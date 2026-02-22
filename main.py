@@ -1192,6 +1192,25 @@ st.markdown(f"""
     color: {T['text']} !important;
   }}
 
+  /* ── TEX DOWNLOAD — piccolo e discreto ── */
+  .tex-btn-wrap .stDownloadButton button,
+  .tex-btn-wrap [data-testid="stDownloadButton"] button {{
+    background: transparent !important;
+    color: {T['muted']} !important;
+    border: 1px solid {T['border']} !important;
+    border-radius: 6px !important;
+    font-size: 0.72rem !important;
+    font-weight: 500 !important;
+    padding: 0.3rem 0.7rem !important;
+    width: 100% !important;
+  }}
+  .tex-btn-wrap .stDownloadButton button:hover,
+  .tex-btn-wrap [data-testid="stDownloadButton"] button:hover {{
+    color: {T['text2']} !important;
+    border-color: {T['border2']} !important;
+    background: {T['card2']} !important;
+  }}
+
   /* ── DOWNLOAD BUTTONS ── */
   .stDownloadButton button,
   [data-testid="stDownloadButton"] button {{
@@ -1522,7 +1541,8 @@ with st.sidebar:
     difficolta = st.selectbox("livello", SCUOLE, index=2, label_visibility="collapsed")
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
-    bes_dsa         = st.checkbox("Supporto BES/DSA", value=True)
+    bes_dsa         = st.checkbox("Supporto BES/DSA", value=True,
+                    help="Gli esercizi contrassegnati da un asterisco (*) sono facoltativi per gli studenti con certificazione BES/DSA. L'asterisco appare accanto alla lettera del sottopunto.")
     doppia_fila     = st.checkbox("Genera Versione A e B", value=False)
     correzione_step = st.checkbox("Correzione Step-by-Step", value=False)
 
@@ -1969,25 +1989,27 @@ if st.session_state.verifiche['A']['latex']:
                         else:
                             with st.expander("Log"): st.text(se)
 
-            # ── Anteprima PDF compatta ────────────────────────────────────────
+            # ── Anteprima PDF a tenda ────────────────────────────────────────
             if v['preview'] and v['pdf']:
-                b64 = base64.b64encode(v['pdf']).decode()
-                st.markdown(f"""
-                <div class="pdf-preview-wrap">
-                  <div class="pdf-preview-header">
-                    <span>👁 Anteprima</span>
-                    <span style="font-weight:400;opacity:0.6;">scroll per navigare</span>
-                  </div>
-                  <iframe
-                    src="data:application/pdf;base64,{b64}#toolbar=0&navpanes=0&scrollbar=1"
-                    class="pdf-preview-frame"
-                  ></iframe>
-                </div>
-                """, unsafe_allow_html=True)
+                with st.expander("👁 Anteprima PDF", expanded=True):
+                    b64 = base64.b64encode(v['pdf']).decode()
+                    st.markdown(f"""
+                    <iframe
+                      src="data:application/pdf;base64,{b64}#toolbar=0&navpanes=0&scrollbar=1"
+                      style="width:100%;height:500px;border:none;border-radius:8px;display:block;"
+                    ></iframe>
+                    """, unsafe_allow_html=True)
 
-            with st.expander(f"🛠️ Editor LaTeX {fid}"):
-                st.session_state.verifiche[fid]['latex'] = st.text_area(
-                    "Codice:", value=v['latex'], height=280, key=f"ed_{fid}")
-                if v['soluzioni_latex']:
-                    st.session_state.verifiche[fid]['soluzioni_latex'] = st.text_area(
-                        "Soluzioni:", value=v['soluzioni_latex'], height=180, key=f"eds_{fid}")
+            # ── Download LaTeX sorgente ──────────────────────────────────
+            _spacer, _tex_col = st.columns([3, 1])
+            with _tex_col:
+                st.markdown('<div class="tex-btn-wrap">', unsafe_allow_html=True)
+                st.download_button(
+                    "⬇ Sorgente .tex",
+                    data=v['latex'].encode('utf-8'),
+                    file_name=f"Verifica_{_arg}_{fid}.tex",
+                    mime="text/plain",
+                    key=f"dl_tex_{fid}",
+                    help="Scarica il sorgente LaTeX per modificarlo"
+                )
+                st.markdown('</div>', unsafe_allow_html=True)
