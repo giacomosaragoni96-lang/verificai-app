@@ -5,6 +5,7 @@ import tempfile
 import base64
 import re
 import io
+import time
 import google.generativeai as genai
 from dotenv import load_dotenv
 
@@ -21,12 +22,55 @@ APP_ICON    = "📝"
 APP_TAGLINE = "Crea verifiche su misura in pochi secondi"
 SHARE_URL   = "https://verificai.streamlit.app"
 
-T = {
-    "bg": "#0e1117", "card": "#1e2130", "border": "#2e3250",
-    "text": "#e8eaf0", "muted": "#8b90a8", "accent": "#4f8ef7",
-    "accent2": "#7c5cbf", "success": "#2d9e6b", "warn": "#d4860a",
-    "label_color": "#c5c9e0",
+# ── TEMI ─────────────────────────────────────────────────────────────────────────
+THEMES = {
+    "light": {
+        "bg":           "#F7F7F5",
+        "bg2":          "#FFFFFF",
+        "card":         "#FFFFFF",
+        "card2":        "#F0EFEB",
+        "border":       "#E5E4DF",
+        "border2":      "#D1D0CA",
+        "text":         "#1A1915",
+        "text2":        "#4A4840",
+        "muted":        "#8C8A82",
+        "accent":       "#D97706",
+        "accent_light": "#FEF3C7",
+        "accent2":      "#059669",
+        "success":      "#059669",
+        "warn":         "#D97706",
+        "err":          "#DC2626",
+        "shadow":       "0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05)",
+        "shadow_md":    "0 4px 12px rgba(0,0,0,.08)",
+        "input_bg":     "#FFFFFF",
+        "hover":        "#F0EFEB",
+    },
+    "dark": {
+        "bg":           "#0F0F0E",
+        "bg2":          "#1A1916",
+        "card":         "#1A1916",
+        "card2":        "#232320",
+        "border":       "#2E2D28",
+        "border2":      "#3D3C36",
+        "text":         "#F5F4EF",
+        "text2":        "#C8C6BC",
+        "muted":        "#6B6960",
+        "accent":       "#F59E0B",
+        "accent_light": "#292215",
+        "accent2":      "#10B981",
+        "success":      "#10B981",
+        "warn":         "#F59E0B",
+        "err":          "#EF4444",
+        "shadow":       "0 1px 3px rgba(0,0,0,.3)",
+        "shadow_md":    "0 4px 16px rgba(0,0,0,.4)",
+        "input_bg":     "#232320",
+        "hover":        "#232320",
+    }
 }
+
+if "theme" not in st.session_state:
+    st.session_state.theme = "light"
+T = THEMES[st.session_state.theme]
 
 MODELLI_DISPONIBILI = {
     "⚡ Flash 2.5 Lite (velocissimo)": "gemini-2.5-flash-lite",
@@ -106,7 +150,7 @@ NOTE_PLACEHOLDER = {
 
 TIPI_ESERCIZIO = ["Aperto", "Scelta multipla", "Vero/Falso", "Completamento"]
 
-# ── GRIGLIA ─────────────────────────────────────────────────────────────────────
+# ── FUNZIONI ORIGINALI (invariate) ───────────────────────────────────────────────
 def parse_esercizi(latex):
     esercizi = []
     ex_blocks = re.split(r'\\subsection\*\{', latex)[1:]
@@ -119,13 +163,27 @@ def parse_esercizi(latex):
             num_match = re.search(r'(?:Esercizio\s+)?(\d+)', header)
             num_label = num_match.group(1) if num_match else str(i + 1)
         items_found = []
-        for line in block.split('\n'):
-            m = re.search(r'\\item(?:\[([^\]]+)\])?\s*.*?\((\d+(?:[.,]\d+)?)\s*pt\)', line)
-            if m:
-                raw_label = m.group(1) or ''
-                punti = m.group(2)
-                clean_label = raw_label.replace('*', '').strip() if raw_label else str(len(items_found) + 1)
-                items_found.append((clean_label, punti))
+        lines = block.split('\n')
+        for li, line in enumerate(lines):
+            item_match = re.search(r'\\item\[([^\]]+)\]', line)
+            if not item_match:
+                continue
+            raw_label = item_match.group(1)
+            # Costruisce la finestra di testo: dalla riga corrente
+            # fino alla riga prima del prossimo \item (max 8 righe)
+            window_lines = []
+            for lj in range(li, min(li + 8, len(lines))):
+                # Fermati se troviamo un nuovo \item (diverso da quello corrente)
+                if lj > li and re.search(r'\\item\[', lines[lj]):
+                    break
+                window_lines.append(lines[lj])
+            search_window = '\n'.join(window_lines)
+            pt_match = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', search_window)
+            if not pt_match:
+                continue
+            punti = pt_match.group(1)
+            clean_label = raw_label.replace('*', '').strip()
+            items_found.append((clean_label, punti))
         if items_found:
             esercizi.append({'num': num_label, 'items': items_found})
     return esercizi
@@ -154,52 +212,34 @@ def build_griglia_latex(esercizi, punti_totali):
     )
 
 def inietta_asterischi_bes(latex, percentuale=0.25):
-    """
-    Garantisce che almeno `percentuale` dei sottopunti \\item abbiano asterisco.
-    Trasforma i sottopunti più in fondo (generalmente i più difficili) aggiungendo *.
-    """
-    # Trova tutti gli \item con label tipo [a)] [b)] ecc.
     pattern = r'(\\item\[([a-zA-Z]+)(\*?)\)\])'
     tutti = list(re.finditer(pattern, latex))
     if not tutti:
         return latex
-
     n_totale = len(tutti)
     n_con_asterisco = sum(1 for m in tutti if m.group(3) == '*')
-    n_necessari = max(1, int(n_totale * percentuale + 0.999))  # arrotonda su
-
+    n_necessari = max(1, int(n_totale * percentuale + 0.999))
     if n_con_asterisco >= n_necessari:
-        return latex  # già ok
-
+        return latex
     n_da_aggiungere = n_necessari - n_con_asterisco
-    # Aggiungi asterisco agli item senza asterisco, preferendo gli ultimi di ogni esercizio
     candidati = [m for m in tutti if m.group(3) != '*']
-    # Prendi gli ultimi N candidati (più difficili = ultimi sottopunti)
     da_modificare = candidati[-n_da_aggiungere:]
-
-    # Sostituisci da destra per non invalidare gli offset
     for m in reversed(da_modificare):
         lettera = m.group(2)
         replacement = f'\\item[{lettera}*)]'
         latex = latex[:m.start()] + replacement + latex[m.end():]
-
     return latex
 
-
 def fix_items_environment(latex):
-    """Wrappa item nudi (fuori da enumerate/itemize) in begin{enumerate}[a)].
-    Traccia SOLO enumerate/itemize, non document/center/tabular."""
     import re as _r
     lines = latex.split('\n')
     result = []
-    # Conta solo ambienti list-like (enumerate, itemize)
     list_depth = 0
     in_bare_block = False
     for line in lines:
         stripped = line.strip()
         list_opens  = len(_r.findall(r'\\begin\{(?:enumerate|itemize)', line))
         list_closes = len(_r.findall(r'\\end\{(?:enumerate|itemize)', line))
-        # Un item è "nudo" se non siamo dentro enumerate/itemize
         is_bare_item = bool(_r.match(r'\\item\[', stripped)) and list_depth == 0
         if is_bare_item and not in_bare_block:
             result.append(r'\begin{enumerate}[a)]')
@@ -213,16 +253,12 @@ def fix_items_environment(latex):
         result.append(r'\end{enumerate}')
     return '\n'.join(result)
 
-
 def inietta_griglia(latex, punti_totali):
-    # 1. Rimuoviamo eventuali griglie vecchie per evitare duplicati
     latex = re.sub(
         r'(\\vspace\{[^}]+\}\s*)?\\begin\{center\}\s*\\textbf\{Griglia[^}]*\}.*?\\end\{center\}',
         '', latex, flags=re.DOTALL
     )
-    # 2. Generiamo la nuova griglia
     griglia = build_griglia_latex(parse_esercizi(latex), punti_totali)
-    # 3. Inserimento: prima di \end{document}, o in fondo
     if "\\end{document}" in latex:
         return latex.replace("\\end{document}", f"\n\\vfill\n{griglia}\n\\end{{document}}")
     else:
@@ -266,10 +302,9 @@ def pdf_to_images_bytes(pdf_bytes):
                 return [open(os.path.join(d, f), "rb").read() for f in imgs], None
     except Exception as e:
         return None, str(e)
-    return None, "pdf2image non installato e pdftoppm non trovato. Esegui: pip install pdf2image"
+    return None, "pdf2image non installato e pdftoppm non trovato."
 
 def _make_tc_xml(text, width_dxa, bold=False, gridSpan=1):
-    """Crea <w:tc> XML con merge fisico corretto (gridSpan + cella singola)."""
     from docx.oxml.ns import qn as _qn
     from docx.oxml import OxmlElement as _OE
     tc = _OE('w:tc')
@@ -293,9 +328,7 @@ def _make_tc_xml(text, width_dxa, bold=False, gridSpan=1):
         t = _OE('w:t'); t.text = str(text); r_el.append(t)
     return tc
 
-
 def _fix_tbl_grid(tbl_el, col_widths, _qn, _OE):
-    """Sovrascrive il tblGrid con le larghezze reali delle colonne (evita valori negativi)."""
     old_grid = tbl_el.find(_qn('w:tblGrid'))
     if old_grid is not None:
         tbl_el.remove(old_grid)
@@ -304,16 +337,13 @@ def _fix_tbl_grid(tbl_el, col_widths, _qn, _OE):
         gc = _OE('w:gridCol')
         gc.set(_qn('w:w'), str(max(1, w)))
         new_grid.append(gc)
-    # Il tblGrid deve stare subito dopo tblPr
     tbl_pr = tbl_el.find(_qn('w:tblPr'))
     if tbl_pr is not None:
         tbl_pr.addnext(new_grid)
     else:
         tbl_el.insert(0, new_grid)
 
-
 def _build_griglia_xml(doc, row_es, row_sotto, row_max, PAGE_W_DXA=9638):
-    """Tabella griglia con riga Es. costruita da XML puro → merge fisicamente corretto."""
     from docx.oxml.ns import qn as _qn
     from docx.oxml import OxmlElement as _OE
     from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -322,35 +352,29 @@ def _build_griglia_xml(doc, row_es, row_sotto, row_max, PAGE_W_DXA=9638):
     n_cols = len(row_es)
     row_punti = ["Punti"] + [""] * (n_cols - 1)
 
-    # Calcola larghezze colonne
     first_col = 1400
     last_col = 900
     n_mid = max(1, n_cols - 2)
     available = PAGE_W_DXA - first_col - last_col
     mid_col = max(400, available // n_mid)
     col_widths = [first_col] + [mid_col] * n_mid + [last_col]
-    # Aggiusta per far quadrare esattamente il totale
     diff = PAGE_W_DXA - sum(col_widths)
-    col_widths[-1] += diff  # aggiusta sull'ultima colonna (Tot)
+    col_widths[-1] += diff
 
     def _setup_tbl(tbl, total_w, widths):
-        """Imposta tblPr (larghezza, layout fisso, margini celle=0) e sovrascrive tblGrid."""
         tbl_el = tbl._tbl
         tbl_pr = tbl_el.find(_qn('w:tblPr'))
         if tbl_pr is None:
             tbl_pr = _OE('w:tblPr'); tbl_el.insert(0, tbl_pr)
-        # tblW
         tbl_w = _OE('w:tblW')
         tbl_w.set(_qn('w:w'), str(total_w)); tbl_w.set(_qn('w:type'), 'dxa')
         ex = tbl_pr.find(_qn('w:tblW'))
         if ex is not None: tbl_pr.remove(ex)
         tbl_pr.append(tbl_w)
-        # tblLayout fixed
         tbl_lay = _OE('w:tblLayout'); tbl_lay.set(_qn('w:type'), 'fixed')
         ex2 = tbl_pr.find(_qn('w:tblLayout'))
         if ex2 is not None: tbl_pr.remove(ex2)
         tbl_pr.append(tbl_lay)
-        # tblCellMar = 50 DXA (margine minimo per leggibilità)
         tbl_cm = _OE('w:tblCellMar')
         for side in ('top', 'left', 'bottom', 'right'):
             cm_el = _OE(f'w:{side}')
@@ -359,7 +383,6 @@ def _build_griglia_xml(doc, row_es, row_sotto, row_max, PAGE_W_DXA=9638):
         ex3 = tbl_pr.find(_qn('w:tblCellMar'))
         if ex3 is not None: tbl_pr.remove(ex3)
         tbl_pr.append(tbl_cm)
-        # Sovrascrive tblGrid con larghezze reali
         _fix_tbl_grid(tbl_el, widths, _qn, _OE)
 
     def _fill_cell(cell, text, bold=False, w=None, font_pt=9):
@@ -379,7 +402,6 @@ def _build_griglia_xml(doc, row_es, row_sotto, row_max, PAGE_W_DXA=9638):
     tbl.style = 'Table Grid'
     _setup_tbl(tbl, PAGE_W_DXA, col_widths)
 
-    # Righe 1-3: Sotto., Max, Punti
     for r_idx, riga in enumerate([row_sotto, row_max, row_punti], start=1):
         for c_idx in range(n_cols):
             val = riga[c_idx] if c_idx < len(riga) else ''
@@ -387,8 +409,6 @@ def _build_griglia_xml(doc, row_es, row_sotto, row_max, PAGE_W_DXA=9638):
                        bold=(c_idx == 0),
                        w=col_widths[c_idx] if c_idx < len(col_widths) else mid_col)
 
-    # Riga 0 (Es.): raggruppa per esercizio con run-length encoding
-    # row_es formato: ["Es.", "1","1","1","2","2","Tot"]
     groups = []
     c = 0
     while c < n_cols:
@@ -406,7 +426,6 @@ def _build_griglia_xml(doc, row_es, row_sotto, row_max, PAGE_W_DXA=9638):
             groups.append((val, span, total_w))
             c += span
 
-    # Sostituisci riga 0 con celle XML con merge fisico corretto
     tr_el = tbl.rows[0]._tr
     for tc_el in list(tr_el.findall(_qn('w:tc'))):
         tr_el.remove(tc_el)
@@ -415,9 +434,7 @@ def _build_griglia_xml(doc, row_es, row_sotto, row_max, PAGE_W_DXA=9638):
 
     return tbl
 
-
 def _strip_latex_math(text):
-    """Converte formule LaTeX in testo leggibile (rimuove $...$ e comandi)."""
     import re as _r
     if not text: return text
     text = _r.sub(r'\$\$(.+?)\$\$', lambda m: m.group(1).strip(), text, flags=_r.DOTALL)
@@ -450,93 +467,141 @@ def _strip_latex_math(text):
     text = text.replace('{', '').replace('}', '')
     return text.strip()
 
-def _parse_latex_to_data(codice_latex):
-    """Parsa direttamente il LaTeX in struttura dati senza usare l'AI."""
+def _clean_latex_line(text):
     import re as _r
+    if not text:
+        return ''
+    text = _r.sub(r'\\vspace\*?\{[^}]*\}', '', text)
+    text = _r.sub(r'\\hspace\*?\{[^}]*\}', '', text)
+    text = _r.sub(r'\\noindent\b', '', text)
+    text = _r.sub(r'\\newline\b', '', text)
+    text = _r.sub(r'\\\\(\s)', r'\1', text)
+    text = _r.sub(r'\\\\\s*$', '', text, flags=_r.MULTILINE)
+    for cmd in ('textbf', 'textit', 'emph', 'underline', 'textrm', 'texttt'):
+        text = _r.sub(rf'\\{cmd}\{{([^}}]*)\}}', r'\1', text)
+    text = _r.sub(r'\\(?:small|large|Large|LARGE|huge|Huge|normalsize|footnotesize)\b', '', text)
+    return _strip_latex_math(text).strip()
 
+
+def _parse_latex_to_data(codice_latex):
+    import re as _r
     data = {'titolo': '', 'intestazione_nota': '', 'esercizi': []}
 
-    # Titolo
     m = _r.search(r'\\textbf\{\\large ([^}]+)\}', codice_latex)
     if m:
-        data['titolo'] = _strip_latex_math(m.group(1).strip())
+        data['titolo'] = _clean_latex_line(m.group(1))
 
-    # Nota BES/DSA
     m2 = _r.search(r'\\textit\{\\small ([^}]+)\}', codice_latex)
     if m2:
         data['intestazione_nota'] = m2.group(1).strip()
 
-    # Dividi per esercizi (\subsection*)
-    blocks = _r.split(r'\\subsection\*\{', codice_latex)
+    body_start = codice_latex.find('\\end{center}')
+    if body_start == -1:
+        body_start = 0
+    else:
+        body_start += len('\\end{center}')
+    corpus = codice_latex[body_start:]
+    corpus = corpus.replace('\\end{document}', '')
+
+    blocks = _r.split(r'\\subsection\*\s*\{', corpus)
+
     for block in blocks[1:]:
-        header_end = block.find('}')
-        if header_end == -1:
-            continue
-        titolo_ex = _strip_latex_math(block[:header_end].strip())
+        brace_depth = 0
+        header_end = 0
+        for ci, ch in enumerate(block):
+            if ch == '{': brace_depth += 1
+            elif ch == '}':
+                if brace_depth == 0:
+                    header_end = ci
+                    break
+                brace_depth -= 1
+        titolo_ex = _clean_latex_line(block[:header_end])
         body = block[header_end+1:]
 
-        # Testo introduttivo prima del primo enumerate/item
-        markers = ['\\item[', '\\begin{enumerate}', '\\begin{itemize}']
-        positions = [body.find(x) for x in markers if body.find(x) != -1]
-        intro_end = min(positions) if positions else len(body)
-        testo_intro = _strip_latex_math(body[:intro_end].strip())
+        first_item = len(body)
+        for marker in [r'\\item[', r'\\begin{enumerate}', r'\\begin{itemize}']:
+            idx = body.find(marker.replace('\\\\','\\'))
+            if idx != -1 and idx < first_item:
+                first_item = idx
+        raw_intro = body[:first_item]
+        raw_intro = _r.sub(r'\\begin\{tabular\}.*?\\end\{tabular\}', '', raw_intro, flags=_r.DOTALL)
+        raw_intro = _r.sub(r'\\begin\{center\}.*?\\end\{center\}', '', raw_intro, flags=_r.DOTALL)
+        testo_intro = _clean_latex_line(raw_intro)
 
         sottopunti = []
 
-        # Strategia: trova tutti i blocchi \begin{enumerate}[a)] ... \end{enumerate}
-        # con eventuali opzioni \hspace dopo
-        enum_pattern = _r.compile(
-            r'\\begin\{enumerate\}\[a\)\]\s*'
-            r'(.*?)'
-            r'\\end\{enumerate\}'
-            r'((?:\s*\\hspace\{[^}]+\}\s*[A-Da-d]\)[^\n\\]*(?:\\\\)?\n?)*)',
+        enum_pat = _r.compile(
+            r'\\begin\{enumerate\}\s*\[a\)\]\s*(.*?)\\end\{enumerate\}',
             _r.DOTALL
         )
+        used_ranges = []
 
-        for em in enum_pattern.finditer(body):
+        for em in enum_pat.finditer(body):
+            used_ranges.append((em.start(), em.end()))
             items_block = em.group(1)
-            hspace_block = em.group(2).strip()
 
-            # Estrai tutti gli \item[label)] dal blocco
-            item_matches = list(_r.finditer(
+            item_pat = _r.compile(
                 r'\\item\[([^\]]+)\]\s*(.*?)(?=\\item\[|$)',
-                items_block, _r.DOTALL
-            ))
-
-            for i, im in enumerate(item_matches):
+                _r.DOTALL
+            )
+            for im in item_pat.finditer(items_block):
                 label = im.group(1).strip()
                 raw_text = im.group(2).strip()
                 opzioni = []
 
-                # Se questo è l'unico item nel blocco, le opzioni potrebbero essere
-                # nel blocco hspace che segue \end{enumerate}
-                if len(item_matches) == 1 and hspace_block:
-                    hspace_opts = _r.findall(
-                        r'\\hspace\{[^}]+\}\s*[A-Da-d]\)\s*([^\n\\]+)',
-                        hspace_block
-                    )
-                    opzioni = [_strip_latex_math(o.strip()) for o in hspace_opts if o.strip()]
+                inner_enum = _r.search(
+                    r'\\begin\{enumerate\}\s*\[a\)\](.*?)\\end\{enumerate\}',
+                    raw_text, _r.DOTALL
+                )
+                if inner_enum:
+                    for opt_m in _r.finditer(r'\\item\s+(.*?)(?=\\item|$)', inner_enum.group(1), _r.DOTALL):
+                        opt_c = _clean_latex_line(opt_m.group(1))
+                        if opt_c: opzioni.append(opt_c)
+                    raw_text = raw_text[:inner_enum.start()].strip()
 
-                # Cerca opzioni anche dentro raw_text (formato \begin{enumerate}[a)] annidato)
-                if not opzioni:
-                    inner = _r.search(
-                        r'\\begin\{enumerate\}\[a\)\](.*?)\\end\{enumerate\}',
-                        raw_text, _r.DOTALL
-                    )
-                    if inner:
-                        for opt in _r.findall(r'\\item\s*(.*?)(?=\\item|$)', inner.group(1), _r.DOTALL):
-                            opt_c = _strip_latex_math(opt.strip())
-                            if opt_c: opzioni.append(opt_c)
-                        raw_text = raw_text[:inner.start()].strip()
+                vf_pairs = _r.findall(r'\$\\square\$\s*\\textbf\{([VF])\}', raw_text)
+                if vf_pairs:
+                    opzioni = [f"☐ {v}" for v in vf_pairs]
+                    raw_text = _r.sub(r'\$\\square\$\s*\\textbf\{[VF]\}\s*(?:\\quad)?', '', raw_text).strip()
 
-                testo_clean = _strip_latex_math(raw_text)
-                testo_clean = _r.sub(r'\\vspace\{[^}]+\}', '', testo_clean).strip()
+                testo_clean = _clean_latex_line(raw_text)
+                testo_clean = _r.sub(r'\n{2,}', '\n', testo_clean).strip()
 
                 if label:
                     sottopunti.append({
                         'label': label,
-                        'testo': testo_clean if testo_clean else '—',
-                        'opzioni': opzioni
+                        'testo': testo_clean if testo_clean else '',
+                        'opzioni': opzioni,
+                        'punti': _estrai_punti(label + ' ' + testo_clean)
+                    })
+
+        if not sottopunti:
+            for im in _r.finditer(
+                r'\\item\[([^\]]+)\]\s*(.*?)(?=\\item\[|\\end\{|$)',
+                body, _r.DOTALL
+            ):
+                label = im.group(1).strip()
+                raw_text = im.group(2).strip()
+                skip = any(s <= im.start() <= e for s, e in used_ranges)
+                if skip: continue
+                opzioni = []
+                inner_enum = _r.search(
+                    r'\\begin\{enumerate\}\s*\[a\)\](.*?)\\end\{enumerate\}',
+                    raw_text, _r.DOTALL
+                )
+                if inner_enum:
+                    for opt_m in _r.finditer(r'\\item\s+(.*?)(?=\\item|$)', inner_enum.group(1), _r.DOTALL):
+                        opt_c = _clean_latex_line(opt_m.group(1))
+                        if opt_c: opzioni.append(opt_c)
+                    raw_text = raw_text[:inner_enum.start()].strip()
+                testo_clean = _clean_latex_line(raw_text)
+                testo_clean = _r.sub(r'\n{2,}', '\n', testo_clean).strip()
+                if label:
+                    sottopunti.append({
+                        'label': label,
+                        'testo': testo_clean if testo_clean else '',
+                        'opzioni': opzioni,
+                        'punti': _estrai_punti(label + ' ' + testo_clean)
                     })
 
         if titolo_ex or sottopunti:
@@ -545,11 +610,15 @@ def _parse_latex_to_data(codice_latex):
                 'testo_intro': testo_intro,
                 'sottopunti': sottopunti
             })
-
     return data
 
+
+def _estrai_punti(text):
+    import re as _r
+    m = _r.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', text)
+    return m.group(1) if m else ''
+
 def latex_to_docx_via_ai(codice_latex, model, con_griglia=True):
-    """Converte LaTeX → DOCX tramite parsing diretto (no AI, no JSON)."""
     try:
         from docx import Document as DocxDocument
         from docx.shared import Pt, Cm
@@ -580,13 +649,11 @@ def latex_to_docx_via_ai(codice_latex, model, con_griglia=True):
         style = doc.styles['Normal']
         style.font.name = 'Arial'; style.font.size = Pt(11)
 
-        # Titolo
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         rt = p.add_run(data.get('titolo', 'Verifica'))
         rt.bold = True; rt.font.size = Pt(14)
 
-        # ── Intestazione: 2 celle invisibili ──
         _cw = [int(PAGE_W_DXA * 0.62), PAGE_W_DXA - int(PAGE_W_DXA * 0.62)]
         hdr_tbl = doc.add_table(rows=1, cols=2)
         hdr_el = hdr_tbl._tbl
@@ -610,8 +677,8 @@ def latex_to_docx_via_ai(codice_latex, model, con_griglia=True):
         tblPr_h.append(tblB_h)
         _fix_tbl_grid(hdr_el, _cw, _qn, _OE)
         hdr_cells_data = [
-            [("Nome e Cognome: ", "______________")],
-            [("Classe: ", "______"), ("   Data: ", "______")],
+            [("Nome: ", "_______________________________")],
+            [("Classe e Data: ", "______________________")],
         ]
         for ci_h, runs in enumerate(hdr_cells_data):
             cell_h = hdr_tbl.cell(0, ci_h)
@@ -631,41 +698,46 @@ def latex_to_docx_via_ai(codice_latex, model, con_griglia=True):
                 r1_h = p_h.add_run(lbl_h); r1_h.bold = True; r1_h.font.size = Pt(10)
                 r2_h = p_h.add_run(line_h); r2_h.font.size = Pt(10)
 
-        # Nota BES
         nota = data.get('intestazione_nota', '')
         if nota:
             p3 = doc.add_paragraph(); p3.alignment = WD_ALIGN_PARAGRAPH.CENTER
             r3 = p3.add_run(nota); r3.italic = True; r3.font.size = Pt(10)
         doc.add_paragraph()
 
-        # ── Esercizi ─────────────────────────────────────────────────────────────
         for ex in data.get('esercizi', []):
             pe = doc.add_paragraph()
+            pe.paragraph_format.space_before = Pt(10)
+            pe.paragraph_format.space_after = Pt(3)
             rt = pe.add_run(ex.get('titolo', '')); rt.bold = True; rt.font.size = Pt(12)
             intro = ex.get('testo_intro', '').strip()
             if intro:
-                pi = doc.add_paragraph(intro); pi.paragraph_format.space_after = Pt(4)
+                pi = doc.add_paragraph(intro)
+                pi.paragraph_format.space_before = Pt(0)
+                pi.paragraph_format.space_after = Pt(3)
             for sp in ex.get('sottopunti', []):
                 label = sp.get('label', '').strip()
                 testo = sp.get('testo', '').strip()
                 opzioni = sp.get('opzioni', [])
                 ps = doc.add_paragraph()
-                ps.paragraph_format.left_indent = Cm(0.5)
+                ps.paragraph_format.left_indent = Cm(0.4)
+                ps.paragraph_format.space_before = Pt(2)
                 ps.paragraph_format.space_after = Pt(2)
-                rl = ps.add_run(label + "  "); rl.bold = True
-                ps.add_run(testo if testo and testo != '—' else '')
+                rl = ps.add_run(label + "  "); rl.bold = True; rl.font.size = Pt(11)
+                if testo:
+                    ps.add_run(testo).font.size = Pt(11)
                 if opzioni:
                     for opt in opzioni:
                         po = doc.add_paragraph()
-                        po.paragraph_format.left_indent = Cm(1.5)
+                        po.paragraph_format.left_indent = Cm(1.2)
+                        po.paragraph_format.space_before = Pt(0)
                         po.paragraph_format.space_after = Pt(1)
-                        po.add_run(str(opt))
-                    doc.add_paragraph("").paragraph_format.space_after = Pt(4)
-                else:
-                    doc.add_paragraph("").paragraph_format.space_after = Pt(14)
-            doc.add_paragraph()
+                        po.add_run(str(opt)).font.size = Pt(11)
+                if not opzioni:
+                    pr = doc.add_paragraph()
+                    pr.paragraph_format.left_indent = Cm(0.4)
+                    pr.paragraph_format.space_before = Pt(1)
+                    pr.paragraph_format.space_after = Pt(8)
 
-        # ── Griglia ──────────────────────────────────────────────────────────────
         esercizi_parsed = parse_esercizi(codice_latex) if con_griglia else []
         if con_griglia and esercizi_parsed:
             pg = doc.add_paragraph()
@@ -684,7 +756,7 @@ def latex_to_docx_via_ai(codice_latex, model, con_griglia=True):
                         except: pass
                     row_max.append(str(int(tot_ex)) if tot_ex == int(tot_ex) else str(round(tot_ex,1)))
                 row_es.append("Tot")
-                tot_pts = sum(float(x.replace(',','.')) for x in row_max[1:] if x.replace(',','.').replace('.','').isdigit() or (x.replace(',','.').replace('.','').replace('-','').isdigit()))
+                tot_pts = sum(float(x.replace(',','.')) for x in row_max[1:] if x.replace(',','.').replace('.','').isdigit())
                 row_max.append(str(int(tot_pts)) if tot_pts == int(tot_pts) else str(round(tot_pts,1)))
                 row_sotto_c = [""] * len(row_es)
                 _build_griglia_xml(doc, row_es, row_sotto_c, row_max, GRIGLIA_W_DXA)
@@ -735,335 +807,858 @@ def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali):
     righe.append(f"Distribuisci {punti_totali} pt in modo equilibrato.")
     return "\n".join(righe), immagini
 
+# ── HELPER: formato tempo relativo ───────────────────────────────────────────────
+def _tempo_relativo(ts):
+    if ts is None:
+        return ""
+    diff = time.time() - ts
+    if diff < 60:
+        return "pochi secondi fa"
+    elif diff < 3600:
+        m = int(diff // 60)
+        return f"{m} min fa"
+    elif diff < 86400:
+        h = int(diff // 3600)
+        return f"{h} ore fa"
+    else:
+        return time.strftime("%d/%m", time.localtime(ts))
+
+def _stima_dimensione(data_bytes):
+    """Stima dimensione leggibile."""
+    if data_bytes is None:
+        return "—"
+    kb = len(data_bytes) / 1024
+    if kb < 1024:
+        return f"{kb:.0f} KB"
+    return f"{kb/1024:.1f} MB"
+
 # ── SESSION STATE ────────────────────────────────────────────────────────────────
-st.set_page_config(page_title=APP_NAME, page_icon=APP_ICON, layout="wide")
+st.set_page_config(
+    page_title=APP_NAME,
+    page_icon=APP_ICON,
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 def _vf():
     return {'latex': '', 'pdf': None, 'preview': False,
-            'soluzioni_latex': '', 'soluzioni_pdf': None, 'docx': None}
+            'soluzioni_latex': '', 'soluzioni_pdf': None, 'docx': None,
+            'pdf_ts': None, 'docx_ts': None}
 
 if 'verifiche'       not in st.session_state: st.session_state.verifiche = {'A': _vf(), 'B': _vf()}
 if 'esercizi_custom' not in st.session_state: st.session_state.esercizi_custom = []
+# Status bar state
+if 'last_materia'    not in st.session_state: st.session_state.last_materia = None
+if 'last_argomento'  not in st.session_state: st.session_state.last_argomento = None
+if 'last_gen_ts'     not in st.session_state: st.session_state.last_gen_ts = None
 
-# ── SIDEBAR ──────────────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown(f"""
-    <div style="font-size:1.15rem;font-weight:800;color:{T['text']};
-                letter-spacing:-0.3px;margin-bottom:1.2rem;">
-        ⚙️ Impostazioni
-    </div>
-    """, unsafe_allow_html=True)
+# ── CSS GLOBALE ──────────────────────────────────────────────────────────────────
+is_dark = (st.session_state.theme == "dark")
 
-    # ── Sezione: Classe ──
-    st.markdown(f'<div class="sb-section-label">🏫 Classe</div>', unsafe_allow_html=True)
-    difficolta = st.selectbox("livello", SCUOLE, index=2, label_visibility="collapsed")
-
-    # ── Sezione: Opzioni verifica ──
-    st.markdown(f'<div class="sb-section-label" style="margin-top:1.1rem;">📋 Opzioni verifica</div>', unsafe_allow_html=True)
-    bes_dsa      = st.checkbox("Supporto BES/DSA", value=True,
-                               help="Contrassegna con (*) i sottopunti facoltativi per studenti certificati.")
-    doppia_fila  = st.checkbox("Genera Versione A e B", value=False,
-                               help="Genera una seconda versione fac-simile con dati diversi.")
-    correzione_step = st.checkbox("Correzione Step-by-Step", value=False,
-                                  help="PDF separato: soluzioni rapide + svolgimento completo.")
-
-    # ── Sezione: Esercizio Multidisciplinare ──
-    st.markdown(f'<div class="sb-section-label" style="margin-top:1.1rem;">🔗 Interdisciplinare</div>', unsafe_allow_html=True)
-    esercizio_multidisciplinare = st.checkbox(
-        "Includi 1 esercizio interdisciplinare",
-        value=False,
-        help="Incluso nel totale esercizi, non aggiunto in più. Usa solo strumenti già noti agli studenti."
-    )
-    if esercizio_multidisciplinare:
-        materia2_scelta = st.text_input(
-            "Collega con (materia/disciplina):",
-            placeholder="es. Fisica, Storia, Arte, Economia...",
-            key="materia2_input"
-        )
-        materia2_scelta = materia2_scelta.strip() or None
-        difficolta_multi = st.select_slider(
-            "Difficoltà esercizio:",
-            options=["Facile", "Media", "Alta"],
-            value="Media",
-            key="diff_multi_slider"
-        )
-    else:
-        materia2_scelta  = None
-        difficolta_multi = None
-
-    # ── Sezione: Punteggi ──
-    st.markdown(f'<div class="sb-section-label" style="margin-top:1.1rem;">🏆 Punteggi e Griglia</div>', unsafe_allow_html=True)
-    mostra_punteggi = st.checkbox("Mostra punteggi per esercizio", value=True,
-                                  help="Se disattivato, la verifica non mostrerà i punti per ogni sottopunto.")
-    con_griglia     = st.checkbox("Includi griglia di valutazione", value=True,
-                                  help="Se disattivato, la verifica non avrà la griglia finale.")
-    punti_totali = st.number_input("Punti totali", min_value=10, max_value=200, value=100, step=5,
-                                   disabled=not mostra_punteggi,
-                                   help="Punti totali da distribuire tra gli esercizi.")
-
-    # ── Sezione: Modello AI ──
-    st.markdown(f'<div class="sb-section-label" style="margin-top:1.1rem;">🤖 Modello AI</div>', unsafe_allow_html=True)
-    modello_id = MODELLI_DISPONIBILI[
-        st.selectbox("modello", list(MODELLI_DISPONIBILI.keys()), label_visibility="collapsed")
-    ]
-
-# ── CSS DINAMICO ─────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <style>
-  /* Reset e base */
-  .stApp {{ background-color: {T['bg']} !important; }}
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
+
+  *, *::before, *::after {{ box-sizing: border-box; }}
+
+  .stApp {{
+    background-color: {T['bg']} !important;
+    font-family: 'DM Sans', sans-serif;
+    color: {T['text']};
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }}
+
   .block-container {{
-    padding-top: 3rem !important;
-    padding-left: 3rem !important;
-    padding-right: 3rem !important;
-    max-width: 1200px !important;
+    padding: 5rem 1.5rem 4rem !important;
+    max-width: 780px !important;
+    margin: 0 auto !important;
   }}
 
-  /* Nascondi anchor links sui titoli markdown */
-  .stMarkdown h1 a, .stMarkdown h2 a, .stMarkdown h3 a,
-  .stMarkdown h4 a, .stMarkdown h5 a, .stMarkdown h6 a {{
-    display: none !important;
+  #MainMenu, footer {{ visibility: hidden; }}
+  .stDecoration {{ display: none; }}
+
+  /* Header: stessa bg dell'app, così il bottone sidebar si vede sempre */
+  header[data-testid="stHeader"] {{
+    background-color: {T['bg']} !important;
+    border-bottom: 1px solid {T['border']} !important;
   }}
 
-  /* Label dei widget — più grandi e più visibili */
-  .stTextInput label p,
-  .stSelectbox label p {{
-    font-size: 1.05rem !important;
-    font-weight: 600 !important;
-    color: {T['label_color']} !important;
+  /* Forza colore icona/bottone toggle sidebar con specificity massima */
+  header button svg {{
+    fill: {T['text']} !important;
+    color: {T['text']} !important;
+    stroke: {T['text']} !important;
+  }}
+  header button {{
+    background: {T['card']} !important;
+    border: 1.5px solid {T['border2']} !important;
+    border-radius: 8px !important;
+    color: {T['text']} !important;
+  }}
+  header button:hover {{
+    background: {T['hover']} !important;
+    border-color: {T['accent']} !important;
+  }}
+  header button:hover svg {{
+    fill: {T['accent']} !important;
+  }}
+  .stMarkdown h1 a, .stMarkdown h2 a, .stMarkdown h3 a {{ display: none !important; }}
+
+  /* ════════════════════════════════════
+     SIDEBAR
+     ════════════════════════════════════ */
+  [data-testid="stSidebar"] {{
+    background: #141412 !important;
+    border-right: 1px solid #2a2926 !important;
   }}
 
-  /* Rimpicciolisci il drag&drop uploader */
-  [data-testid="stFileUploader"] section {{
-    padding: 0.6rem 1rem !important;
-    min-height: unset !important;
-  }}
-  [data-testid="stFileUploader"] section > div {{
-    gap: 0.3rem !important;
-  }}
-  [data-testid="stFileUploadDropzone"] {{
-    padding: 0.5rem 0.8rem !important;
-  }}
-  [data-testid="stFileUploadDropzone"] p {{
-    font-size: 0.82rem !important;
-    margin: 0 !important;
-  }}
-  [data-testid="stFileUploadDropzone"] small {{
-    font-size: 0.72rem !important;
+  /* Titolo principale sidebar */
+  .sidebar-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.1rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.01em;
+    color: #f0ede6 !important;
+    margin: 0.5rem 0 1.2rem 0;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid #2a2926;
   }}
 
-  /* Header app */
-  .app-header {{
+  /* Etichette sezione sidebar — più visibili */
+  .sidebar-label {{
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    color: #b0ad9f !important;
+    margin: 0.8rem 0 0.4rem 0;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #2a2926;
+  }}
+  [data-testid="stSidebar"] .block-container {{
+    padding: 1.5rem 1.2rem !important;
+    max-width: 100% !important;
+  }}
+  [data-testid="stSidebar"] p,
+  [data-testid="stSidebar"] span,
+  [data-testid="stSidebar"] label,
+  [data-testid="stSidebar"] div {{
+    color: #d4d2c9 !important;
+  }}
+  [data-testid="stSidebar"] .stTextInput label p,
+  [data-testid="stSidebar"] .stSelectbox label p,
+  [data-testid="stSidebar"] .stNumberInput label p {{
+    color: #8a8880 !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    font-weight: 700 !important;
+  }}
+  [data-testid="stSidebar"] .stCheckbox label {{
+    color: #d4d2c9 !important;
+    font-size: 0.9rem !important;
+  }}
+  [data-testid="stSidebar"] .stCheckbox [data-testid="stCheckbox"] span:first-child {{
+    background-color: #232320 !important;
+    border: 1.5px solid #3d3c36 !important;
+    border-radius: 5px !important;
+  }}
+  [data-testid="stSidebar"] .stTextInput input,
+  [data-testid="stSidebar"] .stNumberInput input {{
+    background: #232320 !important;
+    border: 1.5px solid #3d3c36 !important;
+    border-radius: 8px !important;
+    color: #f0ede6 !important;
+  }}
+  [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:first-child {{
+    background: #232320 !important;
+    border: 1.5px solid #3d3c36 !important;
+    border-radius: 8px !important;
+  }}
+  [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{
+    color: #f0ede6 !important;
+  }}
+  [data-testid="stSidebar"] .stRadio label {{
+    color: #d4d2c9 !important;
+  }}
+  [data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {{
+    color: #d4d2c9 !important;
+  }}
+  [data-testid="stSidebar"] .stButton button {{
+    background: #232320 !important;
+    color: #f0ede6 !important;
+    border: 1.5px solid #3d3c36 !important;
+    border-radius: 8px !important;
+  }}
+  [data-testid="stSidebar"] .stButton button:hover {{
+    background: #2e2d28 !important;
+    border-color: #5a5950 !important;
+  }}
+  [data-testid="stSidebar"] .stSelectSlider [data-testid="stMarkdownContainer"] p {{
+    color: #d4d2c9 !important;
+  }}
+  [data-testid="stSidebar"] .section-label {{
+    color: #5a5950 !important;
+    border-bottom-color: #2a2926 !important;
+  }}
+  [data-testid="collapsedControl"] {{
+    color: {T['text']} !important;
+    top: 1rem !important;
+  }}
+
+  /* ── TYPOGRAPHY ── */
+  h1, h2, h3 {{
+    font-family: 'DM Sans', sans-serif !important;
+    color: {T['text']} !important;
+    letter-spacing: -0.02em;
+  }}
+
+  /* ── HERO HEADER ── */
+  .hero-wrap {{
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid {T['border']};
     display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 2px;
-    padding-top: 0;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }}
-  .app-title {{
-    font-size: 2rem;
+  .hero-left {{ flex: 1; min-width: 200px; }}
+  .hero-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
     font-weight: 800;
     color: {T['text']};
-    line-height: 1.2;
-    letter-spacing: -0.5px;
-    margin: 0;
+    line-height: 1.15;
+    margin: 0 0 0.3rem 0;
+    letter-spacing: -0.03em;
   }}
-  .app-share {{
+  .hero-sub {{
+    font-size: 0.9rem;
+    color: {T['muted']};
+    margin: 0;
+    font-weight: 400;
+  }}
+  .hero-right {{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    padding-top: 4px;
+  }}
+  .share-btn {{
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid {T['border2']};
+    border-radius: 100px;
+    padding: 5px 14px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: {T['muted']};
+    background: {T['card2']};
+    text-decoration: none;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }}
+  .share-btn:hover {{
+    border-color: {T['accent']};
+    color: {T['accent']};
+    background: {T['accent_light']};
+  }}
+
+  /* ── LABELS ── */
+  .stTextInput label p,
+  .stSelectbox label p,
+  .stNumberInput label p,
+  .stTextArea label p,
+  .stFileUploader label p {{
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    color: {T['text2']} !important;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin-bottom: 4px !important;
+  }}
+
+  /* ── INPUTS ── */
+  .stTextInput input,
+  .stNumberInput input {{
+    background: {T['input_bg']} !important;
+    border: 1.5px solid {T['border']} !important;
+    border-radius: 10px !important;
+    color: {T['text']} !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.95rem !important;
+    padding: 10px 14px !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }}
+  .stTextInput input::placeholder,
+  .stNumberInput input::placeholder {{
+    color: {T['muted']} !important;
+    opacity: 1 !important;
+  }}
+  .stTextInput input:focus,
+  .stNumberInput input:focus {{
+    border-color: {T['accent']} !important;
+    box-shadow: 0 0 0 3px {T['accent_light']} !important;
+    outline: none !important;
+  }}
+  .stTextArea textarea {{
+    background: {T['input_bg']} !important;
+    border: 1.5px solid {T['border']} !important;
+    border-radius: 10px !important;
+    color: {T['text']} !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.9rem !important;
+    padding: 10px 14px !important;
+  }}
+  .stTextArea textarea::placeholder {{
+    color: {T['muted']} !important;
+    opacity: 1 !important;
+  }}
+  .stTextArea textarea:focus {{
+    border-color: {T['accent']} !important;
+    box-shadow: 0 0 0 3px {T['accent_light']} !important;
+  }}
+
+  /* ── SELECTBOX ── */
+  .stSelectbox [data-baseweb="select"] > div:first-child {{
+    background: {T['input_bg']} !important;
+    border: 1.5px solid {T['border']} !important;
+    border-radius: 10px !important;
+    color: {T['text']} !important;
+  }}
+  .stSelectbox [data-baseweb="select"] span {{
+    color: {T['text']} !important;
+  }}
+
+  /* ── CHECKBOXES ── */
+  .stCheckbox label {{
+    color: {T['text']} !important;
+    font-size: 0.9rem !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }}
+  .stCheckbox [data-testid="stCheckbox"] span:first-child {{
+    background-color: {T['input_bg']} !important;
+    border: 1.5px solid {T['border2']} !important;
+    border-radius: 5px !important;
+  }}
+
+  /* ════════════════════════════════════
+     BOTTONE PRIMARIO
+     ════════════════════════════════════ */
+  .stButton [data-testid="baseButton-primary"],
+  .stButton button[kind="primary"],
+  button[data-testid="baseButton-primary"] {{
+    background: #D97706 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em !important;
+    padding: 0.8rem 2rem !important;
+    transition: transform 0.15s ease, filter 0.15s ease !important;
+    box-shadow: 0 2px 12px rgba(217,119,6,0.35) !important;
+  }}
+  .stButton [data-testid="baseButton-primary"]:hover,
+  button[data-testid="baseButton-primary"]:hover {{
+    filter: brightness(1.08) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 18px rgba(217,119,6,0.45) !important;
+  }}
+
+  /* ── BOTTONI SECONDARI ── */
+  .stButton [data-testid="baseButton-secondary"],
+  .stButton button[kind="secondary"],
+  button[data-testid="baseButton-secondary"] {{
+    background: {T['card']} !important;
+    color: {T['text']} !important;
+    border: 1.5px solid {T['border2']} !important;
+    border-radius: 10px !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    padding: 0.6rem 1.2rem !important;
+    transition: all 0.15s ease !important;
+  }}
+  .stButton [data-testid="baseButton-secondary"]:hover,
+  button[data-testid="baseButton-secondary"]:hover {{
+    background: {T['hover']} !important;
+    border-color: {T['accent']} !important;
+    color: {T['text']} !important;
+  }}
+
+  /* ── DOWNLOAD BUTTONS ── */
+  .stDownloadButton button,
+  [data-testid="stDownloadButton"] button {{
+    background: {T['card']} !important;
+    color: {T['text']} !important;
+    border: 1.5px solid {T['border2']} !important;
+    border-radius: 10px !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    padding: 0.6rem 1.2rem !important;
+    transition: all 0.15s ease !important;
+  }}
+  .stDownloadButton button:hover,
+  [data-testid="stDownloadButton"] button:hover {{
+    background: {T['hover']} !important;
+    border-color: {T['accent']} !important;
+  }}
+
+  /* ── EXPANDER ── */
+  [data-testid="stExpander"] {{
+    background: {T['card']} !important;
+    border: 1px solid {T['border']} !important;
+    border-radius: 12px !important;
+    margin-bottom: 0.75rem !important;
+    overflow: hidden;
+  }}
+  [data-testid="stExpander"] summary {{
+    padding: 0.85rem 1.1rem !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    color: {T['text']} !important;
+    background: {T['card']} !important;
+  }}
+  [data-testid="stExpander"] summary:hover {{
+    background: {T['hover']} !important;
+  }}
+  [data-testid="stExpander"] > div > div {{
+    padding: 0.5rem 1.1rem 1rem !important;
+  }}
+
+  hr {{
+    border: none;
+    border-top: 1px solid {T['border']} !important;
+    margin: 2rem 0 !important;
+  }}
+
+  [data-testid="stFileUploader"] section {{
+    background: {T['card2']} !important;
+    border: 1.5px dashed {T['border2']} !important;
+    border-radius: 10px !important;
+    padding: 0.75rem 1rem !important;
+    min-height: unset !important;
+  }}
+  [data-testid="stFileUploader"] section > div {{ gap: 0.3rem !important; }}
+  [data-testid="stFileUploadDropzone"] p,
+  [data-testid="stFileUploadDropzone"] span,
+  [data-testid="stFileUploadDropzone"] small,
+  [data-testid="stFileUploader"] span,
+  [data-testid="stFileUploader"] small,
+  [data-testid="stFileUploader"] p {{
+    color: {T['text2']} !important;
+    opacity: 1 !important;
+  }}
+  [data-testid="stFileUploadDropzone"] button,
+  [data-testid="stFileUploader"] button {{
+    color: {T['accent']} !important;
+    font-weight: 600 !important;
+  }}
+  [data-testid="stFileUploadDropzone"] svg {{
+    fill: {T['muted']} !important;
+    color: {T['muted']} !important;
+  }}
+
+  /* ── CARD OUTPUT ── */
+  .output-card {{
+    background: {T['card']};
+    border: 1px solid {T['border']};
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: {T['shadow']};
+  }}
+  .output-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: {T['text']};
+    margin: 0 0 1rem 0;
+  }}
+
+  /* ── BADGE CHIP ── */
+  .chip {{
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    border: 1px solid {T['border']};
-    border-radius: 20px;
-    padding: 3px 11px;
-    font-size: 0.75rem;
-    color: {T['muted']};
-    background: {T['card']};
-    text-decoration: none;
-    white-space: nowrap;
-    transition: border-color 0.2s;
-  }}
-  .app-share:hover {{ border-color: {T['accent']}; color: {T['accent']}; }}
-  .app-tagline {{
-    color: {T['muted']};
-    font-size: 0.85rem;
-    margin: 2px 0 1.4rem 0;
+    background: {T['accent_light']};
+    color: {T['accent']};
+    border: 1px solid {T['accent']};
+    border-radius: 100px;
+    padding: 2px 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }}
 
-  /* Sezione heading dentro expander */
-  .section-heading {{
-    font-size: 1rem;
-    font-weight: 700;
-    color: {T['text']};
-    margin: 0.6rem 0 0.3rem 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }}
-
-  /* Caption/hint personalizzato */
-  .hint-text {{
-    font-size: 0.8rem;
-    color: {T['muted']};
-    margin-top: 3px;
-    margin-bottom: 6px;
-  }}
-
-  /* ── SIDEBAR SECTION LABELS ── */
-  .sb-section-label {{
+  /* ── SECTION LABELS ── */
+  .section-label {{
     font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: {T['muted']};
-    margin-bottom: 0.35rem;
-    padding-bottom: 0.25rem;
+    margin: 1.2rem 0 0.5rem 0;
+    padding-bottom: 0.3rem;
     border-bottom: 1px solid {T['border']};
+  }}
+
+  .hint {{
+    font-size: 0.78rem;
+    color: {T['muted']};
+    margin-top: 4px;
+    line-height: 1.4;
+  }}
+
+  .stSelectSlider [data-testid="stMarkdownContainer"] p {{
+    color: {T['text']} !important;
+    font-size: 0.88rem !important;
+  }}
+  .stSlider [data-baseweb="slider"] [role="slider"] {{
+    background: {T['accent']} !important;
+    border-color: {T['accent']} !important;
+  }}
+  .stSlider [data-baseweb="slider"] div[data-testid="stTickBar"] {{
+    color: {T['muted']} !important;
+  }}
+  .stSlider label p {{
+    color: {T['text2']} !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }}
+  .stSlider [data-baseweb="slider"] [data-testid="stSliderThumbValue"] {{
+    color: {T['text']} !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+  }}
+
+  .stAlert {{
+    border-radius: 10px !important;
+    border: none !important;
+  }}
+
+  .stProgress > div > div {{
+    background: {T['accent']} !important;
+    border-radius: 100px !important;
+  }}
+  .stProgress > div {{
+    background: {T['border']} !important;
+    border-radius: 100px !important;
+    height: 6px !important;
+  }}
+
+  .stSubheader {{
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    color: {T['text']} !important;
+  }}
+
+  /* ════════════════════════════════════
+     STATUS BAR
+     ════════════════════════════════════ */
+  .status-bar {{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: {T['card2']};
+    border: 1px solid {T['border']};
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: {T['muted']};
+    margin-top: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .status-bar .dot {{
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: {T['success']};
+    flex-shrink: 0;
+  }}
+  .status-bar strong {{
+    color: {T['text2']};
+    font-weight: 600;
+  }}
+
+  /* ════════════════════════════════════
+     DOWNLOAD CARD
+     ════════════════════════════════════ */
+  .dl-card {{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: {T['card']};
+    border: 1.5px solid {T['border']};
+    border-radius: 12px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    margin-bottom: 8px;
+  }}
+  .dl-card:hover {{
+    border-color: {T['accent']};
+    box-shadow: 0 2px 12px rgba(217,119,6,0.12);
+  }}
+  .dl-card-icon {{
+    font-size: 1.6rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }}
+  .dl-card-body {{
+    flex: 1;
+    min-width: 0;
+  }}
+  .dl-card-title {{
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: {T['text']};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }}
+  .dl-card-meta {{
+    font-size: 0.72rem;
+    color: {T['muted']};
+    margin-top: 1px;
+  }}
+
+  /* ════════════════════════════════════
+     PDF PREVIEW COMPATTA
+     ════════════════════════════════════ */
+  .pdf-preview-wrap {{
+    margin-top: 1rem;
+    border: 1px solid {T['border']};
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: {T['shadow_md']};
+    background: {T['card2']};
+  }}
+  .pdf-preview-header {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: {T['card']};
+    border-bottom: 1px solid {T['border']};
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: {T['text2']};
+  }}
+  .pdf-preview-frame {{
+    width: 100%;
+    height: 480px;
+    border: none;
+    display: block;
+    overflow: auto;
+  }}
+
+  /* ═══ MOBILE ═══ */
+  @media (max-width: 640px) {{
+    .block-container {{
+      padding: 1.2rem 1rem 3rem !important;
+    }}
+    .hero-title {{ font-size: 1.75rem !important; }}
+    .hero-wrap {{ margin-bottom: 1.5rem; padding-bottom: 1.2rem; }}
+    [data-testid="column"] {{
+      width: 100% !important;
+      flex: 1 1 100% !important;
+      min-width: 100% !important;
+    }}
+    .stButton button {{
+      min-height: 48px !important;
+      font-size: 1rem !important;
+    }}
+    .stTextInput input,
+    .stNumberInput input {{
+      font-size: 1rem !important;
+      padding: 12px 14px !important;
+    }}
+    .stTextArea textarea {{
+      font-size: 0.95rem !important;
+    }}
+    .stSelectbox [data-baseweb="select"] > div:first-child {{
+      padding: 10px 14px !important;
+      min-height: 48px !important;
+    }}
+    [data-testid="stSidebar"] .block-container {{
+      padding: 1rem !important;
+    }}
+    .output-card {{ padding: 1rem; }}
+    .stDownloadButton button {{
+      width: 100% !important;
+      min-height: 48px !important;
+    }}
+    .pdf-preview-frame {{ height: 340px !important; }}
+  }}
+
+  @media (min-width: 641px) and (max-width: 1024px) {{
+    .block-container {{
+      padding: 1.5rem 1.5rem 3rem !important;
+      max-width: 900px !important;
+    }}
+  }}
+
+  .stSpinner > div {{
+    border-top-color: {T['accent']} !important;
   }}
 </style>
 """, unsafe_allow_html=True)
 
+# ── SIDEBAR ──────────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown('<div class="sidebar-title">⚙️ Impostazioni</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="sidebar-label">🏫 Classe</div>', unsafe_allow_html=True)
+    difficolta = st.selectbox("livello", SCUOLE, index=2, label_visibility="collapsed")
+
+    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
+    bes_dsa         = st.checkbox("Supporto BES/DSA", value=True)
+    doppia_fila     = st.checkbox("Genera Versione A e B", value=False)
+    correzione_step = st.checkbox("Correzione Step-by-Step", value=False)
+
+    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🔗 Interdisciplinare</div>', unsafe_allow_html=True)
+    esercizio_multidisciplinare = st.checkbox("Includi esercizio interdisciplinare", value=False)
+    if esercizio_multidisciplinare:
+        materia2_scelta = st.text_input("Collega con:", placeholder="es. Fisica, Storia...", key="materia2_input").strip() or None
+        difficolta_multi = st.select_slider("Difficoltà:", options=["Facile","Media","Alta"], value="Media", key="diff_multi_slider")
+    else:
+        materia2_scelta  = None
+        difficolta_multi = None
+
+    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🏆 Punteggi</div>', unsafe_allow_html=True)
+    mostra_punteggi = st.checkbox("Mostra punteggi", value=True)
+    con_griglia     = st.checkbox("Includi griglia", value=True)
+    punti_totali    = st.number_input("Punti totali", min_value=10, max_value=200, value=100, step=5,
+                                      disabled=not mostra_punteggi)
+
+    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🤖 Modello AI</div>', unsafe_allow_html=True)
+    modello_id = MODELLI_DISPONIBILI[
+        st.selectbox("modello", list(MODELLI_DISPONIBILI.keys()), label_visibility="collapsed")
+    ]
+
+    st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">🎨 Aspetto</div>', unsafe_allow_html=True)
+    tema_sel = st.radio(
+        "tema",
+        ["☀️ Chiaro", "🌙 Scuro"],
+        index=0 if st.session_state.theme == "light" else 1,
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    new_theme = "light" if "Chiaro" in tema_sel else "dark"
+    if new_theme != st.session_state.theme:
+        st.session_state.theme = new_theme
+        st.rerun()
+
 # ── HEADER ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
-<div class="app-header">
-  <span class="app-title">{APP_ICON} {APP_NAME}</span>
-  <a href="{SHARE_URL}" class="app-share" target="_blank">🔗 Condividi</a>
+<div class="hero-wrap">
+  <div class="hero-left">
+    <h1 class="hero-title">{APP_ICON} {APP_NAME}</h1>
+    <p class="hero-sub">{APP_TAGLINE}</p>
+  </div>
+  <div class="hero-right">
+    <a href="{SHARE_URL}" class="share-btn" target="_blank">↗ Condividi</a>
+  </div>
 </div>
-<p class="app-tagline">{APP_TAGLINE}</p>
 """, unsafe_allow_html=True)
 
-# ── FORM: argomento + materia (sempre visibili) ───────────────────────────────────
-c1, c2 = st.columns([3, 1])
+# ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
+c1, c2 = st.columns([2.5, 1])
 with c1:
-    argomento = st.text_input("📚 Argomento della verifica",
-                              placeholder="es. Le equazioni di secondo grado")
+    argomento = st.text_input("📚 Argomento", placeholder="es. Le equazioni di secondo grado")
 with c2:
     _materie_select = MATERIE + ["✏️ Altra materia..."]
-    _materia_idx = st.session_state.get('_materia_sel_idx', 0)
-    _materia_sel = st.selectbox(
-        "📖 Materia",
-        _materie_select,
-        index=_materia_idx,
-        help="Seleziona la materia o scegli 'Altra materia...' per scriverla.",
-        key="_materia_selectbox"
-    )
+    _materia_sel = st.selectbox("📖 Materia", _materie_select, index=0)
     if _materia_sel == "✏️ Altra materia...":
-        materia_scelta = st.text_input(
-            "Scrivi la materia:",
-            placeholder="es. Economia Aziendale...",
-            key="_materia_custom_input",
-            label_visibility="collapsed"
-        ).strip() or "Matematica"
+        materia_scelta = st.text_input("Scrivi materia:", placeholder="es. Economia Aziendale...",
+                                       key="_materia_custom_input", label_visibility="collapsed").strip() or "Matematica"
     else:
-        materia_scelta = _materia_sel if _materia_sel else "Matematica"
+        materia_scelta = _materia_sel or "Matematica"
 
-# ── TENDINA PERSONALIZZAZIONE ─────────────────────────────────────────────────────
-if "personalizza_open" not in st.session_state:
-    st.session_state.personalizza_open = False
-with st.expander("✏️  Personalizza la verifica  *(opzionale)*",
-                 expanded=st.session_state.personalizza_open):
+# ── PERSONALIZZAZIONE ─────────────────────────────────────────────────────────────
+with st.expander("✏️  Personalizza  *(opzionale)*"):
 
-    # Istruzioni AI
-    st.markdown('<div class="section-heading">🎯 Istruzioni specifiche per l\'AI</div>',
-                unsafe_allow_html=True)
-    note_generali = st.text_area(
-        "note", label_visibility="collapsed",
-        placeholder=NOTE_PLACEHOLDER.get(materia_scelta,
-            "es. Argomenti da privilegiare, tipo di esercizi, livello di difficoltà..."),
-        height=95
+    st.markdown(f'<div class="section-label">📝 Struttura esercizi</div>', unsafe_allow_html=True)
+    num_esercizi_totali = st.slider(
+        "N° esercizi totali",
+        min_value=1, max_value=15, value=4,
+        help="Trascina per scegliere il numero di esercizi"
     )
 
-    # File riferimento
-    st.markdown('<div class="section-heading">📂 File di riferimento</div>',
-                unsafe_allow_html=True)
-    col_up, _ = st.columns([2, 1])
-    with col_up:
-        file_ispirazione = st.file_uploader(
-            "file", type=['pdf', 'png', 'jpg', 'jpeg'], label_visibility="collapsed"
-        )
-    st.markdown(
-        '<div class="hint-text">💡 PDF o immagine del libro/verifica precedente. '
-        "L'AI prenderà spunto senza copiarlo.</div>",
-        unsafe_allow_html=True
-    )
-
-    # Struttura esercizi (senza divisore)
-    st.markdown('<div class="section-heading">📝 Struttura degli esercizi</div>',
-                unsafe_allow_html=True)
-    col_n1, _ = st.columns([1, 2])
-    with col_n1:
-        num_esercizi_totali = st.number_input(
-            "Numero totale esercizi", min_value=1, max_value=15, value=4,
-            help="Esercizi totali (inclusi quelli specifici sotto)"
-        )
-    # ── Sub-expander esercizi specifici ─────────────────────────────────────────
-    with st.expander("🎯  Definisci esercizi specifici", expanded=False):
+    with st.expander("🎯 Definisci esercizi specifici"):
         n_custom = len(st.session_state.esercizi_custom)
         n_liberi = max(0, num_esercizi_totali - n_custom)
 
-        # Messaggio stato DENTRO questo sub-expander
         if n_custom == 0:
-            st.info(f"💡 Tutti i {num_esercizi_totali} esercizi saranno generati dall'AI. "
-                    "Aggiungi esercizi specifici qui sotto se vuoi controllarne alcuni.")
+            st.info(f"Tutti i {num_esercizi_totali} esercizi generati dall'AI.")
         elif n_custom >= num_esercizi_totali:
-            st.warning(f"⚠️ {n_custom}/{num_esercizi_totali} specifici — totale raggiunto. "
-                       "Aumenta il numero sopra.")
+            st.warning(f"Totale {n_custom}/{num_esercizi_totali} raggiunto — aumenta il numero.")
         else:
-            st.success(f"✅ {n_custom} specifici + {n_liberi} liberi all'AI = {num_esercizi_totali} totali")
+            st.success(f"✅ {n_custom} specifici + {n_liberi} liberi = {num_esercizi_totali} totali")
 
         if st.session_state.esercizi_custom:
-            # Header colonne
-            hc1, hc2, hc3, hc4 = st.columns([1, 3, 2, 0.4])
-            hc1.caption("Tipo"); hc2.caption("Descrizione"); hc3.caption("Immagine rif."); hc4.caption("")
             to_remove = None
             for i, ex in enumerate(st.session_state.esercizi_custom):
-                # Header numerato per ogni esercizio
-                st.markdown(
-                    f'<div style="font-size:0.82rem;font-weight:700;color:{T["accent"]};'
-                    f'margin-top:0.7rem;margin-bottom:0.2rem;letter-spacing:0.03em;">'
-                    f'ESERCIZIO {i+1}</div>',
-                    unsafe_allow_html=True
-                )
+                st.markdown(f'<div class="section-label">Esercizio {i+1}</div>', unsafe_allow_html=True)
                 ca, cb, cc, cd = st.columns([1, 3, 2, 0.4])
                 with ca:
-                    t = st.selectbox("t", TIPI_ESERCIZIO,
+                    t = st.selectbox("tipo", TIPI_ESERCIZIO,
                                      index=TIPI_ESERCIZIO.index(ex['tipo']),
                                      key=f"tipo_{i}", label_visibility="collapsed")
                     st.session_state.esercizi_custom[i]['tipo'] = t
                 with cb:
-                    d = st.text_input("d", value=ex['descrizione'],
+                    d = st.text_input("desc", value=ex['descrizione'],
                                       placeholder="es. Risolvi l'equazione...",
                                       key=f"desc_{i}", label_visibility="collapsed")
                     st.session_state.esercizi_custom[i]['descrizione'] = d
                 with cc:
-                    img = st.file_uploader("i", type=['png','jpg','jpeg'],
+                    img = st.file_uploader("img", type=['png','jpg','jpeg'],
                                            key=f"img_{i}", label_visibility="collapsed")
                     if img: st.session_state.esercizi_custom[i]['immagine'] = img
                     if st.session_state.esercizi_custom[i].get('immagine'):
-                        st.image(st.session_state.esercizi_custom[i]['immagine'], width=75)
+                        st.image(st.session_state.esercizi_custom[i]['immagine'], width=60)
                 with cd:
-                    st.write("")  # allineamento verticale
+                    st.write("")
                     if st.button("✕", key=f"rm_{i}"): to_remove = i
             if to_remove is not None:
                 st.session_state.esercizi_custom.pop(to_remove); st.rerun()
 
         can_add = len(st.session_state.esercizi_custom) < num_esercizi_totali
-        if st.button("＋ Aggiungi esercizio specifico", disabled=not can_add,
-                     help="Aggiungi un esercizio di cui vuoi definire tipo e contenuto" if can_add
-                     else "Totale raggiunto — aumenta il numero sopra"):
-            st.session_state.esercizi_custom.append(
-                {'tipo': 'Aperto', 'descrizione': '', 'immagine': None})
+        if st.button("＋ Aggiungi esercizio", disabled=not can_add):
+            st.session_state.esercizi_custom.append({'tipo': 'Aperto', 'descrizione': '', 'immagine': None})
             st.rerun()
 
-# ── GENERA ───────────────────────────────────────────────────────────────────────
+    st.markdown('<div class="section-label" style="margin-top:1rem;">🎯 Istruzioni per l\'AI</div>', unsafe_allow_html=True)
+    note_generali = st.text_area(
+        "note", label_visibility="collapsed",
+        placeholder=NOTE_PLACEHOLDER.get(materia_scelta, "es. Argomenti da privilegiare, tipo di esercizi..."),
+        height=80
+    )
+
+    st.markdown(f'<div class="section-label">📂 File di riferimento</div>', unsafe_allow_html=True)
+    col_up, _ = st.columns([2, 1])
+    with col_up:
+        file_ispirazione = st.file_uploader("file", type=['pdf','png','jpg','jpeg'], label_visibility="collapsed")
+    st.markdown('<div class="hint">💡 PDF o immagine del libro/verifica precedente.</div>', unsafe_allow_html=True)
+# ── BOTTONE GENERA ────────────────────────────────────────────────────────────────
 st.write("")
-_, cg, _ = st.columns([1, 1, 1])
-with cg:
-    genera_btn = st.button("🚀  GENERA VERIFICA", use_container_width=True, type="primary")
+genera_btn = st.button("🚀  Genera Verifica", use_container_width=True, type="primary")
+
+# ── STATUS BAR (sotto il bottone) ────────────────────────────────────────────────
 
 
-# ── LOGICA GENERAZIONE ────────────────────────────────────────────────────────────
+# ── LOGICA GENERAZIONE ───────────────────────────────────────────────────────────
 if genera_btn:
-    st.session_state.personalizza_open = False  # chiudi expander alla generazione
     if not argomento.strip():
         st.warning("⚠️ Inserisci l'argomento della verifica."); st.stop()
     try:
@@ -1078,71 +1673,53 @@ if genera_btn:
             st.session_state.esercizi_custom, num_esercizi_totali, punti_totali if mostra_punteggi else 0)
         titolo_a = "Versione A" if doppia_fila else ""
 
-        # ── Progress bar unificata ───────────────────────────────────────────────
-        _n_steps = 3 + (1 if correzione_step else 0) + (2 if doppia_fila else 0)
-        _step = [0]
-        _pbar = st.progress(0, text="✍️ Elaborazione titolo...")
+        # ── Spinner unico — nessuna progress bar ──────────────────────────────
+        with st.spinner("✍️ Generazione in corso…"):
 
-        def _avanza(testo):
-            _step[0] += 1
-            _pbar.progress(min(_step[0] / _n_steps, 1.0), text=testo)
-
-        # ── Genera titolo corretto con AI ────────────────────────────────────────
-        titolo_resp = model.generate_content(
-            f"Sei un docente. Crea un titolo professionale e conciso per una verifica scolastica.\n"
-            f"Materia: {materia}\n"
-            f"Argomento inserito dall'utente (potrebbe avere errori ortografici o essere informale): \"{argomento}\"\n"
-            f"Restituisci SOLO il titolo senza virgolette, senza punteggiatura finale, "
-            f"senza prefissi come \'Verifica di\'. Esempio: \'Le equazioni di secondo grado\'"
-        )
-        titolo_clean = titolo_resp.text.strip().strip('"').strip("'").strip()
-        if not titolo_clean:
-            titolo_clean = argomento.strip()
-        _avanza("⚙️ Generazione esercizi...")
-
-        # Istruzione BES/DSA rafforzata
-        bes_rule = ""
-        if bes_dsa:
-            bes_rule = (
-                "- BES/DSA OBBLIGATORIO: almeno il 25% dei sottopunti DEVE avere asterisco.\n"
-                "  USA ESATTAMENTE questo formato: \\item[a*)] — lettera, asterisco, parentesi chiusa.\n"
-                "  NON usare \\item[a.] NE \\item[a*] NE \\item[a.)] — SOLO \\item[a*)]\n"
-                "  Scegli i sottopunti più complessi. Con 4 sottopunti: minimo 1 con *. Con 8+: minimo 2 con *.\n"
-                "  IMPORTANTE: conta i sottopunti totali, calcola il 25% e assicurati di mettere asterisco su quel numero minimo PRIMA di terminare.\n"
-                "  ESEMPIO CORRETTO con 4 sottopunti: \\item[a)] ... \\item[b)] ... \\item[c*)] ... \\item[d)] ..."
+            titolo_resp = model.generate_content(
+                f"Sei un docente. Crea un titolo professionale e conciso per una verifica scolastica.\n"
+                f"Materia: {materia}\n"
+                f"Argomento inserito dall'utente (potrebbe avere errori ortografici o essere informale): \"{argomento}\"\n"
+                f"Restituisci SOLO il titolo senza virgolette, senza punteggiatura finale, "
+                f"senza prefissi come 'Verifica di'. Esempio: 'Le equazioni di secondo grado'"
             )
-        else:
-            bes_rule = "- Nessun asterisco BES/DSA."
+            titolo_clean = titolo_resp.text.strip().strip('"').strip("'").strip()
+            if not titolo_clean:
+                titolo_clean = argomento.strip()
 
-        # Istruzione punteggi
-        punti_rule = ""
-        if mostra_punteggi:
-            punti_rule = f"- Ogni \\item DEVE avere \"(X pt)\" sulla stessa riga. Totale: {punti_totali} pt."
-        else:
-            punti_rule = "- NON inserire punti (X pt) in nessun esercizio né sottopunto."
+            bes_rule = ""
+            if bes_dsa:
+                bes_rule = (
+                    "- BES/DSA OBBLIGATORIO: almeno il 25% dei sottopunti DEVE avere asterisco.\n"
+                    "  USA ESATTAMENTE questo formato: \\item[a*)] — lettera, asterisco, parentesi chiusa.\n"
+                    "  NON usare \\item[a.] NE \\item[a*] NE \\item[a.)] — SOLO \\item[a*)]\n"
+                    "  Scegli i sottopunti più complessi.\n"
+                    "  IMPORTANTE: conta i sottopunti totali, calcola il 25% e assicurati di mettere asterisco su quel numero minimo PRIMA di terminare.\n"
+                )
+            else:
+                bes_rule = "- Nessun asterisco BES/DSA."
 
-        # Istruzione multidisciplinare
-        multi_rule = ""
-        if esercizio_multidisciplinare:
-            materia2_str = f" con {materia2_scelta}" if materia2_scelta else " (scegli tu la disciplina più adatta)"
-            diff_multi_str = f" Difficoltà dell'esercizio: {difficolta_multi}." if difficolta_multi else ""
-            multi_rule = (
-                f"- ESERCIZIO MULTIDISCIPLINARE: uno degli esercizi INCLUSI NEL TOTALE deve collegare "
-                f"{materia}{materia2_str}.{diff_multi_str}\n"
-                "  IMPORTANTE: usa SOLO strumenti già acquisiti dagli studenti. "
-                "Niente formule nuove o concetti non ancora visti nel programma."
-            )
-        else:
-            multi_rule = "- NON includere esercizi multidisciplinari."
+            punti_rule = (f"- Ogni \\item DEVE avere \"(X pt)\" sulla stessa riga. Totale: {punti_totali} pt."
+                          if mostra_punteggi else "- NON inserire punti (X pt) in nessun esercizio né sottopunto.")
 
-        # Istruzione griglia
-        griglia_rule = ("- NON generare la griglia (sarà aggiunta automaticamente)."
-                        if con_griglia else "- NON generare nessuna griglia di valutazione.")
+            multi_rule = ""
+            if esercizio_multidisciplinare:
+                materia2_str = f" con {materia2_scelta}" if materia2_scelta else " (scegli tu la disciplina più adatta)"
+                diff_multi_str = f" Difficoltà: {difficolta_multi}." if difficolta_multi else ""
+                multi_rule = (
+                    f"- ESERCIZIO MULTIDISCIPLINARE: uno degli esercizi INCLUSI NEL TOTALE deve collegare "
+                    f"{materia}{materia2_str}.{diff_multi_str}\n"
+                    "  Usa SOLO strumenti già acquisiti dagli studenti."
+                )
+            else:
+                multi_rule = "- NON includere esercizi multidisciplinari."
 
-        # Costruiamo il preambolo fisso — l'AI non lo deve generare
-        pgfplots_pkg = "\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}" if e_mat else ""
-        titolo_header = f"Verifica di {materia}: {titolo_clean}" + (f" — {titolo_a}" if titolo_a else "")
-        preambolo_fisso = f"""\\documentclass[12pt,a4paper]{{article}}
+            griglia_rule = ("- NON generare la griglia (sarà aggiunta automaticamente)."
+                            if con_griglia else "- NON generare nessuna griglia di valutazione.")
+
+            pgfplots_pkg = "\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}" if e_mat else ""
+            titolo_header = f"Verifica di {materia}: {titolo_clean}" + (f" — {titolo_a}" if titolo_a else "")
+            preambolo_fisso = f"""\\documentclass[12pt,a4paper]{{article}}
 \\usepackage[utf8]{{inputenc}}
 \\usepackage[italian]{{babel}}
 \\usepackage{{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}}
@@ -1154,13 +1731,13 @@ if genera_btn:
 \\begin{{center}}
   \\textbf{{\\large {titolo_header}}} \\\\
   \\vspace{{0.3cm}}
-  \\small \\textbf{{Nome e Cognome:}} \\hrulefill \\quad \\textbf{{Classe:}} \\hrulefill \\quad \\textbf{{Data:}} \\hrulefill \\\\
+  \\small \\textbf{{Nome:}} \\underline{{\\hspace{{6cm}}}} \\quad \\textbf{{Classe e Data:}} \\underline{{\\hspace{{4cm}}}} \\\\
   \\vspace{{0.3cm}}
   \\textit{{\\small {nota_bes}}}
 \\end{{center}}
 """
 
-        prompt_a = f"""Sei un docente esperto di {materia} e LaTeX. Genera SOLO il corpo degli esercizi (senza preambolo, senza \\documentclass, senza \\begin{{document}}) per una verifica su: {argomento}.
+            prompt_a = f"""Sei un docente esperto di {materia} e LaTeX. Genera SOLO il corpo degli esercizi (senza preambolo, senza \\documentclass, senza \\begin{{document}}) per una verifica su: {argomento}.
 {f'Punti totali: {punti_totali}.' if mostra_punteggi else ''}
 
 CALIBRAZIONE LIVELLO:
@@ -1173,18 +1750,9 @@ REGOLE LATEX (TASSATIVE):
 {punti_rule}
 - Titoli: \\subsection*{{Esercizio N: Titolo{' (TOT pt)' if mostra_punteggi else ''}}}
 - SOTTOPUNTI OBBLIGATORI: usa SEMPRE \\item[a)] \\item[b)] \\item[c)] ecc. con label ESPLICITA tra parentesi quadre. NON usare \\begin{{enumerate}}[a)] con item senza label. Ogni \\item DEVE avere [lettera)] esplicito.
-  CORRETTO: \\item[a)] Testo (5 pt) — SBAGLIATO: \\item Testo (5 pt)
 {bes_rule}
 {multi_rule}
-- Scelta multipla: le opzioni DEVONO stare in un \\begin{enumerate}[a)] SEPARATO dopo la riga della domanda. FORMATO OBBLIGATORIO:
-  \\item[a)] Testo domanda (5 pt)
-  \\begin{enumerate}[a)]
-    \\item Prima opzione
-    \\item Seconda opzione
-    \\item Terza opzione
-    \\item Quarta opzione
-  \\end{enumerate}
-  MAI usare \\hspace per le opzioni. MAI mettere A) B) C) D) sulla riga della domanda.
+- Scelta multipla: le opzioni DEVONO stare in un \\begin{{enumerate}}[a)] SEPARATO dopo la riga della domanda.
 - Vero/Falso: $\\square$ \\textbf{{V}} $\\quad\\square$ \\textbf{{F}}
 - Completamento: \\underline{{\\hspace{{3cm}}}}
 {'- Grafici pgfplots: solo se già forniti. Per disegnare usa \\vspace{4cm}.' if e_mat else ''}
@@ -1194,78 +1762,82 @@ TERMINA con \\end{{document}}.
 NIENTE preambolo, NIENTE \\documentclass, NIENTE \\begin{{document}}.
 SOLO CODICE LATEX del corpo."""
 
-        inp = [prompt_a]
-        if file_ispirazione:
-            inp.append({"mime_type": file_ispirazione.type, "data": file_ispirazione.getvalue()})
-            inp[0] += "\nPrendi spunto dal file allegato per stile e livello."
-        for im in imgs_es:
-            inp.append({"mime_type": im['mime_type'], "data": im['data']})
-            inp[0] += f"\nUsa l'immagine come riferimento per l'Esercizio {im['idx']}."
+            inp = [prompt_a]
+            if file_ispirazione:
+                inp.append({"mime_type": file_ispirazione.type, "data": file_ispirazione.getvalue()})
+                inp[0] += "\nPrendi spunto dal file allegato per stile e livello."
+            for im in imgs_es:
+                inp.append({"mime_type": im['mime_type'], "data": im['data']})
+                inp[0] += f"\nUsa l'immagine come riferimento per l'Esercizio {im['idx']}."
 
-        ra = model.generate_content(inp)
-        corpo_latex = ra.text.replace("```latex","").replace("```","").strip()
-        corpo_latex = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex, flags=re.DOTALL)
-        corpo_latex = re.sub(r'^\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex, flags=re.DOTALL)
-        if "\\end{document}" not in corpo_latex:
-            corpo_latex += "\n\\end{document}"
-        latex_a = preambolo_fisso + corpo_latex
-        latex_a = fix_items_environment(latex_a)
-        if bes_dsa:
-            latex_a = inietta_asterischi_bes(latex_a, percentuale=0.25)
-        latex_a_final = inietta_griglia(latex_a, punti_totali) if con_griglia else latex_a
-        st.session_state.verifiche['A'] = {**_vf(), 'latex': latex_a_final}
-
-        _avanza("🖨️ Compilazione PDF...")
-        pdf_auto, err_auto = compila_pdf(latex_a_final)
-        if pdf_auto:
-            st.session_state.verifiche['A']['pdf'] = pdf_auto
-            st.session_state.verifiche['A']['preview'] = True
-
-        if correzione_step:
-            _avanza("📝 Generazione soluzioni...")
-            ps = (f"Risolvi questa verifica come docente correttore. Stesso preambolo.\n"
-                  f"Titolo: 'Soluzioni — {titolo_clean}'. Niente griglia.\n"
-                  f"1. \\subsection*{{Soluzioni Rapide}}: solo risultati finali, una riga per sottopunto.\n"
-                  f"2. \\subsection*{{Svolgimento Dettagliato}}: \\subsubsection*{{Esercizio N}} + passaggi.\n"
-                  f"SOLO CODICE LATEX.\n\n{latex_a}")
-            rs = model.generate_content(ps)
-            st.session_state.verifiche['A']['soluzioni_latex'] = (
-                rs.text.replace("```latex","").replace("```","").strip())
-
-        if doppia_fila:
-            _avanza("📄 Generazione Versione B...")
-            rb = model.generate_content(
-                f"Versione B: stessa struttura, cambia dati e quesiti. "
-                f"Restituisci SOLO il corpo degli esercizi (\\subsection* ecc.), "
-                f"SENZA preambolo, SENZA \\documentclass, SENZA \\begin{{document}}. "
-                f"Sostituisci 'Versione A' con 'Versione B' dove presente. "
-                f"TERMINA con \\end{{document}}. SOLO LATEX.\n\n{corpo_latex}")
-            corpo_latex_b = rb.text.replace("```latex","").replace("```","").strip()
-            corpo_latex_b = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex_b, flags=re.DOTALL)
-            corpo_latex_b = re.sub(r'^\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex_b, flags=re.DOTALL)
-            if "\\end{document}" not in corpo_latex_b:
-                corpo_latex_b += "\n\\end{document}"
-            preambolo_b = preambolo_fisso.replace(titolo_header, titolo_header.replace("Versione A", "Versione B") if "Versione A" in titolo_header else titolo_header + " — Versione B")
-            latex_b = preambolo_b + corpo_latex_b
-            latex_b = fix_items_environment(latex_b)
+            ra = model.generate_content(inp)
+            corpo_latex = ra.text.replace("```latex","").replace("```","").strip()
+            corpo_latex = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex, flags=re.DOTALL)
+            corpo_latex = re.sub(r'^\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex, flags=re.DOTALL)
+            if "\\end{document}" not in corpo_latex:
+                corpo_latex += "\n\\end{document}"
+            latex_a = preambolo_fisso + corpo_latex
+            latex_a = fix_items_environment(latex_a)
             if bes_dsa:
-                latex_b = inietta_asterischi_bes(latex_b, percentuale=0.25)
-            latex_b_final = inietta_griglia(latex_b, punti_totali) if con_griglia else latex_b
-            st.session_state.verifiche['B'] = {**_vf(), 'latex': latex_b_final}
+                latex_a = inietta_asterischi_bes(latex_a, percentuale=0.25)
+            latex_a_final = inietta_griglia(latex_a, punti_totali) if con_griglia else latex_a
+            st.session_state.verifiche['A'] = {**_vf(), 'latex': latex_a_final}
 
-            _avanza("🖨️ Compilazione PDF Versione B...")
-            pdf_b_auto, _ = compila_pdf(latex_b_final)
-            if pdf_b_auto:
-                st.session_state.verifiche['B']['pdf'] = pdf_b_auto
-                st.session_state.verifiche['B']['preview'] = True
+            pdf_auto, err_auto = compila_pdf(latex_a_final)
+            if pdf_auto:
+                st.session_state.verifiche['A']['pdf'] = pdf_auto
+                st.session_state.verifiche['A']['pdf_ts'] = time.time()
+                st.session_state.verifiche['A']['preview'] = True
+
             if correzione_step:
-                rsb = model.generate_content(
-                    "Stessa struttura soluzioni (Rapide + Dettagliato). SOLO LATEX.\n\n" + latex_b)
-                st.session_state.verifiche['B']['soluzioni_latex'] = (
-                    rsb.text.replace("```latex","").replace("```","").strip())
+                ps = (f"Risolvi questa verifica come docente correttore. Stesso preambolo.\n"
+                      f"Titolo: 'Soluzioni — {titolo_clean}'. Niente griglia.\n"
+                      f"1. \\subsection*{{Soluzioni Rapide}}: solo risultati finali.\n"
+                      f"2. \\subsection*{{Svolgimento Dettagliato}}: passaggi completi.\n"
+                      f"SOLO CODICE LATEX.\n\n{latex_a}")
+                rs = model.generate_content(ps)
+                st.session_state.verifiche['A']['soluzioni_latex'] = (
+                    rs.text.replace("```latex","").replace("```","").strip())
 
-        _pbar.progress(1.0, text="✅ Fatto!")
-        st.success("✅ Verifica generata!"); st.rerun()
+            if doppia_fila:
+                rb = model.generate_content(
+                    f"Versione B: stessa struttura, cambia dati e quesiti. "
+                    f"SOLO corpo esercizi (\\subsection* ecc.), SENZA preambolo/\\documentclass/\\begin{{document}}. "
+                    f"Sostituisci 'Versione A' con 'Versione B'. TERMINA con \\end{{document}}. SOLO LATEX.\n\n{corpo_latex}")
+                corpo_latex_b = rb.text.replace("```latex","").replace("```","").strip()
+                corpo_latex_b = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex_b, flags=re.DOTALL)
+                corpo_latex_b = re.sub(r'^\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex_b, flags=re.DOTALL)
+                if "\\end{document}" not in corpo_latex_b:
+                    corpo_latex_b += "\n\\end{document}"
+                preambolo_b = preambolo_fisso.replace(
+                    titolo_header,
+                    titolo_header.replace("Versione A","Versione B") if "Versione A" in titolo_header
+                    else titolo_header + " — Versione B"
+                )
+                latex_b = preambolo_b + corpo_latex_b
+                latex_b = fix_items_environment(latex_b)
+                if bes_dsa:
+                    latex_b = inietta_asterischi_bes(latex_b, percentuale=0.25)
+                latex_b_final = inietta_griglia(latex_b, punti_totali) if con_griglia else latex_b
+                st.session_state.verifiche['B'] = {**_vf(), 'latex': latex_b_final}
+
+                pdf_b_auto, _ = compila_pdf(latex_b_final)
+                if pdf_b_auto:
+                    st.session_state.verifiche['B']['pdf'] = pdf_b_auto
+                    st.session_state.verifiche['B']['pdf_ts'] = time.time()
+                    st.session_state.verifiche['B']['preview'] = True
+                if correzione_step:
+                    rsb = model.generate_content(
+                        "Stessa struttura soluzioni (Rapide + Dettagliato). SOLO LATEX.\n\n" + latex_b)
+                    st.session_state.verifiche['B']['soluzioni_latex'] = (
+                        rsb.text.replace("```latex","").replace("```","").strip())
+
+        # Salva status bar info
+        st.session_state.last_materia   = materia
+        st.session_state.last_argomento = titolo_clean
+        st.session_state.last_gen_ts    = time.time()
+
+        st.rerun()
 
     except Exception as e:
         st.error(f"❌ Errore: {e}")
@@ -1274,7 +1846,7 @@ SOLO CODICE LATEX del corpo."""
 if st.session_state.verifiche['A']['latex']:
     st.divider()
     _df  = doppia_fila   if 'doppia_fila'  in dir() else False
-    _arg = titolo_clean  if 'titolo_clean' in dir() else (argomento if 'argomento' in dir() else 'verifica')
+    _arg = st.session_state.last_argomento or (argomento if 'argomento' in dir() else 'verifica')
     _mid = modello_id    if 'modello_id'   in dir() else "gemini-2.5-flash"
 
     attive = ['A','B'] if _df and st.session_state.verifiche['B']['latex'] else ['A']
@@ -1283,79 +1855,139 @@ if st.session_state.verifiche['A']['latex']:
     for idx, fid in enumerate(attive):
         v = st.session_state.verifiche[fid]
         with cols[idx]:
-            st.subheader(f"{APP_ICON} {'Versione ' + fid if _df else 'La tua verifica'}")
+            label_ver = f"Versione {fid}" if _df else "La tua verifica"
+            st.markdown(f"""
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;">
+              <span style="font-family:'DM Sans',sans-serif;font-size:1.1rem;
+                           font-weight:700;color:{T['text']};">{APP_ICON} {label_ver}</span>
+              <span class="chip">Pronta</span>
+            </div>
+            """, unsafe_allow_html=True)
 
-            # Riga 1: PDF | DOCX affiancati
-            btn1, btn2 = st.columns(2)
-            with btn1:
-                if v['pdf']:
-                    st.download_button("📥 Scarica PDF", v['pdf'],
-                        file_name=f"Verifica_{_arg}_{fid}.pdf", mime="application/pdf",
-                        use_container_width=True, key=f"dl_{fid}")
-                else:
-                    if st.button("📥 Scarica PDF", key=f"dlc_{fid}", use_container_width=True):
-                        with st.spinner("Compilazione..."):
-                            pdf, err = compila_pdf(v['latex'])
-                        if pdf:
-                            st.session_state.verifiche[fid]['pdf'] = pdf; st.rerun()
-                        else:
-                            st.error("Errore PDF")
-                            with st.expander("Log"): st.text(err)
-            with btn2:
-                if v['docx']:
-                    st.download_button("📝 Scarica Word", v['docx'],
-                        file_name=f"Verifica_{_arg}_{fid}.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        use_container_width=True, key=f"dld_{fid}")
-                else:
-                    # Genera e offre download diretto senza secondo click
-                    _docx_gen_key = f"_docx_generating_{fid}"
-                    if st.button("📝 Genera Word (.docx)", key=f"dldc_{fid}", use_container_width=True):
-                        st.session_state[_docx_gen_key] = True
-                    if st.session_state.get(_docx_gen_key, False):
-                        with st.spinner("⏳ Conversione in Word..."):
-                            _m = genai.GenerativeModel(_mid)
-                            db, de = latex_to_docx_via_ai(v['latex'], _m, con_griglia=con_griglia)
-                        if db:
-                            st.session_state.verifiche[fid]['docx'] = db
-                            st.session_state[_docx_gen_key] = False
-                            st.download_button("⬇️ Scarica Word ora", db,
-                                file_name=f"Verifica_{_arg}_{fid}.docx",
-                                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                use_container_width=True, key=f"dld_now_{fid}")
-                        else:
-                            st.session_state[_docx_gen_key] = False
-                            st.error("Errore conversione Word")
-                            with st.expander("Log"): st.text(de)
+            # ── Download cards ────────────────────────────────────────────────
+            # PDF card
+            if v['pdf']:
+                pdf_size = _stima_dimensione(v['pdf'])
+                st.markdown(f"""
+                <div class="dl-card">
+                  <div class="dl-card-icon">📄</div>
+                  <div class="dl-card-body">
+                    <div class="dl-card-title">PDF — Alta qualità</div>
+                    <div class="dl-card-meta">{pdf_size}</div>
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
+                st.download_button(
+                    "⬇️ Scarica PDF",
+                    v['pdf'],
+                    file_name=f"Verifica_{_arg}_{fid}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                    key=f"dl_{fid}"
+                )
+            else:
+                if st.button("📄 Genera PDF", key=f"dlc_{fid}", use_container_width=True):
+                    with st.spinner("Compilazione…"):
+                        pdf, err = compila_pdf(v['latex'])
+                    if pdf:
+                        st.session_state.verifiche[fid]['pdf'] = pdf
+                        st.session_state.verifiche[fid]['pdf_ts'] = time.time()
+                        st.rerun()
+                    else:
+                        st.error("Errore PDF")
+                        with st.expander("Log"): st.text(err)
 
-            # Riga 2: Soluzioni (se presenti)
+            st.write("")
+
+            # Word card
+            if v['docx']:
+                docx_size = _stima_dimensione(v['docx'])
+                st.markdown(f"""
+                <div class="dl-card">
+                  <div class="dl-card-icon">📝</div>
+                  <div class="dl-card-body">
+                    <div class="dl-card-title">File Modificabile Word</div>
+                    <div class="dl-card-meta">{docx_size}</div>
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
+                st.download_button(
+                    "⬇️ Scarica Word",
+                    v['docx'],
+                    file_name=f"Verifica_{_arg}_{fid}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True,
+                    key=f"dld_{fid}"
+                )
+            else:
+                _docx_gen_key = f"_docx_generating_{fid}"
+                if st.button("📝 File Modificabile Word", key=f"dldc_{fid}", use_container_width=True):
+                    st.session_state[_docx_gen_key] = True
+                if st.session_state.get(_docx_gen_key, False):
+                    with st.spinner("⏳ Conversione Word…"):
+                        _m = genai.GenerativeModel(_mid)
+                        db, de = latex_to_docx_via_ai(v['latex'], _m, con_griglia=con_griglia)
+                    if db:
+                        st.session_state.verifiche[fid]['docx'] = db
+                        st.session_state.verifiche[fid]['docx_ts'] = time.time()
+                        st.session_state[_docx_gen_key] = False
+                        st.rerun()
+                    else:
+                        st.session_state[_docx_gen_key] = False
+                        st.error("Errore Word")
+                        with st.expander("Log"): st.text(de)
+
+            # Soluzioni
             if v['soluzioni_latex']:
+                st.write("")
                 if v['soluzioni_pdf']:
-                    st.download_button("✅ Scarica Soluzioni", v['soluzioni_pdf'],
-                        file_name=f"Soluzioni_{_arg}_{fid}.pdf", mime="application/pdf",
-                        use_container_width=True, key=f"dls_{fid}")
+                    sol_size = _stima_dimensione(v['soluzioni_pdf'])
+                    st.markdown(f"""
+                    <div class="dl-card">
+                      <div class="dl-card-icon">✅</div>
+                      <div class="dl-card-body">
+                        <div class="dl-card-title">Soluzioni Step-by-Step</div>
+                        <div class="dl-card-meta">{sol_size}</div>
+                      </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    st.download_button(
+                        "⬇️ Scarica Soluzioni",
+                        v['soluzioni_pdf'],
+                        file_name=f"Soluzioni_{_arg}_{fid}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                        key=f"dls_{fid}"
+                    )
                 else:
                     if st.button("✅ Compila Soluzioni", key=f"cs_{fid}", use_container_width=True):
-                        with st.spinner("Compilazione..."):
+                        with st.spinner("Compilazione…"):
                             sp, se = compila_pdf(v['soluzioni_latex'])
                         if sp:
-                            st.session_state.verifiche[fid]['soluzioni_pdf'] = sp; st.rerun()
+                            st.session_state.verifiche[fid]['soluzioni_pdf'] = sp
+                            st.rerun()
                         else:
-                            st.error("Errore soluzioni")
                             with st.expander("Log"): st.text(se)
 
+            # ── Anteprima PDF compatta ────────────────────────────────────────
             if v['preview'] and v['pdf']:
                 b64 = base64.b64encode(v['pdf']).decode()
-                st.markdown(
-                    f'<iframe src="data:application/pdf;base64,{b64}" width="100%" height="700px"'
-                    f' style="border:1px solid {T["border"]};border-radius:8px;"></iframe>',
-                    unsafe_allow_html=True)
-
-
+                st.markdown(f"""
+                <div class="pdf-preview-wrap">
+                  <div class="pdf-preview-header">
+                    <span>👁 Anteprima</span>
+                    <span style="font-weight:400;opacity:0.6;">scroll per navigare</span>
+                  </div>
+                  <iframe
+                    src="data:application/pdf;base64,{b64}#toolbar=0&navpanes=0&scrollbar=1"
+                    class="pdf-preview-frame"
+                  ></iframe>
+                </div>
+                """, unsafe_allow_html=True)
 
             with st.expander(f"🛠️ Editor LaTeX {fid}"):
                 st.session_state.verifiche[fid]['latex'] = st.text_area(
-                    "Codice:", value=v['latex'], height=300, key=f"ed_{fid}")
+                    "Codice:", value=v['latex'], height=280, key=f"ed_{fid}")
                 if v['soluzioni_latex']:
                     st.session_state.verifiche[fid]['soluzioni_latex'] = st.text_area(
-                        "Soluzioni:", value=v['soluzioni_latex'], height=200, key=f"eds_{fid}")
+                        "Soluzioni:", value=v['soluzioni_latex'], height=180, key=f"eds_{fid}")
