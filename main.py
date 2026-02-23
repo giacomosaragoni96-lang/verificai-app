@@ -89,29 +89,35 @@ SCUOLE = [
 ]
 
 CALIBRAZIONE_SCUOLA = {
-    "Scuola Primaria (Elementari)": (
-        "Livello: Scuola Primaria (6-11 anni). Usa linguaggio semplice, frasi brevi, numeri piccoli (entro 1000). "
-        "Almeno un esercizio visivo o di completamento. Niente simboli algebrici o formule."
+    "Scuola Primaria": (
+        "Target: 6-11 anni. Linguaggio ludico-concreto. "
+        "Contesto: Vita quotidiana familiare, gioco, spesa. "
+        "Usa frasi brevi e numeri entro il 1000. Evita simboli astratti, preferisci il testo narrativo."
     ),
-    "Scuola Secondaria I grado (Medie)": (
-        "Livello: Scuola Media (11-14 anni). Difficoltà intermedia: frazioni, proporzioni, geometria base, prime equazioni. "
-        "Un esercizio legato alla vita quotidiana degli studenti."
+    "Scuola Secondaria I grado": (
+        "Target: 11-14 anni. Linguaggio in transizione verso il tecnico. "
+        "Contesto: Scuola, sport, socialità, prime esplorazioni scientifiche. "
+        "Difficoltà bilanciata: calcolo procedurale e primi problemi logici con frazioni e variabili."
     ),
     "Liceo Scientifico": (
-        "Livello: Liceo Scientifico (14-19 anni). Difficoltà elevata: dimostrazioni, calcolo, notazione avanzata. "
-        "Almeno un esercizio che richiede 'dimostrare' o 'giustificare'. Un raccordo interdisciplinare."
+        "Target: 14-19 anni. Linguaggio rigoroso e accademico. "
+        "Contesto: Ricerca scientifica, astrazione pura, modellizzazione complessa. "
+        "Livello elevato: stimola il ragionamento deduttivo e la giustificazione dei passaggi."
     ),
     "Liceo non Scientifico": (
-        "Livello: Liceo umanistico/classico/linguistico (14-19 anni). Enfasi su definizioni, argomentazione, analisi. "
-        "Formule semplici se presenti. Almeno un collegamento storico-culturale."
+        "Target: 14-19 anni. Linguaggio colto e argomentativo. "
+        "Contesto: Storia delle idee, filosofia, analisi critica della realtà. "
+        "Bilanciamento: Matematica vista come linguaggio logico, non solo come calcolo meccanico."
     ),
     "Istituto Tecnico": (
-        "Livello: Istituto Tecnico (14-19 anni). Orientamento pratico-professionale. "
-        "Almeno un esercizio su caso lavorativo reale con unità di misura tecniche."
+        "Target: 14-19 anni. Linguaggio tecnico-professionale. "
+        "Contesto: Azienda, laboratorio, tecnologia, economia reale. "
+        "Enfasi: Applicazione pratica dei teoremi a scenari lavorativi e dati reali."
     ),
     "Istituto Professionale": (
-        "Livello: Istituto Professionale (14-19 anni). Esercizi concreti, step guidati, contesto lavorativo esplicito. "
-        "Evita calcoli astratti. Almeno un esercizio che simula una situazione professionale reale."
+        "Target: 14-19 anni. Linguaggio pratico e operativo. "
+        "Contesto: Situazioni lavorative simulate, compiti di realtà, problem solving guidato. "
+        "Supporto: Suddividi i problemi complessi in step chiari ed espliciti."
     ),
 }
 
@@ -2272,5 +2278,6 @@ st.markdown(f"""
   </a>
 </div>
 """, unsafe_allow_html=True)
+
 
 
