@@ -1484,7 +1484,7 @@ st.markdown(f"""
   /* ═══ MOBILE ═══ */
   @media (max-width: 640px) {{
     .block-container {{
-      padding: 1.2rem 1rem 3rem !important;
+      padding: 4.5rem 1rem 3rem !important;
     }}
     .hero-title {{ font-size: 1.75rem !important; }}
     .hero-wrap {{ margin-bottom: 1.5rem; padding-bottom: 1.2rem; }}
@@ -1542,7 +1542,7 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
     bes_dsa         = st.checkbox("Supporto BES/DSA", value=True,
-                    help="Gli esercizi contrassegnati da un asterisco (*) sono facoltativi per gli studenti con certificazione BES/DSA. L'asterisco appare accanto alla lettera del sottopunto.")
+                    help="Contrassegna con ★ i sottopunti opzionali per studenti con certificazione BES/DSA (circa il 25% degli esercizi). Gli asterischi appaiono accanto alla lettera del sottopunto, es. 'a*)', e l'intestazione della verifica ne spiega il significato.")
     doppia_fila     = st.checkbox("Genera Versione A e B", value=False)
     correzione_step = st.checkbox("Correzione Step-by-Step", value=False)
 
