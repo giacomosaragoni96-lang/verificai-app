@@ -1705,7 +1705,7 @@ with st.sidebar:
     difficolta = st.selectbox("livello", SCUOLE, index=2, label_visibility="collapsed")
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
-    bes_dsa         = st.checkbox("Verifica ridotta (sostegno/certificazione)", value=True,
+    bes_dsa         = st.checkbox("Verifica ridotta (sostegno/certificazione)", value=False,
                     help="Circa il 25% dei sottopunti vengono marcati con (*) e resi facoltativi per gli studenti con verifica ridotta (sostegno, certificazioni varie, NAI, ecc.).")
     doppia_fila     = st.checkbox("Genera Versione A e B (due varianti)", value=False)
     correzione_step = st.checkbox("Includi soluzioni passo per passo", value=False)
@@ -1715,7 +1715,7 @@ with st.sidebar:
     difficolta_multi = None
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🏆 Punteggi</div>', unsafe_allow_html=True)
-    mostra_punteggi = st.checkbox("Mostra punteggio per esercizio", value=True)
+    mostra_punteggi = st.checkbox("Mostra punteggio per esercizio", value=False)
     con_griglia     = st.checkbox("Includi griglia di valutazione", value=False)
     punti_totali    = st.number_input("Punti totali", min_value=10, max_value=200, value=100, step=5,
                                       disabled=not mostra_punteggi)
@@ -2272,3 +2272,4 @@ st.markdown(f"""
   </a>
 </div>
 """, unsafe_allow_html=True)
+
