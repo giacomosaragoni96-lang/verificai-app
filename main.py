@@ -2423,9 +2423,15 @@ st.markdown(f"""
   prima di distribuirlo agli studenti. Il docente è responsabile del materiale finale.<br>
   <span style="opacity:0.55;">VerificAI · Versione Beta</span>
   &nbsp;·&nbsp;
-  <a href="{SHARE_URL}" target="_blank" rel="noopener noreferrer"
-     style="color:{T['accent']};text-decoration:none;font-weight:600;">
+  <button onclick="navigator.clipboard.writeText('{SHARE_URL}').then(function(){{
+    var btn = document.getElementById('copy-btn');
+    btn.innerText = '✅ Link copiato!';
+    setTimeout(function(){{ btn.innerText = '🔗 Condividi con i colleghi'; }}, 2000);
+  }})" id="copy-btn"
+    style="background:none;border:none;cursor:pointer;color:{T['accent']};
+           font-weight:600;font-size:0.72rem;font-family:'DM Sans',sans-serif;
+           padding:0;text-decoration:none;">
     🔗 Condividi con i colleghi
-  </a>
+  </button>
 </div>
 """, unsafe_allow_html=True)
