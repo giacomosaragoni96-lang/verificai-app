@@ -151,7 +151,7 @@ NOTE_PLACEHOLDER = {
 
 TIPI_ESERCIZIO = ["Aperto", "Scelta multipla", "Vero/Falso", "Completamento", "Interdisciplinare"]
 
-# ── FUNZIONI ─────────────────────────────────────────────────────────────────────
+# ── FUNZIONI ORIGINALI (invariate) ───────────────────────────────────────────────
 def parse_esercizi(latex):
     esercizi = []
     ex_blocks = re.split(r'\\subsection\*\{', latex)[1:]
@@ -226,9 +226,11 @@ def inietta_asterischi_bes(latex, percentuale=0.25):
     n_necessari = max(1, int(n_totale * percentuale + 0.999))
     if n_gia >= n_necessari:
         return latex
+
     n_da_aggiungere = n_necessari - n_gia
     candidati = [m for m in tutti if not _gia_marcato(m)]
     da_modificare = candidati[-n_da_aggiungere:]
+
     for m in reversed(da_modificare):
         ins_pos = m.end()
         latex = latex[:ins_pos] + ' (*)' + latex[ins_pos:]
@@ -355,6 +357,7 @@ def _build_griglia_xml(doc, row_es, row_sotto, row_max, PAGE_W_DXA=9638):
 
     n_cols = len(row_es)
     row_punti = ["Punti"] + [""] * (n_cols - 1)
+
     first_col = 1400
     last_col = 900
     n_mid = max(1, n_cols - 2)
@@ -487,15 +490,19 @@ def _clean_latex_line(text):
     text = _r.sub(r'\\(?:small|large|Large|LARGE|huge|Huge|normalsize|footnotesize)\b', '', text)
     return _strip_latex_math(text).strip()
 
+
 def _parse_latex_to_data(codice_latex):
     import re as _r
     data = {'titolo': '', 'intestazione_nota': '', 'esercizi': []}
+
     m = _r.search(r'\\textbf\{\\large ([^}]+)\}', codice_latex)
     if m:
         data['titolo'] = _clean_latex_line(m.group(1))
+
     m2 = _r.search(r'\\textit\{\\small ([^}]+)\}', codice_latex)
     if m2:
         data['intestazione_nota'] = m2.group(1).strip()
+
     body_start = codice_latex.find('\\end{center}')
     if body_start == -1:
         body_start = 0
@@ -503,7 +510,9 @@ def _parse_latex_to_data(codice_latex):
         body_start += len('\\end{center}')
     corpus = codice_latex[body_start:]
     corpus = corpus.replace('\\end{document}', '')
+
     blocks = _r.split(r'\\subsection\*\s*\{', corpus)
+
     for block in blocks[1:]:
         brace_depth = 0
         header_end = 0
@@ -516,8 +525,10 @@ def _parse_latex_to_data(codice_latex):
                 brace_depth -= 1
         titolo_ex = _clean_latex_line(block[:header_end])
         body = block[header_end+1:]
+
         body = _r.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '\n[Grafico]\n', body, flags=_r.DOTALL)
         body = _r.sub(r'\\begin\{axis\}.*?\\end\{axis\}', '\n[Grafico]\n', body, flags=_r.DOTALL)
+
         first_item = len(body)
         for marker in [r'\\item[', r'\\begin{enumerate}', r'\\begin{itemize}']:
             idx = body.find(marker.replace('\\\\','\\'))
@@ -527,29 +538,46 @@ def _parse_latex_to_data(codice_latex):
         raw_intro = _r.sub(r'\\begin\{tabular\}.*?\\end\{tabular\}', '', raw_intro, flags=_r.DOTALL)
         raw_intro = _r.sub(r'\\begin\{center\}.*?\\end\{center\}', '', raw_intro, flags=_r.DOTALL)
         testo_intro = _clean_latex_line(raw_intro)
+
         sottopunti = []
-        enum_pat = _r.compile(r'\\begin\{enumerate\}\s*\[a\)\]\s*(.*?)\\end\{enumerate\}', _r.DOTALL)
+
+        enum_pat = _r.compile(
+            r'\\begin\{enumerate\}\s*\[a\)\]\s*(.*?)\\end\{enumerate\}',
+            _r.DOTALL
+        )
         used_ranges = []
+
         for em in enum_pat.finditer(body):
             used_ranges.append((em.start(), em.end()))
             items_block = em.group(1)
-            item_pat = _r.compile(r'\\item\[([^\]]+)\]\s*(.*?)(?=\\item\[|$)', _r.DOTALL)
+
+            item_pat = _r.compile(
+                r'\\item\[([^\]]+)\]\s*(.*?)(?=\\item\[|$)',
+                _r.DOTALL
+            )
             for im in item_pat.finditer(items_block):
                 label = im.group(1).strip()
                 raw_text = im.group(2).strip()
                 opzioni = []
-                inner_enum = _r.search(r'\\begin\{enumerate\}\s*\[a\)\](.*?)\\end\{enumerate\}', raw_text, _r.DOTALL)
+
+                inner_enum = _r.search(
+                    r'\\begin\{enumerate\}\s*\[a\)\](.*?)\\end\{enumerate\}',
+                    raw_text, _r.DOTALL
+                )
                 if inner_enum:
                     for opt_m in _r.finditer(r'\\item\s+(.*?)(?=\\item|$)', inner_enum.group(1), _r.DOTALL):
                         opt_c = _clean_latex_line(opt_m.group(1))
                         if opt_c: opzioni.append(opt_c)
                     raw_text = raw_text[:inner_enum.start()].strip()
+
                 vf_pairs = _r.findall(r'\$\\square\$\s*\\textbf\{([VF])\}', raw_text)
                 if vf_pairs:
                     opzioni = [f"☐ {v}" for v in vf_pairs]
                     raw_text = _r.sub(r'\$\\square\$\s*\\textbf\{[VF]\}\s*(?:\\quad)?', '', raw_text).strip()
+
                 testo_clean = _clean_latex_line(raw_text)
                 testo_clean = _r.sub(r'\n{2,}', '\n', testo_clean).strip()
+
                 if label:
                     sottopunti.append({
                         'label': label,
@@ -557,14 +585,21 @@ def _parse_latex_to_data(codice_latex):
                         'opzioni': opzioni,
                         'punti': _estrai_punti(label + ' ' + testo_clean)
                     })
+
         if not sottopunti:
-            for im in _r.finditer(r'\\item\[([^\]]+)\]\s*(.*?)(?=\\item\[|\\end\{|$)', body, _r.DOTALL):
+            for im in _r.finditer(
+                r'\\item\[([^\]]+)\]\s*(.*?)(?=\\item\[|\\end\{|$)',
+                body, _r.DOTALL
+            ):
                 label = im.group(1).strip()
                 raw_text = im.group(2).strip()
                 skip = any(s <= im.start() <= e for s, e in used_ranges)
                 if skip: continue
                 opzioni = []
-                inner_enum = _r.search(r'\\begin\{enumerate\}\s*\[a\)\](.*?)\\end\{enumerate\}', raw_text, _r.DOTALL)
+                inner_enum = _r.search(
+                    r'\\begin\{enumerate\}\s*\[a\)\](.*?)\\end\{enumerate\}',
+                    raw_text, _r.DOTALL
+                )
                 if inner_enum:
                     for opt_m in _r.finditer(r'\\item\s+(.*?)(?=\\item|$)', inner_enum.group(1), _r.DOTALL):
                         opt_c = _clean_latex_line(opt_m.group(1))
@@ -579,9 +614,15 @@ def _parse_latex_to_data(codice_latex):
                         'opzioni': opzioni,
                         'punti': _estrai_punti(label + ' ' + testo_clean)
                     })
+
         if titolo_ex or sottopunti:
-            data['esercizi'].append({'titolo': titolo_ex, 'testo_intro': testo_intro, 'sottopunti': sottopunti})
+            data['esercizi'].append({
+                'titolo': titolo_ex,
+                'testo_intro': testo_intro,
+                'sottopunti': sottopunti
+            })
     return data
+
 
 def _estrai_punti(text):
     import re as _r
@@ -597,27 +638,33 @@ def latex_to_docx_via_ai(codice_latex, model, con_griglia=True):
         from docx.oxml import OxmlElement as _OE
     except ImportError:
         return None, "python-docx non installato. Esegui: pip install python-docx"
+
     try:
         data = _parse_latex_to_data(codice_latex)
     except Exception as e:
         import traceback
         return None, f"Errore parsing LaTeX: {e}\n{traceback.format_exc()}"
+
     try:
         doc = DocxDocument()
         MARGIN_CM = 1.5
         PAGE_W_DXA = int((21.0 - 2 * MARGIN_CM) / 2.54 * 1440)
         GRIGLIA_W_DXA = PAGE_W_DXA - 80
+
         for section in doc.sections:
             section.page_width    = Cm(21.0)
             section.page_height   = Cm(29.7)
             section.left_margin   = Cm(MARGIN_CM); section.right_margin  = Cm(MARGIN_CM)
             section.top_margin    = Cm(MARGIN_CM); section.bottom_margin = Cm(MARGIN_CM)
+
         style = doc.styles['Normal']
         style.font.name = 'Arial'; style.font.size = Pt(11)
+
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         rt = p.add_run(data.get('titolo', 'Verifica'))
         rt.bold = True; rt.font.size = Pt(14)
+
         _cw = [int(PAGE_W_DXA * 0.62), PAGE_W_DXA - int(PAGE_W_DXA * 0.62)]
         hdr_tbl = doc.add_table(rows=1, cols=2)
         hdr_el = hdr_tbl._tbl
@@ -661,11 +708,13 @@ def latex_to_docx_via_ai(codice_latex, model, con_griglia=True):
             for lbl_h, line_h in runs:
                 r1_h = p_h.add_run(lbl_h); r1_h.bold = True; r1_h.font.size = Pt(10)
                 r2_h = p_h.add_run(line_h); r2_h.font.size = Pt(10)
+
         nota = data.get('intestazione_nota', '')
         if nota:
             p3 = doc.add_paragraph(); p3.alignment = WD_ALIGN_PARAGRAPH.CENTER
             r3 = p3.add_run(nota); r3.italic = True; r3.font.size = Pt(10)
         doc.add_paragraph()
+
         for ex in data.get('esercizi', []):
             pe = doc.add_paragraph()
             pe.paragraph_format.space_before = Pt(10)
@@ -699,14 +748,17 @@ def latex_to_docx_via_ai(codice_latex, model, con_griglia=True):
                     pr.paragraph_format.left_indent = Cm(0.4)
                     pr.paragraph_format.space_before = Pt(1)
                     pr.paragraph_format.space_after = Pt(8)
+
         esercizi_parsed = parse_esercizi(codice_latex) if con_griglia else []
         if con_griglia and esercizi_parsed:
             pg = doc.add_paragraph()
             rg = pg.add_run("Griglia di Valutazione"); rg.bold = True; rg.font.size = Pt(12)
             pg.alignment = WD_ALIGN_PARAGRAPH.CENTER; pg.paragraph_format.space_before = Pt(12)
+
             n_sotto_totali = sum(len(ex['items']) for ex in esercizi_parsed)
             if n_sotto_totali > 12:
-                row_es = ["Es."]; row_max = ["Max"]
+                row_es = ["Es."]
+                row_max = ["Max"]
                 for ex in esercizi_parsed:
                     row_es.append(f"Es. {ex['num']}")
                     tot_ex = 0
@@ -735,8 +787,10 @@ def latex_to_docx_via_ai(codice_latex, model, con_griglia=True):
                 row_max.append(str(int(tot_pts)) if tot_pts == int(tot_pts) else str(round(tot_pts,1)))
                 if len(row_es) >= 3:
                     _build_griglia_xml(doc, row_es, row_sotto, row_max, GRIGLIA_W_DXA)
+
         buf = io.BytesIO(); doc.save(buf)
         return buf.getvalue(), None
+
     except Exception as e:
         import traceback
         return None, f"Errore DOCX: {e}\n{traceback.format_exc()}"
@@ -752,7 +806,8 @@ def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali):
         riga = f"- Esercizio {i} [{tipo}]" + (f": {desc}" if desc else "")
         if ex.get('immagine'):
             riga += f" — vedi immagine allegata per l'esercizio {i}"
-            immagini.append({'idx': i, 'data': ex['immagine'].getvalue(), 'mime_type': ex['immagine'].type})
+            immagini.append({'idx': i, 'data': ex['immagine'].getvalue(),
+                             'mime_type': ex['immagine'].type})
         if tipo == "Scelta multipla":
             riga += " — opzioni con \\begin{enumerate}[a)] \\item prima \\item seconda \\end{enumerate}"
         elif tipo == "Vero/Falso":
@@ -764,6 +819,22 @@ def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali):
         righe.append(f"- Genera altri {n_liberi} esercizi liberi coerenti con l'argomento.")
     righe.append(f"Distribuisci {punti_totali} pt in modo equilibrato.")
     return "\n".join(righe), immagini
+
+# ── HELPER ───────────────────────────────────────────────────────────────────────
+def _tempo_relativo(ts):
+    if ts is None:
+        return ""
+    diff = time.time() - ts
+    if diff < 60:
+        return "pochi secondi fa"
+    elif diff < 3600:
+        m = int(diff // 60)
+        return f"{m} min fa"
+    elif diff < 86400:
+        h = int(diff // 3600)
+        return f"{h} ore fa"
+    else:
+        return time.strftime("%d/%m", time.localtime(ts))
 
 def _stima_dimensione(data_bytes):
     if data_bytes is None:
@@ -793,6 +864,8 @@ if 'last_argomento'  not in st.session_state: st.session_state.last_argomento = 
 if 'last_gen_ts'     not in st.session_state: st.session_state.last_gen_ts = None
 
 # ── CSS GLOBALE ──────────────────────────────────────────────────────────────────
+is_dark = (st.session_state.theme == "dark")
+
 st.markdown(f"""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
@@ -872,7 +945,9 @@ st.markdown(f"""
   [data-testid="stSidebar"] p,
   [data-testid="stSidebar"] span,
   [data-testid="stSidebar"] label,
-  [data-testid="stSidebar"] div {{ color: #d4d2c9 !important; }}
+  [data-testid="stSidebar"] div {{
+    color: #d4d2c9 !important;
+  }}
   [data-testid="stSidebar"] .stTextInput label p,
   [data-testid="stSidebar"] .stSelectbox label p,
   [data-testid="stSidebar"] .stNumberInput label p {{
@@ -882,7 +957,10 @@ st.markdown(f"""
     text-transform: uppercase !important;
     font-weight: 700 !important;
   }}
-  [data-testid="stSidebar"] .stCheckbox label {{ color: #d4d2c9 !important; font-size: 0.9rem !important; }}
+  [data-testid="stSidebar"] .stCheckbox label {{
+    color: #d4d2c9 !important;
+    font-size: 0.9rem !important;
+  }}
   [data-testid="stSidebar"] .stCheckbox [data-testid="stCheckbox"] span:first-child {{
     background-color: {T['input_bg']} !important;
     border: 1.5px solid {T['border2']} !important;
@@ -900,9 +978,15 @@ st.markdown(f"""
     border: 1.5px solid #3d3c36 !important;
     border-radius: 8px !important;
   }}
-  [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{ color: #f0ede6 !important; }}
-  [data-testid="stSidebar"] .stRadio label {{ color: #d4d2c9 !important; }}
-  [data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {{ color: #d4d2c9 !important; }}
+  [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{
+    color: #f0ede6 !important;
+  }}
+  [data-testid="stSidebar"] .stRadio label {{
+    color: #d4d2c9 !important;
+  }}
+  [data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {{
+    color: #d4d2c9 !important;
+  }}
   [data-testid="stSidebar"] .stButton button {{
     background: #232320 !important;
     color: #f0ede6 !important;
@@ -913,8 +997,17 @@ st.markdown(f"""
     background: #2e2d28 !important;
     border-color: #5a5950 !important;
   }}
-  [data-testid="stSidebar"] .stSelectSlider [data-testid="stMarkdownContainer"] p {{ color: #d4d2c9 !important; }}
-  [data-testid="collapsedControl"] {{ color: {T['text']} !important; top: 1rem !important; }}
+  [data-testid="stSidebar"] .stSelectSlider [data-testid="stMarkdownContainer"] p {{
+    color: #d4d2c9 !important;
+  }}
+  [data-testid="stSidebar"] .section-label {{
+    color: #5a5950 !important;
+    border-bottom-color: #2a2926 !important;
+  }}
+  [data-testid="collapsedControl"] {{
+    color: {T['text']} !important;
+    top: 1rem !important;
+  }}
 
   /* ── TYPOGRAPHY ── */
   h1, h2, h3 {{
@@ -992,6 +1085,13 @@ st.markdown(f"""
     margin: 0;
     font-weight: 400;
   }}
+  .hero-right {{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    padding-top: 4px;
+  }}
 
   /* ── LABELS ── */
   .stTextInput label p,
@@ -1023,7 +1123,10 @@ st.markdown(f"""
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }}
   .stTextInput input::placeholder,
-  .stNumberInput input::placeholder {{ color: {T['muted']} !important; opacity: 1 !important; }}
+  .stNumberInput input::placeholder {{
+    color: {T['muted']} !important;
+    opacity: 1 !important;
+  }}
   .stTextInput input:focus,
   .stNumberInput input:focus {{
     border-color: {T['accent']} !important;
@@ -1039,7 +1142,10 @@ st.markdown(f"""
     font-size: 0.9rem !important;
     padding: 10px 14px !important;
   }}
-  .stTextArea textarea::placeholder {{ color: {T['muted']} !important; opacity: 1 !important; }}
+  .stTextArea textarea::placeholder {{
+    color: {T['muted']} !important;
+    opacity: 1 !important;
+  }}
   .stTextArea textarea:focus {{
     border-color: {T['accent']} !important;
     box-shadow: 0 0 0 3px {T['accent_light']} !important;
@@ -1052,10 +1158,16 @@ st.markdown(f"""
     border-radius: 10px !important;
     color: {T['text']} !important;
   }}
-  .stSelectbox [data-baseweb="select"] span {{ color: {T['text']} !important; }}
+  .stSelectbox [data-baseweb="select"] span {{
+    color: {T['text']} !important;
+  }}
 
   /* ── CHECKBOXES ── */
-  .stCheckbox label {{ color: {T['text']} !important; font-size: 0.9rem !important; font-family: 'DM Sans', sans-serif !important; }}
+  .stCheckbox label {{
+    color: {T['text']} !important;
+    font-size: 0.9rem !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }}
   .stCheckbox [data-testid="stCheckbox"] span:first-child {{
     background-color: {T['input_bg']} !important;
     border: 1.5px solid {T['border2']} !important;
@@ -1113,7 +1225,9 @@ st.markdown(f"""
     background: transparent !important;
     min-height: unset !important;
   }}
-  .compact-uploader [data-testid="stFileUploadDropzone"] {{ display: none !important; }}
+  .compact-uploader [data-testid="stFileUploadDropzone"] {{
+    display: none !important;
+  }}
   .compact-uploader [data-testid="stFileUploader"] button {{
     background: {T['card2']} !important;
     color: {T['text2']} !important;
@@ -1180,10 +1294,18 @@ st.markdown(f"""
     color: {T['text']} !important;
     background: {T['card']} !important;
   }}
-  [data-testid="stExpander"] summary:hover {{ background: {T['hover']} !important; }}
-  [data-testid="stExpander"] > div > div {{ padding: 0.5rem 1.1rem 1rem !important; }}
+  [data-testid="stExpander"] summary:hover {{
+    background: {T['hover']} !important;
+  }}
+  [data-testid="stExpander"] > div > div {{
+    padding: 0.5rem 1.1rem 1rem !important;
+  }}
 
-  hr {{ border: none; border-top: 1px solid {T['border']} !important; margin: 2rem 0 !important; }}
+  hr {{
+    border: none;
+    border-top: 1px solid {T['border']} !important;
+    margin: 2rem 0 !important;
+  }}
 
   [data-testid="stFileUploader"] section {{
     background: {T['card2']} !important;
@@ -1198,10 +1320,19 @@ st.markdown(f"""
   [data-testid="stFileUploadDropzone"] small,
   [data-testid="stFileUploader"] span,
   [data-testid="stFileUploader"] small,
-  [data-testid="stFileUploader"] p {{ color: {T['text2']} !important; opacity: 1 !important; }}
+  [data-testid="stFileUploader"] p {{
+    color: {T['text2']} !important;
+    opacity: 1 !important;
+  }}
   [data-testid="stFileUploadDropzone"] button,
-  [data-testid="stFileUploader"] button {{ color: {T['accent']} !important; font-weight: 600 !important; }}
-  [data-testid="stFileUploadDropzone"] svg {{ fill: {T['muted']} !important; color: {T['muted']} !important; }}
+  [data-testid="stFileUploader"] button {{
+    color: {T['accent']} !important;
+    font-weight: 600 !important;
+  }}
+  [data-testid="stFileUploadDropzone"] svg {{
+    fill: {T['muted']} !important;
+    color: {T['muted']} !important;
+  }}
 
   /* ── CARD OUTPUT ── */
   .output-card {{
@@ -1210,6 +1341,13 @@ st.markdown(f"""
     border-radius: 16px;
     padding: 1.5rem;
     box-shadow: {T['shadow']};
+  }}
+  .output-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: {T['text']};
+    margin: 0 0 1rem 0;
   }}
 
   /* ── BADGE CHIP ── */
@@ -1254,8 +1392,24 @@ st.markdown(f"""
     border-bottom: 1px solid {T['border']};
   }}
 
-  .stSelectSlider [data-testid="stMarkdownContainer"] p {{ color: {T['text']} !important; font-size: 0.88rem !important; }}
-  .stSlider [data-baseweb="slider"] [role="slider"] {{ background: {T['accent']} !important; border-color: {T['accent']} !important; }}
+  .hint {{
+    font-size: 0.78rem;
+    color: {T['muted']};
+    margin-top: 4px;
+    line-height: 1.4;
+  }}
+
+  .stSelectSlider [data-testid="stMarkdownContainer"] p {{
+    color: {T['text']} !important;
+    font-size: 0.88rem !important;
+  }}
+  .stSlider [data-baseweb="slider"] [role="slider"] {{
+    background: {T['accent']} !important;
+    border-color: {T['accent']} !important;
+  }}
+  .stSlider [data-baseweb="slider"] div[data-testid="stTickBar"] {{
+    color: {T['muted']} !important;
+  }}
   .stSlider label p {{
     color: {T['text2']} !important;
     font-size: 0.82rem !important;
@@ -1269,10 +1423,53 @@ st.markdown(f"""
     font-size: 0.95rem !important;
   }}
 
-  .stAlert {{ border-radius: 10px !important; border: none !important; }}
+  .stAlert {{
+    border-radius: 10px !important;
+    border: none !important;
+  }}
 
-  .stProgress > div > div {{ background: {T['accent']} !important; border-radius: 100px !important; }}
-  .stProgress > div {{ background: {T['border']} !important; border-radius: 100px !important; height: 6px !important; }}
+  .stProgress > div > div {{
+    background: {T['accent']} !important;
+    border-radius: 100px !important;
+  }}
+  .stProgress > div {{
+    background: {T['border']} !important;
+    border-radius: 100px !important;
+    height: 6px !important;
+  }}
+
+  .stSubheader {{
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    color: {T['text']} !important;
+  }}
+
+  /* ── STATUS BAR ── */
+  .status-bar {{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: {T['card2']};
+    border: 1px solid {T['border']};
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: {T['muted']};
+    margin-top: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .status-bar .dot {{
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: {T['success']};
+    flex-shrink: 0;
+  }}
+  .status-bar strong {{
+    color: {T['text2']};
+    font-weight: 600;
+  }}
 
   /* ── DOWNLOAD CARD ── */
   .dl-card {{
@@ -1286,20 +1483,52 @@ st.markdown(f"""
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
     margin-bottom: 8px;
   }}
-  .dl-card:hover {{ border-color: {T['accent']}; box-shadow: 0 2px 12px rgba(217,119,6,0.12); }}
-  .dl-card-icon {{ font-size: 1.6rem; line-height: 1; flex-shrink: 0; }}
-  .dl-card-body {{ flex: 1; min-width: 0; }}
-  .dl-card-title {{ font-weight: 700; font-size: 0.9rem; color: {T['text']}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
-  .dl-card-meta {{ font-size: 0.72rem; color: {T['muted']}; margin-top: 1px; }}
+  .dl-card:hover {{
+    border-color: {T['accent']};
+    box-shadow: 0 2px 12px rgba(217,119,6,0.12);
+  }}
+  .dl-card-icon {{
+    font-size: 1.6rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }}
+  .dl-card-body {{
+    flex: 1;
+    min-width: 0;
+  }}
+  .dl-card-title {{
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: {T['text']};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }}
+  .dl-card-meta {{
+    font-size: 0.72rem;
+    color: {T['muted']};
+    margin-top: 1px;
+  }}
+
+  /* ── PDF PREVIEW ── */
+  .pdf-preview-wrap {{
+    margin-top: 1rem;
+    border: 1px solid {T['border']};
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: {T['shadow_md']};
+    background: {T['card2']};
+  }}
 
   /* ── TOP BAR ── */
   .top-bar {{
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    gap: 0.75rem;
     margin-bottom: 1.2rem;
   }}
-  /* Hint visibile SOLO su mobile */
+  /* MODIFICA: hint visibile SOLO su mobile */
   .top-bar-hint {{
     display: none;
   }}
@@ -1319,7 +1548,7 @@ st.markdown(f"""
     }}
   }}
 
-  /* ── FEEDBACK BUTTON ── */
+  /* ── FEEDBACK BUTTON (FAB) ── */
   .fab-link {{
     position: fixed;
     top: 4.5rem;
@@ -1381,36 +1610,86 @@ st.markdown(f"""
     margin-top: 3rem;
     padding-top: 1.2rem;
     border-top: 1px solid {T['border']};
-    line-height: 1.8;
+    line-height: 1.6;
   }}
 
   /* ═══ MOBILE ═══ */
   @media (max-width: 640px) {{
-    .block-container {{ padding: 4.5rem 1rem 3rem !important; }}
+    .block-container {{
+      padding: 4.5rem 1rem 3rem !important;
+    }}
     .hero-title {{ font-size: 56px !important; }}
     .hero-sub {{ font-size: 0.9rem !important; }}
     .hero-wrap {{ margin-bottom: 1.5rem; padding-bottom: 1.2rem; }}
+    .top-bar {{
+      justify-content: center;
+      gap: 0.5rem;
+    }}
     .stTextInput input,
     .stNumberInput input {{
       font-size: 1rem !important;
       padding: 14px 16px !important;
       min-height: 52px !important;
       height: 52px !important;
+      line-height: 1.4 !important;
+      box-sizing: border-box !important;
     }}
-    .stTextArea textarea {{ font-size: 0.95rem !important; }}
-    .stButton button {{ min-height: 48px !important; font-size: 1rem !important; }}
-    .stDownloadButton button {{ width: 100% !important; min-height: 48px !important; }}
+    .stTextInput > div > div {{
+      min-height: 52px !important;
+    }}
+    .stTextInput input::placeholder,
+    .stNumberInput input::placeholder {{
+      font-size: 1rem !important;
+      opacity: 1 !important;
+    }}
+    .stSelectbox [data-baseweb="select"] > div:first-child {{
+      padding: 12px 14px !important;
+      min-height: 50px !important;
+      height: auto !important;
+    }}
+    .stSelectbox [data-baseweb="select"] span,
+    .stSelectbox [data-baseweb="select"] div {{
+      font-size: 0.95rem !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }}
+    [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:first-child {{
+      min-height: 48px !important;
+      padding: 10px 12px !important;
+    }}
+    [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{
+      font-size: 0.85rem !important;
+      color: #f0ede6 !important;
+    }}
+    .stTextArea textarea {{
+      font-size: 0.95rem !important;
+    }}
+    .stButton button {{
+      min-height: 48px !important;
+      font-size: 1rem !important;
+    }}
+    [data-testid="stSidebar"] .block-container {{
+      padding: 1rem !important;
+    }}
     .output-card {{ padding: 1rem; }}
-    [data-testid="stSidebar"] .block-container {{ padding: 1rem !important; }}
+    .stDownloadButton button {{
+      width: 100% !important;
+      min-height: 48px !important;
+    }}
   }}
 
   @media (min-width: 641px) and (max-width: 1024px) {{
-    .block-container {{ padding: 1.5rem 1.5rem 3rem !important; max-width: 900px !important; }}
+    .block-container {{
+      padding: 1.5rem 1.5rem 3rem !important;
+      max-width: 900px !important;
+    }}
   }}
 </style>
 """, unsafe_allow_html=True)
 
-# ── FEEDBACK BUTTON (fisso in alto a destra) ─────────────────────────────────────
+# ── FEEDBACK BUTTON (fisso in alto a destra) ──────────────────────────────────────
+# MODIFICA: aggiunto onclick per forzare apertura in nuova scheda (fix Streamlit)
 st.markdown(f"""
 <a class="fab-link" href="{FEEDBACK_FORM_URL}" target="_blank" rel="noopener noreferrer"
    onclick="window.open(this.href,'_blank','noopener,noreferrer'); return false;">
@@ -1422,23 +1701,23 @@ st.markdown(f"""
 with st.sidebar:
     st.markdown('<div class="sidebar-title">⚙️ Impostazioni</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="sidebar-label">🏫 Tipo di scuola</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-label">🏫 Classe</div>', unsafe_allow_html=True)
     difficolta = st.selectbox("livello", SCUOLE, index=2, label_visibility="collapsed")
 
-    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni verifica</div>', unsafe_allow_html=True)
-    bes_dsa         = st.checkbox("Verifica ridotta per BES/DSA/sostegno", value=True,
-                    help="Circa il 25% dei sottopunti vengono marcati con (*) e resi facoltativi per gli studenti con verifica ridotta.")
-    doppia_fila     = st.checkbox("Genera 2 varianti (Versione A e B)", value=False)
+    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
+    bes_dsa         = st.checkbox("Verifica ridotta (sostegno/certificazione)", value=True,
+                    help="Circa il 25% dei sottopunti vengono marcati con (*) e resi facoltativi per gli studenti con verifica ridotta (sostegno, certificazioni varie, NAI, ecc.).")
+    doppia_fila     = st.checkbox("Genera Versione A e B (due varianti)", value=False)
     correzione_step = st.checkbox("Includi soluzioni passo per passo", value=False)
 
     esercizio_multidisciplinare = False
     materia2_scelta  = None
     difficolta_multi = None
 
-    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🏆 Punteggio</div>', unsafe_allow_html=True)
-    mostra_punteggi = st.checkbox("Mostra punteggio per ogni esercizio", value=True)
-    con_griglia     = st.checkbox("Includi griglia di valutazione finale", value=False)
-    punti_totali    = st.number_input("Punti totali della verifica", min_value=10, max_value=200, value=100, step=5,
+    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🏆 Punteggi</div>', unsafe_allow_html=True)
+    mostra_punteggi = st.checkbox("Mostra punteggio per esercizio", value=True)
+    con_griglia     = st.checkbox("Includi griglia di valutazione", value=False)
+    punti_totali    = st.number_input("Punti totali", min_value=10, max_value=200, value=100, step=5,
                                       disabled=not mostra_punteggi)
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🤖 Modello AI</div>', unsafe_allow_html=True)
@@ -1446,7 +1725,7 @@ with st.sidebar:
         st.selectbox("modello", list(MODELLI_DISPONIBILI.keys()), label_visibility="collapsed")
     ]
 
-    st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">🎨 Tema</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">🎨 Aspetto</div>', unsafe_allow_html=True)
     tema_sel = st.radio(
         "tema",
         ["☀️ Chiaro", "🌙 Scuro"],
@@ -1459,10 +1738,10 @@ with st.sidebar:
         st.session_state.theme = new_theme
         st.rerun()
 
-# ── TOPBAR (hint solo mobile) ─────────────────────────────────────────────────────
+# ── TOPBAR ── MODIFICA: rimosso link "Condividi", hint solo mobile via CSS ────────
 st.markdown("""
 <div class="top-bar">
-  <div class="top-bar-hint">⚙️ Tocca &nbsp;<strong>&gt;&gt;</strong>&nbsp; in alto per le impostazioni</div>
+  <div class="top-bar-hint">⚙️ Tocca &nbsp;<strong>&gt;&gt;</strong>&nbsp; qui sopra per le impostazioni</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1501,13 +1780,13 @@ argomento = argomento_area.strip()
 
 st.markdown('<div style="height:0.8rem;"></div>', unsafe_allow_html=True)
 
-with st.expander("✏️  Personalizza  *(opzionale)*"):
+with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
 
-    st.markdown('<div class="expander-heading">📝 Numero di esercizi</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="expander-heading">📝 Struttura esercizi</div>', unsafe_allow_html=True)
     num_esercizi_totali = st.slider(
-        "Numero di esercizi",
+        "Numero di esercizi in verifica",
         min_value=1, max_value=15, value=4,
-        help="Trascina per scegliere quanti esercizi includere nella verifica"
+        help="Trascina per scegliere il numero di esercizi"
     )
 
     with st.expander("🎯 Specifica il tipo di ogni esercizio (opzionale)"):
@@ -1515,11 +1794,11 @@ with st.expander("✏️  Personalizza  *(opzionale)*"):
         n_liberi = max(0, num_esercizi_totali - n_custom)
 
         if n_custom == 0:
-            st.info(f"Tutti i {num_esercizi_totali} esercizi saranno scelti dall'AI.")
+            st.info(f"Tutti i {num_esercizi_totali} esercizi generati dall'AI.")
         elif n_custom >= num_esercizi_totali:
-            st.warning(f"Hai raggiunto il limite di {num_esercizi_totali} esercizi — aumenta il numero sopra se vuoi aggiungerne altri.")
+            st.warning(f"Totale {n_custom}/{num_esercizi_totali} raggiunto — aumenta il numero.")
         else:
-            st.success(f"✅ {n_custom} personalizzati + {n_liberi} generati dall'AI = {num_esercizi_totali} totali")
+            st.success(f"✅ {n_custom} specifici + {n_liberi} liberi = {num_esercizi_totali} totali")
 
         if st.session_state.esercizi_custom:
             to_remove = None
@@ -1546,7 +1825,7 @@ with st.expander("✏️  Personalizza  *(opzionale)*"):
                     )
                     st.session_state.esercizi_custom[i]['difficolta_multi'] = df2
 
-                d = st.text_input("Descrizione (opzionale)",
+                d = st.text_input("Descrizione dell'esercizio (opzionale)",
                                   value=ex.get('descrizione', ''),
                                   placeholder="es. Risolvi ax²+bx+c=0 mostrando i passaggi",
                                   key=f"desc_{i}", label_visibility="visible")
@@ -1575,17 +1854,17 @@ with st.expander("✏️  Personalizza  *(opzionale)*"):
             st.session_state.esercizi_custom.append({'tipo': 'Aperto', 'descrizione': '', 'immagine': None, 'materia2': '', 'difficolta_multi': 'Media'})
             st.rerun()
 
-    st.markdown('<div class="expander-heading" style="margin-top:1rem;">🎯 Istruzioni aggiuntive per l\'AI</div>', unsafe_allow_html=True)
+    st.markdown('<div class="expander-heading" style="margin-top:1rem;">🎯 Istruzioni per l\'AI</div>', unsafe_allow_html=True)
     note_generali = st.text_area(
         "note", label_visibility="collapsed",
-        placeholder=NOTE_PLACEHOLDER.get(materia_scelta, "es. Argomenti da privilegiare, stile degli esercizi..."),
+        placeholder=NOTE_PLACEHOLDER.get(materia_scelta, "es. Argomenti da privilegiare, tipo di esercizi..."),
         height=80
     )
 
-    st.markdown('<div class="expander-heading">📂 File di riferimento (opzionale)</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="expander-heading">📂 File di riferimento</div>', unsafe_allow_html=True)
     st.markdown('<div class="compact-uploader">', unsafe_allow_html=True)
     file_ispirazione = st.file_uploader(
-        "📎 Allega PDF o immagine come riferimento",
+        "📎 Allega PDF o immagine",
         type=['pdf','png','jpg','jpeg'],
         label_visibility="collapsed"
     )
@@ -1593,12 +1872,12 @@ with st.expander("✏️  Personalizza  *(opzionale)*"):
 
 # ── BOTTONE GENERA ────────────────────────────────────────────────────────────────
 st.write("")
-genera_btn = st.button("🚀  Genera la Verifica", use_container_width=True, type="primary")
+genera_btn = st.button("🚀  Genera Verifica", use_container_width=True, type="primary")
 
 # ── LOGICA GENERAZIONE ───────────────────────────────────────────────────────────
 if genera_btn:
     if not argomento.strip():
-        st.warning("⚠️ Inserisci l'argomento della verifica prima di procedere."); st.stop()
+        st.warning("⚠️ Inserisci l'argomento della verifica."); st.stop()
     try:
         model        = genai.GenerativeModel(modello_id)
         materia      = materia_scelta.strip() or "Matematica"
@@ -1823,10 +2102,11 @@ SOLO CODICE LATEX del corpo."""
         st.session_state.last_materia   = materia
         st.session_state.last_argomento = titolo_clean
         st.session_state.last_gen_ts    = time.time()
+
         st.rerun()
 
     except Exception as e:
-        st.error(f"❌ Errore durante la generazione: {e}")
+        st.error(f"❌ Errore: {e}")
 
 # ── OUTPUT ────────────────────────────────────────────────────────────────────────
 if st.session_state.verifiche['A']['latex']:
@@ -1850,7 +2130,7 @@ if st.session_state.verifiche['A']['latex']:
             </div>
             <div class="disclaimer">
               <span class="disclaimer-icon">⚠️</span>
-              <span>Controlla sempre il contenuto prima di distribuirla — il docente è responsabile del materiale finale.</span>
+              <span>Le verifiche generate sono <strong>suggerimenti</strong>. Rivedi sempre il contenuto prima della distribuzione — il docente è responsabile del materiale finale.</span>
             </div>
             """, unsafe_allow_html=True)
 
@@ -1875,15 +2155,15 @@ if st.session_state.verifiche['A']['latex']:
                 )
             else:
                 if st.button("📄 Genera PDF", key=f"dlc_{fid}", use_container_width=True):
-                    with st.spinner("Compilazione in corso…"):
+                    with st.spinner("Compilazione…"):
                         pdf, err = compila_pdf(v['latex'])
                     if pdf:
                         st.session_state.verifiche[fid]['pdf'] = pdf
                         st.session_state.verifiche[fid]['pdf_ts'] = time.time()
                         st.rerun()
                     else:
-                        st.error("❌ Errore nella generazione del PDF")
-                        with st.expander("Dettagli errore"): st.text(err)
+                        st.error("Errore PDF")
+                        with st.expander("Log"): st.text(err)
 
             st.write("")
 
@@ -1893,7 +2173,7 @@ if st.session_state.verifiche['A']['latex']:
                 <div class="dl-card">
                   <div class="dl-card-icon">📝</div>
                   <div class="dl-card-body">
-                    <div class="dl-card-title">File Word modificabile</div>
+                    <div class="dl-card-title">File Modificabile Word</div>
                     <div class="dl-card-meta">{docx_size}</div>
                   </div>
                 </div>
@@ -1908,10 +2188,10 @@ if st.session_state.verifiche['A']['latex']:
                 )
             else:
                 _docx_gen_key = f"_docx_generating_{fid}"
-                if st.button("📝 Genera file Word modificabile", key=f"dldc_{fid}", use_container_width=True):
+                if st.button("📝 File Modificabile Word", key=f"dldc_{fid}", use_container_width=True):
                     st.session_state[_docx_gen_key] = True
                 if st.session_state.get(_docx_gen_key, False):
-                    with st.spinner("⏳ Conversione in corso…"):
+                    with st.spinner("⏳ Conversione Word…"):
                         _m = genai.GenerativeModel(_mid)
                         db, de = latex_to_docx_via_ai(v['latex'], _m, con_griglia=con_griglia)
                     if db:
@@ -1921,8 +2201,8 @@ if st.session_state.verifiche['A']['latex']:
                         st.rerun()
                     else:
                         st.session_state[_docx_gen_key] = False
-                        st.error("❌ Errore nella conversione Word")
-                        with st.expander("Dettagli errore"): st.text(de)
+                        st.error("Errore Word")
+                        with st.expander("Log"): st.text(de)
 
             if v['soluzioni_latex']:
                 st.write("")
@@ -1932,7 +2212,7 @@ if st.session_state.verifiche['A']['latex']:
                     <div class="dl-card">
                       <div class="dl-card-icon">✅</div>
                       <div class="dl-card-body">
-                        <div class="dl-card-title">Soluzioni passo per passo</div>
+                        <div class="dl-card-title">Soluzioni Step-by-Step</div>
                         <div class="dl-card-meta">{sol_size}</div>
                       </div>
                     </div>
@@ -1946,15 +2226,16 @@ if st.session_state.verifiche['A']['latex']:
                         key=f"dls_{fid}"
                     )
                 else:
-                    if st.button("✅ Genera PDF Soluzioni", key=f"cs_{fid}", use_container_width=True):
+                    if st.button("✅ Compila Soluzioni", key=f"cs_{fid}", use_container_width=True):
                         with st.spinner("Compilazione…"):
                             sp, se = compila_pdf(v['soluzioni_latex'])
                         if sp:
                             st.session_state.verifiche[fid]['soluzioni_pdf'] = sp
                             st.rerun()
                         else:
-                            with st.expander("Dettagli errore"): st.text(se)
+                            with st.expander("Log"): st.text(se)
 
+            # MODIFICA: anteprima chiusa di default (expanded=False)
             if v['preview'] and v['pdf']:
                 with st.expander("👁 Anteprima PDF", expanded=False):
                     b64 = base64.b64encode(v['pdf']).decode()
@@ -1974,14 +2255,15 @@ if st.session_state.verifiche['A']['latex']:
                     file_name=f"Verifica_{_arg}_{fid}.tex",
                     mime="text/plain",
                     key=f"dl_tex_{fid}",
-                    help="Scarica il sorgente LaTeX per modificarlo con un editor"
+                    help="Scarica il sorgente LaTeX per modificarlo"
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
 
-# ── FOOTER ───────────────────────────────────────────────────────────────────────
+# ── FOOTER ── MODIFICA: aggiunto link "Condividi con i colleghi" ──────────────────
 st.markdown(f"""
 <div class="app-footer">
-  ⚠️ Le verifiche generate dall'AI sono suggerimenti didattici — il docente è responsabile del materiale finale.<br>
+  ⚠️ Le verifiche generate dall'AI sono suggerimenti didattici — rivedi sempre il contenuto
+  prima di distribuirlo agli studenti. Il docente è responsabile del materiale finale.<br>
   <span style="opacity:0.55;">VerificAI · Versione Beta</span>
   &nbsp;·&nbsp;
   <a href="{SHARE_URL}" target="_blank" rel="noopener noreferrer"
