@@ -1636,8 +1636,34 @@ st.markdown(f"""
     }}
   }}
 
-  .stSpinner > div {{
-    border-top-color: {T['accent']} !important;
+  /* ── DISCLAIMER ── */
+  .disclaimer {{
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 12px;
+    background: {T['card2']};
+    border: 1px solid {T['border']};
+    border-left: 3px solid {T['muted']};
+    border-radius: 8px;
+    font-size: 0.74rem;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.45;
+    margin-bottom: 1rem;
+  }}
+  .disclaimer-icon {{ flex-shrink: 0; font-size: 0.9rem; margin-top: 1px; }}
+
+  /* ── APP FOOTER ── */
+  .app-footer {{
+    text-align: center;
+    font-size: 0.72rem;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    margin-top: 3rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid {T['border']};
+    line-height: 1.6;
   }}
 </style>
 """, unsafe_allow_html=True)
@@ -2077,10 +2103,14 @@ if st.session_state.verifiche['A']['latex']:
         with cols[idx]:
             label_ver = f"Versione {fid}" if _df else "La tua verifica"
             st.markdown(f"""
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;">
               <span style="font-family:'DM Sans',sans-serif;font-size:1.1rem;
                            font-weight:700;color:{T['text']};">{APP_ICON} {label_ver}</span>
               <span class="chip">Pronta</span>
+            </div>
+            <div class="disclaimer">
+              <span class="disclaimer-icon">⚠️</span>
+              <span>Le verifiche generate sono <strong>suggerimenti</strong>. Rivedi sempre il contenuto prima della distribuzione — il docente è responsabile del materiale finale.</span>
             </div>
             """, unsafe_allow_html=True)
 
@@ -2207,3 +2237,12 @@ if st.session_state.verifiche['A']['latex']:
                     help="Scarica il sorgente LaTeX per modificarlo"
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
+
+# ── FOOTER ───────────────────────────────────────────────────────────────────────
+st.markdown(f"""
+<div class="app-footer">
+  ⚠️ Le verifiche generate dall'AI sono suggerimenti didattici — rivedi sempre il contenuto
+  prima di distribuirlo agli studenti. Il docente è responsabile del materiale finale.<br>
+  <span style="opacity:0.55;">VerificAI · Versione Beta · Powered by Google Gemini</span>
+</div>
+""", unsafe_allow_html=True)
