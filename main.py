@@ -148,7 +148,7 @@ NOTE_PLACEHOLDER = {
     "Scienze Motorie":    "es. Apparato muscolare e scheletrico. Norme di sicurezza in palestra.",
 }
 
-TIPI_ESERCIZIO = ["Aperto", "Scelta multipla", "Vero/Falso", "Completamento"]
+TIPI_ESERCIZIO = ["Aperto", "Scelta multipla", "Vero/Falso", "Completamento", "Interdisciplinare"]
 
 # ── FUNZIONI ORIGINALI (invariate) ───────────────────────────────────────────────
 def parse_esercizi(latex):
@@ -789,7 +789,9 @@ def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali):
     righe = [f"\nSTRUTTURA ESERCIZI (totale: {num_totale}):"]
     immagini = []
     for i, ex in enumerate(esercizi_custom, 1):
-        tipo, desc = ex['tipo'], ex['descrizione'].strip()
+        tipo, desc = ex.get('tipo', 'Aperto'), ex.get('descrizione', '').strip()
+        if tipo == "Interdisciplinare" and ex.get('materia2'):
+            tipo = f"Interdisciplinare con {ex['materia2']} (difficoltà: {ex.get('difficolta_multi','Media')})"
         riga = f"- Esercizio {i} [{tipo}]" + (f": {desc}" if desc else "")
         if ex.get('immagine'):
             riga += f" — vedi immagine allegata per l'esercizio {i}"
@@ -1044,7 +1046,7 @@ st.markdown(f"""
 
   .hero-title {{
     font-family: 'DM Sans', sans-serif;
-    font-size: clamp(3.2rem, 11vw, 5rem);
+    font-size: clamp(4.5rem, 16vw, 7rem);
     font-weight: 900;
     color: {T['text']};
     line-height: 1.05;
@@ -1680,14 +1682,10 @@ with st.sidebar:
     doppia_fila     = st.checkbox("Genera Versione A e B (due varianti)", value=False)
     correzione_step = st.checkbox("Includi soluzioni passo per passo", value=False)
 
-    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🔗 Interdisciplinare</div>', unsafe_allow_html=True)
-    esercizio_multidisciplinare = st.checkbox("Aggiungi un esercizio collegato ad altra materia", value=False)
-    if esercizio_multidisciplinare:
-        materia2_scelta = st.text_input("Collega con:", placeholder="es. Fisica, Storia...", key="materia2_input").strip() or None
-        difficolta_multi = st.select_slider("Difficoltà:", options=["Facile","Media","Alta"], value="Media", key="diff_multi_slider")
-    else:
-        materia2_scelta  = None
-        difficolta_multi = None
+    # interdisciplinare gestito dentro esercizi specifici
+    esercizio_multidisciplinare = False
+    materia2_scelta  = None
+    difficolta_multi = None
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🏆 Punteggi</div>', unsafe_allow_html=True)
     mostra_punteggi = st.checkbox("Mostra punteggio per esercizio", value=True)
@@ -1780,12 +1778,30 @@ with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
                 st.markdown(f'<div class="expander-heading">Esercizio {i+1}</div>', unsafe_allow_html=True)
                 # Tipo esercizio
                 t = st.selectbox("Tipo esercizio", TIPI_ESERCIZIO,
-                                 index=TIPI_ESERCIZIO.index(ex['tipo']),
+                                 index=TIPI_ESERCIZIO.index(ex.get('tipo', 'Aperto')),
                                  key=f"tipo_{i}", label_visibility="visible")
                 st.session_state.esercizi_custom[i]['tipo'] = t
+
+                # Se interdisciplinare: mostra scelta materia collegata
+                if t == "Interdisciplinare":
+                    m2 = st.text_input(
+                        "Materia collegata",
+                        value=ex.get('materia2', ''),
+                        placeholder="es. Fisica, Storia dell'Arte, Informatica...",
+                        key=f"materia2_{i}", label_visibility="visible"
+                    )
+                    st.session_state.esercizi_custom[i]['materia2'] = m2
+                    df2 = st.select_slider(
+                        "Difficoltà collegamento",
+                        options=["Facile", "Media", "Alta"],
+                        value=ex.get('difficolta_multi', 'Media'),
+                        key=f"diff_multi_{i}"
+                    )
+                    st.session_state.esercizi_custom[i]['difficolta_multi'] = df2
+
                 # Descrizione
                 d = st.text_input("Descrizione dell'esercizio (opzionale)",
-                                  value=ex['descrizione'],
+                                  value=ex.get('descrizione', ''),
                                   placeholder="es. Risolvi ax²+bx+c=0 mostrando i passaggi",
                                   key=f"desc_{i}", label_visibility="visible")
                 st.session_state.esercizi_custom[i]['descrizione'] = d
@@ -1811,7 +1827,7 @@ with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
 
         can_add = len(st.session_state.esercizi_custom) < num_esercizi_totali
         if st.button("＋ Aggiungi esercizio specifico", disabled=not can_add):
-            st.session_state.esercizi_custom.append({'tipo': 'Aperto', 'descrizione': '', 'immagine': None})
+            st.session_state.esercizi_custom.append({'tipo': 'Aperto', 'descrizione': '', 'immagine': None, 'materia2': '', 'difficolta_multi': 'Media'})
             st.rerun()
 
     st.markdown('<div class="expander-heading" style="margin-top:1rem;">🎯 Istruzioni per l\'AI</div>', unsafe_allow_html=True)
