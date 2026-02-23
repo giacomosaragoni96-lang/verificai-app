@@ -65,7 +65,49 @@ THEMES = {
         "shadow_md":    "0 4px 16px rgba(0,0,0,.4)",
         "input_bg":     "#232320",
         "hover":        "#232320",
-    }
+    },
+    "blue": {
+        "bg":           "#1877F2",
+        "bg2":          "#1565D8",
+        "card":         "#1565D8",
+        "card2":        "#1050C0",
+        "border":       "#2E86FF",
+        "border2":      "#4D9FFF",
+        "text":         "#FFFFFF",
+        "text2":        "#D0E8FF",
+        "muted":        "#90BBEE",
+        "accent":       "#FFD700",
+        "accent_light": "#3A3000",
+        "accent2":      "#00E5A0",
+        "success":      "#00E5A0",
+        "warn":         "#FFD700",
+        "err":          "#FF6B6B",
+        "shadow":       "0 1px 3px rgba(0,0,0,.25)",
+        "shadow_md":    "0 4px 16px rgba(0,0,0,.35)",
+        "input_bg":     "#1050C0",
+        "hover":        "#0D45A8",
+    },
+    "forest": {
+        "bg":           "#1A1F1A",
+        "bg2":          "#212621",
+        "card":         "#252C25",
+        "card2":        "#2D342D",
+        "border":       "#3A4A3A",
+        "border2":      "#4A5E4A",
+        "text":         "#E8F0E8",
+        "text2":        "#B8CCB8",
+        "muted":        "#708070",
+        "accent":       "#6DBF5E",
+        "accent_light": "#1A2E1A",
+        "accent2":      "#A8D878",
+        "success":      "#6DBF5E",
+        "warn":         "#D4A83A",
+        "err":          "#E06060",
+        "shadow":       "0 1px 3px rgba(0,0,0,.3)",
+        "shadow_md":    "0 4px 16px rgba(0,0,0,.45)",
+        "input_bg":     "#2D342D",
+        "hover":        "#323C32",
+    },
 }
 
 if "theme" not in st.session_state:
@@ -908,8 +950,8 @@ st.markdown(f"""
      SIDEBAR
      ════════════════════════════════════ */
   [data-testid="stSidebar"] {{
-    background: #141412 !important;
-    border-right: 1px solid #2a2926 !important;
+    background: {T['card2']} !important;
+    border-right: 1px solid {T['border']} !important;
   }}
 
   /* Titolo principale sidebar */
@@ -918,7 +960,7 @@ st.markdown(f"""
     font-size: 1.1rem !important;
     font-weight: 800 !important;
     letter-spacing: -0.01em;
-    color: #f0ede6 !important;
+    color: {T['text']} !important;
     margin: 0.5rem 0 1.2rem 0;
     padding-bottom: 0.6rem;
     border-bottom: 1px solid #2a2926;
@@ -943,63 +985,63 @@ st.markdown(f"""
   [data-testid="stSidebar"] span,
   [data-testid="stSidebar"] label,
   [data-testid="stSidebar"] div {{
-    color: #d4d2c9 !important;
+    color: {T['text2']} !important;
   }}
   [data-testid="stSidebar"] .stTextInput label p,
   [data-testid="stSidebar"] .stSelectbox label p,
   [data-testid="stSidebar"] .stNumberInput label p {{
-    color: #8a8880 !important;
+    color: {T['muted']} !important;
     font-size: 0.7rem !important;
     letter-spacing: 0.08em !important;
     text-transform: uppercase !important;
     font-weight: 700 !important;
   }}
   [data-testid="stSidebar"] .stCheckbox label {{
-    color: #d4d2c9 !important;
+    color: {T['text2']} !important;
     font-size: 0.9rem !important;
   }}
   [data-testid="stSidebar"] .stCheckbox [data-testid="stCheckbox"] span:first-child {{
-    background-color: #232320 !important;
-    border: 1.5px solid #3d3c36 !important;
+    background-color: {T['input_bg']} !important;
+    border: 1.5px solid {T['border2']} !important;
     border-radius: 5px !important;
   }}
   [data-testid="stSidebar"] .stTextInput input,
   [data-testid="stSidebar"] .stNumberInput input {{
-    background: #232320 !important;
-    border: 1.5px solid #3d3c36 !important;
+    background: {T['input_bg']} !important;
+    border: 1.5px solid {T['border2']} !important;
     border-radius: 8px !important;
-    color: #f0ede6 !important;
+    color: {T['text']} !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:first-child {{
-    background: #232320 !important;
-    border: 1.5px solid #3d3c36 !important;
+    background: {T['input_bg']} !important;
+    border: 1.5px solid {T['border2']} !important;
     border-radius: 8px !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{
-    color: #f0ede6 !important;
+    color: {T['text']} !important;
   }}
   [data-testid="stSidebar"] .stRadio label {{
-    color: #d4d2c9 !important;
+    color: {T['text2']} !important;
   }}
   [data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {{
-    color: #d4d2c9 !important;
+    color: {T['text2']} !important;
   }}
   [data-testid="stSidebar"] .stButton button {{
-    background: #232320 !important;
-    color: #f0ede6 !important;
-    border: 1.5px solid #3d3c36 !important;
+    background: {T['card2']} !important;
+    color: {T['text']} !important;
+    border: 1.5px solid {T['border2']} !important;
     border-radius: 8px !important;
   }}
   [data-testid="stSidebar"] .stButton button:hover {{
-    background: #2e2d28 !important;
-    border-color: #5a5950 !important;
+    background: {T['hover']} !important;
+    border-color: {T['border2']} !important;
   }}
   [data-testid="stSidebar"] .stSelectSlider [data-testid="stMarkdownContainer"] p {{
-    color: #d4d2c9 !important;
+    color: {T['text2']} !important;
   }}
   [data-testid="stSidebar"] .section-label {{
-    color: #5a5950 !important;
-    border-bottom-color: #2a2926 !important;
+    color: {T['muted']} !important;
+    border-bottom-color: {T['border']} !important;
   }}
   [data-testid="collapsedControl"] {{
     color: {T['text']} !important;
@@ -1500,7 +1542,11 @@ st.markdown(f"""
     /* Contenitore colonne: vertical stack con gap tra i campi */
     [data-testid="stHorizontalBlock"] {{
       flex-direction: column !important;
-      gap: 0.6rem !important;
+      gap: 1.2rem !important;
+    }}
+    /* Assicura spazio sopra ogni colonna impilata */
+    [data-testid="stHorizontalBlock"] > [data-testid="column"] + [data-testid="column"] {{
+      margin-top: 0.4rem !important;
     }}
 
     /* Input e select: altezza adeguata e testo visibile */
@@ -1602,14 +1648,17 @@ with st.sidebar:
     ]
 
     st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">🎨 Aspetto</div>', unsafe_allow_html=True)
+    _theme_opts = ["☀️ Chiaro", "🌙 Scuro", "🔵 Blu", "🌿 Forest"]
+    _theme_map  = {"☀️ Chiaro": "light", "🌙 Scuro": "dark", "🔵 Blu": "blue", "🌿 Forest": "forest"}
+    _theme_rev  = {v: k for k, v in _theme_map.items()}
     tema_sel = st.radio(
         "tema",
-        ["☀️ Chiaro", "🌙 Scuro"],
-        index=0 if st.session_state.theme == "light" else 1,
-        horizontal=True,
+        _theme_opts,
+        index=_theme_opts.index(_theme_rev.get(st.session_state.theme, "☀️ Chiaro")),
+        horizontal=False,
         label_visibility="collapsed"
     )
-    new_theme = "light" if "Chiaro" in tema_sel else "dark"
+    new_theme = _theme_map[tema_sel]
     if new_theme != st.session_state.theme:
         st.session_state.theme = new_theme
         st.rerun()
@@ -1665,26 +1714,28 @@ with st.expander("✏️  Personalizza  *(opzionale)*"):
             to_remove = None
             for i, ex in enumerate(st.session_state.esercizi_custom):
                 st.markdown(f'<div class="section-label">Esercizio {i+1}</div>', unsafe_allow_html=True)
-                ca, cb, cc, cd = st.columns([1, 3, 2, 0.4])
-                with ca:
-                    t = st.selectbox("tipo", TIPI_ESERCIZIO,
+                # Tipo + rimuovi sulla stessa riga
+                _ca, _cd = st.columns([4, 0.5])
+                with _ca:
+                    t = st.selectbox("Tipo esercizio", TIPI_ESERCIZIO,
                                      index=TIPI_ESERCIZIO.index(ex['tipo']),
                                      key=f"tipo_{i}", label_visibility="collapsed")
                     st.session_state.esercizi_custom[i]['tipo'] = t
-                with cb:
-                    d = st.text_input("desc", value=ex['descrizione'],
-                                      placeholder="es. Risolvi l'equazione...",
-                                      key=f"desc_{i}", label_visibility="collapsed")
-                    st.session_state.esercizi_custom[i]['descrizione'] = d
-                with cc:
-                    img = st.file_uploader("img", type=['png','jpg','jpeg'],
-                                           key=f"img_{i}", label_visibility="collapsed")
-                    if img: st.session_state.esercizi_custom[i]['immagine'] = img
-                    if st.session_state.esercizi_custom[i].get('immagine'):
-                        st.image(st.session_state.esercizi_custom[i]['immagine'], width=60)
-                with cd:
+                with _cd:
                     st.write("")
                     if st.button("✕", key=f"rm_{i}"): to_remove = i
+                # Descrizione sotto
+                d = st.text_input("Descrizione", value=ex['descrizione'],
+                                  placeholder="es. Risolvi l'equazione...",
+                                  key=f"desc_{i}", label_visibility="collapsed")
+                st.session_state.esercizi_custom[i]['descrizione'] = d
+                # Allegato: pulsante semplice
+                img = st.file_uploader("📎 Allega immagine (opzionale)",
+                                       type=['png','jpg','jpeg'],
+                                       key=f"img_{i}", label_visibility="visible")
+                if img: st.session_state.esercizi_custom[i]['immagine'] = img
+                if st.session_state.esercizi_custom[i].get('immagine'):
+                    st.image(st.session_state.esercizi_custom[i]['immagine'], width=60)
             if to_remove is not None:
                 st.session_state.esercizi_custom.pop(to_remove); st.rerun()
 
@@ -1701,10 +1752,12 @@ with st.expander("✏️  Personalizza  *(opzionale)*"):
     )
 
     st.markdown(f'<div class="section-label">📂 File di riferimento</div>', unsafe_allow_html=True)
-    col_up, _ = st.columns([2, 1])
-    with col_up:
-        file_ispirazione = st.file_uploader("file", type=['pdf','png','jpg','jpeg'], label_visibility="collapsed")
-    st.markdown('<div class="hint">💡 PDF o immagine del libro/verifica precedente.</div>', unsafe_allow_html=True)
+    file_ispirazione = st.file_uploader(
+        "Allega PDF o immagine del libro / verifica precedente",
+        type=['pdf','png','jpg','jpeg'],
+        label_visibility="visible"
+    )
+
 # ── BOTTONE GENERA ────────────────────────────────────────────────────────────────
 st.write("")
 genera_btn = st.button("🚀  Genera Verifica", use_container_width=True, type="primary")
