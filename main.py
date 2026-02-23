@@ -66,48 +66,6 @@ THEMES = {
         "input_bg":     "#232320",
         "hover":        "#232320",
     },
-    "blue": {
-        "bg":           "#1877F2",
-        "bg2":          "#1565D8",
-        "card":         "#1565D8",
-        "card2":        "#1050C0",
-        "border":       "#2E86FF",
-        "border2":      "#4D9FFF",
-        "text":         "#FFFFFF",
-        "text2":        "#D0E8FF",
-        "muted":        "#90BBEE",
-        "accent":       "#FFD700",
-        "accent_light": "#3A3000",
-        "accent2":      "#00E5A0",
-        "success":      "#00E5A0",
-        "warn":         "#FFD700",
-        "err":          "#FF6B6B",
-        "shadow":       "0 1px 3px rgba(0,0,0,.25)",
-        "shadow_md":    "0 4px 16px rgba(0,0,0,.35)",
-        "input_bg":     "#1050C0",
-        "hover":        "#0D45A8",
-    },
-    "forest": {
-        "bg":           "#1A1F1A",
-        "bg2":          "#212621",
-        "card":         "#252C25",
-        "card2":        "#2D342D",
-        "border":       "#3A4A3A",
-        "border2":      "#4A5E4A",
-        "text":         "#E8F0E8",
-        "text2":        "#B8CCB8",
-        "muted":        "#708070",
-        "accent":       "#6DBF5E",
-        "accent_light": "#1A2E1A",
-        "accent2":      "#A8D878",
-        "success":      "#6DBF5E",
-        "warn":         "#D4A83A",
-        "err":          "#E06060",
-        "shadow":       "0 1px 3px rgba(0,0,0,.3)",
-        "shadow_md":    "0 4px 16px rgba(0,0,0,.45)",
-        "input_bg":     "#2D342D",
-        "hover":        "#323C32",
-    },
 }
 
 if "theme" not in st.session_state:
@@ -1234,6 +1192,29 @@ st.markdown(f"""
     color: {T['text']} !important;
   }}
 
+  /* ── COMPACT UPLOADER — solo bottone, no drag&drop ── */
+  .compact-uploader [data-testid="stFileUploader"] section {{
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    min-height: unset !important;
+  }}
+  .compact-uploader [data-testid="stFileUploadDropzone"] {{
+    display: none !important;
+  }}
+  .compact-uploader [data-testid="stFileUploader"] button {{
+    background: {T['card2']} !important;
+    color: {T['text2']} !important;
+    border: 1px solid {T['border2']} !important;
+    border-radius: 8px !important;
+    font-size: 0.8rem !important;
+    padding: 6px 14px !important;
+  }}
+  .compact-uploader [data-testid="stFileUploader"] button:hover {{
+    border-color: {T['accent']} !important;
+    color: {T['accent']} !important;
+  }}
+
   /* ── TEX DOWNLOAD — piccolo e discreto ── */
   .tex-btn-wrap .stDownloadButton button,
   .tex-btn-wrap [data-testid="stDownloadButton"] button {{
@@ -1542,11 +1523,17 @@ st.markdown(f"""
     /* Contenitore colonne: vertical stack con gap tra i campi */
     [data-testid="stHorizontalBlock"] {{
       flex-direction: column !important;
-      gap: 1.2rem !important;
+      gap: 0 !important;
     }}
-    /* Assicura spazio sopra ogni colonna impilata */
+    /* Spazio esplicito sopra la seconda colonna (Materia) */
     [data-testid="stHorizontalBlock"] > [data-testid="column"] + [data-testid="column"] {{
-      margin-top: 0.4rem !important;
+      margin-top: 1.4rem !important;
+    }}
+    /* Assicura altezza minima input argomento */
+    [data-testid="stHorizontalBlock"] > [data-testid="column"]:first-child .stTextInput input {{
+      min-height: 54px !important;
+      height: 54px !important;
+      font-size: 1rem !important;
     }}
 
     /* Input e select: altezza adeguata e testo visibile */
@@ -1648,17 +1635,14 @@ with st.sidebar:
     ]
 
     st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">🎨 Aspetto</div>', unsafe_allow_html=True)
-    _theme_opts = ["☀️ Chiaro", "🌙 Scuro", "🔵 Blu", "🌿 Forest"]
-    _theme_map  = {"☀️ Chiaro": "light", "🌙 Scuro": "dark", "🔵 Blu": "blue", "🌿 Forest": "forest"}
-    _theme_rev  = {v: k for k, v in _theme_map.items()}
     tema_sel = st.radio(
         "tema",
-        _theme_opts,
-        index=_theme_opts.index(_theme_rev.get(st.session_state.theme, "☀️ Chiaro")),
-        horizontal=False,
+        ["☀️ Chiaro", "🌙 Scuro"],
+        index=0 if st.session_state.theme == "light" else 1,
+        horizontal=True,
         label_visibility="collapsed"
     )
-    new_theme = _theme_map[tema_sel]
+    new_theme = "light" if "Chiaro" in tema_sel else "dark"
     if new_theme != st.session_state.theme:
         st.session_state.theme = new_theme
         st.rerun()
@@ -1729,10 +1713,12 @@ with st.expander("✏️  Personalizza  *(opzionale)*"):
                                   placeholder="es. Risolvi l'equazione...",
                                   key=f"desc_{i}", label_visibility="collapsed")
                 st.session_state.esercizi_custom[i]['descrizione'] = d
-                # Allegato: pulsante semplice
-                img = st.file_uploader("📎 Allega immagine (opzionale)",
+                # Allegato: uploader compatto
+                st.markdown('<div class="compact-uploader">', unsafe_allow_html=True)
+                img = st.file_uploader("📎 Immagine opzionale",
                                        type=['png','jpg','jpeg'],
-                                       key=f"img_{i}", label_visibility="visible")
+                                       key=f"img_{i}", label_visibility="collapsed")
+                st.markdown('</div>', unsafe_allow_html=True)
                 if img: st.session_state.esercizi_custom[i]['immagine'] = img
                 if st.session_state.esercizi_custom[i].get('immagine'):
                     st.image(st.session_state.esercizi_custom[i]['immagine'], width=60)
