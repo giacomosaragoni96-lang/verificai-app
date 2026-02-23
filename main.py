@@ -1702,7 +1702,7 @@ with st.sidebar:
     st.markdown('<div class="sidebar-title">⚙️ Impostazioni</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="sidebar-label">🏫 Classe</div>', unsafe_allow_html=True)
-    difficolta = st.selectbox("livello", SCUOLE, index=2, label_visibility="collapsed")
+    difficolta = st.selectbox("livello", SCUOLE, index=3, label_visibility="collapsed")
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
     bes_dsa         = st.checkbox("Verifica ridotta (sostegno/certificazione)", value=False,
@@ -2272,4 +2272,5 @@ st.markdown(f"""
   </a>
 </div>
 """, unsafe_allow_html=True)
+
 
