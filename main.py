@@ -1824,28 +1824,18 @@ if genera_btn:
             st.session_state.esercizi_custom, num_esercizi_totali, punti_totali if mostra_punteggi else 0)
         titolo_a = "Versione A" if doppia_fila else ""
 
-        # ── Progress bar animata con step visibili ───────────────────────────
+        # ── Progress bar animata ─────────────────────────────────────────────
         _n_steps = 3 + (1 if correzione_step else 0) + (2 if doppia_fila else 0)
-        _step = [0]
-        _prog_slot = st.empty()
+        _step    = [0]
+        _prog    = st.empty()
 
-        _STEP_LABELS = [
-            "✍️  Elaborazione titolo…",
-            "🧠  Generazione esercizi…",
-            "🖨️  Compilazione PDF…",
-            "📝  Soluzioni step-by-step…",
-            "📄  Versione B…",
-            "🖨️  PDF Versione B…",
-        ]
-
-        def _avanza(label_idx=None, testo=None):
+        def _avanza(testo):
             _step[0] += 1
-            perc = min(_step[0] / _n_steps, 0.99)
-            msg = testo or (_STEP_LABELS[label_idx] if label_idx is not None and label_idx < len(_STEP_LABELS) else "⏳ In corso…")
-            _prog_slot.progress(perc, text=msg)
+            _prog.progress(min(_step[0] / _n_steps, 0.97), text=testo)
 
-        _prog_slot.progress(0.02, text=_STEP_LABELS[0])
+        _prog.progress(0.03, text="✍️  Elaborazione titolo…")
 
+        # Step 1 — titolo
         titolo_resp = model.generate_content(
             f"Sei un docente. Crea un titolo professionale e conciso per una verifica scolastica.\n"
             f"Materia: {materia}\n"
@@ -1856,54 +1846,54 @@ if genera_btn:
         titolo_clean = titolo_resp.text.strip().strip('"').strip("'").strip()
         if not titolo_clean:
             titolo_clean = argomento.strip()
-        _avanza(0, "🧠  Generazione esercizi…")
+        _avanza("🧠  Generazione esercizi in corso…")
 
-        bes_rule = ""
-            if bes_dsa:
-                bes_rule = (
-                    "- VERIFICA RIDOTTA: almeno il 25% dei sottopunti DEVE essere marcato come facoltativo.\n"
-                    "  USA ESATTAMENTE questo formato: metti (*) subito dopo la label, sulla stessa riga.\n"
-                    "  Esempio corretto: \\item[c)] (*) Descrivi le caratteristiche...\n"
-                    "  NON modificare la lettera della label (NON usare \\item[c*)] o simili).\n"
-                    "  Scegli i sottopunti più complessi o avanzati per il (*). Conta: almeno 1 ogni 4 item.\n"
-                )
-            else:
-                bes_rule = "- Nessun simbolo (*) facoltativi."
+        # ── Regole prompt ────────────────────────────────────────────────────
+        if bes_dsa:
+            bes_rule = (
+                "- VERIFICA RIDOTTA: almeno il 25% dei sottopunti DEVE essere marcato come facoltativo.\n"
+                "  USA ESATTAMENTE questo formato: metti (*) subito dopo la label, sulla stessa riga.\n"
+                "  Esempio corretto: \\item[c)] (*) Descrivi le caratteristiche...\n"
+                "  NON modificare la lettera della label (NON usare \\item[c*)] o simili).\n"
+                "  Scegli i sottopunti più complessi o avanzati per il (*). Conta: almeno 1 ogni 4 item.\n"
+            )
+        else:
+            bes_rule = "- Nessun simbolo (*) facoltativi."
 
-            punti_rule = (f"- Ogni \\item DEVE avere \"(X pt)\" sulla stessa riga. Totale: {punti_totali} pt."
-                          if mostra_punteggi else "- NON inserire punti (X pt) in nessun esercizio né sottopunto.")
+        punti_rule = (f"- Ogni \\item DEVE avere \"(X pt)\" sulla stessa riga. Totale: {punti_totali} pt."
+                      if mostra_punteggi else "- NON inserire punti (X pt) in nessun esercizio né sottopunto.")
 
-            multi_rule = ""
-            if esercizio_multidisciplinare:
-                materia2_str = f" con {materia2_scelta}" if materia2_scelta else " (scegli tu la disciplina più adatta)"
-                diff_multi_str = f" Difficoltà: {difficolta_multi}." if difficolta_multi else ""
-                multi_rule = (
-                    f"- ESERCIZIO MULTIDISCIPLINARE: uno degli esercizi INCLUSI NEL TOTALE deve collegare "
-                    f"{materia}{materia2_str}.{diff_multi_str}\n"
-                    "  Usa SOLO strumenti già acquisiti dagli studenti."
-                )
-            else:
-                multi_rule = "- NON includere esercizi multidisciplinari."
+        if esercizio_multidisciplinare:
+            materia2_str   = f" con {materia2_scelta}" if materia2_scelta else " (scegli tu la disciplina più adatta)"
+            diff_multi_str = f" Difficoltà: {difficolta_multi}." if difficolta_multi else ""
+            multi_rule = (
+                f"- ESERCIZIO MULTIDISCIPLINARE: uno degli esercizi INCLUSI NEL TOTALE deve collegare "
+                f"{materia}{materia2_str}.{diff_multi_str}\n"
+                "  Usa SOLO strumenti già acquisiti dagli studenti."
+            )
+        else:
+            multi_rule = "- NON includere esercizi multidisciplinari."
 
-            griglia_rule = ("- NON generare la griglia (sarà aggiunta automaticamente)."
-                            if con_griglia else "- NON generare nessuna griglia di valutazione.")
+        griglia_rule = ("- NON generare la griglia (sarà aggiunta automaticamente)."
+                        if con_griglia else "- NON generare nessuna griglia di valutazione.")
 
-            # Regola grafici per materie scientifiche
-            if e_mat:
-                grafici_rule = (
-                    "- GRAFICI pgfplots: quando il grafico è un DATO fornito allo studente "
-                    "(es. 'osserva il grafico della parabola e determina...', 'dal grafico ricava...'), "
-                    "DEVI obbligatoriamente generarlo con \\begin{tikzpicture}\\begin{axis}[width=7cm,height=5.5cm,"
-                    "axis lines=center,xlabel=$x$,ylabel=$y$,grid=both]...\\end{axis}\\end{tikzpicture}. "
-                    "Per parabole: \\addplot[blue,thick,domain=-5:5,samples=100]{x^2-2*x-3}; "
-                    "Usa \\vspace{3cm} SOLO se lo studente deve disegnare lui il grafico."
-                )
-            else:
-                grafici_rule = ""
+        if e_mat:
+            grafici_rule = (
+                "- GRAFICI pgfplots: quando il grafico è un DATO fornito allo studente "
+                "(es. 'osserva il grafico della parabola e determina...', 'dal grafico ricava...'), "
+                "DEVI obbligatoriamente generarlo con pgfplots/tikzpicture. "
+                "Esempio per parabola: \\begin{tikzpicture}\\begin{axis}[width=7cm,height=5.5cm,"
+                "axis lines=center,xlabel=$x$,ylabel=$y$,grid=both,xtick={-4,...,4},ytick={-4,...,4}]"
+                "\\addplot[blue,thick,domain=-3:3,samples=100]{x^2-2*x-3}; \\end{axis}\\end{tikzpicture} "
+                "Usa \\vspace{3cm} SOLO se lo studente deve disegnare lui il grafico."
+            )
+            pgfplots_pkg = "\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}"
+        else:
+            grafici_rule = ""
+            pgfplots_pkg = ""
 
-            pgfplots_pkg = "\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}" if e_mat else ""
-            titolo_header = f"Verifica di {materia}: {titolo_clean}" + (f" — {titolo_a}" if titolo_a else "")
-            preambolo_fisso = f"""\\documentclass[12pt,a4paper]{{article}}
+        titolo_header = f"Verifica di {materia}: {titolo_clean}" + (f" — {titolo_a}" if titolo_a else "")
+        preambolo_fisso = f"""\\documentclass[12pt,a4paper]{{article}}
 \\usepackage[utf8]{{inputenc}}
 \\usepackage[italian]{{babel}}
 \\usepackage{{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}}
@@ -1921,7 +1911,7 @@ if genera_btn:
 \\end{{center}}
 """
 
-            prompt_a = f"""Sei un docente esperto di {materia} e LaTeX. Genera SOLO il corpo degli esercizi (senza preambolo, senza \\documentclass, senza \\begin{{document}}) per una verifica su: {argomento}.
+        prompt_a = f"""Sei un docente esperto di {materia} e LaTeX. Genera SOLO il corpo degli esercizi (senza preambolo, senza \\documentclass, senza \\begin{{document}}) per una verifica su: {argomento}.
 {f'Punti totali: {punti_totali}.' if mostra_punteggi else ''}
 
 CALIBRAZIONE LIVELLO:
@@ -1933,10 +1923,10 @@ REGOLE LATEX (TASSATIVE):
 {griglia_rule}
 {punti_rule}
 - Titoli: \\subsection*{{Esercizio N: Titolo{' (TOT pt)' if mostra_punteggi else ''}}}
-- SOTTOPUNTI OBBLIGATORI: usa SEMPRE \\item[a)] \\item[b)] \\item[c)] ecc. con label ESPLICITA tra parentesi quadre. NON usare \\begin{{enumerate}}[a)] con item senza label. Ogni \\item DEVE avere [lettera)] esplicito.
+- SOTTOPUNTI OBBLIGATORI: usa SEMPRE \\item[a)] \\item[b)] \\item[c)] ecc. con label ESPLICITA tra parentesi quadre.
 {bes_rule}
 {multi_rule}
-- Scelta multipla: le opzioni DEVONO stare in un \\begin{{enumerate}}[a)] SEPARATO dopo la riga della domanda.
+- Scelta multipla: le opzioni DEVONO stare in un \\begin{{enumerate}}[a)] SEPARATO dopo la domanda.
 - Vero/Falso: $\\square$ \\textbf{{V}} $\\quad\\square$ \\textbf{{F}}
 - Completamento: \\underline{{\\hspace{{3cm}}}}
 {grafici_rule}
@@ -1946,84 +1936,91 @@ TERMINA con \\end{{document}}.
 NIENTE preambolo, NIENTE \\documentclass, NIENTE \\begin{{document}}.
 SOLO CODICE LATEX del corpo."""
 
-            inp = [prompt_a]
-            if file_ispirazione:
-                inp.append({"mime_type": file_ispirazione.type, "data": file_ispirazione.getvalue()})
-                inp[0] += "\nPrendi spunto dal file allegato per stile e livello."
-            for im in imgs_es:
-                inp.append({"mime_type": im['mime_type'], "data": im['data']})
-                inp[0] += f"\nUsa l'immagine come riferimento per l'Esercizio {im['idx']}."
+        inp = [prompt_a]
+        if file_ispirazione:
+            inp.append({"mime_type": file_ispirazione.type, "data": file_ispirazione.getvalue()})
+            inp[0] += "\nPrendi spunto dal file allegato per stile e livello."
+        for im in imgs_es:
+            inp.append({"mime_type": im['mime_type'], "data": im['data']})
+            inp[0] += f"\nUsa l'immagine come riferimento per l'Esercizio {im['idx']}."
 
-            ra = model.generate_content(inp)
-            _avanza(1, "🧠  Elaborazione LaTeX…")
-            corpo_latex = ra.text.replace("```latex","").replace("```","").strip()
-            corpo_latex = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex, flags=re.DOTALL)
-            corpo_latex = re.sub(r'^\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex, flags=re.DOTALL)
-            if "\\end{document}" not in corpo_latex:
-                corpo_latex += "\n\\end{document}"
-            latex_a = preambolo_fisso + corpo_latex
-            latex_a = fix_items_environment(latex_a)
+        # Step 2 — genera LaTeX
+        ra = model.generate_content(inp)
+        _avanza("⚙️  Elaborazione LaTeX…")
+
+        corpo_latex = ra.text.replace("```latex","").replace("```","").strip()
+        corpo_latex = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex, flags=re.DOTALL)
+        corpo_latex = re.sub(r'^\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex, flags=re.DOTALL)
+        if "\\end{document}" not in corpo_latex:
+            corpo_latex += "\n\\end{document}"
+
+        latex_a = preambolo_fisso + corpo_latex
+        latex_a = fix_items_environment(latex_a)
+        if bes_dsa:
+            latex_a = inietta_asterischi_bes(latex_a, percentuale=0.25)
+        latex_a_final = inietta_griglia(latex_a, punti_totali) if con_griglia else latex_a
+        st.session_state.verifiche['A'] = {**_vf(), 'latex': latex_a_final}
+
+        # Step 3 — compila PDF A
+        _avanza("🖨️  Compilazione PDF…")
+        pdf_auto, err_auto = compila_pdf(latex_a_final)
+        if pdf_auto:
+            st.session_state.verifiche['A']['pdf']     = pdf_auto
+            st.session_state.verifiche['A']['pdf_ts']  = time.time()
+            st.session_state.verifiche['A']['preview'] = True
+
+        # Step opzionale — soluzioni A
+        if correzione_step:
+            _avanza("📝  Generazione soluzioni…")
+            ps = (f"Risolvi questa verifica come docente correttore. Stesso preambolo.\n"
+                  f"Titolo: 'Soluzioni — {titolo_clean}'. Niente griglia.\n"
+                  f"1. \\subsection*{{Soluzioni Rapide}}: solo risultati finali.\n"
+                  f"2. \\subsection*{{Svolgimento Dettagliato}}: passaggi completi.\n"
+                  f"SOLO CODICE LATEX.\n\n{latex_a}")
+            rs = model.generate_content(ps)
+            st.session_state.verifiche['A']['soluzioni_latex'] = (
+                rs.text.replace("```latex","").replace("```","").strip())
+
+        # Step opzionale — versione B
+        if doppia_fila:
+            _avanza("📄  Generazione Versione B…")
+            rb = model.generate_content(
+                f"Versione B: stessa struttura, cambia dati e quesiti. "
+                f"SOLO corpo esercizi (\\subsection* ecc.), SENZA preambolo/\\documentclass/\\begin{{document}}. "
+                f"Sostituisci 'Versione A' con 'Versione B'. TERMINA con \\end{{document}}. SOLO LATEX.\n\n{corpo_latex}")
+            corpo_latex_b = rb.text.replace("```latex","").replace("```","").strip()
+            corpo_latex_b = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex_b, flags=re.DOTALL)
+            corpo_latex_b = re.sub(r'^\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex_b, flags=re.DOTALL)
+            if "\\end{document}" not in corpo_latex_b:
+                corpo_latex_b += "\n\\end{document}"
+            preambolo_b = preambolo_fisso.replace(
+                titolo_header,
+                titolo_header.replace("Versione A","Versione B") if "Versione A" in titolo_header
+                else titolo_header + " — Versione B"
+            )
+            latex_b = preambolo_b + corpo_latex_b
+            latex_b = fix_items_environment(latex_b)
             if bes_dsa:
-                latex_a = inietta_asterischi_bes(latex_a, percentuale=0.25)
-            latex_a_final = inietta_griglia(latex_a, punti_totali) if con_griglia else latex_a
-            st.session_state.verifiche['A'] = {**_vf(), 'latex': latex_a_final}
+                latex_b = inietta_asterischi_bes(latex_b, percentuale=0.25)
+            latex_b_final = inietta_griglia(latex_b, punti_totali) if con_griglia else latex_b
+            st.session_state.verifiche['B'] = {**_vf(), 'latex': latex_b_final}
 
-            _avanza(2, "🖨️  Compilazione PDF…")
-            pdf_auto, err_auto = compila_pdf(latex_a_final)
-            if pdf_auto:
-                st.session_state.verifiche['A']['pdf'] = pdf_auto
-                st.session_state.verifiche['A']['pdf_ts'] = time.time()
-                st.session_state.verifiche['A']['preview'] = True
-
+            _avanza("🖨️  PDF Versione B…")
+            pdf_b_auto, _ = compila_pdf(latex_b_final)
+            if pdf_b_auto:
+                st.session_state.verifiche['B']['pdf']     = pdf_b_auto
+                st.session_state.verifiche['B']['pdf_ts']  = time.time()
+                st.session_state.verifiche['B']['preview'] = True
             if correzione_step:
-                _avanza(3, "📝  Generazione soluzioni…")
-                ps = (f"Risolvi questa verifica come docente correttore. Stesso preambolo.\n"
-                      f"Titolo: 'Soluzioni — {titolo_clean}'. Niente griglia.\n"
-                      f"1. \\subsection*{{Soluzioni Rapide}}: solo risultati finali.\n"
-                      f"2. \\subsection*{{Svolgimento Dettagliato}}: passaggi completi.\n"
-                      f"SOLO CODICE LATEX.\n\n{latex_a}")
-                rs = model.generate_content(ps)
-                st.session_state.verifiche['A']['soluzioni_latex'] = (
-                    rs.text.replace("```latex","").replace("```","").strip())
+                rsb = model.generate_content(
+                    "Stessa struttura soluzioni (Rapide + Dettagliato). SOLO LATEX.\n\n" + latex_b)
+                st.session_state.verifiche['B']['soluzioni_latex'] = (
+                    rsb.text.replace("```latex","").replace("```","").strip())
 
-            if doppia_fila:
-                _avanza(None, "📄  Generazione Versione B…")
-                rb = model.generate_content(
-                    f"Versione B: stessa struttura, cambia dati e quesiti. "
-                    f"SOLO corpo esercizi (\\subsection* ecc.), SENZA preambolo/\\documentclass/\\begin{{document}}. "
-                    f"Sostituisci 'Versione A' con 'Versione B'. TERMINA con \\end{{document}}. SOLO LATEX.\n\n{corpo_latex}")
-                corpo_latex_b = rb.text.replace("```latex","").replace("```","").strip()
-                corpo_latex_b = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex_b, flags=re.DOTALL)
-                corpo_latex_b = re.sub(r'^\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex_b, flags=re.DOTALL)
-                if "\\end{document}" not in corpo_latex_b:
-                    corpo_latex_b += "\n\\end{document}"
-                preambolo_b = preambolo_fisso.replace(
-                    titolo_header,
-                    titolo_header.replace("Versione A","Versione B") if "Versione A" in titolo_header
-                    else titolo_header + " — Versione B"
-                )
-                latex_b = preambolo_b + corpo_latex_b
-                latex_b = fix_items_environment(latex_b)
-                if bes_dsa:
-                    latex_b = inietta_asterischi_bes(latex_b, percentuale=0.25)
-                latex_b_final = inietta_griglia(latex_b, punti_totali) if con_griglia else latex_b
-                st.session_state.verifiche['B'] = {**_vf(), 'latex': latex_b_final}
-
-                _avanza(None, "🖨️  PDF Versione B…")
-                pdf_b_auto, _ = compila_pdf(latex_b_final)
-                if pdf_b_auto:
-                    st.session_state.verifiche['B']['pdf'] = pdf_b_auto
-                    st.session_state.verifiche['B']['pdf_ts'] = time.time()
-                    st.session_state.verifiche['B']['preview'] = True
-                if correzione_step:
-                    rsb = model.generate_content(
-                        "Stessa struttura soluzioni (Rapide + Dettagliato). SOLO LATEX.\n\n" + latex_b)
-                    st.session_state.verifiche['B']['soluzioni_latex'] = (
-                        rsb.text.replace("```latex","").replace("```","").strip())
-
-        _prog_slot.progress(1.0, text="✅  Verifica pronta!")
+        # Fine
+        _prog.progress(1.0, text="✅  Verifica pronta!")
         time.sleep(0.6)
-        _prog_slot.empty()
+        _prog.empty()
 
         st.session_state.last_materia   = materia
         st.session_state.last_argomento = titolo_clean
