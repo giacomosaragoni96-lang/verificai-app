@@ -2239,7 +2239,7 @@ if st.session_state.verifiche['A']['latex']:
                 st.markdown('</div>', unsafe_allow_html=True)
 # ── FEEDBACK FLOATING BUTTON ─────────────────────────────────────────────────────
 # 👇 SOSTITUISCI con il link del tuo Google Form
-FEEDBACK_FORM_URL = "https://forms.gle/XXXXXXXXXXXXXXXX"
+FEEDBACK_FORM_URL = "https://forms.gle/KNu8v8iDVUiGkQUL8"
 
 st.markdown(f"""
 <style>
@@ -2291,6 +2291,7 @@ st.markdown(f"""
   <span style="opacity:0.55;">VerificAI · Versione Beta </span>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
