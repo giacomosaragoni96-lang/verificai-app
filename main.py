@@ -1092,8 +1092,9 @@ st.markdown(f"""
     font-family: 'DM Sans', sans-serif !important;
     font-size: 0.95rem !important;
     padding: 14px 16px !important;
-    min-height: 56px !important;
-    height: 56px !important;
+    min-height: 52px !important;
+    height: 52px !important;
+    box-sizing: border-box !important;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }}
   .stTextInput input::placeholder,
@@ -1554,9 +1555,14 @@ st.markdown(f"""
     .stNumberInput input {{
       font-size: 1rem !important;
       padding: 14px 16px !important;
-      min-height: 54px !important;
-      height: 54px !important;
-      line-height: 1.5 !important;
+      min-height: 52px !important;
+      height: 52px !important;
+      line-height: 1.4 !important;
+      box-sizing: border-box !important;
+    }}
+    /* Forza altezza contenitore input */
+    .stTextInput > div > div {{
+      min-height: 52px !important;
     }}
     .stTextInput input::placeholder,
     .stNumberInput input::placeholder {{
@@ -1721,30 +1727,34 @@ with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
             to_remove = None
             for i, ex in enumerate(st.session_state.esercizi_custom):
                 st.markdown(f'<div class="expander-heading">Esercizio {i+1}</div>', unsafe_allow_html=True)
-                # Tipo + rimuovi sulla stessa riga
-                _ca, _cd = st.columns([4, 0.5])
-                with _ca:
-                    t = st.selectbox("Tipo esercizio", TIPI_ESERCIZIO,
-                                     index=TIPI_ESERCIZIO.index(ex['tipo']),
-                                     key=f"tipo_{i}", label_visibility="collapsed")
-                    st.session_state.esercizi_custom[i]['tipo'] = t
-                with _cd:
-                    st.write("")
-                    if st.button("✕", key=f"rm_{i}"): to_remove = i
-                # Descrizione sotto
-                d = st.text_input("Descrizione", value=ex['descrizione'],
-                                  placeholder="es. Risolvi l'equazione ax²+bx+c=0, mostra i passaggi...",
-                                  key=f"desc_{i}", label_visibility="collapsed")
+                # Tipo esercizio
+                t = st.selectbox("Tipo esercizio", TIPI_ESERCIZIO,
+                                 index=TIPI_ESERCIZIO.index(ex['tipo']),
+                                 key=f"tipo_{i}", label_visibility="visible")
+                st.session_state.esercizi_custom[i]['tipo'] = t
+                # Descrizione
+                d = st.text_input("Descrizione dell'esercizio (opzionale)",
+                                  value=ex['descrizione'],
+                                  placeholder="es. Risolvi ax²+bx+c=0 mostrando i passaggi",
+                                  key=f"desc_{i}", label_visibility="visible")
                 st.session_state.esercizi_custom[i]['descrizione'] = d
-                # Allegato: uploader compatto
-                st.markdown('<div class="compact-uploader">', unsafe_allow_html=True)
-                img = st.file_uploader("📎 Immagine opzionale",
-                                       type=['png','jpg','jpeg'],
-                                       key=f"img_{i}", label_visibility="collapsed")
-                st.markdown('</div>', unsafe_allow_html=True)
-                if img: st.session_state.esercizi_custom[i]['immagine'] = img
-                if st.session_state.esercizi_custom[i].get('immagine'):
-                    st.image(st.session_state.esercizi_custom[i]['immagine'], width=60)
+                # Allegato + rimuovi sulla stessa riga
+                _cimg, _cdel = st.columns([3, 1])
+                with _cimg:
+                    st.markdown('<div class="compact-uploader">', unsafe_allow_html=True)
+                    img = st.file_uploader("📎 Immagine allegata",
+                                           type=['png','jpg','jpeg'],
+                                           key=f"img_{i}", label_visibility="collapsed")
+                    st.markdown('</div>', unsafe_allow_html=True)
+                    if img: st.session_state.esercizi_custom[i]['immagine'] = img
+                    if st.session_state.esercizi_custom[i].get('immagine'):
+                        st.image(st.session_state.esercizi_custom[i]['immagine'], width=60)
+                with _cdel:
+                    st.markdown('<div style="padding-top:4px;">', unsafe_allow_html=True)
+                    if st.button("🗑 Rimuovi", key=f"rm_{i}", use_container_width=True):
+                        to_remove = i
+                    st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown('<hr style="margin:0.8rem 0; opacity:0.15;">', unsafe_allow_html=True)
             if to_remove is not None:
                 st.session_state.esercizi_custom.pop(to_remove); st.rerun()
 
