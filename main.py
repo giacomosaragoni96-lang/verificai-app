@@ -1091,8 +1091,9 @@ st.markdown(f"""
     color: {T['text']} !important;
     font-family: 'DM Sans', sans-serif !important;
     font-size: 0.95rem !important;
-    padding: 12px 16px !important;
-    min-height: 50px !important;
+    padding: 14px 16px !important;
+    min-height: 56px !important;
+    height: 56px !important;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }}
   .stTextInput input::placeholder,
