@@ -1497,10 +1497,10 @@ st.markdown(f"""
       padding-left: 0 !important;
       padding-right: 0 !important;
     }}
-    /* Contenitore colonne: vertical stack */
+    /* Contenitore colonne: vertical stack con gap tra i campi */
     [data-testid="stHorizontalBlock"] {{
       flex-direction: column !important;
-      gap: 0 !important;
+      gap: 0.6rem !important;
     }}
 
     /* Input e select: altezza adeguata e testo visibile */
@@ -1516,12 +1516,27 @@ st.markdown(f"""
       font-size: 1rem !important;
       opacity: 1 !important;
     }}
+    /* Selectbox: fix altezza sia nel main che nella sidebar */
     .stSelectbox [data-baseweb="select"] > div:first-child {{
-      padding: 14px 14px !important;
+      padding: 12px 14px !important;
       min-height: 50px !important;
+      height: auto !important;
     }}
-    .stSelectbox [data-baseweb="select"] span {{
-      font-size: 1rem !important;
+    .stSelectbox [data-baseweb="select"] span,
+    .stSelectbox [data-baseweb="select"] div {{
+      font-size: 0.95rem !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }}
+    /* Sidebar selectbox specifico */
+    [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:first-child {{
+      min-height: 48px !important;
+      padding: 10px 12px !important;
+    }}
+    [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{
+      font-size: 0.85rem !important;
+      color: #f0ede6 !important;
     }}
     .stTextArea textarea {{
       font-size: 0.95rem !important;
