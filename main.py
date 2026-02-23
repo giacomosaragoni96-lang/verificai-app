@@ -1526,18 +1526,19 @@ st.markdown(f"""
      SIDEBAR HINT — solo mobile
      ════════════════════════════════════ */
   .sidebar-hint-mobile {{
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     background: {T['accent_light']};
     border: 1px solid {T['accent']};
-    border-radius: 10px;
-    padding: 8px 14px;
-    font-size: 0.78rem;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 0.75rem;
     color: {T['accent']};
     margin-bottom: 1rem;
-    font-weight: 500;
-    opacity: 0.85;
+    font-weight: 600;
+    white-space: nowrap;
+    max-width: fit-content;
   }}
 
   /* ═══ MOBILE ═══ */
@@ -1670,7 +1671,7 @@ with st.sidebar:
 # ── HINT SIDEBAR MOBILE (sopra il titolo) ────────────────────────────────────────
 st.markdown("""
 <div class="sidebar-hint-mobile">
-  ⚙️ &nbsp; Apri il pannello <strong>&gt;&gt;</strong> in alto a sinistra per personalizzare classe, punteggi e opzioni
+  ⚙️ &nbsp; Apri <strong>&gt;&gt;</strong> per le impostazioni
 </div>
 """, unsafe_allow_html=True)
 
@@ -1693,10 +1694,19 @@ st.markdown(f"""
 
 
 # ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
-argomento = st.text_input("📚 Argomento", placeholder="es. Le equazioni di secondo grado, i limiti di funzione, la Rivoluzione Francese...")
+st.markdown('<div class="expander-heading">📚 Argomento della verifica</div>', unsafe_allow_html=True)
+argomento_area = st.text_area(
+    "argomento",
+    placeholder="es. Le equazioni di secondo grado\nes. La Rivoluzione Francese",
+    height=90,
+    label_visibility="collapsed",
+    key="argomento_area"
+)
+argomento = argomento_area.strip()
 st.markdown('<div style="height:1.2rem;"></div>', unsafe_allow_html=True)
+st.markdown('<div class="expander-heading" style="margin-top:0.8rem;">📖 Materia</div>', unsafe_allow_html=True)
 _materie_select = MATERIE + ["✏️ Altra materia..."]
-_materia_sel = st.selectbox("📖 Materia", _materie_select, index=0)
+_materia_sel = st.selectbox("Materia", _materie_select, index=0, label_visibility="collapsed")
 if _materia_sel == "✏️ Altra materia...":
     materia_scelta = st.text_input("Scrivi materia:", placeholder="es. Economia Aziendale, Scienze Naturali...",
                                    key="_materia_custom_input", label_visibility="collapsed").strip() or "Matematica"
