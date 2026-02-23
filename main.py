@@ -1934,7 +1934,7 @@ if genera_btn:
                 "Esempio per parabola: \\begin{tikzpicture}\\begin{axis}[width=7cm,height=5.5cm,"
                 "axis lines=center,xlabel=$x$,ylabel=$y$,grid=both,xtick={-4,...,4},ytick={-4,...,4}]"
                 "\\addplot[blue,thick,domain=-3:3,samples=100]{x^2-2*x-3}; \\end{axis}\\end{tikzpicture} "
-                "Usa \\vspace{3cm} SOLO se lo studente deve disegnare lui il grafico."
+                "NON lasciare spazio extra per disegnare se lo studente deve disegnare lui il grafico, lo fara sul suo foglio."
             )
             pgfplots_pkg = "\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}"
         else:
@@ -2246,4 +2246,5 @@ st.markdown(f"""
   <span style="opacity:0.55;">VerificAI · Versione Beta </span>
 </div>
 """, unsafe_allow_html=True)
+
 
