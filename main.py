@@ -1524,22 +1524,18 @@ st.markdown(f"""
      SIDEBAR HINT — solo mobile
      ════════════════════════════════════ */
   .sidebar-hint-mobile {{
-    display: none;
-  }}
-  @media (max-width: 768px) {{
-    .sidebar-hint-mobile {{
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: {T['accent_light']};
-      border: 1px solid {T['accent']};
-      border-radius: 10px;
-      padding: 8px 14px;
-      font-size: 0.82rem;
-      color: {T['accent']};
-      margin-bottom: 1rem;
-      font-weight: 500;
-    }}
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: {T['accent_light']};
+    border: 1px solid {T['accent']};
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.78rem;
+    color: {T['accent']};
+    margin-bottom: 1rem;
+    font-weight: 500;
+    opacity: 0.85;
   }}
 
   /* ═══ MOBILE ═══ */
@@ -1667,7 +1663,7 @@ with st.sidebar:
 # ── HINT SIDEBAR MOBILE (sopra il titolo) ────────────────────────────────────────
 st.markdown("""
 <div class="sidebar-hint-mobile">
-  ⚙️ &nbsp; Tocca <strong>&gt;&gt;</strong> in alto a sinistra per le impostazioni
+  ⚙️ &nbsp; Apri il pannello <strong>&gt;&gt;</strong> in alto a sinistra per personalizzare classe, punteggi e opzioni
 </div>
 """, unsafe_allow_html=True)
 
