@@ -209,22 +209,35 @@ def build_griglia_latex(esercizi, punti_totali):
     )
 
 def inietta_asterischi_bes(latex, percentuale=0.25):
-    pattern = r'(\\item\[([a-zA-Z]+)(\*?)\)\])'
-    tutti = list(re.finditer(pattern, latex))
+    """
+    Marca i sottopunti facoltativi (verifica ridotta) aggiungendo il simbolo (*)
+    subito dopo la label dell'item, senza toccare la lettera.
+    es: \\item[c)]  →  \\item[c)] (*)
+    Evita completamente il problema della doppia numerazione tipo c) / c*).
+    """
+    pattern = re.compile(r'(\\item\[([a-zA-Z]+\*?)\)\])([ \t]*)')
+    tutti = list(pattern.finditer(latex))
     if not tutti:
         return latex
+
+    def _gia_marcato(m):
+        pos_dopo = m.end()
+        resto = latex[pos_dopo:pos_dopo+10].lstrip()
+        return resto.startswith('(*)')
+
     n_totale = len(tutti)
-    n_con_asterisco = sum(1 for m in tutti if m.group(3) == '*')
+    n_gia = sum(1 for m in tutti if _gia_marcato(m))
     n_necessari = max(1, int(n_totale * percentuale + 0.999))
-    if n_con_asterisco >= n_necessari:
+    if n_gia >= n_necessari:
         return latex
-    n_da_aggiungere = n_necessari - n_con_asterisco
-    candidati = [m for m in tutti if m.group(3) != '*']
+
+    n_da_aggiungere = n_necessari - n_gia
+    candidati = [m for m in tutti if not _gia_marcato(m)]
     da_modificare = candidati[-n_da_aggiungere:]
+
     for m in reversed(da_modificare):
-        lettera = m.group(2)
-        replacement = f'\\item[{lettera}*)]'
-        latex = latex[:m.start()] + replacement + latex[m.end():]
+        ins_pos = m.end()
+        latex = latex[:ins_pos] + ' (*)' + latex[ins_pos:]
     return latex
 
 def fix_items_environment(latex):
@@ -1616,8 +1629,8 @@ with st.sidebar:
     difficolta = st.selectbox("livello", SCUOLE, index=2, label_visibility="collapsed")
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
-    bes_dsa         = st.checkbox("Supporto BES/DSA", value=True,
-                    help="Circa il 25% dei sottopunti vengono contrassegnati con * e resi facoltativi per gli studenti con certificazione BES/DSA.")
+    bes_dsa         = st.checkbox("Verifica ridotta (sostegno/certificazione)", value=True,
+                    help="Circa il 25% dei sottopunti vengono marcati con (*) e resi facoltativi per gli studenti con verifica ridotta (sostegno, certificazioni varie, NAI, ecc.).")
     doppia_fila     = st.checkbox("Genera Versione A e B (due varianti)", value=False)
     correzione_step = st.checkbox("Includi soluzioni passo per passo", value=False)
 
@@ -1793,7 +1806,7 @@ if genera_btn:
         model        = genai.GenerativeModel(modello_id)
         materia      = materia_scelta.strip() or "Matematica"
         e_mat        = any(k in materia.lower() for k in ["matem","fis","chim","inform","elettr","meccan"])
-        nota_bes     = ("I sottopunti (*) sono facoltativi per studenti con certificazione."
+        nota_bes     = ("I sottopunti (*) sono facoltativi per gli studenti con verifica ridotta."
                         if bes_dsa else "Svolgere tutti gli esercizi mostrando i passaggi.")
         calibrazione = CALIBRAZIONE_SCUOLA.get(difficolta, "")
         s_note       = f"\nNOTE DOCENTE: {note_generali.strip()}" if note_generali.strip() else ""
@@ -1817,14 +1830,14 @@ if genera_btn:
             bes_rule = ""
             if bes_dsa:
                 bes_rule = (
-                    "- BES/DSA OBBLIGATORIO: almeno il 25% dei sottopunti DEVE avere asterisco.\n"
-                    "  USA ESATTAMENTE questo formato: \\item[a*)] — lettera, asterisco, parentesi chiusa.\n"
-                    "  NON usare \\item[a.] NE \\item[a*] NE \\item[a.)] — SOLO \\item[a*)]\n"
-                    "  Scegli i sottopunti più complessi.\n"
-                    "  IMPORTANTE: conta i sottopunti totali, calcola il 25% e assicurati di mettere asterisco su quel numero minimo PRIMA di terminare.\n"
+                    "- VERIFICA RIDOTTA: almeno il 25% dei sottopunti DEVE essere marcato come facoltativo.\n"
+                    "  USA ESATTAMENTE questo formato: metti (*) subito dopo la label, sulla stessa riga.\n"
+                    "  Esempio corretto: \\item[c)] (*) Descrivi le caratteristiche...\n"
+                    "  NON modificare la lettera della label (NON usare \\item[c*)] o simili).\n"
+                    "  Scegli i sottopunti più complessi o avanzati per il (*). Conta: almeno 1 ogni 4 item.\n"
                 )
             else:
-                bes_rule = "- Nessun asterisco BES/DSA."
+                bes_rule = "- Nessun simbolo (*) facoltativi."
 
             punti_rule = (f"- Ogni \\item DEVE avere \"(X pt)\" sulla stessa riga. Totale: {punti_totali} pt."
                           if mostra_punteggi else "- NON inserire punti (X pt) in nessun esercizio né sottopunto.")
@@ -1844,7 +1857,20 @@ if genera_btn:
             griglia_rule = ("- NON generare la griglia (sarà aggiunta automaticamente)."
                             if con_griglia else "- NON generare nessuna griglia di valutazione.")
 
-            pgfplots_pkg = "\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}" if e_mat else ""
+            # Regola grafici per materie scientifiche
+            if e_mat:
+                grafici_rule = (
+                    "- GRAFICI pgfplots: quando il grafico è un DATO fornito allo studente "
+                    "(es. 'osserva il grafico della parabola e determina...', 'dal grafico ricava...'), "
+                    "DEVI obbligatoriamente generarlo con \\begin{tikzpicture}\\begin{axis}[width=7cm,height=5.5cm,"
+                    "axis lines=center,xlabel=$x$,ylabel=$y$,grid=both]...\\end{axis}\\end{tikzpicture}. "
+                    "Per parabole: \\addplot[blue,thick,domain=-5:5,samples=100]{x^2-2*x-3}; "
+                    "Usa \\vspace{3cm} SOLO se lo studente deve disegnare lui il grafico."
+                )
+            else:
+                grafici_rule = ""
+
+            pgfplots_pkg = "\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}" if e_mat else ""
             titolo_header = f"Verifica di {materia}: {titolo_clean}" + (f" — {titolo_a}" if titolo_a else "")
             preambolo_fisso = f"""\\documentclass[12pt,a4paper]{{article}}
 \\usepackage[utf8]{{inputenc}}
@@ -1882,7 +1908,7 @@ REGOLE LATEX (TASSATIVE):
 - Scelta multipla: le opzioni DEVONO stare in un \\begin{{enumerate}}[a)] SEPARATO dopo la riga della domanda.
 - Vero/Falso: $\\square$ \\textbf{{V}} $\\quad\\square$ \\textbf{{F}}
 - Completamento: \\underline{{\\hspace{{3cm}}}}
-{'- Grafici pgfplots: solo se già forniti. Per disegnare usa \\vspace{4cm}.' if e_mat else ''}
+{grafici_rule}
 
 FORMATO OUTPUT: restituisci SOLO i blocchi \\subsection*{{...}} con relativi esercizi.
 TERMINA con \\end{{document}}.
