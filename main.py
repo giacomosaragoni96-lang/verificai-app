@@ -908,8 +908,8 @@ st.markdown(f"""
      SIDEBAR
      ════════════════════════════════════ */
   [data-testid="stSidebar"] {{
-    background: {T['card2']} !important;
-    border-right: 1px solid {T['border']} !important;
+    background: #141412 !important;
+    border-right: 1px solid #2a2926 !important;
   }}
 
   /* Titolo principale sidebar */
@@ -918,7 +918,7 @@ st.markdown(f"""
     font-size: 1.1rem !important;
     font-weight: 800 !important;
     letter-spacing: -0.01em;
-    color: {T['text']} !important;
+    color: #f0ede6 !important;
     margin: 0.5rem 0 1.2rem 0;
     padding-bottom: 0.6rem;
     border-bottom: 1px solid #2a2926;
@@ -943,19 +943,19 @@ st.markdown(f"""
   [data-testid="stSidebar"] span,
   [data-testid="stSidebar"] label,
   [data-testid="stSidebar"] div {{
-    color: {T['text2']} !important;
+    color: #d4d2c9 !important;
   }}
   [data-testid="stSidebar"] .stTextInput label p,
   [data-testid="stSidebar"] .stSelectbox label p,
   [data-testid="stSidebar"] .stNumberInput label p {{
-    color: {T['muted']} !important;
+    color: #8a8880 !important;
     font-size: 0.7rem !important;
     letter-spacing: 0.08em !important;
     text-transform: uppercase !important;
     font-weight: 700 !important;
   }}
   [data-testid="stSidebar"] .stCheckbox label {{
-    color: {T['text2']} !important;
+    color: #d4d2c9 !important;
     font-size: 0.9rem !important;
   }}
   [data-testid="stSidebar"] .stCheckbox [data-testid="stCheckbox"] span:first-child {{
@@ -965,41 +965,41 @@ st.markdown(f"""
   }}
   [data-testid="stSidebar"] .stTextInput input,
   [data-testid="stSidebar"] .stNumberInput input {{
-    background: {T['input_bg']} !important;
-    border: 1.5px solid {T['border2']} !important;
+    background: #232320 !important;
+    border: 1.5px solid #3d3c36 !important;
     border-radius: 8px !important;
-    color: {T['text']} !important;
+    color: #f0ede6 !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:first-child {{
-    background: {T['input_bg']} !important;
-    border: 1.5px solid {T['border2']} !important;
+    background: #232320 !important;
+    border: 1.5px solid #3d3c36 !important;
     border-radius: 8px !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{
-    color: {T['text']} !important;
+    color: #f0ede6 !important;
   }}
   [data-testid="stSidebar"] .stRadio label {{
-    color: {T['text2']} !important;
+    color: #d4d2c9 !important;
   }}
   [data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {{
-    color: {T['text2']} !important;
+    color: #d4d2c9 !important;
   }}
   [data-testid="stSidebar"] .stButton button {{
-    background: {T['card2']} !important;
-    color: {T['text']} !important;
-    border: 1.5px solid {T['border2']} !important;
+    background: #232320 !important;
+    color: #f0ede6 !important;
+    border: 1.5px solid #3d3c36 !important;
     border-radius: 8px !important;
   }}
   [data-testid="stSidebar"] .stButton button:hover {{
-    background: {T['hover']} !important;
-    border-color: {T['border2']} !important;
+    background: #2e2d28 !important;
+    border-color: #5a5950 !important;
   }}
   [data-testid="stSidebar"] .stSelectSlider [data-testid="stMarkdownContainer"] p {{
-    color: {T['text2']} !important;
+    color: #d4d2c9 !important;
   }}
   [data-testid="stSidebar"] .section-label {{
-    color: {T['muted']} !important;
-    border-bottom-color: {T['border']} !important;
+    color: #5a5950 !important;
+    border-bottom-color: #2a2926 !important;
   }}
   [data-testid="collapsedControl"] {{
     color: {T['text']} !important;
@@ -1230,7 +1230,7 @@ st.markdown(f"""
   .tex-btn-wrap .stDownloadButton button:hover,
   .tex-btn-wrap [data-testid="stDownloadButton"] button:hover {{
     color: {T['text2']} !important;
-    border-color: {T['border2']} !important;
+    border-color: #5a5950 !important;
     background: {T['card2']} !important;
   }}
 
@@ -1504,6 +1504,28 @@ st.markdown(f"""
     overflow: auto;
   }}
 
+  /* ════════════════════════════════════
+     SIDEBAR HINT — solo mobile
+     ════════════════════════════════════ */
+  .sidebar-hint-mobile {{
+    display: none;
+  }}
+  @media (max-width: 768px) {{
+    .sidebar-hint-mobile {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: {T['accent_light']};
+      border: 1px solid {T['accent']};
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      color: {T['accent']};
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }}
+  }}
+
   /* ═══ MOBILE ═══ */
   @media (max-width: 640px) {{
     .block-container {{
@@ -1512,29 +1534,7 @@ st.markdown(f"""
     .hero-title {{ font-size: 1.75rem !important; }}
     .hero-wrap {{ margin-bottom: 1.5rem; padding-bottom: 1.2rem; }}
 
-    /* Colonne in verticale su mobile */
-    [data-testid="column"] {{
-      width: 100% !important;
-      flex: 1 1 100% !important;
-      min-width: 100% !important;
-      padding-left: 0 !important;
-      padding-right: 0 !important;
-    }}
-    /* Contenitore colonne: vertical stack con gap tra i campi */
-    [data-testid="stHorizontalBlock"] {{
-      flex-direction: column !important;
-      gap: 0 !important;
-    }}
-    /* Spazio esplicito sopra la seconda colonna (Materia) */
-    [data-testid="stHorizontalBlock"] > [data-testid="column"] + [data-testid="column"] {{
-      margin-top: 1.4rem !important;
-    }}
-    /* Assicura altezza minima input argomento */
-    [data-testid="stHorizontalBlock"] > [data-testid="column"]:first-child .stTextInput input {{
-      min-height: 54px !important;
-      height: 54px !important;
-      font-size: 1rem !important;
-    }}
+    /* Nessuna colonna affiancata su mobile - layout già lineare */
 
     /* Input e select: altezza adeguata e testo visibile */
     .stTextInput input,
@@ -1660,20 +1660,24 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
-c1, c2 = st.columns([2.5, 1])
-with c1:
-    argomento = st.text_input("📚 Argomento", placeholder="es. Le equazioni di secondo grado")
-with c2:
-    _materie_select = MATERIE + ["✏️ Altra materia..."]
-    _materia_sel = st.selectbox("📖 Materia", _materie_select, index=0)
-    if _materia_sel == "✏️ Altra materia...":
-        materia_scelta = st.text_input("Scrivi materia:", placeholder="es. Economia Aziendale...",
-                                       key="_materia_custom_input", label_visibility="collapsed").strip() or "Matematica"
-    else:
-        materia_scelta = _materia_sel or "Matematica"
+# ── HINT SIDEBAR MOBILE ───────────────────────────────────────────────────────────
+st.markdown(f"""
+<div class="sidebar-hint-mobile">
+  <span>⚙️</span>
+  <span>Tocca <strong>&gt;&gt;</strong> in alto a sinistra per le impostazioni</span>
+</div>
+""", unsafe_allow_html=True)
 
-# ── PERSONALIZZAZIONE ─────────────────────────────────────────────────────────────
+# ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
+argomento = st.text_input("📚 Argomento", placeholder="es. Le equazioni di secondo grado")
+_materie_select = MATERIE + ["✏️ Altra materia..."]
+_materia_sel = st.selectbox("📖 Materia", _materie_select, index=0)
+if _materia_sel == "✏️ Altra materia...":
+    materia_scelta = st.text_input("Scrivi materia:", placeholder="es. Economia Aziendale...",
+                                   key="_materia_custom_input", label_visibility="collapsed").strip() or "Matematica"
+else:
+    materia_scelta = _materia_sel or "Matematica"
+
 with st.expander("✏️  Personalizza  *(opzionale)*"):
 
     st.markdown(f'<div class="section-label">📝 Struttura esercizi</div>', unsafe_allow_html=True)
