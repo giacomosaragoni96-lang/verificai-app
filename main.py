@@ -170,15 +170,18 @@ def parse_esercizi(latex):
                 continue
             raw_label = item_match.group(1)
             window_lines = []
-            for lj in range(li, min(li + 8, len(lines))):
+            for lj in range(li, min(li + 12, len(lines))):
                 if lj > li and re.search(r'\\item\[', lines[lj]):
                     break
                 window_lines.append(lines[lj])
             search_window = '\n'.join(window_lines)
+            # Rimuovi blocchi tikzpicture dalla finestra per non bloccare il match dei punti
+            search_window = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '', search_window, flags=re.DOTALL)
             pt_match = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', search_window)
             if not pt_match:
                 continue
             punti = pt_match.group(1)
+            # Pulisci label: rimuovi asterisco e simbolo (*) che non fanno parte della lettera
             clean_label = raw_label.replace('*', '').strip()
             items_found.append((clean_label, punti))
         if items_found:
@@ -481,6 +484,9 @@ def _clean_latex_line(text):
     import re as _r
     if not text:
         return ''
+    # Prima rimuovi blocchi tikzpicture/pgfplots interamente, sostituendoli con placeholder
+    text = _r.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '[Grafico]', text, flags=_r.DOTALL)
+    text = _r.sub(r'\\begin\{axis\}.*?\\end\{axis\}', '[Grafico]', text, flags=_r.DOTALL)
     text = _r.sub(r'\\vspace\*?\{[^}]*\}', '', text)
     text = _r.sub(r'\\hspace\*?\{[^}]*\}', '', text)
     text = _r.sub(r'\\noindent\b', '', text)
@@ -527,6 +533,10 @@ def _parse_latex_to_data(codice_latex):
                 brace_depth -= 1
         titolo_ex = _clean_latex_line(block[:header_end])
         body = block[header_end+1:]
+
+        # Rimuovi blocchi tikzpicture dal body prima di parsare — sostituisci con placeholder
+        body = _r.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '\n[Grafico]\n', body, flags=_r.DOTALL)
+        body = _r.sub(r'\\begin\{axis\}.*?\\end\{axis\}', '\n[Grafico]\n', body, flags=_r.DOTALL)
 
         first_item = len(body)
         for marker in [r'\\item[', r'\\begin{enumerate}', r'\\begin{itemize}']:
@@ -1814,20 +1824,41 @@ if genera_btn:
             st.session_state.esercizi_custom, num_esercizi_totali, punti_totali if mostra_punteggi else 0)
         titolo_a = "Versione A" if doppia_fila else ""
 
-        with st.spinner("✍️ Generazione in corso…"):
+        # ── Progress bar animata con step visibili ───────────────────────────
+        _n_steps = 3 + (1 if correzione_step else 0) + (2 if doppia_fila else 0)
+        _step = [0]
+        _prog_slot = st.empty()
 
-            titolo_resp = model.generate_content(
-                f"Sei un docente. Crea un titolo professionale e conciso per una verifica scolastica.\n"
-                f"Materia: {materia}\n"
-                f"Argomento inserito dall'utente (potrebbe avere errori ortografici o essere informale): \"{argomento}\"\n"
-                f"Restituisci SOLO il titolo senza virgolette, senza punteggiatura finale, "
-                f"senza prefissi come 'Verifica di'. Esempio: 'Le equazioni di secondo grado'"
-            )
-            titolo_clean = titolo_resp.text.strip().strip('"').strip("'").strip()
-            if not titolo_clean:
-                titolo_clean = argomento.strip()
+        _STEP_LABELS = [
+            "✍️  Elaborazione titolo…",
+            "🧠  Generazione esercizi…",
+            "🖨️  Compilazione PDF…",
+            "📝  Soluzioni step-by-step…",
+            "📄  Versione B…",
+            "🖨️  PDF Versione B…",
+        ]
 
-            bes_rule = ""
+        def _avanza(label_idx=None, testo=None):
+            _step[0] += 1
+            perc = min(_step[0] / _n_steps, 0.99)
+            msg = testo or (_STEP_LABELS[label_idx] if label_idx is not None and label_idx < len(_STEP_LABELS) else "⏳ In corso…")
+            _prog_slot.progress(perc, text=msg)
+
+        _prog_slot.progress(0.02, text=_STEP_LABELS[0])
+
+        titolo_resp = model.generate_content(
+            f"Sei un docente. Crea un titolo professionale e conciso per una verifica scolastica.\n"
+            f"Materia: {materia}\n"
+            f"Argomento inserito dall'utente (potrebbe avere errori ortografici o essere informale): \"{argomento}\"\n"
+            f"Restituisci SOLO il titolo senza virgolette, senza punteggiatura finale, "
+            f"senza prefissi come 'Verifica di'. Esempio: 'Le equazioni di secondo grado'"
+        )
+        titolo_clean = titolo_resp.text.strip().strip('"').strip("'").strip()
+        if not titolo_clean:
+            titolo_clean = argomento.strip()
+        _avanza(0, "🧠  Generazione esercizi…")
+
+        bes_rule = ""
             if bes_dsa:
                 bes_rule = (
                     "- VERIFICA RIDOTTA: almeno il 25% dei sottopunti DEVE essere marcato come facoltativo.\n"
@@ -1924,6 +1955,7 @@ SOLO CODICE LATEX del corpo."""
                 inp[0] += f"\nUsa l'immagine come riferimento per l'Esercizio {im['idx']}."
 
             ra = model.generate_content(inp)
+            _avanza(1, "🧠  Elaborazione LaTeX…")
             corpo_latex = ra.text.replace("```latex","").replace("```","").strip()
             corpo_latex = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex, flags=re.DOTALL)
             corpo_latex = re.sub(r'^\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex, flags=re.DOTALL)
@@ -1936,6 +1968,7 @@ SOLO CODICE LATEX del corpo."""
             latex_a_final = inietta_griglia(latex_a, punti_totali) if con_griglia else latex_a
             st.session_state.verifiche['A'] = {**_vf(), 'latex': latex_a_final}
 
+            _avanza(2, "🖨️  Compilazione PDF…")
             pdf_auto, err_auto = compila_pdf(latex_a_final)
             if pdf_auto:
                 st.session_state.verifiche['A']['pdf'] = pdf_auto
@@ -1943,6 +1976,7 @@ SOLO CODICE LATEX del corpo."""
                 st.session_state.verifiche['A']['preview'] = True
 
             if correzione_step:
+                _avanza(3, "📝  Generazione soluzioni…")
                 ps = (f"Risolvi questa verifica come docente correttore. Stesso preambolo.\n"
                       f"Titolo: 'Soluzioni — {titolo_clean}'. Niente griglia.\n"
                       f"1. \\subsection*{{Soluzioni Rapide}}: solo risultati finali.\n"
@@ -1953,6 +1987,7 @@ SOLO CODICE LATEX del corpo."""
                     rs.text.replace("```latex","").replace("```","").strip())
 
             if doppia_fila:
+                _avanza(None, "📄  Generazione Versione B…")
                 rb = model.generate_content(
                     f"Versione B: stessa struttura, cambia dati e quesiti. "
                     f"SOLO corpo esercizi (\\subsection* ecc.), SENZA preambolo/\\documentclass/\\begin{{document}}. "
@@ -1974,6 +2009,7 @@ SOLO CODICE LATEX del corpo."""
                 latex_b_final = inietta_griglia(latex_b, punti_totali) if con_griglia else latex_b
                 st.session_state.verifiche['B'] = {**_vf(), 'latex': latex_b_final}
 
+                _avanza(None, "🖨️  PDF Versione B…")
                 pdf_b_auto, _ = compila_pdf(latex_b_final)
                 if pdf_b_auto:
                     st.session_state.verifiche['B']['pdf'] = pdf_b_auto
@@ -1984,6 +2020,10 @@ SOLO CODICE LATEX del corpo."""
                         "Stessa struttura soluzioni (Rapide + Dettagliato). SOLO LATEX.\n\n" + latex_b)
                     st.session_state.verifiche['B']['soluzioni_latex'] = (
                         rsb.text.replace("```latex","").replace("```","").strip())
+
+        _prog_slot.progress(1.0, text="✅  Verifica pronta!")
+        time.sleep(0.6)
+        _prog_slot.empty()
 
         st.session_state.last_materia   = materia
         st.session_state.last_argomento = titolo_clean
