@@ -1025,14 +1025,84 @@ st.markdown(f"""
     gap: 0.75rem;
   }}
   .hero-left {{ flex: 1; min-width: 200px; }}
+  /* ── HERO TITLE ANIMATIONS ── */
+  @keyframes iconBounce {{
+    0%   {{ transform: rotate(0deg) scale(1); }}
+    15%  {{ transform: rotate(-12deg) scale(1.15); }}
+    30%  {{ transform: rotate(8deg) scale(1.1); }}
+    45%  {{ transform: rotate(-6deg) scale(1.05); }}
+    60%  {{ transform: rotate(3deg) scale(1.02); }}
+    75%  {{ transform: rotate(-1deg) scale(1.01); }}
+    100% {{ transform: rotate(0deg) scale(1); }}
+  }}
+  @keyframes underlineSlide {{
+    0%   {{ width: 0; opacity: 0; }}
+    40%  {{ opacity: 1; }}
+    100% {{ width: 100%; opacity: 1; }}
+  }}
+  @keyframes badgePop {{
+    0%   {{ transform: scale(0.5) translateY(4px); opacity: 0; }}
+    70%  {{ transform: scale(1.1) translateY(-2px); opacity: 1; }}
+    100% {{ transform: scale(1) translateY(0); opacity: 1; }}
+  }}
+
   .hero-title {{
     font-family: 'DM Sans', sans-serif;
-    font-size: clamp(1.6rem, 5vw, 2.2rem);
-    font-weight: 800;
+    font-size: clamp(1.9rem, 6vw, 2.8rem);
+    font-weight: 900;
     color: {T['text']};
-    line-height: 1.15;
-    margin: 0 0 0.3rem 0;
-    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.04em;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+  }}
+
+  /* Icona animata */
+  .hero-icon {{
+    display: inline-block;
+    margin-right: 0.3em;
+    animation: iconBounce 1.1s ease 0.2s both;
+    transform-origin: center bottom;
+  }}
+
+  /* Testo "Verific" */
+  .hero-word {{
+    display: inline;
+  }}
+
+  /* Badge "AI" */
+  .hero-badge {{
+    display: inline-flex;
+    align-items: center;
+    background: {T['accent']};
+    color: #1A1200;
+    font-size: 0.65em;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    padding: 0.05em 0.35em 0.1em;
+    border-radius: 6px;
+    margin-left: 0.08em;
+    vertical-align: middle;
+    position: relative;
+    top: -0.1em;
+    animation: badgePop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.6s both;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }}
+
+  /* Linea ambra animata sotto il titolo */
+  .hero-underline {{
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, {T['accent']}, transparent);
+    border-radius: 2px;
+    animation: underlineSlide 0.8s ease 0.4s both;
+    display: block;
+    width: 100%;
   }}
   .hero-sub {{
     font-size: 0.9rem;
@@ -1679,7 +1749,11 @@ st.markdown("""
 st.markdown(f"""
 <div class="hero-wrap">
   <div class="hero-left">
-    <h1 class="hero-title">{APP_ICON} {APP_NAME}</h1>
+    <h1 class="hero-title">
+      <span class="hero-icon">{APP_ICON}</span>
+      <span class="hero-word">Verific</span><span class="hero-badge">AI</span>
+      <span class="hero-underline"></span>
+    </h1>
     <p class="hero-sub">{APP_TAGLINE}</p>
   </div>
   <div class="hero-right">
