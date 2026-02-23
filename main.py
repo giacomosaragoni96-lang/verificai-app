@@ -1024,7 +1024,7 @@ st.markdown(f"""
     flex-wrap: wrap;
     gap: 0.75rem;
   }}
-  .hero-left {{ flex: 1; min-width: 200px; }}
+  .hero-left {{ flex: 1; min-width: 200px; text-align: center; }}
   /* ── HERO TITLE ANIMATIONS ── */
   @keyframes iconBounce {{
     0%   {{ transform: rotate(0deg) scale(1); }}
@@ -1035,11 +1035,7 @@ st.markdown(f"""
     75%  {{ transform: rotate(-1deg) scale(1.01); }}
     100% {{ transform: rotate(0deg) scale(1); }}
   }}
-  @keyframes underlineSlide {{
-    0%   {{ width: 0; opacity: 0; }}
-    40%  {{ opacity: 1; }}
-    100% {{ width: 100%; opacity: 1; }}
-  }}
+
   @keyframes badgePop {{
     0%   {{ transform: scale(0.5) translateY(4px); opacity: 0; }}
     70%  {{ transform: scale(1.1) translateY(-2px); opacity: 1; }}
@@ -1048,16 +1044,16 @@ st.markdown(f"""
 
   .hero-title {{
     font-family: 'DM Sans', sans-serif;
-    font-size: clamp(1.9rem, 6vw, 2.8rem);
+    font-size: clamp(2.8rem, 9vw, 4.2rem);
     font-weight: 900;
     color: {T['text']};
-    line-height: 1.1;
+    line-height: 1.05;
     margin: 0 0 0.5rem 0;
     letter-spacing: -0.04em;
-    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 0;
+    justify-content: center;
   }}
 
   /* Icona animata */
@@ -1079,31 +1075,20 @@ st.markdown(f"""
     align-items: center;
     background: {T['accent']};
     color: #1A1200;
-    font-size: 0.65em;
+    font-size: 0.5em;
     font-weight: 900;
-    letter-spacing: 0.02em;
-    padding: 0.05em 0.35em 0.1em;
-    border-radius: 6px;
-    margin-left: 0.08em;
+    letter-spacing: 0.04em;
+    padding: 0.15em 0.45em 0.2em;
+    border-radius: 8px;
+    margin-left: 0.12em;
     vertical-align: middle;
     position: relative;
-    top: -0.1em;
+    top: -0.2em;
     animation: badgePop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.6s both;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 3px 12px rgba(0,0,0,0.25);
   }}
 
-  /* Linea ambra animata sotto il titolo */
-  .hero-underline {{
-    position: absolute;
-    bottom: -4px;
-    left: 0;
-    height: 3px;
-    background: linear-gradient(90deg, {T['accent']}, transparent);
-    border-radius: 2px;
-    animation: underlineSlide 0.8s ease 0.4s both;
-    display: block;
-    width: 100%;
-  }}
+
   .hero-sub {{
     font-size: 0.9rem;
     color: {T['muted']};
@@ -1752,7 +1737,7 @@ st.markdown(f"""
     <h1 class="hero-title">
       <span class="hero-icon">{APP_ICON}</span>
       <span class="hero-word">Verific</span><span class="hero-badge">AI</span>
-      <span class="hero-underline"></span>
+
     </h1>
     <p class="hero-sub">{APP_TAGLINE}</p>
   </div>
