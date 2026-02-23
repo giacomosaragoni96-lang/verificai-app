@@ -169,11 +169,8 @@ def parse_esercizi(latex):
             if not item_match:
                 continue
             raw_label = item_match.group(1)
-            # Costruisce la finestra di testo: dalla riga corrente
-            # fino alla riga prima del prossimo \item (max 8 righe)
             window_lines = []
             for lj in range(li, min(li + 8, len(lines))):
-                # Fermati se troviamo un nuovo \item (diverso da quello corrente)
                 if lj > li and re.search(r'\\item\[', lines[lj]):
                     break
                 window_lines.append(lines[lj])
@@ -809,7 +806,7 @@ def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali):
     righe.append(f"Distribuisci {punti_totali} pt in modo equilibrato.")
     return "\n".join(righe), immagini
 
-# ── HELPER: formato tempo relativo ───────────────────────────────────────────────
+# ── HELPER ───────────────────────────────────────────────────────────────────────
 def _tempo_relativo(ts):
     if ts is None:
         return ""
@@ -826,7 +823,6 @@ def _tempo_relativo(ts):
         return time.strftime("%d/%m", time.localtime(ts))
 
 def _stima_dimensione(data_bytes):
-    """Stima dimensione leggibile."""
     if data_bytes is None:
         return "—"
     kb = len(data_bytes) / 1024
@@ -849,7 +845,6 @@ def _vf():
 
 if 'verifiche'       not in st.session_state: st.session_state.verifiche = {'A': _vf(), 'B': _vf()}
 if 'esercizi_custom' not in st.session_state: st.session_state.esercizi_custom = []
-# Status bar state
 if 'last_materia'    not in st.session_state: st.session_state.last_materia = None
 if 'last_argomento'  not in st.session_state: st.session_state.last_argomento = None
 if 'last_gen_ts'     not in st.session_state: st.session_state.last_gen_ts = None
@@ -879,13 +874,11 @@ st.markdown(f"""
   #MainMenu, footer {{ visibility: hidden; }}
   .stDecoration {{ display: none; }}
 
-  /* Header: stessa bg dell'app, così il bottone sidebar si vede sempre */
   header[data-testid="stHeader"] {{
     background-color: {T['bg']} !important;
     border-bottom: 1px solid {T['border']} !important;
   }}
 
-  /* Forza colore icona/bottone toggle sidebar con specificity massima */
   header button svg {{
     fill: {T['text']} !important;
     color: {T['text']} !important;
@@ -906,15 +899,11 @@ st.markdown(f"""
   }}
   .stMarkdown h1 a, .stMarkdown h2 a, .stMarkdown h3 a {{ display: none !important; }}
 
-  /* ════════════════════════════════════
-     SIDEBAR
-     ════════════════════════════════════ */
+  /* ════ SIDEBAR ════ */
   [data-testid="stSidebar"] {{
     background: #141412 !important;
     border-right: 1px solid #2a2926 !important;
   }}
-
-  /* Titolo principale sidebar */
   .sidebar-title {{
     font-family: 'DM Sans', sans-serif;
     font-size: 1.1rem !important;
@@ -925,8 +914,6 @@ st.markdown(f"""
     padding-bottom: 0.6rem;
     border-bottom: 1px solid #2a2926;
   }}
-
-  /* Etichette sezione sidebar — più visibili */
   .sidebar-label {{
     font-size: 0.75rem !important;
     font-weight: 700 !important;
@@ -1015,7 +1002,7 @@ st.markdown(f"""
     letter-spacing: -0.02em;
   }}
 
-  /* ── HERO HEADER ── */
+  /* ── HERO ── */
   .hero-wrap {{
     margin-bottom: 2.5rem;
     padding-bottom: 1.5rem;
@@ -1028,7 +1015,6 @@ st.markdown(f"""
     gap: 0.5rem;
   }}
   .hero-left {{ flex: 1; min-width: 200px; text-align: center; }}
-  /* ── HERO TITLE ANIMATIONS ── */
   @keyframes iconBounce {{
     0%   {{ transform: rotate(0deg) scale(1); }}
     15%  {{ transform: rotate(-12deg) scale(1.15); }}
@@ -1038,12 +1024,10 @@ st.markdown(f"""
     75%  {{ transform: rotate(-1deg) scale(1.01); }}
     100% {{ transform: rotate(0deg) scale(1); }}
   }}
-
   @keyframes badgePop {{
     0%   {{ opacity: 0; transform: translateY(6px); }}
     100% {{ opacity: 1; transform: translateY(0); }}
   }}
-
   .hero-title {{
     font-family: 'DM Sans', sans-serif;
     font-size: 96px !important;
@@ -1057,16 +1041,12 @@ st.markdown(f"""
     gap: 0;
     justify-content: center;
   }}
-
-  /* Icona animata */
   .hero-icon {{
     display: inline-block;
     margin-right: 0.3em;
     animation: iconBounce 1.1s ease 0.2s both;
     transform-origin: center bottom;
   }}
-
-  /* "AI" gradient text */
   .hero-ai {{
     background: linear-gradient(135deg, {T['accent']} 0%, #FF8C00 100%);
     -webkit-background-clip: text;
@@ -1074,8 +1054,6 @@ st.markdown(f"""
     background-clip: text;
     animation: badgePop 0.6s ease 0.5s both;
   }}
-
-
   .hero-sub {{
     font-size: 0.9rem;
     color: {T['muted']};
@@ -1089,7 +1067,6 @@ st.markdown(f"""
     flex-shrink: 0;
     padding-top: 4px;
   }}
-
 
   /* ── LABELS ── */
   .stTextInput label p,
@@ -1172,9 +1149,7 @@ st.markdown(f"""
     border-radius: 5px !important;
   }}
 
-  /* ════════════════════════════════════
-     BOTTONE PRIMARIO
-     ════════════════════════════════════ */
+  /* ════ BOTTONE PRIMARIO ════ */
   .stButton [data-testid="baseButton-primary"],
   .stButton button[kind="primary"],
   button[data-testid="baseButton-primary"] {{
@@ -1218,7 +1193,7 @@ st.markdown(f"""
     color: {T['text']} !important;
   }}
 
-  /* ── COMPACT UPLOADER — solo bottone, no drag&drop ── */
+  /* ── COMPACT UPLOADER ── */
   .compact-uploader [data-testid="stFileUploader"] section {{
     padding: 0 !important;
     border: none !important;
@@ -1241,7 +1216,7 @@ st.markdown(f"""
     color: {T['accent']} !important;
   }}
 
-  /* ── TEX DOWNLOAD — piccolo e discreto ── */
+  /* ── TEX DOWNLOAD ── */
   .tex-btn-wrap .stDownloadButton button,
   .tex-btn-wrap [data-testid="stDownloadButton"] button {{
     background: transparent !important;
@@ -1366,8 +1341,7 @@ st.markdown(f"""
     text-transform: uppercase;
   }}
 
-  /* ── SECTION LABELS ── */
-  /* Headings visibili dentro le tendine */
+  /* ── EXPANDER HEADING ── */
   .expander-heading {{
     font-size: 0.8rem !important;
     font-weight: 700 !important;
@@ -1446,9 +1420,7 @@ st.markdown(f"""
     color: {T['text']} !important;
   }}
 
-  /* ════════════════════════════════════
-     STATUS BAR
-     ════════════════════════════════════ */
+  /* ── STATUS BAR ── */
   .status-bar {{
     display: flex;
     align-items: center;
@@ -1474,9 +1446,7 @@ st.markdown(f"""
     font-weight: 600;
   }}
 
-  /* ════════════════════════════════════
-     DOWNLOAD CARD
-     ════════════════════════════════════ */
+  /* ── DOWNLOAD CARD ── */
   .dl-card {{
     display: flex;
     align-items: center;
@@ -1515,9 +1485,7 @@ st.markdown(f"""
     margin-top: 1px;
   }}
 
-  /* ════════════════════════════════════
-     PDF PREVIEW COMPATTA
-     ════════════════════════════════════ */
+  /* ── PDF PREVIEW ── */
   .pdf-preview-wrap {{
     margin-top: 1rem;
     border: 1px solid {T['border']};
@@ -1526,29 +1494,8 @@ st.markdown(f"""
     box-shadow: {T['shadow_md']};
     background: {T['card2']};
   }}
-  .pdf-preview-header {{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 14px;
-    background: {T['card']};
-    border-bottom: 1px solid {T['border']};
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: {T['text2']};
-  }}
-  .pdf-preview-frame {{
-    width: 100%;
-    height: 480px;
-    border: none;
-    display: block;
-    overflow: auto;
-  }}
 
-  /* ════════════════════════════════════
-     SIDEBAR HINT — solo mobile
-     ════════════════════════════════════ */
-  /* ── TOP BAR (hint + share) ── */
+  /* ── TOP BAR ── */
   .top-bar {{
     display: flex;
     align-items: center;
@@ -1576,7 +1523,15 @@ st.markdown(f"""
   .top-bar-share:hover {{
     opacity: 0.8;
   }}
+
+  /* ═══ MOBILE ═══ */
   @media (max-width: 640px) {{
+    .block-container {{
+      padding: 4.5rem 1rem 3rem !important;
+    }}
+    .hero-title {{ font-size: 56px !important; }}
+    .hero-sub {{ font-size: 0.9rem !important; }}
+    .hero-wrap {{ margin-bottom: 1.5rem; padding-bottom: 1.2rem; }}
     .top-bar {{
       justify-content: center;
       gap: 0.5rem;
@@ -1586,19 +1541,6 @@ st.markdown(f"""
       font-size: 0.7rem;
       padding: 4px 10px;
     }}
-  }}
-
-  /* ═══ MOBILE ═══ */
-  @media (max-width: 640px) {{
-    .block-container {{
-      padding: 4.5rem 1rem 3rem !important;
-    }}
-    .hero-title {{ font-size: 1.75rem !important; }}
-    .hero-wrap {{ margin-bottom: 1.5rem; padding-bottom: 1.2rem; }}
-
-    /* Nessuna colonna affiancata su mobile - layout già lineare */
-
-    /* Input e select: altezza adeguata e testo visibile */
     .stTextInput input,
     .stNumberInput input {{
       font-size: 1rem !important;
@@ -1608,7 +1550,6 @@ st.markdown(f"""
       line-height: 1.4 !important;
       box-sizing: border-box !important;
     }}
-    /* Forza altezza contenitore input */
     .stTextInput > div > div {{
       min-height: 52px !important;
     }}
@@ -1617,7 +1558,6 @@ st.markdown(f"""
       font-size: 1rem !important;
       opacity: 1 !important;
     }}
-    /* Selectbox: fix altezza sia nel main che nella sidebar */
     .stSelectbox [data-baseweb="select"] > div:first-child {{
       padding: 12px 14px !important;
       min-height: 50px !important;
@@ -1630,7 +1570,6 @@ st.markdown(f"""
       overflow: hidden !important;
       text-overflow: ellipsis !important;
     }}
-    /* Sidebar selectbox specifico */
     [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:first-child {{
       min-height: 48px !important;
       padding: 10px 12px !important;
@@ -1653,12 +1592,6 @@ st.markdown(f"""
     .stDownloadButton button {{
       width: 100% !important;
       min-height: 48px !important;
-    }}
-    .hero-title {{
-      font-size: 56px !important;
-    }}
-    .hero-sub {{
-      font-size: 0.9rem !important;
     }}
   }}
 
@@ -1684,11 +1617,10 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
     bes_dsa         = st.checkbox("Supporto BES/DSA", value=True,
-                    help="Circa il 25% dei sottopunti vengono contrassegnati con * e resi facoltativi per gli studenti con certificazione BES/DSA. L'intestazione della verifica indica il significato dell'asterisco.")
+                    help="Circa il 25% dei sottopunti vengono contrassegnati con * e resi facoltativi per gli studenti con certificazione BES/DSA.")
     doppia_fila     = st.checkbox("Genera Versione A e B (due varianti)", value=False)
     correzione_step = st.checkbox("Includi soluzioni passo per passo", value=False)
 
-    # interdisciplinare gestito dentro esercizi specifici
     esercizio_multidisciplinare = False
     materia2_scelta  = None
     difficolta_multi = None
@@ -1717,7 +1649,7 @@ with st.sidebar:
         st.session_state.theme = new_theme
         st.rerun()
 
-# ── TOPBAR: hint + condividi ──────────────────────────────────────────────────────
+# ── TOPBAR ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="top-bar">
   <div class="top-bar-hint">⚙️ &nbsp; Apri <strong>&gt;&gt;</strong> per le impostazioni</div>
@@ -1735,10 +1667,18 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── HINT SIDEBAR MOBILE ───────────────────────────────────────────────────────────
+# ── FORM PRINCIPALE — MATERIA prima, poi ARGOMENTO ───────────────────────────────
+st.markdown('<div class="expander-heading">📖 Materia</div>', unsafe_allow_html=True)
+_materie_select = MATERIE + ["✏️ Altra materia..."]
+_materia_sel = st.selectbox("Materia", _materie_select, index=0, label_visibility="collapsed")
+if _materia_sel == "✏️ Altra materia...":
+    materia_scelta = st.text_input("Scrivi materia:", placeholder="es. Economia Aziendale, Scienze Naturali...",
+                                   key="_materia_custom_input", label_visibility="collapsed").strip() or "Matematica"
+else:
+    materia_scelta = _materia_sel or "Matematica"
 
+st.markdown('<div style="height:0.8rem;"></div>', unsafe_allow_html=True)
 
-# ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
 st.markdown('<div class="expander-heading">📚 Argomento della verifica</div>', unsafe_allow_html=True)
 argomento_area = st.text_area(
     "argomento",
@@ -1748,15 +1688,8 @@ argomento_area = st.text_area(
     key="argomento_area"
 )
 argomento = argomento_area.strip()
-st.markdown('<div style="height:1.2rem;"></div>', unsafe_allow_html=True)
-st.markdown('<div class="expander-heading" style="margin-top:0.8rem;">📖 Materia</div>', unsafe_allow_html=True)
-_materie_select = MATERIE + ["✏️ Altra materia..."]
-_materia_sel = st.selectbox("Materia", _materie_select, index=0, label_visibility="collapsed")
-if _materia_sel == "✏️ Altra materia...":
-    materia_scelta = st.text_input("Scrivi materia:", placeholder="es. Economia Aziendale, Scienze Naturali...",
-                                   key="_materia_custom_input", label_visibility="collapsed").strip() or "Matematica"
-else:
-    materia_scelta = _materia_sel or "Matematica"
+
+st.markdown('<div style="height:0.8rem;"></div>', unsafe_allow_html=True)
 
 with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
 
@@ -1782,13 +1715,11 @@ with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
             to_remove = None
             for i, ex in enumerate(st.session_state.esercizi_custom):
                 st.markdown(f'<div class="expander-heading">Esercizio {i+1}</div>', unsafe_allow_html=True)
-                # Tipo esercizio
                 t = st.selectbox("Tipo esercizio", TIPI_ESERCIZIO,
                                  index=TIPI_ESERCIZIO.index(ex.get('tipo', 'Aperto')),
                                  key=f"tipo_{i}", label_visibility="visible")
                 st.session_state.esercizi_custom[i]['tipo'] = t
 
-                # Se interdisciplinare: mostra scelta materia collegata
                 if t == "Interdisciplinare":
                     m2 = st.text_input(
                         "Materia collegata",
@@ -1805,13 +1736,11 @@ with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
                     )
                     st.session_state.esercizi_custom[i]['difficolta_multi'] = df2
 
-                # Descrizione
                 d = st.text_input("Descrizione dell'esercizio (opzionale)",
                                   value=ex.get('descrizione', ''),
                                   placeholder="es. Risolvi ax²+bx+c=0 mostrando i passaggi",
                                   key=f"desc_{i}", label_visibility="visible")
                 st.session_state.esercizi_custom[i]['descrizione'] = d
-                # Allegato + rimuovi sulla stessa riga
                 _cimg, _cdel = st.columns([3, 1])
                 with _cimg:
                     st.markdown('<div class="compact-uploader">', unsafe_allow_html=True)
@@ -1856,9 +1785,6 @@ with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
 st.write("")
 genera_btn = st.button("🚀  Genera Verifica", use_container_width=True, type="primary")
 
-# ── STATUS BAR (sotto il bottone) ────────────────────────────────────────────────
-
-
 # ── LOGICA GENERAZIONE ───────────────────────────────────────────────────────────
 if genera_btn:
     if not argomento.strip():
@@ -1875,7 +1801,6 @@ if genera_btn:
             st.session_state.esercizi_custom, num_esercizi_totali, punti_totali if mostra_punteggi else 0)
         titolo_a = "Versione A" if doppia_fila else ""
 
-        # ── Spinner unico — nessuna progress bar ──────────────────────────────
         with st.spinner("✍️ Generazione in corso…"):
 
             titolo_resp = model.generate_content(
@@ -2034,7 +1959,6 @@ SOLO CODICE LATEX del corpo."""
                     st.session_state.verifiche['B']['soluzioni_latex'] = (
                         rsb.text.replace("```latex","").replace("```","").strip())
 
-        # Salva status bar info
         st.session_state.last_materia   = materia
         st.session_state.last_argomento = titolo_clean
         st.session_state.last_gen_ts    = time.time()
@@ -2066,8 +1990,6 @@ if st.session_state.verifiche['A']['latex']:
             </div>
             """, unsafe_allow_html=True)
 
-            # ── Download cards ────────────────────────────────────────────────
-            # PDF card
             if v['pdf']:
                 pdf_size = _stima_dimensione(v['pdf'])
                 st.markdown(f"""
@@ -2101,7 +2023,6 @@ if st.session_state.verifiche['A']['latex']:
 
             st.write("")
 
-            # Word card
             if v['docx']:
                 docx_size = _stima_dimensione(v['docx'])
                 st.markdown(f"""
@@ -2139,7 +2060,6 @@ if st.session_state.verifiche['A']['latex']:
                         st.error("Errore Word")
                         with st.expander("Log"): st.text(de)
 
-            # Soluzioni
             if v['soluzioni_latex']:
                 st.write("")
                 if v['soluzioni_pdf']:
@@ -2171,7 +2091,6 @@ if st.session_state.verifiche['A']['latex']:
                         else:
                             with st.expander("Log"): st.text(se)
 
-            # ── Anteprima PDF a tenda ────────────────────────────────────────
             if v['preview'] and v['pdf']:
                 with st.expander("👁 Anteprima PDF", expanded=True):
                     b64 = base64.b64encode(v['pdf']).decode()
@@ -2182,7 +2101,6 @@ if st.session_state.verifiche['A']['latex']:
                     ></iframe>
                     """, unsafe_allow_html=True)
 
-            # ── Download LaTeX sorgente ──────────────────────────────────
             _spacer, _tex_col = st.columns([3, 1])
             with _tex_col:
                 st.markdown('<div class="tex-btn-wrap">', unsafe_allow_html=True)
