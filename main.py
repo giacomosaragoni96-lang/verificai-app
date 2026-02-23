@@ -1046,8 +1046,8 @@ st.markdown(f"""
 
   .hero-title {{
     font-family: 'DM Sans', sans-serif;
-    font-size: clamp(4.5rem, 16vw, 7rem);
-    font-weight: 900;
+    font-size: 96px !important;
+    font-weight: 900 !important;
     color: {T['text']};
     line-height: 1.05;
     margin: 0 0 0.5rem 0;
@@ -1653,6 +1653,12 @@ st.markdown(f"""
     .stDownloadButton button {{
       width: 100% !important;
       min-height: 48px !important;
+    }}
+    .hero-title {{
+      font-size: 56px !important;
+    }}
+    .hero-sub {{
+      font-size: 0.9rem !important;
     }}
   }}
 
