@@ -1342,6 +1342,21 @@ st.markdown(f"""
   }}
 
   /* ── SECTION LABELS ── */
+  /* Headings visibili dentro le tendine */
+  .expander-heading {{
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.03em !important;
+    text-transform: uppercase !important;
+    color: {T['text']} !important;
+    margin: 1rem 0 0.4rem 0 !important;
+    padding: 5px 10px !important;
+    background: {T['card2']} !important;
+    border-left: 3px solid {T['accent']} !important;
+    border-radius: 0 6px 6px 0 !important;
+    display: block !important;
+  }}
+
   .section-label {{
     font-size: 0.7rem;
     font-weight: 700;
@@ -1612,12 +1627,12 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
     bes_dsa         = st.checkbox("Supporto BES/DSA", value=True,
-                    help="Contrassegna con ★ i sottopunti opzionali per studenti con certificazione BES/DSA (circa il 25% degli esercizi). Gli asterischi appaiono accanto alla lettera del sottopunto, es. 'a*)', e l'intestazione della verifica ne spiega il significato.")
-    doppia_fila     = st.checkbox("Genera Versione A e B", value=False)
-    correzione_step = st.checkbox("Correzione Step-by-Step", value=False)
+                    help="Circa il 25% dei sottopunti vengono contrassegnati con * e resi facoltativi per gli studenti con certificazione BES/DSA. L'intestazione della verifica indica il significato dell'asterisco.")
+    doppia_fila     = st.checkbox("Genera Versione A e B (due varianti)", value=False)
+    correzione_step = st.checkbox("Includi soluzioni passo per passo", value=False)
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🔗 Interdisciplinare</div>', unsafe_allow_html=True)
-    esercizio_multidisciplinare = st.checkbox("Includi esercizio interdisciplinare", value=False)
+    esercizio_multidisciplinare = st.checkbox("Aggiungi un esercizio collegato ad altra materia", value=False)
     if esercizio_multidisciplinare:
         materia2_scelta = st.text_input("Collega con:", placeholder="es. Fisica, Storia...", key="materia2_input").strip() or None
         difficolta_multi = st.select_slider("Difficoltà:", options=["Facile","Media","Alta"], value="Media", key="diff_multi_slider")
@@ -1626,8 +1641,8 @@ with st.sidebar:
         difficolta_multi = None
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🏆 Punteggi</div>', unsafe_allow_html=True)
-    mostra_punteggi = st.checkbox("Mostra punteggi", value=True)
-    con_griglia     = st.checkbox("Includi griglia", value=True)
+    mostra_punteggi = st.checkbox("Mostra punteggio per esercizio", value=True)
+    con_griglia     = st.checkbox("Includi griglia di valutazione", value=True)
     punti_totali    = st.number_input("Punti totali", min_value=10, max_value=200, value=100, step=5,
                                       disabled=not mostra_punteggi)
 
@@ -1675,26 +1690,26 @@ st.markdown(f"""
 
 
 # ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
-argomento = st.text_input("📚 Argomento", placeholder="es. Le equazioni di secondo grado")
+argomento = st.text_input("📚 Argomento", placeholder="es. Le equazioni di secondo grado, i limiti di funzione, la Rivoluzione Francese...")
 st.markdown('<div style="height:1.2rem;"></div>', unsafe_allow_html=True)
 _materie_select = MATERIE + ["✏️ Altra materia..."]
 _materia_sel = st.selectbox("📖 Materia", _materie_select, index=0)
 if _materia_sel == "✏️ Altra materia...":
-    materia_scelta = st.text_input("Scrivi materia:", placeholder="es. Economia Aziendale...",
+    materia_scelta = st.text_input("Scrivi materia:", placeholder="es. Economia Aziendale, Scienze Naturali...",
                                    key="_materia_custom_input", label_visibility="collapsed").strip() or "Matematica"
 else:
     materia_scelta = _materia_sel or "Matematica"
 
-with st.expander("✏️  Personalizza  *(opzionale)*"):
+with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
 
-    st.markdown(f'<div class="section-label">📝 Struttura esercizi</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="expander-heading">📝 Struttura esercizi</div>', unsafe_allow_html=True)
     num_esercizi_totali = st.slider(
-        "N° esercizi totali",
+        "Numero di esercizi in verifica",
         min_value=1, max_value=15, value=4,
         help="Trascina per scegliere il numero di esercizi"
     )
 
-    with st.expander("🎯 Definisci esercizi specifici"):
+    with st.expander("🎯 Specifica il tipo di ogni esercizio (opzionale)"):
         n_custom = len(st.session_state.esercizi_custom)
         n_liberi = max(0, num_esercizi_totali - n_custom)
 
@@ -1708,7 +1723,7 @@ with st.expander("✏️  Personalizza  *(opzionale)*"):
         if st.session_state.esercizi_custom:
             to_remove = None
             for i, ex in enumerate(st.session_state.esercizi_custom):
-                st.markdown(f'<div class="section-label">Esercizio {i+1}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="expander-heading">Esercizio {i+1}</div>', unsafe_allow_html=True)
                 # Tipo + rimuovi sulla stessa riga
                 _ca, _cd = st.columns([4, 0.5])
                 with _ca:
@@ -1721,7 +1736,7 @@ with st.expander("✏️  Personalizza  *(opzionale)*"):
                     if st.button("✕", key=f"rm_{i}"): to_remove = i
                 # Descrizione sotto
                 d = st.text_input("Descrizione", value=ex['descrizione'],
-                                  placeholder="es. Risolvi l'equazione...",
+                                  placeholder="es. Risolvi l'equazione ax²+bx+c=0, mostra i passaggi...",
                                   key=f"desc_{i}", label_visibility="collapsed")
                 st.session_state.esercizi_custom[i]['descrizione'] = d
                 # Allegato: uploader compatto
@@ -1737,18 +1752,18 @@ with st.expander("✏️  Personalizza  *(opzionale)*"):
                 st.session_state.esercizi_custom.pop(to_remove); st.rerun()
 
         can_add = len(st.session_state.esercizi_custom) < num_esercizi_totali
-        if st.button("＋ Aggiungi esercizio", disabled=not can_add):
+        if st.button("＋ Aggiungi esercizio specifico", disabled=not can_add):
             st.session_state.esercizi_custom.append({'tipo': 'Aperto', 'descrizione': '', 'immagine': None})
             st.rerun()
 
-    st.markdown('<div class="section-label" style="margin-top:1rem;">🎯 Istruzioni per l\'AI</div>', unsafe_allow_html=True)
+    st.markdown('<div class="expander-heading" style="margin-top:1rem;">🎯 Istruzioni per l\'AI</div>', unsafe_allow_html=True)
     note_generali = st.text_area(
         "note", label_visibility="collapsed",
         placeholder=NOTE_PLACEHOLDER.get(materia_scelta, "es. Argomenti da privilegiare, tipo di esercizi..."),
         height=80
     )
 
-    st.markdown(f'<div class="section-label">📂 File di riferimento</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="expander-heading">📂 File di riferimento</div>', unsafe_allow_html=True)
     st.markdown('<div class="compact-uploader">', unsafe_allow_html=True)
     file_ispirazione = st.file_uploader(
         "📎 Allega PDF o immagine",
