@@ -851,6 +851,7 @@ if 'esercizi_custom' not in st.session_state: st.session_state.esercizi_custom =
 if 'last_materia'    not in st.session_state: st.session_state.last_materia = None
 if 'last_argomento'  not in st.session_state: st.session_state.last_argomento = None
 if 'last_gen_ts'     not in st.session_state: st.session_state.last_gen_ts = None
+if 'sidebar_opened'  not in st.session_state: st.session_state.sidebar_opened = False
 
 # ── CSS GLOBALE ──────────────────────────────────────────────────────────────────
 is_dark = (st.session_state.theme == "dark")
@@ -1047,25 +1048,25 @@ st.markdown(f"""
     flex-shrink: 0;
     padding-top: 4px;
   }}
-  .share-btn {{
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    border: 1px solid {T['border2']};
-    border-radius: 100px;
-    padding: 5px 14px;
-    font-size: 0.78rem;
+  .share-link {{
+    font-size: 0.72rem;
     font-weight: 500;
     color: {T['muted']};
-    background: {T['card2']};
     text-decoration: none;
-    transition: all 0.15s ease;
+    letter-spacing: 0.01em;
+    opacity: 0.7;
+    transition: all 0.2s ease;
     white-space: nowrap;
+    border-bottom: 1px dashed {T['border2']};
+    padding-bottom: 1px;
   }}
-  .share-btn:hover {{
-    border-color: {T['accent']};
+  .share-link:hover {{
     color: {T['accent']};
-    background: {T['accent_light']};
+    opacity: 1;
+    border-bottom-color: {T['accent']};
+  }}
+  @media (max-width: 640px) {{
+    .share-link {{ display: none; }}
   }}
 
   /* ── LABELS ── */
@@ -1603,6 +1604,8 @@ st.markdown(f"""
 
 # ── SIDEBAR ──────────────────────────────────────────────────────────────────────
 with st.sidebar:
+    if not st.session_state.sidebar_opened:
+        st.session_state.sidebar_opened = True
     st.markdown('<div class="sidebar-title">⚙️ Impostazioni</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="sidebar-label">🏫 Classe</div>', unsafe_allow_html=True)
@@ -1655,21 +1658,25 @@ st.markdown(f"""
     <p class="hero-sub">{APP_TAGLINE}</p>
   </div>
   <div class="hero-right">
-    <a href="{SHARE_URL}" class="share-btn" target="_blank">↗ Condividi</a>
+    <a href="{SHARE_URL}" class="share-link" target="_blank">
+      Condividi questo strumento con i colleghi →
+    </a>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ── HINT SIDEBAR MOBILE ───────────────────────────────────────────────────────────
-st.markdown(f"""
-<div class="sidebar-hint-mobile">
-  <span>⚙️</span>
-  <span>Tocca <strong>&gt;&gt;</strong> in alto a sinistra per le impostazioni</span>
-</div>
-""", unsafe_allow_html=True)
+if not st.session_state.sidebar_opened:
+    st.markdown(f"""
+    <div class="sidebar-hint-mobile">
+      <span>⚙️</span>
+      <span>Tocca <strong>&gt;&gt;</strong> in alto a sinistra per le impostazioni</span>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
 argomento = st.text_input("📚 Argomento", placeholder="es. Le equazioni di secondo grado")
+st.markdown('<div style="height:1.2rem;"></div>', unsafe_allow_html=True)
 _materie_select = MATERIE + ["✏️ Altra materia..."]
 _materia_sel = st.selectbox("📖 Materia", _materie_select, index=0)
 if _materia_sel == "✏️ Altra materia...":
@@ -1742,11 +1749,13 @@ with st.expander("✏️  Personalizza  *(opzionale)*"):
     )
 
     st.markdown(f'<div class="section-label">📂 File di riferimento</div>', unsafe_allow_html=True)
+    st.markdown('<div class="compact-uploader">', unsafe_allow_html=True)
     file_ispirazione = st.file_uploader(
-        "Allega PDF o immagine del libro / verifica precedente",
+        "📎 Allega PDF o immagine",
         type=['pdf','png','jpg','jpeg'],
-        label_visibility="visible"
+        label_visibility="collapsed"
     )
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ── BOTTONE GENERA ────────────────────────────────────────────────────────────────
 st.write("")
