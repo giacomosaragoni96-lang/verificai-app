@@ -2423,14 +2423,25 @@ st.markdown(f"""
   prima di distribuirlo agli studenti. Il docente è responsabile del materiale finale.<br>
   <span style="opacity:0.55;">VerificAI · Versione Beta</span>
   &nbsp;·&nbsp;
-  <button onclick="navigator.clipboard.writeText('{SHARE_URL}').then(function(){{
-    var btn = document.getElementById('copy-btn');
-    btn.innerText = '✅ Link copiato!';
-    setTimeout(function(){{ btn.innerText = '🔗 Condividi con i colleghi'; }}, 2000);
-  }})" id="copy-btn"
+  <button id="copy-btn" onclick="
+    var tmp = document.createElement('textarea');
+    tmp.value = '{SHARE_URL}';
+    tmp.style.position = 'fixed';
+    tmp.style.opacity = '0';
+    document.body.appendChild(tmp);
+    tmp.focus();
+    tmp.select();
+    try {{
+      document.execCommand('copy');
+      document.getElementById('copy-btn').innerText = '✅ Link copiato!';
+      setTimeout(function(){{ document.getElementById('copy-btn').innerText = '🔗 Condividi con i colleghi'; }}, 2000);
+    }} catch(e) {{
+      document.getElementById('copy-btn').innerText = '{SHARE_URL}';
+    }}
+    document.body.removeChild(tmp);
+  "
     style="background:none;border:none;cursor:pointer;color:{T['accent']};
-           font-weight:600;font-size:0.72rem;font-family:'DM Sans',sans-serif;
-           padding:0;text-decoration:none;">
+           font-weight:600;font-size:0.72rem;font-family:'DM Sans',sans-serif;padding:0;">
     🔗 Condividi con i colleghi
   </button>
 </div>
