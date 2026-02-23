@@ -2239,152 +2239,48 @@ if st.session_state.verifiche['A']['latex']:
                 st.markdown('</div>', unsafe_allow_html=True)
 # ── FEEDBACK FLOATING BUTTON ─────────────────────────────────────────────────────
 # 👇 SOSTITUISCI con il link del tuo Google Form
-FEEDBACK_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScwwLlHlzSERIz0zIB9WxFawyNII7b_h5s-thhg7qUBYgPI3g/viewform?usp=publish-editor"
+FEEDBACK_FORM_URL = "https://forms.gle/XXXXXXXXXXXXXXXX"
 
 st.markdown(f"""
 <style>
-  /* ── Floating button ── */
-  .fab-wrap {{
+  .fab-link {{
     position: fixed;
     bottom: 1.5rem;
     right: 1.5rem;
     z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 10px;
-    font-family: 'DM Sans', sans-serif;
-  }}
-
-  .fab-panel {{
-    display: none;
-    flex-direction: column;
-    gap: 10px;
-    background: {T['card']};
-    border: 1.5px solid {T['border2']};
-    border-radius: 16px;
-    padding: 16px 18px;
-    box-shadow: {T['shadow_md']};
-    width: 260px;
-    animation: fabIn 0.2s ease;
-  }}
-  @keyframes fabIn {{
-    from {{ opacity: 0; transform: translateY(10px) scale(0.97); }}
-    to   {{ opacity: 1; transform: translateY(0)   scale(1); }}
-  }}
-  .fab-panel.open {{ display: flex; }}
-
-  .fab-panel-title {{
-    font-weight: 700;
-    font-size: 0.92rem;
-    color: {T['text']};
-    margin: 0 0 2px 0;
-  }}
-  .fab-panel-sub {{
-    font-size: 0.75rem;
-    color: {T['muted']};
-    margin: 0 0 6px 0;
-    line-height: 1.4;
-  }}
-  .fab-link {{
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
+    gap: 8px;
     background: {T['accent']};
-    color: #fff !important;
-    border-radius: 10px;
-    padding: 10px 16px;
-    font-weight: 700;
-    font-size: 0.88rem;
+    color: #ffffff !important;
     text-decoration: none !important;
-    transition: filter 0.15s ease;
-  }}
-  .fab-link:hover {{ filter: brightness(1.1); }}
-
-  .fab-btn {{
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: {T['accent']};
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    font-size: 1.4rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: 50px;
+    padding: 12px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
     box-shadow: 0 4px 18px rgba(217,119,6,0.45);
     transition: transform 0.15s ease, filter 0.15s ease;
-    position: relative;
+    white-space: nowrap;
   }}
-  .fab-btn:hover {{
-    transform: scale(1.08);
+  .fab-link:hover {{
+    transform: translateY(-2px);
     filter: brightness(1.1);
+    color: #ffffff !important;
   }}
-  /* Pallino rosso notifica */
-  .fab-btn::after {{
-    content: '';
-    position: absolute;
-    top: 4px; right: 4px;
-    width: 10px; height: 10px;
-    background: #EF4444;
-    border-radius: 50%;
-    border: 2px solid {T['card']};
-  }}
-
   @media (max-width: 640px) {{
-    .fab-wrap {{ bottom: 1rem; right: 1rem; }}
-    .fab-panel {{ width: 230px; }}
+    .fab-link {{
+      bottom: 1rem;
+      right: 1rem;
+      padding: 10px 16px;
+      font-size: 0.82rem;
+    }}
   }}
 </style>
 
-<div class="fab-wrap" id="fabWrap">
-
-  <!-- Pannello popup -->
-  <div class="fab-panel" id="fabPanel">
-    <p class="fab-panel-title">💬 Feedback & Bug</p>
-    <p class="fab-panel-sub">
-      Hai trovato un bug o hai un suggerimento?<br>
-      Ci vogliono meno di 30 secondi — grazie! 🙏
-    </p>
-    <a href="{FEEDBACK_FORM_URL}" target="_blank" class="fab-link">
-      ✏️&nbsp; Apri il Form
-    </a>
-  </div>
-
-  <!-- Bottone rotondo -->
-  <button class="fab-btn" id="fabBtn" onclick="toggleFab()" title="Lascia un feedback">
-    💬
-  </button>
-
-</div>
-
-<script>
-  function toggleFab() {{
-    var panel = document.getElementById('fabPanel');
-    var btn   = document.getElementById('fabBtn');
-    panel.classList.toggle('open');
-    // Cambia emoji quando aperto
-    btn.textContent = panel.classList.contains('open') ? '✕' : '💬';
-    // Nascondi pallino rosso dopo primo click
-    btn.style.setProperty('--dot-display', 'none');
-    btn.classList.add('seen');
-  }}
-
-  // Chiudi cliccando fuori
-  document.addEventListener('click', function(e) {{
-    var wrap = document.getElementById('fabWrap');
-    if (wrap && !wrap.contains(e.target)) {{
-      var panel = document.getElementById('fabPanel');
-      var btn   = document.getElementById('fabBtn');
-      if (panel && panel.classList.contains('open')) {{
-        panel.classList.remove('open');
-        btn.textContent = '💬';
-      }}
-    }}
-  }});
-</script>
+<a class="fab-link" href="{FEEDBACK_FORM_URL}" target="_blank">
+  💬 &nbsp; Feedback & Bug
+</a>
 """, unsafe_allow_html=True)
 # ── FINE FEEDBACK BUTTON ──────────────────────────────────────────────────────────
 # ── FOOTER ───────────────────────────────────────────────────────────────────────
@@ -2395,6 +2291,7 @@ st.markdown(f"""
   <span style="opacity:0.55;">VerificAI · Versione Beta </span>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
