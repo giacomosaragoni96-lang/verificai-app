@@ -1488,26 +1488,47 @@ st.markdown(f"""
     }}
     .hero-title {{ font-size: 1.75rem !important; }}
     .hero-wrap {{ margin-bottom: 1.5rem; padding-bottom: 1.2rem; }}
+
+    /* Colonne in verticale su mobile */
     [data-testid="column"] {{
       width: 100% !important;
       flex: 1 1 100% !important;
       min-width: 100% !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
     }}
-    .stButton button {{
-      min-height: 48px !important;
-      font-size: 1rem !important;
+    /* Contenitore colonne: vertical stack */
+    [data-testid="stHorizontalBlock"] {{
+      flex-direction: column !important;
+      gap: 0 !important;
     }}
+
+    /* Input e select: altezza adeguata e testo visibile */
     .stTextInput input,
     .stNumberInput input {{
       font-size: 1rem !important;
-      padding: 12px 14px !important;
+      padding: 14px 14px !important;
+      min-height: 50px !important;
+      height: 50px !important;
+    }}
+    .stTextInput input::placeholder,
+    .stNumberInput input::placeholder {{
+      font-size: 1rem !important;
+      opacity: 1 !important;
+    }}
+    .stSelectbox [data-baseweb="select"] > div:first-child {{
+      padding: 14px 14px !important;
+      min-height: 50px !important;
+    }}
+    .stSelectbox [data-baseweb="select"] span {{
+      font-size: 1rem !important;
     }}
     .stTextArea textarea {{
       font-size: 0.95rem !important;
     }}
-    .stSelectbox [data-baseweb="select"] > div:first-child {{
-      padding: 10px 14px !important;
+    .stButton button {{
       min-height: 48px !important;
+      font-size: 1rem !important;
     }}
     [data-testid="stSidebar"] .block-container {{
       padding: 1rem !important;
@@ -1517,7 +1538,6 @@ st.markdown(f"""
       width: 100% !important;
       min-height: 48px !important;
     }}
-    .pdf-preview-frame {{ height: 340px !important; }}
   }}
 
   @media (min-width: 641px) and (max-width: 1024px) {{
