@@ -851,7 +851,6 @@ if 'esercizi_custom' not in st.session_state: st.session_state.esercizi_custom =
 if 'last_materia'    not in st.session_state: st.session_state.last_materia = None
 if 'last_argomento'  not in st.session_state: st.session_state.last_argomento = None
 if 'last_gen_ts'     not in st.session_state: st.session_state.last_gen_ts = None
-if 'sidebar_opened'  not in st.session_state: st.session_state.sidebar_opened = False
 
 # ── CSS GLOBALE ──────────────────────────────────────────────────────────────────
 is_dark = (st.session_state.theme == "dark")
@@ -1092,7 +1091,8 @@ st.markdown(f"""
     color: {T['text']} !important;
     font-family: 'DM Sans', sans-serif !important;
     font-size: 0.95rem !important;
-    padding: 10px 14px !important;
+    padding: 12px 16px !important;
+    min-height: 50px !important;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }}
   .stTextInput input::placeholder,
@@ -1541,9 +1541,10 @@ st.markdown(f"""
     .stTextInput input,
     .stNumberInput input {{
       font-size: 1rem !important;
-      padding: 14px 14px !important;
-      min-height: 50px !important;
-      height: 50px !important;
+      padding: 14px 16px !important;
+      min-height: 54px !important;
+      height: 54px !important;
+      line-height: 1.5 !important;
     }}
     .stTextInput input::placeholder,
     .stNumberInput input::placeholder {{
@@ -1604,8 +1605,6 @@ st.markdown(f"""
 
 # ── SIDEBAR ──────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    if not st.session_state.sidebar_opened:
-        st.session_state.sidebar_opened = True
     st.markdown('<div class="sidebar-title">⚙️ Impostazioni</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="sidebar-label">🏫 Classe</div>', unsafe_allow_html=True)
@@ -1650,6 +1649,13 @@ with st.sidebar:
         st.session_state.theme = new_theme
         st.rerun()
 
+# ── HINT SIDEBAR MOBILE (sopra il titolo) ────────────────────────────────────────
+st.markdown("""
+<div class="sidebar-hint-mobile">
+  ⚙️ &nbsp; Tocca <strong>&gt;&gt;</strong> in alto a sinistra per le impostazioni
+</div>
+""", unsafe_allow_html=True)
+
 # ── HEADER ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="hero-wrap">
@@ -1666,13 +1672,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ── HINT SIDEBAR MOBILE ───────────────────────────────────────────────────────────
-if not st.session_state.sidebar_opened:
-    st.markdown(f"""
-    <div class="sidebar-hint-mobile">
-      <span>⚙️</span>
-      <span>Tocca <strong>&gt;&gt;</strong> in alto a sinistra per le impostazioni</span>
-    </div>
-    """, unsafe_allow_html=True)
+
 
 # ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
 argomento = st.text_input("📚 Argomento", placeholder="es. Le equazioni di secondo grado")
