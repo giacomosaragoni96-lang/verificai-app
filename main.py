@@ -2422,27 +2422,49 @@ st.markdown(f"""
   ⚠️ Le verifiche generate dall'AI sono suggerimenti didattici — rivedi sempre il contenuto
   prima di distribuirlo agli studenti. Il docente è responsabile del materiale finale.<br>
   <span style="opacity:0.55;">VerificAI · Versione Beta</span>
-  &nbsp;·&nbsp;
-  <button id="copy-btn" onclick="
-    var tmp = document.createElement('textarea');
-    tmp.value = '{SHARE_URL}';
-    tmp.style.position = 'fixed';
-    tmp.style.opacity = '0';
-    document.body.appendChild(tmp);
-    tmp.focus();
-    tmp.select();
-    try {{
-      document.execCommand('copy');
-      document.getElementById('copy-btn').innerText = '✅ Link copiato!';
-      setTimeout(function(){{ document.getElementById('copy-btn').innerText = '🔗 Condividi con i colleghi'; }}, 2000);
-    }} catch(e) {{
-      document.getElementById('copy-btn').innerText = '{SHARE_URL}';
-    }}
-    document.body.removeChild(tmp);
-  "
-    style="background:none;border:none;cursor:pointer;color:{T['accent']};
-           font-weight:600;font-size:0.72rem;font-family:'DM Sans',sans-serif;padding:0;">
-    🔗 Condividi con i colleghi
-  </button>
 </div>
 """, unsafe_allow_html=True)
+
+import streamlit.components.v1 as components
+components.html(f"""
+<style>
+  body {{ margin: 0; padding: 0; background: transparent; }}
+  #share-btn {{
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: {T['accent']};
+    font-weight: 600;
+    font-size: 0.72rem;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0;
+    display: block;
+    margin: 0 auto;
+    text-align: center;
+    width: 100%;
+  }}
+  #share-btn:hover {{ text-decoration: underline; }}
+</style>
+<button id="share-btn" onclick="copyLink()">🔗 Condividi con i colleghi</button>
+<script>
+function copyLink() {{
+  var url = "{SHARE_URL}";
+  var btn = document.getElementById("share-btn");
+  var ta = document.createElement("textarea");
+  ta.value = url;
+  ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  var ok = false;
+  try {{ ok = document.execCommand("copy"); }} catch(e) {{}}
+  document.body.removeChild(ta);
+  if (ok) {{
+    btn.innerText = "✅ Link copiato!";
+    setTimeout(function() {{ btn.innerText = "🔗 Condividi con i colleghi"; }}, 2000);
+  }} else {{
+    btn.innerText = url;
+  }}
+}}
+</script>
+""", height=30)
