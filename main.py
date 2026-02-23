@@ -1019,10 +1019,11 @@ st.markdown(f"""
     padding-bottom: 1.5rem;
     border-bottom: 1px solid {T['border']};
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: 0.5rem;
   }}
   .hero-left {{ flex: 1; min-width: 200px; text-align: center; }}
   /* ── HERO TITLE ANIMATIONS ── */
@@ -1043,7 +1044,7 @@ st.markdown(f"""
 
   .hero-title {{
     font-family: 'DM Sans', sans-serif;
-    font-size: clamp(2.8rem, 9vw, 4.2rem);
+    font-size: clamp(3.2rem, 11vw, 5rem);
     font-weight: 900;
     color: {T['text']};
     line-height: 1.05;
@@ -1086,26 +1087,7 @@ st.markdown(f"""
     flex-shrink: 0;
     padding-top: 4px;
   }}
-  .share-link {{
-    font-size: 0.72rem;
-    font-weight: 500;
-    color: {T['muted']};
-    text-decoration: none;
-    letter-spacing: 0.01em;
-    opacity: 0.7;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-    border-bottom: 1px dashed {T['border2']};
-    padding-bottom: 1px;
-  }}
-  .share-link:hover {{
-    color: {T['accent']};
-    opacity: 1;
-    border-bottom-color: {T['accent']};
-  }}
-  @media (max-width: 640px) {{
-    .share-link {{ display: none; }}
-  }}
+
 
   /* ── LABELS ── */
   .stTextInput label p,
@@ -1564,20 +1546,44 @@ st.markdown(f"""
   /* ════════════════════════════════════
      SIDEBAR HINT — solo mobile
      ════════════════════════════════════ */
-  .sidebar-hint-mobile {{
+  /* ── TOP BAR (hint + share) ── */
+  .top-bar {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1.2rem;
+    flex-wrap: wrap;
+  }}
+  .top-bar-hint,
+  .top-bar-share {{
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     background: {T['accent_light']};
     border: 1px solid {T['accent']};
     border-radius: 20px;
     padding: 5px 14px;
     font-size: 0.75rem;
     color: {T['accent']};
-    margin-bottom: 1rem;
     font-weight: 600;
     white-space: nowrap;
-    max-width: fit-content;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }}
+  .top-bar-share:hover {{
+    opacity: 0.8;
+  }}
+  @media (max-width: 640px) {{
+    .top-bar {{
+      justify-content: center;
+      gap: 0.5rem;
+    }}
+    .top-bar-hint,
+    .top-bar-share {{
+      font-size: 0.7rem;
+      padding: 4px 10px;
+    }}
   }}
 
   /* ═══ MOBILE ═══ */
@@ -1707,10 +1713,11 @@ with st.sidebar:
         st.session_state.theme = new_theme
         st.rerun()
 
-# ── HINT SIDEBAR MOBILE (sopra il titolo) ────────────────────────────────────────
-st.markdown("""
-<div class="sidebar-hint-mobile">
-  ⚙️ &nbsp; Apri <strong>&gt;&gt;</strong> per le impostazioni
+# ── TOPBAR: hint + condividi ──────────────────────────────────────────────────────
+st.markdown(f"""
+<div class="top-bar">
+  <div class="top-bar-hint">⚙️ &nbsp; Apri <strong>&gt;&gt;</strong> per le impostazioni</div>
+  <a href="{SHARE_URL}" class="top-bar-share" target="_blank">🔗 &nbsp; Condividi con i colleghi</a>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1720,11 +1727,6 @@ st.markdown(f"""
   <div class="hero-left">
     <h1 class="hero-title"><span class="hero-icon">{APP_ICON}</span> Verific<span class="hero-ai">AI</span></h1>
     <p class="hero-sub">{APP_TAGLINE}</p>
-  </div>
-  <div class="hero-right">
-    <a href="{SHARE_URL}" class="share-link" target="_blank">
-      Condividi questo strumento con i colleghi →
-    </a>
   </div>
 </div>
 """, unsafe_allow_html=True)
