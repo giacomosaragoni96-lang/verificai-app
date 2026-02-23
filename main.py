@@ -1650,7 +1650,7 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🏆 Punteggi</div>', unsafe_allow_html=True)
     mostra_punteggi = st.checkbox("Mostra punteggio per esercizio", value=True)
-    con_griglia     = st.checkbox("Includi griglia di valutazione", value=True)
+    con_griglia     = st.checkbox("Includi griglia di valutazione", value=False)
     punti_totali    = st.number_input("Punti totali", min_value=10, max_value=200, value=100, step=5,
                                       disabled=not mostra_punteggi)
 
@@ -1824,16 +1824,27 @@ if genera_btn:
             st.session_state.esercizi_custom, num_esercizi_totali, punti_totali if mostra_punteggi else 0)
         titolo_a = "Versione A" if doppia_fila else ""
 
-        # ── Progress bar animata ─────────────────────────────────────────────
+        # ── Progress bar animata (HTML custom — nessuna doppia barra) ────────
         _n_steps = 3 + (1 if correzione_step else 0) + (2 if doppia_fila else 0)
         _step    = [0]
         _prog    = st.empty()
 
         def _avanza(testo):
             _step[0] += 1
-            _prog.progress(min(_step[0] / _n_steps, 0.97), text=testo)
+            perc = int(min(_step[0] / _n_steps, 0.97) * 100)
+            _prog.markdown(f"""
+<div style="margin:0.6rem 0 1rem 0;">
+  <div style="font-size:0.82rem;font-weight:600;color:{T['text2']};
+              font-family:'DM Sans',sans-serif;margin-bottom:6px;">{testo}</div>
+  <div style="background:{T['border']};border-radius:100px;height:8px;overflow:hidden;">
+    <div style="background:linear-gradient(90deg,{T['accent']},{T['accent']}cc);
+                width:{perc}%;height:100%;border-radius:100px;
+                transition:width 0.4s ease;"></div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
-        _prog.progress(0.03, text="✍️  Elaborazione titolo…")
+        _avanza("✍️  Elaborazione titolo…")
 
         # Step 1 — titolo
         titolo_resp = model.generate_content(
@@ -2018,8 +2029,16 @@ SOLO CODICE LATEX del corpo."""
                     rsb.text.replace("```latex","").replace("```","").strip())
 
         # Fine
-        _prog.progress(1.0, text="✅  Verifica pronta!")
-        time.sleep(0.6)
+        _prog.markdown(f"""
+<div style="margin:0.6rem 0 1rem 0;">
+  <div style="font-size:0.82rem;font-weight:600;color:{T['success']};
+              font-family:'DM Sans',sans-serif;margin-bottom:6px;">✅  Verifica pronta!</div>
+  <div style="background:{T['border']};border-radius:100px;height:8px;overflow:hidden;">
+    <div style="background:{T['success']};width:100%;height:100%;border-radius:100px;"></div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+        time.sleep(0.7)
         _prog.empty()
 
         st.session_state.last_materia   = materia
