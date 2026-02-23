@@ -1077,22 +1077,15 @@ st.markdown(f"""
     background-clip: text;
     animation: badgePop 0.6s ease 0.5s both;
   }}
-  .beta-badge {{
-    display: inline-block;
-    font-size: 0.55rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    color: {T['accent']};
-    border: 1.5px solid {T['accent']};
-    border-radius: 5px;
-    padding: 2px 6px;
-    vertical-align: super;
-    margin-left: 6px;
-    line-height: 1;
+  .hero-beta {{
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: {T['muted']};
+    margin: 2px 0 0 0;
     font-family: 'DM Sans', sans-serif;
-    -webkit-text-fill-color: {T['accent']};
-    background: {T['accent_light']};
-    animation: badgePop 0.6s ease 0.8s both;
+    animation: badgePop 0.5s ease 0.9s both;
     opacity: 0;
   }}
   .hero-sub {{
@@ -1702,8 +1695,9 @@ st.markdown(f"""
 st.markdown(f"""
 <div class="hero-wrap">
   <div class="hero-left">
-    <h1 class="hero-title"><span class="hero-icon">{APP_ICON}</span> Verific<span class="hero-ai">AI</span><span class="beta-badge">BETA</span></h1>
+    <h1 class="hero-title"><span class="hero-icon">{APP_ICON}</span> Verific<span class="hero-ai">AI</span></h1>
     <p class="hero-sub">{APP_TAGLINE}</p>
+    <p class="hero-beta">Versione Beta</p>
   </div>
 </div>
 """, unsafe_allow_html=True)
