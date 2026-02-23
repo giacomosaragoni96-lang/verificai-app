@@ -1129,7 +1129,7 @@ st.markdown(f"""
     justify-content: center;
     flex-direction: column;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0;
   }}
   .hero-left {{ flex: 1; min-width: 200px; text-align: center; }}
   @keyframes iconBounce {{
@@ -1145,13 +1145,17 @@ st.markdown(f"""
     0%   {{ opacity: 0; transform: translateY(6px); }}
     100% {{ opacity: 1; transform: translateY(0); }}
   }}
+  @keyframes subFadeIn {{
+    0%   {{ opacity: 0; transform: translateY(4px); }}
+    100% {{ opacity: 1; transform: translateY(0); }}
+  }}
   .hero-title {{
     font-family: 'DM Sans', sans-serif;
     font-size: 96px !important;
     font-weight: 900 !important;
     color: {T['text']};
-    line-height: 1.05;
-    margin: 0 0 0.5rem 0;
+    line-height: 1.0;
+    margin: 0 0 0.15rem 0;
     letter-spacing: -0.04em;
     display: inline-flex;
     align-items: center;
@@ -1171,22 +1175,29 @@ st.markdown(f"""
     background-clip: text;
     animation: badgePop 0.6s ease 0.5s both;
   }}
-  .hero-beta {{
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: {T['muted']};
-    margin: 2px 0 0 0;
-    font-family: 'DM Sans', sans-serif;
-    animation: badgePop 0.5s ease 0.9s both;
+  .hero-sub {{
+    font-size: 1.05rem;
+    color: {T['text2']};
+    margin: 0 0 0.55rem 0;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    animation: subFadeIn 0.5s ease 0.35s both;
     opacity: 0;
   }}
-  .hero-sub {{
-    font-size: 0.9rem;
+  .hero-beta {{
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     color: {T['muted']};
-    margin: 0;
-    font-weight: 400;
+    background: {T['card2']};
+    border: 1px solid {T['border2']};
+    border-radius: 100px;
+    padding: 2px 10px;
+    font-family: 'DM Sans', sans-serif;
+    animation: badgePop 0.5s ease 0.75s both;
+    opacity: 0;
   }}
   .hero-right {{
     display: flex;
@@ -1721,7 +1732,7 @@ st.markdown(f"""
       padding: 4.5rem 1rem 3rem !important;
     }}
     .hero-title {{ font-size: 56px !important; }}
-    .hero-sub {{ font-size: 0.9rem !important; }}
+    .hero-sub {{ font-size: 0.95rem !important; }}
     .hero-wrap {{ margin-bottom: 1.5rem; padding-bottom: 1.2rem; }}
     .top-bar {{
       justify-content: center;
@@ -1852,7 +1863,7 @@ st.markdown(f"""
   <div class="hero-left">
     <h1 class="hero-title"><span class="hero-icon">{APP_ICON}</span> Verific<span class="hero-ai">AI</span></h1>
     <p class="hero-sub">{APP_TAGLINE}</p>
-    <p class="hero-beta">Versione Beta</p>
+    <span class="hero-beta">Versione Beta</span>
   </div>
 </div>
 """, unsafe_allow_html=True)
