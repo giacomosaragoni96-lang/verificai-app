@@ -2245,8 +2245,8 @@ st.markdown(f"""
 <style>
   .fab-link {{
     position: fixed;
-    bottom: 1.5rem;
-    left: 1.5rem;
+    top: 1.5rem;
+    right: 1.5rem;
     z-index: 9999;
     display: inline-flex;
     align-items: center;
@@ -2270,8 +2270,8 @@ st.markdown(f"""
   }}
   @media (max-width: 640px) {{
     .fab-link {{
-      bottom: 1rem;
-      left: 1rem;
+      top: 1rem;
+      right: 1rem;
       padding: 10px 16px;
       font-size: 0.82rem;
     }}
@@ -2291,6 +2291,7 @@ st.markdown(f"""
   <span style="opacity:0.55;">VerificAI · Versione Beta </span>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
