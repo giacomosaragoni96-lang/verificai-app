@@ -23,6 +23,12 @@ APP_TAGLINE = "Crea verifiche su misura in pochi secondi"
 SHARE_URL   = "https://verificai.streamlit.app"
 FEEDBACK_FORM_URL = "https://forms.gle/KNu8v8iDVUiGkQUL8"
 
+MODELLI_DISPONIBILI = {
+    "⚡ Flash 2.5 Lite (velocissimo)": "gemini-2.5-flash-lite",
+    "⚡ Flash 2.5 (bilanciato)":        "gemini-2.5-flash",
+    "🧠 Pro 2.5 (massima qualità)":     "gemini-2.5-pro",
+}
+
 # ── TEMI ─────────────────────────────────────────────────────────────────────────
 THEMES = {
     "light": {
@@ -72,12 +78,6 @@ THEMES = {
 if "theme" not in st.session_state:
     st.session_state.theme = "light"
 T = THEMES[st.session_state.theme]
-
-MODELLI_DISPONIBILI = {
-    "⚡ Flash 2.5 Lite (velocissimo)": "gemini-2.5-flash-lite",
-    "⚡ Flash 2.5 (bilanciato)":        "gemini-2.5-flash",
-    "🧠 Pro 2.5 (massima qualità)":     "gemini-2.5-pro",
-}
 
 SCUOLE = [
     "Scuola Primaria (Elementari)",
@@ -157,7 +157,8 @@ NOTE_PLACEHOLDER = {
 
 TIPI_ESERCIZIO = ["Aperto", "Scelta multipla", "Vero/Falso", "Completamento", "Interdisciplinare"]
 
-# ── FUNZIONI ORIGINALI (invariate) ───────────────────────────────────────────────
+# ── FUNZIONI ───────────────────────────────────────────────────────────────────
+
 def parse_esercizi(latex):
     esercizi = []
     ex_blocks = re.split(r'\\subsection\*\{', latex)[1:]
@@ -193,6 +194,7 @@ def parse_esercizi(latex):
             esercizi.append({'num': num_label, 'items': items_found})
     return esercizi
 
+
 def build_griglia_latex(esercizi, punti_totali):
     if not esercizi:
         return ""
@@ -215,6 +217,7 @@ def build_griglia_latex(esercizi, punti_totali):
         f"\\adjustbox{{max width=\\textwidth}}{{\n\\begin{{tabular}}{{{col_spec}}}\n\\hline\n"
         f"{row_es}\n{row_sotto}\n{row_max}\n{row_punti}\n\\end{{tabular}}\n}}}}\n\\end{{center}}"
     )
+
 
 def inietta_asterischi_bes(latex, percentuale=0.25):
     pattern = re.compile(r'(\\item\[([a-zA-Z]+\*?)\)\])([ \t]*)')
@@ -242,6 +245,24 @@ def inietta_asterischi_bes(latex, percentuale=0.25):
         latex = latex[:ins_pos] + ' (*)' + latex[ins_pos:]
     return latex
 
+
+def rimuovi_asterischi_primo_esercizio(ltx):
+    """Rimuove tutti i (*) dal primo blocco \\subsection* (Saperi Essenziali)."""
+    parts = re.split(r'(\\subsection\*\{)', ltx, maxsplit=1)
+    if len(parts) < 3:
+        return ltx
+    after_first_header = parts[2]
+    secondo = re.search(r'\\subsection\*\{', after_first_header)
+    if secondo:
+        primo_blocco = after_first_header[:secondo.start()]
+        resto = after_first_header[secondo.start():]
+    else:
+        primo_blocco = after_first_header
+        resto = ""
+    primo_blocco_clean = re.sub(r'\s*\(\*\)', '', primo_blocco)
+    return parts[0] + parts[1] + primo_blocco_clean + resto
+
+
 def fix_items_environment(latex):
     import re as _r
     lines = latex.split('\n')
@@ -265,16 +286,47 @@ def fix_items_environment(latex):
         result.append(r'\end{enumerate}')
     return '\n'.join(result)
 
+
 def inietta_griglia(latex, punti_totali):
+    """
+    Rimuove eventuali griglie precedenti e inietta la griglia aggiornata.
+    Robusto: funziona anche se \\end{document} manca o è malformato.
+    """
+    # Rimuovi griglia precedente se presente
+    latex = re.sub(
+        r'(\\vspace\{[^}]+\}\s*)?% GRIGLIA.*?\\end\{center\}',
+        '', latex, flags=re.DOTALL
+    )
     latex = re.sub(
         r'(\\vspace\{[^}]+\}\s*)?\\begin\{center\}\s*\\textbf\{Griglia[^}]*\}.*?\\end\{center\}',
         '', latex, flags=re.DOTALL
     )
-    griglia = build_griglia_latex(parse_esercizi(latex), punti_totali)
+
+    esercizi = parse_esercizi(latex)
+    if not esercizi:
+        # Se non ci sono esercizi parsabili (es. punti non trovati), restituisce latex invariato
+        return latex
+
+    griglia = build_griglia_latex(esercizi, punti_totali)
+
+    # Calcola punti totali reali dalla griglia e aggiorna il totale se necessario
+    try:
+        tot_reale = sum(
+            float(pts.replace(',', '.'))
+            for ex in esercizi for _, pts in ex['items']
+        )
+        if abs(tot_reale - punti_totali) > 0.5:
+            # Aggiorna il totale nella griglia con quello reale
+            griglia = build_griglia_latex(esercizi, int(tot_reale) if tot_reale == int(tot_reale) else round(tot_reale, 1))
+    except Exception:
+        pass
+
+    # Inserisci prima di \end{document}
     if "\\end{document}" in latex:
         return latex.replace("\\end{document}", f"\n\\vfill\n{griglia}\n\\end{{document}}")
     else:
         return latex + f"\n\\vfill\n{griglia}\n\\end{{document}}"
+
 
 def compila_pdf(codice_latex):
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -289,6 +341,7 @@ def compila_pdf(codice_latex):
         if os.path.exists(pdf):
             return open(pdf, "rb").read(), None
         return None, r.stdout.decode()
+
 
 def pdf_to_images_bytes(pdf_bytes):
     try:
@@ -316,6 +369,7 @@ def pdf_to_images_bytes(pdf_bytes):
         return None, str(e)
     return None, "pdf2image non installato e pdftoppm non trovato."
 
+
 def _make_tc_xml(text, width_dxa, bold=False, gridSpan=1):
     from docx.oxml.ns import qn as _qn
     from docx.oxml import OxmlElement as _OE
@@ -340,6 +394,7 @@ def _make_tc_xml(text, width_dxa, bold=False, gridSpan=1):
         t = _OE('w:t'); t.text = str(text); r_el.append(t)
     return tc
 
+
 def _fix_tbl_grid(tbl_el, col_widths, _qn, _OE):
     old_grid = tbl_el.find(_qn('w:tblGrid'))
     if old_grid is not None:
@@ -354,6 +409,7 @@ def _fix_tbl_grid(tbl_el, col_widths, _qn, _OE):
         tbl_pr.addnext(new_grid)
     else:
         tbl_el.insert(0, new_grid)
+
 
 def _build_griglia_xml(doc, row_es, row_sotto, row_max, PAGE_W_DXA=9638):
     from docx.oxml.ns import qn as _qn
@@ -446,6 +502,7 @@ def _build_griglia_xml(doc, row_es, row_sotto, row_max, PAGE_W_DXA=9638):
 
     return tbl
 
+
 def _strip_latex_math(text):
     import re as _r
     if not text: return text
@@ -478,6 +535,7 @@ def _strip_latex_math(text):
     text = _r.sub(r'\\[a-zA-Z]+', '', text)
     text = text.replace('{', '').replace('}', '')
     return text.strip()
+
 
 def _clean_latex_line(text):
     import re as _r
@@ -635,7 +693,8 @@ def _estrai_punti(text):
     m = _r.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', text)
     return m.group(1) if m else ''
 
-def latex_to_docx_via_ai(codice_latex, model, con_griglia=True):
+
+def latex_to_docx_via_ai(codice_latex, con_griglia=True):
     try:
         from docx import Document as DocxDocument
         from docx.shared import Pt, Cm
@@ -801,10 +860,42 @@ def latex_to_docx_via_ai(codice_latex, model, con_griglia=True):
         import traceback
         return None, f"Errore DOCX: {e}\n{traceback.format_exc()}"
 
-def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali):
+
+def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_punteggi):
     n_liberi = max(0, num_totale - len(esercizi_custom))
-    righe = [f"\nSTRUTTURA ESERCIZI (totale: {num_totale}):"]
+    righe = [
+        f"\nSTRUTTURA ESERCIZI — REGOLA ASSOLUTA:",
+        f"Devi generare ESATTAMENTE {num_totale} esercizi, né uno di più né uno di meno.",
+        f"Ogni esercizio è un blocco \\subsection*{{Esercizio N: Titolo}}.",
+        f"Conta i tuoi \\subsection* prima di terminare: devono essere ESATTAMENTE {num_totale}.",
+    ]
     immagini = []
+
+    # Calcola distribuzione punti suggerita
+    if mostra_punteggi and num_totale > 0:
+        pts_base = punti_totali // num_totale
+        resto = punti_totali - pts_base * num_totale
+        pts_per_ex = [pts_base] * num_totale
+        if resto > 0:
+            pts_per_ex[0] += resto
+        righe.append(f"\nDISTRIBUZIONE PUNTI SUGGERITA (totale ESATTO: {punti_totali} pt):")
+        for i_ex in range(num_totale):
+            righe.append(f"  - Esercizio {i_ex+1}: circa {pts_per_ex[i_ex]} pt (distribuisci tra i sottopunti)")
+        righe.append(f"REGOLA CRITICA: la somma di TUTTI i (X pt) nei sottopunti DEVE essere ESATTAMENTE {punti_totali} pt.")
+
+    # Regola primo esercizio saperi essenziali (solo se non specificato dall'utente)
+    ha_primo_custom = len(esercizi_custom) > 0  # se il docente ha specificato l'esercizio 1, rispettiamo
+    if not ha_primo_custom:
+        righe.append(
+            f"\nREGOLA PRIMO ESERCIZIO (Esercizio 1 — SEMPRE presente, NON modificabile):\n"
+            f"Il primo esercizio DEVE chiamarsi 'Saperi Essenziali' e coprire i concetti fondamentali\n"
+            f"dell'argomento che TUTTI gli studenti devono conoscere (definizioni, concetti base, formule\n"
+            f"chiave, fatti imprescindibili). NON inserire mai il simbolo (*) in questo esercizio:\n"
+            f"è obbligatorio per tutti, nessuna esclusione. Calibra il livello di difficoltà in modo\n"
+            f"accessibile. Gli esercizi {2}–{num_totale} possono approfondire e variare."
+        )
+
+    righe.append(f"\nDETTAGLIO ESERCIZI ({num_totale} totali):")
     for i, ex in enumerate(esercizi_custom, 1):
         tipo, desc = ex.get('tipo', 'Aperto'), ex.get('descrizione', '').strip()
         if tipo == "Interdisciplinare" and ex.get('materia2'):
@@ -822,9 +913,11 @@ def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali):
             riga += " — \\underline{\\hspace{3cm}} per gli spazi"
         righe.append(riga)
     if n_liberi > 0:
-        righe.append(f"- Genera altri {n_liberi} esercizi liberi coerenti con l'argomento.")
-    righe.append(f"Distribuisci {punti_totali} pt in modo equilibrato.")
+        start_idx = len(esercizi_custom) + 1
+        end_idx   = num_totale
+        righe.append(f"- Esercizi {start_idx}–{end_idx}: genera tu {n_liberi} esercizi coerenti con l'argomento.")
     return "\n".join(righe), immagini
+
 
 # ── HELPER ───────────────────────────────────────────────────────────────────────
 def _tempo_relativo(ts):
@@ -842,6 +935,7 @@ def _tempo_relativo(ts):
     else:
         return time.strftime("%d/%m", time.localtime(ts))
 
+
 def _stima_dimensione(data_bytes):
     if data_bytes is None:
         return "—"
@@ -849,6 +943,7 @@ def _stima_dimensione(data_bytes):
     if kb < 1024:
         return f"{kb:.0f} KB"
     return f"{kb/1024:.1f} MB"
+
 
 # ── SESSION STATE ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -858,10 +953,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+
 def _vf():
     return {'latex': '', 'pdf': None, 'preview': False,
             'soluzioni_latex': '', 'soluzioni_pdf': None, 'docx': None,
             'pdf_ts': None, 'docx_ts': None}
+
 
 if 'verifiche'       not in st.session_state: st.session_state.verifiche = {'A': _vf(), 'B': _vf()}
 if 'esercizi_custom' not in st.session_state: st.session_state.esercizi_custom = []
@@ -1534,7 +1631,6 @@ st.markdown(f"""
     gap: 0.75rem;
     margin-bottom: 1.2rem;
   }}
-  /* MODIFICA: hint visibile SOLO su mobile */
   .top-bar-hint {{
     display: none;
   }}
@@ -1694,8 +1790,7 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-# ── FEEDBACK BUTTON (fisso in alto a destra) ──────────────────────────────────────
-# MODIFICA: aggiunto onclick per forzare apertura in nuova scheda (fix Streamlit)
+# ── FEEDBACK BUTTON ──────────────────────────────────────────────────────────────
 st.markdown(f"""
 <a class="fab-link" href="{FEEDBACK_FORM_URL}" target="_blank" rel="noopener noreferrer"
    onclick="window.open(this.href,'_blank','noopener,noreferrer'); return false;">
@@ -1744,7 +1839,7 @@ with st.sidebar:
         st.session_state.theme = new_theme
         st.rerun()
 
-# ── TOPBAR ── MODIFICA: rimosso link "Condividi", hint solo mobile via CSS ────────
+# ── TOPBAR ───────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="top-bar">
   <div class="top-bar-hint">⚙️ Tocca &nbsp;<strong>&gt;&gt;</strong>&nbsp; qui sopra per le impostazioni</div>
@@ -1893,7 +1988,8 @@ if genera_btn:
         calibrazione = CALIBRAZIONE_SCUOLA.get(difficolta, "")
         s_note       = f"\nNOTE DOCENTE: {note_generali.strip()}" if note_generali.strip() else ""
         s_es, imgs_es = costruisci_prompt_esercizi(
-            st.session_state.esercizi_custom, num_esercizi_totali, punti_totali if mostra_punteggi else 0)
+            st.session_state.esercizi_custom, num_esercizi_totali,
+            punti_totali if mostra_punteggi else 0, mostra_punteggi)
         titolo_a = "Versione A" if doppia_fila else ""
 
         _n_steps = 3 + (1 if correzione_step else 0) + (2 if doppia_fila else 0)
@@ -1940,8 +2036,15 @@ if genera_btn:
         else:
             bes_rule = "- Nessun simbolo (*) facoltativi."
 
-        punti_rule = (f"- Ogni \\item DEVE avere \"(X pt)\" sulla stessa riga. Totale: {punti_totali} pt."
-                      if mostra_punteggi else "- NON inserire punti (X pt) in nessun esercizio né sottopunto.")
+        if mostra_punteggi:
+            punti_rule = (
+                f"- PUNTEGGI OBBLIGATORI: ogni \\item DEVE avere \"(X pt)\" sulla stessa riga.\n"
+                f"- La somma di TUTTI i punti deve essere ESATTAMENTE {punti_totali} pt. CONTROLLA prima di terminare.\n"
+                f"- Distribuisci i punti in modo che sia facile ottenere almeno 60% svolgendo le parti più semplici.\n"
+                f"- NON inserire punti nel titolo \\subsection*, solo nei \\item."
+            )
+        else:
+            punti_rule = "- NON inserire punti (X pt) in nessun esercizio né sottopunto."
 
         if esercizio_multidisciplinare:
             materia2_str   = f" con {materia2_scelta}" if materia2_scelta else " (scegli tu la disciplina più adatta)"
@@ -1954,7 +2057,7 @@ if genera_btn:
         else:
             multi_rule = "- NON includere esercizi multidisciplinari."
 
-        griglia_rule = ("- NON generare la griglia (sarà aggiunta automaticamente)."
+        griglia_rule = ("- NON generare la griglia (sarà aggiunta automaticamente dopo)."
                         if con_griglia else "- NON generare nessuna griglia di valutazione.")
 
         if e_mat:
@@ -1992,7 +2095,7 @@ if genera_btn:
 """
 
         prompt_a = f"""Sei un docente esperto di {materia} e LaTeX. Genera SOLO il corpo degli esercizi (senza preambolo, senza \\documentclass, senza \\begin{{document}}) per una verifica su: {argomento}.
-{f'Punti totali: {punti_totali}.' if mostra_punteggi else ''}
+{f'Punti totali da distribuire: {punti_totali} pt.' if mostra_punteggi else ''}
 
 CALIBRAZIONE LIVELLO:
 {calibrazione}
@@ -2002,9 +2105,11 @@ CALIBRAZIONE LIVELLO:
 REGOLE LATEX (TASSATIVE):
 {griglia_rule}
 {punti_rule}
-- Titoli: \\subsection*{{Esercizio N: Titolo{' (TOT pt)' if mostra_punteggi else ''}}}
+- NUMERO ESERCIZI: genera ESATTAMENTE {num_esercizi_totali} blocchi \\subsection*. CONTA i tuoi blocchi prima di chiudere. Se ne hai di più, elimina i superflui. Se ne hai di meno, aggiungine.
+- Titoli: \\subsection*{{Esercizio N: Titolo}}
 - SOTTOPUNTI OBBLIGATORI: usa SEMPRE \\item[a)] \\item[b)] \\item[c)] ecc. con label ESPLICITA tra parentesi quadre.
 {bes_rule}
+- PROTEZIONE ESERCIZIO 1 (Saperi Essenziali): nell'Esercizio 1 NON inserire MAI il simbolo (*) su nessun sottopunto. È obbligatorio per tutti gli studenti senza eccezioni.
 {multi_rule}
 - Scelta multipla: le opzioni DEVONO stare in un \\begin{{enumerate}}[a)] SEPARATO dopo la domanda.
 - Vero/Falso: $\\square$ \\textbf{{V}} $\\quad\\square$ \\textbf{{F}}
@@ -2033,11 +2138,36 @@ SOLO CODICE LATEX del corpo."""
         if "\\end{document}" not in corpo_latex:
             corpo_latex += "\n\\end{document}"
 
+        # ── GUARDIA: tronca esercizi in eccesso ──────────────────────────────
+        splits = re.split(r'(\\subsection\*\{)', corpo_latex)
+        # splits[0] = testo prima del primo \subsection*
+        # poi coppie: splits[1]= \subsection*{, splits[2]=resto del blocco
+        n_blocchi = (len(splits) - 1) // 2
+        if n_blocchi > num_esercizi_totali:
+            # Ricostruisci tenendo solo i primi num_esercizi_totali blocchi
+            testa = splits[0]
+            blocchi_da_tenere = []
+            for b in range(num_esercizi_totali):
+                blocchi_da_tenere.append(splits[1 + b*2])      # \subsection*{
+                blocchi_da_tenere.append(splits[2 + b*2])      # contenuto
+            corpo_troncato = testa + "".join(blocchi_da_tenere)
+            # Assicura \end{document}
+            corpo_troncato = re.sub(r'\\end\{document\}.*$', '', corpo_troncato, flags=re.DOTALL).rstrip()
+            corpo_latex = corpo_troncato + "\n\\end{document}"
+
         latex_a = preambolo_fisso + corpo_latex
         latex_a = fix_items_environment(latex_a)
         if bes_dsa:
             latex_a = inietta_asterischi_bes(latex_a, percentuale=0.25)
-        latex_a_final = inietta_griglia(latex_a, punti_totali) if con_griglia else latex_a
+            # Rimuovi eventuali (*) rimasti nell'Esercizio 1 (Saperi Essenziali)
+            latex_a = rimuovi_asterischi_primo_esercizio(latex_a)
+
+        # Iniezione griglia SEMPRE dopo fix_items_environment e bes
+        if con_griglia:
+            latex_a_final = inietta_griglia(latex_a, punti_totali)
+        else:
+            latex_a_final = latex_a
+
         st.session_state.verifiche['A'] = {**_vf(), 'latex': latex_a_final}
 
         _avanza("🖨️  Compilazione PDF…")
@@ -2046,6 +2176,15 @@ SOLO CODICE LATEX del corpo."""
             st.session_state.verifiche['A']['pdf']     = pdf_auto
             st.session_state.verifiche['A']['pdf_ts']  = time.time()
             st.session_state.verifiche['A']['preview'] = True
+        else:
+            # Fallback: prova senza griglia se la compilazione fallisce per colpa della griglia
+            if con_griglia:
+                pdf_fallback, _ = compila_pdf(latex_a)
+                if pdf_fallback:
+                    st.session_state.verifiche['A']['pdf']     = pdf_fallback
+                    st.session_state.verifiche['A']['pdf_ts']  = time.time()
+                    st.session_state.verifiche['A']['preview'] = True
+                    st.warning("⚠️ La griglia di valutazione non è stata inclusa nel PDF (errore di compilazione). Scarica il .tex per debug.")
 
         if correzione_step:
             _avanza("📝  Generazione soluzioni…")
@@ -2078,7 +2217,13 @@ SOLO CODICE LATEX del corpo."""
             latex_b = fix_items_environment(latex_b)
             if bes_dsa:
                 latex_b = inietta_asterischi_bes(latex_b, percentuale=0.25)
-            latex_b_final = inietta_griglia(latex_b, punti_totali) if con_griglia else latex_b
+                latex_b = rimuovi_asterischi_primo_esercizio(latex_b)
+
+            if con_griglia:
+                latex_b_final = inietta_griglia(latex_b, punti_totali)
+            else:
+                latex_b_final = latex_b
+
             st.session_state.verifiche['B'] = {**_vf(), 'latex': latex_b_final}
 
             _avanza("🖨️  PDF Versione B…")
@@ -2087,6 +2232,14 @@ SOLO CODICE LATEX del corpo."""
                 st.session_state.verifiche['B']['pdf']     = pdf_b_auto
                 st.session_state.verifiche['B']['pdf_ts']  = time.time()
                 st.session_state.verifiche['B']['preview'] = True
+            else:
+                if con_griglia:
+                    pdf_b_fallback, _ = compila_pdf(latex_b)
+                    if pdf_b_fallback:
+                        st.session_state.verifiche['B']['pdf'] = pdf_b_fallback
+                        st.session_state.verifiche['B']['pdf_ts'] = time.time()
+                        st.session_state.verifiche['B']['preview'] = True
+
             if correzione_step:
                 rsb = model.generate_content(
                     "Stessa struttura soluzioni (Rapide + Dettagliato). SOLO LATEX.\n\n" + latex_b)
@@ -2119,14 +2272,14 @@ if st.session_state.verifiche['A']['latex']:
     st.divider()
     _df  = doppia_fila   if 'doppia_fila'  in dir() else False
     _arg = st.session_state.last_argomento or (argomento if 'argomento' in dir() else 'verifica')
-    _mid = modello_id    if 'modello_id'   in dir() else "gemini-2.5-flash"
 
     attive = ['A','B'] if _df and st.session_state.verifiche['B']['latex'] else ['A']
-    cols   = st.columns(len(attive))
 
     for idx, fid in enumerate(attive):
         v = st.session_state.verifiche[fid]
-        with cols[idx]:
+        if idx > 0:
+            st.divider()
+        with st.container():
             label_ver = f"Versione {fid}" if _df else "La tua verifica"
             st.markdown(f"""
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;">
@@ -2198,8 +2351,7 @@ if st.session_state.verifiche['A']['latex']:
                     st.session_state[_docx_gen_key] = True
                 if st.session_state.get(_docx_gen_key, False):
                     with st.spinner("⏳ Conversione Word…"):
-                        _m = genai.GenerativeModel(_mid)
-                        db, de = latex_to_docx_via_ai(v['latex'], _m, con_griglia=con_griglia)
+                        db, de = latex_to_docx_via_ai(v['latex'], con_griglia=con_griglia)
                     if db:
                         st.session_state.verifiche[fid]['docx'] = db
                         st.session_state.verifiche[fid]['docx_ts'] = time.time()
@@ -2241,7 +2393,6 @@ if st.session_state.verifiche['A']['latex']:
                         else:
                             with st.expander("Log"): st.text(se)
 
-            # MODIFICA: anteprima chiusa di default (expanded=False)
             if v['preview'] and v['pdf']:
                 with st.expander("👁 Anteprima PDF", expanded=False):
                     b64 = base64.b64encode(v['pdf']).decode()
@@ -2265,7 +2416,7 @@ if st.session_state.verifiche['A']['latex']:
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
 
-# ── FOOTER ── MODIFICA: aggiunto link "Condividi con i colleghi" ──────────────────
+# ── FOOTER ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="app-footer">
   ⚠️ Le verifiche generate dall'AI sono suggerimenti didattici — rivedi sempre il contenuto
@@ -2278,6 +2429,3 @@ st.markdown(f"""
   </a>
 </div>
 """, unsafe_allow_html=True)
-
-
-
