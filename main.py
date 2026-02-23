@@ -2243,6 +2243,7 @@ st.markdown(f"""
 <div class="app-footer">
   ⚠️ Le verifiche generate dall'AI sono suggerimenti didattici — rivedi sempre il contenuto
   prima di distribuirlo agli studenti. Il docente è responsabile del materiale finale.<br>
-  <span style="opacity:0.55;">VerificAI · Versione Beta · Powered by Google Gemini</span>
+  <span style="opacity:0.55;">VerificAI · Versione Beta </span>
 </div>
 """, unsafe_allow_html=True)
+
