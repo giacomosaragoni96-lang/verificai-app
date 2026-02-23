@@ -1037,9 +1037,8 @@ st.markdown(f"""
   }}
 
   @keyframes badgePop {{
-    0%   {{ transform: scale(0.5) translateY(4px); opacity: 0; }}
-    70%  {{ transform: scale(1.1) translateY(-2px); opacity: 1; }}
-    100% {{ transform: scale(1) translateY(0); opacity: 1; }}
+    0%   {{ opacity: 0; transform: translateY(6px); }}
+    100% {{ opacity: 1; transform: translateY(0); }}
   }}
 
   .hero-title {{
@@ -1064,28 +1063,13 @@ st.markdown(f"""
     transform-origin: center bottom;
   }}
 
-  /* Testo "Verific" */
-  .hero-word {{
-    display: inline;
-  }}
-
-  /* Badge "AI" */
-  .hero-badge {{
-    display: inline-flex;
-    align-items: center;
-    background: {T['accent']};
-    color: #1A1200;
-    font-size: 0.5em;
-    font-weight: 900;
-    letter-spacing: 0.04em;
-    padding: 0.15em 0.45em 0.2em;
-    border-radius: 8px;
-    margin-left: 0.12em;
-    vertical-align: middle;
-    position: relative;
-    top: -0.2em;
-    animation: badgePop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.6s both;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+  /* "AI" gradient text */
+  .hero-ai {{
+    background: linear-gradient(135deg, {T['accent']} 0%, #FF8C00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: badgePop 0.6s ease 0.5s both;
   }}
 
 
@@ -1734,11 +1718,7 @@ st.markdown("""
 st.markdown(f"""
 <div class="hero-wrap">
   <div class="hero-left">
-    <h1 class="hero-title">
-      <span class="hero-icon">{APP_ICON}</span>
-      <span class="hero-word">Verific</span><span class="hero-badge">AI</span>
-
-    </h1>
+    <h1 class="hero-title"><span class="hero-icon">{APP_ICON}</span> Verific<span class="hero-ai">AI</span></h1>
     <p class="hero-sub">{APP_TAGLINE}</p>
   </div>
   <div class="hero-right">
