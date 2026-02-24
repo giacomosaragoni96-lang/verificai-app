@@ -178,13 +178,17 @@ def parse_esercizi(latex):
                 continue
             raw_label = item_match.group(1)
             window_lines = []
-            for lj in range(li, min(li + 12, len(lines))):
+            for lj in range(li, min(li + 15, len(lines))):
                 if lj > li and re.search(r'\\item\[', lines[lj]):
                     break
                 window_lines.append(lines[lj])
             search_window = '\n'.join(window_lines)
             search_window = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '', search_window, flags=re.DOTALL)
-            pt_match = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', search_window)
+            # Riconosce: (2 pt), (2pt), (2 punti), [2 pt], 2 pt, 2pt
+            pt_match = re.search(
+                r'[\(\[]?\s*(\d+(?:[.,]\d+)?)\s*(?:pt|punt[io]|p\.?)\s*[\)\]]?',
+                search_window, re.IGNORECASE
+            )
             if not pt_match:
                 continue
             punti = pt_match.group(1)
@@ -193,7 +197,6 @@ def parse_esercizi(latex):
         if items_found:
             esercizi.append({'num': num_label, 'items': items_found})
     return esercizi
-
 
 def build_griglia_latex(esercizi, punti_totali):
     if not esercizi:
@@ -1997,10 +2000,13 @@ if genera_btn:
 
         if mostra_punteggi:
             punti_rule = (
-                f"- PUNTEGGI OBBLIGATORI: ogni \\item DEVE avere \"(X pt)\" sulla stessa riga.\n"
-                f"- La somma di TUTTI i punti deve essere ESATTAMENTE {punti_totali} pt. CONTROLLA prima di terminare.\n"
+                f"- PUNTEGGI OBBLIGATORI: ogni \\item DEVE avere \"(X pt)\" SULLA STESSA RIGA, subito dopo il testo.\n"
+                f"- Formato ESATTO e UNICO accettato: (X pt) — esempio: \\item[a)] Risolvi l'equazione. (3 pt)\n"
+                f"- NON usare formati alternativi come [X pt], X punti, X p., pt X, ecc.\n"
+                f"- La somma di TUTTI i (X pt) deve essere ESATTAMENTE {punti_totali} pt. CONTROLLA prima di terminare.\n"
                 f"- Distribuisci i punti in modo che sia facile ottenere almeno 60% svolgendo le parti più semplici.\n"
-                f"- NON inserire punti nel titolo \\subsection*, solo nei \\item."
+                f"- NON inserire punti nel titolo \\subsection*, SOLO nei \\item.\n"
+                f"- Se dimentichi il punteggio anche su UN SOLO \\item, la griglia di valutazione sarà incompleta."
             )
         else:
             punti_rule = "- NON inserire punti (X pt) in nessun esercizio né sottopunto."
@@ -2027,7 +2033,7 @@ if genera_btn:
                 "Esempio per parabola: \\begin{tikzpicture}\\begin{axis}[width=7cm,height=5.5cm,"
                 "axis lines=center,xlabel=$x$,ylabel=$y$,grid=both,xtick={-4,...,4},ytick={-4,...,4}]"
                 "\\addplot[blue,thick,domain=-3:3,samples=100]{x^2-2*x-3}; \\end{axis}\\end{tikzpicture} "
-                "NON lasciare spazio extra per disegnare se lo studente deve disegnare lui il grafico, lo fara sul suo foglio."
+                "MI RACCOMANDO NON lasciare MAI spazio extra per disegnare se lo studente deve disegnare lui il grafico, lo fara sul suo foglio."
             )
             pgfplots_pkg = "\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}"
         else:
@@ -2472,6 +2478,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
