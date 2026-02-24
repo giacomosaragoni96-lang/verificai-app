@@ -170,30 +170,50 @@ def parse_esercizi(latex):
         else:
             num_match = re.search(r'(?:Esercizio\s+)?(\d+)', header)
             num_label = num_match.group(1) if num_match else str(i + 1)
+
         items_found = []
         lines = block.split('\n')
+        lettere = 'abcdefghijklmnopqrstuvwxyz'
+        lettera_idx = 0
+
         for li, line in enumerate(lines):
-            item_match = re.search(r'\\item\[([^\]]+)\]', line)
-            if not item_match:
+            # Cerca \item[label] OPPURE \item semplice
+            item_label_match = re.search(r'\\item\[([^\]]+)\]', line)
+            item_plain_match = re.search(r'\\item(?!\[)', line)
+
+            if not item_label_match and not item_plain_match:
                 continue
-            raw_label = item_match.group(1)
+
+            # Determina la label
+            if item_label_match:
+                raw_label = item_label_match.group(1).replace('*', '').strip()
+            else:
+                raw_label = lettere[lettera_idx % 26] + ")"
+                lettera_idx += 1
+
+            # Finestra di ricerca per i punti
             window_lines = []
             for lj in range(li, min(li + 15, len(lines))):
-                if lj > li and re.search(r'\\item\[', lines[lj]):
+                if lj > li and (re.search(r'\\item(?:\[|(?!\w))', lines[lj])):
                     break
                 window_lines.append(lines[lj])
             search_window = '\n'.join(window_lines)
-            search_window = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '', search_window, flags=re.DOTALL)
-            # Riconosce: (2 pt), (2pt), (2 punti), [2 pt], 2 pt, 2pt
+            search_window = re.sub(
+                r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '',
+                search_window, flags=re.DOTALL
+            )
+
+            # Riconosce: (2 pt), (2pt), (2 punti), [2 pt], 2 pt
             pt_match = re.search(
                 r'[\(\[]?\s*(\d+(?:[.,]\d+)?)\s*(?:pt|punt[io]|p\.?)\s*[\)\]]?',
                 search_window, re.IGNORECASE
             )
             if not pt_match:
                 continue
+
             punti = pt_match.group(1)
-            clean_label = raw_label.replace('*', '').strip()
-            items_found.append((clean_label, punti))
+            items_found.append((raw_label, punti))
+
         if items_found:
             esercizi.append({'num': num_label, 'items': items_found})
     return esercizi
@@ -245,7 +265,18 @@ def fix_items_environment(latex):
     if in_bare_block:
         result.append(r'\end{enumerate}')
     return '\n'.join(result)
-
+    
+def rimuovi_vspace_corpo(latex):
+    """Rimuove tutti i \vspace e \hspace dal corpo degli esercizi."""
+    # Rimuove \vspace{...} e \vspace*{...} ovunque nel corpo
+    latex = re.sub(r'\\vspace\*?\{[^}]*\}', '', latex)
+    # Rimuove \hspace{...} e \hspace*{...}
+    latex = re.sub(r'\\hspace\*?\{[^}]*\}', '', latex)
+    # Rimuove \bigskip, \medskip, \smallskip
+    latex = re.sub(r'\\(?:big|med|small)skip\b', '', latex)
+    # Rimuove righe vuote eccessive lasciate dalla rimozione
+    latex = re.sub(r'\n{3,}', '\n\n', latex)
+    return latex
 
 def inietta_griglia(latex, punti_totali):
     latex = re.sub(
@@ -2134,6 +2165,7 @@ SOLO CODICE LATEX del corpo."""
 
         latex_a = preambolo_fisso + corpo_latex
         latex_a = fix_items_environment(latex_a)
+        latex_a = rimuovi_vspace_corpo(latex_a)
 
 
         if con_griglia:
@@ -2199,7 +2231,8 @@ SOLO CODICE LATEX del corpo."""
         
             latex_ridotta = preambolo_fisso + corpo_latex_ridotta
             latex_ridotta = fix_items_environment(latex_ridotta)
-        
+            latex_ridotta = rimuovi_vspace_corpo(latex_ridotta)
+                    
             if con_griglia:
                 latex_ridotta_final = inietta_griglia(latex_ridotta, punti_totali)
             else:
@@ -2246,6 +2279,7 @@ SOLO CODICE LATEX del corpo."""
             )
             latex_b = preambolo_b + corpo_latex_b
             latex_b = fix_items_environment(latex_b)
+            latex_b = rimuovi_vspace_corpo(latex_b)
 
 
             if con_griglia:
@@ -2487,6 +2521,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
