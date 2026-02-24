@@ -1781,19 +1781,114 @@ st.markdown(f"""
     text-transform: uppercase;
   }}
 
-  /* ── EXPANDER HEADING ── */
+  /* ── EXPANDER HEADING (usato inside expander) ── */
   .expander-heading {{
-    font-size: 0.8rem !important;
+    font-size: 0.75rem !important;
     font-weight: 700 !important;
-    letter-spacing: 0.03em !important;
+    letter-spacing: 0.04em !important;
     text-transform: uppercase !important;
-    color: {T['text']} !important;
+    color: {T['text2']} !important;
     margin: 1rem 0 0.4rem 0 !important;
-    padding: 5px 10px !important;
+    padding: 4px 10px !important;
     background: {T['card2']} !important;
     border-left: 3px solid {T['accent']} !important;
     border-radius: 0 6px 6px 0 !important;
     display: block !important;
+  }}
+
+  /* ── STEP LABELS ── */
+  .step-label {{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 2.2rem 0 0.75rem 0;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .step-num {{
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: {T['accent']};
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 900;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: 0;
+    box-shadow: 0 2px 8px {T['accent']}55;
+  }}
+  .step-title {{
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: {T['text']};
+  }}
+  .step-line {{
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, {T['border2']} 0%, transparent 100%);
+  }}
+
+  /* ── COMPACT AI HINT ── */
+  .ai-hint {{
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: {T['accent_light']};
+    border: 1px solid {T['accent']}55;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-size: 0.78rem;
+    color: {T['text2']};
+    margin: 1.8rem 0 0.6rem 0;
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.4;
+  }}
+  .ai-hint-icon {{ font-size: 1rem; flex-shrink: 0; }}
+  .ai-hint strong {{ color: {T['accent']}; font-weight: 700; }}
+
+  /* ── PERSONALIZZA EXPANDER ── */
+  .personalizza-wrap [data-testid="stExpander"] {{
+    border: 1.5px solid {T['accent']}44 !important;
+    border-radius: 14px !important;
+    background: {T['card']} !important;
+    box-shadow: 0 2px 16px {T['accent']}0f !important;
+  }}
+  .personalizza-wrap [data-testid="stExpander"] summary {{
+    background: {T['accent_light']} !important;
+    color: {T['text']} !important;
+    font-weight: 700 !important;
+    font-size: 0.92rem !important;
+    padding: 1rem 1.2rem !important;
+  }}
+  .personalizza-wrap [data-testid="stExpander"] summary:hover {{
+    background: {T['accent_light']} !important;
+    filter: brightness(0.96);
+  }}
+  .personalizza-wrap [data-testid="stExpander"] summary svg {{
+    color: {T['accent']} !important;
+    fill: {T['accent']} !important;
+  }}
+  .personalizza-wrap [data-testid="stExpander"] > div > div {{
+    padding: 1rem 1.2rem 1.2rem !important;
+  }}
+
+  /* ── GENERA SECTION ── */
+  .genera-section {{ margin-top: 2.2rem; margin-bottom: 0.5rem; }}
+  .genera-hint {{
+    text-align: center;
+    font-size: 0.73rem;
+    color: {T['muted']};
+    margin-top: 0.6rem;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
   }}
 
   .section-label {{
@@ -2347,9 +2442,15 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
-st.info("💡 **Suggerimento:** Più sei preciso nei dettagli (Argomento, Note aggiuntive, Stile desiderato), più l'AI capirà le tue esigenze e genererà una verifica vicina alle tue aspettative. Sfrutta a pieno le opzioni se hai in mente qualcosa di specifico!", icon="🧠")
 
-st.markdown('<div class="expander-heading">📖 Materia</div>', unsafe_allow_html=True)
+# STEP 1 — MATERIA
+st.markdown(f"""
+<div class="step-label">
+  <span class="step-num">01</span>
+  <span class="step-title">📖 Materia</span>
+  <span class="step-line"></span>
+</div>
+""", unsafe_allow_html=True)
 _materie_select = MATERIE + ["✏️ Altra materia..."]
 _materia_sel = st.selectbox("Materia", _materie_select, index=0, label_visibility="collapsed")
 if _materia_sel == "✏️ Altra materia...":
@@ -2358,20 +2459,32 @@ if _materia_sel == "✏️ Altra materia...":
 else:
     materia_scelta = _materia_sel or "Matematica"
 
-st.markdown('<div style="height:0.8rem;"></div>', unsafe_allow_html=True)
-
-st.markdown('<div class="expander-heading">📚 Argomento della verifica</div>', unsafe_allow_html=True)
+# STEP 2 — ARGOMENTO
+st.markdown(f"""
+<div class="step-label">
+  <span class="step-num">02</span>
+  <span class="step-title">📚 Argomento della verifica</span>
+  <span class="step-line"></span>
+</div>
+""", unsafe_allow_html=True)
 argomento_area = st.text_area(
     "argomento",
     placeholder="es. Le equazioni di secondo grado\nes. La Rivoluzione Francese",
-    height=90,
+    height=100,
     label_visibility="collapsed",
     key="argomento_area"
 )
 argomento = argomento_area.strip()
 
-st.markdown('<div style="height:0.8rem;"></div>', unsafe_allow_html=True)
+# STEP 3 — PERSONALIZZA (con hint compatto sopra)
+st.markdown(f"""
+<div class="ai-hint">
+  <span class="ai-hint-icon">✨</span>
+  <span><strong>Suggerimento:</strong> più dettagli fornisci nell'argomento e nelle opzioni avanzate, più la verifica sarà precisa e su misura.</span>
+</div>
+""", unsafe_allow_html=True)
 
+st.markdown('<div class="personalizza-wrap">', unsafe_allow_html=True)
 with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
 
     st.markdown(f'<div class="expander-heading">⏱️ Tempistiche e Struttura</div>', unsafe_allow_html=True)
@@ -2455,9 +2568,17 @@ with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
     )
     st.markdown('</div>', unsafe_allow_html=True)
 
+st.markdown('</div>', unsafe_allow_html=True)  # chiude personalizza-wrap
+
 # ── BOTTONE GENERA ────────────────────────────────────────────────────────────────
-st.write("")
+st.markdown('<div class="genera-section">', unsafe_allow_html=True)
 genera_btn = st.button("🚀  Genera Verifica", use_container_width=True, type="primary")
+st.markdown(f"""
+<div class="genera-hint">
+  <span>⏱</span> La verifica viene generata in circa 20–40 secondi
+</div>
+</div>
+""", unsafe_allow_html=True)
 
 # ── LOGICA GENERAZIONE ───────────────────────────────────────────────────────────
 if genera_btn:
