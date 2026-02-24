@@ -114,6 +114,7 @@ def mostra_auth():
                         st.rerun()
                     except Exception as e:
                         st.warning(f"⚠️ Salvataggio non riuscito: {e}")
+                        time.sleep(5)
         with tab_reg:
             email = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
             password = st.text_input("Password (min 6 caratteri)", type="password", key="reg_pass", placeholder="••••••••")
@@ -2775,6 +2776,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
