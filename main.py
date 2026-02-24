@@ -198,7 +198,7 @@ def parse_esercizi(latex):
 def build_griglia_latex(esercizi, punti_totali):
     if not esercizi:
         return ""
-    col_spec = "|l|" + "".join("c|" * len(ex['items']) + "|" for ex in esercizi) + "c|"
+    col_spec = "|l|" + "".join("c|" * len(ex['items']) for ex in esercizi) + "c|"
     row_es = "\\textbf{Es.}" + "".join(
         f" & \\multicolumn{{{len(ex['items'])}}}{{c||}}{{\\textbf{{{ex['num']}}}}}"
         for ex in esercizi
@@ -959,10 +959,10 @@ if 'last_gen_ts'     not in st.session_state: st.session_state.last_gen_ts = Non
 is_dark = (st.session_state.theme == "dark")
 
 # Colori fissi sidebar (sempre dark)
-_SB_LABEL   = "#c8c6bc"   # ← più chiaro rispetto al vecchio #b0ad9f  [MIGLIORIA 3]
+_SB_LABEL   = "#c8c6bc"   
 _SB_MUTED   = "#8a8880"
 _SB_BORDER  = "#2a2926"
-_SB_TEXT    = "#e8e6e0"   # ← più chiaro rispetto al vecchio #d4d2c9   [MIGLIORIA 3]
+_SB_TEXT    = "#e8e6e0"   
 
 st.markdown(f"""
 <style>
@@ -1026,7 +1026,6 @@ st.markdown(f"""
     padding-bottom: 0.6rem;
     border-bottom: 1px solid {_SB_BORDER};
   }}
-  /* ── MIGLIORIA 3: label sidebar più contrastanti ── */
   .sidebar-label {{
     font-size: 0.75rem !important;
     font-weight: 700 !important;
@@ -1127,7 +1126,6 @@ st.markdown(f"""
     gap: 0;
     position: relative;
   }}
-  /* ── MIGLIORIA 1: separatore decorativo sotto il hero ── */
   .hero-wrap::after {{
     content: '';
     position: absolute;
@@ -1315,34 +1313,43 @@ st.markdown(f"""
     font-weight: 700 !important;
     letter-spacing: 0.01em !important;
     padding: 0.8rem 2rem !important;
-    transition: transform 0.15s ease, filter 0.15s ease !important;
+    transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease !important;
     box-shadow: 0 2px 12px rgba(217,119,6,0.35) !important;
   }}
   .stButton [data-testid="baseButton-primary"]:hover,
   button[data-testid="baseButton-primary"]:hover {{
     filter: brightness(1.08) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 18px rgba(217,119,6,0.45) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 6px 18px rgba(217,119,6,0.45) !important;
   }}
 
-  /* ── BOTTONI SECONDARI ── */
+  /* ── BOTTONI SECONDARI E DOWNLOAD UNIFICATI ── */
+  .stDownloadButton button,
+  [data-testid="stDownloadButton"] button,
   .stButton [data-testid="baseButton-secondary"],
   .stButton button[kind="secondary"],
   button[data-testid="baseButton-secondary"] {{
     background: {T['card']} !important;
     color: {T['text']} !important;
     border: 1.5px solid {T['border2']} !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.88rem !important;
-    font-weight: 600 !important;
-    padding: 0.6rem 1.2rem !important;
-    transition: all 0.15s ease !important;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    padding: 1rem 1.4rem !important;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease !important;
+    letter-spacing: 0.01em !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04) !important;
+    width: 100% !important;
   }}
+  .stDownloadButton button:hover,
+  [data-testid="stDownloadButton"] button:hover,
   .stButton [data-testid="baseButton-secondary"]:hover,
   button[data-testid="baseButton-secondary"]:hover {{
     background: {T['hover']} !important;
     border-color: {T['accent']} !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 6px 20px rgba(217,119,6,0.18) !important;
     color: {T['text']} !important;
   }}
 
@@ -1380,34 +1387,16 @@ st.markdown(f"""
     font-weight: 500 !important;
     padding: 0.3rem 0.7rem !important;
     width: 100% !important;
+    box-shadow: none !important;
+    transform: none !important;
   }}
   .tex-btn-wrap .stDownloadButton button:hover,
   .tex-btn-wrap [data-testid="stDownloadButton"] button:hover {{
     color: {T['text2']} !important;
     border-color: #5a5950 !important;
     background: {T['card2']} !important;
-  }}
-
-  /* ── MIGLIORIA 2: DOWNLOAD BUTTONS più premium ── */
-  .stDownloadButton button,
-  [data-testid="stDownloadButton"] button {{
-    background: {T['card']} !important;
-    color: {T['text']} !important;
-    border: 1.5px solid {T['border2']} !important;
-    border-radius: 12px !important;
-    font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.95rem !important;
-    font-weight: 700 !important;
-    padding: 0.75rem 1.4rem !important;
-    transition: all 0.18s ease !important;
-    letter-spacing: 0.01em !important;
-  }}
-  .stDownloadButton button:hover,
-  [data-testid="stDownloadButton"] button:hover {{
-    background: {T['hover']} !important;
-    border-color: {T['accent']} !important;
+    box-shadow: none !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 4px 14px rgba(217,119,6,0.15) !important;
   }}
 
   /* ── EXPANDER ── */
@@ -1463,22 +1452,6 @@ st.markdown(f"""
   [data-testid="stFileUploadDropzone"] svg {{
     fill: {T['muted']} !important;
     color: {T['muted']} !important;
-  }}
-
-  /* ── CARD OUTPUT ── */
-  .output-card {{
-    background: {T['card']};
-    border: 1px solid {T['border']};
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: {T['shadow']};
-  }}
-  .output-title {{
-    font-family: 'DM Sans', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: {T['text']};
-    margin: 0 0 1rem 0;
   }}
 
   /* ── BADGE CHIP ── */
@@ -1600,49 +1573,6 @@ st.markdown(f"""
   .status-bar strong {{
     color: {T['text2']};
     font-weight: 600;
-  }}
-
-  /* ── MIGLIORIA 2+4: DOWNLOAD CARD con hover translateY ── */
-  .dl-card {{
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
-    background: {T['card']};
-    border: 1.5px solid {T['border']};
-    border-radius: 14px;
-    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
-    margin-bottom: 8px;
-    cursor: default;
-  }}
-  .dl-card:hover {{
-    border-color: {T['accent']};
-    box-shadow: 0 6px 20px rgba(217,119,6,0.14);
-    transform: translateY(-2px);   /* ← MIGLIORIA 4 */
-  }}
-  /* ── MIGLIORIA 2: icona più grande ── */
-  .dl-card-icon {{
-    font-size: 2.2rem;
-    line-height: 1;
-    flex-shrink: 0;
-    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.12));
-  }}
-  .dl-card-body {{
-    flex: 1;
-    min-width: 0;
-  }}
-  .dl-card-title {{
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: {T['text']};
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }}
-  .dl-card-meta {{
-    font-size: 0.74rem;
-    color: {T['muted']};
-    margin-top: 2px;
   }}
 
   /* ── PDF PREVIEW ── */
@@ -1806,7 +1736,6 @@ st.markdown(f"""
     [data-testid="stSidebar"] .block-container {{
       padding: 1rem !important;
     }}
-    .output-card {{ padding: 1rem; }}
     .stDownloadButton button {{
       width: 100% !important;
       min-height: 48px !important;
@@ -1835,6 +1764,7 @@ with st.sidebar:
     st.markdown('<div class="sidebar-title">⚙️ Impostazioni</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="sidebar-label">🏫 Classe</div>', unsafe_allow_html=True)
+    st.caption("ℹ️ Attenzione: questa scelta influenza radicalmente il lessico, i riferimenti teorici e la complessità matematica degli esercizi.")
     difficolta = st.selectbox("livello", SCUOLE, index=3, label_visibility="collapsed")
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
@@ -1890,6 +1820,8 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
+st.info("💡 **Suggerimento:** Più sei preciso nei dettagli (Argomento, Note aggiuntive, Stile desiderato), più l'AI capirà le tue esigenze e genererà una verifica vicina alle tue aspettative. Sfrutta a pieno le opzioni se hai in mente qualcosa di specifico!", icon="🧠")
+
 st.markdown('<div class="expander-heading">📖 Materia</div>', unsafe_allow_html=True)
 _materie_select = MATERIE + ["✏️ Altra materia..."]
 _materia_sel = st.selectbox("Materia", _materie_select, index=0, label_visibility="collapsed")
@@ -1915,12 +1847,21 @@ st.markdown('<div style="height:0.8rem;"></div>', unsafe_allow_html=True)
 
 with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
 
-    st.markdown(f'<div class="expander-heading">📝 Struttura esercizi</div>', unsafe_allow_html=True)
-    num_esercizi_totali = st.slider(
-        "Numero di esercizi in verifica",
-        min_value=1, max_value=15, value=4,
-        help="Trascina per scegliere il numero di esercizi"
-    )
+    st.markdown(f'<div class="expander-heading">⏱️ Tempistiche e Struttura</div>', unsafe_allow_html=True)
+    _c_dur, _c_num = st.columns(2)
+    with _c_dur:
+        durata_scelta = st.selectbox(
+            "Durata della verifica",
+            ["30 min", "1 ora", "1 ora e 30 min", "2 ore"],
+            index=1,
+            help="L'AI calcolerà la lunghezza dei calcoli e la complessità dei passaggi per far completare la verifica in questo tempo."
+        )
+    with _c_num:
+        num_esercizi_totali = st.slider(
+            "Numero di esercizi in verifica",
+            min_value=1, max_value=15, value=4,
+            help="Trascina per scegliere il numero totale di esercizi."
+        )
 
     with st.expander("🎯 Specifica il tipo di ogni esercizio (opzionale)"):
         n_custom = len(st.session_state.esercizi_custom)
@@ -2129,8 +2070,11 @@ if genera_btn:
         prompt_a = f"""Sei un docente esperto di {materia} e LaTeX. Genera SOLO il corpo degli esercizi (senza preambolo, senza \\documentclass, senza \\begin{{document}}) per una verifica su: {argomento}.
 {f'Punti totali da distribuire: {punti_totali} pt.' if mostra_punteggi else ''}
 
-CALIBRAZIONE LIVELLO:
+CALIBRAZIONE LIVELLO E TEMPO:
 {calibrazione}
+- DURATA PREVISTA: {durata_scelta}. Regola la lunghezza dei calcoli, il numero di incognite e la complessità testuale in modo che {num_esercizi_totali} esercizi siano agevolmente fattibili nel tempo scelto.
+- BILANCIAMENTO CONTESTO E MODELLAZIONE: NON esagerare con i problemi applicati alla realtà o fortemente interdisciplinari (es. non inserire scenari ingegneristici o fisici su tutti gli esercizi di matematica). MASSIMO 1 o 2 esercizi possono essere fortemente contestualizzati. I restanti DEVONO essere esercizi canonici, diretti e focalizzati sulla procedura pura per non sovraccaricare cognitivamente lo studente.
+
 {s_note}
 {s_es}
 
@@ -2320,18 +2264,9 @@ if st.session_state.verifiche['A']['latex']:
 
             if v['pdf']:
                 pdf_size = _stima_dimensione(v['pdf'])
-                st.markdown(f"""
-                <div class="dl-card">
-                  <div class="dl-card-icon">📄</div>
-                  <div class="dl-card-body">
-                    <div class="dl-card-title">PDF — Alta qualità</div>
-                    <div class="dl-card-meta">{pdf_size}</div>
-                  </div>
-                </div>
-                """, unsafe_allow_html=True)
                 st.download_button(
-                    "⬇️ Scarica PDF",
-                    v['pdf'],
+                    label=f"📄 Scarica PDF — Alta qualità ({pdf_size})",
+                    data=v['pdf'],
                     file_name=f"Verifica_{_arg}_{fid}.pdf",
                     mime="application/pdf",
                     use_container_width=True,
@@ -2353,18 +2288,9 @@ if st.session_state.verifiche['A']['latex']:
 
             if v['docx']:
                 docx_size = _stima_dimensione(v['docx'])
-                st.markdown(f"""
-                <div class="dl-card">
-                  <div class="dl-card-icon">📝</div>
-                  <div class="dl-card-body">
-                    <div class="dl-card-title">File Modificabile Word</div>
-                    <div class="dl-card-meta">{docx_size}</div>
-                  </div>
-                </div>
-                """, unsafe_allow_html=True)
                 st.download_button(
-                    "⬇️ Scarica Word",
-                    v['docx'],
+                    label=f"📝 Scarica File Word Modificabile ({docx_size})",
+                    data=v['docx'],
                     file_name=f"Verifica_{_arg}_{fid}.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     use_container_width=True,
@@ -2372,7 +2298,7 @@ if st.session_state.verifiche['A']['latex']:
                 )
             else:
                 _docx_gen_key = f"_docx_generating_{fid}"
-                if st.button("📝 File Modificabile Word", key=f"dldc_{fid}", use_container_width=True):
+                if st.button("📝 Genera File Word Modificabile", key=f"dldc_{fid}", use_container_width=True):
                     st.session_state[_docx_gen_key] = True
                 if st.session_state.get(_docx_gen_key, False):
                     with st.spinner("⏳ Conversione Word…"):
@@ -2391,18 +2317,9 @@ if st.session_state.verifiche['A']['latex']:
                 st.write("")
                 if v['soluzioni_pdf']:
                     sol_size = _stima_dimensione(v['soluzioni_pdf'])
-                    st.markdown(f"""
-                    <div class="dl-card">
-                      <div class="dl-card-icon">✅</div>
-                      <div class="dl-card-body">
-                        <div class="dl-card-title">Soluzioni Step-by-Step</div>
-                        <div class="dl-card-meta">{sol_size}</div>
-                      </div>
-                    </div>
-                    """, unsafe_allow_html=True)
                     st.download_button(
-                        "⬇️ Scarica Soluzioni",
-                        v['soluzioni_pdf'],
+                        label=f"✅ Scarica Soluzioni Step-by-Step ({sol_size})",
+                        data=v['soluzioni_pdf'],
                         file_name=f"Soluzioni_{_arg}_{fid}.pdf",
                         mime="application/pdf",
                         use_container_width=True,
