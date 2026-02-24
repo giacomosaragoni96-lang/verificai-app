@@ -2319,16 +2319,16 @@ if st.session_state.verifiche['A']['latex']:
 
 
             if v['docx']:
-                    docx_size = _stima_dimensione(v['docx'])
-                    st.markdown(f'<div class="dl-card"><div class="dl-label">📝 Versione Word</div>', unsafe_allow_html=True)
-                    st.download_button(
-                        label=f"Scarica Word Modificabile ({docx_size})",
-                        data=v['docx'],
-                        file_name=f"Verifica_{_arg}_{fid}.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        use_container_width=True,
-                        key=f"dld_{fid}"
-                    )
+                docx_size = _stima_dimensione(v['docx'])
+                st.markdown(f'<div class="dl-card"><div class="dl-label">📝 Versione Word</div>', unsafe_allow_html=True)
+                st.download_button(
+                    label=f"Scarica Word Modificabile ({docx_size})",
+                    data=v['docx'],
+                    file_name=f"Verifica_{_arg}_{fid}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True,
+                    key=f"dld_{fid}"
+                )
                     # AVVISO WORD CON STILE DEDICATO
                     st.markdown("""
                         <div class="hint-docx">
@@ -2456,6 +2456,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
