@@ -267,16 +267,21 @@ def fix_items_environment(latex):
     return '\n'.join(result)
     
 def rimuovi_vspace_corpo(latex):
-    """Rimuove tutti i \vspace e \hspace dal corpo degli esercizi."""
-    # Rimuove \vspace{...} e \vspace*{...} ovunque nel corpo
-    latex = re.sub(r'\\vspace\*?\{[^}]*\}', '', latex)
-    # Rimuove \hspace{...} e \hspace*{...}
-    latex = re.sub(r'\\hspace\*?\{[^}]*\}', '', latex)
-    # Rimuove \bigskip, \medskip, \smallskip
-    latex = re.sub(r'\\(?:big|med|small)skip\b', '', latex)
-    # Rimuove righe vuote eccessive lasciate dalla rimozione
-    latex = re.sub(r'\n{3,}', '\n\n', latex)
-    return latex
+    """Rimuove \vspace e \hspace dal corpo degli esercizi, preservando il preambolo."""
+    # Divide preambolo e corpo al primo \subsection*
+    idx = latex.find('\\subsection*')
+    if idx == -1:
+        return latex
+    preambolo = latex[:idx]
+    corpo = latex[idx:]
+    
+    # Applica le rimozioni SOLO al corpo
+    corpo = re.sub(r'\\vspace\*?\{[^}]*\}', '', corpo)
+    corpo = re.sub(r'\\hspace\*?\{[^}]*\}', '', corpo)
+    corpo = re.sub(r'\\(?:big|med|small)skip\b', '', corpo)
+    corpo = re.sub(r'\n{3,}', '\n\n', corpo)
+    
+    return preambolo + corpo
 
 def pulisci_corpo_latex(testo):
     """Rimuove tutto ciò che precede il primo \subsection*"""
@@ -2598,6 +2603,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
