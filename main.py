@@ -2080,6 +2080,49 @@ with st.sidebar:
         st.session_state.theme = new_theme
         st.rerun()
 
+    st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">📚 Le mie verifiche</div>', unsafe_allow_html=True)
+    try:
+        storico = supabase.table("verifiche_storico")\
+            .select("id, materia, argomento, created_at, latex_a, latex_b, latex_r")\
+            .eq("user_id", st.session_state.utente.id)\
+            .order("created_at", desc=True)\
+            .limit(10)\
+            .execute()
+        
+        if storico.data:
+            for v in storico.data:
+                data_str = v['created_at'][:10]
+                label = f"📄 {v['materia']} — {v['argomento'][:25]}{'...' if len(v['argomento'])>25 else ''}"
+                with st.expander(f"{label} ({data_str})"):
+                    st.caption(f"🏫 {v.get('scuola','')[:30]}")
+                    if v.get('latex_a'):
+                        if st.button("♻️ Ricarica Versione A", key=f"reload_a_{v['id']}"):
+                            st.session_state.verifiche['A']['latex'] = v['latex_a']
+                            pdf, _ = compila_pdf(v['latex_a'])
+                            if pdf:
+                                st.session_state.verifiche['A']['pdf'] = pdf
+                                st.session_state.verifiche['A']['preview'] = True
+                            st.rerun()
+                    if v.get('latex_b'):
+                        if st.button("♻️ Ricarica Versione B", key=f"reload_b_{v['id']}"):
+                            st.session_state.verifiche['B']['latex'] = v['latex_b']
+                            pdf, _ = compila_pdf(v['latex_b'])
+                            if pdf:
+                                st.session_state.verifiche['B']['pdf'] = pdf
+                                st.session_state.verifiche['B']['preview'] = True
+                            st.rerun()
+        else:
+            st.caption("Nessuna verifica salvata ancora.")
+    except Exception:
+        st.caption("Storico non disponibile.")
+
+    st.markdown("---")
+    st.caption(f"👤 {st.session_state.utente.email}")
+    if st.button("Esci", key="logout_btn"):
+        supabase.auth.sign_out()
+        st.session_state.utente = None
+        st.rerun()
+
 # ── TOPBAR ───────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="top-bar">
@@ -2721,6 +2764,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
