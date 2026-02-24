@@ -1794,21 +1794,8 @@ with st.sidebar:
     difficolta = st.selectbox("livello", SCUOLE, index=3, label_visibility="collapsed")
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
-    # NUOVO
-    bes_dsa = st.checkbox(
-        "Genera versione ridotta (sostegno/certificazioni)",
-        value=False,
-        help="Verrà generato un secondo file identico ma con una percentuale ridotta di sottopunti, scelti tra i più semplici. I punteggi verranno ricalcolati automaticamente."
-    )
-    perc_ridotta = None
-    if bes_dsa:
-        perc_ridotta = st.select_slider(
-            "Percentuale sottopunti da mantenere",
-            options=[10, 20, 30],
-            value=20,
-            format_func=lambda x: f"{x}% dei sottopunti",
-            help="Es. 20% = mantieni circa 1 sottopunto ogni 5"
-    )
+    bes_dsa         = st.checkbox("Verifica ridotta (sostegno/certificazione)", value=False,
+                help="Circa il 25% dei sottopunti vengono marcati con (*) e resi facoltativi per gli studenti con verifica ridotta (sostegno, certificazioni varie, NAI, ecc.).")
     doppia_fila     = st.checkbox("Genera Versione A e B (due varianti)", value=False)
     correzione_step = st.checkbox("Includi soluzioni passo per passo", value=False)
 
@@ -2464,6 +2451,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
