@@ -1803,10 +1803,11 @@ with st.sidebar:
     if bes_dsa:
         perc_ridotta = st.select_slider(
             "Esercizi da rimuovere",
+            help="Es. 20% = verranno eliminati circa 1 esercizio ogni 5, partendo dai più complessi"
             options=[10, 20, 30],
             value=20,
-            format_func=lambda x: f"Rimuovi il {x}% degli esercizi",
-            help="Es. 20% = verranno eliminati circa 1 esercizio ogni 5, partendo dai più complessi"
+            format_func=lambda x: f"-{x}%",
+            
     )
     doppia_fila     = st.checkbox("Genera Versione A e B (due varianti)", value=False)
     correzione_step = st.checkbox("Includi soluzioni passo per passo", value=False)
@@ -2463,6 +2464,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
