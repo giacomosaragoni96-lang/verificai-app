@@ -288,11 +288,6 @@ def fix_items_environment(latex):
 
 
 def inietta_griglia(latex, punti_totali):
-    """
-    Rimuove eventuali griglie precedenti e inietta la griglia aggiornata.
-    Robusto: funziona anche se \\end{document} manca o è malformato.
-    """
-    # Rimuovi griglia precedente se presente
     latex = re.sub(
         r'(\\vspace\{[^}]+\}\s*)?% GRIGLIA.*?\\end\{center\}',
         '', latex, flags=re.DOTALL
@@ -304,24 +299,20 @@ def inietta_griglia(latex, punti_totali):
 
     esercizi = parse_esercizi(latex)
     if not esercizi:
-        # Se non ci sono esercizi parsabili (es. punti non trovati), restituisce latex invariato
         return latex
 
     griglia = build_griglia_latex(esercizi, punti_totali)
 
-    # Calcola punti totali reali dalla griglia e aggiorna il totale se necessario
     try:
         tot_reale = sum(
             float(pts.replace(',', '.'))
             for ex in esercizi for _, pts in ex['items']
         )
         if abs(tot_reale - punti_totali) > 0.5:
-            # Aggiorna il totale nella griglia con quello reale
             griglia = build_griglia_latex(esercizi, int(tot_reale) if tot_reale == int(tot_reale) else round(tot_reale, 1))
     except Exception:
         pass
 
-    # Inserisci prima di \end{document}
     if "\\end{document}" in latex:
         return latex.replace("\\end{document}", f"\n\\vfill\n{griglia}\n\\end{{document}}")
     else:
@@ -871,7 +862,6 @@ def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra
     ]
     immagini = []
 
-    # Calcola distribuzione punti suggerita
     if mostra_punteggi and num_totale > 0:
         pts_base = punti_totali // num_totale
         resto = punti_totali - pts_base * num_totale
@@ -883,8 +873,7 @@ def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra
             righe.append(f"  - Esercizio {i_ex+1}: circa {pts_per_ex[i_ex]} pt (distribuisci tra i sottopunti)")
         righe.append(f"REGOLA CRITICA: la somma di TUTTI i (X pt) nei sottopunti DEVE essere ESATTAMENTE {punti_totali} pt.")
 
-    # Regola primo esercizio saperi essenziali (solo se non specificato dall'utente)
-    ha_primo_custom = len(esercizi_custom) > 0  # se il docente ha specificato l'esercizio 1, rispettiamo
+    ha_primo_custom = len(esercizi_custom) > 0
     if not ha_primo_custom:
         righe.append(
             f"\nREGOLA PRIMO ESERCIZIO (Esercizio 1 — SEMPRE presente, NON modificabile):\n"
@@ -969,6 +958,12 @@ if 'last_gen_ts'     not in st.session_state: st.session_state.last_gen_ts = Non
 # ── CSS GLOBALE ──────────────────────────────────────────────────────────────────
 is_dark = (st.session_state.theme == "dark")
 
+# Colori fissi sidebar (sempre dark)
+_SB_LABEL   = "#c8c6bc"   # ← più chiaro rispetto al vecchio #b0ad9f  [MIGLIORIA 3]
+_SB_MUTED   = "#8a8880"
+_SB_BORDER  = "#2a2926"
+_SB_TEXT    = "#e8e6e0"   # ← più chiaro rispetto al vecchio #d4d2c9   [MIGLIORIA 3]
+
 st.markdown(f"""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
@@ -1019,27 +1014,28 @@ st.markdown(f"""
   /* ════ SIDEBAR ════ */
   [data-testid="stSidebar"] {{
     background: #141412 !important;
-    border-right: 1px solid #2a2926 !important;
+    border-right: 1px solid {_SB_BORDER} !important;
   }}
   .sidebar-title {{
     font-family: 'DM Sans', sans-serif;
     font-size: 1.1rem !important;
     font-weight: 800 !important;
     letter-spacing: -0.01em;
-    color: #f0ede6 !important;
+    color: #f5f3ed !important;
     margin: 0.5rem 0 1.2rem 0;
     padding-bottom: 0.6rem;
-    border-bottom: 1px solid #2a2926;
+    border-bottom: 1px solid {_SB_BORDER};
   }}
+  /* ── MIGLIORIA 3: label sidebar più contrastanti ── */
   .sidebar-label {{
     font-size: 0.75rem !important;
     font-weight: 700 !important;
     letter-spacing: 0.06em !important;
     text-transform: uppercase !important;
-    color: #b0ad9f !important;
+    color: {_SB_LABEL} !important;
     margin: 0.8rem 0 0.4rem 0;
     padding-bottom: 0.25rem;
-    border-bottom: 1px solid #2a2926;
+    border-bottom: 1px solid {_SB_BORDER};
   }}
   [data-testid="stSidebar"] .block-container {{
     padding: 1.5rem 1.2rem !important;
@@ -1049,19 +1045,19 @@ st.markdown(f"""
   [data-testid="stSidebar"] span,
   [data-testid="stSidebar"] label,
   [data-testid="stSidebar"] div {{
-    color: #d4d2c9 !important;
+    color: {_SB_TEXT} !important;
   }}
   [data-testid="stSidebar"] .stTextInput label p,
   [data-testid="stSidebar"] .stSelectbox label p,
   [data-testid="stSidebar"] .stNumberInput label p {{
-    color: #8a8880 !important;
+    color: {_SB_MUTED} !important;
     font-size: 0.7rem !important;
     letter-spacing: 0.08em !important;
     text-transform: uppercase !important;
     font-weight: 700 !important;
   }}
   [data-testid="stSidebar"] .stCheckbox label {{
-    color: #d4d2c9 !important;
+    color: {_SB_TEXT} !important;
     font-size: 0.9rem !important;
   }}
   [data-testid="stSidebar"] .stCheckbox [data-testid="stCheckbox"] span:first-child {{
@@ -1074,7 +1070,7 @@ st.markdown(f"""
     background: #232320 !important;
     border: 1.5px solid #3d3c36 !important;
     border-radius: 8px !important;
-    color: #f0ede6 !important;
+    color: #f5f3ed !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:first-child {{
     background: #232320 !important;
@@ -1082,17 +1078,17 @@ st.markdown(f"""
     border-radius: 8px !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{
-    color: #f0ede6 !important;
+    color: #f5f3ed !important;
   }}
   [data-testid="stSidebar"] .stRadio label {{
-    color: #d4d2c9 !important;
+    color: {_SB_TEXT} !important;
   }}
   [data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {{
-    color: #d4d2c9 !important;
+    color: {_SB_TEXT} !important;
   }}
   [data-testid="stSidebar"] .stButton button {{
     background: #232320 !important;
-    color: #f0ede6 !important;
+    color: #f5f3ed !important;
     border: 1.5px solid #3d3c36 !important;
     border-radius: 8px !important;
   }}
@@ -1101,11 +1097,11 @@ st.markdown(f"""
     border-color: #5a5950 !important;
   }}
   [data-testid="stSidebar"] .stSelectSlider [data-testid="stMarkdownContainer"] p {{
-    color: #d4d2c9 !important;
+    color: {_SB_TEXT} !important;
   }}
   [data-testid="stSidebar"] .section-label {{
     color: #5a5950 !important;
-    border-bottom-color: #2a2926 !important;
+    border-bottom-color: {_SB_BORDER} !important;
   }}
   [data-testid="collapsedControl"] {{
     color: {T['text']} !important;
@@ -1122,14 +1118,32 @@ st.markdown(f"""
   /* ── HERO ── */
   .hero-wrap {{
     margin-bottom: 2.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid {T['border']};
+    padding-bottom: 1.8rem;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     flex-wrap: wrap;
     gap: 0;
+    position: relative;
+  }}
+  /* ── MIGLIORIA 1: separatore decorativo sotto il hero ── */
+  .hero-wrap::after {{
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      {T['border2']} 20%,
+      {T['accent']} 50%,
+      {T['border2']} 80%,
+      transparent 100%
+    );
   }}
   .hero-left {{ flex: 1; min-width: 200px; text-align: center; }}
   @keyframes iconBounce {{
@@ -1374,23 +1388,26 @@ st.markdown(f"""
     background: {T['card2']} !important;
   }}
 
-  /* ── DOWNLOAD BUTTONS ── */
+  /* ── MIGLIORIA 2: DOWNLOAD BUTTONS più premium ── */
   .stDownloadButton button,
   [data-testid="stDownloadButton"] button {{
     background: {T['card']} !important;
     color: {T['text']} !important;
     border: 1.5px solid {T['border2']} !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.88rem !important;
-    font-weight: 600 !important;
-    padding: 0.6rem 1.2rem !important;
-    transition: all 0.15s ease !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    padding: 0.75rem 1.4rem !important;
+    transition: all 0.18s ease !important;
+    letter-spacing: 0.01em !important;
   }}
   .stDownloadButton button:hover,
   [data-testid="stDownloadButton"] button:hover {{
     background: {T['hover']} !important;
     border-color: {T['accent']} !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 14px rgba(217,119,6,0.15) !important;
   }}
 
   /* ── EXPANDER ── */
@@ -1585,26 +1602,30 @@ st.markdown(f"""
     font-weight: 600;
   }}
 
-  /* ── DOWNLOAD CARD ── */
+  /* ── MIGLIORIA 2+4: DOWNLOAD CARD con hover translateY ── */
   .dl-card {{
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
+    gap: 14px;
+    padding: 14px 18px;
     background: {T['card']};
     border: 1.5px solid {T['border']};
-    border-radius: 12px;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    border-radius: 14px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
     margin-bottom: 8px;
+    cursor: default;
   }}
   .dl-card:hover {{
     border-color: {T['accent']};
-    box-shadow: 0 2px 12px rgba(217,119,6,0.12);
+    box-shadow: 0 6px 20px rgba(217,119,6,0.14);
+    transform: translateY(-2px);   /* ← MIGLIORIA 4 */
   }}
+  /* ── MIGLIORIA 2: icona più grande ── */
   .dl-card-icon {{
-    font-size: 1.6rem;
+    font-size: 2.2rem;
     line-height: 1;
     flex-shrink: 0;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.12));
   }}
   .dl-card-body {{
     flex: 1;
@@ -1612,16 +1633,16 @@ st.markdown(f"""
   }}
   .dl-card-title {{
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: {T['text']};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }}
   .dl-card-meta {{
-    font-size: 0.72rem;
+    font-size: 0.74rem;
     color: {T['muted']};
-    margin-top: 1px;
+    margin-top: 2px;
   }}
 
   /* ── PDF PREVIEW ── */
@@ -1773,7 +1794,7 @@ st.markdown(f"""
     }}
     [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{
       font-size: 0.85rem !important;
-      color: #f0ede6 !important;
+      color: #f5f3ed !important;
     }}
     .stTextArea textarea {{
       font-size: 0.95rem !important;
@@ -2151,18 +2172,14 @@ SOLO CODICE LATEX del corpo."""
 
         # ── GUARDIA: tronca esercizi in eccesso ──────────────────────────────
         splits = re.split(r'(\\subsection\*\{)', corpo_latex)
-        # splits[0] = testo prima del primo \subsection*
-        # poi coppie: splits[1]= \subsection*{, splits[2]=resto del blocco
         n_blocchi = (len(splits) - 1) // 2
         if n_blocchi > num_esercizi_totali:
-            # Ricostruisci tenendo solo i primi num_esercizi_totali blocchi
             testa = splits[0]
             blocchi_da_tenere = []
             for b in range(num_esercizi_totali):
-                blocchi_da_tenere.append(splits[1 + b*2])      # \subsection*{
-                blocchi_da_tenere.append(splits[2 + b*2])      # contenuto
+                blocchi_da_tenere.append(splits[1 + b*2])
+                blocchi_da_tenere.append(splits[2 + b*2])
             corpo_troncato = testa + "".join(blocchi_da_tenere)
-            # Assicura \end{document}
             corpo_troncato = re.sub(r'\\end\{document\}.*$', '', corpo_troncato, flags=re.DOTALL).rstrip()
             corpo_latex = corpo_troncato + "\n\\end{document}"
 
@@ -2170,10 +2187,8 @@ SOLO CODICE LATEX del corpo."""
         latex_a = fix_items_environment(latex_a)
         if bes_dsa:
             latex_a = inietta_asterischi_bes(latex_a, percentuale=0.25)
-            # Rimuovi eventuali (*) rimasti nell'Esercizio 1 (Saperi Essenziali)
             latex_a = rimuovi_asterischi_primo_esercizio(latex_a)
 
-        # Iniezione griglia SEMPRE dopo fix_items_environment e bes
         if con_griglia:
             latex_a_final = inietta_griglia(latex_a, punti_totali)
         else:
@@ -2188,7 +2203,6 @@ SOLO CODICE LATEX del corpo."""
             st.session_state.verifiche['A']['pdf_ts']  = time.time()
             st.session_state.verifiche['A']['preview'] = True
         else:
-            # Fallback: prova senza griglia se la compilazione fallisce per colpa della griglia
             if con_griglia:
                 pdf_fallback, _ = compila_pdf(latex_a)
                 if pdf_fallback:
