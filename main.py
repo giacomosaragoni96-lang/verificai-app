@@ -2113,6 +2113,89 @@ st.markdown(f"""
       max-width: 900px !important;
     }}
   }}
+
+  /* ══════════════════════════════════════════════════════════════
+     SIDEBAR DARK OVERRIDE — deve stare ULTIMO per battere tutto
+     ══════════════════════════════════════════════════════════════ */
+
+  /* Tutti i bottoni dentro la sidebar: sempre dark */
+  [data-testid="stSidebar"] .stButton > button,
+  [data-testid="stSidebar"] .stButton > button[kind="secondary"],
+  [data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
+  [data-testid="stSidebar"] .stDownloadButton button,
+  [data-testid="stSidebar"] [data-testid="stDownloadButton"] button {{
+    background: #1e1d1b !important;
+    color: #e8e6e0 !important;
+    border: 1.5px solid #3d3c36 !important;
+    border-radius: 8px !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    padding: 8px 14px !important;
+    min-height: 36px !important;
+    width: 100% !important;
+  }}
+  [data-testid="stSidebar"] .stButton > button:hover,
+  [data-testid="stSidebar"] .stButton > button[kind="secondary"]:hover,
+  [data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover,
+  [data-testid="stSidebar"] .stDownloadButton button:hover,
+  [data-testid="stSidebar"] [data-testid="stDownloadButton"] button:hover {{
+    background: #2a2926 !important;
+    border-color: #D97706 !important;
+    color: #f5f3ed !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }}
+
+  /* Expanders nella sidebar: sempre dark */
+  [data-testid="stSidebar"] [data-testid="stExpander"] {{
+    background: #1e1d1b !important;
+    border: 1px solid #2e2d28 !important;
+    border-radius: 10px !important;
+  }}
+  [data-testid="stSidebar"] [data-testid="stExpander"] summary {{
+    background: #1e1d1b !important;
+    color: #c8c6bc !important;
+    font-size: 0.82rem !important;
+    padding: 0.7rem 1rem !important;
+  }}
+  [data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {{
+    background: #2a2926 !important;
+    color: #f5f3ed !important;
+  }}
+  [data-testid="stSidebar"] [data-testid="stExpander"] > div > div {{
+    background: #1e1d1b !important;
+    padding: 0.4rem 1rem 0.8rem !important;
+  }}
+  [data-testid="stSidebar"] [data-testid="stExpander"] p,
+  [data-testid="stSidebar"] [data-testid="stExpander"] span {{
+    color: #c8c6bc !important;
+  }}
+
+  /* Bottone logout: sempre rosso sottile */
+  [data-testid="stSidebar"] .logout-btn-wrap .stButton > button,
+  [data-testid="stSidebar"] .logout-btn-wrap button {{
+    background: transparent !important;
+    color: #f87171 !important;
+    border: 1px solid #5c2222 !important;
+    border-radius: 8px !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    padding: 6px 14px !important;
+    width: auto !important;
+    min-height: unset !important;
+    box-shadow: none !important;
+  }}
+  [data-testid="stSidebar"] .logout-btn-wrap .stButton > button:hover,
+  [data-testid="stSidebar"] .logout-btn-wrap button:hover {{
+    background: #2a0f0f !important;
+    border-color: #f87171 !important;
+    color: #fca5a5 !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }}
+
 </style>
 """, unsafe_allow_html=True)
 
