@@ -2158,7 +2158,7 @@ SOLO CODICE LATEX del corpo."""
 
         # ── VERIFICA RIDOTTA BES/DSA ─────────────────────────────────────────────────
         if bes_dsa and perc_ridotta:
-            _avanza("♿  Generazione verifica ridotta…")
+            _avanza(" ⛳ Generazione verifica ridotta…")
 
             prompt_ridotta = f"""Sei un docente esperto. Hai già generato questa verifica:
 
@@ -2297,7 +2297,7 @@ if st.session_state.verifiche['A']['latex']:
             st.divider()
         with st.container():
             if fid == 'R':
-                label_ver = "♿ Verifica Ridotta"
+                label_ver = "Verifica Ridotta"
             elif _df:
                 label_ver = f"Versione {fid}"
             else:
@@ -2472,6 +2472,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
