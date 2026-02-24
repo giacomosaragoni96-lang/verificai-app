@@ -277,7 +277,46 @@ def rimuovi_vspace_corpo(latex):
     # Rimuove righe vuote eccessive lasciate dalla rimozione
     latex = re.sub(r'\n{3,}', '\n\n', latex)
     return latex
+def riscala_punti(latex, punti_totali_target):
+    """
+    Trova tutti i (X pt) nel corpo, li riscala proporzionalmente
+    in modo che la somma sia ESATTAMENTE punti_totali_target.
+    """
+    pattern = re.compile(r'\((\d+(?:[.,]\d+)?)\s*pt\)')
+    matches = list(pattern.finditer(latex))
+    if not matches:
+        return latex
 
+    valori = [float(m.group(1).replace(',', '.')) for m in matches]
+    somma_attuale = sum(valori)
+    if somma_attuale == 0:
+        return latex
+
+    # Riscala proporzionalmente
+    fattore = punti_totali_target / somma_attuale
+    nuovi_valori = [v * fattore for v in valori]
+
+    # Arrotonda mantenendo il totale esatto
+    nuovi_interi = [int(v) for v in nuovi_valori]
+    resti = [(nuovi_valori[i] - nuovi_interi[i], i) for i in range(len(nuovi_valori))]
+    differenza = punti_totali_target - sum(nuovi_interi)
+    resti.sort(reverse=True)
+    for i in range(int(round(differenza))):
+        nuovi_interi[resti[i][1]] += 1
+
+    # Sostituisci nel LaTeX
+    risultato = latex
+    offset = 0
+    for i, m in enumerate(matches):
+        vecchio = m.group(0)
+        nuovo = f"({nuovi_interi[i]} pt)"
+        start = m.start() + offset
+        end = m.end() + offset
+        risultato = risultato[:start] + nuovo + risultato[end:]
+        offset += len(nuovo) - len(vecchio)
+
+    return risultato
+    
 def inietta_griglia(latex, punti_totali):
     latex = re.sub(
         r'(\\vspace\{[^}]+\}\s*)?% GRIGLIA.*?\\end\{center\}',
@@ -2146,7 +2185,10 @@ SOLO CODICE LATEX del corpo."""
 
         corpo_latex = ra.text.replace("```latex","").replace("```","").strip()
         corpo_latex = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex, flags=re.DOTALL)
-        corpo_latex = re.sub(r'^\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex, flags=re.DOTALL)
+        while re.match(r'^\s*\\begin\{center\}', corpo_latex):
+            corpo_latex = re.sub(r'^\s*\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex, flags=re.DOTALL)
+        corpo_latex = re.sub(r'^\s*\\vspace\*?\{[^}]*\}\s*', '', corpo_latex)
+        corpo_latex = corpo_latex.lstrip()
         if "\\end{document}" not in corpo_latex:
             corpo_latex += "\n\\end{document}"
 
@@ -2166,7 +2208,8 @@ SOLO CODICE LATEX del corpo."""
         latex_a = preambolo_fisso + corpo_latex
         latex_a = fix_items_environment(latex_a)
         latex_a = rimuovi_vspace_corpo(latex_a)
-
+        if mostra_punteggi:
+            latex_a = riscala_punti(latex_a, punti_totali)
 
         if con_griglia:
             latex_a_final = inietta_griglia(latex_a, punti_totali)
@@ -2225,14 +2268,19 @@ SOLO CODICE LATEX del corpo."""
             rb_bes = model.generate_content(prompt_ridotta)
             corpo_latex_ridotta = rb_bes.text.replace("```latex", "").replace("```", "").strip()
             corpo_latex_ridotta = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex_ridotta, flags=re.DOTALL)
-            corpo_latex_ridotta = re.sub(r'^\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex_ridotta, flags=re.DOTALL)
+            while re.match(r'^\s*\\begin\{center\}', corpo_latex_ridotta):
+                corpo_latex_ridotta = re.sub(r'^\s*\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex_ridotta, flags=re.DOTALL)
+            corpo_latex_ridotta = re.sub(r'^\s*\\vspace\*?\{[^}]*\}\s*', '', corpo_latex_ridotta)
+            corpo_latex_ridotta = corpo_latex_ridotta.lstrip()
             if "\\end{document}" not in corpo_latex_ridotta:
                 corpo_latex_ridotta += "\n\\end{document}"
-        
+                    
             latex_ridotta = preambolo_fisso + corpo_latex_ridotta
             latex_ridotta = fix_items_environment(latex_ridotta)
             latex_ridotta = rimuovi_vspace_corpo(latex_ridotta)
-                    
+            if mostra_punteggi:
+                latex_ridotta = riscala_punti(latex_ridotta, punti_totali)        
+                
             if con_griglia:
                 latex_ridotta_final = inietta_griglia(latex_ridotta, punti_totali)
             else:
@@ -2269,9 +2317,13 @@ SOLO CODICE LATEX del corpo."""
                 f"Sostituisci 'Versione A' con 'Versione B'. TERMINA con \\end{{document}}. SOLO LATEX.\n\n{corpo_latex}")
             corpo_latex_b = rb.text.replace("```latex","").replace("```","").strip()
             corpo_latex_b = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex_b, flags=re.DOTALL)
-            corpo_latex_b = re.sub(r'^\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex_b, flags=re.DOTALL)
+            while re.match(r'^\s*\\begin\{center\}', corpo_latex_b):
+                corpo_latex_b = re.sub(r'^\s*\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex_b, flags=re.DOTALL)
+            corpo_latex_b = re.sub(r'^\s*\\vspace\*?\{[^}]*\}\s*', '', corpo_latex_b)
+            corpo_latex_b = corpo_latex_b.lstrip()
             if "\\end{document}" not in corpo_latex_b:
                 corpo_latex_b += "\n\\end{document}"
+                
             preambolo_b = preambolo_fisso.replace(
                 titolo_header,
                 titolo_header.replace("Versione A","Versione B") if "Versione A" in titolo_header
@@ -2280,7 +2332,8 @@ SOLO CODICE LATEX del corpo."""
             latex_b = preambolo_b + corpo_latex_b
             latex_b = fix_items_environment(latex_b)
             latex_b = rimuovi_vspace_corpo(latex_b)
-
+            if mostra_punteggi:
+                latex_b = riscala_punti(latex_b, punti_totali)
 
             if con_griglia:
                 latex_b_final = inietta_griglia(latex_b, punti_totali)
@@ -2521,6 +2574,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
