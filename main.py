@@ -219,49 +219,6 @@ def build_griglia_latex(esercizi, punti_totali):
     )
 
 
-def inietta_asterischi_bes(latex, percentuale=0.25):
-    pattern = re.compile(r'(\\item\[([a-zA-Z]+\*?)\)\])([ \t]*)')
-    tutti = list(pattern.finditer(latex))
-    if not tutti:
-        return latex
-
-    def _gia_marcato(m):
-        pos_dopo = m.end()
-        resto = latex[pos_dopo:pos_dopo+10].lstrip()
-        return resto.startswith('(*)')
-
-    n_totale = len(tutti)
-    n_gia = sum(1 for m in tutti if _gia_marcato(m))
-    n_necessari = max(1, int(n_totale * percentuale + 0.999))
-    if n_gia >= n_necessari:
-        return latex
-
-    n_da_aggiungere = n_necessari - n_gia
-    candidati = [m for m in tutti if not _gia_marcato(m)]
-    da_modificare = candidati[-n_da_aggiungere:]
-
-    for m in reversed(da_modificare):
-        ins_pos = m.end()
-        latex = latex[:ins_pos] + ' (*)' + latex[ins_pos:]
-    return latex
-
-
-def rimuovi_asterischi_primo_esercizio(ltx):
-    """Rimuove tutti i (*) dal primo blocco \\subsection* (Saperi Essenziali)."""
-    parts = re.split(r'(\\subsection\*\{)', ltx, maxsplit=1)
-    if len(parts) < 3:
-        return ltx
-    after_first_header = parts[2]
-    secondo = re.search(r'\\subsection\*\{', after_first_header)
-    if secondo:
-        primo_blocco = after_first_header[:secondo.start()]
-        resto = after_first_header[secondo.start():]
-    else:
-        primo_blocco = after_first_header
-        resto = ""
-    primo_blocco_clean = re.sub(r'\s*\(\*\)', '', primo_blocco)
-    return parts[0] + parts[1] + primo_blocco_clean + resto
-
 
 def fix_items_environment(latex):
     import re as _r
@@ -949,7 +906,7 @@ def _vf():
             'pdf_ts': None, 'docx_ts': None}
 
 
-if 'verifiche'       not in st.session_state: st.session_state.verifiche = {'A': _vf(), 'B': _vf()}
+if 'verifiche' not in st.session_state: st.session_state.verifiche = {'A': _vf(), 'B': _vf(), 'R': _vf()}
 if 'esercizi_custom' not in st.session_state: st.session_state.esercizi_custom = []
 if 'last_materia'    not in st.session_state: st.session_state.last_materia = None
 if 'last_argomento'  not in st.session_state: st.session_state.last_argomento = None
@@ -1995,8 +1952,7 @@ if genera_btn:
         model        = genai.GenerativeModel(modello_id)
         materia      = materia_scelta.strip() or "Matematica"
         e_mat        = any(k in materia.lower() for k in ["matem","fis","chim","inform","elettr","meccan"])
-        nota_bes     = ("I sottopunti (*) sono facoltativi per gli studenti con verifica ridotta."
-                        if bes_dsa else "Svolgere tutti gli esercizi mostrando i passaggi.")
+        nota_bes = "Svolgere tutti gli esercizi mostrando i passaggi."
         calibrazione = CALIBRAZIONE_SCUOLA.get(difficolta, "")
         s_note       = f"\nNOTE DOCENTE: {note_generali.strip()}" if note_generali.strip() else ""
         s_es, imgs_es = costruisci_prompt_esercizi(
@@ -2037,16 +1993,7 @@ if genera_btn:
             titolo_clean = argomento.strip()
         _avanza("🧠  Generazione esercizi in corso…")
 
-        if bes_dsa:
-            bes_rule = (
-                "- VERIFICA RIDOTTA: almeno il 25% dei sottopunti DEVE essere marcato come facoltativo.\n"
-                "  USA ESATTAMENTE questo formato: metti (*) subito dopo la label, sulla stessa riga.\n"
-                "  Esempio corretto: \\item[c)] (*) Descrivi le caratteristiche...\n"
-                "  NON modificare la lettera della label (NON usare \\item[c*)] o simili).\n"
-                "  Scegli i sottopunti più complessi o avanzati per il (*). Conta: almeno 1 ogni 4 item.\n"
-            )
-        else:
-            bes_rule = "- Nessun simbolo (*) facoltativi."
+        bes_rule = "- NON inserire mai il simbolo (*) accanto a nessun sottopunto."
 
         if mostra_punteggi:
             punti_rule = (
@@ -2128,7 +2075,6 @@ REGOLE LATEX (TASSATIVE):
 - NUMERO ESERCIZI: genera ESATTAMENTE {num_esercizi_totali} blocchi \\subsection*. CONTA i tuoi blocchi prima di chiudere. Se ne hai di più, elimina i superflui. Se ne hai di meno, aggiungine.
 - Titoli: \\subsection*{{Esercizio N: Titolo}}
 - SOTTOPUNTI OBBLIGATORI: usa SEMPRE \\item[a)] \\item[b)] \\item[c)] ecc. con label ESPLICITA tra parentesi quadre.
-{bes_rule}
 - PROTEZIONE ESERCIZIO 1 (Saperi Essenziali): nell'Esercizio 1 NON inserire MAI il simbolo (*) su nessun sottopunto. È obbligatorio per tutti gli studenti senza eccezioni.
 {multi_rule}
 - Scelta multipla: le opzioni DEVONO stare in un \\begin{{enumerate}}[a)] SEPARATO dopo la domanda.
@@ -2173,9 +2119,7 @@ SOLO CODICE LATEX del corpo."""
 
         latex_a = preambolo_fisso + corpo_latex
         latex_a = fix_items_environment(latex_a)
-        if bes_dsa:
-            latex_a = inietta_asterischi_bes(latex_a, percentuale=0.25)
-            latex_a = rimuovi_asterischi_primo_esercizio(latex_a)
+
 
         if con_griglia:
             latex_a_final = inietta_griglia(latex_a, punti_totali)
@@ -2210,6 +2154,65 @@ SOLO CODICE LATEX del corpo."""
             st.session_state.verifiche['A']['soluzioni_latex'] = (
                 rs.text.replace("```latex","").replace("```","").strip())
 
+
+
+        # ── VERIFICA RIDOTTA BES/DSA ─────────────────────────────────────────────────
+        if bes_dsa and perc_ridotta:
+            _avanza("♿  Generazione verifica ridotta…")
+
+            prompt_ridotta = f"""Sei un docente esperto. Hai già generato questa verifica:
+
+        {corpo_latex}
+
+        Devi creare una versione RIDOTTA per studenti con sostegno o certificazione (BES/DSA/NAI).
+        La struttura deve essere simile all'originale ma con circa il {perc_ridotta}% di sottopunti IN MENO rispetto al totale.
+        Scegli quali sottopunti eliminare partendo dai più complessi, astratti o che richiedono più passaggi di calcolo.
+        Mantieni sempre almeno 1 sottopunto per esercizio.
+        Mantieni i sottopunti più semplici e diretti.
+        {'Ridistribuisci i punti in modo che la somma sia ESATTAMENTE ' + str(punti_totali) + ' pt. totali. Ogni sottopunto mantenuto deve avere il suo (X pt).' if mostra_punteggi else 'NON inserire punteggi.'}
+        NON aggiungere nessun simbolo (*), nessuna nota BES, nessuna indicazione che si tratta di una verifica ridotta.
+        La verifica deve sembrare una verifica normale, semplicemente più breve.
+        TERMINA con \\end{{document}}.
+        SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
+
+            rb_bes = model.generate_content(prompt_ridotta)
+            corpo_latex_ridotta = rb_bes.text.replace("```latex", "").replace("```", "").strip()
+            corpo_latex_ridotta = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex_ridotta, flags=re.DOTALL)
+            corpo_latex_ridotta = re.sub(r'^\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex_ridotta, flags=re.DOTALL)
+            if "\\end{document}" not in corpo_latex_ridotta:
+                corpo_latex_ridotta += "\n\\end{document}"
+        
+            latex_ridotta = preambolo_fisso + corpo_latex_ridotta
+            latex_ridotta = fix_items_environment(latex_ridotta)
+        
+            if con_griglia:
+                latex_ridotta_final = inietta_griglia(latex_ridotta, punti_totali)
+            else:
+                latex_ridotta_final = latex_ridotta
+        
+            st.session_state.verifiche['R'] = {**_vf(), 'latex': latex_ridotta_final}
+        
+            pdf_r, err_r = compila_pdf(latex_ridotta_final)
+            if pdf_r:
+                st.session_state.verifiche['R']['pdf']    = pdf_r
+                st.session_state.verifiche['R']['pdf_ts'] = time.time()
+                st.session_state.verifiche['R']['preview'] = True
+            else:
+                if con_griglia:
+                    pdf_r_fallback, _ = compila_pdf(latex_ridotta)
+                    if pdf_r_fallback:
+                        st.session_state.verifiche['R']['pdf']     = pdf_r_fallback
+                        st.session_state.verifiche['R']['pdf_ts']  = time.time()
+                        st.session_state.verifiche['R']['preview'] = True
+                        st.warning("⚠️ La griglia non è stata inclusa nella verifica ridotta (errore compilazione).")
+
+
+        
+
+
+
+        
+        
         if doppia_fila:
             _avanza("📄  Generazione Versione B…")
             rb = model.generate_content(
@@ -2228,9 +2231,7 @@ SOLO CODICE LATEX del corpo."""
             )
             latex_b = preambolo_b + corpo_latex_b
             latex_b = fix_items_environment(latex_b)
-            if bes_dsa:
-                latex_b = inietta_asterischi_bes(latex_b, percentuale=0.25)
-                latex_b = rimuovi_asterischi_primo_esercizio(latex_b)
+
 
             if con_griglia:
                 latex_b_final = inietta_griglia(latex_b, punti_totali)
@@ -2287,13 +2288,20 @@ if st.session_state.verifiche['A']['latex']:
     _arg = st.session_state.last_argomento or (argomento if 'argomento' in dir() else 'verifica')
 
     attive = ['A','B'] if _df and st.session_state.verifiche['B']['latex'] else ['A']
+    if st.session_state.verifiche['R']['latex']:
+        attive.append('R')
 
     for idx, fid in enumerate(attive):
         v = st.session_state.verifiche[fid]
         if idx > 0:
             st.divider()
         with st.container():
-            label_ver = f"Versione {fid}" if _df else "La tua verifica"
+            if fid == 'R':
+                label_ver = "♿ Verifica Ridotta"
+            elif _df:
+                label_ver = f"Versione {fid}"
+            else:
+                label_ver = "La tua verifica"
             st.markdown(f"""
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;">
               <span style="font-family:'DM Sans',sans-serif;font-size:1.1rem;
@@ -2464,6 +2472,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
