@@ -2101,6 +2101,11 @@ CALIBRAZIONE LIVELLO E TEMPO:
 - DURATA PREVISTA: {durata_scelta}. Regola la lunghezza dei calcoli, il numero di incognite e la complessità testuale in modo che {num_esercizi_totali} esercizi siano agevolmente fattibili nel tempo scelto.
 - BILANCIAMENTO CONTESTO E MODELLAZIONE: NON esagerare con i problemi applicati alla realtà o fortemente interdisciplinari (es. non inserire scenari ingegneristici o fisici su tutti gli esercizi di matematica). MASSIMO 1 o 2 esercizi possono essere fortemente contestualizzati. I restanti DEVONO essere esercizi canonici, diretti e focalizzati sulla procedura pura per non sovraccaricare cognitivamente lo studente.
 
+REGOLE TASSATIVE SUI GRAFICI (LOGICA ANTI-SPOILER):
+- Se l'esercizio richiede esplicitamente allo studente di "disegnare", "rappresentare graficamente", "tracciare" o "costruire" una figura/grafico, NON generare il codice TikZ del grafico risolto.
+- In questi casi, limita l'output al testo della consegna e lascia lo spazio bianco per lo svolgimento usando \\vspace{{5cm}} o una griglia vuota.
+- Genera un grafico (TikZ) SOLO se esso è un dato di partenza necessario fornito dal docente (es. "Dato il seguente grafico, ricava i dati...").
+
 {s_note}
 {s_es}
 
@@ -2436,6 +2441,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
