@@ -2580,21 +2580,23 @@ SOLO CODICE LATEX del corpo."""
 
         # ── SALVA SU SUPABASE ──
         try:
-            supabase.table("verifiche_storico").insert({
-                "user_id": st.session_state.utente.id,
-                "materia": materia,
-                "argomento": titolo_clean,
-                "scuola": difficolta,
-                "latex_a": st.session_state.verifiche['A']['latex'],
-                "latex_b": st.session_state.verifiche['B']['latex'] if st.session_state.verifiche['B']['latex'] else None,
-                "latex_r": st.session_state.verifiche['R']['latex'] if st.session_state.verifiche['R']['latex'] else None,
-            }).execute()
-        except Exception:
-            pass  # Non bloccare l'app se il salvataggio fallisce
-
-        st.rerun()
-    except Exception as e:
-        st.error(f"❌ Errore: {e}")
+            if st.session_state.utente is not None:
+                insert_data = {
+                    "user_id": st.session_state.utente.id,
+                    "materia": materia,
+                    "argomento": titolo_clean,
+                    "scuola": difficolta,
+                    "latex_a": st.session_state.verifiche['A']['latex'],
+                    "latex_b": st.session_state.verifiche['B']['latex'] if st.session_state.verifiche['B']['latex'] else None,
+                    "latex_r": st.session_state.verifiche['R']['latex'] if st.session_state.verifiche['R']['latex'] else None,
+                }
+                result = supabase.table("verifiche_storico").insert(insert_data).execute()
+                st.toast("✅ Verifica salvata!", icon="💾")
+            else:
+                st.warning("Utente non loggato, verifica non salvata.")
+        except Exception as e:
+            st.warning(f"⚠️ Salvataggio non riuscito: {e}")
+        st.rerun()  # 
 # ── OUTPUT ────────────────────────────────────────────────────────────────────────
 if st.session_state.verifiche['A']['latex']:
     st.divider()
@@ -2764,6 +2766,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
