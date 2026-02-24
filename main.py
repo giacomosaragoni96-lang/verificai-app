@@ -2316,13 +2316,7 @@ if st.session_state.verifiche['A']['latex']:
                         with st.expander("Log"): st.text(err)
 
             st.write("")
-    st.markdown("""
-                        <div class="hint-docx">
-                            💡 <b>Nota:</b> La versione Word è modificabile ma ha una resa grafica inferiore. 
-                            I grafici complessi (TikZ) non compaiono in Word.
-                        </div>
-                        </div>
-                    """, unsafe_allow_html=True)
+  
             if v['docx']:
                 docx_size = _stima_dimensione(v['docx'])
                 st.download_button(
@@ -2349,6 +2343,14 @@ if st.session_state.verifiche['A']['latex']:
                         st.session_state[_docx_gen_key] = False
                         st.error("Errore Word")
                         with st.expander("Log"): st.text(de)
+
+              st.markdown("""
+                        <div class="hint-docx">
+                            💡 <b>Nota:</b> La versione Word è modificabile ma ha una resa grafica inferiore. 
+                            I grafici complessi (TikZ) non compaiono in Word.
+                        </div>
+                        </div>
+                    """, unsafe_allow_html=True)
            
         
 
@@ -2449,6 +2451,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
