@@ -1300,28 +1300,29 @@ st.markdown(f"""
     border-radius: 5px !important;
   }}
 
- /* ════ BOTTONE PRIMARIO (Genera Verifica con Zoom) ════ */
-  .stButton [data-testid="baseButton-primary"],
-  .stButton button[kind="primary"] {{
+ /* ════ BOTTONE PRIMARIO (Genera Verifica - VERSIONE FORZATA) ════ */
+  div.stButton > button[kind="primary"] {{
     background: #D97706 !important;
-    color: #ffffff !important;
+    color: white !important;
     border: none !important;
     border-radius: 12px !important;
-    font-family: 'DM Sans', sans-serif !important;
-    font-size: 1rem !important;
-    font-weight: 700 !important;
-    padding: 0.8rem 2rem !important;
-    transition: all 0.2s ease-in-out !important;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, filter 0.2s ease !important;
     box-shadow: 0 2px 12px rgba(217,119,6,0.35) !important;
+    display: block !important;
   }}
 
-  .stButton [data-testid="baseButton-primary"]:hover {{
+  div.stButton > button[kind="primary"]:hover {{
+    transform: scale(1.05) !important; /* Ingrandimento del 5% */
+    box-shadow: 0 10px 25px rgba(217,119,6,0.5) !important;
     filter: brightness(1.1) !important;
-    transform: scale(1.03) translateY(-2px) !important;
-    box-shadow: 0 8px 20px rgba(217,119,6,0.45) !important;
+    border: none !important;
   }}
 
-  /* ── STILE CARD DOWNLOAD UNIFORMATE ── */
+  div.stButton > button[kind="primary"]:active {{
+    transform: scale(0.98) !important; /* Si schiaccia quando clicchi */
+  }}
+
+  /* ── STILE CARD DOWNLOAD (Mantieni queste per il blocco 3) ── */
   .dl-card {{
     background: #FFFFFF !important;
     padding: 1.2rem;
@@ -1348,7 +1349,6 @@ st.markdown(f"""
     border-top: 1px solid #EEE;
     padding-top: 8px;
   }}
-
   /* ── BOTTONI SECONDARI E DOWNLOAD UNIFICATI ── */
   .stDownloadButton button,
   [data-testid="stDownloadButton"] button,
@@ -2436,5 +2436,6 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
