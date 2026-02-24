@@ -2317,33 +2317,41 @@ if st.session_state.verifiche['A']['latex']:
 
             st.write("")
   
-            if v['docx']:
-                docx_size = _stima_dimensione(v['docx'])
-                st.download_button(
-                    label=f"📝 Scarica File Word Modificabile ({docx_size})",
-                    data=v['docx'],
-                    file_name=f"Verifica_{_arg}_{fid}.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True,
-                    key=f"dld_{fid}"
-                )
-            else:
-                _docx_gen_key = f"_docx_generating_{fid}"
-                if st.button("📝 Genera File Word Modificabile", key=f"dldc_{fid}", use_container_width=True):
-                    st.session_state[_docx_gen_key] = True
-                if st.session_state.get(_docx_gen_key, False):
-                    with st.spinner("⏳ Conversione Word…"):
-                        db, de = latex_to_docx_via_ai(v['latex'], con_griglia=con_griglia)
-                    if db:
-                        st.session_state.verifiche[fid]['docx'] = db
-                        st.session_state.verifiche[fid]['docx_ts'] = time.time()
-                        st.session_state[_docx_gen_key] = False
-                        st.rerun()
-                    else:
-                        st.session_state[_docx_gen_key] = False
-                        st.error("Errore Word")
-                        with st.expander("Log"): st.text(de)
-
+          if v['docx']:
+                    docx_size = _stima_dimensione(v['docx'])
+                    st.markdown(f'<div class="dl-card"><div class="dl-label">📝 Versione Word</div>', unsafe_allow_html=True)
+                    st.download_button(
+                        label=f"Scarica Word Modificabile ({docx_size})",
+                        data=v['docx'],
+                        file_name=f"Verifica_{_arg}_{fid}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True,
+                        key=f"dld_{fid}"
+                    )
+                    # AVVISO WORD CON STILE DEDICATO
+                    st.markdown("""
+                        <div class="hint-docx">
+                            💡 <b>Nota:</b> La versione Word è modificabile ma ha una resa grafica inferiore. 
+                            I grafici complessi di funzione (TikZ/Plot) non compaiono in Word e vanno aggiunti a mano.
+                        </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    _docx_gen_key = f"_docx_generating_{fid}"
+                    if st.button("📝 Genera File Word", key=f"dldc_{fid}", use_container_width=True):
+                        st.session_state[_docx_gen_key] = True
+                    if st.session_state.get(_docx_gen_key, False):
+                        with st.spinner("⏳ Conversione Word…"):
+                            db, de = latex_to_docx_via_ai(v['latex'], con_griglia=con_griglia)
+                        if db:
+                            st.session_state.verifiche[fid]['docx'] = db
+                            st.session_state.verifiche[fid]['docx_ts'] = time.time()
+                            st.session_state[_docx_gen_key] = False
+                            st.rerun()
+                        else:
+                            st.session_state[_docx_gen_key] = False
+                            st.error("Errore Word")
+                            with st.expander("Log"): st.text(de)
              
            
         
@@ -2445,6 +2453,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
