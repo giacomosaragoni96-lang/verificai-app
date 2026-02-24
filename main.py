@@ -1300,9 +1300,9 @@ st.markdown(f"""
     border-radius: 5px !important;
   }}
 
-  /* ════ BOTTONE PRIMARIO (Genera Verifica con Zoom) ════ */
+ /* ════ BOTTONE PRIMARIO (Genera Verifica con Zoom) ════ */
   .stButton [data-testid="baseButton-primary"],
-  .stButton button[kind="primary"] {
+  .stButton button[kind="primary"] {{
     background: #D97706 !important;
     color: #ffffff !important;
     border: none !important;
@@ -1313,32 +1313,32 @@ st.markdown(f"""
     padding: 0.8rem 2rem !important;
     transition: all 0.2s ease-in-out !important;
     box-shadow: 0 2px 12px rgba(217,119,6,0.35) !important;
-  }
+  }}
 
-  .stButton [data-testid="baseButton-primary"]:hover {
+  .stButton [data-testid="baseButton-primary"]:hover {{
     filter: brightness(1.1) !important;
     transform: scale(1.03) translateY(-2px) !important;
     box-shadow: 0 8px 20px rgba(217,119,6,0.45) !important;
-  }
+  }}
 
   /* ── STILE CARD DOWNLOAD UNIFORMATE ── */
-  .dl-card {
+  .dl-card {{
     background: #FFFFFF !important;
     padding: 1.2rem;
     border-radius: 15px;
     border: 1px solid #E0E0E0;
     text-align: center;
     margin-bottom: 1rem;
-  }
-  .dl-label {
+  }}
+  .dl-label {{
     font-size: 0.85rem;
     color: #666;
     margin-bottom: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-  }
-  .hint-docx {
+  }}
+  .hint-docx {{
     font-size: 0.78rem;
     color: #888;
     line-height: 1.3;
@@ -1347,7 +1347,7 @@ st.markdown(f"""
     text-align: left;
     border-top: 1px solid #EEE;
     padding-top: 8px;
-  }
+  }}
 
   /* ── BOTTONI SECONDARI E DOWNLOAD UNIFICATI ── */
   .stDownloadButton button,
@@ -2436,4 +2436,5 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
