@@ -1794,8 +1794,20 @@ with st.sidebar:
     difficolta = st.selectbox("livello", SCUOLE, index=3, label_visibility="collapsed")
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
-    bes_dsa         = st.checkbox("Verifica ridotta (sostegno/certificazione)", value=False,
-                help="Circa il 25% dei sottopunti vengono marcati con (*) e resi facoltativi per gli studenti con verifica ridotta (sostegno, certificazioni varie, NAI, ecc.).")
+    bes_dsa = st.checkbox(
+    "Genera versione ridotta (sostegno/certificazioni)",
+    value=False,
+    help="Verrà generato un secondo file identico ma con una percentuale di esercizi in meno, scelti tra i più complessi. I punteggi verranno ricalcolati automaticamente."
+    )
+    perc_ridotta = None
+    if bes_dsa:
+        perc_ridotta = st.select_slider(
+            "Esercizi da rimuovere",
+            options=[10, 20, 30],
+            value=20,
+            format_func=lambda x: f"Rimuovi il {x}% degli esercizi",
+            help="Es. 20% = verranno eliminati circa 1 esercizio ogni 5, partendo dai più complessi"
+    )
     doppia_fila     = st.checkbox("Genera Versione A e B (due varianti)", value=False)
     correzione_step = st.checkbox("Includi soluzioni passo per passo", value=False)
 
@@ -2451,6 +2463,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
