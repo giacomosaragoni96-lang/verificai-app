@@ -34,10 +34,7 @@ def mostra_auth():
         box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         font-family: 'DM Sans', sans-serif;
     }}
-    .auth-logo {{
-        text-align: center;
-        margin-bottom: 0.3rem;
-    }}
+    
     .auth-title {{
         font-size: 2rem;
         font-weight: 900;
@@ -2711,6 +2708,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
