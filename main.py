@@ -2289,61 +2289,77 @@ if st.session_state.verifiche['A']['latex']:
             </div>
             <div class="disclaimer">
               <span class="disclaimer-icon">⚠️</span>
-              <span>Le verifiche generate sono <strong>suggerimenti</strong>. Rivedi sempre il contenuto prima della distribuzione — il docente è responsabile del materiale finale.</span>
+              <span>Le verifiche generate sono <strong>suggerimenti</strong>. Rivedi sempre il contenuto prima della distribuzione.</span>
             </div>
             """, unsafe_allow_html=True)
 
-            if v['pdf']:
-                pdf_size = _stima_dimensione(v['pdf'])
-                st.download_button(
-                    label=f"📄 Scarica PDF — Alta qualità ({pdf_size})",
-                    data=v['pdf'],
-                    file_name=f"Verifica_{_arg}_{fid}.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                    key=f"dl_{fid}"
-                )
-            else:
-                if st.button("📄 Genera PDF", key=f"dlc_{fid}", use_container_width=True):
-                    with st.spinner("Compilazione…"):
-                        pdf, err = compila_pdf(v['latex'])
-                    if pdf:
-                        st.session_state.verifiche[fid]['pdf'] = pdf
-                        st.session_state.verifiche[fid]['pdf_ts'] = time.time()
-                        st.rerun()
-                    else:
-                        st.error("Errore PDF")
-                        with st.expander("Log"): st.text(err)
+            # ── AREA DOWNLOAD SIMMETRICA ──
+            col_dl1, col_dl2 = st.columns(2)
 
-            st.write("")
+            # --- COLONNA PDF ---
+            with col_dl1:
+                if v['pdf']:
+                    pdf_size = _stima_dimensione(v['pdf'])
+                    st.markdown(f'<div class="dl-card"><div class="dl-label">📄 Versione PDF</div>', unsafe_allow_html=True)
+                    st.download_button(
+                        label=f"Scarica PDF ({pdf_size})",
+                        data=v['pdf'],
+                        file_name=f"Verifica_{_arg}_{fid}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                        key=f"dl_pdf_{fid}"
+                    )
+                    st.markdown('</div>', unsafe_allow_html=True)
+                else:
+                    if st.button("📄 Genera PDF", key=f"dlc_{fid}", use_container_width=True):
+                        with st.spinner("Compilazione…"):
+                            pdf, err = compila_pdf(v['latex'])
+                        if pdf:
+                            st.session_state.verifiche[fid]['pdf'] = pdf
+                            st.session_state.verifiche[fid]['pdf_ts'] = time.time()
+                            st.rerun()
+                        else:
+                            st.error("Errore PDF")
+                            with st.expander("Log"): st.text(err)
 
-            if v['docx']:
-                docx_size = _stima_dimensione(v['docx'])
-                st.download_button(
-                    label=f"📝 Scarica File Word Modificabile ({docx_size})",
-                    data=v['docx'],
-                    file_name=f"Verifica_{_arg}_{fid}.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True,
-                    key=f"dld_{fid}"
-                )
-            else:
-                _docx_gen_key = f"_docx_generating_{fid}"
-                if st.button("📝 Genera File Word Modificabile", key=f"dldc_{fid}", use_container_width=True):
-                    st.session_state[_docx_gen_key] = True
-                if st.session_state.get(_docx_gen_key, False):
-                    with st.spinner("⏳ Conversione Word…"):
-                        db, de = latex_to_docx_via_ai(v['latex'], con_griglia=con_griglia)
-                    if db:
-                        st.session_state.verifiche[fid]['docx'] = db
-                        st.session_state.verifiche[fid]['docx_ts'] = time.time()
-                        st.session_state[_docx_gen_key] = False
-                        st.rerun()
-                    else:
-                        st.session_state[_docx_gen_key] = False
-                        st.error("Errore Word")
-                        with st.expander("Log"): st.text(de)
+            # --- COLONNA DOCX ---
+            with col_dl2:
+                if v['docx']:
+                    docx_size = _stima_dimensione(v['docx'])
+                    st.markdown(f'<div class="dl-card"><div class="dl-label">📝 Versione Word</div>', unsafe_allow_html=True)
+                    st.download_button(
+                        label=f"Scarica DOCX ({docx_size})",
+                        data=v['docx'],
+                        file_name=f"Verifica_{_arg}_{fid}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True,
+                        key=f"dl_docx_{fid}"
+                    )
+                    st.markdown("""
+                        <div class="hint-docx">
+                            💡 <b>Nota:</b> La versione Word è modificabile ma ha una resa grafica inferiore. 
+                            I grafici complessi (TikZ) non compaiono in Word.
+                        </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    _docx_gen_key = f"_docx_generating_{fid}"
+                    if st.button("📝 Genera File Word", key=f"dldc_{fid}", use_container_width=True):
+                        st.session_state[_docx_gen_key] = True
+                    if st.session_state.get(_docx_gen_key, False):
+                        with st.spinner("⏳ Conversione Word…"):
+                            db, de = latex_to_docx_via_ai(v['latex'], con_griglia=con_griglia)
+                        if db:
+                            st.session_state.verifiche[fid]['docx'] = db
+                            st.session_state.verifiche[fid]['docx_ts'] = time.time()
+                            st.session_state[_docx_gen_key] = False
+                            st.rerun()
+                        else:
+                            st.session_state[_docx_gen_key] = False
+                            st.error("Errore Word")
+                            with st.expander("Log"): st.text(de)
 
+            # ── SEZIONE SOLUZIONI (A LARGHEZZA INTERA) ──
             if v['soluzioni_latex']:
                 st.write("")
                 if v['soluzioni_pdf']:
@@ -2366,6 +2382,7 @@ if st.session_state.verifiche['A']['latex']:
                         else:
                             with st.expander("Log"): st.text(se)
 
+            # ── ANTEPRIMA E SORGENTE ──
             if v['preview'] and v['pdf']:
                 with st.expander("👁 Anteprima PDF", expanded=False):
                     b64 = base64.b64encode(v['pdf']).decode()
@@ -2388,7 +2405,6 @@ if st.session_state.verifiche['A']['latex']:
                     help="Scarica il sorgente LaTeX per modificarlo"
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
-
 # ── FOOTER ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="app-footer">
@@ -2441,6 +2457,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
