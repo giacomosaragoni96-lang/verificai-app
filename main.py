@@ -2268,246 +2268,127 @@ SOLO CODICE LATEX del corpo."""
         st.error(f"❌ Errore: {e}")
 
 # ── OUTPUT ────────────────────────────────────────────────────────────────────────
-
 if st.session_state.verifiche['A']['latex']:
-
     st.divider()
-
     _df  = doppia_fila   if 'doppia_fila'  in dir() else False
-
     _arg = st.session_state.last_argomento or (argomento if 'argomento' in dir() else 'verifica')
-
-
 
     attive = ['A','B'] if _df and st.session_state.verifiche['B']['latex'] else ['A']
 
-
-
     for idx, fid in enumerate(attive):
-
         v = st.session_state.verifiche[fid]
-
         if idx > 0:
-
             st.divider()
-
         with st.container():
-
             label_ver = f"Versione {fid}" if _df else "La tua verifica"
-
             st.markdown(f"""
-
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;">
-
               <span style="font-family:'DM Sans',sans-serif;font-size:1.1rem;
-
                            font-weight:700;color:{T['text']};">{APP_ICON} {label_ver}</span>
-
               <span class="chip">Pronta</span>
-
             </div>
-
             <div class="disclaimer">
-
               <span class="disclaimer-icon">⚠️</span>
-
               <span>Le verifiche generate sono <strong>suggerimenti</strong>. Rivedi sempre il contenuto prima della distribuzione — il docente è responsabile del materiale finale.</span>
-
             </div>
-
             """, unsafe_allow_html=True)
 
-
-
             if v['pdf']:
-
                 pdf_size = _stima_dimensione(v['pdf'])
-
                 st.download_button(
-
                     label=f"📄 Scarica PDF — Alta qualità ({pdf_size})",
-
                     data=v['pdf'],
-
                     file_name=f"Verifica_{_arg}_{fid}.pdf",
-
                     mime="application/pdf",
-
                     use_container_width=True,
-
                     key=f"dl_{fid}"
-
                 )
-
             else:
-
                 if st.button("📄 Genera PDF", key=f"dlc_{fid}", use_container_width=True):
-
                     with st.spinner("Compilazione…"):
-
                         pdf, err = compila_pdf(v['latex'])
-
                     if pdf:
-
                         st.session_state.verifiche[fid]['pdf'] = pdf
-
                         st.session_state.verifiche[fid]['pdf_ts'] = time.time()
-
                         st.rerun()
-
                     else:
-
                         st.error("Errore PDF")
-
                         with st.expander("Log"): st.text(err)
-
-
 
             st.write("")
 
-
-
             if v['docx']:
-
                 docx_size = _stima_dimensione(v['docx'])
-
                 st.download_button(
-
                     label=f"📝 Scarica File Word Modificabile ({docx_size})",
-
                     data=v['docx'],
-
                     file_name=f"Verifica_{_arg}_{fid}.docx",
-
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-
                     use_container_width=True,
-
                     key=f"dld_{fid}"
-
                 )
-
             else:
-
                 _docx_gen_key = f"_docx_generating_{fid}"
-
                 if st.button("📝 Genera File Word Modificabile", key=f"dldc_{fid}", use_container_width=True):
-
                     st.session_state[_docx_gen_key] = True
-
                 if st.session_state.get(_docx_gen_key, False):
-
                     with st.spinner("⏳ Conversione Word…"):
-
                         db, de = latex_to_docx_via_ai(v['latex'], con_griglia=con_griglia)
-
                     if db:
-
                         st.session_state.verifiche[fid]['docx'] = db
-
                         st.session_state.verifiche[fid]['docx_ts'] = time.time()
-
                         st.session_state[_docx_gen_key] = False
-
                         st.rerun()
-
                     else:
-
                         st.session_state[_docx_gen_key] = False
-
                         st.error("Errore Word")
-
                         with st.expander("Log"): st.text(de)
 
-
-
             if v['soluzioni_latex']:
-
                 st.write("")
-
                 if v['soluzioni_pdf']:
-
                     sol_size = _stima_dimensione(v['soluzioni_pdf'])
-
                     st.download_button(
-
                         label=f"✅ Scarica Soluzioni Step-by-Step ({sol_size})",
-
                         data=v['soluzioni_pdf'],
-
                         file_name=f"Soluzioni_{_arg}_{fid}.pdf",
-
                         mime="application/pdf",
-
                         use_container_width=True,
-
                         key=f"dls_{fid}"
-
                     )
-
                 else:
-
                     if st.button("✅ Compila Soluzioni", key=f"cs_{fid}", use_container_width=True):
-
                         with st.spinner("Compilazione…"):
-
                             sp, se = compila_pdf(v['soluzioni_latex'])
-
                         if sp:
-
                             st.session_state.verifiche[fid]['soluzioni_pdf'] = sp
-
                             st.rerun()
-
                         else:
-
                             with st.expander("Log"): st.text(se)
 
-
-
             if v['preview'] and v['pdf']:
-
                 with st.expander("👁 Anteprima PDF", expanded=False):
-
                     b64 = base64.b64encode(v['pdf']).decode()
-
                     st.markdown(f"""
-
                     <iframe
-
                       src="data:application/pdf;base64,{b64}#toolbar=0&navpanes=0&scrollbar=1"
-
                       style="width:100%;height:500px;border:none;border-radius:8px;display:block;"
-
                     ></iframe>
-
                     """, unsafe_allow_html=True)
 
-
-
             _spacer, _tex_col = st.columns([3, 1])
-
             with _tex_col:
-
                 st.markdown('<div class="tex-btn-wrap">', unsafe_allow_html=True)
-
                 st.download_button(
-
                     "⬇ Sorgente .tex",
-
                     data=v['latex'].encode('utf-8'),
-
                     file_name=f"Verifica_{_arg}_{fid}.tex",
-
                     mime="text/plain",
-
                     key=f"dl_tex_{fid}",
-
                     help="Scarica il sorgente LaTeX per modificarlo"
-
                 )
-
                 st.markdown('</div>', unsafe_allow_html=True)
+
 # ── FOOTER ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="app-footer">
@@ -2560,9 +2441,6 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
-
-
-
 
 
 
