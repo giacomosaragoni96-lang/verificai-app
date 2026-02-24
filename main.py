@@ -22,6 +22,49 @@ SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
 supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+# ── PERSISTENT LOGIN: ripristina sessione dal token salvato in query params ──────
+def _ripristina_sessione():
+    """Tenta di ripristinare la sessione Supabase da access_token + refresh_token."""
+    if st.session_state.get('utente') is not None:
+        return  # già loggato
+
+    # Prova prima con i query params (redirect OAuth / link magico)
+    params = st.query_params
+    access_token  = params.get("access_token",  None)
+    refresh_token = params.get("refresh_token", None)
+
+    # Altrimenti usa quelli salvati nel session_state (persistono dentro una tab)
+    if not access_token:
+        access_token  = st.session_state.get("_sb_access_token")
+        refresh_token = st.session_state.get("_sb_refresh_token")
+
+    if access_token and refresh_token:
+        try:
+            sess = supabase.auth.set_session(access_token, refresh_token)
+            if sess and sess.user:
+                st.session_state.utente = sess.user
+                # Aggiorna i token (potrebbero essere stati ruotati)
+                st.session_state["_sb_access_token"]  = sess.session.access_token
+                st.session_state["_sb_refresh_token"] = sess.session.refresh_token
+                # Pulisce i query params per non tenerli nell'URL
+                st.query_params.clear()
+                return
+        except Exception:
+            pass
+
+    # Prova con get_session (funziona se la sessione è ancora attiva nello stesso processo)
+    try:
+        sess = supabase.auth.get_session()
+        if sess and sess.user:
+            st.session_state.utente = sess.user
+            st.session_state["_sb_access_token"]  = sess.access_token
+            st.session_state["_sb_refresh_token"] = sess.refresh_token
+    except Exception:
+        pass
+
+_ripristina_sessione()
+
 # ── AUTENTICAZIONE ──────────────────────────────────────────────────────────────
 def mostra_auth():
     st.markdown("""
@@ -113,9 +156,12 @@ def mostra_auth():
                     try:
                         res = supabase.auth.sign_in_with_password({"email": email, "password": password})
                         st.session_state.utente = res.user
+                        # Salva i token per il ripristino automatico
+                        st.session_state["_sb_access_token"]  = res.session.access_token
+                        st.session_state["_sb_refresh_token"] = res.session.refresh_token
                         st.rerun()
                     except Exception as e:
-                        st.warning(f"⚠️ Salvataggio non riuscito: {e}")
+                        st.warning(f"⚠️ Accesso non riuscito: {e}")
                         time.sleep(5)
         with tab_reg:
             email = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
@@ -130,6 +176,9 @@ def mostra_auth():
                     try:
                         res = supabase.auth.sign_up({"email": email, "password": password})
                         st.session_state.utente = res.user
+                        if res.session:
+                            st.session_state["_sb_access_token"]  = res.session.access_token
+                            st.session_state["_sb_refresh_token"] = res.session.refresh_token
                         st.success("✅ Account creato! Benvenuto su VerificAI.")
                         st.rerun()
                     except Exception as e:
@@ -341,21 +390,18 @@ def parse_esercizi(latex):
         lettera_idx = 0
 
         for li, line in enumerate(lines):
-            # Cerca \item[label] OPPURE \item semplice
             item_label_match = re.search(r'\\item\[([^\]]+)\]', line)
             item_plain_match = re.search(r'\\item(?!\[)', line)
 
             if not item_label_match and not item_plain_match:
                 continue
 
-            # Determina la label
             if item_label_match:
                 raw_label = item_label_match.group(1).replace('*', '').strip()
             else:
                 raw_label = lettere[lettera_idx % 26] + ")"
                 lettera_idx += 1
 
-            # Finestra di ricerca per i punti
             window_lines = []
             for lj in range(li, min(li + 15, len(lines))):
                 if lj > li and (re.search(r'\\item(?:\[|(?!\w))', lines[lj])):
@@ -367,7 +413,6 @@ def parse_esercizi(latex):
                 search_window, flags=re.DOTALL
             )
 
-            # Riconosce: (2 pt), (2pt), (2 punti), [2 pt], 2 pt
             pt_match = re.search(
                 r'[\(\[]?\s*(\d+(?:[.,]\d+)?)\s*(?:pt|punt[io]|p\.?)\s*[\)\]]?',
                 search_window, re.IGNORECASE
@@ -406,7 +451,6 @@ def build_griglia_latex(esercizi, punti_totali):
     )
 
 
-
 def fix_items_environment(latex):
     import re as _r
     lines = latex.split('\n')
@@ -431,51 +475,35 @@ def fix_items_environment(latex):
     return '\n'.join(result)
     
 def rimuovi_vspace_corpo(latex):
-    """Rimuove \vspace e \hspace dal corpo degli esercizi, preservando il preambolo."""
-    # Divide preambolo e corpo al primo \subsection*
     idx = latex.find('\\subsection*')
     if idx == -1:
         return latex
     preambolo = latex[:idx]
     corpo = latex[idx:]
-    
-    # Applica le rimozioni SOLO al corpo
     corpo = re.sub(r'\\vspace\*?\{[^}]*\}', '', corpo)
     corpo = re.sub(r'\\hspace\*?\{[^}]*\}', '', corpo)
     corpo = re.sub(r'\\(?:big|med|small)skip\b', '', corpo)
     corpo = re.sub(r'\n{3,}', '\n\n', corpo)
-    
     return preambolo + corpo
 
 def pulisci_corpo_latex(testo):
-    """Rimuove tutto ciò che precede il primo \subsection*"""
-    # Trova il primo \subsection*
     idx = testo.find('\\subsection*')
     if idx == -1:
-        # Se non c'è \subsection*, rimuove almeno preambolo e intestazione
         testo = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', testo, flags=re.DOTALL)
         while re.match(r'^\s*\\begin\{center\}', testo):
             testo = re.sub(r'^\s*\\begin\{center\}.*?\\end\{center\}\s*', '', testo, flags=re.DOTALL)
     else:
-        # Tronca tutto ciò che viene prima del primo \subsection*
         testo = testo[idx:]
-    # Assicura \end{document} finale
     testo = re.sub(r'\\end\{document\}.*$', '', testo, flags=re.DOTALL).rstrip()
     testo += "\n\\end{document}"
     return testo
 
 def rimuovi_punti_subsection(latex):
-    """
-    Rimuove i (X pt) che compaiono subito dopo \subsection*{...},
-    lasciando solo quelli nei \item.
-    """
-    # Rimuove (X pt) sulla stessa riga di \subsection* o nella riga immediatamente dopo
     latex = re.sub(
         r'(\\subsection\*\{[^}]*\}[^\n]*)\s*\((\d+(?:[.,]\d+)?)\s*pt\)',
         r'\1',
         latex
     )
-    # Rimuove una riga che contiene SOLO (X pt) subito dopo \subsection*
     latex = re.sub(
         r'(\\subsection\*\{[^}]*\})\s*\n\s*\(\d+(?:[.,]\d+)?\s*pt\)\s*\n',
         r'\1\n',
@@ -484,10 +512,6 @@ def rimuovi_punti_subsection(latex):
     return latex
 
 def riscala_punti(latex, punti_totali_target):
-    """
-    Trova tutti i (X pt) nel corpo, li riscala proporzionalmente
-    in modo che la somma sia ESATTAMENTE punti_totali_target.
-    """
     pattern = re.compile(r'\((\d+(?:[.,]\d+)?)\s*pt\)')
     matches = list(pattern.finditer(latex))
     if not matches:
@@ -498,11 +522,9 @@ def riscala_punti(latex, punti_totali_target):
     if somma_attuale == 0:
         return latex
 
-    # Riscala proporzionalmente
     fattore = punti_totali_target / somma_attuale
     nuovi_valori = [v * fattore for v in valori]
 
-    # Arrotonda mantenendo il totale esatto
     nuovi_interi = [int(v) for v in nuovi_valori]
     resti = [(nuovi_valori[i] - nuovi_interi[i], i) for i in range(len(nuovi_valori))]
     differenza = punti_totali_target - sum(nuovi_interi)
@@ -510,7 +532,6 @@ def riscala_punti(latex, punti_totali_target):
     for i in range(int(round(differenza))):
         nuovi_interi[resti[i][1]] += 1
 
-    # Sostituisci nel LaTeX
     risultato = latex
     offset = 0
     for i, m in enumerate(matches):
@@ -1188,11 +1209,12 @@ if 'esercizi_custom' not in st.session_state: st.session_state.esercizi_custom =
 if 'last_materia'    not in st.session_state: st.session_state.last_materia = None
 if 'last_argomento'  not in st.session_state: st.session_state.last_argomento = None
 if 'last_gen_ts'     not in st.session_state: st.session_state.last_gen_ts = None
+# Flag per aggiornare lo storico sidebar dopo il salvataggio
+if '_storico_refresh' not in st.session_state: st.session_state._storico_refresh = 0
 
 # ── CSS GLOBALE ──────────────────────────────────────────────────────────────────
 is_dark = (st.session_state.theme == "dark")
 
-# Colori fissi sidebar (sempre dark)
 _SB_LABEL   = "#c8c6bc"   
 _SB_MUTED   = "#8a8880"
 _SB_BORDER  = "#2a2926"
@@ -1341,6 +1363,24 @@ st.markdown(f"""
     top: 1rem !important;
   }}
 
+  /* ── LOGOUT BUTTON STILE ── */
+  [data-testid="stSidebar"] .logout-btn-wrap button {{
+    background: transparent !important;
+    color: #EF4444 !important;
+    border: 1px solid #4a1a1a !important;
+    border-radius: 8px !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    padding: 6px 12px !important;
+    width: auto !important;
+    transition: background 0.15s ease, border-color 0.15s ease !important;
+  }}
+  [data-testid="stSidebar"] .logout-btn-wrap button:hover {{
+    background: #2a1010 !important;
+    border-color: #EF4444 !important;
+    color: #ff6b6b !important;
+  }}
+
   /* ── TYPOGRAPHY ── */
   h1, h2, h3 {{
     font-family: 'DM Sans', sans-serif !important;
@@ -1445,13 +1485,6 @@ st.markdown(f"""
     animation: badgePop 0.5s ease 0.75s both;
     opacity: 0;
   }}
-  .hero-right {{
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-shrink: 0;
-    padding-top: 4px;
-  }}
 
   /* ── LABELS ── */
   .stTextInput label p,
@@ -1534,7 +1567,7 @@ st.markdown(f"""
     border-radius: 5px !important;
   }}
 
- /* ════ BOTTONE PRIMARIO (Genera Verifica - VERSIONE FORZATA) ════ */
+  /* ════ BOTTONE PRIMARIO ════ */
   div.stButton > button[kind="primary"] {{
     background: #D97706 !important;
     color: white !important;
@@ -1544,19 +1577,17 @@ st.markdown(f"""
     box-shadow: 0 2px 12px rgba(217,119,6,0.35) !important;
     display: block !important;
   }}
-
   div.stButton > button[kind="primary"]:hover {{
-    transform: scale(1.05) !important; /* Ingrandimento del 5% */
+    transform: scale(1.05) !important;
     box-shadow: 0 10px 25px rgba(217,119,6,0.5) !important;
     filter: brightness(1.1) !important;
     border: none !important;
   }}
-
   div.stButton > button[kind="primary"]:active {{
-    transform: scale(0.98) !important; /* Si schiaccia quando clicchi */
+    transform: scale(0.98) !important;
   }}
 
-  /* ── STILE CARD DOWNLOAD (Mantieni queste per il blocco 3) ── */
+  /* ── STILE CARD DOWNLOAD ── */
   .dl-card {{
     background: #FFFFFF !important;
     padding: 1.2rem;
@@ -1583,7 +1614,7 @@ st.markdown(f"""
     border-top: 1px solid #EEE;
     padding-top: 8px;
   }}
-  /* ── BOTTONI SECONDARI E DOWNLOAD UNIFICATI ── */
+  /* ── BOTTONI SECONDARI ── */
   .stDownloadButton button,
   [data-testid="stDownloadButton"] button,
   .stButton [data-testid="baseButton-secondary"],
@@ -1946,6 +1977,51 @@ st.markdown(f"""
     line-height: 1.6;
   }}
 
+  /* ── USER PILL SIDEBAR ── */
+  .user-pill {{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #1e1d1b;
+    border: 1px solid #2e2d28;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-top: 0.5rem;
+  }}
+  .user-avatar {{
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #D97706, #FF8C00);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: white;
+    flex-shrink: 0;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .user-info {{
+    flex: 1;
+    min-width: 0;
+  }}
+  .user-email {{
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #e8e6e0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .user-role {{
+    font-size: 0.65rem;
+    color: #6b6960 !important;
+    font-family: 'DM Sans', sans-serif;
+    margin-top: 1px;
+  }}
+
   /* ═══ MOBILE ═══ */
   @media (max-width: 640px) {{
     .block-container {{
@@ -2050,10 +2126,8 @@ with st.sidebar:
             options=[10, 20, 30],
             value=20,
             format_func=lambda x: f"-{x}%",
-            
-    )
-    doppia_fila     = st.checkbox("Genera Versione A e B (due varianti)", value=False)
-
+        )
+    doppia_fila = st.checkbox("Genera Versione A e B (due varianti)", value=False)
 
     esercizio_multidisciplinare = False
     materia2_scelta  = None
@@ -2070,7 +2144,7 @@ with st.sidebar:
         st.selectbox("modello", list(MODELLI_DISPONIBILI.keys()), label_visibility="collapsed")
     ]
 
-    st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">🎨 Aspetto</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🎨 Aspetto</div>', unsafe_allow_html=True)
     tema_sel = st.radio(
         "tema",
         ["☀️ Chiaro", "🌙 Scuro"],
@@ -2083,10 +2157,14 @@ with st.sidebar:
         st.session_state.theme = new_theme
         st.rerun()
 
+    # ── STORICO VERIFICHE ────────────────────────────────────────────────────────
     st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">📚 Le mie verifiche</div>', unsafe_allow_html=True)
+    
+    # Usa il flag di refresh come cache-buster: ogni volta che cambia, ricarica
+    _refresh_key = st.session_state._storico_refresh
     try:
         storico = supabase.table("verifiche_storico")\
-            .select("id, materia, argomento, created_at, latex_a, latex_b, latex_r")\
+            .select("id, materia, argomento, created_at, latex_a, latex_b, latex_r, scuola")\
             .eq("user_id", st.session_state.utente.id)\
             .order("created_at", desc=True)\
             .limit(10)\
@@ -2095,11 +2173,12 @@ with st.sidebar:
         if storico.data:
             for v in storico.data:
                 data_str = v['created_at'][:10]
-                label = f"📄 {v['materia']} — {v['argomento'][:25]}{'...' if len(v['argomento'])>25 else ''}"
+                label = f"📄 {v['materia']} — {v['argomento'][:22]}{'...' if len(v['argomento'])>22 else ''}"
                 with st.expander(f"{label} ({data_str})"):
-                    st.caption(f"🏫 {v.get('scuola','')[:30]}")
+                    if v.get('scuola'):
+                        st.caption(f"🏫 {v['scuola'][:35]}")
                     if v.get('latex_a'):
-                        if st.button("♻️ Ricarica Versione A", key=f"reload_a_{v['id']}"):
+                        if st.button("♻️ Ricarica Versione A", key=f"reload_a_{v['id']}_{_refresh_key}"):
                             st.session_state.verifiche['A']['latex'] = v['latex_a']
                             pdf, _ = compila_pdf(v['latex_a'])
                             if pdf:
@@ -2107,7 +2186,7 @@ with st.sidebar:
                                 st.session_state.verifiche['A']['preview'] = True
                             st.rerun()
                     if v.get('latex_b'):
-                        if st.button("♻️ Ricarica Versione B", key=f"reload_b_{v['id']}"):
+                        if st.button("♻️ Ricarica Versione B", key=f"reload_b_{v['id']}_{_refresh_key}"):
                             st.session_state.verifiche['B']['latex'] = v['latex_b']
                             pdf, _ = compila_pdf(v['latex_b'])
                             if pdf:
@@ -2116,15 +2195,32 @@ with st.sidebar:
                             st.rerun()
         else:
             st.caption("Nessuna verifica salvata ancora.")
-    except Exception:
-        st.caption("Storico non disponibile.")
+    except Exception as e:
+        st.caption(f"Storico non disponibile.")
 
+    # ── USER PILL + LOGOUT ───────────────────────────────────────────────────────
     st.markdown("---")
-    st.caption(f"👤 {st.session_state.utente.email}")
-    if st.button("Esci", key="logout_btn"):
+    email_utente = st.session_state.utente.email or ""
+    iniziale = email_utente[0].upper() if email_utente else "?"
+    st.markdown(f"""
+    <div class="user-pill">
+      <div class="user-avatar">{iniziale}</div>
+      <div class="user-info">
+        <div class="user-email">{email_utente}</div>
+        <div class="user-role">Docente · Piano gratuito</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div style="height:0.5rem;"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="logout-btn-wrap">', unsafe_allow_html=True)
+    if st.button("↩ Esci dall'account", key="logout_btn", use_container_width=False):
         supabase.auth.sign_out()
         st.session_state.utente = None
+        st.session_state.pop("_sb_access_token", None)
+        st.session_state.pop("_sb_refresh_token", None)
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ── TOPBAR ───────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -2207,7 +2303,6 @@ with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
                                  index=TIPI_ESERCIZIO.index(ex.get('tipo', 'Aperto')),
                                  key=f"tipo_{i}", label_visibility="visible")
                 st.session_state.esercizi_custom[i]['tipo'] = t
-
 
                 d = st.text_input("Descrizione dell'esercizio (opzionale)",
                                   value=ex.get('descrizione', ''),
@@ -2462,26 +2557,24 @@ SOLO CODICE LATEX del corpo."""
                     st.session_state.verifiche['A']['preview'] = True
                     st.warning("⚠️ La griglia di valutazione non è stata inclusa nel PDF (errore di compilazione). Scarica il .tex per debug.")
 
-
-
-        # ── VERIFICA RIDOTTA BES/DSA ─────────────────────────────────────────────────
+        # ── VERIFICA RIDOTTA BES/DSA ─────────────────────────────────────────
         if bes_dsa and perc_ridotta:
-            _avanza(" ⛳ Generazione verifica ridotta…")
+            _avanza("⛳ Generazione verifica ridotta…")
 
             prompt_ridotta = f"""Sei un docente esperto. Hai già generato questa verifica:
 
-        {corpo_latex}
+{corpo_latex}
 
-        Devi creare una versione RIDOTTA per studenti con sostegno o certificazione (BES/DSA/NAI).
-        La struttura deve essere simile all'originale ma con circa il {perc_ridotta}% di sottopunti IN MENO rispetto al totale.
-        Scegli quali sottopunti eliminare partendo dai più complessi, astratti o che richiedono più passaggi di calcolo. Cerca di non togliere esercizi cuore dell'argomento, per esempio se l'argomento indicato sono le simmetrie nello studio di funzione, non tolgo il punto dove chiedo di verificare se la funzione e simmetrica ma magari tolgo lo studio del segno o qualcos'altro, insomma non togliere esercizi essenziali.
-        Mantieni sempre almeno 1 sottopunto per esercizio.
-        Mantieni i sottopunti più semplici e diretti.
-        {'Ridistribuisci i punti in modo che la somma sia ESATTAMENTE ' + str(punti_totali) + ' pt. totali. Ogni sottopunto mantenuto deve avere il suo (X pt).' if mostra_punteggi else 'NON inserire punteggi.'}
-        NON aggiungere nessun simbolo (*), nessuna nota BES, nessuna indicazione che si tratta di una verifica ridotta.
-        La verifica deve sembrare una verifica normale, semplicemente più breve.
-        TERMINA con \\end{{document}}.
-        SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
+Devi creare una versione RIDOTTA per studenti con sostegno o certificazione (BES/DSA/NAI).
+La struttura deve essere simile all'originale ma con circa il {perc_ridotta}% di sottopunti IN MENO rispetto al totale.
+Scegli quali sottopunti eliminare partendo dai più complessi, astratti o che richiedono più passaggi di calcolo. Cerca di non togliere esercizi cuore dell'argomento, per esempio se l'argomento indicato sono le simmetrie nello studio di funzione, non tolgo il punto dove chiedo di verificare se la funzione e simmetrica ma magari tolgo lo studio del segno o qualcos'altro, insomma non togliere esercizi essenziali.
+Mantieni sempre almeno 1 sottopunto per esercizio.
+Mantieni i sottopunti più semplici e diretti.
+{'Ridistribuisci i punti in modo che la somma sia ESATTAMENTE ' + str(punti_totali) + ' pt. totali. Ogni sottopunto mantenuto deve avere il suo (X pt).' if mostra_punteggi else 'NON inserire punteggi.'}
+NON aggiungere nessun simbolo (*), nessuna nota BES, nessuna indicazione che si tratta di una verifica ridotta.
+La verifica deve sembrare una verifica normale, semplicemente più breve.
+TERMINA con \\end{{document}}.
+SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
 
             rb_bes = model.generate_content(prompt_ridotta)
             corpo_latex_ridotta = rb_bes.text.replace("```latex", "").replace("```", "").strip()
@@ -2515,13 +2608,6 @@ SOLO CODICE LATEX del corpo."""
                         st.session_state.verifiche['R']['preview'] = True
                         st.warning("⚠️ La griglia non è stata inclusa nella verifica ridotta (errore compilazione).")
 
-
-        
-
-
-
-        
-        
         if doppia_fila:
             _avanza("📄  Generazione Versione B…")
             rb = model.generate_content(
@@ -2564,8 +2650,6 @@ SOLO CODICE LATEX del corpo."""
                         st.session_state.verifiche['B']['pdf_ts'] = time.time()
                         st.session_state.verifiche['B']['preview'] = True
 
-
-
         _prog.markdown(f"""
 <div style="margin:0.6rem 0 1rem 0;">
   <div style="font-size:0.82rem;font-weight:600;color:{T['success']};
@@ -2594,6 +2678,8 @@ SOLO CODICE LATEX del corpo."""
                     "latex_r": st.session_state.verifiche['R']['latex'] if st.session_state.verifiche['R']['latex'] else None,
                 }
                 result = supabase_admin.table("verifiche_storico").insert(insert_data).execute()
+                # ← AGGIORNA il flag di refresh così la sidebar si ricarica col nuovo dato
+                st.session_state._storico_refresh += 1
                 st.toast("✅ Verifica salvata!", icon="💾")
             else:
                 st.warning("Utente non loggato, verifica non salvata.")
@@ -2604,10 +2690,6 @@ SOLO CODICE LATEX del corpo."""
 
     except Exception as e:
         st.error(f"❌ Errore: {e}")
-
-# ── OUTPUT ────────────────────────────────────────────────────────────────────────
-
-# ── OUTPUT ────────────────────────────────────────────────────────────────────────
 
 # ── OUTPUT ────────────────────────────────────────────────────────────────────────
 if st.session_state.verifiche['A']['latex']:
@@ -2678,7 +2760,6 @@ if st.session_state.verifiche['A']['latex']:
                     use_container_width=True,
                     key=f"dld_{fid}"
                 )
-                # AVVISO WORD
                 st.markdown(f"""
                     <div class="hint-docx" style="margin-top: -10px; margin-bottom: 15px;">
                         💡 <b>Nota:</b> La versione Word è modificabile ma ha una resa grafica inferiore. 
@@ -2702,7 +2783,6 @@ if st.session_state.verifiche['A']['latex']:
                         st.error("Errore Word")
                         with st.expander("Log"): st.text(de)
 
-           
             # --- PREVIEW ---
             if v['preview'] and v['pdf']:
                 with st.expander("👁 Anteprima PDF", expanded=False):
@@ -2778,53 +2858,3 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
