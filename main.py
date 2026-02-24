@@ -278,6 +278,23 @@ def rimuovi_vspace_corpo(latex):
     latex = re.sub(r'\n{3,}', '\n\n', latex)
     return latex
 
+def pulisci_corpo_latex(testo):
+    """Rimuove tutto ciò che precede il primo \subsection*"""
+    # Trova il primo \subsection*
+    idx = testo.find('\\subsection*')
+    if idx == -1:
+        # Se non c'è \subsection*, rimuove almeno preambolo e intestazione
+        testo = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', testo, flags=re.DOTALL)
+        while re.match(r'^\s*\\begin\{center\}', testo):
+            testo = re.sub(r'^\s*\\begin\{center\}.*?\\end\{center\}\s*', '', testo, flags=re.DOTALL)
+    else:
+        # Tronca tutto ciò che viene prima del primo \subsection*
+        testo = testo[idx:]
+    # Assicura \end{document} finale
+    testo = re.sub(r'\\end\{document\}.*$', '', testo, flags=re.DOTALL).rstrip()
+    testo += "\n\\end{document}"
+    return testo
+
 def rimuovi_punti_subsection(latex):
     """
     Rimuove i (X pt) che compaiono subito dopo \subsection*{...},
@@ -2207,13 +2224,7 @@ SOLO CODICE LATEX del corpo."""
         _avanza("⚙️  Elaborazione LaTeX…")
 
         corpo_latex = ra.text.replace("```latex","").replace("```","").strip()
-        corpo_latex = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex, flags=re.DOTALL)
-        while re.match(r'^\s*\\begin\{center\}', corpo_latex):
-            corpo_latex = re.sub(r'^\s*\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex, flags=re.DOTALL)
-        corpo_latex = re.sub(r'^\s*\\vspace\*?\{[^}]*\}\s*', '', corpo_latex)
-        corpo_latex = corpo_latex.lstrip()
-        if "\\end{document}" not in corpo_latex:
-            corpo_latex += "\n\\end{document}"
+        corpo_latex = pulisci_corpo_latex(corpo_latex)
 
         # ── GUARDIA: tronca esercizi in eccesso ──────────────────────────────
         splits = re.split(r'(\\subsection\*\{)', corpo_latex)
@@ -2291,13 +2302,7 @@ SOLO CODICE LATEX del corpo."""
 
             rb_bes = model.generate_content(prompt_ridotta)
             corpo_latex_ridotta = rb_bes.text.replace("```latex", "").replace("```", "").strip()
-            corpo_latex_ridotta = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex_ridotta, flags=re.DOTALL)
-            while re.match(r'^\s*\\begin\{center\}', corpo_latex_ridotta):
-                corpo_latex_ridotta = re.sub(r'^\s*\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex_ridotta, flags=re.DOTALL)
-            corpo_latex_ridotta = re.sub(r'^\s*\\vspace\*?\{[^}]*\}\s*', '', corpo_latex_ridotta)
-            corpo_latex_ridotta = corpo_latex_ridotta.lstrip()
-            if "\\end{document}" not in corpo_latex_ridotta:
-                corpo_latex_ridotta += "\n\\end{document}"
+            corpo_latex_ridotta = pulisci_corpo_latex(corpo_latex_ridotta)
                     
             latex_ridotta = preambolo_fisso + corpo_latex_ridotta
             latex_ridotta = fix_items_environment(latex_ridotta)
@@ -2341,13 +2346,7 @@ SOLO CODICE LATEX del corpo."""
                 f"SOLO corpo esercizi (\\subsection* ecc.), SENZA preambolo/\\documentclass/\\begin{{document}}. "
                 f"Sostituisci 'Versione A' con 'Versione B'. TERMINA con \\end{{document}}. SOLO LATEX.\n\n{corpo_latex}")
             corpo_latex_b = rb.text.replace("```latex","").replace("```","").strip()
-            corpo_latex_b = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', corpo_latex_b, flags=re.DOTALL)
-            while re.match(r'^\s*\\begin\{center\}', corpo_latex_b):
-                corpo_latex_b = re.sub(r'^\s*\\begin\{center\}.*?\\end\{center\}\s*', '', corpo_latex_b, flags=re.DOTALL)
-            corpo_latex_b = re.sub(r'^\s*\\vspace\*?\{[^}]*\}\s*', '', corpo_latex_b)
-            corpo_latex_b = corpo_latex_b.lstrip()
-            if "\\end{document}" not in corpo_latex_b:
-                corpo_latex_b += "\n\\end{document}"
+            corpo_latex_b = pulisci_corpo_latex(corpo_latex_b)
                 
             preambolo_b = preambolo_fisso.replace(
                 titolo_header,
@@ -2600,6 +2599,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
