@@ -1513,19 +1513,19 @@ st.markdown(f"""
     font-size: 0.95rem !important;
   }}
 
-  .stAlert {
+  .stAlert {{
     border-radius: 10px !important;
     border: none !important;
-  }
+  }}
   .stAlert p,
   .stAlert span,
   .stAlert div,
   [data-testid="stAlert"] p,
   [data-testid="stAlert"] span,
-  [data-testid="stAlert"] div {
+  [data-testid="stAlert"] div {{
       color: #1a1915 !important;
       opacity: 1 !important;
-  }
+  }}
 
   .stProgress > div > div {{
     background: {T['accent']} !important;
@@ -2487,6 +2487,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
