@@ -4,3 +4,4 @@ texlive-lang-italian
 poppler-utils
 supabase
 pandoc
+supabase>=2.7.0
