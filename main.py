@@ -2531,16 +2531,27 @@ SOLO CODICE LATEX del corpo."""
 """, unsafe_allow_html=True)
         time.sleep(0.7)
         _prog.empty()
-
         st.session_state.last_materia   = materia
         st.session_state.last_argomento = titolo_clean
         st.session_state.last_gen_ts    = time.time()
 
-        st.rerun()
+        # ── SALVA SU SUPABASE ──
+        try:
+            supabase.table("verifiche_storico").insert({
+                "user_id": st.session_state.utente.id,
+                "materia": materia,
+                "argomento": titolo_clean,
+                "scuola": difficolta,
+                "latex_a": st.session_state.verifiche['A']['latex'],
+                "latex_b": st.session_state.verifiche['B']['latex'] if st.session_state.verifiche['B']['latex'] else None,
+                "latex_r": st.session_state.verifiche['R']['latex'] if st.session_state.verifiche['R']['latex'] else None,
+            }).execute()
+        except Exception:
+            pass  # Non bloccare l'app se il salvataggio fallisce
 
+        st.rerun()
     except Exception as e:
         st.error(f"❌ Errore: {e}")
-
 # ── OUTPUT ────────────────────────────────────────────────────────────────────────
 if st.session_state.verifiche['A']['latex']:
     st.divider()
@@ -2710,6 +2721,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
