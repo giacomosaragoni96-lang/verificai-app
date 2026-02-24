@@ -83,41 +83,80 @@ SCUOLE = [
     "Scuola Primaria (Elementari)",
     "Scuola Secondaria I grado (Medie)",
     "Liceo Scientifico",
-    "Liceo non Scientifico",
-    "Istituto Tecnico",
+    "Liceo Classico",
+    "Liceo Linguistico",
+    "Liceo delle Scienze Umane",
+    "Liceo Artistico",
+    "Istituto Tecnico Tecnologico/Industriale",
+    "Istituto Tecnico Economico",
+    "Istituto Tecnico Agrario/Ambientale",
     "Istituto Professionale",
 ]
 
 CALIBRAZIONE_SCUOLA = {
-    "Scuola Primaria": (
+    "Scuola Primaria (Elementari)": (
         "Target: 6-11 anni. Linguaggio ludico-concreto. "
-        "Contesto: Vita quotidiana familiare, gioco, spesa. "
+        "Contesto: vita quotidiana familiare, gioco, spesa. "
         "Usa frasi brevi e numeri entro il 1000. Evita simboli astratti, preferisci il testo narrativo."
     ),
-    "Scuola Secondaria I grado": (
+    "Scuola Secondaria I grado (Medie)": (
         "Target: 11-14 anni. Linguaggio in transizione verso il tecnico. "
-        "Contesto: Scuola, sport, socialità, prime esplorazioni scientifiche. "
+        "Contesto: scuola, sport, socialità, prime esplorazioni scientifiche. "
         "Difficoltà bilanciata: calcolo procedurale e primi problemi logici con frazioni e variabili."
     ),
     "Liceo Scientifico": (
         "Target: 14-19 anni. Linguaggio rigoroso e accademico. "
-        "Contesto: Ricerca scientifica, astrazione pura, modellizzazione complessa. "
+        "Contesto: ricerca scientifica, astrazione pura, modellizzazione complessa. "
         "Livello elevato: stimola il ragionamento deduttivo e la giustificazione dei passaggi."
     ),
-    "Liceo non Scientifico": (
-        "Target: 14-19 anni. Linguaggio colto e argomentativo. "
-        "Contesto: Storia delle idee, filosofia, analisi critica della realtà. "
-        "Bilanciamento: Matematica vista come linguaggio logico, non solo come calcolo meccanico."
+    "Liceo Classico": (
+        "Target: 14-19 anni. Linguaggio formale ma DIRETTO e CHIARO. "
+        "Contesto: storia, letteratura, filosofia, lingue classiche. "
+        "IMPORTANTE: registro colto ma non aulico. Frasi dirette, domande nette. "
+        "La profondità sta nel contenuto, NON nel lessico. Evita perifrasi, paroloni rari e fronzoli retorici. "
+        "Una domanda ben posta vale più di tre righe di introduzione filosofica."
     ),
-    "Istituto Tecnico": (
+    "Liceo Linguistico": (
+        "Target: 14-19 anni. Linguaggio chiaro e internazionale. "
+        "Contesto: lingue straniere, cultura, comunicazione, letteratura comparata. "
+        "Stile neutro e diretto. Privilegia la chiarezza espositiva. "
+        "Evita tecnicismi inutili e riferimenti troppo specialistici."
+    ),
+    "Liceo delle Scienze Umane": (
+        "Target: 14-19 anni. Linguaggio accessibile con riferimenti alle scienze sociali. "
+        "Contesto: psicologia, sociologia, pedagogia, antropologia. "
+        "Stile semplice e concreto, con esempi pratici tratti dalla realtà quotidiana. "
+        "Evita gergo accademico pesante."
+    ),
+    "Liceo Artistico": (
+        "Target: 14-19 anni. Linguaggio descrittivo e visivo. "
+        "Contesto: storia dell'arte, teoria, tecniche artistiche, progettazione. "
+        "Stile diretto e pratico. Privilegia domande operative e descrittive. "
+        "Evita astrattismi: chiedi di osservare, descrivere, confrontare opere concrete."
+    ),
+    "Istituto Tecnico Tecnologico/Industriale": (
         "Target: 14-19 anni. Linguaggio tecnico-professionale. "
-        "Contesto: Azienda, laboratorio, tecnologia, economia reale. "
-        "Enfasi: Applicazione pratica dei teoremi a scenari lavorativi e dati reali."
+        "Contesto: laboratorio, tecnologia, elettronica, meccanica, informatica applicata. "
+        "Enfasi su applicazione pratica, dati reali, scenari lavorativi concreti. "
+        "Esercizi con misure, tolleranze, schemi, calcoli ingegneristici di base."
+    ),
+    "Istituto Tecnico Economico": (
+        "Target: 14-19 anni. Linguaggio economico-aziendale. "
+        "Contesto: azienda, contabilità, economia, diritto commerciale, marketing. "
+        "Privilegia casi aziendali reali, calcoli su bilanci, problemi di gestione. "
+        "Stile professionale ma accessibile."
+    ),
+    "Istituto Tecnico Agrario/Ambientale": (
+        "Target: 14-19 anni. Linguaggio tecnico-naturalistico. "
+        "Contesto: agricoltura, ambiente, biologia applicata, chimica agraria, territorio. "
+        "Privilegia esempi concreti legati a colture, ecosistemi, analisi del suolo, sostenibilità. "
+        "Stile pratico e operativo."
     ),
     "Istituto Professionale": (
         "Target: 14-19 anni. Linguaggio pratico e operativo. "
-        "Contesto: Situazioni lavorative simulate, compiti di realtà, problem solving guidato. "
-        "Supporto: Suddividi i problemi complessi in step chiari ed espliciti."
+        "Contesto: situazioni lavorative simulate, compiti di realtà, problem solving guidato. "
+        "Suddividi i problemi complessi in step chiari ed espliciti. "
+        "Domande brevi, dirette, con un unico obiettivo per volta."
     ),
 }
 
@@ -155,7 +194,7 @@ NOTE_PLACEHOLDER = {
     "Scienze Motorie":    "es. Apparato muscolare e scheletrico. Norme di sicurezza in palestra.",
 }
 
-TIPI_ESERCIZIO = ["Aperto", "Scelta multipla", "Vero/Falso", "Completamento", "Interdisciplinare"]
+TIPI_ESERCIZIO = ["Aperto", "Scelta multipla", "Vero/Falso", "Completamento"]
 
 # ── FUNZIONI ───────────────────────────────────────────────────────────────────
 
@@ -959,8 +998,6 @@ def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra
     righe.append(f"\nDETTAGLIO ESERCIZI ({num_totale} totali):")
     for i, ex in enumerate(esercizi_custom, 1):
         tipo, desc = ex.get('tipo', 'Aperto'), ex.get('descrizione', '').strip()
-        if tipo == "Interdisciplinare" and ex.get('materia2'):
-            tipo = f"Interdisciplinare con {ex['materia2']} (difficoltà: {ex.get('difficolta_multi','Media')})"
         riga = f"- Esercizio {i} [{tipo}]" + (f": {desc}" if desc else "")
         if ex.get('immagine'):
             riga += f" — vedi immagine allegata per l'esercizio {i}"
@@ -1891,7 +1928,7 @@ with st.sidebar:
             
     )
     doppia_fila     = st.checkbox("Genera Versione A e B (due varianti)", value=False)
-    correzione_step = st.checkbox("Includi soluzioni passo per passo", value=False)
+
 
     esercizio_multidisciplinare = False
     materia2_scelta  = None
@@ -2003,21 +2040,6 @@ with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
                                  key=f"tipo_{i}", label_visibility="visible")
                 st.session_state.esercizi_custom[i]['tipo'] = t
 
-                if t == "Interdisciplinare":
-                    m2 = st.text_input(
-                        "Materia collegata",
-                        value=ex.get('materia2', ''),
-                        placeholder="es. Fisica, Storia dell'Arte, Informatica...",
-                        key=f"materia2_{i}", label_visibility="visible"
-                    )
-                    st.session_state.esercizi_custom[i]['materia2'] = m2
-                    df2 = st.select_slider(
-                        "Difficoltà collegamento",
-                        options=["Facile", "Media", "Alta"],
-                        value=ex.get('difficolta_multi', 'Media'),
-                        key=f"diff_multi_{i}"
-                    )
-                    st.session_state.esercizi_custom[i]['difficolta_multi'] = df2
 
                 d = st.text_input("Descrizione dell'esercizio (opzionale)",
                                   value=ex.get('descrizione', ''),
@@ -2084,7 +2106,7 @@ if genera_btn:
             punti_totali if mostra_punteggi else 0, mostra_punteggi)
         titolo_a = "Versione A" if doppia_fila else ""
 
-        _n_steps = 3 + (1 if correzione_step else 0) + (2 if doppia_fila else 0)
+        _n_steps = 3 + (2 if doppia_fila else 0) + (1 if bes_dsa else 0)
         _step    = [0]
         _prog    = st.empty()
 
@@ -2188,11 +2210,11 @@ if genera_btn:
 CALIBRAZIONE LIVELLO E TEMPO:
 {calibrazione}
 - DURATA PREVISTA: {durata_scelta}. Regola la lunghezza dei calcoli, il numero di incognite e la complessità testuale in modo che {num_esercizi_totali} esercizi siano agevolmente fattibili nel tempo scelto.
-- BILANCIAMENTO CONTESTO E MODELLAZIONE: NON esagerare con i problemi applicati alla realtà o fortemente interdisciplinari (es. non inserire scenari ingegneristici o fisici su tutti gli esercizi di matematica). MASSIMO 1 o 2 esercizi possono essere fortemente contestualizzati. I restanti DEVONO essere esercizi canonici, diretti e focalizzati sulla procedura pura per non sovraccaricare cognitivamente lo studente.
-
+- BILANCIAMENTO CONTESTO E MODELLAZIONE: NON esagerare con i problemi applicati alla realtà o fortemente interdisciplinari. MASSIMO 1 o 2 esercizi possono essere contestualizzati. I restanti DEVONO essere esercizi canonici, diretti e focalizzati sulla procedura pura.
+- REGISTRO LINGUISTICO — REGOLA ASSOLUTA: il testo degli esercizi deve essere CONCISO e DIRETTO. Ogni domanda deve stare in massimo 3 righe. NON scrivere introduzioni filosofiche, contesti narrativi lunghi o premesse elaborate prima della domanda. NON usare parole rare o auliche quando esistono alternative comuni. La complessità deve stare nel contenuto richiesto, NON nel modo in cui la domanda è formulata. Questo vale per TUTTI i livelli scolastici senza eccezioni.
 REGOLE TASSATIVE SUI GRAFICI (LOGICA ANTI-SPOILER):
 - Se l'esercizio richiede esplicitamente allo studente di "disegnare", "rappresentare graficamente", "tracciare" o "costruire" una figura/grafico, NON generare il codice TikZ del grafico risolto.
-- In questi casi, limita l'output al testo della consegna e lascia lo spazio bianco per lo svolgimento usando \\vspace{{5cm}} o una griglia vuota.
+- In questi casi, limita l'output al testo della consegna.
 - Genera un grafico (TikZ) SOLO se esso è un dato di partenza necessario fornito dal docente (es. "Dato il seguente grafico, ricava i dati...").
 
 {s_note}
@@ -2272,17 +2294,6 @@ SOLO CODICE LATEX del corpo."""
                     st.session_state.verifiche['A']['preview'] = True
                     st.warning("⚠️ La griglia di valutazione non è stata inclusa nel PDF (errore di compilazione). Scarica il .tex per debug.")
 
-        if correzione_step:
-            _avanza("📝  Generazione soluzioni…")
-            ps = (f"Risolvi questa verifica come docente correttore. Stesso preambolo.\n"
-                  f"Titolo: 'Soluzioni — {titolo_clean}'. Niente griglia.\n"
-                  f"1. \\subsection*{{Soluzioni Rapide}}: solo risultati finali.\n"
-                  f"2. \\subsection*{{Svolgimento Dettagliato}}: passaggi completi.\n"
-                  f"SOLO CODICE LATEX.\n\n{latex_a}")
-            rs = model.generate_content(ps)
-            st.session_state.verifiche['A']['soluzioni_latex'] = (
-                rs.text.replace("```latex","").replace("```","").strip())
-
 
 
         # ── VERIFICA RIDOTTA BES/DSA ─────────────────────────────────────────────────
@@ -2295,7 +2306,7 @@ SOLO CODICE LATEX del corpo."""
 
         Devi creare una versione RIDOTTA per studenti con sostegno o certificazione (BES/DSA/NAI).
         La struttura deve essere simile all'originale ma con circa il {perc_ridotta}% di sottopunti IN MENO rispetto al totale.
-        Scegli quali sottopunti eliminare partendo dai più complessi, astratti o che richiedono più passaggi di calcolo.
+        Scegli quali sottopunti eliminare partendo dai più complessi, astratti o che richiedono più passaggi di calcolo. Cerca di non togliere esercizi cuore dell'argomento, per esempio se l'argomento indicato sono le simmetrie nello studio di funzione, non tolgo il punto dove chiedo di verificare se la funzione e simmetrica ma magari tolgo lo studio del segno o qualcos'altro, insomma non togliere esercizi essenziali.
         Mantieni sempre almeno 1 sottopunto per esercizio.
         Mantieni i sottopunti più semplici e diretti.
         {'Ridistribuisci i punti in modo che la somma sia ESATTAMENTE ' + str(punti_totali) + ' pt. totali. Ogni sottopunto mantenuto deve avere il suo (X pt).' if mostra_punteggi else 'NON inserire punteggi.'}
@@ -2385,11 +2396,7 @@ SOLO CODICE LATEX del corpo."""
                         st.session_state.verifiche['B']['pdf_ts'] = time.time()
                         st.session_state.verifiche['B']['preview'] = True
 
-            if correzione_step:
-                rsb = model.generate_content(
-                    "Stessa struttura soluzioni (Rapide + Dettagliato). SOLO LATEX.\n\n" + latex_b)
-                st.session_state.verifiche['B']['soluzioni_latex'] = (
-                    rsb.text.replace("```latex","").replace("```","").strip())
+
 
         _prog.markdown(f"""
 <div style="margin:0.6rem 0 1rem 0;">
@@ -2505,29 +2512,7 @@ if st.session_state.verifiche['A']['latex']:
                         st.error("Errore Word")
                         with st.expander("Log"): st.text(de)
 
-            # --- SOLUZIONI ---
-            if v['soluzioni_latex']:
-                st.write("")
-                if v['soluzioni_pdf']:
-                    sol_size = _stima_dimensione(v['soluzioni_pdf'])
-                    st.download_button(
-                        label=f"✅ Scarica Soluzioni Step-by-Step ({sol_size})",
-                        data=v['soluzioni_pdf'],
-                        file_name=f"Soluzioni_{_arg}_{fid}.pdf",
-                        mime="application/pdf",
-                        use_container_width=True,
-                        key=f"dls_{fid}"
-                    )
-                else:
-                    if st.button("✅ Compila Soluzioni", key=f"cs_{fid}", use_container_width=True):
-                        with st.spinner("Compilazione…"):
-                            sp, se = compila_pdf(v['soluzioni_latex'])
-                        if sp:
-                            st.session_state.verifiche[fid]['soluzioni_pdf'] = sp
-                            st.rerun()
-                        else:
-                            with st.expander("Log"): st.text(se)
-
+           
             # --- PREVIEW ---
             if v['preview'] and v['pdf']:
                 with st.expander("👁 Anteprima PDF", expanded=False):
@@ -2603,6 +2588,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
