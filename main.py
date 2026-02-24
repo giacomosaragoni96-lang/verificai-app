@@ -10,7 +10,7 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 
 # ── CONFIGURAZIONE ──────────────────────────────────────────────────────────────
-load_dotenv(
+load_dotenv()
 API_KEY = os.getenv("GOOGLE_API_KEY")
 if not API_KEY:
     st.error("⚠️ Chiave API mancante! Crea un file .env con: GOOGLE_API_KEY=la_tua_chiave")
@@ -2598,6 +2598,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
