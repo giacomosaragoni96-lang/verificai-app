@@ -21,14 +21,12 @@ SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # ── AUTENTICAZIONE ──────────────────────────────────────────────────────────────
-st.markdown(f"""
+def mostra_auth():
+    st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;900&display=swap');
-    
-    .stApp {{ background: #0F0F0E !important; }}
-    
-    /* Bottone arancione */
-    div.stButton > button[kind="primary"] {{
+    .stApp { background: #0F0F0E !important; }
+    div.stButton > button[kind="primary"] {
         background: #D97706 !important;
         color: white !important;
         border: none !important;
@@ -37,13 +35,12 @@ st.markdown(f"""
         font-family: 'DM Sans', sans-serif !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
-    }}
-    div.stButton > button[kind="primary"]:hover {{
+    }
+    div.stButton > button[kind="primary"]:hover {
         filter: brightness(1.1) !important;
         transform: scale(1.02) !important;
-    }}
-
-    .auth-wrap {{
+    }
+    .auth-wrap {
         max-width: 420px;
         margin: 3rem auto 0 auto;
         padding: 2.5rem 2rem 2rem 2rem;
@@ -52,8 +49,8 @@ st.markdown(f"""
         border-radius: 20px;
         box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         font-family: 'DM Sans', sans-serif;
-    }}
-    .auth-title {{
+    }
+    .auth-title {
         font-size: 2.4rem;
         font-weight: 900;
         letter-spacing: -0.03em;
@@ -64,26 +61,16 @@ st.markdown(f"""
         align-items: center;
         justify-content: center;
         gap: 0.15em;
-    }}
-    .auth-ai {{
+    }
+    .auth-ai {
         background: linear-gradient(135deg, #D97706 0%, #FF8C00 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-    }}
-    .auth-icon {{
-        font-size: 2.2rem;
-        margin-right: 0.1em;
-        display: inline-block;
-    }}
-    .auth-sub {{
-        text-align: center;
-        color: #6B6960;
-        font-size: 0.85rem;
-        margin: 0 0 1.2rem 0;
-        line-height: 1.5;
-    }}
-    .auth-benefit {{
+    }
+    .auth-icon { font-size: 2.2rem; margin-right: 0.1em; display: inline-block; }
+    .auth-sub { text-align: center; color: #6B6960; font-size: 0.85rem; margin: 0 0 1.2rem 0; line-height: 1.5; }
+    .auth-benefit {
         display: flex;
         align-items: center;
         gap: 10px;
@@ -95,12 +82,10 @@ st.markdown(f"""
         margin: 0 0 0.5rem 0;
         font-size: 0.82rem;
         color: #C8C6BC;
-        font-family: 'DM Sans', sans-serif;
         line-height: 1.5;
-    }}
-    .auth-benefit strong {{ color: #F5F4EF; }}
+    }
+    .auth-benefit strong { color: #F5F4EF; }
     </style>
-
     <div class="auth-wrap">
         <h1 class="auth-title">
             <span class="auth-icon">📝</span>Verific<span class="auth-ai">AI</span>
@@ -112,19 +97,47 @@ st.markdown(f"""
     </div>
     """, unsafe_allow_html=True)
 
+    col = st.columns([1, 2, 1])[1]
+    with col:
+        tab_login, tab_reg = st.tabs(["🔑  Accedi", "✨  Registrati"])
+        with tab_login:
+            email = st.text_input("Email", key="login_email", placeholder="docente@scuola.it")
+            password = st.text_input("Password", type="password", key="login_pass", placeholder="••••••••")
+            st.write("")
+            if st.button("Accedi →", type="primary", use_container_width=True, key="btn_login"):
+                if not email or not password:
+                    st.warning("Inserisci email e password.")
+                else:
+                    try:
+                        res = supabase.auth.sign_in_with_password({"email": email, "password": password})
+                        st.session_state.utente = res.user
+                        st.rerun()
+                    except Exception:
+                        st.error("Credenziali errate o account non esistente.")
+        with tab_reg:
+            email = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
+            password = st.text_input("Password (min 6 caratteri)", type="password", key="reg_pass", placeholder="••••••••")
+            st.write("")
+            if st.button("Crea account →", type="primary", use_container_width=True, key="btn_reg"):
+                if not email or not password:
+                    st.warning("Inserisci email e password.")
+                elif len(password) < 6:
+                    st.warning("La password deve essere di almeno 6 caratteri.")
+                else:
+                    try:
+                        res = supabase.auth.sign_up({"email": email, "password": password})
+                        st.session_state.utente = res.user
+                        st.success("✅ Account creato! Benvenuto su VerificAI.")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Errore durante la registrazione: {e}")
+
+if 'utente' not in st.session_state:
+    st.session_state.utente = None
+
 if st.session_state.utente is None:
     mostra_auth()
     st.stop()
-
-# Bottone logout nella sidebar
-with st.sidebar:
-    st.markdown("---")
-    st.caption(f"👤 {st.session_state.utente.email}")
-    if st.button("Esci"):
-        supabase.auth.sign_out()
-        st.session_state.utente = None
-        st.rerun()
-
 
 APP_NAME    = "VerificAI"
 APP_ICON    = "📝"
@@ -2697,6 +2710,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
