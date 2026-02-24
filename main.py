@@ -1803,7 +1803,7 @@ with st.sidebar:
     if bes_dsa:
         perc_ridotta = st.select_slider(
             "Esercizi da rimuovere",
-            help="Es. 20% = verranno eliminati circa 1 esercizio ogni 5, partendo dai più complessi"
+            help="Es. 20% = verranno eliminati circa 1 esercizio ogni 5, partendo dai più complessi",
             options=[10, 20, 30],
             value=20,
             format_func=lambda x: f"-{x}%",
@@ -2464,6 +2464,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
