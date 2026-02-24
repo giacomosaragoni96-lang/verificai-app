@@ -2140,6 +2140,7 @@ if genera_btn:
             pgfplots_pkg = ""
 
         titolo_header = f"Verifica di {materia}: {titolo_clean}" + (f" — {titolo_a}" if titolo_a else "")
+        _riga_intestazione = "  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n"
         preambolo_fisso = f"""\\documentclass[12pt,a4paper]{{article}}
 \\usepackage[utf8]{{inputenc}}
 \\usepackage[italian]{{babel}}
@@ -2152,7 +2153,7 @@ if genera_btn:
 \\begin{{center}}
   \\textbf{{\\large {titolo_header}}} \\\\
   \\vspace{{0.3cm}}
-  \\small \\textbf{{Nome:}} \\underline{{\\hspace{{6cm}}}} \\quad \\textbf{{Classe e Data:}} \\underline{{\\hspace{{4cm}}}} \\\\
+{_riga_intestazione}  
   \\vspace{{0.3cm}}
   \\textit{{\\small {nota_bes}}}
 \\end{{center}}
@@ -2597,6 +2598,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
