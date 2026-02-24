@@ -2,6 +2,6 @@ texlive-latex-extra
 texlive-fonts-recommended
 texlive-lang-italian
 poppler-utils
-supabase
 pandoc
 supabase>=2.7.0
+
