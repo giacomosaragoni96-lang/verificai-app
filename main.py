@@ -277,6 +277,26 @@ def rimuovi_vspace_corpo(latex):
     # Rimuove righe vuote eccessive lasciate dalla rimozione
     latex = re.sub(r'\n{3,}', '\n\n', latex)
     return latex
+
+def rimuovi_punti_subsection(latex):
+    """
+    Rimuove i (X pt) che compaiono subito dopo \subsection*{...},
+    lasciando solo quelli nei \item.
+    """
+    # Rimuove (X pt) sulla stessa riga di \subsection* o nella riga immediatamente dopo
+    latex = re.sub(
+        r'(\\subsection\*\{[^}]*\}[^\n]*)\s*\((\d+(?:[.,]\d+)?)\s*pt\)',
+        r'\1',
+        latex
+    )
+    # Rimuove una riga che contiene SOLO (X pt) subito dopo \subsection*
+    latex = re.sub(
+        r'(\\subsection\*\{[^}]*\})\s*\n\s*\(\d+(?:[.,]\d+)?\s*pt\)\s*\n',
+        r'\1\n',
+        latex
+    )
+    return latex
+
 def riscala_punti(latex, punti_totali_target):
     """
     Trova tutti i (X pt) nel corpo, li riscala proporzionalmente
@@ -2209,6 +2229,7 @@ SOLO CODICE LATEX del corpo."""
         latex_a = fix_items_environment(latex_a)
         latex_a = rimuovi_vspace_corpo(latex_a)
         if mostra_punteggi:
+            latex_a = rimuovi_punti_subsection(latex_a)
             latex_a = riscala_punti(latex_a, punti_totali)
 
         if con_griglia:
@@ -2279,7 +2300,8 @@ SOLO CODICE LATEX del corpo."""
             latex_ridotta = fix_items_environment(latex_ridotta)
             latex_ridotta = rimuovi_vspace_corpo(latex_ridotta)
             if mostra_punteggi:
-                latex_ridotta = riscala_punti(latex_ridotta, punti_totali)        
+                latex_ridotta = rimuovi_punti_subsection(latex_ridotta)
+                latex_ridotta = riscala_punti(latex_ridotta, punti_totali)   
                 
             if con_griglia:
                 latex_ridotta_final = inietta_griglia(latex_ridotta, punti_totali)
@@ -2333,8 +2355,9 @@ SOLO CODICE LATEX del corpo."""
             latex_b = fix_items_environment(latex_b)
             latex_b = rimuovi_vspace_corpo(latex_b)
             if mostra_punteggi:
+                latex_b = rimuovi_punti_subsection(latex_b)
                 latex_b = riscala_punti(latex_b, punti_totali)
-
+                
             if con_griglia:
                 latex_b_final = inietta_griglia(latex_b, punti_totali)
             else:
@@ -2574,6 +2597,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
