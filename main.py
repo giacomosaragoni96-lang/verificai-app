@@ -20,6 +20,8 @@ genai.configure(api_key=API_KEY)
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
+supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 # ── AUTENTICAZIONE ──────────────────────────────────────────────────────────────
 def mostra_auth():
     st.markdown("""
@@ -2591,7 +2593,7 @@ SOLO CODICE LATEX del corpo."""
                     "latex_b": st.session_state.verifiche['B']['latex'] if st.session_state.verifiche['B']['latex'] else None,
                     "latex_r": st.session_state.verifiche['R']['latex'] if st.session_state.verifiche['R']['latex'] else None,
                 }
-                result = supabase.table("verifiche_storico").insert(insert_data).execute()
+                result = supabase_admin.table("verifiche_storico").insert(insert_data).execute()
                 st.toast("✅ Verifica salvata!", icon="💾")
             else:
                 st.warning("Utente non loggato, verifica non salvata.")
@@ -2776,6 +2778,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
