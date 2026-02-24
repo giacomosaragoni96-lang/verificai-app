@@ -2316,8 +2316,9 @@ if st.session_state.verifiche['A']['latex']:
                         with st.expander("Log"): st.text(err)
 
             st.write("")
-  
-          if v['docx']:
+
+
+            if v['docx']:
                     docx_size = _stima_dimensione(v['docx'])
                     st.markdown(f'<div class="dl-card"><div class="dl-label">📝 Versione Word</div>', unsafe_allow_html=True)
                     st.download_button(
@@ -2353,6 +2354,8 @@ if st.session_state.verifiche['A']['latex']:
                             st.error("Errore Word")
                             with st.expander("Log"): st.text(de)
              
+  
+          
            
         
 
@@ -2453,6 +2456,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
