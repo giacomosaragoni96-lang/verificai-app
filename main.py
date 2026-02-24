@@ -2140,20 +2140,22 @@ if genera_btn:
             pgfplots_pkg = ""
 
         titolo_header = f"Verifica di {materia}: {titolo_clean}" + (f" — {titolo_a}" if titolo_a else "")
-        _riga_intestazione = "  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n"
+        _hspace6 = "{6cm}"
+        _hspace4 = "{4cm}"
+
         preambolo_fisso = f"""\\documentclass[12pt,a4paper]{{article}}
-\\usepackage[utf8]{{inputenc}}
-\\usepackage[italian]{{babel}}
-\\usepackage{{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}}
-{pgfplots_pkg}
-\\geometry{{margin=1.5cm}}
+        \\usepackage[utf8]{{inputenc}}
+        \\usepackage[italian]{{babel}}
+        \\usepackage{{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}}
+        {pgfplots_pkg}
+        \\geometry{{margin=1.5cm}}
 \\setlength{{\\parskip}}{{3pt plus1pt minus1pt}}
 \\pagestyle{{empty}}
 \\begin{{document}}
 \\begin{{center}}
   \\textbf{{\\large {titolo_header}}} \\\\
   \\vspace{{0.3cm}}
-{_riga_intestazione}  
+  \\small \\textbf{{Nome:}} \\underline{{\\hspace{_hspace6}}} \\quad \\textbf{{Classe e Data:}} \\underline{{\\hspace{_hspace4}}} \\\\
   \\vspace{{0.3cm}}
   \\textit{{\\small {nota_bes}}}
 \\end{{center}}
@@ -2598,6 +2600,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
