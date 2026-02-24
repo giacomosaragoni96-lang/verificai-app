@@ -2520,8 +2520,7 @@ st.markdown(f"""
     <h1 class="hero-title"><span class="hero-icon">{APP_ICON}</span> Verific<span class="hero-ai">AI</span></h1>
     <p class="hero-sub">{APP_TAGLINE}</p>
     <span class="hero-beta">Versione Beta</span>
-  </div>
-</div>
+ 
 """, unsafe_allow_html=True)
 
 # ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
@@ -3168,3 +3167,4 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
