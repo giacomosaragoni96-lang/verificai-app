@@ -2596,7 +2596,6 @@ SOLO CODICE LATEX del corpo."""
                 st.warning("Utente non loggato, verifica non salvata.")
         except Exception as e:
             st.warning(f"⚠️ Salvataggio non riuscito: {e}")
-
         st.rerun()
 
 # ── OUTPUT ────────────────────────────────────────────────────────────────────────
@@ -2768,6 +2767,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
