@@ -8,10 +8,7 @@ import io
 import time
 import google.generativeai as genai
 from dotenv import load_dotenv
-try:
-    from supabase import create_client, Client
-except ImportError:
-    from supabase_py import create_client, Client
+from supabase import create_client, Client
 
 # ── CONFIGURAZIONE ──────────────────────────────────────────────────────────────
 load_dotenv()
@@ -2595,6 +2592,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
