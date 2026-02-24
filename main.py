@@ -20,6 +20,47 @@ genai.configure(api_key=API_KEY)
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# ── AUTENTICAZIONE ──────────────────────────────────────────────────────────────
+def mostra_auth():
+    st.markdown("## 👋 Benvenuto su VerificAI")
+    tab_login, tab_reg = st.tabs(["Accedi", "Registrati"])
+    
+    with tab_login:
+        email = st.text_input("Email", key="login_email")
+        password = st.text_input("Password", type="password", key="login_pass")
+        if st.button("Accedi", type="primary", use_container_width=True):
+            try:
+                res = supabase.auth.sign_in_with_password({"email": email, "password": password})
+                st.session_state.utente = res.user
+                st.rerun()
+            except Exception as e:
+                st.error(f"Errore: {e}")
+
+    with tab_reg:
+        email = st.text_input("Email", key="reg_email")
+        password = st.text_input("Password (min 6 caratteri)", type="password", key="reg_pass")
+        if st.button("Registrati", type="primary", use_container_width=True):
+            try:
+                res = supabase.auth.sign_up({"email": email, "password": password})
+                st.session_state.utente = res.user
+                st.success("Registrazione avvenuta!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Errore: {e}")
+
+if st.session_state.utente is None:
+    mostra_auth()
+    st.stop()
+
+# Bottone logout nella sidebar
+with st.sidebar:
+    st.markdown("---")
+    st.caption(f"👤 {st.session_state.utente.email}")
+    if st.button("Esci"):
+        supabase.auth.sign_out()
+        st.session_state.utente = None
+        st.rerun()
+
 
 APP_NAME    = "VerificAI"
 APP_ICON    = "📝"
@@ -2592,6 +2633,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
