@@ -2596,7 +2596,9 @@ SOLO CODICE LATEX del corpo."""
                 st.warning("Utente non loggato, verifica non salvata.")
         except Exception as e:
             st.warning(f"⚠️ Salvataggio non riuscito: {e}")
-        st.rerun()  # 
+
+        st.rerun()
+
 # ── OUTPUT ────────────────────────────────────────────────────────────────────────
 if st.session_state.verifiche['A']['latex']:
     st.divider()
@@ -2766,6 +2768,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
