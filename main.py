@@ -112,8 +112,8 @@ def mostra_auth():
                         res = supabase.auth.sign_in_with_password({"email": email, "password": password})
                         st.session_state.utente = res.user
                         st.rerun()
-                    except Exception:
-                        st.error("Credenziali errate o account non esistente.")
+                    except Exception as e:
+                        st.warning(f"⚠️ Salvataggio non riuscito: {e}")
         with tab_reg:
             email = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
             password = st.text_input("Password (min 6 caratteri)", type="password", key="reg_pass", placeholder="••••••••")
@@ -2764,6 +2764,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
