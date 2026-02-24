@@ -1454,6 +1454,7 @@ st.markdown(f"""
     gap: 0;
     position: relative;
   }}
+  /*
   .hero-wrap::after {{
     content: '';
     position: absolute;
@@ -1471,6 +1472,7 @@ st.markdown(f"""
       transparent 100%
     );
   }}
+  */
   .hero-left {{ flex: 1; min-width: 200px; text-align: center; }}
   @keyframes iconBounce {{
     0%   {{ transform: rotate(0deg) scale(1); }}
@@ -2520,7 +2522,8 @@ st.markdown(f"""
     <h1 class="hero-title"><span class="hero-icon">{APP_ICON}</span> Verific<span class="hero-ai">AI</span></h1>
     <p class="hero-sub">{APP_TAGLINE}</p>
     <span class="hero-beta">Versione Beta</span>
- 
+  </div>
+</div>
 """, unsafe_allow_html=True)
 
 # ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
@@ -3167,4 +3170,5 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
