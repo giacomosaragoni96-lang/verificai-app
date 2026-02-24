@@ -8,6 +8,7 @@ import io
 import time
 import google.generativeai as genai
 from dotenv import load_dotenv
+from supabase import create_client, Client
 
 # ── CONFIGURAZIONE ──────────────────────────────────────────────────────────────
 load_dotenv()
@@ -16,6 +17,9 @@ if not API_KEY:
     st.error("⚠️ Chiave API mancante! Crea un file .env con: GOOGLE_API_KEY=la_tua_chiave")
     st.stop()
 genai.configure(api_key=API_KEY)
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 APP_NAME    = "VerificAI"
 APP_ICON    = "📝"
@@ -1057,7 +1061,7 @@ def _vf():
             'soluzioni_latex': '', 'soluzioni_pdf': None, 'docx': None,
             'pdf_ts': None, 'docx_ts': None}
 
-
+if 'utente' not in st.session_state: st.session_state.utente = None
 if 'verifiche' not in st.session_state: st.session_state.verifiche = {'A': _vf(), 'B': _vf(), 'R': _vf()}
 if 'esercizi_custom' not in st.session_state: st.session_state.esercizi_custom = []
 if 'last_materia'    not in st.session_state: st.session_state.last_materia = None
@@ -2588,6 +2592,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
