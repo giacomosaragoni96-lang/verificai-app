@@ -1219,6 +1219,7 @@ if 'last_argomento'  not in st.session_state: st.session_state.last_argomento = 
 if 'last_gen_ts'     not in st.session_state: st.session_state.last_gen_ts = None
 # Flag per aggiornare lo storico sidebar dopo il salvataggio
 if '_storico_refresh' not in st.session_state: st.session_state._storico_refresh = 0
+if '_first_visit' not in st.session_state: st.session_state._first_visit = True
 
 # ── CSS GLOBALE ──────────────────────────────────────────────────────────────────
 is_dark = (st.session_state.theme == "dark")
@@ -1356,9 +1357,42 @@ st.markdown(f"""
     color: #5a5950 !important;
     border-bottom-color: {_SB_BORDER} !important;
   }}
+  /* ── HAMBURGER BUTTON — sempre visibile, mai perso ── */
   [data-testid="collapsedControl"] {{
-    color: {T['text']} !important;
-    top: 1rem !important;
+    top: 0.75rem !important;
+    left: 0.75rem !important;
+    z-index: 999 !important;
+  }}
+  [data-testid="collapsedControl"] button {{
+    background: {T['card']} !important;
+    border: 2px solid {T['accent']} !important;
+    border-radius: 10px !important;
+    color: {T['accent']} !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 12px {T['accent']}33 !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease !important;
+    padding: 0 !important;
+  }}
+  [data-testid="collapsedControl"] button:hover {{
+    background: {T['accent']} !important;
+    box-shadow: 0 4px 18px {T['accent']}55 !important;
+    transform: scale(1.08) !important;
+  }}
+  [data-testid="collapsedControl"] button:hover svg {{
+    fill: #ffffff !important;
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+  }}
+  [data-testid="collapsedControl"] button svg {{
+    fill: {T['accent']} !important;
+    color: {T['accent']} !important;
+    stroke: {T['accent']} !important;
+    width: 18px !important;
+    height: 18px !important;
   }}
 
   /* ── SIDEBAR LABELS MIGLIORATI ── */
@@ -2290,6 +2324,46 @@ st.markdown(f"""
     box-shadow: none !important;
     transform: none !important;
   }}
+  /* ── ONBOARDING TOOLTIP ── */
+  @keyframes tooltipSlideIn {{
+    0%   {{ opacity: 0; transform: translateX(-12px); }}
+    15%  {{ opacity: 1; transform: translateX(4px); }}
+    25%  {{ opacity: 1; transform: translateX(0); }}
+    75%  {{ opacity: 1; transform: translateX(0); }}
+    90%  {{ opacity: 0; transform: translateX(-8px); }}
+    100% {{ opacity: 0; transform: translateX(-8px); }}
+  }}
+  .sidebar-tooltip {{
+    position: fixed;
+    top: 0.9rem;
+    left: 3.8rem;
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: {T['accent']};
+    color: #ffffff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 7px 13px 7px 10px;
+    border-radius: 20px;
+    box-shadow: 0 4px 18px {T['accent']}55;
+    pointer-events: none;
+    white-space: nowrap;
+    animation: tooltipSlideIn 4.5s ease forwards;
+  }}
+  .sidebar-tooltip::before {{
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 5px 6px 5px 0;
+    border-style: solid;
+    border-color: transparent {T['accent']} transparent transparent;
+  }}
 
 </style>
 """, unsafe_allow_html=True)
@@ -2429,6 +2503,15 @@ st.markdown("""
   <div class="top-bar-hint">⚙️ Tocca &nbsp;<strong>&gt;&gt;</strong>&nbsp; qui sopra per le impostazioni</div>
 </div>
 """, unsafe_allow_html=True)
+
+# ── ONBOARDING TOOLTIP (solo al primo caricamento) ──────────────────────────────
+if st.session_state._first_visit:
+    st.markdown("""
+<div class="sidebar-tooltip">
+  ⚙️ &nbsp;Impostazioni qui
+</div>
+""", unsafe_allow_html=True)
+    st.session_state._first_visit = False
 
 # ── HEADER ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
