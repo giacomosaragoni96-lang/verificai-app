@@ -2159,13 +2159,12 @@ if genera_btn:
         titolo_header = f"Verifica di {materia}: {titolo_clean}" + (f" — {titolo_a}" if titolo_a else "")
         _hspace6 = "{6cm}"
         _hspace4 = "{4cm}"
-
         preambolo_fisso = f"""\\documentclass[12pt,a4paper]{{article}}
-        \\usepackage[utf8]{{inputenc}}
-        \\usepackage[italian]{{babel}}
-        \\usepackage{{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}}
-        {pgfplots_pkg}
-        \\geometry{{margin=1.5cm}}
+\\usepackage[utf8]{{inputenc}}
+\\usepackage[italian]{{babel}}
+\\usepackage{{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}}
+{pgfplots_pkg}
+\\geometry{{margin=1.5cm}}
 \\setlength{{\\parskip}}{{3pt plus1pt minus1pt}}
 \\pagestyle{{empty}}
 \\begin{{document}}
@@ -2599,6 +2598,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
