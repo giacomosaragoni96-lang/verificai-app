@@ -2344,13 +2344,7 @@ if st.session_state.verifiche['A']['latex']:
                         st.error("Errore Word")
                         with st.expander("Log"): st.text(de)
 
-              st.markdown("""
-                        <div class="hint-docx">
-                            💡 <b>Nota:</b> La versione Word è modificabile ma ha una resa grafica inferiore. 
-                            I grafici complessi (TikZ) non compaiono in Word.
-                        </div>
-                        </div>
-                    """, unsafe_allow_html=True)
+             
            
         
 
@@ -2451,6 +2445,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
