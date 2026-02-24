@@ -2293,6 +2293,7 @@ if st.session_state.verifiche['A']['latex']:
             </div>
             """, unsafe_allow_html=True)
 
+            # --- DOWNLOAD PDF ---
             if v['pdf']:
                 pdf_size = _stima_dimensione(v['pdf'])
                 st.download_button(
@@ -2317,48 +2318,42 @@ if st.session_state.verifiche['A']['latex']:
 
             st.write("")
 
-
+            # --- DOWNLOAD WORD + AVVISO ---
             if v['docx']:
                 docx_size = _stima_dimensione(v['docx'])
-                st.markdown(f'<div class="dl-card"><div class="dl-label">📝 Versione Word</div>', unsafe_allow_html=True)
                 st.download_button(
-                    label=f"Scarica Word Modificabile ({docx_size})",
+                    label=f"📝 Scarica File Word Modificabile ({docx_size})",
                     data=v['docx'],
                     file_name=f"Verifica_{_arg}_{fid}.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     use_container_width=True,
                     key=f"dld_{fid}"
                 )
-                    # AVVISO WORD CON STILE DEDICATO
-                    st.markdown("""
-                        <div class="hint-docx">
-                            💡 <b>Nota:</b> La versione Word è modificabile ma ha una resa grafica inferiore. 
-                            I grafici complessi di funzione (TikZ/Plot) non compaiono in Word e vanno aggiunti a mano.
-                        </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    _docx_gen_key = f"_docx_generating_{fid}"
-                    if st.button("📝 Genera File Word", key=f"dldc_{fid}", use_container_width=True):
-                        st.session_state[_docx_gen_key] = True
-                    if st.session_state.get(_docx_gen_key, False):
-                        with st.spinner("⏳ Conversione Word…"):
-                            db, de = latex_to_docx_via_ai(v['latex'], con_griglia=con_griglia)
-                        if db:
-                            st.session_state.verifiche[fid]['docx'] = db
-                            st.session_state.verifiche[fid]['docx_ts'] = time.time()
-                            st.session_state[_docx_gen_key] = False
-                            st.rerun()
-                        else:
-                            st.session_state[_docx_gen_key] = False
-                            st.error("Errore Word")
-                            with st.expander("Log"): st.text(de)
-             
-  
-          
-           
-        
+                # AVVISO WORD
+                st.markdown(f"""
+                    <div class="hint-docx" style="margin-top: -10px; margin-bottom: 15px;">
+                        💡 <b>Nota:</b> La versione Word è modificabile ma ha una resa grafica inferiore. 
+                        I grafici complessi di funzione (TikZ/Plot) non compaiono in Word e vanno aggiunti a mano.
+                    </div>
+                """, unsafe_allow_html=True)
+            else:
+                _docx_gen_key = f"_docx_generating_{fid}"
+                if st.button("📝 Genera File Word Modificabile", key=f"dldc_{fid}", use_container_width=True):
+                    st.session_state[_docx_gen_key] = True
+                if st.session_state.get(_docx_gen_key, False):
+                    with st.spinner("⏳ Conversione Word…"):
+                        db, de = latex_to_docx_via_ai(v['latex'], con_griglia=con_griglia)
+                    if db:
+                        st.session_state.verifiche[fid]['docx'] = db
+                        st.session_state.verifiche[fid]['docx_ts'] = time.time()
+                        st.session_state[_docx_gen_key] = False
+                        st.rerun()
+                    else:
+                        st.session_state[_docx_gen_key] = False
+                        st.error("Errore Word")
+                        with st.expander("Log"): st.text(de)
 
+            # --- SOLUZIONI ---
             if v['soluzioni_latex']:
                 st.write("")
                 if v['soluzioni_pdf']:
@@ -2381,16 +2376,16 @@ if st.session_state.verifiche['A']['latex']:
                         else:
                             with st.expander("Log"): st.text(se)
 
+            # --- PREVIEW ---
             if v['preview'] and v['pdf']:
                 with st.expander("👁 Anteprima PDF", expanded=False):
                     b64 = base64.b64encode(v['pdf']).decode()
                     st.markdown(f"""
-                    <iframe
-                      src="data:application/pdf;base64,{b64}#toolbar=0&navpanes=0&scrollbar=1"
-                      style="width:100%;height:500px;border:none;border-radius:8px;display:block;"
-                    ></iframe>
+                    <iframe src="data:application/pdf;base64,{b64}#toolbar=0&navpanes=0&scrollbar=1"
+                            style="width:100%;height:500px;border:none;border-radius:8px;display:block;"></iframe>
                     """, unsafe_allow_html=True)
 
+            # --- SORGENTE TEX ---
             _spacer, _tex_col = st.columns([3, 1])
             with _tex_col:
                 st.markdown('<div class="tex-btn-wrap">', unsafe_allow_html=True)
@@ -2403,7 +2398,7 @@ if st.session_state.verifiche['A']['latex']:
                     help="Scarica il sorgente LaTeX per modificarlo"
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
-
+                
 # ── FOOTER ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="app-footer">
@@ -2456,6 +2451,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
