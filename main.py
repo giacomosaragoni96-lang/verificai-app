@@ -25,16 +25,20 @@ supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # ── PERSISTENT LOGIN: ripristina sessione dal token salvato in query params ──────
 def _ripristina_sessione():
-    """Tenta di ripristinare la sessione Supabase da access_token + refresh_token."""
+    """
+    Ripristina la sessione Supabase.
+    I token vengono salvati nei query_params dell'URL (sopravvivono a F5/refresh),
+    poi vengono usati per riautenticarsi automaticamente ad ogni caricamento.
+    """
     if st.session_state.get('utente') is not None:
         return  # già loggato
 
-    # Prova prima con i query params (redirect OAuth / link magico)
+    # I query_params sopravvivono ai refresh della pagina (sono nell'URL)
     params = st.query_params
-    access_token  = params.get("access_token",  None)
-    refresh_token = params.get("refresh_token", None)
+    access_token  = params.get("_at", None)
+    refresh_token = params.get("_rt", None)
 
-    # Altrimenti usa quelli salvati nel session_state (persistono dentro una tab)
+    # Fallback: session_state (utile per reruns nella stessa sessione)
     if not access_token:
         access_token  = st.session_state.get("_sb_access_token")
         refresh_token = st.session_state.get("_sb_refresh_token")
@@ -44,24 +48,20 @@ def _ripristina_sessione():
             sess = supabase.auth.set_session(access_token, refresh_token)
             if sess and sess.user:
                 st.session_state.utente = sess.user
-                # Aggiorna i token (potrebbero essere stati ruotati)
-                st.session_state["_sb_access_token"]  = sess.session.access_token
-                st.session_state["_sb_refresh_token"] = sess.session.refresh_token
-                # Pulisce i query params per non tenerli nell'URL
-                st.query_params.clear()
+                # Aggiorna i token ruotati sia in session_state che in query_params
+                new_at = sess.session.access_token
+                new_rt = sess.session.refresh_token
+                st.session_state["_sb_access_token"] = new_at
+                st.session_state["_sb_refresh_token"] = new_rt
+                st.query_params["_at"] = new_at
+                st.query_params["_rt"] = new_rt
                 return
         except Exception:
-            pass
-
-    # Prova con get_session (funziona se la sessione è ancora attiva nello stesso processo)
-    try:
-        sess = supabase.auth.get_session()
-        if sess and sess.user:
-            st.session_state.utente = sess.user
-            st.session_state["_sb_access_token"]  = sess.access_token
-            st.session_state["_sb_refresh_token"] = sess.refresh_token
-    except Exception:
-        pass
+            # Token scaduto/invalido: pulisci e chiedi login
+            st.query_params.pop("_at", None)
+            st.query_params.pop("_rt", None)
+            st.session_state.pop("_sb_access_token", None)
+            st.session_state.pop("_sb_refresh_token", None)
 
 _ripristina_sessione()
 
@@ -156,9 +156,13 @@ def mostra_auth():
                     try:
                         res = supabase.auth.sign_in_with_password({"email": email, "password": password})
                         st.session_state.utente = res.user
-                        # Salva i token per il ripristino automatico
-                        st.session_state["_sb_access_token"]  = res.session.access_token
-                        st.session_state["_sb_refresh_token"] = res.session.refresh_token
+                        # Salva token in session_state E query_params (sopravvivono a F5)
+                        at = res.session.access_token
+                        rt = res.session.refresh_token
+                        st.session_state["_sb_access_token"] = at
+                        st.session_state["_sb_refresh_token"] = rt
+                        st.query_params["_at"] = at
+                        st.query_params["_rt"] = rt
                         st.rerun()
                     except Exception as e:
                         st.warning(f"⚠️ Accesso non riuscito: {e}")
@@ -177,8 +181,12 @@ def mostra_auth():
                         res = supabase.auth.sign_up({"email": email, "password": password})
                         st.session_state.utente = res.user
                         if res.session:
-                            st.session_state["_sb_access_token"]  = res.session.access_token
-                            st.session_state["_sb_refresh_token"] = res.session.refresh_token
+                            at = res.session.access_token
+                            rt = res.session.refresh_token
+                            st.session_state["_sb_access_token"] = at
+                            st.session_state["_sb_refresh_token"] = rt
+                            st.query_params["_at"] = at
+                            st.query_params["_rt"] = rt
                         st.success("✅ Account creato! Benvenuto su VerificAI.")
                         st.rerun()
                     except Exception as e:
@@ -1282,16 +1290,6 @@ st.markdown(f"""
     padding-bottom: 0.6rem;
     border-bottom: 1px solid {_SB_BORDER};
   }}
-  .sidebar-label {{
-    font-size: 0.75rem !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.06em !important;
-    text-transform: uppercase !important;
-    color: {_SB_LABEL} !important;
-    margin: 0.8rem 0 0.4rem 0;
-    padding-bottom: 0.25rem;
-    border-bottom: 1px solid {_SB_BORDER};
-  }}
   [data-testid="stSidebar"] .block-container {{
     padding: 1.5rem 1.2rem !important;
     max-width: 100% !important;
@@ -1363,22 +1361,44 @@ st.markdown(f"""
     top: 1rem !important;
   }}
 
-  /* ── LOGOUT BUTTON STILE ── */
+  /* ── SIDEBAR LABELS MIGLIORATI ── */
+  [data-testid="stSidebar"] .sidebar-label,
+  .sidebar-label {{
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+    color: #D97706 !important;
+    margin: 1rem 0 0.5rem 0 !important;
+    padding-bottom: 0.35rem !important;
+    border-bottom: 2px solid #3a3320 !important;
+    display: block !important;
+  }}
+
+  /* ── LOGOUT BUTTON — massima specificità per vincere sulle regole sidebar ── */
+  [data-testid="stSidebar"] .logout-btn-wrap div.stButton > button,
+  [data-testid="stSidebar"] .logout-btn-wrap .stButton button,
   [data-testid="stSidebar"] .logout-btn-wrap button {{
     background: transparent !important;
-    color: #EF4444 !important;
-    border: 1px solid #4a1a1a !important;
+    color: #f87171 !important;
+    border: 1px solid #5c2222 !important;
     border-radius: 8px !important;
-    font-size: 0.8rem !important;
+    font-size: 0.78rem !important;
     font-weight: 600 !important;
-    padding: 6px 12px !important;
+    padding: 6px 14px !important;
     width: auto !important;
-    transition: background 0.15s ease, border-color 0.15s ease !important;
+    min-height: unset !important;
+    box-shadow: none !important;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
+    letter-spacing: 0.02em !important;
   }}
+  [data-testid="stSidebar"] .logout-btn-wrap div.stButton > button:hover,
+  [data-testid="stSidebar"] .logout-btn-wrap .stButton button:hover,
   [data-testid="stSidebar"] .logout-btn-wrap button:hover {{
-    background: #2a1010 !important;
-    border-color: #EF4444 !important;
-    color: #ff6b6b !important;
+    background: #2a0f0f !important;
+    border-color: #f87171 !important;
+    color: #fca5a5 !important;
+    box-shadow: 0 0 0 1px #5c2222 !important;
   }}
 
   /* ── TYPOGRAPHY ── */
@@ -2163,7 +2183,7 @@ with st.sidebar:
     # Usa il flag di refresh come cache-buster: ogni volta che cambia, ricarica
     _refresh_key = st.session_state._storico_refresh
     try:
-        storico = supabase.table("verifiche_storico")\
+        storico = supabase_admin.table("verifiche_storico")\
             .select("id, materia, argomento, created_at, latex_a, latex_b, latex_r, scuola")\
             .eq("user_id", st.session_state.utente.id)\
             .order("created_at", desc=True)\
@@ -2219,6 +2239,9 @@ with st.sidebar:
         st.session_state.utente = None
         st.session_state.pop("_sb_access_token", None)
         st.session_state.pop("_sb_refresh_token", None)
+        # Rimuovi token dall'URL
+        st.query_params.pop("_at", None)
+        st.query_params.pop("_rt", None)
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
