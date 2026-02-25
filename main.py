@@ -56,6 +56,7 @@ def _ripristina_sessione():
 _ripristina_sessione()
 
 # ── AUTENTICAZIONE ──────────────────────────────────────────────────────────────
+# ── AUTENTICAZIONE ──────────────────────────────────────────────────────────────
 def mostra_auth():
     st.markdown("""
     <style>
@@ -75,11 +76,8 @@ def mostra_auth():
         max-width: 480px !important;
         margin: 0 auto !important;
     }
-    [data-testid="stMainBlockContainer"] {
-        padding: 0 !important;
-    }
+    [data-testid="stMainBlockContainer"] { padding: 0 !important; }
 
-    /* ── INPUT ── */
     [data-testid="stTextInput"] input {
         background: #1A1916 !important;
         border: 1.5px solid #2A2926 !important;
@@ -105,8 +103,6 @@ def mostra_auth():
         font-weight: 600 !important;
         font-family: 'DM Sans', sans-serif !important;
     }
-
-    /* ── TABS ── */
     [data-testid="stTabs"] [data-baseweb="tab-list"] {
         background: #1A1916 !important;
         border-radius: 10px !important;
@@ -128,8 +124,6 @@ def mostra_auth():
         color: #F5F4EF !important;
     }
     [data-testid="stTabs"] [data-baseweb="tab-highlight"] { display: none !important; }
-
-    /* ── BUTTON ── */
     div.stButton > button[kind="primary"] {
         background: #D97706 !important;
         color: white !important;
@@ -146,171 +140,137 @@ def mostra_auth():
         filter: brightness(1.1) !important;
         transform: translateY(-1px) !important;
     }
-
-    /* ── ALERT ── */
     .stAlert { border-radius: 8px !important; }
     .stAlert p, .stAlert div { font-size: 0.88rem !important; }
-
-    /* ── DIVIDER ── */
-    hr { border-color: #1E1D1A !important; margin: 1.5rem 0 !important; }
-
     </style>
     """, unsafe_allow_html=True)
 
-    # ── HERO ──────────────────────────────────────────────────────────────────
     st.markdown("""
-    <div style="padding: 3rem 2rem 0 2rem; text-align: center;">
-
-      <!-- Badge -->
+    <div style="padding:3rem 2rem 0 2rem;text-align:center;">
       <div style="display:inline-flex;align-items:center;gap:7px;
                   background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.3);
                   border-radius:100px;padding:5px 14px;margin-bottom:1.8rem;">
-        <span style="width:6px;height:6px;border-radius:50%;background:#F59E0B;
-                     display:inline-block;"></span>
-        <span style="font-size:0.72rem;font-weight:700;color:#F59E0B;
-                     letter-spacing:0.07em;text-transform:uppercase;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#F59E0B;display:inline-block;"></span>
+        <span style="font-size:0.72rem;font-weight:700;color:#F59E0B;letter-spacing:0.07em;text-transform:uppercase;">
           Generazione AI · Beta
         </span>
       </div>
-
-      <!-- Logo -->
       <div style="font-size:3.2rem;font-weight:900;letter-spacing:-0.04em;
                   color:#F5F4EF;line-height:1;margin-bottom:0.5rem;">
         📝 Verific<span style="background:linear-gradient(135deg,#D97706,#FF8C00);
                                -webkit-background-clip:text;-webkit-text-fill-color:transparent;
                                background-clip:text;">AI</span>
       </div>
-
-      <!-- Tagline -->
       <p style="font-size:1rem;color:#8C8A82;font-weight:400;
                 margin:0 auto 2rem auto;line-height:1.5;max-width:360px;">
         Crea <strong style="color:#C8C6BC;">verifiche scolastiche professionali</strong>
         in 30 secondi. Tu dici l'argomento, l'AI fa il resto.
       </p>
-
-      <!-- Feature pills -->
-      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;
-                  justify-content:center;margin-bottom:2.5rem;">
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;
-                     padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🧠 Generazione AI</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;
-                     padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">📄 PDF & Word</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;
-                     padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🔀 Fila A/B</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;
-                     padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">♿ BES/DSA</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;
-                     padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">✅ Soluzioni</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;
-                     padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🏫 Tutti i livelli</span>
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin-bottom:2.5rem;">
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🧠 Generazione AI</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">📄 PDF & Word</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🔀 Fila A/B</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🎯 BES/DSA</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">✅ Soluzioni</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🏫 Tutti i livelli</span>
       </div>
-
-    </div>
-
-    <!-- Form card -->
-    <div style="background:#111110;border:1px solid #1E1D1A;border-radius:20px;
-                margin:0 1rem 1rem 1rem;padding:2rem 2rem 1.5rem 2rem;">
-      <div style="font-size:1.3rem;font-weight:800;color:#F5F4EF;
-                  margin-bottom:0.3rem;letter-spacing:-0.02em;">
-        Inizia subito
-      </div>
-      <div style="font-size:0.85rem;color:#6B6960;margin-bottom:1.5rem;line-height:1.4;">
-        Gratuito durante il periodo Beta · Nessuna carta richiesta
+      <div style="background:#111110;border:1px solid #1E1D1A;border-radius:20px;
+                  padding:1.8rem 2rem 0.5rem 2rem;text-align:left;margin-bottom:0.5rem;">
+        <div style="font-size:1.3rem;font-weight:800;color:#F5F4EF;
+                    margin-bottom:0.3rem;letter-spacing:-0.02em;">Inizia subito</div>
+        <div style="font-size:0.85rem;color:#6B6960;margin-bottom:0;line-height:1.4;">
+          Gratuito durante il periodo Beta · Nessuna carta richiesta
+        </div>
       </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── FORM (Streamlit nativo dentro la card) ────────────────────────────────
-    with st.container():
-        st.markdown('<div style="padding:0 1rem;">', unsafe_allow_html=True)
+    # ── FORM ──────────────────────────────────────────────────────────────────
+    tab_login, tab_reg, tab_reset = st.tabs(["  Accedi  ", "  Registrati  ", "  Password  "])
 
-        tab_login, tab_reg, tab_reset = st.tabs(["  Accedi  ", "  Registrati  ", "  Password  "])
+    with tab_login:
+        st.write("")
+        email = st.text_input("Email", key="login_email", placeholder="docente@scuola.it")
+        password = st.text_input("Password", type="password", key="login_pass", placeholder="••••••••")
+        st.write("")
+        if st.button("Accedi →", type="primary", use_container_width=True, key="btn_login"):
+            if not email or not password:
+                st.warning("Inserisci email e password.")
+            else:
+                try:
+                    res = supabase.auth.sign_in_with_password({"email": email, "password": password})
+                    st.session_state.utente = res.user
+                    at = res.session.access_token
+                    rt = res.session.refresh_token
+                    st.session_state["_sb_access_token"] = at
+                    st.session_state["_sb_refresh_token"] = rt
+                    st.query_params["_at"] = at
+                    st.query_params["_rt"] = rt
+                    st.rerun()
+                except Exception as e:
+                    err_str = str(e).lower()
+                    if "invalid login" in err_str or "invalid credentials" in err_str:
+                        st.warning("Password errata. Usa il tab 'Password' per reimpostarla.")
+                    elif "email not confirmed" in err_str:
+                        st.warning("Email non confermata. Controlla la tua casella di posta.")
+                    elif "user not found" in err_str or "no user" in err_str:
+                        st.warning("Nessun account trovato. Registrati prima.")
+                    else:
+                        st.warning("Accesso non riuscito. Controlla email e password.")
+                    time.sleep(2)
 
-        with tab_login:
-            st.write("")
-            email = st.text_input("Email", key="login_email", placeholder="docente@scuola.it")
-            password = st.text_input("Password", type="password", key="login_pass", placeholder="••••••••")
-            st.write("")
-            if st.button("Accedi →", type="primary", use_container_width=True, key="btn_login"):
-                if not email or not password:
-                    st.warning("Inserisci email e password.")
-                else:
-                    try:
-                        res = supabase.auth.sign_in_with_password({"email": email, "password": password})
-                        st.session_state.utente = res.user
+    with tab_reg:
+        st.write("")
+        email    = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
+        password = st.text_input("Password (min. 6 caratteri)", type="password", key="reg_pass", placeholder="••••••••")
+        st.write("")
+        if st.button("Crea account gratuito →", type="primary", use_container_width=True, key="btn_reg"):
+            if not email or not password:
+                st.warning("Inserisci email e password.")
+            elif len(password) < 6:
+                st.warning("La password deve essere di almeno 6 caratteri.")
+            else:
+                try:
+                    res = supabase.auth.sign_up({"email": email, "password": password})
+                    st.session_state.utente = res.user
+                    if res.session:
                         at = res.session.access_token
                         rt = res.session.refresh_token
                         st.session_state["_sb_access_token"] = at
                         st.session_state["_sb_refresh_token"] = rt
                         st.query_params["_at"] = at
                         st.query_params["_rt"] = rt
-                        st.rerun()
-                    except Exception as e:
-                        err_str = str(e).lower()
-                        if "invalid login" in err_str or "invalid credentials" in err_str:
-                            st.warning("Password errata. Usa il tab 'Password' per reimpostarla.")
-                        elif "email not confirmed" in err_str:
-                            st.warning("Email non confermata. Controlla la tua casella di posta.")
-                        elif "user not found" in err_str or "no user" in err_str:
-                            st.warning("Nessun account trovato. Registrati prima.")
-                        else:
-                            st.warning("Accesso non riuscito. Controlla email e password.")
-                        time.sleep(2)
+                    st.success("Benvenuto su VerificAI! Account creato.")
+                    time.sleep(1)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Errore durante la registrazione: {e}")
 
-        with tab_reg:
-            st.write("")
-            email    = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
-            password = st.text_input("Password (min. 6 caratteri)", type="password", key="reg_pass", placeholder="••••••••")
-            st.write("")
-            if st.button("Crea account gratuito →", type="primary", use_container_width=True, key="btn_reg"):
-                if not email or not password:
-                    st.warning("Inserisci email e password.")
-                elif len(password) < 6:
-                    st.warning("La password deve essere di almeno 6 caratteri.")
-                else:
-                    try:
-                        res = supabase.auth.sign_up({"email": email, "password": password})
-                        st.session_state.utente = res.user
-                        if res.session:
-                            at = res.session.access_token
-                            rt = res.session.refresh_token
-                            st.session_state["_sb_access_token"] = at
-                            st.session_state["_sb_refresh_token"] = rt
-                            st.query_params["_at"] = at
-                            st.query_params["_rt"] = rt
-                        st.success("Benvenuto su VerificAI! Account creato.")
-                        time.sleep(1)
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Errore durante la registrazione: {e}")
-
-        with tab_reset:
-            st.write("")
-            st.markdown("""
-            <div style="font-size:0.82rem;color:#8C8A82;line-height:1.5;
-                        padding:0.8rem 1rem;background:#161614;border-radius:8px;
-                        border-left:2px solid #2A2926;margin-bottom:0.8rem;">
-              Inserisci la tua email. Riceverai un link per reimpostare la password.
-            </div>
-            """, unsafe_allow_html=True)
-            email_reset = st.text_input("Email", key="reset_email", placeholder="docente@scuola.it")
-            st.write("")
-            if st.button("Invia link di reset →", type="primary", use_container_width=True, key="btn_reset"):
-                if not email_reset:
-                    st.warning("Inserisci la tua email.")
-                else:
-                    try:
-                        supabase.auth.reset_password_email(email_reset)
-                        st.success("Email inviata! Controlla la casella di posta.")
-                    except Exception as e:
-                        st.error(f"Errore nell'invio: {e}")
-
-        st.markdown('</div>', unsafe_allow_html=True)
+    with tab_reset:
+        st.write("")
+        st.markdown("""
+        <div style="font-size:0.82rem;color:#8C8A82;line-height:1.5;
+                    padding:0.8rem 1rem;background:#161614;border-radius:8px;
+                    border-left:2px solid #2A2926;margin-bottom:0.8rem;">
+          Inserisci la tua email. Riceverai un link per reimpostare la password.
+        </div>
+        """, unsafe_allow_html=True)
+        email_reset = st.text_input("Email", key="reset_email", placeholder="docente@scuola.it")
+        st.write("")
+        if st.button("Invia link di reset →", type="primary", use_container_width=True, key="btn_reset"):
+            if not email_reset:
+                st.warning("Inserisci la tua email.")
+            else:
+                try:
+                    supabase.auth.reset_password_email(email_reset)
+                    st.success("Email inviata! Controlla la casella di posta.")
+                except Exception as e:
+                    st.error(f"Errore nell'invio: {e}")
 
     # ── FOOTER ────────────────────────────────────────────────────────────────
     st.markdown("""
     <div style="display:flex;align-items:center;gap:0.8rem;
-                justify-content:center;padding:1.5rem 1rem 3rem 1rem;">
+                justify-content:center;padding:2rem 1rem 3rem 1rem;">
       <div style="display:flex;">
         <div style="width:28px;height:28px;border-radius:50%;border:2px solid #0C0C0B;
                     background:linear-gradient(135deg,#D97706,#92400E);
@@ -335,90 +295,6 @@ def mostra_auth():
       </div>
     </div>
     """, unsafe_allow_html=True)
-
-    # Colonna sinistra vuota (placeholder per spingere il form a destra)
-    col_placeholder, col_form = st.columns([55, 45])
-
-    with col_form:
-        st.write("")
-        st.write("")
-        tab_login, tab_reg, tab_reset = st.tabs(["  Accedi  ", "  Registrati  ", "  Password  "])
-
-        with tab_login:
-            st.write("")
-            email = st.text_input("Email", key="login_email", placeholder="docente@scuola.it")
-            password = st.text_input("Password", type="password", key="login_pass", placeholder="••••••••")
-            st.write("")
-            if st.button("Accedi →", type="primary", use_container_width=True, key="btn_login"):
-                if not email or not password:
-                    st.warning("Inserisci email e password.")
-                else:
-                    try:
-                        res = supabase.auth.sign_in_with_password({"email": email, "password": password})
-                        st.session_state.utente = res.user
-                        at = res.session.access_token
-                        rt = res.session.refresh_token
-                        st.session_state["_sb_access_token"] = at
-                        st.session_state["_sb_refresh_token"] = rt
-                        st.query_params["_at"] = at
-                        st.query_params["_rt"] = rt
-                        st.rerun()
-                    except Exception as e:
-                        err_str = str(e).lower()
-                        if "invalid login" in err_str or "invalid credentials" in err_str:
-                            st.warning("Password errata. Usa il tab 'Password' per reimpostarla.")
-                        elif "email not confirmed" in err_str:
-                            st.warning("Email non confermata. Controlla la tua casella di posta.")
-                        elif "user not found" in err_str or "no user" in err_str:
-                            st.warning("Nessun account trovato con questa email. Registrati prima.")
-                        else:
-                            st.warning("Accesso non riuscito. Controlla email e password.")
-                        time.sleep(2)
-
-        with tab_reg:
-            st.write("")
-            st.markdown('<div style="font-size:0.78rem;color:#6B6960;margin-bottom:0.5rem;">Gratuito durante il periodo Beta · Nessuna carta richiesta</div>', unsafe_allow_html=True)
-            email    = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
-            password = st.text_input("Password (min. 6 caratteri)", type="password", key="reg_pass", placeholder="••••••••")
-            st.write("")
-            if st.button("Crea account gratuito →", type="primary", use_container_width=True, key="btn_reg"):
-                if not email or not password:
-                    st.warning("Inserisci email e password.")
-                elif len(password) < 6:
-                    st.warning("La password deve essere di almeno 6 caratteri.")
-                else:
-                    try:
-                        res = supabase.auth.sign_up({"email": email, "password": password})
-                        st.session_state.utente = res.user
-                        if res.session:
-                            at = res.session.access_token
-                            rt = res.session.refresh_token
-                            st.session_state["_sb_access_token"] = at
-                            st.session_state["_sb_refresh_token"] = rt
-                            st.query_params["_at"] = at
-                            st.query_params["_rt"] = rt
-                        st.success("Benvenuto su VerificAI! Account creato.")
-                        time.sleep(1)
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Errore durante la registrazione: {e}")
-
-        with tab_reset:
-            st.write("")
-            st.markdown('<div class="reset-note">Inserisci la tua email. Riceverai un link per reimpostare la password.</div>', unsafe_allow_html=True)
-            email_reset = st.text_input("Email", key="reset_email", placeholder="docente@scuola.it")
-            st.write("")
-            if st.button("Invia link di reset →", type="primary", use_container_width=True, key="btn_reset"):
-                if not email_reset:
-                    st.warning("Inserisci la tua email.")
-                else:
-                    try:
-                        supabase.auth.reset_password_email(email_reset)
-                        st.success("Email inviata! Controlla la casella di posta.")
-                    except Exception as e:
-                        st.error(f"Errore nell'invio: {e}")
-
-        st.markdown('</div>', unsafe_allow_html=True)
 
 
 if 'utente' not in st.session_state:
@@ -4323,6 +4199,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
