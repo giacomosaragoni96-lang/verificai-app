@@ -3148,10 +3148,43 @@ if not st.session_state._onboarding_done:
     _c_accent_light = T['accent_light']
     _c_muted        = T['muted']
 
+    # CSS per il bottone dismiss — piccolo link testuale
+    st.markdown(f"""
+    <style>
+    .ob-dismiss div.stButton > button {{
+        background: transparent !important;
+        border: none !important;
+        color: {_c_muted} !important;
+        font-size: 0.75rem !important;
+        font-weight: 500 !important;
+        text-decoration: underline !important;
+        text-underline-offset: 2px !important;
+        padding: 0 !important;
+        min-height: unset !important;
+        height: auto !important;
+        box-shadow: none !important;
+        transform: none !important;
+        width: auto !important;
+        display: inline !important;
+    }}
+    .ob-dismiss div.stButton > button:hover {{
+        color: {_c_text2} !important;
+        background: transparent !important;
+        transform: none !important;
+        box-shadow: none !important;
+        text-decoration: underline !important;
+    }}
+    .ob-dismiss {{
+        margin-top: -0.5rem !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Banner
     st.markdown(
         f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
-        f'border:1.5px solid {_c_accent};border-radius:14px;'
-        f'padding:1.1rem 1.4rem 0.7rem 1.4rem;margin-bottom:0.6rem;font-family:DM Sans,sans-serif;">'
+        f'border:1.5px solid {_c_accent};border-radius:14px 14px 0 0;'
+        f'padding:1.1rem 1.4rem 1rem 1.4rem;font-family:DM Sans,sans-serif;">'
 
         f'<div style="display:flex;align-items:flex-start;gap:12px;">'
         f'<div style="font-size:1.4rem;flex-shrink:0;margin-top:1px;">👋</div>'
@@ -3171,7 +3204,7 @@ if not st.session_state._onboarding_done:
         f'</div>'
 
         f'<div style="display:flex;background:{_c_bg2};border:1px solid {_c_border};'
-        f'border-radius:10px;overflow:hidden;margin-bottom:0.75rem;">'
+        f'border-radius:10px;overflow:hidden;">'
 
         f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
         f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};'
@@ -3192,59 +3225,37 @@ if not st.session_state._onboarding_done:
         f'</div>'
 
         f'</div>'  # fine step box
-
         f'</div>'  # fine flex:1
         f'</div>'  # fine display:flex
-
-        # Link "Ho capito" dentro il banner, in fondo a destra
-        f'<div style="text-align:right;padding-top:0.1rem;">'
-        f'<span style="font-size:0.75rem;color:{_c_muted};">'
-        f'✓ Visto &nbsp;</span>'
-        f'</div>'
-
-        f'</div>',  # fine card
+        f'</div>',  # fine card (bordo solo in alto e lati)
         unsafe_allow_html=True
     )
 
-    # Bottone "Ho capito" testuale — stilizzato come link
-    st.markdown(f"""
-    <style>
-    [data-testid="stButton"] button[data-testid="baseButton-secondary"]:has(+ *) {{
-        all: unset;
-    }}
-    div.ob-dismiss-wrap div.stButton > button {{
-        background: transparent !important;
-        border: none !important;
-        color: {_c_muted} !important;
-        font-size: 0.78rem !important;
-        font-weight: 600 !important;
-        text-decoration: underline !important;
-        padding: 0 !important;
-        min-height: unset !important;
-        height: auto !important;
-        box-shadow: none !important;
-        transform: none !important;
-        width: auto !important;
-        float: right !important;
-        margin-top: -1.4rem !important;
-        margin-right: 1.4rem !important;
-        margin-bottom: 1rem !important;
-    }}
-    div.ob-dismiss-wrap div.stButton > button:hover {{
-        color: {_c_text2} !important;
-        background: transparent !important;
-        transform: none !important;
-        box-shadow: none !important;
-    }}
-    </style>
-    <div class="ob-dismiss-wrap">
-    """, unsafe_allow_html=True)
+    # Footer del banner — stesso sfondo, bordo continuo, contiene il bottone
+    _spacer, _btn_col = st.columns([5, 1])
+    with _btn_col:
+        st.markdown(
+            f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
+            f'border:1.5px solid {_c_accent};border-top:none;border-radius:0 0 14px 14px;'
+            f'padding:0.4rem 1.4rem 0.6rem 1.4rem;margin-bottom:0.6rem;'
+            f'text-align:right;">',
+            unsafe_allow_html=True
+        )
+        st.markdown('<div class="ob-dismiss">', unsafe_allow_html=True)
+        if st.button("Ho capito, non mostrare più", key="_dismiss_onboarding"):
+            st.session_state._onboarding_done = True
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    if st.button("Ho capito, non mostrare più", key="_dismiss_onboarding"):
-        st.session_state._onboarding_done = True
-        st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    with _spacer:
+        st.markdown(
+            f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
+            f'border:1.5px solid {_c_accent};border-top:none;border-right:none;'
+            f'border-radius:0 0 0 14px;padding:0.4rem 0 0.6rem 0;margin-bottom:0.6rem;">',
+            unsafe_allow_html=True
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # Disclaimer AI
     st.markdown(
@@ -4257,6 +4268,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
