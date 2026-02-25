@@ -1117,6 +1117,36 @@ def latex_to_docx_via_ai(codice_latex, con_griglia=True):
         return None, f"Errore DOCX: {e}\n{traceback.format_exc()}"
 
 
+def modifica_verifica_con_ai(latex_originale, richiesta_modifica, model):
+    """Modifica una verifica esistente usando l'AI."""
+    prompt = f"""Sei un docente esperto di LaTeX. Ti viene fornita una verifica già generata e una richiesta di modifica.
+
+VERIFICA ORIGINALE:
+{latex_originale}
+
+RICHIESTA DI MODIFICA:
+{richiesta_modifica}
+
+ISTRUZIONI:
+- Applica SOLO le modifiche richieste
+- Mantieni la struttura LaTeX esistente
+- NON rigenerare da zero, modifica l'esistente
+- Mantieni lo stesso preambolo e intestazione
+- Se la modifica riguarda punteggi, ricalcola la somma totale
+- Restituisci il codice LaTeX completo modificato
+- TERMINA con \\end{{document}}
+
+OUTPUT: SOLO codice LaTeX completo, senza ```latex né spiegazioni."""
+
+    response = model.generate_content(prompt)
+    latex_modificato = response.text.replace("```latex", "").replace("```", "").strip()
+    
+    # Assicurati che termini correttamente
+    if "\\end{document}" not in latex_modificato:
+        latex_modificato += "\n\\end{document}"
+    
+    return latex_modificato
+
 def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_punteggi):
     n_liberi = max(0, num_totale - len(esercizi_custom))
     righe = [
@@ -3094,7 +3124,79 @@ if st.session_state.verifiche['A']['latex']:
                         st.session_state[_docx_gen_key] = False
                         st.error("Errore Word")
                         with st.expander("Log"): st.text(de)
-
+                        
+            # --- MODIFICA PDF ---
+            st.write("")
+            with st.expander("✏️ Modifica questa verifica", expanded=False):
+                st.markdown(f"""
+                <div style="font-size:0.85rem;color:{T['text2']};margin-bottom:0.8rem;line-height:1.5;">
+                    Descrivi le modifiche che vuoi apportare. Esempi:<br>
+                    • "Aggiungi un esercizio sulla proprietà distributiva"<br>
+                    • "Rimuovi l'esercizio 3"<br>
+                    • "Cambia i numeri dell'esercizio 2 con valori più piccoli"<br>
+                    • "Aumenta la difficoltà dell'esercizio 4"
+                </div>
+                """, unsafe_allow_html=True)
+                
+                richiesta_modifica = st.text_area(
+                    "Cosa vuoi modificare?",
+                    height=100,
+                    placeholder="es. Sostituisci l'esercizio 2 con un problema sulla velocità media",
+                    key=f"modifica_input_{fid}",
+                    label_visibility="collapsed"
+                )
+                
+                col_mod1, col_mod2 = st.columns([1, 1])
+                with col_mod1:
+                    if st.button("🔄 Applica Modifiche", key=f"modifica_btn_{fid}", 
+                               use_container_width=True, disabled=not richiesta_modifica.strip()):
+                        try:
+                            with st.spinner("⏳ Modifica in corso..."):
+                                model = genai.GenerativeModel(modello_id)
+                                latex_modificato = modifica_verifica_con_ai(
+                                    v['latex'], 
+                                    richiesta_modifica.strip(),
+                                    model
+                                )
+                                
+                                # Applica le stesse trasformazioni dell'originale
+                                latex_modificato = fix_items_environment(latex_modificato)
+                                latex_modificato = rimuovi_vspace_corpo(latex_modificato)
+                                
+                                # Ricalcola punti se necessario
+                                if mostra_punteggi:
+                                    latex_modificato = rimuovi_punti_subsection(latex_modificato)
+                                    latex_modificato = riscala_punti(latex_modificato, punti_totali)
+                                
+                                # Rigenera griglia se necessario
+                                if con_griglia:
+                                    latex_modificato = inietta_griglia(latex_modificato, punti_totali)
+                                
+                                # Aggiorna session state
+                                st.session_state.verifiche[fid]['latex'] = latex_modificato
+                                
+                                # Ricompila PDF
+                                pdf_mod, err_mod = compila_pdf(latex_modificato)
+                                if pdf_mod:
+                                    st.session_state.verifiche[fid]['pdf'] = pdf_mod
+                                    st.session_state.verifiche[fid]['pdf_ts'] = time.time()
+                                    st.session_state.verifiche[fid]['preview'] = True
+                                    # Reset DOCX per rigenerarlo con le modifiche
+                                    st.session_state.verifiche[fid]['docx'] = None
+                                    st.success("✅ Modifiche applicate!")
+                                    time.sleep(0.8)
+                                    st.rerun()
+                                else:
+                                    st.error("❌ Errore nella compilazione del PDF modificato")
+                                    if err_mod:
+                                        with st.expander("Log errore"):
+                                            st.text(err_mod)
+                        except Exception as e:
+                            st.error(f"❌ Errore durante la modifica: {str(e)}")
+                
+                with col_mod2:
+                    if st.button("↺ Annulla", key=f"reset_mod_{fid}", use_container_width=True):
+                        st.rerun()
             # --- PREVIEW ---
             if v['preview'] and v['pdf']:
                 with st.expander("👁 Anteprima PDF", expanded=False):
@@ -3170,5 +3272,6 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
