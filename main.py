@@ -1742,7 +1742,140 @@ st.markdown(f"""
     box-shadow: 0 6px 20px rgba(217,119,6,0.18) !important;
     color: {T['text']} !important;
   }}
+  /* ══════════════════════════════════════════════════════════
+     SEZIONE OUTPUT VERIFICHE - DESIGN UPGRADE
+     ══════════════════════════════════════════════════════════ */
 
+  /* ── CARD AZIONI (PDF, Word, Modifica, Preview) ── */
+  .action-card {{
+    background: {T['card']} !important;
+    border: 2px solid {T['border']} !important;
+    border-radius: 14px !important;
+    padding: 1.2rem !important;
+    margin-bottom: 1rem !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }}
+  .action-card::before {{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, {T['accent']} 0%, {T['accent']}00 100%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }}
+  .action-card:hover {{
+    border-color: {T['accent']}88 !important;
+    box-shadow: 0 8px 24px {T['accent']}15 !important;
+    transform: translateY(-2px) !important;
+  }}
+  .action-card:hover::before {{
+    opacity: 1;
+  }}
+
+  /* ── BOTTONI AZIONE PRINCIPALE (Scarica PDF, Genera Word) ── */
+  .action-card .stDownloadButton button,
+  .action-card .stButton button {{
+    background: linear-gradient(135deg, {T['accent']} 0%, {T['accent']}ee 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    padding: 1rem 1.5rem !important;
+    box-shadow: 0 4px 14px {T['accent']}35 !important;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  }}
+  .action-card .stDownloadButton button:hover,
+  .action-card .stButton button:hover {{
+    transform: scale(1.03) !important;
+    box-shadow: 0 6px 20px {T['accent']}50 !important;
+    filter: brightness(1.08) !important;
+  }}
+  .action-card .stDownloadButton button:active,
+  .action-card .stButton button:active {{
+    transform: scale(0.98) !important;
+  }}
+
+  /* ── EXPANDER MODIFICA & PREVIEW ── */
+  .action-card [data-testid="stExpander"] {{
+    background: transparent !important;
+    border: 2px dashed {T['border2']} !important;
+    border-radius: 12px !important;
+    transition: all 0.2s ease !important;
+  }}
+  .action-card [data-testid="stExpander"]:hover {{
+    border-color: {T['accent']} !important;
+    background: {T['accent_light']} !important;
+  }}
+  .action-card [data-testid="stExpander"] summary {{
+    background: transparent !important;
+    color: {T['text']} !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    padding: 1rem 1.2rem !important;
+  }}
+  .action-card [data-testid="stExpander"] summary:hover {{
+    color: {T['accent']} !important;
+  }}
+  .action-card [data-testid="stExpander"] summary svg {{
+    color: {T['accent']} !important;
+  }}
+
+  /* ── BOTTONE TEX (Secondario, discreto) ── */
+  .tex-download {{
+    opacity: 0.7 !important;
+    transition: opacity 0.2s ease, transform 0.2s ease !important;
+  }}
+  .tex-download:hover {{
+    opacity: 1 !important;
+    transform: translateX(3px) !important;
+  }}
+
+  /* ── HINT DOCX (styling migliore) ── */
+  .hint-docx {{
+    background: {T['accent_light']} !important;
+    border-left: 3px solid {T['accent']} !important;
+    border-radius: 8px !important;
+    padding: 10px 14px !important;
+    margin-top: 8px !important;
+    font-size: 0.8rem !important;
+    color: {T['text2']} !important;
+    line-height: 1.5 !important;
+  }}
+  .hint-docx strong {{
+    color: {T['accent']} !important;
+  }}
+
+  /* ── SEZIONE LABELS (PDF, Word, etc) ── */
+  .section-action-label {{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: {T['muted']};
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid {T['border']};
+  }}
+  .section-action-label::before {{
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: {T['accent']};
+    display: inline-block;
+  }}
+
+    
+  
   /* ── COMPACT UPLOADER ── */
   .compact-uploader [data-testid="stFileUploader"] section {{
     padding: 0 !important;
@@ -3112,7 +3245,7 @@ if st.session_state.verifiche['A']['latex']:
             """, unsafe_allow_html=True)
 
 # --- DOWNLOAD PDF ---
-            st.markdown('<div style="margin-bottom:1rem;">', unsafe_allow_html=True)
+            st.markdown('<div class="action-card">', unsafe_allow_html=True)
             if v['pdf']:
                 pdf_size = _stima_dimensione(v['pdf'])
                 st.download_button(
@@ -3137,7 +3270,7 @@ if st.session_state.verifiche['A']['latex']:
             st.markdown('</div>', unsafe_allow_html=True)
             
             # --- MODIFICA PDF ---
-            st.markdown('<div style="margin:1.5rem 0;">', unsafe_allow_html=True)
+            st.markdown('<div class="action-card">', unsafe_allow_html=True)
             with st.expander("✏️ Modifica questa verifica", expanded=False):
                 st.markdown(f"""
                 <div style="font-size:0.85rem;color:{T['text2']};margin-bottom:0.8rem;line-height:1.5;">
@@ -3226,7 +3359,7 @@ if st.session_state.verifiche['A']['latex']:
             st.markdown('</div>', unsafe_allow_html=True)
             
             # --- DOWNLOAD WORD + AVVISO ---
-            st.markdown('<div style="margin:1.5rem 0;">', unsafe_allow_html=True)
+            st.markdown('<div class="action-card">', unsafe_allow_html=True)
             if v['docx']:
                 docx_size = _stima_dimensione(v['docx'])
                 st.download_button(
@@ -3271,6 +3404,7 @@ if st.session_state.verifiche['A']['latex']:
                     """, unsafe_allow_html=True)
 
             # --- SORGENTE TEX ---
+            st.markdown('<div style="margin-top:1.5rem;">', unsafe_allow_html=True)
             _spacer, _tex_col = st.columns([3, 1])
             with _tex_col:
                 st.markdown('<div class="tex-btn-wrap">', unsafe_allow_html=True)
@@ -3336,6 +3470,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
