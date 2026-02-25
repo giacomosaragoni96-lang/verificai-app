@@ -23,7 +23,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
 supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-LIMITE_MENSILE = 20  # ← numero massimo di verifiche al mese per utente free
+LIMITE_MENSILE = 5  # ← numero massimo di verifiche al mese per utente free
 
 # ── PERSISTENT LOGIN ─────────────────────────────────────────────────────────────
 def _ripristina_sessione():
@@ -554,6 +554,7 @@ if "theme" not in st.session_state:
 T = THEMES[st.session_state.theme]
 
 SCUOLE = [
+    "Generico — adatta alle istruzioni",
     "Scuola Primaria (Elementari)",
     "Scuola Secondaria I grado (Medie)",
     "Liceo Scientifico",
@@ -568,6 +569,12 @@ SCUOLE = [
 ]
 
 CALIBRAZIONE_SCUOLA = {
+    "Generico — adatta alle istruzioni": (
+        "Livello NON specificato: adatta autonomamente difficoltà, registro linguistico e complessità "
+        "in base all'argomento e alle istruzioni del docente. "
+        "Se l'argomento suggerisce un livello (es. 'derivate' → superiori, 'addizioni' → primaria), calibra di conseguenza. "
+        "Usa un linguaggio chiaro, diretto e professionale. Nessun vincolo di scuola."
+    ),
     "Scuola Primaria (Elementari)": (
         "Target: 6-11 anni. Linguaggio ludico-concreto. "
         "Contesto: vita quotidiana familiare, gioco, spesa. "
@@ -2459,37 +2466,59 @@ st.markdown(f"""
     background: linear-gradient(135deg, {T['accent_light']} 0%, {T['card']} 100%);
     border: 1.5px solid {T['accent']};
     border-radius: 14px;
-    padding: 1.1rem 1.3rem;
-    margin-bottom: 1.8rem;
+    padding: 1rem 1.3rem;
+    margin-bottom: 1.5rem;
     font-family: 'DM Sans', sans-serif;
   }}
   .onboarding-steps {{
     display: flex;
-    gap: 0.6rem;
+    align-items: center;
+    gap: 0.5rem;
     flex-wrap: wrap;
-    margin-top: 0.5rem;
+    margin-top: 0.4rem;
   }}
   .onboarding-step {{
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
     background: {T['bg2']};
     border: 1px solid {T['border']};
     border-radius: 20px;
-    padding: 4px 12px;
-    font-size: 0.74rem;
+    padding: 5px 12px;
+    font-size: 0.76rem;
     font-weight: 600;
     color: {T['text2']};
+    white-space: nowrap;
   }}
-  .onboarding-step-num {{
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    background: {T['accent']};
-    color: #fff;
-    font-size: 0.65rem;
-    font-weight: 800;
-    display: flex; align-items: center; justify-content: center;
+  .onboarding-step-ico {{
+    font-size: 0.85rem;
+  }}
+  .onboarding-step-arrow {{
+    color: {T['accent']};
+    font-size: 0.9rem;
+    font-weight: 700;
     flex-shrink: 0;
+  }}
+  /* X close button per onboarding */
+  div[data-testid="column"]:has(button[kind="secondary"][title="Chiudi"]) button,
+  div[data-testid="column"] button[data-testid*="_dismiss_onboarding"] {{
+    background: transparent !important;
+    border: 1px solid {T['border']} !important;
+    border-radius: 50% !important;
+    color: {T['muted']} !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-height: unset !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    line-height: 1 !important;
+  }}
+  div[data-testid="column"]:has(button[kind="secondary"][title="Chiudi"]) button:hover {{
+    background: {T['hover']} !important;
+    border-color: {T['muted']} !important;
+    color: {T['text']} !important;
   }}
   .genera-hint {{
     text-align: center;
@@ -3048,8 +3077,8 @@ with st.sidebar:
     st.markdown('<div class="sidebar-title">Impostazioni</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="sidebar-label">Classe</div>', unsafe_allow_html=True)
-    st.caption("Attenzione: questa scelta influenza radicalmente il lessico, i riferimenti teorici e la complessità matematica degli esercizi.")
-    difficolta = st.selectbox("livello", SCUOLE, index=3, label_visibility="collapsed")
+    st.caption("Questa scelta calibra lessico, complessità e riferimenti teorici degli esercizi.")
+    difficolta = st.selectbox("livello", SCUOLE, index=0, label_visibility="collapsed")
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Opzioni</div>', unsafe_allow_html=True)
     bes_dsa = st.checkbox(
@@ -3091,9 +3120,20 @@ with st.sidebar:
                                       disabled=not mostra_punteggi)
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Modello AI</div>', unsafe_allow_html=True)
-    modello_id = MODELLI_DISPONIBILI[
-        st.selectbox("modello", list(MODELLI_DISPONIBILI.keys()), label_visibility="collapsed")
-    ]
+    if _is_admin:
+        modello_id = MODELLI_DISPONIBILI[
+            st.selectbox("modello", list(MODELLI_DISPONIBILI.keys()), label_visibility="collapsed")
+        ]
+    else:
+        modello_id = "gemini-2.5-flash-lite"
+        st.markdown(f"""
+        <div style="background:{T['card2']};border:1px solid {T['border']};border-radius:10px;
+                    padding:8px 12px;font-size:0.8rem;color:{T['text2']};
+                    font-family:'DM Sans',sans-serif;">
+          Flash 2.5 Lite
+          <span style="font-size:0.7rem;color:{T['muted']};margin-left:6px;">modello standard</span>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Aspetto</div>', unsafe_allow_html=True)
     tema_sel = st.radio(
@@ -3287,39 +3327,40 @@ st.markdown(f"""
 
 # ── ONBOARDING: guida al primo accesso ───────────────────────────────────────────
 if not st.session_state._onboarding_done:
-    st.markdown(f"""
-    <div class="onboarding-banner">
-      <div style="font-size:1.6rem;flex-shrink:0;">👋</div>
-      <div style="flex:1;">
-        <div style="font-size:0.92rem;font-weight:700;color:{T['text']};margin-bottom:0.3rem;">
-          Benvenuto su VerificAI — ecco come iniziare
-        </div>
-        <div style="font-size:0.8rem;color:{T['text2']};margin-bottom:0.6rem;">
-          In 3 passi hai la tua verifica pronta da stampare.
-        </div>
-        <div class="onboarding-steps">
-          <div class="onboarding-step">
-            <div class="onboarding-step-num">1</div>
-            Scegli materia e argomento
+    _ob_col, _ob_close = st.columns([20, 1])
+    with _ob_col:
+        st.markdown(f"""
+        <div class="onboarding-banner">
+          <div style="font-size:1.5rem;flex-shrink:0;margin-top:2px;">👋</div>
+          <div style="flex:1;">
+            <div style="font-size:0.9rem;font-weight:700;color:{T['text']};margin-bottom:0.5rem;">
+              Benvenuto su VerificAI — tre passi per iniziare
+            </div>
+            <div class="onboarding-steps">
+              <div class="onboarding-step">
+                <span class="onboarding-step-ico">←</span>
+                Scegli la classe dalla barra laterale
+              </div>
+              <div class="onboarding-step-arrow">▸</div>
+              <div class="onboarding-step">
+                <span class="onboarding-step-ico">✍</span>
+                Compila materia e argomento qui sotto
+              </div>
+              <div class="onboarding-step-arrow">▸</div>
+              <div class="onboarding-step">
+                <span class="onboarding-step-ico">🚀</span>
+                Premi "Genera Verifica" in fondo
+              </div>
+            </div>
           </div>
-          <div class="onboarding-step">
-            <div class="onboarding-step-num">2</div>
-            Configura classe e opzioni nella barra laterale ←
-          </div>
-          <div class="onboarding-step">
-            <div class="onboarding-step-num">3</div>
-            Premi "Genera Verifica"
-          </div>
         </div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-    # Dismiss automaticamente dopo il primo genera
-    _dismiss_col1, _dismiss_col2 = st.columns([5, 1])
-    with _dismiss_col2:
-        if st.button("Ok, capito", key="_dismiss_onboarding"):
+        """, unsafe_allow_html=True)
+    with _ob_close:
+        st.markdown('<div style="padding-top:6px;">', unsafe_allow_html=True)
+        if st.button("✕", key="_dismiss_onboarding", help="Chiudi"):
             st.session_state._onboarding_done = True
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # STEP 1 — MATERIA
 st.markdown(f"""
