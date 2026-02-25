@@ -1701,8 +1701,8 @@ st.markdown(f"""
     padding-top: 8px;
   }}
   /* ── BOTTONI SECONDARI ── */
-  /* ── CARD VERIFICA OUTPUT ── */
-  .output-card {
+ /* ── CARD VERIFICA OUTPUT ── */
+  .output-card {{
     background: {T['card']} !important;
     border: 1.5px solid {T['border2']} !important;
     border-radius: 16px !important;
@@ -1710,10 +1710,10 @@ st.markdown(f"""
     margin-bottom: 1.5rem !important;
     overflow: hidden !important;
     box-shadow: {T['shadow_md']} !important;
-  }
-  .output-card > div {
+  }}
+  .output-card > div {{
     padding: 1.2rem !important;
-  }
+  }}
   .stDownloadButton button,
   [data-testid="stDownloadButton"] button,
   .stButton [data-testid="baseButton-secondary"],
@@ -3310,6 +3310,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
