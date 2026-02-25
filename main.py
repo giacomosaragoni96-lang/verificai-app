@@ -3255,7 +3255,7 @@ argomento = argomento_area.strip()
 # STEP 3 — PERSONALIZZA
 st.markdown(f"""
 <div class="ai-hint">
-  <span class="ai-hint-icon">✨</span>
+  <span class="ai-hint-icon">💡</span>
   <span><strong>Suggerimento:</strong> più dettagli fornisci nell'argomento e nelle opzioni avanzate, più la verifica sarà precisa e su misura.</span>
 </div>
 """, unsafe_allow_html=True)
@@ -3372,13 +3372,13 @@ if _limite_raggiunto:
     """, unsafe_allow_html=True)
 else:
     # ── hint dinamico: riepilogo file che verranno generati ──────────────
-    _files_hint = ["📄 Fila A"]
+    _files_hint = ["📄 Verifica"]
     if doppia_fila:
-        _files_hint.append("📄 Fila B")
+        _files_hint.append("📄 Versione B")
     if bes_dsa:
-        _files_hint.append("♿ Ridotta A")
+        _files_hint.append("📄Ridotta A")
     if bes_dsa and doppia_fila and bes_dsa_b:
-        _files_hint.append("♿ Ridotta B")
+        _files_hint.append("📄Ridotta B")
     if genera_soluzioni:
         _files_hint.append("✅ Soluzioni")
     _files_str = " · ".join(_files_hint)
@@ -4212,6 +4212,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
