@@ -1334,10 +1334,11 @@ if 'last_materia'    not in st.session_state: st.session_state.last_materia = No
 if 'last_argomento'  not in st.session_state: st.session_state.last_argomento = None
 if 'last_gen_ts'     not in st.session_state: st.session_state.last_gen_ts = None
 if '_storico_refresh' not in st.session_state: st.session_state._storico_refresh = 0
+if '_preferiti' not in st.session_state: st.session_state._preferiti = set()
 if '_first_visit' not in st.session_state: st.session_state._first_visit = True
 
 # ── CALCOLA VERIFICHE DEL MESE (una volta per rerun) ────────────────────────────
-ADMIN_EMAILS = {"giacomosaragoni96@gmail.com"}  # ← sostituisci con la tua mail
+ADMIN_EMAILS = {"tua@email.com"}  # ← sostituisci con la tua mail
 
 _verifiche_mese_count = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
 _is_admin = (st.session_state.utente.email in ADMIN_EMAILS) if st.session_state.utente else False
@@ -2552,6 +2553,51 @@ st.markdown(f"""
     color: #c8c6bc !important;
   }}
 
+  /* Bottoni dentro gli expander della sidebar — stile dark coerente */
+  [data-testid="stSidebar"] [data-testid="stExpander"] .stButton > button {{
+    background: #2a2926 !important;
+    color: #c8c6bc !important;
+    border: 1px solid #3a3834 !important;
+    border-radius: 8px !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    padding: 5px 12px !important;
+    min-height: unset !important;
+    box-shadow: none !important;
+    transition: background 0.15s, border-color 0.15s, color 0.15s !important;
+    width: 100% !important;
+  }}
+  [data-testid="stSidebar"] [data-testid="stExpander"] .stButton > button:hover {{
+    background: #353330 !important;
+    border-color: {T['accent']} !important;
+    color: {T['accent']} !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }}
+  /* Bottone elimina — bordo rosso sottile */
+  [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn .stButton > button {{
+    border-color: #5c2222 !important;
+    color: #f87171 !important;
+  }}
+  [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn .stButton > button:hover {{
+    background: #2a0f0f !important;
+    border-color: #f87171 !important;
+    color: #fca5a5 !important;
+  }}
+  /* Bottone stella preferito */
+  [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn .stButton > button {{
+    border-color: #4a4020 !important;
+    color: #9a8a50 !important;
+    font-size: 1rem !important;
+    padding: 3px 8px !important;
+    width: auto !important;
+  }}
+  [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn-on .stButton > button {{
+    border-color: #D97706 !important;
+    color: #F59E0B !important;
+    background: #2a2010 !important;
+  }}
+
   [data-testid="stSidebar"] .logout-btn-wrap .stButton > button,
   [data-testid="stSidebar"] .logout-btn-wrap button {{
     background: transparent !important;
@@ -2658,7 +2704,7 @@ with st.sidebar:
         bes_dsa_b = st.checkbox(
             "Genera versione ridotta anche per Fila B",
             value=False,
-            help="Genera la versione ridotta anche per la Fila B"
+            help="Genera la versione ridotta (BES/DSA) anche per la Fila B"
         )
 
     esercizio_multidisciplinare = False
@@ -2709,7 +2755,7 @@ with st.sidebar:
         st.warning(f"⛔ Limite mensile raggiunto ({LIMITE_MENSILE} verifiche). Riprova il mese prossimo.")
 
     # ── STORICO VERIFICHE ─────────────────────────────────────────────────────
-    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📚 Le mie verifiche</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Le mie verifiche</div>', unsafe_allow_html=True)
 
     _refresh_key = st.session_state._storico_refresh
     try:
@@ -2717,18 +2763,41 @@ with st.sidebar:
             .select("id, materia, argomento, created_at, latex_a, latex_b, latex_r, scuola")\
             .eq("user_id", st.session_state.utente.id)\
             .order("created_at", desc=True)\
-            .limit(10)\
+            .limit(20)\
             .execute()
 
         if storico.data:
-            for v in storico.data:
+            # Metti in cima i preferiti
+            _pref = st.session_state._preferiti
+            def _sort_key(v):
+                return (0 if v['id'] in _pref else 1, v['created_at'])
+            dati_ordinati = sorted(storico.data, key=_sort_key)
+
+            for v in dati_ordinati:
                 data_str = v['created_at'][:10]
-                label = f"📄 {v['materia']} — {v['argomento'][:22]}{'...' if len(v['argomento'])>22 else ''}"
+                is_pref  = v['id'] in _pref
+                star_ico = "★" if is_pref else "☆"
+                star_label_prefix = "⭐ " if is_pref else ""
+                label = f"{star_label_prefix}{v['materia']} — {v['argomento'][:20]}{'...' if len(v['argomento'])>20 else ''}"
                 with st.expander(f"{label} ({data_str})"):
                     if v.get('scuola'):
                         st.caption(f"🏫 {v['scuola'][:35]}")
+
+                    # Riga: stella preferiti
+                    _col_star, _col_spacer = st.columns([1, 3])
+                    with _col_star:
+                        st.markdown(f'<div class="{"stella-btn-on" if is_pref else "stella-btn"}">', unsafe_allow_html=True)
+                        if st.button(star_ico, key=f"star_{v['id']}_{_refresh_key}",
+                                     help="Aggiungi/rimuovi dai preferiti"):
+                            if v['id'] in st.session_state._preferiti:
+                                st.session_state._preferiti.discard(v['id'])
+                            else:
+                                st.session_state._preferiti.add(v['id'])
+                            st.rerun()
+                        st.markdown('</div>', unsafe_allow_html=True)
+
                     if v.get('latex_a'):
-                        if st.button("♻️ Ricarica Versione A", key=f"reload_a_{v['id']}_{_refresh_key}"):
+                        if st.button("♻ Ricarica Fila A", key=f"reload_a_{v['id']}_{_refresh_key}", use_container_width=True):
                             st.session_state.verifiche['A']['latex'] = v['latex_a']
                             pdf, _ = compila_pdf(v['latex_a'])
                             if pdf:
@@ -2736,24 +2805,26 @@ with st.sidebar:
                                 st.session_state.verifiche['A']['preview'] = True
                             st.rerun()
                     if v.get('latex_b'):
-                        if st.button("♻️ Ricarica Versione B", key=f"reload_b_{v['id']}_{_refresh_key}"):
+                        if st.button("♻ Ricarica Fila B", key=f"reload_b_{v['id']}_{_refresh_key}", use_container_width=True):
                             st.session_state.verifiche['B']['latex'] = v['latex_b']
                             pdf, _ = compila_pdf(v['latex_b'])
                             if pdf:
                                 st.session_state.verifiche['B']['pdf'] = pdf
                                 st.session_state.verifiche['B']['preview'] = True
                             st.rerun()
-                    # ── NUOVO: BOTTONE ELIMINA ────────────────────────────────
-                    st.markdown('<div style="margin-top:6px;">', unsafe_allow_html=True)
-                    if st.button("🗑️ Elimina", key=f"del_{v['id']}_{_refresh_key}",
+                    # Bottone elimina
+                    st.markdown('<div class="elimina-btn">', unsafe_allow_html=True)
+                    if st.button("Elimina", key=f"del_{v['id']}_{_refresh_key}",
+                                 use_container_width=True,
                                  help="Elimina definitivamente questa verifica dallo storico"):
                         try:
                             supabase_admin.table("verifiche_storico")\
                                 .delete()\
                                 .eq("id", v['id'])\
                                 .execute()
+                            st.session_state._preferiti.discard(v['id'])
                             st.session_state._storico_refresh += 1
-                            st.toast("🗑️ Verifica eliminata.", icon="✅")
+                            st.toast("Verifica eliminata.", icon="🗑️")
                             st.rerun()
                         except Exception as del_err:
                             st.error(f"Errore eliminazione: {del_err}")
@@ -2821,7 +2892,7 @@ st.markdown(f"""
 st.markdown(f"""
 <div class="step-label">
   <span class="step-num">01</span>
-  <span class="step-title">📖 Materia</span>
+  <span class="step-title">Materia</span>
   <span class="step-line"></span>
 </div>
 """, unsafe_allow_html=True)
@@ -2837,7 +2908,7 @@ else:
 st.markdown(f"""
 <div class="step-label">
   <span class="step-num">02</span>
-  <span class="step-title">📚 Argomento della verifica</span>
+  <span class="step-title">Argomento della verifica</span>
   <span class="step-line"></span>
 </div>
 """, unsafe_allow_html=True)
@@ -2858,8 +2929,16 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+st.markdown(f"""
+<div class="step-label">
+  <span class="step-num">03</span>
+  <span class="step-title">Personalizza</span>
+  <span class="step-line"></span>
+</div>
+""", unsafe_allow_html=True)
+
 st.markdown('<div class="personalizza-wrap">', unsafe_allow_html=True)
-with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
+with st.expander("Personalizza la verifica *(opzionale)*"):
 
     st.markdown(f'<div class="expander-heading">⏱️ Tempistiche e Struttura</div>', unsafe_allow_html=True)
     _c_dur, _c_num = st.columns(2)
@@ -2966,22 +3045,16 @@ else:
     if doppia_fila:
         _files_hint.append("📄 Fila B")
     if bes_dsa:
-        _files_hint.append("📄Ridotta A")
+        _files_hint.append("♿ Ridotta A")
     if bes_dsa and doppia_fila and bes_dsa_b:
-        _files_hint.append("📄Ridotta B")
+        _files_hint.append("♿ Ridotta B")
     if genera_soluzioni:
         _files_hint.append("✅ Soluzioni")
     _files_str = " · ".join(_files_hint)
     _n_files   = len(_files_hint)
     st.markdown(f"""
-    <div class="genera-hint" style="flex-direction:column;align-items:flex-start;gap:4px;">
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span>⏱</span>
-        <span>Generazione in circa {20 + (_n_files-1)*15}–{40 + (_n_files-1)*20} secondi</span>
-      </div>
-      <div style="font-size:0.77rem;color:{T['muted']};margin-top:2px;">
-        <strong style="color:{T['text2']};">File generati ({_n_files}):</strong> {_files_str}
-      </div>
+    <div class="genera-hint">
+      <strong style="color:{T['text2']};">File richiesti ({_n_files}):</strong> {_files_str}
     </div>
     """, unsafe_allow_html=True)
 
@@ -3003,7 +3076,7 @@ if genera_btn and not _limite_raggiunto:
             punti_totali if mostra_punteggi else 0, mostra_punteggi)
         titolo_a = "Versione A" if doppia_fila else ""
 
-        _n_steps = 3 + (2 if doppia_fila else 0) + (1 if bes_dsa else 0) + (1 if bes_dsa and doppia_fila and bes_dsa_b else 0) + (1 if genera_soluzioni else 0)
+        _n_steps = 4 + (2 if doppia_fila else 0) + (1 if bes_dsa else 0) + (1 if bes_dsa and doppia_fila and bes_dsa_b else 0) + (1 if genera_soluzioni else 0) + (1 if genera_soluzioni and doppia_fila else 0)
         _step    = [0]
         _prog    = st.empty()
 
@@ -3109,6 +3182,7 @@ CALIBRAZIONE LIVELLO E TEMPO:
 - DURATA PREVISTA: {durata_scelta}. Regola la lunghezza dei calcoli, il numero di incognite e la complessità testuale in modo che {num_esercizi_totali} esercizi siano agevolmente fattibili nel tempo scelto.
 - BILANCIAMENTO CONTESTO E MODELLAZIONE: NON esagerare con i problemi applicati alla realtà o fortemente interdisciplinari. MASSIMO 1 o 2 esercizi possono essere contestualizzati. I restanti DEVONO essere esercizi canonici, diretti e focalizzati sulla procedura pura.
 - REGISTRO LINGUISTICO — REGOLA ASSOLUTA: il testo degli esercizi deve essere CONCISO e DIRETTO.
+- DATI PULITI — REGOLA ASSOLUTA: prima di scrivere ogni esercizio, risolvilo mentalmente tu stesso. Scegli SOLO dati che portano a risultati interi o frazioni semplici. MAI scegliere dati che rendono un sistema contraddittorio, sovradeterminato o senza soluzione unica (a meno che non sia esplicitamente richiesto). Se un esercizio chiede di trovare un'equazione soddisfacendo N condizioni, verifica che le N condizioni siano compatibili tra loro.
 REGOLE TASSATIVE SUI GRAFICI (LOGICA ANTI-SPOILER):
 - Se l'esercizio richiede allo studente di "disegnare", "rappresentare graficamente", "tracciare" o "costruire" una figura/grafico, NON generare il codice TikZ.
 - Genera un grafico (TikZ) SOLO se esso è un dato di partenza necessario fornito dal docente.
@@ -3147,6 +3221,47 @@ SOLO CODICE LATEX del corpo."""
 
         corpo_latex = ra.text.replace("```latex","").replace("```","").strip()
         corpo_latex = pulisci_corpo_latex(corpo_latex)
+
+        # ── SELF-CHECK: VERIFICA E CORREZIONE AUTOMATICA ─────────────────────
+        _avanza("🔎  Controllo qualità e correzione errori…")
+        prompt_check = f"""Sei un docente esperto di {materia} e devi fare un CONTROLLO DI QUALITÀ RIGOROSO su questa verifica scolastica prima che venga consegnata agli studenti.
+
+MATERIA: {materia}
+LIVELLO: {difficolta}
+VERIFICA DA CONTROLLARE:
+{corpo_latex}
+
+COMPITO: analizza OGNI esercizio e OGNI sottopunto. Per ciascuno verifica:
+
+1. CORRETTEZZA MATEMATICA / DISCIPLINARE: i dati sono coerenti? L'esercizio ha UNA soluzione determinata e corretta? Se risolvo l'esercizio io stesso, ottengo una risposta pulita e sensata?
+   - Esempi di ERRORI GRAVI: sistema sovradeterminato o contraddittorio, dati incoerenti (es. due condizioni incompatibili), risposta che richiede conoscenze non adatte al livello, calcoli che portano a risultati assurdi.
+   
+2. ADEGUATEZZA AL LIVELLO ({difficolta}): la complessità è appropriata? Un esercizio non deve richiedere 30 passaggi se il livello è basso.
+
+3. UNIVOCITÀ: la domanda ha una sola risposta corretta e non è ambigua?
+
+SE trovi problemi: CORREGGILI DIRETTAMENTE modificando i dati dell'esercizio (cambia numeri, coordinate, coefficienti, punti) finché l'esercizio sia corretto, sensato e risolvibile. NON eliminare esercizi, correggili.
+
+SE tutto è corretto: restituisci il testo IDENTICO senza modifiche.
+
+REGOLE OUTPUT:
+- Restituisci SOLO il corpo LaTeX corretto (\\subsection* ecc.), senza preambolo.
+- Mantieni ESATTAMENTE la stessa struttura LaTeX (\\item[a)], \\item[b)], ecc.).
+- NON aggiungere commenti, spiegazioni o note al di fuori del LaTeX.
+- TERMINA con \\end{{document}}.
+- Se hai modificato dati, mantieni la stessa difficoltà complessiva e lo stesso tipo di esercizio."""
+
+        rc = model.generate_content(prompt_check)
+        corpo_latex_corretto = rc.text.replace("```latex","").replace("```","").strip()
+        corpo_latex_corretto = pulisci_corpo_latex(corpo_latex_corretto)
+
+        # Usa il corpo corretto solo se il modello ha restituito qualcosa di sensato
+        # (stessa struttura, stesso numero di \subsection*)
+        _n_orig = len(re.findall(r'\\subsection\*', corpo_latex))
+        _n_corr = len(re.findall(r'\\subsection\*', corpo_latex_corretto))
+        if corpo_latex_corretto and _n_corr == _n_orig:
+            corpo_latex = corpo_latex_corretto
+        # Se il modello ha restituito struttura diversa, manteniamo l'originale
 
         splits = re.split(r'(\\subsection\*\{)', corpo_latex)
         n_blocchi = (len(splits) - 1) // 2
@@ -3314,38 +3429,66 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo. TERMINA con \
         # ── SOLUZIONI ─────────────────────────────────────────────────────────
         if genera_soluzioni:
             _avanza("📋 Generazione soluzioni…")
-            prompt_sol = f"""Sei un docente di {materia}. Fornisci le soluzioni complete della seguente verifica.
 
-{corpo_latex}
+            def _genera_testo_sol(corpo, versione_label=""):
+                _v_tag = f" — {versione_label}" if versione_label else ""
+                _prompt = f"""Sei un docente di {materia}. Fornisci le soluzioni SINTETICHE della seguente verifica{_v_tag}.
 
-REGOLE TASSATIVE:
-- Per ogni esercizio scrivi "Esercizio N: [Titolo]" poi risolvi ogni sottopunto nell'ordine a), b), c)...
-- CALCOLI: mostra i passaggi chiave in modo sintetico, ma completo.
-- DOMANDE APERTE / TEORICHE: MASSIMO 5 RIGHE di risposta, concise e dirette. NON scrivere saggi.
-- SCELTA MULTIPLA / VERO-FALSO: scrivi solo la risposta corretta e una riga di motivazione.
-- NON riscrivere il testo della domanda originale, vai diretto alla soluzione.
+{corpo}
+
+REGOLE FERREE — RISPETTALE ALLA LETTERA:
+- Per ogni esercizio scrivi "Esercizio N: [Titolo]" poi le soluzioni in ordine a), b), c)...
+- CALCOLI: mostra SOLO i passaggi essenziali. Niente testo narrativo. Solo la catena di calcolo.
+- DOMANDE APERTE / TEORICHE: MASSIMO 3-4 RIGHE. Sii telegraficamente conciso. NON scrivere saggi.
+- SCELTA MULTIPLA / VERO-FALSO: una riga sola: "Risposta: X — perché [motivazione breve]."
+- NON riscrivere mai il testo della domanda originale, vai diretto alla soluzione.
+- SE UN ESERCIZIO HA DATI INCOERENTI O ERRATI: scrivi "Dati da rivedere: [problema in una riga]" e passa avanti.
 - Usa $...$ per le formule matematiche inline.
+- Risposta totale per esercizio: MASSIMO 15-20 righe inclusi tutti i sottopunti.
 - Rispondi con testo strutturato, senza preambolo LaTeX."""
+                _rs = model.generate_content(_prompt)
+                return _rs.text.strip()
 
-            rs = model.generate_content(prompt_sol)
-            testo_sol = rs.text.strip()
+            def _testo_to_latex_body(testo):
+                body = ""
+                for line in testo.split('\n'):
+                    ls = line.strip()
+                    if not ls:
+                        body += "\n\\vspace{0.15cm}\n"
+                    elif re.match(r'^#{1,3}\s', ls):
+                        heading = re.sub(r'^#+\s*', '', ls)
+                        body += f"\n\\subsection*{{{heading}}}\n"
+                    elif re.match(r'^Esercizio\s+\d+', ls, re.IGNORECASE):
+                        body += f"\n\\subsection*{{{ls}}}\n"
+                    elif re.match(r'^[a-z]\)\s', ls):
+                        body += f"\\noindent\\textbf{{{ls[:2]}}} {ls[2:].strip()}\n\n"
+                    else:
+                        body += ls + "\n"
+                return body
 
-            # Costruisci PDF soluzioni
+            # Genera soluzioni fila A
+            testo_sol_a = _genera_testo_sol(corpo_latex, "Fila A" if doppia_fila else "")
+
+            # Genera soluzioni fila B (se esiste)
+            testo_sol_b = None
+            if doppia_fila and 'corpo_latex_b' in dir() and corpo_latex_b:
+                testo_sol_b = _genera_testo_sol(corpo_latex_b, "Fila B")
+
+            # Costruisci unico PDF soluzioni
             _titolo_sol = f"Soluzioni — {materia}: {titolo_clean}"
             latex_sol_body = ""
-            for line in testo_sol.split('\n'):
-                ls = line.strip()
-                if not ls:
-                    latex_sol_body += "\n\\vspace{0.15cm}\n"
-                elif re.match(r'^#{1,3}\s', ls):
-                    heading = re.sub(r'^#+\s*', '', ls)
-                    latex_sol_body += f"\n\\subsection*{{{heading}}}\n"
-                elif re.match(r'^Esercizio\s+\d+', ls, re.IGNORECASE):
-                    latex_sol_body += f"\n\\subsection*{{{ls}}}\n"
-                elif re.match(r'^[a-z]\)\s', ls):
-                    latex_sol_body += f"\\noindent\\textbf{{{ls[:2]}}} {ls[2:].strip()}\n\n"
-                else:
-                    latex_sol_body += ls + "\n"
+
+            if testo_sol_b:
+                latex_sol_body += "\\section*{Fila A}\n"
+            latex_sol_body += _testo_to_latex_body(testo_sol_a)
+
+            if testo_sol_b:
+                latex_sol_body += "\n\\newpage\n\\section*{Fila B}\n"
+                latex_sol_body += _testo_to_latex_body(testo_sol_b)
+
+            testo_sol_completo = testo_sol_a
+            if testo_sol_b:
+                testo_sol_completo += "\n\n---\n\n## Fila B\n\n" + testo_sol_b
 
             latex_sol = f"""\\documentclass[11pt,a4paper]{{article}}
 \\usepackage[utf8]{{inputenc}}
@@ -3365,7 +3508,7 @@ REGOLE TASSATIVE:
 \\end{{document}}"""
 
             st.session_state.verifiche['S']['latex'] = latex_sol
-            st.session_state.verifiche['S']['testo'] = testo_sol
+            st.session_state.verifiche['S']['testo'] = testo_sol_completo
             pdf_sol, _ = compila_pdf(latex_sol)
             if pdf_sol:
                 st.session_state.verifiche['S']['pdf']     = pdf_sol
@@ -3737,7 +3880,3 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
-
-
-
-
