@@ -1701,6 +1701,19 @@ st.markdown(f"""
     padding-top: 8px;
   }}
   /* ── BOTTONI SECONDARI ── */
+  /* ── CARD VERIFICA OUTPUT ── */
+  .output-card {
+    background: {T['card']} !important;
+    border: 1.5px solid {T['border2']} !important;
+    border-radius: 16px !important;
+    padding: 0 !important;
+    margin-bottom: 1.5rem !important;
+    overflow: hidden !important;
+    box-shadow: {T['shadow_md']} !important;
+  }
+  .output-card > div {
+    padding: 1.2rem !important;
+  }
   .stDownloadButton button,
   [data-testid="stDownloadButton"] button,
   .stButton [data-testid="baseButton-secondary"],
@@ -3058,18 +3071,22 @@ if st.session_state.verifiche['A']['latex']:
             else:
                 label_ver = "La tua verifica"
             st.markdown(f"""
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;">
-              <span style="font-family:'DM Sans',sans-serif;font-size:1.1rem;
-                           font-weight:700;color:{T['text']};">{APP_ICON} {label_ver}</span>
-              <span class="chip">Pronta</span>
-            </div>
-            <div class="disclaimer">
-              <span class="disclaimer-icon">⚠️</span>
-              <span>Le verifiche generate sono <strong>suggerimenti</strong>. Rivedi sempre il contenuto prima della distribuzione — il docente è responsabile del materiale finale.</span>
+            <div style="background:{T['accent_light']};border:1px solid {T['accent']}44;
+                        border-radius:14px;padding:1.2rem;margin-bottom:1.5rem;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.8rem;">
+                <span style="font-family:'DM Sans',sans-serif;font-size:1.25rem;
+                             font-weight:800;color:{T['text']};">{APP_ICON} {label_ver}</span>
+                <span class="chip">Pronta</span>
+              </div>
+              <div class="disclaimer" style="margin:0;border-left-color:{T['accent']};">
+                <span class="disclaimer-icon">⚠️</span>
+                <span>Le verifiche generate sono <strong>suggerimenti</strong>. Rivedi sempre il contenuto prima della distribuzione — il docente è responsabile del materiale finale.</span>
+              </div>
             </div>
             """, unsafe_allow_html=True)
 
-            # --- DOWNLOAD PDF ---
+# --- DOWNLOAD PDF ---
+            st.markdown('<div style="margin-bottom:1rem;">', unsafe_allow_html=True)
             if v['pdf']:
                 pdf_size = _stima_dimensione(v['pdf'])
                 st.download_button(
@@ -3091,13 +3108,10 @@ if st.session_state.verifiche['A']['latex']:
                     else:
                         st.error("Errore PDF")
                         with st.expander("Log"): st.text(err)
-
-            st.write("")
-
-           
-                        
+            st.markdown('</div>', unsafe_allow_html=True)
+            
             # --- MODIFICA PDF ---
-            st.write("")
+            st.markdown('<div style="margin:1.5rem 0;">', unsafe_allow_html=True)
             with st.expander("✏️ Modifica questa verifica", expanded=False):
                 st.markdown(f"""
                 <div style="font-size:0.85rem;color:{T['text2']};margin-bottom:0.8rem;line-height:1.5;">
@@ -3183,9 +3197,10 @@ if st.session_state.verifiche['A']['latex']:
                             st.success("✅ Versione originale ripristinata!")
                             time.sleep(0.5)
                             st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
             
             # --- DOWNLOAD WORD + AVVISO ---
-            st.write("")
+            st.markdown('<div style="margin:1.5rem 0;">', unsafe_allow_html=True)
             if v['docx']:
                 docx_size = _stima_dimensione(v['docx'])
                 st.download_button(
@@ -3218,6 +3233,7 @@ if st.session_state.verifiche['A']['latex']:
                         st.session_state[_docx_gen_key] = False
                         st.error("Errore Word")
                         with st.expander("Log"): st.text(de)
+            st.markdown('</div>', unsafe_allow_html=True)
             
             # --- PREVIEW ---
             if v['preview'] and v['pdf']:
@@ -3294,6 +3310,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
