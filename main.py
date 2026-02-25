@@ -64,56 +64,80 @@ def mostra_auth():
     html, body, [data-testid="stAppViewContainer"], .stApp {
         background: #0C0C0B !important;
         font-family: 'DM Sans', sans-serif !important;
+        overflow-x: hidden !important;
     }
-    [data-testid="stHeader"] { background: transparent !important; }
+    [data-testid="stHeader"] { display: none !important; }
     [data-testid="stDecoration"] { display: none !important; }
+    [data-testid="stToolbar"] { display: none !important; }
+    #MainMenu { display: none !important; }
+    footer { display: none !important; }
+
+    /* ── RESET BLOCCO CONTAINER ── */
     .block-container {
         padding: 0 !important;
         max-width: 100% !important;
+        margin: 0 !important;
     }
-    [data-testid="stMainBlockContainer"] { padding: 0 !important; }
-
-    /* ── NASCONDE TUTTO tranne il form ── */
-    [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlock"]:first-child {
-        display: none !important;
+    [data-testid="stMainBlockContainer"] {
+        padding: 0 !important;
+        max-width: 100% !important;
     }
-
-    /* ── LAYOUT AUTH ── */
-    .auth-page {
-        display: flex;
-        min-height: 100vh;
-        width: 100%;
-        font-family: 'DM Sans', sans-serif;
+    [data-testid="stVerticalBlock"] {
+        gap: 0 !important;
     }
 
-    /* COLONNA SINISTRA */
-    .auth-left {
-        flex: 1.1;
+    /* ── PANEL SINISTRO FISSO ── */
+    .auth-left-panel {
+        position: fixed;
+        top: 0; left: 0;
+        width: 55%;
+        height: 100vh;
         background: #0C0C0B;
-        padding: 4rem 5rem;
+        padding: 4rem 4.5rem;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        position: relative;
-        overflow: hidden;
+        overflow-y: auto;
+        z-index: 1;
+        box-sizing: border-box;
     }
-    .auth-left::before {
+    .auth-left-panel::before {
         content: '';
-        position: absolute;
+        position: fixed;
         top: -120px; left: -120px;
         width: 500px; height: 500px;
-        background: radial-gradient(circle, rgba(217,119,6,0.12) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(217,119,6,0.10) 0%, transparent 70%);
         pointer-events: none;
-    }
-    .auth-left::after {
-        content: '';
-        position: absolute;
-        bottom: -80px; right: -80px;
-        width: 350px; height: 350px;
-        background: radial-gradient(circle, rgba(217,119,6,0.07) 0%, transparent 70%);
-        pointer-events: none;
+        z-index: 0;
     }
 
+    /* ── PANEL DESTRO FISSO (sfondo) ── */
+    .auth-right-bg {
+        position: fixed;
+        top: 0; right: 0;
+        width: 45%;
+        height: 100vh;
+        background: #111110;
+        border-left: 1px solid #1E1D1A;
+        z-index: 1;
+    }
+    .auth-right-header {
+        padding: 3.5rem 3rem 1.5rem 3rem;
+    }
+    .auth-right-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #F5F4EF;
+        margin-bottom: 0.3rem;
+        letter-spacing: -0.02em;
+    }
+    .auth-right-sub {
+        font-size: 0.85rem;
+        color: #6B6960;
+        line-height: 1.5;
+    }
+
+    /* ── BADGE ── */
     .auth-badge {
         display: inline-flex;
         align-items: center;
@@ -142,12 +166,12 @@ def mostra_auth():
     }
 
     .auth-logo {
-        font-size: 3.8rem;
+        font-size: 3.5rem;
         font-weight: 900;
         letter-spacing: -0.04em;
         color: #F5F4EF;
         line-height: 1.0;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.4rem;
     }
     .auth-logo-ai {
         background: linear-gradient(135deg, #D97706 0%, #F59E0B 50%, #FF8C00 100%);
@@ -155,74 +179,80 @@ def mostra_auth():
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
-
     .auth-tagline {
-        font-size: 1.15rem;
+        font-size: 1.05rem;
         color: #8C8A82;
         font-weight: 400;
-        margin-bottom: 3rem;
+        margin-bottom: 2.5rem;
         line-height: 1.5;
-        max-width: 440px;
+        max-width: 420px;
     }
     .auth-tagline strong { color: #C8C6BC; font-weight: 600; }
 
     .feature-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 0.85rem;
-        max-width: 460px;
-        margin-bottom: 3rem;
+        gap: 0.75rem;
+        max-width: 440px;
+        margin-bottom: 2.5rem;
     }
     .feature-card {
         background: #161614;
         border: 1px solid #2A2926;
-        border-radius: 14px;
-        padding: 1rem 1.1rem;
-        transition: border-color 0.2s;
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
     }
-    .feature-card:hover { border-color: rgba(217,119,6,0.4); }
-    .feature-icon { font-size: 1.4rem; margin-bottom: 0.4rem; display: block; }
-    .feature-title { font-size: 0.82rem; font-weight: 700; color: #E5E4DF; margin-bottom: 0.2rem; }
-    .feature-desc { font-size: 0.72rem; color: #6B6960; line-height: 1.4; }
+    .feature-icon { font-size: 1.3rem; margin-bottom: 0.35rem; display: block; }
+    .feature-title { font-size: 0.8rem; font-weight: 700; color: #E5E4DF; margin-bottom: 0.2rem; }
+    .feature-desc { font-size: 0.71rem; color: #6B6960; line-height: 1.4; }
 
-    .auth-social-proof {
+    .auth-social {
         display: flex;
         align-items: center;
         gap: 1rem;
-        padding-top: 2rem;
+        padding-top: 1.8rem;
         border-top: 1px solid #1E1D1A;
     }
     .auth-avatars { display: flex; }
-    .auth-avatar {
-        width: 32px; height: 32px;
+    .auth-av {
+        width: 30px; height: 30px;
         border-radius: 50%;
         border: 2px solid #0C0C0B;
         background: linear-gradient(135deg, #D97706, #92400E);
         display: flex; align-items: center; justify-content: center;
-        font-size: 0.7rem; font-weight: 700; color: white;
-        margin-left: -8px;
+        font-size: 0.65rem; font-weight: 700; color: white;
+        margin-left: -7px;
     }
-    .auth-avatar:first-child { margin-left: 0; }
-    .auth-social-text { font-size: 0.78rem; color: #6B6960; line-height: 1.4; }
+    .auth-av:first-child { margin-left: 0; }
+    .auth-social-text { font-size: 0.76rem; color: #6B6960; line-height: 1.4; }
     .auth-social-text strong { color: #C8C6BC; }
 
-    /* COLONNA DESTRA — viene sovrapposta dai form Streamlit */
-    .auth-right-bg {
-        flex: 0.9;
-        background: #111110;
-        border-left: 1px solid #1E1D1A;
-        min-height: 100vh;
+    /* ── FORM STREAMLIT: sovrapposto al panel destro ── */
+    /* Tutto il blocco form viene spinto a destra */
+    [data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"] {
+        position: relative;
+        z-index: 10;
     }
 
-    @media (max-width: 768px) {
-        .auth-left { display: none; }
-        .auth-right-bg { display: none; }
+    /* Il primo div (HTML panel) è ignorato dal layout */
+    /* Le colonne Streamlit si posizionano sopra il right panel */
+    [data-testid="column"]:last-child {
+        position: fixed !important;
+        top: 0 !important;
+        right: 0 !important;
+        width: 45% !important;
+        height: 100vh !important;
+        padding: 5.5rem 3rem 2rem 3rem !important;
+        z-index: 20 !important;
+        background: transparent !important;
+        overflow-y: auto !important;
+    }
+    [data-testid="column"]:first-child {
+        visibility: hidden !important;
+        pointer-events: none !important;
     }
 
-    /* ── OVERRIDE FORM STREAMLIT per sembrare parte della colonna destra ── */
-    /* Il form viene renderizzato tramite st.columns([1.1, 0.9]) */
-
-    /* Tab styling */
+    /* ── TAB STYLING ── */
     [data-testid="stTabs"] [data-baseweb="tab-list"] {
         background: #1A1916 !important;
         border-radius: 10px !important;
@@ -245,30 +275,35 @@ def mostra_auth():
     }
     [data-testid="stTabs"] [data-baseweb="tab-highlight"] { display: none !important; }
 
-    /* Input styling */
+    /* ── INPUT STYLING ── */
     [data-testid="stTextInput"] input {
         background: #1A1916 !important;
-        border: 1px solid #2A2926 !important;
+        border: 1.5px solid #2A2926 !important;
         border-radius: 10px !important;
         color: #F5F4EF !important;
         font-family: 'DM Sans', sans-serif !important;
+        font-size: 0.92rem !important;
         padding: 12px 14px !important;
         min-height: 46px !important;
+        transition: border-color 0.15s ease !important;
     }
     [data-testid="stTextInput"] input:focus {
         border-color: #D97706 !important;
         box-shadow: 0 0 0 2px rgba(217,119,6,0.15) !important;
+        outline: none !important;
     }
-    [data-testid="stTextInput"] input::placeholder { color: #4A4840 !important; opacity: 1 !important; }
-
-    /* Label styling */
+    [data-testid="stTextInput"] input::placeholder {
+        color: #3A3830 !important;
+        opacity: 1 !important;
+    }
     [data-testid="stTextInput"] label p {
         color: #C8C6BC !important;
-        font-size: 0.83rem !important;
+        font-size: 0.82rem !important;
         font-weight: 600 !important;
+        font-family: 'DM Sans', sans-serif !important;
     }
 
-    /* Primary button */
+    /* ── BUTTON ── */
     div.stButton > button[kind="primary"] {
         background: #D97706 !important;
         color: white !important;
@@ -276,9 +311,8 @@ def mostra_auth():
         border-radius: 10px !important;
         font-weight: 700 !important;
         font-size: 0.95rem !important;
-        padding: 0.65rem 1rem !important;
         min-height: 48px !important;
-        box-shadow: 0 2px 16px rgba(217,119,6,0.3) !important;
+        box-shadow: 0 2px 16px rgba(217,119,6,0.35) !important;
         transition: filter 0.15s, transform 0.15s !important;
         width: 100% !important;
     }
@@ -286,6 +320,10 @@ def mostra_auth():
         filter: brightness(1.1) !important;
         transform: translateY(-1px) !important;
     }
+
+    /* Alert/warning */
+    .stAlert { border-radius: 8px !important; margin-top: 0.5rem !important; }
+    .stAlert p, .stAlert div { color: #1a1915 !important; font-size: 0.85rem !important; }
 
     .reset-note {
         font-size: 0.78rem;
@@ -298,112 +336,98 @@ def mostra_auth():
         margin-bottom: 1rem;
     }
 
-    .auth-form-header {
-        margin-bottom: 1.5rem;
-    }
-    .auth-form-title {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #F5F4EF;
-        margin-bottom: 0.3rem;
-        letter-spacing: -0.02em;
-        font-family: 'DM Sans', sans-serif;
-    }
-    .auth-form-sub {
-        font-size: 0.85rem;
-        color: #6B6960;
-        line-height: 1.5;
-    }
-
+    /* ── MOBILE: tutto in colonna singola ── */
     @media (max-width: 768px) {
-        .auth-form-title { font-size: 1.3rem; }
+        .auth-left-panel { display: none !important; }
+        .auth-right-bg { display: none !important; }
+        [data-testid="column"]:last-child {
+            position: relative !important;
+            width: 100% !important;
+            height: auto !important;
+            padding: 2.5rem 1.5rem !important;
+            right: auto !important;
+            top: auto !important;
+            background: #111110 !important;
+            min-height: 100vh !important;
+        }
+        html, body, .stApp {
+            background: #111110 !important;
+        }
     }
     </style>
+
+    <!-- Panel sinistro fisso (solo desktop) -->
+    <div class="auth-left-panel">
+      <div class="auth-badge">
+        <span class="auth-badge-dot"></span>
+        Generazione AI · Beta
+      </div>
+      <div class="auth-logo">📝&nbsp;Verific<span class="auth-logo-ai">AI</span></div>
+      <p class="auth-tagline">
+        Crea <strong>verifiche scolastiche professionali</strong> in 30 secondi.<br>
+        Tu dici l'argomento, l'AI fa il resto.
+      </p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="feature-icon">🧠</span>
+          <div class="feature-title">Generazione AI</div>
+          <div class="feature-desc">Esercizi calibrati sul livello della tua classe, corretti automaticamente</div>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📄</span>
+          <div class="feature-title">PDF & Word</div>
+          <div class="feature-desc">Esporta in alta qualità, pronto da stampare o condividere</div>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🔀</span>
+          <div class="feature-title">Fila A / B</div>
+          <div class="feature-desc">Due varianti diverse per evitare i copiatori, generate insieme</div>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">♿</span>
+          <div class="feature-title">BES / DSA</div>
+          <div class="feature-desc">Versione ridotta automatica per studenti con certificazione</div>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">✅</span>
+          <div class="feature-title">Soluzioni</div>
+          <div class="feature-desc">Documento soluzioni riservato al docente, generato insieme</div>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🏫</span>
+          <div class="feature-title">Tutti i livelli</div>
+          <div class="feature-desc">Elementari, medie, licei, istituti tecnici e professionali</div>
+        </div>
+      </div>
+      <div class="auth-social">
+        <div class="auth-avatars">
+          <div class="auth-av">GM</div>
+          <div class="auth-av">AR</div>
+          <div class="auth-av">FL</div>
+          <div class="auth-av" style="background:linear-gradient(135deg,#444,#222);font-size:0.6rem;">+</div>
+        </div>
+        <div class="auth-social-text">
+          Già usato da docenti di tutta Italia.<br>
+          <strong>Gratis durante il periodo Beta.</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel destro fisso (sfondo + header) -->
+    <div class="auth-right-bg">
+      <div class="auth-right-header">
+        <div class="auth-right-title">Inizia subito</div>
+        <div class="auth-right-sub">Crea un account gratuito o accedi se hai già un profilo.</div>
+      </div>
+    </div>
     """, unsafe_allow_html=True)
 
-    # Layout: colonna sinistra (HTML puro) | colonna destra (form Streamlit)
-    col_left, col_right = st.columns([1.1, 0.9], gap="small")
+    # Colonna sinistra vuota (placeholder per spingere il form a destra)
+    col_placeholder, col_form = st.columns([55, 45])
 
-    with col_left:
-        st.markdown("""
-        <div class="auth-left">
-          <div class="auth-badge">
-            <span class="auth-badge-dot"></span>
-            Generazione AI · Beta
-          </div>
-
-          <div class="auth-logo">
-            📝&nbsp;Verific<span class="auth-logo-ai">AI</span>
-          </div>
-
-          <p class="auth-tagline">
-            Crea <strong>verifiche scolastiche professionali</strong> in 30 secondi.<br>
-            Tu dici l'argomento, l'AI fa il resto.
-          </p>
-
-          <div class="feature-grid">
-            <div class="feature-card">
-              <span class="feature-icon">🧠</span>
-              <div class="feature-title">Generazione AI</div>
-              <div class="feature-desc">Esercizi calibrati sul livello della tua classe, corretti automaticamente</div>
-            </div>
-            <div class="feature-card">
-              <span class="feature-icon">📄</span>
-              <div class="feature-title">PDF & Word</div>
-              <div class="feature-desc">Esporta in alta qualità, pronto da stampare o condividere</div>
-            </div>
-            <div class="feature-card">
-              <span class="feature-icon">🔀</span>
-              <div class="feature-title">Fila A / B</div>
-              <div class="feature-desc">Due varianti diverse per evitare i copiatori, generate insieme</div>
-            </div>
-            <div class="feature-card">
-              <span class="feature-icon">♿</span>
-              <div class="feature-title">BES / DSA</div>
-              <div class="feature-desc">Versione ridotta automatica per studenti con certificazione</div>
-            </div>
-            <div class="feature-card">
-              <span class="feature-icon">✅</span>
-              <div class="feature-title">Soluzioni</div>
-              <div class="feature-desc">Documento soluzioni riservato al docente, generato insieme</div>
-            </div>
-            <div class="feature-card">
-              <span class="feature-icon">🏫</span>
-              <div class="feature-title">Tutti i livelli</div>
-              <div class="feature-desc">Elementari, medie, licei, istituti tecnici e professionali</div>
-            </div>
-          </div>
-
-          <div class="auth-social-proof">
-            <div class="auth-avatars">
-              <div class="auth-avatar">GM</div>
-              <div class="auth-avatar">AR</div>
-              <div class="auth-avatar">FL</div>
-              <div class="auth-avatar" style="background:linear-gradient(135deg,#555,#333);font-size:0.65rem;">+</div>
-            </div>
-            <div class="auth-social-text">
-              Già usato da docenti di tutta Italia.<br>
-              <strong>Gratis durante il periodo Beta.</strong>
-            </div>
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col_right:
-        # Contenitore con sfondo scuro per simulare la colonna destra
-        st.markdown("""
-        <div style="background:#111110;min-height:100vh;padding:3.5rem 2.5rem 2rem 2.5rem;
-                    border-left:1px solid #1E1D1A;">
-          <div class="auth-form-header">
-            <div class="auth-form-title">Inizia subito</div>
-            <div class="auth-form-sub">Crea un account gratuito o accedi se hai già un profilo.</div>
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Spazio per allineare i tab con il testo sopra
-        st.markdown('<div style="margin-top:-2rem;">', unsafe_allow_html=True)
-
+    with col_form:
+        st.write("")
+        st.write("")
         tab_login, tab_reg, tab_reset = st.tabs(["  Accedi  ", "  Registrati  ", "  Password  "])
 
         with tab_login:
@@ -428,7 +452,7 @@ def mostra_auth():
                     except Exception as e:
                         err_str = str(e).lower()
                         if "invalid login" in err_str or "invalid credentials" in err_str:
-                            st.warning("Password errata. Hai dimenticato la password? Usa il tab 'Password'.")
+                            st.warning("Password errata. Usa il tab 'Password' per reimpostarla.")
                         elif "email not confirmed" in err_str:
                             st.warning("Email non confermata. Controlla la tua casella di posta.")
                         elif "user not found" in err_str or "no user" in err_str:
@@ -3324,9 +3348,6 @@ st.markdown(f"""
 # ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
 
 # ── ONBOARDING: guida al primo accesso ───────────────────────────────────────────
-# SOSTITUISCI questo blocco nel tuo app.py:
-# (cerca "if not st.session_state._onboarding_done:")
-
 if not st.session_state._onboarding_done:
     _ob_col, _ob_close = st.columns([20, 1])
     with _ob_col:
@@ -3340,20 +3361,25 @@ if not st.session_state._onboarding_done:
             font-family: 'DM Sans', sans-serif;
         ">
           <div style="display:flex;align-items:flex-start;gap:14px;">
-            <div style="font-size:1.6rem;flex-shrink:0;margin-top:2px;">👋</div>
+            <div style="font-size:1.5rem;flex-shrink:0;margin-top:2px;">👋</div>
             <div style="flex:1;">
+
               <div style="font-size:0.95rem;font-weight:800;color:{T['text']};
-                          margin-bottom:0.6rem;letter-spacing:-0.01em;">
-                Benvenuto su VerificAI — come iniziare
+                          margin-bottom:0.8rem;letter-spacing:-0.01em;">
+                Come iniziare in 3 passi
               </div>
 
-              <!-- Riga impostazioni sidebar -->
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.55rem;">
-                <div style="width:22px;height:22px;border-radius:50%;background:{T['accent']};
-                            display:flex;align-items:center;justify-content:center;
-                            font-size:0.7rem;font-weight:900;color:white;flex-shrink:0;">⚙</div>
-                <div style="font-size:0.84rem;color:{T['text2']};">
-                  Prima di tutto, apri la <strong style="color:{T['accent']};">barra laterale ←</strong>
+              <!-- Step 0: sidebar -->
+              <div style="display:flex;align-items:center;gap:10px;
+                          padding:0.55rem 0.8rem;margin-bottom:0.5rem;
+                          background:{T['bg2']};border-radius:8px;
+                          border-left:3px solid {T['accent']};">
+                <div style="width:20px;height:20px;border-radius:50%;
+                            background:{T['accent']};display:flex;align-items:center;
+                            justify-content:center;font-size:0.65rem;font-weight:900;
+                            color:white;flex-shrink:0;">⚙</div>
+                <div style="font-size:0.83rem;color:{T['text2']};">
+                  Usa il menu <strong style="color:{T['text']};">☰ in alto a sinistra</strong>
                   per impostare il tipo di classe, le opzioni e il modello AI
                 </div>
               </div>
@@ -3361,27 +3387,27 @@ if not st.session_state._onboarding_done:
               <!-- Tre step inline -->
               <div style="display:flex;align-items:stretch;gap:0;
                           background:{T['bg2']};border:1px solid {T['border']};
-                          border-radius:10px;overflow:hidden;margin-top:0.6rem;">
-                <div style="flex:1;padding:0.7rem 0.9rem;border-right:1px solid {T['border']};">
-                  <div style="font-size:0.7rem;font-weight:800;color:{T['accent']};
+                          border-radius:10px;overflow:hidden;">
+                <div style="flex:1;padding:0.65rem 0.9rem;border-right:1px solid {T['border']};">
+                  <div style="font-size:0.68rem;font-weight:800;color:{T['accent']};
                               text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">
                     01 · Materia
                   </div>
-                  <div style="font-size:0.79rem;color:{T['text2']};">Scegli la materia</div>
+                  <div style="font-size:0.78rem;color:{T['text2']};">Scegli la materia dalla lista</div>
                 </div>
-                <div style="flex:1;padding:0.7rem 0.9rem;border-right:1px solid {T['border']};">
-                  <div style="font-size:0.7rem;font-weight:800;color:{T['accent']};
+                <div style="flex:1;padding:0.65rem 0.9rem;border-right:1px solid {T['border']};">
+                  <div style="font-size:0.68rem;font-weight:800;color:{T['accent']};
                               text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">
                     02 · Argomento
                   </div>
-                  <div style="font-size:0.79rem;color:{T['text2']};">Scrivi l'argomento</div>
+                  <div style="font-size:0.78rem;color:{T['text2']};">Scrivi l'argomento della verifica</div>
                 </div>
-                <div style="flex:1;padding:0.7rem 0.9rem;">
-                  <div style="font-size:0.7rem;font-weight:800;color:{T['accent']};
+                <div style="flex:1;padding:0.65rem 0.9rem;">
+                  <div style="font-size:0.68rem;font-weight:800;color:{T['accent']};
                               text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">
-                    03 · Genera
+                    03 · Genera 🚀
                   </div>
-                  <div style="font-size:0.79rem;color:{T['text2']};">Premi il bottone 🚀</div>
+                  <div style="font-size:0.78rem;color:{T['text2']};">Clicca il bottone arancione</div>
                 </div>
               </div>
 
@@ -3395,6 +3421,7 @@ if not st.session_state._onboarding_done:
             st.session_state._onboarding_done = True
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
+
 # STEP 1 — MATERIA
 st.markdown(f"""
 <div class="step-label">
@@ -4388,4 +4415,5 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
