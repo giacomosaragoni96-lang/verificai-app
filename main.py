@@ -3139,73 +3139,75 @@ st.markdown(f"""
 
 # ── ONBOARDING: guida al primo accesso ───────────────────────────────────────────
 if not st.session_state._onboarding_done:
+    # Estrai i colori PRIMA — nessuna f-string complessa
+    _c_accent      = T['accent']
+    _c_text        = T['text']
+    _c_text2       = T['text2']
+    _c_bg2         = T['bg2']
+    _c_border      = T['border']
+    _c_card        = T['card']
+    _c_accent_light = T['accent_light']
+
     _ob_col, _ob_close = st.columns([20, 1])
     with _ob_col:
-        st.markdown(f"""
-        <div style="background:linear-gradient(135deg,{T['accent_light']} 0%,{T['card']} 100%);
-                    border:1.5px solid {T['accent']};border-radius:14px;
-                    padding:1.1rem 1.4rem;margin-bottom:1.5rem;
-                    font-family:'DM Sans',sans-serif;">
-          <div style="display:flex;align-items:flex-start;gap:14px;">
-            <div style="font-size:1.5rem;flex-shrink:0;margin-top:2px;">👋</div>
-            <div style="flex:1;">
+        st.markdown(
+            f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
+            f'border:1.5px solid {_c_accent};border-radius:14px;'
+            f'padding:1.1rem 1.4rem;margin-bottom:1.5rem;font-family:DM Sans,sans-serif;">'
 
-              <div style="font-size:0.95rem;font-weight:800;color:{T['text']};
-                          margin-bottom:0.8rem;letter-spacing:-0.01em;">
-                Come iniziare in 3 passi
-              </div>
+            f'<div style="display:flex;align-items:flex-start;gap:14px;">'
+            f'<div style="font-size:1.5rem;flex-shrink:0;margin-top:2px;">👋</div>'
+            f'<div style="flex:1;">'
 
-              <div style="display:flex;align-items:center;gap:10px;
-                          padding:0.55rem 0.8rem;margin-bottom:0.5rem;
-                          background:{T['bg2']};border-radius:8px;
-                          border-left:3px solid {T['accent']};">
-                <div style="width:20px;height:20px;border-radius:50%;
-                            background:{T['accent']};display:flex;align-items:center;
-                            justify-content:center;font-size:0.65rem;font-weight:900;
-                            color:white;flex-shrink:0;">☰</div>
-                <div style="font-size:0.83rem;color:{T['text2']};">
-                  Apri il menu <strong style="color:{T['text']};">☰ in alto a sinistra</strong>
-                  per impostare classe, opzioni e modello AI
-                </div>
-              </div>
+            f'<div style="font-size:0.95rem;font-weight:800;color:{_c_text};'
+            f'margin-bottom:0.8rem;letter-spacing:-0.01em;">Come iniziare in 3 passi</div>'
 
-              <div style="display:flex;align-items:stretch;
-                          background:{T['bg2']};border:1px solid {T['border']};
-                          border-radius:10px;overflow:hidden;">
-                <div style="flex:1;padding:0.65rem 0.9rem;border-right:1px solid {T['border']};">
-                  <div style="font-size:0.68rem;font-weight:800;color:{T['accent']};
-                              text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">
-                    01 · Materia
-                  </div>
-                  <div style="font-size:0.78rem;color:{T['text2']};">Scegli la materia dalla lista</div>
-                </div>
-                <div style="flex:1;padding:0.65rem 0.9rem;border-right:1px solid {T['border']};">
-                  <div style="font-size:0.68rem;font-weight:800;color:{T['accent']};
-                              text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">
-                    02 · Argomento
-                  </div>
-                  <div style="font-size:0.78rem;color:{T['text2']};">Scrivi l'argomento della verifica</div>
-                </div>
-                <div style="flex:1;padding:0.65rem 0.9rem;">
-                  <div style="font-size:0.68rem;font-weight:800;color:{T['accent']};
-                              text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">
-                    03 · Genera 🚀
-                  </div>
-                  <div style="font-size:0.78rem;color:{T['text2']};">Clicca il bottone arancione</div>
-                </div>
-              </div>
+            f'<div style="display:flex;align-items:center;gap:10px;'
+            f'padding:0.55rem 0.8rem;margin-bottom:0.5rem;'
+            f'background:{_c_bg2};border-radius:8px;border-left:3px solid {_c_accent};">'
+            f'<div style="width:20px;height:20px;border-radius:50%;background:{_c_accent};'
+            f'display:flex;align-items:center;justify-content:center;'
+            f'font-size:0.65rem;font-weight:900;color:white;flex-shrink:0;">☰</div>'
+            f'<div style="font-size:0.83rem;color:{_c_text2};">'
+            f'Apri il menu <strong style="color:{_c_text};">☰ in alto a sinistra</strong>'
+            f' per impostare classe, opzioni e modello AI'
+            f'</div>'
+            f'</div>'
 
-            </div>
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
+            f'<div style="display:flex;background:{_c_bg2};border:1px solid {_c_border};'
+            f'border-radius:10px;overflow:hidden;">'
+
+            f'<div style="flex:1;padding:0.65rem 0.9rem;border-right:1px solid {_c_border};">'
+            f'<div style="font-size:0.68rem;font-weight:800;color:{_c_accent};'
+            f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">01 · Materia</div>'
+            f'<div style="font-size:0.78rem;color:{_c_text2};">Scegli la materia dalla lista</div>'
+            f'</div>'
+
+            f'<div style="flex:1;padding:0.65rem 0.9rem;border-right:1px solid {_c_border};">'
+            f'<div style="font-size:0.68rem;font-weight:800;color:{_c_accent};'
+            f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">02 · Argomento</div>'
+            f'<div style="font-size:0.78rem;color:{_c_text2};">Scrivi l\'argomento della verifica</div>'
+            f'</div>'
+
+            f'<div style="flex:1;padding:0.65rem 0.9rem;">'
+            f'<div style="font-size:0.68rem;font-weight:800;color:{_c_accent};'
+            f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">03 · Genera 🚀</div>'
+            f'<div style="font-size:0.78rem;color:{_c_text2};">Clicca il bottone arancione</div>'
+            f'</div>'
+
+            f'</div>'  # fine tre step
+            f'</div>'  # fine flex:1
+            f'</div>'  # fine display:flex
+            f'</div>', # fine card
+            unsafe_allow_html=True
+        )
     with _ob_close:
         st.markdown('<div style="padding-top:6px;">', unsafe_allow_html=True)
         if st.button("✕", key="_dismiss_onboarding", help="Chiudi"):
             st.session_state._onboarding_done = True
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
-
+        
 # STEP 1 — MATERIA
 st.markdown(f"""
 <div class="step-label">
@@ -4199,6 +4201,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
