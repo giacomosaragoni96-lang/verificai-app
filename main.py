@@ -3148,120 +3148,86 @@ if not st.session_state._onboarding_done:
     _c_accent_light = T['accent_light']
     _c_muted        = T['muted']
 
-    # CSS per il bottone dismiss — piccolo link testuale
+    # Banner
+    st.markdown(
+        f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
+        f'border:1.5px solid {_c_accent};border-radius:14px;'
+        f'padding:1.1rem 1.4rem 1rem 1.4rem;margin-bottom:0.3rem;font-family:DM Sans,sans-serif;">'
+        f'<div style="display:flex;align-items:flex-start;gap:12px;">'
+        f'<div style="font-size:1.4rem;flex-shrink:0;margin-top:1px;">👋</div>'
+        f'<div style="flex:1;">'
+        f'<div style="font-size:0.9rem;font-weight:800;color:{_c_text};margin-bottom:0.7rem;">Come iniziare</div>'
+        f'<div style="display:flex;align-items:center;gap:8px;padding:0.45rem 0.75rem;margin-bottom:0.5rem;'
+        f'background:{_c_bg2};border-radius:8px;border-left:3px solid {_c_accent};">'
+        f'<span>⚙️</span>'
+        f'<div style="font-size:0.8rem;color:{_c_text2};">Prima di tutto: apri '
+        f'<strong style="color:{_c_text};">☰ Impostazioni</strong> in alto a sinistra '
+        f'per scegliere classe e modello AI</div>'
+        f'</div>'
+        f'<div style="display:flex;background:{_c_bg2};border:1px solid {_c_border};border-radius:10px;overflow:hidden;">'
+        f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
+        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">01 · Materia</div>'
+        f'<div style="font-size:0.76rem;color:{_c_text2};">Scegli la materia</div>'
+        f'</div>'
+        f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
+        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">02 · Argomento</div>'
+        f'<div style="font-size:0.76rem;color:{_c_text2};">Scrivi l\'argomento</div>'
+        f'</div>'
+        f'<div style="flex:1;padding:0.6rem 0.85rem;">'
+        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">03 · Personalizza</div>'
+        f'<div style="font-size:0.76rem;color:{_c_text2};">Opzioni avanzate (facoltativo)</div>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+    # Riga "Ho capito" — semplice, allineata a destra con CSS
     st.markdown(f"""
     <style>
-    .ob-dismiss div.stButton > button {{
+    .ob-row {{
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 0.8rem;
+        margin-top: 0;
+    }}
+    .ob-row div.stButton > button {{
         background: transparent !important;
         border: none !important;
         color: {_c_muted} !important;
-        font-size: 0.75rem !important;
+        font-size: 0.78rem !important;
         font-weight: 500 !important;
         text-decoration: underline !important;
         text-underline-offset: 2px !important;
-        padding: 0 !important;
+        padding: 2px 0 !important;
         min-height: unset !important;
         height: auto !important;
         box-shadow: none !important;
         transform: none !important;
         width: auto !important;
-        display: inline !important;
     }}
-    .ob-dismiss div.stButton > button:hover {{
-        color: {_c_text2} !important;
+    .ob-row div.stButton > button:hover {{
+        color: {_c_text} !important;
         background: transparent !important;
-        transform: none !important;
         box-shadow: none !important;
-        text-decoration: underline !important;
-    }}
-    .ob-dismiss {{
-        margin-top: -0.5rem !important;
+        transform: none !important;
     }}
     </style>
+    <div class="ob-row">
     """, unsafe_allow_html=True)
 
-    # Banner
+    if st.button("Ho capito, non mostrare più →", key="_dismiss_onboarding"):
+        st.session_state._onboarding_done = True
+        st.rerun()
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Disclaimer
     st.markdown(
-        f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
-        f'border:1.5px solid {_c_accent};border-radius:14px 14px 0 0;'
-        f'padding:1.1rem 1.4rem 1rem 1.4rem;font-family:DM Sans,sans-serif;">'
-
-        f'<div style="display:flex;align-items:flex-start;gap:12px;">'
-        f'<div style="font-size:1.4rem;flex-shrink:0;margin-top:1px;">👋</div>'
-        f'<div style="flex:1;">'
-
-        f'<div style="font-size:0.9rem;font-weight:800;color:{_c_text};'
-        f'margin-bottom:0.7rem;letter-spacing:-0.01em;">Come iniziare</div>'
-
-        f'<div style="display:flex;align-items:center;gap:8px;'
-        f'padding:0.45rem 0.75rem;margin-bottom:0.5rem;'
-        f'background:{_c_bg2};border-radius:8px;border-left:3px solid {_c_accent};">'
-        f'<span style="font-size:0.85rem;">⚙️</span>'
-        f'<div style="font-size:0.8rem;color:{_c_text2};">'
-        f'Prima di tutto: apri <strong style="color:{_c_text};">☰ Impostazioni</strong>'
-        f' in alto a sinistra per scegliere classe e modello AI'
-        f'</div>'
-        f'</div>'
-
-        f'<div style="display:flex;background:{_c_bg2};border:1px solid {_c_border};'
-        f'border-radius:10px;overflow:hidden;">'
-
-        f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
-        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};'
-        f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">01 · Materia</div>'
-        f'<div style="font-size:0.76rem;color:{_c_text2};">Scegli la materia</div>'
-        f'</div>'
-
-        f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
-        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};'
-        f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">02 · Argomento</div>'
-        f'<div style="font-size:0.76rem;color:{_c_text2};">Scrivi l\'argomento</div>'
-        f'</div>'
-
-        f'<div style="flex:1;padding:0.6rem 0.85rem;">'
-        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};'
-        f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">03 · Personalizza</div>'
-        f'<div style="font-size:0.76rem;color:{_c_text2};">Opzioni avanzate (facoltativo)</div>'
-        f'</div>'
-
-        f'</div>'  # fine step box
-        f'</div>'  # fine flex:1
-        f'</div>'  # fine display:flex
-        f'</div>',  # fine card (bordo solo in alto e lati)
-        unsafe_allow_html=True
-    )
-
-    # Footer del banner — stesso sfondo, bordo continuo, contiene il bottone
-    _spacer, _btn_col = st.columns([5, 1])
-    with _btn_col:
-        st.markdown(
-            f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
-            f'border:1.5px solid {_c_accent};border-top:none;border-radius:0 0 14px 14px;'
-            f'padding:0.4rem 1.4rem 0.6rem 1.4rem;margin-bottom:0.6rem;'
-            f'text-align:right;">',
-            unsafe_allow_html=True
-        )
-        st.markdown('<div class="ob-dismiss">', unsafe_allow_html=True)
-        if st.button("Ho capito, non mostrare più", key="_dismiss_onboarding"):
-            st.session_state._onboarding_done = True
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with _spacer:
-        st.markdown(
-            f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
-            f'border:1.5px solid {_c_accent};border-top:none;border-right:none;'
-            f'border-radius:0 0 0 14px;padding:0.4rem 0 0.6rem 0;margin-bottom:0.6rem;">',
-            unsafe_allow_html=True
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    # Disclaimer AI
-    st.markdown(
-        f'<div style="display:flex;align-items:flex-start;gap:8px;'
-        f'padding:0.6rem 0.9rem;margin-bottom:1.2rem;'
-        f'background:{_c_bg2};border-radius:8px;border:1px solid {_c_border};">'
+        f'<div style="display:flex;align-items:flex-start;gap:8px;padding:0.6rem 0.9rem;'
+        f'margin-bottom:1.2rem;background:{_c_bg2};border-radius:8px;border:1px solid {_c_border};">'
         f'<span style="font-size:0.85rem;flex-shrink:0;margin-top:1px;">⚠️</span>'
         f'<span style="font-size:0.75rem;color:{_c_muted};line-height:1.45;">'
         f'Le verifiche generate dall\'AI sono <strong style="color:{_c_text2};">suggerimenti didattici</strong>. '
@@ -4268,6 +4234,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
