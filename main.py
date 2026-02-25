@@ -67,28 +67,37 @@ def mostra_auth():
     }
     [data-testid="stHeader"] { background: transparent !important; }
     [data-testid="stDecoration"] { display: none !important; }
-    .block-container { padding: 0 !important; max-width: 100% !important; }
+    .block-container {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
     [data-testid="stMainBlockContainer"] { padding: 0 !important; }
 
-    /* ── LAYOUT ── */
-    .landing-wrap {
+    /* ── NASCONDE TUTTO tranne il form ── */
+    [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlock"]:first-child {
+        display: none !important;
+    }
+
+    /* ── LAYOUT AUTH ── */
+    .auth-page {
         display: flex;
         min-height: 100vh;
         width: 100%;
+        font-family: 'DM Sans', sans-serif;
     }
 
-    /* ── LEFT PANEL ── */
-    .landing-left {
+    /* COLONNA SINISTRA */
+    .auth-left {
         flex: 1.1;
         background: #0C0C0B;
-        padding: 4rem 5rem 4rem 5rem;
+        padding: 4rem 5rem;
         display: flex;
         flex-direction: column;
         justify-content: center;
         position: relative;
         overflow: hidden;
     }
-    .landing-left::before {
+    .auth-left::before {
         content: '';
         position: absolute;
         top: -120px; left: -120px;
@@ -96,7 +105,7 @@ def mostra_auth():
         background: radial-gradient(circle, rgba(217,119,6,0.12) 0%, transparent 70%);
         pointer-events: none;
     }
-    .landing-left::after {
+    .auth-left::after {
         content: '';
         position: absolute;
         bottom: -80px; right: -80px;
@@ -105,7 +114,7 @@ def mostra_auth():
         pointer-events: none;
     }
 
-    .landing-badge {
+    .auth-badge {
         display: inline-flex;
         align-items: center;
         gap: 7px;
@@ -121,7 +130,7 @@ def mostra_auth():
         margin-bottom: 2rem;
         width: fit-content;
     }
-    .landing-badge-dot {
+    .auth-badge-dot {
         width: 6px; height: 6px;
         border-radius: 50%;
         background: #F59E0B;
@@ -132,7 +141,7 @@ def mostra_auth():
         50% { opacity: 0.5; transform: scale(0.8); }
     }
 
-    .landing-logo {
+    .auth-logo {
         font-size: 3.8rem;
         font-weight: 900;
         letter-spacing: -0.04em;
@@ -140,14 +149,14 @@ def mostra_auth():
         line-height: 1.0;
         margin-bottom: 0.5rem;
     }
-    .landing-logo-ai {
+    .auth-logo-ai {
         background: linear-gradient(135deg, #D97706 0%, #F59E0B 50%, #FF8C00 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
 
-    .landing-tagline {
+    .auth-tagline {
         font-size: 1.15rem;
         color: #8C8A82;
         font-weight: 400;
@@ -155,9 +164,8 @@ def mostra_auth():
         line-height: 1.5;
         max-width: 440px;
     }
-    .landing-tagline strong { color: #C8C6BC; font-weight: 600; }
+    .auth-tagline strong { color: #C8C6BC; font-weight: 600; }
 
-    /* Feature cards */
     .feature-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -173,81 +181,49 @@ def mostra_auth():
         transition: border-color 0.2s;
     }
     .feature-card:hover { border-color: rgba(217,119,6,0.4); }
-    .feature-icon {
-        font-size: 1.4rem;
-        margin-bottom: 0.4rem;
-        display: block;
-    }
-    .feature-title {
-        font-size: 0.82rem;
-        font-weight: 700;
-        color: #E5E4DF;
-        margin-bottom: 0.2rem;
-    }
-    .feature-desc {
-        font-size: 0.72rem;
-        color: #6B6960;
-        line-height: 1.4;
-    }
+    .feature-icon { font-size: 1.4rem; margin-bottom: 0.4rem; display: block; }
+    .feature-title { font-size: 0.82rem; font-weight: 700; color: #E5E4DF; margin-bottom: 0.2rem; }
+    .feature-desc { font-size: 0.72rem; color: #6B6960; line-height: 1.4; }
 
-    /* Social proof */
-    .social-proof {
+    .auth-social-proof {
         display: flex;
         align-items: center;
         gap: 1rem;
         padding-top: 2rem;
         border-top: 1px solid #1E1D1A;
     }
-    .avatars {
-        display: flex;
-    }
-    .avatar-bubble {
+    .auth-avatars { display: flex; }
+    .auth-avatar {
         width: 32px; height: 32px;
         border-radius: 50%;
         border: 2px solid #0C0C0B;
         background: linear-gradient(135deg, #D97706, #92400E);
         display: flex; align-items: center; justify-content: center;
-        font-size: 0.7rem;
-        font-weight: 700;
-        color: white;
+        font-size: 0.7rem; font-weight: 700; color: white;
         margin-left: -8px;
     }
-    .avatar-bubble:first-child { margin-left: 0; }
-    .social-text {
-        font-size: 0.78rem;
-        color: #6B6960;
-        line-height: 1.4;
-    }
-    .social-text strong { color: #C8C6BC; }
+    .auth-avatar:first-child { margin-left: 0; }
+    .auth-social-text { font-size: 0.78rem; color: #6B6960; line-height: 1.4; }
+    .auth-social-text strong { color: #C8C6BC; }
 
-    /* ── RIGHT PANEL ── */
-    .landing-right {
+    /* COLONNA DESTRA — viene sovrapposta dai form Streamlit */
+    .auth-right-bg {
         flex: 0.9;
         background: #111110;
         border-left: 1px solid #1E1D1A;
-        padding: 3.5rem 3.5rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
         min-height: 100vh;
     }
 
-    .auth-panel-title {
-        font-size: 1.4rem;
-        font-weight: 800;
-        color: #F5F4EF;
-        margin-bottom: 0.3rem;
-        letter-spacing: -0.02em;
-    }
-    .auth-panel-sub {
-        font-size: 0.83rem;
-        color: #6B6960;
-        margin-bottom: 2rem;
-        line-height: 1.5;
+    @media (max-width: 768px) {
+        .auth-left { display: none; }
+        .auth-right-bg { display: none; }
     }
 
-    /* Override Streamlit tabs inside auth */
-    .landing-right [data-testid="stTabs"] [data-baseweb="tab-list"] {
+    /* ── OVERRIDE FORM STREAMLIT per sembrare parte della colonna destra ── */
+    /* Il form viene renderizzato tramite st.columns([1.1, 0.9]) */
+
+    /* Tab styling */
+    [data-testid="stTabs"] [data-baseweb="tab-list"] {
         background: #1A1916 !important;
         border-radius: 10px !important;
         padding: 4px !important;
@@ -255,7 +231,7 @@ def mostra_auth():
         border: 1px solid #2A2926 !important;
         margin-bottom: 1.5rem !important;
     }
-    .landing-right [data-testid="stTabs"] [data-baseweb="tab"] {
+    [data-testid="stTabs"] [data-baseweb="tab"] {
         border-radius: 7px !important;
         font-size: 0.82rem !important;
         font-weight: 600 !important;
@@ -263,48 +239,57 @@ def mostra_auth():
         padding: 0.4rem 1rem !important;
         background: transparent !important;
     }
-    .landing-right [data-testid="stTabs"] [aria-selected="true"] {
+    [data-testid="stTabs"] [aria-selected="true"] {
         background: #2A2926 !important;
         color: #F5F4EF !important;
     }
-    .landing-right [data-testid="stTabs"] [data-baseweb="tab-highlight"] {
-        display: none !important;
-    }
-    .landing-right input {
+    [data-testid="stTabs"] [data-baseweb="tab-highlight"] { display: none !important; }
+
+    /* Input styling */
+    [data-testid="stTextInput"] input {
         background: #1A1916 !important;
         border: 1px solid #2A2926 !important;
         border-radius: 10px !important;
         color: #F5F4EF !important;
         font-family: 'DM Sans', sans-serif !important;
+        padding: 12px 14px !important;
+        min-height: 46px !important;
     }
-    .landing-right input:focus {
+    [data-testid="stTextInput"] input:focus {
         border-color: #D97706 !important;
         box-shadow: 0 0 0 2px rgba(217,119,6,0.15) !important;
     }
-    .landing-right div.stButton > button[kind="primary"] {
+    [data-testid="stTextInput"] input::placeholder { color: #4A4840 !important; opacity: 1 !important; }
+
+    /* Label styling */
+    [data-testid="stTextInput"] label p {
+        color: #C8C6BC !important;
+        font-size: 0.83rem !important;
+        font-weight: 600 !important;
+    }
+
+    /* Primary button */
+    div.stButton > button[kind="primary"] {
         background: #D97706 !important;
         color: white !important;
         border: none !important;
         border-radius: 10px !important;
         font-weight: 700 !important;
         font-size: 0.95rem !important;
-        padding: 0.6rem 1rem !important;
+        padding: 0.65rem 1rem !important;
+        min-height: 48px !important;
         box-shadow: 0 2px 16px rgba(217,119,6,0.3) !important;
         transition: filter 0.15s, transform 0.15s !important;
+        width: 100% !important;
     }
-    .landing-right div.stButton > button[kind="primary"]:hover {
+    div.stButton > button[kind="primary"]:hover {
         filter: brightness(1.1) !important;
         transform: translateY(-1px) !important;
-    }
-    .landing-right label {
-        color: #C8C6BC !important;
-        font-size: 0.83rem !important;
-        font-weight: 600 !important;
     }
 
     .reset-note {
         font-size: 0.78rem;
-        color: #6B6960;
+        color: #8C8A82;
         line-height: 1.5;
         padding: 0.8rem 1rem;
         background: #161614;
@@ -313,101 +298,112 @@ def mostra_auth():
         margin-bottom: 1rem;
     }
 
-    /* Mobile: stack vertically */
+    .auth-form-header {
+        margin-bottom: 1.5rem;
+    }
+    .auth-form-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #F5F4EF;
+        margin-bottom: 0.3rem;
+        letter-spacing: -0.02em;
+        font-family: 'DM Sans', sans-serif;
+    }
+    .auth-form-sub {
+        font-size: 0.85rem;
+        color: #6B6960;
+        line-height: 1.5;
+    }
+
     @media (max-width: 768px) {
-        .landing-left { display: none; }
-        .landing-right {
-            padding: 2.5rem 1.5rem;
-            border-left: none;
-            min-height: 100vh;
-        }
-        .landing-right::before {
-            content: '';
-            display: block;
-            text-align: center;
-            font-size: 2.2rem;
-            font-weight: 900;
-            color: #F5F4EF;
-            margin-bottom: 2rem;
-        }
+        .auth-form-title { font-size: 1.3rem; }
     }
     </style>
-
-    <div class="landing-wrap">
-      <!-- LEFT: hero -->
-      <div class="landing-left">
-        <div class="landing-badge">
-          <span class="landing-badge-dot"></span>
-          Generazione AI · Beta
-        </div>
-
-        <div class="landing-logo">
-          📝&nbsp;Verific<span class="landing-logo-ai">AI</span>
-        </div>
-
-        <p class="landing-tagline">
-          Crea <strong>verifiche scolastiche professionali</strong> in 30 secondi.<br>
-          Tu dici l'argomento, l'AI fa il resto.
-        </p>
-
-        <div class="feature-grid">
-          <div class="feature-card">
-            <span class="feature-icon">🧠</span>
-            <div class="feature-title">Generazione AI</div>
-            <div class="feature-desc">Esercizi calibrati sul livello della tua classe, corretti automaticamente</div>
-          </div>
-          <div class="feature-card">
-            <span class="feature-icon">📄</span>
-            <div class="feature-title">PDF & Word</div>
-            <div class="feature-desc">Esporta in alta qualità, pronto da stampare o condividere</div>
-          </div>
-          <div class="feature-card">
-            <span class="feature-icon">🔀</span>
-            <div class="feature-title">Fila A / B</div>
-            <div class="feature-desc">Due varianti diverse per evitare i copiatori, generate insieme</div>
-          </div>
-          <div class="feature-card">
-            <span class="feature-icon">♿</span>
-            <div class="feature-title">BES / DSA</div>
-            <div class="feature-desc">Versione ridotta automatica per studenti con certificazione</div>
-          </div>
-          <div class="feature-card">
-            <span class="feature-icon">✅</span>
-            <div class="feature-title">Soluzioni</div>
-            <div class="feature-desc">Documento soluzioni riservato al docente, generato insieme</div>
-          </div>
-          <div class="feature-card">
-            <span class="feature-icon">🏫</span>
-            <div class="feature-title">Tutti i livelli</div>
-            <div class="feature-desc">Elementari, medie, licei, istituti tecnici e professionali</div>
-          </div>
-        </div>
-
-        <div class="social-proof">
-          <div class="avatars">
-            <div class="avatar-bubble">GM</div>
-            <div class="avatar-bubble">AR</div>
-            <div class="avatar-bubble">FL</div>
-            <div class="avatar-bubble">+</div>
-          </div>
-          <div class="social-text">
-            Già usato da docenti di tutta Italia.<br>
-            <strong>Gratis durante il periodo Beta.</strong>
-          </div>
-        </div>
-      </div>
-
-      <!-- RIGHT: auth form placeholder — rendered by Streamlit below -->
-      <div class="landing-right">
-        <div class="auth-panel-title">Inizia subito</div>
-        <div class="auth-panel-sub">Crea un account gratuito o accedi se hai già un profilo.</div>
-      </div>
-    </div>
     """, unsafe_allow_html=True)
 
-    # Il form Streamlit va sovrapposto alla right panel via columns
-    _, col_form, _ = st.columns([1.15, 0.85, 0.01])
-    with col_form:
+    # Layout: colonna sinistra (HTML puro) | colonna destra (form Streamlit)
+    col_left, col_right = st.columns([1.1, 0.9], gap="small")
+
+    with col_left:
+        st.markdown("""
+        <div class="auth-left">
+          <div class="auth-badge">
+            <span class="auth-badge-dot"></span>
+            Generazione AI · Beta
+          </div>
+
+          <div class="auth-logo">
+            📝&nbsp;Verific<span class="auth-logo-ai">AI</span>
+          </div>
+
+          <p class="auth-tagline">
+            Crea <strong>verifiche scolastiche professionali</strong> in 30 secondi.<br>
+            Tu dici l'argomento, l'AI fa il resto.
+          </p>
+
+          <div class="feature-grid">
+            <div class="feature-card">
+              <span class="feature-icon">🧠</span>
+              <div class="feature-title">Generazione AI</div>
+              <div class="feature-desc">Esercizi calibrati sul livello della tua classe, corretti automaticamente</div>
+            </div>
+            <div class="feature-card">
+              <span class="feature-icon">📄</span>
+              <div class="feature-title">PDF & Word</div>
+              <div class="feature-desc">Esporta in alta qualità, pronto da stampare o condividere</div>
+            </div>
+            <div class="feature-card">
+              <span class="feature-icon">🔀</span>
+              <div class="feature-title">Fila A / B</div>
+              <div class="feature-desc">Due varianti diverse per evitare i copiatori, generate insieme</div>
+            </div>
+            <div class="feature-card">
+              <span class="feature-icon">♿</span>
+              <div class="feature-title">BES / DSA</div>
+              <div class="feature-desc">Versione ridotta automatica per studenti con certificazione</div>
+            </div>
+            <div class="feature-card">
+              <span class="feature-icon">✅</span>
+              <div class="feature-title">Soluzioni</div>
+              <div class="feature-desc">Documento soluzioni riservato al docente, generato insieme</div>
+            </div>
+            <div class="feature-card">
+              <span class="feature-icon">🏫</span>
+              <div class="feature-title">Tutti i livelli</div>
+              <div class="feature-desc">Elementari, medie, licei, istituti tecnici e professionali</div>
+            </div>
+          </div>
+
+          <div class="auth-social-proof">
+            <div class="auth-avatars">
+              <div class="auth-avatar">GM</div>
+              <div class="auth-avatar">AR</div>
+              <div class="auth-avatar">FL</div>
+              <div class="auth-avatar" style="background:linear-gradient(135deg,#555,#333);font-size:0.65rem;">+</div>
+            </div>
+            <div class="auth-social-text">
+              Già usato da docenti di tutta Italia.<br>
+              <strong>Gratis durante il periodo Beta.</strong>
+            </div>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_right:
+        # Contenitore con sfondo scuro per simulare la colonna destra
+        st.markdown("""
+        <div style="background:#111110;min-height:100vh;padding:3.5rem 2.5rem 2rem 2.5rem;
+                    border-left:1px solid #1E1D1A;">
+          <div class="auth-form-header">
+            <div class="auth-form-title">Inizia subito</div>
+            <div class="auth-form-sub">Crea un account gratuito o accedi se hai già un profilo.</div>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Spazio per allineare i tab con il testo sopra
+        st.markdown('<div style="margin-top:-2rem;">', unsafe_allow_html=True)
+
         tab_login, tab_reg, tab_reset = st.tabs(["  Accedi  ", "  Registrati  ", "  Password  "])
 
         with tab_login:
@@ -483,6 +479,8 @@ def mostra_auth():
                         st.success("Email inviata! Controlla la casella di posta.")
                     except Exception as e:
                         st.error(f"Errore nell'invio: {e}")
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
 
 if 'utente' not in st.session_state:
@@ -3326,31 +3324,67 @@ st.markdown(f"""
 # ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
 
 # ── ONBOARDING: guida al primo accesso ───────────────────────────────────────────
+# SOSTITUISCI questo blocco nel tuo app.py:
+# (cerca "if not st.session_state._onboarding_done:")
+
 if not st.session_state._onboarding_done:
     _ob_col, _ob_close = st.columns([20, 1])
     with _ob_col:
         st.markdown(f"""
-        <div class="onboarding-banner">
-          <div style="font-size:1.5rem;flex-shrink:0;margin-top:2px;">👋</div>
-          <div style="flex:1;">
-            <div style="font-size:0.9rem;font-weight:700;color:{T['text']};margin-bottom:0.5rem;">
-              Benvenuto su VerificAI — tre passi per iniziare
-            </div>
-            <div class="onboarding-steps">
-              <div class="onboarding-step">
-                <span class="onboarding-step-ico">←</span>
-                Scegli la classe dalla barra laterale
+        <div style="
+            background: linear-gradient(135deg, {T['accent_light']} 0%, {T['card']} 100%);
+            border: 1.5px solid {T['accent']};
+            border-radius: 14px;
+            padding: 1.1rem 1.4rem;
+            margin-bottom: 1.5rem;
+            font-family: 'DM Sans', sans-serif;
+        ">
+          <div style="display:flex;align-items:flex-start;gap:14px;">
+            <div style="font-size:1.6rem;flex-shrink:0;margin-top:2px;">👋</div>
+            <div style="flex:1;">
+              <div style="font-size:0.95rem;font-weight:800;color:{T['text']};
+                          margin-bottom:0.6rem;letter-spacing:-0.01em;">
+                Benvenuto su VerificAI — come iniziare
               </div>
-              <div class="onboarding-step-arrow">▸</div>
-              <div class="onboarding-step">
-                <span class="onboarding-step-ico">✍</span>
-                Compila materia e argomento qui sotto
+
+              <!-- Riga impostazioni sidebar -->
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.55rem;">
+                <div style="width:22px;height:22px;border-radius:50%;background:{T['accent']};
+                            display:flex;align-items:center;justify-content:center;
+                            font-size:0.7rem;font-weight:900;color:white;flex-shrink:0;">⚙</div>
+                <div style="font-size:0.84rem;color:{T['text2']};">
+                  Prima di tutto, apri la <strong style="color:{T['accent']};">barra laterale ←</strong>
+                  per impostare il tipo di classe, le opzioni e il modello AI
+                </div>
               </div>
-              <div class="onboarding-step-arrow">▸</div>
-              <div class="onboarding-step">
-                <span class="onboarding-step-ico">🚀</span>
-                Premi "Genera Verifica" in fondo
+
+              <!-- Tre step inline -->
+              <div style="display:flex;align-items:stretch;gap:0;
+                          background:{T['bg2']};border:1px solid {T['border']};
+                          border-radius:10px;overflow:hidden;margin-top:0.6rem;">
+                <div style="flex:1;padding:0.7rem 0.9rem;border-right:1px solid {T['border']};">
+                  <div style="font-size:0.7rem;font-weight:800;color:{T['accent']};
+                              text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">
+                    01 · Materia
+                  </div>
+                  <div style="font-size:0.79rem;color:{T['text2']};">Scegli la materia</div>
+                </div>
+                <div style="flex:1;padding:0.7rem 0.9rem;border-right:1px solid {T['border']};">
+                  <div style="font-size:0.7rem;font-weight:800;color:{T['accent']};
+                              text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">
+                    02 · Argomento
+                  </div>
+                  <div style="font-size:0.79rem;color:{T['text2']};">Scrivi l'argomento</div>
+                </div>
+                <div style="flex:1;padding:0.7rem 0.9rem;">
+                  <div style="font-size:0.7rem;font-weight:800;color:{T['accent']};
+                              text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">
+                    03 · Genera
+                  </div>
+                  <div style="font-size:0.79rem;color:{T['text2']};">Premi il bottone 🚀</div>
+                </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -3361,7 +3395,6 @@ if not st.session_state._onboarding_done:
             st.session_state._onboarding_done = True
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
-
 # STEP 1 — MATERIA
 st.markdown(f"""
 <div class="step-label">
@@ -4355,3 +4388,4 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
