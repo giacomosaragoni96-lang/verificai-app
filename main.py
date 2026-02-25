@@ -461,6 +461,14 @@ def parse_esercizi(latex):
 
         if items_found:
             esercizi.append({'num': num_label, 'items': items_found})
+        else:
+            # Esercizio senza \item ma con punteggio nel testo del blocco (es. "Determina X. (25 pt)")
+            pt_global = re.search(
+                r'[\(\[]?\s*(\d+(?:[.,]\d+)?)\s*(?:pt|punt[io]|p\.?)\s*[\)\]]?',
+                block, re.IGNORECASE
+            )
+            if pt_global:
+                esercizi.append({'num': num_label, 'items': [('', pt_global.group(1))]})
     return esercizi
 
 def build_griglia_latex(esercizi, punti_totali):
@@ -472,7 +480,7 @@ def build_griglia_latex(esercizi, punti_totali):
         for ex in esercizi
     ) + " & \\textbf{Tot} \\\\ \\hline"
     row_sotto = "\\textbf{Sotto.}" + "".join(
-        f" & {label}" for ex in esercizi for label, _ in ex['items']
+        f" & {label if label else '—'}" for ex in esercizi for label, _ in ex['items']
     ) + " & \\\\ \\hline"
     row_max = "\\textbf{Max}" + "".join(
         f" & {pts}" for ex in esercizi for _, pts in ex['items']
@@ -1320,7 +1328,7 @@ def _vf():
             'pdf_ts': None, 'docx_ts': None, 'latex_originale': ''}
 
 if 'utente' not in st.session_state: st.session_state.utente = None
-if 'verifiche' not in st.session_state: st.session_state.verifiche = {'A': _vf(), 'B': _vf(), 'R': _vf()}
+if 'verifiche' not in st.session_state: st.session_state.verifiche = {'A': _vf(), 'B': _vf(), 'R': _vf(), 'RB': _vf(), 'S': {'latex': None, 'testo': None}}
 if 'esercizi_custom' not in st.session_state: st.session_state.esercizi_custom = []
 if 'last_materia'    not in st.session_state: st.session_state.last_materia = None
 if 'last_argomento'  not in st.session_state: st.session_state.last_argomento = None
@@ -1329,7 +1337,7 @@ if '_storico_refresh' not in st.session_state: st.session_state._storico_refresh
 if '_first_visit' not in st.session_state: st.session_state._first_visit = True
 
 # ── CALCOLA VERIFICHE DEL MESE (una volta per rerun) ────────────────────────────
-ADMIN_EMAILS = {"giacomosaragoni96@gmail.com"}  # ← sostituisci con la tua mail
+ADMIN_EMAILS = {"tua@email.com"}  # ← sostituisci con la tua mail
 
 _verifiche_mese_count = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
 _is_admin = (st.session_state.utente.email in ADMIN_EMAILS) if st.session_state.utente else False
@@ -2640,6 +2648,18 @@ with st.sidebar:
             format_func=lambda x: f"-{x}%",
         )
     doppia_fila = st.checkbox("Genera Versione A e B (due varianti)", value=False)
+    genera_soluzioni = st.checkbox(
+        "📋 Genera soluzioni della verifica",
+        value=False,
+        help="Verrà generato un documento separato con le soluzioni complete. Per le domande aperte le risposte saranno sintetiche (max 5 righe)."
+    )
+    bes_dsa_b = False
+    if bes_dsa and doppia_fila:
+        bes_dsa_b = st.checkbox(
+            "Genera versione ridotta anche per Fila B",
+            value=False,
+            help="Genera la versione ridotta (BES/DSA) anche per la Fila B"
+        )
 
     esercizio_multidisciplinare = False
     materia2_scelta  = None
@@ -2941,9 +2961,27 @@ if _limite_raggiunto:
     </div>
     """, unsafe_allow_html=True)
 else:
+    # ── hint dinamico: riepilogo file che verranno generati ──────────────
+    _files_hint = ["📄 Fila A"]
+    if doppia_fila:
+        _files_hint.append("📄 Fila B")
+    if bes_dsa:
+        _files_hint.append("♿ Ridotta A")
+    if bes_dsa and doppia_fila and bes_dsa_b:
+        _files_hint.append("♿ Ridotta B")
+    if genera_soluzioni:
+        _files_hint.append("✅ Soluzioni")
+    _files_str = " · ".join(_files_hint)
+    _n_files   = len(_files_hint)
     st.markdown(f"""
-    <div class="genera-hint">
-      <span>⏱</span> La verifica viene generata in circa 20–40 secondi
+    <div class="genera-hint" style="flex-direction:column;align-items:flex-start;gap:4px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span>⏱</span>
+        <span>Generazione in circa {20 + (_n_files-1)*15}–{40 + (_n_files-1)*20} secondi</span>
+      </div>
+      <div style="font-size:0.77rem;color:{T['muted']};margin-top:2px;">
+        <strong style="color:{T['text2']};">File generati ({_n_files}):</strong> {_files_str}
+      </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -2965,7 +3003,7 @@ if genera_btn and not _limite_raggiunto:
             punti_totali if mostra_punteggi else 0, mostra_punteggi)
         titolo_a = "Versione A" if doppia_fila else ""
 
-        _n_steps = 3 + (2 if doppia_fila else 0) + (1 if bes_dsa else 0)
+        _n_steps = 3 + (2 if doppia_fila else 0) + (1 if bes_dsa else 0) + (1 if bes_dsa and doppia_fila and bes_dsa_b else 0) + (1 if genera_soluzioni else 0)
         _step    = [0]
         _prog    = st.empty()
 
@@ -3241,6 +3279,99 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
                         st.session_state.verifiche['B']['pdf_ts'] = time.time()
                         st.session_state.verifiche['B']['preview'] = True
 
+        # ── VERIFICA RIDOTTA FILA B ───────────────────────────────────────────
+        if doppia_fila and bes_dsa and bes_dsa_b and perc_ridotta and st.session_state.verifiche['B']['latex']:
+            _avanza("⛳ Generazione verifica ridotta Fila B…")
+            prompt_ridotta_b = f"""Sei un docente esperto. Hai già generato questa verifica (Fila B):
+
+{corpo_latex_b}
+
+Crea una versione RIDOTTA per studenti con sostegno o certificazione (BES/DSA/NAI).
+Stessa logica della ridotta A: rimuovi circa il {perc_ridotta}% dei sottopunti più complessi, mantieni almeno 1 sottopunto per esercizio.
+{'Ridistribuisci i punti con somma ESATTAMENTE ' + str(punti_totali) + ' pt.' if mostra_punteggi else 'NON inserire punteggi.'}
+NON aggiungere note BES o indicazioni che si tratta di versione ridotta.
+SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo. TERMINA con \\end{{document}}."""
+
+            rb_bes_b = model.generate_content(prompt_ridotta_b)
+            corpo_lr_b = rb_bes_b.text.replace("```latex","").replace("```","").strip()
+            corpo_lr_b = pulisci_corpo_latex(corpo_lr_b)
+            preambolo_rb = preambolo_b.replace(titolo_header + " — Versione B", titolo_header + " — Versione B Ridotta") if "Versione B" in preambolo_b else preambolo_b
+            latex_ridotta_b = preambolo_rb + corpo_lr_b
+            latex_ridotta_b = fix_items_environment(latex_ridotta_b)
+            latex_ridotta_b = rimuovi_vspace_corpo(latex_ridotta_b)
+            if mostra_punteggi:
+                latex_ridotta_b = rimuovi_punti_subsection(latex_ridotta_b)
+                latex_ridotta_b = riscala_punti(latex_ridotta_b, punti_totali)
+            if con_griglia:
+                latex_ridotta_b = inietta_griglia(latex_ridotta_b, punti_totali)
+            st.session_state.verifiche['RB'] = {**_vf(), 'latex': latex_ridotta_b, 'latex_originale': latex_ridotta_b}
+            pdf_rb, _ = compila_pdf(latex_ridotta_b)
+            if pdf_rb:
+                st.session_state.verifiche['RB']['pdf']    = pdf_rb
+                st.session_state.verifiche['RB']['pdf_ts'] = time.time()
+                st.session_state.verifiche['RB']['preview'] = True
+
+        # ── SOLUZIONI ─────────────────────────────────────────────────────────
+        if genera_soluzioni:
+            _avanza("📋 Generazione soluzioni…")
+            prompt_sol = f"""Sei un docente di {materia}. Fornisci le soluzioni complete della seguente verifica.
+
+{corpo_latex}
+
+REGOLE TASSATIVE:
+- Per ogni esercizio scrivi "Esercizio N: [Titolo]" poi risolvi ogni sottopunto nell'ordine a), b), c)...
+- CALCOLI: mostra i passaggi chiave in modo sintetico, ma completo.
+- DOMANDE APERTE / TEORICHE: MASSIMO 5 RIGHE di risposta, concise e dirette. NON scrivere saggi.
+- SCELTA MULTIPLA / VERO-FALSO: scrivi solo la risposta corretta e una riga di motivazione.
+- NON riscrivere il testo della domanda originale, vai diretto alla soluzione.
+- Usa $...$ per le formule matematiche inline.
+- Rispondi con testo strutturato, senza preambolo LaTeX."""
+
+            rs = model.generate_content(prompt_sol)
+            testo_sol = rs.text.strip()
+
+            # Costruisci PDF soluzioni
+            _titolo_sol = f"Soluzioni — {materia}: {titolo_clean}"
+            latex_sol_body = ""
+            for line in testo_sol.split('\n'):
+                ls = line.strip()
+                if not ls:
+                    latex_sol_body += "\n\\vspace{0.15cm}\n"
+                elif re.match(r'^#{1,3}\s', ls):
+                    heading = re.sub(r'^#+\s*', '', ls)
+                    latex_sol_body += f"\n\\subsection*{{{heading}}}\n"
+                elif re.match(r'^Esercizio\s+\d+', ls, re.IGNORECASE):
+                    latex_sol_body += f"\n\\subsection*{{{ls}}}\n"
+                elif re.match(r'^[a-z]\)\s', ls):
+                    latex_sol_body += f"\\noindent\\textbf{{{ls[:2]}}} {ls[2:].strip()}\n\n"
+                else:
+                    latex_sol_body += ls + "\n"
+
+            latex_sol = f"""\\documentclass[11pt,a4paper]{{article}}
+\\usepackage[utf8]{{inputenc}}
+\\usepackage[italian]{{babel}}
+\\usepackage{{amsmath,amsfonts,amssymb,geometry}}
+\\geometry{{margin=2cm}}
+\\setlength{{\\parskip}}{{4pt}}
+\\pagestyle{{empty}}
+\\begin{{document}}
+\\begin{{center}}
+  \\textbf{{\\large {_titolo_sol}}} \\\\
+  \\vspace{{0.2cm}}
+  {{\\small \\textit{{Documento riservato al docente — non distribuire agli studenti}}}}
+\\end{{center}}
+\\vspace{{0.4cm}}
+{latex_sol_body}
+\\end{{document}}"""
+
+            st.session_state.verifiche['S']['latex'] = latex_sol
+            st.session_state.verifiche['S']['testo'] = testo_sol
+            pdf_sol, _ = compila_pdf(latex_sol)
+            if pdf_sol:
+                st.session_state.verifiche['S']['pdf']     = pdf_sol
+                st.session_state.verifiche['S']['pdf_ts']  = time.time()
+                st.session_state.verifiche['S']['preview'] = True
+
         _prog.markdown(f"""
 <div style="margin:0.6rem 0 1rem 0;">
   <div style="font-size:0.82rem;font-weight:600;color:{T['success']};
@@ -3293,6 +3424,8 @@ if st.session_state.verifiche['A']['latex']:
     attive = ['A','B'] if _df and st.session_state.verifiche['B']['latex'] else ['A']
     if st.session_state.verifiche['R']['latex']:
         attive.append('R')
+    if st.session_state.verifiche['RB']['latex']:
+        attive.append('RB')
 
     for idx, fid in enumerate(attive):
         v = st.session_state.verifiche[fid]
@@ -3300,7 +3433,9 @@ if st.session_state.verifiche['A']['latex']:
             st.divider()
         with st.container():
             if fid == 'R':
-                label_ver = "Verifica Ridotta"
+                label_ver = "Verifica Ridotta (Fila A)"
+            elif fid == 'RB':
+                label_ver = "Verifica Ridotta (Fila B)"
             elif _df:
                 label_ver = f"Versione {fid}"
             else:
@@ -3500,6 +3635,55 @@ if st.session_state.verifiche['A']['latex']:
                     help="Scarica il sorgente LaTeX per modificarlo"
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
+
+# ── SOLUZIONI ────────────────────────────────────────────────────────────────────
+if st.session_state.verifiche['S'].get('testo') or st.session_state.verifiche['S'].get('pdf'):
+    st.divider()
+    _arg_s = st.session_state.last_argomento or (argomento if 'argomento' in dir() else 'verifica')
+    v_s = st.session_state.verifiche['S']
+    st.markdown(f"""
+    <div style="background:linear-gradient(135deg, {T['accent_light']} 0%, {T['card']} 100%);
+                border:2px solid {T['success']};border-radius:16px;padding:0;
+                margin-bottom:1.8rem;overflow:hidden;box-shadow:0 4px 20px {T['success']}22;">
+      <div style="background:{T['success']};padding:1rem 1.3rem;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:1.8rem;">📋</span>
+          <div style="flex:1;">
+            <div style="font-family:'DM Sans',sans-serif;font-size:1.3rem;font-weight:900;color:#ffffff;letter-spacing:-0.02em;">
+              Soluzioni
+            </div>
+            <div style="font-size:0.75rem;color:#ffffff;opacity:0.85;font-weight:600;margin-top:2px;">
+              Documento riservato al docente
+            </div>
+          </div>
+          <div style="background:#ffffff22;border:1px solid #ffffff33;border-radius:20px;
+                      padding:6px 16px;font-size:0.72rem;font-weight:700;color:#ffffff;
+                      letter-spacing:0.05em;text-transform:uppercase;">🔒 Solo docente</div>
+        </div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if v_s.get('pdf'):
+        st.download_button(
+            label="📄 Scarica Soluzioni PDF",
+            data=v_s['pdf'],
+            file_name=f"Soluzioni_{_arg_s}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+            key="dl_sol_pdf"
+        )
+    st.write("")
+    if v_s.get('testo'):
+        with st.expander("👁 Mostra soluzioni", expanded=False):
+            st.markdown(v_s['testo'])
+    if v_s.get('pdf') and v_s.get('preview'):
+        with st.expander("👁 Anteprima PDF Soluzioni", expanded=False):
+            b64_s = base64.b64encode(v_s['pdf']).decode()
+            st.markdown(f"""
+            <iframe src="data:application/pdf;base64,{b64_s}#toolbar=0&navpanes=0&scrollbar=1"
+                    style="width:100%;height:500px;border:none;border-radius:8px;display:block;"></iframe>
+            """, unsafe_allow_html=True)
 
 # ── FOOTER ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
