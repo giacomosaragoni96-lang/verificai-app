@@ -3139,74 +3139,102 @@ st.markdown(f"""
 
 # ── ONBOARDING: guida al primo accesso ───────────────────────────────────────────
 if not st.session_state._onboarding_done:
-    # Estrai i colori PRIMA — nessuna f-string complessa
-    _c_accent      = T['accent']
-    _c_text        = T['text']
-    _c_text2       = T['text2']
-    _c_bg2         = T['bg2']
-    _c_border      = T['border']
-    _c_card        = T['card']
+    _c_accent       = T['accent']
+    _c_text         = T['text']
+    _c_text2        = T['text2']
+    _c_bg2          = T['bg2']
+    _c_border       = T['border']
+    _c_card         = T['card']
     _c_accent_light = T['accent_light']
+    _c_muted        = T['muted']
 
-    _ob_col, _ob_close = st.columns([20, 1])
-    with _ob_col:
+    # Usiamo un unico st.markdown per il banner + X integrata
+    st.markdown(
+        f'<div style="position:relative;background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
+        f'border:1.5px solid {_c_accent};border-radius:14px;'
+        f'padding:1.1rem 3rem 1.1rem 1.4rem;margin-bottom:0.6rem;font-family:DM Sans,sans-serif;">'
+
+        # X in alto a destra dentro il div
+        f'<div id="ob-dismiss" style="position:absolute;top:0.75rem;right:0.75rem;'
+        f'width:24px;height:24px;border-radius:50%;'
+        f'background:{_c_bg2};border:1px solid {_c_border};'
+        f'display:flex;align-items:center;justify-content:center;'
+        f'font-size:0.7rem;color:{_c_muted};cursor:pointer;line-height:1;'
+        f'font-weight:700;"></div>'  # placeholder visivo — il vero pulsante è sotto
+
+        f'<div style="display:flex;align-items:flex-start;gap:12px;">'
+        f'<div style="font-size:1.4rem;flex-shrink:0;margin-top:1px;">👋</div>'
+        f'<div style="flex:1;">'
+        f'<div style="font-size:0.9rem;font-weight:800;color:{_c_text};'
+        f'margin-bottom:0.7rem;letter-spacing:-0.01em;">Come iniziare</div>'
+
+        # Riga sidebar
+        f'<div style="display:flex;align-items:center;gap:8px;'
+        f'padding:0.45rem 0.75rem;margin-bottom:0.5rem;'
+        f'background:{_c_bg2};border-radius:8px;border-left:3px solid {_c_accent};">'
+        f'<span style="font-size:0.85rem;">⚙️</span>'
+        f'<div style="font-size:0.8rem;color:{_c_text2};">'
+        f'Prima di tutto: apri <strong style="color:{_c_text};">☰ Impostazioni</strong>'
+        f' in alto a sinistra per scegliere classe e modello AI'
+        f'</div>'
+        f'</div>'
+
+        # Tre step
+        f'<div style="display:flex;background:{_c_bg2};border:1px solid {_c_border};'
+        f'border-radius:10px;overflow:hidden;">'
+
+        f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
+        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};'
+        f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">01 · Materia</div>'
+        f'<div style="font-size:0.76rem;color:{_c_text2};">Scegli la materia</div>'
+        f'</div>'
+
+        f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
+        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};'
+        f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">02 · Argomento</div>'
+        f'<div style="font-size:0.76rem;color:{_c_text2};">Scrivi l\'argomento</div>'
+        f'</div>'
+
+        f'<div style="flex:1;padding:0.6rem 0.85rem;">'
+        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};'
+        f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">03 · Personalizza</div>'
+        f'<div style="font-size:0.76rem;color:{_c_text2};">Opzioni avanzate (facoltativo)</div>'
+        f'</div>'
+
+        f'</div>'  # fine step
+        f'</div>'  # fine flex:1
+        f'</div>'  # fine display:flex
+        f'</div>',  # fine card
+        unsafe_allow_html=True
+    )
+
+    # Pulsante X reale di Streamlit — piccolo, allineato a destra
+    _, _close_col = st.columns([20, 1])
+    with _close_col:
         st.markdown(
-            f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
-            f'border:1.5px solid {_c_accent};border-radius:14px;'
-            f'padding:1.1rem 1.4rem;margin-bottom:1.5rem;font-family:DM Sans,sans-serif;">'
-
-            f'<div style="display:flex;align-items:flex-start;gap:14px;">'
-            f'<div style="font-size:1.5rem;flex-shrink:0;margin-top:2px;">👋</div>'
-            f'<div style="flex:1;">'
-
-            f'<div style="font-size:0.95rem;font-weight:800;color:{_c_text};'
-            f'margin-bottom:0.8rem;letter-spacing:-0.01em;">Come iniziare in 3 passi</div>'
-
-            f'<div style="display:flex;align-items:center;gap:10px;'
-            f'padding:0.55rem 0.8rem;margin-bottom:0.5rem;'
-            f'background:{_c_bg2};border-radius:8px;border-left:3px solid {_c_accent};">'
-            f'<div style="width:20px;height:20px;border-radius:50%;background:{_c_accent};'
-            f'display:flex;align-items:center;justify-content:center;'
-            f'font-size:0.65rem;font-weight:900;color:white;flex-shrink:0;">☰</div>'
-            f'<div style="font-size:0.83rem;color:{_c_text2};">'
-            f'Apri il menu <strong style="color:{_c_text};">☰ in alto a sinistra</strong>'
-            f' per impostare classe, opzioni e modello AI'
-            f'</div>'
-            f'</div>'
-
-            f'<div style="display:flex;background:{_c_bg2};border:1px solid {_c_border};'
-            f'border-radius:10px;overflow:hidden;">'
-
-            f'<div style="flex:1;padding:0.65rem 0.9rem;border-right:1px solid {_c_border};">'
-            f'<div style="font-size:0.68rem;font-weight:800;color:{_c_accent};'
-            f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">01 · Materia</div>'
-            f'<div style="font-size:0.78rem;color:{_c_text2};">Scegli la materia dalla lista</div>'
-            f'</div>'
-
-            f'<div style="flex:1;padding:0.65rem 0.9rem;border-right:1px solid {_c_border};">'
-            f'<div style="font-size:0.68rem;font-weight:800;color:{_c_accent};'
-            f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">02 · Argomento</div>'
-            f'<div style="font-size:0.78rem;color:{_c_text2};">Scrivi l\'argomento della verifica</div>'
-            f'</div>'
-
-            f'<div style="flex:1;padding:0.65rem 0.9rem;">'
-            f'<div style="font-size:0.68rem;font-weight:800;color:{_c_accent};'
-            f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">03 · Genera 🚀</div>'
-            f'<div style="font-size:0.78rem;color:{_c_text2};">Clicca il bottone arancione</div>'
-            f'</div>'
-
-            f'</div>'  # fine tre step
-            f'</div>'  # fine flex:1
-            f'</div>'  # fine display:flex
-            f'</div>', # fine card
+            f'<div style="margin-top:-4.2rem;margin-bottom:3.8rem;">',
             unsafe_allow_html=True
         )
-    with _ob_close:
-        st.markdown('<div style="padding-top:6px;">', unsafe_allow_html=True)
         if st.button("✕", key="_dismiss_onboarding", help="Chiudi"):
             st.session_state._onboarding_done = True
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
+
+    # Disclaimer AI — sottile, subito sotto il banner
+    st.markdown(
+        f'<div style="display:flex;align-items:flex-start;gap:8px;'
+        f'padding:0.6rem 0.9rem;margin-bottom:1.2rem;'
+        f'background:{_c_bg2};border-radius:8px;border:1px solid {_c_border};">'
+        f'<span style="font-size:0.85rem;flex-shrink:0;margin-top:1px;">⚠️</span>'
+        f'<span style="font-size:0.75rem;color:{_c_muted};line-height:1.45;">'
+        f'Le verifiche generate dall\'AI sono <strong style="color:{_c_text2};">suggerimenti didattici</strong>. '
+        f'Controlla sempre contenuti, dati e punteggi prima di distribuirle agli studenti. '
+        f'Il docente rimane responsabile del materiale finale.'
+        f'</span>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
         
 # STEP 1 — MATERIA
 st.markdown(f"""
@@ -4201,6 +4229,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
