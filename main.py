@@ -3139,6 +3139,12 @@ st.markdown(f"""
 
 # ── ONBOARDING: guida al primo accesso ───────────────────────────────────────────
 if not st.session_state._onboarding_done:
+    # Controlla se l'utente ha cliccato "Ho capito" via query param
+    if st.query_params.get("_ob") == "done":
+        st.session_state._onboarding_done = True
+        st.query_params.pop("_ob", None)
+        st.rerun()
+
     _c_accent       = T['accent']
     _c_text         = T['text']
     _c_text2        = T['text2']
@@ -3151,11 +3157,13 @@ if not st.session_state._onboarding_done:
     st.markdown(
         f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
         f'border:1.5px solid {_c_accent};border-radius:14px;'
-        f'padding:1.1rem 1.4rem 1rem 1.4rem;margin-bottom:0.4rem;font-family:DM Sans,sans-serif;">'
+        f'padding:1.1rem 1.4rem 0.8rem 1.4rem;margin-bottom:0.8rem;font-family:DM Sans,sans-serif;">'
+
         f'<div style="display:flex;align-items:flex-start;gap:12px;">'
         f'<div style="font-size:1.4rem;flex-shrink:0;margin-top:1px;">👋</div>'
         f'<div style="flex:1;">'
         f'<div style="font-size:0.9rem;font-weight:800;color:{_c_text};margin-bottom:0.7rem;">Come iniziare</div>'
+
         f'<div style="display:flex;align-items:center;gap:8px;padding:0.45rem 0.75rem;margin-bottom:0.5rem;'
         f'background:{_c_bg2};border-radius:8px;border-left:3px solid {_c_accent};">'
         f'<span>⚙️</span>'
@@ -3163,7 +3171,8 @@ if not st.session_state._onboarding_done:
         f'<strong style="color:{_c_text};">☰ Impostazioni</strong> in alto a sinistra '
         f'per scegliere classe e modello AI</div>'
         f'</div>'
-        f'<div style="display:flex;background:{_c_bg2};border:1px solid {_c_border};border-radius:10px;overflow:hidden;">'
+
+        f'<div style="display:flex;background:{_c_bg2};border:1px solid {_c_border};border-radius:10px;overflow:hidden;margin-bottom:0.75rem;">'
         f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
         f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">01 · Materia</div>'
         f'<div style="font-size:0.76rem;color:{_c_text2};">Scegli la materia</div>'
@@ -3177,46 +3186,20 @@ if not st.session_state._onboarding_done:
         f'<div style="font-size:0.76rem;color:{_c_text2};">Opzioni avanzate (facoltativo)</div>'
         f'</div>'
         f'</div>'
+
+        # Link "Ho capito" dentro il banner — puro HTML/JS, nessun widget Streamlit
+        f'<div style="text-align:right;">'
+        f'<a href="?_ob=done" style="font-size:0.75rem;color:{_c_muted};'
+        f'text-decoration:underline;text-underline-offset:2px;cursor:pointer;'
+        f'font-family:DM Sans,sans-serif;font-weight:500;">'
+        f'Ho capito, non mostrare più →</a>'
         f'</div>'
-        f'</div>'
-        f'</div>',
+
+        f'</div>'  # fine flex:1
+        f'</div>'  # fine display:flex
+        f'</div>',  # fine card
         unsafe_allow_html=True
     )
-
-    # Checkbox piccolo e compatto — molto meno invasivo di un button
-    st.markdown(f"""
-    <style>
-    .ob-check .stCheckbox {{
-        margin-top: 0 !important;
-        margin-bottom: 0.8rem !important;
-    }}
-    .ob-check .stCheckbox label {{
-        font-size: 0.78rem !important;
-        color: {_c_muted} !important;
-        font-weight: 400 !important;
-        gap: 6px !important;
-    }}
-    .ob-check .stCheckbox label:hover {{
-        color: {_c_text2} !important;
-    }}
-    .ob-check [data-testid="stCheckbox"] span:first-child {{
-        width: 14px !important;
-        height: 14px !important;
-        border-radius: 3px !important;
-        border: 1px solid {_c_border} !important;
-        background: {_c_bg2} !important;
-        flex-shrink: 0 !important;
-    }}
-    </style>
-    <div class="ob-check">
-    """, unsafe_allow_html=True)
-
-    _dismiss = st.checkbox("Ho capito, non mostrare più", key="_dismiss_onboarding")
-    if _dismiss:
-        st.session_state._onboarding_done = True
-        st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
     # Disclaimer
     st.markdown(
@@ -3231,6 +3214,7 @@ if not st.session_state._onboarding_done:
         f'</div>',
         unsafe_allow_html=True
     )
+
 
 
 
@@ -4228,6 +4212,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
