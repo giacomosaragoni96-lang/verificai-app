@@ -23,32 +23,23 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
 supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-# ── PERSISTENT LOGIN: ripristina sessione dal token salvato in query params ──────
-def _ripristina_sessione():
-    """
-    Ripristina la sessione Supabase.
-    I token vengono salvati nei query_params dell'URL (sopravvivono a F5/refresh),
-    poi vengono usati per riautenticarsi automaticamente ad ogni caricamento.
-    """
-    if st.session_state.get('utente') is not None:
-        return  # già loggato
+LIMITE_MENSILE = 20  # ← numero massimo di verifiche al mese per utente free
 
-    # I query_params sopravvivono ai refresh della pagina (sono nell'URL)
+# ── PERSISTENT LOGIN ─────────────────────────────────────────────────────────────
+def _ripristina_sessione():
+    if st.session_state.get('utente') is not None:
+        return
     params = st.query_params
     access_token  = params.get("_at", None)
     refresh_token = params.get("_rt", None)
-
-    # Fallback: session_state (utile per reruns nella stessa sessione)
     if not access_token:
         access_token  = st.session_state.get("_sb_access_token")
         refresh_token = st.session_state.get("_sb_refresh_token")
-
     if access_token and refresh_token:
         try:
             sess = supabase.auth.set_session(access_token, refresh_token)
             if sess and sess.user:
                 st.session_state.utente = sess.user
-                # Aggiorna i token ruotati sia in session_state che in query_params
                 new_at = sess.session.access_token
                 new_rt = sess.session.refresh_token
                 st.session_state["_sb_access_token"] = new_at
@@ -57,7 +48,6 @@ def _ripristina_sessione():
                 st.query_params["_rt"] = new_rt
                 return
         except Exception:
-            # Token scaduto/invalido: pulisci e chiedi login
             st.query_params.pop("_at", None)
             st.query_params.pop("_rt", None)
             st.session_state.pop("_sb_access_token", None)
@@ -144,7 +134,9 @@ def mostra_auth():
 
     col = st.columns([1, 2, 1])[1]
     with col:
-        tab_login, tab_reg = st.tabs(["🔑  Accedi", "✨  Registrati"])
+        # ── 3 TAB: Accedi / Registrati / Reset Password ──────────────────────
+        tab_login, tab_reg, tab_reset = st.tabs(["🔑  Accedi", "✨  Registrati", "🔒  Reset Password"])
+
         with tab_login:
             email = st.text_input("Email", key="login_email", placeholder="docente@scuola.it")
             password = st.text_input("Password", type="password", key="login_pass", placeholder="••••••••")
@@ -156,7 +148,6 @@ def mostra_auth():
                     try:
                         res = supabase.auth.sign_in_with_password({"email": email, "password": password})
                         st.session_state.utente = res.user
-                        # Salva token in session_state E query_params (sopravvivono a F5)
                         at = res.session.access_token
                         rt = res.session.refresh_token
                         st.session_state["_sb_access_token"] = at
@@ -167,6 +158,7 @@ def mostra_auth():
                     except Exception as e:
                         st.warning(f"⚠️ Accesso non riuscito: {e}")
                         time.sleep(5)
+
         with tab_reg:
             email = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
             password = st.text_input("Password (min 6 caratteri)", type="password", key="reg_pass", placeholder="••••••••")
@@ -192,6 +184,26 @@ def mostra_auth():
                     except Exception as e:
                         st.error(f"Errore durante la registrazione: {e}")
 
+        # ── NUOVO: TAB RESET PASSWORD ─────────────────────────────────────────
+        with tab_reset:
+            st.markdown("""
+            <div style="font-size:0.85rem;color:#8C8A82;line-height:1.5;margin-bottom:0.8rem;">
+                Inserisci la tua email. Riceverai un link per reimpostare la password.
+            </div>
+            """, unsafe_allow_html=True)
+            email_reset = st.text_input("Email", key="reset_email", placeholder="docente@scuola.it")
+            st.write("")
+            if st.button("📧 Invia email di reset →", type="primary", use_container_width=True, key="btn_reset"):
+                if not email_reset:
+                    st.warning("Inserisci la tua email.")
+                else:
+                    try:
+                        supabase.auth.reset_password_email(email_reset)
+                        st.success("✅ Email inviata! Controlla la tua casella di posta e clicca il link di reset.")
+                    except Exception as e:
+                        st.error(f"Errore nell'invio: {e}")
+
+
 if 'utente' not in st.session_state:
     st.session_state.utente = None
 
@@ -211,7 +223,6 @@ MODELLI_DISPONIBILI = {
     "🧠 Pro 2.5 (massima qualità)":     "gemini-2.5-pro",
 }
 
-# ── TEMI ─────────────────────────────────────────────────────────────────────────
 THEMES = {
     "light": {
         "bg":           "#F7F7F5",
@@ -380,6 +391,23 @@ TIPI_ESERCIZIO = ["Aperto", "Scelta multipla", "Vero/Falso", "Completamento"]
 
 # ── FUNZIONI ───────────────────────────────────────────────────────────────────
 
+# ── NUOVO: contatore verifiche mensili ────────────────────────────────────────
+def _get_verifiche_mese(user_id):
+    """Restituisce il numero di verifiche generate dall'utente nel mese corrente."""
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    primo_mese = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+    try:
+        res = supabase_admin.table("verifiche_storico") \
+            .select("id", count="exact") \
+            .eq("user_id", user_id) \
+            .gte("created_at", primo_mese) \
+            .execute()
+        return res.count or 0
+    except Exception:
+        return 0
+
+
 def parse_esercizi(latex):
     esercizi = []
     ex_blocks = re.split(r'\\subsection\*\{', latex)[1:]
@@ -481,7 +509,7 @@ def fix_items_environment(latex):
     if in_bare_block:
         result.append(r'\end{enumerate}')
     return '\n'.join(result)
-    
+
 def rimuovi_vspace_corpo(latex):
     idx = latex.find('\\subsection*')
     if idx == -1:
@@ -551,7 +579,7 @@ def riscala_punti(latex, punti_totali_target):
         offset += len(nuovo) - len(vecchio)
 
     return risultato
-    
+
 def inietta_griglia(latex, punti_totali):
     latex = re.sub(
         r'(\\vspace\{[^}]+\}\s*)?% GRIGLIA.*?\\end\{center\}',
@@ -1118,7 +1146,6 @@ def latex_to_docx_via_ai(codice_latex, con_griglia=True):
 
 
 def modifica_verifica_con_ai(latex_originale, richiesta_modifica, model):
-    """Modifica una verifica esistente usando l'AI."""
     prompt = f"""Sei un docente esperto di LaTeX. Ti viene fornita una verifica già generata e una richiesta di modifica.
 
 VERIFICA ORIGINALE:
@@ -1140,11 +1167,8 @@ OUTPUT: SOLO codice LaTeX completo, senza ```latex né spiegazioni."""
 
     response = model.generate_content(prompt)
     latex_modificato = response.text.replace("```latex", "").replace("```", "").strip()
-    
-    # Assicurati che termini correttamente
     if "\\end{document}" not in latex_modificato:
         latex_modificato += "\n\\end{document}"
-    
     return latex_modificato
 
 def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_punteggi):
@@ -1247,17 +1271,20 @@ if 'esercizi_custom' not in st.session_state: st.session_state.esercizi_custom =
 if 'last_materia'    not in st.session_state: st.session_state.last_materia = None
 if 'last_argomento'  not in st.session_state: st.session_state.last_argomento = None
 if 'last_gen_ts'     not in st.session_state: st.session_state.last_gen_ts = None
-# Flag per aggiornare lo storico sidebar dopo il salvataggio
 if '_storico_refresh' not in st.session_state: st.session_state._storico_refresh = 0
 if '_first_visit' not in st.session_state: st.session_state._first_visit = True
+
+# ── CALCOLA VERIFICHE DEL MESE (una volta per rerun) ────────────────────────────
+_verifiche_mese_count = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
+_limite_raggiunto = _verifiche_mese_count >= LIMITE_MENSILE
 
 # ── CSS GLOBALE ──────────────────────────────────────────────────────────────────
 is_dark = (st.session_state.theme == "dark")
 
-_SB_LABEL   = "#c8c6bc"   
+_SB_LABEL   = "#c8c6bc"
 _SB_MUTED   = "#8a8880"
 _SB_BORDER  = "#2a2926"
-_SB_TEXT    = "#e8e6e0"   
+_SB_TEXT    = "#e8e6e0"
 
 st.markdown(f"""
 <style>
@@ -1387,7 +1414,6 @@ st.markdown(f"""
     color: #5a5950 !important;
     border-bottom-color: {_SB_BORDER} !important;
   }}
-  /* ── HAMBURGER BUTTON — sempre visibile, mai perso ── */
   [data-testid="collapsedControl"] {{
     top: 0.75rem !important;
     left: 0.75rem !important;
@@ -1425,7 +1451,6 @@ st.markdown(f"""
     height: 18px !important;
   }}
 
-  /* ── SIDEBAR LABELS MIGLIORATI ── */
   [data-testid="stSidebar"] .sidebar-label,
   .sidebar-label {{
     font-size: 0.72rem !important;
@@ -1439,7 +1464,6 @@ st.markdown(f"""
     display: block !important;
   }}
 
-  /* ── LOGOUT BUTTON — massima specificità per vincere sulle regole sidebar ── */
   [data-testid="stSidebar"] .logout-btn-wrap div.stButton > button,
   [data-testid="stSidebar"] .logout-btn-wrap .stButton button,
   [data-testid="stSidebar"] .logout-btn-wrap button {{
@@ -1465,14 +1489,12 @@ st.markdown(f"""
     box-shadow: 0 0 0 1px #5c2222 !important;
   }}
 
-  /* ── TYPOGRAPHY ── */
   h1, h2, h3 {{
     font-family: 'DM Sans', sans-serif !important;
     color: {T['text']} !important;
     letter-spacing: -0.02em;
   }}
 
-  /* ── HERO ── */
   .hero-wrap {{
     margin-bottom: 2.5rem;
     padding-bottom: 1.8rem;
@@ -1484,25 +1506,6 @@ st.markdown(f"""
     gap: 0;
     position: relative;
   }}
-  /*
-  .hero-wrap::after {{
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      {T['border2']} 20%,
-      {T['accent']} 50%,
-      {T['border2']} 80%,
-      transparent 100%
-    );
-  }}
-  */
   .hero-left {{ flex: 1; min-width: 200px; text-align: center; }}
   @keyframes iconBounce {{
     0%   {{ transform: rotate(0deg) scale(1); }}
@@ -1572,7 +1575,6 @@ st.markdown(f"""
     opacity: 0;
   }}
 
-  /* ── LABELS ── */
   .stTextInput label p,
   .stSelectbox label p,
   .stNumberInput label p,
@@ -1586,7 +1588,6 @@ st.markdown(f"""
     margin-bottom: 4px !important;
   }}
 
-  /* ── INPUTS ── */
   .stTextInput input,
   .stNumberInput input {{
     background: {T['input_bg']} !important;
@@ -1630,7 +1631,6 @@ st.markdown(f"""
     box-shadow: 0 0 0 3px {T['accent_light']} !important;
   }}
 
-  /* ── SELECTBOX ── */
   .stSelectbox [data-baseweb="select"] > div:first-child {{
     background: {T['input_bg']} !important;
     border: 1.5px solid {T['border']} !important;
@@ -1641,7 +1641,6 @@ st.markdown(f"""
     color: {T['text']} !important;
   }}
 
-  /* ── CHECKBOXES ── */
   .stCheckbox label {{
     color: {T['text']} !important;
     font-size: 0.9rem !important;
@@ -1653,7 +1652,6 @@ st.markdown(f"""
     border-radius: 5px !important;
   }}
 
-  /* ════ BOTTONE PRIMARIO ════ */
   div.stButton > button[kind="primary"] {{
     background: #D97706 !important;
     color: white !important;
@@ -1672,8 +1670,15 @@ st.markdown(f"""
   div.stButton > button[kind="primary"]:active {{
     transform: scale(0.98) !important;
   }}
+  div.stButton > button[kind="primary"]:disabled {{
+    background: #9CA3AF !important;
+    box-shadow: none !important;
+    transform: none !important;
+    filter: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.7 !important;
+  }}
 
-  /* ── STILE CARD DOWNLOAD ── */
   .dl-card {{
     background: #FFFFFF !important;
     padding: 1.2rem;
@@ -1700,8 +1705,7 @@ st.markdown(f"""
     border-top: 1px solid #EEE;
     padding-top: 8px;
   }}
-  /* ── BOTTONI SECONDARI ── */
- /* ── CARD VERIFICA OUTPUT ── */
+
   .output-card {{
     background: {T['card']} !important;
     border: 1.5px solid {T['border2']} !important;
@@ -1742,11 +1746,7 @@ st.markdown(f"""
     box-shadow: 0 6px 20px rgba(217,119,6,0.18) !important;
     color: {T['text']} !important;
   }}
-  /* ══════════════════════════════════════════════════════════
-     SEZIONE OUTPUT VERIFICHE - DESIGN UPGRADE
-     ══════════════════════════════════════════════════════════ */
 
-  /* ── CARD AZIONI (PDF, Word, Modifica, Preview) ── */
   .action-card {{
     background: {T['card']} !important;
     border: 2px solid {T['border']} !important;
@@ -1776,8 +1776,6 @@ st.markdown(f"""
   .action-card:hover::before {{
     opacity: 1;
   }}
-
-  /* ── BOTTONI AZIONE PRINCIPALE (Scarica PDF, Genera Word) ── */
   .action-card .stDownloadButton button,
   .action-card .stButton button {{
     background: linear-gradient(135deg, {T['accent']} 0%, {T['accent']}ee 100%) !important;
@@ -1800,8 +1798,6 @@ st.markdown(f"""
   .action-card .stButton button:active {{
     transform: scale(0.98) !important;
   }}
-
-  /* ── EXPANDER MODIFICA & PREVIEW ── */
   .action-card [data-testid="stExpander"] {{
     background: transparent !important;
     border: 2px dashed {T['border2']} !important;
@@ -1825,8 +1821,6 @@ st.markdown(f"""
   .action-card [data-testid="stExpander"] summary svg {{
     color: {T['accent']} !important;
   }}
-
-  /* ── BOTTONE TEX (Secondario, discreto) ── */
   .tex-download {{
     opacity: 0.7 !important;
     transition: opacity 0.2s ease, transform 0.2s ease !important;
@@ -1835,8 +1829,6 @@ st.markdown(f"""
     opacity: 1 !important;
     transform: translateX(3px) !important;
   }}
-
-  /* ── HINT DOCX (styling migliore) ── */
   .hint-docx {{
     background: {T['accent_light']} !important;
     border-left: 3px solid {T['accent']} !important;
@@ -1850,8 +1842,6 @@ st.markdown(f"""
   .hint-docx strong {{
     color: {T['accent']} !important;
   }}
-
-  /* ── SEZIONE LABELS (PDF, Word, etc) ── */
   .section-action-label {{
     display: inline-flex;
     align-items: center;
@@ -1874,9 +1864,6 @@ st.markdown(f"""
     display: inline-block;
   }}
 
-    
-  
-  /* ── COMPACT UPLOADER ── */
   .compact-uploader [data-testid="stFileUploader"] section {{
     padding: 0 !important;
     border: none !important;
@@ -1899,7 +1886,6 @@ st.markdown(f"""
     color: {T['accent']} !important;
   }}
 
-  /* ── TEX DOWNLOAD ── */
   .tex-btn-wrap .stDownloadButton button,
   .tex-btn-wrap [data-testid="stDownloadButton"] button {{
     background: transparent !important;
@@ -1922,7 +1908,6 @@ st.markdown(f"""
     transform: translateY(-1px) !important;
   }}
 
-  /* ── EXPANDER ── */
   [data-testid="stExpander"] {{
     background: {T['card']} !important;
     border: 1px solid {T['border']} !important;
@@ -1977,7 +1962,6 @@ st.markdown(f"""
     color: {T['muted']} !important;
   }}
 
-  /* ── BADGE CHIP ── */
   .chip {{
     display: inline-flex;
     align-items: center;
@@ -1993,7 +1977,6 @@ st.markdown(f"""
     text-transform: uppercase;
   }}
 
-  /* ── EXPANDER HEADING (usato inside expander) ── */
   .expander-heading {{
     font-size: 0.75rem !important;
     font-weight: 700 !important;
@@ -2008,7 +1991,6 @@ st.markdown(f"""
     display: block !important;
   }}
 
-  /* ── STEP LABELS ── */
   .step-label {{
     display: flex;
     align-items: center;
@@ -2044,7 +2026,6 @@ st.markdown(f"""
     background: linear-gradient(90deg, {T['border2']} 0%, transparent 100%);
   }}
 
-  /* ── COMPACT AI HINT ── */
   .ai-hint {{
     display: flex;
     align-items: center;
@@ -2062,7 +2043,6 @@ st.markdown(f"""
   .ai-hint-icon {{ font-size: 1rem; flex-shrink: 0; }}
   .ai-hint strong {{ color: {T['accent']}; font-weight: 700; }}
 
-  /* ── PERSONALIZZA EXPANDER ── */
   .personalizza-wrap [data-testid="stExpander"] {{
     border: 1.5px solid {T['accent']}44 !important;
     border-radius: 14px !important;
@@ -2088,7 +2068,6 @@ st.markdown(f"""
     padding: 1rem 1.2rem 1.2rem !important;
   }}
 
-  /* ── GENERA SECTION ── */
   .genera-section {{ margin-top: 2.2rem; margin-bottom: 0.5rem; }}
   .genera-hint {{
     text-align: center;
@@ -2176,7 +2155,6 @@ st.markdown(f"""
     color: {T['text']} !important;
   }}
 
-  /* ── STATUS BAR ── */
   .status-bar {{
     display: flex;
     align-items: center;
@@ -2202,7 +2180,6 @@ st.markdown(f"""
     font-weight: 600;
   }}
 
-  /* ── PDF PREVIEW ── */
   .pdf-preview-wrap {{
     margin-top: 1rem;
     border: 1px solid {T['border']};
@@ -2212,7 +2189,6 @@ st.markdown(f"""
     background: {T['card2']};
   }}
 
-  /* ── TOP BAR ── */
   .top-bar {{
     display: flex;
     align-items: center;
@@ -2239,7 +2215,6 @@ st.markdown(f"""
     }}
   }}
 
-  /* ── FEEDBACK BUTTON (FAB) ── */
   .fab-link {{
     position: fixed;
     top: 4.5rem;
@@ -2274,7 +2249,6 @@ st.markdown(f"""
     }}
   }}
 
-  /* ── DISCLAIMER ── */
   .disclaimer {{
     display: flex;
     align-items: flex-start;
@@ -2292,7 +2266,6 @@ st.markdown(f"""
   }}
   .disclaimer-icon {{ flex-shrink: 0; font-size: 0.9rem; margin-top: 1px; }}
 
-  /* ── APP FOOTER ── */
   .app-footer {{
     text-align: center;
     font-size: 0.72rem;
@@ -2304,7 +2277,6 @@ st.markdown(f"""
     line-height: 1.6;
   }}
 
-  /* ── USER PILL SIDEBAR ── */
   .user-pill {{
     display: flex;
     align-items: center;
@@ -2349,7 +2321,47 @@ st.markdown(f"""
     margin-top: 1px;
   }}
 
-  /* ═══ MOBILE ═══ */
+  /* ── MONTHLY COUNTER BAR ── */
+  .monthly-bar {{
+    background: #1e1d1b;
+    border: 1px solid #2e2d28;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .monthly-bar-header {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }}
+  .monthly-bar-label {{
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #8a8880 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }}
+  .monthly-bar-count {{
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #e8e6e0 !important;
+  }}
+  .monthly-bar-count.limit-near {{ color: #F59E0B !important; }}
+  .monthly-bar-count.limit-reached {{ color: #EF4444 !important; }}
+  .monthly-progress {{
+    height: 5px;
+    background: #2e2d28;
+    border-radius: 100px;
+    overflow: hidden;
+  }}
+  .monthly-progress-fill {{
+    height: 100%;
+    border-radius: 100px;
+    transition: width 0.4s ease;
+  }}
+
   @media (max-width: 640px) {{
     .block-container {{
       padding: 4.5rem 1rem 3rem !important;
@@ -2421,11 +2433,7 @@ st.markdown(f"""
     }}
   }}
 
-  /* ══════════════════════════════════════════════════════════════
-     SIDEBAR DARK OVERRIDE — deve stare ULTIMO per battere tutto
-     ══════════════════════════════════════════════════════════════ */
-
-  /* Tutti i bottoni dentro la sidebar: sempre dark */
+  /* ── SIDEBAR DARK OVERRIDE ── */
   [data-testid="stSidebar"] .stButton > button,
   [data-testid="stSidebar"] .stButton > button[kind="secondary"],
   [data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
@@ -2455,7 +2463,6 @@ st.markdown(f"""
     box-shadow: none !important;
   }}
 
-  /* Expanders nella sidebar: sempre dark */
   [data-testid="stSidebar"] [data-testid="stExpander"] {{
     background: #1e1d1b !important;
     border: 1px solid #2e2d28 !important;
@@ -2480,7 +2487,6 @@ st.markdown(f"""
     color: #c8c6bc !important;
   }}
 
-  /* Bottone logout: sempre rosso sottile */
   [data-testid="stSidebar"] .logout-btn-wrap .stButton > button,
   [data-testid="stSidebar"] .logout-btn-wrap button {{
     background: transparent !important;
@@ -2502,7 +2508,7 @@ st.markdown(f"""
     box-shadow: none !important;
     transform: none !important;
   }}
-  /* ── ONBOARDING TOOLTIP ── */
+
   @keyframes tooltipSlideIn {{
     0%   {{ opacity: 0; transform: translateX(-12px); }}
     15%  {{ opacity: 1; transform: translateX(4px); }}
@@ -2542,7 +2548,6 @@ st.markdown(f"""
     border-style: solid;
     border-color: transparent {T['accent']} transparent transparent;
   }}
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -2564,9 +2569,9 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
     bes_dsa = st.checkbox(
-    "Genera versione ridotta (sostegno/certificazioni)",
-    value=False,
-    help="Verrà generato un secondo file identico ma con una percentuale di esercizi in meno, scelti tra i più complessi. I punteggi verranno ricalcolati automaticamente."
+        "Genera versione ridotta (sostegno/certificazioni)",
+        value=False,
+        help="Verrà generato un secondo file identico ma con una percentuale di esercizi in meno."
     )
     perc_ridotta = None
     if bes_dsa:
@@ -2607,10 +2612,28 @@ with st.sidebar:
         st.session_state.theme = new_theme
         st.rerun()
 
-    # ── STORICO VERIFICHE ────────────────────────────────────────────────────────
-    st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">📚 Le mie verifiche</div>', unsafe_allow_html=True)
-    
-    # Usa il flag di refresh come cache-buster: ogni volta che cambia, ricarica
+    # ── NUOVO: CONTATORE MENSILE ──────────────────────────────────────────────
+    st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">📊 Utilizzo mensile</div>', unsafe_allow_html=True)
+    _perc_uso = min(100, int(_verifiche_mese_count / LIMITE_MENSILE * 100))
+    _color_bar = "#EF4444" if _limite_raggiunto else ("#F59E0B" if _perc_uso >= 70 else "#10B981")
+    _count_class = "limit-reached" if _limite_raggiunto else ("limit-near" if _perc_uso >= 70 else "")
+    st.markdown(f"""
+    <div class="monthly-bar">
+      <div class="monthly-bar-header">
+        <span class="monthly-bar-label">Verifiche questo mese</span>
+        <span class="monthly-bar-count {_count_class}">{_verifiche_mese_count} / {LIMITE_MENSILE}</span>
+      </div>
+      <div class="monthly-progress">
+        <div class="monthly-progress-fill" style="width:{_perc_uso}%;background:{_color_bar};"></div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+    if _limite_raggiunto:
+        st.warning(f"⛔ Limite mensile raggiunto ({LIMITE_MENSILE} verifiche). Riprova il mese prossimo.")
+
+    # ── STORICO VERIFICHE ─────────────────────────────────────────────────────
+    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📚 Le mie verifiche</div>', unsafe_allow_html=True)
+
     _refresh_key = st.session_state._storico_refresh
     try:
         storico = supabase_admin.table("verifiche_storico")\
@@ -2619,7 +2642,7 @@ with st.sidebar:
             .order("created_at", desc=True)\
             .limit(10)\
             .execute()
-        
+
         if storico.data:
             for v in storico.data:
                 data_str = v['created_at'][:10]
@@ -2643,12 +2666,27 @@ with st.sidebar:
                                 st.session_state.verifiche['B']['pdf'] = pdf
                                 st.session_state.verifiche['B']['preview'] = True
                             st.rerun()
+                    # ── NUOVO: BOTTONE ELIMINA ────────────────────────────────
+                    st.markdown('<div style="margin-top:6px;">', unsafe_allow_html=True)
+                    if st.button("🗑️ Elimina", key=f"del_{v['id']}_{_refresh_key}",
+                                 help="Elimina definitivamente questa verifica dallo storico"):
+                        try:
+                            supabase_admin.table("verifiche_storico")\
+                                .delete()\
+                                .eq("id", v['id'])\
+                                .execute()
+                            st.session_state._storico_refresh += 1
+                            st.toast("🗑️ Verifica eliminata.", icon="✅")
+                            st.rerun()
+                        except Exception as del_err:
+                            st.error(f"Errore eliminazione: {del_err}")
+                    st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.caption("Nessuna verifica salvata ancora.")
     except Exception as e:
-        st.caption(f"Storico non disponibile.")
+        st.caption("Storico non disponibile.")
 
-    # ── USER PILL + LOGOUT ───────────────────────────────────────────────────────
+    # ── USER PILL + LOGOUT ────────────────────────────────────────────────────
     st.markdown("---")
     email_utente = st.session_state.utente.email or ""
     iniziale = email_utente[0].upper() if email_utente else "?"
@@ -2661,7 +2699,7 @@ with st.sidebar:
       </div>
     </div>
     """, unsafe_allow_html=True)
-    
+
     st.markdown('<div style="height:0.5rem;"></div>', unsafe_allow_html=True)
     st.markdown('<div class="logout-btn-wrap">', unsafe_allow_html=True)
     if st.button("↩ Esci dall'account", key="logout_btn", use_container_width=False):
@@ -2669,7 +2707,6 @@ with st.sidebar:
         st.session_state.utente = None
         st.session_state.pop("_sb_access_token", None)
         st.session_state.pop("_sb_refresh_token", None)
-        # Rimuovi token dall'URL
         st.query_params.pop("_at", None)
         st.query_params.pop("_rt", None)
         st.rerun()
@@ -2682,7 +2719,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ── ONBOARDING TOOLTIP (solo al primo caricamento) ──────────────────────────────
 if st.session_state._first_visit:
     st.markdown("""
 <div class="sidebar-tooltip">
@@ -2737,7 +2773,7 @@ argomento_area = st.text_area(
 )
 argomento = argomento_area.strip()
 
-# STEP 3 — PERSONALIZZA (con hint compatto sopra)
+# STEP 3 — PERSONALIZZA
 st.markdown(f"""
 <div class="ai-hint">
   <span class="ai-hint-icon">✨</span>
@@ -2755,13 +2791,11 @@ with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
             "Durata della verifica",
             ["30 min", "1 ora", "1 ora e 30 min", "2 ore"],
             index=1,
-            help="L'AI calcolerà la lunghezza dei calcoli e la complessità dei passaggi per far completare la verifica in questo tempo."
         )
     with _c_num:
         num_esercizi_totali = st.slider(
             "Numero di esercizi in verifica",
             min_value=1, max_value=15, value=4,
-            help="Trascina per scegliere il numero totale di esercizi."
         )
 
     with st.expander("🎯 Specifica il tipo di ogni esercizio (opzionale)"):
@@ -2829,20 +2863,37 @@ with st.expander("✏️  Personalizza la verifica  *(opzionale)*"):
     )
     st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)  # chiude personalizza-wrap
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ── BOTTONE GENERA ────────────────────────────────────────────────────────────────
 st.markdown('<div class="genera-section">', unsafe_allow_html=True)
-genera_btn = st.button("🚀  Genera Verifica", use_container_width=True, type="primary")
-st.markdown(f"""
-<div class="genera-hint">
-  <span>⏱</span> La verifica viene generata in circa 20–40 secondi
-</div>
-</div>
-""", unsafe_allow_html=True)
+
+# ── NUOVO: bottone disabilitato se limite raggiunto ──────────────────────────────
+genera_btn = st.button(
+    "🚀  Genera Verifica",
+    use_container_width=True,
+    type="primary",
+    disabled=_limite_raggiunto
+)
+
+if _limite_raggiunto:
+    st.markdown(f"""
+    <div style="text-align:center;font-size:0.82rem;color:#EF4444;margin-top:0.5rem;
+                font-family:'DM Sans',sans-serif;font-weight:600;">
+      ⛔ Limite di {LIMITE_MENSILE} verifiche mensili raggiunto. Riprova il mese prossimo.
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown(f"""
+    <div class="genera-hint">
+      <span>⏱</span> La verifica viene generata in circa 20–40 secondi
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ── LOGICA GENERAZIONE ───────────────────────────────────────────────────────────
-if genera_btn:
+if genera_btn and not _limite_raggiunto:
     if not argomento.strip():
         st.warning("⚠️ Inserisci l'argomento della verifica."); st.stop()
     try:
@@ -2962,11 +3013,10 @@ CALIBRAZIONE LIVELLO E TEMPO:
 {calibrazione}
 - DURATA PREVISTA: {durata_scelta}. Regola la lunghezza dei calcoli, il numero di incognite e la complessità testuale in modo che {num_esercizi_totali} esercizi siano agevolmente fattibili nel tempo scelto.
 - BILANCIAMENTO CONTESTO E MODELLAZIONE: NON esagerare con i problemi applicati alla realtà o fortemente interdisciplinari. MASSIMO 1 o 2 esercizi possono essere contestualizzati. I restanti DEVONO essere esercizi canonici, diretti e focalizzati sulla procedura pura.
-- REGISTRO LINGUISTICO — REGOLA ASSOLUTA: il testo degli esercizi deve essere CONCISO e DIRETTO. Ogni domanda deve stare in massimo 3 righe. NON scrivere introduzioni filosofiche, contesti narrativi lunghi o premesse elaborate prima della domanda. NON usare parole rare o auliche quando esistono alternative comuni. La complessità deve stare nel contenuto richiesto, NON nel modo in cui la domanda è formulata. Questo vale per TUTTI i livelli scolastici senza eccezioni.
+- REGISTRO LINGUISTICO — REGOLA ASSOLUTA: il testo degli esercizi deve essere CONCISO e DIRETTO.
 REGOLE TASSATIVE SUI GRAFICI (LOGICA ANTI-SPOILER):
-- Se l'esercizio richiede esplicitamente allo studente di "disegnare", "rappresentare graficamente", "tracciare" o "costruire" una figura/grafico, NON generare il codice TikZ del grafico risolto.
-- In questi casi, limita l'output al testo della consegna.
-- Genera un grafico (TikZ) SOLO se esso è un dato di partenza necessario fornito dal docente (es. "Dato il seguente grafico, ricava i dati...").
+- Se l'esercizio richiede allo studente di "disegnare", "rappresentare graficamente", "tracciare" o "costruire" una figura/grafico, NON generare il codice TikZ.
+- Genera un grafico (TikZ) SOLO se esso è un dato di partenza necessario fornito dal docente.
 
 {s_note}
 {s_es}
@@ -2974,10 +3024,10 @@ REGOLE TASSATIVE SUI GRAFICI (LOGICA ANTI-SPOILER):
 REGOLE LATEX (TASSATIVE):
 {griglia_rule}
 {punti_rule}
-- NUMERO ESERCIZI: genera ESATTAMENTE {num_esercizi_totali} blocchi \\subsection*. CONTA i tuoi blocchi prima di chiudere. Se ne hai di più, elimina i superflui. Se ne hai di meno, aggiungine.
+- NUMERO ESERCIZI: genera ESATTAMENTE {num_esercizi_totali} blocchi \\subsection*. CONTA i tuoi blocchi prima di chiudere.
 - Titoli: \\subsection*{{Esercizio N: Titolo}}
 - SOTTOPUNTI OBBLIGATORI: usa SEMPRE \\item[a)] \\item[b)] \\item[c)] ecc. con label ESPLICITA tra parentesi quadre.
-- PROTEZIONE ESERCIZIO 1 (Saperi Essenziali): nell'Esercizio 1 NON inserire MAI il simbolo (*) su nessun sottopunto. È obbligatorio per tutti gli studenti senza eccezioni.
+- PROTEZIONE ESERCIZIO 1 (Saperi Essenziali): nell'Esercizio 1 NON inserire MAI il simbolo (*) su nessun sottopunto.
 {multi_rule}
 - Scelta multipla: le opzioni DEVONO stare in un \\begin{{enumerate}}[a)] SEPARATO dopo la domanda.
 - Vero/Falso: $\\square$ \\textbf{{V}} $\\quad\\square$ \\textbf{{F}}
@@ -3003,7 +3053,6 @@ SOLO CODICE LATEX del corpo."""
         corpo_latex = ra.text.replace("```latex","").replace("```","").strip()
         corpo_latex = pulisci_corpo_latex(corpo_latex)
 
-        # ── GUARDIA: tronca esercizi in eccesso ──────────────────────────────
         splits = re.split(r'(\\subsection\*\{)', corpo_latex)
         n_blocchi = (len(splits) - 1) // 2
         if n_blocchi > num_esercizi_totali:
@@ -3029,7 +3078,7 @@ SOLO CODICE LATEX del corpo."""
             latex_a_final = latex_a
 
         st.session_state.verifiche['A'] = {**_vf(), 'latex': latex_a_final}
-        st.session_state.verifiche['A']['latex_originale'] = latex_a_final  # Salva backup
+        st.session_state.verifiche['A']['latex_originale'] = latex_a_final
 
         _avanza("🖨️  Compilazione PDF…")
         pdf_auto, err_auto = compila_pdf(latex_a_final)
@@ -3044,9 +3093,9 @@ SOLO CODICE LATEX del corpo."""
                     st.session_state.verifiche['A']['pdf']     = pdf_fallback
                     st.session_state.verifiche['A']['pdf_ts']  = time.time()
                     st.session_state.verifiche['A']['preview'] = True
-                    st.warning("⚠️ La griglia di valutazione non è stata inclusa nel PDF (errore di compilazione). Scarica il .tex per debug.")
+                    st.warning("⚠️ La griglia di valutazione non è stata inclusa nel PDF.")
 
-        # ── VERIFICA RIDOTTA BES/DSA ─────────────────────────────────────────
+        # ── VERIFICA RIDOTTA BES/DSA ──────────────────────────────────────────
         if bes_dsa and perc_ridotta:
             _avanza("⛳ Generazione verifica ridotta…")
 
@@ -3056,33 +3105,30 @@ SOLO CODICE LATEX del corpo."""
 
 Devi creare una versione RIDOTTA per studenti con sostegno o certificazione (BES/DSA/NAI).
 La struttura deve essere simile all'originale ma con circa il {perc_ridotta}% di sottopunti IN MENO rispetto al totale.
-Scegli quali sottopunti eliminare partendo dai più complessi, astratti o che richiedono più passaggi di calcolo. Cerca di non togliere esercizi cuore dell'argomento, per esempio se l'argomento indicato sono le simmetrie nello studio di funzione, non tolgo il punto dove chiedo di verificare se la funzione e simmetrica ma magari tolgo lo studio del segno o qualcos'altro, insomma non togliere esercizi essenziali.
-Mantieni sempre almeno 1 sottopunto per esercizio.
-Mantieni i sottopunti più semplici e diretti.
-{'Ridistribuisci i punti in modo che la somma sia ESATTAMENTE ' + str(punti_totali) + ' pt. totali. Ogni sottopunto mantenuto deve avere il suo (X pt).' if mostra_punteggi else 'NON inserire punteggi.'}
+Scegli quali sottopunti eliminare partendo dai più complessi. Mantieni sempre almeno 1 sottopunto per esercizio.
+{'Ridistribuisci i punti in modo che la somma sia ESATTAMENTE ' + str(punti_totali) + ' pt. totali.' if mostra_punteggi else 'NON inserire punteggi.'}
 NON aggiungere nessun simbolo (*), nessuna nota BES, nessuna indicazione che si tratta di una verifica ridotta.
-La verifica deve sembrare una verifica normale, semplicemente più breve.
 TERMINA con \\end{{document}}.
 SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
 
             rb_bes = model.generate_content(prompt_ridotta)
             corpo_latex_ridotta = rb_bes.text.replace("```latex", "").replace("```", "").strip()
             corpo_latex_ridotta = pulisci_corpo_latex(corpo_latex_ridotta)
-                    
+
             latex_ridotta = preambolo_fisso + corpo_latex_ridotta
             latex_ridotta = fix_items_environment(latex_ridotta)
             latex_ridotta = rimuovi_vspace_corpo(latex_ridotta)
             if mostra_punteggi:
                 latex_ridotta = rimuovi_punti_subsection(latex_ridotta)
-                latex_ridotta = riscala_punti(latex_ridotta, punti_totali)   
-                
+                latex_ridotta = riscala_punti(latex_ridotta, punti_totali)
+
             if con_griglia:
                 latex_ridotta_final = inietta_griglia(latex_ridotta, punti_totali)
             else:
                 latex_ridotta_final = latex_ridotta
-        
+
             st.session_state.verifiche['R'] = {**_vf(), 'latex': latex_ridotta_final, 'latex_originale': latex_ridotta_final}
-        
+
             pdf_r, err_r = compila_pdf(latex_ridotta_final)
             if pdf_r:
                 st.session_state.verifiche['R']['pdf']    = pdf_r
@@ -3095,7 +3141,6 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
                         st.session_state.verifiche['R']['pdf']     = pdf_r_fallback
                         st.session_state.verifiche['R']['pdf_ts']  = time.time()
                         st.session_state.verifiche['R']['preview'] = True
-                        st.warning("⚠️ La griglia non è stata inclusa nella verifica ridotta (errore compilazione).")
 
         if doppia_fila:
             _avanza("📄  Generazione Versione B…")
@@ -3105,7 +3150,7 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
                 f"Sostituisci 'Versione A' con 'Versione B'. TERMINA con \\end{{document}}. SOLO LATEX.\n\n{corpo_latex}")
             corpo_latex_b = rb.text.replace("```latex","").replace("```","").strip()
             corpo_latex_b = pulisci_corpo_latex(corpo_latex_b)
-                
+
             preambolo_b = preambolo_fisso.replace(
                 titolo_header,
                 titolo_header.replace("Versione A","Versione B") if "Versione A" in titolo_header
@@ -3117,7 +3162,7 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
             if mostra_punteggi:
                 latex_b = rimuovi_punti_subsection(latex_b)
                 latex_b = riscala_punti(latex_b, punti_totali)
-                
+
             if con_griglia:
                 latex_b_final = inietta_griglia(latex_b, punti_totali)
             else:
@@ -3154,20 +3199,22 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
         st.session_state.last_argomento = titolo_clean
         st.session_state.last_gen_ts    = time.time()
 
-        # ── SALVA SU SUPABASE ──
+        # ── SALVA SU SUPABASE (con analytics) ────────────────────────────────
         try:
             if st.session_state.utente is not None:
                 insert_data = {
-                    "user_id": st.session_state.utente.id,
-                    "materia": materia,
-                    "argomento": titolo_clean,
-                    "scuola": difficolta,
-                    "latex_a": st.session_state.verifiche['A']['latex'],
-                    "latex_b": st.session_state.verifiche['B']['latex'] if st.session_state.verifiche['B']['latex'] else None,
-                    "latex_r": st.session_state.verifiche['R']['latex'] if st.session_state.verifiche['R']['latex'] else None,
+                    "user_id":      st.session_state.utente.id,
+                    "materia":      materia,
+                    "argomento":    titolo_clean,
+                    "scuola":       difficolta,
+                    "latex_a":      st.session_state.verifiche['A']['latex'],
+                    "latex_b":      st.session_state.verifiche['B']['latex'] if st.session_state.verifiche['B']['latex'] else None,
+                    "latex_r":      st.session_state.verifiche['R']['latex'] if st.session_state.verifiche['R']['latex'] else None,
+                    # ── NUOVO: campi analytics ────────────────────────────────
+                    "modello":      modello_id,
+                    "num_esercizi": num_esercizi_totali,
                 }
                 result = supabase_admin.table("verifiche_storico").insert(insert_data).execute()
-                # ← AGGIORNA il flag di refresh così la sidebar si ricarica col nuovo dato
                 st.session_state._storico_refresh += 1
                 st.toast("✅ Verifica salvata!", icon="💾")
             else:
@@ -3242,7 +3289,6 @@ if st.session_state.verifiche['A']['latex']:
             </div>
             """, unsafe_allow_html=True)
 
-            # --- DOWNLOAD PDF ---
             if v['pdf']:
                 pdf_size = _stima_dimensione(v['pdf'])
                 st.download_button(
@@ -3264,10 +3310,9 @@ if st.session_state.verifiche['A']['latex']:
                     else:
                         st.error("Errore PDF")
                         with st.expander("Log"): st.text(err)
-            
+
             st.write("")
-            
-            # --- MODIFICA PDF ---
+
             with st.expander("✏️ Modifica questa verifica", expanded=False):
                 st.markdown(f"""
                 <div style="font-size:0.85rem;color:{T['text2']};margin-bottom:0.8rem;line-height:1.5;">
@@ -3278,7 +3323,7 @@ if st.session_state.verifiche['A']['latex']:
                     • "Aumenta la difficoltà dell'esercizio 4"
                 </div>
                 """, unsafe_allow_html=True)
-                
+
                 richiesta_modifica = st.text_area(
                     "Cosa vuoi modificare?",
                     height=100,
@@ -3286,43 +3331,32 @@ if st.session_state.verifiche['A']['latex']:
                     key=f"modifica_input_{fid}",
                     label_visibility="collapsed"
                 )
-                
+
                 col_mod1, col_mod2 = st.columns([1, 1])
                 with col_mod1:
-                    if st.button("🔄 Applica Modifiche", key=f"modifica_btn_{fid}", 
+                    if st.button("🔄 Applica Modifiche", key=f"modifica_btn_{fid}",
                                use_container_width=True, disabled=not richiesta_modifica.strip()):
                         try:
                             with st.spinner("⏳ Modifica in corso..."):
                                 model = genai.GenerativeModel(modello_id)
                                 latex_modificato = modifica_verifica_con_ai(
-                                    v['latex'], 
+                                    v['latex'],
                                     richiesta_modifica.strip(),
                                     model
                                 )
-                                
-                                # Applica le stesse trasformazioni dell'originale
                                 latex_modificato = fix_items_environment(latex_modificato)
                                 latex_modificato = rimuovi_vspace_corpo(latex_modificato)
-                                
-                                # Ricalcola punti se necessario
                                 if mostra_punteggi:
                                     latex_modificato = rimuovi_punti_subsection(latex_modificato)
                                     latex_modificato = riscala_punti(latex_modificato, punti_totali)
-                                
-                                # Rigenera griglia se necessario
                                 if con_griglia:
                                     latex_modificato = inietta_griglia(latex_modificato, punti_totali)
-                                
-                                # Aggiorna session state
                                 st.session_state.verifiche[fid]['latex'] = latex_modificato
-                                
-                                # Ricompila PDF
                                 pdf_mod, err_mod = compila_pdf(latex_modificato)
                                 if pdf_mod:
                                     st.session_state.verifiche[fid]['pdf'] = pdf_mod
                                     st.session_state.verifiche[fid]['pdf_ts'] = time.time()
                                     st.session_state.verifiche[fid]['preview'] = True
-                                    # Reset DOCX per rigenerarlo con le modifiche
                                     st.session_state.verifiche[fid]['docx'] = None
                                     st.success("✅ Modifiche applicate!")
                                     time.sleep(0.8)
@@ -3334,17 +3368,15 @@ if st.session_state.verifiche['A']['latex']:
                                             st.text(err_mod)
                         except Exception as e:
                             st.error(f"❌ Errore durante la modifica: {str(e)}")
-                
+
                 with col_mod2:
-                    # Controlla se esiste un backup originale
                     ha_originale = 'latex_originale' in v and v.get('latex_originale')
-                    if st.button("🗑️ Ripristina Originale", key=f"reset_mod_{fid}", 
+                    if st.button("🗑️ Ripristina Originale", key=f"reset_mod_{fid}",
                                use_container_width=True,
                                disabled=not ha_originale,
                                help="Torna alla versione generata inizialmente"):
                         if ha_originale:
                             st.session_state.verifiche[fid]['latex'] = v['latex_originale']
-                            # Ricompila PDF originale
                             pdf_orig, _ = compila_pdf(v['latex_originale'])
                             if pdf_orig:
                                 st.session_state.verifiche[fid]['pdf'] = pdf_orig
@@ -3353,10 +3385,9 @@ if st.session_state.verifiche['A']['latex']:
                             st.success("✅ Versione originale ripristinata!")
                             time.sleep(0.5)
                             st.rerun()
-            
+
             st.write("")
-            
-            # --- DOWNLOAD WORD + AVVISO ---
+
             if v['docx']:
                 docx_size = _stima_dimensione(v['docx'])
                 st.download_button(
@@ -3369,7 +3400,7 @@ if st.session_state.verifiche['A']['latex']:
                 )
                 st.markdown(f"""
                     <div class="hint-docx" style="margin-top: -10px; margin-bottom: 15px;">
-                        💡 <b>Nota:</b> La versione Word è modificabile ma ha una resa grafica inferiore. 
+                        💡 <b>Nota:</b> La versione Word è modificabile ma ha una resa grafica inferiore.
                         I grafici complessi di funzione (TikZ/Plot) non compaiono in Word e vanno aggiunti a mano.
                     </div>
                 """, unsafe_allow_html=True)
@@ -3389,10 +3420,9 @@ if st.session_state.verifiche['A']['latex']:
                         st.session_state[_docx_gen_key] = False
                         st.error("Errore Word")
                         with st.expander("Log"): st.text(de)
-            
+
             st.write("")
-            
-            # --- PREVIEW ---
+
             if v['preview'] and v['pdf']:
                 with st.expander("👁 Anteprima PDF", expanded=False):
                     b64 = base64.b64encode(v['pdf']).decode()
@@ -3401,7 +3431,6 @@ if st.session_state.verifiche['A']['latex']:
                             style="width:100%;height:500px;border:none;border-radius:8px;display:block;"></iframe>
                     """, unsafe_allow_html=True)
 
-            # --- SORGENTE TEX ---
             _spacer, _tex_col = st.columns([3, 1])
             with _tex_col:
                 st.markdown('<div class="tex-btn-wrap">', unsafe_allow_html=True)
@@ -3414,7 +3443,7 @@ if st.session_state.verifiche['A']['latex']:
                     help="Scarica il sorgente LaTeX per modificarlo"
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
-                
+
 # ── FOOTER ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="app-footer">
@@ -3467,14 +3496,3 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
-
-
-
-
-
-
-
-
-
-
-
