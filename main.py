@@ -3071,16 +3071,42 @@ if st.session_state.verifiche['A']['latex']:
             else:
                 label_ver = "La tua verifica"
             st.markdown(f"""
-            <div style="background:{T['accent_light']};border:1px solid {T['accent']}44;
-                        border-radius:14px;padding:1.2rem;margin-bottom:1.5rem;">
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.8rem;">
-                <span style="font-family:'DM Sans',sans-serif;font-size:1.25rem;
-                             font-weight:800;color:{T['text']};">{APP_ICON} {label_ver}</span>
-                <span class="chip">Pronta</span>
+            <div style="background:linear-gradient(135deg, {T['accent_light']} 0%, {T['card']} 100%);
+                        border:2px solid {T['accent']};border-radius:16px;padding:0;
+                        margin-bottom:1.8rem;overflow:hidden;
+                        box-shadow:0 4px 20px {T['accent']}22;">
+              <div style="background:{T['accent']};padding:1rem 1.3rem;
+                          border-bottom:1px solid {T['accent']};">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="font-size:1.8rem;">{APP_ICON}</span>
+                  <div style="flex:1;">
+                    <div style="font-family:'DM Sans',sans-serif;font-size:1.3rem;
+                                font-weight:900;color:#ffffff;letter-spacing:-0.02em;">
+                      {label_ver}
+                    </div>
+                    <div style="font-size:0.75rem;color:#ffffff;opacity:0.85;
+                                font-weight:600;margin-top:2px;">
+                      Generata con successo
+                    </div>
+                  </div>
+                  <div style="background:#ffffff22;backdrop-filter:blur(10px);
+                              border:1px solid #ffffff33;border-radius:20px;
+                              padding:6px 16px;font-size:0.72rem;font-weight:700;
+                              color:#ffffff;letter-spacing:0.05em;text-transform:uppercase;">
+                    ✓ Pronta
+                  </div>
+                </div>
               </div>
-              <div class="disclaimer" style="margin:0;border-left-color:{T['accent']};">
-                <span class="disclaimer-icon">⚠️</span>
-                <span>Le verifiche generate sono <strong>suggerimenti</strong>. Rivedi sempre il contenuto prima della distribuzione — il docente è responsabile del materiale finale.</span>
+              <div style="padding:1.2rem 1.3rem;background:{T['card']};">
+                <div style="display:flex;align-items:flex-start;gap:10px;
+                            background:{T['accent_light']};border-left:3px solid {T['accent']};
+                            border-radius:8px;padding:12px 16px;">
+                  <span style="font-size:1.1rem;flex-shrink:0;">⚠️</span>
+                  <span style="font-size:0.82rem;color:{T['text2']};line-height:1.5;">
+                    Le verifiche generate sono <strong style="color:{T['text']};">suggerimenti didattici</strong>. 
+                    Rivedi sempre il contenuto prima della distribuzione — il docente è responsabile del materiale finale.
+                  </span>
+                </div>
               </div>
             </div>
             """, unsafe_allow_html=True)
@@ -3310,6 +3336,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
