@@ -2966,9 +2966,9 @@ else:
     if doppia_fila:
         _files_hint.append("📄 Fila B")
     if bes_dsa:
-        _files_hint.append("Ridotta A")
+        _files_hint.append("📄Ridotta A")
     if bes_dsa and doppia_fila and bes_dsa_b:
-        _files_hint.append("Ridotta B")
+        _files_hint.append("📄Ridotta B")
     if genera_soluzioni:
         _files_hint.append("✅ Soluzioni")
     _files_str = " · ".join(_files_hint)
@@ -3737,6 +3737,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
