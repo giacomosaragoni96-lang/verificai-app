@@ -2689,13 +2689,13 @@ st.markdown(f"""
 
 # ── SIDEBAR ──────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown('<div class="sidebar-title">⚙️ Impostazioni</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-title">Impostazioni</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="sidebar-label">🏫 Classe</div>', unsafe_allow_html=True)
-    st.caption("ℹ️ Attenzione: questa scelta influenza radicalmente il lessico, i riferimenti teorici e la complessità matematica degli esercizi.")
+    st.markdown('<div class="sidebar-label">Classe</div>', unsafe_allow_html=True)
+    st.caption("Attenzione: questa scelta influenza radicalmente il lessico, i riferimenti teorici e la complessità matematica degli esercizi.")
     difficolta = st.selectbox("livello", SCUOLE, index=3, label_visibility="collapsed")
 
-    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">📋 Opzioni</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Opzioni</div>', unsafe_allow_html=True)
     bes_dsa = st.checkbox(
         "Genera versione ridotta (sostegno/certificazioni)",
         value=False,
@@ -2728,18 +2728,18 @@ with st.sidebar:
     materia2_scelta  = None
     difficolta_multi = None
 
-    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🏆 Punteggi</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Punteggi</div>', unsafe_allow_html=True)
     mostra_punteggi = st.checkbox("Mostra punteggio per esercizio", value=False)
     con_griglia     = st.checkbox("Includi griglia dei punteggi", value=False)
     punti_totali    = st.number_input("Punti totali", min_value=10, max_value=200, value=100, step=5,
                                       disabled=not mostra_punteggi)
 
-    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🤖 Modello AI</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Modello AI</div>', unsafe_allow_html=True)
     modello_id = MODELLI_DISPONIBILI[
         st.selectbox("modello", list(MODELLI_DISPONIBILI.keys()), label_visibility="collapsed")
     ]
 
-    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🎨 Aspetto</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Aspetto</div>', unsafe_allow_html=True)
     tema_sel = st.radio(
         "tema",
         ["☀️ Chiaro", "🌙 Scuro"],
@@ -2753,7 +2753,7 @@ with st.sidebar:
         st.rerun()
 
     # ── NUOVO: CONTATORE MENSILE ──────────────────────────────────────────────
-    st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">📊 Utilizzo mensile</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">Utilizzo mensile</div>', unsafe_allow_html=True)
     _perc_uso = min(100, int(_verifiche_mese_count / LIMITE_MENSILE * 100))
     _color_bar = "#EF4444" if _limite_raggiunto else ("#F59E0B" if _perc_uso >= 70 else "#10B981")
     _count_class = "limit-reached" if _limite_raggiunto else ("limit-near" if _perc_uso >= 70 else "")
@@ -2798,7 +2798,7 @@ with st.sidebar:
                 label = f"{star_label_prefix}{v['materia']} — {v['argomento'][:20]}{'...' if len(v['argomento'])>20 else ''}"
                 with st.expander(f"{label} ({data_str})"):
                     if v.get('scuola'):
-                        st.caption(f"🏫 {v['scuola'][:35]}")
+                        st.caption(f"{v['scuola'][:35]}")
 
                     # Riga: stella preferiti
                     _col_star, _col_spacer = st.columns([1, 3])
