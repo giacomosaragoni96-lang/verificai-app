@@ -1239,7 +1239,7 @@ st.set_page_config(
 def _vf():
     return {'latex': '', 'pdf': None, 'preview': False,
             'soluzioni_latex': '', 'soluzioni_pdf': None, 'docx': None,
-            'pdf_ts': None, 'docx_ts': None}
+            'pdf_ts': None, 'docx_ts': None, 'latex_originale': ''}
 
 if 'utente' not in st.session_state: st.session_state.utente = None
 if 'verifiche' not in st.session_state: st.session_state.verifiche = {'A': _vf(), 'B': _vf(), 'R': _vf()}
@@ -2883,6 +2883,7 @@ SOLO CODICE LATEX del corpo."""
             latex_a_final = latex_a
 
         st.session_state.verifiche['A'] = {**_vf(), 'latex': latex_a_final}
+        st.session_state.verifiche['A']['latex_originale'] = latex_a_final  # Salva backup
 
         _avanza("🖨️  Compilazione PDF…")
         pdf_auto, err_auto = compila_pdf(latex_a_final)
@@ -2935,6 +2936,7 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
                 latex_ridotta_final = latex_ridotta
         
             st.session_state.verifiche['R'] = {**_vf(), 'latex': latex_ridotta_final}
+            st.session_state.verifiche['R'] = {**_vf(), 'latex': latex_ridotta_final, 'latex_originale': latex_ridotta_final}
         
             pdf_r, err_r = compila_pdf(latex_ridotta_final)
             if pdf_r:
@@ -2977,6 +2979,7 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
                 latex_b_final = latex_b
 
             st.session_state.verifiche['B'] = {**_vf(), 'latex': latex_b_final}
+            st.session_state.verifiche['B']['latex_originale'] = latex_b_final  # Salva backup
 
             _avanza("🖨️  PDF Versione B…")
             pdf_b_auto, _ = compila_pdf(latex_b_final)
@@ -3195,8 +3198,23 @@ if st.session_state.verifiche['A']['latex']:
                             st.error(f"❌ Errore durante la modifica: {str(e)}")
                 
                 with col_mod2:
-                    if st.button("↺ Annulla", key=f"reset_mod_{fid}", use_container_width=True):
-                        st.rerun()
+                    # Controlla se esiste un backup originale
+                    ha_originale = 'latex_originale' in v and v.get('latex_originale')
+                    if st.button("🗑️ Ripristina Originale", key=f"reset_mod_{fid}", 
+                               use_container_width=True,
+                               disabled=not ha_originale,
+                               help="Torna alla versione generata inizialmente"):
+                        if ha_originale:
+                            st.session_state.verifiche[fid]['latex'] = v['latex_originale']
+                            # Ricompila PDF originale
+                            pdf_orig, _ = compila_pdf(v['latex_originale'])
+                            if pdf_orig:
+                                st.session_state.verifiche[fid]['pdf'] = pdf_orig
+                                st.session_state.verifiche[fid]['pdf_ts'] = time.time()
+                                st.session_state.verifiche[fid]['docx'] = None
+                            st.success("✅ Versione originale ripristinata!")
+                            time.sleep(0.5)
+                            st.rerun()
             # --- PREVIEW ---
             if v['preview'] and v['pdf']:
                 with st.expander("👁 Anteprima PDF", expanded=False):
@@ -3272,6 +3290,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
