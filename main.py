@@ -3148,11 +3148,10 @@ if not st.session_state._onboarding_done:
     _c_accent_light = T['accent_light']
     _c_muted        = T['muted']
 
-    # Banner
     st.markdown(
         f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
         f'border:1.5px solid {_c_accent};border-radius:14px;'
-        f'padding:1.1rem 1.4rem 1rem 1.4rem;margin-bottom:0.3rem;font-family:DM Sans,sans-serif;">'
+        f'padding:1.1rem 1.4rem 1rem 1.4rem;margin-bottom:0.4rem;font-family:DM Sans,sans-serif;">'
         f'<div style="display:flex;align-items:flex-start;gap:12px;">'
         f'<div style="font-size:1.4rem;flex-shrink:0;margin-top:1px;">👋</div>'
         f'<div style="flex:1;">'
@@ -3184,41 +3183,36 @@ if not st.session_state._onboarding_done:
         unsafe_allow_html=True
     )
 
-    # Riga "Ho capito" — semplice, allineata a destra con CSS
+    # Checkbox piccolo e compatto — molto meno invasivo di un button
     st.markdown(f"""
     <style>
-    .ob-row {{
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 0.8rem;
-        margin-top: 0;
+    .ob-check .stCheckbox {{
+        margin-top: 0 !important;
+        margin-bottom: 0.8rem !important;
     }}
-    .ob-row div.stButton > button {{
-        background: transparent !important;
-        border: none !important;
-        color: {_c_muted} !important;
+    .ob-check .stCheckbox label {{
         font-size: 0.78rem !important;
-        font-weight: 500 !important;
-        text-decoration: underline !important;
-        text-underline-offset: 2px !important;
-        padding: 2px 0 !important;
-        min-height: unset !important;
-        height: auto !important;
-        box-shadow: none !important;
-        transform: none !important;
-        width: auto !important;
+        color: {_c_muted} !important;
+        font-weight: 400 !important;
+        gap: 6px !important;
     }}
-    .ob-row div.stButton > button:hover {{
-        color: {_c_text} !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        transform: none !important;
+    .ob-check .stCheckbox label:hover {{
+        color: {_c_text2} !important;
+    }}
+    .ob-check [data-testid="stCheckbox"] span:first-child {{
+        width: 14px !important;
+        height: 14px !important;
+        border-radius: 3px !important;
+        border: 1px solid {_c_border} !important;
+        background: {_c_bg2} !important;
+        flex-shrink: 0 !important;
     }}
     </style>
-    <div class="ob-row">
+    <div class="ob-check">
     """, unsafe_allow_html=True)
 
-    if st.button("Ho capito, non mostrare più →", key="_dismiss_onboarding"):
+    _dismiss = st.checkbox("Ho capito, non mostrare più", key="_dismiss_onboarding")
+    if _dismiss:
         st.session_state._onboarding_done = True
         st.rerun()
 
@@ -4234,6 +4228,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
