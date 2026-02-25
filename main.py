@@ -3081,7 +3081,6 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
             else:
                 latex_ridotta_final = latex_ridotta
         
-            st.session_state.verifiche['R'] = {**_vf(), 'latex': latex_ridotta_final}
             st.session_state.verifiche['R'] = {**_vf(), 'latex': latex_ridotta_final, 'latex_originale': latex_ridotta_final}
         
             pdf_r, err_r = compila_pdf(latex_ridotta_final)
@@ -3124,8 +3123,7 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
             else:
                 latex_b_final = latex_b
 
-            st.session_state.verifiche['B'] = {**_vf(), 'latex': latex_b_final}
-            st.session_state.verifiche['B']['latex_originale'] = latex_b_final  # Salva backup
+            st.session_state.verifiche['B'] = {**_vf(), 'latex': latex_b_final, 'latex_originale': latex_b_final}
 
             _avanza("🖨️  PDF Versione B…")
             pdf_b_auto, _ = compila_pdf(latex_b_final)
@@ -3244,8 +3242,7 @@ if st.session_state.verifiche['A']['latex']:
             </div>
             """, unsafe_allow_html=True)
 
-# --- DOWNLOAD PDF ---
-            st.markdown('<div class="action-card">', unsafe_allow_html=True)
+            # --- DOWNLOAD PDF ---
             if v['pdf']:
                 pdf_size = _stima_dimensione(v['pdf'])
                 st.download_button(
@@ -3267,10 +3264,10 @@ if st.session_state.verifiche['A']['latex']:
                     else:
                         st.error("Errore PDF")
                         with st.expander("Log"): st.text(err)
-            st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.write("")
             
             # --- MODIFICA PDF ---
-            st.markdown('<div class="action-card">', unsafe_allow_html=True)
             with st.expander("✏️ Modifica questa verifica", expanded=False):
                 st.markdown(f"""
                 <div style="font-size:0.85rem;color:{T['text2']};margin-bottom:0.8rem;line-height:1.5;">
@@ -3356,10 +3353,10 @@ if st.session_state.verifiche['A']['latex']:
                             st.success("✅ Versione originale ripristinata!")
                             time.sleep(0.5)
                             st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.write("")
             
             # --- DOWNLOAD WORD + AVVISO ---
-            st.markdown('<div class="action-card">', unsafe_allow_html=True)
             if v['docx']:
                 docx_size = _stima_dimensione(v['docx'])
                 st.download_button(
@@ -3392,7 +3389,8 @@ if st.session_state.verifiche['A']['latex']:
                         st.session_state[_docx_gen_key] = False
                         st.error("Errore Word")
                         with st.expander("Log"): st.text(de)
-            st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.write("")
             
             # --- PREVIEW ---
             if v['preview'] and v['pdf']:
@@ -3404,7 +3402,6 @@ if st.session_state.verifiche['A']['latex']:
                     """, unsafe_allow_html=True)
 
             # --- SORGENTE TEX ---
-            st.markdown('<div style="margin-top:1.5rem;">', unsafe_allow_html=True)
             _spacer, _tex_col = st.columns([3, 1])
             with _tex_col:
                 st.markdown('<div class="tex-btn-wrap">', unsafe_allow_html=True)
@@ -3470,6 +3467,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
