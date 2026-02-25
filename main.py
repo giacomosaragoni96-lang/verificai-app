@@ -393,11 +393,14 @@ TIPI_ESERCIZIO = ["Aperto", "Scelta multipla", "Vero/Falso", "Completamento"]
 
 # ── NUOVO: contatore verifiche mensili ────────────────────────────────────────
 def _get_verifiche_mese(user_id):
-    """Restituisce il numero di verifiche generate dall'utente nel mese corrente."""
+    """Restituisce il numero di verifiche generate dall'utente nel mese corrente.
+    Conta ANCHE le verifiche eliminate dallo storico (soft-delete) — il contatore
+    non deve scendere se l'utente cancella una verifica."""
     from datetime import datetime, timezone
     now = datetime.now(timezone.utc)
     primo_mese = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
     try:
+        # Non filtriamo su deleted_at: contiamo TUTTE le generazioni del mese
         res = supabase_admin.table("verifiche_storico") \
             .select("id", count="exact") \
             .eq("user_id", user_id) \
@@ -406,6 +409,22 @@ def _get_verifiche_mese(user_id):
         return res.count or 0
     except Exception:
         return 0
+
+
+def _giorni_al_reset():
+    """Restituisce (giorni, ore) al primo del mese prossimo."""
+    from datetime import datetime, timezone, timedelta
+    import calendar
+    now = datetime.now(timezone.utc)
+    # Primo giorno del mese prossimo
+    if now.month == 12:
+        reset = now.replace(year=now.year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    else:
+        reset = now.replace(month=now.month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    delta = reset - now
+    giorni = delta.days
+    ore    = delta.seconds // 3600
+    return giorni, ore
 
 
 def parse_esercizi(latex):
@@ -2757,6 +2776,13 @@ with st.sidebar:
     _perc_uso = min(100, int(_verifiche_mese_count / LIMITE_MENSILE * 100))
     _color_bar = "#EF4444" if _limite_raggiunto else ("#F59E0B" if _perc_uso >= 70 else "#10B981")
     _count_class = "limit-reached" if _limite_raggiunto else ("limit-near" if _perc_uso >= 70 else "")
+    _gg_reset, _hh_reset = _giorni_al_reset()
+    if _gg_reset == 0:
+        _reset_str = f"Reset tra {_hh_reset}h"
+    elif _gg_reset == 1:
+        _reset_str = f"Reset domani"
+    else:
+        _reset_str = f"Reset tra {_gg_reset}gg"
     st.markdown(f"""
     <div class="monthly-bar">
       <div class="monthly-bar-header">
@@ -2766,10 +2792,13 @@ with st.sidebar:
       <div class="monthly-progress">
         <div class="monthly-progress-fill" style="width:{_perc_uso}%;background:{_color_bar};"></div>
       </div>
+      <div style="text-align:right;font-size:0.68rem;color:#6b6960;margin-top:4px;font-family:'DM Sans',sans-serif;">
+        🔄 {_reset_str}
+      </div>
     </div>
     """, unsafe_allow_html=True)
     if _limite_raggiunto:
-        st.warning(f"⛔ Limite mensile raggiunto ({LIMITE_MENSILE} verifiche). Riprova il mese prossimo.")
+        st.warning(f"Limite mensile raggiunto ({LIMITE_MENSILE} verifiche). {_reset_str}.")
 
     # ── STORICO VERIFICHE ─────────────────────────────────────────────────────
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Le mie verifiche</div>', unsafe_allow_html=True)
@@ -2779,6 +2808,7 @@ with st.sidebar:
         storico = supabase_admin.table("verifiche_storico")\
             .select("id, materia, argomento, created_at, latex_a, latex_b, latex_r, scuola")\
             .eq("user_id", st.session_state.utente.id)\
+            .is_("deleted_at", "null")\
             .order("created_at", desc=True)\
             .limit(20)\
             .execute()
@@ -2833,18 +2863,19 @@ with st.sidebar:
                     st.markdown('<div class="elimina-btn">', unsafe_allow_html=True)
                     if st.button("Elimina", key=f"del_{v['id']}_{_refresh_key}",
                                  use_container_width=True,
-                                 help="Elimina definitivamente questa verifica dallo storico"):
+                                 help="Rimuovi questa verifica dallo storico"):
                         try:
+                            from datetime import datetime, timezone
                             supabase_admin.table("verifiche_storico")\
-                                .delete()\
+                                .update({"deleted_at": datetime.now(timezone.utc).isoformat()})\
                                 .eq("id", v['id'])\
                                 .execute()
                             st.session_state._preferiti.discard(v['id'])
                             st.session_state._storico_refresh += 1
-                            st.toast("Verifica eliminata.", icon="🗑️")
+                            st.toast("Verifica rimossa dallo storico.", icon="🗑️")
                             st.rerun()
                         except Exception as del_err:
-                            st.error(f"Errore eliminazione: {del_err}")
+                            st.error(f"Errore: {del_err}")
                     st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.caption("Nessuna verifica salvata ancora.")
