@@ -64,195 +64,49 @@ def mostra_auth():
     html, body, [data-testid="stAppViewContainer"], .stApp {
         background: #0C0C0B !important;
         font-family: 'DM Sans', sans-serif !important;
-        overflow-x: hidden !important;
     }
-    [data-testid="stHeader"] { display: none !important; }
-    [data-testid="stDecoration"] { display: none !important; }
-    [data-testid="stToolbar"] { display: none !important; }
-    #MainMenu { display: none !important; }
-    footer { display: none !important; }
+    [data-testid="stHeader"],
+    [data-testid="stDecoration"],
+    [data-testid="stToolbar"],
+    #MainMenu, footer { display: none !important; }
 
-    /* ── RESET BLOCCO CONTAINER ── */
     .block-container {
         padding: 0 !important;
-        max-width: 100% !important;
-        margin: 0 !important;
+        max-width: 480px !important;
+        margin: 0 auto !important;
     }
     [data-testid="stMainBlockContainer"] {
         padding: 0 !important;
-        max-width: 100% !important;
-    }
-    [data-testid="stVerticalBlock"] {
-        gap: 0 !important;
     }
 
-    /* ── PANEL SINISTRO FISSO ── */
-    .auth-left-panel {
-        position: fixed;
-        top: 0; left: 0;
-        width: 55%;
-        height: 100vh;
-        background: #0C0C0B;
-        padding: 4rem 4.5rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        overflow-y: auto;
-        z-index: 1;
-        box-sizing: border-box;
+    /* ── INPUT ── */
+    [data-testid="stTextInput"] input {
+        background: #1A1916 !important;
+        border: 1.5px solid #2A2926 !important;
+        border-radius: 10px !important;
+        color: #F5F4EF !important;
+        font-family: 'DM Sans', sans-serif !important;
+        font-size: 1rem !important;
+        padding: 14px 16px !important;
+        min-height: 50px !important;
     }
-    .auth-left-panel::before {
-        content: '';
-        position: fixed;
-        top: -120px; left: -120px;
-        width: 500px; height: 500px;
-        background: radial-gradient(circle, rgba(217,119,6,0.10) 0%, transparent 70%);
-        pointer-events: none;
-        z-index: 0;
+    [data-testid="stTextInput"] input:focus {
+        border-color: #D97706 !important;
+        box-shadow: 0 0 0 3px rgba(217,119,6,0.18) !important;
+        outline: none !important;
     }
-
-    /* ── PANEL DESTRO FISSO (sfondo) ── */
-    .auth-right-bg {
-        position: fixed;
-        top: 0; right: 0;
-        width: 45%;
-        height: 100vh;
-        background: #111110;
-        border-left: 1px solid #1E1D1A;
-        z-index: 1;
+    [data-testid="stTextInput"] input::placeholder {
+        color: #4A4840 !important;
+        opacity: 1 !important;
     }
-    .auth-right-header {
-        padding: 3.5rem 3rem 1.5rem 3rem;
-    }
-    .auth-right-title {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #F5F4EF;
-        margin-bottom: 0.3rem;
-        letter-spacing: -0.02em;
-    }
-    .auth-right-sub {
-        font-size: 0.85rem;
-        color: #6B6960;
-        line-height: 1.5;
+    [data-testid="stTextInput"] label p {
+        color: #C8C6BC !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        font-family: 'DM Sans', sans-serif !important;
     }
 
-    /* ── BADGE ── */
-    .auth-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        background: rgba(217,119,6,0.12);
-        border: 1px solid rgba(217,119,6,0.3);
-        border-radius: 100px;
-        padding: 6px 14px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #F59E0B;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        margin-bottom: 2rem;
-        width: fit-content;
-    }
-    .auth-badge-dot {
-        width: 6px; height: 6px;
-        border-radius: 50%;
-        background: #F59E0B;
-        animation: pulse-dot 2s infinite;
-    }
-    @keyframes pulse-dot {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.5; transform: scale(0.8); }
-    }
-
-    .auth-logo {
-        font-size: 3.5rem;
-        font-weight: 900;
-        letter-spacing: -0.04em;
-        color: #F5F4EF;
-        line-height: 1.0;
-        margin-bottom: 0.4rem;
-    }
-    .auth-logo-ai {
-        background: linear-gradient(135deg, #D97706 0%, #F59E0B 50%, #FF8C00 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    .auth-tagline {
-        font-size: 1.05rem;
-        color: #8C8A82;
-        font-weight: 400;
-        margin-bottom: 2.5rem;
-        line-height: 1.5;
-        max-width: 420px;
-    }
-    .auth-tagline strong { color: #C8C6BC; font-weight: 600; }
-
-    .feature-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.75rem;
-        max-width: 440px;
-        margin-bottom: 2.5rem;
-    }
-    .feature-card {
-        background: #161614;
-        border: 1px solid #2A2926;
-        border-radius: 12px;
-        padding: 0.85rem 1rem;
-    }
-    .feature-icon { font-size: 1.3rem; margin-bottom: 0.35rem; display: block; }
-    .feature-title { font-size: 0.8rem; font-weight: 700; color: #E5E4DF; margin-bottom: 0.2rem; }
-    .feature-desc { font-size: 0.71rem; color: #6B6960; line-height: 1.4; }
-
-    .auth-social {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding-top: 1.8rem;
-        border-top: 1px solid #1E1D1A;
-    }
-    .auth-avatars { display: flex; }
-    .auth-av {
-        width: 30px; height: 30px;
-        border-radius: 50%;
-        border: 2px solid #0C0C0B;
-        background: linear-gradient(135deg, #D97706, #92400E);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 0.65rem; font-weight: 700; color: white;
-        margin-left: -7px;
-    }
-    .auth-av:first-child { margin-left: 0; }
-    .auth-social-text { font-size: 0.76rem; color: #6B6960; line-height: 1.4; }
-    .auth-social-text strong { color: #C8C6BC; }
-
-    /* ── FORM STREAMLIT: sovrapposto al panel destro ── */
-    /* Tutto il blocco form viene spinto a destra */
-    [data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"] {
-        position: relative;
-        z-index: 10;
-    }
-
-    /* Il primo div (HTML panel) è ignorato dal layout */
-    /* Le colonne Streamlit si posizionano sopra il right panel */
-    [data-testid="column"]:last-child {
-        position: fixed !important;
-        top: 0 !important;
-        right: 0 !important;
-        width: 45% !important;
-        height: 100vh !important;
-        padding: 5.5rem 3rem 2rem 3rem !important;
-        z-index: 20 !important;
-        background: transparent !important;
-        overflow-y: auto !important;
-    }
-    [data-testid="column"]:first-child {
-        visibility: hidden !important;
-        pointer-events: none !important;
-    }
-
-    /* ── TAB STYLING ── */
+    /* ── TABS ── */
     [data-testid="stTabs"] [data-baseweb="tab-list"] {
         background: #1A1916 !important;
         border-radius: 10px !important;
@@ -263,10 +117,10 @@ def mostra_auth():
     }
     [data-testid="stTabs"] [data-baseweb="tab"] {
         border-radius: 7px !important;
-        font-size: 0.82rem !important;
+        font-size: 0.85rem !important;
         font-weight: 600 !important;
         color: #6B6960 !important;
-        padding: 0.4rem 1rem !important;
+        padding: 0.45rem 1.2rem !important;
         background: transparent !important;
     }
     [data-testid="stTabs"] [aria-selected="true"] {
@@ -275,34 +129,6 @@ def mostra_auth():
     }
     [data-testid="stTabs"] [data-baseweb="tab-highlight"] { display: none !important; }
 
-    /* ── INPUT STYLING ── */
-    [data-testid="stTextInput"] input {
-        background: #1A1916 !important;
-        border: 1.5px solid #2A2926 !important;
-        border-radius: 10px !important;
-        color: #F5F4EF !important;
-        font-family: 'DM Sans', sans-serif !important;
-        font-size: 0.92rem !important;
-        padding: 12px 14px !important;
-        min-height: 46px !important;
-        transition: border-color 0.15s ease !important;
-    }
-    [data-testid="stTextInput"] input:focus {
-        border-color: #D97706 !important;
-        box-shadow: 0 0 0 2px rgba(217,119,6,0.15) !important;
-        outline: none !important;
-    }
-    [data-testid="stTextInput"] input::placeholder {
-        color: #3A3830 !important;
-        opacity: 1 !important;
-    }
-    [data-testid="stTextInput"] label p {
-        color: #C8C6BC !important;
-        font-size: 0.82rem !important;
-        font-weight: 600 !important;
-        font-family: 'DM Sans', sans-serif !important;
-    }
-
     /* ── BUTTON ── */
     div.stButton > button[kind="primary"] {
         background: #D97706 !important;
@@ -310,114 +136,202 @@ def mostra_auth():
         border: none !important;
         border-radius: 10px !important;
         font-weight: 700 !important;
-        font-size: 0.95rem !important;
-        min-height: 48px !important;
-        box-shadow: 0 2px 16px rgba(217,119,6,0.35) !important;
-        transition: filter 0.15s, transform 0.15s !important;
+        font-size: 1rem !important;
+        min-height: 52px !important;
+        box-shadow: 0 2px 20px rgba(217,119,6,0.35) !important;
         width: 100% !important;
+        transition: filter 0.15s, transform 0.15s !important;
     }
     div.stButton > button[kind="primary"]:hover {
         filter: brightness(1.1) !important;
         transform: translateY(-1px) !important;
     }
 
-    /* Alert/warning */
-    .stAlert { border-radius: 8px !important; margin-top: 0.5rem !important; }
-    .stAlert p, .stAlert div { color: #1a1915 !important; font-size: 0.85rem !important; }
+    /* ── ALERT ── */
+    .stAlert { border-radius: 8px !important; }
+    .stAlert p, .stAlert div { font-size: 0.88rem !important; }
 
-    .reset-note {
-        font-size: 0.78rem;
-        color: #8C8A82;
-        line-height: 1.5;
-        padding: 0.8rem 1rem;
-        background: #161614;
-        border-radius: 8px;
-        border-left: 2px solid #2A2926;
-        margin-bottom: 1rem;
-    }
+    /* ── DIVIDER ── */
+    hr { border-color: #1E1D1A !important; margin: 1.5rem 0 !important; }
 
-    /* ── MOBILE: tutto in colonna singola ── */
-    @media (max-width: 768px) {
-        .auth-left-panel { display: none !important; }
-        .auth-right-bg { display: none !important; }
-        [data-testid="column"]:last-child {
-            position: relative !important;
-            width: 100% !important;
-            height: auto !important;
-            padding: 2.5rem 1.5rem !important;
-            right: auto !important;
-            top: auto !important;
-            background: #111110 !important;
-            min-height: 100vh !important;
-        }
-        html, body, .stApp {
-            background: #111110 !important;
-        }
-    }
     </style>
+    """, unsafe_allow_html=True)
 
-    <!-- Panel sinistro fisso (solo desktop) -->
-    <div class="auth-left-panel">
-      <div class="auth-badge">
-        <span class="auth-badge-dot"></span>
-        Generazione AI · Beta
+    # ── HERO ──────────────────────────────────────────────────────────────────
+    st.markdown("""
+    <div style="padding: 3rem 2rem 0 2rem; text-align: center;">
+
+      <!-- Badge -->
+      <div style="display:inline-flex;align-items:center;gap:7px;
+                  background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.3);
+                  border-radius:100px;padding:5px 14px;margin-bottom:1.8rem;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#F59E0B;
+                     display:inline-block;"></span>
+        <span style="font-size:0.72rem;font-weight:700;color:#F59E0B;
+                     letter-spacing:0.07em;text-transform:uppercase;">
+          Generazione AI · Beta
+        </span>
       </div>
-      <div class="auth-logo">📝&nbsp;Verific<span class="auth-logo-ai">AI</span></div>
-      <p class="auth-tagline">
-        Crea <strong>verifiche scolastiche professionali</strong> in 30 secondi.<br>
-        Tu dici l'argomento, l'AI fa il resto.
+
+      <!-- Logo -->
+      <div style="font-size:3.2rem;font-weight:900;letter-spacing:-0.04em;
+                  color:#F5F4EF;line-height:1;margin-bottom:0.5rem;">
+        📝 Verific<span style="background:linear-gradient(135deg,#D97706,#FF8C00);
+                               -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                               background-clip:text;">AI</span>
+      </div>
+
+      <!-- Tagline -->
+      <p style="font-size:1rem;color:#8C8A82;font-weight:400;
+                margin:0 auto 2rem auto;line-height:1.5;max-width:360px;">
+        Crea <strong style="color:#C8C6BC;">verifiche scolastiche professionali</strong>
+        in 30 secondi. Tu dici l'argomento, l'AI fa il resto.
       </p>
-      <div class="feature-grid">
-        <div class="feature-card">
-          <span class="feature-icon">🧠</span>
-          <div class="feature-title">Generazione AI</div>
-          <div class="feature-desc">Esercizi calibrati sul livello della tua classe, corretti automaticamente</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">📄</span>
-          <div class="feature-title">PDF & Word</div>
-          <div class="feature-desc">Esporta in alta qualità, pronto da stampare o condividere</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">🔀</span>
-          <div class="feature-title">Fila A / B</div>
-          <div class="feature-desc">Due varianti diverse per evitare i copiatori, generate insieme</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">♿</span>
-          <div class="feature-title">BES / DSA</div>
-          <div class="feature-desc">Versione ridotta automatica per studenti con certificazione</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">✅</span>
-          <div class="feature-title">Soluzioni</div>
-          <div class="feature-desc">Documento soluzioni riservato al docente, generato insieme</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">🏫</span>
-          <div class="feature-title">Tutti i livelli</div>
-          <div class="feature-desc">Elementari, medie, licei, istituti tecnici e professionali</div>
-        </div>
+
+      <!-- Feature pills -->
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;
+                  justify-content:center;margin-bottom:2.5rem;">
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;
+                     padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🧠 Generazione AI</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;
+                     padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">📄 PDF & Word</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;
+                     padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🔀 Fila A/B</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;
+                     padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">♿ BES/DSA</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;
+                     padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">✅ Soluzioni</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;
+                     padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🏫 Tutti i livelli</span>
       </div>
-      <div class="auth-social">
-        <div class="auth-avatars">
-          <div class="auth-av">GM</div>
-          <div class="auth-av">AR</div>
-          <div class="auth-av">FL</div>
-          <div class="auth-av" style="background:linear-gradient(135deg,#444,#222);font-size:0.6rem;">+</div>
-        </div>
-        <div class="auth-social-text">
-          Già usato da docenti di tutta Italia.<br>
-          <strong>Gratis durante il periodo Beta.</strong>
-        </div>
-      </div>
+
     </div>
 
-    <!-- Panel destro fisso (sfondo + header) -->
-    <div class="auth-right-bg">
-      <div class="auth-right-header">
-        <div class="auth-right-title">Inizia subito</div>
-        <div class="auth-right-sub">Crea un account gratuito o accedi se hai già un profilo.</div>
+    <!-- Form card -->
+    <div style="background:#111110;border:1px solid #1E1D1A;border-radius:20px;
+                margin:0 1rem 1rem 1rem;padding:2rem 2rem 1.5rem 2rem;">
+      <div style="font-size:1.3rem;font-weight:800;color:#F5F4EF;
+                  margin-bottom:0.3rem;letter-spacing:-0.02em;">
+        Inizia subito
+      </div>
+      <div style="font-size:0.85rem;color:#6B6960;margin-bottom:1.5rem;line-height:1.4;">
+        Gratuito durante il periodo Beta · Nessuna carta richiesta
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── FORM (Streamlit nativo dentro la card) ────────────────────────────────
+    with st.container():
+        st.markdown('<div style="padding:0 1rem;">', unsafe_allow_html=True)
+
+        tab_login, tab_reg, tab_reset = st.tabs(["  Accedi  ", "  Registrati  ", "  Password  "])
+
+        with tab_login:
+            st.write("")
+            email = st.text_input("Email", key="login_email", placeholder="docente@scuola.it")
+            password = st.text_input("Password", type="password", key="login_pass", placeholder="••••••••")
+            st.write("")
+            if st.button("Accedi →", type="primary", use_container_width=True, key="btn_login"):
+                if not email or not password:
+                    st.warning("Inserisci email e password.")
+                else:
+                    try:
+                        res = supabase.auth.sign_in_with_password({"email": email, "password": password})
+                        st.session_state.utente = res.user
+                        at = res.session.access_token
+                        rt = res.session.refresh_token
+                        st.session_state["_sb_access_token"] = at
+                        st.session_state["_sb_refresh_token"] = rt
+                        st.query_params["_at"] = at
+                        st.query_params["_rt"] = rt
+                        st.rerun()
+                    except Exception as e:
+                        err_str = str(e).lower()
+                        if "invalid login" in err_str or "invalid credentials" in err_str:
+                            st.warning("Password errata. Usa il tab 'Password' per reimpostarla.")
+                        elif "email not confirmed" in err_str:
+                            st.warning("Email non confermata. Controlla la tua casella di posta.")
+                        elif "user not found" in err_str or "no user" in err_str:
+                            st.warning("Nessun account trovato. Registrati prima.")
+                        else:
+                            st.warning("Accesso non riuscito. Controlla email e password.")
+                        time.sleep(2)
+
+        with tab_reg:
+            st.write("")
+            email    = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
+            password = st.text_input("Password (min. 6 caratteri)", type="password", key="reg_pass", placeholder="••••••••")
+            st.write("")
+            if st.button("Crea account gratuito →", type="primary", use_container_width=True, key="btn_reg"):
+                if not email or not password:
+                    st.warning("Inserisci email e password.")
+                elif len(password) < 6:
+                    st.warning("La password deve essere di almeno 6 caratteri.")
+                else:
+                    try:
+                        res = supabase.auth.sign_up({"email": email, "password": password})
+                        st.session_state.utente = res.user
+                        if res.session:
+                            at = res.session.access_token
+                            rt = res.session.refresh_token
+                            st.session_state["_sb_access_token"] = at
+                            st.session_state["_sb_refresh_token"] = rt
+                            st.query_params["_at"] = at
+                            st.query_params["_rt"] = rt
+                        st.success("Benvenuto su VerificAI! Account creato.")
+                        time.sleep(1)
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Errore durante la registrazione: {e}")
+
+        with tab_reset:
+            st.write("")
+            st.markdown("""
+            <div style="font-size:0.82rem;color:#8C8A82;line-height:1.5;
+                        padding:0.8rem 1rem;background:#161614;border-radius:8px;
+                        border-left:2px solid #2A2926;margin-bottom:0.8rem;">
+              Inserisci la tua email. Riceverai un link per reimpostare la password.
+            </div>
+            """, unsafe_allow_html=True)
+            email_reset = st.text_input("Email", key="reset_email", placeholder="docente@scuola.it")
+            st.write("")
+            if st.button("Invia link di reset →", type="primary", use_container_width=True, key="btn_reset"):
+                if not email_reset:
+                    st.warning("Inserisci la tua email.")
+                else:
+                    try:
+                        supabase.auth.reset_password_email(email_reset)
+                        st.success("Email inviata! Controlla la casella di posta.")
+                    except Exception as e:
+                        st.error(f"Errore nell'invio: {e}")
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ── FOOTER ────────────────────────────────────────────────────────────────
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:0.8rem;
+                justify-content:center;padding:1.5rem 1rem 3rem 1rem;">
+      <div style="display:flex;">
+        <div style="width:28px;height:28px;border-radius:50%;border:2px solid #0C0C0B;
+                    background:linear-gradient(135deg,#D97706,#92400E);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:0.6rem;font-weight:700;color:white;">GM</div>
+        <div style="width:28px;height:28px;border-radius:50%;border:2px solid #0C0C0B;
+                    background:linear-gradient(135deg,#D97706,#92400E);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:0.6rem;font-weight:700;color:white;margin-left:-7px;">AR</div>
+        <div style="width:28px;height:28px;border-radius:50%;border:2px solid #0C0C0B;
+                    background:linear-gradient(135deg,#D97706,#92400E);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:0.6rem;font-weight:700;color:white;margin-left:-7px;">FL</div>
+        <div style="width:28px;height:28px;border-radius:50%;border:2px solid #0C0C0B;
+                    background:linear-gradient(135deg,#444,#222);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:0.6rem;font-weight:700;color:white;margin-left:-7px;">+</div>
+      </div>
+      <div style="font-size:0.78rem;color:#6B6960;line-height:1.4;">
+        Già usato da docenti di tutta Italia.<br>
+        <strong style="color:#C8C6BC;">Gratis durante il periodo Beta.</strong>
       </div>
     </div>
     """, unsafe_allow_html=True)
@@ -3352,14 +3266,10 @@ if not st.session_state._onboarding_done:
     _ob_col, _ob_close = st.columns([20, 1])
     with _ob_col:
         st.markdown(f"""
-        <div style="
-            background: linear-gradient(135deg, {T['accent_light']} 0%, {T['card']} 100%);
-            border: 1.5px solid {T['accent']};
-            border-radius: 14px;
-            padding: 1.1rem 1.4rem;
-            margin-bottom: 1.5rem;
-            font-family: 'DM Sans', sans-serif;
-        ">
+        <div style="background:linear-gradient(135deg,{T['accent_light']} 0%,{T['card']} 100%);
+                    border:1.5px solid {T['accent']};border-radius:14px;
+                    padding:1.1rem 1.4rem;margin-bottom:1.5rem;
+                    font-family:'DM Sans',sans-serif;">
           <div style="display:flex;align-items:flex-start;gap:14px;">
             <div style="font-size:1.5rem;flex-shrink:0;margin-top:2px;">👋</div>
             <div style="flex:1;">
@@ -3369,7 +3279,6 @@ if not st.session_state._onboarding_done:
                 Come iniziare in 3 passi
               </div>
 
-              <!-- Step 0: sidebar -->
               <div style="display:flex;align-items:center;gap:10px;
                           padding:0.55rem 0.8rem;margin-bottom:0.5rem;
                           background:{T['bg2']};border-radius:8px;
@@ -3377,15 +3286,14 @@ if not st.session_state._onboarding_done:
                 <div style="width:20px;height:20px;border-radius:50%;
                             background:{T['accent']};display:flex;align-items:center;
                             justify-content:center;font-size:0.65rem;font-weight:900;
-                            color:white;flex-shrink:0;">⚙</div>
+                            color:white;flex-shrink:0;">☰</div>
                 <div style="font-size:0.83rem;color:{T['text2']};">
-                  Usa il menu <strong style="color:{T['text']};">☰ in alto a sinistra</strong>
-                  per impostare il tipo di classe, le opzioni e il modello AI
+                  Apri il menu <strong style="color:{T['text']};">☰ in alto a sinistra</strong>
+                  per impostare classe, opzioni e modello AI
                 </div>
               </div>
 
-              <!-- Tre step inline -->
-              <div style="display:flex;align-items:stretch;gap:0;
+              <div style="display:flex;align-items:stretch;
                           background:{T['bg2']};border:1px solid {T['border']};
                           border-radius:10px;overflow:hidden;">
                 <div style="flex:1;padding:0.65rem 0.9rem;border-right:1px solid {T['border']};">
@@ -4415,5 +4323,6 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
