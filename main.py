@@ -840,9 +840,19 @@ def _clean_latex_line(text):
 
 
 def _parse_latex_to_data(codice_latex):
+    """
+    Parsa il codice LaTeX e restituisce un dict con titolo, intestazione e lista esercizi.
+    Gestisce sia \item[label] con etichetta esplicita sia \item senza etichetta
+    all'interno di \begin{enumerate}[a)] o \begin{enumerate}[i)].
+    """
     import re as _r
+    LETTERE = 'abcdefghijklmnopqrstuvwxyz'
+    ROMANI  = ['i','ii','iii','iv','v','vi','vii','viii','ix','x',
+               'xi','xii','xiii','xiv','xv','xvi','xvii','xviii','xix','xx']
+
     data = {'titolo': '', 'intestazione_nota': '', 'esercizi': []}
 
+    # ── titolo e nota ────────────────────────────────────────────────────────
     m = _r.search(r'\\textbf\{\\large ([^}]+)\}', codice_latex)
     if m:
         data['titolo'] = _clean_latex_line(m.group(1))
@@ -851,123 +861,167 @@ def _parse_latex_to_data(codice_latex):
     if m2:
         data['intestazione_nota'] = m2.group(1).strip()
 
+    # ── corpo dopo \end{center} ──────────────────────────────────────────────
     body_start = codice_latex.find('\\end{center}')
-    if body_start == -1:
-        body_start = 0
-    else:
-        body_start += len('\\end{center}')
-    corpus = codice_latex[body_start:]
-    corpus = corpus.replace('\\end{document}', '')
+    body_start = (body_start + len('\\end{center}')) if body_start != -1 else 0
+    corpus = codice_latex[body_start:].replace('\\end{document}', '')
 
+    # ── split per esercizio ──────────────────────────────────────────────────
     blocks = _r.split(r'\\subsection\*\s*\{', corpus)
 
     for block in blocks[1:]:
+        # estrai il titolo dell'esercizio (contenuto fino alla prima } non appaiate)
         brace_depth = 0
-        header_end = 0
+        header_end  = 0
         for ci, ch in enumerate(block):
-            if ch == '{': brace_depth += 1
+            if   ch == '{': brace_depth += 1
             elif ch == '}':
                 if brace_depth == 0:
                     header_end = ci
                     break
                 brace_depth -= 1
         titolo_ex = _clean_latex_line(block[:header_end])
-        body = block[header_end+1:]
+        body = block[header_end + 1:]
 
-        body = _r.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '\n[Grafico]\n', body, flags=_r.DOTALL)
-        body = _r.sub(r'\\begin\{axis\}.*?\\end\{axis\}', '\n[Grafico]\n', body, flags=_r.DOTALL)
+        # rimuovi grafica tikz
+        body = _r.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
+                      '\n[Grafico]\n', body, flags=_r.DOTALL)
+        body = _r.sub(r'\\begin\{axis\}.*?\\end\{axis\}',
+                      '\n[Grafico]\n', body, flags=_r.DOTALL)
 
-        first_item = len(body)
-        for marker in [r'\\item[', r'\\begin{enumerate}', r'\\begin{itemize}']:
-            idx = body.find(marker.replace('\\\\','\\'))
-            if idx != -1 and idx < first_item:
-                first_item = idx
-        raw_intro = body[:first_item]
+        # ── testo introduttivo (prima del primo \begin{enumerate/itemize} o \item) ──
+        first_env = len(body)
+        for marker in [r'\begin{enumerate}', r'\begin{itemize}', r'\item']:
+            idx = body.find(marker)
+            if idx != -1 and idx < first_env:
+                first_env = idx
+        raw_intro = body[:first_env]
         raw_intro = _r.sub(r'\\begin\{tabular\}.*?\\end\{tabular\}', '', raw_intro, flags=_r.DOTALL)
-        raw_intro = _r.sub(r'\\begin\{center\}.*?\\end\{center\}', '', raw_intro, flags=_r.DOTALL)
+        raw_intro = _r.sub(r'\\begin\{center\}.*?\\end\{center\}',   '', raw_intro, flags=_r.DOTALL)
         testo_intro = _clean_latex_line(raw_intro)
 
         sottopunti = []
 
-        enum_pat = _r.compile(
-            r'\\begin\{enumerate\}\s*\[a\)\]\s*(.*?)\\end\{enumerate\}',
-            _r.DOTALL
-        )
-        used_ranges = []
-
-        for em in enum_pat.finditer(body):
-            used_ranges.append((em.start(), em.end()))
-            items_block = em.group(1)
-
-            item_pat = _r.compile(
-                r'\\item\[([^\]]+)\]\s*(.*?)(?=\\item\[|$)',
+        # ── helper: estrai items da un blocco enumerate/itemize ──────────────
+        def _parse_items(items_block, label_style='alpha'):
+            """
+            Restituisce lista di (label, testo_pulito, opzioni, punti).
+            label_style: 'alpha' → a) b) c)  |  'roman' → i) ii) iii)
+            """
+            risultati = []
+            # match sia \item[X] con etichetta esplicita sia \item senza
+            pat = _r.compile(
+                r'\\item(?:\[([^\]]*)\])?\s*(.*?)(?=\\item(?:\[|\s)|$)',
                 _r.DOTALL
             )
-            for im in item_pat.finditer(items_block):
-                label = im.group(1).strip()
+            auto_idx = 0
+            for im in pat.finditer(items_block):
+                explicit = im.group(1)
+                if explicit is not None:
+                    label = explicit.strip()
+                    auto_idx += 1
+                else:
+                    # genera etichetta automatica
+                    if label_style == 'roman':
+                        label = ROMANI[min(auto_idx, len(ROMANI)-1)] + ')'
+                    else:
+                        label = LETTERE[auto_idx % 26] + ')'
+                    auto_idx += 1
+
                 raw_text = im.group(2).strip()
+                if not label and not raw_text:
+                    continue
+
                 opzioni = []
 
-                inner_enum = _r.search(
-                    r'\\begin\{enumerate\}\s*\[a\)\](.*?)\\end\{enumerate\}',
+                # sotto-enumerate (es. scelta multipla o domande i) ii) iii))
+                inner = _r.search(
+                    r'\\begin\{enumerate\}\s*\[([^\]]*)\]\s*(.*?)\\end\{enumerate\}',
                     raw_text, _r.DOTALL
                 )
-                if inner_enum:
-                    for opt_m in _r.finditer(r'\\item\s+(.*?)(?=\\item|$)', inner_enum.group(1), _r.DOTALL):
-                        opt_c = _clean_latex_line(opt_m.group(1))
-                        if opt_c: opzioni.append(opt_c)
-                    raw_text = raw_text[:inner_enum.start()].strip()
+                if not inner:
+                    inner = _r.search(
+                        r'\\begin\{enumerate\}\s*(.*?)\\end\{enumerate\}',
+                        raw_text, _r.DOTALL
+                    )
+                if inner:
+                    inner_content = inner.group(inner.lastindex)
+                    inner_label   = inner.group(1) if inner.lastindex > 1 else 'a)'
+                    inner_style   = 'roman' if 'i' in inner_label else 'alpha'
+                    for sub_label, sub_testo, _, _ in _parse_items(inner_content, inner_style):
+                        opt_c = (f"{sub_label} {sub_testo}").strip()
+                        if opt_c:
+                            opzioni.append(opt_c)
+                    raw_text = raw_text[:inner.start()].strip()
 
+                # Vero/Falso
                 vf_pairs = _r.findall(r'\$\\square\$\s*\\textbf\{([VF])\}', raw_text)
                 if vf_pairs:
                     opzioni = [f"☐ {v}" for v in vf_pairs]
-                    raw_text = _r.sub(r'\$\\square\$\s*\\textbf\{[VF]\}\s*(?:\\quad)?', '', raw_text).strip()
+                    raw_text = _r.sub(
+                        r'\$\\square\$\s*\\textbf\{[VF]\}\s*(?:\\quad)?', '', raw_text
+                    ).strip()
 
                 testo_clean = _clean_latex_line(raw_text)
                 testo_clean = _r.sub(r'\n{2,}', '\n', testo_clean).strip()
 
-                if label:
-                    sottopunti.append({
-                        'label': label,
-                        'testo': testo_clean if testo_clean else '',
-                        'opzioni': opzioni,
-                        'punti': _estrai_punti(label + ' ' + testo_clean)
-                    })
+                punti = _estrai_punti(label + ' ' + testo_clean)
+                risultati.append((label, testo_clean, opzioni, punti))
+            return risultati
 
+        # ── scansiona tutti gli ambienti enumerate/itemize nel body ──────────
+        env_pat = _r.compile(
+            r'\\begin\{(enumerate|itemize)\}(\s*\[[^\]]*\])?\s*(.*?)\\end\{(?:enumerate|itemize)\}',
+            _r.DOTALL
+        )
+        used_ranges = []
+        for em in env_pat.finditer(body):
+            used_ranges.append((em.start(), em.end()))
+            opt_arg      = (em.group(2) or '').strip()  # es. [a)] o [i)] o vuoto
+            items_block  = em.group(3)
+            label_style  = 'roman' if opt_arg.startswith('[i') else 'alpha'
+
+            # testo eventuale prima di questo ambiente (intestazione secondaria)
+            preceding_start = used_ranges[-2][1] if len(used_ranges) >= 2 else first_env
+            # (non necessario in docx, usiamo solo il testo_intro già estratto)
+
+            for label, testo_clean, opzioni, punti in _parse_items(items_block, label_style):
+                sottopunti.append({
+                    'label':  label,
+                    'testo':  testo_clean,
+                    'opzioni': opzioni,
+                    'punti':  punti,
+                })
+
+        # ── fallback: \item liberi fuori da qualsiasi ambiente ───────────────
         if not sottopunti:
-            for im in _r.finditer(
-                r'\\item\[([^\]]+)\]\s*(.*?)(?=\\item\[|\\end\{|$)',
-                body, _r.DOTALL
-            ):
-                label = im.group(1).strip()
+            free_items = _r.compile(
+                r'\\item(?:\[([^\]]*)\])?\s*(.*?)(?=\\item(?:\[|\s)|\\end\{|$)',
+                _r.DOTALL
+            )
+            auto_idx = 0
+            for im in free_items.finditer(body):
+                skip = any(s <= im.start() < e for s, e in used_ranges)
+                if skip:
+                    continue
+                explicit = im.group(1)
+                label    = explicit.strip() if explicit is not None else (LETTERE[auto_idx % 26] + ')')
+                auto_idx += 1
                 raw_text = im.group(2).strip()
-                skip = any(s <= im.start() <= e for s, e in used_ranges)
-                if skip: continue
-                opzioni = []
-                inner_enum = _r.search(
-                    r'\\begin\{enumerate\}\s*\[a\)\](.*?)\\end\{enumerate\}',
-                    raw_text, _r.DOTALL
-                )
-                if inner_enum:
-                    for opt_m in _r.finditer(r'\\item\s+(.*?)(?=\\item|$)', inner_enum.group(1), _r.DOTALL):
-                        opt_c = _clean_latex_line(opt_m.group(1))
-                        if opt_c: opzioni.append(opt_c)
-                    raw_text = raw_text[:inner_enum.start()].strip()
                 testo_clean = _clean_latex_line(raw_text)
                 testo_clean = _r.sub(r'\n{2,}', '\n', testo_clean).strip()
-                if label:
-                    sottopunti.append({
-                        'label': label,
-                        'testo': testo_clean if testo_clean else '',
-                        'opzioni': opzioni,
-                        'punti': _estrai_punti(label + ' ' + testo_clean)
-                    })
+                sottopunti.append({
+                    'label':  label,
+                    'testo':  testo_clean,
+                    'opzioni': [],
+                    'punti':  _estrai_punti(label + ' ' + testo_clean),
+                })
 
         if titolo_ex or sottopunti:
             data['esercizi'].append({
-                'titolo': titolo_ex,
+                'titolo':      titolo_ex,
                 'testo_intro': testo_intro,
-                'sottopunti': sottopunti
+                'sottopunti':  sottopunti,
             })
     return data
 
@@ -1275,11 +1329,8 @@ if '_storico_refresh' not in st.session_state: st.session_state._storico_refresh
 if '_first_visit' not in st.session_state: st.session_state._first_visit = True
 
 # ── CALCOLA VERIFICHE DEL MESE (una volta per rerun) ────────────────────────────
-ADMIN_EMAILS = {"giacomosaragoni96@gmail.com"}  # ← metti qui la tua mail
-
 _verifiche_mese_count = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
-_is_admin = (st.session_state.utente.email in ADMIN_EMAILS) if st.session_state.utente else False
-_limite_raggiunto = (not _is_admin) and (_verifiche_mese_count >= LIMITE_MENSILE)
+_limite_raggiunto = _verifiche_mese_count >= LIMITE_MENSILE
 
 # ── CSS GLOBALE ──────────────────────────────────────────────────────────────────
 is_dark = (st.session_state.theme == "dark")
@@ -3499,4 +3550,3 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
-
