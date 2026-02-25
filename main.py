@@ -1338,7 +1338,7 @@ if '_preferiti' not in st.session_state: st.session_state._preferiti = set()
 if '_first_visit' not in st.session_state: st.session_state._first_visit = True
 
 # ── CALCOLA VERIFICHE DEL MESE (una volta per rerun) ────────────────────────────
-ADMIN_EMAILS = {"tua@email.com"}  # ← sostituisci con la tua mail
+ADMIN_EMAILS = {"giacomosaragoni96@gmail.com"}  # ← email admin con verifiche illimitate
 
 _verifiche_mese_count = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
 _is_admin = (st.session_state.utente.email in ADMIN_EMAILS) if st.session_state.utente else False
@@ -2554,8 +2554,12 @@ st.markdown(f"""
   }}
 
   /* Bottoni dentro gli expander della sidebar — stile dark coerente */
-  [data-testid="stSidebar"] [data-testid="stExpander"] .stButton > button {{
+  [data-testid="stSidebar"] [data-testid="stExpander"] .stButton > button,
+  [data-testid="stSidebar"] [data-testid="stExpander"] div.stButton > button,
+  [data-testid="stSidebar"] [data-testid="stExpander"] button[kind="secondary"],
+  [data-testid="stSidebar"] [data-testid="stExpander"] button {{
     background: #2a2926 !important;
+    background-color: #2a2926 !important;
     color: #c8c6bc !important;
     border: 1px solid #3a3834 !important;
     border-radius: 8px !important;
@@ -2567,35 +2571,48 @@ st.markdown(f"""
     transition: background 0.15s, border-color 0.15s, color 0.15s !important;
     width: 100% !important;
   }}
-  [data-testid="stSidebar"] [data-testid="stExpander"] .stButton > button:hover {{
+  [data-testid="stSidebar"] [data-testid="stExpander"] .stButton > button:hover,
+  [data-testid="stSidebar"] [data-testid="stExpander"] div.stButton > button:hover {{
     background: #353330 !important;
+    background-color: #353330 !important;
     border-color: {T['accent']} !important;
     color: {T['accent']} !important;
     box-shadow: none !important;
     transform: none !important;
   }}
   /* Bottone elimina — bordo rosso sottile */
-  [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn .stButton > button {{
+  [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn .stButton > button,
+  [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn button {{
+    background: #1e1008 !important;
+    background-color: #1e1008 !important;
     border-color: #5c2222 !important;
     color: #f87171 !important;
   }}
-  [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn .stButton > button:hover {{
+  [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn .stButton > button:hover,
+  [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn button:hover {{
     background: #2a0f0f !important;
+    background-color: #2a0f0f !important;
     border-color: #f87171 !important;
     color: #fca5a5 !important;
   }}
   /* Bottone stella preferito */
-  [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn .stButton > button {{
+  [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn .stButton > button,
+  [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn button {{
+    background: #1e1d1b !important;
+    background-color: #1e1d1b !important;
     border-color: #4a4020 !important;
     color: #9a8a50 !important;
     font-size: 1rem !important;
     padding: 3px 8px !important;
     width: auto !important;
   }}
-  [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn-on .stButton > button {{
-    border-color: #D97706 !important;
-    color: #F59E0B !important;
+  [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn-on .stButton > button,
+  [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn-on button {{
     background: #2a2010 !important;
+    background-color: #2a2010 !important;
+    border-color: {T['accent']} !important;
+    color: #F59E0B !important;
+    width: auto !important;
   }}
 
   [data-testid="stSidebar"] .logout-btn-wrap .stButton > button,
