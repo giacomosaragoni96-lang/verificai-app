@@ -1329,8 +1329,11 @@ if '_storico_refresh' not in st.session_state: st.session_state._storico_refresh
 if '_first_visit' not in st.session_state: st.session_state._first_visit = True
 
 # ── CALCOLA VERIFICHE DEL MESE (una volta per rerun) ────────────────────────────
+ADMIN_EMAILS = {"giacomosaragoni96@gmail.com"}  # ← sostituisci con la tua mail
+
 _verifiche_mese_count = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
-_limite_raggiunto = _verifiche_mese_count >= LIMITE_MENSILE
+_is_admin = (st.session_state.utente.email in ADMIN_EMAILS) if st.session_state.utente else False
+_limite_raggiunto = (not _is_admin) and (_verifiche_mese_count >= LIMITE_MENSILE)
 
 # ── CSS GLOBALE ──────────────────────────────────────────────────────────────────
 is_dark = (st.session_state.theme == "dark")
