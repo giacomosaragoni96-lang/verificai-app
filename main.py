@@ -2585,7 +2585,7 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">🏆 Punteggi</div>', unsafe_allow_html=True)
     mostra_punteggi = st.checkbox("Mostra punteggio per esercizio", value=False)
-    con_griglia     = st.checkbox("Includi griglia di valutazione", value=False)
+    con_griglia     = st.checkbox("Includi griglia dei punteggi", value=False)
     punti_totali    = st.number_input("Punti totali", min_value=10, max_value=200, value=100, step=5,
                                       disabled=not mostra_punteggi)
 
@@ -3467,6 +3467,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
