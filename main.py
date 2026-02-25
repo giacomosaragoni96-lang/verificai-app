@@ -2658,7 +2658,7 @@ with st.sidebar:
         bes_dsa_b = st.checkbox(
             "Genera versione ridotta anche per Fila B",
             value=False,
-            help="Genera la versione ridotta (BES/DSA) anche per la Fila B"
+            help="Genera la versione ridotta anche per la Fila B"
         )
 
     esercizio_multidisciplinare = False
@@ -2966,9 +2966,9 @@ else:
     if doppia_fila:
         _files_hint.append("📄 Fila B")
     if bes_dsa:
-        _files_hint.append("♿ Ridotta A")
+        _files_hint.append("Ridotta A")
     if bes_dsa and doppia_fila and bes_dsa_b:
-        _files_hint.append("♿ Ridotta B")
+        _files_hint.append("Ridotta B")
     if genera_soluzioni:
         _files_hint.append("✅ Soluzioni")
     _files_str = " · ".join(_files_hint)
@@ -3737,5 +3737,6 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
