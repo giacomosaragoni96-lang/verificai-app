@@ -3148,90 +3148,103 @@ if not st.session_state._onboarding_done:
     _c_accent_light = T['accent_light']
     _c_muted        = T['muted']
 
-    _banner_col, _x_col = st.columns([19, 1])
+    st.markdown(
+        f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
+        f'border:1.5px solid {_c_accent};border-radius:14px;'
+        f'padding:1.1rem 1.4rem 0.7rem 1.4rem;margin-bottom:0.6rem;font-family:DM Sans,sans-serif;">'
 
-    with _x_col:
-        # CSS per rendere il pulsante X piccolo, rotondo, discreto
-        st.markdown(f"""
-        <style>
-        div[data-testid="stButton"] button[kind="secondary"]#ob_x_btn,
-        [data-testid="column"]:last-child div.stButton > button {{
-            background: {_c_bg2} !important;
-            border: 1px solid {_c_border} !important;
-            border-radius: 50% !important;
-            color: {_c_muted} !important;
-            font-size: 0.7rem !important;
-            font-weight: 700 !important;
-            width: 26px !important;
-            height: 26px !important;
-            min-height: unset !important;
-            padding: 0 !important;
-            box-shadow: none !important;
-            transform: none !important;
-            line-height: 1 !important;
-            margin-top: 0.85rem !important;
-        }}
-        [data-testid="column"]:last-child div.stButton > button:hover {{
-            background: {_c_border} !important;
-            color: {_c_text} !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }}
-        </style>
-        """, unsafe_allow_html=True)
-        if st.button("✕", key="_dismiss_onboarding", help="Chiudi"):
-            st.session_state._onboarding_done = True
-            st.rerun()
+        f'<div style="display:flex;align-items:flex-start;gap:12px;">'
+        f'<div style="font-size:1.4rem;flex-shrink:0;margin-top:1px;">👋</div>'
+        f'<div style="flex:1;">'
 
-    with _banner_col:
-        st.markdown(
-            f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
-            f'border:1.5px solid {_c_accent};border-radius:14px;'
-            f'padding:1.1rem 1.4rem;margin-bottom:0.6rem;font-family:DM Sans,sans-serif;">'
+        f'<div style="font-size:0.9rem;font-weight:800;color:{_c_text};'
+        f'margin-bottom:0.7rem;letter-spacing:-0.01em;">Come iniziare</div>'
 
-            f'<div style="display:flex;align-items:flex-start;gap:12px;">'
-            f'<div style="font-size:1.4rem;flex-shrink:0;margin-top:1px;">👋</div>'
-            f'<div style="flex:1;">'
-            f'<div style="font-size:0.9rem;font-weight:800;color:{_c_text};'
-            f'margin-bottom:0.7rem;letter-spacing:-0.01em;">Come iniziare</div>'
+        f'<div style="display:flex;align-items:center;gap:8px;'
+        f'padding:0.45rem 0.75rem;margin-bottom:0.5rem;'
+        f'background:{_c_bg2};border-radius:8px;border-left:3px solid {_c_accent};">'
+        f'<span style="font-size:0.85rem;">⚙️</span>'
+        f'<div style="font-size:0.8rem;color:{_c_text2};">'
+        f'Prima di tutto: apri <strong style="color:{_c_text};">☰ Impostazioni</strong>'
+        f' in alto a sinistra per scegliere classe e modello AI'
+        f'</div>'
+        f'</div>'
 
-            f'<div style="display:flex;align-items:center;gap:8px;'
-            f'padding:0.45rem 0.75rem;margin-bottom:0.5rem;'
-            f'background:{_c_bg2};border-radius:8px;border-left:3px solid {_c_accent};">'
-            f'<span style="font-size:0.85rem;">⚙️</span>'
-            f'<div style="font-size:0.8rem;color:{_c_text2};">'
-            f'Prima di tutto: apri <strong style="color:{_c_text};">☰ Impostazioni</strong>'
-            f' in alto a sinistra per scegliere classe e modello AI'
-            f'</div>'
-            f'</div>'
+        f'<div style="display:flex;background:{_c_bg2};border:1px solid {_c_border};'
+        f'border-radius:10px;overflow:hidden;margin-bottom:0.75rem;">'
 
-            f'<div style="display:flex;background:{_c_bg2};border:1px solid {_c_border};'
-            f'border-radius:10px;overflow:hidden;">'
+        f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
+        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};'
+        f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">01 · Materia</div>'
+        f'<div style="font-size:0.76rem;color:{_c_text2};">Scegli la materia</div>'
+        f'</div>'
 
-            f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
-            f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};'
-            f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">01 · Materia</div>'
-            f'<div style="font-size:0.76rem;color:{_c_text2};">Scegli la materia</div>'
-            f'</div>'
+        f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
+        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};'
+        f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">02 · Argomento</div>'
+        f'<div style="font-size:0.76rem;color:{_c_text2};">Scrivi l\'argomento</div>'
+        f'</div>'
 
-            f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
-            f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};'
-            f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">02 · Argomento</div>'
-            f'<div style="font-size:0.76rem;color:{_c_text2};">Scrivi l\'argomento</div>'
-            f'</div>'
+        f'<div style="flex:1;padding:0.6rem 0.85rem;">'
+        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};'
+        f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">03 · Personalizza</div>'
+        f'<div style="font-size:0.76rem;color:{_c_text2};">Opzioni avanzate (facoltativo)</div>'
+        f'</div>'
 
-            f'<div style="flex:1;padding:0.6rem 0.85rem;">'
-            f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};'
-            f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">03 · Personalizza</div>'
-            f'<div style="font-size:0.76rem;color:{_c_text2};">Opzioni avanzate (facoltativo)</div>'
-            f'</div>'
+        f'</div>'  # fine step box
 
-            f'</div>'
-            f'</div>'
-            f'</div>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
+        f'</div>'  # fine flex:1
+        f'</div>'  # fine display:flex
+
+        # Link "Ho capito" dentro il banner, in fondo a destra
+        f'<div style="text-align:right;padding-top:0.1rem;">'
+        f'<span style="font-size:0.75rem;color:{_c_muted};">'
+        f'✓ Visto &nbsp;</span>'
+        f'</div>'
+
+        f'</div>',  # fine card
+        unsafe_allow_html=True
+    )
+
+    # Bottone "Ho capito" testuale — stilizzato come link
+    st.markdown(f"""
+    <style>
+    [data-testid="stButton"] button[data-testid="baseButton-secondary"]:has(+ *) {{
+        all: unset;
+    }}
+    div.ob-dismiss-wrap div.stButton > button {{
+        background: transparent !important;
+        border: none !important;
+        color: {_c_muted} !important;
+        font-size: 0.78rem !important;
+        font-weight: 600 !important;
+        text-decoration: underline !important;
+        padding: 0 !important;
+        min-height: unset !important;
+        height: auto !important;
+        box-shadow: none !important;
+        transform: none !important;
+        width: auto !important;
+        float: right !important;
+        margin-top: -1.4rem !important;
+        margin-right: 1.4rem !important;
+        margin-bottom: 1rem !important;
+    }}
+    div.ob-dismiss-wrap div.stButton > button:hover {{
+        color: {_c_text2} !important;
+        background: transparent !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }}
+    </style>
+    <div class="ob-dismiss-wrap">
+    """, unsafe_allow_html=True)
+
+    if st.button("Ho capito, non mostrare più", key="_dismiss_onboarding"):
+        st.session_state._onboarding_done = True
+        st.rerun()
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Disclaimer AI
     st.markdown(
@@ -3247,6 +3260,7 @@ if not st.session_state._onboarding_done:
         f'</div>',
         unsafe_allow_html=True
     )
+
 
 
         
@@ -4243,6 +4257,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
