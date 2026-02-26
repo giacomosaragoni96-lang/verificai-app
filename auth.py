@@ -5,9 +5,10 @@ import extra_streamlit_components as stx
 
 
 # ── COOKIE MANAGER ────────────────────────────────────────────────────────────────
-@st.cache_resource
 def get_cookie_manager():
-    return stx.CookieManager()
+    if "_cookie_manager" not in st.session_state:
+        st.session_state._cookie_manager = stx.CookieManager()
+    return st.session_state._cookie_manager
 
 
 # ── PERSISTENT LOGIN ──────────────────────────────────────────────────────────────
