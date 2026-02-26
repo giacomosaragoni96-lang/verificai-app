@@ -261,6 +261,8 @@ def render_sidebar(
             st.session_state.utente = None
             st.session_state.pop("_sb_access_token", None)
             st.session_state.pop("_sb_refresh_token", None)
+            st.session_state._cookie_check_done = False  # ← aggiungi
+            st.session_state.pop("_tok", None)         
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -278,3 +280,4 @@ def render_sidebar(
         'modello_id': modello_id,
 
     }
+
