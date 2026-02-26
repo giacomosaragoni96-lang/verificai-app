@@ -60,8 +60,16 @@ if 'utente' not in st.session_state:
     st.session_state.utente = None
 
 if st.session_state.utente is None:
-    mostra_auth(supabase)
-    st.stop()
+    # Prima inizializza il controller e aspetta che i cookie si carichino
+    if not st.session_state.get('_cookie_check_done'):
+        ripristina_sessione(supabase)
+        # Se dopo il check l'utente è ancora None, mostra il login
+        if st.session_state.utente is None:
+            mostra_auth(supabase)
+        st.stop()
+    else:
+        mostra_auth(supabase)
+        st.stop()
 
 # ── FUNZIONI ───────────────────────────────────────────────────────────────────
 
@@ -957,6 +965,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
