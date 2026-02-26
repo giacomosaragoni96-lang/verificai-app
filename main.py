@@ -62,16 +62,19 @@ if not API_KEY:
     st.stop()
 genai.configure(api_key=API_KEY)
 
-# ── AUTENTICAZIONE GATE ───────────────────────────────────────────────────────────
+# ── AUTENTICAZIONE GATE (MODIFICATO PER PERSISTENZA) ─────────────────────────────
 if 'utente' not in st.session_state:
     st.session_state.utente = None
 
+# 1. Recupero immediato del cookie (usando la tua funzione ripristina_sessione)
+ripristina_sessione(supabase)
+
+# 2. Controllo accesso
 if st.session_state.utente is None:
-    # Tenta ripristino da cookie
-    ripristina_sessione(supabase)
-    # Se ancora None, mostra login
+    mostra_auth(supabase)
+    
+    # Se dopo il form è ancora None, allora fermiamo l'app
     if st.session_state.utente is None:
-        mostra_auth(supabase)
         st.stop()
 
 # ── FUNZIONI ──────────────────────────────────────────────────────────────────────
@@ -960,6 +963,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
