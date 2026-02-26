@@ -26,7 +26,7 @@ from config import (
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
-from auth import mostra_auth, ripristina_sessione, get_cookie_controller
+from auth import mostra_auth, ripristina_sessione, get_cookie_manager
 from styles import get_css
 
 # ── PAGE CONFIG — DEVE ESSERE IL PRIMO COMANDO STREAMLIT ────────────────────────
@@ -38,9 +38,8 @@ st.set_page_config(
 )
 
 # ── COOKIE CONTROLLER — ISTANZIATO SUBITO, PRIMA DI QUALSIASI st.stop() ─────────
-# Questo è il trucco fondamentale: il componente JS deve renderizzarsi
-# almeno una volta prima che possiamo leggere i cookie.
-_cookie_controller = get_cookie_controller()
+
+get_cookie_manager()
 
 # ── SUPABASE ──────────────────────────────────────────────────────────────────────
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -960,3 +959,4 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
