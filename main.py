@@ -1,6 +1,7 @@
 import streamlit as st
 import base64
 import re
+import os
 import time
 import google.generativeai as genai
 from latex_utils import (
@@ -3654,6 +3655,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
