@@ -215,7 +215,7 @@ st.markdown(f"""
 </a>
 """, unsafe_allow_html=True)
 
-# Sostituisci il blocco alla riga 219 con questo:
+
 try:
     settings = render_sidebar(
         supabase_admin=supabase_admin,
@@ -951,6 +951,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
