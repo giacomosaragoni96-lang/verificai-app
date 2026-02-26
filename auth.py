@@ -1,19 +1,13 @@
 import streamlit as st
 import time
-from streamlit_cookies_controller import CookieController
+import extra_streamlit_components as stx
 
 
-# ── COOKIE CONTROLLER ─────────────────────────────────────────────────────────────
-def get_cookie_controller():
-    """
-    Il controller va istanziato UNA sola volta per sessione.
-    La prima volta che viene creato, renderizza un componente invisibile
-    che legge i cookie dal browser. Questo richiede un rerun per completarsi.
-    IMPORTANTE: deve essere chiamato in main.py PRIMA di qualsiasi st.stop().
-    """
-    if "_cookie_controller" not in st.session_state:
-        st.session_state._cookie_controller = CookieController()
-    return st.session_state._cookie_controller
+
+# ── COOKIE MANAGER ────────────────────────────────────────────────────────────────
+@st.cache_resource
+def get_cookie_manager():
+    return stx.CookieManager()_cookie_controller
 
 
 # ── PERSISTENT LOGIN ──────────────────────────────────────────────────────────────
