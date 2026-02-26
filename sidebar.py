@@ -255,6 +255,8 @@ def render_sidebar(
         st.markdown('<div style="height:0.5rem;"></div>', unsafe_allow_html=True)
         st.markdown('<div class="logout-btn-wrap">', unsafe_allow_html=True)
         if st.button("↩ Esci dall'account", key="logout_btn"):
+            from auth import cancella_sessione_cookie
+            cancella_sessione_cookie()
             supabase_client.auth.sign_out()
             st.session_state.utente = None
             st.session_state.pop("_sb_access_token", None)
@@ -274,4 +276,5 @@ def render_sidebar(
         'con_griglia': con_griglia,
         'punti_totali': punti_totali,
         'modello_id': modello_id,
+
     }
