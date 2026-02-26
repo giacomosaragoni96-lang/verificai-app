@@ -3082,8 +3082,7 @@ if not st.session_state._onboarding_done:
         f'border:1.5px solid {_c_accent};border-radius:14px;'
         f'padding:1.1rem 1.4rem 0.8rem 1.4rem;margin-bottom:0.8rem;font-family:DM Sans,sans-serif;">'
         f'<div style="display:flex;align-items:flex-start;gap:12px;">'
-        f'<div style="font-size:1.4rem;flex-shrink:0;margin-top:1px;">👋</div>'
-        f'<div style="flex:1;">'
+
         f'<div style="font-size:0.9rem;font-weight:800;color:{_c_text};margin-bottom:0.7rem;">Come iniziare</div>'
         f'<div style="display:flex;align-items:center;gap:8px;padding:0.45rem 0.75rem;margin-bottom:0.5rem;'
         f'background:{_c_bg2};border-radius:8px;border-left:3px solid {_c_accent};">'
@@ -4110,6 +4109,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
