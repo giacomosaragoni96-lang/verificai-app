@@ -3417,7 +3417,7 @@ if st.session_state.verifiche['A']['latex']:
             # ── HINT MODIFICA ─────────────────────────────────────────────────
             st.markdown(f"""
             <div class="modifica-hint">
-              <span class="modifica-hint-icon">✏️</span>
+              
               <span>
                 <strong>La verifica ti soddisfa?</strong> Scarica il PDF — oppure, se vuoi apportare correzioni
                 (cambiare un esercizio, modificare i dati, variare la difficoltà, aggiungere un sottopunto…),
@@ -3658,6 +3658,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
