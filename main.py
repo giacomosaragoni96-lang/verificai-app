@@ -3177,7 +3177,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="personalizza-wrap">', unsafe_allow_html=True)
-with st.expander("Personalizza la verifica *(opzionale)*"):
+with st.expander("Personalizza la verifica"):
 
     st.markdown(f'<div class="expander-heading">⏱️ Tempistiche e Struttura</div>', unsafe_allow_html=True)
     _c_dur, _c_num = st.columns(2)
@@ -3193,7 +3193,7 @@ with st.expander("Personalizza la verifica *(opzionale)*"):
             min_value=1, max_value=15, value=4,
         )
 
-    with st.expander("🎯 Specifica il tipo di ogni esercizio (opzionale)"):
+    with st.expander("🎯 Personalizza i singoli esercizi"):
         n_custom = len(st.session_state.esercizi_custom)
         n_liberi = max(0, num_esercizi_totali - n_custom)
 
@@ -4110,4 +4110,5 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
