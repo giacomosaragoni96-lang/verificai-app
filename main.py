@@ -56,7 +56,6 @@ def _ripristina_sessione():
 _ripristina_sessione()
 
 # ── AUTENTICAZIONE ──────────────────────────────────────────────────────────────
-# ── AUTENTICAZIONE ──────────────────────────────────────────────────────────────
 def mostra_auth():
     st.markdown("""
     <style>
@@ -73,7 +72,7 @@ def mostra_auth():
 
     .block-container {
         padding: 0 !important;
-        max-width: 480px !important;
+        max-width: 420px !important;
         margin: 0 auto !important;
     }
     [data-testid="stMainBlockContainer"] { padding: 0 !important; }
@@ -145,44 +144,41 @@ def mostra_auth():
     </style>
     """, unsafe_allow_html=True)
 
+    # ── HEADER COMPATTO ──────────────────────────────────────────────────────
     st.markdown("""
-    <div style="padding:3rem 2rem 0 2rem;text-align:center;">
+    <div style="padding:2.2rem 2rem 0 2rem;text-align:center;">
       <div style="display:inline-flex;align-items:center;gap:7px;
                   background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.3);
-                  border-radius:100px;padding:5px 14px;margin-bottom:1.8rem;">
+                  border-radius:100px;padding:5px 14px;margin-bottom:1.2rem;">
         <span style="width:6px;height:6px;border-radius:50%;background:#F59E0B;display:inline-block;"></span>
         <span style="font-size:0.72rem;font-weight:700;color:#F59E0B;letter-spacing:0.07em;text-transform:uppercase;">
-          Generazione AI · Beta
+          Generazione AI · Beta gratuita
         </span>
       </div>
-      <div style="font-size:3.2rem;font-weight:900;letter-spacing:-0.04em;
-                  color:#F5F4EF;line-height:1;margin-bottom:0.5rem;">
+
+      <div style="font-size:3rem;font-weight:900;letter-spacing:-0.04em;
+                  color:#F5F4EF;line-height:1;margin-bottom:0.45rem;">
         📝 Verific<span style="background:linear-gradient(135deg,#D97706,#FF8C00);
                                -webkit-background-clip:text;-webkit-text-fill-color:transparent;
                                background-clip:text;">AI</span>
       </div>
-      <p style="font-size:1rem;color:#8C8A82;font-weight:400;
-                margin:0 auto 2rem auto;line-height:1.5;max-width:360px;">
-        Crea <strong style="color:#C8C6BC;">verifiche scolastiche professionali</strong>
-        in 30 secondi. Tu dici l'argomento, l'AI fa il resto.
+
+      <p style="font-size:0.95rem;color:#8C8A82;font-weight:400;
+                margin:0 auto 1.4rem auto;line-height:1.5;max-width:320px;">
+        Crea verifiche scolastiche professionali in pochi secondi.<br>
+        <span style="color:#6B6960;font-size:0.82rem;">Materia, argomento, livello — il resto lo fa l'AI.</span>
       </p>
-      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin-bottom:2.5rem;">
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🧠 Generazione AI</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">📄 PDF & Word</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🔀 Fila A/B</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🎯 BES/DSA</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">✅ Soluzioni</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:5px 12px;font-size:0.75rem;color:#C8C6BC;">🏫 Tutti i livelli</span>
+
+      <div style="display:flex;flex-wrap:wrap;gap:0.35rem;justify-content:center;margin-bottom:1.8rem;">
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">🧠 AI</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">📄 PDF & Word</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">🔀 Fila A/B</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">🎯 BES/DSA</span>
+        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">✅ Soluzioni</span>
       </div>
-      <div style="background:#111110;border:1px solid #1E1D1A;border-radius:20px;
-                  padding:1.8rem 2rem 0.5rem 2rem;text-align:left;margin-bottom:0.5rem;">
-        <div style="font-size:1.3rem;font-weight:800;color:#F5F4EF;
-                    margin-bottom:0.3rem;letter-spacing:-0.02em;">Inizia subito</div>
-        <div style="font-size:0.85rem;color:#6B6960;margin-bottom:0;line-height:1.4;">
-          Gratuito durante il periodo Beta · Nessuna carta richiesta
-        </div>
-      </div>
-    </div>
+
+      <div style="background:#111110;border:1px solid #1E1D1A;border-radius:16px;
+                  padding:1.4rem 1.6rem 0.4rem 1.6rem;text-align:left;">
     """, unsafe_allow_html=True)
 
     # ── FORM ──────────────────────────────────────────────────────────────────
@@ -267,32 +263,32 @@ def mostra_auth():
                 except Exception as e:
                     st.error(f"Errore nell'invio: {e}")
 
-    # ── FOOTER ────────────────────────────────────────────────────────────────
+    # ── CHIUDI BOX FORM ───────────────────────────────────────────────────────
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # ── FOOTER COMPATTO ───────────────────────────────────────────────────────
     st.markdown("""
-    <div style="display:flex;align-items:center;gap:0.8rem;
-                justify-content:center;padding:2rem 1rem 3rem 1rem;">
+    <div style="display:flex;align-items:center;gap:0.7rem;
+                justify-content:center;padding:1.4rem 1rem 2.5rem 1rem;">
       <div style="display:flex;">
-        <div style="width:28px;height:28px;border-radius:50%;border:2px solid #0C0C0B;
+        <div style="width:24px;height:24px;border-radius:50%;border:2px solid #0C0C0B;
                     background:linear-gradient(135deg,#D97706,#92400E);
                     display:flex;align-items:center;justify-content:center;
-                    font-size:0.6rem;font-weight:700;color:white;">GM</div>
-        <div style="width:28px;height:28px;border-radius:50%;border:2px solid #0C0C0B;
+                    font-size:0.55rem;font-weight:700;color:white;">GM</div>
+        <div style="width:24px;height:24px;border-radius:50%;border:2px solid #0C0C0B;
                     background:linear-gradient(135deg,#D97706,#92400E);
                     display:flex;align-items:center;justify-content:center;
-                    font-size:0.6rem;font-weight:700;color:white;margin-left:-7px;">AR</div>
-        <div style="width:28px;height:28px;border-radius:50%;border:2px solid #0C0C0B;
-                    background:linear-gradient(135deg,#D97706,#92400E);
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:0.6rem;font-weight:700;color:white;margin-left:-7px;">FL</div>
-        <div style="width:28px;height:28px;border-radius:50%;border:2px solid #0C0C0B;
+                    font-size:0.55rem;font-weight:700;color:white;margin-left:-6px;">AR</div>
+        <div style="width:24px;height:24px;border-radius:50%;border:2px solid #0C0C0B;
                     background:linear-gradient(135deg,#444,#222);
                     display:flex;align-items:center;justify-content:center;
-                    font-size:0.6rem;font-weight:700;color:white;margin-left:-7px;">+</div>
+                    font-size:0.55rem;font-weight:700;color:white;margin-left:-6px;">+</div>
       </div>
-      <div style="font-size:0.78rem;color:#6B6960;line-height:1.4;">
-        Già usato da docenti di tutta Italia.<br>
-        <strong style="color:#C8C6BC;">Gratis durante il periodo Beta.</strong>
+      <div style="font-size:0.75rem;color:#6B6960;line-height:1.4;">
+        Usato da docenti di tutta Italia ·
+        <strong style="color:#8C8A82;">Gratis in Beta</strong>
       </div>
+    </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -310,17 +306,19 @@ APP_TAGLINE = "Crea verifiche su misura in pochi secondi"
 SHARE_URL   = "https://verificai.streamlit.app"
 FEEDBACK_FORM_URL = "https://forms.gle/KNu8v8iDVUiGkQUL8"
 
+ADMIN_EMAILS = {"giacomosaragoni96@gmail.com"}
+
 MODELLI_DISPONIBILI = {
     "⚡ Flash 2.5 Lite (velocissimo)": {
-        "id": "gemini-2.5-flash-lite",
+        "id":  "gemini-2.5-flash-lite",
         "pro": False,
     },
     "⚡ Flash 2.5 (bilanciato)": {
-        "id": "gemini-2.5-flash",
+        "id":  "gemini-2.5-flash",
         "pro": True,
     },
     "🧠 Pro 2.5 (massima qualità)": {
-        "id": "gemini-2.5-pro",
+        "id":  "gemini-2.5-pro",
         "pro": True,
     },
 }
@@ -500,16 +498,11 @@ TIPI_ESERCIZIO = ["Aperto", "Scelta multipla", "Vero/Falso", "Completamento"]
 
 # ── FUNZIONI ───────────────────────────────────────────────────────────────────
 
-# ── NUOVO: contatore verifiche mensili ────────────────────────────────────────
 def _get_verifiche_mese(user_id):
-    """Restituisce il numero di verifiche generate dall'utente nel mese corrente.
-    Conta ANCHE le verifiche eliminate dallo storico (soft-delete) — il contatore
-    non deve scendere se l'utente cancella una verifica."""
     from datetime import datetime, timezone
     now = datetime.now(timezone.utc)
     primo_mese = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
     try:
-        # Non filtriamo su deleted_at: contiamo TUTTE le generazioni del mese
         res = supabase_admin.table("verifiche_storico") \
             .select("id", count="exact") \
             .eq("user_id", user_id) \
@@ -521,11 +514,8 @@ def _get_verifiche_mese(user_id):
 
 
 def _giorni_al_reset():
-    """Restituisce (giorni, ore) al primo del mese prossimo."""
-    from datetime import datetime, timezone, timedelta
-    import calendar
+    from datetime import datetime, timezone
     now = datetime.now(timezone.utc)
-    # Primo giorno del mese prossimo
     if now.month == 12:
         reset = now.replace(year=now.year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
     else:
@@ -590,7 +580,6 @@ def parse_esercizi(latex):
         if items_found:
             esercizi.append({'num': num_label, 'items': items_found})
         else:
-            # Esercizio senza \item ma con punteggio nel testo del blocco (es. "Determina X. (25 pt)")
             pt_global = re.search(
                 r'[\(\[]?\s*(\d+(?:[.,]\d+)?)\s*(?:pt|punt[io]|p\.?)\s*[\)\]]?',
                 block, re.IGNORECASE
@@ -976,11 +965,6 @@ def _clean_latex_line(text):
 
 
 def _parse_latex_to_data(codice_latex):
-    """
-    Parsa il codice LaTeX e restituisce un dict con titolo, intestazione e lista esercizi.
-    Gestisce sia \item[label] con etichetta esplicita sia \item senza etichetta
-    all'interno di \begin{enumerate}[a)] o \begin{enumerate}[i)].
-    """
     import re as _r
     LETTERE = 'abcdefghijklmnopqrstuvwxyz'
     ROMANI  = ['i','ii','iii','iv','v','vi','vii','viii','ix','x',
@@ -988,7 +972,6 @@ def _parse_latex_to_data(codice_latex):
 
     data = {'titolo': '', 'intestazione_nota': '', 'esercizi': []}
 
-    # ── titolo e nota ────────────────────────────────────────────────────────
     m = _r.search(r'\\textbf\{\\large ([^}]+)\}', codice_latex)
     if m:
         data['titolo'] = _clean_latex_line(m.group(1))
@@ -997,16 +980,13 @@ def _parse_latex_to_data(codice_latex):
     if m2:
         data['intestazione_nota'] = m2.group(1).strip()
 
-    # ── corpo dopo \end{center} ──────────────────────────────────────────────
     body_start = codice_latex.find('\\end{center}')
     body_start = (body_start + len('\\end{center}')) if body_start != -1 else 0
     corpus = codice_latex[body_start:].replace('\\end{document}', '')
 
-    # ── split per esercizio ──────────────────────────────────────────────────
     blocks = _r.split(r'\\subsection\*\s*\{', corpus)
 
     for block in blocks[1:]:
-        # estrai il titolo dell'esercizio (contenuto fino alla prima } non appaiate)
         brace_depth = 0
         header_end  = 0
         for ci, ch in enumerate(block):
@@ -1019,13 +999,11 @@ def _parse_latex_to_data(codice_latex):
         titolo_ex = _clean_latex_line(block[:header_end])
         body = block[header_end + 1:]
 
-        # rimuovi grafica tikz
         body = _r.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
                       '\n[Grafico]\n', body, flags=_r.DOTALL)
         body = _r.sub(r'\\begin\{axis\}.*?\\end\{axis\}',
                       '\n[Grafico]\n', body, flags=_r.DOTALL)
 
-        # ── testo introduttivo (prima del primo \begin{enumerate/itemize} o \item) ──
         first_env = len(body)
         for marker in [r'\begin{enumerate}', r'\begin{itemize}', r'\item']:
             idx = body.find(marker)
@@ -1038,14 +1016,8 @@ def _parse_latex_to_data(codice_latex):
 
         sottopunti = []
 
-        # ── helper: estrai items da un blocco enumerate/itemize ──────────────
         def _parse_items(items_block, label_style='alpha'):
-            """
-            Restituisce lista di (label, testo_pulito, opzioni, punti).
-            label_style: 'alpha' → a) b) c)  |  'roman' → i) ii) iii)
-            """
             risultati = []
-            # match sia \item[X] con etichetta esplicita sia \item senza
             pat = _r.compile(
                 r'\\item(?:\[([^\]]*)\])?\s*(.*?)(?=\\item(?:\[|\s)|$)',
                 _r.DOTALL
@@ -1057,7 +1029,6 @@ def _parse_latex_to_data(codice_latex):
                     label = explicit.strip()
                     auto_idx += 1
                 else:
-                    # genera etichetta automatica
                     if label_style == 'roman':
                         label = ROMANI[min(auto_idx, len(ROMANI)-1)] + ')'
                     else:
@@ -1070,7 +1041,6 @@ def _parse_latex_to_data(codice_latex):
 
                 opzioni = []
 
-                # sotto-enumerate (es. scelta multipla o domande i) ii) iii))
                 inner = _r.search(
                     r'\\begin\{enumerate\}\s*\[([^\]]*)\]\s*(.*?)\\end\{enumerate\}',
                     raw_text, _r.DOTALL
@@ -1090,7 +1060,6 @@ def _parse_latex_to_data(codice_latex):
                             opzioni.append(opt_c)
                     raw_text = raw_text[:inner.start()].strip()
 
-                # Vero/Falso
                 vf_pairs = _r.findall(r'\$\\square\$\s*\\textbf\{([VF])\}', raw_text)
                 if vf_pairs:
                     opzioni = [f"☐ {v}" for v in vf_pairs]
@@ -1105,7 +1074,6 @@ def _parse_latex_to_data(codice_latex):
                 risultati.append((label, testo_clean, opzioni, punti))
             return risultati
 
-        # ── scansiona tutti gli ambienti enumerate/itemize nel body ──────────
         env_pat = _r.compile(
             r'\\begin\{(enumerate|itemize)\}(\s*\[[^\]]*\])?\s*(.*?)\\end\{(?:enumerate|itemize)\}',
             _r.DOTALL
@@ -1113,13 +1081,11 @@ def _parse_latex_to_data(codice_latex):
         used_ranges = []
         for em in env_pat.finditer(body):
             used_ranges.append((em.start(), em.end()))
-            opt_arg      = (em.group(2) or '').strip()  # es. [a)] o [i)] o vuoto
+            opt_arg      = (em.group(2) or '').strip()
             items_block  = em.group(3)
             label_style  = 'roman' if opt_arg.startswith('[i') else 'alpha'
 
-            # testo eventuale prima di questo ambiente (intestazione secondaria)
             preceding_start = used_ranges[-2][1] if len(used_ranges) >= 2 else first_env
-            # (non necessario in docx, usiamo solo il testo_intro già estratto)
 
             for label, testo_clean, opzioni, punti in _parse_items(items_block, label_style):
                 sottopunti.append({
@@ -1129,7 +1095,6 @@ def _parse_latex_to_data(codice_latex):
                     'punti':  punti,
                 })
 
-        # ── fallback: \item liberi fuori da qualsiasi ambiente ───────────────
         if not sottopunti:
             free_items = _r.compile(
                 r'\\item(?:\[([^\]]*)\])?\s*(.*?)(?=\\item(?:\[|\s)|\\end\{|$)',
@@ -1467,8 +1432,6 @@ if '_storico_page' not in st.session_state: st.session_state._storico_page = 1
 if '_onboarding_done' not in st.session_state: st.session_state._onboarding_done = False
 
 # ── CALCOLA VERIFICHE DEL MESE (una volta per rerun) ────────────────────────────
-ADMIN_EMAILS = {"giacomosaragoni96@gmail.com"}  # ← email admin con verifiche illimitate
-
 _verifiche_mese_count = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
 _is_admin = (st.session_state.utente.email in ADMIN_EMAILS) if st.session_state.utente else False
 _limite_raggiunto = (not _is_admin) and (_verifiche_mese_count >= LIMITE_MENSILE)
@@ -2238,6 +2201,25 @@ st.markdown(f"""
   .ai-hint-icon {{ font-size: 1rem; flex-shrink: 0; }}
   .ai-hint strong {{ color: {T['accent']}; font-weight: 700; }}
 
+  /* ── HINT MODIFICA — box sotto l'header verifica, sopra l'expander ── */
+  .modifica-hint {{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: {T['bg2']};
+    border: 1px solid {T['border']};
+    border-left: 3px solid {T['accent']};
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 0.75rem;
+    font-size: 0.8rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.5;
+  }}
+  .modifica-hint-icon {{ font-size: 1rem; flex-shrink: 0; margin-top: 1px; }}
+  .modifica-hint strong {{ color: {T['text']}; font-weight: 700; }}
+
   .personalizza-wrap [data-testid="stExpander"] {{
     border: 1.5px solid {T['accent']}44 !important;
     border-radius: 14px !important;
@@ -2263,84 +2245,12 @@ st.markdown(f"""
     padding: 1rem 1.2rem 1.2rem !important;
   }}
 
-  .genera-section {{ margin-top: 2.2rem; margin-bottom: 0.5rem; }}
-
-  /* ── STICKY CTA su mobile ── */
-  @media (max-width: 640px) {{
-    .genera-section {{
-      position: sticky;
-      bottom: 0;
-      z-index: 999;
-      background: {T['bg']};
-      padding: 0.8rem 0 0.5rem 0;
-      margin: 0;
-      border-top: 1px solid {T['border']};
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-    }}
+  /* ── GENERA BUTTON — NO sticky su mobile ── */
+  .genera-section {{
+    margin-top: 2.2rem;
+    margin-bottom: 0.5rem;
   }}
 
-  /* ── ONBOARDING BANNER ── */
-  .onboarding-banner {{
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    background: linear-gradient(135deg, {T['accent_light']} 0%, {T['card']} 100%);
-    border: 1.5px solid {T['accent']};
-    border-radius: 14px;
-    padding: 1rem 1.3rem;
-    margin-bottom: 1.5rem;
-    font-family: 'DM Sans', sans-serif;
-  }}
-  .onboarding-steps {{
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-top: 0.4rem;
-  }}
-  .onboarding-step {{
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: {T['bg2']};
-    border: 1px solid {T['border']};
-    border-radius: 20px;
-    padding: 5px 12px;
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: {T['text2']};
-    white-space: nowrap;
-  }}
-  .onboarding-step-ico {{
-    font-size: 0.85rem;
-  }}
-  .onboarding-step-arrow {{
-    color: {T['accent']};
-    font-size: 0.9rem;
-    font-weight: 700;
-    flex-shrink: 0;
-  }}
-  /* X close button per onboarding */
-  div[data-testid="column"]:has(button[kind="secondary"][title="Chiudi"]) button,
-  div[data-testid="column"] button[data-testid*="_dismiss_onboarding"] {{
-    background: transparent !important;
-    border: 1px solid {T['border']} !important;
-    border-radius: 50% !important;
-    color: {T['muted']} !important;
-    font-size: 0.75rem !important;
-    font-weight: 700 !important;
-    width: 28px !important;
-    height: 28px !important;
-    min-height: unset !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    line-height: 1 !important;
-  }}
-  div[data-testid="column"]:has(button[kind="secondary"][title="Chiudi"]) button:hover {{
-    background: {T['hover']} !important;
-    border-color: {T['muted']} !important;
-    color: {T['text']} !important;
-  }}
   .genera-hint {{
     text-align: center;
     font-size: 0.73rem;
@@ -2759,7 +2669,6 @@ st.markdown(f"""
     color: #c8c6bc !important;
   }}
 
-  /* Bottoni dentro gli expander della sidebar — stile dark coerente */
   [data-testid="stSidebar"] [data-testid="stExpander"] .stButton > button,
   [data-testid="stSidebar"] [data-testid="stExpander"] div.stButton > button,
   [data-testid="stSidebar"] [data-testid="stExpander"] button[kind="secondary"],
@@ -2786,7 +2695,6 @@ st.markdown(f"""
     box-shadow: none !important;
     transform: none !important;
   }}
-  /* Bottone elimina — bordo rosso sottile */
   [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn .stButton > button,
   [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn button {{
     background: #1e1008 !important;
@@ -2801,7 +2709,6 @@ st.markdown(f"""
     border-color: #f87171 !important;
     color: #fca5a5 !important;
   }}
-  /* Bottone stella preferito */
   [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn .stButton > button,
   [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn button {{
     background: #1e1d1b !important;
@@ -2920,14 +2827,13 @@ with st.sidebar:
     genera_soluzioni = st.checkbox(
         "Genera soluzioni della verifica",
         value=False,
-        help="Verrà generato un documento separato con le soluzioni complete. Per le domande aperte le risposte saranno sintetiche (max 5 righe)."
+        help="Verrà generato un documento separato con le soluzioni complete."
     )
     bes_dsa_b = False
     if bes_dsa and doppia_fila:
         bes_dsa_b = st.checkbox(
             "Genera versione ridotta anche per Fila B",
             value=False,
-            help="Genera la versione ridotta (BES/DSA) anche per la Fila B"
         )
 
     esercizio_multidisciplinare = False
@@ -2949,7 +2855,6 @@ with st.sidebar:
         )
         modello_id = MODELLI_DISPONIBILI[_sel_modello]["id"]
     else:
-        # Mostra i modelli con lucchetto — non selezionabili
         _nomi_display = []
         for _k, _v in MODELLI_DISPONIBILI.items():
             if _v["pro"]:
@@ -2965,7 +2870,6 @@ with st.sidebar:
         _sel_raw = _sel_display.replace("  🔒", "")
         _info    = MODELLI_DISPONIBILI[_sel_raw]
         if _info["pro"]:
-            # Mostra avviso e forza Lite
             st.markdown(
                 f'<div style="font-size:0.74rem;color:{T["muted"]};padding:4px 0 2px 2px;'
                 f'font-family:DM Sans,sans-serif;">🔒 Disponibile solo per gli amministratori.</div>',
@@ -2988,7 +2892,7 @@ with st.sidebar:
         st.session_state.theme = new_theme
         st.rerun()
 
-    # ── NUOVO: CONTATORE MENSILE ──────────────────────────────────────────────
+    # ── CONTATORE MENSILE ─────────────────────────────────────────────────────
     st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">Utilizzo mensile</div>', unsafe_allow_html=True)
     _perc_uso = min(100, int(_verifiche_mese_count / LIMITE_MENSILE * 100))
     _color_bar = "#EF4444" if _limite_raggiunto else ("#F59E0B" if _perc_uso >= 70 else "#10B981")
@@ -3030,13 +2934,12 @@ with st.sidebar:
             .is_("deleted_at", "null")\
             .order("created_at", desc=True)\
             .limit(_storico_limit + 1)\
-            .execute()  # fetch +1 per sapere se ci sono altri
+            .execute()
 
         if storico.data:
             _ha_altri = len(storico.data) > _storico_limit
             dati_pagina = storico.data[:_storico_limit]
 
-            # Metti in cima i preferiti
             _pref = st.session_state._preferiti
             def _sort_key(v):
                 return (0 if v['id'] in _pref else 1, v['created_at'])
@@ -3052,7 +2955,6 @@ with st.sidebar:
                     if v.get('scuola'):
                         st.caption(f"{v['scuola'][:35]}")
 
-                    # Riga: stella preferiti
                     _col_star, _col_spacer = st.columns([1, 3])
                     with _col_star:
                         st.markdown(f'<div class="{"stella-btn-on" if is_pref else "stella-btn"}">', unsafe_allow_html=True)
@@ -3081,7 +2983,6 @@ with st.sidebar:
                                 st.session_state.verifiche['B']['pdf'] = pdf
                                 st.session_state.verifiche['B']['preview'] = True
                             st.rerun()
-                    # Bottone elimina
                     st.markdown('<div class="elimina-btn">', unsafe_allow_html=True)
                     if st.button("Elimina", key=f"del_{v['id']}_{_refresh_key}",
                                  use_container_width=True,
@@ -3102,7 +3003,6 @@ with st.sidebar:
         else:
             st.caption("Nessuna verifica salvata ancora.")
 
-        # ── Paginazione: carica altri ─────────────────────────────────────────
         if storico.data and _ha_altri:
             st.markdown('<div style="margin-top:0.5rem;">', unsafe_allow_html=True)
             if st.button("Carica altre verifiche", key="storico_load_more", use_container_width=True):
@@ -3150,8 +3050,6 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-
-
 # ── HEADER ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="hero-wrap">
@@ -3163,11 +3061,8 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── FORM PRINCIPALE ───────────────────────────────────────────────────────────────
-
-# ── ONBOARDING: guida al primo accesso ───────────────────────────────────────────
+# ── ONBOARDING ────────────────────────────────────────────────────────────────────
 if not st.session_state._onboarding_done:
-    # Controlla se l'utente ha cliccato "Ho capito" via query param
     if st.query_params.get("_ob") == "done":
         st.session_state._onboarding_done = True
         st.query_params.pop("_ob", None)
@@ -3186,12 +3081,10 @@ if not st.session_state._onboarding_done:
         f'<div style="background:linear-gradient(135deg,{_c_accent_light} 0%,{_c_card} 100%);'
         f'border:1.5px solid {_c_accent};border-radius:14px;'
         f'padding:1.1rem 1.4rem 0.8rem 1.4rem;margin-bottom:0.8rem;font-family:DM Sans,sans-serif;">'
-
         f'<div style="display:flex;align-items:flex-start;gap:12px;">'
         f'<div style="font-size:1.4rem;flex-shrink:0;margin-top:1px;">👋</div>'
         f'<div style="flex:1;">'
         f'<div style="font-size:0.9rem;font-weight:800;color:{_c_text};margin-bottom:0.7rem;">Come iniziare</div>'
-
         f'<div style="display:flex;align-items:center;gap:8px;padding:0.45rem 0.75rem;margin-bottom:0.5rem;'
         f'background:{_c_bg2};border-radius:8px;border-left:3px solid {_c_accent};">'
         f'<span>⚙️</span>'
@@ -3199,7 +3092,6 @@ if not st.session_state._onboarding_done:
         f'<strong style="color:{_c_text};">☰ Impostazioni</strong> in alto a sinistra '
         f'per scegliere classe e impostazioni</div>'
         f'</div>'
-
         f'<div style="display:flex;background:{_c_bg2};border:1px solid {_c_border};border-radius:10px;overflow:hidden;margin-bottom:0.75rem;">'
         f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
         f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">01 · Materia</div>'
@@ -3214,40 +3106,31 @@ if not st.session_state._onboarding_done:
         f'<div style="font-size:0.76rem;color:{_c_text2};">Opzioni avanzate (facoltativo)</div>'
         f'</div>'
         f'</div>'
-
-        # Link "Ho capito" dentro il banner — puro HTML/JS, nessun widget Streamlit
         f'<div style="text-align:right;">'
         f'<a href="?_ob=done" style="font-size:0.75rem;color:{_c_muted};'
         f'text-decoration:underline;text-underline-offset:2px;cursor:pointer;'
         f'font-family:DM Sans,sans-serif;font-weight:500;">'
         f'Ho capito, non mostrare più →</a>'
         f'</div>'
-
-        f'</div>'  # fine flex:1
-        f'</div>'  # fine display:flex
-        f'</div>',  # fine card
+        f'</div>'
+        f'</div>'
+        f'</div>',
         unsafe_allow_html=True
     )
 
-    # Disclaimer
     st.markdown(
         f'<div style="display:flex;align-items:flex-start;gap:8px;padding:0.6rem 0.9rem;'
         f'margin-bottom:1.2rem;background:{_c_bg2};border-radius:8px;border:1px solid {_c_border};">'
         f'<span style="font-size:0.85rem;flex-shrink:0;margin-top:1px;">⚠️</span>'
         f'<span style="font-size:0.75rem;color:{_c_muted};line-height:1.45;">'
         f'Le verifiche generate dall\'AI sono <strong style="color:{_c_text2};">suggerimenti didattici</strong>. '
-        f'Controlla sempre contenuti e punteggi prima di distribuirle agli studenti. '
-        f'Il docente rimane responsabile del materiale finale.'
+        f'Controlla sempre contenuti e punteggi prima di distribuirle agli studenti.'
         f'</span>'
         f'</div>',
         unsafe_allow_html=True
     )
 
-
-
-
-        
-# STEP 1 — MATERIA
+# ── STEP 1 — MATERIA ─────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="step-label">
   <span class="step-num">01</span>
@@ -3263,7 +3146,7 @@ if _materia_sel == "✏️ Altra materia...":
 else:
     materia_scelta = _materia_sel or "Matematica"
 
-# STEP 2 — ARGOMENTO
+# ── STEP 2 — ARGOMENTO ───────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="step-label">
   <span class="step-num">02</span>
@@ -3280,7 +3163,7 @@ argomento_area = st.text_area(
 )
 argomento = argomento_area.strip()
 
-# STEP 3 — PERSONALIZZA
+# ── STEP 3 — PERSONALIZZA ────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="ai-hint">
   <span class="ai-hint-icon">💡</span>
@@ -3383,7 +3266,6 @@ st.markdown('</div>', unsafe_allow_html=True)
 # ── BOTTONE GENERA ────────────────────────────────────────────────────────────────
 st.markdown('<div class="genera-section">', unsafe_allow_html=True)
 
-# ── NUOVO: bottone disabilitato se limite raggiunto ──────────────────────────────
 genera_btn = st.button(
     "🚀  Genera Verifica",
     use_container_width=True,
@@ -3399,14 +3281,13 @@ if _limite_raggiunto:
     </div>
     """, unsafe_allow_html=True)
 else:
-    # ── hint dinamico: riepilogo file che verranno generati ──────────────
     _files_hint = ["📄 Verifica"]
     if doppia_fila:
         _files_hint.append("📄 Versione B")
     if bes_dsa:
-        _files_hint.append("📄Ridotta A")
+        _files_hint.append("📄 Ridotta A")
     if bes_dsa and doppia_fila and bes_dsa_b:
-        _files_hint.append("📄Ridotta B")
+        _files_hint.append("📄 Ridotta B")
     if genera_soluzioni:
         _files_hint.append("✅ Soluzioni")
     _files_str = " · ".join(_files_hint)
@@ -3483,16 +3364,7 @@ if genera_btn and not _limite_raggiunto:
         else:
             punti_rule = "- NON inserire punti (X pt) in nessun esercizio né sottopunto."
 
-        if esercizio_multidisciplinare:
-            materia2_str   = f" con {materia2_scelta}" if materia2_scelta else " (scegli tu la disciplina più adatta)"
-            diff_multi_str = f" Difficoltà: {difficolta_multi}." if difficolta_multi else ""
-            multi_rule = (
-                f"- ESERCIZIO MULTIDISCIPLINARE: uno degli esercizi INCLUSI NEL TOTALE deve collegare "
-                f"{materia}{materia2_str}.{diff_multi_str}\n"
-                "  Usa SOLO strumenti già acquisiti dagli studenti."
-            )
-        else:
-            multi_rule = "- NON includere esercizi multidisciplinari."
+        multi_rule = "- NON includere esercizi multidisciplinari."
 
         griglia_rule = ("- NON generare la griglia (sarà aggiunta automaticamente dopo)."
                         if con_griglia else "- NON generare nessuna griglia di valutazione.")
@@ -3581,7 +3453,6 @@ SOLO CODICE LATEX del corpo."""
         corpo_latex = ra.text.replace("```latex","").replace("```","").strip()
         corpo_latex = pulisci_corpo_latex(corpo_latex)
 
-        # ── SELF-CHECK: VERIFICA E CORREZIONE AUTOMATICA ─────────────────────
         _avanza("🔎  Controllo qualità e correzione errori…")
         prompt_check = f"""Sei un docente esperto di {materia} e devi fare un CONTROLLO DI QUALITÀ RIGOROSO su questa verifica scolastica prima che venga consegnata agli studenti.
 
@@ -3594,12 +3465,12 @@ COMPITO: analizza OGNI esercizio e OGNI sottopunto. Per ciascuno verifica:
 
 1. CORRETTEZZA MATEMATICA / DISCIPLINARE: i dati sono coerenti? L'esercizio ha UNA soluzione determinata e corretta? Se risolvo l'esercizio io stesso, ottengo una risposta pulita e sensata?
    - Esempi di ERRORI GRAVI: sistema sovradeterminato o contraddittorio, dati incoerenti (es. due condizioni incompatibili), risposta che richiede conoscenze non adatte al livello, calcoli che portano a risultati assurdi.
-   
-2. ADEGUATEZZA AL LIVELLO ({difficolta}): la complessità è appropriata? Un esercizio non deve richiedere 30 passaggi se il livello è basso.
+
+2. ADEGUATEZZA AL LIVELLO ({difficolta}): la complessità è appropriata?
 
 3. UNIVOCITÀ: la domanda ha una sola risposta corretta e non è ambigua?
 
-SE trovi problemi: CORREGGILI DIRETTAMENTE modificando i dati dell'esercizio (cambia numeri, coordinate, coefficienti, punti) finché l'esercizio sia corretto, sensato e risolvibile. NON eliminare esercizi, correggili.
+SE trovi problemi: CORREGGILI DIRETTAMENTE modificando i dati dell'esercizio finché l'esercizio sia corretto, sensato e risolvibile. NON eliminare esercizi, correggili.
 
 SE tutto è corretto: restituisci il testo IDENTICO senza modifiche.
 
@@ -3614,13 +3485,10 @@ REGOLE OUTPUT:
         corpo_latex_corretto = rc.text.replace("```latex","").replace("```","").strip()
         corpo_latex_corretto = pulisci_corpo_latex(corpo_latex_corretto)
 
-        # Usa il corpo corretto solo se il modello ha restituito qualcosa di sensato
-        # (stessa struttura, stesso numero di \subsection*)
         _n_orig = len(re.findall(r'\\subsection\*', corpo_latex))
         _n_corr = len(re.findall(r'\\subsection\*', corpo_latex_corretto))
         if corpo_latex_corretto and _n_corr == _n_orig:
             corpo_latex = corpo_latex_corretto
-        # Se il modello ha restituito struttura diversa, manteniamo l'originale
 
         splits = re.split(r'(\\subsection\*\{)', corpo_latex)
         n_blocchi = (len(splits) - 1) // 2
@@ -3664,7 +3532,6 @@ REGOLE OUTPUT:
                     st.session_state.verifiche['A']['preview'] = True
                     st.warning("⚠️ La griglia di valutazione non è stata inclusa nel PDF.")
 
-        # ── VERIFICA RIDOTTA BES/DSA ──────────────────────────────────────────
         if bes_dsa and perc_ridotta:
             _avanza("⛳ Generazione verifica ridotta…")
 
@@ -3753,7 +3620,6 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
                         st.session_state.verifiche['B']['pdf_ts'] = time.time()
                         st.session_state.verifiche['B']['preview'] = True
 
-        # ── VERIFICA RIDOTTA FILA B ───────────────────────────────────────────
         if doppia_fila and bes_dsa and bes_dsa_b and perc_ridotta and st.session_state.verifiche['B']['latex']:
             _avanza("⛳ Generazione verifica ridotta Fila B…")
             prompt_ridotta_b = f"""Sei un docente esperto. Hai già generato questa verifica (Fila B):
@@ -3785,7 +3651,6 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo. TERMINA con \
                 st.session_state.verifiche['RB']['pdf_ts'] = time.time()
                 st.session_state.verifiche['RB']['preview'] = True
 
-        # ── SOLUZIONI ─────────────────────────────────────────────────────────
         if genera_soluzioni:
             _avanza("📋 Generazione soluzioni…")
 
@@ -3798,7 +3663,7 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo. TERMINA con \
 REGOLE FERREE — RISPETTALE ALLA LETTERA:
 - Per ogni esercizio scrivi "Esercizio N: [Titolo]" poi le soluzioni in ordine a), b), c)...
 - CALCOLI: mostra SOLO i passaggi essenziali. Niente testo narrativo. Solo la catena di calcolo.
-- DOMANDE APERTE / TEORICHE: MASSIMO 3-4 RIGHE. Sii telegraficamente conciso. NON scrivere saggi.
+- DOMANDE APERTE / TEORICHE: MASSIMO 3-4 RIGHE. Sii telegraficamente conciso.
 - SCELTA MULTIPLA / VERO-FALSO: una riga sola: "Risposta: X — perché [motivazione breve]."
 - NON riscrivere mai il testo della domanda originale, vai diretto alla soluzione.
 - SE UN ESERCIZIO HA DATI INCOERENTI O ERRATI: scrivi "Dati da rivedere: [problema in una riga]" e passa avanti.
@@ -3825,15 +3690,12 @@ REGOLE FERREE — RISPETTALE ALLA LETTERA:
                         body += ls + "\n"
                 return body
 
-            # Genera soluzioni fila A
             testo_sol_a = _genera_testo_sol(corpo_latex, "Fila A" if doppia_fila else "")
 
-            # Genera soluzioni fila B (se esiste)
             testo_sol_b = None
             if doppia_fila and 'corpo_latex_b' in dir() and corpo_latex_b:
                 testo_sol_b = _genera_testo_sol(corpo_latex_b, "Fila B")
 
-            # Costruisci unico PDF soluzioni
             _titolo_sol = f"Soluzioni — {materia}: {titolo_clean}"
             latex_sol_body = ""
 
@@ -3888,9 +3750,8 @@ REGOLE FERREE — RISPETTALE ALLA LETTERA:
         st.session_state.last_materia   = materia
         st.session_state.last_argomento = titolo_clean
         st.session_state.last_gen_ts    = time.time()
-        st.session_state._onboarding_done = True  # dismiss onboarding after first use
+        st.session_state._onboarding_done = True
 
-        # ── SALVA SU SUPABASE (con analytics) ────────────────────────────────
         try:
             if st.session_state.utente is not None:
                 insert_data = {
@@ -3901,7 +3762,6 @@ REGOLE FERREE — RISPETTALE ALLA LETTERA:
                     "latex_a":      st.session_state.verifiche['A']['latex'],
                     "latex_b":      st.session_state.verifiche['B']['latex'] if st.session_state.verifiche['B']['latex'] else None,
                     "latex_r":      st.session_state.verifiche['R']['latex'] if st.session_state.verifiche['R']['latex'] else None,
-                    # ── NUOVO: campi analytics ────────────────────────────────
                     "modello":      modello_id,
                     "num_esercizi": num_esercizi_totali,
                 }
@@ -3943,6 +3803,7 @@ if st.session_state.verifiche['A']['latex']:
                 label_ver = f"Versione {fid}"
             else:
                 label_ver = "La tua verifica"
+
             st.markdown(f"""
             <div style="background:linear-gradient(135deg, {T['accent_light']} 0%, {T['card']} 100%);
                         border:2px solid {T['accent']};border-radius:16px;padding:0;
@@ -3976,7 +3837,7 @@ if st.session_state.verifiche['A']['latex']:
                             border-radius:8px;padding:12px 16px;">
                   <span style="font-size:1.1rem;flex-shrink:0;">⚠️</span>
                   <span style="font-size:0.82rem;color:{T['text2']};line-height:1.5;">
-                    Le verifiche generate sono <strong style="color:{T['text']};">suggerimenti didattici</strong>. 
+                    Le verifiche generate sono <strong style="color:{T['text']};">suggerimenti didattici</strong>.
                     Rivedi sempre il contenuto prima della distribuzione — il docente è responsabile del materiale finale.
                   </span>
                 </div>
@@ -4007,6 +3868,18 @@ if st.session_state.verifiche['A']['latex']:
                         with st.expander("Log"): st.text(err)
 
             st.write("")
+
+            # ── HINT MODIFICA ─────────────────────────────────────────────────
+            st.markdown(f"""
+            <div class="modifica-hint">
+              <span class="modifica-hint-icon">✏️</span>
+              <span>
+                <strong>La verifica ti soddisfa?</strong> Scarica il PDF — oppure, se vuoi apportare correzioni
+                (cambiare un esercizio, modificare i dati, variare la difficoltà, aggiungere un sottopunto…),
+                apri il pannello qui sotto e descrivi nel dettaglio cosa cambiare: più sei preciso, migliore sarà il risultato.
+              </span>
+            </div>
+            """, unsafe_allow_html=True)
 
             with st.expander("✏️ Modifica questa verifica", expanded=False):
                 st.markdown(f"""
@@ -4240,19 +4113,3 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
