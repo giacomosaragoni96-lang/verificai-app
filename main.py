@@ -29,27 +29,16 @@ LIMITE_MENSILE = 5  # ← numero massimo di verifiche al mese per utente free
 def _ripristina_sessione():
     if st.session_state.get('utente') is not None:
         return
-    params = st.query_params
-    access_token  = params.get("_at", None)
-    refresh_token = params.get("_rt", None)
-    if not access_token:
-        access_token  = st.session_state.get("_sb_access_token")
-        refresh_token = st.session_state.get("_sb_refresh_token")
+    access_token  = st.session_state.get("_sb_access_token")
+    refresh_token = st.session_state.get("_sb_refresh_token")
     if access_token and refresh_token:
         try:
             sess = supabase.auth.set_session(access_token, refresh_token)
             if sess and sess.user:
                 st.session_state.utente = sess.user
-                new_at = sess.session.access_token
-                new_rt = sess.session.refresh_token
-                st.session_state["_sb_access_token"] = new_at
-                st.session_state["_sb_refresh_token"] = new_rt
-                st.query_params["_at"] = new_at
-                st.query_params["_rt"] = new_rt
-                return
+                st.session_state["_sb_access_token"] = sess.session.access_token
+                st.session_state["_sb_refresh_token"] = sess.session.refresh_token
         except Exception:
-            st.query_params.pop("_at", None)
-            st.query_params.pop("_rt", None)
             st.session_state.pop("_sb_access_token", None)
             st.session_state.pop("_sb_refresh_token", None)
 
@@ -200,8 +189,7 @@ def mostra_auth():
                     rt = res.session.refresh_token
                     st.session_state["_sb_access_token"] = at
                     st.session_state["_sb_refresh_token"] = rt
-                    st.query_params["_at"] = at
-                    st.query_params["_rt"] = rt
+               
                     st.rerun()
                 except Exception as e:
                     err_str = str(e).lower()
@@ -234,8 +222,7 @@ def mostra_auth():
                         rt = res.session.refresh_token
                         st.session_state["_sb_access_token"] = at
                         st.session_state["_sb_refresh_token"] = rt
-                        st.query_params["_at"] = at
-                        st.query_params["_rt"] = rt
+                 
                     st.success("Benvenuto su VerificAI! Account creato.")
                     time.sleep(1)
                     st.rerun()
@@ -3036,8 +3023,7 @@ with st.sidebar:
         st.session_state.utente = None
         st.session_state.pop("_sb_access_token", None)
         st.session_state.pop("_sb_refresh_token", None)
-        st.query_params.pop("_at", None)
-        st.query_params.pop("_rt", None)
+  
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -4110,6 +4096,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
