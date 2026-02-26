@@ -1,12 +1,13 @@
 import streamlit as st
 import time
-import extra_streamlit_components as stx
+from streamlit_cookies_controller import CookieController
 
 
-# ── COOKIE MANAGER ────────────────────────────────────────────────────────────────
-@st.cache_resource
-def get_cookie_manager():
-    return stx.CookieManager()
+# ── COOKIE CONTROLLER ─────────────────────────────────────────────────────────────
+def get_cookie_controller():
+    if "_cookie_controller" not in st.session_state:
+        st.session_state._cookie_controller = CookieController()
+    return st.session_state._cookie_controller
 
 
 # ── PERSISTENT LOGIN ──────────────────────────────────────────────────────────────
@@ -17,47 +18,39 @@ def ripristina_sessione(supabase):
     if st.session_state.get('utente') is not None:
         return
 
-    cookie_manager = get_cookie_manager()
+    controller = get_cookie_controller()
 
     try:
-        access_token  = cookie_manager.get("sb_access_token")
-        refresh_token = cookie_manager.get("sb_refresh_token")
+        refresh_token = controller.get("sb_refresh_token")
 
-        if access_token and refresh_token:
-            res = supabase.auth.set_session(access_token, refresh_token)
+        if refresh_token:
+            res = supabase.auth.refresh_session(refresh_token)
             if res and res.user:
                 st.session_state.utente = res.user
                 st.session_state["_sb_access_token"]  = res.session.access_token
                 st.session_state["_sb_refresh_token"] = res.session.refresh_token
-                # Rinnova i cookie con i token aggiornati
-                cookie_manager.set("sb_access_token",  res.session.access_token,
-                                   max_age=60*60*24*30, key="ck_set_access")
-                cookie_manager.set("sb_refresh_token", res.session.refresh_token,
-                                   max_age=60*60*24*30, key="ck_set_refresh")
+                # Aggiorna il cookie con il nuovo refresh token
+                controller.set("sb_refresh_token", res.session.refresh_token,
+                               max_age=60*60*24*30)
     except Exception:
         st.session_state.utente = None
 
 
 def salva_sessione_cookie(res):
     """
-    Salva i token nei cookie dopo login/registrazione.
-    Da chiamare subito dopo sign_in o sign_up.
+    Salva il refresh token nel cookie dopo login/registrazione.
     """
-    cookie_manager = get_cookie_manager()
-    cookie_manager.set("sb_access_token",  res.session.access_token,
-                       max_age=60*60*24*30, key="ck_login_access")
-    cookie_manager.set("sb_refresh_token", res.session.refresh_token,
-                       max_age=60*60*24*30, key="ck_login_refresh")
+    controller = get_cookie_controller()
+    controller.set("sb_refresh_token", res.session.refresh_token,
+                   max_age=60*60*24*30)
 
 
 def cancella_sessione_cookie():
     """
-    Cancella i cookie al logout.
-    Da chiamare prima di resettare st.session_state.utente = None.
+    Cancella il cookie al logout.
     """
-    cookie_manager = get_cookie_manager()
-    cookie_manager.delete("sb_access_token", key="ck_del_access")
-    cookie_manager.delete("sb_refresh_token", key="ck_del_refresh")
+    controller = get_cookie_controller()
+    controller.remove("sb_refresh_token")
 
 
 # ── AUTENTICAZIONE ────────────────────────────────────────────────────────────────
@@ -67,9 +60,6 @@ def mostra_auth(supabase):
     Da chiamare solo quando st.session_state.utente è None,
     seguito da st.stop() per bloccare il resto dell'app.
     """
-    # Rendering invisibile del cookie manager (necessario per leggere i cookie)
-    get_cookie_manager()
-
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&display=swap');
