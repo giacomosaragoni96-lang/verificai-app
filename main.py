@@ -26,13 +26,11 @@ from config import (
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
-from auth import mostra_auth, ripristina_sessione, get_cookie_manager
+from auth import mostra_auth, ripristina_sessione, salva_sessione_cookie, cancella_sessione_cookie
 from styles import get_css
 
 
-# ── COOKIE CONTROLLER — ISTANZIATO SUBITO, PRIMA DI QUALSIASI st.stop() ─────────
 
-get_cookie_manager()
 
 # ── PAGE CONFIG — DEVE ESSERE IL PRIMO COMANDO STREAMLIT ────────────────────────
 st.set_page_config(
@@ -962,5 +960,6 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
