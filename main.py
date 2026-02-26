@@ -26,6 +26,8 @@ from config import (
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from auth import mostra_auth, ripristina_sessione
+from styles import get_css
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -36,9 +38,7 @@ supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 # ── PERSISTENT LOGIN ─────────────────────────────────────────────────────────────
 ripristina_sessione(supabase)
 
-# ── NUOVI IMPORT ─────────────────────────────────────────────────────────────────
-from auth import ripristina_sessione, mostra_auth
-from styles import get_css
+
 
 if "theme" not in st.session_state:
     st.session_state.theme = "light"
@@ -957,6 +957,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
