@@ -5,4 +5,4 @@ pdf2image
 python-docx
 mammoth>=1.6.0
 supabase>=2.7.0
-streamlit-cookies-controller
+extra-streamlit-components==0.1.60
