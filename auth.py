@@ -21,7 +21,7 @@ def ripristina_sessione(supabase):
             st.session_state["_sb_refresh_token"] = res.session.refresh_token
     except Exception:
         # Se la sessione è scaduta o corrotta, puliamo tutto
-        st.session_state.utente = NoneNone)
+        st.session_state.utente = None)
 
 
 # ── AUTENTICAZIONE ────────────────────────────────────────────────────────────────
