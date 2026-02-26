@@ -7,7 +7,7 @@ import extra_streamlit_components as stx
 # ── COOKIE MANAGER ────────────────────────────────────────────────────────────────
 @st.cache_resource
 def get_cookie_manager():
-    return stx.CookieManager()_cookie_controller
+    return stx.CookieManager()
 
 
 # ── PERSISTENT LOGIN ──────────────────────────────────────────────────────────────
