@@ -1,27 +1,63 @@
 import streamlit as st
 import time
+import extra_streamlit_components as stx
 
 
-# ── PERSISTENT LOGIN ─────────────────────────────────────────────────────────────
+# ── COOKIE MANAGER ────────────────────────────────────────────────────────────────
+@st.cache_resource
+def get_cookie_manager():
+    return stx.CookieManager()
+
+
+# ── PERSISTENT LOGIN ──────────────────────────────────────────────────────────────
 def ripristina_sessione(supabase):
     """
-    Tenta di recuperare la sessione direttamente dal client Supabase
-    che gestisce internamente un minimo di persistenza durante il refresh.
+    Tenta di recuperare la sessione dai cookie al refresh della pagina.
     """
-    # 1. Se l'utente è già in session_state, non fare nulla
     if st.session_state.get('utente') is not None:
         return
 
+    cookie_manager = get_cookie_manager()
+
     try:
-        # 2. Chiedi a Supabase se c'è una sessione attiva nel thread attuale
-        res = supabase.auth.get_session()
-        if res and res.session and res.session.user:
-            st.session_state.utente = res.session.user
-            st.session_state["_sb_access_token"] = res.session.access_token
-            st.session_state["_sb_refresh_token"] = res.session.refresh_token
+        access_token  = cookie_manager.get("sb_access_token")
+        refresh_token = cookie_manager.get("sb_refresh_token")
+
+        if access_token and refresh_token:
+            res = supabase.auth.set_session(access_token, refresh_token)
+            if res and res.user:
+                st.session_state.utente = res.user
+                st.session_state["_sb_access_token"]  = res.session.access_token
+                st.session_state["_sb_refresh_token"] = res.session.refresh_token
+                # Rinnova i cookie con i token aggiornati
+                cookie_manager.set("sb_access_token",  res.session.access_token,
+                                   max_age=60*60*24*30, key="ck_set_access")
+                cookie_manager.set("sb_refresh_token", res.session.refresh_token,
+                                   max_age=60*60*24*30, key="ck_set_refresh")
     except Exception:
-        # Se la sessione è scaduta o corrotta, puliamo tutto
         st.session_state.utente = None
+
+
+def salva_sessione_cookie(res):
+    """
+    Salva i token nei cookie dopo login/registrazione.
+    Da chiamare subito dopo sign_in o sign_up.
+    """
+    cookie_manager = get_cookie_manager()
+    cookie_manager.set("sb_access_token",  res.session.access_token,
+                       max_age=60*60*24*30, key="ck_login_access")
+    cookie_manager.set("sb_refresh_token", res.session.refresh_token,
+                       max_age=60*60*24*30, key="ck_login_refresh")
+
+
+def cancella_sessione_cookie():
+    """
+    Cancella i cookie al logout.
+    Da chiamare prima di resettare st.session_state.utente = None.
+    """
+    cookie_manager = get_cookie_manager()
+    cookie_manager.delete("sb_access_token", key="ck_del_access")
+    cookie_manager.delete("sb_refresh_token", key="ck_del_refresh")
 
 
 # ── AUTENTICAZIONE ────────────────────────────────────────────────────────────────
@@ -31,6 +67,9 @@ def mostra_auth(supabase):
     Da chiamare solo quando st.session_state.utente è None,
     seguito da st.stop() per bloccare il resto dell'app.
     """
+    # Rendering invisibile del cookie manager (necessario per leggere i cookie)
+    get_cookie_manager()
+
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&display=swap');
@@ -172,6 +211,7 @@ def mostra_auth(supabase):
                     st.session_state.utente = res.user
                     st.session_state["_sb_access_token"]  = res.session.access_token
                     st.session_state["_sb_refresh_token"] = res.session.refresh_token
+                    salva_sessione_cookie(res)
                     st.rerun()
                 except Exception as e:
                     err_str = str(e).lower()
@@ -202,6 +242,7 @@ def mostra_auth(supabase):
                     if res.session:
                         st.session_state["_sb_access_token"]  = res.session.access_token
                         st.session_state["_sb_refresh_token"] = res.session.refresh_token
+                        salva_sessione_cookie(res)
                     st.success("Benvenuto su VerificAI! Account creato.")
                     time.sleep(1)
                     st.rerun()
