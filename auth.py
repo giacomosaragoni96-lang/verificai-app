@@ -5,6 +5,11 @@ from streamlit_cookies_controller import CookieController
 
 # ── COOKIE CONTROLLER ─────────────────────────────────────────────────────────────
 def get_cookie_controller():
+    """
+    Il controller va istanziato UNA sola volta per sessione.
+    La prima volta che viene creato, renderizza un componente invisibile
+    che legge i cookie dal browser. Questo richiede un rerun per completarsi.
+    """
     if "_cookie_controller" not in st.session_state:
         st.session_state._cookie_controller = CookieController()
     return st.session_state._cookie_controller
@@ -14,52 +19,58 @@ def get_cookie_controller():
 def ripristina_sessione(supabase):
     """
     Tenta di recuperare la sessione dai cookie al refresh della pagina.
+    Gestisce il timing asincrono del CookieController con un doppio rerun.
     """
+    # Utente già in sessione, non fare nulla
     if st.session_state.get('utente') is not None:
         return
 
+    # Inizializza il controller (primo rerun: il componente JS si carica)
     controller = get_cookie_controller()
 
-    try:
-        refresh_token = controller.get("sb_refresh_token")
+    # Segniamo se abbiamo già tentato il ripristino per evitare loop
+    if st.session_state.get('_cookie_check_done'):
+        return
 
-        if refresh_token:
+    # Tenta di leggere il token — potrebbe essere None al primo render
+    refresh_token = controller.get("sb_refresh_token")
+
+    if refresh_token:
+        try:
             res = supabase.auth.refresh_session(refresh_token)
             if res and res.user:
                 st.session_state.utente = res.user
                 st.session_state["_sb_access_token"]  = res.session.access_token
                 st.session_state["_sb_refresh_token"] = res.session.refresh_token
-                # Aggiorna il cookie con il nuovo refresh token
+                # Aggiorna il cookie con il token rinnovato
                 controller.set("sb_refresh_token", res.session.refresh_token,
-                               max_age=60*60*24*30)
-    except Exception:
-        st.session_state.utente = None
+                               max_age=60 * 60 * 24 * 30)
+        except Exception:
+            # Token scaduto o invalido — puliamo
+            controller.remove("sb_refresh_token")
+            st.session_state.utente = None
+
+    # Segniamo che il check è stato fatto
+    st.session_state._cookie_check_done = True
 
 
 def salva_sessione_cookie(res):
-    """
-    Salva il refresh token nel cookie dopo login/registrazione.
-    """
+    """Salva il refresh token nel cookie dopo login/registrazione."""
     controller = get_cookie_controller()
     controller.set("sb_refresh_token", res.session.refresh_token,
-                   max_age=60*60*24*30)
+                   max_age=60 * 60 * 24 * 30)
 
 
 def cancella_sessione_cookie():
-    """
-    Cancella il cookie al logout.
-    """
+    """Cancella il cookie al logout."""
     controller = get_cookie_controller()
     controller.remove("sb_refresh_token")
+    # Resettiamo il flag così al prossimo login funziona tutto
+    st.session_state._cookie_check_done = False
 
 
 # ── AUTENTICAZIONE ────────────────────────────────────────────────────────────────
 def mostra_auth(supabase):
-    """
-    Renderizza la schermata di login/registrazione/reset password.
-    Da chiamare solo quando st.session_state.utente è None,
-    seguito da st.stop() per bloccare il resto dell'app.
-    """
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&display=swap');
@@ -147,7 +158,6 @@ def mostra_auth(supabase):
     </style>
     """, unsafe_allow_html=True)
 
-    # ── HEADER ───────────────────────────────────────────────────────────────────
     st.markdown("""
     <div style="padding:2.2rem 2rem 0 2rem;text-align:center;">
       <div style="display:inline-flex;align-items:center;gap:7px;
@@ -158,20 +168,17 @@ def mostra_auth(supabase):
           Generazione AI · Beta gratuita
         </span>
       </div>
-
       <div style="font-size:3rem;font-weight:900;letter-spacing:-0.04em;
                   color:#F5F4EF;line-height:1;margin-bottom:0.45rem;">
         📝 Verific<span style="background:linear-gradient(135deg,#D97706,#FF8C00);
                                -webkit-background-clip:text;-webkit-text-fill-color:transparent;
                                background-clip:text;">AI</span>
       </div>
-
       <p style="font-size:0.95rem;color:#8C8A82;font-weight:400;
                 margin:0 auto 1.4rem auto;line-height:1.5;max-width:320px;">
         Crea verifiche scolastiche professionali in pochi secondi.<br>
         <span style="color:#6B6960;font-size:0.82rem;">Materia, argomento, livello — il resto lo fa l'AI.</span>
       </p>
-
       <div style="display:flex;flex-wrap:wrap;gap:0.35rem;justify-content:center;margin-bottom:1.8rem;">
         <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">🧠 AI</span>
         <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">📄 PDF & Word</span>
@@ -179,12 +186,10 @@ def mostra_auth(supabase):
         <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">🎯 BES/DSA</span>
         <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">✅ Soluzioni</span>
       </div>
-
       <div style="background:#111110;border:1px solid #1E1D1A;border-radius:16px;
                   padding:1.4rem 1.6rem 0.4rem 1.6rem;text-align:left;">
     """, unsafe_allow_html=True)
 
-    # ── FORM TABS ────────────────────────────────────────────────────────────────
     tab_login, tab_reg, tab_reset = st.tabs(["  Accedi  ", "  Registrati  ", "  Password  "])
 
     with tab_login:
@@ -201,6 +206,7 @@ def mostra_auth(supabase):
                     st.session_state.utente = res.user
                     st.session_state["_sb_access_token"]  = res.session.access_token
                     st.session_state["_sb_refresh_token"] = res.session.refresh_token
+                    st.session_state._cookie_check_done   = False  # reset per il prossimo refresh
                     salva_sessione_cookie(res)
                     st.rerun()
                 except Exception as e:
@@ -232,6 +238,7 @@ def mostra_auth(supabase):
                     if res.session:
                         st.session_state["_sb_access_token"]  = res.session.access_token
                         st.session_state["_sb_refresh_token"] = res.session.refresh_token
+                        st.session_state._cookie_check_done   = False
                         salva_sessione_cookie(res)
                     st.success("Benvenuto su VerificAI! Account creato.")
                     time.sleep(1)
@@ -260,10 +267,8 @@ def mostra_auth(supabase):
                 except Exception as e:
                     st.error(f"Errore nell'invio: {e}")
 
-    # ── CHIUDI BOX FORM ───────────────────────────────────────────────────────────
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # ── FOOTER ───────────────────────────────────────────────────────────────────
     st.markdown("""
     <div style="display:flex;align-items:center;gap:0.7rem;
                 justify-content:center;padding:1.4rem 1rem 2.5rem 1rem;">
