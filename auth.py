@@ -1,106 +1,102 @@
 import streamlit as st
-import time
 import streamlit.components.v1 as components
 
 
-# ── COOKIE VIA JAVASCRIPT ─────────────────────────────────────────────────────────
-def _inject_cookie_writer(token: str):
-    """Scrive il cookie sb_refresh_token via JS dopo il login."""
+# ── INJECT JS: salva token in localStorage ──────────────────────────────────────
+def _inject_save_tokens(access_token: str, refresh_token: str):
+    """Salva i token in localStorage via JS."""
     components.html(f"""
     <script>
-      var d = new Date();
-      d.setTime(d.getTime() + (30*24*60*60*1000));
-      document.cookie = "sb_refresh_token={token};expires=" + d.toUTCString() + ";path=/;SameSite=Lax";
+      try {{
+        localStorage.setItem('sb_at', '{access_token}');
+        localStorage.setItem('sb_rt', '{refresh_token}');
+      }} catch(e) {{}}
     </script>
     """, height=0)
 
 
-def _inject_cookie_deleter():
-    """Cancella il cookie sb_refresh_token via JS."""
+# ── INJECT JS: cancella token da localStorage ───────────────────────────────────
+def cancella_sessione_cookie():
+    """Rimuove i token da localStorage."""
     components.html("""
     <script>
-      document.cookie = "sb_refresh_token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax";
+      try {
+        localStorage.removeItem('sb_at');
+        localStorage.removeItem('sb_rt');
+      } catch(e) {}
     </script>
     """, height=0)
+    st.session_state._token_check_done = False
 
 
-def _inject_cookie_reader():
-    """
-    Legge il cookie e reindirizza aggiungendo ?_tok=VALORE all'URL,
-    così Python può leggerlo tramite st.query_params.
-    Eseguito solo se non c'è già _tok nei query params.
-    """
+# ── INJECT JS: legge token e manda a ?_at=...&_rt=... ───────────────────────────
+def _inject_token_reader():
+    """Legge i token da localStorage e redirige con query params se trovati."""
     components.html("""
     <script>
       (function() {
-        // Se _tok è già nell'URL non fare nulla
-        if (window.location.search.indexOf('_tok=') !== -1) return;
-        
-        var cookies = document.cookie.split(';');
-        var token = null;
-        for (var i = 0; i < cookies.length; i++) {
-          var c = cookies[i].trim();
-          if (c.indexOf('sb_refresh_token=') === 0) {
-            token = c.substring('sb_refresh_token='.length);
-            break;
+        // evita loop
+        if (window.location.search.indexOf('_at=') !== -1) return;
+        try {
+          var at = localStorage.getItem('sb_at');
+          var rt = localStorage.getItem('sb_rt');
+          if (at && rt && at.length > 10 && rt.length > 10) {
+            var url = window.location.pathname +
+                      '?_at=' + encodeURIComponent(at) +
+                      '&_rt=' + encodeURIComponent(rt);
+            window.location.replace(url);
           }
-        }
-        if (token && token.length > 10) {
-          var url = window.location.pathname + '?_tok=' + encodeURIComponent(token);
-          window.location.replace(url);
-        }
+        } catch(e) {}
       })();
     </script>
     """, height=0)
 
 
-# ── PERSISTENT LOGIN ──────────────────────────────────────────────────────────────
+# ── FUNZIONE PRINCIPALE: ripristina sessione da localStorage ────────────────────
 def ripristina_sessione(supabase):
-    """Tenta di recuperare la sessione dal cookie al refresh."""
+    """Tenta di ripristinare la sessione dal localStorage tramite query params."""
     if st.session_state.get('utente') is not None:
         return
-
-    if st.session_state.get('_cookie_check_done'):
+    if st.session_state.get('_token_check_done'):
         return
 
-    st.session_state._cookie_check_done = True
+    # Caso 1: siamo arrivati qui con i query params (redirect da JS)
+    at = st.query_params.get("_at", None)
+    rt = st.query_params.get("_rt", None)
 
-    # Leggi il token dai query params (messo lì dal JS cookie reader)
-    token = st.query_params.get("_tok", None)
-
-    if token:
-        # Pulisci subito l'URL
+    if at and rt:
         st.query_params.clear()
+        st.session_state._token_check_done = True
         try:
-            res = supabase.auth.refresh_session(token)
-            if res and res.user:
-                st.session_state.utente = res.user
-                st.session_state["_sb_access_token"] = res.session.access_token
-                st.session_state["_sb_refresh_token"] = res.session.refresh_token
-                # Aggiorna il cookie con il token rinnovato
-                _inject_cookie_writer(res.session.refresh_token)
+            sess = supabase.auth.set_session(at, rt)
+            if sess and sess.user:
+                st.session_state.utente = sess.user
+                new_at = sess.session.access_token
+                new_rt = sess.session.refresh_token
+                st.session_state["_sb_access_token"] = new_at
+                st.session_state["_sb_refresh_token"] = new_rt
+                # aggiorna localStorage con token freschi
+                _inject_save_tokens(new_at, new_rt)
         except Exception:
-            _inject_cookie_deleter()
+            # token scaduti o invalidi — pulisci
+            cancella_sessione_cookie()
             st.session_state.utente = None
     else:
-        # Nessun token nei query params: inietta il reader JS
-        # Al prossimo caricamento, se c'è un cookie, verrà letto
-        _inject_cookie_reader()
+        # Caso 2: nessun query param — inietta JS che legge localStorage
+        st.session_state._token_check_done = True
+        _inject_token_reader()
 
 
+# ── SALVA SESSIONE DOPO LOGIN ────────────────────────────────────────────────────
 def salva_sessione_cookie(res):
-    """Salva il refresh token nel cookie dopo login/registrazione."""
-    _inject_cookie_writer(res.session.refresh_token)
+    """Salva i token in localStorage dopo il login."""
+    _inject_save_tokens(res.session.access_token, res.session.refresh_token)
 
 
-def cancella_sessione_cookie():
-    """Cancella il cookie al logout."""
-    _inject_cookie_deleter()
-    st.session_state._cookie_check_done = False
-
-
-# ── AUTENTICAZIONE UI ─────────────────────────────────────────────────────────────
+# ── FORM DI LOGIN/REGISTRAZIONE ─────────────────────────────────────────────────
 def mostra_auth(supabase):
+    import time
+
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&display=swap');
@@ -108,9 +104,11 @@ def mostra_auth(supabase):
         background: #0C0C0B !important;
         font-family: 'DM Sans', sans-serif !important;
     }
-    [data-testid="stHeader"],[data-testid="stDecoration"],
-    [data-testid="stToolbar"],#MainMenu, footer { display: none !important; }
-    .block-container { padding: 0 !important; max-width: 420px !important; margin: 0 auto !important; }
+    [data-testid="stHeader"], [data-testid="stDecoration"],
+    [data-testid="stToolbar"], #MainMenu, footer { display: none !important; }
+    .block-container {
+        padding: 0 !important; max-width: 480px !important; margin: 0 auto !important;
+    }
     [data-testid="stMainBlockContainer"] { padding: 0 !important; }
     [data-testid="stTextInput"] input {
         background: #1A1916 !important; border: 1.5px solid #2A2926 !important;
@@ -137,55 +135,48 @@ def mostra_auth(supabase):
         font-weight: 600 !important; color: #6B6960 !important;
         padding: 0.45rem 1.2rem !important; background: transparent !important;
     }
-    [data-testid="stTabs"] [aria-selected="true"] { background: #2A2926 !important; color: #F5F4EF !important; }
+    [data-testid="stTabs"] [aria-selected="true"] {
+        background: #2A2926 !important; color: #F5F4EF !important;
+    }
     [data-testid="stTabs"] [data-baseweb="tab-highlight"] { display: none !important; }
     div.stButton > button[kind="primary"] {
-        background: #D97706 !important; color: white !important; border: none !important;
-        border-radius: 10px !important; font-weight: 700 !important; font-size: 1rem !important;
-        min-height: 52px !important; box-shadow: 0 2px 20px rgba(217,119,6,0.35) !important;
-        width: 100% !important; transition: filter 0.15s, transform 0.15s !important;
+        background: #D97706 !important; color: white !important;
+        border: none !important; border-radius: 10px !important;
+        font-weight: 700 !important; font-size: 1rem !important;
+        min-height: 52px !important;
+        box-shadow: 0 2px 20px rgba(217,119,6,0.35) !important;
+        width: 100% !important;
     }
-    div.stButton > button[kind="primary"]:hover { filter: brightness(1.1) !important; transform: translateY(-1px) !important; }
-    .stAlert { border-radius: 8px !important; }
-    .stAlert p, .stAlert div { font-size: 0.88rem !important; }
+    div.stButton > button[kind="primary"]:hover { filter: brightness(1.1) !important; }
     </style>
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div style="padding:2.2rem 2rem 0 2rem;text-align:center;">
-      <div style="display:inline-flex;align-items:center;gap:7px;
-                  background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.3);
-                  border-radius:100px;padding:5px 14px;margin-bottom:1.2rem;">
-        <span style="width:6px;height:6px;border-radius:50%;background:#F59E0B;display:inline-block;"></span>
-        <span style="font-size:0.72rem;font-weight:700;color:#F59E0B;letter-spacing:0.07em;text-transform:uppercase;">
-          Generazione AI · Beta gratuita
-        </span>
-      </div>
-      <div style="font-size:3rem;font-weight:900;letter-spacing:-0.04em;
-                  color:#F5F4EF;line-height:1;margin-bottom:0.45rem;">
+    <div style="padding:3rem 2rem 0 2rem;text-align:center;">
+      <div style="font-size:3.2rem;font-weight:900;letter-spacing:-0.04em;
+                  color:#F5F4EF;line-height:1;margin-bottom:0.5rem;">
         📝 Verific<span style="background:linear-gradient(135deg,#D97706,#FF8C00);
-        -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">AI</span>
+                               -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                               background-clip:text;">AI</span>
       </div>
-      <p style="font-size:0.95rem;color:#8C8A82;font-weight:400;margin:0 auto 1.4rem auto;line-height:1.5;max-width:320px;">
-        Crea verifiche scolastiche professionali in pochi secondi.<br>
-        <span style="color:#6B6960;font-size:0.82rem;">Materia, argomento, livello — il resto lo fa l'AI.</span>
+      <p style="font-size:1rem;color:#8C8A82;margin:0 auto 2rem auto;max-width:360px;">
+        Crea <strong style="color:#C8C6BC;">verifiche scolastiche professionali</strong> in 30 secondi.
       </p>
-      <div style="display:flex;flex-wrap:wrap;gap:0.35rem;justify-content:center;margin-bottom:1.8rem;">
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">🧠 AI</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">📄 PDF & Word</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">🔀 Fila A/B</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">🎯 BES/DSA</span>
-        <span style="background:#161614;border:1px solid #2A2926;border-radius:20px;padding:4px 11px;font-size:0.72rem;color:#C8C6BC;">✅ Soluzioni</span>
+      <div style="background:#111110;border:1px solid #1E1D1A;border-radius:20px;
+                  padding:1.8rem 2rem 0.5rem 2rem;text-align:left;margin-bottom:0.5rem;">
+        <div style="font-size:1.3rem;font-weight:800;color:#F5F4EF;margin-bottom:0.3rem;">Inizia subito</div>
+        <div style="font-size:0.85rem;color:#6B6960;margin-bottom:0;">
+          Gratuito durante il periodo Beta · Nessuna carta richiesta
+        </div>
       </div>
-      <div style="background:#111110;border:1px solid #1E1D1A;border-radius:16px;
-                  padding:1.4rem 1.6rem 0.4rem 1.6rem;text-align:left;">
+    </div>
     """, unsafe_allow_html=True)
 
     tab_login, tab_reg, tab_reset = st.tabs(["  Accedi  ", "  Registrati  ", "  Password  "])
 
     with tab_login:
         st.write("")
-        email    = st.text_input("Email", key="login_email", placeholder="docente@scuola.it")
+        email = st.text_input("Email", key="login_email", placeholder="docente@scuola.it")
         password = st.text_input("Password", type="password", key="login_pass", placeholder="••••••••")
         st.write("")
         if st.button("Accedi →", type="primary", use_container_width=True, key="btn_login"):
@@ -195,9 +186,8 @@ def mostra_auth(supabase):
                 try:
                     res = supabase.auth.sign_in_with_password({"email": email, "password": password})
                     st.session_state.utente = res.user
-                    st.session_state["_sb_access_token"]  = res.session.access_token
+                    st.session_state["_sb_access_token"] = res.session.access_token
                     st.session_state["_sb_refresh_token"] = res.session.refresh_token
-                    st.session_state._cookie_check_done   = False
                     salva_sessione_cookie(res)
                     st.rerun()
                 except Exception as e:
@@ -205,31 +195,28 @@ def mostra_auth(supabase):
                     if "invalid login" in err_str or "invalid credentials" in err_str:
                         st.warning("Password errata. Usa il tab 'Password' per reimpostarla.")
                     elif "email not confirmed" in err_str:
-                        st.warning("Email non confermata. Controlla la tua casella di posta.")
-                    elif "user not found" in err_str or "no user" in err_str:
-                        st.warning("Nessun account trovato. Registrati prima.")
+                        st.warning("Email non confermata. Controlla la casella di posta.")
                     else:
                         st.warning("Accesso non riuscito. Controlla email e password.")
                     time.sleep(2)
 
     with tab_reg:
         st.write("")
-        email    = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
-        password = st.text_input("Password (min. 6 caratteri)", type="password", key="reg_pass", placeholder="••••••••")
+        email_r = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
+        password_r = st.text_input("Password (min. 6 caratteri)", type="password", key="reg_pass", placeholder="••••••••")
         st.write("")
         if st.button("Crea account gratuito →", type="primary", use_container_width=True, key="btn_reg"):
-            if not email or not password:
+            if not email_r or not password_r:
                 st.warning("Inserisci email e password.")
-            elif len(password) < 6:
+            elif len(password_r) < 6:
                 st.warning("La password deve essere di almeno 6 caratteri.")
             else:
                 try:
-                    res = supabase.auth.sign_up({"email": email, "password": password})
+                    res = supabase.auth.sign_up({"email": email_r, "password": password_r})
                     st.session_state.utente = res.user
                     if res.session:
-                        st.session_state["_sb_access_token"]  = res.session.access_token
+                        st.session_state["_sb_access_token"] = res.session.access_token
                         st.session_state["_sb_refresh_token"] = res.session.refresh_token
-                        st.session_state._cookie_check_done   = False
                         salva_sessione_cookie(res)
                     st.success("Benvenuto su VerificAI! Account creato.")
                     time.sleep(1)
@@ -240,9 +227,8 @@ def mostra_auth(supabase):
     with tab_reset:
         st.write("")
         st.markdown("""
-        <div style="font-size:0.82rem;color:#8C8A82;line-height:1.5;
-                    padding:0.8rem 1rem;background:#161614;border-radius:8px;
-                    border-left:2px solid #2A2926;margin-bottom:0.8rem;">
+        <div style="font-size:0.82rem;color:#8C8A82;padding:0.8rem 1rem;
+                    background:#161614;border-radius:8px;border-left:2px solid #2A2926;margin-bottom:0.8rem;">
           Inserisci la tua email. Riceverai un link per reimpostare la password.
         </div>
         """, unsafe_allow_html=True)
@@ -257,30 +243,3 @@ def mostra_auth(supabase):
                     st.success("Email inviata! Controlla la casella di posta.")
                 except Exception as e:
                     st.error(f"Errore nell'invio: {e}")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("""
-    <div style="display:flex;align-items:center;gap:0.7rem;
-                justify-content:center;padding:1.4rem 1rem 2.5rem 1rem;">
-      <div style="display:flex;">
-        <div style="width:24px;height:24px;border-radius:50%;border:2px solid #0C0C0B;
-                    background:linear-gradient(135deg,#D97706,#92400E);
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:0.55rem;font-weight:700;color:white;">GM</div>
-        <div style="width:24px;height:24px;border-radius:50%;border:2px solid #0C0C0B;
-                    background:linear-gradient(135deg,#D97706,#92400E);
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:0.55rem;font-weight:700;color:white;margin-left:-6px;">AR</div>
-        <div style="width:24px;height:24px;border-radius:50%;border:2px solid #0C0C0B;
-                    background:linear-gradient(135deg,#444,#222);
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:0.55rem;font-weight:700;color:white;margin-left:-6px;">+</div>
-      </div>
-      <div style="font-size:0.75rem;color:#6B6960;line-height:1.4;">
-        Usato da docenti di tutta Italia ·
-        <strong style="color:#8C8A82;">Gratis in Beta</strong>
-      </div>
-    </div>
-    </div>
-    """, unsafe_allow_html=True)
