@@ -5,25 +5,23 @@ import time
 # ── PERSISTENT LOGIN ─────────────────────────────────────────────────────────────
 def ripristina_sessione(supabase):
     """
-    Tenta di ripristinare la sessione utente dai token salvati in session_state.
-    Chiama questa funzione all'avvio dell'app, prima del gate di autenticazione.
+    Tenta di recuperare la sessione direttamente dal client Supabase
+    che gestisce internamente un minimo di persistenza durante il refresh.
     """
+    # 1. Se l'utente è già in session_state, non fare nulla
     if st.session_state.get('utente') is not None:
         return
 
-    access_token  = st.session_state.get("_sb_access_token")
-    refresh_token = st.session_state.get("_sb_refresh_token")
-
-    if access_token and refresh_token:
-        try:
-            sess = supabase.auth.set_session(access_token, refresh_token)
-            if sess and sess.user:
-                st.session_state.utente = sess.user
-                st.session_state["_sb_access_token"]  = sess.session.access_token
-                st.session_state["_sb_refresh_token"] = sess.session.refresh_token
-        except Exception:
-            st.session_state.pop("_sb_access_token", None)
-            st.session_state.pop("_sb_refresh_token", None)
+    try:
+        # 2. Chiedi a Supabase se c'è una sessione attiva nel thread attuale
+        res = supabase.auth.get_session()
+        if res and res.session and res.session.user:
+            st.session_state.utente = res.session.user
+            st.session_state["_sb_access_token"] = res.session.access_token
+            st.session_state["_sb_refresh_token"] = res.session.refresh_token
+    except Exception:
+        # Se la sessione è scaduta o corrotta, puliamo tutto
+        st.session_state.utente = NoneNone)
 
 
 # ── AUTENTICAZIONE ────────────────────────────────────────────────────────────────
