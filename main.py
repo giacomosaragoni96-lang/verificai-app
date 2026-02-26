@@ -4,6 +4,7 @@ import re
 import os
 import time
 import google.generativeai as genai
+from sidebar import render_sidebar
 from generation import genera_verifica
 from prompts import (
     prompt_titolo, prompt_corpo_verifica, prompt_controllo_qualita,
@@ -951,6 +952,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
