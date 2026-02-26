@@ -373,7 +373,7 @@ if "theme" not in st.session_state:
 T = THEMES[st.session_state.theme]
 
 SCUOLE = [
-    "Generico — adatta alle istruzioni",
+    "Generico",
     "Scuola Primaria (Elementari)",
     "Scuola Secondaria I grado (Medie)",
     "Liceo Scientifico",
@@ -388,8 +388,8 @@ SCUOLE = [
 ]
 
 CALIBRAZIONE_SCUOLA = {
-    "Generico — adatta alle istruzioni": (
-        "Livello NON specificato: adatta autonomamente difficoltà, registro linguistico e complessità "
+    "Generico": (
+        "Livello NON specificato: adatta autonomamente difficoltà, registro linguistico e complessità, se non specificato consulta indicazioni nazionali e cerca di capire l'argomento indicato quando viene trattato nella scuola italiana per capire il contesto. "
         "in base all'argomento e alle istruzioni del docente. "
         "Se l'argomento suggerisce un livello (es. 'derivate' → superiori, 'addizioni' → primaria), calibra di conseguenza. "
         "Usa un linguaggio chiaro, diretto e professionale. Nessun vincolo di scuola."
@@ -4110,6 +4110,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
