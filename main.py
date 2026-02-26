@@ -2918,7 +2918,7 @@ with st.sidebar:
         )
     doppia_fila = st.checkbox("Genera Versione A e B (due varianti)", value=False)
     genera_soluzioni = st.checkbox(
-        "📋 Genera soluzioni della verifica",
+        "Genera soluzioni della verifica",
         value=False,
         help="Verrà generato un documento separato con le soluzioni complete. Per le domande aperte le risposte saranno sintetiche (max 5 righe)."
     )
@@ -4240,6 +4240,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
