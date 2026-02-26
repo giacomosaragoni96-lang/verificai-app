@@ -1,146 +1,151 @@
 import streamlit as st
 import time
-import extra_streamlit_components as stx
+import streamlit.components.v1 as components
 
 
-# ── COOKIE MANAGER ────────────────────────────────────────────────────────────────
-def get_cookie_manager():
-    if "_cookie_manager" not in st.session_state:
-        st.session_state._cookie_manager = stx.CookieManager()
-    return st.session_state._cookie_manager
+# ── COOKIE VIA JAVASCRIPT ─────────────────────────────────────────────────────────
+def _inject_cookie_writer(token: str):
+    """Scrive il cookie sb_refresh_token via JS dopo il login."""
+    components.html(f"""
+    <script>
+      var d = new Date();
+      d.setTime(d.getTime() + (30*24*60*60*1000));
+      document.cookie = "sb_refresh_token={token};expires=" + d.toUTCString() + ";path=/;SameSite=Lax";
+    </script>
+    """, height=0)
+
+
+def _inject_cookie_deleter():
+    """Cancella il cookie sb_refresh_token via JS."""
+    components.html("""
+    <script>
+      document.cookie = "sb_refresh_token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax";
+    </script>
+    """, height=0)
+
+
+def _inject_cookie_reader():
+    """
+    Legge il cookie e reindirizza aggiungendo ?_tok=VALORE all'URL,
+    così Python può leggerlo tramite st.query_params.
+    Eseguito solo se non c'è già _tok nei query params.
+    """
+    components.html("""
+    <script>
+      (function() {
+        // Se _tok è già nell'URL non fare nulla
+        if (window.location.search.indexOf('_tok=') !== -1) return;
+        
+        var cookies = document.cookie.split(';');
+        var token = null;
+        for (var i = 0; i < cookies.length; i++) {
+          var c = cookies[i].trim();
+          if (c.indexOf('sb_refresh_token=') === 0) {
+            token = c.substring('sb_refresh_token='.length);
+            break;
+          }
+        }
+        if (token && token.length > 10) {
+          var url = window.location.pathname + '?_tok=' + encodeURIComponent(token);
+          window.location.replace(url);
+        }
+      })();
+    </script>
+    """, height=0)
 
 
 # ── PERSISTENT LOGIN ──────────────────────────────────────────────────────────────
 def ripristina_sessione(supabase):
+    """Tenta di recuperare la sessione dal cookie al refresh."""
     if st.session_state.get('utente') is not None:
         return
 
     if st.session_state.get('_cookie_check_done'):
         return
 
-    cookie_manager = get_cookie_manager()
-    refresh_token = cookie_manager.get("sb_refresh_token")
-
     st.session_state._cookie_check_done = True
 
-    if refresh_token:
+    # Leggi il token dai query params (messo lì dal JS cookie reader)
+    token = st.query_params.get("_tok", None)
+
+    if token:
+        # Pulisci subito l'URL
+        st.query_params.clear()
         try:
-            res = supabase.auth.refresh_session(refresh_token)
+            res = supabase.auth.refresh_session(token)
             if res and res.user:
                 st.session_state.utente = res.user
                 st.session_state["_sb_access_token"] = res.session.access_token
                 st.session_state["_sb_refresh_token"] = res.session.refresh_token
-                cookie_manager.set(
-                    "sb_refresh_token",
-                    res.session.refresh_token,
-                    expires_at=None,
-                    key="cookie_refresh_restore"
-                )
+                # Aggiorna il cookie con il token rinnovato
+                _inject_cookie_writer(res.session.refresh_token)
         except Exception:
-            cookie_manager.delete("sb_refresh_token", key="cookie_delete_invalid")
+            _inject_cookie_deleter()
             st.session_state.utente = None
+    else:
+        # Nessun token nei query params: inietta il reader JS
+        # Al prossimo caricamento, se c'è un cookie, verrà letto
+        _inject_cookie_reader()
 
 
 def salva_sessione_cookie(res):
-    cookie_manager = get_cookie_manager()
-    cookie_manager.set(
-        "sb_refresh_token",
-        res.session.refresh_token,
-        expires_at=None,
-        key="cookie_set_login"
-    )
+    """Salva il refresh token nel cookie dopo login/registrazione."""
+    _inject_cookie_writer(res.session.refresh_token)
 
 
 def cancella_sessione_cookie():
-    cookie_manager = get_cookie_manager()
-    cookie_manager.delete("sb_refresh_token", key="cookie_delete_logout")
+    """Cancella il cookie al logout."""
+    _inject_cookie_deleter()
     st.session_state._cookie_check_done = False
 
 
-# ── AUTENTICAZIONE ────────────────────────────────────────────────────────────────
+# ── AUTENTICAZIONE UI ─────────────────────────────────────────────────────────────
 def mostra_auth(supabase):
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&display=swap');
-
     html, body, [data-testid="stAppViewContainer"], .stApp {
         background: #0C0C0B !important;
         font-family: 'DM Sans', sans-serif !important;
     }
-    [data-testid="stHeader"],
-    [data-testid="stDecoration"],
-    [data-testid="stToolbar"],
-    #MainMenu, footer { display: none !important; }
-
-    .block-container {
-        padding: 0 !important;
-        max-width: 420px !important;
-        margin: 0 auto !important;
-    }
+    [data-testid="stHeader"],[data-testid="stDecoration"],
+    [data-testid="stToolbar"],#MainMenu, footer { display: none !important; }
+    .block-container { padding: 0 !important; max-width: 420px !important; margin: 0 auto !important; }
     [data-testid="stMainBlockContainer"] { padding: 0 !important; }
-
     [data-testid="stTextInput"] input {
-        background: #1A1916 !important;
-        border: 1.5px solid #2A2926 !important;
-        border-radius: 10px !important;
-        color: #F5F4EF !important;
-        font-family: 'DM Sans', sans-serif !important;
-        font-size: 1rem !important;
-        padding: 14px 16px !important;
-        min-height: 50px !important;
+        background: #1A1916 !important; border: 1.5px solid #2A2926 !important;
+        border-radius: 10px !important; color: #F5F4EF !important;
+        font-family: 'DM Sans', sans-serif !important; font-size: 1rem !important;
+        padding: 14px 16px !important; min-height: 50px !important;
     }
     [data-testid="stTextInput"] input:focus {
         border-color: #D97706 !important;
-        box-shadow: 0 0 0 3px rgba(217,119,6,0.18) !important;
-        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(217,119,6,0.18) !important; outline: none !important;
     }
-    [data-testid="stTextInput"] input::placeholder {
-        color: #4A4840 !important;
-        opacity: 1 !important;
-    }
+    [data-testid="stTextInput"] input::placeholder { color: #4A4840 !important; opacity: 1 !important; }
     [data-testid="stTextInput"] label p {
-        color: #C8C6BC !important;
-        font-size: 0.85rem !important;
-        font-weight: 600 !important;
-        font-family: 'DM Sans', sans-serif !important;
+        color: #C8C6BC !important; font-size: 0.85rem !important;
+        font-weight: 600 !important; font-family: 'DM Sans', sans-serif !important;
     }
     [data-testid="stTabs"] [data-baseweb="tab-list"] {
-        background: #1A1916 !important;
-        border-radius: 10px !important;
-        padding: 4px !important;
-        gap: 2px !important;
-        border: 1px solid #2A2926 !important;
-        margin-bottom: 1.5rem !important;
+        background: #1A1916 !important; border-radius: 10px !important;
+        padding: 4px !important; gap: 2px !important;
+        border: 1px solid #2A2926 !important; margin-bottom: 1.5rem !important;
     }
     [data-testid="stTabs"] [data-baseweb="tab"] {
-        border-radius: 7px !important;
-        font-size: 0.85rem !important;
-        font-weight: 600 !important;
-        color: #6B6960 !important;
-        padding: 0.45rem 1.2rem !important;
-        background: transparent !important;
+        border-radius: 7px !important; font-size: 0.85rem !important;
+        font-weight: 600 !important; color: #6B6960 !important;
+        padding: 0.45rem 1.2rem !important; background: transparent !important;
     }
-    [data-testid="stTabs"] [aria-selected="true"] {
-        background: #2A2926 !important;
-        color: #F5F4EF !important;
-    }
+    [data-testid="stTabs"] [aria-selected="true"] { background: #2A2926 !important; color: #F5F4EF !important; }
     [data-testid="stTabs"] [data-baseweb="tab-highlight"] { display: none !important; }
     div.stButton > button[kind="primary"] {
-        background: #D97706 !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 10px !important;
-        font-weight: 700 !important;
-        font-size: 1rem !important;
-        min-height: 52px !important;
-        box-shadow: 0 2px 20px rgba(217,119,6,0.35) !important;
-        width: 100% !important;
-        transition: filter 0.15s, transform 0.15s !important;
+        background: #D97706 !important; color: white !important; border: none !important;
+        border-radius: 10px !important; font-weight: 700 !important; font-size: 1rem !important;
+        min-height: 52px !important; box-shadow: 0 2px 20px rgba(217,119,6,0.35) !important;
+        width: 100% !important; transition: filter 0.15s, transform 0.15s !important;
     }
-    div.stButton > button[kind="primary"]:hover {
-        filter: brightness(1.1) !important;
-        transform: translateY(-1px) !important;
-    }
+    div.stButton > button[kind="primary"]:hover { filter: brightness(1.1) !important; transform: translateY(-1px) !important; }
     .stAlert { border-radius: 8px !important; }
     .stAlert p, .stAlert div { font-size: 0.88rem !important; }
     </style>
@@ -159,11 +164,9 @@ def mostra_auth(supabase):
       <div style="font-size:3rem;font-weight:900;letter-spacing:-0.04em;
                   color:#F5F4EF;line-height:1;margin-bottom:0.45rem;">
         📝 Verific<span style="background:linear-gradient(135deg,#D97706,#FF8C00);
-                               -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                               background-clip:text;">AI</span>
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">AI</span>
       </div>
-      <p style="font-size:0.95rem;color:#8C8A82;font-weight:400;
-                margin:0 auto 1.4rem auto;line-height:1.5;max-width:320px;">
+      <p style="font-size:0.95rem;color:#8C8A82;font-weight:400;margin:0 auto 1.4rem auto;line-height:1.5;max-width:320px;">
         Crea verifiche scolastiche professionali in pochi secondi.<br>
         <span style="color:#6B6960;font-size:0.82rem;">Materia, argomento, livello — il resto lo fa l'AI.</span>
       </p>
