@@ -3121,7 +3121,7 @@ if not st.session_state._onboarding_done:
     st.markdown(
         f'<div style="display:flex;align-items:flex-start;gap:8px;padding:0.6rem 0.9rem;'
         f'margin-bottom:1.2rem;background:{_c_bg2};border-radius:8px;border:1px solid {_c_border};">'
-        f'<span style="font-size:0.85rem;flex-shrink:0;margin-top:1px;">⚠️</span>'
+      
         f'<span style="font-size:0.75rem;color:{_c_muted};line-height:1.45;">'
         f'Le verifiche generate dall\'AI sono <strong style="color:{_c_text2};">suggerimenti didattici</strong>. '
         f'Controlla sempre contenuti e punteggi prima di distribuirle agli studenti.'
@@ -4110,5 +4110,6 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
