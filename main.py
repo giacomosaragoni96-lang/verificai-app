@@ -17,6 +17,9 @@ from config import (
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
+if "theme" not in st.session_state:
+    st.session_state.theme = "light"
+T = THEMES[st.session_state.theme]
 
 # ── CONFIGURAZIONE ──────────────────────────────────────────────────────────────
 load_dotenv()
@@ -3655,6 +3658,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
