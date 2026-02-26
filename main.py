@@ -4,6 +4,11 @@ import re
 import os
 import time
 import google.generativeai as genai
+from prompts import (
+    prompt_titolo, prompt_corpo_verifica, prompt_controllo_qualita,
+    prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
+    prompt_modifica,
+)
 from docx_export import latex_to_docx_via_ai
 from latex_utils import (
     compila_pdf, inietta_griglia, riscala_punti,
@@ -328,30 +333,13 @@ def _giorni_al_reset():
     return giorni, ore
 
 def modifica_verifica_con_ai(latex_originale, richiesta_modifica, model):
-    prompt = f"""Sei un docente esperto di LaTeX. Ti viene fornita una verifica già generata e una richiesta di modifica.
-
-VERIFICA ORIGINALE:
-{latex_originale}
-
-RICHIESTA DI MODIFICA:
-{richiesta_modifica}
-
-ISTRUZIONI:
-- Applica SOLO le modifiche richieste
-- Mantieni la struttura LaTeX esistente
-- NON rigenerare da zero, modifica l'esistente
-- Mantieni lo stesso preambolo e intestazione
-- Se la modifica riguarda punteggi, ricalcola la somma totale
-- Restituisci il codice LaTeX completo modificato
-- TERMINA con \\end{{document}}
-
-OUTPUT: SOLO codice LaTeX completo, senza ```latex né spiegazioni."""
-
-    response = model.generate_content(prompt)
+    response = model.generate_content(prompt_modifica(latex_originale, richiesta_modifica))
     latex_modificato = response.text.replace("```latex", "").replace("```", "").strip()
     if "\\end{document}" not in latex_modificato:
         latex_modificato += "\n\\end{document}"
     return latex_modificato
+
+
 
 def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_punteggi):
     n_liberi = max(0, num_totale - len(esercizi_custom))
@@ -2361,51 +2349,15 @@ if genera_btn and not _limite_raggiunto:
         _avanza("✍️  Elaborazione titolo…")
 
         titolo_resp = model.generate_content(
-            f"Sei un docente. Crea un titolo professionale e conciso per una verifica scolastica.\n"
-            f"Materia: {materia}\n"
-            f"Argomento inserito dall'utente (potrebbe avere errori ortografici o essere informale): \"{argomento}\"\n"
-            f"Restituisci SOLO il titolo senza virgolette, senza punteggiatura finale, "
-            f"senza prefissi come 'Verifica di'. Esempio: 'Le equazioni di secondo grado'"
+            prompt_titolo(materia, argomento)
         )
         titolo_clean = titolo_resp.text.strip().strip('"').strip("'").strip()
         if not titolo_clean:
             titolo_clean = argomento.strip()
         _avanza("🧠  Generazione esercizi in corso…")
 
-        bes_rule = "- NON inserire mai il simbolo (*) accanto a nessun sottopunto."
 
-        if mostra_punteggi:
-            punti_rule = (
-                f"- PUNTEGGI OBBLIGATORI: ogni \\item DEVE avere \"(X pt)\" SULLA STESSA RIGA, subito dopo il testo.\n"
-                f"- Formato ESATTO e UNICO accettato: (X pt) — esempio: \\item[a)] Risolvi l'equazione. (3 pt)\n"
-                f"- NON usare formati alternativi come [X pt], X punti, X p., pt X, ecc.\n"
-                f"- La somma di TUTTI i (X pt) deve essere ESATTAMENTE {punti_totali} pt. CONTROLLA prima di terminare.\n"
-                f"- Distribuisci i punti in modo che sia facile ottenere almeno 60% svolgendo le parti più semplici.\n"
-                f"- NON inserire punti nel titolo \\subsection*, SOLO nei \\item.\n"
-                f"- Se dimentichi il punteggio anche su UN SOLO \\item, la griglia di valutazione sarà incompleta."
-            )
-        else:
-            punti_rule = "- NON inserire punti (X pt) in nessun esercizio né sottopunto."
-
-        multi_rule = "- NON includere esercizi multidisciplinari."
-
-        griglia_rule = ("- NON generare la griglia (sarà aggiunta automaticamente dopo)."
-                        if con_griglia else "- NON generare nessuna griglia di valutazione.")
-
-        if e_mat:
-            grafici_rule = (
-                "- GRAFICI pgfplots: quando il grafico è un DATO fornito allo studente "
-                "(es. 'osserva il grafico della parabola e determina...', 'dal grafico ricava...'), "
-                "DEVI obbligatoriamente generarlo con pgfplots/tikzpicture. "
-                "Esempio per parabola: \\begin{tikzpicture}\\begin{axis}[width=7cm,height=5.5cm,"
-                "axis lines=center,xlabel=$x$,ylabel=$y$,grid=both,xtick={-4,...,4},ytick={-4,...,4}]"
-                "\\addplot[blue,thick,domain=-3:3,samples=100]{x^2-2*x-3}; \\end{axis}\\end{tikzpicture} "
-                "MI RACCOMANDO NON lasciare MAI spazio extra per disegnare se lo studente deve disegnare lui il grafico, lo fara sul suo foglio."
-            )
-            pgfplots_pkg = "\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}"
-        else:
-            grafici_rule = ""
-            pgfplots_pkg = ""
+        
 
         titolo_header = f"Verifica di {materia}: {titolo_clean}" + (f" — {titolo_a}" if titolo_a else "")
         _hspace6 = "{6cm}"
@@ -2414,7 +2366,7 @@ if genera_btn and not _limite_raggiunto:
 \\usepackage[utf8]{{inputenc}}
 \\usepackage[italian]{{babel}}
 \\usepackage{{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}}
-{pgfplots_pkg}
+{"\\usepackage{pgfplots}\\n\\pgfplotsset{compat=1.18}\\n\\usepackage{tikz}" if e_mat else ""}
 \\geometry{{margin=1.5cm}}
 \\setlength{{\\parskip}}{{3pt plus1pt minus1pt}}
 \\pagestyle{{empty}}
@@ -2428,41 +2380,12 @@ if genera_btn and not _limite_raggiunto:
 \\end{{center}}
 """
 
-        prompt_a = f"""Sei un docente esperto di {materia} e LaTeX. Genera SOLO il corpo degli esercizi (senza preambolo, senza \\documentclass, senza \\begin{{document}}) per una verifica su: {argomento}.
-{f'Punti totali da distribuire: {punti_totali} pt.' if mostra_punteggi else ''}
-
-CALIBRAZIONE LIVELLO E TEMPO:
-{calibrazione}
-- DURATA PREVISTA: {durata_scelta}. Regola la lunghezza dei calcoli, il numero di incognite e la complessità testuale in modo che {num_esercizi_totali} esercizi siano agevolmente fattibili nel tempo scelto.
-- BILANCIAMENTO CONTESTO E MODELLAZIONE: NON esagerare con i problemi applicati alla realtà o fortemente interdisciplinari. MASSIMO 1 o 2 esercizi possono essere contestualizzati. I restanti DEVONO essere esercizi canonici, diretti e focalizzati sulla procedura pura.
-- REGISTRO LINGUISTICO — REGOLA ASSOLUTA: il testo degli esercizi deve essere CONCISO e DIRETTO.
-- DATI PULITI — REGOLA ASSOLUTA: prima di scrivere ogni esercizio, risolvilo mentalmente tu stesso. Scegli SOLO dati che portano a risultati interi o frazioni semplici. MAI scegliere dati che rendono un sistema contraddittorio, sovradeterminato o senza soluzione unica (a meno che non sia esplicitamente richiesto). Se un esercizio chiede di trovare un'equazione soddisfacendo N condizioni, verifica che le N condizioni siano compatibili tra loro.
-REGOLE TASSATIVE SUI GRAFICI (LOGICA ANTI-SPOILER):
-- Se l'esercizio richiede allo studente di "disegnare", "rappresentare graficamente", "tracciare" o "costruire" una figura/grafico, NON generare il codice TikZ.
-- Genera un grafico (TikZ) SOLO se esso è un dato di partenza necessario fornito dal docente.
-
-{s_note}
-{s_es}
-
-REGOLE LATEX (TASSATIVE):
-{griglia_rule}
-{punti_rule}
-- NUMERO ESERCIZI: genera ESATTAMENTE {num_esercizi_totali} blocchi \\subsection*. CONTA i tuoi blocchi prima di chiudere.
-- Titoli: \\subsection*{{Esercizio N: Titolo}}
-- SOTTOPUNTI OBBLIGATORI: usa SEMPRE \\item[a)] \\item[b)] \\item[c)] ecc. con label ESPLICITA tra parentesi quadre.
-- PROTEZIONE ESERCIZIO 1 (Saperi Essenziali): nell'Esercizio 1 NON inserire MAI il simbolo (*) su nessun sottopunto.
-{multi_rule}
-- Scelta multipla: le opzioni DEVONO stare in un \\begin{{enumerate}}[a)] SEPARATO dopo la domanda.
-- Vero/Falso: $\\square$ \\textbf{{V}} $\\quad\\square$ \\textbf{{F}}
-- Completamento: \\underline{{\\hspace{{3cm}}}}
-{grafici_rule}
-
-FORMATO OUTPUT: restituisci SOLO i blocchi \\subsection*{{...}} con relativi esercizi.
-TERMINA con \\end{{document}}.
-NIENTE preambolo, NIENTE \\documentclass, NIENTE \\begin{{document}}.
-SOLO CODICE LATEX del corpo."""
-
-        inp = [prompt_a]
+        inp = [prompt_corpo_verifica(
+            materia, argomento, calibrazione, durata_scelta,
+            num_esercizi_totali, punti_totali, mostra_punteggi,
+            con_griglia, note_generali, s_es, e_mat,
+            titolo_header, preambolo_fisso,
+        )]
         if file_ispirazione:
             inp.append({"mime_type": file_ispirazione.type, "data": file_ispirazione.getvalue()})
             inp[0] += "\nPrendi spunto dal file allegato per stile e livello."
@@ -2471,40 +2394,14 @@ SOLO CODICE LATEX del corpo."""
             inp[0] += f"\nUsa l'immagine come riferimento per l'Esercizio {im['idx']}."
 
         ra = model.generate_content(inp)
-        _avanza("⚙️  Elaborazione LaTeX…")
 
         corpo_latex = ra.text.replace("```latex","").replace("```","").strip()
         corpo_latex = pulisci_corpo_latex(corpo_latex)
 
         _avanza("🔎  Controllo qualità e correzione errori…")
-        prompt_check = f"""Sei un docente esperto di {materia} e devi fare un CONTROLLO DI QUALITÀ RIGOROSO su questa verifica scolastica prima che venga consegnata agli studenti.
-
-MATERIA: {materia}
-LIVELLO: {difficolta}
-VERIFICA DA CONTROLLARE:
-{corpo_latex}
-
-COMPITO: analizza OGNI esercizio e OGNI sottopunto. Per ciascuno verifica:
-
-1. CORRETTEZZA MATEMATICA / DISCIPLINARE: i dati sono coerenti? L'esercizio ha UNA soluzione determinata e corretta? Se risolvo l'esercizio io stesso, ottengo una risposta pulita e sensata?
-   - Esempi di ERRORI GRAVI: sistema sovradeterminato o contraddittorio, dati incoerenti (es. due condizioni incompatibili), risposta che richiede conoscenze non adatte al livello, calcoli che portano a risultati assurdi.
-
-2. ADEGUATEZZA AL LIVELLO ({difficolta}): la complessità è appropriata?
-
-3. UNIVOCITÀ: la domanda ha una sola risposta corretta e non è ambigua?
-
-SE trovi problemi: CORREGGILI DIRETTAMENTE modificando i dati dell'esercizio finché l'esercizio sia corretto, sensato e risolvibile. NON eliminare esercizi, correggili.
-
-SE tutto è corretto: restituisci il testo IDENTICO senza modifiche.
-
-REGOLE OUTPUT:
-- Restituisci SOLO il corpo LaTeX corretto (\\subsection* ecc.), senza preambolo.
-- Mantieni ESATTAMENTE la stessa struttura LaTeX (\\item[a)], \\item[b)], ecc.).
-- NON aggiungere commenti, spiegazioni o note al di fuori del LaTeX.
-- TERMINA con \\end{{document}}.
-- Se hai modificato dati, mantieni la stessa difficoltà complessiva e lo stesso tipo di esercizio."""
-
-        rc = model.generate_content(prompt_check)
+        rc = model.generate_content(
+            prompt_controllo_qualita(materia, difficolta, corpo_latex)
+        )
         corpo_latex_corretto = rc.text.replace("```latex","").replace("```","").strip()
         corpo_latex_corretto = pulisci_corpo_latex(corpo_latex_corretto)
 
@@ -2558,19 +2455,9 @@ REGOLE OUTPUT:
         if bes_dsa and perc_ridotta:
             _avanza("⛳ Generazione verifica ridotta…")
 
-            prompt_ridotta = f"""Sei un docente esperto. Hai già generato questa verifica:
-
-{corpo_latex}
-
-Devi creare una versione RIDOTTA per studenti con sostegno o certificazione (BES/DSA/NAI).
-La struttura deve essere simile all'originale ma con circa il {perc_ridotta}% di sottopunti IN MENO rispetto al totale.
-Scegli quali sottopunti eliminare partendo dai più complessi. Mantieni sempre almeno 1 sottopunto per esercizio.
-{'Ridistribuisci i punti in modo che la somma sia ESATTAMENTE ' + str(punti_totali) + ' pt. totali.' if mostra_punteggi else 'NON inserire punteggi.'}
-NON aggiungere nessun simbolo (*), nessuna nota BES, nessuna indicazione che si tratta di una verifica ridotta.
-TERMINA con \\end{{document}}.
-SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
-
-            rb_bes = model.generate_content(prompt_ridotta)
+            rb_bes = model.generate_content(
+                prompt_versione_ridotta(corpo_latex, materia, perc_ridotta, mostra_punteggi, punti_totali)
+            )
             corpo_latex_ridotta = rb_bes.text.replace("```latex", "").replace("```", "").strip()
             corpo_latex_ridotta = pulisci_corpo_latex(corpo_latex_ridotta)
 
@@ -2604,16 +2491,7 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
         if doppia_fila:
             _avanza("📄  Generazione Versione B…")
             rb = model.generate_content(
-                f"Versione B: stessa struttura, cambia dati e quesiti. "
-                f"SOLO corpo esercizi (\\subsection* ecc.), SENZA preambolo/\\documentclass/\\begin{{document}}. "
-                f"Sostituisci 'Versione A' con 'Versione B'. TERMINA con \\end{{document}}. SOLO LATEX.\n\n{corpo_latex}")
-            corpo_latex_b = rb.text.replace("```latex","").replace("```","").strip()
-            corpo_latex_b = pulisci_corpo_latex(corpo_latex_b)
-
-            preambolo_b = preambolo_fisso.replace(
-                titolo_header,
-                titolo_header.replace("Versione A","Versione B") if "Versione A" in titolo_header
-                else titolo_header + " — Versione B"
+                prompt_versione_b(corpo_latex)
             )
             latex_b = preambolo_b + corpo_latex_b
             latex_b = fix_items_environment(latex_b)
@@ -2645,17 +2523,9 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."""
 
         if doppia_fila and bes_dsa and bes_dsa_b and perc_ridotta and st.session_state.verifiche['B']['latex']:
             _avanza("⛳ Generazione verifica ridotta Fila B…")
-            prompt_ridotta_b = f"""Sei un docente esperto. Hai già generato questa verifica (Fila B):
-
-{corpo_latex_b}
-
-Crea una versione RIDOTTA per studenti con sostegno o certificazione (BES/DSA/NAI).
-Stessa logica della ridotta A: rimuovi circa il {perc_ridotta}% dei sottopunti più complessi, mantieni almeno 1 sottopunto per esercizio.
-{'Ridistribuisci i punti con somma ESATTAMENTE ' + str(punti_totali) + ' pt.' if mostra_punteggi else 'NON inserire punteggi.'}
-NON aggiungere note BES o indicazioni che si tratta di versione ridotta.
-SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo. TERMINA con \\end{{document}}."""
-
-            rb_bes_b = model.generate_content(prompt_ridotta_b)
+            rb_bes_b = model.generate_content(
+                prompt_versione_ridotta(corpo_latex_b, materia, perc_ridotta, mostra_punteggi, punti_totali, "Fila B")
+            )
             corpo_lr_b = rb_bes_b.text.replace("```latex","").replace("```","").strip()
             corpo_lr_b = pulisci_corpo_latex(corpo_lr_b)
             preambolo_rb = preambolo_b.replace(titolo_header + " — Versione B", titolo_header + " — Versione B Ridotta") if "Versione B" in preambolo_b else preambolo_b
@@ -2679,21 +2549,9 @@ SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo. TERMINA con \
 
             def _genera_testo_sol(corpo, versione_label=""):
                 _v_tag = f" — {versione_label}" if versione_label else ""
-                _prompt = f"""Sei un docente di {materia}. Fornisci le soluzioni SINTETICHE della seguente verifica{_v_tag}.
-
-{corpo}
-
-REGOLE FERREE — RISPETTALE ALLA LETTERA:
-- Per ogni esercizio scrivi "Esercizio N: [Titolo]" poi le soluzioni in ordine a), b), c)...
-- CALCOLI: mostra SOLO i passaggi essenziali. Niente testo narrativo. Solo la catena di calcolo.
-- DOMANDE APERTE / TEORICHE: MASSIMO 3-4 RIGHE. Sii telegraficamente conciso.
-- SCELTA MULTIPLA / VERO-FALSO: una riga sola: "Risposta: X — perché [motivazione breve]."
-- NON riscrivere mai il testo della domanda originale, vai diretto alla soluzione.
-- SE UN ESERCIZIO HA DATI INCOERENTI O ERRATI: scrivi "Dati da rivedere: [problema in una riga]" e passa avanti.
-- Usa $...$ per le formule matematiche inline.
-- Risposta totale per esercizio: MASSIMO 15-20 righe inclusi tutti i sottopunti.
-- Rispondi con testo strutturato, senza preambolo LaTeX."""
-                _rs = model.generate_content(_prompt)
+                _rs = model.generate_content(
+                    prompt_soluzioni(corpo, materia, versione_label)
+                )
                 return _rs.text.strip()
 
             def _testo_to_latex_body(testo):
@@ -3136,6 +2994,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
