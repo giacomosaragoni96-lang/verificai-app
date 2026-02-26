@@ -169,7 +169,7 @@ def mostra_auth(supabase):
             else:
                 try:
                     res = supabase.auth.sign_in_with_password({"email": email, "password": password})
-                   res.user
+                    st.session_state.utente = res.user
                     st.session_state["_sb_access_token"]  = res.session.access_token
                     st.session_state["_sb_refresh_token"] = res.session.refresh_token
                     st.rerun()
