@@ -311,9 +311,18 @@ SHARE_URL   = "https://verificai.streamlit.app"
 FEEDBACK_FORM_URL = "https://forms.gle/KNu8v8iDVUiGkQUL8"
 
 MODELLI_DISPONIBILI = {
-    "⚡ Flash 2.5 Lite (velocissimo)": "gemini-2.5-flash-lite",
-    "⚡ Flash 2.5 (bilanciato)":        "gemini-2.5-flash",
-    "🧠 Pro 2.5 (massima qualità)":     "gemini-2.5-pro",
+    "⚡ Flash 2.5 Lite (velocissimo)": {
+        "id": "gemini-2.5-flash-lite",
+        "pro": False,
+    },
+    "⚡ Flash 2.5 (bilanciato)": {
+        "id": "gemini-2.5-flash",
+        "pro": True,
+    },
+    "🧠 Pro 2.5 (massima qualità)": {
+        "id": "gemini-2.5-pro",
+        "pro": True,
+    },
 }
 
 THEMES = {
@@ -2933,19 +2942,38 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Modello AI</div>', unsafe_allow_html=True)
     if _is_admin:
-        modello_id = MODELLI_DISPONIBILI[
-            st.selectbox("modello", list(MODELLI_DISPONIBILI.keys()), label_visibility="collapsed")
-        ]
+        _sel_modello = st.selectbox(
+            "modello",
+            list(MODELLI_DISPONIBILI.keys()),
+            label_visibility="collapsed"
+        )
+        modello_id = MODELLI_DISPONIBILI[_sel_modello]["id"]
     else:
-        modello_id = "gemini-2.5-flash-lite"
-        st.markdown(f"""
-        <div style="background:{T['card2']};border:1px solid {T['border']};border-radius:10px;
-                    padding:8px 12px;font-size:0.8rem;color:{T['text2']};
-                    font-family:'DM Sans',sans-serif;">
-          Flash 2.5 Lite
-          <span style="font-size:0.7rem;color:{T['muted']};margin-left:6px;">modello standard</span>
-        </div>
-        """, unsafe_allow_html=True)
+        # Mostra i modelli con lucchetto — non selezionabili
+        _nomi_display = []
+        for _k, _v in MODELLI_DISPONIBILI.items():
+            if _v["pro"]:
+                _nomi_display.append(_k + "  🔒")
+            else:
+                _nomi_display.append(_k)
+        _sel_display = st.selectbox(
+            "modello",
+            _nomi_display,
+            index=0,
+            label_visibility="collapsed"
+        )
+        _sel_raw = _sel_display.replace("  🔒", "")
+        _info    = MODELLI_DISPONIBILI[_sel_raw]
+        if _info["pro"]:
+            # Mostra avviso e forza Lite
+            st.markdown(
+                f'<div style="font-size:0.74rem;color:{T["muted"]};padding:4px 0 2px 2px;'
+                f'font-family:DM Sans,sans-serif;">🔒 Disponibile solo per gli amministratori.</div>',
+                unsafe_allow_html=True
+            )
+            modello_id = MODELLI_DISPONIBILI["⚡ Flash 2.5 Lite (velocissimo)"]["id"]
+        else:
+            modello_id = _info["id"]
 
     st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Aspetto</div>', unsafe_allow_html=True)
     tema_sel = st.radio(
@@ -4212,6 +4240,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
