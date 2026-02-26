@@ -3148,6 +3148,10 @@ else:
 
 # ── STEP 2 — ARGOMENTO ───────────────────────────────────────────────────────────
 st.markdown(f"""
+<div class="ai-hint">
+  <span class="ai-hint-icon">💡</span>
+  <span><strong>Suggerimento:</strong> più dettagli fornisci nell'argomento e nelle opzioni avanzate, più la verifica sarà precisa e su misura.</span>
+</div>
 <div class="step-label">
   <span class="step-num">02</span>
   <span class="step-title">Argomento della verifica</span>
@@ -3164,13 +3168,6 @@ argomento_area = st.text_area(
 argomento = argomento_area.strip()
 
 # ── STEP 3 — PERSONALIZZA ────────────────────────────────────────────────────────
-st.markdown(f"""
-<div class="ai-hint">
-  <span class="ai-hint-icon">💡</span>
-  <span><strong>Suggerimento:</strong> più dettagli fornisci nell'argomento e nelle opzioni avanzate, più la verifica sarà precisa e su misura.</span>
-</div>
-""", unsafe_allow_html=True)
-
 st.markdown(f"""
 <div class="step-label">
   <span class="step-num">03</span>
@@ -4113,3 +4110,4 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
