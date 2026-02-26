@@ -4,6 +4,11 @@ import re
 import os
 import time
 import google.generativeai as genai
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
+supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 from sidebar import render_sidebar
 from generation import genera_verifica
 from prompts import (
@@ -41,11 +46,7 @@ if not API_KEY:
     st.error("⚠️ Chiave API mancante! Crea un file .env con: GOOGLE_API_KEY=la_tua_chiave")
     st.stop()
 genai.configure(api_key=API_KEY)
-SUPABASE_URL = st.secrets["SUPABASE_URL"]
-SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
-supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
 
 # ── PERSISTENT LOGIN ─────────────────────────────────────────────────────────────
 ripristina_sessione(supabase)
@@ -952,6 +953,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
