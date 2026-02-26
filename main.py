@@ -26,25 +26,35 @@ from config import (
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
-from auth import mostra_auth, ripristina_sessione
+from auth import mostra_auth, ripristina_sessione, get_cookie_controller
 from styles import get_css
 
+# ── PAGE CONFIG — DEVE ESSERE IL PRIMO COMANDO STREAMLIT ────────────────────────
+st.set_page_config(
+    page_title=APP_NAME,
+    page_icon=APP_ICON,
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# ── COOKIE CONTROLLER — ISTANZIATO SUBITO, PRIMA DI QUALSIASI st.stop() ─────────
+# Questo è il trucco fondamentale: il componente JS deve renderizzarsi
+# almeno una volta prima che possiamo leggere i cookie.
+_cookie_controller = get_cookie_controller()
+
+# ── SUPABASE ──────────────────────────────────────────────────────────────────────
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
 supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-# ── PERSISTENT LOGIN ─────────────────────────────────────────────────────────────
-ripristina_sessione(supabase)
-
-
-
+# ── TEMA ──────────────────────────────────────────────────────────────────────────
 if "theme" not in st.session_state:
     st.session_state.theme = "light"
 T = THEMES[st.session_state.theme]
 
-# ── CONFIGURAZIONE ──────────────────────────────────────────────────────────────
+# ── CONFIGURAZIONE ────────────────────────────────────────────────────────────────
 load_dotenv()
 API_KEY = os.getenv("GOOGLE_API_KEY")
 if not API_KEY:
@@ -52,26 +62,19 @@ if not API_KEY:
     st.stop()
 genai.configure(api_key=API_KEY)
 
-
-
-
-# ── AUTENTICAZIONE GATE ──────────────────────────────────────────────────────────
+# ── AUTENTICAZIONE GATE ───────────────────────────────────────────────────────────
 if 'utente' not in st.session_state:
     st.session_state.utente = None
 
 if st.session_state.utente is None:
-    # Prima inizializza il controller e aspetta che i cookie si carichino
-    if not st.session_state.get('_cookie_check_done'):
-        ripristina_sessione(supabase)
-        # Se dopo il check l'utente è ancora None, mostra il login
-        if st.session_state.utente is None:
-            mostra_auth(supabase)
-        st.stop()
-    else:
+    # Tenta ripristino da cookie
+    ripristina_sessione(supabase)
+    # Se ancora None, mostra login
+    if st.session_state.utente is None:
         mostra_auth(supabase)
         st.stop()
 
-# ── FUNZIONI ───────────────────────────────────────────────────────────────────
+# ── FUNZIONI ──────────────────────────────────────────────────────────────────────
 
 def _get_verifiche_mese(user_id):
     from datetime import datetime, timezone
@@ -162,7 +165,7 @@ def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra
     return "\n".join(righe), immagini
 
 
-# ── HELPER ───────────────────────────────────────────────────────────────────────
+# ── HELPER ────────────────────────────────────────────────────────────────────────
 def _tempo_relativo(ts):
     if ts is None:
         return ""
@@ -188,15 +191,7 @@ def _stima_dimensione(data_bytes):
     return f"{kb/1024:.1f} MB"
 
 
-# ── SESSION STATE ────────────────────────────────────────────────────────────────
-st.set_page_config(
-    page_title=APP_NAME,
-    page_icon=APP_ICON,
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
-
+# ── SESSION STATE ─────────────────────────────────────────────────────────────────
 def _vf():
     return {'latex': '', 'pdf': None, 'preview': False,
             'soluzioni_latex': '', 'soluzioni_pdf': None, 'docx': None,
@@ -213,15 +208,15 @@ if '_preferiti' not in st.session_state: st.session_state._preferiti = set()
 if '_storico_page' not in st.session_state: st.session_state._storico_page = 1
 if '_onboarding_done' not in st.session_state: st.session_state._onboarding_done = False
 
-# ── CALCOLA VERIFICHE DEL MESE (una volta per rerun) ────────────────────────────
+# ── CALCOLA VERIFICHE DEL MESE (una volta per rerun) ─────────────────────────────
 _verifiche_mese_count = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
 _is_admin = (st.session_state.utente.email in ADMIN_EMAILS) if st.session_state.utente else False
 _limite_raggiunto = (not _is_admin) and (_verifiche_mese_count >= LIMITE_MENSILE)
 
-# ── CSS GLOBALE — ora da styles.py ───────────────────────────────────────────────
+# ── CSS GLOBALE — ora da styles.py ────────────────────────────────────────────────
 st.markdown(get_css(T), unsafe_allow_html=True)
 
-# ── FEEDBACK BUTTON ──────────────────────────────────────────────────────────────
+# ── FEEDBACK BUTTON ───────────────────────────────────────────────────────────────
 st.markdown(f"""
 <a class="fab-link" href="{FEEDBACK_FORM_URL}" target="_blank" rel="noopener noreferrer"
    onclick="window.open(this.href,'_blank','noopener,noreferrer'); return false;">
@@ -241,8 +236,8 @@ try:
         SCUOLE=SCUOLE,
         MODELLI_DISPONIBILI=MODELLI_DISPONIBILI,
         LIMITE_MENSILE=LIMITE_MENSILE,
-        giorni_al_reset_func=_giorni_al_reset, # <--- Deve avere il _ davanti
-        compila_pdf_func=compila_pdf,         # <--- Deve corrispondere all'import da latex_utils
+        giorni_al_reset_func=_giorni_al_reset,
+        compila_pdf_func=compila_pdf,
         supabase_client=supabase
     )
 
@@ -257,12 +252,13 @@ try:
     con_griglia = settings.get('con_griglia', False)
     punti_totali = settings.get('punti_totali', 100)
     modello_id = settings.get('modello_id', 'gemini-1.5-pro')
-    
+
 except NameError as e:
     st.error(f"Errore di configurazione: {e}")
     st.info("Controlla che tutte le variabili (T, SCUOLE, _is_admin, ecc.) siano definite prima di questa riga.")
     st.stop()
-# ── TOPBAR ───────────────────────────────────────────────────────────────────────
+
+# ── TOPBAR ────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="top-bar">
   <div class="top-bar-hint">
@@ -271,7 +267,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── HEADER ───────────────────────────────────────────────────────────────────────
+# ── HEADER ────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="hero-wrap">
   <div class="hero-left">
@@ -349,7 +345,7 @@ if not st.session_state._onboarding_done:
         unsafe_allow_html=True
     )
 
-# ── STEP 1 — MATERIA ─────────────────────────────────────────────────────────────
+# ── STEP 1 — MATERIA ──────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="step-label">
   <span class="step-num">01</span>
@@ -365,7 +361,7 @@ if _materia_sel == "✏️ Altra materia...":
 else:
     materia_scelta = _materia_sel or "Matematica"
 
-# ── STEP 2 — ARGOMENTO ───────────────────────────────────────────────────────────
+# ── STEP 2 — ARGOMENTO ────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="ai-hint">
   <span class="ai-hint-icon">💡</span>
@@ -386,7 +382,7 @@ argomento_area = st.text_area(
 )
 argomento = argomento_area.strip()
 
-# ── STEP 3 — PERSONALIZZA ────────────────────────────────────────────────────────
+# ── STEP 3 — PERSONALIZZA ─────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="step-label">
   <span class="step-num">03</span>
@@ -516,7 +512,7 @@ else:
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ── LOGICA GENERAZIONE ───────────────────────────────────────────────────────────
+# ── LOGICA GENERAZIONE ────────────────────────────────────────────────────────────
 if genera_btn and not _limite_raggiunto:
     if not argomento.strip():
         st.warning("⚠️ Inserisci l'argomento della verifica."); st.stop()
@@ -629,7 +625,6 @@ if genera_btn and not _limite_raggiunto:
 
     except Exception as e:
         st.error(f"❌ Errore: {e}")
-
 
 
 # ── OUTPUT ────────────────────────────────────────────────────────────────────────
@@ -864,7 +859,7 @@ if st.session_state.verifiche['A']['latex']:
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
 
-# ── SOLUZIONI ────────────────────────────────────────────────────────────────────
+# ── SOLUZIONI ─────────────────────────────────────────────────────────────────────
 if st.session_state.verifiche['S'].get('testo') or st.session_state.verifiche['S'].get('pdf'):
     st.divider()
     _arg_s = st.session_state.last_argomento or (argomento if 'argomento' in dir() else 'verifica')
@@ -913,7 +908,7 @@ if st.session_state.verifiche['S'].get('testo') or st.session_state.verifiche['S
                     style="width:100%;height:500px;border:none;border-radius:8px;display:block;"></iframe>
             """, unsafe_allow_html=True)
 
-# ── FOOTER ───────────────────────────────────────────────────────────────────────
+# ── FOOTER ────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="app-footer">
   ⚠️ Le verifiche generate dall'AI sono suggerimenti didattici — rivedi sempre il contenuto
@@ -965,14 +960,3 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
-
-
-
-
-
-
-
-
-
-
-
