@@ -215,34 +215,39 @@ st.markdown(f"""
 </a>
 """, unsafe_allow_html=True)
 
-# 1. Chiami la funzione e salvi tutto nel dizionario 'settings'
-# 1. Chiamata alla funzione corretta (ho sistemato i nomi con il trattino basso)
-settings = render_sidebar(
-    supabase_admin=supabase_admin,
-    utente=st.session_state.utente,
-    verifiche_mese_count=_verifiche_mese_count, # <--- Corretto (aveva _)
-    is_admin=_is_admin,                         # <--- Corretto (aveva _)
-    limite_raggiunto=_limite_raggiunto,         # <--- Corretto (aveva _)
-    T=T,
-    SCUOLE=SCUOLE,
-    MODELLI_DISPONIBILI=MODELLI_DISPONIBILI,
-    LIMITE_MENSILE=LIMITE_MENSILE,
-    giorni_al_reset_func=_giorni_al_reset,      # <--- Corretto (aveva _)
-    compila_pdf_func=compila_pdf,
-    supabase_client=supabase
-)
+# Sostituisci il blocco alla riga 219 con questo:
+try:
+    settings = render_sidebar(
+        supabase_admin=supabase_admin,
+        utente=st.session_state.utente,
+        verifiche_mese_count=_verifiche_mese_count,
+        is_admin=_is_admin,
+        limite_raggiunto=_limite_raggiunto,
+        T=T,
+        SCUOLE=SCUOLE,
+        MODELLI_DISPONIBILI=MODELLI_DISPONIBILI,
+        LIMITE_MENSILE=LIMITE_MENSILE,
+        giorni_al_reset_func=_giorni_al_reset, # <--- Deve avere il _ davanti
+        compila_pdf_func=compila_pdf,         # <--- Deve corrispondere all'import da latex_utils
+        supabase_client=supabase
+    )
 
-# 2. Estrazione dei valori (indispensabile per il resto del codice)
-difficolta = settings['difficolta']
-bes_dsa = settings['bes_dsa']
-perc_ridotta = settings['perc_ridotta']
-doppia_fila = settings['doppia_fila']
-genera_soluzioni = settings['genera_soluzioni']
-bes_dsa_b = settings['bes_dsa_b']
-mostra_punteggi = settings['mostra_punteggi']
-con_griglia = settings['con_griglia']
-punti_totali = settings['punti_totali']
-modello_id = settings['modello_id']
+    # Estrazione sicura dei valori
+    difficolta = settings.get('difficolta', 'Liceo Scientifico')
+    bes_dsa = settings.get('bes_dsa', False)
+    perc_ridotta = settings.get('perc_ridotta', 15)
+    doppia_fila = settings.get('doppia_fila', False)
+    genera_soluzioni = settings.get('genera_soluzioni', False)
+    bes_dsa_b = settings.get('bes_dsa_b', False)
+    mostra_punteggi = settings.get('mostra_punteggi', True)
+    con_griglia = settings.get('con_griglia', False)
+    punti_totali = settings.get('punti_totali', 100)
+    modello_id = settings.get('modello_id', 'gemini-1.5-pro')
+    
+except NameError as e:
+    st.error(f"Errore di configurazione: {e}")
+    st.info("Controlla che tutte le variabili (T, SCUOLE, _is_admin, ecc.) siano definite prima di questa riga.")
+    st.stop()
 # ── TOPBAR ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="top-bar">
@@ -946,6 +951,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
