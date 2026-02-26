@@ -215,7 +215,33 @@ st.markdown(f"""
 </a>
 """, unsafe_allow_html=True)
 
+# 1. Chiami la funzione e salvi tutto nel dizionario 'settings'
+settings = render_sidebar(
+    supabase_admin=supabase_admin,
+    utente=st.session_state.utente,
+    verifiche_mese_count=verifiche_mese_count,
+    is_admin=is_admin,
+    limite_raggiunto=limite_raggiunto,
+    T=T,
+    SCUOLE=SCUOLE,
+    MODELLI_DISPONIBILI=MODELLI_DISPONIBILI,
+    LIMITE_MENSILE=LIMITE_MENSILE,
+    giorni_al_reset_func=giorni_al_reset, # <--- Verifica che si chiami così nel tuo main
+    compila_pdf_func=compila_pdf,         # <--- Verifica che si chiami così nel tuo main
+    supabase_client=supabase              # <--- Verifica che si chiami così nel tuo main
+)
 
+# 2. ESTRAI TUTTI I VALORI (fondamentale per non avere errori dopo)
+difficolta = settings['difficolta']
+bes_dsa = settings['bes_dsa']
+perc_ridotta = settings['perc_ridotta']
+doppia_fila = settings['doppia_fila']
+genera_soluzioni = settings['genera_soluzioni']
+bes_dsa_b = settings['bes_dsa_b']
+mostra_punteggi = settings['mostra_punteggi']
+con_griglia = settings['con_griglia']
+punti_totali = settings['punti_totali']
+modello_id = settings['modello_id']
 # ── TOPBAR ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="top-bar">
@@ -584,6 +610,8 @@ if genera_btn and not _limite_raggiunto:
     except Exception as e:
         st.error(f"❌ Errore: {e}")
 
+
+
 # ── OUTPUT ────────────────────────────────────────────────────────────────────────
 if st.session_state.verifiche['A']['latex']:
     st.divider()
@@ -917,4 +945,5 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
