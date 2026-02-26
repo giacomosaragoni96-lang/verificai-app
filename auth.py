@@ -18,11 +18,7 @@ def get_cookie_controller():
 
 # ── PERSISTENT LOGIN ──────────────────────────────────────────────────────────────
 def ripristina_sessione(supabase):
-    """
-    Tenta di recuperare la sessione dai cookie al refresh della pagina.
-    Funziona solo se get_cookie_controller() è già stato chiamato in main.py
-    PRIMA di qualsiasi st.stop() (il componente JS ha avuto tempo di caricarsi).
-    """
+
     # Utente già in sessione, non fare nulla
     if st.session_state.get('utente') is not None:
         return
@@ -30,6 +26,11 @@ def ripristina_sessione(supabase):
     # Inizializza il controller
     controller = get_cookie_controller()
 
+    # Aspettiamo un rerun prima di tentare la lettura.
+    if not st.session_state.get('_cookie_js_ready'):
+        st.session_state['_cookie_js_ready'] = True
+        st.rerun()   # ← secondo rerun: ora il JS ha avuto tempo di girare
+    
     # Evitiamo di ritentare ad ogni rerun se il check è già stato fatto
     if st.session_state.get('_cookie_check_done'):
         return
@@ -69,6 +70,7 @@ def cancella_sessione_cookie():
     controller.remove("sb_refresh_token")
     # Resettiamo il flag così al prossimo login funziona tutto
     st.session_state._cookie_check_done = False
+    st.session_state['_cookie_js_ready'] = False 
 
 
 # ── AUTENTICAZIONE ────────────────────────────────────────────────────────────────
