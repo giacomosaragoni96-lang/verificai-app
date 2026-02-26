@@ -21,7 +21,7 @@ def ripristina_sessione(supabase):
             st.session_state["_sb_refresh_token"] = res.session.refresh_token
     except Exception:
         # Se la sessione è scaduta o corrotta, puliamo tutto
-        st.session_state.utente = None)
+        st.session_state.utente = None
 
 
 # ── AUTENTICAZIONE ────────────────────────────────────────────────────────────────
@@ -169,7 +169,7 @@ def mostra_auth(supabase):
             else:
                 try:
                     res = supabase.auth.sign_in_with_password({"email": email, "password": password})
-                    st.session_state.utente = res.user
+                   res.user
                     st.session_state["_sb_access_token"]  = res.session.access_token
                     st.session_state["_sb_refresh_token"] = res.session.refresh_token
                     st.rerun()
