@@ -1,8 +1,7 @@
-_SB_LABEL   = "#c8c6bc"
-_SB_MUTED   = "#8a8880"
-_SB_BORDER  = "#2a2926"
-_SB_TEXT    = "#e8e6e0"
 def get_css(T: dict) -> str:
+    _SB_BORDER = "#2a2926"
+    _SB_MUTED  = "#8a8880"
+    _SB_TEXT   = "#e8e6e0"
     return f"""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
@@ -1347,4 +1346,5 @@ def get_css(T: dict) -> str:
 </style>
 
 """
+
 
