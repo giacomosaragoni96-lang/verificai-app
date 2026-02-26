@@ -33,6 +33,9 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
 supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
+# ── PERSISTENT LOGIN ─────────────────────────────────────────────────────────────
+ripristina_sessione(supabase)
+
 # ── NUOVI IMPORT ─────────────────────────────────────────────────────────────────
 from auth import ripristina_sessione, mostra_auth
 from styles import get_css
@@ -50,8 +53,7 @@ if not API_KEY:
 genai.configure(api_key=API_KEY)
 
 
-# ── PERSISTENT LOGIN ─────────────────────────────────────────────────────────────
-ripristina_sessione(supabase)
+
 
 # ── AUTENTICAZIONE GATE ──────────────────────────────────────────────────────────
 if 'utente' not in st.session_state:
@@ -955,6 +957,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
