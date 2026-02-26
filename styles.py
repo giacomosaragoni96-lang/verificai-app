@@ -1,4 +1,7 @@
+_SB_LABEL   = "#c8c6bc"
+_SB_MUTED   = "#8a8880"
 _SB_BORDER  = "#2a2926"
+_SB_TEXT    = "#e8e6e0"
 def get_css(T: dict) -> str:
     return f"""
 <style>
@@ -1344,3 +1347,4 @@ def get_css(T: dict) -> str:
 </style>
 
 """
+
