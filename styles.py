@@ -1,3 +1,4 @@
+_SB_BORDER  = "#2a2926"
 def get_css(T: dict) -> str:
     return f"""
 <style>
@@ -1341,4 +1342,5 @@ def get_css(T: dict) -> str:
     border-color: transparent {T['accent']} transparent transparent;
   }}
 </style>
+
 """
