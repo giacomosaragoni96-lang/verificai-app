@@ -4,6 +4,7 @@ import re
 import os
 import time
 import google.generativeai as genai
+from generation import genera_verifica
 from prompts import (
     prompt_titolo, prompt_corpo_verifica, prompt_controllo_qualita,
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
@@ -2316,20 +2317,18 @@ if genera_btn and not _limite_raggiunto:
     if not argomento.strip():
         st.warning("⚠️ Inserisci l'argomento della verifica."); st.stop()
     try:
-        model        = genai.GenerativeModel(modello_id)
-        materia      = materia_scelta.strip() or "Matematica"
-        e_mat        = any(k in materia.lower() for k in ["matem","fis","chim","inform","elettr","meccan"])
-        nota_bes = "Svolgere tutti gli esercizi mostrando i passaggi."
+        model       = genai.GenerativeModel(modello_id)
+        materia     = materia_scelta.strip() or "Matematica"
         calibrazione = CALIBRAZIONE_SCUOLA.get(difficolta, "")
-        s_note       = f"\nNOTE DOCENTE: {note_generali.strip()}" if note_generali.strip() else ""
         s_es, imgs_es = costruisci_prompt_esercizi(
             st.session_state.esercizi_custom, num_esercizi_totali,
             punti_totali if mostra_punteggi else 0, mostra_punteggi)
-        titolo_a = "Versione A" if doppia_fila else ""
 
-        _n_steps = 4 + (2 if doppia_fila else 0) + (1 if bes_dsa else 0) + (1 if bes_dsa and doppia_fila and bes_dsa_b else 0) + (1 if genera_soluzioni else 0) + (1 if genera_soluzioni and doppia_fila else 0)
-        _step    = [0]
-        _prog    = st.empty()
+        _n_steps = 4 + (2 if doppia_fila else 0) + (1 if bes_dsa else 0) \
+                   + (1 if bes_dsa and doppia_fila and bes_dsa_b else 0) \
+                   + (1 if genera_soluzioni else 0)
+        _step = [0]
+        _prog = st.empty()
 
         def _avanza(testo):
             _step[0] += 1
@@ -2346,276 +2345,47 @@ if genera_btn and not _limite_raggiunto:
 </div>
 """, unsafe_allow_html=True)
 
-        _avanza("✍️  Elaborazione titolo…")
-
-        titolo_resp = model.generate_content(
-            prompt_titolo(materia, argomento)
+        ris = genera_verifica(
+            model=model,
+            materia=materia,
+            argomento=argomento,
+            difficolta=difficolta,
+            calibrazione=calibrazione,
+            durata=durata_scelta,
+            num_esercizi=num_esercizi_totali,
+            punti_totali=punti_totali,
+            mostra_punteggi=mostra_punteggi,
+            con_griglia=con_griglia,
+            doppia_fila=doppia_fila,
+            bes_dsa=bes_dsa,
+            perc_ridotta=perc_ridotta,
+            bes_dsa_b=bes_dsa_b,
+            genera_soluzioni=genera_soluzioni,
+            note_generali=note_generali,
+            istruzioni_esercizi=s_es,
+            immagini_esercizi=imgs_es,
+            file_ispirazione=file_ispirazione,
+            on_progress=_avanza,
         )
-        titolo_clean = titolo_resp.text.strip().strip('"').strip("'").strip()
-        if not titolo_clean:
-            titolo_clean = argomento.strip()
-        _avanza("🧠  Generazione esercizi in corso…")
 
+        def _aggiorna(fid, dati):
+            v = st.session_state.verifiche[fid]
+            if dati.get('latex'):
+                v['latex'] = dati['latex']
+                v['latex_originale'] = dati['latex']
+            if dati.get('pdf'):
+                v['pdf']     = dati['pdf']
+                v['pdf_ts']  = time.time()
+                v['preview'] = True
+            if fid == 'S' and dati.get('testo'):
+                v['testo'] = dati['testo']
+                v['latex'] = dati.get('latex', '')
 
-        
-
-        titolo_header = f"Verifica di {materia}: {titolo_clean}" + (f" — {titolo_a}" if titolo_a else "")
-        _hspace6 = "{6cm}"
-        _hspace4 = "{4cm}"
-        preambolo_fisso = f"""\\documentclass[12pt,a4paper]{{article}}
-\\usepackage[utf8]{{inputenc}}
-\\usepackage[italian]{{babel}}
-\\usepackage{{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}}
-{"\\usepackage{pgfplots}\\n\\pgfplotsset{compat=1.18}\\n\\usepackage{tikz}" if e_mat else ""}
-\\geometry{{margin=1.5cm}}
-\\setlength{{\\parskip}}{{3pt plus1pt minus1pt}}
-\\pagestyle{{empty}}
-\\begin{{document}}
-\\begin{{center}}
-  \\textbf{{\\large {titolo_header}}} \\\\
-  \\vspace{{0.3cm}}
-  \\small \\textbf{{Nome:}} \\underline{{\\hspace{_hspace6}}} \\quad \\textbf{{Classe e Data:}} \\underline{{\\hspace{_hspace4}}} \\\\
-  \\vspace{{0.3cm}}
-  \\textit{{\\small {nota_bes}}}
-\\end{{center}}
-"""
-
-        inp = [prompt_corpo_verifica(
-            materia, argomento, calibrazione, durata_scelta,
-            num_esercizi_totali, punti_totali, mostra_punteggi,
-            con_griglia, note_generali, s_es, e_mat,
-            titolo_header, preambolo_fisso,
-        )]
-        if file_ispirazione:
-            inp.append({"mime_type": file_ispirazione.type, "data": file_ispirazione.getvalue()})
-            inp[0] += "\nPrendi spunto dal file allegato per stile e livello."
-        for im in imgs_es:
-            inp.append({"mime_type": im['mime_type'], "data": im['data']})
-            inp[0] += f"\nUsa l'immagine come riferimento per l'Esercizio {im['idx']}."
-
-        ra = model.generate_content(inp)
-
-        corpo_latex = ra.text.replace("```latex","").replace("```","").strip()
-        corpo_latex = pulisci_corpo_latex(corpo_latex)
-
-        _avanza("🔎  Controllo qualità e correzione errori…")
-        rc = model.generate_content(
-            prompt_controllo_qualita(materia, difficolta, corpo_latex)
-        )
-        corpo_latex_corretto = rc.text.replace("```latex","").replace("```","").strip()
-        corpo_latex_corretto = pulisci_corpo_latex(corpo_latex_corretto)
-
-        _n_orig = len(re.findall(r'\\subsection\*', corpo_latex))
-        _n_corr = len(re.findall(r'\\subsection\*', corpo_latex_corretto))
-        if corpo_latex_corretto and _n_corr == _n_orig:
-            corpo_latex = corpo_latex_corretto
-
-        splits = re.split(r'(\\subsection\*\{)', corpo_latex)
-        n_blocchi = (len(splits) - 1) // 2
-        if n_blocchi > num_esercizi_totali:
-            testa = splits[0]
-            blocchi_da_tenere = []
-            for b in range(num_esercizi_totali):
-                blocchi_da_tenere.append(splits[1 + b*2])
-                blocchi_da_tenere.append(splits[2 + b*2])
-            corpo_troncato = testa + "".join(blocchi_da_tenere)
-            corpo_troncato = re.sub(r'\\end\{document\}.*$', '', corpo_troncato, flags=re.DOTALL).rstrip()
-            corpo_latex = corpo_troncato + "\n\\end{document}"
-
-        latex_a = preambolo_fisso + corpo_latex
-        latex_a = fix_items_environment(latex_a)
-        latex_a = rimuovi_vspace_corpo(latex_a)
-        if mostra_punteggi:
-            latex_a = rimuovi_punti_subsection(latex_a)
-            latex_a = riscala_punti(latex_a, punti_totali)
-
-        if con_griglia:
-            latex_a_final = inietta_griglia(latex_a, punti_totali)
-        else:
-            latex_a_final = latex_a
-
-        st.session_state.verifiche['A'] = {**_vf(), 'latex': latex_a_final}
-        st.session_state.verifiche['A']['latex_originale'] = latex_a_final
-
-        _avanza("🖨️  Compilazione PDF…")
-        pdf_auto, err_auto = compila_pdf(latex_a_final)
-        if pdf_auto:
-            st.session_state.verifiche['A']['pdf']     = pdf_auto
-            st.session_state.verifiche['A']['pdf_ts']  = time.time()
-            st.session_state.verifiche['A']['preview'] = True
-        else:
-            if con_griglia:
-                pdf_fallback, _ = compila_pdf(latex_a)
-                if pdf_fallback:
-                    st.session_state.verifiche['A']['pdf']     = pdf_fallback
-                    st.session_state.verifiche['A']['pdf_ts']  = time.time()
-                    st.session_state.verifiche['A']['preview'] = True
-                    st.warning("⚠️ La griglia di valutazione non è stata inclusa nel PDF.")
-
-        if bes_dsa and perc_ridotta:
-            _avanza("⛳ Generazione verifica ridotta…")
-
-            rb_bes = model.generate_content(
-                prompt_versione_ridotta(corpo_latex, materia, perc_ridotta, mostra_punteggi, punti_totali)
-            )
-            corpo_latex_ridotta = rb_bes.text.replace("```latex", "").replace("```", "").strip()
-            corpo_latex_ridotta = pulisci_corpo_latex(corpo_latex_ridotta)
-
-            latex_ridotta = preambolo_fisso + corpo_latex_ridotta
-            latex_ridotta = fix_items_environment(latex_ridotta)
-            latex_ridotta = rimuovi_vspace_corpo(latex_ridotta)
-            if mostra_punteggi:
-                latex_ridotta = rimuovi_punti_subsection(latex_ridotta)
-                latex_ridotta = riscala_punti(latex_ridotta, punti_totali)
-
-            if con_griglia:
-                latex_ridotta_final = inietta_griglia(latex_ridotta, punti_totali)
-            else:
-                latex_ridotta_final = latex_ridotta
-
-            st.session_state.verifiche['R'] = {**_vf(), 'latex': latex_ridotta_final, 'latex_originale': latex_ridotta_final}
-
-            pdf_r, err_r = compila_pdf(latex_ridotta_final)
-            if pdf_r:
-                st.session_state.verifiche['R']['pdf']    = pdf_r
-                st.session_state.verifiche['R']['pdf_ts'] = time.time()
-                st.session_state.verifiche['R']['preview'] = True
-            else:
-                if con_griglia:
-                    pdf_r_fallback, _ = compila_pdf(latex_ridotta)
-                    if pdf_r_fallback:
-                        st.session_state.verifiche['R']['pdf']     = pdf_r_fallback
-                        st.session_state.verifiche['R']['pdf_ts']  = time.time()
-                        st.session_state.verifiche['R']['preview'] = True
-
-        if doppia_fila:
-            _avanza("📄  Generazione Versione B…")
-            rb = model.generate_content(
-                prompt_versione_b(corpo_latex)
-            )
-            latex_b = preambolo_b + corpo_latex_b
-            latex_b = fix_items_environment(latex_b)
-            latex_b = rimuovi_vspace_corpo(latex_b)
-            if mostra_punteggi:
-                latex_b = rimuovi_punti_subsection(latex_b)
-                latex_b = riscala_punti(latex_b, punti_totali)
-
-            if con_griglia:
-                latex_b_final = inietta_griglia(latex_b, punti_totali)
-            else:
-                latex_b_final = latex_b
-
-            st.session_state.verifiche['B'] = {**_vf(), 'latex': latex_b_final, 'latex_originale': latex_b_final}
-
-            _avanza("🖨️  PDF Versione B…")
-            pdf_b_auto, _ = compila_pdf(latex_b_final)
-            if pdf_b_auto:
-                st.session_state.verifiche['B']['pdf']     = pdf_b_auto
-                st.session_state.verifiche['B']['pdf_ts']  = time.time()
-                st.session_state.verifiche['B']['preview'] = True
-            else:
-                if con_griglia:
-                    pdf_b_fallback, _ = compila_pdf(latex_b)
-                    if pdf_b_fallback:
-                        st.session_state.verifiche['B']['pdf'] = pdf_b_fallback
-                        st.session_state.verifiche['B']['pdf_ts'] = time.time()
-                        st.session_state.verifiche['B']['preview'] = True
-
-        if doppia_fila and bes_dsa and bes_dsa_b and perc_ridotta and st.session_state.verifiche['B']['latex']:
-            _avanza("⛳ Generazione verifica ridotta Fila B…")
-            rb_bes_b = model.generate_content(
-                prompt_versione_ridotta(corpo_latex_b, materia, perc_ridotta, mostra_punteggi, punti_totali, "Fila B")
-            )
-            corpo_lr_b = rb_bes_b.text.replace("```latex","").replace("```","").strip()
-            corpo_lr_b = pulisci_corpo_latex(corpo_lr_b)
-            preambolo_rb = preambolo_b.replace(titolo_header + " — Versione B", titolo_header + " — Versione B Ridotta") if "Versione B" in preambolo_b else preambolo_b
-            latex_ridotta_b = preambolo_rb + corpo_lr_b
-            latex_ridotta_b = fix_items_environment(latex_ridotta_b)
-            latex_ridotta_b = rimuovi_vspace_corpo(latex_ridotta_b)
-            if mostra_punteggi:
-                latex_ridotta_b = rimuovi_punti_subsection(latex_ridotta_b)
-                latex_ridotta_b = riscala_punti(latex_ridotta_b, punti_totali)
-            if con_griglia:
-                latex_ridotta_b = inietta_griglia(latex_ridotta_b, punti_totali)
-            st.session_state.verifiche['RB'] = {**_vf(), 'latex': latex_ridotta_b, 'latex_originale': latex_ridotta_b}
-            pdf_rb, _ = compila_pdf(latex_ridotta_b)
-            if pdf_rb:
-                st.session_state.verifiche['RB']['pdf']    = pdf_rb
-                st.session_state.verifiche['RB']['pdf_ts'] = time.time()
-                st.session_state.verifiche['RB']['preview'] = True
-
-        if genera_soluzioni:
-            _avanza("📋 Generazione soluzioni…")
-
-            def _genera_testo_sol(corpo, versione_label=""):
-                _v_tag = f" — {versione_label}" if versione_label else ""
-                _rs = model.generate_content(
-                    prompt_soluzioni(corpo, materia, versione_label)
-                )
-                return _rs.text.strip()
-
-            def _testo_to_latex_body(testo):
-                body = ""
-                for line in testo.split('\n'):
-                    ls = line.strip()
-                    if not ls:
-                        body += "\n\\vspace{0.15cm}\n"
-                    elif re.match(r'^#{1,3}\s', ls):
-                        heading = re.sub(r'^#+\s*', '', ls)
-                        body += f"\n\\subsection*{{{heading}}}\n"
-                    elif re.match(r'^Esercizio\s+\d+', ls, re.IGNORECASE):
-                        body += f"\n\\subsection*{{{ls}}}\n"
-                    elif re.match(r'^[a-z]\)\s', ls):
-                        body += f"\\noindent\\textbf{{{ls[:2]}}} {ls[2:].strip()}\n\n"
-                    else:
-                        body += ls + "\n"
-                return body
-
-            testo_sol_a = _genera_testo_sol(corpo_latex, "Fila A" if doppia_fila else "")
-
-            testo_sol_b = None
-            if doppia_fila and 'corpo_latex_b' in dir() and corpo_latex_b:
-                testo_sol_b = _genera_testo_sol(corpo_latex_b, "Fila B")
-
-            _titolo_sol = f"Soluzioni — {materia}: {titolo_clean}"
-            latex_sol_body = ""
-
-            if testo_sol_b:
-                latex_sol_body += "\\section*{Fila A}\n"
-            latex_sol_body += _testo_to_latex_body(testo_sol_a)
-
-            if testo_sol_b:
-                latex_sol_body += "\n\\newpage\n\\section*{Fila B}\n"
-                latex_sol_body += _testo_to_latex_body(testo_sol_b)
-
-            testo_sol_completo = testo_sol_a
-            if testo_sol_b:
-                testo_sol_completo += "\n\n---\n\n## Fila B\n\n" + testo_sol_b
-
-            latex_sol = f"""\\documentclass[11pt,a4paper]{{article}}
-\\usepackage[utf8]{{inputenc}}
-\\usepackage[italian]{{babel}}
-\\usepackage{{amsmath,amsfonts,amssymb,geometry}}
-\\geometry{{margin=2cm}}
-\\setlength{{\\parskip}}{{4pt}}
-\\pagestyle{{empty}}
-\\begin{{document}}
-\\begin{{center}}
-  \\textbf{{\\large {_titolo_sol}}} \\\\
-  \\vspace{{0.2cm}}
-  {{\\small \\textit{{Documento riservato al docente — non distribuire agli studenti}}}}
-\\end{{center}}
-\\vspace{{0.4cm}}
-{latex_sol_body}
-\\end{{document}}"""
-
-            st.session_state.verifiche['S']['latex'] = latex_sol
-            st.session_state.verifiche['S']['testo'] = testo_sol_completo
-            pdf_sol, _ = compila_pdf(latex_sol)
-            if pdf_sol:
-                st.session_state.verifiche['S']['pdf']     = pdf_sol
-                st.session_state.verifiche['S']['pdf_ts']  = time.time()
-                st.session_state.verifiche['S']['preview'] = True
+        _aggiorna('A',  ris['A'])
+        _aggiorna('B',  ris['B'])
+        _aggiorna('R',  ris['R'])
+        _aggiorna('RB', ris['RB'])
+        _aggiorna('S',  ris['S'])
 
         _prog.markdown(f"""
 <div style="margin:0.6rem 0 1rem 0;">
@@ -2628,29 +2398,26 @@ if genera_btn and not _limite_raggiunto:
 """, unsafe_allow_html=True)
         time.sleep(0.7)
         _prog.empty()
+
         st.session_state.last_materia   = materia
-        st.session_state.last_argomento = titolo_clean
+        st.session_state.last_argomento = ris['titolo']
         st.session_state.last_gen_ts    = time.time()
         st.session_state._onboarding_done = True
 
         try:
-            if st.session_state.utente is not None:
-                insert_data = {
-                    "user_id":      st.session_state.utente.id,
-                    "materia":      materia,
-                    "argomento":    titolo_clean,
-                    "scuola":       difficolta,
-                    "latex_a":      st.session_state.verifiche['A']['latex'],
-                    "latex_b":      st.session_state.verifiche['B']['latex'] if st.session_state.verifiche['B']['latex'] else None,
-                    "latex_r":      st.session_state.verifiche['R']['latex'] if st.session_state.verifiche['R']['latex'] else None,
-                    "modello":      modello_id,
-                    "num_esercizi": num_esercizi_totali,
-                }
-                result = supabase_admin.table("verifiche_storico").insert(insert_data).execute()
-                st.session_state._storico_refresh += 1
-                st.toast("✅ Verifica salvata!", icon="💾")
-            else:
-                st.warning("Utente non loggato, verifica non salvata.")
+            supabase_admin.table("verifiche_storico").insert({
+                "user_id":      st.session_state.utente.id,
+                "materia":      materia,
+                "argomento":    ris['titolo'],
+                "scuola":       difficolta,
+                "latex_a":      ris['A']['latex'] or None,
+                "latex_b":      ris['B']['latex'] or None,
+                "latex_r":      ris['R']['latex'] or None,
+                "modello":      modello_id,
+                "num_esercizi": num_esercizi_totali,
+            }).execute()
+            st.session_state._storico_refresh += 1
+            st.toast("✅ Verifica salvata!", icon="💾")
         except Exception as e:
             st.warning(f"⚠️ Salvataggio non riuscito: {e}")
 
@@ -2994,6 +2761,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
