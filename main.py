@@ -216,22 +216,23 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # 1. Chiami la funzione e salvi tutto nel dizionario 'settings'
+# 1. Chiamata alla funzione corretta (ho sistemato i nomi con il trattino basso)
 settings = render_sidebar(
     supabase_admin=supabase_admin,
     utente=st.session_state.utente,
-    verifiche_mese_count=verifiche_mese_count,
-    is_admin=is_admin,
-    limite_raggiunto=limite_raggiunto,
+    verifiche_mese_count=_verifiche_mese_count, # <--- Corretto (aveva _)
+    is_admin=_is_admin,                         # <--- Corretto (aveva _)
+    limite_raggiunto=_limite_raggiunto,         # <--- Corretto (aveva _)
     T=T,
     SCUOLE=SCUOLE,
     MODELLI_DISPONIBILI=MODELLI_DISPONIBILI,
     LIMITE_MENSILE=LIMITE_MENSILE,
-    giorni_al_reset_func=giorni_al_reset, # <--- Verifica che si chiami così nel tuo main
-    compila_pdf_func=compila_pdf,         # <--- Verifica che si chiami così nel tuo main
-    supabase_client=supabase              # <--- Verifica che si chiami così nel tuo main
+    giorni_al_reset_func=_giorni_al_reset,      # <--- Corretto (aveva _)
+    compila_pdf_func=compila_pdf,
+    supabase_client=supabase
 )
 
-# 2. ESTRAI TUTTI I VALORI (fondamentale per non avere errori dopo)
+# 2. Estrazione dei valori (indispensabile per il resto del codice)
 difficolta = settings['difficolta']
 bes_dsa = settings['bes_dsa']
 perc_ridotta = settings['perc_ridotta']
@@ -945,5 +946,6 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
