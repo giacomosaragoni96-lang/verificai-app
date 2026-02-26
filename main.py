@@ -3197,7 +3197,7 @@ if not st.session_state._onboarding_done:
         f'<span>⚙️</span>'
         f'<div style="font-size:0.8rem;color:{_c_text2};">Prima di tutto: apri '
         f'<strong style="color:{_c_text};">☰ Impostazioni</strong> in alto a sinistra '
-        f'per scegliere classe e modello AI</div>'
+        f'per scegliere classe e impostazioni</div>'
         f'</div>'
 
         f'<div style="display:flex;background:{_c_bg2};border:1px solid {_c_border};border-radius:10px;overflow:hidden;margin-bottom:0.75rem;">'
@@ -4240,6 +4240,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
