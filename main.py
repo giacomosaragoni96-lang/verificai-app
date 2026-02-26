@@ -29,6 +29,11 @@ from supabase import create_client, Client
 from auth import mostra_auth, ripristina_sessione, get_cookie_manager
 from styles import get_css
 
+
+# ── COOKIE CONTROLLER — ISTANZIATO SUBITO, PRIMA DI QUALSIASI st.stop() ─────────
+
+get_cookie_manager()
+
 # ── PAGE CONFIG — DEVE ESSERE IL PRIMO COMANDO STREAMLIT ────────────────────────
 st.set_page_config(
     page_title=APP_NAME,
@@ -37,9 +42,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ── COOKIE CONTROLLER — ISTANZIATO SUBITO, PRIMA DI QUALSIASI st.stop() ─────────
 
-get_cookie_manager()
 
 # ── SUPABASE ──────────────────────────────────────────────────────────────────────
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -959,4 +962,5 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
