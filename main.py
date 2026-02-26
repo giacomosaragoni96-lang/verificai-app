@@ -4,11 +4,7 @@ import re
 import os
 import time
 import google.generativeai as genai
-SUPABASE_URL = st.secrets["SUPABASE_URL"]
-SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
-supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
 from sidebar import render_sidebar
 from generation import genera_verifica
 from prompts import (
@@ -30,6 +26,12 @@ from config import (
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
+
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
+supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # ── NUOVI IMPORT ─────────────────────────────────────────────────────────────────
 from auth import ripristina_sessione, mostra_auth
@@ -953,6 +955,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
