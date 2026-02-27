@@ -84,26 +84,9 @@ def render_sidebar(
             else:
                 modello_id = _info["id"]
 
-        # ── ASPETTO ───────────────────────────────────────────────────────────
-        st.markdown(
-            f'<div class="sidebar-label" style="margin-top:1rem;">Aspetto</div>',
-            unsafe_allow_html=True
-        )
-        tema_sel = st.radio(
-            "tema",
-            ["☀️ Chiaro", "🌙 Scuro"],
-            index=0 if st.session_state.theme == "light" else 1,
-            horizontal=True,
-            label_visibility="collapsed"
-        )
-        new_theme = "light" if "Chiaro" in tema_sel else "dark"
-        if new_theme != st.session_state.theme:
-            st.session_state.theme = new_theme
-            st.rerun()
-
         # ── CONTATORE MENSILE ─────────────────────────────────────────────────
         st.markdown(
-            f'<div class="sidebar-label" style="margin-top:1.5rem;">Utilizzo mensile</div>',
+            f'<div class="sidebar-label" style="margin-top:1rem;">Utilizzo mensile</div>',
             unsafe_allow_html=True
         )
         _perc_uso   = min(100, int(verifiche_mese_count / LIMITE_MENSILE * 100))
