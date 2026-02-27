@@ -820,11 +820,13 @@ if st.session_state.verifiche['A']['latex']:
 
             if v['preview'] and v['pdf']:
                 with st.expander("👁 Anteprima PDF", expanded=False):
-                    b64 = base64.b64encode(v['pdf']).decode()
-                    st.markdown(f"""
-                    <iframe src="data:application/pdf;base64,{b64}#toolbar=0&navpanes=0&scrollbar=1"
-                            style="width:100%;height:500px;border:none;border-radius:8px;display:block;"></iframe>
-                    """, unsafe_allow_html=True)
+                    with st.spinner("Caricamento anteprima..."):
+                        immagini = pdf_to_images_bytes(v['pdf'])
+                    if immagini:
+                        for img in immagini:
+                            st.image(img, use_container_width=True)
+                    else:
+                        st.warning("Anteprima non disponibile sul tuo browser. Scarica il PDF per visualizzarlo.")
 
             _spacer, _tex_col = st.columns([3, 1])
             with _tex_col:
@@ -882,11 +884,13 @@ if st.session_state.verifiche['S'].get('testo') or st.session_state.verifiche['S
             st.markdown(v_s['testo'])
     if v_s.get('pdf') and v_s.get('preview'):
         with st.expander("👁 Anteprima PDF Soluzioni", expanded=False):
-            b64_s = base64.b64encode(v_s['pdf']).decode()
-            st.markdown(f"""
-            <iframe src="data:application/pdf;base64,{b64_s}#toolbar=0&navpanes=0&scrollbar=1"
-                    style="width:100%;height:500px;border:none;border-radius:8px;display:block;"></iframe>
-            """, unsafe_allow_html=True)
+            with st.spinner("Caricamento anteprima..."):
+                immagini_s = pdf_to_images_bytes(v_s['pdf'])
+            if immagini_s:
+                for img in immagini_s:
+                    st.image(img, use_container_width=True)
+            else:
+                st.warning("Anteprima non disponibile sul tuo browser. Scarica il PDF per visualizzarlo.")
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
@@ -940,6 +944,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
