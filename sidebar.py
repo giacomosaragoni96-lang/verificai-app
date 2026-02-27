@@ -19,10 +19,7 @@ def render_sidebar(
     with st.sidebar:
         st.markdown('<div class="sidebar-title">Impostazioni</div>', unsafe_allow_html=True)
 
-        st.markdown('<div class="sidebar-label">Classe</div>', unsafe_allow_html=True)
-        st.caption("Questa scelta calibra lessico, complessità e riferimenti teorici degli esercizi.")
-        difficolta = st.selectbox("livello", SCUOLE, index=0, label_visibility="collapsed")
-
+       
         st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Opzioni</div>', unsafe_allow_html=True)
         bes_dsa = st.checkbox(
             "Genera versione ridotta (sostegno/certificazioni)",
@@ -267,7 +264,6 @@ def render_sidebar(
 
     # Ritorno dei valori per l'app principale
     return {
-        'difficolta': difficolta,
         'bes_dsa': bes_dsa,
         'perc_ridotta': perc_ridotta,
         'doppia_fila': doppia_fila,
@@ -279,5 +275,6 @@ def render_sidebar(
         'modello_id': modello_id,
 
     }
+
 
 
