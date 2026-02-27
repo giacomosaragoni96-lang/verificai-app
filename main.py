@@ -661,7 +661,7 @@ if genera_btn and not _limite_raggiunto:
 
 # ── SEZIONE REVISIONE BLOCCHI (CHECKPOINT VISIVI) ─────────────────────────────────
 # DEBUG — rimuovere dopo conferma funzionamento
-if _ha_latex:
+if bool(st.session_state.verifiche['A']['latex']):
     st.caption(f"🔧 DEBUG — fase: `{st.session_state._fase}` | blocchi: `{len(st.session_state._blocchi_a)}` | streaming_disponibile: `{_STREAMING_DISPONIBILE}`")
 
 if (
