@@ -827,8 +827,8 @@ if st.session_state.verifiche['A']['latex']:
                 with st.expander("👁 Anteprima PDF", expanded=False):
                     with st.spinner("Caricamento anteprima..."):
                         immagini, _ = pdf_to_images_bytes(v['pdf'])
-                        if immagini:
-                            for img in immagini:
+                    if immagini:
+                        for img in immagini:
                             st.image(img, use_container_width=True)
                     else:
                         st.warning("Anteprima non disponibile sul tuo browser. Scarica il PDF per visualizzarlo.")
@@ -949,6 +949,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
