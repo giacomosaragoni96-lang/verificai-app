@@ -784,48 +784,120 @@ if (
     # ── BLOCCHI ESERCIZI ────────────────────────────────────────────────────
     _materia_curr = st.session_state.last_materia or (materia_scelta if 'materia_scelta' in dir() else "Matematica")
 
-    def _latex_to_readable(blocco: str) -> str:
+    def _blocco_to_katex_html(blocco: str, bg_color: str, border_color: str, text_color: str) -> str:
         """
-        Converte un blocco LaTeX in testo leggibile per la preview.
-        Non rimuove le formule matematiche — le mantiene come $...$.
+        Converte un blocco LaTeX in HTML con KaTeX per il rendering matematico.
+        Restituisce una stringa HTML completa con KaTeX caricato inline.
         """
+        import html as _html
         t = blocco
-        # Rimuovi intestazione subsection
+
+        # 1. Rimuovi intestazione subsection
         t = re.sub(re.escape(chr(92)) + r"subsection\*\{[^}]*\}", "", t)
-        # Rimuovi ambienti enumerate/itemize ma tieni il contenuto
-        t = re.sub(re.escape(chr(92)) + r"begin\{(?:enumerate|itemize)\}(?:\[[^\]]*\])?", "", t)
-        t = re.sub(re.escape(chr(92)) + r"end\{(?:enumerate|itemize)\}", "", t)
-        # Converti \item[a)] → "a)" con indentazione
-        t = re.sub(re.escape(chr(92)) + r"item\[([^\]]+)\]", r"\n**\1**", t)
-        t = re.sub(re.escape(chr(92)) + r"item\b", "\n•", t)
-        # Rimuovi \textbf{} ma tieni il testo in grassetto markdown
-        t = re.sub(re.escape(chr(92)) + r"textbf\{([^}]+)\}", r"**\1**", t)
-        t = re.sub(re.escape(chr(92)) + r"textit\{([^}]+)\}", r"*\1*", t)
-        t = re.sub(re.escape(chr(92)) + r"underline\{([^}]+)\}", r"__\1__", t)
-        # Converti \underline{\hspace{Xcm}} → _____
-        t = re.sub(re.escape(chr(92)) + r"underline\{" + re.escape(chr(92)) + r"hspace\{[^}]+\}\}", "___________", t)
-        # Rimuovi comandi di formattazione semplici
+        # 2. Rimuovi \end{document}
+        t = re.sub(re.escape(chr(92)) + r"end\{document\}", "", t)
+        # 3. Rimuovi ambienti enumerate/itemize (apertura con opzioni)
+        t = re.sub(re.escape(chr(92)) + r"begin\{(?:enumerate|itemize)\}(?:\[[^\]]*\])?", "<ol class='ex-list'>", t)
+        t = re.sub(re.escape(chr(92)) + r"end\{(?:enumerate|itemize)\}", "</ol>", t)
+        # 4. \item[a)] → <li><b>a)</b> ...
+        t = re.sub(re.escape(chr(92)) + r"item\[([^\]]+)\]\s*", r"<li><b>\1</b> ", t)
+        t = re.sub(re.escape(chr(92)) + r"item\b\s*", "<li>", t)
+        # 5. Formattazione testo
+        t = re.sub(re.escape(chr(92)) + r"textbf\{([^}]+)\}", r"<b>\1</b>", t)
+        t = re.sub(re.escape(chr(92)) + r"textit\{([^}]+)\}", r"<i>\1</i>", t)
+        # 6. Spazio per completamento
+        t = re.sub(re.escape(chr(92)) + r"underline\{" + re.escape(chr(92)) + r"hspace\{[^}]+\}\}",
+                   "<span style='display:inline-block;width:80px;border-bottom:1.5px solid currentColor;'>&nbsp;</span>", t)
+        t = re.sub(re.escape(chr(92)) + r"underline\{([^}]+)\}", r"<u>\1</u>", t)
+        # 7. Vero/Falso
+        t = re.sub(r"\$\\square\$", "☐", t)
+        # 8. Rimuovi comandi di layout
         t = re.sub(re.escape(chr(92)) + r"noindent\b", "", t)
         t = re.sub(re.escape(chr(92)) + r"vspace\{[^}]+\}", "", t)
-        t = re.sub(re.escape(chr(92)) + r"hspace\{[^}]+\}", " ", t)
-        t = re.sub(re.escape(chr(92)) + r"newline\b|" + re.escape(chr(92)) + r"\\", "\n", t)
-        # Vero/Falso checkbox LaTeX → leggibile
-        t = t.replace(r"$\square$", "☐")
-        # Rimuovi \end{document}
-        t = re.sub(re.escape(chr(92)) + r"end\{document\}", "", t)
-        # Normalizza spazi e righe vuote multiple
-        lines = [l.rstrip() for l in t.split("\n")]
-        result = []
-        prev_empty = False
-        for l in lines:
-            if not l.strip():
-                if not prev_empty:
-                    result.append("")
-                prev_empty = True
+        t = re.sub(re.escape(chr(92)) + r"hspace\{[^}]+\}", "&ensp;", t)
+        t = re.sub(re.escape(chr(92)) + r"quad\b", "&ensp;&ensp;", t)
+        t = re.sub(re.escape(chr(92)) + r"\\\\\b?", "<br>", t)
+        t = re.sub(re.escape(chr(92)) + r"newline\b", "<br>", t)
+        # 9. Proteggi le formule $...$ e $$...$$ dall'HTML escaping
+        _formule = []
+        _D = chr(36)  # carattere $ 
+        def _salva_formula_display(m):
+            _formule.append(("display", m.group(1)))
+            return f"@@FORMULA_D_{len(_formule)-1}@@"
+        def _salva_formula_inline(m):
+            _formule.append(("inline", m.group(1)))
+            return f"@@FORMULA_I_{len(_formule)-1}@@"
+        # Display math $$...$$ prima
+        t = re.sub(re.escape(_D*2) + r"(.+?)" + re.escape(_D*2), _salva_formula_display, t, flags=re.DOTALL)
+        # Inline math $...$ (singolo)
+        t = re.sub(re.escape(_D) + r"([^" + re.escape(_D) + r"\n]+?)" + re.escape(_D), _salva_formula_inline, t)
+        # 10. Converti newlines in <br> per il testo normale (non dentro liste)
+        # Normalizza righe vuote
+        lines = t.split("\n")
+        cleaned = []
+        for ln in lines:
+            s = ln.strip()
+            if s:
+                cleaned.append(s)
+            elif cleaned and cleaned[-1] != "":
+                cleaned.append("")
+        t = "\n".join(cleaned).strip()
+        t = t.replace("\n\n", "<br><br>").replace("\n", " ")
+        # 11. Rimetti le formule come span KaTeX-renderable
+        for _fi, (_ftype, _fval) in enumerate(_formule):
+            if _ftype == "display":
+                _placeholder = f"@@FORMULA_D_{_fi}@@"
+                _katex_span = f'<span class="katex-display-formula">\\displaystyle {_fval}</span>'
             else:
-                result.append(l)
-                prev_empty = False
-        return "\n".join(result).strip()
+                _placeholder = f"@@FORMULA_I_{_fi}@@"
+                _katex_span = f'<span class="katex-inline-formula">{_fval}</span>'
+            t = t.replace(_placeholder, _katex_span)
+
+        html_out = f"""
+<div style="background:{bg_color};border:1.5px solid {border_color};
+            border-radius:10px;padding:1.1rem 1.3rem;margin-bottom:0.6rem;
+            font-family:'DM Sans',sans-serif;font-size:0.9rem;
+            color:{text_color};line-height:1.8;">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {{
+      delimiters: [
+        {{left:'@@D@@', right:'@@/D@@', display:true}},
+        {{left:'@@I@@', right:'@@/I@@', display:false}}
+      ],
+      throwOnError: false
+    }});"></script>
+  <style>
+    .ex-list {{ padding-left: 1.2rem; margin: 0.4rem 0; list-style: none; }}
+    .ex-list li {{ margin-bottom: 0.5rem; }}
+    .katex-display {{ margin: 0.6rem 0; overflow-x: auto; }}
+  </style>
+  {t}
+  <script>
+  (function() {{
+    function renderAll() {{
+      if (typeof katex === 'undefined') {{ setTimeout(renderAll, 100); return; }}
+      // Inline formulas
+      document.querySelectorAll('.katex-inline-formula').forEach(function(el) {{
+        try {{ katex.render(el.textContent, el, {{throwOnError: false, displayMode: false}}); }}
+        catch(e) {{ el.style.color='#c00'; }}
+      }});
+      // Display formulas
+      document.querySelectorAll('.katex-display-formula').forEach(function(el) {{
+        try {{ katex.render(el.textContent.replace('\\\\displaystyle ',''), el, {{throwOnError: false, displayMode: true}}); }}
+        catch(e) {{ el.style.color='#c00'; }}
+      }});
+    }}
+    if (document.readyState === 'loading') {{
+      document.addEventListener('DOMContentLoaded', renderAll);
+    }} else {{
+      renderAll();
+    }}
+  }})();
+  </script>
+</div>"""
+        return html_out
 
     for _bi, _blocco in enumerate(_blocchi):
         _approvato = _bi in _approvati
@@ -842,11 +914,10 @@ if (
         _dot         = "🟢"         if _approvato else "🟡"
         _label_stato = "Approvato"  if _approvato else "In attesa"
 
-        # ── CARD ESERCIZIO ──────────────────────────────────────────────
+        # ── CARD HEADER ─────────────────────────────────────────────────
         st.markdown(f"""
-<div style="border:2px solid {_col_stato};border-radius:14px;
-            overflow:hidden;margin-bottom:1.2rem;
-            box-shadow:0 2px 12px {_col_stato}18;">
+<div style="border:2px solid {_col_stato};border-radius:14px 14px 0 0;
+            overflow:hidden;margin-bottom:0;">
   <div style="background:{_col_stato};padding:0.65rem 1.1rem;
               display:flex;align-items:center;gap:10px;">
     <span style="font-size:1rem;">{_dot}</span>
@@ -859,16 +930,16 @@ if (
 </div>
 """, unsafe_allow_html=True)
 
-        # ── ANTEPRIMA LEGGIBILE (no LaTeX grezzo) ───────────────────────
-        _preview_text = _latex_to_readable(_blocco)
-        st.markdown(
-            f'<div style="background:{_bg_card};border:1px solid {_col_stato}44;'
-            f'border-radius:10px;padding:1rem 1.2rem;margin-top:-1rem;margin-bottom:0.8rem;'
-            f'font-family:\'DM Sans\',sans-serif;font-size:0.88rem;color:{T["text"]};line-height:1.7;">'
-            f'{_preview_text.replace(chr(10), "<br>")}'
-            f'</div>',
-            unsafe_allow_html=True
+        # ── ANTEPRIMA CON KATEX ─────────────────────────────────────────
+        _katex_html = _blocco_to_katex_html(
+            _blocco,
+            bg_color=_bg_card,
+            border_color=_col_stato + "66",
+            text_color=T['text'],
         )
+        # Usiamo components.html per eseguire il JS di KaTeX
+        import streamlit.components.v1 as _components
+        _components.html(_katex_html, height=_blocco.count(chr(92)+"item") * 55 + 120, scrolling=False)
 
         # ── CONTROLLI ───────────────────────────────────────────────────
         _c_approva, _c_regen = st.columns([1, 2])
