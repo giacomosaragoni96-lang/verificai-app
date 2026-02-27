@@ -123,6 +123,15 @@ def modifica_verifica_con_ai(latex_originale, richiesta_modifica, model):
         latex_modificato += "\n\\end{document}"
     return latex_modificato
 
+def _stima_dimensione(data: bytes) -> str:
+    """Restituisce la dimensione di un file in formato leggibile (KB o MB)."""
+    if not data:
+        return ""
+    size = len(data)
+    if size < 1024 * 1024:
+        return f"{size // 1024} KB"
+    return f"{size / (1024 * 1024):.1f} MB"
+
 def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_punteggi):
     n_liberi = max(0, num_totale - len(esercizi_custom))
     righe = [
@@ -944,6 +953,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
