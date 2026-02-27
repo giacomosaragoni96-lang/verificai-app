@@ -5,12 +5,6 @@ from streamlit_cookies_controller import CookieController
 
 # ── COOKIE CONTROLLER ─────────────────────────────────────────────────────────────
 def get_cookie_controller():
-    """
-    Istanzia il CookieController UNA sola volta per sessione.
-    DEVE essere chiamato in main.py subito dopo st.set_page_config(),
-    PRIMA di qualsiasi st.stop() — altrimenti il componente JS non ha
-    tempo di caricarsi e i cookie non vengono mai letti.
-    """
     if "_cookie_controller" not in st.session_state:
         st.session_state._cookie_controller = CookieController()
     return st.session_state._cookie_controller
@@ -19,15 +13,34 @@ def get_cookie_controller():
 # ── RIPRISTINO SESSIONE ───────────────────────────────────────────────────────────
 def ripristina_sessione(supabase):
     """
-    Tenta di recuperare la sessione dal cookie sb_refresh_token.
-    Funziona solo se get_cookie_controller() è già stato chiamato prima.
+    Logica a due passaggi per gestire il caricamento asincrono del JS:
+
+    RENDER 1: il CookieController viene creato ma il JS non è ancora pronto.
+              controller.get() restituisce None (falso negativo).
+              Settiamo _cookie_controller_ready=True e usciamo SENZA marcare done.
+              Il componente JS triggera automaticamente un rerun.
+
+    RENDER 2: il JS è pronto, controller.get() restituisce il valore reale.
+              Ora possiamo leggere il cookie e ripristinare la sessione.
+              Solo qui settiamo _cookie_check_done=True.
     """
+    # Utente già loggato — non fare nulla
     if st.session_state.get('utente') is not None:
         return
+
+    # Check già completato — non ripetere
     if st.session_state.get('_cookie_check_done'):
         return
 
     controller = get_cookie_controller()
+
+    # RENDER 1: prima volta che vediamo il controller — JS sta caricando
+    # Non leggiamo ancora il cookie, aspettiamo il rerun automatico del componente
+    if not st.session_state.get('_cookie_controller_ready'):
+        st.session_state._cookie_controller_ready = True
+        return  # <-- usciamo senza _cookie_check_done=True, il JS triggera rerun
+
+    # RENDER 2+: JS pronto, leggiamo il cookie per davvero
     refresh_token = controller.get("sb_refresh_token")
 
     if refresh_token:
@@ -37,12 +50,15 @@ def ripristina_sessione(supabase):
                 st.session_state.utente = res.user
                 st.session_state["_sb_access_token"]  = res.session.access_token
                 st.session_state["_sb_refresh_token"] = res.session.refresh_token
+                # Rinnova il cookie per altri 30 giorni
                 controller.set("sb_refresh_token", res.session.refresh_token,
                                max_age=60 * 60 * 24 * 30)
         except Exception:
+            # Token scaduto o invalido
             controller.remove("sb_refresh_token")
             st.session_state.utente = None
 
+    # Marca come completato — non rileggere il cookie ai prossimi rerun
     st.session_state._cookie_check_done = True
 
 
@@ -54,10 +70,11 @@ def salva_sessione_cookie(res):
 
 
 def cancella_sessione_cookie():
-    """Cancella il cookie al logout."""
+    """Cancella il cookie al logout e resetta i flag."""
     controller = get_cookie_controller()
     controller.remove("sb_refresh_token")
-    st.session_state._cookie_check_done = False
+    st.session_state._cookie_check_done    = False
+    st.session_state._cookie_controller_ready = False
 
 
 # ── FORM LOGIN / REGISTRAZIONE ────────────────────────────────────────────────────
@@ -150,10 +167,11 @@ def mostra_auth(supabase):
             else:
                 try:
                     res = supabase.auth.sign_in_with_password({"email": email, "password": password})
-                    st.session_state.utente = res.user
+                    st.session_state.utente               = res.user
                     st.session_state["_sb_access_token"]  = res.session.access_token
                     st.session_state["_sb_refresh_token"] = res.session.refresh_token
-                    st.session_state._cookie_check_done   = False
+                    st.session_state._cookie_check_done      = False
+                    st.session_state._cookie_controller_ready = True  # JS già pronto
                     salva_sessione_cookie(res)
                     st.rerun()
                 except Exception as e:
@@ -170,7 +188,7 @@ def mostra_auth(supabase):
 
     with tab_reg:
         st.write("")
-        email_r = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
+        email_r   = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
         password_r = st.text_input("Password (min. 6 caratteri)", type="password", key="reg_pass", placeholder="••••••••")
         st.write("")
         if st.button("Crea account gratuito →", type="primary", use_container_width=True, key="btn_reg"):
@@ -185,7 +203,8 @@ def mostra_auth(supabase):
                     if res.session:
                         st.session_state["_sb_access_token"]  = res.session.access_token
                         st.session_state["_sb_refresh_token"] = res.session.refresh_token
-                        st.session_state._cookie_check_done   = False
+                        st.session_state._cookie_check_done      = False
+                        st.session_state._cookie_controller_ready = True
                         salva_sessione_cookie(res)
                     st.success("Benvenuto su VerificAI! Account creato.")
                     time.sleep(1)
