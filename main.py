@@ -551,33 +551,11 @@ if genera_btn and not _limite_raggiunto:
 </div>
 """, unsafe_allow_html=True)
 
-        # ── STREAMING LIVE DEL CORPO ────────────────────────────────────────
-        st.markdown(f"""
-<div style="font-size:0.78rem;font-weight:700;color:{T['accent']};
-            font-family:'DM Sans',sans-serif;letter-spacing:0.04em;
-            text-transform:uppercase;margin:0.8rem 0 0.3rem 0;">
-  📡 Generazione in corso — puoi vedere gli esercizi apparire in tempo reale
-</div>
-""", unsafe_allow_html=True)
-
-        _stream_box = st.empty()
+        # ── GENERAZIONE ─────────────────────────────────────────────────────
         _stream_buffer = [""]
 
         def _on_token(chunk):
             _stream_buffer[0] += chunk
-            # Mostra gli ultimi ~1200 caratteri per non appesantire il DOM
-            shown = _stream_buffer[0][-1200:]
-            _stream_box.markdown(
-                f'<div style="background:{T["bg2"]};border:1px solid {T["border"]};'
-                f'border-radius:8px;padding:0.9rem 1rem;'
-                f'font-family:\'Courier New\',monospace;font-size:0.72rem;'
-                f'color:{T["text2"]};white-space:pre-wrap;word-break:break-all;'
-                f'max-height:260px;overflow:hidden;line-height:1.4;">'
-                f'{shown.replace("<","&lt;").replace(">","&gt;")}'
-                f'<span style="animation:blink 1s step-end infinite;">▌</span>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
 
         ris = genera_verifica_streaming(
             model=model,
@@ -603,18 +581,18 @@ if genera_btn and not _limite_raggiunto:
             on_token=_on_token,
         )
 
-        _stream_box.empty()
-
         # ── SALVA BLOCCHI E PREAMBOLO NEL SESSION STATE ──────────────────────
-        st.session_state._blocchi_a   = ris.get("blocchi_a", [])
+        _blocchi_ricevuti = ris.get("blocchi_a", [])
+        st.session_state._blocchi_a   = _blocchi_ricevuti
         st.session_state._preambolo_a = ris.get("_preambolo_a", "")
-        st.session_state._blocchi_approvati = set()  # tutti non approvati inizialmente
-        # Se streaming non disponibile, marca tutto come già approvato
-        if not _STREAMING_DISPONIBILE or not st.session_state._blocchi_a:
-            st.session_state._blocchi_approvati = set()  # resterà vuoto → sezione revisione non compare
-            st.session_state._fase = "pronto"
-        else:
+        st.session_state._blocchi_approvati = set()
+
+        # Vai in revisione solo se abbiamo blocchi validi
+        if _STREAMING_DISPONIBILE and len(_blocchi_ricevuti) > 0:
             st.session_state._fase = "revisione"
+        else:
+            # Fallback: output diretto senza revisione blocchi
+            st.session_state._fase = "pronto"
 
         def _aggiorna(fid, dati):
             v = st.session_state.verifiche[fid]
@@ -635,10 +613,15 @@ if genera_btn and not _limite_raggiunto:
         _aggiorna('RB', ris['RB'])
         _aggiorna('S',  ris['S'])
 
+        _msg_completamento = (
+            "✅  Verifica generata! Rivedi gli esercizi qui sotto."
+            if st.session_state._fase == "revisione"
+            else "✅  Verifica pronta!"
+        )
         _prog.markdown(f"""
 <div style="margin:0.6rem 0 1rem 0;">
   <div style="font-size:0.82rem;font-weight:600;color:{T['success']};
-              font-family:'DM Sans',sans-serif;margin-bottom:6px;">✅  Verifica generata! Rivedi gli esercizi qui sotto.</div>
+              font-family:'DM Sans',sans-serif;margin-bottom:6px;">{_msg_completamento}</div>
   <div style="background:{T['border']};border-radius:100px;height:8px;overflow:hidden;">
     <div style="background:{T['success']};width:100%;height:100%;border-radius:100px;"></div>
   </div>
@@ -677,6 +660,14 @@ if genera_btn and not _limite_raggiunto:
 
 
 # ── SEZIONE REVISIONE BLOCCHI (CHECKPOINT VISIVI) ─────────────────────────────────
+
+# DEBUG TEMPORANEO — rimuovere dopo verifica
+if st.session_state._fase in ("revisione", "pronto") and st.session_state.verifiche['A']['latex']:
+    _n_bl_debug = len(st.session_state._blocchi_a)
+    if _n_bl_debug == 0:
+        st.info(f"ℹ️ Blocchi trovati: {_n_bl_debug} — sezione revisione non disponibile (output diretto sotto)")
+    # fine debug
+
 if (
     st.session_state._fase in ("revisione", "pronto")
     and st.session_state._blocchi_a
