@@ -152,7 +152,8 @@ def _assembla_e_compila(
 
 def _tronca_al_numero_giusto(corpo: str, num_esercizi: int) -> str:
     """Rimuove i blocchi \\subsection* in eccesso."""
-    splits = re.split(r"(\\subsection\*\{)", corpo)
+    _sub_pat = re.escape(chr(92) + "subsection*{")
+    splits = re.split(f"({_sub_pat})", corpo)
     n_blocchi = (len(splits) - 1) // 2
     if n_blocchi <= num_esercizi:
         return corpo
@@ -162,21 +163,25 @@ def _tronca_al_numero_giusto(corpo: str, num_esercizi: int) -> str:
         parti.append(splits[1 + b * 2])
         parti.append(splits[2 + b * 2])
     troncato = testa + "".join(parti)
-    troncato = re.sub(r"\\end\{document\}.*$", "", troncato, flags=re.DOTALL).rstrip()
-    return troncato + "\n\\end{document}"
+    _end_pat = re.escape(chr(92) + "end{document}")
+    troncato = re.sub(_end_pat + r".*$", "", troncato, flags=re.DOTALL).rstrip()
+    return troncato + "\n" + chr(92) + "end{document}"
 
 
 def _split_blocchi(corpo: str) -> list[str]:
     """
     Divide il corpo LaTeX in blocchi, uno per ogni \\subsection*.
-    Restituisce lista di stringhe, ognuna inizia con \\subsection*{...}.
+    Restituisce (prefix, lista_blocchi) dove ogni blocco inizia con \\subsection*{...}.
     """
-    parts = re.split(r"(?=\\subsection\*\{)", corpo)
-    # Il primo elemento potrebbe essere vuoto o del testo prima del primo blocco
+    # re.escape garantisce che il backslash letterale venga cercato correttamente
+    _pattern = f"(?={re.escape(chr(92) + 'subsection*{')})"
+    parts = re.split(_pattern, corpo)
+
+    _marker = chr(92) + "subsection*{"   # stringa: \subsection*{
     blocchi = []
     prefix = ""
     for p in parts:
-        if p.strip().startswith("\\subsection*{"):
+        if p.strip().startswith(_marker):
             blocchi.append(p)
         else:
             prefix += p
@@ -186,9 +191,10 @@ def _split_blocchi(corpo: str) -> list[str]:
 def _assembla_corpo_da_blocchi(blocchi: list[str]) -> str:
     """Riassembla i blocchi in un corpo LaTeX completo."""
     corpo = "\n".join(b.rstrip() for b in blocchi)
-    # Rimuovi \\end{document} residui dai singoli blocchi, poi aggiungi alla fine
-    corpo = re.sub(r"\\end\{document\}", "", corpo).rstrip()
-    return corpo + "\n\\end{document}"
+    # Rimuovi \end{document} residui dai singoli blocchi, poi aggiungi alla fine
+    _end_doc = re.escape(chr(92) + "end{document}")
+    corpo = re.sub(_end_doc, "", corpo).rstrip()
+    return corpo + "\n" + chr(92) + "end{document}"
 
 
 # ── FUNZIONE STREAMING PER BLOCCO ─────────────────────────────────────────────────
