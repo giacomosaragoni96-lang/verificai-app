@@ -660,14 +660,6 @@ if genera_btn and not _limite_raggiunto:
 
 
 # ── SEZIONE REVISIONE BLOCCHI (CHECKPOINT VISIVI) ─────────────────────────────────
-
-# DEBUG TEMPORANEO — rimuovere dopo verifica
-if st.session_state._fase in ("revisione", "pronto") and st.session_state.verifiche['A']['latex']:
-    _n_bl_debug = len(st.session_state._blocchi_a)
-    if _n_bl_debug == 0:
-        st.info(f"ℹ️ Blocchi trovati: {_n_bl_debug} — sezione revisione non disponibile (output diretto sotto)")
-    # fine debug
-
 if (
     st.session_state._fase in ("revisione", "pronto")
     and st.session_state._blocchi_a
