@@ -660,9 +660,8 @@ if st.session_state.verifiche['A']['latex']:
             """, unsafe_allow_html=True)
 
             if v['pdf']:
-                pdf_size = _stima_dimensione(v['pdf'])
                 st.download_button(
-                    label=f"📄 Scarica PDF — Alta qualità ({pdf_size})",
+                    label=f"📄 Scarica PDF ",
                     data=v['pdf'],
                     file_name=f"Verifica_{_arg}_{fid}.pdf",
                     mime="application/pdf",
@@ -925,6 +924,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
