@@ -6,7 +6,30 @@ import time
 import google.generativeai as genai
 
 from sidebar import render_sidebar
-from generation import genera_verifica, genera_verifica_streaming, rigenera_singolo_blocco, ricompila_da_blocchi
+from generation import genera_verifica
+
+# Import delle nuove funzioni streaming — con fallback se generation.py è la versione vecchia
+try:
+    from generation import genera_verifica_streaming, rigenera_singolo_blocco, ricompila_da_blocchi
+    _STREAMING_DISPONIBILE = True
+except ImportError:
+    _STREAMING_DISPONIBILE = False
+    # Stub: usa il flusso classico senza streaming
+    def genera_verifica_streaming(*args, **kwargs):
+        return genera_verifica(*args, **{
+            k: v for k, v in kwargs.items()
+            if k not in ("on_token", "on_corpo_grezzo", "on_blocchi")
+        })
+    def rigenera_singolo_blocco(model, materia, blocco_latex, istruzione, mostra_punteggi, on_token=None):
+        return blocco_latex
+    def ricompila_da_blocchi(blocchi, preambolo, mostra_punteggi, punti_totali, con_griglia):
+        from latex_utils import compila_pdf
+        corpo = "\n".join(b.rstrip() for b in blocchi)
+        import re
+        corpo = re.sub(r"\\end\{document\}", "", corpo).rstrip() + "\n\\end{document}"
+        latex = preambolo + corpo
+        pdf, _ = compila_pdf(latex)
+        return latex, pdf
 from prompts import (
     prompt_titolo, prompt_corpo_verifica, prompt_controllo_qualita,
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
@@ -586,6 +609,12 @@ if genera_btn and not _limite_raggiunto:
         st.session_state._blocchi_a   = ris.get("blocchi_a", [])
         st.session_state._preambolo_a = ris.get("_preambolo_a", "")
         st.session_state._blocchi_approvati = set()  # tutti non approvati inizialmente
+        # Se streaming non disponibile, marca tutto come già approvato
+        if not _STREAMING_DISPONIBILE or not st.session_state._blocchi_a:
+            st.session_state._blocchi_approvati = set()  # resterà vuoto → sezione revisione non compare
+            st.session_state._fase = "pronto"
+        else:
+            st.session_state._fase = "revisione"
 
         def _aggiorna(fid, dati):
             v = st.session_state.verifiche[fid]
@@ -622,7 +651,6 @@ if genera_btn and not _limite_raggiunto:
         st.session_state.last_argomento   = ris['titolo']
         st.session_state.last_gen_ts      = time.time()
         st.session_state._onboarding_done = True
-        st.session_state._fase            = "revisione"
 
         try:
             supabase_admin.table("verifiche_storico").insert({
