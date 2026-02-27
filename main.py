@@ -62,23 +62,23 @@ if not API_KEY:
     st.stop()
 genai.configure(api_key=API_KEY)
 
-# ── AUTENTICAZIONE GATE ───────────────────────────────────────────────────────────
+# --- LOGICA DI ACCESSO ---
 if 'utente' not in st.session_state:
     st.session_state.utente = None
 
-# Tenta il ripristino
 ripristina_sessione(supabase)
 
-# SE DOPO IL RIPRISTINO L'UTENTE È ANCORA NONE
+# Se non siamo loggati, mostriamo il login
 if st.session_state.utente is None:
-    # Diamo un secondo al componente cookie per inizializzarsi
-    # Se lo schermo è nero, è perché stiamo stoppando l'esecuzione troppo presto
-    with st.spinner("Verifica sessione..."):
-        time.sleep(1.5) # <--- Aggiungi questo piccolo delay
-        
-    # Controlliamo di nuovo dopo il delay
-    if st.session_state.utente is None:
+    # IMPORTANTE: Se stiamo aspettando il redirect di JS, 
+    # i parametri _at e _rt appariranno a breve nell'URL.
+    if "_at" not in st.query_params:
         mostra_auth(supabase)
+        st.stop()
+    else:
+        # Se i parametri ci sono, mostriamo solo un caricamento
+        # finché ripristina_sessione non li processa al prossimo giro
+        st.info("Ripristino sessione...")
         st.stop()
 
 # 1. Recupero immediato del cookie (usando la tua funzione ripristina_sessione)
@@ -978,6 +978,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
