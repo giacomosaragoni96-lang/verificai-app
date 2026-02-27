@@ -37,7 +37,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-
+get_cookie_controller()
 # ── SUPABASE ──────────────────────────────────────────────────────────────────────
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -949,6 +949,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
