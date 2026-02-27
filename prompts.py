@@ -23,25 +23,23 @@ def prompt_corpo_verifica(
     mostra_punteggi: bool,
     con_griglia: bool,
     note_generali: str,
-    istruzioni_esercizi: str,   # output di costruisci_prompt_esercizi() — solo la stringa
-    e_mat: bool,                # True se materia scientifica/tecnica (abilita pgfplots)
+    istruzioni_esercizi: str,
+    e_mat: bool,
     titolo_header: str,
     preambolo_fisso: str,
 ) -> str:
-    """
-    Restituisce il prompt per generare il CORPO degli esercizi (senza preambolo LaTeX).
-    """
     s_note = f"\nNOTE DOCENTE: {note_generali.strip()}" if note_generali.strip() else ""
 
     if mostra_punteggi:
         punti_rule = (
-            f"- PUNTEGGI OBBLIGATORI: ogni \\item DEVE avere \"(X pt)\" SULLA STESSA RIGA, subito dopo il testo.\n"
+            f"- PUNTEGGI OBBLIGATORI SU OGNI \\item: ogni \\item DEVE avere \"(X pt)\" SULLA STESSA RIGA, subito dopo il testo.\n"
             f"- Formato ESATTO e UNICO accettato: (X pt) — esempio: \\item[a)] Risolvi l'equazione. (3 pt)\n"
             f"- NON usare formati alternativi come [X pt], X punti, X p., pt X, ecc.\n"
-            f"- La somma di TUTTI i (X pt) deve essere ESATTAMENTE {punti_totali} pt. CONTROLLA prima di terminare.\n"
+            f"- La somma di TUTTI i (X pt) di TUTTI gli esercizi deve essere ESATTAMENTE {punti_totali} pt. CONTROLLA prima di terminare.\n"
             f"- Distribuisci i punti in modo che sia facile ottenere almeno 60% svolgendo le parti più semplici.\n"
             f"- NON inserire punti nel titolo \\subsection*, SOLO nei \\item.\n"
-            f"- Se dimentichi il punteggio anche su UN SOLO \\item, la griglia di valutazione sarà incompleta."
+            f"- REGOLA CRITICA: se un esercizio ha UN SOLO sottopunto, metti comunque \\item[a)] con il suo punteggio. "
+            f"NON lasciare MAI un esercizio senza almeno un \\item con punteggio — altrimenti la griglia di valutazione sarà incompleta e inutilizzabile."
         )
     else:
         punti_rule = "- NON inserire punti (X pt) in nessun esercizio né sottopunto."
@@ -95,7 +93,10 @@ def prompt_corpo_verifica(
         f"{punti_rule}\n"
         f"- NUMERO ESERCIZI: genera ESATTAMENTE {num_esercizi} blocchi \\subsection*. CONTA i tuoi blocchi prima di chiudere.\n"
         f"- Titoli: \\subsection*{{Esercizio N: Titolo}}\n"
-        f"- SOTTOPUNTI OBBLIGATORI: usa SEMPRE \\item[a)] \\item[b)] \\item[c)] ecc. con label ESPLICITA tra parentesi quadre.\n"
+        f"- SOTTOPUNTI OBBLIGATORI — REGOLA ASSOLUTA: ogni esercizio DEVE avere ALMENO UN \\item con label esplicita "
+        f"tra parentesi quadre (es. \\item[a)]). NON è mai accettabile un esercizio con solo testo e senza \\item. "
+        f"Se un esercizio ha una sola richiesta, usa comunque \\item[a)]. "
+        f"Se ne ha due, \\item[a)] e \\item[b)]. E così via.\n"
         f"- PROTEZIONE ESERCIZIO 1 (Saperi Essenziali): nell'Esercizio 1 NON inserire MAI il simbolo (*) su nessun sottopunto.\n"
         f"{multi_rule}\n"
         f"- Scelta multipla: le opzioni DEVONO stare in un \\begin{{enumerate}}[a)] SEPARATO dopo la domanda.\n"
@@ -133,6 +134,7 @@ def prompt_controllo_qualita(
         f"REGOLE OUTPUT:\n"
         f"- Restituisci SOLO il corpo LaTeX corretto (\\subsection* ecc.), senza preambolo.\n"
         f"- Mantieni ESATTAMENTE la stessa struttura LaTeX (\\item[a)], \\item[b)], ecc.).\n"
+        f"- Assicurati che ogni esercizio abbia almeno un \\item con label esplicita e punteggio (X pt).\n"
         f"- NON aggiungere commenti, spiegazioni o note al di fuori del LaTeX.\n"
         f"- TERMINA con \\end{{document}}.\n"
         f"- Se hai modificato dati, mantieni la stessa difficoltà complessiva e lo stesso tipo di esercizio."
@@ -144,6 +146,7 @@ def prompt_versione_b(corpo_latex: str) -> str:
         f"Versione B: stessa struttura, cambia dati e quesiti. "
         f"SOLO corpo esercizi (\\subsection* ecc.), SENZA preambolo/\\documentclass/\\begin{{document}}. "
         f"Sostituisci 'Versione A' con 'Versione B'. TERMINA con \\end{{document}}. SOLO LATEX.\n\n"
+        f"RICORDA: ogni esercizio deve avere almeno un \\item[a)] con punteggio (X pt).\n\n"
         f"{corpo_latex}"
     )
 
@@ -154,7 +157,7 @@ def prompt_versione_ridotta(
     perc_ridotta: int,
     mostra_punteggi: bool,
     punti_totali: int,
-    versione_label: str = "",   # es. "Fila B" — lascia vuoto per Fila A
+    versione_label: str = "",
 ) -> str:
     _v_tag = f" ({versione_label})" if versione_label else ""
     punti_str = (
@@ -179,7 +182,7 @@ def prompt_versione_ridotta(
 def prompt_soluzioni(
     corpo_latex: str,
     materia: str,
-    versione_label: str = "",   # es. "Fila A", "Fila B" — vuoto se non c'è doppia fila
+    versione_label: str = "",
 ) -> str:
     _v_tag = f" — {versione_label}" if versione_label else ""
     return (
@@ -209,6 +212,7 @@ def prompt_modifica(latex_originale: str, richiesta: str) -> str:
         f"- NON rigenerare da zero, modifica l'esistente\n"
         f"- Mantieni lo stesso preambolo e intestazione\n"
         f"- Se la modifica riguarda punteggi, ricalcola la somma totale\n"
+        f"- Ogni esercizio deve mantenere almeno un \\item[a)] con punteggio (X pt)\n"
         f"- Restituisci il codice LaTeX completo modificato\n"
         f"- TERMINA con \\end{{document}}\n\n"
         f"OUTPUT: SOLO codice LaTeX completo, senza ```latex né spiegazioni."
