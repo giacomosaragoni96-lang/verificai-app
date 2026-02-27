@@ -37,7 +37,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-get_cookie_controller()
+
 # ── SUPABASE ──────────────────────────────────────────────────────────────────────
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -58,32 +58,17 @@ if not API_KEY:
     st.stop()
 genai.configure(api_key=API_KEY)
 
-# ── LOGICA DI ACCESSO (GATE DEFINITIVO) ──────────────────────────────────────────
+# ── AUTENTICAZIONE GATE ───────────────────────────────────────────────────────────
 if 'utente' not in st.session_state:
     st.session_state.utente = None
 
-# 1. Tenta il ripristino (legge l'URL o inietta il JS per leggere localStorage)
+# Tenta ripristino sessione dal query param ?rt=TOKEN nell'URL
 ripristina_sessione(supabase)
 
-# 2. Controllo stato dopo ripristino
+# Se ancora None, mostra login
 if st.session_state.utente is None:
-    # Se i parametri sono nell'URL ma 'utente' è ancora None, 
-    # significa che stiamo processando il redirect. Aspettiamo un istante.
-    if "_at" in st.query_params:
-        st.markdown("""
-            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:80vh;">
-                <div class="spinner"></div>
-                <p style="color:#8C8A82; margin-top:1rem; font-family:'DM Sans',sans-serif;">
-                    Sincronizzazione sessione...
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
-        time.sleep(0.5)
-        st.rerun()
-    else:
-        # Se non c'è nulla nell'URL, mostriamo il form di login
-        mostra_auth(supabase)
-        st.stop()
+    mostra_auth(supabase)
+    st.stop()
 
 # ── FINE GATE (Se arriviamo qui, l'utente è loggato) ──────────────────────────────
 
@@ -122,15 +107,6 @@ def modifica_verifica_con_ai(latex_originale, richiesta_modifica, model):
     if "\\end{document}" not in latex_modificato:
         latex_modificato += "\n\\end{document}"
     return latex_modificato
-
-def _stima_dimensione(data: bytes) -> str:
-    """Restituisce la dimensione di un file in formato leggibile (KB o MB)."""
-    if not data:
-        return ""
-    size = len(data)
-    if size < 1024 * 1024:
-        return f"{size // 1024} KB"
-    return f"{size / (1024 * 1024):.1f} MB"
 
 def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_punteggi):
     n_liberi = max(0, num_totale - len(esercizi_custom))
@@ -242,6 +218,10 @@ except Exception as e:
     st.stop()
 
 
+except NameError as e:
+    st.error(f"Errore di configurazione: {e}")
+    st.info("Controlla che tutte le variabili (T, SCUOLE, _is_admin, ecc.) siano definite prima di questa riga.")
+    st.stop()
 
 # ── TOPBAR ────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
@@ -825,13 +805,11 @@ if st.session_state.verifiche['A']['latex']:
 
             if v['preview'] and v['pdf']:
                 with st.expander("👁 Anteprima PDF", expanded=False):
-                    with st.spinner("Caricamento anteprima..."):
-                        immagini, _ = pdf_to_images_bytes(v['pdf'])
-                    if immagini:
-                        for img in immagini:
-                            st.image(img, use_container_width=True)
-                    else:
-                        st.warning("Anteprima non disponibile sul tuo browser. Scarica il PDF per visualizzarlo.")
+                    b64 = base64.b64encode(v['pdf']).decode()
+                    st.markdown(f"""
+                    <iframe src="data:application/pdf;base64,{b64}#toolbar=0&navpanes=0&scrollbar=1"
+                            style="width:100%;height:500px;border:none;border-radius:8px;display:block;"></iframe>
+                    """, unsafe_allow_html=True)
 
             _spacer, _tex_col = st.columns([3, 1])
             with _tex_col:
@@ -889,13 +867,11 @@ if st.session_state.verifiche['S'].get('testo') or st.session_state.verifiche['S
             st.markdown(v_s['testo'])
     if v_s.get('pdf') and v_s.get('preview'):
         with st.expander("👁 Anteprima PDF Soluzioni", expanded=False):
-            with st.spinner("Caricamento anteprima..."):
-                immagini_s, _ = pdf_to_images_bytes(v_s['pdf'])
-                if immagini_s:
-                    for img in immagini_s:
-                        st.image(img, use_container_width=True)
-                else:
-                    st.warning("Anteprima non disponibile sul tuo browser. Scarica il PDF per visualizzarlo.")
+            b64_s = base64.b64encode(v_s['pdf']).decode()
+            st.markdown(f"""
+            <iframe src="data:application/pdf;base64,{b64_s}#toolbar=0&navpanes=0&scrollbar=1"
+                    style="width:100%;height:500px;border:none;border-radius:8px;display:block;"></iframe>
+            """, unsafe_allow_html=True)
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
@@ -949,13 +925,6 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
-
-
-
-
-
-
-
 
 
 
