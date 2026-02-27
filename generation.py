@@ -16,8 +16,39 @@ from prompts import (
     prompt_versione_b,
     prompt_versione_ridotta,
     prompt_soluzioni,
-    prompt_rigenera_blocco,
 )
+
+# prompt_rigenera_blocco potrebbe non essere ancora in prompts.py (deploy graduale)
+try:
+    from prompts import prompt_rigenera_blocco
+except ImportError:
+    def prompt_rigenera_blocco(
+        materia: str,
+        blocco_latex: str,
+        istruzione: str,
+        mostra_punteggi: bool,
+    ) -> str:
+        punti_nota = (
+            "Mantieni il formato (X pt) su ogni \\item come nell'originale. "
+            "Non è necessario che i punti sommino a un totale preciso — verranno ribilanciati automaticamente."
+            if mostra_punteggi
+            else "NON inserire punteggi (X pt)."
+        )
+        return (
+            f"Sei un docente esperto di {materia} e LaTeX. "
+            f"Devi rigenerare SOLO questo esercizio della verifica, secondo l'istruzione del docente.\n\n"
+            f"ESERCIZIO ORIGINALE:\n{blocco_latex}\n\n"
+            f"ISTRUZIONE DEL DOCENTE:\n{istruzione}\n\n"
+            f"REGOLE:\n"
+            f"- Restituisci SOLO il blocco \\subsection*{{...}} con il nuovo esercizio.\n"
+            f"- Mantieni la stessa struttura LaTeX (\\subsection*, \\begin{{enumerate}}, \\item[a)], ecc.).\n"
+            f"- Ogni esercizio deve avere ALMENO un \\item[a)] con la sua richiesta.\n"
+            f"- {punti_nota}\n"
+            f"- NON includere preambolo, \\documentclass o \\begin{{document}}.\n"
+            f"- NON aggiungere commenti o spiegazioni fuori dal LaTeX.\n"
+            f"- TERMINA il blocco con una riga vuota (non con \\end{{document}}).\n"
+            f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
+        )
 from latex_utils import (
     compila_pdf,
     inietta_griglia,
