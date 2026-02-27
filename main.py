@@ -893,9 +893,9 @@ if st.session_state.verifiche['S'].get('testo') or st.session_state.verifiche['S
                 immagini_s, _ = pdf_to_images_bytes(v_s['pdf'])
                 if immagini_s:
                     for img in immagini_s:
-                    st.image(img, use_container_width=True)
-            else:
-                st.warning("Anteprima non disponibile sul tuo browser. Scarica il PDF per visualizzarlo.")
+                        st.image(img, use_container_width=True)
+                else:
+                    st.warning("Anteprima non disponibile sul tuo browser. Scarica il PDF per visualizzarlo.")
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
@@ -949,6 +949,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
