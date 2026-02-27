@@ -1,99 +1,67 @@
 import streamlit as st
-import streamlit.components.v1 as components
+import time
+from streamlit_cookies_controller import CookieController
 
 
-def _inject_save_tokens(access_token: str, refresh_token: str):
-    """Salva i token nel localStorage della finestra principale."""
-    components.html(f"""
-    <script>
-      try {{
-        window.parent.localStorage.setItem('sb_at', '{access_token}');
-        window.parent.localStorage.setItem('sb_rt', '{refresh_token}');
-      }} catch(e) {{ console.error("Errore salvataggio:", e); }}
-    </script>
-    """, height=0)
-
-def _inject_token_reader():
-    """Legge i token e forza il redirect della finestra principale."""
-    components.html("""
-    <script>
-      (function() {
-        try {
-          // Controlliamo se siamo già in fase di redirect per evitare loop
-          if (window.parent.location.search.indexOf('_at=') !== -1) return;
-
-          var at = window.parent.localStorage.getItem('sb_at');
-          var rt = window.parent.localStorage.getItem('sb_rt');
-
-          if (at && rt && at.length > 10) {
-            var newUrl = window.parent.location.pathname + 
-                         '?_at=' + encodeURIComponent(at) + 
-                         '&_rt=' + encodeURIComponent(rt);
-            window.parent.location.replace(newUrl);
-          }
-        } catch(e) { console.error("Errore lettura:", e); }
-      })();
-    </script>
-    """, height=0)
-
-def cancella_sessione_cookie():
-    """Rimuove i token dal localStorage della finestra principale."""
-    components.html("""
-    <script>
-      try {
-        window.parent.localStorage.removeItem('sb_at');
-        window.parent.localStorage.removeItem('sb_rt');
-      } catch(e) {}
-    </script>
-    """, height=0)
-    st.session_state._token_check_done = False
+# ── COOKIE CONTROLLER ─────────────────────────────────────────────────────────────
+def get_cookie_controller():
+    """
+    Istanzia il CookieController UNA sola volta per sessione.
+    DEVE essere chiamato in main.py subito dopo st.set_page_config(),
+    PRIMA di qualsiasi st.stop() — altrimenti il componente JS non ha
+    tempo di caricarsi e i cookie non vengono mai letti.
+    """
+    if "_cookie_controller" not in st.session_state:
+        st.session_state._cookie_controller = CookieController()
+    return st.session_state._cookie_controller
 
 
-
-
-
-
-# ── FUNZIONE PRINCIPALE: ripristina sessione da localStorage ────────────────────
+# ── RIPRISTINO SESSIONE ───────────────────────────────────────────────────────────
 def ripristina_sessione(supabase):
-    """Tenta di ripristinare la sessione dal localStorage tramite query params."""
+    """
+    Tenta di recuperare la sessione dal cookie sb_refresh_token.
+    Funziona solo se get_cookie_controller() è già stato chiamato prima.
+    """
     if st.session_state.get('utente') is not None:
         return
-    if st.session_state.get('_token_check_done'):
+    if st.session_state.get('_cookie_check_done'):
         return
 
-    # Caso 1: siamo arrivati qui con i query params (redirect da JS)
-    at = st.query_params.get("_at", None)
-    rt = st.query_params.get("_rt", None)
+    controller = get_cookie_controller()
+    refresh_token = controller.get("sb_refresh_token")
 
-    if at and rt:
-        # Pulisce i parametri e segna come fatto
-        st.session_state._token_check_done = True
+    if refresh_token:
         try:
-            sess = supabase.auth.set_session(at, rt)
-            if sess and sess.user:
-                st.session_state.utente = sess.user
-                # Aggiorniamo i token per il prossimo giro
-                _inject_save_tokens(sess.session.access_token, sess.session.refresh_token)
-                # RIMUOVIAMO i parametri dall'URL per pulizia
-                st.query_params.clear()
-                st.rerun() # <--- AGGIUNGI QUESTO PER ENTRARE NELL'APP
+            res = supabase.auth.refresh_session(refresh_token)
+            if res and res.user:
+                st.session_state.utente = res.user
+                st.session_state["_sb_access_token"]  = res.session.access_token
+                st.session_state["_sb_refresh_token"] = res.session.refresh_token
+                controller.set("sb_refresh_token", res.session.refresh_token,
+                               max_age=60 * 60 * 24 * 30)
         except Exception:
-            cancella_sessione_cookie()
-    else:
-        # Caso 2: Nessun parametro. Inietta JS e ASPETTA un istante
-        _inject_token_reader()
-      
+            controller.remove("sb_refresh_token")
+            st.session_state.utente = None
 
-# ── SALVA SESSIONE DOPO LOGIN ────────────────────────────────────────────────────
+    st.session_state._cookie_check_done = True
+
+
 def salva_sessione_cookie(res):
-    """Salva i token in localStorage dopo il login."""
-    _inject_save_tokens(res.session.access_token, res.session.refresh_token)
+    """Salva il refresh token nel cookie dopo login/registrazione."""
+    controller = get_cookie_controller()
+    controller.set("sb_refresh_token", res.session.refresh_token,
+                   max_age=60 * 60 * 24 * 30)
 
 
-# ── FORM DI LOGIN/REGISTRAZIONE ─────────────────────────────────────────────────
+def cancella_sessione_cookie():
+    """Cancella il cookie al logout."""
+    controller = get_cookie_controller()
+    controller.remove("sb_refresh_token")
+    st.session_state._cookie_check_done = False
+
+
+# ── FORM LOGIN / REGISTRAZIONE ────────────────────────────────────────────────────
 def mostra_auth(supabase):
-    import time
-
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&display=swap');
@@ -183,8 +151,9 @@ def mostra_auth(supabase):
                 try:
                     res = supabase.auth.sign_in_with_password({"email": email, "password": password})
                     st.session_state.utente = res.user
-                    st.session_state["_sb_access_token"] = res.session.access_token
+                    st.session_state["_sb_access_token"]  = res.session.access_token
                     st.session_state["_sb_refresh_token"] = res.session.refresh_token
+                    st.session_state._cookie_check_done   = False
                     salva_sessione_cookie(res)
                     st.rerun()
                 except Exception as e:
@@ -193,6 +162,8 @@ def mostra_auth(supabase):
                         st.warning("Password errata. Usa il tab 'Password' per reimpostarla.")
                     elif "email not confirmed" in err_str:
                         st.warning("Email non confermata. Controlla la casella di posta.")
+                    elif "user not found" in err_str or "no user" in err_str:
+                        st.warning("Nessun account trovato. Registrati prima.")
                     else:
                         st.warning("Accesso non riuscito. Controlla email e password.")
                     time.sleep(2)
@@ -212,8 +183,9 @@ def mostra_auth(supabase):
                     res = supabase.auth.sign_up({"email": email_r, "password": password_r})
                     st.session_state.utente = res.user
                     if res.session:
-                        st.session_state["_sb_access_token"] = res.session.access_token
+                        st.session_state["_sb_access_token"]  = res.session.access_token
                         st.session_state["_sb_refresh_token"] = res.session.refresh_token
+                        st.session_state._cookie_check_done   = False
                         salva_sessione_cookie(res)
                     st.success("Benvenuto su VerificAI! Account creato.")
                     time.sleep(1)
