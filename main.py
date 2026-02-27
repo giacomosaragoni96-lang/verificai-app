@@ -59,7 +59,7 @@ supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # ── TEMA ──────────────────────────────────────────────────────────────────────
 if "theme" not in st.session_state:
-    st.session_state.theme = "light"
+    st.session_state.theme = "dark"
 T = THEMES[st.session_state.theme]
 
 # ── CONFIGURAZIONE API ────────────────────────────────────────────────────────
@@ -365,57 +365,86 @@ st.markdown(f"""
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def _render_stage_indicator():
+    """
+    Breadcrumb a 3 step. Usa concatenazione di stringhe (NON f-string annidate)
+    per evitare ambiguità con suffissi hex tipo {color}44 → bug Streamlit/Python.
+    """
     stage = st.session_state.stage
     steps = [
         ("01", "Configura", STAGE_INPUT),
         ("02", "Revisione", STAGE_REVIEW),
         ("03", "Download",  STAGE_FINAL),
     ]
+
+    # Calcola stato "completato" per ciascun passo
+    completed = {
+        STAGE_INPUT:  stage in (STAGE_REVIEW, STAGE_FINAL),
+        STAGE_REVIEW: stage == STAGE_FINAL,
+        STAGE_FINAL:  False,
+    }
+
+    # Icone
+    check_icon = "✓"
+
     items_html = ""
-    for num, label, s in steps:
-        if s == stage:
-            color   = T["accent"]
-            bg      = T["accent_light"]
-            fw      = "800"
-            opacity = "1"
-        elif (
-            (stage == STAGE_REVIEW and s == STAGE_INPUT) or
-            (stage == STAGE_FINAL)
-        ):
-            color   = T["success"]
-            bg      = T["accent_light"]
-            fw      = "600"
-            opacity = "0.85"
+    for i, (num, label, s) in enumerate(steps):
+        is_active    = s == stage
+        is_completed = completed[s]
+
+        if is_active:
+            circle_bg     = T["accent"]
+            circle_border = T["accent"]
+            circle_color  = "#ffffff"
+            label_color   = T["accent"]
+            label_fw      = "800"
+            wrap_opacity  = "1"
+            inner_content = num
+        elif is_completed:
+            circle_bg     = T["success"]
+            circle_border = T["success"]
+            circle_color  = "#ffffff"
+            label_color   = T["success"]
+            label_fw      = "600"
+            wrap_opacity  = "1"
+            inner_content = check_icon
         else:
-            color   = T["muted"]
-            bg      = T["bg2"]
-            fw      = "500"
-            opacity = "0.5"
+            circle_bg     = T["bg2"]
+            circle_border = T["border2"]
+            circle_color  = T["muted"]
+            label_color   = T["muted"]
+            label_fw      = "500"
+            wrap_opacity  = "0.55"
+            inner_content = num
 
-        items_html += f"""
-        <div style="display:flex;align-items:center;gap:6px;opacity:{opacity};">
-          <div style="background:{bg};border:1.5px solid {color};border-radius:50%;
-                      width:28px;height:28px;display:flex;align-items:center;
-                      justify-content:center;font-size:0.7rem;font-weight:800;
-                      color:{color};flex-shrink:0;">{num}</div>
-          <span style="font-size:0.8rem;font-weight:{fw};color:{color};
-                       font-family:'DM Sans',sans-serif;">{label}</span>
-        </div>
-        """
-        if num != "03":
-            items_html += f"""
-            <div style="flex:1;height:1.5px;background:linear-gradient(90deg,{color}44,{T['border']});
-                        min-width:20px;max-width:60px;"></div>
-            """
+        # Step circle + label
+        items_html += (
+            '<div style="display:flex;align-items:center;gap:6px;opacity:' + wrap_opacity + ';">'
+            '<div style="background:' + circle_bg + ';border:1.5px solid ' + circle_border + ';'
+            'border-radius:50%;width:26px;height:26px;display:flex;align-items:center;'
+            'justify-content:center;font-size:0.68rem;font-weight:800;'
+            'color:' + circle_color + ';flex-shrink:0;">' + inner_content + '</div>'
+            '<span style="font-size:0.8rem;font-weight:' + label_fw + ';color:' + label_color + ';'
+            'font-family:DM Sans,sans-serif;white-space:nowrap;">' + label + '</span>'
+            '</div>'
+        )
 
-    st.markdown(f"""
-    <div style="display:flex;align-items:center;gap:8px;
-                padding:0.7rem 1rem;margin-bottom:1.2rem;
-                background:{T['bg2']};border:1px solid {T['border']};
-                border-radius:12px;flex-wrap:wrap;">
-      {items_html}
-    </div>
-    """, unsafe_allow_html=True)
+        # Connettore tra i passi
+        if i < len(steps) - 1:
+            line_color = T["success"] if is_completed else T["border"]
+            items_html += (
+                '<div style="flex:1;height:1.5px;background:' + line_color + ';'
+                'min-width:16px;max-width:56px;opacity:0.6;"></div>'
+            )
+
+    html_out = (
+        '<div style="display:flex;align-items:center;gap:8px;'
+        'padding:0.65rem 1rem;margin-bottom:1.2rem;'
+        'background:' + T["bg2"] + ';border:1px solid ' + T["border"] + ';'
+        'border-radius:12px;flex-wrap:nowrap;">'
+        + items_html +
+        '</div>'
+    )
+    st.markdown(html_out, unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -735,12 +764,14 @@ def _render_stage_input():
         def _avanza(testo):
             _step[0] += 1
             perc = int(min(_step[0] / _n_steps, 0.97) * 100)
+            _acc = T['accent']
+            _acc_fade = _acc + "cc"
             _prog.markdown(f"""
 <div style="margin:0.6rem 0 1rem 0;">
   <div style="font-size:0.82rem;font-weight:600;color:{T['text2']};
               font-family:'DM Sans',sans-serif;margin-bottom:6px;">{testo}</div>
   <div style="background:{T['border']};border-radius:100px;height:8px;overflow:hidden;">
-    <div style="background:linear-gradient(90deg,{T['accent']},{T['accent']}cc);
+    <div style="background:linear-gradient(90deg,{_acc},{_acc_fade});
                 width:{perc}%;height:100%;border-radius:100px;
                 transition:width 0.4s ease;"></div>
   </div>
@@ -1247,12 +1278,14 @@ def _render_stage_final():
 
         # Soluzioni
         if vS.get("pdf") or vS.get("testo") or vS.get("latex"):
-            st.markdown(f"""
-            <div style="background:{T['bg2']};border:1.5px solid {T['success']}44;
-                        border-radius:10px;padding:0.8rem 1rem;margin-bottom:0.75rem;">
-              <div style="font-size:0.82rem;font-weight:700;color:{T['success']};
-                          margin-bottom:0.5rem;">✅ Soluzioni — Solo docente</div>
-            """, unsafe_allow_html=True)
+            _sol_border = T['success'] + "44"
+            st.markdown(
+                '<div style="background:' + T['bg2'] + ';border:1.5px solid ' + _sol_border + ';'
+                'border-radius:10px;padding:0.8rem 1rem;margin-bottom:0.75rem;">'
+                '<div style="font-size:0.82rem;font-weight:700;color:' + T['success'] + ';'
+                'margin-bottom:0.5rem;">✅ Soluzioni — Solo docente</div>',
+                unsafe_allow_html=True
+            )
             if vS.get("pdf"):
                 st.download_button(
                     f"📄 Soluzioni PDF ({_stima_dimensione(vS['pdf'])})",
