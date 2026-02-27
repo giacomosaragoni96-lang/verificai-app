@@ -65,27 +65,23 @@ def ripristina_sessione(supabase):
     rt = st.query_params.get("_rt", None)
 
     if at and rt:
-        st.query_params.clear()
+        # Pulisce i parametri e segna come fatto
         st.session_state._token_check_done = True
         try:
             sess = supabase.auth.set_session(at, rt)
             if sess and sess.user:
                 st.session_state.utente = sess.user
-                new_at = sess.session.access_token
-                new_rt = sess.session.refresh_token
-                st.session_state["_sb_access_token"] = new_at
-                st.session_state["_sb_refresh_token"] = new_rt
-                # aggiorna localStorage con token freschi
-                _inject_save_tokens(new_at, new_rt)
+                # Aggiorniamo i token per il prossimo giro
+                _inject_save_tokens(sess.session.access_token, sess.session.refresh_token)
+                # RIMUOVIAMO i parametri dall'URL per pulizia
+                st.query_params.clear()
+                st.rerun() # <--- AGGIUNGI QUESTO PER ENTRARE NELL'APP
         except Exception:
-            # token scaduti o invalidi — pulisci
             cancella_sessione_cookie()
-            st.session_state.utente = None
     else:
-        # Caso 2: nessun query param — inietta JS che legge localStorage
-        st.session_state._token_check_done = True
+        # Caso 2: Nessun parametro. Inietta JS e ASPETTA un istante
         _inject_token_reader()
-
+      
 
 # ── SALVA SESSIONE DOPO LOGIN ────────────────────────────────────────────────────
 def salva_sessione_cookie(res):
