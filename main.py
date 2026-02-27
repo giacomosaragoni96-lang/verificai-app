@@ -712,10 +712,6 @@ if genera_btn and not _limite_raggiunto:
 
 
 # ── SEZIONE REVISIONE BLOCCHI (CHECKPOINT VISIVI) ─────────────────────────────────
-# DEBUG — rimuovere dopo conferma funzionamento
-if bool(st.session_state.verifiche['A']['latex']):
-    st.caption(f"🔧 DEBUG — fase: `{st.session_state._fase}` | blocchi: `{len(st.session_state._blocchi_a)}` | streaming_disponibile: `{_STREAMING_DISPONIBILE}`")
-
 if (
     st.session_state._fase in ("revisione", "pronto")
     and st.session_state._blocchi_a
@@ -788,127 +784,171 @@ if (
     # ── BLOCCHI ESERCIZI ────────────────────────────────────────────────────
     _materia_curr = st.session_state.last_materia or (materia_scelta if 'materia_scelta' in dir() else "Matematica")
 
+    def _latex_to_readable(blocco: str) -> str:
+        """
+        Converte un blocco LaTeX in testo leggibile per la preview.
+        Non rimuove le formule matematiche — le mantiene come $...$.
+        """
+        t = blocco
+        # Rimuovi intestazione subsection
+        t = re.sub(re.escape(chr(92)) + r"subsection\*\{[^}]*\}", "", t)
+        # Rimuovi ambienti enumerate/itemize ma tieni il contenuto
+        t = re.sub(re.escape(chr(92)) + r"begin\{(?:enumerate|itemize)\}(?:\[[^\]]*\])?", "", t)
+        t = re.sub(re.escape(chr(92)) + r"end\{(?:enumerate|itemize)\}", "", t)
+        # Converti \item[a)] → "a)" con indentazione
+        t = re.sub(re.escape(chr(92)) + r"item\[([^\]]+)\]", r"\n**\1**", t)
+        t = re.sub(re.escape(chr(92)) + r"item\b", "\n•", t)
+        # Rimuovi \textbf{} ma tieni il testo in grassetto markdown
+        t = re.sub(re.escape(chr(92)) + r"textbf\{([^}]+)\}", r"**\1**", t)
+        t = re.sub(re.escape(chr(92)) + r"textit\{([^}]+)\}", r"*\1*", t)
+        t = re.sub(re.escape(chr(92)) + r"underline\{([^}]+)\}", r"__\1__", t)
+        # Converti \underline{\hspace{Xcm}} → _____
+        t = re.sub(re.escape(chr(92)) + r"underline\{" + re.escape(chr(92)) + r"hspace\{[^}]+\}\}", "___________", t)
+        # Rimuovi comandi di formattazione semplici
+        t = re.sub(re.escape(chr(92)) + r"noindent\b", "", t)
+        t = re.sub(re.escape(chr(92)) + r"vspace\{[^}]+\}", "", t)
+        t = re.sub(re.escape(chr(92)) + r"hspace\{[^}]+\}", " ", t)
+        t = re.sub(re.escape(chr(92)) + r"newline\b|" + re.escape(chr(92)) + r"\\", "\n", t)
+        # Vero/Falso checkbox LaTeX → leggibile
+        t = t.replace(r"$\square$", "☐")
+        # Rimuovi \end{document}
+        t = re.sub(re.escape(chr(92)) + r"end\{document\}", "", t)
+        # Normalizza spazi e righe vuote multiple
+        lines = [l.rstrip() for l in t.split("\n")]
+        result = []
+        prev_empty = False
+        for l in lines:
+            if not l.strip():
+                if not prev_empty:
+                    result.append("")
+                prev_empty = True
+            else:
+                result.append(l)
+                prev_empty = False
+        return "\n".join(result).strip()
+
     for _bi, _blocco in enumerate(_blocchi):
         _approvato = _bi in _approvati
+        _regen_key = f"_regen_input_{_bi}"
+        _regen_doing_key = f"_regen_doing_{_bi}"
 
-        # Estrai titolo del blocco per display
+        # Estrai titolo
         _m_titolo = re.search(r"\\subsection\*\{([^}]+)\}", _blocco)
         _titolo_blocco = _m_titolo.group(1) if _m_titolo else f"Esercizio {_bi+1}"
 
-        # Colori stato
-        _col_stato = T['success'] if _approvato else "#EAB308"
-        _bg_stato  = "#F0FDF4" if _approvato else "#FEFCE8"
-        _dot       = "🟢" if _approvato else "🟡"
-        _label_stato = "Approvato" if _approvato else "In attesa"
+        # Stile card
+        _col_stato   = T['success'] if _approvato else "#EAB308"
+        _bg_card     = "#F0FDF4"    if _approvato else T['card']
+        _dot         = "🟢"         if _approvato else "🟡"
+        _label_stato = "Approvato"  if _approvato else "In attesa"
 
+        # ── CARD ESERCIZIO ──────────────────────────────────────────────
         st.markdown(f"""
-<div style="border:1.5px solid {_col_stato};border-radius:12px;
-            overflow:hidden;margin-bottom:0.9rem;
-            box-shadow:0 2px 8px {_col_stato}22;">
-  <div style="background:{_col_stato};padding:0.6rem 1rem;
-              display:flex;align-items:center;gap:8px;">
+<div style="border:2px solid {_col_stato};border-radius:14px;
+            overflow:hidden;margin-bottom:1.2rem;
+            box-shadow:0 2px 12px {_col_stato}18;">
+  <div style="background:{_col_stato};padding:0.65rem 1.1rem;
+              display:flex;align-items:center;gap:10px;">
     <span style="font-size:1rem;">{_dot}</span>
-    <span style="font-family:'DM Sans',sans-serif;font-size:0.9rem;
+    <span style="font-family:'DM Sans',sans-serif;font-size:0.95rem;
                  font-weight:800;color:#fff;flex:1;">{_titolo_blocco}</span>
-    <span style="background:#ffffff33;border-radius:12px;padding:2px 10px;
+    <span style="background:#ffffff33;border-radius:20px;padding:3px 12px;
                  font-size:0.68rem;font-weight:700;color:#fff;
                  letter-spacing:0.05em;text-transform:uppercase;">{_label_stato}</span>
   </div>
-  <div style="background:{_bg_stato};padding:0;"></div>
 </div>
 """, unsafe_allow_html=True)
 
-        with st.expander(f"👁 Vedi LaTeX — {_titolo_blocco}", expanded=False):
-            st.code(_blocco, language="latex")
+        # ── ANTEPRIMA LEGGIBILE (no LaTeX grezzo) ───────────────────────
+        _preview_text = _latex_to_readable(_blocco)
+        st.markdown(
+            f'<div style="background:{_bg_card};border:1px solid {_col_stato}44;'
+            f'border-radius:10px;padding:1rem 1.2rem;margin-top:-1rem;margin-bottom:0.8rem;'
+            f'font-family:\'DM Sans\',sans-serif;font-size:0.88rem;color:{T["text"]};line-height:1.7;">'
+            f'{_preview_text.replace(chr(10), "<br>")}'
+            f'</div>',
+            unsafe_allow_html=True
+        )
 
-        _cb1, _cb2, _cb3 = st.columns([1, 1, 2])
+        # ── CONTROLLI ───────────────────────────────────────────────────
+        _c_approva, _c_regen = st.columns([1, 2])
 
-        with _cb1:
-            if st.button(
-                "✅ Approva" if not _approvato else "✓ Approvato",
-                key=f"_approva_{_bi}",
-                use_container_width=True,
-                type="primary" if not _approvato else "secondary",
-            ):
-                st.session_state._blocchi_approvati.add(_bi)
-                if len(st.session_state._blocchi_approvati) == _n_blocchi:
-                    st.session_state._fase = "pronto"
-                st.rerun()
-
-        with _cb2:
-            if _approvato:
-                if st.button("↩️ Rimuovi approvazione", key=f"_rimuovi_{_bi}",
-                             use_container_width=True):
+        with _c_approva:
+            if not _approvato:
+                if st.button("✅ Approva", key=f"_approva_{_bi}",
+                             use_container_width=True, type="primary"):
+                    st.session_state._blocchi_approvati.add(_bi)
+                    if len(st.session_state._blocchi_approvati) == _n_blocchi:
+                        st.session_state._fase = "pronto"
+                    st.rerun()
+            else:
+                if st.button("↩️ Annulla", key=f"_rimuovi_{_bi}",
+                             use_container_width=True, type="secondary"):
                     st.session_state._blocchi_approvati.discard(_bi)
                     st.session_state._fase = "revisione"
                     st.rerun()
 
-        # Area rigenerazione
-        _regen_key = f"_regen_input_{_bi}"
-        _regen_doing_key = f"_regen_doing_{_bi}"
-
-        with _cb3:
-            _istr = st.text_input(
-                f"Rigenera con istruzione",
-                placeholder="es. Usa numeri più piccoli, aumenta difficoltà…",
+        with _c_regen:
+            _istr_val = st.text_input(
+                "Istruzione rigenerazione",
+                placeholder="es. Usa numeri più semplici, cambia contesto, aumenta difficoltà…",
                 key=_regen_key,
                 label_visibility="collapsed",
             )
 
-        _col_regen, _ = st.columns([1, 2])
-        with _col_regen:
-            if st.button(
-                "🔄 Rigenera questo esercizio",
-                key=f"_regen_btn_{_bi}",
-                disabled=not st.session_state.get(_regen_key, "").strip() and True,
-                use_container_width=True,
-            ):
-                _istruzione = st.session_state.get(_regen_key, "").strip() or "Rigenera con dati diversi mantenendo stesso tipo"
-                st.session_state[_regen_doing_key] = True
+        _istr_scritta = bool(st.session_state.get(_regen_key, "").strip())
+        if st.button(
+            "🔄 Rigenera questo esercizio",
+            key=f"_regen_btn_{_bi}",
+            use_container_width=True,
+            type="secondary",
+            disabled=not _istr_scritta,
+            help="Scrivi prima un'istruzione nel campo sopra" if not _istr_scritta else "",
+        ):
+            st.session_state[_regen_doing_key] = True
 
-            if st.session_state.get(_regen_doing_key, False):
-                with st.spinner(f"⏳ Rigenerazione Esercizio {_bi+1}…"):
-                    try:
-                        _model_regen = genai.GenerativeModel(
-                            modello_id if 'modello_id' in dir() else 'gemini-1.5-flash'
-                        )
-                        _nuovo_blocco = rigenera_singolo_blocco(
-                            model=_model_regen,
-                            materia=_materia_curr,
-                            blocco_latex=_blocchi[_bi],
-                            istruzione=st.session_state.get(_regen_key, "Rigenera con dati diversi").strip() or "Rigenera con dati diversi",
-                            mostra_punteggi=mostra_punteggi if 'mostra_punteggi' in dir() else True,
-                        )
-                        # Aggiorna blocco nella lista
-                        st.session_state._blocchi_a[_bi] = _nuovo_blocco
-                        # Marca come non approvato
-                        st.session_state._blocchi_approvati.discard(_bi)
-                        st.session_state._fase = "revisione"
+        if st.session_state.get(_regen_doing_key, False):
+            with st.spinner(f"⏳ Rigenerazione Esercizio {_bi+1}…"):
+                try:
+                    _model_regen = genai.GenerativeModel(
+                        modello_id if 'modello_id' in dir() else 'gemini-1.5-flash'
+                    )
+                    _nuovo_blocco = rigenera_singolo_blocco(
+                        model=_model_regen,
+                        materia=_materia_curr,
+                        blocco_latex=_blocchi[_bi],
+                        istruzione=st.session_state.get(_regen_key, "Rigenera con dati diversi").strip() or "Rigenera con dati diversi",
+                        mostra_punteggi=mostra_punteggi if 'mostra_punteggi' in dir() else True,
+                    )
+                    st.session_state._blocchi_a[_bi] = _nuovo_blocco
+                    st.session_state._blocchi_approvati.discard(_bi)
+                    st.session_state._fase = "revisione"
 
-                        # Ricompila PDF con i blocchi aggiornati
-                        _latex_nuovo, _pdf_nuovo = ricompila_da_blocchi(
-                            blocchi=st.session_state._blocchi_a,
-                            preambolo=st.session_state._preambolo_a,
-                            mostra_punteggi=mostra_punteggi if 'mostra_punteggi' in dir() else True,
-                            punti_totali=punti_totali if 'punti_totali' in dir() else 100,
-                            con_griglia=con_griglia if 'con_griglia' in dir() else False,
-                        )
-                        if _latex_nuovo:
-                            st.session_state.verifiche['A']['latex'] = _latex_nuovo
-                            st.session_state.verifiche['A']['latex_originale'] = _latex_nuovo
-                        if _pdf_nuovo:
-                            st.session_state.verifiche['A']['pdf'] = _pdf_nuovo
-                            st.session_state.verifiche['A']['pdf_ts'] = time.time()
-                            st.session_state.verifiche['A']['docx'] = None
+                    _latex_nuovo, _pdf_nuovo = ricompila_da_blocchi(
+                        blocchi=st.session_state._blocchi_a,
+                        preambolo=st.session_state._preambolo_a,
+                        mostra_punteggi=mostra_punteggi if 'mostra_punteggi' in dir() else True,
+                        punti_totali=punti_totali if 'punti_totali' in dir() else 100,
+                        con_griglia=con_griglia if 'con_griglia' in dir() else False,
+                    )
+                    if _latex_nuovo:
+                        st.session_state.verifiche['A']['latex'] = _latex_nuovo
+                        st.session_state.verifiche['A']['latex_originale'] = _latex_nuovo
+                    if _pdf_nuovo:
+                        st.session_state.verifiche['A']['pdf'] = _pdf_nuovo
+                        st.session_state.verifiche['A']['pdf_ts'] = time.time()
+                        st.session_state.verifiche['A']['docx'] = None
 
-                        st.session_state[_regen_doing_key] = False
-                        st.toast(f"✅ Esercizio {_bi+1} rigenerato!", icon="🔄")
-                    except Exception as _e:
-                        st.session_state[_regen_doing_key] = False
-                        st.error(f"❌ Errore rigenerazione: {_e}")
-                st.rerun()
+                    st.session_state[_regen_doing_key] = False
+                    st.toast(f"✅ Esercizio {_bi+1} rigenerato!", icon="🔄")
+                except Exception as _e:
+                    st.session_state[_regen_doing_key] = False
+                    st.error(f"❌ Errore rigenerazione: {_e}")
+            st.rerun()
 
-        st.markdown('<hr style="margin:0.3rem 0 0.8rem 0;opacity:0.12;">', unsafe_allow_html=True)
+        st.markdown('<div style="margin-bottom:0.5rem;"></div>', unsafe_allow_html=True)
+
+
 
 
 # ── OUTPUT ────────────────────────────────────────────────────────────────────────
