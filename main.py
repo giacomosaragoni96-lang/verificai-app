@@ -242,10 +242,6 @@ except Exception as e:
     st.stop()
 
 
-except NameError as e:
-    st.error(f"Errore di configurazione: {e}")
-    st.info("Controlla che tutte le variabili (T, SCUOLE, _is_admin, ecc.) siano definite prima di questa riga.")
-    st.stop()
 
 # ── TOPBAR ────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
@@ -953,6 +949,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
