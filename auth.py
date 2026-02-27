@@ -1,80 +1,51 @@
 import streamlit as st
 import time
-from streamlit_cookies_controller import CookieController
 
 
-# ── COOKIE CONTROLLER ─────────────────────────────────────────────────────────────
+# ── NIENTE PIÙ COOKIE — usiamo i query params dell'URL ───────────────────────────
+# Dopo il login l'URL diventa: https://tuaapp.streamlit.app/?rt=TOKEN
+# Il token sopravvive al refresh perché è nell'URL stesso.
+# Python lo legge direttamente — nessun iframe, nessun JS, funziona su tutti i browser.
+
 def get_cookie_controller():
-    if "_cookie_controller" not in st.session_state:
-        st.session_state._cookie_controller = CookieController()
-    return st.session_state._cookie_controller
+    """Stub di compatibilità — non fa nulla, mantenuto per non rompere main.py."""
+    return None
 
 
-# ── RIPRISTINO SESSIONE ───────────────────────────────────────────────────────────
 def ripristina_sessione(supabase):
     """
-    Logica a due passaggi per gestire il caricamento asincrono del JS:
-
-    RENDER 1: il CookieController viene creato ma il JS non è ancora pronto.
-              controller.get() restituisce None (falso negativo).
-              Settiamo _cookie_controller_ready=True e usciamo SENZA marcare done.
-              Il componente JS triggera automaticamente un rerun.
-
-    RENDER 2: il JS è pronto, controller.get() restituisce il valore reale.
-              Ora possiamo leggere il cookie e ripristinare la sessione.
-              Solo qui settiamo _cookie_check_done=True.
+    Tenta di ripristinare la sessione dal query param ?rt=TOKEN.
+    Se il token è valido, logga l'utente e ripulisce l'URL.
     """
-    # Utente già loggato — non fare nulla
     if st.session_state.get('utente') is not None:
         return
 
-    # Check già completato — non ripetere
-    if st.session_state.get('_cookie_check_done'):
+    rt = st.query_params.get("rt", None)
+    if not rt:
         return
 
-    controller = get_cookie_controller()
-
-    # RENDER 1: prima volta che vediamo il controller — JS sta caricando
-    # Non leggiamo ancora il cookie, aspettiamo il rerun automatico del componente
-    if not st.session_state.get('_cookie_controller_ready'):
-        st.session_state._cookie_controller_ready = True
-        return  # <-- usciamo senza _cookie_check_done=True, il JS triggera rerun
-
-    # RENDER 2+: JS pronto, leggiamo il cookie per davvero
-    refresh_token = controller.get("sb_refresh_token")
-
-    if refresh_token:
-        try:
-            res = supabase.auth.refresh_session(refresh_token)
-            if res and res.user:
-                st.session_state.utente = res.user
-                st.session_state["_sb_access_token"]  = res.session.access_token
-                st.session_state["_sb_refresh_token"] = res.session.refresh_token
-                # Rinnova il cookie per altri 30 giorni
-                controller.set("sb_refresh_token", res.session.refresh_token,
-                               max_age=60 * 60 * 24 * 30)
-        except Exception:
-            # Token scaduto o invalido
-            controller.remove("sb_refresh_token")
-            st.session_state.utente = None
-
-    # Marca come completato — non rileggere il cookie ai prossimi rerun
-    st.session_state._cookie_check_done = True
+    try:
+        res = supabase.auth.refresh_session(rt)
+        if res and res.user:
+            st.session_state.utente = res.user
+            st.session_state["_sb_access_token"]  = res.session.access_token
+            st.session_state["_sb_refresh_token"] = res.session.refresh_token
+            # Aggiorna il token nell'URL con quello rinnovato
+            st.query_params["rt"] = res.session.refresh_token
+    except Exception:
+        # Token scaduto o invalido — rimuovi dall'URL
+        st.query_params.pop("rt", None)
+        st.session_state.utente = None
 
 
 def salva_sessione_cookie(res):
-    """Salva il refresh token nel cookie dopo login/registrazione."""
-    controller = get_cookie_controller()
-    controller.set("sb_refresh_token", res.session.refresh_token,
-                   max_age=60 * 60 * 24 * 30)
+    """Salva il refresh token nell'URL dopo login/registrazione."""
+    st.query_params["rt"] = res.session.refresh_token
 
 
 def cancella_sessione_cookie():
-    """Cancella il cookie al logout e resetta i flag."""
-    controller = get_cookie_controller()
-    controller.remove("sb_refresh_token")
-    st.session_state._cookie_check_done    = False
-    st.session_state._cookie_controller_ready = False
+    """Rimuove il token dall'URL al logout."""
+    st.query_params.pop("rt", None)
 
 
 # ── FORM LOGIN / REGISTRAZIONE ────────────────────────────────────────────────────
@@ -158,7 +129,7 @@ def mostra_auth(supabase):
 
     with tab_login:
         st.write("")
-        email = st.text_input("Email", key="login_email", placeholder="docente@scuola.it")
+        email    = st.text_input("Email", key="login_email", placeholder="docente@scuola.it")
         password = st.text_input("Password", type="password", key="login_pass", placeholder="••••••••")
         st.write("")
         if st.button("Accedi →", type="primary", use_container_width=True, key="btn_login"):
@@ -170,8 +141,6 @@ def mostra_auth(supabase):
                     st.session_state.utente               = res.user
                     st.session_state["_sb_access_token"]  = res.session.access_token
                     st.session_state["_sb_refresh_token"] = res.session.refresh_token
-                    st.session_state._cookie_check_done      = False
-                    st.session_state._cookie_controller_ready = True  # JS già pronto
                     salva_sessione_cookie(res)
                     st.rerun()
                 except Exception as e:
@@ -188,7 +157,7 @@ def mostra_auth(supabase):
 
     with tab_reg:
         st.write("")
-        email_r   = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
+        email_r    = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
         password_r = st.text_input("Password (min. 6 caratteri)", type="password", key="reg_pass", placeholder="••••••••")
         st.write("")
         if st.button("Crea account gratuito →", type="primary", use_container_width=True, key="btn_reg"):
@@ -203,8 +172,6 @@ def mostra_auth(supabase):
                     if res.session:
                         st.session_state["_sb_access_token"]  = res.session.access_token
                         st.session_state["_sb_refresh_token"] = res.session.refresh_token
-                        st.session_state._cookie_check_done      = False
-                        st.session_state._cookie_controller_ready = True
                         salva_sessione_cookie(res)
                     st.success("Benvenuto su VerificAI! Account creato.")
                     time.sleep(1)
