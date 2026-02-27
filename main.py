@@ -376,20 +376,7 @@ with st.expander("Personalizza la verifica"):
             min_value=1, max_value=15, value=4,
         )
 
-    # ── PUNTEGGI ─────────────────────────────────────────────────────────────────
-    st.markdown(f'<div class="expander-heading" style="margin-top:1rem;">🏆 Punteggi</div>', unsafe_allow_html=True)
-    _cp1, _cp2, _cp3 = st.columns([2, 2, 2])
-    with _cp1:
-        mostra_punteggi = st.checkbox("Mostra punteggi per esercizio", value=False, key="mostra_punteggi_body")
-    with _cp2:
-        con_griglia = st.checkbox("Includi griglia di valutazione", value=False, key="con_griglia_body")
-    with _cp3:
-        punti_totali = st.number_input(
-            "Punti totali", min_value=10, max_value=200, value=100, step=5,
-            disabled=not mostra_punteggi, key="punti_totali_body"
-        )
-
-st.markdown('</div>', unsafe_allow_html=True)
+    
 
     
     with st.expander("🎯 Personalizza i singoli esercizi"):
@@ -457,7 +444,20 @@ st.markdown('</div>', unsafe_allow_html=True)
     )
     st.markdown('</div>', unsafe_allow_html=True)
 
-    
+    # ── PUNTEGGI ─────────────────────────────────────────────────────────────────
+    st.markdown(f'<div class="expander-heading" style="margin-top:1rem;">🏆 Punteggi</div>', unsafe_allow_html=True)
+    _cp1, _cp2, _cp3 = st.columns([2, 2, 2])
+    with _cp1:
+        mostra_punteggi = st.checkbox("Mostra punteggi per esercizio", value=False, key="mostra_punteggi_body")
+    with _cp2:
+        con_griglia = st.checkbox("Includi griglia di valutazione", value=False, key="con_griglia_body")
+    with _cp3:
+        punti_totali = st.number_input(
+            "Punti totali", min_value=10, max_value=200, value=100, step=5,
+            disabled=not mostra_punteggi, key="punti_totali_body"
+        )
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ── BOTTONE GENERA ────────────────────────────────────────────────────────────────
 st.markdown('<div class="genera-section">', unsafe_allow_html=True)
@@ -1142,4 +1142,5 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
