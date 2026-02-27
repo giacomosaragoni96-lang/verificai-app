@@ -26,7 +26,7 @@ from config import (
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
-from auth import mostra_auth, ripristina_sessione, salva_sessione_cookie, cancella_sessione_cookie
+from auth import mostra_auth, ripristina_sessione, salva_sessione_cookie, cancella_sessione_cookie, get_cookie_controller
 from styles import get_css
 
 
@@ -949,6 +949,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
