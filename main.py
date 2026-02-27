@@ -62,18 +62,24 @@ if not API_KEY:
     st.stop()
 genai.configure(api_key=API_KEY)
 
-# ── AUTENTICAZIONE GATE (MODIFICATO PER PERSISTENZA) ─────────────────────────────
+# ── AUTENTICAZIONE GATE ───────────────────────────────────────────────────────────
 if 'utente' not in st.session_state:
     st.session_state.utente = None
 
-# Dopo il gate del login, siamo sicuri che l'utente ci sia
-if st.session_state.utente:
-    user_id = st.session_state.utente.id
-    _verifiche_mese_count = _get_verifiche_mese(user_id)
-    _is_admin = (st.session_state.utente.email in ADMIN_EMAILS)
-else:
-    # Questo caso teoricamente non dovrebbe essere raggiunto grazie a st.stop()
-    st.stop()
+# Tenta il ripristino
+ripristina_sessione(supabase)
+
+# SE DOPO IL RIPRISTINO L'UTENTE È ANCORA NONE
+if st.session_state.utente is None:
+    # Diamo un secondo al componente cookie per inizializzarsi
+    # Se lo schermo è nero, è perché stiamo stoppando l'esecuzione troppo presto
+    with st.spinner("Verifica sessione..."):
+        time.sleep(1.5) # <--- Aggiungi questo piccolo delay
+        
+    # Controlliamo di nuovo dopo il delay
+    if st.session_state.utente is None:
+        mostra_auth(supabase)
+        st.stop()
 
 # 1. Recupero immediato del cookie (usando la tua funzione ripristina_sessione)
 ripristina_sessione(supabase)
@@ -972,6 +978,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
