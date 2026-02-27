@@ -2,54 +2,55 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 
-# ── INJECT JS: salva token in localStorage ──────────────────────────────────────
 def _inject_save_tokens(access_token: str, refresh_token: str):
-    """Salva i token in localStorage via JS."""
+    """Salva i token nel localStorage della finestra principale."""
     components.html(f"""
     <script>
       try {{
-        localStorage.setItem('sb_at', '{access_token}');
-        localStorage.setItem('sb_rt', '{refresh_token}');
-      }} catch(e) {{}}
+        window.parent.localStorage.setItem('sb_at', '{access_token}');
+        window.parent.localStorage.setItem('sb_rt', '{refresh_token}');
+      }} catch(e) {{ console.error("Errore salvataggio:", e); }}
     </script>
     """, height=0)
 
+def _inject_token_reader():
+    """Legge i token e forza il redirect della finestra principale."""
+    components.html("""
+    <script>
+      (function() {
+        try {
+          // Controlliamo se siamo già in fase di redirect per evitare loop
+          if (window.parent.location.search.indexOf('_at=') !== -1) return;
 
-# ── INJECT JS: cancella token da localStorage ───────────────────────────────────
+          var at = window.parent.localStorage.getItem('sb_at');
+          var rt = window.parent.localStorage.getItem('sb_rt');
+
+          if (at && rt && at.length > 10) {
+            var newUrl = window.parent.location.pathname + 
+                         '?_at=' + encodeURIComponent(at) + 
+                         '&_rt=' + encodeURIComponent(rt);
+            window.parent.location.replace(newUrl);
+          }
+        } catch(e) { console.error("Errore lettura:", e); }
+      })();
+    </script>
+    """, height=0)
+
 def cancella_sessione_cookie():
-    """Rimuove i token da localStorage."""
+    """Rimuove i token dal localStorage della finestra principale."""
     components.html("""
     <script>
       try {
-        localStorage.removeItem('sb_at');
-        localStorage.removeItem('sb_rt');
+        window.parent.localStorage.removeItem('sb_at');
+        window.parent.localStorage.removeItem('sb_rt');
       } catch(e) {}
     </script>
     """, height=0)
     st.session_state._token_check_done = False
 
 
-# ── INJECT JS: legge token e manda a ?_at=...&_rt=... ───────────────────────────
-def _inject_token_reader():
-    """Legge i token da localStorage e redirige con query params se trovati."""
-    components.html("""
-    <script>
-      (function() {
-        // evita loop
-        if (window.location.search.indexOf('_at=') !== -1) return;
-        try {
-          var at = localStorage.getItem('sb_at');
-          var rt = localStorage.getItem('sb_rt');
-          if (at && rt && at.length > 10 && rt.length > 10) {
-            var url = window.location.pathname +
-                      '?_at=' + encodeURIComponent(at) +
-                      '&_rt=' + encodeURIComponent(rt);
-            window.location.replace(url);
-          }
-        } catch(e) {}
-      })();
-    </script>
-    """, height=0)
+
+
 
 
 # ── FUNZIONE PRINCIPALE: ripristina sessione da localStorage ────────────────────
