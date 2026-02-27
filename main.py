@@ -816,7 +816,7 @@ if (
         t = re.sub(re.escape(chr(92)) + r"vspace\{[^}]+\}", "", t)
         t = re.sub(re.escape(chr(92)) + r"hspace\{[^}]+\}", "&ensp;", t)
         t = re.sub(re.escape(chr(92)) + r"quad\b", "&ensp;&ensp;", t)
-        t = re.sub(re.escape(chr(92)) + r"\\\\\b?", "<br>", t)
+        t = re.sub(re.escape(chr(92) + chr(92)), "<br>", t)   # \\ → <br>
         t = re.sub(re.escape(chr(92)) + r"newline\b", "<br>", t)
         # 9. Proteggi le formule $...$ e $$...$$ dall'HTML escaping
         _formule = []
