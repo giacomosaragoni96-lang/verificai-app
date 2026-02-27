@@ -62,15 +62,13 @@ genai.configure(api_key=API_KEY)
 if 'utente' not in st.session_state:
     st.session_state.utente = None
 
-# Tenta ripristino sessione dal query param ?rt=TOKEN nell'URL
 ripristina_sessione(supabase)
 
-# Se ancora None, mostra login
 if st.session_state.utente is None:
     mostra_auth(supabase)
     st.stop()
 
-# ── FINE GATE (Se arriviamo qui, l'utente è loggato) ──────────────────────────────
+# ── FINE GATE ─────────────────────────────────────────────────────────────────────
 
 
 # ── FUNZIONI UTILITY ──────────────────────────────────────────────────────────────
@@ -158,6 +156,10 @@ def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra
         righe.append(f"- Esercizi {start_idx}–{end_idx}: genera tu {n_liberi} esercizi coerenti.")
     return "\n".join(righe), immagini
 
+def _stima_dimensione(data: bytes) -> str:
+    kb = len(data) / 1024
+    return f"{kb:.0f} KB" if kb < 1024 else f"{kb/1024:.1f} MB"
+
 
 # ── SESSION STATE ─────────────────────────────────────────────────────────────────
 def _vf():
@@ -165,8 +167,8 @@ def _vf():
             'soluzioni_latex': '', 'soluzioni_pdf': None, 'docx': None,
             'pdf_ts': None, 'docx_ts': None, 'latex_originale': ''}
 
-if 'verifiche' not in st.session_state: 
-    st.session_state.verifiche = {'A': _vf(), 'B': _vf(), 'R': _vf(), 'RB': _vf(), 'S': {'latex': None, 'testo': None}}
+if 'verifiche' not in st.session_state:
+    st.session_state.verifiche = {'A': _vf(), 'B': _vf(), 'R': _vf(), 'RB': _vf(), 'S': {'latex': None, 'testo': None, 'pdf': None}}
 if 'esercizi_custom' not in st.session_state: st.session_state.esercizi_custom = []
 if 'last_materia'    not in st.session_state: st.session_state.last_materia = None
 if 'last_argomento'  not in st.session_state: st.session_state.last_argomento = None
@@ -184,7 +186,7 @@ _limite_raggiunto = (not _is_admin) and (_verifiche_mese_count >= LIMITE_MENSILE
 # ── CSS GLOBALE ──────────────────────────────────────────────────────────────────
 st.markdown(get_css(T), unsafe_allow_html=True)
 
-# ── SIDEBAR E CONTENUTO ────────────────────────────────────────────────────────────
+# ── SIDEBAR ────────────────────────────────────────────────────────────────────────
 try:
     settings = render_sidebar(
         supabase_admin=supabase_admin,
@@ -200,33 +202,18 @@ try:
         compila_pdf_func=compila_pdf,
         supabase_client=supabase
     )
-
-    # Estrazione valori settings...
-    bes_dsa = settings.get('bes_dsa', False)
-    perc_ridotta = settings.get('perc_ridotta', 15)
-    doppia_fila = settings.get('doppia_fila', False)
-    genera_soluzioni = settings.get('genera_soluzioni', False)
-    bes_dsa_b = settings.get('bes_dsa_b', False)
-    mostra_punteggi = settings.get('mostra_punteggi', True)
-    con_griglia = settings.get('con_griglia', False)
-    punti_totali = settings.get('punti_totali', 100)
-    modello_id = settings.get('modello_id', 'gemini-1.5-pro')
+    # Dalla sidebar: solo il modello AI
+    modello_id = settings.get('modello_id', 'gemini-2.5-flash-lite')
 
 except Exception as e:
     st.error(f"Errore sidebar: {e}")
-    st.stop()
-
-
-except NameError as e:
-    st.error(f"Errore di configurazione: {e}")
-    st.info("Controlla che tutte le variabili (T, SCUOLE, _is_admin, ecc.) siano definite prima di questa riga.")
     st.stop()
 
 # ── TOPBAR ────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="top-bar">
   <div class="top-bar-hint">
-    ← Apri le impostazioni per opzioni avanzate e modello AI
+    ← Apri le impostazioni per il modello AI e lo storico verifiche
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -265,17 +252,10 @@ if not st.session_state._onboarding_done:
         f'<div style="display:flex;align-items:flex-start;gap:12px;">'
         f'<div style="flex:1;">'
         f'<div style="font-size:0.9rem;font-weight:800;color:{_c_text};margin-bottom:0.7rem;">Come iniziare</div>'
-        f'<div style="display:flex;align-items:center;gap:8px;padding:0.45rem 0.75rem;margin-bottom:0.5rem;'
-        f'background:{_c_bg2};border-radius:8px;border-left:3px solid {_c_accent};">'
-        f'<span>⚙️</span>'
-        f'<div style="font-size:0.8rem;color:{_c_text2};">Prima di tutto: apri '
-        f'<strong style="color:{_c_text};">☰ Impostazioni</strong> in alto a sinistra '
-        f'per scegliere classe e impostazioni</div>'
-        f'</div>'
         f'<div style="display:flex;background:{_c_bg2};border:1px solid {_c_border};border-radius:10px;overflow:hidden;margin-bottom:0.75rem;">'
         f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
-        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">01 · Materia</div>'
-        f'<div style="font-size:0.76rem;color:{_c_text2};">Scegli la materia</div>'
+        f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">01 · Classe & Materia</div>'
+        f'<div style="font-size:0.76rem;color:{_c_text2};">Scegli il livello e la materia</div>'
         f'</div>'
         f'<div style="flex:1;padding:0.6rem 0.85rem;border-right:1px solid {_c_border};">'
         f'<div style="font-size:0.65rem;font-weight:800;color:{_c_accent};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">02 · Argomento</div>'
@@ -308,49 +288,44 @@ if not st.session_state._onboarding_done:
         f'</div>',
         unsafe_allow_html=True
     )
-# ── STEP 0 — LIVELLO SCOLASTICO ───────────────────────────────────────────────────
+
+# ── STEP 1 — CLASSE & MATERIA ─────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="step-label">
-  <span class="step-num">00</span>
-  <span class="step-title">Livello scolastico</span>
+  <span class="step-num">01</span>
+  <span class="step-title">Classe e Materia</span>
   <span class="step-line"></span>
 </div>
 """, unsafe_allow_html=True)
 
-_col_scuola, _col_hint = st.columns([3, 2])
+_col_scuola, _col_materia = st.columns(2)
 with _col_scuola:
+    st.markdown(
+        f'<div style="font-size:0.72rem;font-weight:700;color:{T["muted"]};text-transform:uppercase;'
+        f'letter-spacing:0.06em;margin-bottom:4px;font-family:DM Sans,sans-serif;">Livello scolastico</div>',
+        unsafe_allow_html=True
+    )
     difficolta = st.selectbox(
         "Livello scolastico",
         SCUOLE,
         index=SCUOLE.index("Liceo Scientifico") if "Liceo Scientifico" in SCUOLE else 0,
         label_visibility="collapsed",
         key="difficolta_body",
-        help="Calibra lessico, complessità e riferimenti degli esercizi"
     )
-with _col_hint:
+with _col_materia:
     st.markdown(
-        f'<div style="padding:10px 14px;background:{T["accent_light"]};border:1px solid {T["accent"]}44;'
-        f'border-radius:10px;font-size:0.76rem;color:{T["text2"]};font-family:DM Sans,sans-serif;line-height:1.45;margin-top:4px;">'
-        f'<strong style="color:{T["accent"]}">⚙️ Questo parametro</strong> calibra il livello linguistico, '
-        f'la difficoltà degli esercizi e i riferimenti culturali della verifica.</div>',
+        f'<div style="font-size:0.72rem;font-weight:700;color:{T["muted"]};text-transform:uppercase;'
+        f'letter-spacing:0.06em;margin-bottom:4px;font-family:DM Sans,sans-serif;">Materia</div>',
         unsafe_allow_html=True
     )
+    _materie_select = MATERIE + ["✏️ Altra materia..."]
+    _materia_sel = st.selectbox("Materia", _materie_select, index=0, label_visibility="collapsed")
 
-# ── STEP 1 — MATERIA ──────────────────────────────────────────────────────────────
-
-# ── STEP 1 — MATERIA ──────────────────────────────────────────────────────────────
-st.markdown(f"""
-<div class="step-label">
-  <span class="step-num">01</span>
-  <span class="step-title">Materia</span>
-  <span class="step-line"></span>
-</div>
-""", unsafe_allow_html=True)
-_materie_select = MATERIE + ["✏️ Altra materia..."]
-_materia_sel = st.selectbox("Materia", _materie_select, index=0, label_visibility="collapsed")
 if _materia_sel == "✏️ Altra materia...":
-    materia_scelta = st.text_input("Scrivi materia:", placeholder="es. Economia Aziendale, Scienze Naturali...",
-                                   key="_materia_custom_input", label_visibility="collapsed").strip() or "Matematica"
+    materia_scelta = st.text_input(
+        "Scrivi materia:", placeholder="es. Economia Aziendale, Scienze Naturali...",
+        key="_materia_custom_input", label_visibility="collapsed"
+    ).strip() or "Matematica"
 else:
     materia_scelta = _materia_sel or "Matematica"
 
@@ -447,10 +422,10 @@ with st.expander("Personalizza la verifica"):
 
         can_add = len(st.session_state.esercizi_custom) < num_esercizi_totali
         if st.button("＋ Aggiungi esercizio specifico", disabled=not can_add):
-            st.session_state.esercizi_custom.append({'tipo': 'Aperto', 'descrizione': '', 'immagine': None, 'materia2': '', 'difficolta_multi': 'Media'})
+            st.session_state.esercizi_custom.append({'tipo': 'Aperto', 'descrizione': '', 'immagine': None})
             st.rerun()
 
-    st.markdown('<div class="expander-heading" style="margin-top:1rem;">🎯 Istruzioni per l\'AI</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="expander-heading" style="margin-top:1rem;">🎯 Istruzioni per l\'AI</div>', unsafe_allow_html=True)
     note_generali = st.text_area(
         "note", label_visibility="collapsed",
         placeholder=NOTE_PLACEHOLDER.get(materia_scelta, "es. Argomenti da privilegiare, tipo di esercizi..."),
@@ -465,6 +440,19 @@ with st.expander("Personalizza la verifica"):
         label_visibility="collapsed"
     )
     st.markdown('</div>', unsafe_allow_html=True)
+
+    # ── PUNTEGGI ─────────────────────────────────────────────────────────────────
+    st.markdown(f'<div class="expander-heading" style="margin-top:1rem;">🏆 Punteggi</div>', unsafe_allow_html=True)
+    _cp1, _cp2, _cp3 = st.columns([2, 2, 2])
+    with _cp1:
+        mostra_punteggi = st.checkbox("Mostra punteggi per esercizio", value=False, key="mostra_punteggi_body")
+    with _cp2:
+        con_griglia = st.checkbox("Includi griglia di valutazione", value=False, key="con_griglia_body")
+    with _cp3:
+        punti_totali = st.number_input(
+            "Punti totali", min_value=10, max_value=200, value=100, step=5,
+            disabled=not mostra_punteggi, key="punti_totali_body"
+        )
 
 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -486,20 +474,9 @@ if _limite_raggiunto:
     </div>
     """, unsafe_allow_html=True)
 else:
-    _files_hint = ["📄 Verifica"]
-    if doppia_fila:
-        _files_hint.append("📄 Versione B")
-    if bes_dsa:
-        _files_hint.append("📄 Ridotta A")
-    if bes_dsa and doppia_fila and bes_dsa_b:
-        _files_hint.append("📄 Ridotta B")
-    if genera_soluzioni:
-        _files_hint.append("✅ Soluzioni")
-    _files_str = " · ".join(_files_hint)
-    _n_files   = len(_files_hint)
     st.markdown(f"""
     <div class="genera-hint">
-      <strong style="color:{T['text2']};">File richiesti ({_n_files}):</strong> {_files_str}
+      Genera la verifica principale · Versione B, Ridotta e Soluzioni disponibili dopo
     </div>
     """, unsafe_allow_html=True)
 
@@ -510,37 +487,26 @@ if genera_btn and not _limite_raggiunto:
     if not argomento.strip():
         st.warning("⚠️ Inserisci l'argomento della verifica."); st.stop()
     try:
-        model       = genai.GenerativeModel(modello_id)
-        materia     = materia_scelta.strip() or "Matematica"
+        model        = genai.GenerativeModel(modello_id)
+        materia      = materia_scelta.strip() or "Matematica"
         calibrazione = CALIBRAZIONE_SCUOLA.get(difficolta, "")
         s_es, imgs_es = costruisci_prompt_esercizi(
             st.session_state.esercizi_custom, num_esercizi_totali,
             punti_totali if mostra_punteggi else 0, mostra_punteggi)
 
-        _n_steps = 4 + (2 if doppia_fila else 0) + (1 if bes_dsa else 0) \
-                   + (1 if bes_dsa and doppia_fila and bes_dsa_b else 0) \
-                   + (1 if genera_soluzioni else 0)
-        _step = [0]
-        _prog = st.empty()
-
-        _n_steps = 4 + (2 if doppia_fila else 0) + (1 if bes_dsa else 0) \
-                   + (1 if bes_dsa and doppia_fila and bes_dsa_b else 0) \
-                   + (1 if genera_soluzioni else 0)
-        _step = [0]
+        # Al primo giro genera SOLO la fila A (4 step fissi)
+        _n_steps = 4
+        _step    = [0]
         _t_start = [time.time()]
-        _prog = st.empty()
+        _prog    = st.empty()
 
         def _avanza(testo):
             _step[0] += 1
             perc = int(min(_step[0] / _n_steps, 0.97) * 100)
-
-            # Stima tempo rimanente basata sul ritmo osservato
-            _elapsed = time.time() - _t_start[0]
-            _steps_done = _step[0]
-            _steps_left = max(1, _n_steps - _steps_done)
-            if _steps_done >= 1 and _elapsed > 2:
-                _sec_per_step = _elapsed / _steps_done
-                _sec_rimasti = int(_sec_per_step * _steps_left)
+            _elapsed    = time.time() - _t_start[0]
+            _steps_left = max(1, _n_steps - _step[0])
+            if _step[0] >= 1 and _elapsed > 2:
+                _sec_rimasti = int((_elapsed / _step[0]) * _steps_left)
                 if _sec_rimasti > 90:
                     _tempo_str = f"⏱ ~{_sec_rimasti // 60}min {_sec_rimasti % 60:02d}s"
                 elif _sec_rimasti > 10:
@@ -581,11 +547,11 @@ if genera_btn and not _limite_raggiunto:
             punti_totali=punti_totali,
             mostra_punteggi=mostra_punteggi,
             con_griglia=con_griglia,
-            doppia_fila=doppia_fila,
-            bes_dsa=bes_dsa,
-            perc_ridotta=perc_ridotta,
-            bes_dsa_b=bes_dsa_b,
-            genera_soluzioni=genera_soluzioni,
+            doppia_fila=False,
+            bes_dsa=False,
+            perc_ridotta=None,
+            bes_dsa_b=False,
+            genera_soluzioni=False,
             note_generali=note_generali,
             istruzioni_esercizi=s_es,
             immagini_esercizi=imgs_es,
@@ -606,16 +572,19 @@ if genera_btn and not _limite_raggiunto:
                 v['testo'] = dati['testo']
                 v['latex'] = dati.get('latex', '')
 
-        _aggiorna('A',  ris['A'])
-        _aggiorna('B',  ris['B'])
-        _aggiorna('R',  ris['R'])
-        _aggiorna('RB', ris['RB'])
-        _aggiorna('S',  ris['S'])
+        _aggiorna('A', ris['A'])
+        # Resetta le varianti in caso di rigenerazione
+        st.session_state.verifiche['B'] = _vf()
+        st.session_state.verifiche['R'] = _vf()
+        st.session_state.verifiche['RB'] = _vf()
+        st.session_state.verifiche['S'] = {'latex': None, 'testo': None, 'pdf': None}
 
         _prog.markdown(f"""
 <div style="margin:0.6rem 0 1rem 0;">
-  <div style="font-size:0.82rem;font-weight:600;color:{T['success']};
-              font-family:'DM Sans',sans-serif;margin-bottom:6px;">✅  Verifica pronta!</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+    <div style="font-size:0.82rem;font-weight:600;color:{T['success']};
+                font-family:'DM Sans',sans-serif;">✅  Verifica pronta!</div>
+  </div>
   <div style="background:{T['border']};border-radius:100px;height:8px;overflow:hidden;">
     <div style="background:{T['success']};width:100%;height:100%;border-radius:100px;"></div>
   </div>
@@ -629,6 +598,14 @@ if genera_btn and not _limite_raggiunto:
         st.session_state.last_gen_ts    = time.time()
         st.session_state._onboarding_done = True
 
+        # Salva parametri per uso a posteriori (Versione B, Ridotta, Soluzioni)
+        st.session_state['_gen_mostra_punteggi'] = mostra_punteggi
+        st.session_state['_gen_con_griglia']     = con_griglia
+        st.session_state['_gen_punti_totali']    = punti_totali
+        st.session_state['_gen_modello_id']      = modello_id
+        st.session_state['_gen_difficolta']      = difficolta
+        st.session_state['_gen_materia']         = materia
+
         try:
             supabase_admin.table("verifiche_storico").insert({
                 "user_id":      st.session_state.utente.id,
@@ -636,8 +613,8 @@ if genera_btn and not _limite_raggiunto:
                 "argomento":    ris['titolo'],
                 "scuola":       difficolta,
                 "latex_a":      ris['A']['latex'] or None,
-                "latex_b":      ris['B']['latex'] or None,
-                "latex_r":      ris['R']['latex'] or None,
+                "latex_b":      None,
+                "latex_r":      None,
                 "modello":      modello_id,
                 "num_esercizi": num_esercizi_totali,
             }).execute()
@@ -652,13 +629,21 @@ if genera_btn and not _limite_raggiunto:
         st.error(f"❌ Errore: {e}")
 
 
-# ── OUTPUT ────────────────────────────────────────────────────────────────────────
+# ── OUTPUT VERIFICA PRINCIPALE ────────────────────────────────────────────────────
 if st.session_state.verifiche['A']['latex']:
     st.divider()
-    _df  = doppia_fila   if 'doppia_fila'  in dir() else False
     _arg = st.session_state.last_argomento or (argomento if 'argomento' in dir() else 'verifica')
+    # Recupera parametri punteggi usati nella generazione
+    _mostra_punteggi = st.session_state.get('_gen_mostra_punteggi', False)
+    _con_griglia     = st.session_state.get('_gen_con_griglia', False)
+    _punti_totali    = st.session_state.get('_gen_punti_totali', 100)
+    _modello_id_gen  = st.session_state.get('_gen_modello_id', modello_id)
+    _materia_gen     = st.session_state.get('_gen_materia', 'Materia')
 
-    attive = ['A','B'] if _df and st.session_state.verifiche['B']['latex'] else ['A']
+    # Mostra verifica A (e B, R, RB se già generate)
+    attive = ['A']
+    if st.session_state.verifiche['B']['latex']:
+        attive.append('B')
     if st.session_state.verifiche['R']['latex']:
         attive.append('R')
     if st.session_state.verifiche['RB']['latex']:
@@ -670,11 +655,11 @@ if st.session_state.verifiche['A']['latex']:
             st.divider()
         with st.container():
             if fid == 'R':
-                label_ver = "Verifica Ridotta (Fila A)"
+                label_ver = "Verifica Ridotta BES/DSA (Fila A)"
             elif fid == 'RB':
-                label_ver = "Verifica Ridotta (Fila B)"
-            elif _df:
-                label_ver = f"Versione {fid}"
+                label_ver = "Verifica Ridotta BES/DSA (Fila B)"
+            elif fid == 'B':
+                label_ver = "Versione B"
             else:
                 label_ver = "La tua verifica"
 
@@ -720,8 +705,9 @@ if st.session_state.verifiche['A']['latex']:
             """, unsafe_allow_html=True)
 
             if v['pdf']:
+                pdf_size = _stima_dimensione(v['pdf'])
                 st.download_button(
-                    label=f"📄 Scarica PDF ",
+                    label=f"📄 Scarica PDF — Alta qualità ({pdf_size})",
                     data=v['pdf'],
                     file_name=f"Verifica_{_arg}_{fid}.pdf",
                     mime="application/pdf",
@@ -777,7 +763,7 @@ if st.session_state.verifiche['A']['latex']:
                                use_container_width=True, disabled=not richiesta_modifica.strip()):
                         try:
                             with st.spinner("⏳ Modifica in corso..."):
-                                model = genai.GenerativeModel(modello_id)
+                                model = genai.GenerativeModel(_modello_id_gen)
                                 latex_modificato = modifica_verifica_con_ai(
                                     v['latex'],
                                     richiesta_modifica.strip(),
@@ -785,11 +771,11 @@ if st.session_state.verifiche['A']['latex']:
                                 )
                                 latex_modificato = fix_items_environment(latex_modificato)
                                 latex_modificato = rimuovi_vspace_corpo(latex_modificato)
-                                if mostra_punteggi:
+                                if _mostra_punteggi:
                                     latex_modificato = rimuovi_punti_subsection(latex_modificato)
-                                    latex_modificato = riscala_punti(latex_modificato, punti_totali)
-                                if con_griglia:
-                                    latex_modificato = inietta_griglia(latex_modificato, punti_totali)
+                                    latex_modificato = riscala_punti(latex_modificato, _punti_totali)
+                                if _con_griglia:
+                                    latex_modificato = inietta_griglia(latex_modificato, _punti_totali)
                                 st.session_state.verifiche[fid]['latex'] = latex_modificato
                                 pdf_mod, err_mod = compila_pdf(latex_modificato)
                                 if pdf_mod:
@@ -849,7 +835,7 @@ if st.session_state.verifiche['A']['latex']:
                     st.session_state[_docx_gen_key] = True
                 if st.session_state.get(_docx_gen_key, False):
                     with st.spinner("⏳ Conversione Word…"):
-                        db, de = latex_to_docx_via_ai(v['latex'], con_griglia=con_griglia)
+                        db, de = latex_to_docx_via_ai(v['latex'], con_griglia=_con_griglia)
                     if db:
                         st.session_state.verifiche[fid]['docx'] = db
                         st.session_state.verifiche[fid]['docx_ts'] = time.time()
@@ -883,54 +869,223 @@ if st.session_state.verifiche['A']['latex']:
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
 
-# ── SOLUZIONI ─────────────────────────────────────────────────────────────────────
-if st.session_state.verifiche['S'].get('testo') or st.session_state.verifiche['S'].get('pdf'):
+    # ── ZONA "GENERA ALTRO" (a posteriori) ───────────────────────────────────────
     st.divider()
-    _arg_s = st.session_state.last_argomento or (argomento if 'argomento' in dir() else 'verifica')
-    v_s = st.session_state.verifiche['S']
     st.markdown(f"""
-    <div style="background:linear-gradient(135deg, {T['accent_light']} 0%, {T['card']} 100%);
-                border:2px solid {T['success']};border-radius:16px;padding:0;
-                margin-bottom:1.8rem;overflow:hidden;box-shadow:0 4px 20py {T['success']}22;">
-      <div style="background:{T['success']};padding:1rem 1.3rem;">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <span style="font-size:1.8rem;">📋</span>
-          <div style="flex:1;">
-            <div style="font-family:'DM Sans',sans-serif;font-size:1.3rem;font-weight:900;color:#ffffff;letter-spacing:-0.02em;">
-              Soluzioni
-            </div>
-            <div style="font-size:0.75rem;color:#ffffff;opacity:0.85;font-weight:600;margin-top:2px;">
-              Documento riservato al docente
-            </div>
-          </div>
-          <div style="background:#ffffff22;border:1px solid #ffffff33;border-radius:20px;
-                      padding:6px 16px;font-size:0.72rem;font-weight:700;color:#ffffff;
-                      letter-spacing:0.05em;text-transform:uppercase;">🔒 Solo docente</div>
-        </div>
+    <div style="background:{T['bg2']};border:1.5px solid {T['border2']};border-radius:14px;
+                padding:1.2rem 1.4rem;margin-bottom:1.2rem;">
+      <div style="font-size:0.95rem;font-weight:800;color:{T['text']};
+                  font-family:'DM Sans',sans-serif;margin-bottom:0.3rem;">
+        🎯 Soddisfatto della verifica? Genera anche:
+      </div>
+      <div style="font-size:0.8rem;color:{T['text2']};font-family:'DM Sans',sans-serif;line-height:1.5;">
+        Versione B, Ridotta BES/DSA e Soluzioni vengono generate partendo dalla verifica che hai già approvato — senza ricominciare da capo.
       </div>
     </div>
     """, unsafe_allow_html=True)
 
-    if v_s.get('pdf'):
-        st.download_button(
-            label="📄 Scarica Soluzioni PDF",
-            data=v_s['pdf'],
-            file_name=f"Soluzioni_{_arg_s}.pdf",
-            mime="application/pdf",
-            use_container_width=True,
-            key="dl_sol_pdf"
-        )
-    st.write("")
-    if v_s.get('testo'):
-        with st.expander("👁 Mostra soluzioni", expanded=False):
-            st.markdown(v_s['testo'])
-    if v_s.get('pdf') and v_s.get('preview'):
-        with st.expander("👁 Anteprima PDF Soluzioni", expanded=False):
-            b64_s = base64.b64encode(v_s['pdf']).decode()
-            st.markdown(f"""
-            <iframe src="data:application/pdf;base64,{b64_s}#toolbar=0&navpanes=0&scrollbar=1"
-                    style="width:100%;height:500px;border:none;border-radius:8px;display:block;"></iframe>
-            """, unsafe_allow_html=True)
+    _gc1, _gc2, _gc3 = st.columns(3)
+
+    # ── VERSIONE B ────────────────────────────────────────────────────────────────
+    with _gc1:
+        _ha_b = bool(st.session_state.verifiche['B']['latex'])
+        if _ha_b:
+            if st.session_state.verifiche['B']['pdf']:
+                st.download_button(
+                    "📄 Scarica Versione B",
+                    data=st.session_state.verifiche['B']['pdf'],
+                    file_name=f"Verifica_{_arg}_B.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                    key="dl_b_post"
+                )
+            else:
+                st.info("✅ Versione B pronta (ricompila per PDF)")
+        else:
+            if st.button("📄 Genera Versione B", use_container_width=True, key="btn_gen_b"):
+                with st.spinner("Generazione Versione B…"):
+                    try:
+                        _model_b = genai.GenerativeModel(_modello_id_gen)
+                        _rb = _model_b.generate_content(
+                            prompt_versione_b(st.session_state.verifiche['A']['latex'])
+                        )
+                        _corpo_b = pulisci_corpo_latex(
+                            _rb.text.replace("```latex", "").replace("```", "").strip()
+                        )
+                        # Riusa preambolo di A, sostituisce il corpo
+                        _latex_a_base = st.session_state.verifiche['A']['latex']
+                        _idx_b = _latex_a_base.find('\\subsection*')
+                        if _idx_b > 0:
+                            _latex_b_final = _latex_a_base[:_idx_b] + _corpo_b
+                        else:
+                            _latex_b_final = _corpo_b
+                        # Aggiorna etichetta "Versione B" nel titolo
+                        _latex_b_final = re.sub(
+                            r'(\\textbf\{\\large [^}]+)\}(\s*\\\\)',
+                            lambda m: m.group(0).rstrip('\\').rstrip() + ' — Versione B} \\\\',
+                            _latex_b_final, count=1
+                        )
+                        _latex_b_final = fix_items_environment(_latex_b_final)
+                        _latex_b_final = rimuovi_vspace_corpo(_latex_b_final)
+                        if _mostra_punteggi:
+                            _latex_b_final = rimuovi_punti_subsection(_latex_b_final)
+                            _latex_b_final = riscala_punti(_latex_b_final, _punti_totali)
+                        if _con_griglia:
+                            _latex_b_final = inietta_griglia(_latex_b_final, _punti_totali)
+                        _pdf_b, _err_b = compila_pdf(_latex_b_final)
+                        st.session_state.verifiche['B']['latex'] = _latex_b_final
+                        st.session_state.verifiche['B']['latex_originale'] = _latex_b_final
+                        if _pdf_b:
+                            st.session_state.verifiche['B']['pdf'] = _pdf_b
+                            st.session_state.verifiche['B']['preview'] = True
+                        st.rerun()
+                    except Exception as _e_b:
+                        st.error(f"Errore Versione B: {_e_b}")
+        st.caption("Stessa verifica con dati diversi, per evitare copiatura tra banchi")
+
+    # ── VERSIONE RIDOTTA BES/DSA ──────────────────────────────────────────────────
+    with _gc2:
+        _ha_r = bool(st.session_state.verifiche['R']['latex'])
+        if _ha_r:
+            if st.session_state.verifiche['R']['pdf']:
+                st.download_button(
+                    "📄 Scarica Versione Ridotta",
+                    data=st.session_state.verifiche['R']['pdf'],
+                    file_name=f"Verifica_{_arg}_Ridotta.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                    key="dl_r_post"
+                )
+            else:
+                st.info("✅ Versione Ridotta pronta (ricompila per PDF)")
+        else:
+            _perc_r = st.select_slider(
+                "Riduzione",
+                options=[10, 20, 30], value=20,
+                format_func=lambda x: f"-{x}% esercizi",
+                key="perc_ridotta_post"
+            )
+            if st.button("♿ Genera Versione Ridotta", use_container_width=True, key="btn_gen_r"):
+                with st.spinner("Generazione versione BES/DSA…"):
+                    try:
+                        _model_r = genai.GenerativeModel(_modello_id_gen)
+                        _rb_r = _model_r.generate_content(prompt_versione_ridotta(
+                            st.session_state.verifiche['A']['latex'],
+                            _materia_gen,
+                            _perc_r,
+                            _mostra_punteggi,
+                            _punti_totali
+                        ))
+                        _corpo_r = pulisci_corpo_latex(
+                            _rb_r.text.replace("```latex", "").replace("```", "").strip()
+                        )
+                        _latex_a_base = st.session_state.verifiche['A']['latex']
+                        _idx_r = _latex_a_base.find('\\subsection*')
+                        _latex_r = (_latex_a_base[:_idx_r] + _corpo_r) if _idx_r > 0 else _corpo_r
+                        _latex_r = fix_items_environment(_latex_r)
+                        _latex_r = rimuovi_vspace_corpo(_latex_r)
+                        if _mostra_punteggi:
+                            _latex_r = rimuovi_punti_subsection(_latex_r)
+                            _latex_r = riscala_punti(_latex_r, _punti_totali)
+                        if _con_griglia:
+                            _latex_r = inietta_griglia(_latex_r, _punti_totali)
+                        _pdf_r, _ = compila_pdf(_latex_r)
+                        st.session_state.verifiche['R']['latex'] = _latex_r
+                        st.session_state.verifiche['R']['latex_originale'] = _latex_r
+                        if _pdf_r:
+                            st.session_state.verifiche['R']['pdf'] = _pdf_r
+                            st.session_state.verifiche['R']['preview'] = True
+                        st.rerun()
+                    except Exception as _e_r:
+                        st.error(f"Errore Versione Ridotta: {_e_r}")
+        st.caption("Versione alleggerita per studenti BES/DSA/sostegno")
+
+    # ── SOLUZIONI ─────────────────────────────────────────────────────────────────
+    with _gc3:
+        _ha_s = bool(st.session_state.verifiche['S'].get('testo'))
+        if _ha_s:
+            v_s = st.session_state.verifiche['S']
+            if v_s.get('pdf'):
+                st.download_button(
+                    "📋 Scarica Soluzioni PDF",
+                    data=v_s['pdf'],
+                    file_name=f"Soluzioni_{_arg}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                    key="dl_sol_post"
+                )
+            if v_s.get('testo'):
+                with st.expander("👁 Mostra soluzioni", expanded=False):
+                    st.markdown(v_s['testo'])
+        else:
+            if st.button("📋 Genera Soluzioni", use_container_width=True, key="btn_gen_sol"):
+                with st.spinner("Generazione soluzioni…"):
+                    try:
+                        _model_s = genai.GenerativeModel(_modello_id_gen)
+                        _rs = _model_s.generate_content(prompt_soluzioni(
+                            st.session_state.verifiche['A']['latex'],
+                            _materia_gen,
+                        ))
+                        _testo_s = _rs.text.strip()
+                        _titolo_s = f"Soluzioni — {_materia_gen}: {_arg}"
+                        _latex_s = (
+                            f"\\documentclass[11pt,a4paper]{{article}}\n"
+                            f"\\usepackage[utf8]{{inputenc}}\n\\usepackage[italian]{{babel}}\n"
+                            f"\\usepackage{{amsmath,amsfonts,amssymb,geometry}}\n"
+                            f"\\geometry{{margin=2cm}}\n\\setlength{{\\parskip}}{{4pt}}\n"
+                            f"\\pagestyle{{empty}}\n\\begin{{document}}\n"
+                            f"\\begin{{center}}\n  \\textbf{{\\large {_titolo_s}}} \\\\\n"
+                            f"  \\vspace{{0.2cm}}\n"
+                            f"  {{\\small \\textit{{Documento riservato al docente — non distribuire agli studenti}}}}\n"
+                            f"\\end{{center}}\n\\vspace{{0.4cm}}\n"
+                            f"{_testo_s}\n\\end{{document}}"
+                        )
+                        _pdf_s, _ = compila_pdf(_latex_s)
+                        st.session_state.verifiche['S']['testo'] = _testo_s
+                        st.session_state.verifiche['S']['latex'] = _latex_s
+                        if _pdf_s:
+                            st.session_state.verifiche['S']['pdf'] = _pdf_s
+                        st.rerun()
+                    except Exception as _e_s:
+                        st.error(f"Errore Soluzioni: {_e_s}")
+        st.caption("Documento riservato al docente, non distribuire agli studenti")
+
+    # Se Versione B esiste, offri anche ridotta B
+    if st.session_state.verifiche['B']['latex'] and not st.session_state.verifiche['RB']['latex']:
+        st.write("")
+        _crb, _csp = st.columns([1, 2])
+        with _crb:
+            _perc_rb = st.session_state.get('perc_ridotta_post', 20)
+            if st.button("♿ Genera Versione Ridotta Fila B", use_container_width=True, key="btn_gen_rb"):
+                with st.spinner("Generazione ridotta Fila B…"):
+                    try:
+                        _model_rb = genai.GenerativeModel(_modello_id_gen)
+                        _rb_rb = _model_rb.generate_content(prompt_versione_ridotta(
+                            st.session_state.verifiche['B']['latex'],
+                            _materia_gen,
+                            _perc_rb,
+                            _mostra_punteggi,
+                            _punti_totali,
+                            "Fila B"
+                        ))
+                        _corpo_rb = pulisci_corpo_latex(
+                            _rb_rb.text.replace("```latex", "").replace("```", "").strip()
+                        )
+                        _latex_b_base = st.session_state.verifiche['B']['latex']
+                        _idx_rb = _latex_b_base.find('\\subsection*')
+                        _latex_rb = (_latex_b_base[:_idx_rb] + _corpo_rb) if _idx_rb > 0 else _corpo_rb
+                        _latex_rb = fix_items_environment(_latex_rb)
+                        _latex_rb = rimuovi_vspace_corpo(_latex_rb)
+                        if _mostra_punteggi:
+                            _latex_rb = rimuovi_punti_subsection(_latex_rb)
+                            _latex_rb = riscala_punti(_latex_rb, _punti_totali)
+                        _pdf_rb, _ = compila_pdf(_latex_rb)
+                        st.session_state.verifiche['RB']['latex'] = _latex_rb
+                        if _pdf_rb:
+                            st.session_state.verifiche['RB']['pdf'] = _pdf_rb
+                        st.rerun()
+                    except Exception as _e_rb:
+                        st.error(f"Errore Ridotta B: {_e_rb}")
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
@@ -984,16 +1139,3 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
-
-
-
-
-
-
-
-
-
-
-
-
-
