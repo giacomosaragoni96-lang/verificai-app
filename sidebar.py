@@ -8,59 +8,19 @@ def render_sidebar(
     is_admin, 
     limite_raggiunto, 
     T, 
-    SCUOLE, 
+    SCUOLE,           # mantenuto per compatibilità firma, non più usato qui
     MODELLI_DISPONIBILI, 
     LIMITE_MENSILE,
-    giorni_al_reset_func,  # Passiamo la funzione per il calcolo del reset
-    compila_pdf_func,      # Passiamo la funzione per compilare il PDF
-    supabase_client        # Client per il logout
+    giorni_al_reset_func,
+    compila_pdf_func,
+    supabase_client
 ) -> dict:
     
     with st.sidebar:
         st.markdown('<div class="sidebar-title">Impostazioni</div>', unsafe_allow_html=True)
 
-       
-        st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Opzioni</div>', unsafe_allow_html=True)
-        bes_dsa = st.checkbox(
-            "Genera versione ridotta (sostegno/certificazioni)",
-            value=False,
-            help="Verrà generato un secondo file identico ma con una percentuale di esercizi in meno."
-        )
-        
-        perc_ridotta = None
-        if bes_dsa:
-            perc_ridotta = st.select_slider(
-                "Esercizi da rimuovere",
-                help="Es. 20% = verranno eliminati circa 1 esercizio ogni 5, partendo dai più complessi",
-                options=[10, 20, 30],
-                value=20,
-                format_func=lambda x: f"-{x}%",
-            )
-        
-        doppia_fila = st.checkbox("Genera Versione A e B (due varianti)", value=False)
-        genera_soluzioni = st.checkbox(
-            "Genera soluzioni della verifica",
-            value=False,
-            help="Verrà generato un documento separato con le soluzioni complete."
-        )
-        
-        bes_dsa_b = False
-        if bes_dsa and doppia_fila:
-            bes_dsa_b = st.checkbox(
-                "Genera versione ridotta anche per Fila B",
-                value=False,
-            )
-
-        st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Punteggi</div>', unsafe_allow_html=True)
-        mostra_punteggi = st.checkbox("Mostra punteggio per esercizio", value=False)
-        con_griglia = st.checkbox("Includi griglia dei punteggi", value=False)
-        punti_totali = st.number_input(
-            "Punti totali", 
-            min_value=10, max_value=200, value=100, step=5,
-            disabled=not mostra_punteggi
-        )
-
-        st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Modello AI</div>', unsafe_allow_html=True)
+        # ── MODELLO AI ────────────────────────────────────────────────────────────
+        st.markdown('<div class="sidebar-label">Modello AI</div>', unsafe_allow_html=True)
         if is_admin:
             _sel_modello = st.selectbox(
                 "modello",
@@ -95,6 +55,7 @@ def render_sidebar(
             else:
                 modello_id = _info["id"]
 
+        # ── ASPETTO ───────────────────────────────────────────────────────────────
         st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Aspetto</div>', unsafe_allow_html=True)
         tema_sel = st.radio(
             "tema",
@@ -114,7 +75,6 @@ def render_sidebar(
         _color_bar = "#EF4444" if limite_raggiunto else ("#F59E0B" if _perc_uso >= 70 else "#10B981")
         _count_class = "limit-reached" if limite_raggiunto else ("limit-near" if _perc_uso >= 70 else "")
         
-        # Uso della funzione passata come argomento
         _gg_reset, _hh_reset = giorni_al_reset_func()
         
         if _gg_reset == 0:
@@ -262,19 +222,6 @@ def render_sidebar(
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # Ritorno dei valori per l'app principale
     return {
-        'bes_dsa': bes_dsa,
-        'perc_ridotta': perc_ridotta,
-        'doppia_fila': doppia_fila,
-        'genera_soluzioni': genera_soluzioni,
-        'bes_dsa_b': bes_dsa_b,
-        'mostra_punteggi': mostra_punteggi,
-        'con_griglia': con_griglia,
-        'punti_totali': punti_totali,
         'modello_id': modello_id,
-
     }
-
-
-
