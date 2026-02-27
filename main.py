@@ -591,8 +591,8 @@ if genera_btn and not _limite_raggiunto:
         if _STREAMING_DISPONIBILE and len(_blocchi_ricevuti) > 0:
             st.session_state._fase = "revisione"
         else:
-            # Fallback: output diretto senza revisione blocchi
-            st.session_state._fase = "pronto"
+            # Nessun blocco trovato → salta revisione, vai diretto all'output
+            st.session_state._fase = "solo_output"
 
         def _aggiorna(fid, dati):
             v = st.session_state.verifiche[fid]
@@ -660,6 +660,10 @@ if genera_btn and not _limite_raggiunto:
 
 
 # ── SEZIONE REVISIONE BLOCCHI (CHECKPOINT VISIVI) ─────────────────────────────────
+# DEBUG — rimuovere dopo conferma funzionamento
+if _ha_latex:
+    st.caption(f"🔧 DEBUG — fase: `{st.session_state._fase}` | blocchi: `{len(st.session_state._blocchi_a)}` | streaming_disponibile: `{_STREAMING_DISPONIBILE}`")
+
 if (
     st.session_state._fase in ("revisione", "pronto")
     and st.session_state._blocchi_a
@@ -856,12 +860,19 @@ if (
 
 
 # ── OUTPUT ────────────────────────────────────────────────────────────────────────
-# Mostra l'output solo se: siamo in fase "pronto", oppure non ci sono blocchi (vecchie verifiche / fallback)
-_mostra_output = (
-    st.session_state.verifiche['A']['latex']
-    and st.session_state._fase in ("pronto", "input")
-    or (st.session_state.verifiche['A']['latex'] and not st.session_state._blocchi_a)
-)
+# Logica _fase:
+#   "input"      → nessuna verifica generata in questa sessione (o vecchia sessione)
+#   "revisione"  → verifica generata, blocchi in attesa di approvazione → NO output
+#   "pronto"     → tutti i blocchi approvati → mostra output
+#   "solo_output"→ blocchi non trovati (fallback) → mostra output diretto
+_ha_latex = bool(st.session_state.verifiche['A']['latex'])
+_fase_curr = st.session_state._fase
+
+# Mostra output se:
+# - fase "pronto" o "solo_output" (nuova generazione approvata o senza blocchi)
+# - fase "input" con latex presente = vecchia verifica da sessione precedente
+_mostra_output = _ha_latex and _fase_curr in ("pronto", "solo_output", "input")
+
 if _mostra_output:
     st.divider()
     _df  = doppia_fila   if 'doppia_fila'  in dir() else False
