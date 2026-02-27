@@ -30,8 +30,6 @@ from auth import mostra_auth, ripristina_sessione, salva_sessione_cookie, cancel
 from styles import get_css
 
 
-
-
 # ── PAGE CONFIG — DEVE ESSERE IL PRIMO COMANDO STREAMLIT ────────────────────────
 st.set_page_config(
     page_title=APP_NAME,
@@ -39,8 +37,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-
-
 
 # ── SUPABASE ──────────────────────────────────────────────────────────────────────
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -62,37 +58,37 @@ if not API_KEY:
     st.stop()
 genai.configure(api_key=API_KEY)
 
-# --- LOGICA DI ACCESSO ---
+# ── LOGICA DI ACCESSO (GATE DEFINITIVO) ──────────────────────────────────────────
 if 'utente' not in st.session_state:
     st.session_state.utente = None
 
+# 1. Tenta il ripristino (legge l'URL o inietta il JS per leggere localStorage)
 ripristina_sessione(supabase)
 
-# Se non siamo loggati, mostriamo il login
+# 2. Controllo stato dopo ripristino
 if st.session_state.utente is None:
-    # IMPORTANTE: Se stiamo aspettando il redirect di JS, 
-    # i parametri _at e _rt appariranno a breve nell'URL.
-    if "_at" not in st.query_params:
+    # Se i parametri sono nell'URL ma 'utente' è ancora None, 
+    # significa che stiamo processando il redirect. Aspettiamo un istante.
+    if "_at" in st.query_params:
+        st.markdown("""
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:80vh;">
+                <div class="spinner"></div>
+                <p style="color:#8C8A82; margin-top:1rem; font-family:'DM Sans',sans-serif;">
+                    Sincronizzazione sessione...
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+        time.sleep(0.5)
+        st.rerun()
+    else:
+        # Se non c'è nulla nell'URL, mostriamo il form di login
         mostra_auth(supabase)
         st.stop()
-    else:
-        # Se i parametri ci sono, mostriamo solo un caricamento
-        # finché ripristina_sessione non li processa al prossimo giro
-        st.info("Ripristino sessione...")
-        st.stop()
 
-# 1. Recupero immediato del cookie (usando la tua funzione ripristina_sessione)
-ripristina_sessione(supabase)
+# ── FINE GATE (Se arriviamo qui, l'utente è loggato) ──────────────────────────────
 
-# 2. Controllo accesso
-if st.session_state.utente is None:
-    mostra_auth(supabase)
-    
-    # Se dopo il form è ancora None, allora fermiamo l'app
-    if st.session_state.utente is None:
-        st.stop()
 
-# ── FUNZIONI ──────────────────────────────────────────────────────────────────────
+# ── FUNZIONI UTILITY ──────────────────────────────────────────────────────────────
 
 def _get_verifiche_mese(user_id):
     from datetime import datetime, timezone
@@ -107,7 +103,6 @@ def _get_verifiche_mese(user_id):
         return res.count or 0
     except Exception:
         return 0
-
 
 def _giorni_al_reset():
     from datetime import datetime, timezone
@@ -127,7 +122,6 @@ def modifica_verifica_con_ai(latex_originale, richiesta_modifica, model):
     if "\\end{document}" not in latex_modificato:
         latex_modificato += "\n\\end{document}"
     return latex_modificato
-
 
 def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_punteggi):
     n_liberi = max(0, num_totale - len(esercizi_custom))
@@ -155,10 +149,7 @@ def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra
         righe.append(
             f"\nREGOLA PRIMO ESERCIZIO (Esercizio 1 — SEMPRE presente, NON modificabile):\n"
             f"Il primo esercizio DEVE chiamarsi 'Saperi Essenziali' e coprire i concetti fondamentali\n"
-            f"dell'argomento che TUTTI gli studenti devono conoscere (definizioni, concetti base, formule\n"
-            f"chiave, fatti imprescindibili). NON inserire mai il simbolo (*) in questo esercizio:\n"
-            f"è obbligatorio per tutti, nessuna esclusione. Calibra il livello di difficoltà in modo\n"
-            f"accessibile. Gli esercizi {2}–{num_totale} possono approfondire e variare."
+            f"dell'argomento che TUTTI gli studenti devono conoscere. NON inserire mai il simbolo (*) qui."
         )
 
     righe.append(f"\nDETTAGLIO ESERCIZI ({num_totale} totali):")
@@ -179,34 +170,8 @@ def costruisci_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra
     if n_liberi > 0:
         start_idx = len(esercizi_custom) + 1
         end_idx   = num_totale
-        righe.append(f"- Esercizi {start_idx}–{end_idx}: genera tu {n_liberi} esercizi coerenti con l'argomento.")
+        righe.append(f"- Esercizi {start_idx}–{end_idx}: genera tu {n_liberi} esercizi coerenti.")
     return "\n".join(righe), immagini
-
-
-# ── HELPER ────────────────────────────────────────────────────────────────────────
-def _tempo_relativo(ts):
-    if ts is None:
-        return ""
-    diff = time.time() - ts
-    if diff < 60:
-        return "pochi secondi fa"
-    elif diff < 3600:
-        m = int(diff // 60)
-        return f"{m} min fa"
-    elif diff < 86400:
-        h = int(diff // 3600)
-        return f"{h} ore fa"
-    else:
-        return time.strftime("%d/%m", time.localtime(ts))
-
-
-def _stima_dimensione(data_bytes):
-    if data_bytes is None:
-        return "—"
-    kb = len(data_bytes) / 1024
-    if kb < 1024:
-        return f"{kb:.0f} KB"
-    return f"{kb/1024:.1f} MB"
 
 
 # ── SESSION STATE ─────────────────────────────────────────────────────────────────
@@ -215,8 +180,8 @@ def _vf():
             'soluzioni_latex': '', 'soluzioni_pdf': None, 'docx': None,
             'pdf_ts': None, 'docx_ts': None, 'latex_originale': ''}
 
-if 'utente' not in st.session_state: st.session_state.utente = None
-if 'verifiche' not in st.session_state: st.session_state.verifiche = {'A': _vf(), 'B': _vf(), 'R': _vf(), 'RB': _vf(), 'S': {'latex': None, 'testo': None}}
+if 'verifiche' not in st.session_state: 
+    st.session_state.verifiche = {'A': _vf(), 'B': _vf(), 'R': _vf(), 'RB': _vf(), 'S': {'latex': None, 'testo': None}}
 if 'esercizi_custom' not in st.session_state: st.session_state.esercizi_custom = []
 if 'last_materia'    not in st.session_state: st.session_state.last_materia = None
 if 'last_argomento'  not in st.session_state: st.session_state.last_argomento = None
@@ -226,23 +191,15 @@ if '_preferiti' not in st.session_state: st.session_state._preferiti = set()
 if '_storico_page' not in st.session_state: st.session_state._storico_page = 1
 if '_onboarding_done' not in st.session_state: st.session_state._onboarding_done = False
 
-# ── CALCOLA VERIFICHE DEL MESE (una volta per rerun) ─────────────────────────────
+# ── DATI UTENTE E LIMITI ──────────────────────────────────────────────────────────
 _verifiche_mese_count = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
 _is_admin = (st.session_state.utente.email in ADMIN_EMAILS) if st.session_state.utente else False
 _limite_raggiunto = (not _is_admin) and (_verifiche_mese_count >= LIMITE_MENSILE)
 
-# ── CSS GLOBALE — ora da styles.py ────────────────────────────────────────────────
+# ── CSS GLOBALE ──────────────────────────────────────────────────────────────────
 st.markdown(get_css(T), unsafe_allow_html=True)
 
-# ── FEEDBACK BUTTON ───────────────────────────────────────────────────────────────
-st.markdown(f"""
-<a class="fab-link" href="{FEEDBACK_FORM_URL}" target="_blank" rel="noopener noreferrer"
-   onclick="window.open(this.href,'_blank','noopener,noreferrer'); return false;">
-  💬 &nbsp; Feedback & Bug
-</a>
-""", unsafe_allow_html=True)
-
-
+# ── SIDEBAR E CONTENUTO ────────────────────────────────────────────────────────────
 try:
     settings = render_sidebar(
         supabase_admin=supabase_admin,
@@ -259,7 +216,7 @@ try:
         supabase_client=supabase
     )
 
-    # Estrazione sicura dei valori
+    # Estrazione valori settings...
     difficolta = settings.get('difficolta', 'Liceo Scientifico')
     bes_dsa = settings.get('bes_dsa', False)
     perc_ridotta = settings.get('perc_ridotta', 15)
@@ -270,6 +227,11 @@ try:
     con_griglia = settings.get('con_griglia', False)
     punti_totali = settings.get('punti_totali', 100)
     modello_id = settings.get('modello_id', 'gemini-1.5-pro')
+
+except Exception as e:
+    st.error(f"Errore sidebar: {e}")
+    st.stop()
+
 
 except NameError as e:
     st.error(f"Errore di configurazione: {e}")
@@ -978,6 +940,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
