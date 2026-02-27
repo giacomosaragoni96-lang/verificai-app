@@ -1,26 +1,60 @@
+# ── sidebar.py — VerificAI ───────────────────────────────────────────────────
+# Sidebar: Modello AI, Tema, Contatore mensile, Storico, Logout.
+# I parametri di configurazione (scuola, materia, punteggi, varianti) sono ora
+# nel form principale di STAGE_INPUT — la sidebar resta snella e contestuale.
+# ─────────────────────────────────────────────────────────────────────────────
+
 import streamlit as st
 from datetime import datetime, timezone
 
+
 def render_sidebar(
-    supabase_admin, 
-    utente, 
-    verifiche_mese_count, 
-    is_admin, 
-    limite_raggiunto, 
-    T, 
-    SCUOLE,           # mantenuto per compatibilità firma, non più usato qui
-    MODELLI_DISPONIBILI, 
+    supabase_admin,
+    utente,
+    verifiche_mese_count,
+    is_admin,
+    limite_raggiunto,
+    T,
+    SCUOLE,               # mantenuto per compatibilità firma
+    MODELLI_DISPONIBILI,
     LIMITE_MENSILE,
     giorni_al_reset_func,
     compila_pdf_func,
-    supabase_client
+    supabase_client,
+    current_stage: str = "INPUT",
 ) -> dict:
-    
+
+    # ── Costanti stage ────────────────────────────────────────────────────────
+    STAGE_INPUT  = "INPUT"
+    STAGE_REVIEW = "REVIEW"
+    STAGE_FINAL  = "FINAL"
+
     with st.sidebar:
         st.markdown('<div class="sidebar-title">Impostazioni</div>', unsafe_allow_html=True)
 
-        # ── MODELLO AI ────────────────────────────────────────────────────────────
+        # ── Banner contestuale ─────────────────────────────────────────────────
+        if current_stage == STAGE_REVIEW:
+            st.markdown(f"""
+            <div style="background:{T['accent_light']};border:1px solid {T['accent']}44;
+                        border-radius:8px;padding:0.6rem 0.8rem;margin-bottom:0.8rem;
+                        font-size:0.75rem;color:{T['text2']};font-family:'DM Sans',sans-serif;">
+              ✏️ <strong style="color:{T['accent']};">Fase revisione</strong> — stai
+              correggendo gli esercizi uno a uno.
+            </div>
+            """, unsafe_allow_html=True)
+        elif current_stage == STAGE_FINAL:
+            st.markdown(f"""
+            <div style="background:{T['accent_light']};border:1px solid {T['success']}44;
+                        border-radius:8px;padding:0.6rem 0.8rem;margin-bottom:0.8rem;
+                        font-size:0.75rem;color:{T['text2']};font-family:'DM Sans',sans-serif;">
+              🎉 <strong style="color:{T['success']};">Verifica pronta</strong> — scarica
+              i file o crea una nuova verifica.
+            </div>
+            """, unsafe_allow_html=True)
+
+        # ── MODELLO AI ────────────────────────────────────────────────────────
         st.markdown('<div class="sidebar-label">Modello AI</div>', unsafe_allow_html=True)
+
         if is_admin:
             _sel_modello = st.selectbox(
                 "modello",
@@ -29,22 +63,17 @@ def render_sidebar(
             )
             modello_id = MODELLI_DISPONIBILI[_sel_modello]["id"]
         else:
-            _nomi_display = []
-            for _k, _v in MODELLI_DISPONIBILI.items():
-                if _v["pro"]:
-                    _nomi_display.append(_k + "  🔒")
-                else:
-                    _nomi_display.append(_k)
-            
+            _nomi_display = [
+                k + "  🔒" if v["pro"] else k
+                for k, v in MODELLI_DISPONIBILI.items()
+            ]
             _sel_display = st.selectbox(
-                "modello",
-                _nomi_display,
-                index=0,
+                "modello", _nomi_display, index=0,
                 label_visibility="collapsed"
             )
             _sel_raw = _sel_display.replace("  🔒", "")
-            _info = MODELLI_DISPONIBILI[_sel_raw]
-            
+            _info    = MODELLI_DISPONIBILI[_sel_raw]
+
             if _info["pro"]:
                 st.markdown(
                     f'<div style="font-size:0.74rem;color:{T["muted"]};padding:4px 0 2px 2px;'
@@ -55,8 +84,11 @@ def render_sidebar(
             else:
                 modello_id = _info["id"]
 
-        # ── ASPETTO ───────────────────────────────────────────────────────────────
-        st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Aspetto</div>', unsafe_allow_html=True)
+        # ── ASPETTO ───────────────────────────────────────────────────────────
+        st.markdown(
+            f'<div class="sidebar-label" style="margin-top:1rem;">Aspetto</div>',
+            unsafe_allow_html=True
+        )
         tema_sel = st.radio(
             "tema",
             ["☀️ Chiaro", "🌙 Scuro"],
@@ -69,18 +101,22 @@ def render_sidebar(
             st.session_state.theme = new_theme
             st.rerun()
 
-        # ── CONTATORE MENSILE ─────────────────────────────────────────────────────
-        st.markdown('<div class="sidebar-label" style="margin-top:1.5rem;">Utilizzo mensile</div>', unsafe_allow_html=True)
-        _perc_uso = min(100, int(verifiche_mese_count / LIMITE_MENSILE * 100))
-        _color_bar = "#EF4444" if limite_raggiunto else ("#F59E0B" if _perc_uso >= 70 else "#10B981")
-        _count_class = "limit-reached" if limite_raggiunto else ("limit-near" if _perc_uso >= 70 else "")
-        
+        # ── CONTATORE MENSILE ─────────────────────────────────────────────────
+        st.markdown(
+            f'<div class="sidebar-label" style="margin-top:1.5rem;">Utilizzo mensile</div>',
+            unsafe_allow_html=True
+        )
+        _perc_uso   = min(100, int(verifiche_mese_count / LIMITE_MENSILE * 100))
+        _color_bar  = ("#EF4444" if limite_raggiunto
+                       else ("#F59E0B" if _perc_uso >= 70 else "#10B981"))
+        _count_class = ("limit-reached" if limite_raggiunto
+                        else ("limit-near" if _perc_uso >= 70 else ""))
+
         _gg_reset, _hh_reset = giorni_al_reset_func()
-        
         if _gg_reset == 0:
             _reset_str = f"Reset tra {_hh_reset}h"
         elif _gg_reset == 1:
-            _reset_str = f"Reset domani"
+            _reset_str = "Reset domani"
         else:
             _reset_str = f"Reset tra {_gg_reset}gg"
 
@@ -88,117 +124,153 @@ def render_sidebar(
         <div class="monthly-bar">
           <div class="monthly-bar-header">
             <span class="monthly-bar-label">Verifiche questo mese</span>
-            <span class="monthly-bar-count {_count_class}">{verifiche_mese_count} / {LIMITE_MENSILE}</span>
+            <span class="monthly-bar-count {_count_class}">
+              {verifiche_mese_count} / {LIMITE_MENSILE}
+            </span>
           </div>
           <div class="monthly-progress">
-            <div class="monthly-progress-fill" style="width:{_perc_uso}%;background:{_color_bar};"></div>
+            <div class="monthly-progress-fill"
+                 style="width:{_perc_uso}%;background:{_color_bar};"></div>
           </div>
-          <div style="text-align:right;font-size:0.68rem;color:#6b6960;margin-top:4px;font-family:'DM Sans',sans-serif;">
+          <div style="text-align:right;font-size:0.68rem;color:#6b6960;
+                      margin-top:4px;font-family:'DM Sans',sans-serif;">
             🔄 {_reset_str}
           </div>
         </div>
         """, unsafe_allow_html=True)
-        
+
         if limite_raggiunto:
             st.warning(f"Limite mensile raggiunto ({LIMITE_MENSILE} verifiche). {_reset_str}.")
 
-        # ── STORICO VERIFICHE ─────────────────────────────────────────────────────
-        st.markdown('<div class="sidebar-label" style="margin-top:1rem;">Le mie verifiche</div>', unsafe_allow_html=True)
+        # ── STORICO VERIFICHE ─────────────────────────────────────────────────
+        st.markdown(
+            f'<div class="sidebar-label" style="margin-top:1rem;">Le mie verifiche</div>',
+            unsafe_allow_html=True
+        )
 
-        _refresh_key = st.session_state._storico_refresh
-        _page_size = 5
+        _refresh_key  = st.session_state._storico_refresh
+        _page_size    = 5
         _storico_limit = st.session_state._storico_page * _page_size
-        
+
         try:
-            storico = supabase_admin.table("verifiche_storico")\
-                .select("id, materia, argomento, created_at, latex_a, latex_b, latex_r, scuola")\
-                .eq("user_id", st.session_state.utente.id)\
-                .is_("deleted_at", "null")\
-                .order("created_at", desc=True)\
-                .limit(_storico_limit + 1)\
+            storico = (
+                supabase_admin.table("verifiche_storico")
+                .select("id, materia, argomento, created_at, latex_a, latex_b, latex_r, scuola")
+                .eq("user_id", utente.id)
+                .is_("deleted_at", "null")
+                .order("created_at", desc=True)
+                .limit(_storico_limit + 1)
                 .execute()
+            )
 
             if storico.data:
-                _ha_altri = len(storico.data) > _storico_limit
-                dati_pagina = storico.data[:_storico_limit]
-                _pref = st.session_state._preferiti
-                
+                _ha_altri      = len(storico.data) > _storico_limit
+                dati_pagina    = storico.data[:_storico_limit]
+                _pref          = st.session_state._preferiti
+
                 def _sort_key(v):
-                    return (0 if v['id'] in _pref else 1, v['created_at'])
-                
+                    return (0 if v["id"] in _pref else 1, v["created_at"])
+
                 dati_ordinati = sorted(dati_pagina, key=_sort_key)
 
                 for v in dati_ordinati:
-                    data_str = v['created_at'][:10]
-                    is_pref = v['id'] in _pref
-                    star_ico = "★" if is_pref else "☆"
-                    star_label_prefix = "⭐ " if is_pref else ""
-                    label = f"{star_label_prefix}{v['materia']} — {v['argomento'][:20]}{'...' if len(v['argomento'])>20 else ''}"
-                    
+                    data_str       = v["created_at"][:10]
+                    is_pref        = v["id"] in _pref
+                    star_ico       = "★" if is_pref else "☆"
+                    star_prefix    = "⭐ " if is_pref else ""
+                    arg_trunc      = v["argomento"][:20] + ("…" if len(v["argomento"]) > 20 else "")
+                    label          = f"{star_prefix}{v['materia']} — {arg_trunc}"
+
                     with st.expander(f"{label} ({data_str})"):
-                        if v.get('scuola'):
-                            st.caption(f"{v['scuola'][:35]}")
+                        if v.get("scuola"):
+                            st.caption(v["scuola"][:40])
 
-                        _col_star, _col_spacer = st.columns([1, 3])
+                        _col_star, _ = st.columns([1, 3])
                         with _col_star:
-                            st.markdown(f'<div class="{"stella-btn-on" if is_pref else "stella-btn"}">', unsafe_allow_html=True)
+                            st.markdown(
+                                f'<div class="{"stella-btn-on" if is_pref else "stella-btn"}">',
+                                unsafe_allow_html=True
+                            )
                             if st.button(star_ico, key=f"star_{v['id']}_{_refresh_key}"):
-                                if v['id'] in st.session_state._preferiti:
-                                    st.session_state._preferiti.discard(v['id'])
+                                if v["id"] in st.session_state._preferiti:
+                                    st.session_state._preferiti.discard(v["id"])
                                 else:
-                                    st.session_state._preferiti.add(v['id'])
+                                    st.session_state._preferiti.add(v["id"])
                                 st.rerun()
-                            st.markdown('</div>', unsafe_allow_html=True)
+                            st.markdown("</div>", unsafe_allow_html=True)
 
-                        if v.get('latex_a'):
-                            if st.button("♻ Ricarica Fila A", key=f"reload_a_{v['id']}_{_refresh_key}", use_container_width=True):
-                                st.session_state.verifiche['A']['latex'] = v['latex_a']
-                                pdf, _ = compila_pdf_func(v['latex_a'])
+                        if v.get("latex_a"):
+                            if st.button(
+                                "♻ Ricarica Fila A",
+                                key=f"reload_a_{v['id']}_{_refresh_key}",
+                                use_container_width=True
+                            ):
+                                st.session_state.verifiche["A"]["latex"] = v["latex_a"]
+                                pdf, _ = compila_pdf_func(v["latex_a"])
                                 if pdf:
-                                    st.session_state.verifiche['A']['pdf'] = pdf
-                                    st.session_state.verifiche['A']['preview'] = True
+                                    st.session_state.verifiche["A"]["pdf"]     = pdf
+                                    st.session_state.verifiche["A"]["preview"] = True
+                                # Estrai blocchi per eventuale revisione
+                                from main import _extract_blocks  # noqa: guarded import
+                                try:
+                                    pre, blks = _extract_blocks(v["latex_a"])
+                                    st.session_state.review_preamble = pre
+                                    st.session_state.review_blocks   = blks
+                                except Exception:
+                                    pass
+                                st.session_state.stage = "FINAL"
                                 st.rerun()
-                        
-                        if v.get('latex_b'):
-                            if st.button("♻ Ricarica Fila B", key=f"reload_b_{v['id']}_{_refresh_key}", use_container_width=True):
-                                st.session_state.verifiche['B']['latex'] = v['latex_b']
-                                pdf, _ = compila_pdf_func(v['latex_b'])
+
+                        if v.get("latex_b"):
+                            if st.button(
+                                "♻ Ricarica Fila B",
+                                key=f"reload_b_{v['id']}_{_refresh_key}",
+                                use_container_width=True
+                            ):
+                                st.session_state.verifiche["B"]["latex"] = v["latex_b"]
+                                pdf, _ = compila_pdf_func(v["latex_b"])
                                 if pdf:
-                                    st.session_state.verifiche['B']['pdf'] = pdf
-                                    st.session_state.verifiche['B']['preview'] = True
+                                    st.session_state.verifiche["B"]["pdf"]     = pdf
+                                    st.session_state.verifiche["B"]["preview"] = True
                                 st.rerun()
 
                         st.markdown('<div class="elimina-btn">', unsafe_allow_html=True)
-                        if st.button("Elimina", key=f"del_{v['id']}_{_refresh_key}", use_container_width=True):
+                        if st.button(
+                            "Elimina",
+                            key=f"del_{v['id']}_{_refresh_key}",
+                            use_container_width=True
+                        ):
                             try:
-                                supabase_admin.table("verifiche_storico")\
-                                    .update({"deleted_at": datetime.now(timezone.utc).isoformat()})\
-                                    .eq("id", v['id'])\
+                                supabase_admin.table("verifiche_storico") \
+                                    .update({"deleted_at": datetime.now(timezone.utc).isoformat()}) \
+                                    .eq("id", v["id"]) \
                                     .execute()
-                                st.session_state._preferiti.discard(v['id'])
+                                st.session_state._preferiti.discard(v["id"])
                                 st.session_state._storico_refresh += 1
                                 st.toast("Verifica rimossa.", icon="🗑️")
                                 st.rerun()
                             except Exception as del_err:
                                 st.error(f"Errore: {del_err}")
-                        st.markdown('</div>', unsafe_allow_html=True)
+                        st.markdown("</div>", unsafe_allow_html=True)
+
+                if _ha_altri:
+                    if st.button("Carica altre verifiche", key="storico_load_more",
+                                 use_container_width=True):
+                        st.session_state._storico_page += 1
+                        st.rerun()
+                elif st.session_state._storico_page > 1:
+                    st.caption(f"Tutte le {len(dati_pagina)} verifiche caricate.")
             else:
                 st.caption("Nessuna verifica salvata ancora.")
 
-            if storico.data and _ha_altri:
-                if st.button("Carica altre verifiche", key="storico_load_more", use_container_width=True):
-                    st.session_state._storico_page += 1
-                    st.rerun()
-            elif storico.data and st.session_state._storico_page > 1:
-                st.caption(f"Tutte le {len(dati_pagina)} verifiche caricate.")
-
-        except Exception as e:
+        except Exception:
             st.caption("Storico non disponibile.")
 
-        # ── USER PILL + LOGOUT ────────────────────────────────────────────────────
+        # ── USER + LOGOUT ─────────────────────────────────────────────────────
         st.markdown("---")
         email_utente = utente.email or ""
-        iniziale = email_utente[0].upper() if email_utente else "?"
+        iniziale     = email_utente[0].upper() if email_utente else "?"
+
         st.markdown(f"""
         <div class="user-pill">
           <div class="user-avatar">{iniziale}</div>
@@ -215,13 +287,14 @@ def render_sidebar(
             from auth import cancella_sessione_cookie
             cancella_sessione_cookie()
             supabase_client.auth.sign_out()
-            st.session_state.utente = None
-            st.session_state.pop("_sb_access_token", None)
+            st.session_state.utente          = None
+            st.session_state.stage           = "INPUT"
+            st.session_state.pop("_sb_access_token",  None)
             st.session_state.pop("_sb_refresh_token", None)
             st.session_state._token_check_done = False
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     return {
-        'modello_id': modello_id,
+        "modello_id": modello_id,
     }
