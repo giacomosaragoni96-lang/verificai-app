@@ -826,9 +826,9 @@ if st.session_state.verifiche['A']['latex']:
             if v['preview'] and v['pdf']:
                 with st.expander("👁 Anteprima PDF", expanded=False):
                     with st.spinner("Caricamento anteprima..."):
-                        immagini = pdf_to_images_bytes(v['pdf'])
-                    if immagini:
-                        for img in immagini:
+                        immagini, _ = pdf_to_images_bytes(v['pdf'])
+                        if immagini:
+                            for img in immagini:
                             st.image(img, use_container_width=True)
                     else:
                         st.warning("Anteprima non disponibile sul tuo browser. Scarica il PDF per visualizzarlo.")
@@ -890,9 +890,9 @@ if st.session_state.verifiche['S'].get('testo') or st.session_state.verifiche['S
     if v_s.get('pdf') and v_s.get('preview'):
         with st.expander("👁 Anteprima PDF Soluzioni", expanded=False):
             with st.spinner("Caricamento anteprima..."):
-                immagini_s = pdf_to_images_bytes(v_s['pdf'])
-            if immagini_s:
-                for img in immagini_s:
+                immagini_s, _ = pdf_to_images_bytes(v_s['pdf'])
+                if immagini_s:
+                    for img in immagini_s:
                     st.image(img, use_container_width=True)
             else:
                 st.warning("Anteprima non disponibile sul tuo browser. Scarica il PDF per visualizzarlo.")
@@ -949,6 +949,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
