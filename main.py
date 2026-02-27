@@ -760,6 +760,26 @@ if (
             key="_approva_tutto_btn",
         ):
             st.session_state._blocchi_approvati = set(range(_n_blocchi))
+            # Ricompila sempre il PDF dai blocchi correnti (potrebbero essere stati modificati)
+            with st.spinner("🖨️ Compilazione PDF finale…"):
+                _mp  = mostra_punteggi if 'mostra_punteggi' in dir() else True
+                _pt  = punti_totali    if 'punti_totali'    in dir() else 100
+                _cg  = con_griglia     if 'con_griglia'     in dir() else False
+                _l_fin, _p_fin = ricompila_da_blocchi(
+                    blocchi   = st.session_state._blocchi_a,
+                    preambolo = st.session_state._preambolo_a,
+                    mostra_punteggi = _mp,
+                    punti_totali    = _pt,
+                    con_griglia     = _cg,
+                )
+            if _l_fin:
+                st.session_state.verifiche['A']['latex']          = _l_fin
+                st.session_state.verifiche['A']['latex_originale'] = _l_fin
+            if _p_fin:
+                st.session_state.verifiche['A']['pdf']     = _p_fin
+                st.session_state.verifiche['A']['pdf_ts']  = time.time()
+                st.session_state.verifiche['A']['docx']    = None
+                st.session_state.verifiche['A']['preview'] = True
             st.session_state._fase = "pronto"
             st.rerun()
 
@@ -930,16 +950,84 @@ if (
 </div>
 """, unsafe_allow_html=True)
 
-        # ── ANTEPRIMA CON KATEX ─────────────────────────────────────────
-        _katex_html = _blocco_to_katex_html(
-            _blocco,
-            bg_color=_bg_card,
-            border_color=_col_stato + "66",
-            text_color=T['text'],
-        )
-        # Usiamo components.html per eseguire il JS di KaTeX
-        import streamlit.components.v1 as _components
-        _components.html(_katex_html, height=_blocco.count(chr(92)+"item") * 55 + 120, scrolling=False)
+        # ── ANTEPRIMA: estrai pagina dal PDF compilato ──────────────────
+        # Usa il PDF già compilato come sorgente — mostra la porzione relativa
+        # al blocco. Funziona con TikZ, pgfplots, formule, tutto.
+        _cache_key = f"_blocco_img_{_bi}_{hash(_blocco) % 9999999}"
+        if _cache_key not in st.session_state:
+            _pdf_src = st.session_state.verifiche['A'].get('pdf')
+            if _pdf_src:
+                try:
+                    from pdf2image import convert_from_bytes
+                    import io as _io
+                    # Converti solo la prima pagina (abbastanza per la maggior parte)
+                    _pages = convert_from_bytes(_pdf_src, dpi=130, first_page=1, last_page=2)
+                    # Salva tutte le pagine come PNG bytes
+                    _page_imgs = []
+                    for _pg in _pages:
+                        _buf = _io.BytesIO()
+                        _pg.save(_buf, format="PNG")
+                        _page_imgs.append(_buf.getvalue())
+                    # Assegna la pagina al blocco (1 pagina per ~3-4 blocchi tipicamente)
+                    _n_per_pag = max(1, len(_blocchi) // max(len(_pages), 1))
+                    _pag_idx = min(_bi // max(_n_per_pag, 1), len(_page_imgs) - 1)
+                    st.session_state[_cache_key] = _page_imgs[_pag_idx]
+                except Exception:
+                    st.session_state[_cache_key] = None
+            else:
+                st.session_state[_cache_key] = None
+
+        # Se non abbiamo immagine PDF, compila un mini-PDF del solo blocco
+        if not st.session_state.get(_cache_key):
+            _mini_cache = f"_mini_{_cache_key}"
+            if _mini_cache not in st.session_state:
+                with st.spinner("🖼️ Rendering anteprima…"):
+                    try:
+                        _end = chr(92) + "end{document}"
+                        _mini_latex = (
+                            st.session_state._preambolo_a
+                            + re.sub(re.escape(_end), "", _blocco).rstrip()
+                            + "\n" + _end
+                        )
+                        _mini_pdf, _ = compila_pdf(_mini_latex)
+                        if _mini_pdf:
+                            from pdf2image import convert_from_bytes
+                            import io as _io
+                            _pgs = convert_from_bytes(_mini_pdf, dpi=130, first_page=1, last_page=1)
+                            _buf = _io.BytesIO()
+                            _pgs[0].save(_buf, format="PNG")
+                            st.session_state[_mini_cache] = _buf.getvalue()
+                        else:
+                            st.session_state[_mini_cache] = None
+                    except Exception:
+                        st.session_state[_mini_cache] = None
+
+            _img_bytes = st.session_state.get(_mini_cache)
+        else:
+            _img_bytes = st.session_state.get(_cache_key)
+
+        if _img_bytes:
+            import base64 as _b64
+            _img_b64 = _b64.b64encode(_img_bytes).decode()
+            st.markdown(
+                f'<div style="background:{_bg_card};border:1.5px solid {_col_stato}55;'
+                f'border-radius:0 0 12px 12px;padding:0.7rem;margin-bottom:0.5rem;">'
+                f'<img src="data:image/png;base64,{_img_b64}" '
+                f'style="width:100%;border-radius:6px;box-shadow:0 1px 8px #0002;">'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+        else:
+            # Fallback testo se PDF non disponibile
+            _katex_html = _blocco_to_katex_html(
+                _blocco,
+                bg_color=_bg_card,
+                border_color=_col_stato + "66",
+                text_color=T['text'],
+            )
+            import streamlit.components.v1 as _components
+            _n_items = _blocco.count(chr(92) + "item")
+            _components.html(_katex_html, height=max(120, _n_items * 60 + 100), scrolling=False)
 
         # ── CONTROLLI ───────────────────────────────────────────────────
         _c_approva, _c_regen = st.columns([1, 2])
@@ -949,7 +1037,28 @@ if (
                 if st.button("✅ Approva", key=f"_approva_{_bi}",
                              use_container_width=True, type="primary"):
                     st.session_state._blocchi_approvati.add(_bi)
-                    if len(st.session_state._blocchi_approvati) == _n_blocchi:
+                    _tutti_ora = len(st.session_state._blocchi_approvati) == _n_blocchi
+                    if _tutti_ora:
+                        # Ultimo blocco approvato: ricompila il PDF dai blocchi correnti
+                        with st.spinner("🖨️ Compilazione PDF finale…"):
+                            _mp = mostra_punteggi if 'mostra_punteggi' in dir() else True
+                            _pt = punti_totali    if 'punti_totali'    in dir() else 100
+                            _cg = con_griglia     if 'con_griglia'     in dir() else False
+                            _l_fin, _p_fin = ricompila_da_blocchi(
+                                blocchi         = st.session_state._blocchi_a,
+                                preambolo       = st.session_state._preambolo_a,
+                                mostra_punteggi = _mp,
+                                punti_totali    = _pt,
+                                con_griglia     = _cg,
+                            )
+                        if _l_fin:
+                            st.session_state.verifiche['A']['latex']           = _l_fin
+                            st.session_state.verifiche['A']['latex_originale'] = _l_fin
+                        if _p_fin:
+                            st.session_state.verifiche['A']['pdf']     = _p_fin
+                            st.session_state.verifiche['A']['pdf_ts']  = time.time()
+                            st.session_state.verifiche['A']['docx']    = None
+                            st.session_state.verifiche['A']['preview'] = True
                         st.session_state._fase = "pronto"
                     st.rerun()
             else:
@@ -994,6 +1103,10 @@ if (
                     st.session_state._blocchi_a[_bi] = _nuovo_blocco
                     st.session_state._blocchi_approvati.discard(_bi)
                     st.session_state._fase = "revisione"
+                    # Invalida tutta la cache immagini (il PDF cambierà)
+                    for _ck in list(st.session_state.keys()):
+                        if _ck.startswith("_blocco_img_") or _ck.startswith("_mini__blocco"):
+                            del st.session_state[_ck]
 
                     _latex_nuovo, _pdf_nuovo = ricompila_da_blocchi(
                         blocchi=st.session_state._blocchi_a,
