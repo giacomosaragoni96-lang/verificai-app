@@ -527,29 +527,28 @@ if genera_btn and not _limite_raggiunto:
                    + (1 if bes_dsa and doppia_fila and bes_dsa_b else 0) \
                    + (1 if genera_soluzioni else 0)
         _step = [0]
-        _t_start = [time.time()]   # ← NUOVO: timestamp inizio
+        _t_start = [time.time()]
         _prog = st.empty()
 
         def _avanza(testo):
             _step[0] += 1
             perc = int(min(_step[0] / _n_steps, 0.97) * 100)
 
-            # ── Stima tempo rimanente ──────────────────────────────────────────
+            # Stima tempo rimanente basata sul ritmo osservato
             _elapsed = time.time() - _t_start[0]
             _steps_done = _step[0]
             _steps_left = max(1, _n_steps - _steps_done)
-            if _steps_done >= 1:
+            if _steps_done >= 1 and _elapsed > 2:
                 _sec_per_step = _elapsed / _steps_done
                 _sec_rimasti = int(_sec_per_step * _steps_left)
                 if _sec_rimasti > 90:
-                    _tempo_str = f"⏱ Ancora circa {_sec_rimasti // 60} min {_sec_rimasti % 60:02d}s…"
+                    _tempo_str = f"⏱ ~{_sec_rimasti // 60}min {_sec_rimasti % 60:02d}s"
                 elif _sec_rimasti > 10:
-                    _tempo_str = f"⏱ Ancora circa {_sec_rimasti}s…"
+                    _tempo_str = f"⏱ ancora ~{_sec_rimasti}s"
                 else:
-                    _tempo_str = "⏱ Quasi pronto…"
+                    _tempo_str = "⏱ quasi pronto…"
             else:
-                _tempo_str = "⏱ Avvio generazione…"
-            # ──────────────────────────────────────────────────────────────────
+                _tempo_str = "⏱ avvio…"
 
             _prog.markdown(f"""
 <div style="margin:0.6rem 0 1rem 0;">
@@ -985,6 +984,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
