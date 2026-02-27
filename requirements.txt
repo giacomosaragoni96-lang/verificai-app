@@ -6,5 +6,6 @@ python-docx
 mammoth>=1.6.0
 supabase>=2.7.0
 extra-streamlit-components
+poppler-utils
 
 
