@@ -217,3 +217,32 @@ def prompt_modifica(latex_originale: str, richiesta: str) -> str:
         f"- TERMINA con \\end{{document}}\n\n"
         f"OUTPUT: SOLO codice LaTeX completo, senza ```latex né spiegazioni."
     )
+
+
+def prompt_rigenera_blocco(
+    materia: str,
+    blocco_latex: str,
+    istruzione: str,
+    mostra_punteggi: bool,
+) -> str:
+    punti_nota = (
+        "Mantieni il formato (X pt) su ogni \\item come nell'originale. "
+        "Non è necessario che i punti sommino a un totale preciso — verranno ribilanciati automaticamente."
+        if mostra_punteggi
+        else "NON inserire punteggi (X pt)."
+    )
+    return (
+        f"Sei un docente esperto di {materia} e LaTeX. "
+        f"Devi rigenerare SOLO questo esercizio della verifica, secondo l'istruzione del docente.\n\n"
+        f"ESERCIZIO ORIGINALE:\n{blocco_latex}\n\n"
+        f"ISTRUZIONE DEL DOCENTE:\n{istruzione}\n\n"
+        f"REGOLE:\n"
+        f"- Restituisci SOLO il blocco \\subsection*{{...}} con il nuovo esercizio.\n"
+        f"- Mantieni la stessa struttura LaTeX (\\subsection*, \\begin{{enumerate}}, \\item[a)], ecc.).\n"
+        f"- Ogni esercizio deve avere ALMENO un \\item[a)] con la sua richiesta.\n"
+        f"- {punti_nota}\n"
+        f"- NON includere preambolo, \\documentclass o \\begin{{document}}.\n"
+        f"- NON aggiungere commenti o spiegazioni fuori dal LaTeX.\n"
+        f"- TERMINA il blocco con una riga vuota (non con \\end{{document}}).\n"
+        f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
+    )
