@@ -66,6 +66,15 @@ genai.configure(api_key=API_KEY)
 if 'utente' not in st.session_state:
     st.session_state.utente = None
 
+# Dopo il gate del login, siamo sicuri che l'utente ci sia
+if st.session_state.utente:
+    user_id = st.session_state.utente.id
+    _verifiche_mese_count = _get_verifiche_mese(user_id)
+    _is_admin = (st.session_state.utente.email in ADMIN_EMAILS)
+else:
+    # Questo caso teoricamente non dovrebbe essere raggiunto grazie a st.stop()
+    st.stop()
+
 # 1. Recupero immediato del cookie (usando la tua funzione ripristina_sessione)
 ripristina_sessione(supabase)
 
@@ -963,6 +972,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
