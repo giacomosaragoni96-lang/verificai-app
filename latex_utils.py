@@ -1,14 +1,6 @@
 # ── latex_utils.py ─────────────────────────────────────────────────────────────
 # Funzioni pure per parsing, manipolazione e compilazione LaTeX/PDF.
 # Nessuna dipendenza da Streamlit — importabili e testabili in isolamento.
-#
-# Import in app.py:
-#   from latex_utils import (
-#       compila_pdf, inietta_griglia, riscala_punti,
-#       fix_items_environment, rimuovi_vspace_corpo, pulisci_corpo_latex,
-#       rimuovi_punti_subsection, parse_esercizi, build_griglia_latex,
-#       pdf_to_images_bytes,
-#   )
 # ───────────────────────────────────────────────────────────────────────────────
 
 import os
@@ -24,6 +16,7 @@ def parse_esercizi(latex: str) -> list:
     """
     Analizza il LaTeX e restituisce una lista di esercizi con i loro punteggi.
     Ogni elemento: {'num': str, 'items': [(label, punti), ...]}
+    TUTTI gli esercizi appaiono nella griglia, anche senza punti espliciti.
     """
     esercizi = []
     ex_blocks = re.split(r'\\subsection\*\{', latex)[1:]
@@ -77,14 +70,20 @@ def parse_esercizi(latex: str) -> list:
             items_found.append((raw_label, pt_match.group(1)))
 
         if items_found:
+            # Esercizio con sottopunti e punteggi espliciti
             esercizi.append({'num': num_label, 'items': items_found})
         else:
+            # Cerca punteggio globale nell'intero blocco
             pt_global = re.search(
                 r'[\(\[]?\s*(\d+(?:[.,]\d+)?)\s*(?:pt|punt[io]|p\.?)\s*[\)\]]?',
                 block, re.IGNORECASE
             )
             if pt_global:
+                # Ha un punteggio globale ma nessun sottopunto
                 esercizi.append({'num': num_label, 'items': [('', pt_global.group(1))]})
+            else:
+                # Nessun punteggio trovato — lo includiamo comunque con '—'
+                esercizi.append({'num': num_label, 'items': [('', '—')]})
 
     return esercizi
 
@@ -93,6 +92,7 @@ def build_griglia_latex(esercizi: list, punti_totali: int) -> str:
     """
     Genera il codice LaTeX della griglia di valutazione a partire
     dalla lista restituita da parse_esercizi().
+    Tutti gli esercizi appaiono, quelli senza punti mostrano '—'.
     """
     if not esercizi:
         return ""
@@ -129,10 +129,6 @@ def build_griglia_latex(esercizi: list, punti_totali: int) -> str:
 # ── FIX E PULIZIA LATEX ────────────────────────────────────────────────────────
 
 def fix_items_environment(latex: str) -> str:
-    """
-    Avvolge \item[...] orfani (fuori da enumerate/itemize)
-    in un ambiente enumerate[a)] per evitare errori LaTeX.
-    """
     lines = latex.split('\n')
     result = []
     list_depth = 0
@@ -161,10 +157,6 @@ def fix_items_environment(latex: str) -> str:
 
 
 def rimuovi_vspace_corpo(latex: str) -> str:
-    """
-    Rimuove i comandi di spaziatura verticale/orizzontale dal corpo
-    degli esercizi (dopo il primo \subsection*), lasciando intatto il preambolo.
-    """
     idx = latex.find('\\subsection*')
     if idx == -1:
         return latex
@@ -180,11 +172,6 @@ def rimuovi_vspace_corpo(latex: str) -> str:
 
 
 def pulisci_corpo_latex(testo: str) -> str:
-    """
-    Rimuove preambolo, \documentclass, \begin{document} e intestazioni
-    dal testo restituito dall'AI, mantenendo solo il corpo degli esercizi.
-    Aggiunge sempre \end{document} in fondo.
-    """
     idx = testo.find('\\subsection*')
     if idx == -1:
         testo = re.sub(r'^.*?\\begin\{document\}[^\n]*\n?', '', testo, flags=re.DOTALL)
@@ -202,10 +189,6 @@ def pulisci_corpo_latex(testo: str) -> str:
 
 
 def rimuovi_punti_subsection(latex: str) -> str:
-    """
-    Rimuove i punteggi "(X pt)" dai titoli \subsection* (dove non devono stare).
-    I punteggi rimangono solo dentro i \item.
-    """
     latex = re.sub(
         r'(\\subsection\*\{[^}]*\}[^\n]*)\s*\((\d+(?:[.,]\d+)?)\s*pt\)',
         r'\1',
@@ -220,11 +203,6 @@ def rimuovi_punti_subsection(latex: str) -> str:
 
 
 def riscala_punti(latex: str, punti_totali_target: int) -> str:
-    """
-    Riscala tutti i "(X pt)" nel LaTeX in modo che la loro somma
-    sia esattamente punti_totali_target, usando arrotondamento intelligente
-    (distribuzione del resto per eccesso ai sottopunti con resto maggiore).
-    """
     pattern = re.compile(r'\((\d+(?:[.,]\d+)?)\s*pt\)')
     matches = list(pattern.finditer(latex))
     if not matches:
@@ -259,11 +237,7 @@ def riscala_punti(latex: str, punti_totali_target: int) -> str:
 
 
 def inietta_griglia(latex: str, punti_totali: int) -> str:
-    """
-    Rimuove eventuali griglie preesistenti e inietta una griglia di valutazione
-    aggiornata prima di \end{document}.
-    """
-    # Rimuovi griglia preesistente (generata dall'AI o da una run precedente)
+    # Rimuovi griglia preesistente
     latex = re.sub(
         r'(\\vspace\{[^}]+\}\s*)?% GRIGLIA.*?\\end\{center\}',
         '', latex, flags=re.DOTALL
@@ -279,11 +253,12 @@ def inietta_griglia(latex: str, punti_totali: int) -> str:
 
     griglia = build_griglia_latex(esercizi, punti_totali)
 
-    # Controlla se il totale reale differisce dal target e aggiusta
+    # Controlla se il totale reale (escludendo '—') differisce dal target
     try:
         tot_reale = sum(
             float(pts.replace(',', '.'))
             for ex in esercizi for _, pts in ex['items']
+            if pts != '—'
         )
         if abs(tot_reale - punti_totali) > 0.5:
             griglia = build_griglia_latex(
@@ -304,10 +279,6 @@ def inietta_griglia(latex: str, punti_totali: int) -> str:
 # ── COMPILAZIONE PDF ───────────────────────────────────────────────────────────
 
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
-    """
-    Compila il codice LaTeX con pdflatex e restituisce (pdf_bytes, None)
-    in caso di successo, oppure (None, log_errore) in caso di fallimento.
-    """
     with tempfile.TemporaryDirectory() as tmpdir:
         tex_path = os.path.join(tmpdir, "v.tex")
         pdf_path = os.path.join(tmpdir, "v.pdf")
@@ -327,11 +298,6 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
 
 
 def pdf_to_images_bytes(pdf_bytes: bytes) -> tuple[list | None, str | None]:
-    """
-    Converte un PDF in una lista di immagini PNG (una per pagina).
-    Prova prima con pdf2image, poi con pdftoppm come fallback.
-    Restituisce (lista_bytes_png, None) o (None, messaggio_errore).
-    """
     # Tentativo 1: pdf2image
     try:
         from pdf2image import convert_from_bytes as cfb
