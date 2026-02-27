@@ -719,6 +719,13 @@ if (
   ↓ Scorri per scaricare il PDF
 </div>
 """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+<div style="padding:0.55rem 0;text-align:center;
+            font-size:0.78rem;color:{T['text2']};">
+  Il PDF appare dopo l'approvazione
+</div>
+""", unsafe_allow_html=True)
 
     st.write("")
 
@@ -849,7 +856,13 @@ if (
 
 
 # ── OUTPUT ────────────────────────────────────────────────────────────────────────
-if st.session_state.verifiche['A']['latex']:
+# Mostra l'output solo se: siamo in fase "pronto", oppure non ci sono blocchi (vecchie verifiche / fallback)
+_mostra_output = (
+    st.session_state.verifiche['A']['latex']
+    and st.session_state._fase in ("pronto", "input")
+    or (st.session_state.verifiche['A']['latex'] and not st.session_state._blocchi_a)
+)
+if _mostra_output:
     st.divider()
     _df  = doppia_fila   if 'doppia_fila'  in dir() else False
     _arg = st.session_state.last_argomento or (argomento if 'argomento' in dir() else 'verifica')
@@ -1081,7 +1094,7 @@ if st.session_state.verifiche['A']['latex']:
                 st.markdown('</div>', unsafe_allow_html=True)
 
 # ── SOLUZIONI ─────────────────────────────────────────────────────────────────────
-if st.session_state.verifiche['S'].get('testo') or st.session_state.verifiche['S'].get('pdf'):
+if _mostra_output and (st.session_state.verifiche['S'].get('testo') or st.session_state.verifiche['S'].get('pdf')):
     st.divider()
     _arg_s = st.session_state.last_argomento or (argomento if 'argomento' in dir() else 'verifica')
     v_s = st.session_state.verifiche['S']
