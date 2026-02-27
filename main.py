@@ -202,7 +202,6 @@ try:
     )
 
     # Estrazione valori settings...
-    difficolta = settings.get('difficolta', 'Liceo Scientifico')
     bes_dsa = settings.get('bes_dsa', False)
     perc_ridotta = settings.get('perc_ridotta', 15)
     doppia_fila = settings.get('doppia_fila', False)
@@ -227,7 +226,7 @@ except NameError as e:
 st.markdown(f"""
 <div class="top-bar">
   <div class="top-bar-hint">
-    ← Apri le impostazioni per configurare classe, opzioni e modello AI
+    ← Apri le impostazioni per opzioni avanzate e modello AI
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -309,6 +308,35 @@ if not st.session_state._onboarding_done:
         f'</div>',
         unsafe_allow_html=True
     )
+# ── STEP 0 — LIVELLO SCOLASTICO ───────────────────────────────────────────────────
+st.markdown(f"""
+<div class="step-label">
+  <span class="step-num">00</span>
+  <span class="step-title">Livello scolastico</span>
+  <span class="step-line"></span>
+</div>
+""", unsafe_allow_html=True)
+
+_col_scuola, _col_hint = st.columns([3, 2])
+with _col_scuola:
+    difficolta = st.selectbox(
+        "Livello scolastico",
+        SCUOLE,
+        index=SCUOLE.index("Liceo Scientifico") if "Liceo Scientifico" in SCUOLE else 0,
+        label_visibility="collapsed",
+        key="difficolta_body",
+        help="Calibra lessico, complessità e riferimenti degli esercizi"
+    )
+with _col_hint:
+    st.markdown(
+        f'<div style="padding:10px 14px;background:{T["accent_light"]};border:1px solid {T["accent"]}44;'
+        f'border-radius:10px;font-size:0.76rem;color:{T["text2"]};font-family:DM Sans,sans-serif;line-height:1.45;margin-top:4px;">'
+        f'<strong style="color:{T["accent"]}">⚙️ Questo parametro</strong> calibra il livello linguistico, '
+        f'la difficoltà degli esercizi e i riferimenti culturali della verifica.</div>',
+        unsafe_allow_html=True
+    )
+
+# ── STEP 1 — MATERIA ──────────────────────────────────────────────────────────────
 
 # ── STEP 1 — MATERIA ──────────────────────────────────────────────────────────────
 st.markdown(f"""
@@ -495,17 +523,50 @@ if genera_btn and not _limite_raggiunto:
         _step = [0]
         _prog = st.empty()
 
+        _n_steps = 4 + (2 if doppia_fila else 0) + (1 if bes_dsa else 0) \
+                   + (1 if bes_dsa and doppia_fila and bes_dsa_b else 0) \
+                   + (1 if genera_soluzioni else 0)
+        _step = [0]
+        _t_start = [time.time()]   # ← NUOVO: timestamp inizio
+        _prog = st.empty()
+
         def _avanza(testo):
             _step[0] += 1
             perc = int(min(_step[0] / _n_steps, 0.97) * 100)
+
+            # ── Stima tempo rimanente ──────────────────────────────────────────
+            _elapsed = time.time() - _t_start[0]
+            _steps_done = _step[0]
+            _steps_left = max(1, _n_steps - _steps_done)
+            if _steps_done >= 1:
+                _sec_per_step = _elapsed / _steps_done
+                _sec_rimasti = int(_sec_per_step * _steps_left)
+                if _sec_rimasti > 90:
+                    _tempo_str = f"⏱ Ancora circa {_sec_rimasti // 60} min {_sec_rimasti % 60:02d}s…"
+                elif _sec_rimasti > 10:
+                    _tempo_str = f"⏱ Ancora circa {_sec_rimasti}s…"
+                else:
+                    _tempo_str = "⏱ Quasi pronto…"
+            else:
+                _tempo_str = "⏱ Avvio generazione…"
+            # ──────────────────────────────────────────────────────────────────
+
             _prog.markdown(f"""
 <div style="margin:0.6rem 0 1rem 0;">
-  <div style="font-size:0.82rem;font-weight:600;color:{T['text2']};
-              font-family:'DM Sans',sans-serif;margin-bottom:6px;">{testo}</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+    <div style="font-size:0.82rem;font-weight:600;color:{T['text2']};
+                font-family:'DM Sans',sans-serif;">{testo}</div>
+    <div style="font-size:0.74rem;color:{T['muted']};font-family:'DM Sans',sans-serif;
+                white-space:nowrap;margin-left:12px;">{_tempo_str}</div>
+  </div>
   <div style="background:{T['border']};border-radius:100px;height:8px;overflow:hidden;">
     <div style="background:linear-gradient(90deg,{T['accent']},{T['accent']}cc);
                 width:{perc}%;height:100%;border-radius:100px;
                 transition:width 0.4s ease;"></div>
+  </div>
+  <div style="text-align:right;font-size:0.68rem;color:{T['muted']};
+              font-family:'DM Sans',sans-serif;margin-top:4px;">
+    Step {_step[0]} di {_n_steps}
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -924,6 +985,7 @@ function copyLink() {{
 }}
 </script>
 """, height=30)
+
 
 
 
