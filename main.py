@@ -8,28 +8,73 @@ import google.generativeai as genai
 from sidebar import render_sidebar
 from generation import genera_verifica
 
-# Import delle nuove funzioni streaming — con fallback se generation.py è la versione vecchia
-try:
-    from generation import genera_verifica_streaming, rigenera_singolo_blocco, ricompila_da_blocchi
-    _STREAMING_DISPONIBILE = True
-except ImportError:
-    _STREAMING_DISPONIBILE = False
-    # Stub: usa il flusso classico senza streaming
-    def genera_verifica_streaming(*args, **kwargs):
-        return genera_verifica(*args, **{
-            k: v for k, v in kwargs.items()
-            if k not in ("on_token", "on_corpo_grezzo", "on_blocchi")
-        })
-    def rigenera_singolo_blocco(model, materia, blocco_latex, istruzione, mostra_punteggi, on_token=None):
-        return blocco_latex
-    def ricompila_da_blocchi(blocchi, preambolo, mostra_punteggi, punti_totali, con_griglia):
-        from latex_utils import compila_pdf
-        corpo = "\n".join(b.rstrip() for b in blocchi)
-        import re
-        corpo = re.sub(r"\\end\{document\}", "", corpo).rstrip() + "\n\\end{document}"
-        latex = preambolo + corpo
+# ── FUNZIONI NUOVE DEFINITE INLINE (non dipendono dalla versione di generation.py) ──
+
+def _split_blocchi_inline(corpo: str):
+    """Divide il corpo LaTeX in blocchi per ogni \\subsection*."""
+    _marker = chr(92) + "subsection*{"
+    _pattern = f"(?={re.escape(_marker)})"
+    parts = re.split(_pattern, corpo)
+    blocchi = []
+    prefix = ""
+    for p in parts:
+        if p.strip().startswith(_marker):
+            blocchi.append(p)
+        else:
+            prefix += p
+    return prefix, blocchi
+
+def _assembla_corpo_da_blocchi_inline(blocchi: list) -> str:
+    """Riassembla i blocchi in un corpo LaTeX completo."""
+    corpo = "\n".join(b.rstrip() for b in blocchi)
+    _end = re.escape(chr(92) + "end{document}")
+    corpo = re.sub(_end, "", corpo).rstrip()
+    return corpo + "\n" + chr(92) + "end{document}"
+
+def rigenera_singolo_blocco(model, materia, blocco_latex, istruzione, mostra_punteggi, on_token=None):
+    """Rigenera un singolo blocco \\subsection* secondo l'istruzione."""
+    punti_nota = (
+        "Mantieni il formato (X pt) su ogni \\item. I punti verranno ribilanciati automaticamente."
+        if mostra_punteggi else "NON inserire punteggi (X pt)."
+    )
+    prompt = (
+        f"Sei un docente esperto di {materia} e LaTeX. "
+        f"Rigenera SOLO questo esercizio secondo l'istruzione del docente.\n\n"
+        f"ESERCIZIO ORIGINALE:\n{blocco_latex}\n\n"
+        f"ISTRUZIONE:\n{istruzione}\n\n"
+        f"REGOLE:\n"
+        f"- Restituisci SOLO il blocco " + chr(92) + f"subsection*{{...}} con il nuovo esercizio.\n"
+        f"- Mantieni la struttura LaTeX (" + chr(92) + f"subsection*, " + chr(92) + f"begin{{enumerate}}, " + chr(92) + f"item[a)], ecc.).\n"
+        f"- Ogni esercizio deve avere ALMENO un " + chr(92) + f"item[a)].\n"
+        f"- {punti_nota}\n"
+        f"- NON includere preambolo, " + chr(92) + f"documentclass o " + chr(92) + f"begin{{document}}.\n"
+        f"OUTPUT: SOLO codice LaTeX del blocco."
+    )
+    resp = model.generate_content(prompt)
+    testo = resp.text.replace("```latex", "").replace("```", "").strip()
+    return testo
+
+def ricompila_da_blocchi(blocchi, preambolo, mostra_punteggi, punti_totali, con_griglia):
+    """Riassembla i blocchi e ricompila il PDF."""
+    from latex_utils import (
+        compila_pdf, fix_items_environment, rimuovi_vspace_corpo,
+        rimuovi_punti_subsection, riscala_punti, inietta_griglia
+    )
+    corpo = _assembla_corpo_da_blocchi_inline(blocchi)
+    latex = preambolo + corpo
+    latex = fix_items_environment(latex)
+    latex = rimuovi_vspace_corpo(latex)
+    if mostra_punteggi:
+        latex = rimuovi_punti_subsection(latex)
+        latex = riscala_punti(latex, punti_totali)
+    latex_final = inietta_griglia(latex, punti_totali) if con_griglia else latex
+    pdf, _ = compila_pdf(latex_final)
+    if pdf is None and con_griglia:
         pdf, _ = compila_pdf(latex)
-        return latex, pdf
+    return latex_final, pdf
+
+_STREAMING_DISPONIBILE = True  # sempre True: le funzioni sono inline
+
 from prompts import (
     prompt_titolo, prompt_corpo_verifica, prompt_controllo_qualita,
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
@@ -552,12 +597,7 @@ if genera_btn and not _limite_raggiunto:
 """, unsafe_allow_html=True)
 
         # ── GENERAZIONE ─────────────────────────────────────────────────────
-        _stream_buffer = [""]
-
-        def _on_token(chunk):
-            _stream_buffer[0] += chunk
-
-        ris = genera_verifica_streaming(
+        ris = genera_verifica(
             model=model,
             materia=materia,
             argomento=argomento,
@@ -578,20 +618,32 @@ if genera_btn and not _limite_raggiunto:
             immagini_esercizi=imgs_es,
             file_ispirazione=file_ispirazione,
             on_progress=_avanza_progress,
-            on_token=_on_token,
         )
 
+        # ── SPLIT IN BLOCCHI (inline, non dipende da generation.py) ──────────
+        _latex_a = ris['A'].get('latex', '')
+        _blocchi_ricevuti = []
+        _preambolo_estratto = ""
+        if _latex_a:
+            # Estrai il corpo (tutto dopo \begin{document} fino a \end{document})
+            _m_body = re.search(
+                re.escape(chr(92) + "begin{document}") + r"(.*)" + re.escape(chr(92) + "end{document}"),
+                _latex_a, re.DOTALL
+            )
+            if _m_body:
+                _corpo_per_split = _m_body.group(1)
+                _preambolo_estratto = _latex_a[:_m_body.start(1)]
+                _, _blocchi_ricevuti = _split_blocchi_inline(_corpo_per_split)
+
         # ── SALVA BLOCCHI E PREAMBOLO NEL SESSION STATE ──────────────────────
-        _blocchi_ricevuti = ris.get("blocchi_a", [])
         st.session_state._blocchi_a   = _blocchi_ricevuti
-        st.session_state._preambolo_a = ris.get("_preambolo_a", "")
+        st.session_state._preambolo_a = _preambolo_estratto
         st.session_state._blocchi_approvati = set()
 
-        # Vai in revisione solo se abbiamo blocchi validi
-        if _STREAMING_DISPONIBILE and len(_blocchi_ricevuti) > 0:
+        # Vai in revisione solo se abbiamo trovato blocchi
+        if len(_blocchi_ricevuti) > 0:
             st.session_state._fase = "revisione"
         else:
-            # Nessun blocco trovato → salta revisione, vai diretto all'output
             st.session_state._fase = "solo_output"
 
         def _aggiorna(fid, dati):
