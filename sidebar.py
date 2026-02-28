@@ -86,7 +86,7 @@ def render_sidebar(
             )
             _theme_keys   = list(THEME_LABELS.keys())
             _theme_names  = [THEME_LABELS[k] for k in _theme_keys]
-            _current_theme = st.session_state.get("theme", "midnight_blue")
+            _current_theme = st.session_state.get("theme", "slate_carbon")
             _cur_idx = _theme_keys.index(_current_theme) if _current_theme in _theme_keys else 0
 
             _sel_theme_name = st.selectbox(
@@ -98,7 +98,7 @@ def render_sidebar(
             )
             _sel_theme_key = _theme_keys[_theme_names.index(_sel_theme_name)]
 
-            if _sel_theme_key != st.session_state.get("theme", "midnight_blue"):
+            if _sel_theme_key != st.session_state.get("theme", "slate_carbon"):
                 st.session_state.theme = _sel_theme_key
                 theme_changed = True
 
@@ -143,7 +143,7 @@ def render_sidebar(
         if limite_raggiunto:
             st.warning(f"Limite mensile raggiunto ({LIMITE_MENSILE} verifiche). {_reset_str}.")
 
-        # ── STORICO VERIFICHE ─────────────────────────────────────────────────
+        # ── STORICO VERIFICHE (a tendina) ────────────────────────────────────
         st.markdown(
             f'<div class="sidebar-label" style="margin-top:1rem;">Le mie verifiche</div>',
             unsafe_allow_html=True
@@ -153,161 +153,165 @@ def render_sidebar(
         _page_size    = 5
         _storico_limit = st.session_state._storico_page * _page_size
 
-        try:
-            storico = (
-                supabase_admin.table("verifiche_storico")
-                .select("id, materia, argomento, created_at, latex_a, latex_b, latex_r, scuola")
-                .eq("user_id", utente.id)
-                .is_("deleted_at", "null")
-                .order("created_at", desc=True)
-                .limit(_storico_limit + 1)
-                .execute()
-            )
+        with st.expander("Mostra verifiche salvate", expanded=False):
+            try:
+                storico = (
+                    supabase_admin.table("verifiche_storico")
+                    .select("id, materia, argomento, created_at, latex_a, latex_b, latex_r, scuola")
+                    .eq("user_id", utente.id)
+                    .is_("deleted_at", "null")
+                    .order("created_at", desc=True)
+                    .limit(_storico_limit + 1)
+                    .execute()
+                )
 
-            if storico.data:
-                _ha_altri      = len(storico.data) > _storico_limit
-                dati_pagina    = storico.data[:_storico_limit]
-                _pref          = st.session_state._preferiti
+                if storico.data:
+                    _ha_altri      = len(storico.data) > _storico_limit
+                    dati_pagina    = storico.data[:_storico_limit]
+                    _pref          = st.session_state._preferiti
 
-                def _sort_key(v):
-                    return (0 if v["id"] in _pref else 1, v["created_at"])
+                    def _sort_key(v):
+                        return (0 if v["id"] in _pref else 1, v["created_at"])
 
-                dati_ordinati = sorted(dati_pagina, key=_sort_key)
+                    dati_ordinati = sorted(dati_pagina, key=_sort_key)
 
-                for v in dati_ordinati:
-                    data_str       = v["created_at"][:10]
-                    is_pref        = v["id"] in _pref
-                    star_ico       = "★" if is_pref else "☆"
-                    star_prefix    = "⭐ " if is_pref else ""
-                    arg_trunc      = v["argomento"][:20] + ("…" if len(v["argomento"]) > 20 else "")
-                    label          = f"{star_prefix}{v['materia']} — {arg_trunc}"
+                    for v in dati_ordinati:
+                        data_str       = v["created_at"][:10]
+                        is_pref        = v["id"] in _pref
+                        star_ico       = "★" if is_pref else "☆"
+                        star_prefix    = "⭐ " if is_pref else ""
+                        arg_trunc      = v["argomento"][:20] + ("…" if len(v["argomento"]) > 20 else "")
+                        label          = f"{star_prefix}{v['materia']} — {arg_trunc}"
 
-                    with st.expander(f"{label} ({data_str})"):
-                        if v.get("scuola"):
-                            st.caption(v["scuola"][:40])
+                        with st.expander(f"{label} ({data_str})"):
+                            if v.get("scuola"):
+                                st.caption(v["scuola"][:40])
 
-                        _col_star, _ = st.columns([1, 3])
-                        with _col_star:
-                            st.markdown(
-                                f'<div class="{"stella-btn-on" if is_pref else "stella-btn"}">',
-                                unsafe_allow_html=True
-                            )
-                            if st.button(star_ico, key=f"star_{v['id']}_{_refresh_key}"):
-                                if v["id"] in st.session_state._preferiti:
-                                    st.session_state._preferiti.discard(v["id"])
-                                else:
-                                    st.session_state._preferiti.add(v["id"])
-                                st.rerun()
-                            st.markdown("</div>", unsafe_allow_html=True)
+                            # Star + Elimina affiancati
+                            _col_star, _col_del = st.columns([1, 1])
+                            with _col_star:
+                                st.markdown(
+                                    f'<div class="{"stella-btn-on" if is_pref else "stella-btn"}">',
+                                    unsafe_allow_html=True
+                                )
+                                if st.button(star_ico, key=f"star_{v['id']}_{_refresh_key}",
+                                             use_container_width=True):
+                                    if v["id"] in st.session_state._preferiti:
+                                        st.session_state._preferiti.discard(v["id"])
+                                    else:
+                                        st.session_state._preferiti.add(v["id"])
+                                    st.rerun()
+                                st.markdown("</div>", unsafe_allow_html=True)
 
-                        if v.get("latex_a"):
-                            if st.button(
-                                "▶ Apri verifica",
-                                key=f"reload_a_{v['id']}_{_refresh_key}",
-                                use_container_width=True
-                            ):
-                                latex_a = v["latex_a"]
-                                # Reset completo dello stato verifiche per evitare
-                                # residui di sessioni precedenti
-                                st.session_state.verifiche = {
-                                    "A":  {"latex": latex_a, "latex_originale": latex_a,
-                                           "pdf": None, "preview": False,
-                                           "docx": None, "pdf_ts": None, "docx_ts": None},
-                                    "B":  {"latex": "", "pdf": None, "preview": False,
-                                           "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""},
-                                    "R":  {"latex": "", "pdf": None, "preview": False,
-                                           "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""},
-                                    "RB": {"latex": "", "pdf": None, "preview": False,
-                                           "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""},
-                                    "S":  {"latex": None, "testo": None, "pdf": None},
-                                }
-                                # Compila PDF
-                                pdf, _ = compila_pdf_func(latex_a)
-                                if pdf:
-                                    st.session_state.verifiche["A"]["pdf"]     = pdf
-                                    st.session_state.verifiche["A"]["preview"] = True
-                                # Preview immagini
-                                if pdf and pdf_to_images_func:
+                            with _col_del:
+                                st.markdown('<div class="elimina-btn">', unsafe_allow_html=True)
+                                if st.button(
+                                    "Elimina",
+                                    key=f"del_{v['id']}_{_refresh_key}",
+                                    use_container_width=True
+                                ):
                                     try:
-                                        imgs, _ = pdf_to_images_func(pdf)
-                                        st.session_state.preview_images = imgs or []
-                                    except Exception:
+                                        supabase_admin.table("verifiche_storico") \
+                                            .update({"deleted_at": datetime.now(timezone.utc).isoformat()}) \
+                                            .eq("id", v["id"]) \
+                                            .execute()
+                                        st.session_state._preferiti.discard(v["id"])
+                                        st.session_state._storico_refresh += 1
+                                        st.toast("Verifica rimossa.", icon="🗑️")
+                                        st.rerun()
+                                    except Exception as del_err:
+                                        st.error(f"Errore: {del_err}")
+                                st.markdown("</div>", unsafe_allow_html=True)
+
+                            if v.get("latex_a"):
+                                if st.button(
+                                    "▶ Apri verifica",
+                                    key=f"reload_a_{v['id']}_{_refresh_key}",
+                                    use_container_width=True
+                                ):
+                                    latex_a = v["latex_a"]
+                                    # Reset completo dello stato verifiche per evitare
+                                    # residui di sessioni precedenti
+                                    st.session_state.verifiche = {
+                                        "A":  {"latex": latex_a, "latex_originale": latex_a,
+                                               "pdf": None, "preview": False,
+                                               "docx": None, "pdf_ts": None, "docx_ts": None},
+                                        "B":  {"latex": "", "pdf": None, "preview": False,
+                                               "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""},
+                                        "R":  {"latex": "", "pdf": None, "preview": False,
+                                               "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""},
+                                        "RB": {"latex": "", "pdf": None, "preview": False,
+                                               "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""},
+                                        "S":  {"latex": None, "testo": None, "pdf": None},
+                                    }
+                                    # Compila PDF
+                                    pdf, _ = compila_pdf_func(latex_a)
+                                    if pdf:
+                                        st.session_state.verifiche["A"]["pdf"]     = pdf
+                                        st.session_state.verifiche["A"]["preview"] = True
+                                    # Preview immagini
+                                    if pdf and pdf_to_images_func:
+                                        try:
+                                            imgs, _ = pdf_to_images_func(pdf)
+                                            st.session_state.preview_images = imgs or []
+                                        except Exception:
+                                            st.session_state.preview_images = []
+                                    else:
                                         st.session_state.preview_images = []
-                                else:
-                                    st.session_state.preview_images = []
-                                # Estrai blocchi con la funzione passata (evita import circolare)
-                                if extract_blocks_func:
-                                    try:
-                                        pre, blks = extract_blocks_func(latex_a)
-                                        st.session_state.review_preamble = pre
-                                        st.session_state.review_blocks   = blks
-                                        st.session_state.review_sel_idx  = 0
-                                    except Exception:
-                                        st.session_state.review_preamble = ""
-                                        st.session_state.review_blocks   = []
-                                # Popola gen_params dal record storico
-                                st.session_state.gen_params = {
-                                    "materia":         v.get("materia", ""),
-                                    "difficolta":      v.get("scuola", ""),
-                                    "argomento":       v.get("argomento", ""),
-                                    "durata":          "1 ora",
-                                    "num_esercizi":    v.get("num_esercizi", 4),
-                                    "punti_totali":    100,
-                                    "mostra_punteggi": True,
-                                    "con_griglia":     True,
-                                    "perc_ridotta":    25,
-                                    "modello_id":      v.get("modello", "gemini-2.5-flash-lite"),
-                                }
-                                st.session_state.preview_page      = 0
-                                st.session_state["_prev_stage"]    = None  # forza scroll top
-                                st.session_state._saved_to_storico = True  # già in storico
-                                st.session_state.stage = "FINAL"
-                                st.rerun()
+                                    # Estrai blocchi con la funzione passata
+                                    if extract_blocks_func:
+                                        try:
+                                            pre, blks = extract_blocks_func(latex_a)
+                                            st.session_state.review_preamble = pre
+                                            st.session_state.review_blocks   = blks
+                                            st.session_state.review_sel_idx  = 0
+                                        except Exception:
+                                            st.session_state.review_preamble = ""
+                                            st.session_state.review_blocks   = []
+                                    # Popola gen_params dal record storico
+                                    st.session_state.gen_params = {
+                                        "materia":         v.get("materia", ""),
+                                        "difficolta":      v.get("scuola", ""),
+                                        "argomento":       v.get("argomento", ""),
+                                        "durata":          "1 ora",
+                                        "num_esercizi":    v.get("num_esercizi", 4),
+                                        "punti_totali":    100,
+                                        "mostra_punteggi": True,
+                                        "con_griglia":     True,
+                                        "perc_ridotta":    25,
+                                        "modello_id":      v.get("modello", "gemini-2.5-flash-lite"),
+                                    }
+                                    st.session_state.preview_page      = 0
+                                    st.session_state["_prev_stage"]    = None  # forza scroll top
+                                    st.session_state._saved_to_storico = True  # già in storico
+                                    st.session_state.stage = "FINAL"
+                                    st.rerun()
 
-                        if v.get("latex_b"):
-                            if st.button(
-                                "♻ Ricarica Fila B",
-                                key=f"reload_b_{v['id']}_{_refresh_key}",
-                                use_container_width=True
-                            ):
-                                st.session_state.verifiche["B"]["latex"] = v["latex_b"]
-                                pdf, _ = compila_pdf_func(v["latex_b"])
-                                if pdf:
-                                    st.session_state.verifiche["B"]["pdf"]     = pdf
-                                    st.session_state.verifiche["B"]["preview"] = True
-                                st.rerun()
+                            if v.get("latex_b"):
+                                if st.button(
+                                    "♻ Ricarica Fila B",
+                                    key=f"reload_b_{v['id']}_{_refresh_key}",
+                                    use_container_width=True
+                                ):
+                                    st.session_state.verifiche["B"]["latex"] = v["latex_b"]
+                                    pdf, _ = compila_pdf_func(v["latex_b"])
+                                    if pdf:
+                                        st.session_state.verifiche["B"]["pdf"]     = pdf
+                                        st.session_state.verifiche["B"]["preview"] = True
+                                    st.rerun()
 
-                        st.markdown('<div class="elimina-btn">', unsafe_allow_html=True)
-                        if st.button(
-                            "Elimina",
-                            key=f"del_{v['id']}_{_refresh_key}",
-                            use_container_width=True
-                        ):
-                            try:
-                                supabase_admin.table("verifiche_storico") \
-                                    .update({"deleted_at": datetime.now(timezone.utc).isoformat()}) \
-                                    .eq("id", v["id"]) \
-                                    .execute()
-                                st.session_state._preferiti.discard(v["id"])
-                                st.session_state._storico_refresh += 1
-                                st.toast("Verifica rimossa.", icon="🗑️")
-                                st.rerun()
-                            except Exception as del_err:
-                                st.error(f"Errore: {del_err}")
-                        st.markdown("</div>", unsafe_allow_html=True)
+                    if _ha_altri:
+                        if st.button("Carica altre verifiche", key="storico_load_more",
+                                     use_container_width=True):
+                            st.session_state._storico_page += 1
+                            st.rerun()
+                    elif st.session_state._storico_page > 1:
+                        st.caption(f"Tutte le {len(dati_pagina)} verifiche caricate.")
+                else:
+                    st.caption("Nessuna verifica salvata ancora.")
 
-                if _ha_altri:
-                    if st.button("Carica altre verifiche", key="storico_load_more",
-                                 use_container_width=True):
-                        st.session_state._storico_page += 1
-                        st.rerun()
-                elif st.session_state._storico_page > 1:
-                    st.caption(f"Tutte le {len(dati_pagina)} verifiche caricate.")
-            else:
-                st.caption("Nessuna verifica salvata ancora.")
-
-        except Exception:
-            st.caption("Storico non disponibile.")
+            except Exception:
+                st.caption("Storico non disponibile.")
 
         # ── USER + LOGOUT ─────────────────────────────────────────────────────
         st.markdown("---")
