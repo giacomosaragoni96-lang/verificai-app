@@ -22,7 +22,7 @@ from prompts import (
 )
 from docx_export import latex_to_docx_via_ai
 from latex_utils import (
-    compila_pdf, inietta_griglia, riscala_punti,
+    compila_pdf, inietta_griglia, riscala_punti, riscala_punti_custom,
     fix_items_environment, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
 )
@@ -168,6 +168,29 @@ def _extract_preambolo(latex: str) -> str:
     """Estrae il preambolo fino a \\end{center} incluso."""
     m = re.search(r"^(.*?\\end\{center\})", latex, re.DOTALL)
     return m.group(1) + "\n" if m else ""
+
+
+# ── Score helpers ──────────────────────────────────────────────────────────────
+
+def _parse_pts_from_block_body(body: str) -> int:
+    """
+    Somma tutti i token (N pt) presenti nel corpo di un blocco esercizio.
+    Usato per inizializzare il pannello Ricalibra Punteggi a partire dai
+    valori reali degli \\item, non dai titoli \\subsection* (che possono
+    essere privi di annotazione punti dopo un regen AI o dopo rimuovi_punti_subsection).
+    """
+    return sum(int(p) for p in re.findall(r'\((\d+)\s*pt\)', body))
+
+
+def _valida_totale(pts_list: list, target: int) -> tuple:
+    """
+    Ricalcola da zero la somma dei punteggi e restituisce (somma, ok, diff).
+    'ok' è True solo se la somma coincide esattamente con il target.
+    Garantisce che il tipo sia sempre int per evitare errori di confronto float.
+    """
+    somma = sum(int(p) for p in pts_list)
+    diff  = somma - target
+    return somma, (somma == target), diff
 
 
 # ── KaTeX HTML renderer ────────────────────────────────────────────────────────
@@ -964,11 +987,14 @@ def _render_stage_review():
             unsafe_allow_html=True
         )
 
-        # Costruisci i valori correnti dai titoli dei blocchi
-        _cur_pts = []
-        for _b in st.session_state.review_blocks:
-            _m = re.search(r"\((\d+)\s*pt\)", _b["title"])
-            _cur_pts.append(int(_m.group(1)) if _m else 0)
+        # ── Bug-fix: legge i punteggi dagli \item del corpo, NON dal titolo ──
+        # Il titolo del subsection* spesso non ha (N pt) — quei token vivono
+        # dentro gli \item.  _parse_pts_from_block_body() somma tutti i
+        # (N pt) presenti nel corpo, restituendo il totale reale per esercizio.
+        _cur_pts = [
+            _parse_pts_from_block_body(b["body"])
+            for b in st.session_state.review_blocks
+        ]
 
         # Inizializza session state per i valori del pannello
         _rc_key = "recalibra_pts"
@@ -1004,12 +1030,10 @@ def _render_stage_review():
                 _new_pts.append(_v)
 
         # Aggiorna session state in tempo reale
-        st.session_state[_rc_key] = _new_pts
+        st.session_state[_rc_key] = [int(v) for v in _new_pts]   # ← forza int
 
-        # Somma e indicatore stato
-        _somma = sum(_new_pts)
-        _ok    = (_somma == punti_totali)
-        _diff  = _somma - punti_totali
+        # ── Validazione totale — ricalcolo da zero ad ogni run ────────────────
+        _somma, _ok, _diff = _valida_totale(_new_pts, punti_totali)
         if _ok:
             st.markdown(
                 '<div class="recalibra-sum-ok">'
@@ -1053,8 +1077,13 @@ def _render_stage_review():
             )
             _latex_rc = fix_items_environment(_latex_rc)
             _latex_rc = rimuovi_vspace_corpo(_latex_rc)
+            # ── Bug-fix: usa riscala_punti_custom (distribuzione per-esercizio)
+            # invece di riscala_punti (riscalatura proporzionale globale).
+            # riscala_punti_custom distribuisce i punti fissati dal docente
+            # (uno per esercizio) proporzionalmente tra i sotto-item di ogni
+            # esercizio, preservando la distribuzione scelta nel pannello.
             _latex_rc = rimuovi_punti_subsection(_latex_rc)
-            _latex_rc = riscala_punti(_latex_rc, punti_totali)
+            _latex_rc = riscala_punti_custom(_latex_rc, _new_pts)
             if con_griglia:
                 _latex_rc = inietta_griglia(_latex_rc, punti_totali)
 
@@ -1069,6 +1098,15 @@ def _render_stage_review():
                 st.session_state.verifiche["A"]["preview"] = True
                 _imgs_rc, _ = pdf_to_images_bytes(_pdf_rc)
                 st.session_state.preview_images = _imgs_rc or []
+
+                # ── Bug-fix: sincronizza review_blocks con i punteggi appena
+                # applicati, così "Conferma e genera PDF finale" ricostruisce
+                # dal LaTeX aggiornato e non dai vecchi valori degli \item.
+                _new_preamble, _new_blocks = _extract_blocks(_latex_rc)
+                if _new_blocks:
+                    st.session_state.review_preamble = _new_preamble
+                    st.session_state.review_blocks   = _new_blocks
+
                 if _rc_key in st.session_state:
                     del st.session_state[_rc_key]
                 st.toast("✅ Punteggi applicati — PDF aggiornato!", icon="⚖️")
@@ -1133,7 +1171,15 @@ def _render_stage_review():
                 latex_final = rimuovi_vspace_corpo(latex_final)
                 if mostra_punteggi:
                     latex_final = rimuovi_punti_subsection(latex_final)
-                    latex_final = riscala_punti(latex_final, punti_totali)
+                    # ── Bug-fix: se il docente ha usato il pannello Ricalibra,
+                    # usa i punteggi per-esercizio salvati (riscala_punti_custom)
+                    # invece della riscalatura proporzionale globale.
+                    # Se non ci sono punteggi custom, cade back su riscala_punti.
+                    _pts_custom = st.session_state.get("recalibra_pts", [])
+                    if _pts_custom and len(_pts_custom) == n_blocks:
+                        latex_final = riscala_punti_custom(latex_final, _pts_custom)
+                    else:
+                        latex_final = riscala_punti(latex_final, punti_totali)
                 if con_griglia:
                     latex_final = inietta_griglia(latex_final, punti_totali)
 
