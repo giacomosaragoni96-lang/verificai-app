@@ -33,14 +33,6 @@ def get_css(T: dict) -> str:
     margin: 0 auto !important;
   }}
 
-  /* ── 110% zoom solo desktop — mobile invariato ────────────────────────── */
-  @media (min-width: 768px) {{
-    .block-container {{
-      zoom: 1.1;
-      max-width: 955px !important;
-    }}
-  }}
-
   #MainMenu, footer {{ visibility: hidden; }}
   .stDecoration {{ display: none; }}
 
@@ -1416,9 +1408,7 @@ def get_css(T: dict) -> str:
     font-family: 'DM Sans', sans-serif;
   }}
 
-  /* ════ PULSANTE CONFERMA ORO ════
-     Sostituisce il vecchio layout a due colonne [1,2].
-     Full-width, colore oro/ambra, prominente. ═══════ */
+  /* ════ PULSANTE CONFERMA ORO — full-width, colore ambra ════ */
   .btn-confirm-gold div.stButton > button,
   .btn-confirm-gold .stButton > button {{
     background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important;
@@ -1445,8 +1435,7 @@ def get_css(T: dict) -> str:
     transform: scale(0.98) !important;
   }}
 
-  /* ════ PULSANTE RICONFIGURA PICCOLO ════
-     Testo discreto, nessun bordo visivo, allineato a sinistra. ══ */
+  /* ════ PULSANTE RICONFIGURA PICCOLO ════ */
   .btn-riconfigura-small div.stButton > button,
   .btn-riconfigura-small .stButton > button {{
     background: transparent !important;
@@ -1466,6 +1455,14 @@ def get_css(T: dict) -> str:
     color: {T['text2']} !important;
     border-color: {T['border2']} !important;
     background: {T['hover']} !important;
+  }}
+
+  /* ════ 110% ZOOM su desktop (≥768px) — mobile invariato ════ */
+  @media (min-width: 768px) {{
+    .block-container {{
+      zoom: 1.1;
+      max-width: 955px !important;
+    }}
   }}
 </style>
 """
