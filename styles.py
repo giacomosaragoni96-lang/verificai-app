@@ -1085,14 +1085,14 @@ def get_css(T: dict) -> str:
   .monthly-bar-label {{
     font-size: 0.7rem;
     font-weight: 600;
-    color: #6b6860;
+    color: #9B9890;
     font-family: 'DM Sans', sans-serif;
     letter-spacing: .03em;
   }}
   .monthly-bar-count {{
     font-size: 0.72rem;
     font-weight: 800;
-    color: #c8c6bc;
+    color: #D4D2CA;
     font-family: 'DM Sans', sans-serif;
     letter-spacing: 0.03em;
   }}
@@ -1327,24 +1327,6 @@ def get_css(T: dict) -> str:
     border-width: 5px 6px 5px 0;
     border-style: solid;
     border-color: transparent {T['accent']} transparent transparent;
-  }}
-
-  /* ════ BREADCRUMB RESPONSIVE ════ */
-  .breadcrumb-wrap {{
-    max-width: calc(100vw - 3rem);
-    overflow: hidden;
-  }}
-  @media (max-width: 480px) {{
-    .breadcrumb-wrap {{
-      gap: 5px !important;
-      padding: .45rem .8rem !important;
-    }}
-    .breadcrumb-step {{
-      gap: 3px !important;
-    }}
-    .breadcrumb-label {{
-      font-size: .68rem !important;
-    }}
   }}
 
   /* ════ OVERFLOW — impedisce scroll orizzontale su mobile/tablet ════ */
