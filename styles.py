@@ -955,35 +955,38 @@ def get_css(T: dict) -> str:
 
   .fab-link {{
     position: fixed;
-    top: 4.5rem;
+    bottom: 1.5rem;
     right: 1.5rem;
+    top: auto !important;
     z-index: 9999;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     background: {T['accent']};
     color: #ffffff !important;
     text-decoration: none !important;
     border-radius: 50px;
-    padding: 10px 18px;
+    padding: 8px 14px;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.84rem;
+    font-size: 0.78rem;
     font-weight: 700;
     box-shadow: 0 4px 18px rgba(217,119,6,0.40);
-    transition: transform 0.15s ease, filter 0.15s ease;
+    transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
     white-space: nowrap;
+    max-height: 40px;
   }}
   .fab-link:hover {{
     transform: translateY(-2px);
     filter: brightness(1.1);
+    box-shadow: 0 6px 22px rgba(217,119,6,0.55);
     color: #ffffff !important;
   }}
   @media (max-width: 640px) {{
     .fab-link {{
-      top: 4rem;
+      bottom: 4.5rem;
       right: 0.8rem;
-      padding: 8px 14px;
-      font-size: 0.78rem;
+      padding: 7px 12px;
+      font-size: 0.73rem;
     }}
   }}
 
