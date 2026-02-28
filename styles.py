@@ -33,6 +33,14 @@ def get_css(T: dict) -> str:
     margin: 0 auto !important;
   }}
 
+  /* ── 110% zoom solo desktop — mobile invariato ────────────────────────── */
+  @media (min-width: 768px) {{
+    .block-container {{
+      zoom: 1.1;
+      max-width: 955px !important;
+    }}
+  }}
+
   #MainMenu, footer {{ visibility: hidden; }}
   .stDecoration {{ display: none; }}
 
@@ -1406,6 +1414,58 @@ def get_css(T: dict) -> str:
     font-weight: 700;
     color: {T.get('hint_text', T['err'])};
     font-family: 'DM Sans', sans-serif;
+  }}
+
+  /* ════ PULSANTE CONFERMA ORO ════
+     Sostituisce il vecchio layout a due colonne [1,2].
+     Full-width, colore oro/ambra, prominente. ═══════ */
+  .btn-confirm-gold div.stButton > button,
+  .btn-confirm-gold .stButton > button {{
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 14px !important;
+    font-size: 1.08rem !important;
+    font-weight: 800 !important;
+    min-height: 54px !important;
+    padding: 0.75rem 1.5rem !important;
+    box-shadow: 0 4px 20px #F59E0B55 !important;
+    transition: all .2s cubic-bezier(.175,.885,.32,1.275) !important;
+    letter-spacing: .01em !important;
+    width: 100% !important;
+  }}
+  .btn-confirm-gold div.stButton > button:hover,
+  .btn-confirm-gold .stButton > button:hover {{
+    filter: brightness(1.08) !important;
+    box-shadow: 0 8px 32px #F59E0B77 !important;
+    transform: translateY(-2px) scale(1.01) !important;
+  }}
+  .btn-confirm-gold div.stButton > button:active,
+  .btn-confirm-gold .stButton > button:active {{
+    transform: scale(0.98) !important;
+  }}
+
+  /* ════ PULSANTE RICONFIGURA PICCOLO ════
+     Testo discreto, nessun bordo visivo, allineato a sinistra. ══ */
+  .btn-riconfigura-small div.stButton > button,
+  .btn-riconfigura-small .stButton > button {{
+    background: transparent !important;
+    color: {T['muted']} !important;
+    border: 1px solid {T['border']} !important;
+    border-radius: 8px !important;
+    font-size: .78rem !important;
+    font-weight: 500 !important;
+    min-height: 32px !important;
+    padding: 0.25rem 0.75rem !important;
+    box-shadow: none !important;
+    width: auto !important;
+    display: inline-block !important;
+  }}
+  .btn-riconfigura-small div.stButton > button:hover,
+  .btn-riconfigura-small .stButton > button:hover {{
+    color: {T['text2']} !important;
+    border-color: {T['border2']} !important;
+    background: {T['hover']} !important;
   }}
 </style>
 """
