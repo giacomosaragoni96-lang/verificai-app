@@ -61,31 +61,37 @@ def get_css(T: dict) -> str:
   }}
   .stMarkdown h1 a, .stMarkdown h2 a, .stMarkdown h3 a {{ display: none !important; }}
 
-  /* ════ SIDEBAR (sempre dark) ════ */
+  /* ════ SIDEBAR — Dark Premium ════ */
+  /* Palette fissa dark, indipendente dal tema pagina */
   [data-testid="stSidebar"] {{
-    background: {_SB_BG} !important;
-    border-right: 1px solid {_SB_BORDER} !important;
+    background: linear-gradient(180deg, #111110 0%, #0e0e0d 100%) !important;
+    border-right: 1px solid #252420 !important;
   }}
   .sidebar-title {{
     font-family: 'DM Sans', sans-serif;
-    font-size: 1.1rem !important;
+    font-size: .95rem !important;
     font-weight: 800 !important;
     letter-spacing: -0.01em;
     color: #f5f3ed !important;
-    margin: 0.5rem 0 1.2rem 0;
-    padding-bottom: 0.6rem;
-    border-bottom: 1px solid {_SB_BORDER};
+    margin: 0 0 1.2rem 0;
+    padding: .6rem 0 .8rem 0;
+    border-bottom: 1px solid #252420;
+    display: flex;
+    align-items: center;
+    gap: 7px;
   }}
   [data-testid="stSidebar"] .block-container {{
-    padding: 1.5rem 1.2rem !important;
+    padding: 1.4rem 1.1rem !important;
     max-width: 100% !important;
   }}
+  /* Testo globale sidebar */
   [data-testid="stSidebar"] p,
   [data-testid="stSidebar"] span,
   [data-testid="stSidebar"] label,
   [data-testid="stSidebar"] div {{
     color: {_SB_TEXT} !important;
   }}
+  /* Label dei widget */
   [data-testid="stSidebar"] .stTextInput label p,
   [data-testid="stSidebar"] .stSelectbox label p,
   [data-testid="stSidebar"] .stNumberInput label p {{
@@ -99,49 +105,51 @@ def get_css(T: dict) -> str:
     color: {_SB_TEXT} !important;
     font-size: 0.9rem !important;
   }}
-  [data-testid="stSidebar"] .stCheckbox [data-testid="stCheckbox"] span:first-child {{
-    background-color: {T['input_bg']} !important;
-    border: 1.5px solid {T['border2']} !important;
-    border-radius: 5px !important;
-  }}
+  /* Inputs */
   [data-testid="stSidebar"] .stTextInput input,
   [data-testid="stSidebar"] .stNumberInput input {{
-    background: #232320 !important;
-    border: 1.5px solid #3d3c36 !important;
+    background: #1a1916 !important;
+    border: 1px solid #2e2c28 !important;
     border-radius: 8px !important;
     color: #f5f3ed !important;
+    font-size: 0.88rem !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:first-child {{
-    background: #232320 !important;
-    border: 1.5px solid #3d3c36 !important;
+    background: #1a1916 !important;
+    border: 1px solid #2e2c28 !important;
     border-radius: 8px !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{
-    color: #f5f3ed !important;
+    color: #e8e6e0 !important;
+    font-size: 0.88rem !important;
   }}
-  [data-testid="stSidebar"] .stRadio label {{
-    color: {_SB_TEXT} !important;
-  }}
+  [data-testid="stSidebar"] .stRadio label,
   [data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {{
     color: {_SB_TEXT} !important;
   }}
+  /* Pulsanti standard sidebar */
   [data-testid="stSidebar"] .stButton button {{
-    background: #232320 !important;
-    color: #f5f3ed !important;
-    border: 1.5px solid #3d3c36 !important;
+    background: #1c1b18 !important;
+    color: #d8d6ce !important;
+    border: 1px solid #2e2c28 !important;
     border-radius: 8px !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
   }}
   [data-testid="stSidebar"] .stButton button:hover {{
-    background: #2e2d28 !important;
-    border-color: #5a5950 !important;
+    background: #28261f !important;
+    border-color: #D97706 !important;
+    color: #f5f3ed !important;
   }}
   [data-testid="stSidebar"] .stSelectSlider [data-testid="stMarkdownContainer"] p {{
     color: {_SB_TEXT} !important;
   }}
   [data-testid="stSidebar"] .section-label {{
-    color: #5a5950 !important;
+    color: #4a4840 !important;
     border-bottom-color: {_SB_BORDER} !important;
   }}
+
+  /* Sidebar toggle button */
   [data-testid="collapsedControl"] {{
     top: 0.75rem !important;
     left: 0.75rem !important;
@@ -179,42 +187,45 @@ def get_css(T: dict) -> str:
     height: 18px !important;
   }}
 
+  /* ── Sidebar section labels ── */
   [data-testid="stSidebar"] .sidebar-label,
   .sidebar-label {{
-    font-size: 0.72rem !important;
+    font-size: 0.65rem !important;
     font-weight: 800 !important;
-    letter-spacing: 0.1em !important;
+    letter-spacing: 0.12em !important;
     text-transform: uppercase !important;
-    color: {T['accent']} !important;
-    margin: 1rem 0 0.5rem 0 !important;
-    padding-bottom: 0.35rem !important;
-    border-bottom: 2px solid {T['accent']}33 !important;
-    display: block !important;
+    color: #D97706 !important;
+    margin: 1.1rem 0 0.45rem 0 !important;
+    padding-bottom: 0.3rem !important;
+    border-bottom: 1px solid #2e2c28 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
   }}
 
+  /* ── Logout button ── */
   [data-testid="stSidebar"] .logout-btn-wrap div.stButton > button,
   [data-testid="stSidebar"] .logout-btn-wrap .stButton button,
   [data-testid="stSidebar"] .logout-btn-wrap button {{
     background: transparent !important;
     color: #f87171 !important;
-    border: 1px solid #5c2222 !important;
+    border: 1px solid #3d1515 !important;
     border-radius: 8px !important;
     font-size: 0.78rem !important;
     font-weight: 600 !important;
     padding: 6px 14px !important;
-    width: auto !important;
+    width: 100% !important;
     min-height: unset !important;
     box-shadow: none !important;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
+    transition: background 0.15s ease, border-color 0.15s ease !important;
     letter-spacing: 0.02em !important;
   }}
   [data-testid="stSidebar"] .logout-btn-wrap div.stButton > button:hover,
   [data-testid="stSidebar"] .logout-btn-wrap .stButton button:hover,
   [data-testid="stSidebar"] .logout-btn-wrap button:hover {{
-    background: #2a0f0f !important;
+    background: #1f0a0a !important;
     border-color: #f87171 !important;
     color: #fca5a5 !important;
-    box-shadow: 0 0 0 1px #5c2222 !important;
   }}
 
   /* ════ TESTO GLOBALE — forza colore su tutti i widget (fix tema chiaro) ════ */
@@ -1057,23 +1068,24 @@ def get_css(T: dict) -> str:
 
   /* ════ MONTHLY BAR ════ */
   .monthly-bar {{
-    background: #1a1916;
-    border: 1px solid #2e2d28;
+    background: #161513;
+    border: 1px solid #252320;
     border-radius: 10px;
-    padding: 0.75rem 0.85rem;
-    margin: 0.5rem 0 0 0;
+    padding: 0.7rem 0.85rem;
+    margin: 0.4rem 0 0 0;
   }}
   .monthly-bar-header {{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: 7px;
   }}
   .monthly-bar-label {{
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 600;
-    color: #8a8880;
+    color: #6b6860;
     font-family: 'DM Sans', sans-serif;
+    letter-spacing: .03em;
   }}
   .monthly-bar-count {{
     font-size: 0.72rem;
@@ -1083,17 +1095,17 @@ def get_css(T: dict) -> str:
     letter-spacing: 0.03em;
   }}
   .monthly-bar-count.limit-reached {{ color: #ef4444; }}
-  .monthly-bar-count.limit-near    {{ color: #f59e0b; }}
+  .monthly-bar-count.limit-near    {{ color: #D97706; }}
   .monthly-progress {{
-    background: #2e2d28;
+    background: #252320;
     border-radius: 100px;
-    height: 5px;
+    height: 4px;
     overflow: hidden;
   }}
   .monthly-progress-fill {{
     height: 100%;
     border-radius: 100px;
-    transition: width 0.4s ease;
+    transition: width 0.5s ease;
   }}
 
   /* ════ USER PILL ════ */
@@ -1101,162 +1113,174 @@ def get_css(T: dict) -> str:
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #1a1916;
-    border: 1px solid #2e2d28;
+    background: #161513;
+    border: 1px solid #252320;
     border-radius: 12px;
-    padding: 0.65rem 0.85rem;
+    padding: 0.6rem 0.85rem;
     margin: 0.5rem 0;
   }}
   .user-avatar {{
-    width: 34px; height: 34px;
+    width: 32px; height: 32px;
     border-radius: 50%;
-    background: {T['accent']};
+    background: linear-gradient(135deg, #D97706, #16a34a);
     color: #ffffff;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     font-family: 'DM Sans', sans-serif;
+    box-shadow: 0 2px 8px rgba(217,119,6,.4);
   }}
   .user-info {{ flex: 1; min-width: 0; }}
   .user-email {{
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 600;
-    color: #e8e6e0;
+    color: #d8d6ce;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     font-family: 'DM Sans', sans-serif;
   }}
   .user-role {{
-    font-size: 0.65rem;
-    color: #6b6960;
+    font-size: 0.63rem;
+    color: #4e4c44;
     font-family: 'DM Sans', sans-serif;
-    margin-top: 1px;
+    margin-top: 2px;
+    font-weight: 500;
   }}
 
-  /* ════ SIDEBAR STORICO (dark) ════ */
+  /* ════ SIDEBAR STORICO BUTTONS ════ */
   [data-testid="stSidebar"] .stButton > button,
   [data-testid="stSidebar"] .stButton > button[kind="secondary"],
   [data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
   [data-testid="stSidebar"] .stDownloadButton button,
   [data-testid="stSidebar"] [data-testid="stDownloadButton"] button {{
-    background: #1e1d1b !important;
-    color: #e8e6e0 !important;
-    border: 1.5px solid #3d3c36 !important;
+    background: #191815 !important;
+    color: #c8c6bc !important;
+    border: 1px solid #272522 !important;
     border-radius: 8px !important;
-    font-size: 0.82rem !important;
+    font-size: 0.8rem !important;
     font-weight: 600 !important;
     box-shadow: none !important;
     transform: none !important;
-    padding: 8px 14px !important;
-    min-height: 36px !important;
+    padding: 7px 12px !important;
+    min-height: 34px !important;
     width: 100% !important;
+    letter-spacing: .01em !important;
   }}
   [data-testid="stSidebar"] .stButton > button:hover,
   [data-testid="stSidebar"] .stButton > button[kind="secondary"]:hover,
   [data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover,
   [data-testid="stSidebar"] .stDownloadButton button:hover,
   [data-testid="stSidebar"] [data-testid="stDownloadButton"] button:hover {{
-    background: #2a2926 !important;
-    border-color: {T['accent']} !important;
-    color: #f5f3ed !important;
+    background: #221f18 !important;
+    border-color: #D97706 !important;
+    color: #f5c842 !important;
     transform: none !important;
     box-shadow: none !important;
   }}
 
+  /* ── Storico expanders ── */
   [data-testid="stSidebar"] [data-testid="stExpander"] {{
-    background: #1e1d1b !important;
-    border: 1px solid #2e2d28 !important;
+    background: #161513 !important;
+    border: 1px solid #222018 !important;
     border-radius: 10px !important;
+    margin-bottom: 4px !important;
   }}
   [data-testid="stSidebar"] [data-testid="stExpander"] summary {{
-    background: #1e1d1b !important;
-    color: #c8c6bc !important;
-    font-size: 0.82rem !important;
-    padding: 0.7rem 1rem !important;
+    background: #161513 !important;
+    color: #b0ae9e !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    padding: 0.6rem 0.9rem !important;
+    letter-spacing: .01em !important;
   }}
   [data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {{
-    background: #2a2926 !important;
-    color: #f5f3ed !important;
+    background: #1f1d18 !important;
+    color: #e8e6e0 !important;
   }}
   [data-testid="stSidebar"] [data-testid="stExpander"] > div > div {{
-    background: #1e1d1b !important;
-    padding: 0.4rem 1rem 0.8rem !important;
+    background: #161513 !important;
+    padding: 0.4rem 0.9rem 0.75rem !important;
   }}
   [data-testid="stSidebar"] [data-testid="stExpander"] p,
   [data-testid="stSidebar"] [data-testid="stExpander"] span {{
-    color: #c8c6bc !important;
+    color: #b0ae9e !important;
   }}
 
+  /* Buttons inside storico expanders */
   [data-testid="stSidebar"] [data-testid="stExpander"] .stButton > button,
   [data-testid="stSidebar"] [data-testid="stExpander"] div.stButton > button,
-  [data-testid="stSidebar"] [data-testid="stExpander"] button[kind="secondary"],
   [data-testid="stSidebar"] [data-testid="stExpander"] button {{
-    background: #2a2926 !important;
-    color: #c8c6bc !important;
-    border: 1px solid #3a3834 !important;
-    border-radius: 8px !important;
-    font-size: 0.78rem !important;
+    background: #1f1d18 !important;
+    color: #a8a698 !important;
+    border: 1px solid #2e2a22 !important;
+    border-radius: 7px !important;
+    font-size: 0.76rem !important;
     font-weight: 600 !important;
-    padding: 5px 12px !important;
-    min-height: unset !important;
+    padding: 5px 10px !important;
+    min-height: 30px !important;
     box-shadow: none !important;
     width: 100% !important;
   }}
   [data-testid="stSidebar"] [data-testid="stExpander"] .stButton > button:hover,
   [data-testid="stSidebar"] [data-testid="stExpander"] div.stButton > button:hover {{
-    background: #353330 !important;
-    border-color: {T['accent']} !important;
-    color: {T['accent']} !important;
+    background: #D97706 !important;
+    border-color: #D97706 !important;
+    color: #fff !important;
   }}
+  /* Elimina button */
   [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn .stButton > button,
   [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn button {{
-    background: #1e1008 !important;
-    border-color: #5c2222 !important;
+    background: transparent !important;
+    border-color: #3d1515 !important;
     color: #f87171 !important;
   }}
   [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn .stButton > button:hover,
   [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn button:hover {{
-    background: #2a0f0f !important;
+    background: #1f0a0a !important;
     border-color: #f87171 !important;
     color: #fca5a5 !important;
   }}
+  /* Stella button */
   [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn .stButton > button,
   [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn button {{
-    background: #1e1d1b !important;
-    border-color: #4a4020 !important;
-    color: #9a8a50 !important;
+    background: transparent !important;
+    border-color: #3a3420 !important;
+    color: #7a7040 !important;
     font-size: 1rem !important;
-    padding: 3px 8px !important;
+    padding: 2px 6px !important;
     width: auto !important;
+    min-height: unset !important;
   }}
   [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn-on .stButton > button,
   [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn-on button {{
-    background: #2a2010 !important;
-    border-color: {T['accent']} !important;
+    background: #2a1e06 !important;
+    border-color: #D97706 !important;
     color: #F59E0B !important;
     width: auto !important;
+    min-height: unset !important;
   }}
 
+  /* Logout final overrides (avoid conflicts) */
   [data-testid="stSidebar"] .logout-btn-wrap .stButton > button,
   [data-testid="stSidebar"] .logout-btn-wrap button {{
     background: transparent !important;
     color: #f87171 !important;
-    border: 1px solid #5c2222 !important;
+    border: 1px solid #3d1515 !important;
     border-radius: 8px !important;
     font-size: 0.78rem !important;
     font-weight: 600 !important;
     padding: 6px 14px !important;
-    width: auto !important;
+    width: 100% !important;
     min-height: unset !important;
     box-shadow: none !important;
   }}
   [data-testid="stSidebar"] .logout-btn-wrap .stButton > button:hover,
   [data-testid="stSidebar"] .logout-btn-wrap button:hover {{
-    background: #2a0f0f !important;
+    background: #1f0a0a !important;
     border-color: #f87171 !important;
     color: #fca5a5 !important;
     box-shadow: none !important;
@@ -1457,54 +1481,11 @@ def get_css(T: dict) -> str:
     background: {T['hover']} !important;
   }}
 
-  /* ════ +10% FONT-SIZE su desktop (≥768px) — NO zoom, nessun overflow mobile ════ */
-  /* Nota: usiamo font-size invece di zoom per evitare overflow orizzontale su mobile. */
-  /* zoom scala tutto il box-model inclusi i margini; font-size scala solo il testo.   */
+  /* ════ 110% ZOOM su desktop (≥768px) — mobile invariato ════ */
   @media (min-width: 768px) {{
-    /* Testo generale */
-    .stApp p, .stMarkdown p, [data-testid="stMarkdownContainer"] p,
-    .stText p, [data-testid="stText"] p {{
-      font-size: 1.045rem !important;
-    }}
-    /* Label input */
-    .stTextInput label p, .stSelectbox label p,
-    .stNumberInput label p, .stTextArea label p,
-    .stFileUploader label p {{
-      font-size: 0.902rem !important;
-    }}
-    /* Input fields */
-    .stTextInput input, .stNumberInput input {{
-      font-size: 1.045rem !important;
-    }}
-    .stTextArea textarea {{
-      font-size: 0.99rem !important;
-    }}
-    /* Checkbox e toggle */
-    .stCheckbox label, .stToggle label {{
-      font-size: 0.99rem !important;
-    }}
-    /* Selectbox testo */
-    .stSelectbox [data-baseweb="select"] span,
-    .stSelectbox [data-baseweb="select"] [data-value] {{
-      font-size: 1.045rem !important;
-    }}
-    /* Pulsanti secondary */
-    .stDownloadButton button,
-    [data-testid="stDownloadButton"] button,
-    .stButton [data-testid="baseButton-secondary"],
-    .stButton button[kind="secondary"],
-    button[data-testid="baseButton-secondary"] {{
-      font-size: 1.155rem !important;
-    }}
-    /* Pulsanti primary */
-    div.stButton > button[kind="primary"] {{
-      font-size: 1.1rem !important;
-    }}
-    /* Caption */
-    small, .stCaption, .stCaption p,
-    [data-testid="stCaptionContainer"],
-    [data-testid="stCaptionContainer"] p {{
-      font-size: 0.858rem !important;
+    .block-container {{
+      zoom: 1.1;
+      max-width: 955px !important;
     }}
   }}
 </style>
