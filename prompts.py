@@ -42,7 +42,7 @@ def prompt_corpo_verifica(
             f"  * Distribuisci i punti in modo proporzionale alla difficoltà.\n"
             f"  * NON inserire punti nel titolo \\subsection*, SOLO nei \\item.\n"
             f"  * REGOLA CRITICA: se un esercizio ha un solo sottopunto, usa comunque \\item[a)] con il suo punteggio.\n"
-            f"    NON lasciare MAI un esercizio senza \\item con punteggio — la griglia punteggi sarà inutilizzabile."
+            f"    NON lasciare MAI un esercizio senza \\item con punteggio — la griglia di valutazione sarà inutilizzabile."
         )
     else:
         punti_rule = "- NON inserire punti (X pt) in nessun esercizio né sottopunto."
@@ -50,7 +50,7 @@ def prompt_corpo_verifica(
     griglia_rule = (
         "- NON generare la griglia (sarà aggiunta automaticamente dopo)."
         if con_griglia
-        else "- NON generare nessuna griglia punteggi."
+        else "- NON generare nessuna griglia di valutazione."
     )
 
     multi_rule = "- NON includere esercizi multidisciplinari."
@@ -106,6 +106,9 @@ def prompt_corpo_verifica(
         f"- Vero/Falso: $\\square$ \\textbf{{V}} $\\quad\\square$ \\textbf{{F}}\n"
         f"- Completamento: \\underline{{\\hspace{{3cm}}}}\n"
         f"{grafici_rule}\n"
+        f"- TIKZ LABEL CON MATH — REGOLA CRITICA: nelle opzioni TikZ che contengono matematica, "
+        f"wrappa SEMPRE il valore tra graffe. CORRETTO: [label=right:{{$A(2,3)$}}] "
+        f"SBAGLIATO: [label=right:$A(2,3)$] (la virgola rompe il parsing TikZ).\n"
         f"\nFORMATO OUTPUT: restituisci SOLO i blocchi \\subsection*{{...}} con relativi esercizi.\n"
         f"TERMINA con \\end{{document}}.\n"
         f"NIENTE preambolo, NIENTE \\documentclass, NIENTE \\begin{{document}}.\n"
