@@ -241,7 +241,14 @@ def riscala_punti_custom(latex: str, pts_per_esercizio: list) -> str:
     Assegna punti custom per esercizio. Per ogni esercizio (subsection*) distribuisce
     i punti proporzionalmente tra i suoi item, oppure imposta il valore globale se non ci sono item.
     pts_per_esercizio: lista di int, uno per ogni subsection*.
+
+    Bug-fix rispetto alla versione precedente:
+    - Cast esplicito a int di ogni elemento di pts_per_esercizio (evita confronti float)
+    - Gestione corretta del 'resto' negativo (arrotondamento per difetto)
+    - Se un blocco non ha token (N pt), lo lascia invariato senza crash
     """
+    pts_per_esercizio = [int(p) for p in pts_per_esercizio]   # ← forza int
+
     # Trova i blocchi subsection*
     parts = re.split(r'(?=\\subsection\*\{)', latex)
     if len(parts) <= 1:
@@ -271,12 +278,16 @@ def riscala_punti_custom(latex: str, pts_per_esercizio: list) -> str:
         nuovi = [v / somma * target for v in valori]
         nuovi_int = [int(v) for v in nuovi]
         resto = target - sum(nuovi_int)
+
         # Distribuisce il resto ai più grandi residui frazionali
+        # Bug-fix: gestisce sia resto positivo (aggiungi 1) sia negativo (togli 1)
         frazioni = sorted(
-            range(len(nuovi)), key=lambda k: nuovi[k] - nuovi_int[k], reverse=True
+            range(len(nuovi)), key=lambda k: nuovi[k] - nuovi_int[k], reverse=(resto > 0)
         )
-        for k in range(int(round(resto))):
-            nuovi_int[frazioni[k % len(frazioni)]] += 1
+        for k in range(abs(int(round(resto)))):
+            nuovi_int[frazioni[k % len(frazioni)]] += (1 if resto > 0 else -1)
+        # Sicurezza: nessun valore può scendere sotto 0
+        nuovi_int = [max(0, v) for v in nuovi_int]
 
         new_block = block
         offset = 0
