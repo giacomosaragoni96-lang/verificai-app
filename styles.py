@@ -17,7 +17,7 @@ def get_css(T: dict) -> str:
 
   .block-container {{
     padding: 5rem 1.5rem 4rem !important;
-    max-width: 780px !important;
+    max-width: 1050px !important;
     margin: 0 auto !important;
   }}
 
@@ -874,7 +874,7 @@ def get_css(T: dict) -> str:
     filter: brightness(1.08) !important;
   }}
 
-  /* Floater fase: desktop = top-right, mobile = bottom-right */
+  /* Floater fase: desktop = top-right, nascosto su mobile */
   .stage-floater {{
     position: fixed;
     top: 4.5rem;
@@ -885,14 +885,12 @@ def get_css(T: dict) -> str:
     border-radius: 14px;
     padding: .7rem 1.1rem .65rem 1.1rem;
     box-shadow: 0 4px 24px rgba(0,0,0,.35);
-    min-width: 155px;
+    width: 175px;
     backdrop-filter: blur(8px);
   }}
   @media (max-width: 640px) {{
     .stage-floater {{
-      top: auto;
-      bottom: 1rem;
-      right: .8rem;
+      display: none !important;
     }}
   }}
 
@@ -1063,39 +1061,7 @@ def get_css(T: dict) -> str:
     }}
   }}
 
-  .fab-link {{
-    position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    top: auto !important;
-    z-index: 9999;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: {T['accent']};
-    color: #ffffff !important;
-    text-decoration: none !important;
-    border-radius: 50px;
-    padding: 8px 14px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.78rem;
-    font-weight: 700;
-    box-shadow: 0 4px 18px rgba(217,119,6,0.40);
-    transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
-    white-space: nowrap;
-    max-height: 40px;
-  }}
-  .fab-link:hover {{
-    transform: translateY(-2px);
-    filter: brightness(1.1);
-    box-shadow: 0 6px 22px rgba(217,119,6,0.55);
-    color: #ffffff !important;
-  }}
-  @media (max-width: 640px) {{
-    .fab-link {{
-      display: none !important;
-    }}
-  }}
+  /* fab-link feedback rimosso per richiesta utente */
 
   .disclaimer {{
     display: flex;
