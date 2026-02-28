@@ -28,7 +28,7 @@ from latex_utils import (
 )
 from config import (
     APP_NAME, APP_ICON, APP_TAGLINE, SHARE_URL, FEEDBACK_FORM_URL,
-    LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
+    LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES, THEME_LABELS,
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, NOTE_PLACEHOLDER, TIPI_ESERCIZIO,
 )
 from dotenv import load_dotenv
@@ -57,10 +57,14 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
 supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-# ── TEMA (sempre scuro) ───────────────────────────────────────────────────────
+# ── TEMA — inizializzazione ───────────────────────────────────────────────────
 if "theme" not in st.session_state:
-    st.session_state.theme = "dark"
-T = THEMES[st.session_state.theme]
+    st.session_state.theme = "midnight_blue"
+
+_theme_key = st.session_state.theme
+if _theme_key not in THEMES:
+    _theme_key = "midnight_blue"
+T = THEMES[_theme_key]
 
 # ── CONFIGURAZIONE API ────────────────────────────────────────────────────────
 load_dotenv()
@@ -213,7 +217,7 @@ def _make_katex_html(title: str, body: str, T: dict, height_hint: int = 400) -> 
     t = re.sub(r"\\begin\{(?!" + math_envs + r")[^}]*\}", "", t)
     t = re.sub(r"\\end\{(?!" + math_envs + r")[^}]*\}", "", t)
 
-    # 8. Comandi LaTeX generici con argomento (conservativi: non toccare math)
+    # 8. Comandi LaTeX generici con argomento
     t = re.sub(r"\\(?:small|large|Large|huge|Huge|normalsize|centering)\b", "", t)
     t = re.sub(r"\\[a-zA-Z]+\*?\{([^}$]{0,80})\}", r"\1", t)
 
@@ -371,10 +375,19 @@ def _build_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_pun
         resto = punti_totali - pts_b * num_totale
         pts   = [pts_b] * num_totale
         if resto: pts[0] += resto
-        righe.append(f"DISTRIBUZIONE PUNTI (totale ESATTO: {punti_totali} pt):")
+        righe.append(
+            f"DISTRIBUZIONE PUNTI — VINCOLO TASSATIVO:\n"
+            f"Il punteggio totale della verifica DEVE essere ESATTAMENTE {punti_totali} pt.\n"
+            f"Assegna i punti a ogni singolo \\item o sottopunto in modo che la somma sia\n"
+            f"ESATTAMENTE {punti_totali} pt. Non aggiungere, non togliere nemmeno 1 pt.\n"
+            f"Indicazione di partenza (adattala liberamente ma rispetta il totale):"
+        )
         for i in range(num_totale):
             righe.append(f"  - Esercizio {i+1}: circa {pts[i]} pt")
-        righe.append(f"La somma di TUTTI i (X pt) DEVE essere ESATTAMENTE {punti_totali} pt.")
+        righe.append(
+            f"VERIFICA OBBLIGATORIA PRIMA DI RISPONDERE: somma tutti i (X pt) scritti "
+            f"nel tuo output. Se la somma ≠ {punti_totali} pt, correggi i punti."
+        )
 
     if not esercizi_custom:
         righe.append(
@@ -432,7 +445,6 @@ _limite         = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
 
 # ── CSS + FEEDBACK ────────────────────────────────────────────────────────────
 st.markdown(get_css(T), unsafe_allow_html=True)
-# Modifica FAB: Alzato z-index e bottom per non coprire elementi Streamlit
 st.markdown(
     '<a class="fab-link" href="' + FEEDBACK_FORM_URL + '" target="_blank" '
     'rel="noopener noreferrer">💬 Feedback</a>',
@@ -447,13 +459,19 @@ settings   = render_sidebar(
     MODELLI_DISPONIBILI=MODELLI_DISPONIBILI, LIMITE_MENSILE=LIMITE_MENSILE,
     giorni_al_reset_func=_giorni_al_reset, compila_pdf_func=compila_pdf,
     supabase_client=supabase, current_stage=st.session_state.stage,
+    THEMES=THEMES, THEME_LABELS=THEME_LABELS,
 )
 modello_id = settings.get("modello_id", "gemini-2.5-flash-lite")
+
+# Se il tema è cambiato dalla sidebar, aggiorna T
+if settings.get("theme_changed"):
+    T = THEMES[st.session_state.theme]
+    st.rerun()
 
 # ── HERO ──────────────────────────────────────────────────────────────────────
 st.markdown(
     '<div class="top-bar"><div class="top-bar-hint">'
-    '← Impostazioni: modello AI, storico verifiche, logout'
+    '← Impostazioni: modello AI, tema, storico verifiche, logout'
     '</div></div>',
     unsafe_allow_html=True
 )
@@ -520,14 +538,14 @@ def _render_breadcrumb():
 
 def _render_stage_input():
 
-    # ── GUIDA DISCRETA (statica) ───────────────────────────────────────────────
+    # ── GUIDA DISCRETA (statica, senza icone pesanti) ─────────────────────────
     st.markdown(
         '<div class="onboard-guide">'
-        '<span class="onboard-step"><span class="onboard-num">①</span> Scegli materia, scuola e argomento</span>'
-        '<span class="onboard-sep">→</span>'
-        '<span class="onboard-step"><span class="onboard-num">②</span> Rivedi e modifica gli esercizi</span>'
-        '<span class="onboard-sep">→</span>'
-        '<span class="onboard-step"><span class="onboard-num">③</span> Scarica il PDF finale e le varianti</span>'
+        '<span class="onboard-step"><span class="onboard-num">①</span>&nbsp;Scegli materia, scuola e argomento</span>'
+        '<span class="onboard-sep">·</span>'
+        '<span class="onboard-step"><span class="onboard-num">②</span>&nbsp;Rivedi e modifica gli esercizi</span>'
+        '<span class="onboard-sep">·</span>'
+        '<span class="onboard-step"><span class="onboard-num">③</span>&nbsp;Scarica il PDF e le varianti</span>'
         '</div>',
         unsafe_allow_html=True
     )
@@ -561,7 +579,7 @@ def _render_stage_input():
     # ── STEP 2 — ARGOMENTO ───────────────────────────────────────────────────
     st.markdown(
         '<div class="ai-hint"><span class="ai-hint-icon">💡</span>'
-        '<span><strong>Suggerimento:</strong> più dettagli fornisci, più la verifica sarà precisa e su misura. '
+        '<span><strong>Suggerimento:</strong> più dettagli fornisci, più la verifica sarà precisa. '
         'Es: "equazioni di II grado con discriminante, 2 esercizi applicativi" funziona meglio di "algebra".</span>'
         '</div>'
         '<div class="step-label">'
@@ -638,10 +656,10 @@ def _render_stage_input():
             to_remove = None
             for i, ex in enumerate(st.session_state.esercizi_custom):
                 st.markdown(f"**Esercizio {i+1}**")
-                t = st.selectbox("Tipo", TIPI_ESERCIZIO,
+                t_ex = st.selectbox("Tipo", TIPI_ESERCIZIO,
                                  index=TIPI_ESERCIZIO.index(ex.get("tipo","Aperto")),
                                  key=f"tipo_{i}")
-                st.session_state.esercizi_custom[i]["tipo"] = t
+                st.session_state.esercizi_custom[i]["tipo"] = t_ex
                 d = st.text_input("Descrizione",
                                   value=ex.get("descrizione",""),
                                   placeholder="es. Risolvi l'equazione ax²+bx+c=0",
@@ -765,7 +783,6 @@ def _render_stage_input():
             st.session_state.review_preamble  = preamble
             st.session_state.review_blocks    = blocks
             st.session_state.review_sel_idx   = 0
-            st.session_state._onboarding_done = True
             st.session_state.last_materia     = materia_scelta
             st.session_state.last_argomento   = ris["titolo"]
 
@@ -839,10 +856,10 @@ def _render_stage_review():
         '</div></div>'
         '<div style="padding:.75rem 1.2rem;background:' + T["card"] + ';">'
         '<div style="font-size:.8rem;color:' + T["text2"] + ';line-height:1.5;">'
-        'Seleziona l\'esercizio dal menu: il testo appare nel riquadro di anteprima, '
+        'Seleziona l\'esercizio dal menu. Il testo appare nell\'anteprima qui sotto, '
         'seguito dalla visualizzazione PDF del documento completo. '
-        'Usa il campo di testo per richiedere modifiche — l\'AI rigenererà solo l\'esercizio selezionato. '
-        'Quando sei soddisfatto di tutti gli esercizi, premi <strong>Conferma e genera PDF</strong>.'
+        'Usa il campo di modifica per richiedere cambiamenti — l\'AI rigenererà solo l\'esercizio selezionato. '
+        'Quando sei soddisfatto, premi <strong>Conferma e genera PDF</strong>.'
         '</div></div></div>',
         unsafe_allow_html=True
     )
@@ -867,7 +884,7 @@ def _render_stage_review():
 
     st.markdown(
         '<div style="font-size:.72rem;color:' + T["muted"] + ';margin-top:-.3rem;margin-bottom:.5rem;">'
-        '💡 Seleziona un esercizio dal menu qui sopra per visualizzarlo e modificarlo.'
+        '💡 Seleziona un esercizio dal menu per visualizzarlo e modificarlo.'
         '</div>',
         unsafe_allow_html=True
     )
@@ -876,16 +893,71 @@ def _render_stage_review():
     title = block["title"]
     body  = block["body"]
 
+    # ── Layout: colonna sinistra = KaTeX + modifica AI, colonna destra = PDF ──
     col_ktx, col_pdf = st.columns([3, 2], gap="medium")
 
     with col_ktx:
+        # Anteprima KaTeX
         katex_html = _make_katex_html(title, body, T)
         est_height = max(280, min(700, 180 + len(body) // 4))
         components.html(katex_html, height=est_height, scrolling=True)
 
         if re.search(r"\\begin\{(tikzpicture|axis)\}", body):
-            st.info("📊 Questo esercizio contiene grafici TikZ/pgfplots che non si "
-                    "possono mostrare qui — sono visibili nel PDF finale.")
+            st.info("📊 Questo esercizio contiene grafici TikZ/pgfplots non visualizzabili nell'anteprima — visibili nel PDF finale.")
+
+        # ── Modifica AI — direttamente sotto il testo ────────────────────────
+        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+        st.markdown(
+            '<div style="font-size:.78rem;color:' + T["text2"] + ';margin-bottom:.4rem;">'
+            '<strong>Vuoi cambiare qualcosa?</strong> '
+            'Descrivi la modifica e l\'AI rigenererà solo questo esercizio.</div>',
+            unsafe_allow_html=True
+        )
+        istruzione = st.text_area(
+            f"Modifica esercizio {idx+1}",
+            placeholder="es. Aumenta la difficoltà · Cambia i numeri · Converti in Vero/Falso · Aggiungi un sottopunto",
+            key=f"rw_istr_{idx}",
+            label_visibility="collapsed",
+            height=80,
+        )
+        rigenera = st.button("✏️ Applica Modifica", key=f"rw_btn_{idx}",
+                             use_container_width=True, disabled=not istruzione.strip())
+
+        # ── Modifica punteggio manuale ────────────────────────────────────────
+        if mostra_punteggi:
+            # Estrai punteggio corrente dal titolo (es. "Esercizio 1: Titolo (20 pt)")
+            _pt_match = re.search(r"\((\d+)\s*pt\)", title)
+            _pt_cur   = int(_pt_match.group(1)) if _pt_match else 0
+            st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
+            st.markdown(
+                '<div style="font-size:.72rem;color:' + T["muted"] + ';margin-bottom:.2rem;">'
+                'Punteggio assegnato a questo esercizio</div>',
+                unsafe_allow_html=True
+            )
+            st.markdown('<div class="score-edit-wrap">', unsafe_allow_html=True)
+            _pt_new = st.number_input(
+                "Punti esercizio",
+                min_value=0, max_value=punti_totali,
+                value=_pt_cur, step=1,
+                key=f"score_input_{idx}",
+                label_visibility="collapsed",
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+            # Aggiorna il punteggio nel titolo del blocco se cambiato
+            if _pt_new != _pt_cur:
+                new_title = re.sub(r"\s*\(\d+\s*pt\)", "", title).strip()
+                new_title = f"{new_title} ({_pt_new} pt)"
+                st.session_state.review_blocks[idx]["title"] = new_title
+                # Ricalcola e applica riscalatura LaTeX
+                _latex_tmp = _reconstruct_latex(
+                    st.session_state.review_preamble, st.session_state.review_blocks
+                )
+                _latex_tmp = fix_items_environment(_latex_tmp)
+                _latex_tmp = rimuovi_vspace_corpo(_latex_tmp)
+                # Non riscalare automaticamente — il docente ha scelto il valore
+                st.session_state.verifiche["A"]["latex"] = _latex_tmp
+                st.session_state.verifiche["A"]["latex_originale"] = _latex_tmp
+                st.rerun()
 
     with col_pdf:
         st.markdown(
@@ -910,31 +982,11 @@ def _render_stage_review():
             else:
                 st.caption("Anteprima non disponibile.")
 
-    st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
-    st.markdown(
-        '<div style="font-size:.78rem;color:' + T["text2"] + ';margin-bottom:.4rem;">'
-        '<strong>Vuoi cambiare qualcosa?</strong> '
-        'Descrivi la modifica e l\'AI rigenererà solo questo esercizio.</div>',
-        unsafe_allow_html=True
-    )
-    col_inp, col_btn = st.columns([4, 1])
-    with col_inp:
-        istruzione = st.text_area(
-            f"Modifica esercizio {idx+1}",
-            placeholder="es. Aumenta la difficoltà · Cambia i numeri · Converti in Vero/Falso · Aggiungi un sottopunto",
-            key=f"rw_istr_{idx}",
-            label_visibility="collapsed",
-            height=90,
-        )
-    with col_btn:
-        st.markdown("<div style='height:2.1rem'></div>", unsafe_allow_html=True)
-        rigenera = st.button("✏️ Modifica", key=f"rw_btn_{idx}",
-                             use_container_width=True, disabled=not istruzione.strip())
-
+    # ── Logica modifica AI ─────────────────────────────────────────────────────
     if rigenera and istruzione.strip():
         punti_nota = (
-            "Mantieni il formato (X pt) su ogni \\item. "
-            "I punti totali verranno ribilanciati automaticamente."
+            f"Mantieni il formato (X pt) su ogni \\item. "
+            f"La somma totale dei punti DEVE essere esattamente {punti_totali} pt."
             if mostra_punteggi else "NON inserire punteggi (X pt)."
         )
         _prompt_rw = (
@@ -1035,7 +1087,7 @@ def _render_stage_final():
         '<span style="font-size:1.5rem;">🎉</span>'
         '<div style="flex:1;">'
         '<div style="font-family:DM Sans,sans-serif;font-size:1rem;font-weight:900;color:#fff;">'
-        'Verifica Pronta!</div>'
+        'Verifica pronta!</div>'
         '<div style="font-size:.72rem;color:#fff;opacity:.85;margin-top:1px;">'
         + mat_str + ' · ' + scu_str + ' · ' + arg_str + '</div>'
         '</div></div></div>'
@@ -1047,13 +1099,15 @@ def _render_stage_final():
         unsafe_allow_html=True
     )
 
-    # 1. PREVIEW SOPRA
-    st.markdown("### 👁 Anteprima")
+    # 1. PREVIEW
+    st.markdown(
+        '<div class="s3-section-title">Anteprima</div>',
+        unsafe_allow_html=True
+    )
     imgs = st.session_state.preview_images
     if imgs or vA.get("pdf"):
         with st.expander("Mostra anteprima PDF completo", expanded=True):
             if imgs:
-                # Mostriamo le pagine di preview in griglia o orizzontali per risparmiare spazio verticale
                 cols_prev = st.columns(min(3, len(imgs)))
                 for pi, img_b in enumerate(imgs[:3]):
                     with cols_prev[pi]:
@@ -1074,7 +1128,7 @@ def _render_stage_final():
 
     # ── DOWNLOAD SECTION ──────────────────────────────────────────────────────
     st.markdown(
-        '<div class="s3-section-title">Scarica la verifica</div>',
+        '<div class="s3-section-title">Scarica e condividi</div>',
         unsafe_allow_html=True
     )
 
@@ -1091,20 +1145,14 @@ def _render_stage_final():
 
         # ── PDF ──────────────────────────────────────────────────────────────
         if v.get("pdf"):
-            if is_primary:
-                st.markdown('<div class="dl-accent-btn">', unsafe_allow_html=True)
-                st.download_button(
-                    label=f"⬇  {btn_label} · {_stima(v['pdf'])}",
-                    data=v["pdf"], file_name=fname + ".pdf", mime="application/pdf",
-                    use_container_width=True, key="dl_pdf_" + fid,
-                )
-                st.markdown('</div>', unsafe_allow_html=True)
-            else:
-                st.download_button(
-                    label=f"⬇  {btn_label} · {_stima(v['pdf'])}",
-                    data=v["pdf"], file_name=fname + ".pdf", mime="application/pdf",
-                    use_container_width=True, key="dl_pdf_" + fid, type="primary"
-                )
+            # Tutti i PDF primari usano il colore accent
+            st.markdown('<div class="dl-accent-btn">', unsafe_allow_html=True)
+            st.download_button(
+                label=f"⬇  {btn_label} · {_stima(v['pdf'])}",
+                data=v["pdf"], file_name=fname + ".pdf", mime="application/pdf",
+                use_container_width=True, key="dl_pdf_" + fid,
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
         elif v.get("latex"):
             if st.button(f"Compila PDF — {label_file}", key="gen_pdf_" + fid, use_container_width=True):
                 with st.spinner("Compilazione…"):
@@ -1214,13 +1262,17 @@ def _render_stage_final():
                     st.error(f"Errore: {e}")
 
     # ── Pulsanti di navigazione ────────────────────────────────────────────────
-    st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+
+    # "Rivedi esercizi" — riga separata, outline accent
     st.markdown('<div class="btn-secondary-accent">', unsafe_allow_html=True)
-    if st.button("← Rivedi esercizi", use_container_width=False, key="btn_rev_s3"):
+    if st.button("← Rivedi esercizi", use_container_width=True, key="btn_rev_s3"):
         st.session_state.stage = STAGE_REVIEW; st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+
+    # "Nuova verifica" — larghezza piena, primary, in fondo
     if st.button("🆕 Inizia nuova verifica", type="primary", use_container_width=True, key="btn_new_s3"):
         st.session_state.stage            = STAGE_INPUT
         st.session_state.verifiche         = {
