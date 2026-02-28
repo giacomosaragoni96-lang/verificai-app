@@ -33,19 +33,7 @@ def render_sidebar(
     with st.sidebar:
         st.markdown('<div class="sidebar-title">⚙️ Impostazioni</div>', unsafe_allow_html=True)
 
-        # ── Banner contestuale ─────────────────────────────────────────────────
-        if current_stage == STAGE_REVIEW:
-            st.markdown(f"""
-            <div style="background:{T['accent_light']};border:1px solid {T['accent']}44;
-                        border-radius:8px;padding:0.6rem 0.8rem;margin-bottom:0.8rem;
-                        font-size:0.75rem;color:{T['text2']};font-family:'DM Sans',sans-serif;">
-              ✏️ <strong style="color:{T['accent']};">Fase revisione</strong> — stai
-              correggendo gli esercizi uno a uno.
-            </div>
-            """, unsafe_allow_html=True)
-        elif current_stage == STAGE_FINAL:
-            pass  # nessun banner — l'utente vede già i tasti nello stage 3
-
+      
         # ── MODELLO AI ────────────────────────────────────────────────────────
         st.markdown('<div class="sidebar-label">Modello AI</div>', unsafe_allow_html=True)
 
@@ -299,3 +287,4 @@ def render_sidebar(
         "modello_id":    modello_id,
         "theme_changed": theme_changed,
     }
+
