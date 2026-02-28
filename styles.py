@@ -3,9 +3,11 @@ def get_css(T: dict) -> str:
     Restituisce il CSS dell'app adattato dinamicamente al tema T.
     Tutti i colori vengono estratti dal dizionario T passato come argomento.
     """
-    # La sidebar usa sempre un tema scuro fisso per leggibilità
-    _SB_BG     = "#141412"
-    _SB_BORDER = "#2a2926"
+    # Sidebar: i colori vengono estratti dal tema (chiave sidebar_*).
+    # Fallback ai valori dark storici per retrocompatibilità con temi senza queste chiavi.
+    _SB_ACCENT = T.get("sidebar_accent", "#D97706")
+    _SB_BG_CSS = T.get("sidebar_bg",     "linear-gradient(180deg, #111110 0%, #0e0e0d 100%)")
+    _SB_BORDER = T.get("sidebar_border", "#252420")
     _SB_MUTED  = "#8a8880"
     _SB_TEXT   = "#e8e6e0"
 
@@ -64,8 +66,8 @@ def get_css(T: dict) -> str:
   /* ════ SIDEBAR — Dark Premium ════ */
   /* Palette fissa dark, indipendente dal tema pagina */
   [data-testid="stSidebar"] {{
-    background: linear-gradient(180deg, #111110 0%, #0e0e0d 100%) !important;
-    border-right: 1px solid #252420 !important;
+    background: {_SB_BG_CSS} !important;
+    border-right: 1px solid {_SB_BORDER} !important;
   }}
   .sidebar-title {{
     font-family: 'DM Sans', sans-serif;
@@ -75,7 +77,7 @@ def get_css(T: dict) -> str:
     color: #f5f3ed !important;
     margin: 0 0 1.2rem 0;
     padding: .6rem 0 .8rem 0;
-    border-bottom: 1px solid #252420;
+    border-bottom: 1px solid {_SB_BORDER};
     display: flex;
     align-items: center;
     gap: 7px;
@@ -109,14 +111,14 @@ def get_css(T: dict) -> str:
   [data-testid="stSidebar"] .stTextInput input,
   [data-testid="stSidebar"] .stNumberInput input {{
     background: #1a1916 !important;
-    border: 1px solid #2e2c28 !important;
+    border: 1px solid {_SB_BORDER} !important;
     border-radius: 8px !important;
     color: #f5f3ed !important;
     font-size: 0.88rem !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:first-child {{
     background: #1a1916 !important;
-    border: 1px solid #2e2c28 !important;
+    border: 1px solid {_SB_BORDER} !important;
     border-radius: 8px !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{
@@ -131,14 +133,14 @@ def get_css(T: dict) -> str:
   [data-testid="stSidebar"] .stButton button {{
     background: #1c1b18 !important;
     color: #d8d6ce !important;
-    border: 1px solid #2e2c28 !important;
+    border: 1px solid {_SB_BORDER} !important;
     border-radius: 8px !important;
     font-size: 0.82rem !important;
     font-weight: 600 !important;
   }}
   [data-testid="stSidebar"] .stButton button:hover {{
     background: #28261f !important;
-    border-color: #D97706 !important;
+    border-color: {_SB_ACCENT} !important;
     color: #f5f3ed !important;
   }}
   [data-testid="stSidebar"] .stSelectSlider [data-testid="stMarkdownContainer"] p {{
@@ -194,10 +196,10 @@ def get_css(T: dict) -> str:
     font-weight: 800 !important;
     letter-spacing: 0.12em !important;
     text-transform: uppercase !important;
-    color: #D97706 !important;
+    color: {_SB_ACCENT} !important;
     margin: 1.1rem 0 0.45rem 0 !important;
     padding-bottom: 0.3rem !important;
-    border-bottom: 1px solid #2e2c28 !important;
+    border-bottom: 1px solid {_SB_BORDER} !important;
     display: flex !important;
     align-items: center !important;
     gap: 5px !important;
