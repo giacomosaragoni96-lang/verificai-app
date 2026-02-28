@@ -22,7 +22,7 @@ from prompts import (
 )
 from docx_export import latex_to_docx_via_ai
 from latex_utils import (
-    compila_pdf, inietta_griglia, riscala_punti,
+    compila_pdf, inietta_griglia, riscala_punti, riscala_punti_custom,
     fix_items_environment, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
 )
@@ -432,12 +432,6 @@ _limite         = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
 
 # ── CSS + FEEDBACK ────────────────────────────────────────────────────────────
 st.markdown(get_css(T), unsafe_allow_html=True)
-# Modifica FAB: Alzato z-index e bottom per non coprire elementi Streamlit
-st.markdown(
-    '<a class="fab-link" href="' + FEEDBACK_FORM_URL + '" target="_blank" '
-    'rel="noopener noreferrer">💬 Feedback</a>',
-    unsafe_allow_html=True
-)
 
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 settings   = render_sidebar(
@@ -521,34 +515,22 @@ def _render_breadcrumb():
 
 def _render_stage_input():
 
-    # ── ONBOARDING ────────────────────────────────────────────────────────────
-    if not st.session_state._onboarding_done:
-        if st.query_params.get("_ob") == "done":
-            st.session_state._onboarding_done = True
-            st.query_params.pop("_ob", None)
-            st.rerun()
-        st.markdown(
-            '<div style="background:linear-gradient(135deg,' + T["accent_light"] + ' 0%,' + T["card"] + ' 100%);'
-            'border:1.5px solid ' + T["accent"] + ';border-radius:14px;'
-            'padding:1rem 1.4rem .7rem 1.4rem;margin-bottom:.4rem;font-family:DM Sans,sans-serif;">'
-            '<div style="font-size:.85rem;font-weight:800;color:' + T["text"] + ';margin-bottom:.5rem;">Benvenuto in VerificAI 👋</div>'
-            '<div style="font-size:.78rem;color:' + T["text2"] + ';line-height:1.6;margin-bottom:.6rem;">'
-            'Segui le tre fasi nella barra qui sopra:<br>'
-            '<span style="color:' + T["accent"] + ';font-weight:700;">① Configura</span> — scegli materia, scuola e argomento, poi premi <em>Genera</em>.<br>'
-            '<span style="color:' + T["accent"] + ';font-weight:700;">② Revisione</span> — leggi la bozza, modifica i singoli esercizi se vuoi.<br>'
-            '<span style="color:' + T["accent"] + ';font-weight:700;">③ Download</span> — scarica PDF, Word e genera varianti (Fila B, BES/DSA, Soluzioni).'
-            '</div>'
-            '</div>',
-            unsafe_allow_html=True
-        )
-        # Pulsante piccolo inline
-        _c_ob, _ = st.columns([1, 5])
-        with _c_ob:
-            st.markdown('<div class="_ob_dismiss_wrap">', unsafe_allow_html=True)
-            if st.button("Ho capito →", key="_ob_dismiss", use_container_width=True):
-                st.session_state._onboarding_done = True
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+    # ── GUIDA RAPIDA PERMANENTE ───────────────────────────────────────────────
+    st.markdown(
+        '<div style="display:flex;align-items:flex-start;gap:10px;'
+        'background:' + T["card2"] + ';border:1px solid ' + T["border"] + ';'
+        'border-left:3px solid ' + T["accent"] + ';'
+        'border-radius:10px;padding:.7rem 1rem;margin-bottom:1rem;font-family:DM Sans,sans-serif;">'
+        '<span style="font-size:1.1rem;flex-shrink:0;margin-top:1px;">📋</span>'
+        '<div style="font-size:.8rem;color:' + T["text2"] + ';line-height:1.65;">'
+        '<strong style="color:' + T["text"] + ';">Come funziona:</strong>&ensp;'
+        '<span style="color:' + T["accent"] + ';font-weight:700;">① Configura</span> — scegli materia, scuola e argomento.&ensp;'
+        '<span style="color:' + T["accent"] + ';font-weight:700;">② Revisione</span> — correggi e modifica ogni esercizio.&ensp;'
+        '<span style="color:' + T["accent"] + ';font-weight:700;">③ Download</span> — scarica PDF, Word e varianti (Fila B, BES/DSA, Soluzioni).'
+        '</div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     # ── STEP 1 — MATERIA + SCUOLA ─────────────────────────────────────────────
     st.markdown(
@@ -861,7 +843,8 @@ def _render_stage_review():
         '</div></div>'
         '<div style="padding:.75rem 1.2rem;background:' + T["card"] + ';">'
         '<div style="font-size:.8rem;color:' + T["text2"] + ';line-height:1.5;">'
-        'Dalla tendina seleziona l\'esercizio da esaminare — il testo e l\'anteprima del PDF finale appaiono qui sotto. '
+        'Dalla tendina seleziona l\'esercizio da esaminare — il testo appare a sinistra, '
+        'l\'anteprima del PDF finale è a destra. '
         'Per modificare un esercizio scrivi l\'istruzione e premi <strong>Applica modifica</strong>. '
         'Quando sei soddisfatto di tutti gli esercizi, premi <strong>Conferma e genera PDF</strong>.'
         '</div></div></div>',
@@ -972,7 +955,6 @@ def _render_stage_review():
                     st.warning(f"⚠️ Totale: {total_assigned} pt (mancano {diff} pt per arrivare a {punti_totali})")
                 if st.button("Applica distribuzione", key="apply_pts", use_container_width=True,
                              disabled=(diff != 0)):
-                    # Inietta i punti custom nel session state gen_params
                     st.session_state.gen_params["pts_custom"] = pts_custom
                     # Ricompila PDF con punteggi aggiornati
                     try:
@@ -982,7 +964,6 @@ def _render_stage_review():
                         )
                         _latex_pts = fix_items_environment(_latex_pts)
                         _latex_pts = rimuovi_vspace_corpo(_latex_pts)
-                        from latex_utils import riscala_punti_custom
                         _latex_pts = riscala_punti_custom(_latex_pts, pts_custom)
                         if con_griglia:
                             _latex_pts = inietta_griglia(_latex_pts, punti_totali)
@@ -1022,7 +1003,6 @@ def _render_stage_review():
                 # Applica distribuzione punteggi custom se presente
                 _pts_c = st.session_state.gen_params.get("pts_custom")
                 if mostra_punteggi and _pts_c:
-                    from latex_utils import riscala_punti_custom
                     try:
                         latex_final = riscala_punti_custom(latex_final, _pts_c)
                     except Exception:
@@ -1367,7 +1347,8 @@ def _render_stage_final():
     if st.button("← Rivedi esercizi", use_container_width=True, key="btn_rev_s3"):
         st.session_state.stage = STAGE_REVIEW; st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('<div class="btn-equal-primary" style="margin-top:.5rem">', unsafe_allow_html=True)
+    st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
+    st.markdown('<div class="btn-equal-primary">', unsafe_allow_html=True)
     if st.button("🆕 Nuova Verifica", type="primary", use_container_width=True, key="btn_new_s3"):
         st.session_state.stage           = STAGE_INPUT
         st.session_state.verifiche        = {
@@ -1427,20 +1408,28 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ── SHARE FLOATER (desktop only, sotto stage floater) ─────────────────────────
+_current = st.session_state.stage
+if   _current == STAGE_INPUT:  _render_stage_input()
+elif _current == STAGE_REVIEW: _render_stage_review()
+elif _current == STAGE_FINAL:  _render_stage_final()
+
+
+# ── SHARE FLOATER desktop-only, sotto stage floater ───────────────────────────
 st.markdown(
     '<style>'
-    '.share-floater{position:fixed;top:11rem;right:1.2rem;z-index:9998;'
+    '.share-floater{position:fixed;top:11.5rem;right:1.2rem;z-index:9998;'
     'background:' + T["card"] + ';border:1.5px solid ' + T["border"] + ';'
-    'border-radius:12px;padding:.55rem .9rem;box-shadow:0 4px 18px rgba(0,0,0,.3);'
-    'min-width:155px;backdrop-filter:blur(8px);}'
-    '.share-floater-title{font-size:.58rem;font-weight:800;color:' + T["muted"] + ';'
-    'text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;'
+    'border-radius:14px;padding:.65rem 1.1rem;'
+    'box-shadow:0 4px 18px rgba(0,0,0,.3);width:175px;backdrop-filter:blur(8px);}'
+    '.share-floater-title{font-size:.6rem;font-weight:800;color:' + T["muted"] + ';'
+    'text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;'
     'font-family:"DM Sans",sans-serif;}'
     '.share-floater-btn{display:flex;align-items:center;justify-content:center;gap:5px;'
-    'background:' + T["accent"] + ';border:none;border-radius:8px;cursor:pointer;'
-    'color:#fff;font-weight:700;font-size:.72rem;font-family:"DM Sans",sans-serif;'
-    'padding:5px 10px;width:100%;transition:filter .15s ease;}'
+    'background:' + T["accent"] + ';border-radius:8px;'
+    'color:#fff!important;font-weight:700;font-size:.72rem;'
+    'font-family:"DM Sans",sans-serif;'
+    'padding:5px 10px;width:100%;text-decoration:none!important;'
+    'transition:filter .15s ease;}'
     '.share-floater-btn:hover{filter:brightness(1.1)}'
     '@media(max-width:640px){.share-floater{display:none!important}}'
     '</style>'
@@ -1452,12 +1441,6 @@ st.markdown(
     '</div>',
     unsafe_allow_html=True
 )
-
-_current = st.session_state.stage
-if   _current == STAGE_INPUT:  _render_stage_input()
-elif _current == STAGE_REVIEW: _render_stage_review()
-elif _current == STAGE_FINAL:  _render_stage_final()
-
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
 st.markdown(
