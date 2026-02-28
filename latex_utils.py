@@ -117,7 +117,7 @@ def build_griglia_latex(esercizi: list, punti_totali: int) -> str:
     row_punti = "\\textbf{Punti}" + " &" * total_cols + " \\\\ \\hline"
 
     return (
-        "% GRIGLIA\n\\begin{center}\n\\textbf{Griglia di Valutazione}\\\\[0.3cm]\n"
+        "% GRIGLIA\n\\begin{center}\n\\textbf{Griglia Punteggi}\\\\[0.3cm]\n"
         "{\\renewcommand{\\arraystretch}{1.8}\n"
         f"\\adjustbox{{max width=\\textwidth}}{{\n"
         f"\\begin{{tabular}}{{{col_spec}}}\n\\hline\n"
