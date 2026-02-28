@@ -1329,6 +1329,24 @@ def get_css(T: dict) -> str:
     border-color: transparent {T['accent']} transparent transparent;
   }}
 
+  /* ════ BREADCRUMB RESPONSIVE ════ */
+  .breadcrumb-wrap {{
+    max-width: calc(100vw - 3rem);
+    overflow: hidden;
+  }}
+  @media (max-width: 480px) {{
+    .breadcrumb-wrap {{
+      gap: 5px !important;
+      padding: .45rem .8rem !important;
+    }}
+    .breadcrumb-step {{
+      gap: 3px !important;
+    }}
+    .breadcrumb-label {{
+      font-size: .68rem !important;
+    }}
+  }}
+
   /* ════ OVERFLOW — impedisce scroll orizzontale su mobile/tablet ════ */
   html, body {{
     overflow-x: hidden !important;
