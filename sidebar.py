@@ -1,7 +1,5 @@
 # ── sidebar.py — VerificAI ───────────────────────────────────────────────────
 # Sidebar: Modello AI, Tema, Contatore mensile, Storico, Logout.
-# I parametri di configurazione (scuola, materia, punteggi, varianti) sono ora
-# nel form principale di STAGE_INPUT — la sidebar resta snella e contestuale.
 # ─────────────────────────────────────────────────────────────────────────────
 
 import streamlit as st
@@ -15,22 +13,25 @@ def render_sidebar(
     is_admin,
     limite_raggiunto,
     T,
-    SCUOLE,               # mantenuto per compatibilità firma
+    SCUOLE,
     MODELLI_DISPONIBILI,
     LIMITE_MENSILE,
     giorni_al_reset_func,
     compila_pdf_func,
     supabase_client,
     current_stage: str = "INPUT",
+    THEMES: dict = None,
+    THEME_LABELS: dict = None,
 ) -> dict:
 
-    # ── Costanti stage ────────────────────────────────────────────────────────
     STAGE_INPUT  = "INPUT"
     STAGE_REVIEW = "REVIEW"
     STAGE_FINAL  = "FINAL"
 
+    theme_changed = False
+
     with st.sidebar:
-        st.markdown('<div class="sidebar-title">Impostazioni</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-title">⚙️ Impostazioni</div>', unsafe_allow_html=True)
 
         # ── Banner contestuale ─────────────────────────────────────────────────
         if current_stage == STAGE_REVIEW:
@@ -83,6 +84,30 @@ def render_sidebar(
                 modello_id = MODELLI_DISPONIBILI["⚡ Flash 2.5 Lite (velocissimo)"]["id"]
             else:
                 modello_id = _info["id"]
+
+        # ── TEMA ──────────────────────────────────────────────────────────────
+        if THEMES and THEME_LABELS:
+            st.markdown(
+                '<div class="sidebar-label" style="margin-top:1rem;">Personalizza Aspetto</div>',
+                unsafe_allow_html=True
+            )
+            _theme_keys   = list(THEME_LABELS.keys())
+            _theme_names  = [THEME_LABELS[k] for k in _theme_keys]
+            _current_theme = st.session_state.get("theme", "midnight_blue")
+            _cur_idx = _theme_keys.index(_current_theme) if _current_theme in _theme_keys else 0
+
+            _sel_theme_name = st.selectbox(
+                "Tema",
+                _theme_names,
+                index=_cur_idx,
+                label_visibility="collapsed",
+                key="theme_selectbox"
+            )
+            _sel_theme_key = _theme_keys[_theme_names.index(_sel_theme_name)]
+
+            if _sel_theme_key != st.session_state.get("theme", "midnight_blue"):
+                st.session_state.theme = _sel_theme_key
+                theme_changed = True
 
         # ── CONTATORE MENSILE ─────────────────────────────────────────────────
         st.markdown(
@@ -193,7 +218,6 @@ def render_sidebar(
                                 if pdf:
                                     st.session_state.verifiche["A"]["pdf"]     = pdf
                                     st.session_state.verifiche["A"]["preview"] = True
-                                # Estrai blocchi per eventuale revisione
                                 from main import _extract_blocks  # noqa: guarded import
                                 try:
                                     pre, blks = _extract_blocks(v["latex_a"])
@@ -279,5 +303,6 @@ def render_sidebar(
         st.markdown("</div>", unsafe_allow_html=True)
 
     return {
-        "modello_id": modello_id,
+        "modello_id":    modello_id,
+        "theme_changed": theme_changed,
     }
