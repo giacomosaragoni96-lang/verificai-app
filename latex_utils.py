@@ -236,6 +236,62 @@ def riscala_punti(latex: str, punti_totali_target: int) -> str:
     return risultato
 
 
+def riscala_punti_custom(latex: str, pts_per_esercizio: list) -> str:
+    """
+    Assegna punti custom per esercizio. Per ogni esercizio (subsection*) distribuisce
+    i punti proporzionalmente tra i suoi item, oppure imposta il valore globale se non ci sono item.
+    pts_per_esercizio: lista di int, uno per ogni subsection*.
+    """
+    # Trova i blocchi subsection*
+    parts = re.split(r'(?=\\subsection\*\{)', latex)
+    if len(parts) <= 1:
+        return latex
+
+    preamble = parts[0]
+    blocks = parts[1:]
+
+    result_blocks = []
+    for i, block in enumerate(blocks):
+        if i >= len(pts_per_esercizio):
+            result_blocks.append(block)
+            continue
+        target = pts_per_esercizio[i]
+        # Trova tutti i (N pt) nel blocco
+        pattern = re.compile(r'\((\d+(?:[.,]\d+)?)\s*pt\)')
+        matches = list(pattern.finditer(block))
+        if not matches:
+            result_blocks.append(block)
+            continue
+        valori = [float(m.group(1).replace(',', '.')) for m in matches]
+        somma = sum(valori)
+        if somma == 0:
+            result_blocks.append(block)
+            continue
+        # Distribuisce proporzionalmente
+        nuovi = [v / somma * target for v in valori]
+        nuovi_int = [int(v) for v in nuovi]
+        resto = target - sum(nuovi_int)
+        # Distribuisce il resto ai più grandi residui frazionali
+        frazioni = sorted(
+            range(len(nuovi)), key=lambda k: nuovi[k] - nuovi_int[k], reverse=True
+        )
+        for k in range(int(round(resto))):
+            nuovi_int[frazioni[k % len(frazioni)]] += 1
+
+        new_block = block
+        offset = 0
+        for j, m in enumerate(matches):
+            vecchio = m.group(0)
+            nuovo = f"({nuovi_int[j]} pt)"
+            s = m.start() + offset
+            e = m.end() + offset
+            new_block = new_block[:s] + nuovo + new_block[e:]
+            offset += len(nuovo) - len(vecchio)
+        result_blocks.append(new_block)
+
+    return preamble + ''.join(result_blocks)
+
+
 def inietta_griglia(latex: str, punti_totali: int) -> str:
     # Rimuovi griglia preesistente
     latex = re.sub(
