@@ -513,6 +513,8 @@ settings   = render_sidebar(
     giorni_al_reset_func=_giorni_al_reset, compila_pdf_func=compila_pdf,
     supabase_client=supabase, current_stage=st.session_state.stage,
     THEMES=THEMES, THEME_LABELS=THEME_LABELS,
+    extract_blocks_func=_extract_blocks,
+    pdf_to_images_func=pdf_to_images_bytes,
 )
 modello_id = settings.get("modello_id", "gemini-2.5-flash-lite")
 
@@ -916,7 +918,11 @@ def _render_stage_review():
             st.session_state.stage = STAGE_INPUT; st.rerun()
         return
 
-    labels = [f"Esercizio {i+1}: {b['title']}" for i, b in enumerate(blocks)]
+    # Rimuovi il prefisso "Esercizio N:" o "Esercizio N. " già presente nel titolo
+    def _clean_title(title: str) -> str:
+        return re.sub(r'^Esercizio\s*\d+\s*[:\.\-]\s*', '', title, flags=re.IGNORECASE).strip()
+
+    labels = [f"Esercizio {i+1}: {_clean_title(b['title'])}" for i, b in enumerate(blocks)]
 
     idx = st.session_state.review_sel_idx
     if idx >= n_blocks: idx = 0
@@ -1316,19 +1322,21 @@ def _render_stage_final():
     st.markdown(
         '<div style="background:linear-gradient(135deg,' + T["accent_light"] + ' 0%,' + T["card"] + ' 100%);'
         'border:2px solid ' + T["success"] + ';border-radius:16px;overflow:hidden;margin-bottom:1.3rem;">'
-        '<div style="background:' + T["success"] + ';padding:.85rem 1.2rem;">'
+        '<div style="background:linear-gradient(120deg,#059669 0%,#0284C7 100%);padding:.85rem 1.2rem;">'
         '<div style="display:flex;align-items:center;gap:12px;">'
         '<span style="font-size:1.5rem;">🎉</span>'
         '<div style="flex:1;">'
-        '<div style="font-family:DM Sans,sans-serif;font-size:1rem;font-weight:900;color:#fff;">'
+        '<div style="font-family:DM Sans,sans-serif;font-size:1rem;font-weight:900;color:#fff;'
+        'text-shadow:0 1px 4px rgba(0,0,0,.2);">'
         'Verifica pronta!</div>'
-        '<div style="font-size:.72rem;color:#fff;opacity:.85;margin-top:1px;">'
+        '<div style="font-size:.72rem;color:#fff;opacity:.9;margin-top:1px;">'
         + mat_str + ' · ' + scu_str + ' · ' + arg_str + '</div>'
         '</div></div></div>'
         '<div style="padding:.7rem 1.2rem;background:' + T["card"] + ';">'
-        '<div style="font-size:.78rem;color:' + T["text2"] + ';line-height:1.5;">'
-        '⚠️ Controlla sempre il contenuto prima di distribuire agli studenti. '
-        'Il docente è responsabile del materiale finale.'
+        '<div style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:' + T["text2"] + ';line-height:1.5;">'
+        '<span style="font-size:1rem;">⚠️</span>'
+        '<span>Controlla sempre il contenuto prima di distribuire agli studenti. '
+        'Il docente è responsabile del materiale finale.</span>'
         '</div></div></div>',
         unsafe_allow_html=True
     )
