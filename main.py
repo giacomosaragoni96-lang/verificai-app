@@ -922,42 +922,6 @@ def _render_stage_review():
         rigenera = st.button("✏️ Applica Modifica", key=f"rw_btn_{idx}",
                              use_container_width=True, disabled=not istruzione.strip())
 
-        # ── Modifica punteggio manuale ────────────────────────────────────────
-        if mostra_punteggi:
-            # Estrai punteggio corrente dal titolo (es. "Esercizio 1: Titolo (20 pt)")
-            _pt_match = re.search(r"\((\d+)\s*pt\)", title)
-            _pt_cur   = int(_pt_match.group(1)) if _pt_match else 0
-            st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
-            st.markdown(
-                '<div style="font-size:.72rem;color:' + T["muted"] + ';margin-bottom:.2rem;">'
-                'Punteggio assegnato a questo esercizio</div>',
-                unsafe_allow_html=True
-            )
-            st.markdown('<div class="score-edit-wrap">', unsafe_allow_html=True)
-            _pt_new = st.number_input(
-                "Punti esercizio",
-                min_value=0, max_value=punti_totali,
-                value=_pt_cur, step=1,
-                key=f"score_input_{idx}",
-                label_visibility="collapsed",
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
-            # Aggiorna il punteggio nel titolo del blocco se cambiato
-            if _pt_new != _pt_cur:
-                new_title = re.sub(r"\s*\(\d+\s*pt\)", "", title).strip()
-                new_title = f"{new_title} ({_pt_new} pt)"
-                st.session_state.review_blocks[idx]["title"] = new_title
-                # Ricalcola e applica riscalatura LaTeX
-                _latex_tmp = _reconstruct_latex(
-                    st.session_state.review_preamble, st.session_state.review_blocks
-                )
-                _latex_tmp = fix_items_environment(_latex_tmp)
-                _latex_tmp = rimuovi_vspace_corpo(_latex_tmp)
-                # Non riscalare automaticamente — il docente ha scelto il valore
-                st.session_state.verifiche["A"]["latex"] = _latex_tmp
-                st.session_state.verifiche["A"]["latex_originale"] = _latex_tmp
-                st.rerun()
-
     with col_pdf:
         st.markdown(
             '<div style="font-size:.72rem;font-weight:700;color:' + T["muted"] + ';'
@@ -980,6 +944,139 @@ def _render_stage_review():
                 )
             else:
                 st.caption("Anteprima non disponibile.")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    #  PANNELLO RICALIBRA PUNTEGGI (a piena larghezza, sotto le colonne)
+    # ══════════════════════════════════════════════════════════════════════════
+    if mostra_punteggi and n_blocks > 0:
+        st.markdown('<div class="recalibra-panel">', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="recalibra-title">⚖️ Ricalibra Punteggi</div>',
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            '<div style="font-size:.76rem;color:' + T["text2"] + ';margin-bottom:.8rem;'
+            'font-family:DM Sans,sans-serif;line-height:1.45;">'
+            'Modifica i punti di ogni esercizio. Il tasto <strong>Applica</strong> '
+            'si attiva solo quando la somma corrisponde al totale impostato '
+            '(<strong>' + str(punti_totali) + ' pt</strong>).'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+        # Costruisci i valori correnti dai titoli dei blocchi
+        _cur_pts = []
+        for _b in st.session_state.review_blocks:
+            _m = re.search(r"\((\d+)\s*pt\)", _b["title"])
+            _cur_pts.append(int(_m.group(1)) if _m else 0)
+
+        # Inizializza session state per i valori del pannello
+        _rc_key = "recalibra_pts"
+        if _rc_key not in st.session_state or len(st.session_state[_rc_key]) != n_blocks:
+            st.session_state[_rc_key] = list(_cur_pts)
+
+        # Selectbox per ogni esercizio
+        _pt_options_rc = list(range(0, punti_totali + 1))
+        _new_pts = []
+        _cols_rc = st.columns(min(n_blocks, 4))
+        for _i, _b in enumerate(st.session_state.review_blocks):
+            _title_short = re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]).strip()
+            _title_short = (_title_short[:28] + "…") if len(_title_short) > 28 else _title_short
+            _col_i = _i % min(n_blocks, 4)
+            with _cols_rc[_col_i]:
+                st.markdown(
+                    f'<div style="font-size:.7rem;font-weight:700;color:{T["text2"]};'
+                    f'font-family:DM Sans,sans-serif;margin-bottom:2px;">'
+                    f'Es. {_i+1}</div>'
+                    f'<div style="font-size:.62rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
+                    f'margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+                    f'{_title_short}</div>',
+                    unsafe_allow_html=True
+                )
+                _v = st.selectbox(
+                    f"Punti es. {_i+1}",
+                    options=_pt_options_rc,
+                    index=min(int(st.session_state[_rc_key][_i]), punti_totali),
+                    key=f"rc_pts_{_i}",
+                    label_visibility="collapsed",
+                    format_func=lambda x: f"{x} pt",
+                )
+                _new_pts.append(_v)
+
+        # Aggiorna session state in tempo reale
+        st.session_state[_rc_key] = _new_pts
+
+        # Somma e indicatore stato
+        _somma = sum(_new_pts)
+        _ok    = (_somma == punti_totali)
+        _diff  = _somma - punti_totali
+        if _ok:
+            st.markdown(
+                '<div class="recalibra-sum-ok">'
+                '✅ Somma corretta: <strong>' + str(_somma) + ' pt</strong>'
+                ' = ' + str(punti_totali) + ' pt totali'
+                '</div>',
+                unsafe_allow_html=True
+            )
+        else:
+            _diff_str = ("+" if _diff > 0 else "") + str(_diff)
+            st.markdown(
+                '<div class="recalibra-sum-err">'
+                '⚠️ Somma attuale: <strong>' + str(_somma) + ' pt</strong>'
+                ' — ' + _diff_str + ' pt rispetto all\'obiettivo di '
+                + str(punti_totali) + ' pt'
+                '</div>',
+                unsafe_allow_html=True
+            )
+
+        st.markdown('</div>', unsafe_allow_html=True)  # fine recalibra-panel
+
+        # Pulsante Applica — abilitato SOLO se somma == totale
+        if st.button(
+            "✅ Applica Punteggi e Rigenera PDF" if _ok else
+            f"⛔ Applica Punteggi (somma: {_somma} pt ≠ {punti_totali} pt)",
+            key="rc_applica",
+            disabled=not _ok,
+            use_container_width=True,
+            type="primary",
+        ):
+            # Aggiorna titoli di tutti i blocchi con i nuovi punteggi
+            for _i in range(n_blocks):
+                _clean = re.sub(r"\s*\(\d+\s*pt\)", "",
+                                st.session_state.review_blocks[_i]["title"]).strip()
+                st.session_state.review_blocks[_i]["title"] = f"{_clean} ({_new_pts[_i]} pt)"
+
+            # Ricostruisci LaTeX e ricompila PDF
+            _latex_rc = _reconstruct_latex(
+                st.session_state.review_preamble,
+                st.session_state.review_blocks
+            )
+            _latex_rc = fix_items_environment(_latex_rc)
+            _latex_rc = rimuovi_vspace_corpo(_latex_rc)
+            _latex_rc = rimuovi_punti_subsection(_latex_rc)
+            _latex_rc = riscala_punti(_latex_rc, punti_totali)
+            if con_griglia:
+                _latex_rc = inietta_griglia(_latex_rc, punti_totali)
+
+            st.session_state.verifiche["A"]["latex"]           = _latex_rc
+            st.session_state.verifiche["A"]["latex_originale"] = _latex_rc
+
+            with st.spinner("⏳ Ricompilazione PDF con nuovi punteggi…"):
+                _pdf_rc, _err_rc = compila_pdf(_latex_rc)
+            if _pdf_rc:
+                st.session_state.verifiche["A"]["pdf"]     = _pdf_rc
+                st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
+                st.session_state.verifiche["A"]["preview"] = True
+                _imgs_rc, _ = pdf_to_images_bytes(_pdf_rc)
+                st.session_state.preview_images = _imgs_rc or []
+                if _rc_key in st.session_state:
+                    del st.session_state[_rc_key]
+                st.toast("✅ Punteggi applicati — PDF aggiornato!", icon="⚖️")
+                st.rerun()
+            else:
+                st.error("❌ Errore di compilazione dopo ricalibrazione.")
+                with st.expander("Log errore"):
+                    st.text(_err_rc)
 
     # ── Logica modifica AI ─────────────────────────────────────────────────────
     if rigenera and istruzione.strip():
@@ -1011,6 +1108,9 @@ def _render_stage_review():
                     st.session_state.review_blocks[idx]["body"]  = m.group(2).strip()
                 else:
                     st.session_state.review_blocks[idx]["body"] = nuovo
+                # Reset pannello ricalibra per rileggere i punteggi aggiornati
+                if "recalibra_pts" in st.session_state:
+                    del st.session_state["recalibra_pts"]
                 st.success(f"✅ Esercizio {idx+1} rigenerato!")
                 time.sleep(0.4); st.rerun()
             except Exception as e:
@@ -1320,36 +1420,6 @@ if _stage_scroll_key not in st.session_state:
         "</script>",
         height=0
     )
-
-# ── FLOATING STAGE INDICATOR ──────────────────────────────────────────────────
-_stage_labels = {
-    STAGE_INPUT:  ("01", "Configura",  33),
-    STAGE_REVIEW: ("02", "Revisione",  66),
-    STAGE_FINAL:  ("03", "Download",  100),
-}
-_sn, _sl, _sp = _stage_labels.get(st.session_state.stage, ("01", "Configura", 33))
-st.markdown(
-    '<div style="position:fixed;bottom:1.2rem;right:1.2rem;z-index:9999;'
-    'background:' + T["card"] + ';border:1.5px solid ' + T["border"] + ';'
-    'border-radius:14px;padding:.7rem 1.1rem .65rem 1.1rem;'
-    'box-shadow:0 4px 24px rgba(0,0,0,.35);min-width:160px;backdrop-filter:blur(8px);">'
-    '<div style="font-size:.6rem;font-weight:800;color:' + T["muted"] + ';'
-    'text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">Fase attuale</div>'
-    '<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">'
-    '<div style="background:' + T["accent"] + ';border-radius:50%;width:22px;height:22px;'
-    'display:flex;align-items:center;justify-content:center;font-size:.65rem;'
-    'font-weight:900;color:#fff;flex-shrink:0;">' + _sn + '</div>'
-    '<span style="font-size:.8rem;font-weight:700;color:' + T["text"] + ';">' + _sl + '</span>'
-    '</div>'
-    '<div style="background:' + T["border"] + ';border-radius:100px;height:5px;overflow:hidden;">'
-    '<div style="background:linear-gradient(90deg,' + T["accent"] + ',' + T["accent"] + 'aa);'
-    'width:' + str(_sp) + '%;height:100%;border-radius:100px;"></div>'
-    '</div>'
-    '<div style="font-size:.6rem;color:' + T["muted"] + ';margin-top:4px;text-align:right;">'
-    + str(_sp) + '% completato</div>'
-    '</div>',
-    unsafe_allow_html=True
-)
 
 _current = st.session_state.stage
 if   _current == STAGE_INPUT:  _render_stage_input()
