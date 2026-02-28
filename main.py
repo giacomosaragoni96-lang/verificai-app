@@ -28,9 +28,14 @@ from latex_utils import (
 )
 from config import (
     APP_NAME, APP_ICON, APP_TAGLINE, SHARE_URL, FEEDBACK_FORM_URL,
-    LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES, THEME_LABELS,
+    LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, NOTE_PLACEHOLDER, TIPI_ESERCIZIO,
 )
+# THEME_LABELS è definito nel nuovo config.py — fallback per compatibilità
+try:
+    from config import THEME_LABELS
+except ImportError:
+    THEME_LABELS = {k: k.replace("_", " ").title() for k in THEMES}
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from auth import mostra_auth, ripristina_sessione, cancella_sessione_cookie
@@ -59,11 +64,13 @@ supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # ── TEMA — inizializzazione ───────────────────────────────────────────────────
 if "theme" not in st.session_state:
-    st.session_state.theme = "midnight_blue"
+    st.session_state.theme = "chiaro"
 
 _theme_key = st.session_state.theme
+# Compatibilità con vecchie sessioni
 if _theme_key not in THEMES:
-    _theme_key = "midnight_blue"
+    _theme_key = "chiaro"
+    st.session_state.theme = _theme_key
 T = THEMES[_theme_key]
 
 # ── CONFIGURAZIONE API ────────────────────────────────────────────────────────
@@ -468,11 +475,11 @@ if settings.get("theme_changed"):
     T = THEMES[st.session_state.theme]
     st.rerun()
 
-# ── HERO ──────────────────────────────────────────────────────────────────────
+# ── HINT SIDEBAR MINIMALE (top-left, fuori dal flusso) ───────────────────────
 st.markdown(
-    '<div class="top-bar"><div class="top-bar-hint">'
-    '← Impostazioni: modello AI, tema, storico verifiche, logout'
-    '</div></div>',
+    '<div class="sidebar-hint-inline">'
+    '☰ Impostazioni, storico e logout'
+    '</div>',
     unsafe_allow_html=True
 )
 st.markdown(
@@ -495,40 +502,44 @@ def _render_breadcrumb():
     steps = [("01","Configura",STAGE_INPUT),("02","Revisione",STAGE_REVIEW),("03","Download",STAGE_FINAL)]
     completed = {STAGE_INPUT: stage in (STAGE_REVIEW,STAGE_FINAL),
                  STAGE_REVIEW: stage == STAGE_FINAL, STAGE_FINAL: False}
+    # Contenitore centrato e compatto
     html = (
-        '<div style="display:flex;align-items:center;gap:8px;padding:.65rem 1rem;'
-        'margin-bottom:1.2rem;background:' + T["bg2"] + ';border:1px solid ' + T["border"] + ';'
-        'border-radius:12px;flex-wrap:nowrap;">'
+        '<div style="display:flex;justify-content:center;margin-bottom:1.4rem;">'
+        '<div style="display:inline-flex;align-items:center;gap:6px;'
+        'padding:.45rem .9rem;'
+        'background:' + T["card"] + ';border:1px solid ' + T["border"] + ';'
+        'border-radius:100px;box-shadow:' + T["shadow"] + ';">'
     )
     for i, (num, label, s) in enumerate(steps):
         is_active = s == stage
         is_done   = completed[s]
         if is_active:
-            cb, cb2, cc, lc, lw, op = T["accent"], T["accent"], "#fff", T["accent"], "800", "1"
+            cb, cc, lc, lw = T["accent"], "#fff", T["accent"], "700"
             icon = num
         elif is_done:
-            cb, cb2, cc, lc, lw, op = T["success"], T["success"], "#fff", T["success"], "600", "1"
+            cb, cc, lc, lw = T["success"], "#fff", T["success"], "600"
             icon = "✓"
         else:
-            cb, cb2, cc, lc, lw, op = T["bg2"], T["border2"], T["muted"], T["muted"], "500", ".5"
+            cb, cc, lc, lw = T["border2"], T["muted"], T["muted"], "500"
             icon = num
+        _op = "1" if (is_active or is_done) else ".45"
         html += (
-            '<div style="display:flex;align-items:center;gap:6px;opacity:' + op + ';">'
-            '<div style="background:' + cb + ';border:1.5px solid ' + cb2 + ';'
-            'border-radius:50%;width:26px;height:26px;display:flex;align-items:center;'
-            'justify-content:center;font-size:.68rem;font-weight:800;'
+            '<div style="display:flex;align-items:center;gap:5px;opacity:' + _op + ';">'
+            '<div style="background:' + cb + ';border-radius:50%;'
+            'width:22px;height:22px;display:flex;align-items:center;'
+            'justify-content:center;font-size:.6rem;font-weight:800;'
             'color:' + cc + ';flex-shrink:0;">' + icon + '</div>'
-            '<span style="font-size:.8rem;font-weight:' + lw + ';color:' + lc + ';'
+            '<span style="font-size:.75rem;font-weight:' + lw + ';color:' + lc + ';'
             'font-family:DM Sans,sans-serif;white-space:nowrap;">' + label + '</span>'
             '</div>'
         )
         if i < 2:
-            lc2 = T["success"] if is_done else T["border"]
+            _sep_c = T["success"] if is_done else T["border2"]
             html += (
-                '<div style="flex:1;height:1.5px;background:' + lc2 + ';'
-                'min-width:16px;max-width:56px;opacity:.6;"></div>'
+                '<div style="width:18px;height:1px;background:' + _sep_c + ';'
+                'opacity:.5;flex-shrink:0;"></div>'
             )
-    html += "</div>"
+    html += "</div></div>"
     st.markdown(html, unsafe_allow_html=True)
 
 
@@ -537,18 +548,6 @@ def _render_breadcrumb():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def _render_stage_input():
-
-    # ── GUIDA DISCRETA (statica, senza icone pesanti) ─────────────────────────
-    st.markdown(
-        '<div class="onboard-guide">'
-        '<span class="onboard-step"><span class="onboard-num">①</span>&nbsp;Scegli materia, scuola e argomento</span>'
-        '<span class="onboard-sep">·</span>'
-        '<span class="onboard-step"><span class="onboard-num">②</span>&nbsp;Rivedi e modifica gli esercizi</span>'
-        '<span class="onboard-sep">·</span>'
-        '<span class="onboard-step"><span class="onboard-num">③</span>&nbsp;Scarica il PDF e le varianti</span>'
-        '</div>',
-        unsafe_allow_html=True
-    )
 
     # ── STEP 1 — MATERIA + SCUOLA ─────────────────────────────────────────────
     st.markdown(
@@ -1017,12 +1016,6 @@ def _render_stage_review():
             except Exception as e:
                 st.error(f"❌ Errore: {e}")
 
-    st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-    st.markdown(
-        '<div style="text-align:center;font-size:.78rem;color:' + T["muted"] + ';padding:.3rem 0;">'
-        + str(idx+1) + ' di ' + str(n_blocks) + ' esercizi</div>',
-        unsafe_allow_html=True
-    )
     st.divider()
 
     col_back, col_confirm = st.columns([1, 2])
