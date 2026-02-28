@@ -189,11 +189,29 @@ def pulisci_corpo_latex(testo: str) -> str:
 
 
 def rimuovi_punti_subsection(latex: str) -> str:
+    r"""
+    Rimuove annotazioni (N pt) dai titoli \subsection*.
+    Gestisce tre posizioni distinte:
+      1. DENTRO le graffe: \subsection*{Titolo (N pt)}          <- bug originale
+      2. DOPO le graffe stessa riga: \subsection*{Titolo} (N pt)
+      3. Riga successiva: \subsection*{Titolo}\n(N pt)\n
+    """
+    # Caso 1 — (N pt) DENTRO le graffe (il più comune dopo riscala_punti)
+    # Es: \subsection*{Esercizio 1: Elementi (18 pt)}
+    # Usa [^}]*? non-greedy per fermarsi al PRIMO (N pt) prima della }
     latex = re.sub(
-        r'(\\subsection\*\{[^}]*\}[^\n]*)\s*\((\d+(?:[.,]\d+)?)\s*pt\)',
-        r'\1',
+        r'(\\subsection\*\{[^}]*?)\s*\(\d+(?:[.,]\d+)?\s*pt\)(\s*\})',
+        r'\1\2',
         latex
     )
+    # Caso 2 — (N pt) DOPO le graffe, sulla stessa riga
+    # Es: \subsection*{Esercizio 1} (18 pt)
+    latex = re.sub(
+        r'(\\subsection\*\{[^}]*\}[^\n]*?)\s*\(\d+(?:[.,]\d+)?\s*pt\)([^\n]*)',
+        r'\1\2',
+        latex
+    )
+    # Caso 3 — (N pt) sulla riga SUCCESSIVA al subsection
     latex = re.sub(
         r'(\\subsection\*\{[^}]*\})\s*\n\s*\(\d+(?:[.,]\d+)?\s*pt\)\s*\n',
         r'\1\n',
@@ -237,19 +255,22 @@ def riscala_punti(latex: str, punti_totali_target: int) -> str:
 
 
 def riscala_punti_custom(latex: str, pts_per_esercizio: list) -> str:
-    """
+    r"""
     Assegna punti custom per esercizio. Per ogni esercizio (subsection*) distribuisce
     i punti proporzionalmente tra i suoi item, oppure imposta il valore globale se non ci sono item.
     pts_per_esercizio: lista di int, uno per ogni subsection*.
 
-    Bug-fix rispetto alla versione precedente:
-    - Cast esplicito a int di ogni elemento di pts_per_esercizio (evita confronti float)
-    - Gestione corretta del 'resto' negativo (arrotondamento per difetto)
-    - Se un blocco non ha token (N pt), lo lascia invariato senza crash
+    Bug-fix critico (dimezzamento 80->40):
+    - Il pattern (N pt) veniva cercato nell'INTERO blocco, incluso il titolo
+      \subsection*{Esercizio 1: Titolo (18 pt)}. Poiche' il titolo gia' porta il
+      totale (18 pt) e gli item sommano anch'essi 18, la somma trovata era 36 ->
+      fattore = 18/36 = 0.5 -> tutti i valori dimezzati ad ogni "Applica".
+    - Fix primario: la ricerca di (N pt) e' limitata al CORPO (dopo la prima riga
+      header), escludendo completamente la riga \subsection*{...}.
+    - Fix secondario: cast int, gestione resto negativo, safeguard valori >= 0.
     """
-    pts_per_esercizio = [int(p) for p in pts_per_esercizio]   # ← forza int
+    pts_per_esercizio = [int(p) for p in pts_per_esercizio]
 
-    # Trova i blocchi subsection*
     parts = re.split(r'(?=\\subsection\*\{)', latex)
     if len(parts) <= 1:
         return latex
@@ -263,9 +284,18 @@ def riscala_punti_custom(latex: str, pts_per_esercizio: list) -> str:
             result_blocks.append(block)
             continue
         target = pts_per_esercizio[i]
-        # Trova tutti i (N pt) nel blocco
+
+        # ── Separa la riga header (\subsection*{...}) dal corpo ───────────────
+        # La ricerca di (N pt) avviene SOLO nel corpo: questo evita il bug
+        # per cui il (N pt) nel titolo veniva contato insieme agli item,
+        # raddoppiando la somma e producendo un fattore di scala = 0.5.
+        header_match = re.match(r'[^\n]*\n', block)
+        header_end  = header_match.end() if header_match else 0
+        header_text = block[:header_end]
+        body_text   = block[header_end:]
+
         pattern = re.compile(r'\((\d+(?:[.,]\d+)?)\s*pt\)')
-        matches = list(pattern.finditer(block))
+        matches = list(pattern.finditer(body_text))
         if not matches:
             result_blocks.append(block)
             continue
@@ -274,31 +304,31 @@ def riscala_punti_custom(latex: str, pts_per_esercizio: list) -> str:
         if somma == 0:
             result_blocks.append(block)
             continue
-        # Distribuisce proporzionalmente
+
         nuovi = [v / somma * target for v in valori]
         nuovi_int = [int(v) for v in nuovi]
         resto = target - sum(nuovi_int)
 
-        # Distribuisce il resto ai più grandi residui frazionali
-        # Bug-fix: gestisce sia resto positivo (aggiungi 1) sia negativo (togli 1)
+        # Distribuisce il resto ai più grandi residui frazionali.
+        # Gestisce sia resto positivo (+1) sia negativo (-1).
         frazioni = sorted(
             range(len(nuovi)), key=lambda k: nuovi[k] - nuovi_int[k], reverse=(resto > 0)
         )
         for k in range(abs(int(round(resto)))):
             nuovi_int[frazioni[k % len(frazioni)]] += (1 if resto > 0 else -1)
-        # Sicurezza: nessun valore può scendere sotto 0
         nuovi_int = [max(0, v) for v in nuovi_int]
 
-        new_block = block
+        new_body = body_text
         offset = 0
         for j, m in enumerate(matches):
             vecchio = m.group(0)
             nuovo = f"({nuovi_int[j]} pt)"
             s = m.start() + offset
             e = m.end() + offset
-            new_block = new_block[:s] + nuovo + new_block[e:]
+            new_body = new_body[:s] + nuovo + new_body[e:]
             offset += len(nuovo) - len(vecchio)
-        result_blocks.append(new_block)
+
+        result_blocks.append(header_text + new_body)
 
     return preamble + ''.join(result_blocks)
 
