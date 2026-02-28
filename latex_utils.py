@@ -117,7 +117,7 @@ def build_griglia_latex(esercizi: list, punti_totali: int) -> str:
     row_punti = "\\textbf{Punti}" + " &" * total_cols + " \\\\ \\hline"
 
     return (
-        "% GRIGLIA\n\\begin{center}\n\\textbf{Griglia Punteggi}\\\\[0.3cm]\n"
+        "% GRIGLIA\n\\begin{center}\n\\textbf{Griglia di Valutazione}\\\\[0.3cm]\n"
         "{\\renewcommand{\\arraystretch}{1.8}\n"
         f"\\adjustbox{{max width=\\textwidth}}{{\n"
         f"\\begin{{tabular}}{{{col_spec}}}\n\\hline\n"
@@ -360,7 +360,44 @@ def inietta_griglia(latex: str, punti_totali: int) -> str:
 
 # ── COMPILAZIONE PDF ───────────────────────────────────────────────────────────
 
+# ── FIX TIKZ LABELS ───────────────────────────────────────────────────────────
+
+def fix_tikz_labels(latex: str) -> str:
+    """
+    Corregge un bug frequente dell'AI nella generazione TikZ:
+    i valori math nei label TikZ con virgole NON sono wrappati in {} e questo
+    fa sì che TikZ interpreti la virgola come separatore di chiavi.
+
+    Esempio rotto:   [label=right:$A(2,3)$]
+    Esempio corretto:[label=right:{$A(2,3)$}]
+
+    Applica il wrap a TUTTI i valori label=X:$...$, non solo quelli con virgola,
+    per robustezza (parentesi, segni, etc. possono causare parsing ambiguo).
+    """
+    # Pattern: label=<qualcosa>:<espressione_math>
+    # dove <espressione_math> = $...$ NON già wrappata in {}
+    # Il lookahead negativo (?<!\{) e (?!\}) evita doppio-wrap.
+    latex = re.sub(
+        r'(label\s*=\s*[^:,\]\s{]+\s*:\s*)(?!\{)(\$[^$\n]+\$)',
+        r'\1{\2}',
+        latex
+    )
+    # Caso aggiuntivo: label={above right}:$...$  (direction già in {})
+    # già gestito dal pattern sopra, ma aggiungiamo il caso con spazi
+    latex = re.sub(
+        r'(label\s*=\s*\{[^}]+\}\s*:\s*)(?!\{)(\$[^$\n]+\$)',
+        r'\1{\2}',
+        latex
+    )
+    return latex
+
+
+# ── COMPILAZIONE PDF ───────────────────────────────────────────────────────────
+
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
+    # Applica fix pre-compilazione: TikZ label math, poi due passate pdflatex
+    codice_latex = fix_tikz_labels(codice_latex)
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tex_path = os.path.join(tmpdir, "v.tex")
         pdf_path = os.path.join(tmpdir, "v.pdf")
