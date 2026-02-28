@@ -166,11 +166,13 @@ def _make_katex_html(title: str, body: str, T: dict, height_hint: int = 400) -> 
 
     # 1. TikZ → placeholder
     t = re.sub(r"\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}",
-               '<div class="graph-ph">📊 Grafico TikZ — visibile nel PDF finale</div>',
+               '<div class="graph-ph">📈 Grafico TikZ — visibile nel PDF finale.<br>'
+               '<span style="font-size:.78rem;opacity:.8;">Per un grafico diverso scrivi la funzione nella casella Modifica qui sotto.</span></div>',
                t, flags=re.DOTALL)
     t = re.sub(r"\\begin\{axis\}.*?\\end\{axis\}", "", t, flags=re.DOTALL)
     t = re.sub(r"\\begin\{pgfpicture\}.*?\\end\{pgfpicture\}",
-               '<div class="graph-ph">📊 Grafico pgf — visibile nel PDF finale</div>',
+               '<div class="graph-ph">📈 Grafico pgf — visibile nel PDF finale.<br>'
+               '<span style="font-size:.78rem;opacity:.8;">Per un grafico diverso scrivi la funzione nella casella Modifica qui sotto.</span></div>',
                t, flags=re.DOTALL)
 
     # 2. Display math \[...\] → $$...$$
@@ -253,9 +255,9 @@ def _make_katex_html(title: str, body: str, T: dict, height_hint: int = 400) -> 
         ".lbl{font-weight:700;color:" + acc + "}"
         ".blank{display:inline-block;border-bottom:1.5px solid " + fg2 + ";"
         "min-width:110px;margin:0 3px}"
-        ".graph-ph{background:" + card + ";border:1.5px dashed " + bdr + ";"
-        "border-radius:8px;padding:14px;text-align:center;color:" + muted + ";"
-        "font-size:.85rem;margin:10px 0}"
+        ".graph-ph{background:#2a2520;border:1.5px dashed " + acc + "88;"
+        "border-radius:8px;padding:16px 14px;text-align:center;color:#e8e0d0;"
+        "font-size:.85rem;margin:10px 0;line-height:1.5}"
         "p{margin:5px 0}"
         "strong{color:" + fg + "}"
         ".katex-display{overflow-x:auto;padding:6px 0}"
@@ -424,6 +426,7 @@ if "_storico_refresh"  not in st.session_state: st.session_state._storico_refres
 if "_preferiti"        not in st.session_state: st.session_state._preferiti = set()
 if "_storico_page"     not in st.session_state: st.session_state._storico_page = 1
 if "_onboarding_done"  not in st.session_state: st.session_state._onboarding_done = False
+if "_saved_to_storico" not in st.session_state: st.session_state._saved_to_storico = False
 
 # ── CONTATORI ─────────────────────────────────────────────────────────────────
 _verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
@@ -522,25 +525,25 @@ def _render_stage_input():
 
     # ── ONBOARDING ────────────────────────────────────────────────────────────
     if not st.session_state._onboarding_done:
-        if st.query_params.get("_ob") == "done":
-            st.session_state._onboarding_done = True
-            st.query_params.pop("_ob", None)
-            st.rerun()
         st.markdown(
             '<div style="background:linear-gradient(135deg,' + T["accent_light"] + ' 0%,' + T["card"] + ' 100%);'
             'border:1.5px solid ' + T["accent"] + ';border-radius:14px;'
-            'padding:1rem 1.4rem .8rem 1.4rem;margin-bottom:.8rem;font-family:DM Sans,sans-serif;">'
+            'padding:1rem 1.4rem .8rem 1.4rem;margin-bottom:.4rem;font-family:DM Sans,sans-serif;">'
             '<div style="font-size:.85rem;font-weight:800;color:' + T["text"] + ';margin-bottom:.6rem;">Benvenuto in VerificAI 👋</div>'
-            '<div style="font-size:.78rem;color:' + T["text2"] + ';line-height:1.6;margin-bottom:.7rem;">'
+            '<div style="font-size:.78rem;color:' + T["text2"] + ';line-height:1.6;">'
             'Segui le tre fasi indicate nella barra qui sopra:<br>'
             '<span style="color:' + T["accent"] + ';font-weight:700;">① Configura</span> — scegli materia, scuola e argomento, poi premi <em>Genera</em>.<br>'
             '<span style="color:' + T["accent"] + ';font-weight:700;">② Revisione</span> — leggi la bozza, modifica i singoli esercizi se vuoi.<br>'
             '<span style="color:' + T["accent"] + ';font-weight:700;">③ Download</span> — scarica PDF, Word e genera varianti (Fila B, BES/DSA, Soluzioni).'
             '</div>'
-            '<a href="?_ob=done" style="font-size:.72rem;color:' + T["muted"] + ';text-decoration:underline;font-family:DM Sans,sans-serif;">Ho capito →</a>'
             '</div>',
             unsafe_allow_html=True
         )
+        _ob_col, _ = st.columns([1, 4])
+        with _ob_col:
+            if st.button("Ho capito →", key="_ob_dismiss", use_container_width=True):
+                st.session_state._onboarding_done = True
+                st.rerun()
 
     # ── STEP 1 — MATERIA + SCUOLA ─────────────────────────────────────────────
     st.markdown(
@@ -810,19 +813,6 @@ def _render_stage_input():
             )
             time.sleep(0.7); _prog.empty()
 
-            try:
-                supabase_admin.table("verifiche_storico").insert({
-                    "user_id": st.session_state.utente.id,
-                    "materia": materia_scelta, "argomento": ris["titolo"],
-                    "scuola": difficolta, "latex_a": ris["A"]["latex"] or None,
-                    "latex_b": None, "latex_r": None, "modello": modello_id,
-                    "num_esercizi": num_esercizi_totali,
-                }).execute()
-                st.session_state._storico_refresh += 1
-                st.toast("✅ Bozza salvata!", icon="💾")
-            except Exception as e:
-                st.warning(f"⚠️ Salvataggio storico non riuscito: {e}")
-
             st.session_state.stage = STAGE_REVIEW
             st.rerun()
 
@@ -890,13 +880,6 @@ def _render_stage_review():
     idx = labels.index(sel_label)
     st.session_state.review_sel_idx = idx
 
-    st.markdown(
-        '<div style="font-size:.72rem;color:' + T["muted"] + ';margin-top:-.3rem;margin-bottom:.5rem;">'
-        '💡 Leggi l\'esercizio a sinistra — se qualcosa non va, scrivilo sotto e premi <strong>Modifica</strong>.'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
     block = blocks[idx]
     title = block["title"]
     body  = block["body"]
@@ -909,8 +892,29 @@ def _render_stage_review():
         components.html(katex_html, height=est_height, scrolling=True)
 
         if re.search(r"\\begin\{(tikzpicture|axis)\}", body):
-            st.info("📊 Questo esercizio contiene grafici TikZ/pgfplots che non si "
-                    "possono mostrare qui — sono visibili nel PDF finale.")
+            st.markdown(
+                '<div style="font-size:.75rem;color:' + T["muted"] + ';'
+                'margin-top:.3rem;font-style:italic;">📈 Il grafico è visibile nel PDF — '
+                'per richiederne uno diverso scrivi la funzione nella casella qui sotto.</div>',
+                unsafe_allow_html=True
+            )
+
+        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+        st.markdown(
+            '<div style="font-size:.78rem;color:' + T["text2"] + ';margin-bottom:.3rem;">'
+            '<strong>Vuoi cambiare qualcosa?</strong> '
+            'Descrivi la modifica e l\'AI rigenererà solo questo esercizio.</div>',
+            unsafe_allow_html=True
+        )
+        istruzione = st.text_area(
+            f"Modifica esercizio {idx+1}",
+            placeholder="es. Aumenta la difficoltà · Cambia i numeri · Converti in Vero/Falso · Aggiungi un sottopunto",
+            key=f"rw_istr_{idx}",
+            label_visibility="collapsed",
+            height=80,
+        )
+        rigenera = st.button("✏️ Modifica esercizio", key=f"rw_btn_{idx}",
+                             use_container_width=True, disabled=not istruzione.strip())
 
     with col_pdf:
         st.markdown(
@@ -934,27 +938,6 @@ def _render_stage_review():
                 )
             else:
                 st.caption("Anteprima non disponibile.")
-
-    st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
-    st.markdown(
-        '<div style="font-size:.78rem;color:' + T["text2"] + ';margin-bottom:.4rem;">'
-        '<strong>Vuoi cambiare qualcosa?</strong> '
-        'Descrivi la modifica e l\'AI rigenererà solo questo esercizio.</div>',
-        unsafe_allow_html=True
-    )
-    col_inp, col_btn = st.columns([4, 1])
-    with col_inp:
-        istruzione = st.text_area(
-            f"Modifica esercizio {idx+1}",
-            placeholder="es. Aumenta la difficoltà · Cambia i numeri · Converti in Vero/Falso · Aggiungi un sottopunto",
-            key=f"rw_istr_{idx}",
-            label_visibility="collapsed",
-            height=90,
-        )
-    with col_btn:
-        st.markdown("<div style='height:2.1rem'></div>", unsafe_allow_html=True)
-        rigenera = st.button("✏️ Modifica", key=f"rw_btn_{idx}",
-                             use_container_width=True, disabled=not istruzione.strip())
 
     if rigenera and istruzione.strip():
         punti_nota = (
@@ -990,18 +973,14 @@ def _render_stage_review():
             except Exception as e:
                 st.error(f"❌ Errore: {e}")
 
-    st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-    st.markdown(
-        '<div style="text-align:center;font-size:.78rem;color:' + T["muted"] + ';padding:.3rem 0;">'
-        + str(idx+1) + ' di ' + str(n_blocks) + ' esercizi</div>',
-        unsafe_allow_html=True
-    )
     st.divider()
 
     col_back, col_confirm = st.columns([1, 2])
     with col_back:
-        if st.button("← Riconfigura", use_container_width=True):
+        st.markdown('<div class="btn-secondary-accent">', unsafe_allow_html=True)
+        if st.button("← Riconfigura", use_container_width=True, key="btn_riconfigura"):
             st.session_state.stage = STAGE_INPUT; st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     with col_confirm:
         if st.button("✅ Conferma e genera PDF finale", type="primary", use_container_width=True):
             with st.spinner("⏳ Compilazione PDF finale…"):
@@ -1027,6 +1006,28 @@ def _render_stage_review():
                     st.session_state.verifiche["A"]["preview"] = True
                     imgs, _ = pdf_to_images_bytes(pdf_bytes)
                     st.session_state.preview_images = imgs or []
+
+                    # ── Salvataggio storico (solo una volta per verifica) ──────
+                    if not st.session_state._saved_to_storico:
+                        try:
+                            gp_s = st.session_state.gen_params
+                            supabase_admin.table("verifiche_storico").insert({
+                                "user_id":      st.session_state.utente.id,
+                                "materia":      gp_s.get("materia",""),
+                                "argomento":    gp_s.get("argomento",""),
+                                "scuola":       gp_s.get("difficolta",""),
+                                "latex_a":      latex_final or None,
+                                "latex_b":      None,
+                                "latex_r":      None,
+                                "modello":      gp_s.get("modello_id",""),
+                                "num_esercizi": gp_s.get("num_esercizi", 0),
+                            }).execute()
+                            st.session_state._storico_refresh  += 1
+                            st.session_state._saved_to_storico  = True
+                            st.toast("✅ Verifica salvata!", icon="💾")
+                        except Exception as _e:
+                            st.warning(f"⚠️ Salvataggio storico non riuscito: {_e}")
+
                     st.session_state.stage = STAGE_FINAL
                     st.rerun()
                 else:
@@ -1105,11 +1106,15 @@ def _render_stage_final():
             return
         fname = arg_str + "_" + suffix
         btn_label = label_custom if label_custom else f"Scarica {label_file} (PDF)"
-        
-        # Container unificato
+
+        # ── Etichetta sezione ─────────────────────────────────────────────────
         st.markdown(
-            '<div style="background:' + T["bg2"] + ';border:1.5px solid ' + T["border"] + ';'
-            'border-radius:12px;padding:.8rem 1rem;margin-bottom:.75rem;">',
+            '<div style="font-size:.7rem;font-weight:800;letter-spacing:.07em;'
+            'text-transform:uppercase;color:' + T["muted"] + ';'
+            'margin:1rem 0 .45rem 0;padding-bottom:.3rem;'
+            'border-bottom:1px solid ' + T["border"] + ';">'
+            + icon + ' ' + label_file +
+            '</div>',
             unsafe_allow_html=True
         )
 
@@ -1136,42 +1141,37 @@ def _render_stage_final():
             with st.expander("👁 Mostra soluzioni"):
                 st.markdown(v["testo"])
 
-        # ── DOCX ─────────────────────────────────────────────────────────────
+        # ── Altri formati (DOCX + .tex) ───────────────────────────────────────
         if v.get("latex"):
-            _docx_key = "_docx_gen_" + fid
-            st.markdown("<div style='height:.35rem'></div>", unsafe_allow_html=True)
-            if v.get("docx"):
-                st.download_button(
-                    "📝 Scarica Word · " + _stima(v["docx"]),
-                    data=v["docx"], file_name=fname + ".docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True, key="dl_docx_" + fid
-                )
-            else:
-                if st.button("📝 Genera Word (.docx)", key="gen_docx_" + fid, use_container_width=True):
-                    st.session_state[_docx_key] = True
-                if st.session_state.get(_docx_key, False):
-                    with st.spinner("Conversione Word…"):
-                        db, de = latex_to_docx_via_ai(v["latex"], con_griglia=con_griglia)
-                    st.session_state[_docx_key] = False
-                    if db:
-                        st.session_state.verifiche[fid]["docx"] = db; st.rerun()
-                    else:
-                        st.error("Errore Word")
+            with st.expander("📎 Altri formati", expanded=False):
+                _docx_key = "_docx_gen_" + fid
+                if v.get("docx"):
+                    st.download_button(
+                        "📝 Scarica Word · " + _stima(v["docx"]),
+                        data=v["docx"], file_name=fname + ".docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True, key="dl_docx_" + fid
+                    )
+                else:
+                    if st.button("📝 Genera Word (.docx)", key="gen_docx_" + fid, use_container_width=True):
+                        st.session_state[_docx_key] = True
+                    if st.session_state.get(_docx_key, False):
+                        with st.spinner("Conversione Word…"):
+                            db, de = latex_to_docx_via_ai(v["latex"], con_griglia=con_griglia)
+                        st.session_state[_docx_key] = False
+                        if db:
+                            st.session_state.verifiche[fid]["docx"] = db; st.rerun()
+                        else:
+                            st.error("Errore Word")
 
-            # .tex download discreto
-            col_tex, _ = st.columns([1, 3])
-            with col_tex:
                 st.download_button(
-                    "⬇ .tex",
+                    "⬇ Sorgente LaTeX (.tex)",
                     data=v["latex"].encode("utf-8"),
                     file_name=fname + ".tex", mime="text/plain",
                     key="dl_tex_" + fid,
                     help="Sorgente LaTeX per editor esterno",
                     use_container_width=True,
                 )
-
-        st.markdown("</div>", unsafe_allow_html=True)
 
     # Rendiamo su due colonne solo i blocchi di download generati, così sono ordinati sotto
     col_dl_left, col_dl_right = st.columns(2)
@@ -1238,10 +1238,12 @@ def _render_stage_final():
     st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
     col_rev, col_new = st.columns(2)
     with col_rev:
-        if st.button("← Rivedi esercizi", use_container_width=True):
+        st.markdown('<div class="btn-secondary-accent">', unsafe_allow_html=True)
+        if st.button("← Rivedi esercizi", use_container_width=True, key="btn_rev_stage3"):
             st.session_state.stage = STAGE_REVIEW; st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     with col_new:
-        if st.button("🆕 Nuova Verifica", type="primary", use_container_width=True):
+        if st.button("🆕 Nuova Verifica", type="primary", use_container_width=True, key="btn_new_stage3"):
             st.session_state.stage           = STAGE_INPUT
             st.session_state.verifiche        = {
                 "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
@@ -1253,6 +1255,7 @@ def _render_stage_final():
             st.session_state.gen_params       = {}
             st.session_state.preview_images   = []
             st.session_state.esercizi_custom  = []
+            st.session_state._saved_to_storico = False
             st.rerun()
 
     # Link feedback abbassato alla fine della pagina (Stage 3)
