@@ -807,6 +807,18 @@ def get_css(T: dict) -> str:
     margin-bottom: 0.5rem;
   }}
 
+  /* Etichetta opzione uniforme dentro Personalizza */
+  .opt-label {{
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    color: {T['text2']} !important;
+    margin: 0.9rem 0 0.35rem 0 !important;
+    display: block !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }}
+
   /* Pulsante secondario con stile accent — usato per Riconfigura e Rivedi */
   .btn-secondary-accent div.stButton > button,
   .btn-secondary-accent .stButton > button {{
@@ -818,6 +830,7 @@ def get_css(T: dict) -> str:
     font-size: 1rem !important;
     padding: 0.6rem 1rem !important;
     min-height: 46px !important;
+    height: 46px !important;
     box-shadow: 0 2px 8px {T['accent']}22 !important;
     transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease !important;
   }}
@@ -827,10 +840,81 @@ def get_css(T: dict) -> str:
     box-shadow: 0 4px 16px {T['accent']}40 !important;
     transform: translateY(-1px) !important;
   }}
-  /* Equalizza primary button height con secondary */
+
+  /* Forza primary button alla stessa altezza */
+  .btn-equal-primary div.stButton > button[kind="primary"],
+  .btn-equal-primary .stButton > button[kind="primary"],
   div.stButton > button[kind="primary"] {{
     min-height: 46px !important;
+    height: 46px !important;
     padding: 0.6rem 1rem !important;
+    font-size: 1rem !important;
+  }}
+
+  /* Pulsante download principale Fila A — verde brillante, più grande */
+  .dl-primary-btn .stDownloadButton button,
+  .dl-primary-btn [data-testid="stDownloadButton"] button {{
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    padding: 1rem 1.4rem !important;
+    min-height: 54px !important;
+    box-shadow: 0 4px 18px rgba(22,163,74,0.45) !important;
+    letter-spacing: 0.01em !important;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    width: 100% !important;
+  }}
+  .dl-primary-btn .stDownloadButton button:hover,
+  .dl-primary-btn [data-testid="stDownloadButton"] button:hover {{
+    transform: scale(1.03) translateY(-2px) !important;
+    box-shadow: 0 8px 28px rgba(22,163,74,0.55) !important;
+    filter: brightness(1.08) !important;
+  }}
+
+  /* Floater fase: desktop = top-right, mobile = bottom-right */
+  .stage-floater {{
+    position: fixed;
+    top: 4.5rem;
+    right: 1.2rem;
+    z-index: 9999;
+    background: {T['card']};
+    border: 1.5px solid {T['border']};
+    border-radius: 14px;
+    padding: .7rem 1.1rem .65rem 1.1rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,.35);
+    min-width: 155px;
+    backdrop-filter: blur(8px);
+  }}
+  @media (max-width: 640px) {{
+    .stage-floater {{
+      top: auto;
+      bottom: 4.5rem;
+      right: .8rem;
+    }}
+  }}
+
+  /* "Ho capito" button — stile link discreto */
+  ._ob_dismiss_wrap div.stButton > button,
+  ._ob_dismiss_wrap .stButton > button {{
+    background: transparent !important;
+    color: {T['muted']} !important;
+    border: 1px solid {T['border']} !important;
+    border-radius: 8px !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    padding: 4px 12px !important;
+    min-height: 28px !important;
+    height: 28px !important;
+    box-shadow: none !important;
+    width: auto !important;
+  }}
+  ._ob_dismiss_wrap div.stButton > button:hover {{
+    color: {T['text2']} !important;
+    border-color: {T['accent']} !important;
+    background: {T['accent_light']} !important;
   }}
 
   .genera-hint {{
