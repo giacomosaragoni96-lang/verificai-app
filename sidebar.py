@@ -33,7 +33,11 @@ def render_sidebar(
     with st.sidebar:
         st.markdown('<div class="sidebar-title">⚙️ Impostazioni</div>', unsafe_allow_html=True)
 
-      
+        st.markdown(
+            '<div style="height:2px;background:linear-gradient(90deg,#D97706,#16a34a,transparent);'
+            'border-radius:2px;margin-bottom:1rem;opacity:.6;"></div>',
+            unsafe_allow_html=True
+        )
         # ── MODELLO AI ────────────────────────────────────────────────────────
         st.markdown('<div class="sidebar-label">Modello AI</div>', unsafe_allow_html=True)
 
@@ -190,22 +194,48 @@ def render_sidebar(
 
                         if v.get("latex_a"):
                             if st.button(
-                                "♻ Ricarica Fila A",
+                                "▶ Apri verifica",
                                 key=f"reload_a_{v['id']}_{_refresh_key}",
                                 use_container_width=True
                             ):
-                                st.session_state.verifiche["A"]["latex"] = v["latex_a"]
-                                pdf, _ = compila_pdf_func(v["latex_a"])
+                                latex_a = v["latex_a"]
+                                st.session_state.verifiche["A"]["latex"] = latex_a
+                                st.session_state.verifiche["A"]["latex_originale"] = latex_a
+                                pdf, _ = compila_pdf_func(latex_a)
                                 if pdf:
                                     st.session_state.verifiche["A"]["pdf"]     = pdf
                                     st.session_state.verifiche["A"]["preview"] = True
+                                    # Genera preview immagini
+                                    try:
+                                        from latex_utils import pdf_to_images_bytes
+                                        imgs, _ = pdf_to_images_bytes(pdf)
+                                        st.session_state.preview_images = imgs or []
+                                    except Exception:
+                                        st.session_state.preview_images = []
+                                # Estrai blocchi per la revisione
                                 from main import _extract_blocks  # noqa: guarded import
                                 try:
-                                    pre, blks = _extract_blocks(v["latex_a"])
+                                    pre, blks = _extract_blocks(latex_a)
                                     st.session_state.review_preamble = pre
                                     st.session_state.review_blocks   = blks
+                                    st.session_state.review_sel_idx  = 0
                                 except Exception:
                                     pass
+                                # Popola gen_params dal record storico
+                                st.session_state.gen_params = {
+                                    "materia":        v.get("materia", ""),
+                                    "difficolta":     v.get("scuola", ""),
+                                    "argomento":      v.get("argomento", ""),
+                                    "durata":         "1 ora",
+                                    "num_esercizi":   v.get("num_esercizi", 4),
+                                    "punti_totali":   100,
+                                    "mostra_punteggi": True,
+                                    "con_griglia":    True,
+                                    "perc_ridotta":   25,
+                                    "modello_id":     v.get("modello", "gemini-2.5-flash-lite"),
+                                }
+                                st.session_state.preview_page  = 0
+                                st.session_state["_prev_stage"] = None  # forza scroll top
                                 st.session_state.stage = "FINAL"
                                 st.rerun()
 
@@ -287,4 +317,3 @@ def render_sidebar(
         "modello_id":    modello_id,
         "theme_changed": theme_changed,
     }
-
