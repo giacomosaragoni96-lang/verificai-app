@@ -1,7 +1,19 @@
 def get_css(T: dict) -> str:
+    """
+    Restituisce il CSS dell'app adattato dinamicamente al tema T.
+    Tutti i colori vengono estratti dal dizionario T passato come argomento.
+    """
+    # La sidebar usa sempre un tema scuro fisso per leggibilità
+    _SB_BG     = "#141412"
     _SB_BORDER = "#2a2926"
     _SB_MUTED  = "#8a8880"
     _SB_TEXT   = "#e8e6e0"
+
+    # Calcola se il tema è light (background chiaro) per aggiustare
+    # alcuni colori del pulsante primary
+    _is_light = _is_light_color(T["bg"])
+    _btn_primary_bg = T["accent"]
+
     return f"""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
@@ -49,9 +61,9 @@ def get_css(T: dict) -> str:
   }}
   .stMarkdown h1 a, .stMarkdown h2 a, .stMarkdown h3 a {{ display: none !important; }}
 
-  /* ════ SIDEBAR ════ */
+  /* ════ SIDEBAR (sempre dark) ════ */
   [data-testid="stSidebar"] {{
-    background: #141412 !important;
+    background: {_SB_BG} !important;
     border-right: 1px solid {_SB_BORDER} !important;
   }}
   .sidebar-title {{
@@ -173,10 +185,10 @@ def get_css(T: dict) -> str:
     font-weight: 800 !important;
     letter-spacing: 0.1em !important;
     text-transform: uppercase !important;
-    color: #D97706 !important;
+    color: {T['accent']} !important;
     margin: 1rem 0 0.5rem 0 !important;
     padding-bottom: 0.35rem !important;
-    border-bottom: 2px solid #3a3320 !important;
+    border-bottom: 2px solid {T['accent']}33 !important;
     display: block !important;
   }}
 
@@ -211,6 +223,7 @@ def get_css(T: dict) -> str:
     letter-spacing: -0.02em;
   }}
 
+  /* ════ HERO ════ */
   .hero-wrap {{
     margin-bottom: 2.5rem;
     padding-bottom: 1.8rem;
@@ -260,7 +273,7 @@ def get_css(T: dict) -> str:
     transform-origin: center bottom;
   }}
   .hero-ai {{
-    background: linear-gradient(135deg, {T['accent']} 0%, #FF8C00 100%);
+    background: linear-gradient(135deg, {T['accent']} 0%, {T['accent2']} 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -291,6 +304,24 @@ def get_css(T: dict) -> str:
     opacity: 0;
   }}
 
+  /* ════ TOP BAR ════ */
+  .top-bar {{
+    background: {T['bg2']};
+    border: 1px solid {T['border']};
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }}
+  .top-bar-hint {{
+    font-size: 0.72rem;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+  }}
+
+  /* ════ INPUTS ════ */
   .stTextInput label p,
   .stSelectbox label p,
   .stNumberInput label p,
@@ -368,18 +399,24 @@ def get_css(T: dict) -> str:
     border-radius: 5px !important;
   }}
 
+  /* ════ BUTTONS ════ */
   div.stButton > button[kind="primary"] {{
-    background: #D97706 !important;
+    background: {_btn_primary_bg} !important;
     color: white !important;
     border: none !important;
     border-radius: 12px !important;
     transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, filter 0.2s ease !important;
-    box-shadow: 0 2px 12px rgba(217,119,6,0.35) !important;
+    box-shadow: 0 2px 12px {T['accent']}55 !important;
     display: block !important;
+    min-height: 46px !important;
+    padding: 0.6rem 1rem !important;
+    font-size: 1rem !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-weight: 700 !important;
   }}
   div.stButton > button[kind="primary"]:hover {{
     transform: scale(1.05) !important;
-    box-shadow: 0 10px 25px rgba(217,119,6,0.5) !important;
+    box-shadow: 0 10px 25px {T['accent']}55 !important;
     filter: brightness(1.1) !important;
     border: none !important;
   }}
@@ -395,45 +432,6 @@ def get_css(T: dict) -> str:
     opacity: 0.7 !important;
   }}
 
-  .dl-card {{
-    background: #FFFFFF !important;
-    padding: 1.2rem;
-    border-radius: 15px;
-    border: 1px solid #E0E0E0;
-    text-align: center;
-    margin-bottom: 1rem;
-  }}
-  .dl-label {{
-    font-size: 0.85rem;
-    color: #666;
-    margin-bottom: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }}
-  .hint-docx {{
-    font-size: 0.78rem;
-    color: #888;
-    line-height: 1.3;
-    margin-top: 12px;
-    font-style: italic;
-    text-align: left;
-    border-top: 1px solid #EEE;
-    padding-top: 8px;
-  }}
-
-  .output-card {{
-    background: {T['card']} !important;
-    border: 1.5px solid {T['border2']} !important;
-    border-radius: 16px !important;
-    padding: 0 !important;
-    margin-bottom: 1.5rem !important;
-    overflow: hidden !important;
-    box-shadow: {T['shadow_md']} !important;
-  }}
-  .output-card > div {{
-    padding: 1.2rem !important;
-  }}
   .stDownloadButton button,
   [data-testid="stDownloadButton"] button,
   .stButton [data-testid="baseButton-secondary"],
@@ -459,10 +457,34 @@ def get_css(T: dict) -> str:
     background: {T['hover']} !important;
     border-color: {T['accent']} !important;
     transform: translateY(-3px) !important;
-    box-shadow: 0 6px 20px rgba(217,119,6,0.18) !important;
+    box-shadow: 0 6px 20px {T['accent']}28 !important;
     color: {T['text']} !important;
   }}
 
+  /* ════ DOWNLOAD ACCENT BUTTON (PDF primario) ════ */
+  .dl-accent-btn .stDownloadButton button,
+  .dl-accent-btn [data-testid="stDownloadButton"] button {{
+    background: linear-gradient(135deg, {T['accent']} 0%, {T['accent']}cc 100%) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 14px !important;
+    font-size: 1.1rem !important;
+    font-weight: 800 !important;
+    padding: 1rem 1.6rem !important;
+    min-height: 56px !important;
+    letter-spacing: .01em !important;
+    box-shadow: 0 4px 24px {T['accent']}55 !important;
+    transition: all .2s cubic-bezier(.175,.885,.32,1.275) !important;
+    width: 100% !important;
+  }}
+  .dl-accent-btn .stDownloadButton button:hover,
+  .dl-accent-btn [data-testid="stDownloadButton"] button:hover {{
+    filter: brightness(1.12) !important;
+    box-shadow: 0 8px 32px {T['accent']}77 !important;
+    transform: translateY(-2px) scale(1.01) !important;
+  }}
+
+  /* ════ ACTION CARD ════ */
   .action-card {{
     background: {T['card']} !important;
     border: 2px solid {T['border']} !important;
@@ -537,70 +559,6 @@ def get_css(T: dict) -> str:
   .action-card [data-testid="stExpander"] summary svg {{
     color: {T['accent']} !important;
   }}
-  .tex-download {{
-    opacity: 0.7 !important;
-    transition: opacity 0.2s ease, transform 0.2s ease !important;
-  }}
-  .tex-download:hover {{
-    opacity: 1 !important;
-    transform: translateX(3px) !important;
-  }}
-  .hint-docx {{
-    background: {T['accent_light']} !important;
-    border-left: 3px solid {T['accent']} !important;
-    border-radius: 8px !important;
-    padding: 10px 14px !important;
-    margin-top: 8px !important;
-    font-size: 0.8rem !important;
-    color: {T['text2']} !important;
-    line-height: 1.5 !important;
-  }}
-  .hint-docx strong {{
-    color: {T['accent']} !important;
-  }}
-  .section-action-label {{
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: {T['muted']};
-    margin-bottom: 0.8rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid {T['border']};
-  }}
-  .section-action-label::before {{
-    content: '';
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: {T['accent']};
-    display: inline-block;
-  }}
-
-  .compact-uploader [data-testid="stFileUploader"] section {{
-    padding: 0 !important;
-    border: none !important;
-    background: transparent !important;
-    min-height: unset !important;
-  }}
-  .compact-uploader [data-testid="stFileUploadDropzone"] {{
-    display: none !important;
-  }}
-  .compact-uploader [data-testid="stFileUploader"] button {{
-    background: {T['card2']} !important;
-    color: {T['text2']} !important;
-    border: 1px solid {T['border2']} !important;
-    border-radius: 8px !important;
-    font-size: 0.8rem !important;
-    padding: 6px 14px !important;
-  }}
-  .compact-uploader [data-testid="stFileUploader"] button:hover {{
-    border-color: {T['accent']} !important;
-    color: {T['accent']} !important;
-  }}
 
   .tex-btn-wrap .stDownloadButton button,
   .tex-btn-wrap [data-testid="stDownloadButton"] button {{
@@ -618,12 +576,13 @@ def get_css(T: dict) -> str:
   .tex-btn-wrap .stDownloadButton button:hover,
   .tex-btn-wrap [data-testid="stDownloadButton"] button:hover {{
     color: {T['text2']} !important;
-    border-color: #5a5950 !important;
+    border-color: {T['border2']} !important;
     background: {T['card2']} !important;
     box-shadow: none !important;
     transform: translateY(-1px) !important;
   }}
 
+  /* ════ EXPANDER ════ */
   [data-testid="stExpander"] {{
     background: {T['card']} !important;
     border: 1px solid {T['border']} !important;
@@ -707,6 +666,7 @@ def get_css(T: dict) -> str:
     display: block !important;
   }}
 
+  /* ════ STEP LABELS ════ */
   .step-label {{
     display: flex;
     align-items: center;
@@ -742,6 +702,7 @@ def get_css(T: dict) -> str:
     background: linear-gradient(90deg, {T['border2']} 0%, transparent 100%);
   }}
 
+  /* ════ AI HINT ════ */
   .ai-hint {{
     display: flex;
     align-items: center;
@@ -777,6 +738,7 @@ def get_css(T: dict) -> str:
   .modifica-hint-icon {{ font-size: 1rem; flex-shrink: 0; margin-top: 1px; }}
   .modifica-hint strong {{ color: {T['text']}; font-weight: 700; }}
 
+  /* ════ PERSONALIZZA EXPANDER ════ */
   .personalizza-wrap [data-testid="stExpander"] {{
     border: 1.5px solid {T['accent']}44 !important;
     border-radius: 14px !important;
@@ -802,12 +764,13 @@ def get_css(T: dict) -> str:
     padding: 1rem 1.2rem 1.2rem !important;
   }}
 
+  /* ════ GENERA SECTION ════ */
   .genera-section {{
     margin-top: 2.2rem;
     margin-bottom: 0.5rem;
   }}
 
-  /* Guida discreta onboarding — step bar statica */
+  /* ════ ONBOARDING — messaggio statico, sottile ════ */
   .onboard-guide {{
     display: flex;
     align-items: center;
@@ -816,7 +779,7 @@ def get_css(T: dict) -> str:
     background: {T['bg2']};
     border: 1px solid {T['border']};
     border-radius: 10px;
-    padding: .5rem .9rem;
+    padding: .45rem .9rem;
     margin-bottom: .9rem;
     font-family: 'DM Sans', sans-serif;
   }}
@@ -824,22 +787,21 @@ def get_css(T: dict) -> str:
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: .72rem;
-    color: {T['text2']};
+    font-size: .7rem;
+    color: {T['muted']};
     white-space: nowrap;
   }}
   .onboard-num {{
-    font-size: .7rem;
+    font-size: .68rem;
     font-weight: 800;
     color: {T['accent']};
   }}
   .onboard-sep {{
-    font-size: .65rem;
+    font-size: .62rem;
     color: {T['muted']};
-    opacity: .6;
+    opacity: .5;
   }}
 
-  /* Etichetta opzione uniforme dentro Personalizza */
   .opt-label {{
     font-size: 0.72rem !important;
     font-weight: 700 !important;
@@ -851,7 +813,7 @@ def get_css(T: dict) -> str:
     font-family: 'DM Sans', sans-serif !important;
   }}
 
-  /* Pulsante secondario outline accent — Rivedi esercizi */
+  /* ════ PULSANTE SECONDARIO OUTLINE ════ */
   .btn-secondary-accent div.stButton > button,
   .btn-secondary-accent .stButton > button {{
     background: transparent !important;
@@ -871,37 +833,7 @@ def get_css(T: dict) -> str:
     background: {T['accent_light']} !important;
   }}
 
-  /* Primary buttons uniform height */
-  div.stButton > button[kind="primary"] {{
-    min-height: 46px !important;
-    padding: 0.6rem 1rem !important;
-    font-size: 1rem !important;
-  }}
-
-  /* Download button primario — arancione accent brand */
-  .dl-accent-btn .stDownloadButton button,
-  .dl-accent-btn [data-testid="stDownloadButton"] button {{
-    background: linear-gradient(135deg, {T['accent']} 0%, {T['accent']}cc 100%) !important;
-    color: #fff !important;
-    border: none !important;
-    border-radius: 12px !important;
-    font-size: 1.05rem !important;
-    font-weight: 800 !important;
-    padding: .9rem 1.4rem !important;
-    min-height: 52px !important;
-    letter-spacing: .01em !important;
-    box-shadow: 0 4px 20px {T['accent']}55 !important;
-    transition: all .2s cubic-bezier(.175,.885,.32,1.275) !important;
-    width: 100% !important;
-  }}
-  .dl-accent-btn .stDownloadButton button:hover,
-  .dl-accent-btn [data-testid="stDownloadButton"] button:hover {{
-    filter: brightness(1.1) !important;
-    box-shadow: 0 8px 28px {T['accent']}77 !important;
-    transform: translateY(-2px) !important;
-  }}
-
-  /* Stage 3 — titoli sezione eleganti */
+  /* ════ STAGE 3 SECTION TITLES ════ */
   .s3-section-title {{
     font-size: .68rem;
     font-weight: 800;
@@ -926,7 +858,6 @@ def get_css(T: dict) -> str:
     flex-shrink: 0;
   }}
 
-  /* Stage 3 — label sopra ogni card download */
   .s3-card-label {{
     font-size: .65rem;
     font-weight: 700;
@@ -937,39 +868,22 @@ def get_css(T: dict) -> str:
     font-family: 'DM Sans', sans-serif;
   }}
 
-  /* Floater fase: desktop = top-right, nascosto su mobile */
-  .stage-floater {{
-    position: fixed;
-    top: 4.5rem;
-    right: 1.2rem;
-    z-index: 9999;
-    background: {T['card']};
-    border: 1.5px solid {T['border']};
-    border-radius: 14px;
-    padding: .7rem 1.1rem .65rem 1.1rem;
-    box-shadow: 0 4px 24px rgba(0,0,0,.35);
-    width: 175px;
-    backdrop-filter: blur(8px);
+  /* ════ HINT DOCX ════ */
+  .hint-docx {{
+    background: {T['accent_light']} !important;
+    border-left: 3px solid {T['accent']} !important;
+    border-radius: 8px !important;
+    padding: 10px 14px !important;
+    margin-top: 8px !important;
+    font-size: 0.8rem !important;
+    color: {T['text2']} !important;
+    line-height: 1.5 !important;
   }}
-  @media (max-width: 640px) {{
-    .stage-floater {{
-      display: none !important;
-    }}
+  .hint-docx strong {{
+    color: {T['accent']} !important;
   }}
 
-  .genera-hint {{
-    text-align: center;
-    font-size: 0.73rem;
-    color: {T['muted']};
-    margin-top: 0.6rem;
-    font-family: 'DM Sans', sans-serif;
-    letter-spacing: 0.02em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-  }}
-
+  /* ════ MISC ════ */
   .section-label {{
     font-size: 0.7rem;
     font-weight: 700;
@@ -999,191 +913,89 @@ def get_css(T: dict) -> str:
   .stSlider [data-baseweb="slider"] div[data-testid="stTickBar"] {{
     color: {T['muted']} !important;
   }}
-  .stSlider label p {{
-    color: {T['text2']} !important;
-    font-size: 0.82rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.01em;
-    text-transform: uppercase;
+
+  .stToggle [data-baseweb="toggle"] {{
+    background: {T['border2']} !important;
+    border-radius: 100px !important;
+    transition: background 0.2s ease;
   }}
-  .stSlider [data-baseweb="slider"] [data-testid="stSliderThumbValue"] {{
+  .stToggle [data-baseweb="toggle"][aria-checked="true"] {{
+    background: {T['accent']} !important;
+  }}
+  .stToggle span {{
     color: {T['text']} !important;
-    font-weight: 700 !important;
-    font-size: 0.95rem !important;
+    font-size: 0.88rem !important;
+    font-family: 'DM Sans', sans-serif !important;
   }}
 
+  .stRadio [data-testid="stMarkdownContainer"] p {{
+    color: {T['text']} !important;
+    font-size: 0.9rem !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }}
+  .stRadio > div {{ gap: 6px !important; }}
+  .stRadio [role="radio"] {{
+    background: {T['input_bg']} !important;
+    border: 1.5px solid {T['border2']} !important;
+    border-radius: 50% !important;
+  }}
+  .stRadio [role="radio"][aria-checked="true"] {{
+    border-color: {T['accent']} !important;
+    background: {T['accent']} !important;
+  }}
+
+  /* ════ TOASTS / ALERTS ════ */
   .stAlert {{
     border-radius: 10px !important;
-    border: none !important;
-  }}
-  .stAlert p,
-  .stAlert span,
-  .stAlert div,
-  [data-testid="stAlert"] p,
-  [data-testid="stAlert"] span,
-  [data-testid="stAlert"] div {{
-      color: #1a1915 !important;
-      opacity: 1 !important;
-  }}
-
-  .stProgress > div > div {{
-    background: {T['accent']} !important;
-    border-radius: 100px !important;
-  }}
-  .stProgress > div {{
-    background: {T['border']} !important;
-    border-radius: 100px !important;
-    height: 6px !important;
-  }}
-
-  .stSubheader {{
     font-family: 'DM Sans', sans-serif !important;
-    font-size: 1.15rem !important;
-    font-weight: 700 !important;
-    color: {T['text']} !important;
+    font-size: 0.88rem !important;
   }}
 
-  .status-bar {{
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    background: {T['card2']};
-    border: 1px solid {T['border']};
-    border-radius: 8px;
-    font-size: 0.78rem;
-    color: {T['muted']};
-    margin-top: 0.5rem;
-    font-family: 'DM Sans', sans-serif;
-  }}
-  .status-bar .dot {{
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: {T['success']};
-    flex-shrink: 0;
-  }}
-  .status-bar strong {{
+  /* ════ FAB FEEDBACK ════ */
+  .fab-link {{
+    position: fixed;
+    bottom: 5.5rem;
+    right: 1.2rem;
+    z-index: 9998;
+    background: {T['card']};
+    border: 1.5px solid {T['border2']};
     color: {T['text2']};
-    font-weight: 600;
-  }}
-
-  .pdf-preview-wrap {{
-    margin-top: 1rem;
-    border: 1px solid {T['border']};
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: {T['shadow_md']};
-    background: {T['card2']};
-  }}
-
-  .top-bar {{
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.75rem;
-    margin-bottom: 1.2rem;
-  }}
-  .top-bar-hint {{
-    display: none;
-  }}
-  @media (max-width: 640px) {{
-    .top-bar-hint {{
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: {T['accent_light']};
-      border: 1px solid {T['accent']};
-      border-radius: 20px;
-      padding: 5px 12px;
-      font-size: 0.72rem;
-      color: {T['accent']};
-      font-weight: 600;
-      white-space: nowrap;
-    }}
-  }}
-
-  /* fab-link feedback rimosso per richiesta utente */
-
-  .disclaimer {{
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 8px 12px;
-    background: {T['card2']};
-    border: 1px solid {T['border']};
-    border-left: 3px solid {T['muted']};
-    border-radius: 8px;
-    font-size: 0.74rem;
-    color: {T['muted']};
+    text-decoration: none;
     font-family: 'DM Sans', sans-serif;
-    line-height: 1.45;
-    margin-bottom: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 100px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.25);
+    transition: border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    backdrop-filter: blur(8px);
+    white-space: nowrap;
   }}
-  .disclaimer-icon {{ flex-shrink: 0; font-size: 0.9rem; margin-top: 1px; }}
+  .fab-link:hover {{
+    border-color: {T['accent']};
+    color: {T['accent']};
+    box-shadow: 0 6px 20px {T['accent']}33;
+  }}
 
+  /* ════ APP FOOTER ════ */
   .app-footer {{
     text-align: center;
     font-size: 0.72rem;
     color: {T['muted']};
     font-family: 'DM Sans', sans-serif;
-    margin-top: 3rem;
-    padding-top: 1.2rem;
-    border-top: 1px solid {T['border']};
+    padding: 1.5rem 0 0.5rem 0;
     line-height: 1.6;
+    border-top: 1px solid {T['border']};
+    margin-top: 2rem;
   }}
 
-  .user-pill {{
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #1e1d1b;
-    border: 1px solid #2e2d28;
-    border-radius: 12px;
-    padding: 10px 14px;
-    margin-top: 0.5rem;
-  }}
-  .user-avatar {{
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #D97706, #FF8C00);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.85rem;
-    font-weight: 800;
-    color: white;
-    flex-shrink: 0;
-    font-family: 'DM Sans', sans-serif;
-  }}
-  .user-info {{
-    flex: 1;
-    min-width: 0;
-  }}
-  .user-email {{
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #e8e6e0 !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-family: 'DM Sans', sans-serif;
-  }}
-  .user-role {{
-    font-size: 0.65rem;
-    color: #6b6960 !important;
-    font-family: 'DM Sans', sans-serif;
-    margin-top: 1px;
-  }}
-
+  /* ════ MONTHLY BAR ════ */
   .monthly-bar {{
-    background: #1e1d1b;
+    background: #1a1916;
     border: 1px solid #2e2d28;
     border-radius: 10px;
-    padding: 10px 14px;
-    margin-bottom: 0.5rem;
-    font-family: 'DM Sans', sans-serif;
+    padding: 0.75rem 0.85rem;
+    margin: 0.5rem 0 0 0;
   }}
   .monthly-bar-header {{
     display: flex;
@@ -1193,22 +1005,23 @@ def get_css(T: dict) -> str:
   }}
   .monthly-bar-label {{
     font-size: 0.72rem;
-    font-weight: 700;
-    color: #8a8880 !important;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
+    font-weight: 600;
+    color: #8a8880;
+    font-family: 'DM Sans', sans-serif;
   }}
   .monthly-bar-count {{
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 800;
-    color: #e8e6e0 !important;
+    color: #c8c6bc;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.03em;
   }}
-  .monthly-bar-count.limit-near {{ color: #F59E0B !important; }}
-  .monthly-bar-count.limit-reached {{ color: #EF4444 !important; }}
+  .monthly-bar-count.limit-reached {{ color: #ef4444; }}
+  .monthly-bar-count.limit-near    {{ color: #f59e0b; }}
   .monthly-progress {{
-    height: 5px;
     background: #2e2d28;
     border-radius: 100px;
+    height: 5px;
     overflow: hidden;
   }}
   .monthly-progress-fill {{
@@ -1217,77 +1030,48 @@ def get_css(T: dict) -> str:
     transition: width 0.4s ease;
   }}
 
-  @media (max-width: 640px) {{
-    .block-container {{
-      padding: 4.5rem 1rem 3rem !important;
-    }}
-    .hero-title {{ font-size: 56px !important; }}
-    .hero-sub {{ font-size: 0.95rem !important; }}
-    .hero-wrap {{ margin-bottom: 1.5rem; padding-bottom: 1.2rem; }}
-    .top-bar {{
-      justify-content: center;
-      gap: 0.5rem;
-    }}
-    .stTextInput input,
-    .stNumberInput input {{
-      font-size: 1rem !important;
-      padding: 14px 16px !important;
-      min-height: 52px !important;
-      height: 52px !important;
-      line-height: 1.4 !important;
-      box-sizing: border-box !important;
-    }}
-    .stTextInput > div > div {{
-      min-height: 52px !important;
-    }}
-    .stTextInput input::placeholder,
-    .stNumberInput input::placeholder {{
-      font-size: 1rem !important;
-      opacity: 1 !important;
-    }}
-    .stSelectbox [data-baseweb="select"] > div:first-child {{
-      padding: 12px 14px !important;
-      min-height: 50px !important;
-      height: auto !important;
-    }}
-    .stSelectbox [data-baseweb="select"] span,
-    .stSelectbox [data-baseweb="select"] div {{
-      font-size: 0.95rem !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-    }}
-    [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:first-child {{
-      min-height: 48px !important;
-      padding: 10px 12px !important;
-    }}
-    [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{
-      font-size: 0.85rem !important;
-      color: #f5f3ed !important;
-    }}
-    .stTextArea textarea {{
-      font-size: 0.95rem !important;
-    }}
-    .stButton button {{
-      min-height: 48px !important;
-      font-size: 1rem !important;
-    }}
-    [data-testid="stSidebar"] .block-container {{
-      padding: 1rem !important;
-    }}
-    .stDownloadButton button {{
-      width: 100% !important;
-      min-height: 48px !important;
-    }}
+  /* ════ USER PILL ════ */
+  .user-pill {{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #1a1916;
+    border: 1px solid #2e2d28;
+    border-radius: 12px;
+    padding: 0.65rem 0.85rem;
+    margin: 0.5rem 0;
+  }}
+  .user-avatar {{
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: {T['accent']};
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .user-info {{ flex: 1; min-width: 0; }}
+  .user-email {{
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #e8e6e0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .user-role {{
+    font-size: 0.65rem;
+    color: #6b6960;
+    font-family: 'DM Sans', sans-serif;
+    margin-top: 1px;
   }}
 
-  @media (min-width: 641px) and (max-width: 1024px) {{
-    .block-container {{
-      padding: 1.5rem 1.5rem 3rem !important;
-      max-width: 900px !important;
-    }}
-  }}
-
+  /* ════ SIDEBAR STORICO (dark) ════ */
   [data-testid="stSidebar"] .stButton > button,
   [data-testid="stSidebar"] .stButton > button[kind="secondary"],
   [data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
@@ -1311,7 +1095,7 @@ def get_css(T: dict) -> str:
   [data-testid="stSidebar"] .stDownloadButton button:hover,
   [data-testid="stSidebar"] [data-testid="stDownloadButton"] button:hover {{
     background: #2a2926 !important;
-    border-color: #D97706 !important;
+    border-color: {T['accent']} !important;
     color: #f5f3ed !important;
     transform: none !important;
     box-shadow: none !important;
@@ -1346,7 +1130,6 @@ def get_css(T: dict) -> str:
   [data-testid="stSidebar"] [data-testid="stExpander"] button[kind="secondary"],
   [data-testid="stSidebar"] [data-testid="stExpander"] button {{
     background: #2a2926 !important;
-    background-color: #2a2926 !important;
     color: #c8c6bc !important;
     border: 1px solid #3a3834 !important;
     border-radius: 8px !important;
@@ -1355,36 +1138,29 @@ def get_css(T: dict) -> str:
     padding: 5px 12px !important;
     min-height: unset !important;
     box-shadow: none !important;
-    transition: background 0.15s, border-color 0.15s, color 0.15s !important;
     width: 100% !important;
   }}
   [data-testid="stSidebar"] [data-testid="stExpander"] .stButton > button:hover,
   [data-testid="stSidebar"] [data-testid="stExpander"] div.stButton > button:hover {{
     background: #353330 !important;
-    background-color: #353330 !important;
     border-color: {T['accent']} !important;
     color: {T['accent']} !important;
-    box-shadow: none !important;
-    transform: none !important;
   }}
   [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn .stButton > button,
   [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn button {{
     background: #1e1008 !important;
-    background-color: #1e1008 !important;
     border-color: #5c2222 !important;
     color: #f87171 !important;
   }}
   [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn .stButton > button:hover,
   [data-testid="stSidebar"] [data-testid="stExpander"] .elimina-btn button:hover {{
     background: #2a0f0f !important;
-    background-color: #2a0f0f !important;
     border-color: #f87171 !important;
     color: #fca5a5 !important;
   }}
   [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn .stButton > button,
   [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn button {{
     background: #1e1d1b !important;
-    background-color: #1e1d1b !important;
     border-color: #4a4020 !important;
     color: #9a8a50 !important;
     font-size: 1rem !important;
@@ -1394,7 +1170,6 @@ def get_css(T: dict) -> str:
   [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn-on .stButton > button,
   [data-testid="stSidebar"] [data-testid="stExpander"] .stella-btn-on button {{
     background: #2a2010 !important;
-    background-color: #2a2010 !important;
     border-color: {T['accent']} !important;
     color: #F59E0B !important;
     width: auto !important;
@@ -1461,6 +1236,56 @@ def get_css(T: dict) -> str:
     border-style: solid;
     border-color: transparent {T['accent']} transparent transparent;
   }}
-</style>
 
+  /* ════ RESPONSIVE ════ */
+  @media (max-width: 640px) {{
+    .hero-title {{ font-size: 52px !important; }}
+    .block-container {{ padding: 4rem 0.8rem 3rem !important; }}
+    .stTextInput input, .stNumberInput input {{
+      min-height: 52px !important;
+      height: 52px !important;
+      line-height: 1.4 !important;
+    }}
+    .stTextInput > div > div {{ min-height: 52px !important; }}
+    .stTextInput input::placeholder,
+    .stNumberInput input::placeholder {{ font-size: 1rem !important; opacity: 1 !important; }}
+    .stSelectbox [data-baseweb="select"] > div:first-child {{
+      padding: 12px 14px !important;
+      min-height: 50px !important;
+      height: auto !important;
+    }}
+    .stTextArea textarea {{ font-size: 0.95rem !important; }}
+    .stButton button {{ min-height: 48px !important; font-size: 1rem !important; }}
+    [data-testid="stSidebar"] .block-container {{ padding: 1rem !important; }}
+    .stDownloadButton button {{ width: 100% !important; min-height: 48px !important; }}
+  }}
+
+  @media (min-width: 641px) and (max-width: 1024px) {{
+    .block-container {{
+      padding: 1.5rem 1.5rem 3rem !important;
+      max-width: 900px !important;
+    }}
+  }}
+
+  /* ════ PUNTEGGIO MODIFICA (Stage 2) ════ */
+  .score-edit-wrap .stNumberInput input {{
+    font-size: 0.9rem !important;
+    min-height: 36px !important;
+    height: 36px !important;
+    padding: 6px 10px !important;
+    text-align: center !important;
+  }}
+  .score-edit-wrap label {{ display: none !important; }}
+</style>
 """
+
+
+def _is_light_color(hex_color: str) -> bool:
+    """Restituisce True se il colore è chiaro (luminosità > 0.5)."""
+    try:
+        h = hex_color.lstrip("#")
+        r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+        luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+        return luminance > 0.5
+    except Exception:
+        return False
