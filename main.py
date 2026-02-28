@@ -736,7 +736,7 @@ def _render_stage_input():
     st.markdown("</div>", unsafe_allow_html=True)
 
     # ── BOTTONE GENERA ────────────────────────────────────────────────────────
-    st.markdown('<div class="genera-section">', unsafe_allow_html=True)
+    st.markdown('<div class="genera-section btn-confirm-gold">', unsafe_allow_html=True)
     genera_btn = st.button("🚀  Genera Verifica", use_container_width=True,
                            type="primary", disabled=_limite)
     if _limite:
@@ -1227,14 +1227,72 @@ def _render_stage_review():
                     if mostra_punteggi and _exercise_target_pts > 0:
                         new_body = _riscala_single_block(new_title, new_body, _exercise_target_pts)
 
+                    # ── Aggiorna blocchi (source of truth) ───────────────────
+                    # NOTA: NON ri-estraiamo mai blocchi dal LaTeX post-processing
+                    # per evitare che riscala_punti_custom riscriva i titoli e
+                    # introduca disallineamenti con i punteggi nel corpo.
                     st.session_state.review_blocks[idx]["title"] = new_title
                     st.session_state.review_blocks[idx]["body"]  = new_body
 
                     # Reset pannello ricalibra: rilegge i punteggi aggiornati
                     if "recalibra_pts" in st.session_state:
                         del st.session_state["recalibra_pts"]
-                    st.success(f"✅ Esercizio {idx+1} rigenerato — punteggio preservato ({_exercise_target_pts} pt).")
-                    time.sleep(0.4); st.rerun()
+
+                    # ── Ricostruisci LaTeX con punteggi coerenti ──────────────
+                    # Legge i pt da TUTTI i blocchi aggiornati; sovrascrive solo
+                    # quell'esercizio con il valore target pre-modifica.
+                    _latex_rw = _reconstruct_latex(
+                        st.session_state.review_preamble,
+                        st.session_state.review_blocks
+                    )
+                    _latex_rw = fix_items_environment(_latex_rw)
+                    _latex_rw = rimuovi_vspace_corpo(_latex_rw)
+                    if mostra_punteggi:
+                        _latex_rw = rimuovi_punti_subsection(_latex_rw)
+                        _pts_all = [
+                            _parse_pts_from_block_body(b["body"])
+                            for b in st.session_state.review_blocks
+                        ]
+                        # Forza il target sul blocco modificato
+                        if _exercise_target_pts > 0:
+                            _pts_all[idx] = _exercise_target_pts
+                        _latex_rw = riscala_punti_custom(_latex_rw, _pts_all)
+                    if con_griglia:
+                        _latex_rw = inietta_griglia(_latex_rw, punti_totali)
+
+                    # Aggiorna sempre il LaTeX in session_state (garantisce
+                    # coerenza anche se la compilazione PDF dovesse fallire).
+                    st.session_state.verifiche["A"]["latex"]           = _latex_rw
+                    st.session_state.verifiche["A"]["latex_originale"] = _latex_rw
+
+                    # ── Compila PDF e sincronizza anteprima ───────────────────
+                    _pdf_rw, _err_rw = compila_pdf(_latex_rw)
+                    if _pdf_rw:
+                        st.session_state.verifiche["A"]["pdf"]     = _pdf_rw
+                        st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
+                        st.session_state.verifiche["A"]["preview"] = True
+                        _imgs_rw, _ = pdf_to_images_bytes(_pdf_rw)
+                        st.session_state.preview_images = _imgs_rw or []
+                        st.session_state.preview_page   = 0
+                        st.success(
+                            f"✅ Esercizio {idx+1} rigenerato — "
+                            f"punteggio preservato ({_exercise_target_pts} pt)."
+                        )
+                        time.sleep(0.4)
+                        st.rerun()
+                    else:
+                        # La compilazione PDF è fallita ma il testo è aggiornato.
+                        # Mostriamo errore esplicito e forziamo rerun così la
+                        # preview KaTeX (sinistra) si aggiorna comunque.
+                        st.error(
+                            "⚠️ Esercizio aggiornato, ma la compilazione PDF è fallita. "
+                            "Verifica il testo LaTeX generato o riprova la modifica."
+                        )
+                        if _err_rw:
+                            with st.expander("📋 Log errore LaTeX"):
+                                st.code(_err_rw[:3000], language="text")
+                        time.sleep(0.5)
+                        st.rerun()
                 except Exception as e:
                     st.error(f"❌ Errore: {e}")
 
@@ -1503,8 +1561,11 @@ def _render_stage_final():
 
     st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
 
-    # "Nuova verifica" — larghezza piena, primary, in fondo
-    if st.button("🆕 Inizia nuova verifica", type="primary", use_container_width=True, key="btn_new_s3"):
+    # "Nuova verifica" — larghezza piena, ambra/oro (cambio fase), in fondo
+    st.markdown('<div class="btn-confirm-gold">', unsafe_allow_html=True)
+    _btn_new_s3 = st.button("🆕 Inizia nuova verifica", type="primary", use_container_width=True, key="btn_new_s3")
+    st.markdown('</div>', unsafe_allow_html=True)
+    if _btn_new_s3:
         st.session_state.stage            = STAGE_INPUT
         st.session_state.verifiche         = {
             "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
