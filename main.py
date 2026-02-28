@@ -174,10 +174,12 @@ def _extract_preambolo(latex: str) -> str:
 
 def _parse_pts_from_block_body(body: str) -> int:
     """
-    Somma tutti i token (N pt) presenti nel corpo di un blocco esercizio.
+    Somma tutti i token (N pt) presenti nel CORPO di un blocco esercizio,
+    escludendo il titolo \\subsection*{...}.
+
     Usato per inizializzare il pannello Ricalibra Punteggi a partire dai
-    valori reali degli \\item, non dai titoli \\subsection* (che possono
-    essere privi di annotazione punti dopo un regen AI o dopo rimuovi_punti_subsection).
+    valori reali degli \\item, non dai titoli (che possono contenere un
+    (N pt) duplicato dopo riscala_punti, causando inizializzazione errata).
     """
     return sum(int(p) for p in re.findall(r'\((\d+)\s*pt\)', body))
 
@@ -186,7 +188,7 @@ def _valida_totale(pts_list: list, target: int) -> tuple:
     """
     Ricalcola da zero la somma dei punteggi e restituisce (somma, ok, diff).
     'ok' è True solo se la somma coincide esattamente con il target.
-    Garantisce che il tipo sia sempre int per evitare errori di confronto float.
+    Forza int per evitare errori di confronto float.
     """
     somma = sum(int(p) for p in pts_list)
     diff  = somma - target
@@ -972,149 +974,147 @@ def _render_stage_review():
     #  PANNELLO RICALIBRA PUNTEGGI (a piena larghezza, sotto le colonne)
     # ══════════════════════════════════════════════════════════════════════════
     if mostra_punteggi and n_blocks > 0:
-        st.markdown('<div class="recalibra-panel">', unsafe_allow_html=True)
-        st.markdown(
-            '<div class="recalibra-title">⚖️ Ricalibra Punteggi</div>',
-            unsafe_allow_html=True
-        )
-        st.markdown(
-            '<div style="font-size:.76rem;color:' + T["text2"] + ';margin-bottom:.8rem;'
-            'font-family:DM Sans,sans-serif;line-height:1.45;">'
-            'Modifica i punti di ogni esercizio. Il tasto <strong>Applica</strong> '
-            'si attiva solo quando la somma corrisponde al totale impostato '
-            '(<strong>' + str(punti_totali) + ' pt</strong>).'
-            '</div>',
-            unsafe_allow_html=True
-        )
 
-        # ── Bug-fix: legge i punteggi dagli \item del corpo, NON dal titolo ──
-        # Il titolo del subsection* spesso non ha (N pt) — quei token vivono
-        # dentro gli \item.  _parse_pts_from_block_body() somma tutti i
-        # (N pt) presenti nel corpo, restituendo il totale reale per esercizio.
-        _cur_pts = [
-            _parse_pts_from_block_body(b["body"])
-            for b in st.session_state.review_blocks
-        ]
+        # ── Bug-fix box UI ─────────────────────────────────────────────────────
+        # Il vecchio approccio apriva/chiudeva <div class="recalibra-panel"> con
+        # due st.markdown() separati. Streamlit wrappa ogni st.markdown in un
+        # proprio contenitore, producendo un box vuoto visibile sopra al titolo.
+        # Fix: st.container(border=True) incapsula tutto — titolo, descrizione,
+        # selectbox, indicatore somma E pulsante Applica — in un unico blocco.
+        with st.container(border=True):
 
-        # Inizializza session state per i valori del pannello
-        _rc_key = "recalibra_pts"
-        if _rc_key not in st.session_state or len(st.session_state[_rc_key]) != n_blocks:
-            st.session_state[_rc_key] = list(_cur_pts)
+            # ── Titolo + descrizione (un solo st.markdown) ────────────────────
+            st.markdown(
+                '<div class="recalibra-title">⚖️ Ricalibra Punteggi</div>'
+                '<div style="font-size:.76rem;color:' + T["text2"] + ';margin-bottom:.8rem;'
+                'font-family:DM Sans,sans-serif;line-height:1.45;">'
+                'Modifica i punti di ogni esercizio. Il tasto <strong>Applica</strong> '
+                'si attiva solo quando la somma corrisponde al totale impostato '
+                '(<strong>' + str(punti_totali) + ' pt</strong>).'
+                '</div>',
+                unsafe_allow_html=True
+            )
 
-        # Selectbox per ogni esercizio
-        _pt_options_rc = list(range(0, punti_totali + 1))
-        _new_pts = []
-        _cols_rc = st.columns(min(n_blocks, 4))
-        for _i, _b in enumerate(st.session_state.review_blocks):
-            _title_short = re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]).strip()
-            _title_short = (_title_short[:28] + "…") if len(_title_short) > 28 else _title_short
-            _col_i = _i % min(n_blocks, 4)
-            with _cols_rc[_col_i]:
+            # ── Bug-fix _cur_pts: legge dagli \item del corpo, non dal titolo ─
+            _cur_pts = [
+                _parse_pts_from_block_body(b["body"])
+                for b in st.session_state.review_blocks
+            ]
+
+            # Inizializza session state per i valori del pannello
+            _rc_key = "recalibra_pts"
+            if _rc_key not in st.session_state or len(st.session_state[_rc_key]) != n_blocks:
+                st.session_state[_rc_key] = list(_cur_pts)
+
+            # ── Selectbox per ogni esercizio ──────────────────────────────────
+            _pt_options_rc = list(range(0, punti_totali + 1))
+            _new_pts = []
+            _cols_rc = st.columns(min(n_blocks, 4))
+            for _i, _b in enumerate(st.session_state.review_blocks):
+                _title_short = re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]).strip()
+                _title_short = (_title_short[:28] + "…") if len(_title_short) > 28 else _title_short
+                _col_i = _i % min(n_blocks, 4)
+                with _cols_rc[_col_i]:
+                    st.markdown(
+                        f'<div style="font-size:.7rem;font-weight:700;color:{T["text2"]};'
+                        f'font-family:DM Sans,sans-serif;margin-bottom:2px;">'
+                        f'Es. {_i+1}</div>'
+                        f'<div style="font-size:.62rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
+                        f'margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+                        f'{_title_short}</div>',
+                        unsafe_allow_html=True
+                    )
+                    _v = st.selectbox(
+                        f"Punti es. {_i+1}",
+                        options=_pt_options_rc,
+                        index=min(int(st.session_state[_rc_key][_i]), punti_totali),
+                        key=f"rc_pts_{_i}",
+                        label_visibility="collapsed",
+                        format_func=lambda x: f"{x} pt",
+                    )
+                    _new_pts.append(_v)
+
+            # ── Aggiorna session state — forza int per sicurezza ──────────────
+            st.session_state[_rc_key] = [int(v) for v in _new_pts]
+
+            # ── Validazione totale — ricalcolo da zero ad ogni run ────────────
+            _somma, _ok, _diff = _valida_totale(_new_pts, punti_totali)
+
+            if _ok:
                 st.markdown(
-                    f'<div style="font-size:.7rem;font-weight:700;color:{T["text2"]};'
-                    f'font-family:DM Sans,sans-serif;margin-bottom:2px;">'
-                    f'Es. {_i+1}</div>'
-                    f'<div style="font-size:.62rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
-                    f'margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
-                    f'{_title_short}</div>',
+                    '<div class="recalibra-sum-ok">'
+                    '✅ Somma corretta: <strong>' + str(_somma) + ' pt</strong>'
+                    ' = ' + str(punti_totali) + ' pt totali'
+                    '</div>',
                     unsafe_allow_html=True
                 )
-                _v = st.selectbox(
-                    f"Punti es. {_i+1}",
-                    options=_pt_options_rc,
-                    index=min(int(st.session_state[_rc_key][_i]), punti_totali),
-                    key=f"rc_pts_{_i}",
-                    label_visibility="collapsed",
-                    format_func=lambda x: f"{x} pt",
-                )
-                _new_pts.append(_v)
-
-        # Aggiorna session state in tempo reale
-        st.session_state[_rc_key] = [int(v) for v in _new_pts]   # ← forza int
-
-        # ── Validazione totale — ricalcolo da zero ad ogni run ────────────────
-        _somma, _ok, _diff = _valida_totale(_new_pts, punti_totali)
-        if _ok:
-            st.markdown(
-                '<div class="recalibra-sum-ok">'
-                '✅ Somma corretta: <strong>' + str(_somma) + ' pt</strong>'
-                ' = ' + str(punti_totali) + ' pt totali'
-                '</div>',
-                unsafe_allow_html=True
-            )
-        else:
-            _diff_str = ("+" if _diff > 0 else "") + str(_diff)
-            st.markdown(
-                '<div class="recalibra-sum-err">'
-                '⚠️ Somma attuale: <strong>' + str(_somma) + ' pt</strong>'
-                ' — ' + _diff_str + ' pt rispetto all\'obiettivo di '
-                + str(punti_totali) + ' pt'
-                '</div>',
-                unsafe_allow_html=True
-            )
-
-        st.markdown('</div>', unsafe_allow_html=True)  # fine recalibra-panel
-
-        # Pulsante Applica — abilitato SOLO se somma == totale
-        if st.button(
-            "✅ Applica Punteggi e Rigenera PDF" if _ok else
-            f"⛔ Applica Punteggi (somma: {_somma} pt ≠ {punti_totali} pt)",
-            key="rc_applica",
-            disabled=not _ok,
-            use_container_width=True,
-            type="primary",
-        ):
-            # Aggiorna titoli di tutti i blocchi con i nuovi punteggi
-            for _i in range(n_blocks):
-                _clean = re.sub(r"\s*\(\d+\s*pt\)", "",
-                                st.session_state.review_blocks[_i]["title"]).strip()
-                st.session_state.review_blocks[_i]["title"] = f"{_clean} ({_new_pts[_i]} pt)"
-
-            # Ricostruisci LaTeX e ricompila PDF
-            _latex_rc = _reconstruct_latex(
-                st.session_state.review_preamble,
-                st.session_state.review_blocks
-            )
-            _latex_rc = fix_items_environment(_latex_rc)
-            _latex_rc = rimuovi_vspace_corpo(_latex_rc)
-            # ── Bug-fix: usa riscala_punti_custom (distribuzione per-esercizio)
-            # invece di riscala_punti (riscalatura proporzionale globale).
-            # riscala_punti_custom distribuisce i punti fissati dal docente
-            # (uno per esercizio) proporzionalmente tra i sotto-item di ogni
-            # esercizio, preservando la distribuzione scelta nel pannello.
-            _latex_rc = rimuovi_punti_subsection(_latex_rc)
-            _latex_rc = riscala_punti_custom(_latex_rc, _new_pts)
-            if con_griglia:
-                _latex_rc = inietta_griglia(_latex_rc, punti_totali)
-
-            st.session_state.verifiche["A"]["latex"]           = _latex_rc
-            st.session_state.verifiche["A"]["latex_originale"] = _latex_rc
-
-            with st.spinner("⏳ Ricompilazione PDF con nuovi punteggi…"):
-                _pdf_rc, _err_rc = compila_pdf(_latex_rc)
-            if _pdf_rc:
-                st.session_state.verifiche["A"]["pdf"]     = _pdf_rc
-                st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
-                st.session_state.verifiche["A"]["preview"] = True
-                _imgs_rc, _ = pdf_to_images_bytes(_pdf_rc)
-                st.session_state.preview_images = _imgs_rc or []
-
-                # ── Bug-fix: sincronizza review_blocks con i punteggi appena
-                # applicati, così "Conferma e genera PDF finale" ricostruisce
-                # dal LaTeX aggiornato e non dai vecchi valori degli \item.
-                _new_preamble, _new_blocks = _extract_blocks(_latex_rc)
-                if _new_blocks:
-                    st.session_state.review_preamble = _new_preamble
-                    st.session_state.review_blocks   = _new_blocks
-
-                if _rc_key in st.session_state:
-                    del st.session_state[_rc_key]
-                st.toast("✅ Punteggi applicati — PDF aggiornato!", icon="⚖️")
-                st.rerun()
             else:
-                st.error("❌ Errore di compilazione dopo ricalibrazione.")
-                with st.expander("Log errore"):
-                    st.text(_err_rc)
+                _diff_str = ("+" if _diff > 0 else "") + str(_diff)
+                st.markdown(
+                    '<div class="recalibra-sum-err">'
+                    '⚠️ Somma attuale: <strong>' + str(_somma) + ' pt</strong>'
+                    ' — ' + _diff_str + ' pt rispetto all\'obiettivo di '
+                    + str(punti_totali) + ' pt'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
+
+            # ── Pulsante Applica — dentro il container (stesso box) ───────────
+            if st.button(
+                "✅ Applica Punteggi e Rigenera PDF" if _ok else
+                f"⛔ Applica Punteggi (somma: {_somma} pt ≠ {punti_totali} pt)",
+                key="rc_applica",
+                disabled=not _ok,
+                use_container_width=True,
+                type="primary",
+            ):
+                # Aggiorna titoli di tutti i blocchi con i nuovi punteggi
+                for _i in range(n_blocks):
+                    _clean = re.sub(r"\s*\(\d+\s*pt\)", "",
+                                    st.session_state.review_blocks[_i]["title"]).strip()
+                    st.session_state.review_blocks[_i]["title"] = f"{_clean} ({_new_pts[_i]} pt)"
+
+                # Ricostruisci LaTeX
+                _latex_rc = _reconstruct_latex(
+                    st.session_state.review_preamble,
+                    st.session_state.review_blocks
+                )
+                _latex_rc = fix_items_environment(_latex_rc)
+                _latex_rc = rimuovi_vspace_corpo(_latex_rc)
+                # rimuovi_punti_subsection ora gestisce anche (N pt) dentro {}
+                # riscala_punti_custom distribuisce i punti SOLO nel corpo degli
+                # item (header escluso) → elimina il bug del dimezzamento 80→40
+                _latex_rc = rimuovi_punti_subsection(_latex_rc)
+                _latex_rc = riscala_punti_custom(_latex_rc, _new_pts)
+                if con_griglia:
+                    _latex_rc = inietta_griglia(_latex_rc, punti_totali)
+
+                st.session_state.verifiche["A"]["latex"]           = _latex_rc
+                st.session_state.verifiche["A"]["latex_originale"] = _latex_rc
+
+                with st.spinner("⏳ Ricompilazione PDF con nuovi punteggi…"):
+                    _pdf_rc, _err_rc = compila_pdf(_latex_rc)
+                if _pdf_rc:
+                    st.session_state.verifiche["A"]["pdf"]     = _pdf_rc
+                    st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
+                    st.session_state.verifiche["A"]["preview"] = True
+                    _imgs_rc, _ = pdf_to_images_bytes(_pdf_rc)
+                    st.session_state.preview_images = _imgs_rc or []
+                    # Sincronizza review_blocks con il LaTeX aggiornato,
+                    # così "Conferma e genera PDF finale" ricostruisce dallo
+                    # stato corretto e non da valori pre-scalatura.
+                    _new_preamble, _new_blocks = _extract_blocks(_latex_rc)
+                    if _new_blocks:
+                        st.session_state.review_preamble = _new_preamble
+                        st.session_state.review_blocks   = _new_blocks
+                    if _rc_key in st.session_state:
+                        del st.session_state[_rc_key]
+                    st.toast("✅ Punteggi applicati — PDF aggiornato!", icon="⚖️")
+                    st.rerun()
+                else:
+                    st.error("❌ Errore di compilazione dopo ricalibrazione.")
+                    with st.expander("Log errore"):
+                        st.text(_err_rc)
 
     # ── Logica modifica AI ─────────────────────────────────────────────────────
     if rigenera and istruzione.strip():
@@ -1171,10 +1171,9 @@ def _render_stage_review():
                 latex_final = rimuovi_vspace_corpo(latex_final)
                 if mostra_punteggi:
                     latex_final = rimuovi_punti_subsection(latex_final)
-                    # ── Bug-fix: se il docente ha usato il pannello Ricalibra,
-                    # usa i punteggi per-esercizio salvati (riscala_punti_custom)
-                    # invece della riscalatura proporzionale globale.
-                    # Se non ci sono punteggi custom, cade back su riscala_punti.
+                    # Se il docente ha usato il pannello Ricalibra, usa i pesi
+                    # per-esercizio (riscala_punti_custom). Altrimenti fallback
+                    # sulla riscalatura proporzionale globale (riscala_punti).
                     _pts_custom = st.session_state.get("recalibra_pts", [])
                     if _pts_custom and len(_pts_custom) == n_blocks:
                         latex_final = riscala_punti_custom(latex_final, _pts_custom)
