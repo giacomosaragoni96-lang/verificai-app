@@ -1329,33 +1329,69 @@ def get_css(T: dict) -> str:
     border-color: transparent {T['accent']} transparent transparent;
   }}
 
-  /* ════ RESPONSIVE ════ */
-  @media (max-width: 640px) {{
-    .hero-title {{ font-size: 52px !important; }}
-    .block-container {{ padding: 4rem 0.8rem 3rem !important; }}
-    .stTextInput input, .stNumberInput input {{
-      min-height: 52px !important;
-      height: 52px !important;
-      line-height: 1.4 !important;
-    }}
-    .stTextInput > div > div {{ min-height: 52px !important; }}
-    .stTextInput input::placeholder,
-    .stNumberInput input::placeholder {{ font-size: 1rem !important; opacity: 1 !important; }}
-    .stSelectbox [data-baseweb="select"] > div:first-child {{
-      padding: 12px 14px !important;
-      min-height: 50px !important;
-      height: auto !important;
-    }}
-    .stTextArea textarea {{ font-size: 0.95rem !important; }}
-    .stButton button {{ min-height: 48px !important; font-size: 1rem !important; }}
-    [data-testid="stSidebar"] .block-container {{ padding: 1rem !important; }}
-    .stDownloadButton button {{ width: 100% !important; min-height: 48px !important; }}
+  /* ════ OVERFLOW — impedisce scroll orizzontale su mobile/tablet ════ */
+  html, body {{
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }}
+  .stApp {{
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }}
+  /* Tutti i container non escono dal viewport */
+  .block-container,
+  [data-testid="stAppViewContainer"],
+  [data-testid="stVerticalBlock"],
+  [data-testid="stHorizontalBlock"] {{
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }}
 
-  @media (min-width: 641px) and (max-width: 1024px) {{
+  /* ════ RESPONSIVE ════ */
+  /* ── Mobile ≤640px ── */
+  @media (max-width: 640px) {{
+    .hero-title {{ font-size: 40px !important; }}
+    .block-container {{
+      padding: 3.5rem 0.75rem 2.5rem !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      zoom: 1 !important;
+    }}
+    .stTextInput input, .stNumberInput input {{
+      min-height: 48px !important;
+      height: 48px !important;
+      line-height: 1.4 !important;
+      font-size: 0.95rem !important;
+    }}
+    .stTextInput > div > div {{ min-height: 48px !important; }}
+    .stTextInput input::placeholder,
+    .stNumberInput input::placeholder {{ font-size: 0.95rem !important; opacity: 1 !important; }}
+    .stSelectbox [data-baseweb="select"] > div:first-child {{
+      padding: 10px 12px !important;
+      min-height: 46px !important;
+      height: auto !important;
+    }}
+    .stTextArea textarea {{ font-size: 0.9rem !important; }}
+    .stButton button {{ min-height: 46px !important; font-size: 0.95rem !important; }}
+    [data-testid="stSidebar"] .block-container {{ padding: 1rem !important; }}
+    .stDownloadButton button {{ width: 100% !important; min-height: 46px !important; }}
+  }}
+
+  /* ── Tablet piccolo 641–767px ── */
+  @media (min-width: 641px) and (max-width: 767px) {{
+    .block-container {{
+      padding: 1.5rem 1rem 2.5rem !important;
+      max-width: 100% !important;
+      zoom: 1 !important;
+    }}
+  }}
+
+  /* ── Tablet grande 768–1024px ── */
+  @media (min-width: 768px) and (max-width: 1024px) {{
     .block-container {{
       padding: 1.5rem 1.5rem 3rem !important;
       max-width: 900px !important;
+      zoom: 1 !important;
     }}
   }}
 
@@ -1483,8 +1519,8 @@ def get_css(T: dict) -> str:
     background: {T['hover']} !important;
   }}
 
-  /* ════ 110% ZOOM su desktop (≥768px) — mobile invariato ════ */
-  @media (min-width: 768px) {{
+  /* ════ ZOOM 110% su desktop largo ≥1025px ════ */
+  @media (min-width: 1025px) {{
     .block-container {{
       zoom: 1.1;
       max-width: 955px !important;
