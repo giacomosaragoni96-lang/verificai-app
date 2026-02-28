@@ -46,7 +46,7 @@ STAGE_FINAL  = "FINAL"
 st.set_page_config(
     page_title=APP_NAME,
     page_icon=APP_ICON,
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
@@ -1378,4 +1378,5 @@ components.html(
     "</script>",
     height=30
 )
+
 
