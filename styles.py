@@ -807,6 +807,38 @@ def get_css(T: dict) -> str:
     margin-bottom: 0.5rem;
   }}
 
+  /* Guida discreta onboarding — step bar statica */
+  .onboard-guide {{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    background: {T['bg2']};
+    border: 1px solid {T['border']};
+    border-radius: 10px;
+    padding: .5rem .9rem;
+    margin-bottom: .9rem;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .onboard-step {{
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .72rem;
+    color: {T['text2']};
+    white-space: nowrap;
+  }}
+  .onboard-num {{
+    font-size: .7rem;
+    font-weight: 800;
+    color: {T['accent']};
+  }}
+  .onboard-sep {{
+    font-size: .65rem;
+    color: {T['muted']};
+    opacity: .6;
+  }}
+
   /* Etichetta opzione uniforme dentro Personalizza */
   .opt-label {{
     font-size: 0.72rem !important;
@@ -814,64 +846,95 @@ def get_css(T: dict) -> str:
     letter-spacing: 0.06em !important;
     text-transform: uppercase !important;
     color: {T['text2']} !important;
-    margin: 0.9rem 0 0.35rem 0 !important;
+    margin: 0.7rem 0 0.3rem 0 !important;
     display: block !important;
     font-family: 'DM Sans', sans-serif !important;
   }}
 
-  /* Pulsante secondario con stile accent — usato per Riconfigura e Rivedi */
+  /* Pulsante secondario outline accent — Rivedi esercizi */
   .btn-secondary-accent div.stButton > button,
   .btn-secondary-accent .stButton > button {{
     background: transparent !important;
     color: {T['accent']} !important;
-    border: 2px solid {T['accent']} !important;
-    border-radius: 12px !important;
-    font-weight: 700 !important;
-    font-size: 1rem !important;
-    padding: 0.6rem 1rem !important;
-    min-height: 46px !important;
-    height: 46px !important;
-    box-shadow: 0 2px 8px {T['accent']}22 !important;
-    transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease !important;
+    border: 1.5px solid {T['accent']}88 !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: .88rem !important;
+    padding: 0.45rem 1rem !important;
+    min-height: 38px !important;
+    box-shadow: none !important;
+    transition: border-color .15s ease, color .15s ease !important;
   }}
   .btn-secondary-accent div.stButton > button:hover,
   .btn-secondary-accent .stButton > button:hover {{
+    border-color: {T['accent']} !important;
     background: {T['accent_light']} !important;
-    box-shadow: 0 4px 16px {T['accent']}40 !important;
-    transform: translateY(-1px) !important;
   }}
 
-  /* Forza primary button alla stessa altezza */
-  .btn-equal-primary div.stButton > button[kind="primary"],
-  .btn-equal-primary .stButton > button[kind="primary"],
+  /* Primary buttons uniform height */
   div.stButton > button[kind="primary"] {{
     min-height: 46px !important;
-    height: 46px !important;
     padding: 0.6rem 1rem !important;
     font-size: 1rem !important;
   }}
 
-  /* Pulsante download principale Fila A — verde brillante, più grande */
-  .dl-primary-btn .stDownloadButton button,
-  .dl-primary-btn [data-testid="stDownloadButton"] button {{
-    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
-    color: #ffffff !important;
+  /* Download button primario — arancione accent brand */
+  .dl-accent-btn .stDownloadButton button,
+  .dl-accent-btn [data-testid="stDownloadButton"] button {{
+    background: linear-gradient(135deg, {T['accent']} 0%, {T['accent']}cc 100%) !important;
+    color: #fff !important;
     border: none !important;
     border-radius: 12px !important;
     font-size: 1.05rem !important;
     font-weight: 800 !important;
-    padding: 1rem 1.4rem !important;
-    min-height: 54px !important;
-    box-shadow: 0 4px 18px rgba(22,163,74,0.45) !important;
-    letter-spacing: 0.01em !important;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    padding: .9rem 1.4rem !important;
+    min-height: 52px !important;
+    letter-spacing: .01em !important;
+    box-shadow: 0 4px 20px {T['accent']}55 !important;
+    transition: all .2s cubic-bezier(.175,.885,.32,1.275) !important;
     width: 100% !important;
   }}
-  .dl-primary-btn .stDownloadButton button:hover,
-  .dl-primary-btn [data-testid="stDownloadButton"] button:hover {{
-    transform: scale(1.03) translateY(-2px) !important;
-    box-shadow: 0 8px 28px rgba(22,163,74,0.55) !important;
-    filter: brightness(1.08) !important;
+  .dl-accent-btn .stDownloadButton button:hover,
+  .dl-accent-btn [data-testid="stDownloadButton"] button:hover {{
+    filter: brightness(1.1) !important;
+    box-shadow: 0 8px 28px {T['accent']}77 !important;
+    transform: translateY(-2px) !important;
+  }}
+
+  /* Stage 3 — titoli sezione eleganti */
+  .s3-section-title {{
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: {T['muted']};
+    margin: 1.1rem 0 .65rem 0;
+    padding-bottom: .4rem;
+    border-bottom: 1px solid {T['border']};
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .s3-section-title::before {{
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: {T['accent']};
+    display: inline-block;
+    flex-shrink: 0;
+  }}
+
+  /* Stage 3 — label sopra ogni card download */
+  .s3-card-label {{
+    font-size: .65rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: {T['muted']};
+    margin: .8rem 0 .35rem 0;
+    font-family: 'DM Sans', sans-serif;
   }}
 
   /* Floater fase: desktop = top-right, nascosto su mobile */
@@ -892,27 +955,6 @@ def get_css(T: dict) -> str:
     .stage-floater {{
       display: none !important;
     }}
-  }}
-
-  /* "Ho capito" button — stile link discreto */
-  ._ob_dismiss_wrap div.stButton > button,
-  ._ob_dismiss_wrap .stButton > button {{
-    background: transparent !important;
-    color: {T['muted']} !important;
-    border: 1px solid {T['border']} !important;
-    border-radius: 8px !important;
-    font-size: 0.72rem !important;
-    font-weight: 600 !important;
-    padding: 4px 12px !important;
-    min-height: 28px !important;
-    height: 28px !important;
-    box-shadow: none !important;
-    width: auto !important;
-  }}
-  ._ob_dismiss_wrap div.stButton > button:hover {{
-    color: {T['text2']} !important;
-    border-color: {T['accent']} !important;
-    background: {T['accent_light']} !important;
   }}
 
   .genera-hint {{
