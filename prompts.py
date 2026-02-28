@@ -42,7 +42,7 @@ def prompt_corpo_verifica(
             f"  * Distribuisci i punti in modo proporzionale alla difficoltà.\n"
             f"  * NON inserire punti nel titolo \\subsection*, SOLO nei \\item.\n"
             f"  * REGOLA CRITICA: se un esercizio ha un solo sottopunto, usa comunque \\item[a)] con il suo punteggio.\n"
-            f"    NON lasciare MAI un esercizio senza \\item con punteggio — la griglia di valutazione sarà inutilizzabile."
+            f"    NON lasciare MAI un esercizio senza \\item con punteggio — la griglia punteggi sarà inutilizzabile."
         )
     else:
         punti_rule = "- NON inserire punti (X pt) in nessun esercizio né sottopunto."
@@ -50,7 +50,7 @@ def prompt_corpo_verifica(
     griglia_rule = (
         "- NON generare la griglia (sarà aggiunta automaticamente dopo)."
         if con_griglia
-        else "- NON generare nessuna griglia di valutazione."
+        else "- NON generare nessuna griglia punteggi."
     )
 
     multi_rule = "- NON includere esercizi multidisciplinari."
