@@ -173,17 +173,38 @@ def _extract_preambolo(latex: str) -> str:
 # ── Score helpers ──────────────────────────────────────────────────────────────
 
 def _parse_pts_from_block_body(body: str) -> int:
-    """
-    Somma tutti i (N pt) nel CORPO del blocco (escluso il titolo subsection*).
-    Evita che il (N pt) nel titolo gonfi il totale iniziale del pannello.
-    """
+    """Somma tutti i (N pt) nel CORPO del blocco, escludendo il titolo."""
     return sum(int(p) for p in re.findall(r'\((\d+)\s*pt\)', body))
 
 
 def _valida_totale(pts_list: list, target: int) -> tuple:
-    """Ricalcola somma da zero, forza int, restituisce (somma, ok, diff)."""
+    """Ricalcola somma da zero, forza int. Restituisce (somma, ok, diff)."""
     somma = sum(int(p) for p in pts_list)
     return somma, (somma == target), (somma - target)
+
+
+def _riscala_single_block(title: str, body: str, target_pts: int) -> str:
+    """
+    Applica riscala_punti_custom su un singolo blocco (titolo + corpo),
+    preservando le proporzioni tra gli item e portando la somma a target_pts.
+    Usato dopo ogni regen AI per ripristinare i punti corretti dell'esercizio.
+    """
+    if target_pts <= 0:
+        return body
+    mini = f"\\subsection*{{{title}}}\n{body}"
+    fixed = riscala_punti_custom(mini, [target_pts])
+    m = re.match(r'[^\n]*\n(.*)', fixed, re.DOTALL)
+    return m.group(1) if m else body
+
+
+# Parole chiave che indicano che l'utente sta chiedendo una modifica ai punteggi.
+# In quel caso il prompt AI viene bloccato e viene mostrato un suggerimento
+# a usare il pannello Ricalibra Punteggi.
+_SCORE_KEYWORDS = {
+    'pt', 'punt', 'punti', 'punteggio', 'punteggi', 'punto',
+    'voto', 'voti', 'score', 'valut', 'peso', 'perc', '%',
+    '5 pt', '10 pt', '15 pt', '20 pt', '25 pt', '30 pt',
+}
 
 
 # ── KaTeX HTML renderer ────────────────────────────────────────────────────────
@@ -453,6 +474,7 @@ if "review_blocks"     not in st.session_state: st.session_state.review_blocks =
 if "review_sel_idx"    not in st.session_state: st.session_state.review_sel_idx = 0
 if "gen_params"        not in st.session_state: st.session_state.gen_params = {}
 if "preview_images"    not in st.session_state: st.session_state.preview_images = []
+if "preview_page"      not in st.session_state: st.session_state.preview_page = 0
 if "esercizi_custom"   not in st.session_state: st.session_state.esercizi_custom = []
 if "last_materia"      not in st.session_state: st.session_state.last_materia = None
 if "last_argomento"    not in st.session_state: st.session_state.last_argomento = None
@@ -518,41 +540,42 @@ def _render_breadcrumb():
     steps = [("01","Configura",STAGE_INPUT),("02","Revisione",STAGE_REVIEW),("03","Download",STAGE_FINAL)]
     completed = {STAGE_INPUT: stage in (STAGE_REVIEW,STAGE_FINAL),
                  STAGE_REVIEW: stage == STAGE_FINAL, STAGE_FINAL: False}
+    # Contenitore centrato e compatto
     html = (
-        '<div style="display:flex;justify-content:center;margin-bottom:1.6rem;">'
-        '<div style="display:inline-flex;align-items:center;gap:10px;'
-        'padding:.65rem 1.4rem;'
-        'background:' + T["card"] + ';border:1.5px solid ' + T["border"] + ';'
+        '<div style="display:flex;justify-content:center;margin-bottom:1.4rem;">'
+        '<div style="display:inline-flex;align-items:center;gap:6px;'
+        'padding:.45rem .9rem;'
+        'background:' + T["card"] + ';border:1px solid ' + T["border"] + ';'
         'border-radius:100px;box-shadow:' + T["shadow"] + ';">'
     )
     for i, (num, label, s) in enumerate(steps):
         is_active = s == stage
         is_done   = completed[s]
         if is_active:
-            cb, cc, lc, lw = T["accent"], "#fff", T["accent"], "800"
+            cb, cc, lc, lw = T["accent"], "#fff", T["accent"], "700"
             icon = num
         elif is_done:
-            cb, cc, lc, lw = T["success"], "#fff", T["success"], "700"
+            cb, cc, lc, lw = T["success"], "#fff", T["success"], "600"
             icon = "✓"
         else:
             cb, cc, lc, lw = T["border2"], T["muted"], T["muted"], "500"
             icon = num
         _op = "1" if (is_active or is_done) else ".45"
         html += (
-            '<div style="display:flex;align-items:center;gap:7px;opacity:' + _op + ';">'
+            '<div style="display:flex;align-items:center;gap:5px;opacity:' + _op + ';">'
             '<div style="background:' + cb + ';border-radius:50%;'
-            'width:30px;height:30px;display:flex;align-items:center;'
-            'justify-content:center;font-size:.72rem;font-weight:800;'
-            'color:' + cc + ';flex-shrink:0;letter-spacing:0;">' + icon + '</div>'
-            '<span style="font-size:.88rem;font-weight:' + lw + ';color:' + lc + ';'
+            'width:22px;height:22px;display:flex;align-items:center;'
+            'justify-content:center;font-size:.6rem;font-weight:800;'
+            'color:' + cc + ';flex-shrink:0;">' + icon + '</div>'
+            '<span style="font-size:.75rem;font-weight:' + lw + ';color:' + lc + ';'
             'font-family:DM Sans,sans-serif;white-space:nowrap;">' + label + '</span>'
             '</div>'
         )
         if i < 2:
             _sep_c = T["success"] if is_done else T["border2"]
             html += (
-                '<div style="width:28px;height:2px;background:' + _sep_c + ';'
-                'opacity:.55;flex-shrink:0;border-radius:2px;"></div>'
+                '<div style="width:18px;height:1px;background:' + _sep_c + ';'
+                'opacity:.5;flex-shrink:0;"></div>'
             )
     html += "</div></div>"
     st.markdown(html, unsafe_allow_html=True)
@@ -907,37 +930,185 @@ def _render_stage_review():
     title = block["title"]
     body  = block["body"]
 
-    # ── Layout: colonna sinistra = KaTeX + modifica AI, colonna destra = PDF ──
-    # [2, 3] → la preview PDF (destra) ha il 60% della larghezza desktop
-    col_ktx, col_pdf = st.columns([2, 3], gap="medium")
+    # ══════════════════════════════════════════════════════════════════════════
+    #  LAYOUT DUE COLONNE
+    #  Sinistra [2]: box unico — KaTeX + Modifica AI + Ricalibra Punteggi
+    #  Destra   [3]: anteprima PDF una pagina alla volta con navigazione ◀▶
+    # ══════════════════════════════════════════════════════════════════════════
+    col_left, col_pdf = st.columns([2, 3], gap="medium")
 
-    with col_ktx:
-        # Anteprima KaTeX
-        katex_html = _make_katex_html(title, body, T)
-        est_height = max(280, min(700, 180 + len(body) // 4))
-        components.html(katex_html, height=est_height, scrolling=True)
+    # ── COLONNA SINISTRA ──────────────────────────────────────────────────────
+    with col_left:
+        with st.container(border=True):
 
-        if re.search(r"\\begin\{(tikzpicture|axis)\}", body):
-            st.info("📊 Questo esercizio contiene grafici TikZ/pgfplots non visualizzabili nell'anteprima — visibili nel PDF finale.")
+            # ── Anteprima KaTeX dell'esercizio selezionato ───────────────────
+            katex_html = _make_katex_html(title, body, T)
+            est_height = max(220, min(550, 160 + len(body) // 4))
+            components.html(katex_html, height=est_height, scrolling=True)
 
-        # ── Modifica AI — direttamente sotto il testo ────────────────────────
-        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
-        st.markdown(
-            '<div style="font-size:.78rem;color:' + T["text2"] + ';margin-bottom:.4rem;">'
-            '<strong>Vuoi cambiare qualcosa?</strong> '
-            'Descrivi la modifica e l\'AI rigenererà solo questo esercizio.</div>',
-            unsafe_allow_html=True
-        )
-        istruzione = st.text_area(
-            f"Modifica esercizio {idx+1}",
-            placeholder="es. Aumenta la difficoltà · Cambia i numeri · Converti in Vero/Falso · Aggiungi un sottopunto",
-            key=f"rw_istr_{idx}",
-            label_visibility="collapsed",
-            height=80,
-        )
-        rigenera = st.button("✏️ Applica Modifica", key=f"rw_btn_{idx}",
-                             use_container_width=True, disabled=not istruzione.strip())
+            if re.search(r"\\begin\{(tikzpicture|axis)\}", body):
+                st.info("📊 Grafici TikZ/pgfplots visibili nel PDF finale.")
 
+            st.markdown(
+                f'<div style="height:.6rem"></div>'
+                f'<div style="font-size:.76rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
+                f'font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;">'
+                f'✏️ Modifica con AI</div>',
+                unsafe_allow_html=True
+            )
+            st.markdown(
+                '<div style="font-size:.76rem;color:' + T["text2"] + ';margin-bottom:.4rem;'
+                'font-family:DM Sans,sans-serif;line-height:1.45;">'
+                'Descrivi la modifica — l\'AI rigenererà solo questo esercizio.<br>'
+                '<span style="color:' + T["muted"] + ';font-size:.7rem;">'
+                '⚠️ Per cambiare i <strong>punteggi</strong> usa il pannello qui sotto.</span>'
+                '</div>',
+                unsafe_allow_html=True
+            )
+            istruzione = st.text_area(
+                f"Modifica esercizio {idx+1}",
+                placeholder="es. Aumenta la difficoltà · Cambia i numeri · Converti in Vero/Falso · Aggiungi un sottopunto",
+                key=f"rw_istr_{idx}",
+                label_visibility="collapsed",
+                height=80,
+            )
+            rigenera = st.button(
+                "✏️ Applica Modifica", key=f"rw_btn_{idx}",
+                use_container_width=True, disabled=not istruzione.strip()
+            )
+
+            # ── Separatore visivo ─────────────────────────────────────────────
+            if mostra_punteggi and n_blocks > 0:
+                st.markdown(
+                    f'<div style="border-top:1px solid {T["border"]};margin:.8rem 0 .6rem 0;"></div>',
+                    unsafe_allow_html=True
+                )
+
+            # ── PANNELLO RICALIBRA PUNTEGGI (inline nella stessa box) ─────────
+            if mostra_punteggi and n_blocks > 0:
+                st.markdown(
+                    '<div class="recalibra-title">⚖️ Ricalibra Punteggi</div>'
+                    '<div style="font-size:.74rem;color:' + T["text2"] + ';margin-bottom:.7rem;'
+                    'font-family:DM Sans,sans-serif;line-height:1.45;">'
+                    'Modifica i punti per esercizio. <strong>Applica</strong> si attiva '
+                    'quando la somma = <strong>' + str(punti_totali) + ' pt</strong>.'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
+
+                # _cur_pts dal CORPO (non dal titolo) → evita default 0 post-regen
+                _cur_pts = [
+                    _parse_pts_from_block_body(b["body"])
+                    for b in st.session_state.review_blocks
+                ]
+
+                _rc_key = "recalibra_pts"
+                if _rc_key not in st.session_state or len(st.session_state[_rc_key]) != n_blocks:
+                    st.session_state[_rc_key] = list(_cur_pts)
+
+                _pt_options_rc = list(range(0, punti_totali + 1))
+                _new_pts = []
+                # Griglia a 2 colonne nella colonna sinistra
+                _ncols_rc = min(n_blocks, 2)
+                _cols_rc  = st.columns(_ncols_rc)
+                for _i, _b in enumerate(st.session_state.review_blocks):
+                    _title_short = re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]).strip()
+                    _title_short = (_title_short[:22] + "…") if len(_title_short) > 22 else _title_short
+                    with _cols_rc[_i % _ncols_rc]:
+                        st.markdown(
+                            f'<div style="font-size:.72rem;font-weight:700;color:{T["text2"]};'
+                            f'font-family:DM Sans,sans-serif;margin-bottom:1px;">Es. {_i+1}</div>'
+                            f'<div style="font-size:.64rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
+                            f'margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+                            f'{_title_short}</div>',
+                            unsafe_allow_html=True
+                        )
+                        _v = st.selectbox(
+                            f"Punti es. {_i+1}",
+                            options=_pt_options_rc,
+                            index=min(int(st.session_state[_rc_key][_i]), punti_totali),
+                            key=f"rc_pts_{_i}",
+                            label_visibility="collapsed",
+                            format_func=lambda x: f"{x} pt",
+                        )
+                        _new_pts.append(_v)
+
+                # Forza int — evita confronti float
+                st.session_state[_rc_key] = [int(v) for v in _new_pts]
+
+                # Ricalcolo da zero
+                _somma, _ok, _diff = _valida_totale(_new_pts, punti_totali)
+
+                if _ok:
+                    st.markdown(
+                        '<div class="recalibra-sum-ok">'
+                        '✅ Somma: <strong>' + str(_somma) + ' pt</strong>'
+                        ' = ' + str(punti_totali) + ' pt'
+                        '</div>',
+                        unsafe_allow_html=True
+                    )
+                else:
+                    _diff_str = ("+" if _diff > 0 else "") + str(_diff)
+                    st.markdown(
+                        '<div class="recalibra-sum-err">'
+                        '⚠️ Somma: <strong>' + str(_somma) + ' pt</strong>'
+                        ' (' + _diff_str + ' rispetto a ' + str(punti_totali) + ' pt)'
+                        '</div>',
+                        unsafe_allow_html=True
+                    )
+
+                st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
+
+                if st.button(
+                    "✅ Applica Punteggi e Rigenera PDF" if _ok else
+                    f"⛔ Applica Punteggi (somma: {_somma} ≠ {punti_totali} pt)",
+                    key="rc_applica",
+                    disabled=not _ok,
+                    use_container_width=True,
+                    type="primary",
+                ):
+                    for _i in range(n_blocks):
+                        _clean = re.sub(r"\s*\(\d+\s*pt\)", "",
+                                        st.session_state.review_blocks[_i]["title"]).strip()
+                        st.session_state.review_blocks[_i]["title"] = f"{_clean} ({_new_pts[_i]} pt)"
+
+                    _latex_rc = _reconstruct_latex(
+                        st.session_state.review_preamble,
+                        st.session_state.review_blocks
+                    )
+                    _latex_rc = fix_items_environment(_latex_rc)
+                    _latex_rc = rimuovi_vspace_corpo(_latex_rc)
+                    _latex_rc = rimuovi_punti_subsection(_latex_rc)
+                    _latex_rc = riscala_punti_custom(_latex_rc, _new_pts)
+                    if con_griglia:
+                        _latex_rc = inietta_griglia(_latex_rc, punti_totali)
+
+                    st.session_state.verifiche["A"]["latex"]           = _latex_rc
+                    st.session_state.verifiche["A"]["latex_originale"] = _latex_rc
+
+                    with st.spinner("⏳ Ricompilazione PDF…"):
+                        _pdf_rc, _err_rc = compila_pdf(_latex_rc)
+                    if _pdf_rc:
+                        st.session_state.verifiche["A"]["pdf"]     = _pdf_rc
+                        st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
+                        st.session_state.verifiche["A"]["preview"] = True
+                        _imgs_rc, _ = pdf_to_images_bytes(_pdf_rc)
+                        st.session_state.preview_images = _imgs_rc or []
+                        st.session_state.preview_page   = 0
+                        _new_preamble, _new_blocks = _extract_blocks(_latex_rc)
+                        if _new_blocks:
+                            st.session_state.review_preamble = _new_preamble
+                            st.session_state.review_blocks   = _new_blocks
+                        if _rc_key in st.session_state:
+                            del st.session_state[_rc_key]
+                        st.toast("✅ Punteggi applicati — PDF aggiornato!", icon="⚖️")
+                        st.rerun()
+                    else:
+                        st.error("❌ Errore di compilazione.")
+                        with st.expander("Log errore"):
+                            st.text(_err_rc)
+
+    # ── COLONNA DESTRA — anteprima PDF una pagina alla volta ─────────────────
     with col_pdf:
         st.markdown(
             '<div style="font-size:.72rem;font-weight:700;color:' + T["muted"] + ';'
@@ -947,199 +1118,128 @@ def _render_stage_review():
         )
         imgs = st.session_state.preview_images
         if imgs:
-            for pi, img_bytes in enumerate(imgs):
-                st.image(img_bytes, use_container_width=True, caption=f"Pagina {pi+1}")
+            n_pages  = len(imgs)
+            _pg = max(0, min(st.session_state.get("preview_page", 0), n_pages - 1))
+
+            st.image(imgs[_pg], use_container_width=True)
+
+            if n_pages > 1:
+                st.markdown("<div style='height:.2rem'></div>", unsafe_allow_html=True)
+                _pc, _pm, _pn = st.columns([1, 2, 1])
+                with _pc:
+                    if st.button("◀", key="prev_pg", use_container_width=True,
+                                 disabled=(_pg == 0)):
+                        st.session_state.preview_page = _pg - 1; st.rerun()
+                with _pm:
+                    st.markdown(
+                        f'<div style="text-align:center;font-size:.75rem;font-weight:600;'
+                        f'color:{T["text2"]};font-family:DM Sans,sans-serif;padding:.35rem 0;">'
+                        f'Pag. {_pg+1} / {n_pages}</div>',
+                        unsafe_allow_html=True
+                    )
+                with _pn:
+                    if st.button("▶", key="next_pg", use_container_width=True,
+                                 disabled=(_pg == n_pages - 1)):
+                        st.session_state.preview_page = _pg + 1; st.rerun()
         else:
             vA_pdf = st.session_state.verifiche["A"].get("pdf")
             if vA_pdf:
                 b64 = base64.b64encode(vA_pdf).decode()
                 st.markdown(
                     '<iframe src="data:application/pdf;base64,' + b64 + '#toolbar=0&navpanes=0&scrollbar=1" '
-                    'style="width:100%;height:500px;border:none;border-radius:8px;"></iframe>',
+                    'style="width:100%;height:560px;border:none;border-radius:8px;"></iframe>',
                     unsafe_allow_html=True
                 )
             else:
                 st.caption("Anteprima non disponibile.")
 
-    # ══════════════════════════════════════════════════════════════════════════
-    #  PANNELLO RICALIBRA PUNTEGGI — box unico con st.container(border=True)
-    # ══════════════════════════════════════════════════════════════════════════
-    if mostra_punteggi and n_blocks > 0:
-        # st.container(border=True) crea UN solo box visibile che include titolo,
-        # descrizione, selectbox, indicatore somma E pulsante Applica.
-        # Elimina il vecchio approccio con <div> HTML orfani che produceva
-        # un box vuoto sopra al titolo "⚖️ Ricalibra Punteggi".
-        with st.container(border=True):
+    # ── Logica modifica AI ────────────────────────────────────────────────────
+    if rigenera and istruzione.strip():
+        _istr_low = istruzione.lower()
 
-            st.markdown(
-                '<div class="recalibra-title">⚖️ Ricalibra Punteggi</div>'
-                '<div style="font-size:.8rem;color:' + T["text2"] + ';margin-bottom:.9rem;'
-                'font-family:DM Sans,sans-serif;line-height:1.5;">'
-                'Modifica i punti di ogni esercizio. Il tasto <strong>Applica</strong> '
-                'si attiva solo quando la somma corrisponde al totale impostato '
-                '(<strong>' + str(punti_totali) + ' pt</strong>).'
-                '</div>',
-                unsafe_allow_html=True
+        # ── Rilevamento richieste punteggio ───────────────────────────────────
+        # Se l'utente chiede di cambiare punti/punteggio reindirizza al pannello.
+        _is_score_req = any(kw in _istr_low for kw in _SCORE_KEYWORDS)
+        if _is_score_req:
+            st.warning(
+                "⚠️ **Hai menzionato punteggi / punti.**\n\n"
+                "Per modificare i punti usa il pannello **⚖️ Ricalibra Punteggi** "
+                "qui sopra — imposta i valori desiderati e premi **Applica Punteggi**. "
+                "Il pannello AI è riservato alle modifiche al contenuto (testo, difficoltà, formato)."
             )
+        else:
+            # ── Regen AI con preservazione punti ─────────────────────────────
+            # Cattura i punti correnti dell'esercizio PRIMA della regen.
+            # Se recalibra_pts è stato già impostato dall'utente usa quello,
+            # altrimenti legge dal corpo del blocco corrente.
+            _pts_custom = st.session_state.get("recalibra_pts", [])
+            if _pts_custom and len(_pts_custom) == n_blocks:
+                _exercise_target_pts = int(_pts_custom[idx])
+            else:
+                _exercise_target_pts = _parse_pts_from_block_body(body)
 
-            # _cur_pts letti dal CORPO (non dal titolo) → evita default 0 →
-            # evita che la somma parta sempre da 0 dopo regen AI
-            _cur_pts = [
-                _parse_pts_from_block_body(b["body"])
-                for b in st.session_state.review_blocks
-            ]
-
-            _rc_key = "recalibra_pts"
-            if _rc_key not in st.session_state or len(st.session_state[_rc_key]) != n_blocks:
-                st.session_state[_rc_key] = list(_cur_pts)
-
-            _pt_options_rc = list(range(0, punti_totali + 1))
-            _new_pts = []
-            _cols_rc = st.columns(min(n_blocks, 4))
-            for _i, _b in enumerate(st.session_state.review_blocks):
-                _title_short = re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]).strip()
-                _title_short = (_title_short[:28] + "…") if len(_title_short) > 28 else _title_short
-                with _cols_rc[_i % min(n_blocks, 4)]:
-                    st.markdown(
-                        f'<div style="font-size:.78rem;font-weight:700;color:{T["text2"]};'
-                        f'font-family:DM Sans,sans-serif;margin-bottom:2px;">Es. {_i+1}</div>'
-                        f'<div style="font-size:.7rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
-                        f'margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
-                        f'{_title_short}</div>',
-                        unsafe_allow_html=True
-                    )
-                    _v = st.selectbox(
-                        f"Punti es. {_i+1}",
-                        options=_pt_options_rc,
-                        index=min(int(st.session_state[_rc_key][_i]), punti_totali),
-                        key=f"rc_pts_{_i}",
-                        label_visibility="collapsed",
-                        format_func=lambda x: f"{x} pt",
-                    )
-                    _new_pts.append(_v)
-
-            # Forza int — evita confronti float
-            st.session_state[_rc_key] = [int(v) for v in _new_pts]
-
-            # Ricalcolo da zero ad ogni run — unica fonte di verità
-            _somma, _ok, _diff = _valida_totale(_new_pts, punti_totali)
-
-            if _ok:
-                st.markdown(
-                    '<div class="recalibra-sum-ok">'
-                    '✅ Somma corretta: <strong>' + str(_somma) + ' pt</strong>'
-                    ' = ' + str(punti_totali) + ' pt totali'
-                    '</div>',
-                    unsafe_allow_html=True
+            # Il prompt dice all'AI quanti pt deve assegnare a questo esercizio.
+            # La funzione _riscala_single_block lo corregge deterministicamente dopo.
+            if mostra_punteggi and _exercise_target_pts > 0:
+                punti_nota = (
+                    f"Assegna esattamente {_exercise_target_pts} pt in totale a questo esercizio, "
+                    f"distribuendoli tra i sotto-punti con il formato (N pt) su ogni \\item. "
+                    f"La somma DEVE essere {_exercise_target_pts} pt."
+                )
+            elif mostra_punteggi:
+                punti_nota = (
+                    f"Mantieni il formato (X pt) su ogni \\item. "
+                    f"La somma totale dei punti DEVE essere esattamente {punti_totali} pt."
                 )
             else:
-                _diff_str = ("+" if _diff > 0 else "") + str(_diff)
-                st.markdown(
-                    '<div class="recalibra-sum-err">'
-                    '⚠️ Somma attuale: <strong>' + str(_somma) + ' pt</strong>'
-                    ' — ' + _diff_str + ' pt rispetto a '
-                    + str(punti_totali) + ' pt'
-                    '</div>',
-                    unsafe_allow_html=True
-                )
+                punti_nota = "NON inserire punteggi (X pt)."
 
-            st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
+            _prompt_rw = (
+                f"Sei un docente esperto di {materia_str} e LaTeX.\n"
+                f"Rigenera SOLO questo esercizio secondo l'istruzione.\n\n"
+                f"ESERCIZIO ORIGINALE:\n\\subsection*{{{title}}}\n{body}\n\n"
+                f"ISTRUZIONE: {istruzione.strip()}\n\n"
+                f"REGOLE:\n"
+                f"- Restituisci SOLO il blocco \\subsection*{{...}} con il nuovo esercizio.\n"
+                f"- Mantieni struttura LaTeX (\\subsection*, enumerate, \\item[a)], ecc.).\n"
+                f"- {punti_nota}\n"
+                f"- NON includere preambolo o \\begin{{document}}.\n"
+                f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
+            )
+            with st.spinner(f"⏳ Rigenerando esercizio {idx+1}…"):
+                try:
+                    model_rw_obj = genai.GenerativeModel(modello_rw)
+                    resp  = model_rw_obj.generate_content(_prompt_rw)
+                    nuovo = resp.text.replace("```latex","").replace("```","").strip()
+                    m_rw  = re.match(r"\\subsection\*\{([^}]*)\}(.*)", nuovo, re.DOTALL)
+                    if m_rw:
+                        new_title = m_rw.group(1)
+                        new_body  = m_rw.group(2).strip()
+                    else:
+                        new_title = title
+                        new_body  = nuovo
 
-            # Pulsante Applica — dentro il container (stesso box visivo)
-            if st.button(
-                "✅ Applica Punteggi e Rigenera PDF" if _ok else
-                f"⛔ Applica Punteggi (somma: {_somma} pt ≠ {punti_totali} pt)",
-                key="rc_applica",
-                disabled=not _ok,
-                use_container_width=True,
-                type="primary",
-            ):
-                for _i in range(n_blocks):
-                    _clean = re.sub(r"\s*\(\d+\s*pt\)", "",
-                                    st.session_state.review_blocks[_i]["title"]).strip()
-                    st.session_state.review_blocks[_i]["title"] = f"{_clean} ({_new_pts[_i]} pt)"
+                    # Rimuovi eventuale (N pt) che l'AI ha messo nel titolo
+                    new_title = re.sub(r'\s*\(\d+\s*pt\)', '', new_title).strip()
 
-                _latex_rc = _reconstruct_latex(
-                    st.session_state.review_preamble,
-                    st.session_state.review_blocks
-                )
-                _latex_rc = fix_items_environment(_latex_rc)
-                _latex_rc = rimuovi_vspace_corpo(_latex_rc)
-                # rimuovi_punti_subsection ora gestisce (N pt) anche DENTRO le {}
-                # riscala_punti_custom opera SOLO sugli item (header escluso) →
-                # niente più dimezzamento 80→40
-                _latex_rc = rimuovi_punti_subsection(_latex_rc)
-                _latex_rc = riscala_punti_custom(_latex_rc, _new_pts)
-                if con_griglia:
-                    _latex_rc = inietta_griglia(_latex_rc, punti_totali)
+                    # Correzione deterministica dei punti: porta la somma esatta
+                    # al valore che aveva l'esercizio prima della modifica AI.
+                    if mostra_punteggi and _exercise_target_pts > 0:
+                        new_body = _riscala_single_block(new_title, new_body, _exercise_target_pts)
 
-                st.session_state.verifiche["A"]["latex"]           = _latex_rc
-                st.session_state.verifiche["A"]["latex_originale"] = _latex_rc
+                    st.session_state.review_blocks[idx]["title"] = new_title
+                    st.session_state.review_blocks[idx]["body"]  = new_body
 
-                with st.spinner("⏳ Ricompilazione PDF con nuovi punteggi…"):
-                    _pdf_rc, _err_rc = compila_pdf(_latex_rc)
-                if _pdf_rc:
-                    st.session_state.verifiche["A"]["pdf"]     = _pdf_rc
-                    st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
-                    st.session_state.verifiche["A"]["preview"] = True
-                    _imgs_rc, _ = pdf_to_images_bytes(_pdf_rc)
-                    st.session_state.preview_images = _imgs_rc or []
-                    # Sincronizza review_blocks per evitare che "Conferma"
-                    # ricostruisca dai vecchi pesi pre-scalatura
-                    _new_preamble, _new_blocks = _extract_blocks(_latex_rc)
-                    if _new_blocks:
-                        st.session_state.review_preamble = _new_preamble
-                        st.session_state.review_blocks   = _new_blocks
-                    if _rc_key in st.session_state:
-                        del st.session_state[_rc_key]
-                    st.toast("✅ Punteggi applicati — PDF aggiornato!", icon="⚖️")
-                    st.rerun()
-                else:
-                    st.error("❌ Errore di compilazione dopo ricalibrazione.")
-                    with st.expander("Log errore"):
-                        st.text(_err_rc)
+                    # Reset pannello ricalibra: rilegge i punteggi aggiornati
+                    if "recalibra_pts" in st.session_state:
+                        del st.session_state["recalibra_pts"]
+                    st.success(f"✅ Esercizio {idx+1} rigenerato — punteggio preservato ({_exercise_target_pts} pt).")
+                    time.sleep(0.4); st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Errore: {e}")
 
-    # ── Logica modifica AI ─────────────────────────────────────────────────────
-    if rigenera and istruzione.strip():
-        punti_nota = (
-            f"Mantieni il formato (X pt) su ogni \\item. "
-            f"La somma totale dei punti DEVE essere esattamente {punti_totali} pt."
-            if mostra_punteggi else "NON inserire punteggi (X pt)."
-        )
-        _prompt_rw = (
-            f"Sei un docente esperto di {materia_str} e LaTeX.\n"
-            f"Rigenera SOLO questo esercizio secondo l'istruzione.\n\n"
-            f"ESERCIZIO ORIGINALE:\n\\subsection*{{{title}}}\n{body}\n\n"
-            f"ISTRUZIONE: {istruzione.strip()}\n\n"
-            f"REGOLE:\n"
-            f"- Restituisci SOLO il blocco \\subsection*{{...}} con il nuovo esercizio.\n"
-            f"- Mantieni struttura LaTeX (\\subsection*, enumerate, \\item[a)], ecc.).\n"
-            f"- {punti_nota}\n"
-            f"- NON includere preambolo o \\begin{{document}}.\n"
-            f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
-        )
-        with st.spinner(f"⏳ Rigenerando esercizio {idx+1}…"):
-            try:
-                model_rw_obj = genai.GenerativeModel(modello_rw)
-                resp = model_rw_obj.generate_content(_prompt_rw)
-                nuovo = resp.text.replace("```latex","").replace("```","").strip()
-                m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", nuovo, re.DOTALL)
-                if m:
-                    st.session_state.review_blocks[idx]["title"] = m.group(1)
-                    st.session_state.review_blocks[idx]["body"]  = m.group(2).strip()
-                else:
-                    st.session_state.review_blocks[idx]["body"] = nuovo
-                # Reset pannello ricalibra per rileggere i punteggi aggiornati
-                if "recalibra_pts" in st.session_state:
-                    del st.session_state["recalibra_pts"]
-                st.success(f"✅ Esercizio {idx+1} rigenerato!")
-                time.sleep(0.4); st.rerun()
-            except Exception as e:
-                st.error(f"❌ Errore: {e}")
-
+    # ── Pulsante CONFERMA — oro, piena larghezza ──────────────────────────────
     st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
-
-    # ── Pulsante CONFERMA — oro, piena larghezza, protagonista ────────────────
     st.markdown('<div class="btn-confirm-gold">', unsafe_allow_html=True)
     confirm_pdf = st.button(
         "🎯 Conferma e genera PDF finale",
@@ -1175,16 +1275,17 @@ def _render_stage_review():
                 st.session_state.verifiche["A"]["pdf"]     = pdf_bytes
                 st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
                 st.session_state.verifiche["A"]["preview"] = True
-                imgs, _ = pdf_to_images_bytes(pdf_bytes)
-                st.session_state.preview_images = imgs or []
+                imgs_f, _ = pdf_to_images_bytes(pdf_bytes)
+                st.session_state.preview_images = imgs_f or []
+                st.session_state.preview_page   = 0
                 st.session_state.stage = STAGE_FINAL
                 st.rerun()
             else:
                 st.error("❌ Errore di compilazione PDF.")
                 with st.expander("Log errore"): st.text(err)
 
-    # ── Pulsante RICONFIGURA — piccolo, secondario, in fondo ─────────────────
-    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+    # ── Pulsante RICONFIGURA — piccolo, discreto, sotto ───────────────────────
+    st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
     st.markdown('<div class="btn-riconfigura-small">', unsafe_allow_html=True)
     if st.button("← Riconfigura", use_container_width=False, key="btn_riconfigura"):
         st.session_state.stage = STAGE_INPUT; st.rerun()
@@ -1414,6 +1515,7 @@ def _render_stage_final():
         st.session_state.review_sel_idx    = 0
         st.session_state.gen_params        = {}
         st.session_state.preview_images    = []
+        st.session_state.preview_page      = 0
         st.session_state.esercizi_custom   = []
         st.session_state._saved_to_storico = False
         st.rerun()
