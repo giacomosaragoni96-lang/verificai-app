@@ -1016,30 +1016,31 @@ def get_css(T: dict) -> str:
     font-size: 0.88rem !important;
   }}
 
-  /* ════ FAB FEEDBACK ════ */
+  /* ════ FAB FEEDBACK (in alto a destra) ════ */
   .fab-link {{
     position: fixed;
-    bottom: 5.5rem;
-    right: 1.2rem;
+    top: .55rem;
+    right: 1rem;
     z-index: 9998;
     background: {T['card']};
     border: 1.5px solid {T['border2']};
     color: {T['text2']};
     text-decoration: none;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    padding: 7px 14px;
+    padding: 5px 11px;
     border-radius: 100px;
-    box-shadow: 0 4px 16px rgba(0,0,0,.25);
+    box-shadow: 0 2px 10px rgba(0,0,0,.15);
     transition: border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     backdrop-filter: blur(8px);
     white-space: nowrap;
+    width: auto;
   }}
   .fab-link:hover {{
     border-color: {T['accent']};
     color: {T['accent']};
-    box-shadow: 0 6px 20px {T['accent']}33;
+    box-shadow: 0 4px 14px {T['accent']}33;
   }}
 
   /* ════ APP FOOTER ════ */
@@ -1341,6 +1342,71 @@ def get_css(T: dict) -> str:
     text-align: center !important;
   }}
   .score-edit-wrap label {{ display: none !important; }}
+
+  /* ════ PANNELLO RICALIBRA PUNTEGGI ════ */
+  .recalibra-panel {{
+    background: {T['card']};
+    border: 2px solid {T['border2']};
+    border-radius: 14px;
+    padding: 1.1rem 1.2rem 1.2rem 1.2rem;
+    margin: 1.2rem 0 .8rem 0;
+  }}
+  .recalibra-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: {T['accent']};
+    margin-bottom: .75rem;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }}
+  .recalibra-title::before {{
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: {T['accent']};
+    flex-shrink: 0;
+    display: inline-block;
+  }}
+  .recalibra-row {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: .4rem .1rem;
+    border-bottom: 1px solid {T['border']};
+    font-family: 'DM Sans', sans-serif;
+    font-size: .83rem;
+    color: {T['text2']};
+  }}
+  .recalibra-row:last-of-type {{ border-bottom: none; }}
+  .recalibra-sum-ok {{
+    display: flex; align-items: center; gap: 8px;
+    background: {T['success']}18;
+    border: 1.5px solid {T['success']};
+    border-radius: 10px;
+    padding: .55rem 1rem;
+    margin-top: .75rem;
+    font-size: .82rem;
+    font-weight: 700;
+    color: {T['success']};
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .recalibra-sum-err {{
+    display: flex; align-items: center; gap: 8px;
+    background: {T['err']}12;
+    border: 1.5px solid {T['err']};
+    border-radius: 10px;
+    padding: .55rem 1rem;
+    margin-top: .75rem;
+    font-size: .82rem;
+    font-weight: 700;
+    color: {T.get('hint_text', T['err'])};
+    font-family: 'DM Sans', sans-serif;
+  }}
 </style>
 """
 
