@@ -60,9 +60,19 @@ def mostra_auth(supabase):
     [data-testid="stHeader"], [data-testid="stDecoration"],
     [data-testid="stToolbar"], #MainMenu, footer { display: none !important; }
     .block-container {
-        padding: 0 !important; max-width: 480px !important; margin: 0 auto !important;
+        padding: 0 !important; max-width: 420px !important; margin: 0 auto !important;
     }
     [data-testid="stMainBlockContainer"] { padding: 0 !important; }
+
+    /* Wrap tutto in un card unico */
+    .auth-card-wrap {
+        background: #111110;
+        border: 1px solid #222220;
+        border-radius: 20px;
+        padding: 2rem 2rem 1.5rem 2rem;
+        margin: 2.5rem 1rem 0 1rem;
+    }
+
     [data-testid="stTextInput"] input {
         background: #1A1916 !important; border: 1.5px solid #2A2926 !important;
         border-radius: 10px !important; color: #F5F4EF !important;
@@ -79,9 +89,9 @@ def mostra_auth(supabase):
         font-weight: 600 !important; font-family: 'DM Sans', sans-serif !important;
     }
     [data-testid="stTabs"] [data-baseweb="tab-list"] {
-        background: #1A1916 !important; border-radius: 10px !important;
+        background: #0F0F0E !important; border-radius: 10px !important;
         padding: 4px !important; gap: 2px !important;
-        border: 1px solid #2A2926 !important; margin-bottom: 1.5rem !important;
+        border: 1px solid #2A2926 !important; margin-bottom: 1.2rem !important;
     }
     [data-testid="stTabs"] [data-baseweb="tab"] {
         border-radius: 7px !important; font-size: 0.85rem !important;
@@ -104,25 +114,20 @@ def mostra_auth(supabase):
     </style>
     """, unsafe_allow_html=True)
 
+    # Header logo fuori dal box
     st.markdown("""
-    <div style="padding:3rem 2rem 0 2rem;text-align:center;">
-      <div style="font-size:3.2rem;font-weight:900;letter-spacing:-0.04em;
-                  color:#F5F4EF;line-height:1;margin-bottom:0.5rem;">
+    <div style="padding:2.5rem 1rem 0 1rem;text-align:center;">
+      <div style="font-size:3rem;font-weight:900;letter-spacing:-0.04em;
+                  color:#F5F4EF;line-height:1;margin-bottom:0.4rem;">
         📝 Verific<span style="background:linear-gradient(135deg,#D97706,#FF8C00);
                                -webkit-background-clip:text;-webkit-text-fill-color:transparent;
                                background-clip:text;">AI</span>
       </div>
-      <p style="font-size:1rem;color:#8C8A82;margin:0 auto 2rem auto;max-width:360px;">
-        Crea <strong style="color:#C8C6BC;">verifiche scolastiche professionali</strong> in 30 secondi.
+      <p style="font-size:.95rem;color:#8C8A82;margin:0 auto .5rem auto;">
+        Crea <strong style="color:#C8C6BC;">verifiche scolastiche</strong> in 30 secondi.
       </p>
-      <div style="background:#111110;border:1px solid #1E1D1A;border-radius:20px;
-                  padding:1.8rem 2rem 0.5rem 2rem;text-align:left;margin-bottom:0.5rem;">
-        <div style="font-size:1.3rem;font-weight:800;color:#F5F4EF;margin-bottom:0.3rem;">Inizia subito</div>
-        <div style="font-size:0.85rem;color:#6B6960;margin-bottom:0;">
-          Gratuito durante il periodo Beta · Nessuna carta richiesta
-        </div>
-      </div>
     </div>
+    <div class="auth-card-wrap">
     """, unsafe_allow_html=True)
 
     tab_login, tab_reg, tab_reset = st.tabs(["  Accedi  ", "  Registrati  ", "  Password  "])
@@ -198,3 +203,5 @@ def mostra_auth(supabase):
                     st.success("Email inviata! Controlla la casella di posta.")
                 except Exception as e:
                     st.error(f"Errore nell'invio: {e}")
+
+    st.markdown("</div>", unsafe_allow_html=True)
