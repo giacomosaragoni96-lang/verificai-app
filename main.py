@@ -434,16 +434,8 @@ _limite         = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
 st.markdown(get_css(T), unsafe_allow_html=True)
 # Modifica FAB: Alzato z-index e bottom per non coprire elementi Streamlit
 st.markdown(
-    '<style>'
-    '.fab-link { '
-    '  position: fixed; '
-    '  bottom: 35px !important; '
-    '  right: 20px; '
-    '  z-index: 9999999 !important; '
-    '}'
-    '</style>'
     '<a class="fab-link" href="' + FEEDBACK_FORM_URL + '" target="_blank" '
-    'rel="noopener noreferrer">💬 &nbsp; Feedback & Bug</a>',
+    'rel="noopener noreferrer">💬 Feedback</a>',
     unsafe_allow_html=True
 )
 
@@ -538,32 +530,21 @@ def _render_stage_input():
             '<div style="background:linear-gradient(135deg,' + T["accent_light"] + ' 0%,' + T["card"] + ' 100%);'
             'border:1.5px solid ' + T["accent"] + ';border-radius:14px;'
             'padding:1rem 1.4rem .8rem 1.4rem;margin-bottom:.8rem;font-family:DM Sans,sans-serif;">'
-            '<div style="display:flex;gap:12px;">'
-            '<div style="flex:1;">'
-            '<div style="font-size:.85rem;font-weight:800;color:' + T["text"] + ';margin-bottom:.6rem;">Come iniziare in 3 passi</div>'
-            '<div style="display:flex;background:' + T["bg2"] + ';border:1px solid ' + T["border"] + ';border-radius:10px;overflow:hidden;margin-bottom:.7rem;">'
-            '<div style="flex:1;padding:.55rem .8rem;border-right:1px solid ' + T["border"] + ';">'
-            '<div style="font-size:.62rem;font-weight:800;color:' + T["accent"] + ';text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">01 · Materia & Scuola</div>'
-            '<div style="font-size:.73rem;color:' + T["text2"] + ';">Seleziona materia e tipo di istituto</div>'
-            '</div>'
-            '<div style="flex:1;padding:.55rem .8rem;border-right:1px solid ' + T["border"] + ';">'
-            '<div style="font-size:.62rem;font-weight:800;color:' + T["accent"] + ';text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">02 · Argomento</div>'
-            '<div style="font-size:.73rem;color:' + T["text2"] + ';">Descrivi cosa vuoi testare</div>'
-            '</div>'
-            '<div style="flex:1;padding:.55rem .8rem;">'
-            '<div style="font-size:.62rem;font-weight:800;color:' + T["accent"] + ';text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">03 · Genera</div>'
-            '<div style="font-size:.73rem;color:' + T["text2"] + ';">Personalizza se vuoi, poi premi Genera</div>'
-            '</div>'
+            '<div style="font-size:.85rem;font-weight:800;color:' + T["text"] + ';margin-bottom:.6rem;">Benvenuto in VerificAI 👋</div>'
+            '<div style="font-size:.78rem;color:' + T["text2"] + ';line-height:1.6;margin-bottom:.7rem;">'
+            'Segui le tre fasi indicate nella barra qui sopra:<br>'
+            '<span style="color:' + T["accent"] + ';font-weight:700;">① Configura</span> — scegli materia, scuola e argomento, poi premi <em>Genera</em>.<br>'
+            '<span style="color:' + T["accent"] + ';font-weight:700;">② Revisione</span> — leggi la bozza, modifica i singoli esercizi se vuoi.<br>'
+            '<span style="color:' + T["accent"] + ';font-weight:700;">③ Download</span> — scarica PDF, Word e genera varianti (Fila B, BES/DSA, Soluzioni).'
             '</div>'
             '<a href="?_ob=done" style="font-size:.72rem;color:' + T["muted"] + ';text-decoration:underline;font-family:DM Sans,sans-serif;">Ho capito →</a>'
-            '</div></div></div>',
+            '</div>',
             unsafe_allow_html=True
         )
 
     # ── STEP 1 — MATERIA + SCUOLA ─────────────────────────────────────────────
     st.markdown(
         '<div class="step-label">'
-        '<span class="step-num">01</span>'
         '<span class="step-title">Materia e Tipo di Scuola</span>'
         '<span class="step-line"></span>'
         '</div>',
@@ -594,7 +575,6 @@ def _render_stage_input():
         'Es: "equazioni di II grado con discriminante, 2 esercizi applicativi" funziona meglio di "algebra".</span>'
         '</div>'
         '<div class="step-label">'
-        '<span class="step-num">02</span>'
         '<span class="step-title">Argomento della verifica</span>'
         '<span class="step-line"></span>'
         '</div>',
@@ -609,7 +589,6 @@ def _render_stage_input():
     # ── STEP 3 — PERSONALIZZA (snello) ────────────────────────────────────────
     st.markdown(
         '<div class="step-label">'
-        '<span class="step-num">03</span>'
         '<span class="step-title">Personalizza</span>'
         '<span class="step-line"></span>'
         '</div>',
@@ -1134,6 +1113,7 @@ def _render_stage_final():
             unsafe_allow_html=True
         )
 
+        # ── PDF ──────────────────────────────────────────────────────────────
         if v.get("pdf"):
             st.download_button(
                 label=f"📥 {btn_label} · {_stima(v['pdf'])}",
@@ -1151,41 +1131,46 @@ def _render_stage_final():
                 else:
                     st.error("Errore PDF")
 
+        # ── Anteprima soluzioni ───────────────────────────────────────────────
         if v.get("testo") and fid == "S":
             with st.expander("👁 Mostra soluzioni"):
                 st.markdown(v["testo"])
 
-        has_sec = v.get("latex") or v.get("docx")
-        if has_sec:
-            with st.expander("Altri formati ↓", expanded=False):
-                _docx_key = "_docx_gen_" + fid
-                if v.get("docx"):
-                    st.download_button(
-                        "📝 Word (" + _stima(v["docx"]) + ")",
-                        data=v["docx"], file_name=fname + ".docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        use_container_width=True, key="dl_docx_" + fid
-                    )
-                else:
-                    if st.button("📝 Genera Word", key="gen_docx_" + fid, use_container_width=True):
-                        st.session_state[_docx_key] = True
-                    if st.session_state.get(_docx_key, False):
-                        with st.spinner("Conversione Word…"):
-                            db, de = latex_to_docx_via_ai(v["latex"], con_griglia=con_griglia)
-                        st.session_state[_docx_key] = False
-                        if db:
-                            st.session_state.verifiche[fid]["docx"] = db; st.rerun()
-                        else:
-                            st.error("Errore Word")
+        # ── DOCX ─────────────────────────────────────────────────────────────
+        if v.get("latex"):
+            _docx_key = "_docx_gen_" + fid
+            st.markdown("<div style='height:.35rem'></div>", unsafe_allow_html=True)
+            if v.get("docx"):
+                st.download_button(
+                    "📝 Scarica Word · " + _stima(v["docx"]),
+                    data=v["docx"], file_name=fname + ".docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True, key="dl_docx_" + fid
+                )
+            else:
+                if st.button("📝 Genera Word (.docx)", key="gen_docx_" + fid, use_container_width=True):
+                    st.session_state[_docx_key] = True
+                if st.session_state.get(_docx_key, False):
+                    with st.spinner("Conversione Word…"):
+                        db, de = latex_to_docx_via_ai(v["latex"], con_griglia=con_griglia)
+                    st.session_state[_docx_key] = False
+                    if db:
+                        st.session_state.verifiche[fid]["docx"] = db; st.rerun()
+                    else:
+                        st.error("Errore Word")
 
-                if v.get("latex"):
-                    st.download_button(
-                        "⬇ Sorgente .tex",
-                        data=v["latex"].encode("utf-8"),
-                        file_name=fname + ".tex", mime="text/plain",
-                        key="dl_tex_" + fid,
-                        help="Sorgente LaTeX per editor esterno"
-                    )
+            # .tex download discreto
+            col_tex, _ = st.columns([1, 3])
+            with col_tex:
+                st.download_button(
+                    "⬇ .tex",
+                    data=v["latex"].encode("utf-8"),
+                    file_name=fname + ".tex", mime="text/plain",
+                    key="dl_tex_" + fid,
+                    help="Sorgente LaTeX per editor esterno",
+                    use_container_width=True,
+                )
+
         st.markdown("</div>", unsafe_allow_html=True)
 
     # Rendiamo su due colonne solo i blocchi di download generati, così sono ordinati sotto
@@ -1193,13 +1178,13 @@ def _render_stage_final():
     with col_dl_left:
         _primary_card_unified("Verifica — Fila A", "📄", "A", vA, "FilaA", "Scarica Verifica Fila A (PDF)")
         if vR.get("latex"):
-            _primary_card_unified("Versione BES/DSA — Fila A", "♿", "R", vR, "BES_FilaA", "Scarica Vers. BES/DSA Fila A (PDF)")
+            _primary_card_unified("Versione BES/DSA — Fila A", "🌟", "R", vR, "BES_FilaA", "Scarica Vers. BES/DSA Fila A (PDF)")
     
     with col_dl_right:
         if vB.get("latex"):
             _primary_card_unified("Verifica — Fila B", "📄", "B", vB, "FilaB", "Scarica Verifica Fila B (PDF)")
         if vRB.get("latex"):
-            _primary_card_unified("Versione BES/DSA — Fila B", "♿", "RB", vRB, "BES_FilaB", "Scarica Vers. BES/DSA Fila B (PDF)")
+            _primary_card_unified("Versione BES/DSA — Fila B", "🌟", "RB", vRB, "BES_FilaB", "Scarica Vers. BES/DSA Fila B (PDF)")
         if vS.get("pdf") or vS.get("testo"):
             _primary_card_unified("Soluzioni", "✅", "S", vS, "Soluzioni", "Scarica Soluzioni (PDF)")
 
@@ -1227,7 +1212,7 @@ def _render_stage_final():
 
     with col_v2:
         has_r = bool(vR.get("latex"))
-        lbl_r = "✓ BES/DSA" if has_r else "♿ Genera BES/DSA"
+        lbl_r = "✓ BES/DSA" if has_r else "🌟 Genera BES/DSA"
         if not has_r and st.button(lbl_r, use_container_width=True, key="gen_var_R"):
             with st.spinner("Generazione BES/DSA…"):
                 try:
