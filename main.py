@@ -707,10 +707,12 @@ def _render_stage_input():
                                  index=TIPI_ESERCIZIO.index(ex.get("tipo","Aperto")),
                                  key=f"tipo_{i}")
                 st.session_state.esercizi_custom[i]["tipo"] = t_ex
-                d = st.text_input("Descrizione",
+                d = st.text_area("Descrizione",
                                   value=ex.get("descrizione",""),
                                   placeholder="es. Risolvi l'equazione ax²+bx+c=0",
-                                  key=f"desc_{i}")
+                                  key=f"desc_{i}",
+                                  height=80,
+                                  label_visibility="collapsed")
                 st.session_state.esercizi_custom[i]["descrizione"] = d
                 c1, c2 = st.columns([3,1])
                 with c1:
@@ -988,6 +990,9 @@ def _render_stage_review():
                     "✏️ Applica Modifica", key=f"rw_btn_{idx}",
                     use_container_width=True, disabled=not istruzione.strip()
                 )
+                # Fix: messaggio di elaborazione visibile subito sotto il pulsante
+                if rigenera and istruzione.strip():
+                    st.info(f"⏳ Elaborazione in corso — sto modificando l'esercizio {idx+1}…")
 
             # ── Expander: Ricalibra Punteggi ──────────────────────────────────
             if mostra_punteggi and n_blocks > 0:
@@ -1215,7 +1220,7 @@ def _render_stage_review():
                 f"- NON includere preambolo o \\begin{{document}}.\n"
                 f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
             )
-            with st.spinner(f"⏳ Rigenerando esercizio {idx+1}…"):
+            with st.spinner(f"⏳ Rigenerando esercizio {idx+1} e aggiornando PDF…"):
                 try:
                     model_rw_obj = genai.GenerativeModel(modello_rw)
                     resp  = model_rw_obj.generate_content(_prompt_rw)
@@ -1242,6 +1247,28 @@ def _render_stage_review():
                     # Reset pannello ricalibra: rilegge i punteggi aggiornati
                     if "recalibra_pts" in st.session_state:
                         del st.session_state["recalibra_pts"]
+
+                    # Fix: ricompila il PDF e aggiorna la preview dopo la modifica
+                    _latex_rw = _reconstruct_latex(
+                        st.session_state.review_preamble,
+                        st.session_state.review_blocks
+                    )
+                    _latex_rw = fix_items_environment(_latex_rw)
+                    _latex_rw = rimuovi_vspace_corpo(_latex_rw)
+                    _latex_rw = rimuovi_punti_subsection(_latex_rw)
+                    if con_griglia:
+                        _latex_rw = inietta_griglia(_latex_rw, punti_totali)
+                    st.session_state.verifiche["A"]["latex"]           = _latex_rw
+                    st.session_state.verifiche["A"]["latex_originale"] = _latex_rw
+                    _pdf_rw, _err_rw = compila_pdf(_latex_rw)
+                    if _pdf_rw:
+                        st.session_state.verifiche["A"]["pdf"]    = _pdf_rw
+                        st.session_state.verifiche["A"]["pdf_ts"] = time.time()
+                        st.session_state.verifiche["A"]["preview"] = True
+                        _imgs_rw, _ = pdf_to_images_bytes(_pdf_rw)
+                        st.session_state.preview_images = _imgs_rw or []
+                        st.session_state.preview_page   = 0
+
                     st.success(f"✅ Esercizio {idx+1} rigenerato — punteggio preservato ({_exercise_target_pts} pt).")
                     time.sleep(0.4); st.rerun()
                 except Exception as e:
