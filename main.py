@@ -423,28 +423,21 @@ if "last_argomento"    not in st.session_state: st.session_state.last_argomento 
 if "_storico_refresh"  not in st.session_state: st.session_state._storico_refresh = 0
 if "_preferiti"        not in st.session_state: st.session_state._preferiti = set()
 if "_storico_page"     not in st.session_state: st.session_state._storico_page = 1
-if "_onboarding_done"  not in st.session_state: st.session_state._onboarding_done = False
 if "_saved_to_storico" not in st.session_state: st.session_state._saved_to_storico = False
-if "_scroll_top"       not in st.session_state: st.session_state._scroll_top = False
 
 # ── CONTATORI ─────────────────────────────────────────────────────────────────
 _verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
 _is_admin       = st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False
 _limite         = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
 
-# ── CSS ───────────────────────────────────────────────────────────────────────
+# ── CSS + FEEDBACK ────────────────────────────────────────────────────────────
 st.markdown(get_css(T), unsafe_allow_html=True)
-
-# ── SCROLL TO TOP (when stage changes) ───────────────────────────────────────
-if st.session_state._scroll_top:
-    st.session_state._scroll_top = False
-    components.html(
-        "<script>"
-        "window.parent.document.querySelector('[data-testid=\"stAppViewContainer\"]')"
-        ".scrollTo({top:0,behavior:'instant'});"
-        "</script>",
-        height=0
-    )
+# Modifica FAB: Alzato z-index e bottom per non coprire elementi Streamlit
+st.markdown(
+    '<a class="fab-link" href="' + FEEDBACK_FORM_URL + '" target="_blank" '
+    'rel="noopener noreferrer">💬 Feedback</a>',
+    unsafe_allow_html=True
+)
 
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 settings   = render_sidebar(
@@ -485,10 +478,9 @@ def _render_breadcrumb():
     completed = {STAGE_INPUT: stage in (STAGE_REVIEW,STAGE_FINAL),
                  STAGE_REVIEW: stage == STAGE_FINAL, STAGE_FINAL: False}
     html = (
-        '<div style="display:flex;justify-content:center;margin-bottom:1.2rem;">'
-        '<div style="display:inline-flex;align-items:center;gap:8px;padding:.55rem .9rem;'
-        'background:' + T["bg2"] + ';border:1px solid ' + T["border"] + ';'
-        'border-radius:100px;flex-wrap:nowrap;">'
+        '<div style="display:flex;align-items:center;gap:8px;padding:.65rem 1rem;'
+        'margin-bottom:1.2rem;background:' + T["bg2"] + ';border:1px solid ' + T["border"] + ';'
+        'border-radius:12px;flex-wrap:nowrap;">'
     )
     for i, (num, label, s) in enumerate(steps):
         is_active = s == stage
@@ -518,7 +510,7 @@ def _render_breadcrumb():
                 '<div style="flex:1;height:1.5px;background:' + lc2 + ';'
                 'min-width:16px;max-width:56px;opacity:.6;"></div>'
             )
-    html += "</div></div>"
+    html += "</div>"
     st.markdown(html, unsafe_allow_html=True)
 
 
@@ -528,34 +520,17 @@ def _render_breadcrumb():
 
 def _render_stage_input():
 
-    # ── ONBOARDING ────────────────────────────────────────────────────────────
-    if not st.session_state._onboarding_done:
-        if st.query_params.get("_ob") == "done":
-            st.session_state._onboarding_done = True
-            st.query_params.pop("_ob", None)
-            st.rerun()
-        st.markdown(
-            '<div style="background:linear-gradient(135deg,' + T["accent_light"] + ' 0%,' + T["card"] + ' 100%);'
-            'border:1.5px solid ' + T["accent"] + ';border-radius:14px;'
-            'padding:1rem 1.4rem .7rem 1.4rem;margin-bottom:.4rem;font-family:DM Sans,sans-serif;">'
-            '<div style="font-size:.85rem;font-weight:800;color:' + T["text"] + ';margin-bottom:.5rem;">Benvenuto in VerificAI 👋</div>'
-            '<div style="font-size:.78rem;color:' + T["text2"] + ';line-height:1.6;margin-bottom:.6rem;">'
-            'Segui le tre fasi nella barra qui sopra:<br>'
-            '<span style="color:' + T["accent"] + ';font-weight:700;">① Configura</span> — scegli materia, scuola e argomento, poi premi <em>Genera</em>.<br>'
-            '<span style="color:' + T["accent"] + ';font-weight:700;">② Revisione</span> — leggi la bozza, modifica i singoli esercizi se vuoi.<br>'
-            '<span style="color:' + T["accent"] + ';font-weight:700;">③ Download</span> — scarica PDF, Word e genera varianti (Fila B, BES/DSA, Soluzioni).'
-            '</div>'
-            '</div>',
-            unsafe_allow_html=True
-        )
-        # Pulsante piccolo inline
-        _c_ob, _ = st.columns([1, 5])
-        with _c_ob:
-            st.markdown('<div class="_ob_dismiss_wrap">', unsafe_allow_html=True)
-            if st.button("Ho capito →", key="_ob_dismiss", use_container_width=True):
-                st.session_state._onboarding_done = True
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+    # ── GUIDA DISCRETA (statica) ───────────────────────────────────────────────
+    st.markdown(
+        '<div class="onboard-guide">'
+        '<span class="onboard-step"><span class="onboard-num">①</span> Scegli materia, scuola e argomento</span>'
+        '<span class="onboard-sep">→</span>'
+        '<span class="onboard-step"><span class="onboard-num">②</span> Rivedi e modifica gli esercizi</span>'
+        '<span class="onboard-sep">→</span>'
+        '<span class="onboard-step"><span class="onboard-num">③</span> Scarica il PDF finale e le varianti</span>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     # ── STEP 1 — MATERIA + SCUOLA ─────────────────────────────────────────────
     st.markdown(
@@ -612,17 +587,20 @@ def _render_stage_input():
     st.markdown('<div class="personalizza-wrap">', unsafe_allow_html=True)
     with st.expander("⚙️ Opzioni verifica", expanded=False):
 
-        # Numero esercizi
-        st.markdown('<div class="opt-label">Numero di esercizi</div>', unsafe_allow_html=True)
-        num_esercizi_totali = st.slider(
-            "Numero esercizi", min_value=1, max_value=15, value=4,
-            label_visibility="collapsed"
-        )
+        # Numero esercizi — selectbox compatta
+        _es_options = list(range(1, 16))
+        _es_default_idx = _es_options.index(4)
+        col_es, col_pts = st.columns(2)
+        with col_es:
+            st.markdown('<div class="opt-label">Numero esercizi</div>', unsafe_allow_html=True)
+            num_esercizi_totali = st.selectbox(
+                "Numero esercizi", options=_es_options,
+                index=_es_default_idx, label_visibility="collapsed",
+                key="sel_num_es", format_func=lambda x: f"{x} esercizi"
+            )
         durata_scelta = "1 ora"
 
-        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-
-        # Punteggi + Griglia unificati
+        # Punteggi + Griglia
         punteggi_e_griglia = st.toggle(
             "Aggiungi punteggi e griglia di valutazione",
             value=True,
@@ -631,19 +609,22 @@ def _render_stage_input():
         mostra_punteggi = punteggi_e_griglia
         con_griglia     = punteggi_e_griglia
         if punteggi_e_griglia:
-            st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
-            punti_totali = st.slider(
-                "Punti totali", min_value=10, max_value=100, value=100, step=5,
-                label_visibility="collapsed",
-                help="I punti verranno distribuiti automaticamente tra gli esercizi"
-            )
+            with col_pts:
+                _pt_options = list(range(10, 105, 5))
+                _pt_default = _pt_options.index(100) if 100 in _pt_options else len(_pt_options)-1
+                st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
+                punti_totali = st.selectbox(
+                    "Punti totali", options=_pt_options,
+                    index=_pt_default, label_visibility="collapsed",
+                    key="sel_punti", format_func=lambda x: f"{x} pt"
+                )
         else:
             punti_totali = 100
 
-        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
 
-        # Personalizza singoli esercizi
-        st.markdown('<div class="opt-label">Struttura esercizi (opzionale)</div>', unsafe_allow_html=True)
+        # Struttura esercizi custom
+        st.markdown('<div class="opt-label">Struttura esercizi</div>', unsafe_allow_html=True)
         with st.expander("Definisci tipo e contenuto di ogni esercizio"):
             n_custom = len(st.session_state.esercizi_custom)
             n_liberi = max(0, num_esercizi_totali - n_custom)
@@ -661,7 +642,7 @@ def _render_stage_input():
                                  index=TIPI_ESERCIZIO.index(ex.get("tipo","Aperto")),
                                  key=f"tipo_{i}")
                 st.session_state.esercizi_custom[i]["tipo"] = t
-                d = st.text_input("Descrizione (opzionale)",
+                d = st.text_input("Descrizione",
                                   value=ex.get("descrizione",""),
                                   placeholder="es. Risolvi l'equazione ax²+bx+c=0",
                                   key=f"desc_{i}")
@@ -677,7 +658,7 @@ def _render_stage_input():
                 with c2:
                     if st.button("🗑 Rimuovi", key=f"rm_{i}", use_container_width=True):
                         to_remove = i
-                st.divider()  # Inserito st.divider() come richiesto al posto della linea HR piccola
+                st.divider()
 
             if to_remove is not None:
                 st.session_state.esercizi_custom.pop(to_remove); st.rerun()
@@ -689,13 +670,12 @@ def _render_stage_input():
                 st.rerun()
 
         # Note AI
-        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-        st.markdown('<div class="opt-label">Note per l\'AI (opzionale)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="opt-label">Note per l\'AI</div>', unsafe_allow_html=True)
         note_generali = st.text_area(
             "Note AI",
             placeholder=NOTE_PLACEHOLDER.get(materia_scelta,
                          "es. Includi domande sulla definizione, formula e applicazione..."),
-            height=68, key="note_area", label_visibility="collapsed"
+            height=65, key="note_area", label_visibility="collapsed"
         )
 
     st.markdown("</div>", unsafe_allow_html=True)
@@ -818,7 +798,6 @@ def _render_stage_input():
                 st.warning(f"⚠️ Salvataggio storico non riuscito: {e}")
 
             st.session_state.stage = STAGE_REVIEW
-            st.session_state._scroll_top = True
             st.rerun()
 
         except Exception as e:
@@ -860,9 +839,9 @@ def _render_stage_review():
         '</div></div>'
         '<div style="padding:.75rem 1.2rem;background:' + T["card"] + ';">'
         '<div style="font-size:.8rem;color:' + T["text2"] + ';line-height:1.5;">'
-        'Dalla tendina seleziona l\'esercizio da esaminare — il testo appare a sinistra, '
-        'l\'anteprima del PDF finale è a destra. '
-        'Per modificare un esercizio scrivi l\'istruzione e premi <strong>Applica modifica</strong>. '
+        'Seleziona l\'esercizio dal menu: il testo appare nel riquadro di anteprima, '
+        'seguito dalla visualizzazione PDF del documento completo. '
+        'Usa il campo di testo per richiedere modifiche — l\'AI rigenererà solo l\'esercizio selezionato. '
         'Quando sei soddisfatto di tutti gli esercizi, premi <strong>Conferma e genera PDF</strong>.'
         '</div></div></div>',
         unsafe_allow_html=True
@@ -871,9 +850,7 @@ def _render_stage_review():
     if not blocks:
         st.warning("⚠️ Nessun esercizio trovato. Torna indietro e rigenera.")
         if st.button("← Torna alla configurazione"):
-            st.session_state.stage = STAGE_INPUT
-            st.session_state._scroll_top = True
-            st.rerun()
+            st.session_state.stage = STAGE_INPUT; st.rerun()
         return
 
     labels = [f"Esercizio {i+1}: {b['title']}" for i, b in enumerate(blocks)]
@@ -890,173 +867,25 @@ def _render_stage_review():
 
     st.markdown(
         '<div style="font-size:.72rem;color:' + T["muted"] + ';margin-top:-.3rem;margin-bottom:.5rem;">'
-        '💡 Leggi l\'esercizio a sinistra — se qualcosa non va, scrivilo sotto e premi <strong>Modifica</strong>.'
+        '💡 Seleziona un esercizio dal menu qui sopra per visualizzarlo e modificarlo.'
         '</div>',
         unsafe_allow_html=True
     )
 
     block = blocks[idx]
     title = block["title"]
-    # Strip griglia/tabular dal body (non fa parte dell'esercizio)
-    body_raw = block["body"]
-    body = re.sub(r"\\vfill\s*%.*?(?=\\subsection|\Z)", "", body_raw, flags=re.DOTALL).strip()
-    body = re.sub(r"\\begin\{tabular\}.*?\\end\{tabular\}", "", body, flags=re.DOTALL).strip()
-    body = re.sub(r"\\begin\{center\}.*?\\end\{center\}", "", body, flags=re.DOTALL).strip()
+    body  = block["body"]
 
     col_ktx, col_pdf = st.columns([3, 2], gap="medium")
 
     with col_ktx:
-        # ── Testo esercizio ───────────────────────────────────────────────────
         katex_html = _make_katex_html(title, body, T)
-        est_height = max(280, min(600, 180 + len(body) // 4))
+        est_height = max(280, min(700, 180 + len(body) // 4))
         components.html(katex_html, height=est_height, scrolling=True)
 
-        # ── Nota grafico ──────────────────────────────────────────────────────
-        if re.search(r"\\begin\{(tikzpicture|axis)\}", body_raw):
-            st.markdown(
-                '<div style="font-size:.73rem;color:' + T["muted"] + ';'
-                'margin:.3rem 0 .5rem 0;font-style:italic;line-height:1.4;">'
-                '📈 Il grafico è visibile nell\'anteprima a destra — '
-                'per cambiarlo descrivi la nuova funzione nella casella qui sotto.</div>',
-                unsafe_allow_html=True
-            )
-
-        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
-
-        # ── Box modifica ──────────────────────────────────────────────────────
-        st.markdown(
-            '<div style="font-size:.78rem;color:' + T["text2"] + ';margin-bottom:.3rem;font-weight:600;">'
-            'Vuoi modificare questo esercizio?</div>',
-            unsafe_allow_html=True
-        )
-        istruzione = st.text_area(
-            f"Modifica esercizio {idx+1}",
-            placeholder="es. Aumenta la difficoltà · Cambia i numeri · Converti in Vero/Falso · Aggiungi un sottopunto",
-            key=f"rw_istr_{idx}",
-            label_visibility="collapsed",
-            height=75,
-        )
-        rigenera = st.button("✏️ Applica modifica", key=f"rw_btn_{idx}",
-                             use_container_width=True, disabled=not istruzione.strip())
-
-        st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
-
-        # ── Distribuzione punteggi ────────────────────────────────────────────
-        if mostra_punteggi:
-            with st.expander("📊 Modifica distribuzione punteggi", expanded=False):
-                st.markdown(
-                    '<div style="font-size:.75rem;color:' + T["muted"] + ';margin-bottom:.5rem;">'
-                    'Assegna manualmente i punti a ogni esercizio. '
-                    'La somma deve essere <strong>' + str(punti_totali) + ' pt</strong>.'
-                    '</div>',
-                    unsafe_allow_html=True
-                )
-                pts_custom = []
-                n_b = len(blocks)
-                default_each = punti_totali // n_b
-                remainder    = punti_totali - default_each * n_b
-                total_assigned = 0
-                for bi, blk in enumerate(blocks):
-                    default_v = default_each + (1 if bi < remainder else 0)
-                    pts_custom.append(
-                        st.number_input(
-                            f"Es. {bi+1}: {blk['title'][:30]}",
-                            min_value=1, max_value=punti_totali,
-                            value=default_v, step=1,
-                            key=f"pts_custom_{bi}"
-                        )
-                    )
-                    total_assigned += pts_custom[-1]
-                diff = punti_totali - total_assigned
-                if diff == 0:
-                    st.success(f"✅ Totale: {total_assigned} pt — corretto!")
-                else:
-                    st.warning(f"⚠️ Totale: {total_assigned} pt (mancano {diff} pt per arrivare a {punti_totali})")
-                if st.button("Applica distribuzione", key="apply_pts", use_container_width=True,
-                             disabled=(diff != 0)):
-                    # Inietta i punti custom nel session state gen_params
-                    st.session_state.gen_params["pts_custom"] = pts_custom
-                    st.toast("✅ Distribuzione aggiornata!", icon="📊")
-
-        # ── Separatore + hint conferma ────────────────────────────────────────
-        st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
-        st.markdown(
-            '<div style="background:' + T["accent_light"] + ';border:1.5px solid ' + T["accent"] + '55;'
-            'border-radius:10px;padding:.6rem .9rem;margin-bottom:.45rem;">'
-            '<div style="font-size:.72rem;font-weight:700;color:' + T["accent"] + ';margin-bottom:2px;">'
-            '✅ Pronti? Genera il PDF finale</div>'
-            '<div style="font-size:.72rem;color:' + T["text2"] + ';">'
-            'Quando tutti gli esercizi sono ok, clicca qui sotto per compilare e scaricare la verifica.'
-            '</div></div>',
-            unsafe_allow_html=True
-        )
-        if st.button("✅ Conferma e genera PDF finale", type="primary", use_container_width=True, key="btn_confirm_pdf"):
-            with st.spinner("⏳ Compilazione PDF finale…"):
-                latex_final = _reconstruct_latex(
-                    st.session_state.review_preamble,
-                    st.session_state.review_blocks
-                )
-                latex_final = fix_items_environment(latex_final)
-                latex_final = rimuovi_vspace_corpo(latex_final)
-                # Applica distribuzione punteggi custom se presente
-                _pts_c = st.session_state.gen_params.get("pts_custom")
-                if mostra_punteggi and _pts_c:
-                    from latex_utils import riscala_punti_custom
-                    try:
-                        latex_final = riscala_punti_custom(latex_final, _pts_c)
-                    except Exception:
-                        latex_final = riscala_punti(latex_final, punti_totali)
-                elif mostra_punteggi:
-                    latex_final = rimuovi_punti_subsection(latex_final)
-                    latex_final = riscala_punti(latex_final, punti_totali)
-                if con_griglia:
-                    latex_final = inietta_griglia(latex_final, punti_totali)
-
-                st.session_state.verifiche["A"]["latex"]          = latex_final
-                st.session_state.verifiche["A"]["latex_originale"] = latex_final
-
-                pdf_bytes, err = compila_pdf(latex_final)
-                if pdf_bytes:
-                    st.session_state.verifiche["A"]["pdf"]     = pdf_bytes
-                    st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
-                    st.session_state.verifiche["A"]["preview"] = True
-                    imgs, _ = pdf_to_images_bytes(pdf_bytes)
-                    st.session_state.preview_images = imgs or []
-
-                    # ── Salvataggio storico ────────────────────────────────────
-                    if not st.session_state._saved_to_storico:
-                        try:
-                            gp_s = st.session_state.gen_params
-                            supabase_admin.table("verifiche_storico").insert({
-                                "user_id":      st.session_state.utente.id,
-                                "materia":      gp_s.get("materia",""),
-                                "argomento":    gp_s.get("argomento",""),
-                                "scuola":       gp_s.get("difficolta",""),
-                                "latex_a":      latex_final or None,
-                                "latex_b":      None,
-                                "latex_r":      None,
-                                "modello":      gp_s.get("modello_id",""),
-                                "num_esercizi": gp_s.get("num_esercizi", 0),
-                            }).execute()
-                            st.session_state._storico_refresh  += 1
-                            st.session_state._saved_to_storico  = True
-                            st.toast("✅ Verifica salvata!", icon="💾")
-                        except Exception as _e:
-                            st.warning(f"⚠️ Salvataggio storico non riuscito: {_e}")
-
-                    st.session_state.stage = STAGE_FINAL
-                    st.session_state._scroll_top = True
-                    st.rerun()
-                else:
-                    st.error("❌ Errore di compilazione PDF.")
-                    with st.expander("Log errore"): st.text(err)
-
-        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-        # Pulsante torna indietro — piccolo, secondario
-        if st.button("← Torna indietro", key="btn_back_s2", use_container_width=False):
-            st.session_state.stage = STAGE_INPUT
-            st.session_state._scroll_top = True
-            st.rerun()
+        if re.search(r"\\begin\{(tikzpicture|axis)\}", body):
+            st.info("📊 Questo esercizio contiene grafici TikZ/pgfplots che non si "
+                    "possono mostrare qui — sono visibili nel PDF finale.")
 
     with col_pdf:
         st.markdown(
@@ -1080,6 +909,27 @@ def _render_stage_review():
                 )
             else:
                 st.caption("Anteprima non disponibile.")
+
+    st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
+    st.markdown(
+        '<div style="font-size:.78rem;color:' + T["text2"] + ';margin-bottom:.4rem;">'
+        '<strong>Vuoi cambiare qualcosa?</strong> '
+        'Descrivi la modifica e l\'AI rigenererà solo questo esercizio.</div>',
+        unsafe_allow_html=True
+    )
+    col_inp, col_btn = st.columns([4, 1])
+    with col_inp:
+        istruzione = st.text_area(
+            f"Modifica esercizio {idx+1}",
+            placeholder="es. Aumenta la difficoltà · Cambia i numeri · Converti in Vero/Falso · Aggiungi un sottopunto",
+            key=f"rw_istr_{idx}",
+            label_visibility="collapsed",
+            height=90,
+        )
+    with col_btn:
+        st.markdown("<div style='height:2.1rem'></div>", unsafe_allow_html=True)
+        rigenera = st.button("✏️ Modifica", key=f"rw_btn_{idx}",
+                             use_container_width=True, disabled=not istruzione.strip())
 
     if rigenera and istruzione.strip():
         punti_nota = (
@@ -1115,6 +965,48 @@ def _render_stage_review():
             except Exception as e:
                 st.error(f"❌ Errore: {e}")
 
+    st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
+    st.markdown(
+        '<div style="text-align:center;font-size:.78rem;color:' + T["muted"] + ';padding:.3rem 0;">'
+        + str(idx+1) + ' di ' + str(n_blocks) + ' esercizi</div>',
+        unsafe_allow_html=True
+    )
+    st.divider()
+
+    col_back, col_confirm = st.columns([1, 2])
+    with col_back:
+        if st.button("← Riconfigura", use_container_width=True):
+            st.session_state.stage = STAGE_INPUT; st.rerun()
+    with col_confirm:
+        if st.button("✅ Conferma e genera PDF finale", type="primary", use_container_width=True):
+            with st.spinner("⏳ Compilazione PDF finale…"):
+                latex_final = _reconstruct_latex(
+                    st.session_state.review_preamble,
+                    st.session_state.review_blocks
+                )
+                latex_final = fix_items_environment(latex_final)
+                latex_final = rimuovi_vspace_corpo(latex_final)
+                if mostra_punteggi:
+                    latex_final = rimuovi_punti_subsection(latex_final)
+                    latex_final = riscala_punti(latex_final, punti_totali)
+                if con_griglia:
+                    latex_final = inietta_griglia(latex_final, punti_totali)
+
+                st.session_state.verifiche["A"]["latex"]          = latex_final
+                st.session_state.verifiche["A"]["latex_originale"] = latex_final
+
+                pdf_bytes, err = compila_pdf(latex_final)
+                if pdf_bytes:
+                    st.session_state.verifiche["A"]["pdf"]     = pdf_bytes
+                    st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
+                    st.session_state.verifiche["A"]["preview"] = True
+                    imgs, _ = pdf_to_images_bytes(pdf_bytes)
+                    st.session_state.preview_images = imgs or []
+                    st.session_state.stage = STAGE_FINAL
+                    st.rerun()
+                else:
+                    st.error("❌ Errore di compilazione PDF.")
+                    with st.expander("Log errore"): st.text(err)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1138,21 +1030,19 @@ def _render_stage_final():
     st.markdown(
         '<div style="background:linear-gradient(135deg,' + T["accent_light"] + ' 0%,' + T["card"] + ' 100%);'
         'border:2px solid ' + T["success"] + ';border-radius:16px;overflow:hidden;margin-bottom:1.3rem;">'
-        '<div style="background:linear-gradient(90deg,' + T["success"] + ',' + T["accent"] + ');padding:.85rem 1.2rem;">'
+        '<div style="background:' + T["success"] + ';padding:.85rem 1.2rem;">'
         '<div style="display:flex;align-items:center;gap:12px;">'
-        '<span style="font-size:1.8rem;">🎓</span>'
+        '<span style="font-size:1.5rem;">🎉</span>'
         '<div style="flex:1;">'
-        '<div style="font-family:DM Sans,sans-serif;font-size:1.05rem;font-weight:900;color:#fff;letter-spacing:-.01em;">'
-        'La tua verifica è pronta!</div>'
-        '<div style="font-size:.75rem;color:#fff;opacity:.9;margin-top:2px;">'
+        '<div style="font-family:DM Sans,sans-serif;font-size:1rem;font-weight:900;color:#fff;">'
+        'Verifica Pronta!</div>'
+        '<div style="font-size:.72rem;color:#fff;opacity:.85;margin-top:1px;">'
         + mat_str + ' · ' + scu_str + ' · ' + arg_str + '</div>'
-        '</div>'
-        '<span style="font-size:.72rem;font-weight:700;color:#fff;background:#ffffff22;'
-        'border-radius:20px;padding:3px 11px;">⭐ Condividi con i colleghi!</span>'
-        '</div></div>'
-        '<div style="padding:.65rem 1.2rem;background:' + T["card"] + ';">'
-        '<div style="font-size:.75rem;color:' + T["text2"] + ';line-height:1.5;">'
-        '⚠️ Controlla sempre il contenuto prima di distribuirlo agli studenti.'
+        '</div></div></div>'
+        '<div style="padding:.7rem 1.2rem;background:' + T["card"] + ';">'
+        '<div style="font-size:.78rem;color:' + T["text2"] + ';line-height:1.5;">'
+        '⚠️ Controlla sempre il contenuto prima di distribuire agli studenti. '
+        'Il docente è responsabile del materiale finale.'
         '</div></div></div>',
         unsafe_allow_html=True
     )
@@ -1182,9 +1072,9 @@ def _render_stage_final():
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 2. DOWNLOAD E VARIANTI SOTTO
+    # ── DOWNLOAD SECTION ──────────────────────────────────────────────────────
     st.markdown(
-        '<div class="section-action-label">Scarica e condividi</div>',
+        '<div class="s3-section-title">Scarica la verifica</div>',
         unsafe_allow_html=True
     )
 
@@ -1194,31 +1084,29 @@ def _render_stage_final():
         fname = arg_str + "_" + suffix
         btn_label = label_custom if label_custom else f"Scarica {label_file} (PDF)"
 
-        # Etichetta sezione unificata
         st.markdown(
-            '<div class="section-action-label">' + label_file + '</div>',
+            '<div class="s3-card-label">' + label_file + '</div>',
             unsafe_allow_html=True
         )
 
         # ── PDF ──────────────────────────────────────────────────────────────
         if v.get("pdf"):
             if is_primary:
-                # Pulsante principale: verde brillante, grande
-                st.markdown('<div class="dl-primary-btn">', unsafe_allow_html=True)
+                st.markdown('<div class="dl-accent-btn">', unsafe_allow_html=True)
                 st.download_button(
-                    label=f"⬇ {btn_label} · {_stima(v['pdf'])}",
+                    label=f"⬇  {btn_label} · {_stima(v['pdf'])}",
                     data=v["pdf"], file_name=fname + ".pdf", mime="application/pdf",
                     use_container_width=True, key="dl_pdf_" + fid,
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
             else:
                 st.download_button(
-                    label=f"📥 {btn_label} · {_stima(v['pdf'])}",
+                    label=f"⬇  {btn_label} · {_stima(v['pdf'])}",
                     data=v["pdf"], file_name=fname + ".pdf", mime="application/pdf",
                     use_container_width=True, key="dl_pdf_" + fid, type="primary"
                 )
         elif v.get("latex"):
-            if st.button(f"📄 Compila PDF ({label_file})", key="gen_pdf_" + fid, use_container_width=True):
+            if st.button(f"Compila PDF — {label_file}", key="gen_pdf_" + fid, use_container_width=True):
                 with st.spinner("Compilazione…"):
                     pdf_b, _ = compila_pdf(v["latex"])
                 if pdf_b:
@@ -1230,12 +1118,12 @@ def _render_stage_final():
 
         # ── Anteprima soluzioni ───────────────────────────────────────────────
         if v.get("testo") and fid == "S":
-            with st.expander("👁 Mostra soluzioni"):
+            with st.expander("Mostra soluzioni"):
                 st.markdown(v["testo"])
 
         # ── Altri formati (DOCX + .tex) ───────────────────────────────────────
         if v.get("latex"):
-            with st.expander("Altri formati", expanded=False):
+            with st.expander("Altri formati"):
                 _docx_key = "_docx_gen_" + fid
                 if v.get("docx"):
                     st.download_button(
@@ -1255,7 +1143,7 @@ def _render_stage_final():
                             st.session_state.verifiche[fid]["docx"] = db; st.rerun()
                         else:
                             st.error("Errore Word")
-
+                st.markdown('<div class="tex-btn-wrap">', unsafe_allow_html=True)
                 st.download_button(
                     "⬇ Sorgente LaTeX (.tex)",
                     data=v["latex"].encode("utf-8"),
@@ -1264,26 +1152,26 @@ def _render_stage_final():
                     help="Sorgente LaTeX per editor esterno",
                     use_container_width=True,
                 )
+                st.markdown('</div>', unsafe_allow_html=True)
 
-    # Rendiamo su due colonne solo i blocchi di download generati
     col_dl_left, col_dl_right = st.columns(2)
     with col_dl_left:
         _primary_card_unified("Verifica", "📄", "A", vA, "FilaA", "Scarica verifica (PDF)", is_primary=True)
         if vR.get("latex"):
-            _primary_card_unified("Versione BES/DSA — A", "🌟", "R", vR, "BES_FilaA", "Scarica BES/DSA (PDF)")
-
+            _primary_card_unified("BES / DSA — A", "🌟", "R", vR, "BES_FilaA", "Scarica BES/DSA (PDF)")
     with col_dl_right:
         if vB.get("latex"):
             _primary_card_unified("Verifica — Fila B", "📄", "B", vB, "FilaB", "Scarica Fila B (PDF)")
         if vRB.get("latex"):
-            _primary_card_unified("Versione BES/DSA — B", "🌟", "RB", vRB, "BES_FilaB", "Scarica BES/DSA Fila B (PDF)")
+            _primary_card_unified("BES / DSA — B", "🌟", "RB", vRB, "BES_FilaB", "Scarica BES/DSA Fila B (PDF)")
         if vS.get("pdf") or vS.get("testo"):
             _primary_card_unified("Soluzioni", "✅", "S", vS, "Soluzioni", "Scarica Soluzioni (PDF)")
+
 
     # ── Genera Varianti on-demand ──────────────────────────────────────────────
     st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
     st.markdown(
-        '<div class="section-action-label">Aggiungi varianti</div>',
+        '<div class="s3-section-title">Aggiungi varianti</div>',
         unsafe_allow_html=True
     )
 
@@ -1327,38 +1215,34 @@ def _render_stage_final():
 
     # ── Pulsanti di navigazione ────────────────────────────────────────────────
     st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
-    col_rev, col_new = st.columns(2)
-    with col_rev:
-        st.markdown('<div class="btn-secondary-accent">', unsafe_allow_html=True)
-        if st.button("← Rivedi esercizi", use_container_width=True, key="btn_rev_s3"):
-            st.session_state.stage = STAGE_REVIEW
-            st.session_state._scroll_top = True
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-    with col_new:
-        st.markdown('<div class="btn-equal-primary">', unsafe_allow_html=True)
-        if st.button("🆕 Nuova Verifica", type="primary", use_container_width=True, key="btn_new_s3"):
-            st.session_state.stage           = STAGE_INPUT
-            st.session_state.verifiche        = {
-                "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
-                "S": {"latex": None, "testo": None, "pdf": None},
-            }
-            st.session_state.review_preamble   = ""
-            st.session_state.review_blocks     = []
-            st.session_state.review_sel_idx    = 0
-            st.session_state.gen_params        = {}
-            st.session_state.preview_images    = []
-            st.session_state.esercizi_custom   = []
-            st.session_state._saved_to_storico = False
-            st.session_state._scroll_top       = True
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="btn-secondary-accent">', unsafe_allow_html=True)
+    if st.button("← Rivedi esercizi", use_container_width=False, key="btn_rev_s3"):
+        st.session_state.stage = STAGE_REVIEW; st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+    if st.button("🆕 Inizia nuova verifica", type="primary", use_container_width=True, key="btn_new_s3"):
+        st.session_state.stage            = STAGE_INPUT
+        st.session_state.verifiche         = {
+            "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
+            "S": {"latex": None, "testo": None, "pdf": None},
+        }
+        st.session_state.review_preamble   = ""
+        st.session_state.review_blocks     = []
+        st.session_state.review_sel_idx    = 0
+        st.session_state.gen_params        = {}
+        st.session_state.preview_images    = []
+        st.session_state.esercizi_custom   = []
+        st.session_state._saved_to_storico = False
+        st.rerun()
 
     # Link feedback
     st.markdown(
-        '<div style="margin-top:15px;text-align:center;font-size:.78rem;font-family:DM Sans,sans-serif;">'
+        '<div style="margin-top:14px;text-align:center;font-size:.78rem;'
+        'font-family:DM Sans,sans-serif;color:' + T["muted"] + ';">'
         'Qualcosa non va o hai un suggerimento? '
-        '<a href="' + FEEDBACK_FORM_URL + '" target="_blank" style="color:' + T["accent"] + ';font-weight:600;">Lasciaci un feedback 💬</a>'
+        '<a href="' + FEEDBACK_FORM_URL + '" target="_blank" '
+        'style="color:' + T["accent"] + ';font-weight:600;">Lasciaci un feedback 💬</a>'
         '</div>',
         unsafe_allow_html=True
     )
@@ -1370,6 +1254,28 @@ def _render_stage_final():
 
 _render_breadcrumb()
 
+# ── SCROLL TO TOP on stage change ─────────────────────────────────────────────
+_stage_scroll_key = f"_scrolled_{st.session_state.stage}"
+if _stage_scroll_key not in st.session_state:
+    st.session_state[_stage_scroll_key] = True
+    components.html(
+        "<script>"
+        "(function(){"
+        "var tries=0;"
+        "function scroll(){"
+        "  var m=window.parent.document.querySelector('.main');"
+        "  if(m){m.scrollTop=0;}"
+        "  var a=window.parent.document.querySelector('[data-testid=\"stAppViewContainer\"]');"
+        "  if(a){a.scrollTop=0;}"
+        "  window.parent.scrollTo(0,0);"
+        "  if(tries++<5)setTimeout(scroll,80);"
+        "}"
+        "scroll();"
+        "})();"
+        "</script>",
+        height=0
+    )
+
 # ── FLOATING STAGE INDICATOR ──────────────────────────────────────────────────
 _stage_labels = {
     STAGE_INPUT:  ("01", "Configura",  33),
@@ -1378,7 +1284,10 @@ _stage_labels = {
 }
 _sn, _sl, _sp = _stage_labels.get(st.session_state.stage, ("01", "Configura", 33))
 st.markdown(
-    '<div class="stage-floater">'
+    '<div style="position:fixed;bottom:1.2rem;right:1.2rem;z-index:9999;'
+    'background:' + T["card"] + ';border:1.5px solid ' + T["border"] + ';'
+    'border-radius:14px;padding:.7rem 1.1rem .65rem 1.1rem;'
+    'box-shadow:0 4px 24px rgba(0,0,0,.35);min-width:160px;backdrop-filter:blur(8px);">'
     '<div style="font-size:.6rem;font-weight:800;color:' + T["muted"] + ';'
     'text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">Fase attuale</div>'
     '<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">'
