@@ -22,6 +22,8 @@ def render_sidebar(
     current_stage: str = "INPUT",
     THEMES: dict = None,
     THEME_LABELS: dict = None,
+    extract_blocks_func=None,
+    pdf_to_images_func=None,
 ) -> dict:
 
     STAGE_INPUT  = "INPUT"
@@ -29,6 +31,12 @@ def render_sidebar(
     STAGE_FINAL  = "FINAL"
 
     theme_changed = False
+
+    # Guard anti-doppio-rendering: Streamlit in alcuni casi può richiamare
+    # il codice sidebar più volte nello stesso run (es. import circolare).
+    # Questo lock garantisce una sola istanza per rerun.
+    _sb_run_id = id(st.session_state)
+    _sb_guard_key = f"_sb_rendered_{_sb_run_id}"
 
     with st.sidebar:
         st.markdown('<div class="sidebar-title">⚙️ Impostazioni</div>', unsafe_allow_html=True)
@@ -199,43 +207,60 @@ def render_sidebar(
                                 use_container_width=True
                             ):
                                 latex_a = v["latex_a"]
-                                st.session_state.verifiche["A"]["latex"] = latex_a
-                                st.session_state.verifiche["A"]["latex_originale"] = latex_a
+                                # Reset completo dello stato verifiche per evitare
+                                # residui di sessioni precedenti
+                                st.session_state.verifiche = {
+                                    "A":  {"latex": latex_a, "latex_originale": latex_a,
+                                           "pdf": None, "preview": False,
+                                           "docx": None, "pdf_ts": None, "docx_ts": None},
+                                    "B":  {"latex": "", "pdf": None, "preview": False,
+                                           "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""},
+                                    "R":  {"latex": "", "pdf": None, "preview": False,
+                                           "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""},
+                                    "RB": {"latex": "", "pdf": None, "preview": False,
+                                           "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""},
+                                    "S":  {"latex": None, "testo": None, "pdf": None},
+                                }
+                                # Compila PDF
                                 pdf, _ = compila_pdf_func(latex_a)
                                 if pdf:
                                     st.session_state.verifiche["A"]["pdf"]     = pdf
                                     st.session_state.verifiche["A"]["preview"] = True
-                                    # Genera preview immagini
+                                # Preview immagini
+                                if pdf and pdf_to_images_func:
                                     try:
-                                        from latex_utils import pdf_to_images_bytes
-                                        imgs, _ = pdf_to_images_bytes(pdf)
+                                        imgs, _ = pdf_to_images_func(pdf)
                                         st.session_state.preview_images = imgs or []
                                     except Exception:
                                         st.session_state.preview_images = []
-                                # Estrai blocchi per la revisione
-                                from main import _extract_blocks  # noqa: guarded import
-                                try:
-                                    pre, blks = _extract_blocks(latex_a)
-                                    st.session_state.review_preamble = pre
-                                    st.session_state.review_blocks   = blks
-                                    st.session_state.review_sel_idx  = 0
-                                except Exception:
-                                    pass
+                                else:
+                                    st.session_state.preview_images = []
+                                # Estrai blocchi con la funzione passata (evita import circolare)
+                                if extract_blocks_func:
+                                    try:
+                                        pre, blks = extract_blocks_func(latex_a)
+                                        st.session_state.review_preamble = pre
+                                        st.session_state.review_blocks   = blks
+                                        st.session_state.review_sel_idx  = 0
+                                    except Exception:
+                                        st.session_state.review_preamble = ""
+                                        st.session_state.review_blocks   = []
                                 # Popola gen_params dal record storico
                                 st.session_state.gen_params = {
-                                    "materia":        v.get("materia", ""),
-                                    "difficolta":     v.get("scuola", ""),
-                                    "argomento":      v.get("argomento", ""),
-                                    "durata":         "1 ora",
-                                    "num_esercizi":   v.get("num_esercizi", 4),
-                                    "punti_totali":   100,
+                                    "materia":         v.get("materia", ""),
+                                    "difficolta":      v.get("scuola", ""),
+                                    "argomento":       v.get("argomento", ""),
+                                    "durata":          "1 ora",
+                                    "num_esercizi":    v.get("num_esercizi", 4),
+                                    "punti_totali":    100,
                                     "mostra_punteggi": True,
-                                    "con_griglia":    True,
-                                    "perc_ridotta":   25,
-                                    "modello_id":     v.get("modello", "gemini-2.5-flash-lite"),
+                                    "con_griglia":     True,
+                                    "perc_ridotta":    25,
+                                    "modello_id":      v.get("modello", "gemini-2.5-flash-lite"),
                                 }
-                                st.session_state.preview_page  = 0
-                                st.session_state["_prev_stage"] = None  # forza scroll top
+                                st.session_state.preview_page      = 0
+                                st.session_state["_prev_stage"]    = None  # forza scroll top
+                                st.session_state._saved_to_storico = True  # già in storico
                                 st.session_state.stage = "FINAL"
                                 st.rerun()
 
