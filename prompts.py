@@ -32,14 +32,17 @@ def prompt_corpo_verifica(
 
     if mostra_punteggi:
         punti_rule = (
-            f"- PUNTEGGI OBBLIGATORI SU OGNI \\item: ogni \\item DEVE avere \"(X pt)\" SULLA STESSA RIGA, subito dopo il testo.\n"
-            f"- Formato ESATTO e UNICO accettato: (X pt) — esempio: \\item[a)] Risolvi l'equazione. (3 pt)\n"
-            f"- NON usare formati alternativi come [X pt], X punti, X p., pt X, ecc.\n"
-            f"- La somma di TUTTI i (X pt) di TUTTI gli esercizi deve essere ESATTAMENTE {punti_totali} pt. CONTROLLA prima di terminare.\n"
-            f"- Distribuisci i punti in modo che sia facile ottenere almeno 60% svolgendo le parti più semplici.\n"
-            f"- NON inserire punti nel titolo \\subsection*, SOLO nei \\item.\n"
-            f"- REGOLA CRITICA: se un esercizio ha UN SOLO sottopunto, metti comunque \\item[a)] con il suo punteggio. "
-            f"NON lasciare MAI un esercizio senza almeno un \\item con punteggio — altrimenti la griglia di valutazione sarà incompleta e inutilizzabile."
+            f"- PUNTEGGI — REGOLA ASSOLUTA E INVIOLABILE:\n"
+            f"  * Ogni \\item DEVE avere \"(X pt)\" sulla stessa riga, subito dopo il testo.\n"
+            f"  * Formato ESATTO e UNICO: (X pt) — es: \\item[a)] Risolvi l'equazione. (5 pt)\n"
+            f"  * NON usare: [X pt], X punti, X p., pt X, (Xpt), o qualsiasi altro formato.\n"
+            f"  * SOMMA TOTALE TASSATIVA: la somma di TUTTI i (X pt) di TUTTI gli esercizi deve essere\n"
+            f"    ESATTAMENTE {punti_totali} pt. NON {punti_totali-1}, NON {punti_totali+1}. ESATTAMENTE {punti_totali}.\n"
+            f"  * PRIMA DI TERMINARE: somma mentalmente tutti i (X pt) che hai scritto. Se non fa {punti_totali}, correggi.\n"
+            f"  * Distribuisci i punti in modo proporzionale alla difficoltà.\n"
+            f"  * NON inserire punti nel titolo \\subsection*, SOLO nei \\item.\n"
+            f"  * REGOLA CRITICA: se un esercizio ha un solo sottopunto, usa comunque \\item[a)] con il suo punteggio.\n"
+            f"    NON lasciare MAI un esercizio senza \\item con punteggio — la griglia di valutazione sarà inutilizzabile."
         )
     else:
         punti_rule = "- NON inserire punti (X pt) in nessun esercizio né sottopunto."
@@ -130,6 +133,9 @@ def prompt_controllo_qualita(
         f"3. UNIVOCITÀ: la domanda ha una sola risposta corretta e non è ambigua?\n\n"
         f"SE trovi problemi: CORREGGILI DIRETTAMENTE modificando i dati dell'esercizio finché l'esercizio sia "
         f"corretto, sensato e risolvibile. NON eliminare esercizi, correggili.\n\n"
+        f"CONTROLLO PUNTEGGI OBBLIGATORIO: prima di restituire il testo, somma TUTTI i (X pt) presenti.\n"
+        f"La somma DEVE essere uguale alla somma originale. Se non lo è, ribilancia i punteggi.\n"
+        f"Assicurati che ogni \\item abbia esattamente un (X pt) al termine del testo.\n\n"
         f"SE tutto è corretto: restituisci il testo IDENTICO senza modifiche.\n\n"
         f"REGOLE OUTPUT:\n"
         f"- Restituisci SOLO il corpo LaTeX corretto (\\subsection* ecc.), senza preambolo.\n"
