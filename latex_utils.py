@@ -191,25 +191,29 @@ def pulisci_corpo_latex(testo: str) -> str:
 def rimuovi_punti_subsection(latex: str) -> str:
     r"""
     Rimuove annotazioni (N pt) dai titoli \subsection*.
-    Gestisce tre casi:
-      1. DENTRO le graffe: \subsection*{Titolo (18 pt)}   <- causa dimezzamento
-      2. DOPO le graffe stessa riga: \subsection*{Titolo} (18 pt)
-      3. Riga successiva
+    Gestisce tre posizioni distinte:
+      1. DENTRO le graffe: \subsection*{Titolo (N pt)}        <- bug dimezzamento
+      2. DOPO le graffe stessa riga: \subsection*{Titolo} (N pt)
+      3. Riga successiva: \subsection*{Titolo}\n(N pt)\n
     """
-    # Caso 1 — dentro le graffe (il piu' comune dopo riscala_punti globale)
+    # Caso 1 — (N pt) DENTRO le graffe (causa il bug del dimezzamento perche
+    # riscala_punti globale inserisce il totale dentro le {} del titolo)
     latex = re.sub(
         r'(\\subsection\*\{[^}]*?)\s*\(\d+(?:[.,]\d+)?\s*pt\)(\s*\})',
-        r'\1\2', latex
+        r'\1\2',
+        latex
     )
-    # Caso 2 — dopo le graffe, stessa riga
+    # Caso 2 — (N pt) DOPO le graffe, sulla stessa riga
     latex = re.sub(
         r'(\\subsection\*\{[^}]*\}[^\n]*?)\s*\(\d+(?:[.,]\d+)?\s*pt\)([^\n]*)',
-        r'\1\2', latex
+        r'\1\2',
+        latex
     )
-    # Caso 3 — riga successiva
+    # Caso 3 — (N pt) sulla riga SUCCESSIVA al subsection
     latex = re.sub(
         r'(\\subsection\*\{[^}]*\})\s*\n\s*\(\d+(?:[.,]\d+)?\s*pt\)\s*\n',
-        r'\1\n', latex
+        r'\1\n',
+        latex
     )
     return latex
 
@@ -250,13 +254,15 @@ def riscala_punti(latex: str, punti_totali_target: int) -> str:
 
 def riscala_punti_custom(latex: str, pts_per_esercizio: list) -> str:
     r"""
-    Assegna punti custom per esercizio distribuendo proporzionalmente tra gli item.
+    Assegna punti custom per esercizio. Distribuisce i punti proporzionalmente
+    tra i sotto-item di ogni blocco subsection*.
     pts_per_esercizio: lista di int, uno per ogni subsection*.
 
-    Bug-fix critico: la ricerca (N pt) avviene SOLO nel corpo (dopo la prima
-    riga header), escludendo il titolo \subsection*{...} che puo' contenere
-    un (N pt) aggiunto da riscala_punti globale. Senza questo fix la somma
-    trovata era doppia -> fattore 0.5 -> tutti i valori dimezzati.
+    Bug-fix critico (dimezzamento 80->40):
+    Il pattern (N pt) veniva cercato nell'INTERO blocco, incluso il titolo
+    \subsection*{Es. 1 (18 pt)}. Poiche' gli item sommano altri 18, la somma
+    trovata era 36 -> fattore 0.5 -> tutti i valori dimezzati ad ogni Applica.
+    Fix: la ricerca avviene SOLO nel corpo (dopo la prima riga header).
     """
     pts_per_esercizio = [int(p) for p in pts_per_esercizio]
 
@@ -266,35 +272,36 @@ def riscala_punti_custom(latex: str, pts_per_esercizio: list) -> str:
 
     preamble = parts[0]
     blocks   = parts[1:]
-    result   = []
 
+    result_blocks = []
     for i, block in enumerate(blocks):
         if i >= len(pts_per_esercizio):
-            result.append(block)
+            result_blocks.append(block)
             continue
         target = pts_per_esercizio[i]
 
-        # Separa header (prima riga) dal corpo
-        hm          = re.match(r'[^\n]*\n', block)
-        header_end  = hm.end() if hm else 0
-        header_text = block[:header_end]
-        body_text   = block[header_end:]
+        # Separa header (prima riga) dal corpo: il (N pt) nel titolo NON conta
+        header_match = re.match(r'[^\n]*\n', block)
+        header_end   = header_match.end() if header_match else 0
+        header_text  = block[:header_end]
+        body_text    = block[header_end:]
 
         pattern = re.compile(r'\((\d+(?:[.,]\d+)?)\s*pt\)')
         matches = list(pattern.finditer(body_text))
         if not matches:
-            result.append(block)
+            result_blocks.append(block)
             continue
         valori = [float(m.group(1).replace(',', '.')) for m in matches]
         somma  = sum(valori)
         if somma == 0:
-            result.append(block)
+            result_blocks.append(block)
             continue
 
         nuovi     = [v / somma * target for v in valori]
         nuovi_int = [int(v) for v in nuovi]
         resto     = target - sum(nuovi_int)
 
+        # Gestisce sia resto positivo (+1) sia negativo (-1)
         frazioni = sorted(
             range(len(nuovi)), key=lambda k: nuovi[k] - nuovi_int[k],
             reverse=(resto > 0)
@@ -304,18 +311,18 @@ def riscala_punti_custom(latex: str, pts_per_esercizio: list) -> str:
         nuovi_int = [max(0, v) for v in nuovi_int]
 
         new_body = body_text
-        offset   = 0
+        offset = 0
         for j, m in enumerate(matches):
-            vecchio  = m.group(0)
-            nuovo    = f"({nuovi_int[j]} pt)"
+            vecchio = m.group(0)
+            nuovo   = f"({nuovi_int[j]} pt)"
             s = m.start() + offset
             e = m.end()   + offset
             new_body = new_body[:s] + nuovo + new_body[e:]
             offset  += len(nuovo) - len(vecchio)
 
-        result.append(header_text + new_body)
+        result_blocks.append(header_text + new_body)
 
-    return preamble + ''.join(result)
+    return preamble + ''.join(result_blocks)
 
 
 def inietta_griglia(latex: str, punti_totali: int) -> str:
