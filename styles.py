@@ -807,6 +807,32 @@ def get_css(T: dict) -> str:
     margin-bottom: 0.5rem;
   }}
 
+  /* Pulsante secondario con stile accent — usato per Riconfigura e Rivedi */
+  .btn-secondary-accent div.stButton > button,
+  .btn-secondary-accent .stButton > button {{
+    background: transparent !important;
+    color: {T['accent']} !important;
+    border: 2px solid {T['accent']} !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    padding: 0.6rem 1rem !important;
+    min-height: 46px !important;
+    box-shadow: 0 2px 8px {T['accent']}22 !important;
+    transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease !important;
+  }}
+  .btn-secondary-accent div.stButton > button:hover,
+  .btn-secondary-accent .stButton > button:hover {{
+    background: {T['accent_light']} !important;
+    box-shadow: 0 4px 16px {T['accent']}40 !important;
+    transform: translateY(-1px) !important;
+  }}
+  /* Equalizza primary button height con secondary */
+  div.stButton > button[kind="primary"] {{
+    min-height: 46px !important;
+    padding: 0.6rem 1rem !important;
+  }}
+
   .genera-hint {{
     text-align: center;
     font-size: 0.73rem;
@@ -1349,5 +1375,3 @@ def get_css(T: dict) -> str:
 </style>
 
 """
-
-
