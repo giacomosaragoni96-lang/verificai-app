@@ -24,7 +24,7 @@ from docx_export import latex_to_docx_via_ai
 from latex_utils import (
     compila_pdf, inietta_griglia, riscala_punti, riscala_punti_custom,
     fix_items_environment, rimuovi_vspace_corpo, pulisci_corpo_latex,
-    rimuovi_punti_subsection, pdf_to_images_bytes, fix_tikz_labels,
+    rimuovi_punti_subsection, pdf_to_images_bytes,
 )
 from config import (
     APP_NAME, APP_ICON, APP_TAGLINE, SHARE_URL, FEEDBACK_FORM_URL,
@@ -490,6 +490,8 @@ if "_storico_refresh"  not in st.session_state: st.session_state._storico_refres
 if "_preferiti"        not in st.session_state: st.session_state._preferiti = set()
 if "_storico_page"     not in st.session_state: st.session_state._storico_page = 1
 if "_saved_to_storico" not in st.session_state: st.session_state._saved_to_storico = False
+if "gen_time_sec"      not in st.session_state: st.session_state.gen_time_sec = None
+if "file_ispirazione"  not in st.session_state: st.session_state.file_ispirazione = None
 
 # ── CONTATORI ─────────────────────────────────────────────────────────────────
 _verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
@@ -745,6 +747,58 @@ def _render_stage_input():
             height=65, key="note_area", label_visibility="collapsed"
         )
 
+        # ── DOCUMENTO DI ISPIRAZIONE ───────────────────────────────────────────
+        st.markdown("""
+        <div style="margin-top:0.9rem;background:linear-gradient(135deg,#0D1F35,#0A2416);
+                    border:1px solid #1A3A55;border-radius:12px;padding:0.75rem 1rem;">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">
+            <span style="font-size:1.05rem;">📎</span>
+            <span style="font-size:0.8rem;font-weight:700;color:#60AAEE;
+                         font-family:'DM Sans',sans-serif;letter-spacing:.02em;">
+              Documento di ispirazione
+            </span>
+            <span style="font-size:0.68rem;background:#0A3060;color:#4A90D9;
+                         border-radius:4px;padding:1px 6px;font-weight:600;margin-left:auto;">
+              Nuovo
+            </span>
+          </div>
+          <p style="font-size:0.75rem;color:#8AB8D8;margin:0;line-height:1.5;
+                    font-family:'DM Sans',sans-serif;">
+            Carica una tua verifica precedente, un capitolo del libro, appunti o una foto della lavagna.
+            L'AI la analizzerà per rispettare il tuo stile, coprire gli argomenti giusti e seguire
+            le tue istruzioni.
+          </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        file_doc = st.file_uploader(
+            "Carica documento",
+            type=["pdf", "png", "jpg", "jpeg"],
+            key="file_ispirazione_upload",
+            label_visibility="collapsed",
+            help="PDF, immagine JPG/PNG. Max ~10MB. Può essere una verifica precedente, appunti, capitoli del libro.",
+        )
+        if file_doc:
+            st.session_state.file_ispirazione = file_doc
+            # Preview compatta
+            ftype = file_doc.type or ""
+            if "image" in ftype:
+                st.image(file_doc, width=80)
+            st.markdown(
+                f'<div style="font-size:0.72rem;color:#60AAEE;font-family:DM Sans,sans-serif;'
+                f'margin-top:2px;">✓ <b>{file_doc.name}</b> caricato — l\'AI lo userà come riferimento</div>',
+                unsafe_allow_html=True
+            )
+        elif st.session_state.file_ispirazione:
+            # File caricato in sessione precedente — mantieni
+            f_prev = st.session_state.file_ispirazione
+            st.markdown(
+                f'<div style="font-size:0.72rem;color:#60AAEE;font-family:DM Sans,sans-serif;">'
+                f'✓ <b>{f_prev.name}</b> in uso — '
+                f'<span style="color:#8C8A82;">ricarica il file per cambiarlo</span></div>',
+                unsafe_allow_html=True
+            )
+
     st.markdown("</div>", unsafe_allow_html=True)
 
     # ── BOTTONE GENERA ────────────────────────────────────────────────────────
@@ -773,6 +827,7 @@ def _render_stage_input():
             punti_totali if mostra_punteggi else 0, mostra_punteggi
         )
 
+        _t_gen_start = time.time()
         _n_steps = 4
         _step = [0]
         _prog = st.empty()
@@ -793,6 +848,12 @@ def _render_stage_input():
                 unsafe_allow_html=True
             )
 
+        # Determina file di ispirazione: preferisce quello appena caricato
+        _file_isp = (
+            st.session_state.get("file_ispirazione_upload") or
+            st.session_state.get("file_ispirazione")
+        )
+
         try:
             model_obj = genai.GenerativeModel(modello_id)
             ris = genera_verifica(
@@ -803,7 +864,7 @@ def _render_stage_input():
                 doppia_fila=False, bes_dsa=False, perc_ridotta=25,
                 bes_dsa_b=False, genera_soluzioni=False,
                 note_generali=note_generali, istruzioni_esercizi=s_es,
-                immagini_esercizi=imgs_es, file_ispirazione=None,
+                immagini_esercizi=imgs_es, file_ispirazione=_file_isp,
                 on_progress=_avanza,
             )
 
@@ -819,6 +880,9 @@ def _render_stage_input():
             _aggiorna("A", ris["A"]); _aggiorna("B", ris["B"])
             _aggiorna("R", ris["R"]); _aggiorna("RB", ris["RB"])
             _aggiorna("S", ris["S"])
+
+            _gen_elapsed = int(time.time() - _t_gen_start)
+            st.session_state.gen_time_sec = _gen_elapsed
 
             st.session_state.gen_params = {
                 "materia": materia_scelta, "difficolta": difficolta,
@@ -1256,7 +1320,6 @@ def _render_stage_review():
                     _latex_rw = fix_items_environment(_latex_rw)
                     _latex_rw = rimuovi_vspace_corpo(_latex_rw)
                     _latex_rw = rimuovi_punti_subsection(_latex_rw)
-                    _latex_rw = fix_tikz_labels(_latex_rw)   # fix label math con virgole
                     if con_griglia:
                         _latex_rw = inietta_griglia(_latex_rw, punti_totali)
                     st.session_state.verifiche["A"]["latex"]           = _latex_rw
@@ -1294,7 +1357,6 @@ def _render_stage_review():
             )
             latex_final = fix_items_environment(latex_final)
             latex_final = rimuovi_vspace_corpo(latex_final)
-            latex_final = fix_tikz_labels(latex_final)   # fix label math con virgole/parentesi
             if mostra_punteggi:
                 latex_final = rimuovi_punti_subsection(latex_final)
                 _pts_custom = st.session_state.get("recalibra_pts", [])
@@ -1369,6 +1431,31 @@ def _render_stage_final():
         '</div></div></div>',
         unsafe_allow_html=True
     )
+
+    # ── Badge timer + risparmio tempo ────────────────────────────────────────
+    _gen_sec = st.session_state.get("gen_time_sec")
+    _n_es    = gp.get("num_esercizi", 4)
+    _risparmio_min = max(10, _n_es * 8)  # ~8 min per esercizio fatto manualmente
+    if _gen_sec:
+        _t_label = (f"{_gen_sec}s" if _gen_sec < 60
+                    else f"{_gen_sec // 60}m {_gen_sec % 60}s")
+        st.markdown(
+            f'<div style="display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap;">'
+            f'<div style="background:#0A2010;border:1px solid #1A4A28;border-radius:8px;'
+            f'padding:.35rem .8rem;display:flex;align-items:center;gap:.4rem;">'
+            f'<span style="font-size:.9rem;">⚡</span>'
+            f'<span style="font-size:.75rem;font-weight:700;color:#34D399;'
+            f'font-family:DM Sans,sans-serif;">Generata in {_t_label}</span>'
+            f'</div>'
+            f'<div style="background:#0A1A30;border:1px solid #1A3A5A;border-radius:8px;'
+            f'padding:.35rem .8rem;display:flex;align-items:center;gap:.4rem;">'
+            f'<span style="font-size:.9rem;">🕐</span>'
+            f'<span style="font-size:.75rem;font-weight:700;color:#60AAEE;'
+            f'font-family:DM Sans,sans-serif;">~{_risparmio_min} min risparmiati vs. manuale</span>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
 
     # 1. PREVIEW
     st.markdown(
