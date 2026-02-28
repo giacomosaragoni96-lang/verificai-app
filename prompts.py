@@ -28,7 +28,12 @@ def prompt_corpo_verifica(
     titolo_header: str,
     preambolo_fisso: str,
 ) -> str:
-    s_note = f"\nNOTE DOCENTE: {note_generali.strip()}" if note_generali.strip() else ""
+    s_note = (
+        f"\n\n═══════════════════════════════════════════\n"
+        f"ISTRUZIONI PRIORITARIE DEL DOCENTE — RISPETTA QUESTE PRIMA DI TUTTO:\n"
+        f"{note_generali.strip()}\n"
+        f"═══════════════════════════════════════════\n"
+    ) if note_generali.strip() else ""
 
     if mostra_punteggi:
         punti_rule = (
@@ -72,6 +77,8 @@ def prompt_corpo_verifica(
         f"Sei un docente esperto di {materia} e LaTeX. Genera SOLO il corpo degli esercizi "
         f"(senza preambolo, senza \\documentclass, senza \\begin{{document}}) per una verifica su: {argomento}.\n"
         f"{ f'Punti totali da distribuire: {punti_totali} pt.' if mostra_punteggi else ''}\n"
+        f"{s_note}"
+        f"{istruzioni_esercizi}\n"
         f"\nCALIBRAZIONE LIVELLO E TEMPO:\n"
         f"{calibrazione}\n"
         f"- DURATA PREVISTA: {durata}. Regola la lunghezza dei calcoli, il numero di incognite e la complessità "
@@ -89,8 +96,6 @@ def prompt_corpo_verifica(
         f"- Se l'esercizio richiede allo studente di 'disegnare', 'rappresentare graficamente', 'tracciare' o "
         f"'costruire' una figura/grafico, NON generare il codice TikZ.\n"
         f"- Genera un grafico (TikZ) SOLO se esso è un dato di partenza necessario fornito dal docente.\n"
-        f"\n{s_note}\n"
-        f"{istruzioni_esercizi}\n"
         f"\nREGOLE LATEX (TASSATIVE):\n"
         f"{griglia_rule}\n"
         f"{punti_rule}\n"
@@ -106,9 +111,6 @@ def prompt_corpo_verifica(
         f"- Vero/Falso: $\\square$ \\textbf{{V}} $\\quad\\square$ \\textbf{{F}}\n"
         f"- Completamento: \\underline{{\\hspace{{3cm}}}}\n"
         f"{grafici_rule}\n"
-        f"- TIKZ LABEL CON MATH — REGOLA CRITICA: nelle opzioni TikZ che contengono matematica, "
-        f"wrappa SEMPRE il valore tra graffe. CORRETTO: [label=right:{{$A(2,3)$}}] "
-        f"SBAGLIATO: [label=right:$A(2,3)$] (la virgola rompe il parsing TikZ).\n"
         f"\nFORMATO OUTPUT: restituisci SOLO i blocchi \\subsection*{{...}} con relativi esercizi.\n"
         f"TERMINA con \\end{{document}}.\n"
         f"NIENTE preambolo, NIENTE \\documentclass, NIENTE \\begin{{document}}.\n"
