@@ -24,7 +24,7 @@ from docx_export import latex_to_docx_via_ai
 from latex_utils import (
     compila_pdf, inietta_griglia, riscala_punti, riscala_punti_custom,
     fix_items_environment, rimuovi_vspace_corpo, pulisci_corpo_latex,
-    rimuovi_punti_subsection, pdf_to_images_bytes,
+    rimuovi_punti_subsection, pdf_to_images_bytes, fix_tikz_labels,
 )
 from config import (
     APP_NAME, APP_ICON, APP_TAGLINE, SHARE_URL, FEEDBACK_FORM_URL,
@@ -64,12 +64,12 @@ supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # ── TEMA — inizializzazione ───────────────────────────────────────────────────
 if "theme" not in st.session_state:
-    st.session_state.theme = "slate_carbon"
+    st.session_state.theme = "chiaro"
 
 _theme_key = st.session_state.theme
 # Compatibilità con vecchie sessioni
 if _theme_key not in THEMES:
-    _theme_key = "slate_carbon"
+    _theme_key = "chiaro"
     st.session_state.theme = _theme_key
 T = THEMES[_theme_key]
 
@@ -300,9 +300,9 @@ def _make_katex_html(title: str, body: str, T: dict, height_hint: int = 400) -> 
         "*{box-sizing:border-box;margin:0;padding:0}"
         "body{font-family:-apple-system,DM Sans,sans-serif;background:" + bg + ";"
         "color:" + fg + ";font-size:15px;line-height:1.75;padding:4px 0 12px 0}"
-        ".t{font-size:.82rem;font-weight:700;color:" + acc + ";padding:4px 0 10px 0;"
-        "margin-bottom:8px;letter-spacing:-.01em;border-bottom:1px solid " + bdr + ";"
-        "font-family:DM Sans,-apple-system,sans-serif}"
+        ".t{font-size:.95rem;font-weight:800;color:" + acc + ";padding:8px 14px;"
+        "background:" + card + ";border-left:3px solid " + acc + ";"
+        "margin-bottom:10px;border-radius:0 6px 6px 0}"
         ".b{padding:2px 10px}"
         "ol,ul{padding-left:1.5em;margin:6px 0}"
         "li{margin:5px 0}"
@@ -553,8 +553,8 @@ def _render_breadcrumb():
     # Contenitore centrato e compatto
     html = (
         '<div style="display:flex;justify-content:center;margin-bottom:1.6rem;">'
-        '<div class="breadcrumb-wrap" style="display:inline-flex;align-items:center;gap:8px;'
-        'padding:.6rem 1.2rem;'
+        '<div style="display:inline-flex;align-items:center;gap:10px;'
+        'padding:.7rem 1.6rem;'
         'background:' + T["card"] + ';border:1.5px solid ' + T["border"] + ';'
         'border-radius:100px;box-shadow:' + T["shadow_md"] + ';">'
     )
@@ -572,19 +572,19 @@ def _render_breadcrumb():
             icon = num
         _op = "1" if (is_active or is_done) else ".4"
         html += (
-            '<div class="breadcrumb-step" style="display:flex;align-items:center;gap:5px;opacity:' + _op + ';">'
+            '<div style="display:flex;align-items:center;gap:7px;opacity:' + _op + ';">'
             '<div style="background:' + cb + ';border-radius:50%;'
-            'width:24px;height:24px;display:flex;align-items:center;'
-            'justify-content:center;font-size:.68rem;font-weight:800;'
+            'width:28px;height:28px;display:flex;align-items:center;'
+            'justify-content:center;font-size:.72rem;font-weight:800;'
             'color:' + cc + ';flex-shrink:0;box-shadow:0 2px 8px ' + cb + '44;">' + icon + '</div>'
-            '<span class="breadcrumb-label" style="font-size:.82rem;font-weight:' + lw + ';color:' + lc + ';'
+            '<span style="font-size:.88rem;font-weight:' + lw + ';color:' + lc + ';'
             'font-family:DM Sans,sans-serif;white-space:nowrap;letter-spacing:-.01em;">' + label + '</span>'
             '</div>'
         )
         if i < 2:
             _sep_c = T["success"] if is_done else T["border2"]
             html += (
-                '<div style="width:20px;height:1.5px;background:' + _sep_c + ';'
+                '<div style="width:28px;height:1.5px;background:' + _sep_c + ';'
                 'opacity:.4;flex-shrink:0;border-radius:2px;"></div>'
             )
     html += "</div></div>"
@@ -650,7 +650,7 @@ def _render_stage_input():
         unsafe_allow_html=True
     )
     st.markdown('<div class="personalizza-wrap">', unsafe_allow_html=True)
-    with st.expander("Opzioni Avanzate", expanded=False):
+    with st.expander("⚙️ Opzioni verifica", expanded=False):
 
         # Numero esercizi — selectbox compatta
         _es_options = list(range(1, 16))
@@ -667,7 +667,7 @@ def _render_stage_input():
 
         # Punteggi + Griglia
         punteggi_e_griglia = st.toggle(
-            "Aggiungi punteggi e griglia punteggi",
+            "Aggiungi punteggi e griglia di valutazione",
             value=True,
             help="Aggiunge (X pt) a ogni sottopunto e genera la tabella di valutazione in fondo"
         )
@@ -749,7 +749,7 @@ def _render_stage_input():
 
     # ── BOTTONE GENERA ────────────────────────────────────────────────────────
     st.markdown('<div class="genera-section">', unsafe_allow_html=True)
-    genera_btn = st.button("Genera Verifica", use_container_width=True,
+    genera_btn = st.button("🚀  Genera Verifica", use_container_width=True,
                            type="primary", disabled=_limite)
     if _limite:
         st.markdown(
@@ -890,8 +890,9 @@ def _render_stage_review():
     st.markdown(
         '<div style="background:linear-gradient(135deg,' + T["accent_light"] + ' 0%,' + T["card"] + ' 100%);'
         'border:2px solid ' + T["accent"] + ';border-radius:16px;overflow:hidden;margin-bottom:1.2rem;">'
-        '<div style="background:linear-gradient(120deg,' + T["accent"] + ' 0%,' + T["accent2"] + ' 100%);padding:.85rem 1.2rem;">'
+        '<div style="background:linear-gradient(120deg,#D97706 0%,#16a34a 100%);padding:.85rem 1.2rem;">'
         '<div style="display:flex;align-items:center;gap:12px;">'
+        '<span style="font-size:1.5rem;">✏️</span>'
         '<div style="flex:1;">'
         '<div style="font-family:DM Sans,sans-serif;font-size:1rem;font-weight:900;color:#fff;'
         'text-shadow:0 1px 4px rgba(0,0,0,.25);">'
@@ -937,7 +938,7 @@ def _render_stage_review():
 
     st.markdown(
         '<div style="font-size:.72rem;color:' + T["muted"] + ';margin-top:-.3rem;margin-bottom:.5rem;">'
-        'Seleziona un esercizio dal menu per visualizzarlo e modificarlo.'
+        '💡 Seleziona un esercizio dal menu per visualizzarlo e modificarlo.'
         '</div>',
         unsafe_allow_html=True
     )
@@ -963,12 +964,12 @@ def _render_stage_review():
             components.html(katex_html, height=est_height, scrolling=True)
 
             if re.search(r"\\begin\{(tikzpicture|axis)\}", body):
-                st.info("Grafici TikZ/pgfplots visibili nel PDF finale.")
+                st.info("📊 Grafici TikZ/pgfplots visibili nel PDF finale.")
 
             st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
 
             # ── Expander: Modifica con AI ──────────────────────────────────────
-            with st.expander("Modifica con AI", expanded=False):
+            with st.expander("✏️ Modifica con AI", expanded=False):
                 st.markdown(
                     '<div style="font-size:.76rem;color:' + T["text2"] + ';margin-bottom:.5rem;'
                     'font-family:DM Sans,sans-serif;line-height:1.45;">'
@@ -986,7 +987,7 @@ def _render_stage_review():
                     height=80,
                 )
                 rigenera = st.button(
-                    "Applica Modifica", key=f"rw_btn_{idx}",
+                    "✏️ Applica Modifica", key=f"rw_btn_{idx}",
                     use_container_width=True, disabled=not istruzione.strip()
                 )
                 # Fix: messaggio di elaborazione visibile subito sotto il pulsante
@@ -995,7 +996,7 @@ def _render_stage_review():
 
             # ── Expander: Ricalibra Punteggi ──────────────────────────────────
             if mostra_punteggi and n_blocks > 0:
-                with st.expander("Ricalibra Punteggi", expanded=False):
+                with st.expander("⚖️ Ricalibra Punteggi", expanded=False):
                     st.markdown(
                         '<div style="font-size:.74rem;color:' + T["text2"] + ';margin-bottom:.7rem;'
                         'font-family:DM Sans,sans-serif;line-height:1.45;">'
@@ -1118,7 +1119,7 @@ def _render_stage_review():
         st.markdown(
             '<div style="font-size:.72rem;font-weight:700;color:' + T["muted"] + ';'
             'text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;">'
-            'Anteprima PDF completo</div>',
+            '📄 Anteprima PDF completo</div>',
             unsafe_allow_html=True
         )
         imgs = st.session_state.preview_images
@@ -1255,6 +1256,7 @@ def _render_stage_review():
                     _latex_rw = fix_items_environment(_latex_rw)
                     _latex_rw = rimuovi_vspace_corpo(_latex_rw)
                     _latex_rw = rimuovi_punti_subsection(_latex_rw)
+                    _latex_rw = fix_tikz_labels(_latex_rw)   # fix label math con virgole
                     if con_griglia:
                         _latex_rw = inietta_griglia(_latex_rw, punti_totali)
                     st.session_state.verifiche["A"]["latex"]           = _latex_rw
@@ -1292,6 +1294,7 @@ def _render_stage_review():
             )
             latex_final = fix_items_environment(latex_final)
             latex_final = rimuovi_vspace_corpo(latex_final)
+            latex_final = fix_tikz_labels(latex_final)   # fix label math con virgole/parentesi
             if mostra_punteggi:
                 latex_final = rimuovi_punti_subsection(latex_final)
                 _pts_custom = st.session_state.get("recalibra_pts", [])
@@ -1348,8 +1351,9 @@ def _render_stage_final():
     st.markdown(
         '<div style="background:linear-gradient(135deg,' + T["accent_light"] + ' 0%,' + T["card"] + ' 100%);'
         'border:2px solid ' + T["success"] + ';border-radius:16px;overflow:hidden;margin-bottom:1.3rem;">'
-        '<div style="background:linear-gradient(120deg,' + T["accent"] + ' 0%,' + T["accent2"] + ' 100%);padding:.85rem 1.2rem;">'
+        '<div style="background:linear-gradient(120deg,#059669 0%,#0284C7 100%);padding:.85rem 1.2rem;">'
         '<div style="display:flex;align-items:center;gap:12px;">'
+        '<span style="font-size:1.5rem;">🎉</span>'
         '<div style="flex:1;">'
         '<div style="font-family:DM Sans,sans-serif;font-size:1rem;font-weight:900;color:#fff;'
         'text-shadow:0 1px 4px rgba(0,0,0,.2);">'
@@ -1540,7 +1544,7 @@ def _render_stage_final():
     st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
 
     # "Nuova verifica" — larghezza piena, primary, in fondo
-    if st.button("Inizia nuova verifica", type="primary", use_container_width=True, key="btn_new_s3"):
+    if st.button("🆕 Inizia nuova verifica", type="primary", use_container_width=True, key="btn_new_s3"):
         st.session_state.stage            = STAGE_INPUT
         st.session_state["_prev_stage"]   = None  # forza scroll al top
         st.session_state.verifiche         = {
