@@ -217,6 +217,42 @@ def get_css(T: dict) -> str:
     box-shadow: 0 0 0 1px #5c2222 !important;
   }}
 
+  /* ════ TESTO GLOBALE — forza colore su tutti i widget (fix tema chiaro) ════ */
+  .stApp p,
+  .stApp span:not([class*="sidebar"]),
+  .stApp div:not([data-testid="stSidebar"] *),
+  .stMarkdown p,
+  .stMarkdown span,
+  [data-testid="stMarkdownContainer"] p,
+  [data-testid="stMarkdownContainer"] span,
+  [data-testid="stText"] p,
+  .stText p {{
+    color: {T['text']} !important;
+  }}
+
+  /* Toggle help text / hint accanto ai toggle ✓ — fix chiave tema chiaro */
+  .stCheckbox + div p,
+  .stToggle + div p,
+  [data-testid="stWidgetLabel"] p,
+  [data-testid="stWidgetLabel"] span,
+  [data-testid="InputInstructions"] {{
+    color: {T['text2']} !important;
+  }}
+
+  /* Caption e testo small dei widget */
+  small, .stCaption, .stCaption p,
+  [data-testid="stCaptionContainer"],
+  [data-testid="stCaptionContainer"] p {{
+    color: {T['muted']} !important;
+  }}
+
+  /* Testo del selectbox e dei suoi option */
+  .stSelectbox [data-baseweb="select"] [data-value],
+  .stSelectbox [data-baseweb="select"] span,
+  .stSelectbox label p {{
+    color: {T['text']} !important;
+  }}
+
   h1, h2, h3 {{
     font-family: 'DM Sans', sans-serif !important;
     color: {T['text']} !important;
@@ -304,21 +340,19 @@ def get_css(T: dict) -> str:
     opacity: 0;
   }}
 
-  /* ════ TOP BAR ════ */
-  .top-bar {{
-    background: {T['bg2']};
-    border: 1px solid {T['border']};
-    border-radius: 10px;
-    padding: 0.5rem 1rem;
-    margin-bottom: 1.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-  }}
-  .top-bar-hint {{
-    font-size: 0.72rem;
+  /* ════ SIDEBAR HINT MINIMALE (in alto a sinistra) ════ */
+  .sidebar-hint-inline {{
+    position: fixed;
+    top: .6rem;
+    left: 3.8rem;
+    z-index: 900;
+    font-size: .68rem;
+    font-weight: 500;
     color: {T['muted']};
     font-family: 'DM Sans', sans-serif;
+    letter-spacing: .01em;
+    pointer-events: none;
+    white-space: nowrap;
   }}
 
   /* ════ INPUTS ════ */
@@ -438,7 +472,7 @@ def get_css(T: dict) -> str:
   .stButton button[kind="secondary"],
   button[data-testid="baseButton-secondary"] {{
     background: {T['card']} !important;
-    color: {T['text']} !important;
+    color: {T['text2']} !important;
     border: 1.5px solid {T['border2']} !important;
     border-radius: 12px !important;
     font-family: 'DM Sans', sans-serif !important;
@@ -456,9 +490,9 @@ def get_css(T: dict) -> str:
   button[data-testid="baseButton-secondary"]:hover {{
     background: {T['hover']} !important;
     border-color: {T['accent']} !important;
+    color: {T['accent']} !important;
     transform: translateY(-3px) !important;
     box-shadow: 0 6px 20px {T['accent']}28 !important;
-    color: {T['text']} !important;
   }}
 
   /* ════ DOWNLOAD ACCENT BUTTON (PDF primario) ════ */
@@ -702,17 +736,17 @@ def get_css(T: dict) -> str:
     background: linear-gradient(90deg, {T['border2']} 0%, transparent 100%);
   }}
 
-  /* ════ AI HINT ════ */
+  /* ════ AI HINT — leggibile su qualsiasi tema ════ */
   .ai-hint {{
     display: flex;
     align-items: center;
     gap: 9px;
-    background: {T['accent_light']};
-    border: 1px solid {T['accent']}55;
+    background: {T.get('hint_bg', T['accent_light'])};
+    border: 1px solid {T.get('hint_border', T['accent'] + '55')};
     border-radius: 10px;
     padding: 9px 14px;
     font-size: 0.78rem;
-    color: {T['text2']};
+    color: {T.get('hint_text', T['text2'])};
     margin: 1.8rem 0 0.6rem 0;
     font-family: 'DM Sans', sans-serif;
     line-height: 1.4;
@@ -870,13 +904,13 @@ def get_css(T: dict) -> str:
 
   /* ════ HINT DOCX ════ */
   .hint-docx {{
-    background: {T['accent_light']} !important;
+    background: {T.get('hint_bg', T['accent_light'])} !important;
     border-left: 3px solid {T['accent']} !important;
     border-radius: 8px !important;
     padding: 10px 14px !important;
     margin-top: 8px !important;
     font-size: 0.8rem !important;
-    color: {T['text2']} !important;
+    color: {T.get('hint_text', T['text2'])} !important;
     line-height: 1.5 !important;
   }}
   .hint-docx strong {{
@@ -922,10 +956,41 @@ def get_css(T: dict) -> str:
   .stToggle [data-baseweb="toggle"][aria-checked="true"] {{
     background: {T['accent']} !important;
   }}
-  .stToggle span {{
+  /* Etichetta e testo toggle — visibile su tema chiaro E scuro */
+  .stToggle span,
+  .stToggle label,
+  .stToggle p,
+  .stToggle [data-testid="stWidgetLabel"] p,
+  .stToggle [data-testid="stMarkdownContainer"] p {{
     color: {T['text']} !important;
     font-size: 0.88rem !important;
     font-family: 'DM Sans', sans-serif !important;
+  }}
+  /* Testo help (? tooltip) accanto a toggle e checkbox */
+  [data-testid="stTooltipIcon"] {{
+    opacity: 0.7;
+  }}
+  [data-testid="stTooltipIcon"] svg {{
+    fill: {T['muted']} !important;
+    color: {T['muted']} !important;
+  }}
+  /* Messaggio di help/hint inline accanto ai widget (testo dopo ✓) */
+  .stCheckbox [data-testid="stMarkdownContainer"] p,
+  .stCheckbox label p,
+  .stCheckbox label span,
+  [data-baseweb="checkbox"] span,
+  [data-baseweb="checkbox"] p,
+  [data-baseweb="checkbox"] label {{
+    color: {T['text']} !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }}
+  /* Caption/help text sotto i widget */
+  .stTextInput .stCaption, .stSelectbox .stCaption,
+  [data-testid="stWidgetLabel"] small,
+  [data-testid="stCaptionContainer"] p,
+  .stCaption p,
+  [data-testid="InputInstructions"] p {{
+    color: {T['muted']} !important;
   }}
 
   .stRadio [data-testid="stMarkdownContainer"] p {{
