@@ -596,7 +596,7 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
         esercizi_parsed = parse_esercizi(codice_latex) if con_griglia else []
         if con_griglia and esercizi_parsed:
             pg = doc.add_paragraph()
-            rg = pg.add_run("Griglia di Valutazione")
+            rg = pg.add_run("Griglia Punteggi")
             rg.bold = True
             rg.font.size = Pt(12)
             pg.alignment = WD_ALIGN_PARAGRAPH.CENTER
