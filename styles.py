@@ -891,7 +891,7 @@ def get_css(T: dict) -> str:
   @media (max-width: 640px) {{
     .stage-floater {{
       top: auto;
-      bottom: 4.5rem;
+      bottom: 1rem;
       right: .8rem;
     }}
   }}
@@ -1093,10 +1093,7 @@ def get_css(T: dict) -> str:
   }}
   @media (max-width: 640px) {{
     .fab-link {{
-      bottom: 4.5rem;
-      right: 0.8rem;
-      padding: 7px 12px;
-      font-size: 0.73rem;
+      display: none !important;
     }}
   }}
 
