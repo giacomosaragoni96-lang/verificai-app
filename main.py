@@ -431,20 +431,45 @@ _is_admin       = st.session_state.utente.email in ADMIN_EMAILS if st.session_st
 _limite         = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
 
 # ── CSS + FEEDBACK ────────────────────────────────────────────────────────────
-st.markdown(get_css(T), unsafe_allow_html=True)
-# Modifica FAB: Alzato z-index e bottom per non coprire elementi Streamlit
+# Cerca il punto dove viene definito il pulsante feedback e sostituiscilo con questo:
 st.markdown(
-    '<style>'
-    '.fab-link { '
-    '  position: fixed; '
-    '  bottom: 35px !important; '
-    '  right: 20px; '
-    '  z-index: 9999999 !important; '
-    '}'
-    '</style>'
-    '<a class="fab-link" href="' + FEEDBACK_FORM_URL + '" target="_blank" '
-    'rel="noopener noreferrer">💬 &nbsp; Feedback & Bug</a>',
-    unsafe_allow_html=True
+    f'''
+    <style>
+    .fab-link {{
+        position: fixed;
+        bottom: 35px !important;
+        right: 25px !important;
+        z-index: 1000000 !important;
+        
+        /* CORREZIONE BUG DIMENSIONI */
+        width: auto !important;       /* Impedisce al pulsante di allargarsi al 100% */
+        max-width: 200px !important;  /* Limita la larghezza massima */
+        height: 42px !important;      /* Altezza fissa */
+        
+        background: {T["accent"]};
+        color: white !important;
+        padding: 0 20px !important;   /* Padding laterale */
+        border-radius: 50px !important;
+        text-decoration: none !important;
+        font-weight: 700 !important;
+        font-family: 'DM Sans', sans-serif !important;
+        font-size: 0.85rem !important;
+        
+        /* Allineamento interno */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        pointer-events: auto !important;
+        white-space: nowrap !important; /* Impedisce al testo di andare a capo */
+    }}
+    </style>
+    <a class="fab-link" href="{FEEDBACK_FORM_URL}" target="_blank" rel="noopener noreferrer">
+        <span>💬</span> Feedback
+    </a>
+    ''', unsafe_allow_html=True
 )
 
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
@@ -1353,3 +1378,4 @@ components.html(
     "</script>",
     height=30
 )
+
