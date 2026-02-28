@@ -803,6 +803,68 @@ def get_css(T: dict) -> str:
     margin-top: 2.2rem;
     margin-bottom: 0.5rem;
   }}
+  /* ── Bottone fase: "Genera Verifica" — ambra/oro ── */
+  .genera-section div.stButton > button,
+  .genera-section .stButton > button {{
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 14px !important;
+    font-size: 1.08rem !important;
+    font-weight: 800 !important;
+    min-height: 54px !important;
+    padding: 0.75rem 1.5rem !important;
+    box-shadow: 0 4px 20px #F59E0B55 !important;
+    transition: all .2s cubic-bezier(.175,.885,.32,1.275) !important;
+    letter-spacing: .01em !important;
+    width: 100% !important;
+  }}
+  .genera-section div.stButton > button:hover,
+  .genera-section .stButton > button:hover {{
+    filter: brightness(1.08) !important;
+    box-shadow: 0 8px 32px #F59E0B77 !important;
+    transform: translateY(-2px) scale(1.01) !important;
+  }}
+  .genera-section div.stButton > button:active,
+  .genera-section .stButton > button:active {{
+    transform: scale(0.98) !important;
+  }}
+  .genera-section div.stButton > button:disabled,
+  .genera-section .stButton > button:disabled {{
+    background: #9CA3AF !important;
+    box-shadow: none !important;
+    transform: none !important;
+    filter: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.7 !important;
+  }}
+
+  /* ── Bottone fase: "Inizia nuova verifica" — ambra/oro ── */
+  .btn-nuova-verifica div.stButton > button,
+  .btn-nuova-verifica .stButton > button {{
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 14px !important;
+    font-size: 1.08rem !important;
+    font-weight: 800 !important;
+    min-height: 54px !important;
+    padding: 0.75rem 1.5rem !important;
+    box-shadow: 0 4px 20px #F59E0B55 !important;
+    transition: all .2s cubic-bezier(.175,.885,.32,1.275) !important;
+    letter-spacing: .01em !important;
+    width: 100% !important;
+  }}
+  .btn-nuova-verifica div.stButton > button:hover,
+  .btn-nuova-verifica .stButton > button:hover {{
+    filter: brightness(1.08) !important;
+    box-shadow: 0 8px 32px #F59E0B77 !important;
+    transform: translateY(-2px) scale(1.01) !important;
+  }}
+  .btn-nuova-verifica div.stButton > button:active,
+  .btn-nuova-verifica .stButton > button:active {{
+    transform: scale(0.98) !important;
+  }}
 
   /* ════ ONBOARDING — messaggio statico, sottile ════ */
   .onboard-guide {{
@@ -1457,11 +1519,52 @@ def get_css(T: dict) -> str:
     background: {T['hover']} !important;
   }}
 
-  /* ════ 110% ZOOM su desktop (≥768px) — mobile invariato ════ */
+  /* ════ +10% FONT-SIZE su desktop (≥768px) — no zoom, no overflow mobile ════ */
   @media (min-width: 768px) {{
-    .block-container {{
-      zoom: 1.1;
-      max-width: 955px !important;
+    /* Testo generale */
+    .stApp p, .stMarkdown p, [data-testid="stMarkdownContainer"] p,
+    .stText p, [data-testid="stText"] p {{
+      font-size: 1.045rem !important;
+    }}
+    /* Label input */
+    .stTextInput label p, .stSelectbox label p,
+    .stNumberInput label p, .stTextArea label p,
+    .stFileUploader label p {{
+      font-size: 0.902rem !important;
+    }}
+    /* Input fields */
+    .stTextInput input, .stNumberInput input {{
+      font-size: 1.045rem !important;
+    }}
+    .stTextArea textarea {{
+      font-size: 0.99rem !important;
+    }}
+    /* Checkbox e toggle */
+    .stCheckbox label, .stToggle label {{
+      font-size: 0.99rem !important;
+    }}
+    /* Selectbox testo */
+    .stSelectbox [data-baseweb="select"] span,
+    .stSelectbox [data-baseweb="select"] [data-value] {{
+      font-size: 1.045rem !important;
+    }}
+    /* Pulsanti secondary */
+    .stDownloadButton button,
+    [data-testid="stDownloadButton"] button,
+    .stButton [data-testid="baseButton-secondary"],
+    .stButton button[kind="secondary"],
+    button[data-testid="baseButton-secondary"] {{
+      font-size: 1.155rem !important;
+    }}
+    /* Pulsanti primary */
+    div.stButton > button[kind="primary"] {{
+      font-size: 1.1rem !important;
+    }}
+    /* Caption */
+    small, .stCaption, .stCaption p,
+    [data-testid="stCaptionContainer"],
+    [data-testid="stCaptionContainer"] p {{
+      font-size: 0.858rem !important;
     }}
   }}
 </style>
