@@ -282,3 +282,103 @@ def prompt_rigenera_blocco(
         f"- TERMINA il blocco con una riga vuota (non con \\end{{document}}).\n"
         f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
     )
+
+
+def prompt_analisi_documento(
+    materie_valide: list[str],
+    mathpix_context: str | None = None,
+) -> str:
+    """
+    Prompt per l'estrazione automatica di metadati da un documento caricato.
+    Risponde SOLO con JSON — nessun testo extra.
+    Parametri
+    ---------
+    materie_valide  : lista delle materie accettate dall'applicazione
+    mathpix_context : testo LaTeX estratto da Mathpix OCR (opzionale)
+    """
+    materie_str = ", ".join(f'"{m}"' for m in materie_valide)
+
+    ctx_block = (
+        f"\n\nTESTO OCR ESTRATTO DAL DOCUMENTO (alta fedeltà matematica):\n"
+        f"{'─'*60}\n{mathpix_context.strip()}\n{'─'*60}\n"
+        if mathpix_context and mathpix_context.strip()
+        else ""
+    )
+
+    return (
+        f"Sei un analizzatore esperto di documenti didattici italiani. "
+        f"Ti viene fornito un documento (verifica, esercizi, appunti scolastici).\n"
+        f"{ctx_block}"
+        f"\nANALIZZA il documento e rispondi ESCLUSIVAMENTE con un oggetto JSON valido "
+        f"senza alcun testo prima o dopo, senza markdown, senza ```json.\n\n"
+        f"SCHEMA OBBLIGATORIO (tutte le chiavi devono essere presenti):\n"
+        f"{{\n"
+        f'  "materia": "<una di: {materie_str}, oppure null se non identificabile>",\n'
+        f'  "scuola": "<una di: Scuola Media, Liceo Scientifico, Liceo Classico, Liceo Linguistico, '
+        f'Istituto Tecnico, Istituto Professionale, Università, oppure null>",\n'
+        f'  "argomento": "<titolo sintetico dell\'argomento principale, max 12 parole, oppure null>",\n'
+        f'  "stile_desc": "<descrizione dello stile del docente in max 15 parole, es. \'Esercizi procedurali diretti, '
+        f'pochi testi applicativi, 3-4 sottopunti per esercizio\'>",\n'
+        f'  "tipi_domande": ["<lista dei tipi trovati tra: Aperto, Scelta multipla, Vero/Falso, Completamento>"],\n'
+        f'  "num_item_medi": <numero intero, media di sottopunti per esercizio, 0 se non determinabile>,\n'
+        f'  "num_esercizi_rilevati": <numero intero di esercizi trovati nel documento, 0 se non determinabile>,\n'
+        f'  "confidence": <float tra 0.0 e 1.0, grado di certezza complessiva dell\'analisi>\n'
+        f"}}\n\n"
+        f"REGOLE:\n"
+        f"- Se un campo non è determinabile con sufficiente certezza, usa null (non una stringa vuota).\n"
+        f"- confidence < 0.5: documento ambiguo o troppo generico.\n"
+        f"- confidence > 0.85: documento scolastico chiaro con materia e argomento evidenti.\n"
+        f"- NON inventare informazioni non presenti nel documento.\n"
+        f"- SOLO JSON, nessun'altra parola."
+    )
+
+
+def prompt_qa_verifica(
+    materia: str = "",
+    livello: str = "",
+) -> str:
+    """
+    Prompt per la Modalità QA — analisi critica di una verifica esistente.
+    Il documento viene passato come attachment (immagine o PDF) nel messaggio API.
+    Restituisce un report testuale strutturato, NON JSON.
+    """
+    ctx_mat = f"Materia dichiarata: {materia}. " if materia else ""
+    ctx_liv = f"Livello scolastico: {livello}. " if livello else ""
+
+    return (
+        f"Sei un esperto revisore didattico. {ctx_mat}{ctx_liv}"
+        f"Analizza questa verifica scolastica caricata dal docente e produci un "
+        f"**REPORT DI REVISIONE** strutturato.\n\n"
+        f"SEZIONI OBBLIGATORIE DEL REPORT:\n\n"
+        f"## 1. Panoramica\n"
+        f"- Materia e argomento rilevati\n"
+        f"- Numero e tipologia degli esercizi\n"
+        f"- Punteggio totale dichiarato (se presente)\n\n"
+        f"## 2. Errori e Problemi Critici\n"
+        f"Per ogni problema trovato:\n"
+        f"- [ERRORE/AMBIGUITÀ/INCONSISTENZA] Esercizio N, punto X — descrizione del problema\n"
+        f"- Proposta di correzione (in una riga)\n"
+        f"Tipi di problemi da cercare:\n"
+        f"- Dati matematicamente incoerenti o esercizi senza soluzione unica\n"
+        f"- Testo ambiguo che ammette più interpretazioni\n"
+        f"- Punteggi che non sommano al totale dichiarato\n"
+        f"- Prerequisiti non adeguati al livello scolastico\n"
+        f"- Errori grammaticali o ortografici nel testo degli esercizi\n"
+        f"- Istruzioni contraddittorie o incomplete\n\n"
+        f"## 3. Valutazione Complessiva\n"
+        f"- Difficoltà generale: Molto facile / Adeguata / Difficile / Molto difficile\n"
+        f"- Bilanciamento tra esercizi (troppo simili? troppo eterogenei?)\n"
+        f"- Tempo stimato di svolgimento vs tempo disponibile (se dichiarato)\n\n"
+        f"## 4. Suggerimenti di Miglioramento\n"
+        f"- Max 3-4 suggerimenti concreti e prioritizzati\n\n"
+        f"## 5. Valutazione Finale\n"
+        f"Voto qualitativo: ⭐ (da revisionare completamente) / ⭐⭐ (necessita correzioni) / "
+        f"⭐⭐⭐ (buona con piccoli fix) / ⭐⭐⭐⭐ (ottima, pronta)\n"
+        f"Motivazione in 2 righe.\n\n"
+        f"REGOLE:\n"
+        f"- Sii diretto e specifico — il docente vuole sapere esattamente cosa sistemare.\n"
+        f"- Se non trovi problemi in una sezione, scrivilo esplicitamente ('Nessun problema rilevato').\n"
+        f"- Usa italiano corretto e tono professionale ma non accademico.\n"
+        f"- NON riscrivere il testo degli esercizi per intero.\n"
+        f"- Il report deve essere leggibile in 2-3 minuti."
+    )
