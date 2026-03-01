@@ -534,7 +534,8 @@ st.markdown(
 )
 st.markdown(
     '<div class="hero-wrap"><div class="hero-left">'
-    '<h1 class="hero-title">Verific<span class="hero-ai">AI</span></h1>'
+    '<h1 class="hero-title"><span class="hero-icon">' + APP_ICON + '</span>'
+    'Verific<span class="hero-ai">AI</span></h1>'
     '<p class="hero-sub">' + APP_TAGLINE + '</p>'
     '<span class="hero-beta">Versione Beta</span>'
     '</div></div>',
@@ -1037,7 +1038,7 @@ def _render_stage_review():
             st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
 
             # ── Expander: Modifica con AI ──────────────────────────────────────
-            with st.expander("✏️ Modifica con AI", expanded=False):
+            with st.expander("Modifica con AI", expanded=False):
                 st.markdown(
                     '<div style="font-size:.76rem;color:' + T["text2"] + ';margin-bottom:.5rem;'
                     'font-family:DM Sans,sans-serif;line-height:1.45;">'
@@ -1064,7 +1065,7 @@ def _render_stage_review():
 
             # ── Expander: Ricalibra Punteggi ──────────────────────────────────
             if mostra_punteggi and n_blocks > 0:
-                with st.expander("⚖️ Ricalibra Punteggi", expanded=False):
+                with st.expander("Ricalibra Punteggi", expanded=False):
                     st.markdown(
                         '<div style="font-size:.74rem;color:' + T["text2"] + ';margin-bottom:.7rem;'
                         'font-family:DM Sans,sans-serif;line-height:1.45;">'
@@ -1134,8 +1135,8 @@ def _render_stage_review():
                     st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
 
                     if st.button(
-                        "✅ Applica Punteggi e Rigenera PDF" if _ok else
-                        f"⛔ Applica Punteggi (somma: {_somma} ≠ {punti_totali} pt)",
+                        "Applica Punteggi e Rigenera PDF" if _ok else
+                        f"Applica Punteggi (somma: {_somma} ≠ {punti_totali} pt)",
                         key="rc_applica",
                         disabled=not _ok,
                         use_container_width=True,
@@ -1237,7 +1238,7 @@ def _render_stage_review():
         if _is_score_req:
             st.warning(
                 "⚠️ **Hai menzionato punteggi / punti.**\n\n"
-                "Per modificare i punti usa il pannello **⚖️ Ricalibra Punteggi** "
+                "Per modificare i punti usa il pannello **Ricalibra Punteggi** "
                 "qui sopra — imposta i valori desiderati e premi **Applica Punteggi**. "
                 "Il pannello AI è riservato alle modifiche al contenuto (testo, difficoltà, formato)."
             )
