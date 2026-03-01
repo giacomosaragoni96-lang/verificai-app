@@ -98,12 +98,12 @@ THEMES = {
 
 # ── Etichette leggibili per il menu a tendina ──────────────────────────────────
 THEME_LABELS = {
-    "slate_carbon": "🌙  Scuro (Slate Carbon)",
-    "chiaro":       "☀️  Chiaro (Arctic Blue)",
+    "chiaro":       "☀️  Chiaro",
+    "slate_carbon": "🌙  Scuro",
 }
 
 # Tema predefinito all'avvio
-DEFAULT_THEME = "slate_carbon"
+DEFAULT_THEME = "chiaro"
 
 # ── SCUOLE E CALIBRAZIONE ──────────────────────────────────────────────────────
 SCUOLE = [
