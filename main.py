@@ -536,6 +536,7 @@ if "qa_result"            not in st.session_state: st.session_state.qa_result = 
 if "qa_file_hash"         not in st.session_state: st.session_state.qa_file_hash = None
 # Preferenze docente (caricate da Supabase)
 if "_docente_prefs"       not in st.session_state: st.session_state._docente_prefs = {}
+if "_facsimile_mode"      not in st.session_state: st.session_state["_facsimile_mode"] = False
 
 # ── Flag Mathpix (configurato solo se entrambe le chiavi sono in secrets) ─────
 _MATHPIX_OK = (
@@ -943,8 +944,9 @@ def _consolida_info():
 
 def _render_bivio():
     """
-    Landing page: scelta tra Percorso A (Ho materiale) e Percorso B (Parti da zero).
-    Include link QA discreto.
+    Landing page: scelta tra Percorso A (Ho materiale), Percorso B (Parti da zero),
+    e Facsimile Istantaneo (carica verifica → genera bozza variante).
+    I box descrizione SONO i pulsanti (via CSS overlay).
     """
     st.markdown(
         f'<div style="text-align:center;padding:.8rem 0 1rem;">'
@@ -959,47 +961,89 @@ def _render_bivio():
         unsafe_allow_html=True
     )
 
+    # CSS per card-button gigante con hover
+    st.markdown(
+        f"""
+        <style>
+        .bivio-btn-wrap {{position:relative;}}
+        .bivio-btn-wrap button[kind="primary"],
+        .bivio-btn-wrap button[kind="secondary"] {{
+            position:absolute!important;inset:0!important;
+            width:100%!important;height:100%!important;
+            opacity:0!important;cursor:pointer!important;
+            z-index:10!important;
+        }}
+        .bivio-card {{
+            background:{T["card"]};
+            border:2px solid {T["border2"]};
+            border-radius:20px;
+            padding:1.8rem 1.5rem 1.5rem;
+            min-height:260px;
+            display:flex;flex-direction:column;gap:.6rem;
+            cursor:pointer;
+            transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+            position:relative;
+        }}
+        .bivio-card:hover {{
+            transform:scale(1.035);
+            box-shadow:0 12px 40px {T["accent"]}33;
+            border-color:{T["accent"]}88;
+        }}
+        .bivio-card.primary {{
+            background:linear-gradient(145deg,{T["accent_light"]} 0%,{T["card"]} 60%);
+            border-color:{T["accent"]};
+            box-shadow:0 4px 24px {T["accent"]}22;
+        }}
+        .bivio-card.primary:hover {{
+            transform:scale(1.04);
+            box-shadow:0 16px 48px {T["accent"]}44;
+        }}
+        .bivio-badge {{
+            position:absolute;top:-.8rem;left:1.1rem;
+            background:{T["accent"]};color:#fff;
+            font-size:.62rem;font-weight:800;
+            padding:3px 10px;border-radius:100px;
+            font-family:DM Sans,sans-serif;letter-spacing:.04em;
+        }}
+        .bivio-chip {{
+            font-size:.65rem;background:{T["card2"]};
+            border-radius:5px;padding:2px 8px;color:{T["text2"]};
+            display:inline-block;margin:1px;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
     col_a, col_b = st.columns(2, gap="medium")
 
     # ── Percorso A ────────────────────────────────────────────────────────────
     with col_a:
         st.markdown(
-            f'<div style="background:linear-gradient(145deg,{T["accent_light"]} 0%,{T["card"]} 60%);'
-            f'border:2.5px solid {T["accent"]};border-radius:20px;'
-            f'padding:1.5rem 1.3rem 1.1rem;min-height:240px;position:relative;'
-            f'box-shadow:0 4px 24px {T["accent"]}22;'
-            f'display:flex;flex-direction:column;gap:.55rem;">'
-            # Badge
-            f'<div style="position:absolute;top:-.7rem;left:1.1rem;background:{T["accent"]};'
-            f'color:#fff;font-size:.65rem;font-weight:800;padding:3px 10px;border-radius:100px;'
-            f'font-family:DM Sans,sans-serif;letter-spacing:.04em;">✦ CONSIGLIATO</div>'
-            f'<div style="font-size:2.2rem;margin-bottom:.1rem;">📂</div>'
-            f'<div style="font-size:.98rem;font-weight:900;color:{T["accent"]};'
+            f'<div class="bivio-card primary">'
+            f'<div class="bivio-badge">✦ CONSIGLIATO</div>'
+            f'<div style="font-size:2.4rem;margin-bottom:.1rem;">📂</div>'
+            f'<div style="font-size:1.05rem;font-weight:900;color:{T["accent"]};'
             f'font-family:DM Sans,sans-serif;line-height:1.2;">'
             f'Carica il tuo materiale'
             f'</div>'
-            f'<div style="font-size:.77rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
-            f'line-height:1.55;flex:1;">'
+            f'<div style="font-size:.8rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
+            f'line-height:1.6;flex:1;">'
             f'Hai una verifica precedente, appunti o un capitolo del libro?'
             f'<br><br>'
             f'<span style="color:{T["accent"]};font-weight:700;">'
             f'L\'AI legge il materiale</span> e genera automaticamente una nuova verifica '
             f'nello stesso stile, sullo stesso argomento — o su uno nuovo.'
             f'</div>'
-            f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.2rem;">'
-            f'<span style="font-size:.65rem;background:{T["card2"]};border-radius:5px;'
-            f'padding:2px 8px;color:{T["text2"]};">📝 Verifiche</span>'
-            f'<span style="font-size:.65rem;background:{T["card2"]};border-radius:5px;'
-            f'padding:2px 8px;color:{T["text2"]};">📒 Appunti</span>'
-            f'<span style="font-size:.65rem;background:{T["card2"]};border-radius:5px;'
-            f'padding:2px 8px;color:{T["text2"]};">📚 Libri</span>'
-            f'<span style="font-size:.65rem;background:{T["card2"]};border-radius:5px;'
-            f'padding:2px 8px;color:{T["text2"]};">📷 Foto lavagna</span>'
+            f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.3rem;">'
+            f'<span class="bivio-chip">📝 Verifiche</span>'
+            f'<span class="bivio-chip">📒 Appunti</span>'
+            f'<span class="bivio-chip">📚 Libri</span>'
+            f'<span class="bivio-chip">📷 Foto lavagna</span>'
             f'</div>'
             f'</div>',
             unsafe_allow_html=True
         )
-        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
         if st.button(
             "📂  Ho materiale da caricare →",
             key="btn_percorso_a",
@@ -1013,32 +1057,26 @@ def _render_bivio():
     # ── Percorso B ────────────────────────────────────────────────────────────
     with col_b:
         st.markdown(
-            f'<div style="background:{T["card"]};'
-            f'border:2px solid {T["border2"]};border-radius:20px;'
-            f'padding:1.5rem 1.3rem 1.1rem;min-height:240px;'
-            f'display:flex;flex-direction:column;gap:.55rem;">'
-            f'<div style="font-size:2.2rem;margin-bottom:.1rem;">✍️</div>'
-            f'<div style="font-size:.98rem;font-weight:900;color:{T["text"]};'
+            f'<div class="bivio-card">'
+            f'<div style="font-size:2.4rem;margin-bottom:.1rem;">✍️</div>'
+            f'<div style="font-size:1.05rem;font-weight:900;color:{T["text"]};'
             f'font-family:DM Sans,sans-serif;line-height:1.2;">'
             f'Configurazione manuale'
             f'</div>'
-            f'<div style="font-size:.77rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
-            f'line-height:1.55;flex:1;">'
+            f'<div style="font-size:.8rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
+            f'line-height:1.6;flex:1;">'
             f'Compila tu stesso materia, livello e argomento.'
             f'<br><br>'
             f'Controllo totale su struttura, punteggi e tipi di esercizi — '
             f'<span style="font-weight:700;color:{T["text"]};">nessun upload richiesto.</span>'
             f'</div>'
-            f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.2rem;">'
-            f'<span style="font-size:.65rem;background:{T["card2"]};border-radius:5px;'
-            f'padding:2px 8px;color:{T["text2"]};">⚙️ Configurazione libera</span>'
-            f'<span style="font-size:.65rem;background:{T["card2"]};border-radius:5px;'
-            f'padding:2px 8px;color:{T["text2"]};">🎯 Struttura custom</span>'
+            f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.3rem;">'
+            f'<span class="bivio-chip">⚙️ Configurazione libera</span>'
+            f'<span class="bivio-chip">🎯 Struttura custom</span>'
             f'</div>'
             f'</div>',
             unsafe_allow_html=True
         )
-        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
         if st.button(
             "✍️  Configura manualmente →",
             key="btn_percorso_b",
@@ -1047,25 +1085,46 @@ def _render_bivio():
             st.session_state.input_percorso = "B"
             st.rerun()
 
-    # ── Link QA discreto ─────────────────────────────────────────────────────
-    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+    # ── Facsimile Istantaneo ─────────────────────────────────────────────────
+    st.markdown("<div style='height:.9rem'></div>", unsafe_allow_html=True)
     st.markdown(
-        f'<div style="text-align:center;">'
-        f'<span style="font-size:.73rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
-        f'Hai già una verifica pronta? &nbsp;'
-        f'</span>'
+        f'<div style="text-align:center;font-size:.75rem;font-weight:700;'
+        f'color:{T["muted"]};font-family:DM Sans,sans-serif;margin-bottom:.5rem;">'
+        f'oppure'
         f'</div>',
         unsafe_allow_html=True
     )
-    _qa_c1, _qa_c2, _qa_c3 = st.columns([2, 3, 2])
-    with _qa_c2:
+
+    col_fac1, col_fac2, col_fac3 = st.columns([1, 4, 1])
+    with col_fac2:
+        st.markdown(
+            f'<div class="bivio-card" style="min-height:auto;padding:1.3rem 1.5rem;'
+            f'border:2px dashed {T["border2"]};border-radius:16px;'
+            f'background:linear-gradient(135deg,{T["card2"]} 0%,{T["card"]} 100%);">'
+            f'<div style="display:flex;align-items:center;gap:1rem;">'
+            f'<div style="font-size:2rem;flex-shrink:0;">⚡</div>'
+            f'<div style="flex:1;">'
+            f'<div style="font-size:.95rem;font-weight:900;color:{T["text"]};'
+            f'font-family:DM Sans,sans-serif;margin-bottom:.25rem;">'
+            f'Crea Facsimile Istantaneo'
+            f'</div>'
+            f'<div style="font-size:.77rem;color:{T["text2"]};font-family:DM Sans,sans-serif;line-height:1.5;">'
+            f'Carica una verifica esistente → l\'AI genera subito una variante con dati diversi, '
+            f'pronta per la revisione. <span style="color:{T["accent"]};font-weight:700;">Zero configurazione.</span>'
+            f'</div>'
+            f'</div>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
         if st.button(
-            "🔍 Falla revisionare dall'AI",
-            key="btn_qa_dal_bivio",
+            "⚡ Crea Facsimile da verifica esistente →",
+            key="btn_facsimile_home",
             use_container_width=True,
         ):
-            st.session_state.qa_mode = True
-            st.session_state.input_percorso = "QA"
+            st.session_state.input_percorso = "A"
+            st.session_state["_analisi_rifiuto"] = None
+            st.session_state["_facsimile_mode"] = True
             st.rerun()
 
 
@@ -1076,6 +1135,27 @@ def _render_percorso_a_upload():
     # lista e info usati in tutta la funzione
     lista: list = st.session_state.analisi_docs_list
     info   = st.session_state.info_consolidate
+
+    # ── Facsimile mode banner ─────────────────────────────────────────────────
+    _is_facsimile_mode = st.session_state.get("_facsimile_mode", False)
+    if _is_facsimile_mode:
+        st.markdown(
+            f'<div style="background:linear-gradient(135deg,{T["accent_light"]},{T["card"]});'
+            f'border:2px solid {T["accent"]};border-radius:14px;'
+            f'padding:.75rem 1rem;margin-bottom:.75rem;'
+            f'display:flex;align-items:center;gap:.8rem;">'
+            f'<span style="font-size:1.4rem;">⚡</span>'
+            f'<div>'
+            f'<div style="font-size:.88rem;font-weight:900;color:{T["accent"]};'
+            f'font-family:DM Sans,sans-serif;margin-bottom:.1rem;">Modalità Facsimile Istantaneo</div>'
+            f'<div style="font-size:.74rem;color:{T["text2"]};font-family:DM Sans,sans-serif;line-height:1.4;">'
+            f'Carica la verifica da cui vuoi creare una variante. L\'AI genererà automaticamente '
+            f'un facsimile con dati diversi, pronto per la revisione.'
+            f'</div>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
 
     # ─────────────────────────────────────────────────────────────────────────
     # SEZIONE 0 — Banner onboarding con OCR hint (mostrato solo se lista vuota)
@@ -1156,25 +1236,12 @@ def _render_percorso_a_upload():
     # ─────────────────────────────────────────────────────────────────────────
     _n_file = len(lista)
     _is_light_theme = _is_light_color(T["bg"])
-    st.markdown(
-        f'<div style="background:linear-gradient(135deg,{T["accent"]}12,{T["card"]});'
-        f'border:1.5px solid {T["accent"]}44;border-radius:14px;'
-        f'padding:.75rem 1rem .65rem;margin-bottom:.5rem;">'
-        f'<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.35rem;">'
-        f'<div style="width:8px;height:8px;border-radius:50%;background:{T["accent"]};'
-        f'box-shadow:0 0 6px {T["accent"]}88;flex-shrink:0;"></div>'
-        f'<span style="font-size:.82rem;font-weight:800;color:{T["text"]};'
-        f'font-family:DM Sans,sans-serif;letter-spacing:.01em;">'
-        + ("Aggiungi altro materiale" if _n_file > 0 else "Carica il tuo materiale") +
-        f'</span>'
-        + (f'<span style="font-size:.65rem;color:{T["muted"]};margin-left:auto;">{_n_file} file caricato/i</span>' if _n_file > 0 else "") +
-        f'</div>'
-        f'<p style="font-size:.71rem;color:{T["text2"]};margin:0;line-height:1.5;">'
-        f'Verifiche · Appunti · Capitoli · Foto esercizi · <strong style="color:{T["text"]};">Appunti scritti a mano</strong>'
-        f'&nbsp;|&nbsp; PDF, JPG, PNG — max 10 MB'
-        f'</p></div>',
-        unsafe_allow_html=True
-    )
+    if _n_file > 0:
+        st.markdown(
+            f'<div style="font-size:.75rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
+            f'margin-bottom:.3rem;">{_n_file} file caricato/i — aggiungi altro o prosegui</div>',
+            unsafe_allow_html=True
+        )
 
     # Uploader
     _upload_key = f"file_up_{len(lista)}"
@@ -1466,10 +1533,14 @@ def _render_percorso_a_upload():
             with _cc:
                 if st.button("Usa questo file", key=f"conf_{_i}",
                              use_container_width=True, type="primary"):
+                    # In facsimile mode, auto-force copia_fedele for verifica docs
+                    _mode_to_save = _new_mode
+                    if st.session_state.get("_facsimile_mode") and tipo_doc == "verifica":
+                        _mode_to_save = "copia_fedele"
                     st.session_state.analisi_docs_list[_i]["confirmed"] = True
-                    st.session_state.analisi_docs_list[_i]["file_mode"] = _new_mode
+                    st.session_state.analisi_docs_list[_i]["file_mode"] = _mode_to_save
                     st.session_state.istruzioni_per_file[str(fhash)] = _nuova_istr
-                    st.session_state.file_mode = _new_mode
+                    st.session_state.file_mode = _mode_to_save
                     _consolida_info()
                     st.rerun()
             with _cx:
@@ -1500,38 +1571,6 @@ def _render_percorso_a_upload():
             if _k in st.session_state:
                 del st.session_state[_k]
         st.rerun()
-
-    # ── Barra di gestione file — in fondo alla lista, solo se ci sono file confermati ──
-    _file_confermati = [e for e in lista if e["confirmed"]]
-    if _file_confermati and len(_file_confermati) > 0:
-        st.markdown(
-            f'<div style="background:{T["bg2"]};border:1px solid {T["border"]};'
-            f'border-radius:10px;padding:.45rem .8rem;margin-top:.4rem;'
-            f'display:flex;align-items:center;justify-content:space-between;gap:.75rem;">'
-            f'<span style="font-size:.68rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
-            f'Gestisci file — {len(_file_confermati)} nel pool'
-            f'</span>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-        # Selectbox per scegliere quale file rimuovere
-        _nomi_conf = [f'[{i+1}] {e["file_name"]}' for i, e in enumerate(lista) if e["confirmed"]]
-        _idx_conf  = [i for i, e in enumerate(lista) if e["confirmed"]]
-        if _nomi_conf:
-            _col_sel, _col_rm = st.columns([4, 1], gap="small")
-            with _col_sel:
-                _sel_rm_nome = st.selectbox(
-                    "Seleziona file da rimuovere",
-                    options=_nomi_conf,
-                    label_visibility="collapsed",
-                    key="sel_file_da_rimuovere",
-                )
-            with _col_rm:
-                if st.button("🗑 Rimuovi", key="btn_rm_da_lista",
-                             use_container_width=True):
-                    _rm_pos = _nomi_conf.index(_sel_rm_nome)
-                    _rm_real_idx = _idx_conf[_rm_pos]
-                    _da_rimuovere.append(_rm_real_idx)
 
     # Nessun file ancora
     if not lista:
@@ -1637,7 +1676,7 @@ def _render_percorso_a_upload():
                         _val_materia = _val_materia_sel
 
     # ─────────────────────────────────────────────────────────────────────────
-    # SEZIONE 4 — Note aggiuntive globali
+    # SEZIONE 4+5 — Impostazioni (expander collassabile)
     # ─────────────────────────────────────────────────────────────────────────
     _fmode_prevalente = lista[0]["file_mode"] if lista else "stile_e_struttura"
     _hint_box = {
@@ -1648,88 +1687,86 @@ def _render_percorso_a_upload():
         "esercizio_simile":     "es. Usa dati completamente diversi",
     }.get(_fmode_prevalente, "es. Indica preferenze su tipo esercizi, livello, stile…")
 
-    st.markdown(
-        f'<div style="font-size:.78rem;font-weight:700;color:{T["text"]};'
-        f'font-family:DM Sans,sans-serif;margin-bottom:.2rem;">'
-        f'Note finali per l\'AI <span style="font-weight:400;color:{T["muted"]};">(opzionale)</span>'
-        f'</div>',
-        unsafe_allow_html=True
-    )
-    istruzioni_extra = st.text_area(
-        "Note", placeholder=_hint_box, height=64,
-        label_visibility="collapsed", key="percorso_a_istruzioni",
-    ).strip()
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # SEZIONE 5 — Configurazione rapida (Argomento / Materia / Scuola / Esercizi)
-    # ─────────────────────────────────────────────────────────────────────────
-    _mat_list  = MATERIE + ["Altra materia..."]
-    _mat_idx   = _mat_list.index(_val_materia) if _val_materia in _mat_list else 0
-    _scu_idx   = SCUOLE.index(_val_scuola) if _val_scuola in SCUOLE else 0
-    _es_default = info.get("num_esercizi_rilevati", 4) or 4
-    _es_default = max(1, min(int(_es_default), 15))
-    _es_options = list(range(1, 16))
-    _es_idx     = _es_options.index(_es_default) if _es_default in _es_options else 3
-
-    st.markdown(
-        f'<div style="height:1px;background:{T["border"]};margin:.4rem 0 .55rem;'
-        f'border-radius:1px;"></div>',
-        unsafe_allow_html=True
-    )
-    st.markdown(
-        f'<div style="font-size:.78rem;font-weight:800;color:{T["text"]};'
-        f'font-family:DM Sans,sans-serif;margin-bottom:.4rem;">Parametri verifica</div>',
-        unsafe_allow_html=True
-    )
-
-    # Prima riga: Argomento (full-width o con materia)
-    _col_arg, _col_m = st.columns([3, 2], gap="small")
-    with _col_arg:
-        st.markdown('<div class="opt-label">Argomento della verifica</div>',
-                    unsafe_allow_html=True)
-        _argomento_input = st.text_input(
-            "Argomento",
-            value=_val_argomento or arg_cons,
-            placeholder="es. Equazioni di secondo grado",
-            label_visibility="collapsed",
-            key="sel_argomento_a",
+    with st.expander("⚙️ Impostazioni verifica", expanded=False):
+        st.markdown(
+            f'<div style="font-size:.78rem;font-weight:700;color:{T["text"]};'
+            f'font-family:DM Sans,sans-serif;margin-bottom:.2rem;">'
+            f'Indicazioni aggiuntive per l\'AI <span style="font-weight:400;color:{T["muted"]};">(opzionale)</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        istruzioni_extra = st.text_area(
+            "Note", placeholder=_hint_box, height=72,
+            label_visibility="collapsed", key="percorso_a_istruzioni",
         ).strip()
-        if _argomento_input:
-            _val_argomento = _argomento_input
-    with _col_m:
-        st.markdown('<div class="opt-label">Materia</div>', unsafe_allow_html=True)
-        _sel_m = st.selectbox(
-            "Materia", _mat_list, index=_mat_idx,
-            label_visibility="collapsed", key="sel_materia_a",
-        )
-        materia_scelta = (
-            st.text_input("Scrivi materia:", key="_mat_custom_a",
-                          label_visibility="collapsed").strip() or "Matematica"
-            if _sel_m == "Altra materia..."
-            else (_sel_m or "Matematica")
+
+        st.markdown(
+            f'<div style="height:1px;background:{T["border"]};margin:.55rem 0 .55rem;'
+            f'border-radius:1px;"></div>',
+            unsafe_allow_html=True
         )
 
-    # Seconda riga: Scuola + Esercizi
-    _col_s, _col_n = st.columns(2, gap="small")
-    with _col_s:
-        st.markdown('<div class="opt-label">Tipo di scuola</div>', unsafe_allow_html=True)
-        difficolta = st.selectbox(
-            "Scuola", SCUOLE, index=_scu_idx,
-            label_visibility="collapsed", key="sel_scuola_a",
-        )
-    with _col_n:
-        st.markdown('<div class="opt-label">N° esercizi</div>', unsafe_allow_html=True)
-        num_esercizi = st.selectbox(
-            "Numero esercizi", options=_es_options, index=_es_idx,
-            label_visibility="collapsed", key="sel_num_es_a",
-            format_func=lambda x: f"{x} eserc.",
+        _mat_list  = MATERIE + ["Altra materia..."]
+        _mat_idx   = _mat_list.index(_val_materia) if _val_materia in _mat_list else 0
+        _scu_idx   = SCUOLE.index(_val_scuola) if _val_scuola in SCUOLE else 0
+        _es_default = info.get("num_esercizi_rilevati", 4) or 4
+        _es_default = max(1, min(int(_es_default), 15))
+        _es_options = list(range(1, 16))
+        _es_idx     = _es_options.index(_es_default) if _es_default in _es_options else 3
+
+        st.markdown(
+            f'<div style="font-size:.78rem;font-weight:800;color:{T["text"]};'
+            f'font-family:DM Sans,sans-serif;margin-bottom:.4rem;">Parametri verifica</div>',
+            unsafe_allow_html=True
         )
 
-    # Punteggi (collapsato)
-    mostra_punteggi = True
-    con_griglia     = True
-    punti_totali    = 100
-    with st.expander("Punteggi e griglia di valutazione", expanded=False):
+        # Prima riga: Argomento (full-width o con materia)
+        _col_arg, _col_m = st.columns([3, 2], gap="small")
+        with _col_arg:
+            st.markdown('<div class="opt-label">Argomento della verifica</div>',
+                        unsafe_allow_html=True)
+            _argomento_input = st.text_input(
+                "Argomento",
+                value=_val_argomento or arg_cons,
+                placeholder="es. Equazioni di secondo grado",
+                label_visibility="collapsed",
+                key="sel_argomento_a",
+            ).strip()
+            if _argomento_input:
+                _val_argomento = _argomento_input
+        with _col_m:
+            st.markdown('<div class="opt-label">Materia</div>', unsafe_allow_html=True)
+            _sel_m = st.selectbox(
+                "Materia", _mat_list, index=_mat_idx,
+                label_visibility="collapsed", key="sel_materia_a",
+            )
+            materia_scelta = (
+                st.text_input("Scrivi materia:", key="_mat_custom_a",
+                              label_visibility="collapsed").strip() or "Matematica"
+                if _sel_m == "Altra materia..."
+                else (_sel_m or "Matematica")
+            )
+
+        # Seconda riga: Scuola + Esercizi
+        _col_s, _col_n = st.columns(2, gap="small")
+        with _col_s:
+            st.markdown('<div class="opt-label">Tipo di scuola</div>', unsafe_allow_html=True)
+            difficolta = st.selectbox(
+                "Scuola", SCUOLE, index=_scu_idx,
+                label_visibility="collapsed", key="sel_scuola_a",
+            )
+        with _col_n:
+            st.markdown('<div class="opt-label">N° esercizi</div>', unsafe_allow_html=True)
+            num_esercizi = st.selectbox(
+                "Numero esercizi", options=_es_options, index=_es_idx,
+                label_visibility="collapsed", key="sel_num_es_a",
+                format_func=lambda x: f"{x} eserc.",
+            )
+
+        # Punteggi
+        mostra_punteggi = True
+        con_griglia     = True
+        punti_totali    = 100
         _tog = st.toggle("Aggiungi punteggi e griglia", value=True, key="toggle_punteggi_a")
         mostra_punteggi = _tog
         con_griglia     = _tog
@@ -1744,19 +1781,25 @@ def _render_percorso_a_upload():
             )
 
     # ─────────────────────────────────────────────────────────────────────────
-    # SEZIONE 5b — Esercizi personalizzati da file (se rilevati)
+    # SEZIONE 5b — Esercizi personalizzati da file (se rilevati, solo per modi non-facsimile)
     # ─────────────────────────────────────────────────────────────────────────
     # Raccoglie tutti gli esercizi trovati dai file confermati
+    # SKIP esercizi se tutti i file sono in modalità facsimile (copia_fedele)
+    _tutti_facsimile = all(
+        e["file_mode"] == "copia_fedele" for e in lista if e["confirmed"]
+    ) if lista else False
+
     _tutti_esercizi_trovati = []
-    for _entry in lista:
-        if _entry["confirmed"] and _entry["file_mode"] not in ("ignora",):
-            _es_list = _entry["analisi"].get("esercizi_trovati") or []
-            for _ex in _es_list:
-                _tutti_esercizi_trovati.append({
-                    "file_name": _entry["file_name"],
-                    "file_hash": _entry["file_hash"],
-                    "esercizio": _ex,
-                })
+    if not _tutti_facsimile:
+        for _entry in lista:
+            if _entry["confirmed"] and _entry["file_mode"] not in ("ignora",):
+                _es_list = _entry["analisi"].get("esercizi_trovati") or []
+                for _ex in _es_list:
+                    _tutti_esercizi_trovati.append({
+                        "file_name": _entry["file_name"],
+                        "file_hash": _entry["file_hash"],
+                        "esercizio": _ex,
+                    })
 
     if _tutti_esercizi_trovati:
         # Recupera quanti sono già stati marcati per inclusione
@@ -1961,6 +2004,7 @@ def _render_percorso_a_upload():
         if st.button("← Cambia percorso", key="btn_back_a_upload",
                      use_container_width=True):
             _reset_percorso()
+            st.session_state["_facsimile_mode"] = False
             st.rerun()
 
 
@@ -1981,154 +2025,7 @@ def _render_percorso_b_form():
     Percorso B: form tradizionale pulito, senza upload.
     Restituisce tutti i parametri necessari a genera_verifica().
     """
-    # ── IDEA #8: Template Gallery ─────────────────────────────────────────────
-    _TEMPLATES = [
-        {
-            "id": "classico_misto",
-            "nome": "Classico Misto",
-            "icon": "📝",
-            "desc": "Struttura bilanciata: aperto + scelta multipla + V/F",
-            "materie": ["Tutte"],
-            "esercizi": [
-                {"tipo": "Aperto",          "desc": "Problema/domanda aperta",        "items": 3},
-                {"tipo": "Scelta multipla", "desc": "4 domande a risposta chiusa",    "items": 4},
-                {"tipo": "Vero/Falso",      "desc": "Serie affermazioni V/F",         "items": 5},
-            ],
-        },
-        {
-            "id": "stem_calcolo",
-            "nome": "STEM — Calcolo",
-            "icon": "🧮",
-            "desc": "Per Matematica, Fisica, Chimica: esercizi numerici",
-            "materie": ["Matematica", "Fisica", "Chimica"],
-            "esercizi": [
-                {"tipo": "Aperto", "desc": "Esercizio numerico con sottopunti",  "items": 4},
-                {"tipo": "Aperto", "desc": "Problema applicativo",               "items": 3},
-                {"tipo": "Aperto", "desc": "Dimostrare / Verificare",            "items": 2},
-            ],
-        },
-        {
-            "id": "letterario",
-            "nome": "Letterario/Umanistico",
-            "icon": "📖",
-            "desc": "Analisi testuale, comprensione, produzione scritta",
-            "materie": ["Italiano", "Storia", "Filosofia", "Latino", "Greco"],
-            "esercizi": [
-                {"tipo": "Aperto",          "desc": "Comprensione testo",            "items": 3},
-                {"tipo": "Aperto",          "desc": "Analisi / commento",            "items": 3},
-                {"tipo": "Completamento",   "desc": "Completamento lacune",          "items": 5},
-                {"tipo": "Scelta multipla", "desc": "Conoscenze teoriche",           "items": 4},
-            ],
-        },
-        {
-            "id": "breve_bes",
-            "nome": "Verifica Breve BES/DSA",
-            "icon": "🌟",
-            "desc": "Struttura semplificata, esercizi chiari e diretti",
-            "materie": ["Tutte"],
-            "esercizi": [
-                {"tipo": "Vero/Falso",      "desc": "Affermazioni chiave",           "items": 4},
-                {"tipo": "Scelta multipla", "desc": "Domande a risposta guidata",    "items": 3},
-                {"tipo": "Completamento",   "desc": "Riempi gli spazi",              "items": 4},
-            ],
-        },
-        {
-            "id": "interrogazione_orale",
-            "nome": "Traccia Interrogazione",
-            "icon": "🎤",
-            "desc": "Domande per interrogazione orale strutturata",
-            "materie": ["Tutte"],
-            "esercizi": [
-                {"tipo": "Aperto", "desc": "Domanda di apertura (ampia)",  "items": 1},
-                {"tipo": "Aperto", "desc": "Domande di approfondimento",   "items": 3},
-                {"tipo": "Aperto", "desc": "Collegamento interdisciplinare", "items": 1},
-            ],
-        },
-        {
-            "id": "ripasso_veloce",
-            "nome": "Quiz Ripasso",
-            "icon": "⚡",
-            "desc": "Test rapido fine-unità: solo domande chiuse",
-            "materie": ["Tutte"],
-            "esercizi": [
-                {"tipo": "Scelta multipla", "desc": "Domande rapide",     "items": 6},
-                {"tipo": "Vero/Falso",      "desc": "Affermazioni chiave", "items": 6},
-            ],
-        },
-    ]
-
-    # ── Mostra la gallery ─────────────────────────────────────────────────────
-    st.markdown(
-        f'<div class="template-gallery-header">'
-        f'  <div>'
-        f'    <div class="template-gallery-title">📚 Scegli un template — oppure configura liberamente</div>'
-        f'    <div class="template-gallery-sub">'
-        f'      Strutture predefinite per partire subito · Tutte personalizzabili'
-        f'    </div>'
-        f'  </div>'
-        f'</div>',
-        unsafe_allow_html=True
-    )
-
-    _sel_id = st.session_state.get("_template_sel")
-
-    # Grid 3 colonne
-    _rows = [_TEMPLATES[i:i+3] for i in range(0, len(_TEMPLATES), 3)]
-    for _row in _rows:
-        _cols = st.columns(len(_row), gap="small")
-        for _ci, (_col, _tmpl) in enumerate(zip(_cols, _row)):
-            with _col:
-                _is_sel = (_sel_id == _tmpl["id"])
-                _card_class = "template-card selected" if _is_sel else "template-card"
-                _tags_html = "".join(
-                    f'<span class="template-tag">{t}</span>'
-                    for t in _tmpl["materie"][:2]
-                )
-                _es_list = " · ".join(e["tipo"] for e in _tmpl["esercizi"])
-                st.markdown(
-                    f'<div class="{_card_class}">'
-                    f'  <div class="template-icon">{_tmpl["icon"]}</div>'
-                    f'  <div class="template-name">{_tmpl["nome"]}</div>'
-                    f'  <div class="template-meta">{_tmpl["desc"]}</div>'
-                    f'  <div class="template-meta" style="margin-top:.25rem;opacity:.75;">'
-                    f'    {len(_tmpl["esercizi"])} esercizi · {_es_list}'
-                    f'  </div>'
-                    f'  <div class="template-tags">{_tags_html}</div>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-                _btn_label = "✓ Selezionato" if _is_sel else "Usa questo"
-                if st.button(
-                    _btn_label,
-                    key=f"tmpl_btn_{_tmpl['id']}",
-                    use_container_width=True,
-                    type="primary" if _is_sel else "secondary",
-                ):
-                    if _is_sel:
-                        st.session_state._template_sel = None
-                    else:
-                        st.session_state._template_sel = _tmpl["id"]
-                    st.rerun()
-
-    # Mostra badge template selezionato
-    _tmpl_attivo = None
-    if _sel_id:
-        _tmpl_attivo = next((t for t in _TEMPLATES if t["id"] == _sel_id), None)
-    if _tmpl_attivo:
-        _es_count = len(_tmpl_attivo["esercizi"])
-        st.markdown(
-            f'<div class="template-selected-badge">'
-            f'  {_tmpl_attivo["icon"]} Template attivo: <strong>{_tmpl_attivo["nome"]}</strong>'
-            f'  &nbsp;·&nbsp; {_es_count} esercizi predefiniti'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-
-    st.markdown(
-        f'<div style="height:2px;background:{T["border"]};border-radius:100px;'
-        f'margin:.9rem 0 1rem;opacity:.5;"></div>',
-        unsafe_allow_html=True
-    )
+    # ── Nota: template gallery rimossa per semplicità ──────────────────────────
 
     # Indicatore modalità manuale (header compatto)
     st.markdown(
@@ -2202,29 +2099,26 @@ def _render_percorso_b_form():
         height=90, label_visibility="collapsed", key="argomento_area_b",
     ).strip()
 
-    # Numero esercizi + Genera (always visible)
+    # Numero esercizi — slider sopra il pulsante
     st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-    _col_es, _col_btn = st.columns([2, 3], gap="small")
-    _es_options = list(range(1, 16))
-    with _col_es:
-        st.markdown(
-            f'<div class="opt-label" style="margin-bottom:3px;">Numero di esercizi</div>',
-            unsafe_allow_html=True
-        )
-        num_esercizi = st.selectbox(
-            "Numero esercizi", options=_es_options, index=3,
-            label_visibility="collapsed", key="sel_num_es_b",
-            format_func=lambda x: f"{x} esercizi",
-        )
-    with _col_btn:
-        st.markdown('<div style="height:1.65rem"></div>', unsafe_allow_html=True)
-        genera_btn = st.button(
-            "🚀  Genera Bozza",
-            use_container_width=True,
-            type="primary",
-            disabled=_limite,
-            key="genera_btn_b",
-        )
+    st.markdown(
+        f'<div class="opt-label" style="margin-bottom:3px;">Numero di esercizi</div>',
+        unsafe_allow_html=True
+    )
+    num_esercizi = st.slider(
+        "Numero esercizi",
+        min_value=1, max_value=15, value=4,
+        label_visibility="collapsed", key="sel_num_es_b",
+    )
+
+    st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
+    genera_btn = st.button(
+        "🚀  Genera Bozza",
+        use_container_width=True,
+        type="primary",
+        disabled=_limite,
+        key="genera_btn_b",
+    )
 
     if _limite:
         st.markdown(
@@ -3229,7 +3123,158 @@ def _render_stage_final():
             unsafe_allow_html=True
         )
 
-    # ── IDEA #2: One-Click Variant — card prominente ─────────────────────────
+    # ── Pulsanti azione principali con gerarchia ──────────────────────────────
+    st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
+    st.markdown(
+        '<div class="s3-section-title">Azioni rapide</div>',
+        unsafe_allow_html=True
+    )
+
+    # CSS pulsanti gerarchici
+    st.markdown(
+        f"""
+        <style>
+        /* Download PDF — bottone primario XXL */
+        div[data-testid="stDownloadButton"] .dl-hero > button {{
+            font-size:1.05rem!important; font-weight:900!important;
+            padding:1rem 1.5rem!important; border-radius:14px!important;
+            background:linear-gradient(135deg,{T["accent"]},{T["accent"]}cc)!important;
+            box-shadow:0 6px 24px {T["accent"]}44!important;
+            letter-spacing:.01em!important;
+        }}
+        /* Varianti — bottoni secondari */
+        .btn-variant-row button {{
+            font-weight:700!important;border-radius:10px!important;
+            padding:.6rem .8rem!important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # 1. Download PDF Principale — XXL hero button
+    if vA.get("pdf"):
+        _fname_a = arg_str + "_FilaA"
+        st.markdown(
+            f'<div style="background:linear-gradient(135deg,{T["accent"]}18,{T["card"]});'
+            f'border:2px solid {T["accent"]}55;border-radius:16px;padding:1rem 1.2rem;'
+            f'margin-bottom:.7rem;">'
+            f'<div style="font-size:.72rem;font-weight:700;color:{T["accent"]};'
+            f'font-family:DM Sans,sans-serif;letter-spacing:.06em;margin-bottom:.35rem;">'
+            f'⬇ DOWNLOAD PRINCIPALE</div>',
+            unsafe_allow_html=True
+        )
+        st.download_button(
+            label=f"📄  Scarica Verifica PDF  ·  {_stima(vA['pdf'])}",
+            data=vA["pdf"],
+            file_name=_fname_a + ".pdf",
+            mime="application/pdf",
+            use_container_width=True,
+            key="dl_pdf_hero_A",
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # 2. Pulsanti varianti — riga prominente
+    st.markdown(
+        f'<div style="font-size:.72rem;font-weight:700;color:{T["muted"]};'
+        f'font-family:DM Sans,sans-serif;letter-spacing:.05em;margin-bottom:.35rem;">'
+        f'VARIANTI E AGGIUNTE</div>',
+        unsafe_allow_html=True
+    )
+    _vcol1, _vcol2, _vcol3 = st.columns(3, gap="small")
+    with _vcol1:
+        _has_b = bool(vB.get("latex"))
+        if _has_b:
+            if vB.get("pdf"):
+                st.download_button(
+                    f"📄 Fila B · {_stima(vB['pdf'])}",
+                    data=vB["pdf"], file_name=arg_str+"_FilaB.pdf",
+                    mime="application/pdf", use_container_width=True, key="dl_pdf_B_action",
+                )
+        else:
+            if st.button("⚡ Genera Fila B", use_container_width=True, key="gen_var_B_action",
+                         help="Stessa struttura, dati diversi"):
+                with st.spinner("Generazione Fila B…"):
+                    try:
+                        res = _genera_variante("B", mod_id, gp, vA)
+                        st.session_state.verifiche["B"] = {**st.session_state.verifiche["B"], **res}
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Errore: {e}")
+    with _vcol2:
+        _has_r = bool(vR.get("latex"))
+        if _has_r:
+            if vR.get("pdf"):
+                st.download_button(
+                    f"🌟 BES/DSA · {_stima(vR['pdf'])}",
+                    data=vR["pdf"], file_name=arg_str+"_BES_FilaA.pdf",
+                    mime="application/pdf", use_container_width=True, key="dl_pdf_R_action",
+                )
+        else:
+            if st.button("🌟 Genera BES/DSA", use_container_width=True, key="gen_var_R_action"):
+                with st.spinner("Generazione BES/DSA…"):
+                    try:
+                        res = _genera_variante("R", mod_id, gp, vA)
+                        st.session_state.verifiche["R"] = {**st.session_state.verifiche["R"], **res}
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Errore: {e}")
+    with _vcol3:
+        _has_s = bool(vS.get("pdf") or vS.get("testo"))
+        if _has_s:
+            if vS.get("pdf"):
+                st.download_button(
+                    f"✅ Soluzioni · {_stima(vS.get('pdf', b''))}",
+                    data=vS["pdf"], file_name=arg_str+"_Soluzioni.pdf",
+                    mime="application/pdf", use_container_width=True, key="dl_pdf_S_action",
+                )
+        else:
+            if st.button("✅ Genera Soluzioni", use_container_width=True, key="gen_var_S_action"):
+                with st.spinner("Generazione soluzioni…"):
+                    try:
+                        res = _genera_variante("S", mod_id, gp, vA)
+                        st.session_state.verifiche["S"] = {**st.session_state.verifiche["S"], **res}
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Errore: {e}")
+
+    # 3. Nuova verifica / Rivedi — riga secondaria
+    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+    _nav_c1, _nav_c2 = st.columns([1, 1], gap="small")
+    with _nav_c1:
+        if st.button(
+            "🆕 Nuova verifica",
+            type="primary",
+            use_container_width=True,
+            key="btn_new_s3_top",
+        ):
+            st.session_state.stage            = STAGE_INPUT
+            st.session_state["_prev_stage"]   = None
+            st.session_state.verifiche         = {
+                "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
+                "S": {"latex": None, "testo": None, "pdf": None},
+            }
+            st.session_state.review_preamble   = ""
+            st.session_state.review_blocks     = []
+            st.session_state.review_sel_idx    = 0
+            st.session_state.gen_params        = {}
+            st.session_state.preview_images    = []
+            st.session_state.preview_page      = 0
+            st.session_state.esercizi_custom       = []
+            st.session_state._saved_to_storico     = False
+            st.session_state["_es_custom_da_file"] = {}
+            st.session_state.rubrica_testo         = None
+            st.session_state._rubrica_gen          = False
+            st.session_state._template_sel         = None
+            st.session_state._variant_rapida_gen   = False
+            st.session_state["_facsimile_mode"]    = False
+            st.rerun()
+    with _nav_c2:
+        if st.button("← Rivedi esercizi", use_container_width=True, key="btn_rev_s3_top"):
+            st.session_state.stage = STAGE_REVIEW
+            st.rerun()
+
+    st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
     _has_fila_b_already = bool(vB.get("latex"))
     if not _has_fila_b_already:
         st.markdown(
@@ -3444,14 +3489,47 @@ def _render_stage_final():
 
     if st.session_state.rubrica_testo:
         # Rubrica già generata — mostrala
-        import markdown as _md_lib
+        # Inline markdown → HTML (no external 'markdown' package needed)
+        def _md_to_html(text: str) -> str:
+            import re as _re
+            t = text
+            # Headers
+            t = _re.sub(r'^### (.+)$', r'<h3>\1</h3>', t, flags=_re.MULTILINE)
+            t = _re.sub(r'^## (.+)$',  r'<h2>\1</h2>', t, flags=_re.MULTILINE)
+            t = _re.sub(r'^# (.+)$',   r'<h1>\1</h1>', t, flags=_re.MULTILINE)
+            # Bold / italic
+            t = _re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', t)
+            t = _re.sub(r'\*(.+?)\*',     r'<em>\1</em>', t)
+            # Tables: detect lines with |
+            lines = t.split('\n')
+            out = []
+            in_table = False
+            for line in lines:
+                if '|' in line and line.strip().startswith('|'):
+                    cells = [c.strip() for c in line.strip().strip('|').split('|')]
+                    if not in_table:
+                        out.append('<table style="width:100%;border-collapse:collapse;font-size:.8rem;">')
+                        in_table = True
+                    if all(set(c) <= set('-: ') for c in cells):
+                        continue  # separator row
+                    row = ''.join(f'<td style="border:1px solid #444;padding:4px 8px;">{c}</td>'
+                                  for c in cells)
+                    out.append(f'<tr>{row}</tr>')
+                else:
+                    if in_table:
+                        out.append('</table>')
+                        in_table = False
+                    out.append(line)
+            if in_table:
+                out.append('</table>')
+            t = '\n'.join(out)
+            # Paragraphs
+            t = _re.sub(r'\n\n+', '</p><p>', t)
+            return '<p>' + t + '</p>'
+
         try:
-            _rubrica_html = _md_lib.markdown(
-                st.session_state.rubrica_testo,
-                extensions=["tables"]
-            )
+            _rubrica_html = _md_to_html(st.session_state.rubrica_testo)
         except Exception:
-            # Fallback: usa il testo raw come preformattato
             _rubrica_html = st.session_state.rubrica_testo.replace("\n", "<br>")
 
         st.markdown(
@@ -3541,85 +3619,12 @@ def _render_stage_final():
                 _rub_ph.empty()
                 st.error(f"Errore generazione rubrica: {_e_rub}")
 
-    # ── Genera Varianti on-demand ──────────────────────────────────────────────
-    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
-    st.markdown(
-        '<div class="s3-section-title">Aggiungi varianti</div>',
-        unsafe_allow_html=True
-    )
-
-    col_v1, col_v2, col_v3 = st.columns(3)
-    with col_v1:
-        has_b = bool(vB.get("latex"))
-        lbl_b = "✓ Fila B" if has_b else "📄 Genera Fila B"
-        if not has_b and st.button(lbl_b, use_container_width=True, key="gen_var_B",
-                                   help="Genera una seconda versione con dati diversi"):
-            with st.spinner("Generazione Fila B…"):
-                try:
-                    res = _genera_variante("B", mod_id, gp, vA)
-                    st.session_state.verifiche["B"] = {**st.session_state.verifiche["B"], **res}
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Errore: {e}")
-
-    with col_v2:
-        has_r = bool(vR.get("latex"))
-        lbl_r = "✓ BES/DSA" if has_r else "🌟 Genera BES/DSA"
-        if not has_r and st.button(lbl_r, use_container_width=True, key="gen_var_R"):
-            with st.spinner("Generazione BES/DSA…"):
-                try:
-                    res = _genera_variante("R", mod_id, gp, vA)
-                    st.session_state.verifiche["R"] = {**st.session_state.verifiche["R"], **res}
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Errore: {e}")
-
-    with col_v3:
-        has_s = bool(vS.get("pdf") or vS.get("testo"))
-        lbl_s = "✓ Soluzioni" if has_s else "✅ Genera Soluzioni"
-        if not has_s and st.button(lbl_s, use_container_width=True, key="gen_var_S"):
-            with st.spinner("Generazione soluzioni…"):
-                try:
-                    res = _genera_variante("S", mod_id, gp, vA)
-                    st.session_state.verifiche["S"] = {**st.session_state.verifiche["S"], **res}
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Errore: {e}")
+    # ── Genera Varianti on-demand (altri formati / docx) ─────────────────────
+    # I pulsanti principali varianti sono già nella sezione Azioni Rapide sopra.
+    # Qui mostriamo gli altri formati download (DOCX, .tex) se disponibili.
 
     # ── Pulsanti di navigazione ────────────────────────────────────────────────
-    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-
-    # "Rivedi esercizi" — riga separata, outline accent
-    st.markdown('<div class="btn-secondary-accent">', unsafe_allow_html=True)
-    if st.button("← Rivedi esercizi", use_container_width=True, key="btn_rev_s3"):
-        st.session_state.stage = STAGE_REVIEW; st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
-
-    # "Nuova verifica" — larghezza piena, primary, in fondo
-    if st.button("🆕 Inizia nuova verifica", type="primary", use_container_width=True, key="btn_new_s3"):
-        st.session_state.stage            = STAGE_INPUT
-        st.session_state["_prev_stage"]   = None  # forza scroll al top
-        st.session_state.verifiche         = {
-            "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
-            "S": {"latex": None, "testo": None, "pdf": None},
-        }
-        st.session_state.review_preamble   = ""
-        st.session_state.review_blocks     = []
-        st.session_state.review_sel_idx    = 0
-        st.session_state.gen_params        = {}
-        st.session_state.preview_images    = []
-        st.session_state.preview_page      = 0
-        st.session_state.esercizi_custom       = []
-        st.session_state._saved_to_storico     = False
-        st.session_state["_es_custom_da_file"] = {}
-        # Reset nuove feature
-        st.session_state.rubrica_testo         = None
-        st.session_state._rubrica_gen          = False
-        st.session_state._template_sel         = None
-        st.session_state._variant_rapida_gen   = False
-        st.rerun()
+    # (già presenti nella sezione Azioni Rapide)
 
     # Link feedback
     st.markdown(
