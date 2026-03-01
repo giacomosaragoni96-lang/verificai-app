@@ -16,6 +16,7 @@ from prompts import (
     prompt_versione_b,
     prompt_versione_ridotta,
     prompt_soluzioni,
+    prompt_analisi_documento,
 )
 
 # prompt_rigenera_blocco potrebbe non essere ancora in prompts.py (deploy graduale)
@@ -749,3 +750,94 @@ def ricompila_da_blocchi(
     """
     corpo = _assembla_corpo_da_blocchi(blocchi)
     return _assembla_e_compila(preambolo, corpo, mostra_punteggi, punti_totali, con_griglia)
+
+
+# ── ANALISI DOCUMENTO CARICATO ───────────────────────────────────────────────────
+
+def analizza_documento_caricato(
+    model,
+    file_bytes: bytes,
+    mime_type: str,
+    mathpix_context: str | None = None,
+    materie_valide: list | None = None,
+) -> dict:
+    """
+    Analizza un documento caricato (immagine o PDF) usando un modello veloce.
+    Estrae: materia, scuola, argomento, stile docente, tipi domande, confidence.
+
+    Parametri
+    ---------
+    model           : istanza GenerativeModel (usare Flash Lite per velocità)
+    file_bytes      : bytes del file da analizzare
+    mime_type       : MIME type (es. 'image/png', 'application/pdf')
+    mathpix_context : testo LaTeX estratto da Mathpix OCR (contestuale, opzionale)
+    materie_valide  : lista di materie accettate (da config.MATERIE)
+
+    Ritorno
+    -------
+    dict con chiavi: materia, scuola, argomento, stile_desc, tipi_domande,
+                     num_item_medi, num_esercizi_rilevati, confidence
+    Può sollevare Exception se il modello fallisce o il JSON non è parsabile.
+    """
+    import json
+
+    if materie_valide is None:
+        materie_valide = [
+            "Matematica", "Fisica", "Chimica", "Biologia", "Italiano",
+            "Storia", "Geografia", "Inglese", "Filosofia", "Informatica",
+        ]
+
+    testo_prompt = prompt_analisi_documento(
+        materie_valide=materie_valide,
+        mathpix_context=mathpix_context,
+    )
+
+    # Componi il messaggio multimodale: testo + file
+    inp = [testo_prompt, {"mime_type": mime_type, "data": file_bytes}]
+
+    try:
+        resp = model.generate_content(inp)
+        raw  = resp.text.strip() if resp.text else ""
+    except Exception as exc:
+        raise Exception(f"Chiamata modello fallita: {exc}") from exc
+
+    # Pulizia: rimuovi eventuali fence ```json ... ```
+    raw = re.sub(r"^```(?:json)?", "", raw, flags=re.MULTILINE).strip()
+    raw = re.sub(r"```$", "", raw, flags=re.MULTILINE).strip()
+
+    # Parsing JSON
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        # Tentativo di estrazione JSON parziale (se il modello ha aggiunto testo)
+        m = re.search(r"\{.*\}", raw, re.DOTALL)
+        if m:
+            try:
+                data = json.loads(m.group(0))
+            except json.JSONDecodeError as exc2:
+                raise Exception(
+                    f"Risposta del modello non è JSON valido: {raw[:200]}"
+                ) from exc2
+        else:
+            raise Exception(f"Nessun JSON trovato nella risposta: {raw[:200]}")
+
+    # Normalizzazione e validazione campi
+    result = {
+        "materia":               data.get("materia") or None,
+        "scuola":                data.get("scuola") or None,
+        "argomento":             data.get("argomento") or None,
+        "stile_desc":            data.get("stile_desc") or None,
+        "tipi_domande":          data.get("tipi_domande") or [],
+        "num_item_medi":         int(data.get("num_item_medi") or 0),
+        "num_esercizi_rilevati": int(data.get("num_esercizi_rilevati") or 0),
+        "confidence":            float(data.get("confidence") or 0.0),
+    }
+
+    # Assicura che la materia sia nella lista valida
+    if result["materia"] and result["materia"] not in materie_valide:
+        result["materia"] = None
+
+    # Clamp confidence
+    result["confidence"] = max(0.0, min(1.0, result["confidence"]))
+
+    return result
