@@ -17,9 +17,9 @@ ADMIN_EMAILS   = {"giacomosaragoni96@gmail.com"}
 #
 #  Routing intelligente per piano:
 #  ┌──────────────────────────────┬────────────────────────────────────────────┐
-#  │ Piano Free                   │ gemini-2.5-flash-lite-preview-06-17        │
-#  │ Piano Pro (umanistiche/ling) │ gemini-2.5-flash-preview-05-20             │
-#  │ Piano Gold / Pro+ STEM       │ gemini-2.5-pro-preview-06-05               │
+#  │ Piano Free                   │ gemini-2.5-flash-lite                      │
+#  │ Piano Pro (umanistiche/ling) │ gemini-2.5-flash                           │
+#  │ Piano Gold / Pro+ STEM       │ gemini-2.5-pro                             │
 #  └──────────────────────────────┴────────────────────────────────────────────┘
 #
 #  Usi speciali (sempre Flash Lite, nessun piano richiesto):
@@ -29,21 +29,21 @@ ADMIN_EMAILS   = {"giacomosaragoni96@gmail.com"}
 #
 MODELLI_DISPONIBILI = {
     "⚡ Flash 2.5 Lite (veloce · Free)": {
-        "id":    "gemini-2.5-flash-lite-preview-06-17",
+        "id":    "gemini-2.5-flash-lite",
         "piano": "free",   # disponibile a tutti
     },
     "⚡ Flash 2.5 (bilanciato · Pro)": {
-        "id":    "gemini-2.5-flash-preview-05-20",
+        "id":    "gemini-2.5-flash",
         "piano": "pro",    # richiede piano Pro
     },
     "🧠 Pro 2.5 (STEM/Gold)": {
-        "id":    "gemini-2.5-pro-preview-06-05",
+        "id":    "gemini-2.5-pro",
         "piano": "gold",   # richiede piano Gold
     },
 }
 
 # ── ID MODELLO rapido usato per task economici (analisi upload, feedback, edit blocco)
-MODEL_FAST_ID = "gemini-2.5-flash-lite-preview-06-17"
+MODEL_FAST_ID = "gemini-2.5-flash-lite"
 
 # ── Materie STEM: usano routing Pro (Gold) se disponibile
 MATERIE_STEM = {
@@ -63,7 +63,7 @@ def get_model_id_per_piano(piano: str, materia: str = "") -> str:
     if piano in ("pro", "admin"):
         return MODELLI_DISPONIBILI["⚡ Flash 2.5 (bilanciato · Pro)"]["id"]
     # Free — sempre Lite
-    return MODEL_FAST_ID
+    return MODEL_FAST_ID  # Free — sempre Lite
 
 # ── TEMI UI ────────────────────────────────────────────────────────────────────
 # Solo 2 temi: Slate Carbon (dark, default) e Arctic Blue (chiaro).
