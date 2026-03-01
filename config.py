@@ -14,20 +14,56 @@ LIMITE_MENSILE = 5
 ADMIN_EMAILS   = {"giacomosaragoni96@gmail.com"}
 
 # ── MODELLI AI ─────────────────────────────────────────────────────────────────
+#
+#  Routing intelligente per piano:
+#  ┌──────────────────────────────┬────────────────────────────────────────────┐
+#  │ Piano Free                   │ gemini-2.5-flash-lite-preview-06-17        │
+#  │ Piano Pro (umanistiche/ling) │ gemini-2.5-flash-preview-05-20             │
+#  │ Piano Gold / Pro+ STEM       │ gemini-2.5-pro-preview-06-05               │
+#  └──────────────────────────────┴────────────────────────────────────────────┘
+#
+#  Usi speciali (sempre Flash Lite, nessun piano richiesto):
+#    - analisi metadati upload (percorso A)
+#    - feedback testuale / messaggi dialogo
+#    - modifica singolo blocco esercizio
+#
 MODELLI_DISPONIBILI = {
-    "⚡ Flash 2.5 Lite (velocissimo)": {
-        "id":  "gemini-2.5-flash-lite",
-        "pro": False,
+    "⚡ Flash 2.5 Lite (veloce · Free)": {
+        "id":    "gemini-2.5-flash-lite-preview-06-17",
+        "piano": "free",   # disponibile a tutti
     },
-    "⚡ Flash 2.5 (bilanciato)": {
-        "id":  "gemini-2.5-flash",
-        "pro": True,
+    "⚡ Flash 2.5 (bilanciato · Pro)": {
+        "id":    "gemini-2.5-flash-preview-05-20",
+        "piano": "pro",    # richiede piano Pro
     },
-    "🧠 Pro 2.5 (massima qualità)": {
-        "id":  "gemini-2.5-pro",
-        "pro": True,
+    "🧠 Pro 2.5 (STEM/Gold)": {
+        "id":    "gemini-2.5-pro-preview-06-05",
+        "piano": "gold",   # richiede piano Gold
     },
 }
+
+# ── ID MODELLO rapido usato per task economici (analisi upload, feedback, edit blocco)
+MODEL_FAST_ID = "gemini-2.5-flash-lite-preview-06-17"
+
+# ── Materie STEM: usano routing Pro (Gold) se disponibile
+MATERIE_STEM = {
+    "Matematica", "Fisica", "Chimica", "Informatica",
+    "Scienze della Terra", "Biologia",
+}
+
+# ── Routing automatico: dato piano + materia → model_id
+def get_model_id_per_piano(piano: str, materia: str = "") -> str:
+    """
+    Restituisce il model_id corretto per piano e materia.
+    piano: "free" | "pro" | "gold" | "admin"
+    """
+    is_stem = materia in MATERIE_STEM
+    if piano == "gold" or (piano == "admin" and is_stem):
+        return MODELLI_DISPONIBILI["🧠 Pro 2.5 (STEM/Gold)"]["id"]
+    if piano in ("pro", "admin"):
+        return MODELLI_DISPONIBILI["⚡ Flash 2.5 (bilanciato · Pro)"]["id"]
+    # Free — sempre Lite
+    return MODEL_FAST_ID
 
 # ── TEMI UI ────────────────────────────────────────────────────────────────────
 # Solo 2 temi: Slate Carbon (dark, default) e Arctic Blue (chiaro).
