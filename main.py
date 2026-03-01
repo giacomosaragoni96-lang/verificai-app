@@ -512,6 +512,8 @@ if "analisi_docs_list"    not in st.session_state: st.session_state.analisi_docs
 if "info_consolidate"     not in st.session_state: st.session_state.info_consolidate = {}
 # Istruzioni per file (key = file_hash → testo istruzione)
 if "istruzioni_per_file"  not in st.session_state: st.session_state.istruzioni_per_file = {}
+# Esercizi personalizzati da file (accumulo durante sessione)
+if "_es_custom_da_file"   not in st.session_state: st.session_state["_es_custom_da_file"] = {}
 # Percorso utente: None | "A" | "B"
 if "input_percorso"       not in st.session_state: st.session_state.input_percorso = None
 # Dialogo conferma Percorso A: None | "in_attesa" | "confermato"
@@ -696,14 +698,6 @@ def _render_qa_section():
     Modalità QA: carica una verifica già preparata e ottieni un report critico.
     Accessibile dal bivio come percorso separato.
     """
-    _back_qa1, _back_qa2 = st.columns([1, 8])
-    with _back_qa1:
-        if st.button("← Indietro", key="btn_back_qa",
-                     help="Torna al menu principale"):
-            st.session_state.qa_mode = False
-            st.session_state.input_percorso = None
-            st.rerun()
-
     st.markdown(
         f'<div style="background:linear-gradient(135deg,{T["card2"]},{T["card"]});'
         f'border:2px solid {T["border2"]};border-radius:14px;'
@@ -794,6 +788,23 @@ def _render_qa_section():
             st.session_state.qa_file_hash = None
             st.rerun()
 
+    # ── Torna al menu (fondo pagina) ─────────────────────────────────────────
+    st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="text-align:center;">'
+        f'<span style="font-size:.72rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
+        f'Vuoi creare una verifica invece di analizzarla?'
+        f'</span></div>',
+        unsafe_allow_html=True
+    )
+    _qa_back_c1, _qa_back_c2, _qa_back_c3 = st.columns([3, 2, 3])
+    with _qa_back_c2:
+        if st.button("← Torna al menu", key="btn_back_qa",
+                     use_container_width=True):
+            st.session_state.qa_mode = False
+            st.session_state.input_percorso = None
+            st.rerun()
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  HELPERS — PERCORSO A/B
@@ -808,6 +819,7 @@ def _reset_percorso():
     st.session_state.analisi_docs_list     = []
     st.session_state.info_consolidate      = {}
     st.session_state.istruzioni_per_file   = {}
+    st.session_state["_es_custom_da_file"] = {}
     st.session_state.esercizio_da_includere = None
     st.session_state.file_ispirazione      = None
     st.session_state.mathpix_context       = None
@@ -1060,19 +1072,12 @@ def _render_percorso_a_upload():
     6. Note aggiuntive globali + configurazione rapida
     7. Bottone Genera Bozza
     """
-    # ── Back link compatto (non un bottone enorme) ────────────────────────────
-    _back_c1, _back_c2 = st.columns([1, 8])
-    with _back_c1:
-        if st.button("← Indietro", key="btn_back_a_upload",
-                     help="Torna alla scelta del percorso"):
-            _reset_percorso()
-            st.rerun()
-
+    # lista e info usati in tutta la funzione
     lista: list = st.session_state.analisi_docs_list
     info   = st.session_state.info_consolidate
 
     # ─────────────────────────────────────────────────────────────────────────
-    # BANNER RIFIUTO (guardrail) — mostrato quando l'ultimo file caricato
+    # BANNER RIFIUTO
     # non era pertinente scolasticamente
     # ─────────────────────────────────────────────────────────────────────────
     _rifiuto = st.session_state.get("_analisi_rifiuto")
@@ -1124,11 +1129,6 @@ def _render_percorso_a_upload():
         key=_upload_key,
         label_visibility="collapsed",
     )
-    with st.expander("📷 Oppure scatta una foto", expanded=False):
-        camera_photo = st.camera_input("Inquadra il foglio", key="camera_input_doc",
-                                       label_visibility="collapsed")
-    if camera_photo is None:
-        camera_photo = st.session_state.get("camera_input_doc")
 
     # Determina file appena caricato
     _new_bytes: bytes | None = None
@@ -1139,14 +1139,6 @@ def _render_percorso_a_upload():
         _new_mime  = file_doc.type or "image/png"
         _new_name  = file_doc.name
         st.session_state.file_ispirazione = file_doc
-    elif camera_photo:
-        _new_bytes = camera_photo.getvalue()
-        _new_mime  = "image/png"
-        _new_name  = "foto_camera.png"
-        import io as _io
-        _cf = _io.BytesIO(_new_bytes); _cf.name = _new_name
-        _cf.type = "image/png"  # type: ignore[attr-defined]
-        st.session_state.file_ispirazione = _cf
 
     # Avvia analisi se file nuovo
     if _new_bytes is not None:
@@ -1194,7 +1186,7 @@ def _render_percorso_a_upload():
 
         if confermato:
             # ── Pill compatta: file confermato ────────────────────────────────
-            _col_pill, _col_x = st.columns([10, 1], gap="small")
+            _col_pill, _col_x = st.columns([11, 1], gap="small")
             with _col_pill:
                 st.markdown(
                     f'<div style="background:{T["card"]};border:1px solid {T["border"]};'
@@ -1212,22 +1204,9 @@ def _render_percorso_a_upload():
                     unsafe_allow_html=True
                 )
             with _col_x:
-                # Bottone × piccolo e discreto
-                st.markdown(
-                    f'<style>.rm-btn-{_i} button{{padding:2px 8px!important;'
-                    f'min-height:0!important;height:28px!important;'
-                    f'font-size:.72rem!important;border-radius:6px!important;'
-                    f'background:transparent!important;'
-                    f'border:1px solid {T["border2"]}!important;'
-                    f'color:{T["muted"]}!important;margin-top:2px;}}'
-                    f'.rm-btn-{_i} button:hover{{border-color:{T["err"]}!important;'
-                    f'color:{T["err"]}!important;}}</style>'
-                    f'<div class="rm-btn-{_i}">',
-                    unsafe_allow_html=True
-                )
-                if st.button("×", key=f"rm_{_i}", help="Rimuovi questo file"):
+                if st.button("✕", key=f"rm_{_i}", help="Rimuovi file",
+                             use_container_width=True):
                     _da_rimuovere.append(_i)
-                st.markdown("</div>", unsafe_allow_html=True)
 
         else:
             # ── Card espansa: MESSAGGIO PROATTIVO AI + scelta modalità ────────
@@ -1356,19 +1335,9 @@ def _render_percorso_a_upload():
                     _consolida_info()
                     st.rerun()
             with _cx:
-                st.markdown(
-                    f'<style>.rmx-btn-{_i} button{{background:transparent!important;'
-                    f'border:1px solid {T["border2"]}!important;color:{T["muted"]}!important;'
-                    f'font-size:.78rem!important;}}'
-                    f'.rmx-btn-{_i} button:hover{{border-color:{T["err"]}!important;'
-                    f'color:{T["err"]}!important;}}</style>'
-                    f'<div class="rmx-btn-{_i}">',
-                    unsafe_allow_html=True
-                )
                 if st.button("🗑 Rimuovi", key=f"rm_{_i}",
                              use_container_width=True):
                     _da_rimuovere.append(_i)
-                st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div style='height:.15rem'></div>", unsafe_allow_html=True)
 
@@ -1571,11 +1540,14 @@ def _render_percorso_a_upload():
         )
 
     # Punteggi (collapsato per non appesantire)
+    # Defaults inizializzati PRIMA dell'expander per evitare NameError se collassato
+    mostra_punteggi = True
+    con_griglia     = True
+    punti_totali    = 100
     with st.expander("📊 Punteggi e griglia di valutazione", expanded=False):
         _tog = st.toggle("Aggiungi punteggi e griglia", value=True, key="toggle_punteggi_a")
         mostra_punteggi = _tog
         con_griglia     = _tog
-        punti_totali    = 100
         if _tog:
             _pt_opts = list(range(10, 105, 5))
             _pt_idx  = _pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts) - 1
@@ -1585,13 +1557,100 @@ def _render_percorso_a_upload():
                 label_visibility="collapsed", key="sel_punti_a",
                 format_func=lambda x: f"{x} pt",
             )
-    # Fallback per scope (se expander non espanso, usa defaults)
-    try:
-        mostra_punteggi
-    except NameError:
-        mostra_punteggi = True
-        con_griglia     = True
-        punti_totali    = 100
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # SEZIONE 5b — Esercizi personalizzati da file (se rilevati)
+    # ─────────────────────────────────────────────────────────────────────────
+    # Raccoglie tutti gli esercizi trovati dai file confermati
+    _tutti_esercizi_trovati = []
+    for _entry in lista:
+        if _entry["confirmed"] and _entry["file_mode"] not in ("ignora",):
+            _es_list = _entry["analisi"].get("esercizi_trovati") or []
+            for _ex in _es_list:
+                _tutti_esercizi_trovati.append({
+                    "file_name": _entry["file_name"],
+                    "file_hash": _entry["file_hash"],
+                    "esercizio": _ex,
+                })
+
+    if _tutti_esercizi_trovati:
+        # Recupera quanti sono già stati marcati per inclusione
+        _es_custom_da_file = st.session_state.get("_es_custom_da_file", {})
+        st.markdown(
+            f'<div style="height:1px;background:{T["border"]};margin:.3rem 0 .6rem;'
+            f'border-radius:1px;"></div>',
+            unsafe_allow_html=True
+        )
+        with st.expander(
+            f"✏️ {len(_tutti_esercizi_trovati)} esercizio/i personalizzato/i rilevato/i dai file",
+            expanded=False,
+        ):
+            st.markdown(
+                f'<div style="font-size:.75rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
+                f'line-height:1.5;padding:.3rem 0 .6rem;">'
+                f'L\'AI ha identificato questi esercizi nei tuoi file. Puoi includerli nella nuova '
+                f'verifica e aggiungere istruzioni specifiche per ognuno.'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+            for _ei, _ex_entry in enumerate(_tutti_esercizi_trovati):
+                _ex      = _ex_entry["esercizio"]
+                _ex_num  = _ex.get("numero", _ei + 1)
+                _ex_tipo = _ex.get("tipo", "Aperto")
+                _ex_testo = _ex.get("testo_breve") or "—"
+                _ex_num_dati = _ex.get("ha_dati_numerici", False)
+                _ex_key_incl = f"incl_es_{_ei}"
+                _ex_key_note = f"note_es_{_ei}"
+                _ex_key_hash = str(_ex_entry["file_hash"]) + f"_{_ei}"
+
+                st.markdown(
+                    f'<div style="background:{T["card2"]};border:1px solid {T["border"]};'
+                    f'border-radius:10px;padding:.55rem .8rem;margin-bottom:.4rem;">'
+                    f'<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">'
+                    f'<span style="font-size:.8rem;font-weight:700;color:{T["accent"]};'
+                    f'font-family:DM Sans,sans-serif;">Esercizio {_ex_num}</span>'
+                    f'<span style="font-size:.63rem;background:{T["accent_light"]};color:{T["accent"]};'
+                    f'border-radius:4px;padding:1px 6px;font-weight:600;">{_ex_tipo}</span>'
+                    + (f'<span style="font-size:.63rem;background:{T["card"]};border-radius:4px;'
+                       f'padding:1px 6px;color:{T["muted"]};">🔢 dati numerici</span>'
+                       if _ex_num_dati else "") +
+                    f'<span style="font-size:.63rem;color:{T["muted"]};margin-left:auto;">'
+                    f'da {_ex_entry["file_name"]}</span>'
+                    f'</div>'
+                    f'<div style="font-size:.76rem;color:{T["text2"]};margin-top:.3rem;'
+                    f'font-family:DM Sans,sans-serif;font-style:italic;">'
+                    f'«{_ex_testo}…»'
+                    f'</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+                _incl = st.toggle(
+                    f"Includi nella verifica",
+                    value=_es_custom_da_file.get(_ex_key_hash, {}).get("includi", False),
+                    key=_ex_key_incl,
+                )
+                if _incl:
+                    _note_es = st.text_area(
+                        "Note per questo esercizio",
+                        value=_es_custom_da_file.get(_ex_key_hash, {}).get("note", ""),
+                        placeholder="es. Rendi i numeri diversi · Aumenta la difficoltà · Aggiungi un sottopunto",
+                        height=60,
+                        label_visibility="visible",
+                        key=_ex_key_note,
+                    ).strip()
+                else:
+                    _note_es = ""
+                # Salva in session state
+                if "_es_custom_da_file" not in st.session_state:
+                    st.session_state["_es_custom_da_file"] = {}
+                st.session_state["_es_custom_da_file"][_ex_key_hash] = {
+                    "includi": _incl,
+                    "note": _note_es,
+                    "testo": _ex_testo,
+                    "tipo": _ex_tipo,
+                    "numero": _ex_num,
+                }
+                st.markdown("<div style='height:.1rem'></div>", unsafe_allow_html=True)
 
     # ─────────────────────────────────────────────────────────────────────────
     # SEZIONE 6 — Pulsante Genera
@@ -1632,6 +1691,22 @@ def _render_percorso_a_upload():
                 _istr_per_file_testi.append(
                     f"[File: {entry['file_name']}] {_istr}"
                 )
+
+        # Aggiungi note esercizi personalizzati da file
+        _es_custom_sel = st.session_state.get("_es_custom_da_file", {})
+        _es_da_includere_note = []
+        for _ex_key, _ex_data in _es_custom_sel.items():
+            if _ex_data.get("includi"):
+                _ex_desc = f"Esercizio {_ex_data['numero']} [{_ex_data['tipo']}]: «{_ex_data['testo']}»"
+                if _ex_data.get("note"):
+                    _ex_desc += f" — Istruzione docente: {_ex_data['note']}"
+                _es_da_includere_note.append(_ex_desc)
+        if _es_da_includere_note:
+            _istr_per_file_testi.append(
+                "ESERCIZI DA INCLUDERE (adattali mantenendo l'argomento della nuova verifica):\n"
+                + "\n".join(f"• {x}" for x in _es_da_includere_note)
+            )
+
         _istruzioni_combinate = "\n".join(_istr_per_file_testi)
         if istruzioni_extra:
             _istruzioni_combinate = (
@@ -1689,6 +1764,15 @@ def _render_percorso_a_upload():
             mathpix_context=st.session_state.get("mathpix_context"),
         )
 
+    # ── Torna indietro — in fondo alla pagina ────────────────────────────────
+    st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
+    _ba1, _ba2, _ba3 = st.columns([3, 2, 3])
+    with _ba2:
+        if st.button("← Cambia percorso", key="btn_back_a_upload",
+                     use_container_width=True):
+            _reset_percorso()
+            st.rerun()
+
 
 def _render_dialogo_conferma():
     """Deprecato — ora tutto in _render_percorso_a_upload()."""
@@ -1707,15 +1791,7 @@ def _render_percorso_b_form():
     Percorso B: form tradizionale pulito, senza upload.
     Restituisce tutti i parametri necessari a genera_verifica().
     """
-    # Back link compatto
-    _back_c1, _back_c2 = st.columns([1, 8])
-    with _back_c1:
-        if st.button("← Indietro", key="btn_back_b",
-                     help="Torna alla scelta del percorso"):
-            st.session_state.input_percorso = None
-            st.rerun()
-
-    # Indicatore modalità manuale
+    # Indicatore modalità manuale (header compatto)
     st.markdown(
         f'<div style="background:{T["card"]};border:1px solid {T["border"]};'
         f'border-radius:10px;padding:.5rem .85rem;margin-bottom:.8rem;'
@@ -1915,6 +1991,15 @@ def _render_percorso_b_form():
             placeholder=NOTE_PLACEHOLDER.get(materia_scelta, ""),
             height=65, key="note_area_b", label_visibility="collapsed",
         )
+
+    # ── Torna indietro — in fondo alla pagina ────────────────────────────────
+    st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
+    _bb1, _bb2, _bb3 = st.columns([3, 2, 3])
+    with _bb2:
+        if st.button("← Cambia percorso", key="btn_back_b",
+                     use_container_width=True):
+            st.session_state.input_percorso = None
+            st.rerun()
 
     return (
         argomento, materia_scelta, difficolta,
@@ -2946,8 +3031,9 @@ def _render_stage_final():
         st.session_state.gen_params        = {}
         st.session_state.preview_images    = []
         st.session_state.preview_page      = 0
-        st.session_state.esercizi_custom   = []
-        st.session_state._saved_to_storico = False
+        st.session_state.esercizi_custom       = []
+        st.session_state._saved_to_storico     = False
+        st.session_state["_es_custom_da_file"] = {}
         st.rerun()
 
     # Link feedback
