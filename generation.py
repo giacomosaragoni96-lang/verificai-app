@@ -859,7 +859,23 @@ def analizza_documento_caricato(
     if materia and materia not in materie_valide:
         materia = None
 
+    # ── Pertinenza — guardrail per file non scolastici ───────────────────────
+    # Default: se il campo manca, assumiamo pertinente=True (safe fallback).
+    pertinente_raw = data.get("pertinente")
+    if isinstance(pertinente_raw, bool):
+        pertinente = pertinente_raw
+    elif isinstance(pertinente_raw, str):
+        pertinente = pertinente_raw.lower() not in ("false", "0", "no")
+    else:
+        pertinente = True  # fallback sicuro
+
+    messaggio_rifiuto   = (data.get("messaggio_rifiuto") or None) if not pertinente else None
+    messaggio_proattivo = (data.get("messaggio_proattivo") or None) if pertinente else None
+
     result = {
+        "pertinente":                pertinente,
+        "messaggio_rifiuto":         messaggio_rifiuto,
+        "messaggio_proattivo":       messaggio_proattivo,
         "tipo_documento":            tipo_doc,
         "materia":                   materia,
         "scuola":                    data.get("scuola") or None,
