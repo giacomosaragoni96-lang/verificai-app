@@ -1817,6 +1817,8 @@ def _lancia_generazione(
                 "scuola": difficolta, "latex_a": ris["A"]["latex"] or None,
                 "latex_b": None, "latex_r": None, "modello": modello_id,
                 "num_esercizi": num_esercizi_totali,
+                "percorso_scelto": st.session_state.get("input_percorso"),
+                "file_mode":       st.session_state.get("file_mode"),
             }).execute()
             st.session_state._storico_refresh += 1
             st.toast("✅ Bozza salvata!", icon="💾")
@@ -2768,3 +2770,4 @@ components.html(
     "</script>",
     height=30
 )
+
