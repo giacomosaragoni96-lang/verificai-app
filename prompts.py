@@ -305,12 +305,18 @@ def prompt_analisi_documento(
 
     return (
         f"Sei un analizzatore esperto di documenti didattici italiani. "
-        f"Ricevi un documento scolastico (verifica, esercizi, appunti, libro).\n"
+        f"Ricevi un file caricato da un docente. La tua PRIMA responsabilità è valutare "
+        f"se il contenuto è PERTINENTE a un contesto scolastico/educativo.\n"
         f"{ctx_block}"
         f"\nRISPONDI ESCLUSIVAMENTE con un oggetto JSON valido — "
         f"nessun testo prima/dopo, nessun markdown, nessun ```json.\n\n"
         f"SCHEMA OBBLIGATORIO (usa null per i campi non determinabili):\n"
         f"{{\n"
+        f'  "pertinente": <true se il documento è scolastico/educativo (verifiche, appunti, libri, esercizi, dispense, schemi, mappe concettuali); false se è completamente estraneo alla scuola (es. ricevute, foto personali, documenti aziendali, menu, ecc.)>,\n'
+        f'  "messaggio_rifiuto": "<SOLO se pertinente=false: messaggio gentile e specifico che spiega perché il file non è riconosciuto come materiale scolastico. Altrimenti null>",\n'
+        f'  "messaggio_proattivo": "<SOLO se pertinente=true: messaggio breve e amichevole in italiano che descrive cosa hai trovato nel documento, '
+        f'es. \'Ho visto che hai caricato una verifica di Matematica sulle equazioni di secondo grado 📐. '
+        f'Come vuoi che usi questo materiale?\'. Max 2 frasi, tono da assistente scolastico.>",\n'
         f'  "tipo_documento": "<una di: verifica, appunti, libro, esercizi_sciolti, misto, altro>",\n'
         f'  "materia": "<una di: {materie_str}, oppure null>",\n'
         f'  "scuola": "<una di: Scuola Media, Liceo Scientifico, Liceo Classico, '
@@ -341,6 +347,8 @@ def prompt_analisi_documento(
         f'  "confidence": <float 0.0-1.0>\n'
         f"}}\n\n"
         f"REGOLE CRITICHE:\n"
+        f"- Valuta 'pertinente' con buon senso: una foto di un quaderno scolastico è pertinente, "
+        f"una foto del menu di un ristorante non lo è.\n"
         f"- 'contenuto_argomento' e 'stile_desc' NON si sovrappongono mai.\n"
         f"- 'contenuto_argomento' = di cosa parla (es. 'equazioni di 2° grado').\n"
         f"- 'stile_desc' = come è strutturato (es. '3 esercizi, 4 sottopunti, punteggi presenti').\n"
