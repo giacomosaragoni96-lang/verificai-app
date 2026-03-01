@@ -289,12 +289,10 @@ def prompt_analisi_documento(
     mathpix_context: str | None = None,
 ) -> str:
     """
-    Prompt per l'estrazione automatica di metadati da un documento caricato.
+    Prompt per l'estrazione avanzata di metadati da un documento caricato.
     Risponde SOLO con JSON — nessun testo extra.
-    Parametri
-    ---------
-    materie_valide  : lista delle materie accettate dall'applicazione
-    mathpix_context : testo LaTeX estratto da Mathpix OCR (opzionale)
+    Schema esteso: tipo_documento, esercizi_trovati[], ha_grafici,
+    modalita_uso_consigliata, separazione netta contenuto/stile.
     """
     materie_str = ", ".join(f'"{m}"' for m in materie_valide)
 
@@ -307,29 +305,49 @@ def prompt_analisi_documento(
 
     return (
         f"Sei un analizzatore esperto di documenti didattici italiani. "
-        f"Ti viene fornito un documento (verifica, esercizi, appunti scolastici).\n"
+        f"Ricevi un documento scolastico (verifica, esercizi, appunti, libro).\n"
         f"{ctx_block}"
-        f"\nANALIZZA il documento e rispondi ESCLUSIVAMENTE con un oggetto JSON valido "
-        f"senza alcun testo prima o dopo, senza markdown, senza ```json.\n\n"
-        f"SCHEMA OBBLIGATORIO (tutte le chiavi devono essere presenti):\n"
+        f"\nRISPONDI ESCLUSIVAMENTE con un oggetto JSON valido — "
+        f"nessun testo prima/dopo, nessun markdown, nessun ```json.\n\n"
+        f"SCHEMA OBBLIGATORIO (usa null per i campi non determinabili):\n"
         f"{{\n"
-        f'  "materia": "<una di: {materie_str}, oppure null se non identificabile>",\n'
-        f'  "scuola": "<una di: Scuola Media, Liceo Scientifico, Liceo Classico, Liceo Linguistico, '
-        f'Istituto Tecnico, Istituto Professionale, Università, oppure null>",\n'
-        f'  "argomento": "<titolo sintetico dell\'argomento principale, max 12 parole, oppure null>",\n'
-        f'  "stile_desc": "<descrizione dello stile del docente in max 15 parole, es. \'Esercizi procedurali diretti, '
-        f'pochi testi applicativi, 3-4 sottopunti per esercizio\'>",\n'
-        f'  "tipi_domande": ["<lista dei tipi trovati tra: Aperto, Scelta multipla, Vero/Falso, Completamento>"],\n'
-        f'  "num_item_medi": <numero intero, media di sottopunti per esercizio, 0 se non determinabile>,\n'
-        f'  "num_esercizi_rilevati": <numero intero di esercizi trovati nel documento, 0 se non determinabile>,\n'
-        f'  "confidence": <float tra 0.0 e 1.0, grado di certezza complessiva dell\'analisi>\n'
+        f'  "tipo_documento": "<una di: verifica, appunti, libro, esercizi_sciolti, misto, altro>",\n'
+        f'  "materia": "<una di: {materie_str}, oppure null>",\n'
+        f'  "scuola": "<una di: Scuola Media, Liceo Scientifico, Liceo Classico, '
+        f'Liceo Linguistico, Istituto Tecnico, Istituto Professionale, Università, oppure null>",\n'
+        f'  "contenuto_argomento": "<SOLO l\'argomento disciplinare trattato, max 12 parole — '
+        f'es. \'parabola e funzione quadratica\'. NON descrivere struttura, SOLO argomento>",\n'
+        f'  "stile_desc": "<SOLO struttura/impaginazione — es. \'4 esercizi aperti, 3 sottopunti, '
+        f'punteggi assenti, linguaggio formale\'. NON menzionare l\'argomento>",\n'
+        f'  "tipi_domande": ["<tipi tra: Aperto, Scelta multipla, Vero/Falso, Completamento>"],\n'
+        f'  "num_item_medi": <int, media sottopunti per esercizio, 0 se n/a>,\n'
+        f'  "num_esercizi_rilevati": <int, numero esercizi trovati, 0 se n/a>,\n'
+        f'  "ha_grafici": <true se contiene grafici, schemi o immagini integrate>,\n'
+        f'  "ha_formule": <true se contiene formule matematiche>,\n'
+        f'  "esercizi_trovati": [\n'
+        f'    {{\n'
+        f'      "numero": <int 1-based>,\n'
+        f'      "testo_breve": "<prime 15 parole del testo, oppure null>",\n'
+        f'      "tipo": "<Aperto|Scelta multipla|Vero/Falso|Completamento>",\n'
+        f'      "ha_dati_numerici": <true se ha numeri specifici riutilizzabili>\n'
+        f'    }}\n'
+        f'  ],\n'
+        f'  "modalita_uso_consigliata": "<una di: '
+        f'stile_e_struttura (copia la forma non il contenuto), '
+        f'base_conoscenza (usa il contenuto come fonte per generare domande), '
+        f'copia_fedele (riproduce fedelmente), '
+        f'difficolta_e_livello (usa solo il livello percepito)>",\n'
+        f'  "motivazione_uso": "<1 frase che spiega il perché della modalità>",\n'
+        f'  "confidence": <float 0.0-1.0>\n'
         f"}}\n\n"
-        f"REGOLE:\n"
-        f"- Se un campo non è determinabile con sufficiente certezza, usa null (non una stringa vuota).\n"
-        f"- confidence < 0.5: documento ambiguo o troppo generico.\n"
-        f"- confidence > 0.85: documento scolastico chiaro con materia e argomento evidenti.\n"
-        f"- NON inventare informazioni non presenti nel documento.\n"
-        f"- SOLO JSON, nessun'altra parola."
+        f"REGOLE CRITICHE:\n"
+        f"- 'contenuto_argomento' e 'stile_desc' NON si sovrappongono mai.\n"
+        f"- 'contenuto_argomento' = di cosa parla (es. 'equazioni di 2° grado').\n"
+        f"- 'stile_desc' = come è strutturato (es. '3 esercizi, 4 sottopunti, punteggi presenti').\n"
+        f"- Se tipo_documento è 'appunti' o 'libro': modalita_uso_consigliata = 'base_conoscenza'.\n"
+        f"- Se tipo_documento è 'verifica': modalita_uso_consigliata default = 'stile_e_struttura'.\n"
+        f"- 'esercizi_trovati' può essere [] se non ci sono esercizi numerati.\n"
+        f"- NON inventare. SOLO JSON."
     )
 
 
