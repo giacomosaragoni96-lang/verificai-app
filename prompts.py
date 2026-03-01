@@ -27,6 +27,7 @@ def prompt_corpo_verifica(
     e_mat: bool,
     titolo_header: str,
     preambolo_fisso: str,
+    mathpix_context: str | None = None,
 ) -> str:
     s_note = (
         f"\n\n═══════════════════════════════════════════\n"
@@ -34,6 +35,29 @@ def prompt_corpo_verifica(
         f"{note_generali.strip()}\n"
         f"═══════════════════════════════════════════\n"
     ) if note_generali.strip() else ""
+
+    # ── CONTESTO MATHPIX OCR ──────────────────────────────────────────────────
+    # Se il docente ha caricato un documento (verifica precedente, libro, appunti)
+    # e Mathpix ha estratto il testo matematico, lo iniettiamo come contesto ad
+    # alta priorità. Il modello deve usarlo come riferimento per stile, struttura
+    # e terminologia — NON copiarlo letteralmente.
+    s_mathpix = (
+        f"\n\n╔══════════════════════════════════════════════════════════╗\n"
+        f"║  DOCUMENTO DI RIFERIMENTO — ESTRATTO DA MATHPIX OCR       ║\n"
+        f"╚══════════════════════════════════════════════════════════╝\n"
+        f"Il docente ha allegato un documento (verifica precedente / libro / appunti).\n"
+        f"Di seguito il suo contenuto matematico estratto con OCR preciso.\n"
+        f"ISTRUZIONI D'USO:\n"
+        f"• Analizza lo STILE degli esercizi (tipologia, livello, formulazione).\n"
+        f"• Usa la stessa TERMINOLOGIA e la stessa struttura grammaticale.\n"
+        f"• Rispetta il LIVELLO DI DIFFICOLTÀ implicito nel documento.\n"
+        f"• NON copiare esercizi pari pari — generane di nuovi ISPIRATI al documento.\n"
+        f"• Se il documento contiene formule/grafici, prendi spunto per i dati.\n\n"
+        f"CONTENUTO OCR:\n"
+        f"{'─' * 60}\n"
+        f"{mathpix_context.strip()}\n"
+        f"{'─' * 60}\n"
+    ) if mathpix_context and mathpix_context.strip() else ""
 
     if mostra_punteggi:
         punti_rule = (
@@ -77,6 +101,7 @@ def prompt_corpo_verifica(
         f"Sei un docente esperto di {materia} e LaTeX. Genera SOLO il corpo degli esercizi "
         f"(senza preambolo, senza \\documentclass, senza \\begin{{document}}) per una verifica su: {argomento}.\n"
         f"{ f'Punti totali da distribuire: {punti_totali} pt.' if mostra_punteggi else ''}\n"
+        f"{s_mathpix}"
         f"{s_note}"
         f"{istruzioni_esercizi}\n"
         f"\nCALIBRAZIONE LIVELLO E TEMPO:\n"
