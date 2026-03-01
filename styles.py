@@ -1535,6 +1535,27 @@ def get_css(T: dict) -> str:
     background: {T['hover']} !important;
   }}
 
+  /* ════ Bottoni RIMUOVI / X — compatti nel layout pill ════ */
+  [data-testid="stHorizontalBlock"] > [data-testid="column"]:last-child > [data-testid="stVerticalBlock"] button,
+  [data-testid="stHorizontalBlock"] > [data-testid="column"]:last-child button[kind="secondary"] {{
+    min-height: 28px !important;
+    max-height: 30px !important;
+    height: 28px !important;
+    padding: 0 7px !important;
+    font-size: .72rem !important;
+    line-height: 1 !important;
+    align-self: center !important;
+    margin-top: 3px !important;
+    background: transparent !important;
+    color: {T['muted']} !important;
+    border: 1px solid {T['border2']} !important;
+    border-radius: 6px !important;
+  }}
+  [data-testid="stHorizontalBlock"] > [data-testid="column"]:last-child button[kind="secondary"]:hover {{
+    border-color: #EF4444 !important;
+    color: #EF4444 !important;
+  }}
+
   /* ════ ZOOM 110% su desktop largo ≥1025px ════ */
   @media (min-width: 1025px) {{
     .block-container {{
