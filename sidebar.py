@@ -46,37 +46,76 @@ def render_sidebar(
             'border-radius:2px;margin-bottom:1rem;opacity:.6;"></div>',
             unsafe_allow_html=True
         )
-        # ── MODELLO AI ────────────────────────────────────────────────────────
+        # ── MODELLO AI — routing per piano ───────────────────────────────────
+        # Admin  → sceglie manualmente qualsiasi modello
+        # Free   → Flash Lite fisso (automatico)
+        # Pro    → Flash, con upgrade a Pro se materia STEM (gold necessario)
+        # Il model_id effettivo viene poi eventualmente aggiornato in main.py
+        # tramite get_model_id_per_piano(piano, materia) al momento della generazione.
         st.markdown('<div class="sidebar-label">Modello AI</div>', unsafe_allow_html=True)
 
+        # Determina piano corrente (admin sovrascrive tutto)
+        _piano = "admin" if is_admin else st.session_state.get("piano_utente", "free")
+
         if is_admin:
+            # Admin: selezione manuale completa
+            _nomi_admin = list(MODELLI_DISPONIBILI.keys())
             _sel_modello = st.selectbox(
                 "modello",
-                list(MODELLI_DISPONIBILI.keys()),
-                label_visibility="collapsed"
+                _nomi_admin,
+                label_visibility="collapsed",
+                key="sb_modello_admin",
             )
             modello_id = MODELLI_DISPONIBILI[_sel_modello]["id"]
-        else:
-            _nomi_display = [
-                k + "  🔒" if v["pro"] else k
-                for k, v in MODELLI_DISPONIBILI.items()
-            ]
-            _sel_display = st.selectbox(
-                "modello", _nomi_display, index=0,
-                label_visibility="collapsed"
+            st.markdown(
+                f'<div style="font-size:0.72rem;color:{T["muted"]};padding:3px 0 0 2px;">'
+                f'🔧 Admin: selezione manuale abilitata.</div>',
+                unsafe_allow_html=True
             )
-            _sel_raw = _sel_display.replace("  🔒", "")
-            _info    = MODELLI_DISPONIBILI[_sel_raw]
-
-            if _info["pro"]:
-                st.markdown(
-                    f'<div style="font-size:0.74rem;color:{T["muted"]};padding:4px 0 2px 2px;'
-                    f'font-family:DM Sans,sans-serif;">🔒 Disponibile solo per gli amministratori.</div>',
-                    unsafe_allow_html=True
-                )
-                modello_id = MODELLI_DISPONIBILI["⚡ Flash 2.5 Lite (velocissimo)"]["id"]
-            else:
-                modello_id = _info["id"]
+        elif _piano == "pro":
+            # Pro: Flash come default, possibilità di scegliere tra Lite e Flash
+            _nomi_pro = [
+                k for k, v in MODELLI_DISPONIBILI.items()
+                if v["piano"] in ("free", "pro")
+            ]
+            _sel_pro = st.selectbox(
+                "modello", _nomi_pro, index=1,   # default Flash
+                label_visibility="collapsed",
+                key="sb_modello_pro",
+            )
+            modello_id = MODELLI_DISPONIBILI[_sel_pro]["id"]
+            st.markdown(
+                f'<div style="font-size:0.72rem;color:{T["muted"]};padding:3px 0 0 2px;">'
+                f'⚡ Piano Pro attivo. Per materie STEM considera il Piano Gold.</div>',
+                unsafe_allow_html=True
+            )
+        elif _piano == "gold":
+            # Gold: accesso completo incluso Pro 2.5
+            _nomi_gold = list(MODELLI_DISPONIBILI.keys())
+            _sel_gold = st.selectbox(
+                "modello", _nomi_gold, index=2,  # default Pro 2.5
+                label_visibility="collapsed",
+                key="sb_modello_gold",
+            )
+            modello_id = MODELLI_DISPONIBILI[_sel_gold]["id"]
+            st.markdown(
+                f'<div style="font-size:0.72rem;color:{T["muted"]};padding:3px 0 0 2px;">'
+                f'🌟 Piano Gold attivo · Gemini 2.5 Pro disponibile.</div>',
+                unsafe_allow_html=True
+            )
+        else:
+            # Free: Flash Lite fisso, non selezionabile
+            _nome_lite = "⚡ Flash 2.5 Lite (veloce · Free)"
+            modello_id = MODELLI_DISPONIBILI[_nome_lite]["id"]
+            st.markdown(
+                f'<div style="background:{T["hint_bg"]};border:1px solid {T["hint_border"]}; '
+                f'border-radius:8px;padding:6px 10px;font-size:0.74rem;color:{T["hint_text"]}; '
+                f'margin:4px 0;font-family:DM Sans,sans-serif;">'
+                f'⚡ <b>Flash 2.5 Lite</b> — Piano Free<br/>'
+                f'<span style="opacity:.8;">Passa al Piano Pro per Flash 2.5 (umanistiche) '
+                f'o Gold per Gemini 2.5 Pro (STEM).</span></div>',
+                unsafe_allow_html=True
+            )
 
         # ── TEMA ──────────────────────────────────────────────────────────────
         if THEMES and THEME_LABELS:
