@@ -510,6 +510,8 @@ if "analisi_doc"          not in st.session_state: st.session_state.analisi_doc 
 if "analisi_docs_list"    not in st.session_state: st.session_state.analisi_docs_list = []
 # Stato info consolidate ricavate da tutti i file
 if "info_consolidate"     not in st.session_state: st.session_state.info_consolidate = {}
+# Istruzioni per file (key = file_hash → testo istruzione)
+if "istruzioni_per_file"  not in st.session_state: st.session_state.istruzioni_per_file = {}
 # Percorso utente: None | "A" | "B"
 if "input_percorso"       not in st.session_state: st.session_state.input_percorso = None
 # Dialogo conferma Percorso A: None | "in_attesa" | "confermato"
@@ -694,10 +696,13 @@ def _render_qa_section():
     Modalità QA: carica una verifica già preparata e ottieni un report critico.
     Accessibile dal bivio come percorso separato.
     """
-    if st.button("← Torna al menu", key="btn_back_qa"):
-        st.session_state.qa_mode = False
-        st.session_state.input_percorso = None
-        st.rerun()
+    _back_qa1, _back_qa2 = st.columns([1, 8])
+    with _back_qa1:
+        if st.button("← Indietro", key="btn_back_qa",
+                     help="Torna al menu principale"):
+            st.session_state.qa_mode = False
+            st.session_state.input_percorso = None
+            st.rerun()
 
     st.markdown(
         f'<div style="background:linear-gradient(135deg,{T["card2"]},{T["card"]});'
@@ -802,6 +807,7 @@ def _reset_percorso():
     st.session_state.analisi_doc           = None
     st.session_state.analisi_docs_list     = []
     st.session_state.info_consolidate      = {}
+    st.session_state.istruzioni_per_file   = {}
     st.session_state.esercizio_da_includere = None
     st.session_state.file_ispirazione      = None
     st.session_state.mathpix_context       = None
@@ -845,6 +851,19 @@ def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str)
         )
         result["file_hash"] = file_hash
         result["file_name"] = file_name
+
+        # ── GUARDRAIL: file non pertinente ────────────────────────────────────
+        if not result.get("pertinente", True):
+            # Segna il documento come non pertinente ma NON lo aggiunge alla lista.
+            # Salviamo il messaggio di rifiuto in un key temporaneo per mostrarlo nell'UI.
+            st.session_state["_analisi_rifiuto"] = {
+                "file_name": file_name,
+                "messaggio": result.get("messaggio_rifiuto")
+                    or "Questo file non sembra materiale scolastico. "
+                       "Carica una verifica, appunti, un capitolo del libro o una foto della lavagna.",
+            }
+            st.rerun()
+
         st.session_state.analisi_doc    = result
         st.session_state.dialogo_stato  = "in_attesa"
         st.session_state.file_mode      = result.get("modalita_uso_consigliata", "stile_e_struttura")
@@ -907,15 +926,14 @@ def _render_bivio():
     Landing page: scelta tra Percorso A (Ho materiale) e Percorso B (Parti da zero).
     Include link QA discreto.
     """
-    # Titolo sezione
     st.markdown(
-        f'<div style="text-align:center;padding:1.2rem 0 .8rem;">'
-        f'<div style="font-size:1.05rem;font-weight:800;color:{T["text"]};'
-        f'font-family:DM Sans,sans-serif;letter-spacing:-.01em;margin-bottom:.3rem;">'
-        f'Come vuoi iniziare?'
+        f'<div style="text-align:center;padding:.8rem 0 1rem;">'
+        f'<div style="font-size:1.1rem;font-weight:900;color:{T["text"]};'
+        f'font-family:DM Sans,sans-serif;letter-spacing:-.02em;margin-bottom:.3rem;">'
+        f'Come vuoi creare la verifica?'
         f'</div>'
         f'<div style="font-size:.8rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
-        f'Scegli il percorso — puoi sempre cambiare idea'
+        f'Scegli il percorso più adatto a te'
         f'</div>'
         f'</div>',
         unsafe_allow_html=True
@@ -926,59 +944,83 @@ def _render_bivio():
     # ── Percorso A ────────────────────────────────────────────────────────────
     with col_a:
         st.markdown(
-            f'<div style="background:linear-gradient(135deg,{T["card2"]} 0%,{T["card"]} 100%);'
-            f'border:2px solid {T["accent"]};border-radius:18px;'
-            f'padding:1.4rem 1.2rem 1rem;min-height:210px;'
-            f'display:flex;flex-direction:column;gap:.5rem;">'
-            f'<div style="font-size:2rem;margin-bottom:.1rem;">📂</div>'
-            f'<div style="font-size:.95rem;font-weight:800;color:{T["accent"]};'
+            f'<div style="background:linear-gradient(145deg,{T["accent_light"]} 0%,{T["card"]} 60%);'
+            f'border:2.5px solid {T["accent"]};border-radius:20px;'
+            f'padding:1.5rem 1.3rem 1.1rem;min-height:240px;position:relative;'
+            f'box-shadow:0 4px 24px {T["accent"]}22;'
+            f'display:flex;flex-direction:column;gap:.55rem;">'
+            # Badge
+            f'<div style="position:absolute;top:-.7rem;left:1.1rem;background:{T["accent"]};'
+            f'color:#fff;font-size:.65rem;font-weight:800;padding:3px 10px;border-radius:100px;'
+            f'font-family:DM Sans,sans-serif;letter-spacing:.04em;">✦ CONSIGLIATO</div>'
+            f'<div style="font-size:2.2rem;margin-bottom:.1rem;">📂</div>'
+            f'<div style="font-size:.98rem;font-weight:900;color:{T["accent"]};'
             f'font-family:DM Sans,sans-serif;line-height:1.2;">'
-            f'Ho materiale da condividere'
+            f'Carica il tuo materiale'
             f'</div>'
-            f'<div style="font-size:.75rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
-            f'line-height:1.5;flex:1;">'
-            f'Carica una verifica precedente, appunti, un capitolo del libro o una foto della lavagna.'
+            f'<div style="font-size:.77rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
+            f'line-height:1.55;flex:1;">'
+            f'Hai una verifica precedente, appunti o un capitolo del libro?'
             f'<br><br>'
-            f'<span style="color:{T["accent"]};font-weight:600;">'
-            f'L\'AI analizzerà il materiale</span>, estrarrà stile e argomento '
-            f'e ti guiderà nella configurazione.'
+            f'<span style="color:{T["accent"]};font-weight:700;">'
+            f'L\'AI legge il materiale</span> e genera automaticamente una nuova verifica '
+            f'nello stesso stile, sullo stesso argomento — o su uno nuovo.'
+            f'</div>'
+            f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.2rem;">'
+            f'<span style="font-size:.65rem;background:{T["card2"]};border-radius:5px;'
+            f'padding:2px 8px;color:{T["text2"]};">📝 Verifiche</span>'
+            f'<span style="font-size:.65rem;background:{T["card2"]};border-radius:5px;'
+            f'padding:2px 8px;color:{T["text2"]};">📒 Appunti</span>'
+            f'<span style="font-size:.65rem;background:{T["card2"]};border-radius:5px;'
+            f'padding:2px 8px;color:{T["text2"]};">📚 Libri</span>'
+            f'<span style="font-size:.65rem;background:{T["card2"]};border-radius:5px;'
+            f'padding:2px 8px;color:{T["text2"]};">📷 Foto lavagna</span>'
             f'</div>'
             f'</div>',
             unsafe_allow_html=True
         )
+        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
         if st.button(
-            "📂  Ho materiale",
+            "📂  Ho materiale da caricare →",
             key="btn_percorso_a",
             use_container_width=True,
             type="primary",
         ):
             st.session_state.input_percorso = "A"
+            st.session_state["_analisi_rifiuto"] = None
             st.rerun()
 
     # ── Percorso B ────────────────────────────────────────────────────────────
     with col_b:
         st.markdown(
             f'<div style="background:{T["card"]};'
-            f'border:2px solid {T["border2"]};border-radius:18px;'
-            f'padding:1.4rem 1.2rem 1rem;min-height:210px;'
-            f'display:flex;flex-direction:column;gap:.5rem;">'
-            f'<div style="font-size:2rem;margin-bottom:.1rem;">✏️</div>'
-            f'<div style="font-size:.95rem;font-weight:800;color:{T["text"]};'
+            f'border:2px solid {T["border2"]};border-radius:20px;'
+            f'padding:1.5rem 1.3rem 1.1rem;min-height:240px;'
+            f'display:flex;flex-direction:column;gap:.55rem;">'
+            f'<div style="font-size:2.2rem;margin-bottom:.1rem;">✍️</div>'
+            f'<div style="font-size:.98rem;font-weight:900;color:{T["text"]};'
             f'font-family:DM Sans,sans-serif;line-height:1.2;">'
-            f'Parti da zero'
+            f'Configurazione manuale'
             f'</div>'
-            f'<div style="font-size:.75rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
-            f'line-height:1.5;flex:1;">'
-            f'Compila il form con materia, livello scolastico e argomento.'
+            f'<div style="font-size:.77rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
+            f'line-height:1.55;flex:1;">'
+            f'Compila tu stesso materia, livello e argomento.'
             f'<br><br>'
-            f'Controllo totale su ogni aspetto della verifica: '
-            f'struttura, punteggi, tipi di esercizi.'
+            f'Controllo totale su struttura, punteggi e tipi di esercizi — '
+            f'<span style="font-weight:700;color:{T["text"]};">nessun upload richiesto.</span>'
+            f'</div>'
+            f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.2rem;">'
+            f'<span style="font-size:.65rem;background:{T["card2"]};border-radius:5px;'
+            f'padding:2px 8px;color:{T["text2"]};">⚙️ Configurazione libera</span>'
+            f'<span style="font-size:.65rem;background:{T["card2"]};border-radius:5px;'
+            f'padding:2px 8px;color:{T["text2"]};">🎯 Struttura custom</span>'
             f'</div>'
             f'</div>',
             unsafe_allow_html=True
         )
+        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
         if st.button(
-            "✏️  Parti da zero",
+            "✍️  Configura manualmente →",
             key="btn_percorso_b",
             use_container_width=True,
         ):
@@ -986,10 +1028,11 @@ def _render_bivio():
             st.rerun()
 
     # ── Link QA discreto ─────────────────────────────────────────────────────
+    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
     st.markdown(
-        f'<div style="text-align:center;margin-top:.9rem;">'
-        f'<span style="font-size:.72rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
-        f'Hai già una verifica pronta?&nbsp;&nbsp;'
+        f'<div style="text-align:center;">'
+        f'<span style="font-size:.73rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
+        f'Hai già una verifica pronta? &nbsp;'
         f'</span>'
         f'</div>',
         unsafe_allow_html=True
@@ -1008,26 +1051,56 @@ def _render_bivio():
 
 def _render_percorso_a_upload():
     """
-    Percorso A — pagina unica multi-file.
-
-    Struttura visiva:
-    1. Area upload (sempre visibile)
-    2. Lista file caricati: ogni file mostra recap + dropdown modalità (se non confermato)
-       oppure solo pill recap (se confermato). Bottone × per rimuovere.
-    3. Info consolidate (argomento + scuola): se mancanti → select obbligatorio.
-    4. Box istruzioni aggiuntive
-    5. Configurazione rapida (materia, n° esercizi, avanzate)
-    6. Bottone Genera Bozza
+    Percorso A — pagina unica multi-file con:
+    1. Guardrail: rifiuto file non scolastici con messaggio gentile
+    2. Messaggio proattivo AI per file pertinenti
+    3. Box istruzioni per file + dropdown modalità
+    4. Lista file confermati (pill compatte)
+    5. Info consolidate + campi mancanti
+    6. Note aggiuntive globali + configurazione rapida
+    7. Bottone Genera Bozza
     """
-    if st.button("← Cambia scelta", key="btn_back_a_upload"):
-        _reset_percorso()
-        st.rerun()
+    # ── Back link compatto (non un bottone enorme) ────────────────────────────
+    _back_c1, _back_c2 = st.columns([1, 8])
+    with _back_c1:
+        if st.button("← Indietro", key="btn_back_a_upload",
+                     help="Torna alla scelta del percorso"):
+            _reset_percorso()
+            st.rerun()
 
-    lista: list = st.session_state.analisi_docs_list  # lista entry multi-file
-    info   = st.session_state.info_consolidate        # info mergeate
+    lista: list = st.session_state.analisi_docs_list
+    info   = st.session_state.info_consolidate
 
     # ─────────────────────────────────────────────────────────────────────────
-    # SEZIONE 1 — Upload (sempre visibile)
+    # BANNER RIFIUTO (guardrail) — mostrato quando l'ultimo file caricato
+    # non era pertinente scolasticamente
+    # ─────────────────────────────────────────────────────────────────────────
+    _rifiuto = st.session_state.get("_analisi_rifiuto")
+    if _rifiuto:
+        st.markdown(
+            f'<div style="background:linear-gradient(135deg,#3B0000,#1C0000);'
+            f'border:2px solid #FF453A;border-radius:14px;'
+            f'padding:1rem 1.2rem;margin-bottom:.8rem;'
+            f'display:flex;align-items:flex-start;gap:.8rem;">'
+            f'<span style="font-size:1.8rem;flex-shrink:0;">🧐</span>'
+            f'<div>'
+            f'<div style="font-size:.88rem;font-weight:800;color:#FF453A;'
+            f'font-family:DM Sans,sans-serif;margin-bottom:.25rem;">'
+            f'File non riconosciuto come materiale scolastico</div>'
+            f'<div style="font-size:.77rem;color:#FFBBB8;font-family:DM Sans,sans-serif;line-height:1.5;">'
+            f'{_rifiuto.get("messaggio", "Carica una verifica, appunti, capitoli del libro o foto della lavagna.")}'
+            f'</div>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        if st.button("✕ Chiudi", key="btn_chiudi_rifiuto",
+                     help="Chiudi questo avviso"):
+            st.session_state["_analisi_rifiuto"] = None
+            st.rerun()
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # SEZIONE 1 — Area Upload
     # ─────────────────────────────────────────────────────────────────────────
     st.markdown(
         f'<div style="background:linear-gradient(135deg,{T["card2"]},{T["card"]});'
@@ -1085,7 +1158,7 @@ def _render_percorso_a_upload():
             # Se arriviamo qui analisi fallita (st.rerun già chiamato in successo)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # SEZIONE 2 — Lista file caricati
+    # SEZIONE 2 — Lista file caricati (confermati + in attesa di conferma)
     # ─────────────────────────────────────────────────────────────────────────
     _OPZIONI_LABEL = {
         "stile_e_struttura":    "📐  Copia solo lo stile",
@@ -1101,17 +1174,19 @@ def _render_percorso_a_upload():
         "esercizi_sciolti":["stile_e_struttura","base_conoscenza","copia_fedele","ignora"],
     }
 
-    _da_rimuovere = []   # indici da rimuovere dopo il loop
+    _da_rimuovere = []
 
     for _i, entry in enumerate(lista):
         a          = entry["analisi"]
         confermato = entry["confirmed"]
         fname      = entry["file_name"]
         fmode      = entry["file_mode"]
+        fhash      = entry["file_hash"]
         tipo_doc   = a.get("tipo_documento", "altro")
         arg_f      = a.get("contenuto_argomento") or ""
         scuola_f   = a.get("scuola") or ""
         materia_f  = a.get("materia") or ""
+        msg_pro    = a.get("messaggio_proattivo") or ""
         _tipo_emoji = {"verifica":"📝","appunti":"📒","libro":"📚",
                        "esercizi_sciolti":"🔢","misto":"🗂️","altro":"📄"}.get(tipo_doc,"📄")
         _mode_label = _OPZIONI_LABEL.get(fmode, fmode)
@@ -1119,32 +1194,49 @@ def _render_percorso_a_upload():
 
         if confermato:
             # ── Pill compatta: file confermato ────────────────────────────────
-            _col_pill, _col_x = st.columns([9, 1], gap="small")
+            _col_pill, _col_x = st.columns([10, 1], gap="small")
             with _col_pill:
                 st.markdown(
                     f'<div style="background:{T["card"]};border:1px solid {T["border"]};'
-                    f'border-radius:9px;padding:.45rem .8rem;'
+                    f'border-radius:9px;padding:.4rem .8rem;'
                     f'display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">'
-                    f'<span style="font-size:.95rem;">{_tipo_emoji}</span>'
-                    f'<span style="font-size:.76rem;font-weight:700;color:{T["text"]};'
-                    f'font-family:DM Sans,sans-serif;">{fname}</span>'
-                    f'<span style="font-size:.65rem;background:{T["accent_light"]};color:{T["accent"]};'
+                    f'<span style="font-size:.9rem;">{_tipo_emoji}</span>'
+                    f'<span style="font-size:.75rem;font-weight:700;color:{T["text"]};'
+                    f'font-family:DM Sans,sans-serif;max-width:160px;overflow:hidden;'
+                    f'text-overflow:ellipsis;white-space:nowrap;">{fname}</span>'
+                    f'<span style="font-size:.63rem;background:{T["accent_light"]};color:{T["accent"]};'
                     f'border-radius:4px;padding:1px 6px;font-weight:700;">{_mode_label}</span>'
-                    + (f'<span style="font-size:.65rem;color:{T["muted"]};margin-left:auto;">'
-                       f'{(arg_f[:35]+"…") if len(arg_f)>35 else arg_f}</span>' if arg_f else "") +
+                    + (f'<span style="font-size:.63rem;color:{T["muted"]};margin-left:auto;">'
+                       f'{(arg_f[:32]+"…") if len(arg_f)>32 else arg_f}</span>' if arg_f else "") +
                     f'</div>',
                     unsafe_allow_html=True
                 )
             with _col_x:
+                # Bottone × piccolo e discreto
+                st.markdown(
+                    f'<style>.rm-btn-{_i} button{{padding:2px 8px!important;'
+                    f'min-height:0!important;height:28px!important;'
+                    f'font-size:.72rem!important;border-radius:6px!important;'
+                    f'background:transparent!important;'
+                    f'border:1px solid {T["border2"]}!important;'
+                    f'color:{T["muted"]}!important;margin-top:2px;}}'
+                    f'.rm-btn-{_i} button:hover{{border-color:{T["err"]}!important;'
+                    f'color:{T["err"]}!important;}}</style>'
+                    f'<div class="rm-btn-{_i}">',
+                    unsafe_allow_html=True
+                )
                 if st.button("×", key=f"rm_{_i}", help="Rimuovi questo file"):
                     _da_rimuovere.append(_i)
+                st.markdown("</div>", unsafe_allow_html=True)
 
         else:
-            # ── Card espansa: in attesa di conferma modalità ──────────────────
+            # ── Card espansa: MESSAGGIO PROATTIVO AI + scelta modalità ────────
             st.markdown(
-                f'<div style="background:{T["card"]};border:1.5px solid {T["border2"]};'
-                f'border-radius:12px;padding:.7rem .9rem;margin-bottom:.2rem;">'
-                f'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">'
+                f'<div style="background:{T["card"]};border:2px solid {T["accent"]}44;'
+                f'border-radius:14px;padding:.8rem 1rem;margin-bottom:.3rem;">'
+
+                # Header file
+                f'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;">'
                 f'<span style="font-size:1rem;">{_tipo_emoji}</span>'
                 f'<span style="font-size:.8rem;font-weight:700;color:{T["text"]};'
                 f'font-family:DM Sans,sans-serif;">{fname}</span>'
@@ -1152,8 +1244,9 @@ def _render_percorso_a_upload():
                 f'border-radius:4px;padding:1px 6px;font-weight:700;margin-left:auto;">'
                 f'{tipo_doc.replace("_"," ").title()}</span>'
                 f'</div>'
-                # Mini chips info rilevate
-                + (f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.5rem;">'
+
+                # Chips info rilevate
+                + (f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.6rem;">'
                    + (f'<span style="font-size:.68rem;background:{T["card2"]};border-radius:5px;'
                       f'padding:2px 7px;color:{T["text2"]};">📚 {materia_f}</span>' if materia_f else "")
                    + (f'<span style="font-size:.68rem;background:{T["card2"]};border-radius:5px;'
@@ -1163,19 +1256,32 @@ def _render_percorso_a_upload():
                       f'text-overflow:ellipsis;white-space:nowrap;">'
                       f'📌 {(arg_f[:40]+"…") if len(arg_f)>40 else arg_f}</span>' if arg_f else "")
                    + f'</div>') +
+
+                # Messaggio proattivo AI
+                + (f'<div style="background:linear-gradient(135deg,{T["hint_bg"]},{T["card"]});'
+                   f'border:1px solid {T["hint_border"]};border-radius:10px;'
+                   f'padding:.55rem .8rem;margin-bottom:.6rem;">'
+                   f'<div style="display:flex;gap:.5rem;align-items:flex-start;">'
+                   f'<span style="font-size:1.05rem;flex-shrink:0;">🤖</span>'
+                   f'<span style="font-size:.78rem;color:{T["hint_text"]};'
+                   f'font-family:DM Sans,sans-serif;line-height:1.5;">'
+                   f'{msg_pro}</span>'
+                   f'</div></div>'
+                   if msg_pro else "") +
+
                 f'</div>',
                 unsafe_allow_html=True
             )
 
-            # Dropdown modalità uso
+            # Dropdown modalità uso (fuori dalla div per evitare layout issues)
             st.markdown(
                 f'<div style="font-size:.75rem;font-weight:600;color:{T["text2"]};'
-                f'margin:.1rem 0 .2rem;">Come usare questo file?</div>',
+                f'margin:.2rem 0 .2rem 0;">Come usare questo file? ✱</div>',
                 unsafe_allow_html=True
             )
             _ops_keys = _OPZIONI_PER_TIPO.get(tipo_doc, _OPZIONI_PER_TIPO["verifica"])
             _ops_labels = [
-                _OPZIONI_LABEL[k] + ("  ✦" if k == _modalita_ai else "")
+                _OPZIONI_LABEL[k] + ("  ✦ consigliato" if k == _modalita_ai else "")
                 for k in _ops_keys
             ]
             _cur_idx_m = _ops_keys.index(fmode) if fmode in _ops_keys else 0
@@ -1191,30 +1297,72 @@ def _render_percorso_a_upload():
                 st.session_state.analisi_docs_list[_i]["file_mode"] = _new_mode
                 st.rerun()
 
-            # Bottoni Conferma / Rimuovi
-            _cc, _cx = st.columns([3, 1], gap="small")
+            # Box istruzioni per file (sotto il messaggio proattivo)
+            st.markdown(
+                f'<div style="font-size:.75rem;font-weight:600;color:{T["text2"]};'
+                f'margin:.4rem 0 .2rem 0;">'
+                f'Istruzioni aggiuntive per questo file <span style="font-weight:400;'
+                f'color:{T["muted"]};">(opzionale)</span></div>',
+                unsafe_allow_html=True
+            )
+            _hint_istr = {
+                "stile_e_struttura":    "es. Mantieni lo stile ma cambia argomento",
+                "copia_fedele":         "es. Crea un facsimile cambiando i dati numerici",
+                "base_conoscenza":      "es. Usa solo i concetti del capitolo 3",
+                "difficolta_e_livello": "es. Calibra la difficoltà per studenti BES",
+                "ignora":               "",
+            }.get(_new_mode, "es. Indica come vuoi usare questo documento…")
+
+            _istr_key = f"istr_file_{fhash}"
+            _cur_istr = st.session_state.istruzioni_per_file.get(str(fhash), "")
+            _nuova_istr = st.text_area(
+                f"Istruzioni file {_i}",
+                value=_cur_istr,
+                placeholder=_hint_istr,
+                height=68,
+                label_visibility="collapsed",
+                key=_istr_key,
+            ).strip()
+            if _nuova_istr != _cur_istr:
+                st.session_state.istruzioni_per_file[str(fhash)] = _nuova_istr
+
+            # Bottoni Conferma / Rimuovi — compatti e inline
+            st.markdown("<div style='height:.25rem'></div>", unsafe_allow_html=True)
+            _cc, _cx, _csp = st.columns([4, 2, 1], gap="small")
             with _cc:
-                if st.button("✓ Confermato", key=f"conf_{_i}", use_container_width=True,
-                             type="primary"):
+                if st.button("✓ Usa questo file", key=f"conf_{_i}",
+                             use_container_width=True, type="primary"):
                     st.session_state.analisi_docs_list[_i]["confirmed"] = True
-                    # Aggiorna file_mode nell'entry
                     st.session_state.analisi_docs_list[_i]["file_mode"] = _new_mode
-                    # Retrocompatibilità slot singolo
+                    # Salva istruzione per file
+                    st.session_state.istruzioni_per_file[str(fhash)] = _nuova_istr
                     st.session_state.file_mode = _new_mode
                     _consolida_info()
                     st.rerun()
             with _cx:
-                if st.button("× Rimuovi", key=f"rm_{_i}", use_container_width=True):
+                st.markdown(
+                    f'<style>.rmx-btn-{_i} button{{background:transparent!important;'
+                    f'border:1px solid {T["border2"]}!important;color:{T["muted"]}!important;'
+                    f'font-size:.78rem!important;}}'
+                    f'.rmx-btn-{_i} button:hover{{border-color:{T["err"]}!important;'
+                    f'color:{T["err"]}!important;}}</style>'
+                    f'<div class="rmx-btn-{_i}">',
+                    unsafe_allow_html=True
+                )
+                if st.button("🗑 Rimuovi", key=f"rm_{_i}",
+                             use_container_width=True):
                     _da_rimuovere.append(_i)
+                st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div style='height:.15rem'></div>", unsafe_allow_html=True)
 
-    # Applica rimozioni (reverse per non spostare indici)
+    # Applica rimozioni
     if _da_rimuovere:
         for _idx in sorted(_da_rimuovere, reverse=True):
+            _fh = str(st.session_state.analisi_docs_list[_idx]["file_hash"])
             st.session_state.analisi_docs_list.pop(_idx)
+            st.session_state.istruzioni_per_file.pop(_fh, None)
         _consolida_info()
-        # Ricalcola analisi_doc dal primo elemento rimasto
         if st.session_state.analisi_docs_list:
             st.session_state.analisi_doc = st.session_state.analisi_docs_list[0]["analisi"]
         else:
@@ -1225,9 +1373,10 @@ def _render_percorso_a_upload():
     # Stop se nessun file ancora
     if not lista:
         st.markdown(
-            f'<div style="text-align:center;padding:1.2rem 1rem;color:{T["muted"]};'
-            f'font-size:.78rem;font-family:DM Sans,sans-serif;">'
-            f'⬆️ Carica un file per iniziare — l\'AI lo analizzerà automaticamente'
+            f'<div style="text-align:center;padding:1.4rem 1rem;color:{T["muted"]};'
+            f'font-size:.78rem;font-family:DM Sans,sans-serif;'
+            f'border:1.5px dashed {T["border"]};border-radius:12px;margin-top:.4rem;">'
+            f'⬆️ Carica un file per iniziare — l\'AI lo analizzerà in pochi secondi'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -1236,7 +1385,7 @@ def _render_percorso_a_upload():
     # Stop se qualche file non è ancora confermato
     _non_conf = [e for e in lista if not e["confirmed"]]
     if _non_conf:
-        return   # attendi conferma modalità prima di mostrare la sezione finale
+        return
 
     # ─────────────────────────────────────────────────────────────────────────
     # SEZIONE 3 — Info consolidate + campi obbligatori mancanti
@@ -1246,31 +1395,34 @@ def _render_percorso_a_upload():
     scuola_cons = info.get("scuola") or ""
     materia_cons = info.get("materia") or ""
 
-    # Chip riepilogo consolidato
+    # Chip riepilogo — "L'AI ha capito:"
     _chips = []
     if materia_cons: _chips.append(f"📚 {materia_cons}")
     if scuola_cons:  _chips.append(f"🏫 {scuola_cons}")
     if arg_cons:     _chips.append(f"📌 {(arg_cons[:45]+'…') if len(arg_cons)>45 else arg_cons}")
+
     if _chips:
         st.markdown(
-            f'<div style="display:flex;flex-wrap:wrap;gap:.35rem;margin:.4rem 0 .6rem;">'
+            f'<div style="margin:.5rem 0 .4rem;">'
+            f'<div style="font-size:.72rem;font-weight:700;color:{T["muted"]};'
+            f'font-family:DM Sans,sans-serif;margin-bottom:.3rem;">💡 Estratto dai file:</div>'
+            f'<div style="display:flex;flex-wrap:wrap;gap:.35rem;">'
             + "".join(
-                f'<span style="font-size:.72rem;background:{T["card"]};border:1px solid {T["border"]};'
-                f'border-radius:6px;padding:3px 9px;color:{T["text2"]};">{c}</span>'
+                f'<span style="font-size:.73rem;background:{T["card"]};border:1px solid {T["border"]};'
+                f'border-radius:6px;padding:3px 10px;color:{T["text2"]};">{c}</span>'
                 for c in _chips
             ) +
-            f'</div>',
+            f'</div></div>',
             unsafe_allow_html=True
         )
 
-    # Divisore
     st.markdown(
-        f'<div style="height:1px;background:{T["border"]};margin:.3rem 0 .8rem;'
+        f'<div style="height:1px;background:{T["border"]};margin:.4rem 0 .7rem;'
         f'border-radius:1px;"></div>',
         unsafe_allow_html=True
     )
 
-    # Campi obbligatori mancanti — mostrati solo se necessari
+    # Campi obbligatori mancanti
     _manca_argomento = not arg_cons
     _manca_scuola    = not scuola_cons
     _manca_materia   = not materia_cons
@@ -1329,12 +1481,12 @@ def _render_percorso_a_upload():
                         _val_materia = _val_materia_sel
 
     # ─────────────────────────────────────────────────────────────────────────
-    # SEZIONE 4 — Box istruzioni aggiuntive
+    # SEZIONE 4 — Note aggiuntive globali
     # ─────────────────────────────────────────────────────────────────────────
-    # Determina file_mode prevalente (primo confermato)
+    # Consolida le istruzioni per-file + campo note globale
     _fmode_prevalente = lista[0]["file_mode"] if lista else "stile_e_struttura"
     _hint_box = {
-        "stile_e_struttura":    "es. Usa lo stile del file ma tratta le equazioni di secondo grado",
+        "stile_e_struttura":    "es. Aumenta la difficoltà degli esercizi aperti",
         "base_conoscenza":      "es. Concentrati sulla definizione e sulle applicazioni pratiche",
         "copia_fedele":         "es. Rendi le domande leggermente più difficili",
         "difficolta_e_livello": "es. L'argomento è la fotosintesi clorofilliana",
@@ -1344,17 +1496,17 @@ def _render_percorso_a_upload():
     st.markdown(
         f'<div style="font-size:.8rem;font-weight:700;color:{T["text"]};'
         f'font-family:DM Sans,sans-serif;margin-bottom:.2rem;">'
-        f'Note aggiuntive <span style="font-weight:400;color:{T["muted"]};">(opzionale)</span>'
+        f'Note finali per l\'AI <span style="font-weight:400;color:{T["muted"]};">(opzionale)</span>'
         f'</div>',
         unsafe_allow_html=True
     )
     istruzioni_extra = st.text_area(
-        "Note", placeholder=_hint_box, height=72,
+        "Note", placeholder=_hint_box, height=68,
         label_visibility="collapsed", key="percorso_a_istruzioni",
     ).strip()
 
     # ─────────────────────────────────────────────────────────────────────────
-    # SEZIONE 5 — Configurazione rapida
+    # SEZIONE 5 — Configurazione rapida (Materia / Scuola / Esercizi)
     # ─────────────────────────────────────────────────────────────────────────
     _mat_list  = MATERIE + ["✏️ Altra materia..."]
     _mat_idx   = _mat_list.index(_val_materia) if _val_materia in _mat_list else 0
@@ -1364,9 +1516,20 @@ def _render_percorso_a_upload():
     _es_options = list(range(1, 16))
     _es_idx     = _es_options.index(_es_default) if _es_default in _es_options else 3
 
+    st.markdown(
+        f'<div style="height:1px;background:{T["border"]};margin:.3rem 0 .6rem;'
+        f'border-radius:1px;"></div>',
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        f'<div style="font-size:.78rem;font-weight:800;color:{T["text"]};'
+        f'font-family:DM Sans,sans-serif;margin-bottom:.4rem;">⚙️ Parametri verifica</div>',
+        unsafe_allow_html=True
+    )
+
     _col_m, _col_s, _col_n = st.columns(3, gap="small")
     with _col_m:
-        st.markdown('<div class="opt-label">Materia</div>', unsafe_allow_html=True)
+        st.markdown('<div class="opt-label">📚 Materia</div>', unsafe_allow_html=True)
         _sel_m = st.selectbox(
             "Materia", _mat_list, index=_mat_idx,
             label_visibility="collapsed", key="sel_materia_a",
@@ -1378,43 +1541,50 @@ def _render_percorso_a_upload():
             else (_sel_m or "Matematica")
         )
     with _col_s:
-        st.markdown('<div class="opt-label">Tipo di scuola</div>', unsafe_allow_html=True)
+        st.markdown('<div class="opt-label">🏫 Tipo di scuola</div>', unsafe_allow_html=True)
         difficolta = st.selectbox(
             "Scuola", SCUOLE, index=_scu_idx,
             label_visibility="collapsed", key="sel_scuola_a",
         )
     with _col_n:
-        st.markdown('<div class="opt-label">N° esercizi</div>', unsafe_allow_html=True)
+        st.markdown('<div class="opt-label">🔢 N° Esercizi</div>', unsafe_allow_html=True)
         num_esercizi = st.selectbox(
             "Numero esercizi", options=_es_options, index=_es_idx,
             label_visibility="collapsed", key="sel_num_es_a",
-            format_func=lambda x: f"{x} esercizi",
+            format_func=lambda x: f"{x} eserc.",
         )
 
-    with st.expander("⚙️ Opzioni avanzate (punteggi, griglia)", expanded=False):
-        _tog = st.toggle("Aggiungi punteggi e griglia di valutazione",
-                         value=True, key="toggle_punteggi_a")
+    # Punteggi (collapsato per non appesantire)
+    with st.expander("📊 Punteggi e griglia di valutazione", expanded=False):
+        _tog = st.toggle("Aggiungi punteggi e griglia", value=True, key="toggle_punteggi_a")
         mostra_punteggi = _tog
         con_griglia     = _tog
         punti_totali    = 100
         if _tog:
             _pt_opts = list(range(10, 105, 5))
+            _pt_idx  = _pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts) - 1
+            st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
             punti_totali = st.selectbox(
-                "Punti totali", options=_pt_opts,
-                index=_pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts)-1,
+                "Punti totali", options=_pt_opts, index=_pt_idx,
                 label_visibility="collapsed", key="sel_punti_a",
                 format_func=lambda x: f"{x} pt",
             )
-
-    st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
+    # Fallback per scope (se expander non espanso, usa defaults)
+    try:
+        mostra_punteggi
+    except NameError:
+        mostra_punteggi = True
+        con_griglia     = True
+        punti_totali    = 100
 
     # ─────────────────────────────────────────────────────────────────────────
-    # SEZIONE 6 — Genera Bozza
+    # SEZIONE 6 — Pulsante Genera
     # ─────────────────────────────────────────────────────────────────────────
-    # Blocca genera se argomento o scuola ancora vuoti
-    _arg_finale   = _val_argomento or arg_cons
-    _scuola_finale = difficolta  # già selezionata sopra
+    _arg_finale = _val_argomento or arg_cons
+    _scuola_finale = difficolta
     _manca_ancora = not _arg_finale
+
+    st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
 
     genera_btn = st.button(
         "🚀  Genera Bozza",
@@ -1437,14 +1607,26 @@ def _render_percorso_a_upload():
         )
 
     if genera_btn and not _limite and not _manca_ancora:
-        # Costruisci analisi_doc consolidata per compila_contesto_generazione
+        # Consolida istruzioni per-file con le note globali
+        _istr_per_file_testi = []
+        for entry in lista:
+            _fh_str = str(entry["file_hash"])
+            _istr = st.session_state.istruzioni_per_file.get(_fh_str, "").strip()
+            if _istr:
+                _istr_per_file_testi.append(
+                    f"[File: {entry['file_name']}] {_istr}"
+                )
+        _istruzioni_combinate = "\n".join(_istr_per_file_testi)
+        if istruzioni_extra:
+            _istruzioni_combinate = (
+                istruzioni_extra + ("\n\n" + _istruzioni_combinate if _istruzioni_combinate else "")
+            )
+
         _ad_merged = dict(st.session_state.info_consolidate)
         if _arg_finale:
             _ad_merged["contenuto_argomento"] = _arg_finale
         st.session_state.analisi_doc = _ad_merged
 
-        # File mode: usa quello del primo file confermato non-ignora,
-        # oppure ignora se tutti sono "ignora"
         _fmode_eff = next(
             (e["file_mode"] for e in lista if e["confirmed"] and e["file_mode"] != "ignora"),
             "ignora"
@@ -1454,7 +1636,7 @@ def _render_percorso_a_upload():
         argomento_gen, note_gen = compila_contesto_generazione(
             analisi=_ad_merged,
             file_mode=_fmode_eff,
-            istruzioni_extra=istruzioni_extra,
+            istruzioni_extra=_istruzioni_combinate,
             argomento_override=_arg_finale if _manca_argomento else None,
         )
         s_es, imgs_es = _build_prompt_esercizi(
@@ -1509,9 +1691,29 @@ def _render_percorso_b_form():
     Percorso B: form tradizionale pulito, senza upload.
     Restituisce tutti i parametri necessari a genera_verifica().
     """
-    if st.button("← Cambia scelta", key="btn_back_b"):
-        st.session_state.input_percorso = None
-        st.rerun()
+    # Back link compatto
+    _back_c1, _back_c2 = st.columns([1, 8])
+    with _back_c1:
+        if st.button("← Indietro", key="btn_back_b",
+                     help="Torna alla scelta del percorso"):
+            st.session_state.input_percorso = None
+            st.rerun()
+
+    # Indicatore modalità manuale
+    st.markdown(
+        f'<div style="background:{T["card"]};border:1px solid {T["border"]};'
+        f'border-radius:10px;padding:.5rem .85rem;margin-bottom:.8rem;'
+        f'display:flex;align-items:center;gap:.6rem;">'
+        f'<span style="font-size:1rem;">✍️</span>'
+        f'<div>'
+        f'<div style="font-size:.8rem;font-weight:700;color:{T["text"]};'
+        f'font-family:DM Sans,sans-serif;">Configurazione manuale</div>'
+        f'<div style="font-size:.68rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
+        f'Compila i campi — nessun upload disponibile in questa modalità</div>'
+        f'</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
     _prev = st.session_state.gen_params or {}
 
