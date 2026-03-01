@@ -54,27 +54,33 @@ def mostra_auth(supabase):
     <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&display=swap');
     html, body, [data-testid="stAppViewContainer"], .stApp {
-        background: #0C0C0B !important;
+        background: #0A0A09 !important;
         font-family: 'DM Sans', sans-serif !important;
+    }
+    [data-testid="stAppViewContainer"]::before {
+        content: '';
+        position: fixed; top: -120px; left: 50%;
+        transform: translateX(-50%);
+        width: 600px; height: 400px;
+        background: radial-gradient(ellipse at center, rgba(201,107,0,.18) 0%, transparent 70%);
+        pointer-events: none; z-index: 0;
     }
     [data-testid="stHeader"], [data-testid="stDecoration"],
     [data-testid="stToolbar"], #MainMenu, footer { display: none !important; }
     .block-container {
-        padding: 0 !important; max-width: 420px !important; margin: 0 auto !important;
+        padding: 0 !important; max-width: 440px !important; margin: 0 auto !important;
     }
     [data-testid="stMainBlockContainer"] { padding: 0 !important; }
-
-    /* Card visiva — gestita tramite stVerticalBlock (vedi sotto) */
-
     [data-testid="stTextInput"] input {
-        background: #1A1916 !important; border: 1.5px solid #2A2926 !important;
+        background: #1C1C1A !important; border: 1.5px solid #2C2C28 !important;
         border-radius: 10px !important; color: #F5F4EF !important;
         font-family: 'DM Sans', sans-serif !important; font-size: 1rem !important;
         padding: 14px 16px !important; min-height: 50px !important;
+        transition: border-color .2s ease, box-shadow .2s ease !important;
     }
     [data-testid="stTextInput"] input:focus {
-        border-color: #D97706 !important;
-        box-shadow: 0 0 0 3px rgba(217,119,6,0.18) !important; outline: none !important;
+        border-color: #C96B00 !important;
+        box-shadow: 0 0 0 3px rgba(201,107,0,0.20) !important; outline: none !important;
     }
     [data-testid="stTextInput"] input::placeholder { color: #4A4840 !important; opacity: 1 !important; }
     [data-testid="stTextInput"] label p {
@@ -82,7 +88,7 @@ def mostra_auth(supabase):
         font-weight: 600 !important; font-family: 'DM Sans', sans-serif !important;
     }
     [data-testid="stTabs"] [data-baseweb="tab-list"] {
-        background: #0F0F0E !important; border-radius: 10px !important;
+        background: #131311 !important; border-radius: 10px !important;
         padding: 4px !important; gap: 2px !important;
         border: 1px solid #2A2926 !important; margin-bottom: 1.2rem !important;
     }
@@ -96,60 +102,69 @@ def mostra_auth(supabase):
     }
     [data-testid="stTabs"] [data-baseweb="tab-highlight"] { display: none !important; }
     div.stButton > button[kind="primary"] {
-        background: linear-gradient(135deg,#0A84FF,#0A6ED4) !important;
-        color: white !important;
-        border: none !important; border-radius: 12px !important;
-        font-weight: 700 !important; font-size: 1rem !important;
-        min-height: 52px !important;
-        box-shadow: 0 2px 24px rgba(10,132,255,0.35) !important;
-        width: 100% !important; transition: filter .15s ease !important;
+        background: linear-gradient(135deg, #C96B00, #D97706) !important;
+        color: white !important; border: none !important;
+        border-radius: 12px !important; font-weight: 800 !important;
+        font-size: 1rem !important; min-height: 52px !important;
+        box-shadow: 0 4px 24px rgba(201,107,0,0.40) !important;
+        width: 100% !important;
+        transition: filter .15s ease, box-shadow .2s ease !important;
+        letter-spacing: .01em !important;
     }
-    div.stButton > button[kind="primary"]:hover { filter: brightness(1.12) !important; }
-
-    /* Card = stVerticalBlockBorderWrapper che contiene tabs + campi */
+    div.stButton > button[kind="primary"]:hover {
+        filter: brightness(1.10) !important;
+        box-shadow: 0 6px 32px rgba(201,107,0,0.55) !important;
+    }
     [data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"] {
-        background: #111110;
-        border-radius: 20px;
-        border: 1px solid #1E1E1C;
-        padding: 1.8rem 1.8rem 1.4rem 1.8rem !important;
-        margin: 0 auto;
-        max-width: 420px;
-        box-shadow: 0 0 0 1px #1E1E1C, 0 20px 60px rgba(0,0,0,.5);
-        /* gradient top border illusion */
+        background: #131311; border-radius: 20px;
+        border: 1px solid #222220;
+        padding: 2rem 2rem 1.6rem 2rem !important;
+        margin: 0 auto; max-width: 440px;
+        box-shadow: 0 0 0 1px #222220, 0 24px 72px rgba(0,0,0,.65);
         position: relative;
     }
     [data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"]::before {
-        content:''; position:absolute; top:0; left:0; right:0; height:2px;
-        background:linear-gradient(90deg,#0A84FF,#10B981);
+        content:\'\'; position:absolute; top:0; left:0; right:0; height:3px;
+        background: linear-gradient(90deg, #C96B00, #D97706, #10B981);
         border-radius:20px 20px 0 0;
     }
+    .login-stat-row { display:flex; justify-content:center; gap:.5rem; margin:.5rem 0 .9rem; flex-wrap:wrap; }
+    .login-stat { background:#1A1916; border:1px solid #2A2926; border-radius:8px;
+        padding:.25rem .65rem; font-size:.65rem; color:#A8A6A0; font-family:'DM Sans',sans-serif;
+        display:flex; align-items:center; gap:.25rem; }
+    .login-stat strong { color:#C96B00; }
     </style>
     """, unsafe_allow_html=True)
 
-    # Logo + tagline + badge features — dentro il card (stVerticalBlock)
     st.markdown("""
-    <div style="text-align:center;padding:.6rem 0 1.4rem 0;">
-      <div style="font-size:2.6rem;font-weight:900;letter-spacing:-0.04em;
-                  color:#F5F4EF;line-height:1;margin-bottom:0.45rem;">
-        Verific<span style="background:linear-gradient(135deg,#0A84FF,#10B981);
+    <div style="text-align:center;padding:.5rem 0 1.3rem 0;">
+      <div style="font-size:2.8rem;font-weight:900;letter-spacing:-0.04em;
+                  color:#F5F4EF;line-height:1;margin-bottom:0.5rem;">
+        Verific<span style="background:linear-gradient(135deg,#C96B00,#D97706);
                             -webkit-background-clip:text;-webkit-text-fill-color:transparent;
                             background-clip:text;">AI</span>
       </div>
-      <p style="font-size:.9rem;color:#8C8A82;margin:0 0 .9rem 0;">
-        Crea <strong style="color:#C8C6BC;">verifiche scolastiche professionali</strong> in secondi.
+      <p style="font-size:.88rem;color:#8C8A82;margin:0 0 .5rem 0;line-height:1.5;">
+        Crea <strong style="color:#C8C6BC;">verifiche scolastiche professionali</strong><br>
+        in <strong style="color:#C96B00;">30 secondi</strong> invece di 45 minuti.
       </p>
-      <div style="display:flex;justify-content:center;gap:.5rem;flex-wrap:wrap;">
-        <span style="font-size:.72rem;color:#A8A6A0;background:#1A1916;
-                     border:1px solid #2A2926;border-radius:20px;padding:.2rem .65rem;">
-          ● Generazione AI
+      <div class="login-stat-row">
+        <div class="login-stat">⚡ <strong>30s</strong>&nbsp;media generazione</div>
+        <div class="login-stat">📊 Rubrica MIM inclusa</div>
+        <div class="login-stat">🌟 BES/DSA automatico</div>
+      </div>
+      <div style="display:flex;justify-content:center;gap:.35rem;flex-wrap:wrap;margin-top:.1rem;">
+        <span style="font-size:.65rem;color:#A8A6A0;background:#1A1916;
+                     border:1px solid #2A2926;border-radius:20px;padding:.15rem .55rem;">
+          ✍️ Scrittura a mano
         </span>
-        <span style="font-size:.72rem;color:#A8A6A0;background:#1A1916;
-                     border:1px solid #2A2926;border-radius:20px;padding:.2rem .65rem;">
-          ● Export PDF e Word
+        <span style="font-size:.65rem;color:#A8A6A0;background:#1A1916;
+                     border:1px solid #2A2926;border-radius:20px;padding:.15rem .55rem;">
+          📚 Template gallery
         </span>
-        <span style="font-size:.72rem;color:#A8A6A0;background:#1A1916;
-                     border:1px solid #2A2926;border-radius:20px;padding:.2rem .65rem;">
-          ● BES / DSA incluso
+        <span style="font-size:.65rem;color:#A8A6A0;background:#1A1916;
+                     border:1px solid #2A2926;border-radius:20px;padding:.15rem .55rem;">
+          ⚡ One-Click Fila B
         </span>
       </div>
     </div>
