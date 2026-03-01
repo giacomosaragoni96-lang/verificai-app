@@ -8,5 +8,4 @@ supabase>=2.7.0
 extra-streamlit-components
 poppler-utils
 streamlit-cookies-controller
-
-
+requests>=2.31.0
