@@ -412,3 +412,135 @@ def prompt_qa_verifica(
         f"- NON riscrivere il testo degli esercizi per intero.\n"
         f"- Il report deve essere leggibile in 2-3 minuti."
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  IDEA #19 — Rubrica di Valutazione AI-Generata
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def prompt_rubrica_valutazione(
+    corpo_latex: str,
+    materia: str,
+    livello: str,
+    punti_totali: int,
+) -> str:
+    """
+    Genera una rubrica di valutazione descrittiva per competenze.
+    Allineata alle Linee Guida MIM sulla valutazione per competenze.
+    Restituisce testo strutturato (NON LaTeX, NON JSON).
+    """
+    return (
+        f"Sei un esperto di didattica e valutazione scolastica italiana. "
+        f"Stai aiutando un docente di {materia} ({livello}) a creare una rubrica "
+        f"di valutazione per competenze per la seguente verifica.\n\n"
+        f"VERIFICA (LaTeX):\n{corpo_latex}\n\n"
+        f"PUNTEGGIO TOTALE: {punti_totali} pt\n\n"
+        f"GENERA una rubrica di valutazione con ESATTAMENTE questo formato:\n\n"
+        f"## Rubrica di Valutazione — {materia}\n\n"
+        f"### Legenda fasce di voto\n"
+        f"Per ogni fascia (4 fasce: Eccellente/Buono/Sufficiente/Insufficiente) scrivi:\n"
+        f"- **[FASCIA] — [range punti] pt — Voto [X/10]**\n"
+        f"  - Comprensione: [indicatore qualitativo in 1 riga]\n"
+        f"  - Applicazione: [indicatore qualitativo in 1 riga]\n"
+        f"  - Esposizione: [indicatore qualitativo in 1 riga]\n\n"
+        f"### Indicatori per esercizio\n"
+        f"Per ogni esercizio rilevato nella verifica:\n"
+        f"**Esercizio N — [titolo breve]** ([X pt])\n"
+        f"- Criterio principale: [cosa valuta questo esercizio in 1 riga]\n"
+        f"- Risposta completa: [descrizione risposta eccellente in 1 riga]\n"
+        f"- Risposta parziale: [cosa costituisce risposta sufficiente in 1 riga]\n\n"
+        f"REGOLE:\n"
+        f"- Range punti fasce: calcola proporzionalmente su {punti_totali} pt totali.\n"
+        f"- Voti: Eccellente=9-10, Buono=7-8, Sufficiente=6, Insufficiente=<6.\n"
+        f"- Linguaggio: professionale, diretto, adatto a docenti italiani.\n"
+        f"- NON riscrivere gli esercizi per intero.\n"
+        f"- NON usare LaTeX, usa solo Markdown semplice.\n"
+        f"- Lunghezza massima: 400 parole totali.\n"
+        f"- Se la verifica non ha punteggi espliciti, stima proporzionalmente."
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  IDEA #8 — Template Gallery (prompt per generazione da template)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def prompt_da_template(
+    template: dict,
+    materia: str,
+    livello: str,
+    argomento_custom: str,
+    punti_totali: int,
+    mostra_punteggi: bool,
+    con_griglia: bool,
+    calibrazione: str,
+    preambolo_fisso: str,
+) -> str:
+    """
+    Genera una verifica a partire da un template predefinito della gallery.
+    Il template definisce struttura, tipi di esercizi e numero di item.
+    """
+    es_desc = "\n".join(
+        f"  - Esercizio {i+1}: {e['tipo']} — {e['desc']} ({e.get('items',3)} sottopunti)"
+        for i, e in enumerate(template.get("esercizi", []))
+    )
+    punti_rule = (
+        f"- La somma di TUTTI i (X pt) deve essere ESATTAMENTE {punti_totali}. "
+        f"Distribuisci proporzionalmente alla difficoltà di ogni esercizio."
+        if mostra_punteggi
+        else "- NON inserire punteggi (X pt) in nessun punto."
+    )
+    griglia_rule = (
+        "- NON generare la griglia di valutazione (sarà aggiunta automaticamente)."
+        if con_griglia else
+        "- NON generare nessuna griglia."
+    )
+    return (
+        f"Sei un docente esperto di {materia} ({livello}). "
+        f"Genera una verifica scolastica professionale in LaTeX.\n\n"
+        f"TEMPLATE: {template.get('nome', 'Standard')}\n"
+        f"Argomento: {argomento_custom}\n"
+        f"Calibrazione livello: {calibrazione}\n\n"
+        f"STRUTTURA OBBLIGATORIA — rispetta esattamente:\n{es_desc}\n\n"
+        f"REGOLE LATEX:\n"
+        f"- Usa ESATTAMENTE questo preambolo senza modifiche:\n{preambolo_fisso}\n"
+        f"- Struttura ogni esercizio con \\subsection*{{Esercizio N — Titolo}}\n"
+        f"- Ogni esercizio usa \\begin{{enumerate}}[a)] ... \\end{{enumerate}}\n"
+        f"- Ogni \\item deve avere testo completo e autonomo\n"
+        f"{punti_rule}\n"
+        f"{griglia_rule}\n"
+        f"- TERMINA con \\end{{document}}\n"
+        f"- OUTPUT: SOLO codice LaTeX completo, senza ```latex né spiegazioni."
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  IDEA #2 — One-Click Variant (prompt per variante numerica rapida)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def prompt_variante_rapida(
+    corpo_latex: str,
+    materia: str,
+) -> str:
+    """
+    Genera una Fila B cambiando SOLO i dati numerici e le opzioni di risposta.
+    Mantiene struttura, tipologia e difficoltà identiche all'originale.
+    """
+    return (
+        f"Sei un docente esperto di {materia} e LaTeX. "
+        f"Genera una Variante (Fila B) della seguente verifica.\n\n"
+        f"VERIFICA ORIGINALE:\n{corpo_latex}\n\n"
+        f"REGOLE FERREE — VIOLAZIONE = OUTPUT INUTILIZZABILE:\n"
+        f"1. STRUTTURA: mantieni IDENTICI numero esercizi, numero sottopunti, tipologie.\n"
+        f"2. DATI NUMERICI: cambia TUTTI i valori numerici (coefficienti, misure, date, ecc.).\n"
+        f"   I nuovi dati devono dare risultati 'puliti' (interi o frazioni semplici).\n"
+        f"3. SCELTA MULTIPLA: cambia tutte le opzioni mantenendo una sola corretta.\n"
+        f"4. VERO/FALSO: inverti almeno il 50% delle risposte (cambia i dati di conseguenza).\n"
+        f"5. PUNTEGGI: mantieni IDENTICA la distribuzione dei (X pt) originali.\n"
+        f"6. ANTI-SPOILER: NON inserire le soluzioni. Se ci sono grafici, cambia i parametri\n"
+        f"   della curva ma NON indicare dove passa.\n"
+        f"7. INTESTAZIONE: nella riga Nome/Classe/Data aggiungi 'Fila B' visibile.\n"
+        f"8. COHERENZA: verifica che i nuovi dati siano matematicamente coerenti\n"
+        f"   (niente radici di negativi, divisioni per zero, misure impossibili).\n\n"
+        f"OUTPUT: SOLO codice LaTeX completo identico nella struttura, "
+        f"con \\end{{document}} finale. Nessuna spiegazione."
+    )
