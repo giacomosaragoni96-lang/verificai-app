@@ -196,10 +196,9 @@ def render_sidebar(
                 dati_pagina    = storico.data[:_storico_limit]
                 _pref          = st.session_state._preferiti
 
-                def _sort_key(v):
-                    return (0 if v["id"] in _pref else 1, v["created_at"])
-
-                dati_ordinati = sorted(dati_pagina, key=_sort_key)
+                # Ordina: preferiti SEMPRE prima (stabili), poi per data decrescente
+                dati_per_data    = sorted(dati_pagina, key=lambda x: x["created_at"], reverse=True)
+                dati_ordinati    = sorted(dati_per_data, key=lambda x: 0 if x["id"] in _pref else 1)
 
                 with st.expander(f"Storico ({len(dati_pagina)} verifiche)", expanded=False):
                   for v in dati_ordinati:
@@ -220,7 +219,8 @@ def render_sidebar(
                         unsafe_allow_html=True
                     )
 
-                    _col_star, _col_open = st.columns([1, 3])
+                    # ── Riga azioni: stella + elimina affiancati ──────────────
+                    _col_star, _col_del, _col_spacer = st.columns([1, 1, 2])
                     with _col_star:
                         st.markdown(
                             f'<div class="{"stella-btn-on" if is_pref else "stella-btn"}">',
@@ -232,6 +232,22 @@ def render_sidebar(
                             else:
                                 st.session_state._preferiti.add(v["id"])
                             st.rerun()
+                        st.markdown("</div>", unsafe_allow_html=True)
+
+                    with _col_del:
+                        st.markdown('<div class="elimina-btn">', unsafe_allow_html=True)
+                        if st.button("🗑", key=f"del_{v['id']}_{_refresh_key}"):
+                            try:
+                                supabase_admin.table("verifiche_storico") \
+                                    .update({"deleted_at": datetime.now(timezone.utc).isoformat()}) \
+                                    .eq("id", v["id"]) \
+                                    .execute()
+                                st.session_state._preferiti.discard(v["id"])
+                                st.session_state._storico_refresh += 1
+                                st.toast("Verifica rimossa.")
+                                st.rerun()
+                            except Exception as del_err:
+                                st.error(f"Errore: {del_err}")
                         st.markdown("</div>", unsafe_allow_html=True)
 
                     if v.get("latex_a"):
@@ -311,24 +327,6 @@ def render_sidebar(
                                     st.session_state.verifiche["B"]["preview"] = True
                                 st.rerun()
 
-                        st.markdown('<div class="elimina-btn">', unsafe_allow_html=True)
-                        if st.button(
-                            "Elimina",
-                            key=f"del_{v['id']}_{_refresh_key}",
-                            use_container_width=True
-                        ):
-                            try:
-                                supabase_admin.table("verifiche_storico") \
-                                    .update({"deleted_at": datetime.now(timezone.utc).isoformat()}) \
-                                    .eq("id", v["id"]) \
-                                    .execute()
-                                st.session_state._preferiti.discard(v["id"])
-                                st.session_state._storico_refresh += 1
-                                st.toast("Verifica rimossa.")
-                                st.rerun()
-                            except Exception as del_err:
-                                st.error(f"Errore: {del_err}")
-                        st.markdown("</div>", unsafe_allow_html=True)
                         st.markdown("<div style='height:.25rem'></div>", unsafe_allow_html=True)
 
                   if _ha_altri:
