@@ -807,6 +807,33 @@ MATERIE = [
     "Educazione Civica", "Scienze Motorie",
 ]
 
+# ── ICONE MATERIE (emoji per card UI) ──────────────────────────────────────────
+MATERIE_ICONS = {
+    "Matematica":          "📐",
+    "Fisica":              "⚡",
+    "Chimica":             "🧪",
+    "Biologia":            "🧬",
+    "Scienze della Terra": "🌍",
+    "Italiano":            "📖",
+    "Storia":              "🏛️",
+    "Geografia":           "🗺️",
+    "Latino":              "🦅",
+    "Greco":               "🏺",
+    "Inglese":             "🇬🇧",
+    "Francese":            "🗼",
+    "Spagnolo":            "☀️",
+    "Tedesco":             "🦁",
+    "Filosofia":           "🤔",
+    "Storia dell'Arte":    "🎨",
+    "Musica":              "🎵",
+    "Informatica":         "💻",
+    "Economia":            "📊",
+    "Diritto":             "⚖️",
+    "Educazione Civica":   "🏛️",
+    "Scienze Motorie":     "⚽",
+    "Altra materia":       "✏️",
+}
+
 NOTE_PLACEHOLDER = {
     "Matematica":          "es. Includi un esercizio sul teorema di Pitagora e due problemi algebrici.",
     "Fisica":              "es. Un esercizio sulla seconda legge di Newton, uno sul moto uniformemente accelerato.",
