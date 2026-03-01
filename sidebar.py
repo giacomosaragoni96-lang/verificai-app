@@ -39,7 +39,7 @@ def render_sidebar(
     _sb_guard_key = f"_sb_rendered_{_sb_run_id}"
 
     with st.sidebar:
-        st.markdown('<div class="sidebar-title">⚙️ Impostazioni</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-title">Impostazioni</div>', unsafe_allow_html=True)
 
         st.markdown(
             '<div style="height:2px;background:linear-gradient(90deg,#D97706,#16a34a,transparent);'
@@ -86,7 +86,7 @@ def render_sidebar(
             )
             _theme_keys   = list(THEME_LABELS.keys())
             _theme_names  = [THEME_LABELS[k] for k in _theme_keys]
-            _current_theme = st.session_state.get("theme", "midnight_blue")
+            _current_theme = st.session_state.get("theme", "chiaro")
             _cur_idx = _theme_keys.index(_current_theme) if _current_theme in _theme_keys else 0
 
             _sel_theme_name = st.selectbox(
@@ -98,7 +98,7 @@ def render_sidebar(
             )
             _sel_theme_key = _theme_keys[_theme_names.index(_sel_theme_name)]
 
-            if _sel_theme_key != st.session_state.get("theme", "midnight_blue"):
+            if _sel_theme_key != st.session_state.get("theme", "chiaro"):
                 st.session_state.theme = _sel_theme_key
                 theme_changed = True
 
@@ -201,38 +201,45 @@ def render_sidebar(
 
                 dati_ordinati = sorted(dati_pagina, key=_sort_key)
 
-                for v in dati_ordinati:
+                with st.expander(f"Storico ({len(dati_pagina)} verifiche)", expanded=False):
+                  for v in dati_ordinati:
                     data_str       = v["created_at"][:10]
                     is_pref        = v["id"] in _pref
                     star_ico       = "★" if is_pref else "☆"
-                    star_prefix    = "⭐ " if is_pref else ""
-                    arg_trunc      = v["argomento"][:20] + ("…" if len(v["argomento"]) > 20 else "")
-                    label          = f"{star_prefix}{v['materia']} — {arg_trunc}"
+                    arg_trunc      = v["argomento"][:22] + ("…" if len(v["argomento"]) > 22 else "")
+                    mat_str        = v['materia']
 
-                    with st.expander(f"{label} ({data_str})"):
-                        if v.get("scuola"):
-                            st.caption(v["scuola"][:40])
+                    st.markdown(
+                        f'<div style="margin-top:.6rem;padding-bottom:.25rem;'
+                        f'border-bottom:1px solid #252420;">'
+                        f'<span style="font-size:.78rem;font-weight:700;color:#d8d6ce;'
+                        f'font-family:DM Sans,sans-serif;">{mat_str}</span>'
+                        f'<span style="font-size:.68rem;color:#6b6960;margin-left:.4rem;">{data_str}</span><br>'
+                        f'<span style="font-size:.72rem;color:#9b9890;font-family:DM Sans,sans-serif;">{arg_trunc}</span>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
 
-                        _col_star, _ = st.columns([1, 3])
-                        with _col_star:
-                            st.markdown(
-                                f'<div class="{"stella-btn-on" if is_pref else "stella-btn"}">',
-                                unsafe_allow_html=True
-                            )
-                            if st.button(star_ico, key=f"star_{v['id']}_{_refresh_key}"):
-                                if v["id"] in st.session_state._preferiti:
-                                    st.session_state._preferiti.discard(v["id"])
-                                else:
-                                    st.session_state._preferiti.add(v["id"])
-                                st.rerun()
-                            st.markdown("</div>", unsafe_allow_html=True)
+                    _col_star, _col_open = st.columns([1, 3])
+                    with _col_star:
+                        st.markdown(
+                            f'<div class="{"stella-btn-on" if is_pref else "stella-btn"}">',
+                            unsafe_allow_html=True
+                        )
+                        if st.button(star_ico, key=f"star_{v['id']}_{_refresh_key}"):
+                            if v["id"] in st.session_state._preferiti:
+                                st.session_state._preferiti.discard(v["id"])
+                            else:
+                                st.session_state._preferiti.add(v["id"])
+                            st.rerun()
+                        st.markdown("</div>", unsafe_allow_html=True)
 
-                        if v.get("latex_a"):
-                            if st.button(
-                                "▶ Apri verifica",
-                                key=f"reload_a_{v['id']}_{_refresh_key}",
-                                use_container_width=True
-                            ):
+                    if v.get("latex_a"):
+                        if st.button(
+                            "Apri verifica",
+                            key=f"reload_a_{v['id']}_{_refresh_key}",
+                            use_container_width=True
+                        ):
                                 latex_a = v["latex_a"]
                                 # Reset completo dello stato verifiche per evitare
                                 # residui di sessioni precedenti
@@ -293,7 +300,7 @@ def render_sidebar(
 
                         if v.get("latex_b"):
                             if st.button(
-                                "♻ Ricarica Fila B",
+                                "Ricarica Fila B",
                                 key=f"reload_b_{v['id']}_{_refresh_key}",
                                 use_container_width=True
                             ):
@@ -317,18 +324,19 @@ def render_sidebar(
                                     .execute()
                                 st.session_state._preferiti.discard(v["id"])
                                 st.session_state._storico_refresh += 1
-                                st.toast("Verifica rimossa.", icon="🗑️")
+                                st.toast("Verifica rimossa.")
                                 st.rerun()
                             except Exception as del_err:
                                 st.error(f"Errore: {del_err}")
                         st.markdown("</div>", unsafe_allow_html=True)
+                        st.markdown("<div style='height:.25rem'></div>", unsafe_allow_html=True)
 
-                if _ha_altri:
-                    if st.button("Carica altre verifiche", key="storico_load_more",
+                  if _ha_altri:
+                    if st.button("Carica altre", key="storico_load_more",
                                  use_container_width=True):
                         st.session_state._storico_page += 1
                         st.rerun()
-                elif st.session_state._storico_page > 1:
+                  elif st.session_state._storico_page > 1:
                     st.caption(f"Tutte le {len(dati_pagina)} verifiche caricate.")
             else:
                 st.caption("Nessuna verifica salvata ancora.")
