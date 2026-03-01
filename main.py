@@ -1231,11 +1231,14 @@ def _render_percorso_a_upload():
 
         else:
             # ── Card espansa: MESSAGGIO PROATTIVO AI + scelta modalità ────────
-            st.markdown(
+            # Costruiamo l'HTML in parti per evitare problemi di concatenazione
+            _card_parts = []
+            _card_parts.append(
                 f'<div style="background:{T["card"]};border:2px solid {T["accent"]}44;'
                 f'border-radius:14px;padding:.8rem 1rem;margin-bottom:.3rem;">'
-
-                # Header file
+            )
+            # Header file
+            _card_parts.append(
                 f'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;">'
                 f'<span style="font-size:1rem;">{_tipo_emoji}</span>'
                 f'<span style="font-size:.8rem;font-weight:700;color:{T["text"]};'
@@ -1244,34 +1247,47 @@ def _render_percorso_a_upload():
                 f'border-radius:4px;padding:1px 6px;font-weight:700;margin-left:auto;">'
                 f'{tipo_doc.replace("_"," ").title()}</span>'
                 f'</div>'
-
-                # Chips info rilevate
-                + (f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.6rem;">'
-                   + (f'<span style="font-size:.68rem;background:{T["card2"]};border-radius:5px;'
-                      f'padding:2px 7px;color:{T["text2"]};">📚 {materia_f}</span>' if materia_f else "")
-                   + (f'<span style="font-size:.68rem;background:{T["card2"]};border-radius:5px;'
-                      f'padding:2px 7px;color:{T["text2"]};">🏫 {scuola_f}</span>' if scuola_f else "")
-                   + (f'<span style="font-size:.68rem;background:{T["card2"]};border-radius:5px;'
-                      f'padding:2px 7px;color:{T["text2"]};max-width:200px;overflow:hidden;'
-                      f'text-overflow:ellipsis;white-space:nowrap;">'
-                      f'📌 {(arg_f[:40]+"…") if len(arg_f)>40 else arg_f}</span>' if arg_f else "")
-                   + f'</div>') +
-
-                # Messaggio proattivo AI
-                + (f'<div style="background:linear-gradient(135deg,{T["hint_bg"]},{T["card"]});'
-                   f'border:1px solid {T["hint_border"]};border-radius:10px;'
-                   f'padding:.55rem .8rem;margin-bottom:.6rem;">'
-                   f'<div style="display:flex;gap:.5rem;align-items:flex-start;">'
-                   f'<span style="font-size:1.05rem;flex-shrink:0;">🤖</span>'
-                   f'<span style="font-size:.78rem;color:{T["hint_text"]};'
-                   f'font-family:DM Sans,sans-serif;line-height:1.5;">'
-                   f'{msg_pro}</span>'
-                   f'</div></div>'
-                   if msg_pro else "") +
-
-                f'</div>',
-                unsafe_allow_html=True
             )
+            # Chips info rilevate
+            _chips_html = ""
+            if materia_f:
+                _chips_html += (
+                    f'<span style="font-size:.68rem;background:{T["card2"]};border-radius:5px;'
+                    f'padding:2px 7px;color:{T["text2"]};">📚 {materia_f}</span>'
+                )
+            if scuola_f:
+                _chips_html += (
+                    f'<span style="font-size:.68rem;background:{T["card2"]};border-radius:5px;'
+                    f'padding:2px 7px;color:{T["text2"]};">🏫 {scuola_f}</span>'
+                )
+            if arg_f:
+                _arg_short = (arg_f[:40] + "…") if len(arg_f) > 40 else arg_f
+                _chips_html += (
+                    f'<span style="font-size:.68rem;background:{T["card2"]};border-radius:5px;'
+                    f'padding:2px 7px;color:{T["text2"]};max-width:200px;overflow:hidden;'
+                    f'text-overflow:ellipsis;white-space:nowrap;">📌 {_arg_short}</span>'
+                )
+            if _chips_html:
+                _card_parts.append(
+                    f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.6rem;">'
+                    + _chips_html +
+                    f'</div>'
+                )
+            # Messaggio proattivo AI
+            if msg_pro:
+                _card_parts.append(
+                    f'<div style="background:linear-gradient(135deg,{T["hint_bg"]},{T["card"]});'
+                    f'border:1px solid {T["hint_border"]};border-radius:10px;'
+                    f'padding:.55rem .8rem;margin-bottom:.6rem;">'
+                    f'<div style="display:flex;gap:.5rem;align-items:flex-start;">'
+                    f'<span style="font-size:1.05rem;flex-shrink:0;">🤖</span>'
+                    f'<span style="font-size:.78rem;color:{T["hint_text"]};'
+                    f'font-family:DM Sans,sans-serif;line-height:1.5;">'
+                    f'{msg_pro}</span>'
+                    f'</div></div>'
+                )
+            _card_parts.append("</div>")
+            st.markdown("".join(_card_parts), unsafe_allow_html=True)
 
             # Dropdown modalità uso (fuori dalla div per evitare layout issues)
             st.markdown(
