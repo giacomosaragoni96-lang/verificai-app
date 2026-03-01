@@ -40,7 +40,7 @@ except ImportError:
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from auth import mostra_auth, ripristina_sessione, cancella_sessione_cookie
-from styles import get_css
+from styles import get_css, _is_light_color
 
 # ── MATHPIX OCR (opzionale — degradazione graceful se non configurato) ────────
 try:
@@ -1070,34 +1070,49 @@ def _render_percorso_a_upload():
     info   = st.session_state.info_consolidate
 
     # ─────────────────────────────────────────────────────────────────────────
-    # SEZIONE 0 — Banner onboarding (mostrato solo se lista vuota)
+    # SEZIONE 0 — Banner onboarding con OCR hint (mostrato solo se lista vuota)
     # ─────────────────────────────────────────────────────────────────────────
+    _is_light_theme = _is_light_color(T["bg"])
     if not lista:
+        # Banner OCR con hint prominente
         st.markdown(
-            f'<div style="background:{T["card"]};border:1px solid {T["border"]};'
-            f'border-radius:12px;padding:.75rem 1rem;margin-bottom:.6rem;">'
-            f'<div style="font-size:.78rem;font-weight:700;color:{T["text"]};'
-            f'font-family:DM Sans,sans-serif;margin-bottom:.4rem;">'
-            f'Come funziona</div>'
-            f'<div style="display:flex;gap:.5rem;flex-direction:column;">'
-            f'<div style="display:flex;align-items:flex-start;gap:.5rem;">'
-            f'<span style="font-size:.75rem;font-weight:800;color:{T["accent"]};'
-            f'min-width:18px;">1.</span>'
-            f'<span style="font-size:.75rem;color:{T["text2"]};line-height:1.45;">'
-            f'Carica il tuo materiale: una verifica precedente, degli appunti, un capitolo del libro o la foto di un esercizio.</span>'
+            f'<div class="ocr-hint-banner">'
+            f'<div class="ocr-hint-icon">✍️</div>'
+            f'<div class="ocr-hint-body">'
+            f'<div class="ocr-hint-title">Carica qualsiasi materiale — anche a mano!</div>'
+            f'<div class="ocr-hint-desc">'
+            f'Il sistema è <strong>estremamente performante</strong> nel riconoscere la scrittura manuale: '
+            f'basta una foto del foglio. Funziona anche con schemi, appunti, fotocopie o pagine di libro.'
             f'</div>'
-            f'<div style="display:flex;align-items:flex-start;gap:.5rem;">'
-            f'<span style="font-size:.75rem;font-weight:800;color:{T["accent"]};'
-            f'min-width:18px;">2.</span>'
-            f'<span style="font-size:.75rem;color:{T["text2"]};line-height:1.45;">'
-            f'L\'AI riconosce automaticamente materia, argomento e tipo di documento — '
-            f'poi ti chiede come usarlo.</span>'
+            f'<div class="ocr-hint-tags">'
+            f'<span class="ocr-hint-tag">✍️ Scrittura a mano</span>'
+            f'<span class="ocr-hint-tag">📸 Foto lavagna</span>'
+            f'<span class="ocr-hint-tag">📄 Fotocopie</span>'
+            f'<span class="ocr-hint-tag">📚 Libro di testo</span>'
+            f'<span class="ocr-hint-tag">🖨️ PDF stampati</span>'
             f'</div>'
-            f'<div style="display:flex;align-items:flex-start;gap:.5rem;">'
-            f'<span style="font-size:.75rem;font-weight:800;color:{T["accent"]};'
-            f'min-width:18px;">3.</span>'
-            f'<span style="font-size:.75rem;color:{T["text2"]};line-height:1.45;">'
-            f'Premi Genera e scarica la verifica in PDF in pochi secondi.</span>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        # Mini-guida in 3 passi (compatta)
+        st.markdown(
+            f'<div style="background:{T["bg2"]};border:1px solid {T["border"]};'
+            f'border-radius:10px;padding:.55rem .9rem;margin-bottom:.5rem;">'
+            f'<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px 16px;">'
+            f'<div style="display:flex;align-items:center;gap:5px;">'
+            f'<span style="font-size:.7rem;font-weight:800;color:{T["accent"]};">1.</span>'
+            f'<span style="font-size:.7rem;color:{T["text2"]};">Carica il materiale</span>'
+            f'</div>'
+            f'<span style="font-size:.62rem;color:{T["border2"]};">→</span>'
+            f'<div style="display:flex;align-items:center;gap:5px;">'
+            f'<span style="font-size:.7rem;font-weight:800;color:{T["accent"]};">2.</span>'
+            f'<span style="font-size:.7rem;color:{T["text2"]};">L\'AI analizza e classifica</span>'
+            f'</div>'
+            f'<span style="font-size:.62rem;color:{T["border2"]};">→</span>'
+            f'<div style="display:flex;align-items:center;gap:5px;">'
+            f'<span style="font-size:.7rem;font-weight:800;color:{T["accent"]};">3.</span>'
+            f'<span style="font-size:.7rem;color:{T["text2"]};">Genera e scarica il PDF</span>'
             f'</div>'
             f'</div></div>',
             unsafe_allow_html=True
@@ -1131,16 +1146,24 @@ def _render_percorso_a_upload():
     # ─────────────────────────────────────────────────────────────────────────
     # SEZIONE 1 — Area Upload
     # ─────────────────────────────────────────────────────────────────────────
+    _n_file = len(lista)
+    _is_light_theme = _is_light_color(T["bg"])
     st.markdown(
-        f'<div style="background:linear-gradient(135deg,{T["card2"]},{T["card"]});'
-        f'border:1.5px solid {T["border2"]};border-radius:14px;'
-        f'padding:.7rem 1rem .6rem;margin-bottom:.5rem;">'
-        f'<div style="font-size:.82rem;font-weight:800;color:{T["accent"]};'
-        f'font-family:DM Sans,sans-serif;margin-bottom:.15rem;">Carica materiale</div>'
-        f'<p style="font-size:.71rem;color:{T["text2"]};margin:0;line-height:1.4;">'
-        f'Verifiche · Appunti · Capitoli · Foto esercizi &nbsp;|&nbsp; PDF, JPG, PNG — max 10 MB'
-        + (f'<br><span style="color:{T["muted"]};">Puoi aggiungere più file uno alla volta.</span>'
-           if lista else "") +
+        f'<div style="background:linear-gradient(135deg,{T["accent"]}12,{T["card"]});'
+        f'border:1.5px solid {T["accent"]}44;border-radius:14px;'
+        f'padding:.75rem 1rem .65rem;margin-bottom:.5rem;">'
+        f'<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.35rem;">'
+        f'<div style="width:8px;height:8px;border-radius:50%;background:{T["accent"]};'
+        f'box-shadow:0 0 6px {T["accent"]}88;flex-shrink:0;"></div>'
+        f'<span style="font-size:.82rem;font-weight:800;color:{T["text"]};'
+        f'font-family:DM Sans,sans-serif;letter-spacing:.01em;">'
+        + ("Aggiungi altro materiale" if _n_file > 0 else "Carica il tuo materiale") +
+        f'</span>'
+        + (f'<span style="font-size:.65rem;color:{T["muted"]};margin-left:auto;">{_n_file} file caricato/i</span>' if _n_file > 0 else "") +
+        f'</div>'
+        f'<p style="font-size:.71rem;color:{T["text2"]};margin:0;line-height:1.5;">'
+        f'Verifiche · Appunti · Capitoli · Foto esercizi · <strong style="color:{T["text"]};">Appunti scritti a mano</strong>'
+        f'&nbsp;|&nbsp; PDF, JPG, PNG — max 10 MB'
         f'</p></div>',
         unsafe_allow_html=True
     )
@@ -1175,22 +1198,31 @@ def _render_percorso_a_upload():
     # SEZIONE 2 — Lista file caricati
     # ─────────────────────────────────────────────────────────────────────────
     # Etichette per le opzioni del dropdown (per verifica e esercizi)
+    # Etichette per le opzioni del dropdown — 3 opzioni senza "consigliato"
     _OPZIONI_LABEL = {
-        "stile_e_struttura":    "Adotta solo lo stile — argomento diverso",
-        "copia_fedele":         "Facsimile — stessi esercizi, dati diversi",
+        "stile_e_struttura":    "Copia Stile/Parametri — stesso formato, argomento diverso",
+        "copia_fedele":         "Crea Facsimile — stesso schema, dati diversi",
         "base_conoscenza":      "Usa come fonte di concetti",
-        "includi_esercizio":    "Includi nella verifica (adattato)",
-        "esercizio_simile":     "Crea un esercizio simile (dati diversi)",
+        "includi_esercizio":    "Estrai Esercizi Singoli — includi nella verifica",
+        "esercizio_simile":     "Estrai Esercizi Singoli — crea versione con dati diversi",
+    }
+    # Etichette brevi per la pill (dopo conferma)
+    _OPZIONI_LABEL_BREVE = {
+        "stile_e_struttura":    "Copia Stile",
+        "copia_fedele":         "Facsimile",
+        "base_conoscenza":      "Fonte concetti",
+        "includi_esercizio":    "Estrai esercizi",
+        "esercizio_simile":     "Estrai esercizi",
     }
     # Tipi che NON mostrano il dropdown — auto-assegnati
     _TIPI_AUTO = {"appunti", "libro", "misto"}
-    # Opzioni per tipo (solo per tipi che mostrano il dropdown)
+    # Opzioni per tipo (solo per tipi che mostrano il dropdown) — NO "consigliato"
     _OPZIONI_PER_TIPO = {
-        "verifica":         ["stile_e_struttura", "copia_fedele"],
-        "esercizi_sciolti": ["stile_e_struttura", "base_conoscenza"],
+        "verifica":         ["copia_fedele", "stile_e_struttura"],
+        "esercizi_sciolti": ["stile_e_struttura", "includi_esercizio", "base_conoscenza"],
         "esercizio_singolo":["includi_esercizio", "esercizio_simile"],
     }
-    # Icona per tipo
+    # Badge icona per tipo documento
     _TIPO_EMOJI = {
         "verifica":          "verifica",
         "appunti":           "appunti",
@@ -1198,6 +1230,15 @@ def _render_percorso_a_upload():
         "esercizi_sciolti":  "esercizi",
         "esercizio_singolo": "esercizio",
         "misto":             "documento",
+    }
+    # Badge colore CSS class per tipo (light/dark-aware)
+    _TIPO_BADGE_CLASS = {
+        "verifica":          "doc-type-verifica",
+        "appunti":           "doc-type-appunti",
+        "libro":             "doc-type-libro",
+        "esercizi_sciolti":  "doc-type-esercizi",
+        "esercizio_singolo": "doc-type-esercizi",
+        "misto":             "doc-type-misto",
     }
 
     _da_rimuovere = []
@@ -1219,26 +1260,40 @@ def _render_percorso_a_upload():
         _e_tipo_auto = tipo_doc in _TIPI_AUTO
 
         if confermato:
-            # ── Pill compatta: file confermato ────────────────────────────────
-            _col_pill, _col_x = st.columns([11, 1], gap="small")
-            with _col_pill:
-                st.markdown(
-                    f'<div style="background:{T["card"]};border:1px solid {T["border"]};'
-                    f'border-radius:9px;padding:.45rem .8rem;'
-                    f'display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">'
-                    f'<span style="font-size:.75rem;font-weight:700;color:{T["text"]};'
-                    f'font-family:DM Sans,sans-serif;max-width:200px;overflow:hidden;'
-                    f'text-overflow:ellipsis;white-space:nowrap;">{fname}</span>'
-                    f'<span style="font-size:.62rem;background:{T["accent_light"]};color:{T["accent"]};'
-                    f'border-radius:4px;padding:1px 6px;font-weight:700;">{_tipo_label}</span>'
-                    + (f'<span style="font-size:.62rem;color:{T["muted"]};margin-left:auto;">'
-                       f'{(arg_f[:35]+"…") if len(arg_f)>35 else arg_f}</span>' if arg_f else "") +
-                    f'</div>',
-                    unsafe_allow_html=True
+            # ── Pill compatta: file confermato — con label utilizzo, senza X ingombrante ──
+            _mode_breve = _OPZIONI_LABEL_BREVE.get(fmode, fmode)
+            # classificazione badge colore
+            _badge_class = _TIPO_BADGE_CLASS.get(tipo_doc, "doc-type-misto")
+            # Classificazione intelligente: badge speciale per verifica vs esercizi
+            _classif_badge = ""
+            if tipo_doc == "verifica":
+                _classif_badge = (
+                    f'<span class="classif-verifica">📋 Verifica</span>'
                 )
-            with _col_x:
-                if st.button("✕", key=f"rm_{_i}", help="Rimuovi file"):
-                    _da_rimuovere.append(_i)
+            elif tipo_doc in ("esercizi_sciolti", "esercizio_singolo"):
+                _n_es = len(a.get("esercizi_trovati") or [])
+                _es_label = f"{_n_es} esercizi rilevati" if _n_es > 1 else (f"{_n_es} esercizio rilevato" if _n_es == 1 else "Esercizi")
+                _classif_badge = (
+                    f'<span class="classif-esercizi">📝 {_es_label}</span>'
+                )
+            st.markdown(
+                f'<div style="background:{T["card"]};border:1px solid {T["border"]};'
+                f'border-radius:10px;padding:.5rem .85rem;'
+                f'display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">'
+                f'<span style="font-size:.75rem;font-weight:700;color:{T["text"]};'
+                f'font-family:DM Sans,sans-serif;max-width:180px;overflow:hidden;'
+                f'text-overflow:ellipsis;white-space:nowrap;">{fname}</span>'
+                f'{_classif_badge}'
+                f'<span style="font-size:.62rem;background:{T["hint_bg"]};color:{T["hint_text"]};'
+                f'border:1px solid {T["hint_border"]};'
+                f'border-radius:5px;padding:2px 8px;font-weight:600;white-space:nowrap;">'
+                f'{_mode_breve}</span>'
+                + (f'<span style="font-size:.62rem;color:{T["muted"]};margin-left:auto;'
+                   f'max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
+                   f'{(arg_f[:30]+"…") if len(arg_f)>30 else arg_f}</span>' if arg_f else "") +
+                f'</div>',
+                unsafe_allow_html=True
+            )
 
         else:
             # ── Card espansa: messaggio AI + scelta utilizzo ──────────────────
@@ -1319,8 +1374,6 @@ def _render_percorso_a_upload():
                 _ops_labels = []
                 for k in _ops_keys:
                     lbl = _OPZIONI_LABEL.get(k, k)
-                    if k == _modalita_ai:
-                        lbl += "  — consigliato"
                     _ops_labels.append(lbl)
 
                 # Label contestuale sopra il dropdown
@@ -1402,7 +1455,47 @@ def _render_percorso_a_upload():
         else:
             st.session_state.analisi_doc = None
             st.session_state.info_consolidate = {}
+        # ── Reset dinamico del contesto argomento: se la lista cambia,
+        # il campo argomento si sincronizza sul nuovo contenuto. ────────────
+        # _consolida_info aggiorna direttamente session_state.info_consolidate
+        _consolida_info()
+        # Resetta anche il campo argomento UI (se l'utente lo aveva modificato manualmente)
+        for _k in ["ob_argomento", "sel_argomento_a"]:
+            if _k in st.session_state:
+                del st.session_state[_k]
         st.rerun()
+
+    # ── Barra di gestione file — in fondo alla lista, solo se ci sono file confermati ──
+    _file_confermati = [e for e in lista if e["confirmed"]]
+    if _file_confermati and len(_file_confermati) > 0:
+        st.markdown(
+            f'<div style="background:{T["bg2"]};border:1px solid {T["border"]};'
+            f'border-radius:10px;padding:.45rem .8rem;margin-top:.4rem;'
+            f'display:flex;align-items:center;justify-content:space-between;gap:.75rem;">'
+            f'<span style="font-size:.68rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
+            f'Gestisci file — {len(_file_confermati)} nel pool'
+            f'</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        # Selectbox per scegliere quale file rimuovere
+        _nomi_conf = [f'[{i+1}] {e["file_name"]}' for i, e in enumerate(lista) if e["confirmed"]]
+        _idx_conf  = [i for i, e in enumerate(lista) if e["confirmed"]]
+        if _nomi_conf:
+            _col_sel, _col_rm = st.columns([4, 1], gap="small")
+            with _col_sel:
+                _sel_rm_nome = st.selectbox(
+                    "Seleziona file da rimuovere",
+                    options=_nomi_conf,
+                    label_visibility="collapsed",
+                    key="sel_file_da_rimuovere",
+                )
+            with _col_rm:
+                if st.button("🗑 Rimuovi", key="btn_rm_da_lista",
+                             use_container_width=True):
+                    _rm_pos = _nomi_conf.index(_sel_rm_nome)
+                    _rm_real_idx = _idx_conf[_rm_pos]
+                    _da_rimuovere.append(_rm_real_idx)
 
     # Nessun file ancora
     if not lista:
@@ -1637,15 +1730,26 @@ def _render_percorso_a_upload():
             f'border-radius:1px;"></div>',
             unsafe_allow_html=True
         )
+        # Label "Utilizzato come materiale di supporto" per i file base_conoscenza/appunti
+        _file_supporto = [e for e in lista if e["confirmed"] and e["file_mode"] in ("base_conoscenza",)]
+        if _file_supporto:
+            st.markdown(
+                f'<div style="font-size:.68rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
+                f'padding:.2rem .1rem .4rem;font-style:italic;">'
+                + ", ".join(f'"{e["file_name"]}"' for e in _file_supporto) +
+                f' — <span style="color:{T["hint_text"]};">utilizzato come materiale di supporto</span>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+
         with st.expander(
-            f"✏️ {len(_tutti_esercizi_trovati)} esercizio/i personalizzato/i rilevato/i dai file",
-            expanded=False,
+            f"✏️ {len(_tutti_esercizi_trovati)} esercizio/i rilevato/i — opzioni di estrazione",
+            expanded=len(_tutti_esercizi_trovati) <= 3,
         ):
             st.markdown(
-                f'<div style="font-size:.75rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
-                f'line-height:1.5;padding:.3rem 0 .6rem;">'
-                f'L\'AI ha identificato questi esercizi nei tuoi file. Puoi includerli nella nuova '
-                f'verifica e aggiungere istruzioni specifiche per ognuno.'
+                f'<div style="font-size:.74rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
+                f'line-height:1.5;padding:.2rem 0 .5rem;">'
+                f'Esercizi identificati nei file caricati. Seleziona quelli da includere nella nuova verifica.'
                 f'</div>',
                 unsafe_allow_html=True
             )
@@ -1660,23 +1764,16 @@ def _render_percorso_a_upload():
                 _ex_key_hash = str(_ex_entry["file_hash"]) + f"_{_ei}"
 
                 st.markdown(
-                    f'<div style="background:{T["card2"]};border:1px solid {T["border"]};'
-                    f'border-radius:10px;padding:.55rem .8rem;margin-bottom:.4rem;">'
-                    f'<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">'
-                    f'<span style="font-size:.8rem;font-weight:700;color:{T["accent"]};'
-                    f'font-family:DM Sans,sans-serif;">Esercizio {_ex_num}</span>'
-                    f'<span style="font-size:.63rem;background:{T["accent_light"]};color:{T["accent"]};'
-                    f'border-radius:4px;padding:1px 6px;font-weight:600;">{_ex_tipo}</span>'
+                    f'<div class="es-recap-card">'
+                    f'<div class="es-recap-header">'
+                    f'<span class="es-recap-num">Esercizio {_ex_num}</span>'
+                    f'<span class="es-recap-tipo">{_ex_tipo}</span>'
                     + (f'<span style="font-size:.63rem;background:{T["card"]};border-radius:4px;'
-                       f'padding:1px 6px;color:{T["muted"]};">🔢 dati numerici</span>'
+                       f'padding:1px 6px;color:{T["muted"]};">🔢 numeri</span>'
                        if _ex_num_dati else "") +
-                    f'<span style="font-size:.63rem;color:{T["muted"]};margin-left:auto;">'
-                    f'da {_ex_entry["file_name"]}</span>'
+                    f'<span class="es-recap-source">da {_ex_entry["file_name"]}</span>'
                     f'</div>'
-                    f'<div style="font-size:.76rem;color:{T["text2"]};margin-top:.3rem;'
-                    f'font-family:DM Sans,sans-serif;font-style:italic;">'
-                    f'«{_ex_testo}…»'
-                    f'</div>'
+                    f'<div class="es-recap-testo">«{(_ex_testo[:120]+"…") if len(_ex_testo)>120 else _ex_testo}»</div>'
                     f'</div>',
                     unsafe_allow_html=True
                 )
