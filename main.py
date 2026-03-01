@@ -506,6 +506,10 @@ if "mathpix_context"   not in st.session_state: st.session_state.mathpix_context
 if "mathpix_file_hash" not in st.session_state: st.session_state.mathpix_file_hash = None
 # Analisi documento caricato
 if "analisi_doc"          not in st.session_state: st.session_state.analisi_doc = None
+# Lista di analisi accumulate da più file: [{"file_name","file_hash","analisi","file_mode","confirmed"}, ...]
+if "analisi_docs_list"    not in st.session_state: st.session_state.analisi_docs_list = []
+# Stato info consolidate ricavate da tutti i file
+if "info_consolidate"     not in st.session_state: st.session_state.info_consolidate = {}
 # Percorso utente: None | "A" | "B"
 if "input_percorso"       not in st.session_state: st.session_state.input_percorso = None
 # Dialogo conferma Percorso A: None | "in_attesa" | "confermato"
@@ -792,14 +796,16 @@ def _render_qa_section():
 
 def _reset_percorso():
     """Reset completo del Percorso A (upload). Non tocca gen_params."""
-    st.session_state.input_percorso       = None
-    st.session_state.dialogo_stato        = None
-    st.session_state.file_mode            = None
-    st.session_state.analisi_doc          = None
+    st.session_state.input_percorso        = None
+    st.session_state.dialogo_stato         = None
+    st.session_state.file_mode             = None
+    st.session_state.analisi_doc           = None
+    st.session_state.analisi_docs_list     = []
+    st.session_state.info_consolidate      = {}
     st.session_state.esercizio_da_includere = None
-    st.session_state.file_ispirazione     = None
-    st.session_state.mathpix_context      = None
-    st.session_state.mathpix_file_hash    = None
+    st.session_state.file_ispirazione      = None
+    st.session_state.mathpix_context       = None
+    st.session_state.mathpix_file_hash     = None
 
 
 def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str):
@@ -852,9 +858,48 @@ def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str)
             prefs = _carica_docente_preferenze(st.session_state.utente.id, result["materia"])
             st.session_state._docente_prefs[result["materia"]] = prefs
 
+        # ── Aggiorna lista multi-file ─────────────────────────────────────────
+        # Aggiunge alla lista se non già presente (by hash); lo marca come
+        # "in attesa di conferma" (confirmed=False).
+        _existing_hashes = {d["file_hash"] for d in st.session_state.analisi_docs_list}
+        if file_hash not in _existing_hashes:
+            st.session_state.analisi_docs_list.append({
+                "file_hash":  file_hash,
+                "file_name":  file_name,
+                "analisi":    result,
+                "file_mode":  result.get("modalita_uso_consigliata", "stile_e_struttura"),
+                "confirmed":  False,   # attende conferma modalità
+            })
+        # Retrocompatibilità: slot singolo usato da compila_contesto_generazione
+        st.session_state.analisi_doc = result
+        _consolida_info()
         st.rerun()
     except Exception as e:
         st.warning(f"⚠️ Analisi non riuscita: {e}. Compila i campi manualmente.", icon="🔬")
+
+
+def _consolida_info():
+    """
+    Ricalcola info_consolidate da tutti i file in analisi_docs_list.
+    Priorità: file_mode confermato > ordine inserimento.
+    Campi chiave: argomento, scuola, materia.
+    """
+    lista = st.session_state.analisi_docs_list
+    merged: dict = {}
+    for entry in lista:
+        a = entry.get("analisi", {})
+        # Priorità: prendi il primo valore non-vuoto trovato
+        for campo in ("materia", "scuola", "contenuto_argomento",
+                      "stile_desc", "tipi_domande", "ha_grafici",
+                      "ha_formule", "num_esercizi_rilevati", "tipo_documento"):
+            if campo not in merged or not merged[campo]:
+                v = a.get(campo)
+                if v:
+                    merged[campo] = v
+    # Scuola dalla chiave dedicata (più affidabile)
+    if st.session_state.get("_analisi_scuola"):
+        merged["scuola"] = st.session_state._analisi_scuola
+    st.session_state.info_consolidate = merged
 
 
 def _render_bivio():
@@ -963,41 +1008,47 @@ def _render_bivio():
 
 def _render_percorso_a_upload():
     """
-    Percorso A — pagina unica.
-    Upload → analisi AI → dropdown modalità → suggerimenti → box istruzioni
-    → configurazione → Genera Bozza. Nessun cambio di step intermedio.
+    Percorso A — pagina unica multi-file.
+
+    Struttura visiva:
+    1. Area upload (sempre visibile)
+    2. Lista file caricati: ogni file mostra recap + dropdown modalità (se non confermato)
+       oppure solo pill recap (se confermato). Bottone × per rimuovere.
+    3. Info consolidate (argomento + scuola): se mancanti → select obbligatorio.
+    4. Box istruzioni aggiuntive
+    5. Configurazione rapida (materia, n° esercizi, avanzate)
+    6. Bottone Genera Bozza
     """
     if st.button("← Cambia scelta", key="btn_back_a_upload"):
         _reset_percorso()
         st.rerun()
 
-    ad          = st.session_state.analisi_doc or {}
-    analizzato  = bool(ad)
-    file_mode   = st.session_state.get("file_mode") or ad.get("modalita_uso_consigliata", "stile_e_struttura")
+    lista: list = st.session_state.analisi_docs_list  # lista entry multi-file
+    info   = st.session_state.info_consolidate        # info mergeate
 
     # ─────────────────────────────────────────────────────────────────────────
-    # SEZIONE 1 — Upload file
+    # SEZIONE 1 — Upload (sempre visibile)
     # ─────────────────────────────────────────────────────────────────────────
     st.markdown(
         f'<div style="background:linear-gradient(135deg,{T["card2"]},{T["card"]});'
         f'border:1.5px solid {T["border2"]};border-radius:14px;'
-        f'padding:.9rem 1.1rem .8rem;margin-bottom:.7rem;">'
-        f'<div style="font-size:.88rem;font-weight:800;color:{T["accent"]};'
-        f'font-family:DM Sans,sans-serif;margin-bottom:.25rem;">'
-        f'📂 Carica il tuo materiale'
-        f'</div>'
-        f'<p style="font-size:.74rem;color:{T["text2"]};margin:0;line-height:1.5;">'
-        f'Verifica precedente · Appunti · Capitolo del libro · Foto della lavagna'
-        f'<br>Formati: PDF, JPG, PNG — max 10 MB'
-        f'</p>'
-        f'</div>',
+        f'padding:.8rem 1rem .7rem;margin-bottom:.6rem;">'
+        f'<div style="font-size:.84rem;font-weight:800;color:{T["accent"]};'
+        f'font-family:DM Sans,sans-serif;margin-bottom:.2rem;">📂 Carica materiale</div>'
+        f'<p style="font-size:.72rem;color:{T["text2"]};margin:0;line-height:1.45;">'
+        f'Verifiche · Appunti · Capitoli · Foto lavagna &nbsp;|&nbsp; PDF, JPG, PNG — max 10 MB'
+        + (f'<br><span style="color:{T["muted"]};">Puoi aggiungere più file uno alla volta.</span>'
+           if lista else "") +
+        f'</p></div>',
         unsafe_allow_html=True
     )
 
+    # Uploader — key univoca per permettere di caricare più file in sequenza
+    _upload_key = f"file_up_{len(lista)}"
     file_doc = st.file_uploader(
         "Carica documento",
         type=["pdf", "png", "jpg", "jpeg"],
-        key="file_ispirazione_upload",
+        key=_upload_key,
         label_visibility="collapsed",
     )
     with st.expander("📷 Oppure scatta una foto", expanded=False):
@@ -1006,387 +1057,438 @@ def _render_percorso_a_upload():
     if camera_photo is None:
         camera_photo = st.session_state.get("camera_input_doc")
 
-    # Determina file attivo
-    active_bytes: bytes | None = None
-    active_mime  = "image/png"
-    active_name  = ""
+    # Determina file appena caricato
+    _new_bytes: bytes | None = None
+    _new_mime  = "image/png"
+    _new_name  = ""
     if file_doc:
-        active_bytes = file_doc.getvalue()
-        active_mime  = file_doc.type or "image/png"
-        active_name  = file_doc.name
+        _new_bytes = file_doc.getvalue()
+        _new_mime  = file_doc.type or "image/png"
+        _new_name  = file_doc.name
         st.session_state.file_ispirazione = file_doc
     elif camera_photo:
-        active_bytes = camera_photo.getvalue()
-        active_mime  = "image/png"
-        active_name  = "foto_camera.png"
+        _new_bytes = camera_photo.getvalue()
+        _new_mime  = "image/png"
+        _new_name  = "foto_camera.png"
         import io as _io
-        _cf = _io.BytesIO(active_bytes); _cf.name = active_name
+        _cf = _io.BytesIO(_new_bytes); _cf.name = _new_name
         _cf.type = "image/png"  # type: ignore[attr-defined]
         st.session_state.file_ispirazione = _cf
-    elif st.session_state.get("file_ispirazione"):
-        _f = st.session_state.file_ispirazione
-        try:
-            active_bytes = _f.getvalue()
-            active_mime  = getattr(_f, "type", "image/png") or "image/png"
-            active_name  = getattr(_f, "name", "documento")
-        except Exception:
-            active_bytes = None
 
-    # Lancia analisi se file nuovo e non ancora analizzato
-    if active_bytes is not None and not analizzato:
-        with st.spinner("🔍 Analizzo il documento…"):
-            _esegui_analisi_documento(active_bytes, active_mime, active_name)
-        # Se arriviamo qui l'analisi ha fallito (st.rerun() già chiamato in caso di successo)
-
-    # Re-leggi analisi aggiornata dopo eventuale rerun
-    ad         = st.session_state.analisi_doc or {}
-    analizzato = bool(ad)
+    # Avvia analisi se file nuovo
+    if _new_bytes is not None:
+        _hash_new = hash(_new_bytes)
+        _hashes_esistenti = {d["file_hash"] for d in lista}
+        if _hash_new not in _hashes_esistenti:
+            with st.spinner("🔍 Analizzo il documento…"):
+                _esegui_analisi_documento(_new_bytes, _new_mime, _new_name)
+            # Se arriviamo qui analisi fallita (st.rerun già chiamato in successo)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # SEZIONE 2 — Risultati analisi + suggerimenti AI (solo se analizzato)
+    # SEZIONE 2 — Lista file caricati
     # ─────────────────────────────────────────────────────────────────────────
-    if analizzato:
-        materia_ai  = ad.get("materia") or ""
-        scuola_ai   = st.session_state.get("_analisi_scuola", "") or (ad.get("scuola") or "")
-        arg_file    = ad.get("contenuto_argomento") or ""
-        stile_d     = ad.get("stile_desc") or ""
-        tipo_doc    = ad.get("tipo_documento", "altro")
-        file_name   = ad.get("file_name", "Documento")
-        ha_grafici  = ad.get("ha_grafici", False)
-        ha_formule  = ad.get("ha_formule", False)
-        tipi_dom    = ad.get("tipi_domande") or []
-        n_es        = ad.get("num_esercizi_rilevati") or 0
-        conf        = ad.get("confidence", 0)
-        modalita_ai = ad.get("modalita_uso_consigliata", "stile_e_struttura")
-        es_trovati  = ad.get("esercizi_trovati") or []
+    _OPZIONI_LABEL = {
+        "stile_e_struttura":    "📐  Copia solo lo stile",
+        "copia_fedele":         "🔄  Versione simile (dati diversi)",
+        "base_conoscenza":      "📒  Usa come fonte di concetti",
+        "difficolta_e_livello": "⚖️  Solo livello di difficoltà",
+        "ignora":               "🚫  Ignora questo file",
+    }
+    _OPZIONI_PER_TIPO = {
+        "verifica":        ["stile_e_struttura","copia_fedele","difficolta_e_livello","ignora"],
+        "appunti":         ["base_conoscenza","difficolta_e_livello","ignora"],
+        "libro":           ["base_conoscenza","stile_e_struttura","ignora"],
+        "esercizi_sciolti":["stile_e_struttura","base_conoscenza","copia_fedele","ignora"],
+    }
 
+    _da_rimuovere = []   # indici da rimuovere dopo il loop
+
+    for _i, entry in enumerate(lista):
+        a          = entry["analisi"]
+        confermato = entry["confirmed"]
+        fname      = entry["file_name"]
+        fmode      = entry["file_mode"]
+        tipo_doc   = a.get("tipo_documento", "altro")
+        arg_f      = a.get("contenuto_argomento") or ""
+        scuola_f   = a.get("scuola") or ""
+        materia_f  = a.get("materia") or ""
         _tipo_emoji = {"verifica":"📝","appunti":"📒","libro":"📚",
                        "esercizi_sciolti":"🔢","misto":"🗂️","altro":"📄"}.get(tipo_doc,"📄")
-        _conf_color = T["success"] if conf >= 0.75 else (T["warn"] if conf >= 0.50 else T["err"])
+        _mode_label = _OPZIONI_LABEL.get(fmode, fmode)
+        _modalita_ai = a.get("modalita_uso_consigliata","stile_e_struttura")
 
-        # ── Card riepilogo analisi ────────────────────────────────────────────
-        st.markdown(
-            f'<div style="background:{T["card"]};border:1.5px solid {T["border2"]};'
-            f'border-radius:12px;padding:.75rem 1rem;margin:.6rem 0 .5rem;">'
-            f'<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem;">'
-            f'<span style="font-size:1.1rem;">{_tipo_emoji}</span>'
-            f'<span style="font-size:.82rem;font-weight:700;color:{T["text"]};'
-            f'font-family:DM Sans,sans-serif;">{file_name}</span>'
-            f'<span style="font-size:.65rem;background:{T["accent_light"]};color:{T["accent"]};'
-            f'border-radius:4px;padding:1px 7px;font-weight:700;margin-left:auto;">'
-            f'{tipo_doc.replace("_"," ").title()}</span>'
-            f'</div>'
-            f'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.35rem;">'
-            + (f'<div style="background:{T["card2"]};border-radius:7px;padding:.3rem .55rem;">'
-               f'<div style="font-size:.6rem;color:{T["muted"]};font-weight:600;text-transform:uppercase;'
-               f'letter-spacing:.04em;">Materia</div>'
-               f'<div style="font-size:.76rem;font-weight:700;color:{T["text"]}">'
-               f'{materia_ai or "—"}</div></div>' if True else "") +
-            (f'<div style="background:{T["card2"]};border-radius:7px;padding:.3rem .55rem;">'
-               f'<div style="font-size:.6rem;color:{T["muted"]};font-weight:600;text-transform:uppercase;'
-               f'letter-spacing:.04em;">Scuola</div>'
-               f'<div style="font-size:.76rem;font-weight:700;color:{T["text"]}">'
-               f'{scuola_ai or "—"}</div></div>' if True else "") +
-            (f'<div style="background:{T["card2"]};border-radius:7px;padding:.3rem .55rem;">'
-               f'<div style="font-size:.6rem;color:{T["muted"]};font-weight:600;text-transform:uppercase;'
-               f'letter-spacing:.04em;">Argomento</div>'
-               f'<div style="font-size:.76rem;font-weight:700;color:{T["text"]};line-height:1.3;">'
-               f'{(arg_file[:40]+"…") if len(arg_file)>40 else (arg_file or "—")}</div></div>' if True else "") +
-            (f'<div style="background:{T["card2"]};border-radius:7px;padding:.3rem .55rem;">'
-               f'<div style="font-size:.6rem;color:{T["muted"]};font-weight:600;text-transform:uppercase;'
-               f'letter-spacing:.04em;">Esercizi</div>'
-               f'<div style="font-size:.76rem;font-weight:700;color:{T["text"]}">'
-               f'{n_es if n_es else "—"}</div></div>' if True else "") +
-            (f'<div style="background:{T["card2"]};border-radius:7px;padding:.3rem .55rem;">'
-               f'<div style="font-size:.6rem;color:{T["muted"]};font-weight:600;text-transform:uppercase;'
-               f'letter-spacing:.04em;">Tipi domande</div>'
-               f'<div style="font-size:.72rem;color:{T["text"]};line-height:1.4;">'
-               f'{", ".join(tipi_dom) if tipi_dom else "—"}</div></div>' if tipi_dom else "") +
-            (f'<div style="background:{T["card2"]};border-radius:7px;padding:.3rem .55rem;">'
-               f'<div style="font-size:.6rem;color:{T["muted"]};font-weight:600;text-transform:uppercase;'
-               f'letter-spacing:.04em;">Stile</div>'
-               f'<div style="font-size:.72rem;color:{T["text"]};line-height:1.4;">'
-               f'{(stile_d[:50]+"…") if len(stile_d)>50 else stile_d}</div></div>' if stile_d else "") +
-            f'</div>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
+        if confermato:
+            # ── Pill compatta: file confermato ────────────────────────────────
+            _col_pill, _col_x = st.columns([9, 1], gap="small")
+            with _col_pill:
+                st.markdown(
+                    f'<div style="background:{T["card"]};border:1px solid {T["border"]};'
+                    f'border-radius:9px;padding:.45rem .8rem;'
+                    f'display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">'
+                    f'<span style="font-size:.95rem;">{_tipo_emoji}</span>'
+                    f'<span style="font-size:.76rem;font-weight:700;color:{T["text"]};'
+                    f'font-family:DM Sans,sans-serif;">{fname}</span>'
+                    f'<span style="font-size:.65rem;background:{T["accent_light"]};color:{T["accent"]};'
+                    f'border-radius:4px;padding:1px 6px;font-weight:700;">{_mode_label}</span>'
+                    + (f'<span style="font-size:.65rem;color:{T["muted"]};margin-left:auto;">'
+                       f'{(arg_f[:35]+"…") if len(arg_f)>35 else arg_f}</span>' if arg_f else "") +
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+            with _col_x:
+                if st.button("×", key=f"rm_{_i}", help="Rimuovi questo file"):
+                    _da_rimuovere.append(_i)
 
-        # ── Suggerimenti AI su aspetti non chiari ─────────────────────────────
-        _gap = []
-        if not materia_ai:
-            _gap.append("**Materia** non rilevata — specificala nel menu qui sotto")
-        if not scuola_ai:
-            _gap.append("**Tipo di scuola** non rilevato — selezionalo nella configurazione")
-        if not arg_file:
-            _gap.append("**Argomento** non chiaro dal file — indicalo nel box istruzioni")
-        if not tipi_dom:
-            _gap.append("**Tipo esercizi** non identificato — puoi indicare nel box se preferisci aperto, multipla, ecc.")
-        if ha_grafici:
-            _gap.append("Il documento contiene **grafici**: posso ricrearli solo se matematici (TikZ). Specificalo nel box se sono rilevanti")
-        if ha_formule and tipo_doc == "appunti":
-            _gap.append("Trovate **formule** negli appunti: se vuoi esercizi di calcolo, indicalo nel box")
-
-        if _gap:
-            _gap_items = "".join(
-                f'<li style="margin-bottom:.25rem;">{g}</li>' for g in _gap
-            )
+        else:
+            # ── Card espansa: in attesa di conferma modalità ──────────────────
             st.markdown(
-                f'<div style="background:{T["hint_bg"]};border:1px solid {T["hint_border"]};'
-                f'border-radius:10px;padding:.65rem .9rem;margin:.4rem 0 .6rem;">'
-                f'<div style="font-size:.72rem;font-weight:700;color:{T["hint_text"]};'
-                f'font-family:DM Sans,sans-serif;margin-bottom:.35rem;">💡 Aiutami a completare l\'analisi</div>'
-                f'<ul style="margin:0;padding-left:1.1rem;font-size:.75rem;'
-                f'color:{T["hint_text"]};line-height:1.6;">{_gap_items}</ul>'
+                f'<div style="background:{T["card"]};border:1.5px solid {T["border2"]};'
+                f'border-radius:12px;padding:.7rem .9rem;margin-bottom:.2rem;">'
+                f'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">'
+                f'<span style="font-size:1rem;">{_tipo_emoji}</span>'
+                f'<span style="font-size:.8rem;font-weight:700;color:{T["text"]};'
+                f'font-family:DM Sans,sans-serif;">{fname}</span>'
+                f'<span style="font-size:.63rem;background:{T["accent_light"]};color:{T["accent"]};'
+                f'border-radius:4px;padding:1px 6px;font-weight:700;margin-left:auto;">'
+                f'{tipo_doc.replace("_"," ").title()}</span>'
+                f'</div>'
+                # Mini chips info rilevate
+                + (f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.5rem;">'
+                   + (f'<span style="font-size:.68rem;background:{T["card2"]};border-radius:5px;'
+                      f'padding:2px 7px;color:{T["text2"]};">📚 {materia_f}</span>' if materia_f else "")
+                   + (f'<span style="font-size:.68rem;background:{T["card2"]};border-radius:5px;'
+                      f'padding:2px 7px;color:{T["text2"]};">🏫 {scuola_f}</span>' if scuola_f else "")
+                   + (f'<span style="font-size:.68rem;background:{T["card2"]};border-radius:5px;'
+                      f'padding:2px 7px;color:{T["text2"]};max-width:200px;overflow:hidden;'
+                      f'text-overflow:ellipsis;white-space:nowrap;">'
+                      f'📌 {(arg_f[:40]+"…") if len(arg_f)>40 else arg_f}</span>' if arg_f else "")
+                   + f'</div>') +
                 f'</div>',
                 unsafe_allow_html=True
             )
 
-        # ── Dropdown modalità uso file ─────────────────────────────────────────
-        st.markdown(
-            f'<div style="font-size:.8rem;font-weight:700;color:{T["text"]};'
-            f'font-family:DM Sans,sans-serif;margin:.6rem 0 .3rem;">'
-            f'Come vuoi usare questo file?'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-
-        _opzioni_base = {
-            "verifica": [
-                ("stile_e_struttura",    "📐  Copia solo lo stile — stessa struttura, argomento a tua scelta"),
-                ("copia_fedele",         "🔄  Versione simile — stesso argomento, dati numerici diversi"),
-                ("difficolta_e_livello", "⚖️  Usa solo il livello di difficoltà"),
-            ],
-            "appunti": [
-                ("base_conoscenza",      "📒  Usa i concetti come fonte di domande"),
-                ("difficolta_e_livello", "⚖️  Usa solo il livello di difficoltà"),
-            ],
-            "libro": [
-                ("base_conoscenza",      "📚  Usa il contenuto come fonte"),
-                ("stile_e_struttura",    "📐  Usa solo lo stile tipografico"),
-            ],
-            "esercizi_sciolti": [
-                ("stile_e_struttura",    "📐  Usa come modello di stile"),
-                ("base_conoscenza",      "🔢  Genera esercizi simili con dati nuovi"),
-                ("copia_fedele",         "🔄  Includi alcuni di questi esercizi"),
-            ],
-        }
-        _opzioni = _opzioni_base.get(tipo_doc, _opzioni_base["verifica"]) + [
-            ("ignora", "🚫  Non usare il file — procedi da zero"),
-        ]
-
-        _mode_keys    = [o[0] for o in _opzioni]
-        _mode_labels  = [o[1] for o in _opzioni]
-        _cur_idx      = _mode_keys.index(file_mode) if file_mode in _mode_keys else 0
-        # Evidenzia la consigliata nel label
-        _mode_labels_display = [
-            lbl + ("  ✦ consigliata" if key == modalita_ai else "")
-            for key, lbl in _opzioni
-        ]
-
-        _sel_label = st.selectbox(
-            "Modalità uso file",
-            options=_mode_labels_display,
-            index=_cur_idx,
-            label_visibility="collapsed",
-            key="sel_file_mode",
-        )
-        _sel_idx_new = _mode_labels_display.index(_sel_label)
-        _new_mode    = _mode_keys[_sel_idx_new]
-        if _new_mode != file_mode:
-            st.session_state.file_mode = _new_mode
-            file_mode = _new_mode
-            st.rerun()
-
-        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
-
-        # ── Box istruzioni aggiuntive ─────────────────────────────────────────
-        _hint_box = {
-            "stile_e_struttura":    f"es. Usa lo stile del file ma tratta le equazioni di secondo grado",
-            "base_conoscenza":      f"es. Concentrati sulla definizione e sulle applicazioni pratiche",
-            "copia_fedele":         f"es. Rendi le domande leggermente più difficili",
-            "difficolta_e_livello": f"es. L'argomento è la fotosintesi clorofilliana",
-            "ignora":               f"es. Equazioni di secondo grado, 3 esercizi con grafici",
-        }.get(file_mode, "es. Indica argomento, tipo di esercizi o altre preferenze…")
-
-        _hint_sotto = {
-            "stile_e_struttura":    f"💡 Argomento di default dal file: **{arg_file or 'non rilevato'}**",
-            "base_conoscenza":      f"💡 I concetti del file saranno usati come fonte",
-            "copia_fedele":         f"💡 Cambierò solo i dati numerici, argomento invariato",
-            "difficolta_e_livello": f"💡 Scrivi l'argomento della nuova verifica",
-            "ignora":               f"💡 Scrivi l'argomento della verifica",
-        }.get(file_mode, "")
-
-        st.markdown(
-            f'<div style="font-size:.8rem;font-weight:700;color:{T["text"]};'
-            f'font-family:DM Sans,sans-serif;margin-bottom:.2rem;">'
-            f'Istruzioni aggiuntive <span style="font-weight:400;color:{T["muted"]};">(opzionale)</span>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-        if _hint_sotto:
+            # Dropdown modalità uso
             st.markdown(
-                f'<div style="font-size:.72rem;color:{T["muted"]};margin-bottom:.3rem;">'
-                f'{_hint_sotto}</div>',
+                f'<div style="font-size:.75rem;font-weight:600;color:{T["text2"]};'
+                f'margin:.1rem 0 .2rem;">Come usare questo file?</div>',
                 unsafe_allow_html=True
             )
-
-        _precompile = ""
-        if st.session_state.get("esercizio_da_includere") and file_mode == "includi_esercizio":
-            _precompile = (
-                f"Includi questo esercizio: \"{st.session_state.esercizio_da_includere}\".\n"
-                f"Genera i restanti con dati diversi."
+            _ops_keys = _OPZIONI_PER_TIPO.get(tipo_doc, _OPZIONI_PER_TIPO["verifica"])
+            _ops_labels = [
+                _OPZIONI_LABEL[k] + ("  ✦" if k == _modalita_ai else "")
+                for k in _ops_keys
+            ]
+            _cur_idx_m = _ops_keys.index(fmode) if fmode in _ops_keys else 0
+            _sel_lab = st.selectbox(
+                f"Modalità file {_i}",
+                options=_ops_labels,
+                index=_cur_idx_m,
+                label_visibility="collapsed",
+                key=f"mode_sel_{_i}",
             )
+            _new_mode = _ops_keys[_ops_labels.index(_sel_lab)]
+            if _new_mode != fmode:
+                st.session_state.analisi_docs_list[_i]["file_mode"] = _new_mode
+                st.rerun()
 
-        istruzioni_extra = st.text_area(
-            "Istruzioni extra",
-            value=_precompile,
-            placeholder=_hint_box,
-            height=80,
-            label_visibility="collapsed",
-            key="percorso_a_istruzioni",
-        ).strip()
+            # Bottoni Conferma / Rimuovi
+            _cc, _cx = st.columns([3, 1], gap="small")
+            with _cc:
+                if st.button("✓ Confermato", key=f"conf_{_i}", use_container_width=True,
+                             type="primary"):
+                    st.session_state.analisi_docs_list[_i]["confirmed"] = True
+                    # Aggiorna file_mode nell'entry
+                    st.session_state.analisi_docs_list[_i]["file_mode"] = _new_mode
+                    # Retrocompatibilità slot singolo
+                    st.session_state.file_mode = _new_mode
+                    _consolida_info()
+                    st.rerun()
+            with _cx:
+                if st.button("× Rimuovi", key=f"rm_{_i}", use_container_width=True):
+                    _da_rimuovere.append(_i)
 
-        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:.15rem'></div>", unsafe_allow_html=True)
 
-        # ── Configurazione rapida ─────────────────────────────────────────────
-        _prefs     = st.session_state._docente_prefs.get(materia_ai, {})
-        _mat_list  = MATERIE + ["✏️ Altra materia..."]
-        _mat_idx   = _mat_list.index(materia_ai) if materia_ai in _mat_list else 0
-        _scu_idx   = SCUOLE.index(scuola_ai) if scuola_ai in SCUOLE else 0
-        _es_options = list(range(1, 16))
-        _es_default = ad.get("num_esercizi_rilevati", 4)
-        _es_default = max(1, min(_es_default, 15)) if _es_default else 4
-        _es_idx     = _es_options.index(_es_default) if _es_default in _es_options else 3
+    # Applica rimozioni (reverse per non spostare indici)
+    if _da_rimuovere:
+        for _idx in sorted(_da_rimuovere, reverse=True):
+            st.session_state.analisi_docs_list.pop(_idx)
+        _consolida_info()
+        # Ricalcola analisi_doc dal primo elemento rimasto
+        if st.session_state.analisi_docs_list:
+            st.session_state.analisi_doc = st.session_state.analisi_docs_list[0]["analisi"]
+        else:
+            st.session_state.analisi_doc = None
+            st.session_state.info_consolidate = {}
+        st.rerun()
 
-        _col_m, _col_s, _col_n = st.columns(3, gap="small")
-        with _col_m:
-            st.markdown('<div class="opt-label">Materia</div>', unsafe_allow_html=True)
-            _sel_m = st.selectbox(
-                "Materia", _mat_list, index=_mat_idx,
-                label_visibility="collapsed", key="sel_materia_a",
-            )
-            materia_scelta = (
-                st.text_input("Scrivi materia:", key="_mat_custom_a",
-                              label_visibility="collapsed").strip() or "Matematica"
-                if _sel_m == "✏️ Altra materia..."
-                else (_sel_m or "Matematica")
-            )
-        with _col_s:
-            st.markdown('<div class="opt-label">Tipo di scuola</div>', unsafe_allow_html=True)
-            difficolta = st.selectbox(
-                "Scuola", SCUOLE, index=_scu_idx,
-                label_visibility="collapsed", key="sel_scuola_a",
-            )
-        with _col_n:
-            st.markdown('<div class="opt-label">N° esercizi</div>', unsafe_allow_html=True)
-            num_esercizi = st.selectbox(
-                "Numero esercizi", options=_es_options, index=_es_idx,
-                label_visibility="collapsed", key="sel_num_es_a",
-                format_func=lambda x: f"{x} esercizi",
-            )
-
-        with st.expander("⚙️ Opzioni avanzate (punteggi, griglia)", expanded=False):
-            if _prefs.get("stile_desc"):
-                st.markdown(
-                    f'<div style="background:{T["hint_bg"]};border:1px solid {T["hint_border"]};'
-                    f'border-radius:8px;padding:.4rem .7rem;font-size:.72rem;color:{T["hint_text"]};'
-                    f'margin-bottom:.5rem;">'
-                    f'✨ Preferenze salvate per <b>{materia_ai}</b>: {_prefs["stile_desc"]}'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-            _tog = st.toggle("Aggiungi punteggi e griglia di valutazione",
-                             value=True, key="toggle_punteggi_a")
-            mostra_punteggi = _tog
-            con_griglia     = _tog
-            punti_totali    = 100
-            if _tog:
-                _pt_opts = list(range(10, 105, 5))
-                _pt_idx  = _pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts) - 1
-                st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
-                punti_totali = st.selectbox(
-                    "Punti totali", options=_pt_opts, index=_pt_idx,
-                    label_visibility="collapsed", key="sel_punti_a",
-                    format_func=lambda x: f"{x} pt",
-                )
-
-        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-
-        # ── Pulsante Genera ───────────────────────────────────────────────────
-        genera_btn = st.button(
-            "🚀  Genera Bozza",
-            use_container_width=True,
-            type="primary",
-            disabled=_limite,
-            key="genera_btn_a",
-        )
-        if _limite:
-            st.markdown(
-                '<div style="text-align:center;font-size:.82rem;color:#EF4444;margin-top:.4rem;">'
-                '⛔ Limite mensile raggiunto.</div>',
-                unsafe_allow_html=True
-            )
-
-        # ── Azione Genera ─────────────────────────────────────────────────────
-        if genera_btn and not _limite:
-            _arg_override = None
-            _il = istruzioni_extra.lower()
-            for _kw in ("argomento è", "argomento:", "l'argomento", "tema:"):
-                if _kw in _il:
-                    _arg_override = istruzioni_extra[_il.find(_kw)+len(_kw):].split(".")[0].strip()
-                    break
-
-            _final_file_mode = file_mode if file_mode != "ignora" else "ignora"
-            argomento_gen, note_gen = compila_contesto_generazione(
-                analisi=ad,
-                file_mode=_final_file_mode,
-                istruzioni_extra=istruzioni_extra,
-                argomento_override=_arg_override,
-            )
-            s_es, imgs_es = _build_prompt_esercizi(
-                st.session_state.esercizi_custom,
-                num_esercizi,
-                punti_totali if mostra_punteggi else 0,
-                mostra_punteggi,
-            )
-            if ad.get("confidence", 0) >= 0.70 and materia_scelta in MATERIE:
-                _salva_docente_preferenze(materia_scelta, {
-                    "scuola": difficolta,
-                    "stile_desc": ad.get("stile_desc"),
-                    "tipi_esercizi_preferiti": ad.get("tipi_domande"),
-                    "num_item_medi": ad.get("num_item_medi"),
-                })
-            _file_isp = (
-                st.session_state.get("file_ispirazione_upload") or
-                st.session_state.get("file_ispirazione")
-            )
-            # Segna dialogo_stato come confermato per compatibilità Supabase
-            st.session_state.dialogo_stato = "confermato"
-            _lancia_generazione(
-                materia_scelta=materia_scelta,
-                argomento=argomento_gen,
-                difficolta=difficolta,
-                durata_scelta="1 ora",
-                num_esercizi_totali=num_esercizi,
-                punti_totali=punti_totali,
-                mostra_punteggi=mostra_punteggi,
-                con_griglia=con_griglia,
-                note_generali=note_gen,
-                s_es=s_es,
-                imgs_es=imgs_es,
-                file_ispirazione=_file_isp,
-                mathpix_context=st.session_state.get("mathpix_context"),
-            )
-
-    elif active_bytes is None:
-        # Nessun file caricato ancora — messaggio incoraggiamento
+    # Stop se nessun file ancora
+    if not lista:
         st.markdown(
-            f'<div style="text-align:center;padding:1.5rem 1rem;color:{T["muted"]};'
-            f'font-size:.8rem;font-family:DM Sans,sans-serif;">'
+            f'<div style="text-align:center;padding:1.2rem 1rem;color:{T["muted"]};'
+            f'font-size:.78rem;font-family:DM Sans,sans-serif;">'
             f'⬆️ Carica un file per iniziare — l\'AI lo analizzerà automaticamente'
             f'</div>',
             unsafe_allow_html=True
+        )
+        return
+
+    # Stop se qualche file non è ancora confermato
+    _non_conf = [e for e in lista if not e["confirmed"]]
+    if _non_conf:
+        return   # attendi conferma modalità prima di mostrare la sezione finale
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # SEZIONE 3 — Info consolidate + campi obbligatori mancanti
+    # ─────────────────────────────────────────────────────────────────────────
+    info = st.session_state.info_consolidate
+    arg_cons    = info.get("contenuto_argomento") or ""
+    scuola_cons = info.get("scuola") or ""
+    materia_cons = info.get("materia") or ""
+
+    # Chip riepilogo consolidato
+    _chips = []
+    if materia_cons: _chips.append(f"📚 {materia_cons}")
+    if scuola_cons:  _chips.append(f"🏫 {scuola_cons}")
+    if arg_cons:     _chips.append(f"📌 {(arg_cons[:45]+'…') if len(arg_cons)>45 else arg_cons}")
+    if _chips:
+        st.markdown(
+            f'<div style="display:flex;flex-wrap:wrap;gap:.35rem;margin:.4rem 0 .6rem;">'
+            + "".join(
+                f'<span style="font-size:.72rem;background:{T["card"]};border:1px solid {T["border"]};'
+                f'border-radius:6px;padding:3px 9px;color:{T["text2"]};">{c}</span>'
+                for c in _chips
+            ) +
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
+    # Divisore
+    st.markdown(
+        f'<div style="height:1px;background:{T["border"]};margin:.3rem 0 .8rem;'
+        f'border-radius:1px;"></div>',
+        unsafe_allow_html=True
+    )
+
+    # Campi obbligatori mancanti — mostrati solo se necessari
+    _manca_argomento = not arg_cons
+    _manca_scuola    = not scuola_cons
+    _manca_materia   = not materia_cons
+
+    if _manca_argomento or _manca_scuola or _manca_materia:
+        st.markdown(
+            f'<div style="background:{T["hint_bg"]};border:1px solid {T["hint_border"]};'
+            f'border-radius:10px;padding:.55rem .85rem;margin-bottom:.7rem;">'
+            f'<div style="font-size:.73rem;font-weight:700;color:{T["hint_text"]};'
+            f'margin-bottom:.3rem;">💡 Alcune info non sono state ricavate dai file — '
+            f'compilale qui:</div></div>',
+            unsafe_allow_html=True
+        )
+
+    _col_obbligatori = []
+    if _manca_argomento: _col_obbligatori.append("argomento")
+    if _manca_scuola:    _col_obbligatori.append("scuola")
+    if _manca_materia:   _col_obbligatori.append("materia")
+
+    _val_argomento = arg_cons
+    _val_scuola    = scuola_cons
+    _val_materia   = materia_cons
+
+    if _col_obbligatori:
+        _cols_ob = st.columns(len(_col_obbligatori), gap="small")
+        for _j, _campo in enumerate(_col_obbligatori):
+            with _cols_ob[_j]:
+                if _campo == "argomento":
+                    st.markdown('<div class="opt-label">Argomento verifica ✱</div>',
+                                unsafe_allow_html=True)
+                    _val_argomento = st.text_input(
+                        "Argomento", placeholder="es. Equazioni di secondo grado",
+                        label_visibility="collapsed", key="ob_argomento"
+                    ).strip()
+                elif _campo == "scuola":
+                    st.markdown('<div class="opt-label">Tipo di scuola ✱</div>',
+                                unsafe_allow_html=True)
+                    _val_scuola = st.selectbox(
+                        "Scuola", SCUOLE, index=0,
+                        label_visibility="collapsed", key="ob_scuola"
+                    )
+                elif _campo == "materia":
+                    st.markdown('<div class="opt-label">Materia ✱</div>',
+                                unsafe_allow_html=True)
+                    _mat_opts = MATERIE + ["Altra materia…"]
+                    _val_materia_sel = st.selectbox(
+                        "Materia", _mat_opts, index=0,
+                        label_visibility="collapsed", key="ob_materia"
+                    )
+                    if _val_materia_sel == "Altra materia…":
+                        _val_materia = st.text_input(
+                            "Scrivi materia", label_visibility="collapsed",
+                            key="ob_materia_custom"
+                        ).strip() or "Matematica"
+                    else:
+                        _val_materia = _val_materia_sel
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # SEZIONE 4 — Box istruzioni aggiuntive
+    # ─────────────────────────────────────────────────────────────────────────
+    # Determina file_mode prevalente (primo confermato)
+    _fmode_prevalente = lista[0]["file_mode"] if lista else "stile_e_struttura"
+    _hint_box = {
+        "stile_e_struttura":    "es. Usa lo stile del file ma tratta le equazioni di secondo grado",
+        "base_conoscenza":      "es. Concentrati sulla definizione e sulle applicazioni pratiche",
+        "copia_fedele":         "es. Rendi le domande leggermente più difficili",
+        "difficolta_e_livello": "es. L'argomento è la fotosintesi clorofilliana",
+        "ignora":               "es. Equazioni di secondo grado, 3 esercizi aperti",
+    }.get(_fmode_prevalente, "es. Indica preferenze su tipo esercizi, livello, stile…")
+
+    st.markdown(
+        f'<div style="font-size:.8rem;font-weight:700;color:{T["text"]};'
+        f'font-family:DM Sans,sans-serif;margin-bottom:.2rem;">'
+        f'Note aggiuntive <span style="font-weight:400;color:{T["muted"]};">(opzionale)</span>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+    istruzioni_extra = st.text_area(
+        "Note", placeholder=_hint_box, height=72,
+        label_visibility="collapsed", key="percorso_a_istruzioni",
+    ).strip()
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # SEZIONE 5 — Configurazione rapida
+    # ─────────────────────────────────────────────────────────────────────────
+    _mat_list  = MATERIE + ["✏️ Altra materia..."]
+    _mat_idx   = _mat_list.index(_val_materia) if _val_materia in _mat_list else 0
+    _scu_idx   = SCUOLE.index(_val_scuola) if _val_scuola in SCUOLE else 0
+    _es_default = info.get("num_esercizi_rilevati", 4) or 4
+    _es_default = max(1, min(int(_es_default), 15))
+    _es_options = list(range(1, 16))
+    _es_idx     = _es_options.index(_es_default) if _es_default in _es_options else 3
+
+    _col_m, _col_s, _col_n = st.columns(3, gap="small")
+    with _col_m:
+        st.markdown('<div class="opt-label">Materia</div>', unsafe_allow_html=True)
+        _sel_m = st.selectbox(
+            "Materia", _mat_list, index=_mat_idx,
+            label_visibility="collapsed", key="sel_materia_a",
+        )
+        materia_scelta = (
+            st.text_input("Scrivi materia:", key="_mat_custom_a",
+                          label_visibility="collapsed").strip() or "Matematica"
+            if _sel_m == "✏️ Altra materia..."
+            else (_sel_m or "Matematica")
+        )
+    with _col_s:
+        st.markdown('<div class="opt-label">Tipo di scuola</div>', unsafe_allow_html=True)
+        difficolta = st.selectbox(
+            "Scuola", SCUOLE, index=_scu_idx,
+            label_visibility="collapsed", key="sel_scuola_a",
+        )
+    with _col_n:
+        st.markdown('<div class="opt-label">N° esercizi</div>', unsafe_allow_html=True)
+        num_esercizi = st.selectbox(
+            "Numero esercizi", options=_es_options, index=_es_idx,
+            label_visibility="collapsed", key="sel_num_es_a",
+            format_func=lambda x: f"{x} esercizi",
+        )
+
+    with st.expander("⚙️ Opzioni avanzate (punteggi, griglia)", expanded=False):
+        _tog = st.toggle("Aggiungi punteggi e griglia di valutazione",
+                         value=True, key="toggle_punteggi_a")
+        mostra_punteggi = _tog
+        con_griglia     = _tog
+        punti_totali    = 100
+        if _tog:
+            _pt_opts = list(range(10, 105, 5))
+            punti_totali = st.selectbox(
+                "Punti totali", options=_pt_opts,
+                index=_pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts)-1,
+                label_visibility="collapsed", key="sel_punti_a",
+                format_func=lambda x: f"{x} pt",
+            )
+
+    st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # SEZIONE 6 — Genera Bozza
+    # ─────────────────────────────────────────────────────────────────────────
+    # Blocca genera se argomento o scuola ancora vuoti
+    _arg_finale   = _val_argomento or arg_cons
+    _scuola_finale = difficolta  # già selezionata sopra
+    _manca_ancora = not _arg_finale
+
+    genera_btn = st.button(
+        "🚀  Genera Bozza",
+        use_container_width=True,
+        type="primary",
+        disabled=_limite or _manca_ancora,
+        key="genera_btn_a",
+    )
+    if _manca_ancora and not _limite:
+        st.markdown(
+            f'<div style="font-size:.76rem;color:{T["warn"]};text-align:center;margin-top:.3rem;">'
+            f'⚠️ Inserisci l\'argomento della verifica per continuare.</div>',
+            unsafe_allow_html=True
+        )
+    if _limite:
+        st.markdown(
+            '<div style="text-align:center;font-size:.82rem;color:#EF4444;margin-top:.4rem;">'
+            '⛔ Limite mensile raggiunto.</div>',
+            unsafe_allow_html=True
+        )
+
+    if genera_btn and not _limite and not _manca_ancora:
+        # Costruisci analisi_doc consolidata per compila_contesto_generazione
+        _ad_merged = dict(st.session_state.info_consolidate)
+        if _arg_finale:
+            _ad_merged["contenuto_argomento"] = _arg_finale
+        st.session_state.analisi_doc = _ad_merged
+
+        # File mode: usa quello del primo file confermato non-ignora,
+        # oppure ignora se tutti sono "ignora"
+        _fmode_eff = next(
+            (e["file_mode"] for e in lista if e["confirmed"] and e["file_mode"] != "ignora"),
+            "ignora"
+        )
+        st.session_state.file_mode = _fmode_eff
+
+        argomento_gen, note_gen = compila_contesto_generazione(
+            analisi=_ad_merged,
+            file_mode=_fmode_eff,
+            istruzioni_extra=istruzioni_extra,
+            argomento_override=_arg_finale if _manca_argomento else None,
+        )
+        s_es, imgs_es = _build_prompt_esercizi(
+            st.session_state.esercizi_custom,
+            num_esercizi,
+            punti_totali if mostra_punteggi else 0,
+            mostra_punteggi,
+        )
+        if _ad_merged.get("confidence", 0) >= 0.70 and materia_scelta in MATERIE:
+            _salva_docente_preferenze(materia_scelta, {
+                "scuola": difficolta,
+                "stile_desc": _ad_merged.get("stile_desc"),
+                "tipi_esercizi_preferiti": _ad_merged.get("tipi_domande"),
+                "num_item_medi": _ad_merged.get("num_item_medi"),
+            })
+        _file_isp = (
+            st.session_state.get(f"file_up_{len(lista)-1}") or
+            st.session_state.get("file_ispirazione")
+        )
+        st.session_state.dialogo_stato = "confermato"
+        _lancia_generazione(
+            materia_scelta=materia_scelta,
+            argomento=argomento_gen,
+            difficolta=difficolta,
+            durata_scelta="1 ora",
+            num_esercizi_totali=num_esercizi,
+            punti_totali=punti_totali,
+            mostra_punteggi=mostra_punteggi,
+            con_griglia=con_griglia,
+            note_generali=note_gen,
+            s_es=s_es,
+            imgs_es=imgs_es,
+            file_ispirazione=_file_isp,
+            mathpix_context=st.session_state.get("mathpix_context"),
         )
 
 
