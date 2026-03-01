@@ -763,23 +763,25 @@ def analizza_documento_caricato(
 ) -> dict:
     """
     Analizza un documento caricato (immagine o PDF) usando un modello veloce.
-    Estrae: materia, scuola, argomento, stile docente, tipi domande, confidence.
+    Restituisce lo schema esteso: tipo_documento, contenuto_argomento, stile_desc,
+    esercizi_trovati[], ha_grafici, modalita_uso_consigliata, confidence.
 
     Parametri
     ---------
-    model           : istanza GenerativeModel (usare Flash Lite per velocità)
-    file_bytes      : bytes del file da analizzare
-    mime_type       : MIME type (es. 'image/png', 'application/pdf')
-    mathpix_context : testo LaTeX estratto da Mathpix OCR (contestuale, opzionale)
-    materie_valide  : lista di materie accettate (da config.MATERIE)
+    model           : GenerativeModel (usare Flash Lite per velocità)
+    file_bytes      : bytes del file
+    mime_type       : MIME type (es. "image/png", "application/pdf")
+    mathpix_context : LaTeX estratto da Mathpix OCR (opzionale)
+    materie_valide  : lista materie accettate (da config.MATERIE)
 
     Ritorno
     -------
-    dict con chiavi: materia, scuola, argomento, stile_desc, tipi_domande,
-                     num_item_medi, num_esercizi_rilevati, confidence
-    Può sollevare Exception se il modello fallisce o il JSON non è parsabile.
+    dict con chiavi: tipo_documento, materia, scuola, contenuto_argomento,
+                     stile_desc, tipi_domande, num_item_medi, num_esercizi_rilevati,
+                     ha_grafici, ha_formule, esercizi_trovati, modalita_uso_consigliata,
+                     motivazione_uso, confidence
     """
-    import json
+    import json as _json
 
     if materie_valide is None:
         materie_valide = [
@@ -792,7 +794,6 @@ def analizza_documento_caricato(
         mathpix_context=mathpix_context,
     )
 
-    # Componi il messaggio multimodale: testo + file
     inp = [testo_prompt, {"mime_type": mime_type, "data": file_bytes}]
 
     try:
@@ -801,43 +802,194 @@ def analizza_documento_caricato(
     except Exception as exc:
         raise Exception(f"Chiamata modello fallita: {exc}") from exc
 
-    # Pulizia: rimuovi eventuali fence ```json ... ```
+    # Rimuovi eventuali fence ```json ... ```
     raw = re.sub(r"^```(?:json)?", "", raw, flags=re.MULTILINE).strip()
-    raw = re.sub(r"```$", "", raw, flags=re.MULTILINE).strip()
+    raw = re.sub(r"```$",          "", raw, flags=re.MULTILINE).strip()
 
-    # Parsing JSON
+    # Parsing JSON con fallback estrazione parziale
     try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        # Tentativo di estrazione JSON parziale (se il modello ha aggiunto testo)
+        data = _json.loads(raw)
+    except _json.JSONDecodeError:
         m = re.search(r"\{.*\}", raw, re.DOTALL)
         if m:
             try:
-                data = json.loads(m.group(0))
-            except json.JSONDecodeError as exc2:
+                data = _json.loads(m.group(0))
+            except _json.JSONDecodeError as exc2:
                 raise Exception(
-                    f"Risposta del modello non è JSON valido: {raw[:200]}"
+                    f"Risposta non è JSON valido: {raw[:200]}"
                 ) from exc2
         else:
-            raise Exception(f"Nessun JSON trovato nella risposta: {raw[:200]}")
+            raise Exception(f"Nessun JSON nella risposta: {raw[:200]}")
 
-    # Normalizzazione e validazione campi
-    result = {
-        "materia":               data.get("materia") or None,
-        "scuola":                data.get("scuola") or None,
-        "argomento":             data.get("argomento") or None,
-        "stile_desc":            data.get("stile_desc") or None,
-        "tipi_domande":          data.get("tipi_domande") or [],
-        "num_item_medi":         int(data.get("num_item_medi") or 0),
-        "num_esercizi_rilevati": int(data.get("num_esercizi_rilevati") or 0),
-        "confidence":            float(data.get("confidence") or 0.0),
+    # Normalizzazione
+    _tipi_validi = {"Aperto", "Scelta multipla", "Vero/Falso", "Completamento"}
+    _modalita_valide = {
+        "stile_e_struttura", "base_conoscenza", "copia_fedele", "difficolta_e_livello"
     }
+    _tipo_doc_validi = {"verifica", "appunti", "libro", "esercizi_sciolti", "misto", "altro"}
 
-    # Assicura che la materia sia nella lista valida
-    if result["materia"] and result["materia"] not in materie_valide:
-        result["materia"] = None
+    # Normalizza esercizi_trovati
+    raw_es = data.get("esercizi_trovati") or []
+    esercizi_trovati = []
+    for e in raw_es[:10]:  # cap a 10 per sicurezza
+        if isinstance(e, dict):
+            esercizi_trovati.append({
+                "numero":           int(e.get("numero") or len(esercizi_trovati) + 1),
+                "testo_breve":      (str(e.get("testo_breve") or ""))[:120] or None,
+                "tipo":             e.get("tipo") if e.get("tipo") in _tipi_validi else "Aperto",
+                "ha_dati_numerici": bool(e.get("ha_dati_numerici", False)),
+            })
 
-    # Clamp confidence
-    result["confidence"] = max(0.0, min(1.0, result["confidence"]))
+    modalita = data.get("modalita_uso_consigliata") or ""
+    if modalita not in _modalita_valide:
+        # Inferenza fallback: appunti/libro → base_conoscenza, verifica → stile_e_struttura
+        tipo_doc_raw = (data.get("tipo_documento") or "").lower()
+        if tipo_doc_raw in ("appunti", "libro"):
+            modalita = "base_conoscenza"
+        elif tipo_doc_raw == "verifica":
+            modalita = "stile_e_struttura"
+        else:
+            modalita = "stile_e_struttura"
 
+    tipo_doc = data.get("tipo_documento") or "altro"
+    if tipo_doc not in _tipo_doc_validi:
+        tipo_doc = "altro"
+
+    materia = data.get("materia") or None
+    if materia and materia not in materie_valide:
+        materia = None
+
+    result = {
+        "tipo_documento":            tipo_doc,
+        "materia":                   materia,
+        "scuola":                    data.get("scuola") or None,
+        "contenuto_argomento":       (data.get("contenuto_argomento") or None),
+        "stile_desc":                (data.get("stile_desc") or None),
+        "tipi_domande":              [t for t in (data.get("tipi_domande") or []) if t in _tipi_validi],
+        "num_item_medi":             int(data.get("num_item_medi") or 0),
+        "num_esercizi_rilevati":     int(data.get("num_esercizi_rilevati") or 0),
+        "ha_grafici":                bool(data.get("ha_grafici", False)),
+        "ha_formule":                bool(data.get("ha_formule", False)),
+        "esercizi_trovati":          esercizi_trovati,
+        "modalita_uso_consigliata":  modalita,
+        "motivazione_uso":           (data.get("motivazione_uso") or None),
+        "confidence":                max(0.0, min(1.0, float(data.get("confidence") or 0.0))),
+    }
     return result
+
+
+def compila_contesto_generazione(
+    analisi: dict,
+    file_mode: str,
+    istruzioni_extra: str,
+    argomento_override: str | None = None,
+) -> tuple[str, str]:
+    """
+    Assembla argomento e note_generali per genera_verifica() dai dati del
+    Percorso A (upload intelligente).
+
+    Parametri
+    ---------
+    analisi           : dict restituito da analizza_documento_caricato()
+    file_mode         : come usare il file —
+                        "stile_e_struttura" | "base_conoscenza" |
+                        "copia_fedele"      | "difficolta_e_livello" |
+                        "includi_esercizio" | "ignora"
+    istruzioni_extra  : testo libero del docente (box di correzione finale)
+    argomento_override: se il docente ha specificato un argomento diverso dal file
+
+    Ritorno
+    -------
+    (argomento: str, note_generali: str)
+    """
+    argomento_file = analisi.get("contenuto_argomento") or ""
+    stile_desc     = analisi.get("stile_desc") or ""
+    tipo_doc       = analisi.get("tipo_documento", "altro")
+    ha_grafici     = analisi.get("ha_grafici", False)
+    es_trovati     = analisi.get("esercizi_trovati") or []
+
+    # ── Argomento: override del docente ha sempre priorità assoluta ──────────
+    argomento = (argomento_override or argomento_file or "").strip()
+    if not argomento:
+        argomento = "Argomento da specificare"
+
+    # ── Note AI: costruite in base alla modalità ──────────────────────────────
+    parti_note: list[str] = []
+
+    if file_mode == "stile_e_struttura":
+        parti_note.append(
+            "╔══════════════════════════════════════════════════╗\n"
+            "║  USO FILE: STILE E STRUTTURA                      ║\n"
+            "╚══════════════════════════════════════════════════╝\n"
+            "Il docente ha fornito un documento di riferimento PER LO STILE.\n"
+            "REGOLA ASSOLUTA: usa il file SOLO come modello di forma, NON di contenuto.\n"
+            f"- Replica la struttura: {stile_desc}\n"
+            f"- Argomento della nuova verifica: '{argomento}' (DIVERSO dal file, rispetta questo).\n"
+            "- NON copiare testo, dati numerici o esercizi specifici dal file.\n"
+            "- Adatta il livello di difficoltà percepito nel file."
+        )
+        if ha_grafici:
+            parti_note.append(
+                "⚠️ Il file contiene grafici: non includerli se appartengono all'argomento "
+                "del file originale — genera grafici solo se pertinenti al nuovo argomento."
+            )
+
+    elif file_mode == "base_conoscenza":
+        parti_note.append(
+            "╔══════════════════════════════════════════════════╗\n"
+            "║  USO FILE: BASE DI CONOSCENZA                    ║\n"
+            "╚══════════════════════════════════════════════════╝\n"
+            "Il docente ha fornito appunti/materiale come BASE CONCETTUALE.\n"
+            "- Usa i concetti, le definizioni e gli esempi presenti nel file come fonte.\n"
+            f"- Genera esercizi sull'argomento '{argomento}'.\n"
+            "- Puoi ispirti alla terminologia usata nel file.\n"
+            "- NON copiare esercizi o testo letteralmente."
+        )
+
+    elif file_mode == "copia_fedele":
+        parti_note.append(
+            "╔══════════════════════════════════════════════════╗\n"
+            "║  USO FILE: COPIA FEDELE (RIELABORAZIONE)         ║\n"
+            "╚══════════════════════════════════════════════════╝\n"
+            "Il docente vuole una verifica molto simile al file allegato.\n"
+            "- Mantieni la stessa struttura, lo stesso numero di esercizi e gli stessi tipi.\n"
+            "- Cambia SOLO i dati numerici specifici (numeri, date, nomi propri) per evitare plagio.\n"
+            "- Mantieni lo stesso argomento e livello di difficoltà."
+        )
+        if ha_grafici:
+            parti_note.append(
+                "⚠️ NOTA GRAFICI: il file originale contiene grafici. "
+                "Genera i grafici TikZ/pgfplots SOLO se l'argomento lo richiede intrinsecamente — "
+                "evita grafici puramente decorativi o che richiedono immagini non generabili."
+            )
+
+    elif file_mode == "difficolta_e_livello":
+        parti_note.append(
+            "╔══════════════════════════════════════════════════╗\n"
+            "║  USO FILE: SOLO LIVELLO DI DIFFICOLTÀ            ║\n"
+            "╚══════════════════════════════════════════════════╝\n"
+            "Usa il file SOLO per calibrare la difficoltà e il registro linguistico.\n"
+            f"- Genera esercizi sull'argomento '{argomento}' con lo stesso livello.\n"
+            "- Ignora struttura e contenuto del file."
+        )
+
+    elif file_mode == "includi_esercizio":
+        # Un esercizio specifico viene incluso tra gli esercizi custom
+        # (gestito separatamente in main.py tramite esercizi_custom)
+        parti_note.append(
+            "Un esercizio specifico dal file è già stato incluso nella struttura.\n"
+            f"Genera i restanti esercizi sull'argomento '{argomento}'.\n"
+            "Mantieni coerenza di stile con l'esercizio preimpostato."
+        )
+
+    # ── Istruzioni extra del docente (massima priorità) ───────────────────────
+    if istruzioni_extra.strip():
+        parti_note.insert(0,
+            "╔══════════════════════════════════════════════════╗\n"
+            "║  ISTRUZIONI PRIORITARIE DEL DOCENTE              ║\n"
+            "╚══════════════════════════════════════════════════╝\n"
+            + istruzioni_extra.strip()
+        )
+
+    note_generali = "\n\n".join(parti_note)
+    return argomento, note_generali
