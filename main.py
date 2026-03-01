@@ -605,9 +605,9 @@ st.markdown(
 def _render_breadcrumb():
     stage = st.session_state.stage
     steps = [
-        ("01", "Configura",  STAGE_INPUT),
+        ("01", "Modalità",   STAGE_INPUT),
         ("02", "Anteprima",  STAGE_PREVIEW),
-        ("03", "Revisione",  STAGE_REVIEW),
+        ("03", "Modifica",   STAGE_REVIEW),
         ("04", "Download",   STAGE_FINAL),
     ]
     completed = {
@@ -950,161 +950,191 @@ def _consolida_info():
 
 def _render_bivio():
     """
-    Landing page: scelta tra Percorso A (Ho materiale), Percorso B (Parti da zero),
-    e Facsimile Istantaneo (carica verifica → genera bozza variante).
-    I box descrizione SONO i pulsanti (via CSS overlay).
+    Landing page wizard — Step 1: scelta modalità creazione verifica.
+    Tre card grandi: Creazione Guidata, Descrizione Libera, Genera da File.
     """
+    # Header centrato
     st.markdown(
-        f'<div style="text-align:center;padding:.8rem 0 1rem;">'
-        f'<div style="font-size:1.1rem;font-weight:900;color:{T["text"]};'
-        f'font-family:DM Sans,sans-serif;letter-spacing:-.02em;margin-bottom:.3rem;">'
-        f'Come vuoi creare la verifica?'
-        f'</div>'
-        f'<div style="font-size:.8rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
-        f'Scegli il percorso più adatto a te'
-        f'</div>'
+        f'<div class="wizard-header">'
+        f'<div class="wizard-header-title">Come vuoi creare la verifica?</div>'
+        f'<div class="wizard-header-sub">Scegli il percorso più adatto — puoi cambiare idea in qualsiasi momento</div>'
         f'</div>',
         unsafe_allow_html=True
     )
 
-    # CSS per card-button gigante con hover
+    # CSS card modalità
     st.markdown(
         f"""
         <style>
-        .bivio-btn-wrap {{position:relative;}}
-        .bivio-btn-wrap button[kind="primary"],
-        .bivio-btn-wrap button[kind="secondary"] {{
-            position:absolute!important;inset:0!important;
-            width:100%!important;height:100%!important;
-            opacity:0!important;cursor:pointer!important;
-            z-index:10!important;
-        }}
-        .bivio-card {{
+        .modal-card {{
             background:{T["card"]};
             border:2px solid {T["border2"]};
             border-radius:20px;
-            padding:1.8rem 1.5rem 1.5rem;
-            min-height:260px;
-            display:flex;flex-direction:column;gap:.6rem;
+            padding:2rem 1.6rem 1.6rem;
+            min-height:280px;
+            display:flex;flex-direction:column;gap:.7rem;
             cursor:pointer;
             transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
             position:relative;
+            margin-bottom:.5rem;
         }}
-        .bivio-card:hover {{
-            transform:scale(1.035);
-            box-shadow:0 12px 40px {T["accent"]}33;
+        .modal-card:hover {{
+            transform:translateY(-3px);
+            box-shadow:0 12px 40px {T["accent"]}28;
             border-color:{T["accent"]}88;
         }}
-        .bivio-card.primary {{
-            background:linear-gradient(145deg,{T["accent_light"]} 0%,{T["card"]} 60%);
+        .modal-card.featured {{
+            background:linear-gradient(150deg,{T["accent_light"]} 0%,{T["card"]} 65%);
             border-color:{T["accent"]};
-            box-shadow:0 4px 24px {T["accent"]}22;
+            box-shadow:0 4px 24px {T["accent"]}20;
         }}
-        .bivio-card.primary:hover {{
-            transform:scale(1.04);
+        .modal-card.featured:hover {{
             box-shadow:0 16px 48px {T["accent"]}44;
         }}
-        .bivio-badge {{
-            position:absolute;top:-.8rem;left:1.1rem;
+        .modal-badge {{
+            position:absolute;top:-.85rem;left:1.2rem;
             background:{T["accent"]};color:#fff;
-            font-size:.62rem;font-weight:800;
-            padding:3px 10px;border-radius:100px;
-            font-family:DM Sans,sans-serif;letter-spacing:.04em;
+            font-size:.6rem;font-weight:800;
+            padding:3px 11px;border-radius:100px;
+            font-family:DM Sans,sans-serif;letter-spacing:.05em;text-transform:uppercase;
         }}
-        .bivio-chip {{
+        .modal-icon {{font-size:2.6rem;line-height:1;margin-bottom:.2rem;}}
+        .modal-title {{
+            font-size:1.05rem;font-weight:900;
+            font-family:DM Sans,sans-serif;line-height:1.25;
+        }}
+        .modal-desc {{
+            font-size:.82rem;color:{T["text2"]};
+            font-family:DM Sans,sans-serif;line-height:1.65;flex:1;
+        }}
+        .modal-hint {{
+            font-size:.72rem;color:{T["muted"]};
+            font-family:DM Sans,sans-serif;
+            padding:.4rem .6rem;background:{T["card2"]};
+            border-radius:8px;border-left:2.5px solid {T["accent"]}66;
+        }}
+        .modal-chips {{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.2rem;}}
+        .modal-chip {{
             font-size:.65rem;background:{T["card2"]};
-            border-radius:5px;padding:2px 8px;color:{T["text2"]};
-            display:inline-block;margin:1px;
+            border-radius:6px;padding:3px 9px;color:{T["text2"]};
+        }}
+        /* Nascondi il testo del pulsante streamlit sotto la card */
+        .modal-btn-wrap button {{
+            margin-top:.5rem !important;
+            border-radius:12px !important;
+            font-weight:700 !important;
         }}
         </style>
         """,
         unsafe_allow_html=True
     )
 
-    col_a, col_b = st.columns(2, gap="medium")
+    col_a, col_b, col_c = st.columns(3, gap="medium")
 
-    # ── Percorso A ────────────────────────────────────────────────────────────
+    # ── Card A: Creazione Guidata (= Percorso B storico) ─────────────────────
     with col_a:
         st.markdown(
-            f'<div class="bivio-card primary">'
-            f'<div class="bivio-badge">✦ CONSIGLIATO</div>'
-            f'<div style="font-size:2.4rem;margin-bottom:.1rem;">📂</div>'
-            f'<div style="font-size:1.05rem;font-weight:900;color:{T["accent"]};'
-            f'font-family:DM Sans,sans-serif;line-height:1.2;">'
-            f'Carica il tuo materiale'
+            f'<div class="modal-card featured">'
+            f'<div class="modal-badge">✦ Più usato</div>'
+            f'<div class="modal-icon">✍️</div>'
+            f'<div class="modal-title" style="color:{T["accent"]};">Creazione guidata</div>'
+            f'<div class="modal-desc">'
+            f'Scegli materia, classe e argomento. L\'AI costruisce la verifica rispettando '
+            f'il tuo livello scolastico e il numero di esercizi che vuoi.'
             f'</div>'
-            f'<div style="font-size:.8rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
-            f'line-height:1.6;flex:1;">'
-            f'Hai una verifica precedente, appunti o un capitolo del libro?'
-            f'<br><br>'
-            f'<span style="color:{T["accent"]};font-weight:700;">'
-            f'L\'AI legge il materiale</span> e genera automaticamente una nuova verifica '
-            f'nello stesso stile, sullo stesso argomento — o su uno nuovo.'
-            f'</div>'
-            f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.3rem;">'
-            f'<span class="bivio-chip">📝 Verifiche</span>'
-            f'<span class="bivio-chip">📒 Appunti</span>'
-            f'<span class="bivio-chip">📚 Libri</span>'
-            f'<span class="bivio-chip">📷 Foto lavagna</span>'
+            f'<div class="modal-hint">Compila i campi e premi Genera — è semplice.</div>'
+            f'<div class="modal-chips">'
+            f'<span class="modal-chip">⚙️ Struttura personalizzabile</span>'
+            f'<span class="modal-chip">🎯 Controllo totale</span>'
             f'</div>'
             f'</div>',
             unsafe_allow_html=True
         )
-        if st.button(
-            "📂  Ho materiale da caricare →",
-            key="btn_percorso_a",
-            use_container_width=True,
-            type="primary",
-        ):
+        st.markdown('<div class="modal-btn-wrap">', unsafe_allow_html=True)
+        if st.button("Scegli →", key="btn_modal_guidata", use_container_width=True, type="primary"):
+            st.session_state.input_percorso = "B"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ── Card B: Descrizione Libera ────────────────────────────────────────────
+    with col_b:
+        st.markdown(
+            f'<div class="modal-card">'
+            f'<div class="modal-icon">💬</div>'
+            f'<div class="modal-title" style="color:{T["text"]};">Descrizione libera</div>'
+            f'<div class="modal-desc">'
+            f'Scrivi con parole tue cosa vuoi: "Verifica su equazioni con 2 problemi e 3 '
+            f'esercizi di applicazione". L\'AI interpreta e genera.'
+            f'</div>'
+            f'<div class="modal-hint">Ideale se hai già in mente la struttura ma non vuoi compilare campi.</div>'
+            f'<div class="modal-chips">'
+            f'<span class="modal-chip">🗣️ Linguaggio naturale</span>'
+            f'<span class="modal-chip">⚡ Rapido</span>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        st.markdown('<div class="modal-btn-wrap">', unsafe_allow_html=True)
+        if st.button("Scegli →", key="btn_modal_libera", use_container_width=True):
+            st.session_state.input_percorso = "LIBERA"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ── Card C: Genera da File (= Percorso A storico) ────────────────────────
+    with col_c:
+        st.markdown(
+            f'<div class="modal-card">'
+            f'<div class="modal-icon">📂</div>'
+            f'<div class="modal-title" style="color:{T["text"]};">Genera da file</div>'
+            f'<div class="modal-desc">'
+            f'Carica una verifica precedente, appunti o foto della lavagna. '
+            f'L\'AI legge il materiale e genera una verifica coerente o una variante.'
+            f'</div>'
+            f'<div class="modal-hint">Il file viene usato solo per generare la verifica.</div>'
+            f'<div class="modal-chips">'
+            f'<span class="modal-chip">📝 Verifiche</span>'
+            f'<span class="modal-chip">📒 Appunti</span>'
+            f'<span class="modal-chip">📷 Foto</span>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        st.markdown('<div class="modal-btn-wrap">', unsafe_allow_html=True)
+        if st.button("Scegli →", key="btn_modal_file", use_container_width=True):
             st.session_state.input_percorso = "A"
             st.session_state["_analisi_rifiuto"] = None
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── Percorso B ────────────────────────────────────────────────────────────
-    with col_b:
+    # ── Separatore + opzione QA ───────────────────────────────────────────────
+    st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
+    _qcol1, _qcol2, _qcol3 = st.columns([2, 3, 2])
+    with _qcol2:
         st.markdown(
-            f'<div class="bivio-card">'
-            f'<div style="font-size:2.4rem;margin-bottom:.1rem;">✍️</div>'
-            f'<div style="font-size:1.05rem;font-weight:900;color:{T["text"]};'
-            f'font-family:DM Sans,sans-serif;line-height:1.2;">'
-            f'Configurazione manuale'
-            f'</div>'
-            f'<div style="font-size:.8rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
-            f'line-height:1.6;flex:1;">'
-            f'Compila tu stesso materia, livello e argomento.'
-            f'<br><br>'
-            f'Controllo totale su struttura, punteggi e tipi di esercizi — '
-            f'<span style="font-weight:700;color:{T["text"]};">nessun upload richiesto.</span>'
-            f'</div>'
-            f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.3rem;">'
-            f'<span class="bivio-chip">⚙️ Configurazione libera</span>'
-            f'<span class="bivio-chip">🎯 Struttura custom</span>'
+            f'<div style="text-align:center;padding:.8rem;background:{T["card2"]};'
+            f'border:1px solid {T["border"]};border-radius:12px;">'
+            f'<div style="font-size:.78rem;font-weight:700;color:{T["text2"]};'
+            f'font-family:DM Sans,sans-serif;margin-bottom:.4rem;">'
+            f'Hai già una verifica preparata?</div>'
+            f'<div style="font-size:.72rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
+            f'Falla analizzare dall\'AI per trovare errori e migliorarla.'
             f'</div>'
             f'</div>',
             unsafe_allow_html=True
         )
-        if st.button(
-            "✍️  Configura manualmente →",
-            key="btn_percorso_b",
-            use_container_width=True,
-        ):
-            st.session_state.input_percorso = "B"
+        if st.button("🔍 Analizza la mia verifica", key="btn_modal_qa", use_container_width=True):
+            st.session_state.qa_mode = True
+            st.session_state.input_percorso = "QA"
             st.rerun()
 
-    # ── Facsimile Istantaneo ─────────────────────────────────────────────────
-    st.markdown("<div style='height:.9rem'></div>", unsafe_allow_html=True)
-    st.markdown(
-        f'<div style="text-align:center;font-size:.75rem;font-weight:700;'
-        f'color:{T["muted"]};font-family:DM Sans,sans-serif;margin-bottom:.5rem;">'
-        f'oppure'
-        f'</div>',
-        unsafe_allow_html=True
-    )
-
+    # Legacy Facsimile Istantaneo ─────────────────────────────────────────────
+    # NOTE: The old facsimile/percorso-A wizard code references _render_percorso_a_wizard
+    # which remains intact below. The col_fac2 variable referenced later is replaced here.
+    # We keep a stub to avoid NameError in the partial-read below.
     col_fac1, col_fac2, col_fac3 = st.columns([1, 4, 1])
     with col_fac2:
         st.markdown(
-            f'<div class="bivio-card" style="min-height:auto;padding:1.3rem 1.5rem;'
+            f'<div class="bivio-card" style="display:none;min-height:auto;padding:1.3rem 1.5rem;'
             f'border:2px dashed {T["border2"]};border-radius:16px;'
             f'background:linear-gradient(135deg,{T["card2"]} 0%,{T["card"]} 100%);">'
             f'<div style="display:flex;align-items:center;gap:1rem;">'
@@ -1990,6 +2020,115 @@ def _render_percorso_a_configura(num_esercizi_totali_ref: list):
     return ("", "Matematica", "Generico", True, True, 100, False)
 
 
+def _render_percorso_libera():
+    """
+    Percorso LIBERA: il docente descrive con parole sue la verifica che vuole.
+    Raccoglie la descrizione + materia/livello e lancia la generazione.
+    """
+    # Header percorso
+    st.markdown(
+        f'<div class="wizard-step-header">'
+        f'<div style="display:flex;align-items:center;gap:.7rem;">'
+        f'<span style="font-size:1.4rem;">💬</span>'
+        f'<div>'
+        f'<div style="font-size:.95rem;font-weight:900;color:{T["text"]};font-family:DM Sans,sans-serif;">'
+        f'Descrizione libera</div>'
+        f'<div style="font-size:.74rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
+        f'Scrivi cosa vuoi — l\'AI interpreta e genera la verifica</div>'
+        f'</div></div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+    # Materia + Scuola (riga compatta)
+    _col_m, _col_s = st.columns(2, gap="small")
+    _mat_list = MATERIE + ["✏️ Altra materia..."]
+    with _col_m:
+        st.markdown(f'<div class="field-label">Materia</div>', unsafe_allow_html=True)
+        _sel_m = st.selectbox("Materia", _mat_list, index=0,
+                              label_visibility="collapsed", key="sel_materia_lib")
+        materia_lib = (
+            st.text_input("Scrivi materia:", key="_mat_custom_lib",
+                          label_visibility="collapsed").strip() or "Matematica"
+            if _sel_m == "✏️ Altra materia..."
+            else (_sel_m or "Matematica")
+        )
+    with _col_s:
+        st.markdown(f'<div class="field-label">Livello scolastico</div>', unsafe_allow_html=True)
+        difficolta_lib = st.selectbox("Livello", SCUOLE, index=0,
+                                      label_visibility="collapsed", key="sel_scuola_lib")
+
+    # Campo descrizione libera — grande e centrale
+    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="field-label">Descrivi la verifica che vuoi creare</div>',
+        unsafe_allow_html=True
+    )
+    descrizione_lib = st.text_area(
+        "Descrizione",
+        placeholder=(
+            "Esempi:\n"
+            "• Verifica su equazioni di primo grado con 2 problemi applicativi e 3 esercizi di calcolo\n"
+            "• 4 domande aperte sulla Rivoluzione Francese, difficoltà media, per il Liceo Classico\n"
+            "• Quiz veloce: 6 vero/falso e 4 scelta multipla sull'analisi del testo poetico"
+        ),
+        height=140, label_visibility="collapsed", key="desc_libera",
+    ).strip()
+
+    st.markdown(
+        f'<div class="ai-hint"><span class="ai-hint-icon">💡</span>'
+        f'<span>Puoi indicare numero di esercizi, difficoltà, tipologia (aperto, scelta multipla, vero/falso), '
+        f'argomenti specifici — più dettagli, migliore il risultato.</span>'
+        f'</div>'
+        f'<div style="font-size:.72rem;color:{T["muted"]};font-family:DM Sans,sans-serif;margin-top:.2rem;">'
+        f'Potrai modificare ogni esercizio singolarmente prima di scaricare il PDF.'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+    if _limite:
+        st.markdown(
+            '<div style="text-align:center;font-size:.82rem;color:#EF4444;'
+            'font-family:DM Sans,sans-serif;font-weight:600;">⛔ Limite mensile raggiunto.</div>',
+            unsafe_allow_html=True
+        )
+
+    genera_lib = st.button(
+        "🚀  Genera Verifica",
+        use_container_width=True, type="primary",
+        disabled=_limite or not descrizione_lib,
+        key="genera_btn_lib",
+    )
+
+    if genera_lib and descrizione_lib:
+        s_es, imgs_es = _build_prompt_esercizi([], 4, 100, True)
+        _note_lib = f"DESCRIZIONE DEL DOCENTE (seguila fedelmente):\n{descrizione_lib}"
+        _lancia_generazione(
+            materia_scelta=materia_lib,
+            argomento=descrizione_lib[:120],
+            difficolta=difficolta_lib,
+            durata_scelta="1 ora",
+            num_esercizi_totali=4,
+            punti_totali=100,
+            mostra_punteggi=True,
+            con_griglia=True,
+            note_generali=_note_lib,
+            s_es=s_es,
+            imgs_es=imgs_es,
+            file_ispirazione=None,
+            mathpix_context=None,
+        )
+
+    # Torna indietro
+    st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
+    _bbl1, _bbl2, _bbl3 = st.columns([3, 2, 3])
+    with _bbl2:
+        if st.button("← Cambia modalità", key="btn_back_lib", use_container_width=True):
+            st.session_state.input_percorso = None
+            st.rerun()
+
+
 def _render_percorso_b_form():
     """
     Percorso B: form tradizionale pulito, senza upload.
@@ -1997,18 +2136,17 @@ def _render_percorso_b_form():
     """
     # ── Nota: template gallery rimossa per semplicità ──────────────────────────
 
-    # Indicatore modalità manuale (header compatto)
+    # Header wizard step
     st.markdown(
-        f'<div style="background:{T["card"]};border:1px solid {T["border"]};'
-        f'border-radius:10px;padding:.5rem .85rem;margin-bottom:.8rem;'
-        f'display:flex;align-items:center;gap:.6rem;">'
-        f'<span style="font-size:1rem;">✍️</span>'
+        f'<div class="wizard-step-header">'
+        f'<div style="display:flex;align-items:center;gap:.7rem;">'
+        f'<span style="font-size:1.4rem;">✍️</span>'
         f'<div>'
-        f'<div style="font-size:.8rem;font-weight:700;color:{T["text"]};'
-        f'font-family:DM Sans,sans-serif;">Configurazione manuale</div>'
-        f'<div style="font-size:.68rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
-        f'Compila i campi — nessun upload disponibile in questa modalità</div>'
-        f'</div>'
+        f'<div style="font-size:.95rem;font-weight:900;color:{T["text"]};font-family:DM Sans,sans-serif;">'
+        f'Configurazione guidata</div>'
+        f'<div style="font-size:.74rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
+        f'Compila i campi — potrai modificare tutto dopo la generazione</div>'
+        f'</div></div>'
         f'</div>',
         unsafe_allow_html=True
     )
@@ -2017,10 +2155,7 @@ def _render_percorso_b_form():
 
     # Materia + Scuola
     st.markdown(
-        f'<div class="step-label">'
-        f'<span class="step-title">Materia e tipo di scuola</span>'
-        f'<span class="step-line"></span>'
-        f'</div>',
+        f'<div class="field-label">Materia e tipo di scuola</div>',
         unsafe_allow_html=True
     )
     _col_m, _col_s = st.columns(2)
@@ -2053,9 +2188,8 @@ def _render_percorso_b_form():
         f'<span><strong>Suggerimento:</strong> più dettagli = verifica più precisa. '
         f'"Equazioni di II grado con discriminante" funziona meglio di "algebra".</span>'
         f'</div>'
-        f'<div class="step-label">'
-        f'<span class="step-title">Argomento della verifica</span>'
-        f'<span class="step-line"></span>'
+        f'<div class="field-label">'
+        f'Argomento della verifica'
         f'</div>',
         unsafe_allow_html=True
     )
@@ -2199,7 +2333,7 @@ def _render_percorso_b_form():
     st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
     _bb1, _bb2, _bb3 = st.columns([3, 2, 3])
     with _bb2:
-        if st.button("← Cambia percorso", key="btn_back_b",
+        if st.button("← Cambia modalità", key="btn_back_b",
                      use_container_width=True):
             st.session_state.input_percorso = None
             st.rerun()
@@ -2382,6 +2516,11 @@ def _render_stage_input():
         _render_percorso_a_wizard()
         return
 
+    # ── PERCORSO LIBERA — Descrizione libera ─────────────────────────────────
+    if percorso == "LIBERA":
+        _render_percorso_libera()
+        return
+
     # ── PERCORSO B ────────────────────────────────────────────────────────────
     if percorso == "B":
         (
@@ -2449,9 +2588,8 @@ def _render_stage_input():
 
 def _render_stage_preview():
     """
-    Mostra un'anteprima della verifica appena generata.
-    Il docente sceglie se andare direttamente al salvataggio finale
-    oppure entrare nell'editor dei blocchi (STAGE_REVIEW).
+    Step 4 — Anteprima della verifica appena generata.
+    Il docente sceglie se andare al download o all'editor.
     """
     gp             = st.session_state.get("gen_params", {})
     materia_str    = gp.get("materia", "")
@@ -2460,86 +2598,102 @@ def _render_stage_preview():
     vA             = st.session_state.verifiche.get("A", {})
     preview_imgs   = st.session_state.get("preview_images", [])
 
-    # ── Header ────────────────────────────────────────────────────────────────
+    # ── Header successo ────────────────────────────────────────────────────────
     st.markdown(
-        '<div style="background:linear-gradient(120deg,#D97706 0%,#16a34a 100%);'
-        'border-radius:14px;padding:1rem 1.4rem;margin-bottom:1.2rem;">'
-        '<div style="display:flex;align-items:center;gap:12px;">'
-        '<span style="font-size:1.6rem;">📄</span>'
+        '<div style="background:linear-gradient(120deg,#059669 0%,#0284C7 100%);'
+        'border-radius:16px;padding:1.1rem 1.4rem;margin-bottom:1.4rem;">'
+        '<div style="display:flex;align-items:center;gap:14px;">'
+        '<span style="font-size:2rem;">✅</span>'
         '<div>'
         '<div style="font-family:DM Sans,sans-serif;font-size:1.05rem;font-weight:900;color:#fff;">'
-        'Anteprima Verifica</div>'
-        '<div style="font-size:.75rem;color:#ffffffcc;">'
-        + materia_str + ' · ' + scuola_str + ' · ' + argomento_str +
-        '</div></div></div></div>',
+        'La tua verifica è pronta!</div>'
+        '<div style="font-size:.78rem;color:#ffffffcc;margin-top:2px;">'
+        + (materia_str + ' · ' if materia_str else '') + (scuola_str + ' · ' if scuola_str else '') + argomento_str +
+        '</div>'
+        '<div style="font-size:.73rem;color:#ffffffaa;margin-top:4px;">'
+        '✏️ Puoi modificare ogni esercizio prima di scaricare il PDF finale.'
+        '</div>'
+        '</div></div></div>',
         unsafe_allow_html=True
     )
 
-    # ── Preview PDF — tutte le pagine ────────────────────────────────────────
+    # ── Preview PDF — documento A4 centrato ──────────────────────────────────
     if preview_imgs:
         n_prev = len(preview_imgs)
-        if n_prev == 1:
-            st.image(preview_imgs[0], use_container_width=True)
-        else:
-            # Due o più pagine: prima in full-width, resto a coppie fianco a fianco
-            st.image(preview_imgs[0], use_container_width=True,
-                     caption="Pagina 1")
-            for _pi in range(1, n_prev, 2):
-                _pc1, _pc2 = st.columns(2, gap="small")
-                with _pc1:
-                    st.image(preview_imgs[_pi], use_container_width=True,
-                             caption=f"Pagina {_pi + 1}")
-                with _pc2:
-                    if _pi + 1 < n_prev:
-                        st.image(preview_imgs[_pi + 1], use_container_width=True,
-                                 caption=f"Pagina {_pi + 2}")
+        # Prima pagina full width con cornice A4
+        st.markdown(
+            f'<div style="background:{T["card2"]};border:1px solid {T["border"]};'
+            f'border-radius:12px;padding:1rem;margin-bottom:.8rem;">'
+            f'<div style="font-size:.7rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
+            f'margin-bottom:.5rem;text-align:center;">ANTEPRIMA DOCUMENTO — Pagina 1 di {n_prev}</div>',
+            unsafe_allow_html=True
+        )
+        st.image(preview_imgs[0], use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        if n_prev > 1:
+            with st.expander(f"Visualizza tutte le {n_prev} pagine"):
+                for _pi in range(1, n_prev, 2):
+                    _pc1, _pc2 = st.columns(2, gap="small")
+                    with _pc1:
+                        st.image(preview_imgs[_pi], use_container_width=True,
+                                 caption=f"Pagina {_pi + 1}")
+                    with _pc2:
+                        if _pi + 1 < n_prev:
+                            st.image(preview_imgs[_pi + 1], use_container_width=True,
+                                     caption=f"Pagina {_pi + 2}")
     elif vA.get("latex"):
         with st.expander("Anteprima LaTeX (PDF non disponibile)", expanded=True):
             st.code(vA["latex"][:3000], language="latex")
     else:
-        st.info("Anteprima non disponibile.")
+        st.info("⏳ Anteprima in elaborazione…")
 
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 
-    # ── Due pulsanti di scelta — restyle ──────────────────────────────────────
+    # ── Scelta azione — due card grandi ───────────────────────────────────────
+    st.markdown(
+        f'<div style="font-size:.8rem;font-weight:700;color:{T["text2"]};'
+        f'font-family:DM Sans,sans-serif;margin-bottom:.6rem;text-align:center;">'
+        f'Cosa vuoi fare adesso?'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
     col_ok, col_edit = st.columns(2, gap="medium")
 
     with col_ok:
-        # Card verde
         st.markdown(
             f'<div style="border:2px solid {T["success"]};border-radius:16px;'
-            f'padding:1.1rem 1.3rem;background:{T["card"]};'
-            f'display:flex;flex-direction:column;gap:.5rem;">'
-            f'<div style="font-size:1.6rem;line-height:1;">✅</div>'
-            f'<div style="font-weight:800;font-size:1rem;color:{T["success"]};'
-            f'font-family:DM Sans,sans-serif;">Perfetta così</div>'
-            f'<div style="font-size:.78rem;color:{T["muted"]};line-height:1.45;">'
-            f'Vai direttamente al download — nessuna modifica.</div>'
+            f'padding:1.3rem 1.4rem;background:{T["card"]};text-align:center;">'
+            f'<div style="font-size:2rem;margin-bottom:.4rem;">⬇️</div>'
+            f'<div style="font-weight:900;font-size:.95rem;color:{T["success"]};'
+            f'font-family:DM Sans,sans-serif;margin-bottom:.3rem;">Scarica subito</div>'
+            f'<div style="font-size:.76rem;color:{T["muted"]};line-height:1.5;">'
+            f'Va bene così — vai al download senza modifiche.</div>'
             f'</div>',
             unsafe_allow_html=True
         )
         st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-        if st.button("Scarica PDF", use_container_width=True,
+        if st.button("Vai al download →", use_container_width=True,
                      type="primary", key="preview_ok"):
             st.session_state.stage = STAGE_FINAL
             st.rerun()
 
     with col_edit:
-        # Card arancio
         st.markdown(
             f'<div style="border:2px solid {T["accent"]};border-radius:16px;'
-            f'padding:1.1rem 1.3rem;background:{T["card"]};'
-            f'display:flex;flex-direction:column;gap:.5rem;">'
-            f'<div style="font-size:1.6rem;line-height:1;">✏️</div>'
-            f'<div style="font-weight:800;font-size:1rem;color:{T["accent"]};'
-            f'font-family:DM Sans,sans-serif;">Voglio modificarla</div>'
-            f'<div style="font-size:.78rem;color:{T["muted"]};line-height:1.45;">'
-            f'Apri l\'editor e cambia i singoli esercizi con l\'AI.</div>'
+            f'padding:1.3rem 1.4rem;background:{T["card"]};text-align:center;">'
+            f'<div style="font-size:2rem;margin-bottom:.4rem;">✏️</div>'
+            f'<div style="font-weight:900;font-size:.95rem;color:{T["accent"]};'
+            f'font-family:DM Sans,sans-serif;margin-bottom:.3rem;">Modifica esercizi</div>'
+            f'<div style="font-size:.76rem;color:{T["muted"]};line-height:1.5;">'
+            f'Apri l\'editor e cambia i singoli esercizi con l\'AI.'
+            f'</div>'
             f'</div>',
             unsafe_allow_html=True
         )
         st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-        if st.button("Apri editor", use_container_width=True,
+        if st.button("Apri editor →", use_container_width=True,
                      key="preview_edit"):
             st.session_state.stage = STAGE_REVIEW
             st.rerun()
@@ -2547,14 +2701,16 @@ def _render_stage_preview():
     st.markdown("<br/>", unsafe_allow_html=True)
 
     # ── Link "torna alla configurazione" ────────────────────────────────────
-    if st.button("← Ricomincia da capo", key="preview_back"):
-        for _k in ("stage", "verifiche", "gen_params", "review_blocks",
-                   "review_preamble", "preview_images", "input_percorso",
-                   "dialogo_stato", "analisi_doc", "file_mode"):
-            if _k in st.session_state:
-                del st.session_state[_k]
-        st.session_state.stage = STAGE_INPUT
-        st.rerun()
+    _pb1, _pb2, _pb3 = st.columns([3, 2, 3])
+    with _pb2:
+        if st.button("← Ricomincia da capo", key="preview_back", use_container_width=True):
+            for _k in ("stage", "verifiche", "gen_params", "review_blocks",
+                       "review_preamble", "preview_images", "input_percorso",
+                       "dialogo_stato", "analisi_doc", "file_mode"):
+                if _k in st.session_state:
+                    del st.session_state[_k]
+            st.session_state.stage = STAGE_INPUT
+            st.rerun()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2573,43 +2729,37 @@ def _render_stage_review():
     modello_rw      = gp.get("modello_id", modello_id)
     n_blocks        = len(blocks)
 
+    # ── Header editor ─────────────────────────────────────────────────────────
     st.markdown(
-        '<div style="background:linear-gradient(135deg,' + T["accent_light"] + ' 0%,' + T["card"] + ' 100%);'
-        'border:2px solid ' + T["accent"] + ';border-radius:16px;overflow:hidden;margin-bottom:1.2rem;">'
-        '<div style="background:linear-gradient(120deg,#D97706 0%,#16a34a 100%);padding:.85rem 1.2rem;">'
+        '<div style="background:linear-gradient(120deg,#D97706 0%,#059669 100%);'
+        'border-radius:14px;padding:.85rem 1.2rem;margin-bottom:1rem;">'
         '<div style="display:flex;align-items:center;gap:12px;">'
-        '<span style="font-size:1.5rem;">✏️</span>'
+        '<span style="font-size:1.4rem;">✏️</span>'
         '<div style="flex:1;">'
-        '<div style="font-family:DM Sans,sans-serif;font-size:1rem;font-weight:900;color:#fff;'
-        'text-shadow:0 1px 4px rgba(0,0,0,.25);">'
-        'Revisione Bozza</div>'
-        '<div style="font-size:.72rem;color:#fff;opacity:.9;margin-top:1px;">'
+        '<div style="font-family:DM Sans,sans-serif;font-size:.95rem;font-weight:900;color:#fff;">'
+        'Modifica esercizi</div>'
+        '<div style="font-size:.72rem;color:#fff;opacity:.9;">'
         + materia_str + ' · ' + scuola_str + ' · ' + argomento_str + '</div>'
         '</div>'
-        '<div style="background:#ffffff25;border:1px solid #ffffff40;border-radius:20px;'
+        '<div style="background:#ffffff20;border:1px solid #ffffff30;border-radius:20px;'
         'padding:4px 12px;font-size:.68rem;font-weight:700;color:#fff;">'
         + str(n_blocks) + ' ESERCIZI</div>'
-        '</div></div>'
-        '<div style="padding:.75rem 1.2rem;background:' + T["card"] + ';">'
-        '<div style="font-size:.8rem;color:' + T["text2"] + ';line-height:1.5;">'
-        'Seleziona l\'esercizio dal menu. Il testo appare nell\'anteprima qui sotto, '
-        'seguito dalla visualizzazione PDF del documento completo. '
-        'Usa il campo di modifica per richiedere cambiamenti — l\'AI rigenererà solo l\'esercizio selezionato. '
-        'Quando sei soddisfatto, premi <strong>Conferma e genera PDF</strong>.'
-        '</div></div></div>',
+        '</div></div>',
         unsafe_allow_html=True
     )
 
-    # ── IDEA #3: Smart Preview hint ──────────────────────────────────────────
+    # ── Hint rassicurante ─────────────────────────────────────────────────────
     st.markdown(
-        f'<div class="smart-preview-hint">'
-        f'  <span style="font-size:1rem;flex-shrink:0;">💡</span>'
-        f'  <div>'
-        f'    <strong>Modifica in tempo reale:</strong> seleziona un esercizio, '
-        f'    scrivi la tua istruzione nel campo di testo e premi '
-        f'    <strong>Rigenera esercizio</strong> — l\'AI aggiorna solo quel blocco '
-        f'    senza toccare il resto. L\'anteprima PDF si aggiorna dopo ogni modifica confermata.'
-        f'  </div>'
+        f'<div style="background:{T["hint_bg"]};border:1px solid {T["hint_border"]};'
+        f'border-radius:10px;padding:.6rem 1rem;margin-bottom:1rem;'
+        f'display:flex;align-items:flex-start;gap:.6rem;">'
+        f'<span style="font-size:.9rem;flex-shrink:0;">💡</span>'
+        f'<div style="font-size:.78rem;color:{T["hint_text"]};font-family:DM Sans,sans-serif;line-height:1.55;">'
+        f'<strong>Come funziona:</strong> seleziona un esercizio dal menu, visualizzalo nel pannello sinistro '
+        f'e usa il campo di modifica per istruire l\'AI. Puoi chiedere di aumentare la difficoltà, '
+        f'cambiare i numeri, convertire il formato — l\'AI modifica solo quell\'esercizio. '
+        f'Quando sei soddisfatto, premi <strong>Conferma e genera PDF finale</strong>.'
+        f'</div>'
         f'</div>',
         unsafe_allow_html=True
     )
@@ -2629,19 +2779,18 @@ def _render_stage_review():
     idx = st.session_state.review_sel_idx
     if idx >= n_blocks: idx = 0
 
+    # Selettore esercizio più chiaro
+    st.markdown(
+        f'<div class="field-label">Seleziona l\'esercizio da visualizzare o modificare</div>',
+        unsafe_allow_html=True
+    )
     sel_label = st.selectbox(
         "Seleziona esercizio da rivedere:",
-        labels, index=idx, key="review_selectbox"
+        labels, index=idx, key="review_selectbox",
+        label_visibility="collapsed",
     )
     idx = labels.index(sel_label)
     st.session_state.review_sel_idx = idx
-
-    st.markdown(
-        '<div style="font-size:.72rem;color:' + T["muted"] + ';margin-top:-.3rem;margin-bottom:.5rem;">'
-        '💡 Seleziona un esercizio dal menu per visualizzarlo e modificarlo.'
-        '</div>',
-        unsafe_allow_html=True
-    )
 
     block = blocks[idx]
     title = block["title"]
@@ -2669,30 +2818,30 @@ def _render_stage_review():
             st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
 
             # ── Expander: Modifica con AI ──────────────────────────────────────
-            with st.expander("✏️ Modifica con AI", expanded=False):
+            with st.expander("✏️ Modifica questo esercizio con l'AI", expanded=False):
                 st.markdown(
-                    '<div style="font-size:.76rem;color:' + T["text2"] + ';margin-bottom:.5rem;'
-                    'font-family:DM Sans,sans-serif;line-height:1.45;">'
-                    'Descrivi la modifica — l\'AI rigenererà solo questo esercizio.<br>'
-                    '<span style="color:' + T["muted"] + ';font-size:.7rem;">'
-                    '⚠️ Per cambiare i <strong>punteggi</strong> usa il pannello qui sotto.</span>'
-                    '</div>',
+                    f'<div style="font-size:.78rem;color:{T["text2"]};margin-bottom:.6rem;'
+                    f'font-family:DM Sans,sans-serif;line-height:1.5;">'
+                    f'Descrivi la modifica che vuoi — l\'AI rigenererà solo questo esercizio.<br>'
+                    f'<span style="color:{T["muted"]};font-size:.72rem;">'
+                    f'Per cambiare i punteggi usa il pannello "Ricalibra punteggi" qui sotto.</span>'
+                    f'</div>',
                     unsafe_allow_html=True
                 )
                 istruzione = st.text_area(
                     f"Modifica esercizio {idx+1}",
-                    placeholder="es. Aumenta la difficoltà · Cambia i numeri · Converti in Vero/Falso · Aggiungi un sottopunto",
+                    placeholder="Es: Aumenta la difficoltà · Cambia i numeri · Converti in Vero/Falso · Aggiungi un sottopunto",
                     key=f"rw_istr_{idx}",
                     label_visibility="collapsed",
-                    height=80,
+                    height=90,
                 )
                 rigenera = st.button(
-                    "✏️ Applica Modifica", key=f"rw_btn_{idx}",
-                    use_container_width=True, disabled=not istruzione.strip()
+                    "🔄 Rigenera esercizio", key=f"rw_btn_{idx}",
+                    use_container_width=True, disabled=not istruzione.strip(),
+                    type="primary",
                 )
-                # Fix: messaggio di elaborazione visibile subito sotto il pulsante
                 if rigenera and istruzione.strip():
-                    st.info(f"⏳ Elaborazione in corso — sto modificando l'esercizio {idx+1}…")
+                    st.info(f"⏳ Rigenerando l'esercizio {idx+1}…")
 
             # ── Expander: Ricalibra Punteggi ──────────────────────────────────
             if mostra_punteggi and n_blocks > 0:
@@ -3047,90 +3196,58 @@ def _render_stage_final():
     mod_id       = gp.get("modello_id", modello_id)
 
     st.markdown(
-        '<div style="background:linear-gradient(135deg,' + T["accent_light"] + ' 0%,' + T["card"] + ' 100%);'
-        'border:2px solid ' + T["success"] + ';border-radius:16px;overflow:hidden;margin-bottom:1.3rem;">'
-        '<div style="background:linear-gradient(120deg,#059669 0%,#0284C7 100%);padding:.85rem 1.2rem;">'
-        '<div style="display:flex;align-items:center;gap:12px;">'
-        '<span style="font-size:1.5rem;">🎉</span>'
+        '<div style="background:linear-gradient(120deg,#059669 0%,#0284C7 100%);'
+        'border-radius:16px;padding:1.1rem 1.4rem;margin-bottom:1.2rem;">'
+        '<div style="display:flex;align-items:center;gap:14px;">'
+        '<span style="font-size:2rem;">🎉</span>'
         '<div style="flex:1;">'
-        '<div style="font-family:DM Sans,sans-serif;font-size:1rem;font-weight:900;color:#fff;'
-        'text-shadow:0 1px 4px rgba(0,0,0,.2);">'
-        'Verifica pronta!</div>'
-        '<div style="font-size:.72rem;color:#fff;opacity:.9;margin-top:1px;">'
+        '<div style="font-family:DM Sans,sans-serif;font-size:1.05rem;font-weight:900;color:#fff;">'
+        'La verifica è pronta!</div>'
+        '<div style="font-size:.76rem;color:#ffffffcc;margin-top:2px;">'
         + mat_str + ' · ' + scu_str + ' · ' + arg_str + '</div>'
-        '</div></div></div>'
-        '<div style="padding:.7rem 1.2rem;background:' + T["card"] + ';">'
-        '<div style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:' + T["text2"] + ';line-height:1.5;">'
-        '<span style="font-size:1rem;">⚠️</span>'
-        '<span>Controlla sempre il contenuto prima di distribuire agli studenti. '
-        'Il docente è responsabile del materiale finale.</span>'
-        '</div></div></div>',
+        '</div></div>'
+        '<div style="font-size:.72rem;color:#ffffffaa;margin-top:.5rem;padding-top:.5rem;'
+        'border-top:1px solid #ffffff20;">'
+        '⚠️ Controlla sempre il contenuto prima di distribuire agli studenti. '
+        'Il docente è responsabile del materiale finale.'
+        '</div></div>',
         unsafe_allow_html=True
     )
 
     # ── Badge timer + risparmio tempo ────────────────────────────────────────
     _gen_sec = st.session_state.get("gen_time_sec")
     _n_es    = gp.get("num_esercizi", 4)
-    _risparmio_min = max(10, _n_es * 8)  # ~8 min per esercizio fatto manualmente
+    _risparmio_min = max(10, _n_es * 8)
     if _gen_sec:
         _t_label = (f"{_gen_sec}s" if _gen_sec < 60
                     else f"{_gen_sec // 60}m {_gen_sec % 60}s")
         st.markdown(
-            f'<div style="display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap;">'
-            f'<div style="background:#0A2010;border:1px solid #1A4A28;border-radius:8px;'
-            f'padding:.35rem .8rem;display:flex;align-items:center;gap:.4rem;">'
-            f'<span style="font-size:.9rem;">⚡</span>'
-            f'<span style="font-size:.75rem;font-weight:700;color:#34D399;'
+            f'<div style="display:flex;gap:.5rem;margin-bottom:.8rem;flex-wrap:wrap;">'
+            f'<div style="background:{T["card2"]};border:1px solid {T["border"]};border-radius:8px;'
+            f'padding:.3rem .8rem;display:flex;align-items:center;gap:.4rem;">'
+            f'<span style="font-size:.85rem;">⚡</span>'
+            f'<span style="font-size:.73rem;font-weight:700;color:{T["success"]};'
             f'font-family:DM Sans,sans-serif;">Generata in {_t_label}</span>'
             f'</div>'
-            f'<div style="background:#0A1A30;border:1px solid #1A3A5A;border-radius:8px;'
-            f'padding:.35rem .8rem;display:flex;align-items:center;gap:.4rem;">'
-            f'<span style="font-size:.9rem;">🕐</span>'
-            f'<span style="font-size:.75rem;font-weight:700;color:#60AAEE;'
-            f'font-family:DM Sans,sans-serif;">~{_risparmio_min} min risparmiati vs. manuale</span>'
+            f'<div style="background:{T["card2"]};border:1px solid {T["border"]};border-radius:8px;'
+            f'padding:.3rem .8rem;display:flex;align-items:center;gap:.4rem;">'
+            f'<span style="font-size:.85rem;">🕐</span>'
+            f'<span style="font-size:.73rem;font-weight:700;color:{T["text2"]};'
+            f'font-family:DM Sans,sans-serif;">~{_risparmio_min} min risparmiati</span>'
             f'</div>'
             f'</div>',
             unsafe_allow_html=True
         )
 
-    # ── Pulsanti azione principali con gerarchia ──────────────────────────────
-    st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
-    st.markdown(
-        '<div class="s3-section-title">Azioni rapide</div>',
-        unsafe_allow_html=True
-    )
-
-    # CSS pulsanti gerarchici
-    st.markdown(
-        f"""
-        <style>
-        /* Download PDF — bottone primario XXL */
-        div[data-testid="stDownloadButton"] .dl-hero > button {{
-            font-size:1.05rem!important; font-weight:900!important;
-            padding:1rem 1.5rem!important; border-radius:14px!important;
-            background:linear-gradient(135deg,{T["accent"]},{T["accent"]}cc)!important;
-            box-shadow:0 6px 24px {T["accent"]}44!important;
-            letter-spacing:.01em!important;
-        }}
-        /* Varianti — bottoni secondari */
-        .btn-variant-row button {{
-            font-weight:700!important;border-radius:10px!important;
-            padding:.6rem .8rem!important;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # 1. Download PDF Principale — XXL hero button
+    # ── 1. Download PDF Principale — pulsante grande e dominante ─────────────
     if vA.get("pdf"):
         _fname_a = arg_str + "_FilaA"
         st.markdown(
-            f'<div style="background:linear-gradient(135deg,{T["accent"]}18,{T["card"]});'
-            f'border:2px solid {T["accent"]}55;border-radius:16px;padding:1rem 1.2rem;'
-            f'margin-bottom:.7rem;">'
-            f'<div style="font-size:.72rem;font-weight:700;color:{T["accent"]};'
-            f'font-family:DM Sans,sans-serif;letter-spacing:.06em;margin-bottom:.35rem;">'
+            f'<div style="background:linear-gradient(135deg,{T["accent"]}15,{T["card"]});'
+            f'border:2px solid {T["accent"]}66;border-radius:18px;padding:1.2rem 1.3rem;'
+            f'margin-bottom:.9rem;">'
+            f'<div style="font-size:.68rem;font-weight:700;color:{T["accent"]};'
+            f'font-family:DM Sans,sans-serif;letter-spacing:.07em;margin-bottom:.45rem;">'
             f'⬇ DOWNLOAD PRINCIPALE</div>',
             unsafe_allow_html=True
         )
@@ -3144,11 +3261,14 @@ def _render_stage_final():
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # 2. Pulsanti varianti — riga prominente
+    # ── 2. Varianti e aggiunte — sezione secondaria chiara ────────────────────
     st.markdown(
         f'<div style="font-size:.72rem;font-weight:700;color:{T["muted"]};'
-        f'font-family:DM Sans,sans-serif;letter-spacing:.05em;margin-bottom:.35rem;">'
-        f'VARIANTI E AGGIUNTE</div>',
+        f'font-family:DM Sans,sans-serif;letter-spacing:.06em;margin-bottom:.4rem;">'
+        f'VARIANTI E AGGIUNTE</div>'
+        f'<div style="font-size:.75rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
+        f'margin-bottom:.6rem;line-height:1.5;">'
+        f'Genera queste opzioni in un clic — vengono scaricate come file separati.</div>',
         unsafe_allow_html=True
     )
     _vcol1, _vcol2, _vcol3 = st.columns(3, gap="small")
@@ -3161,9 +3281,17 @@ def _render_stage_final():
                     data=vB["pdf"], file_name=arg_str+"_FilaB.pdf",
                     mime="application/pdf", use_container_width=True, key="dl_pdf_B_action",
                 )
+            else:
+                st.info("Fila B: PDF in corso…")
         else:
-            if st.button("⚡ Genera Fila B", use_container_width=True, key="gen_var_B_action",
-                         help="Stessa struttura, dati diversi"):
+            st.markdown(
+                f'<div style="font-size:.7rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
+                f'margin-bottom:.25rem;font-weight:600;">📄 Fila B</div>'
+                f'<div style="font-size:.68rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
+                f'margin-bottom:.3rem;">Stessa struttura, dati diversi</div>',
+                unsafe_allow_html=True
+            )
+            if st.button("Genera →", use_container_width=True, key="gen_var_B_action"):
                 with st.spinner("Generazione Fila B…"):
                     try:
                         res = _genera_variante("B", mod_id, gp, vA)
@@ -3181,7 +3309,14 @@ def _render_stage_final():
                     mime="application/pdf", use_container_width=True, key="dl_pdf_R_action",
                 )
         else:
-            if st.button("🌟 Genera BES/DSA", use_container_width=True, key="gen_var_R_action"):
+            st.markdown(
+                f'<div style="font-size:.7rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
+                f'margin-bottom:.25rem;font-weight:600;">🌟 Versione BES/DSA</div>'
+                f'<div style="font-size:.68rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
+                f'margin-bottom:.3rem;">Linguaggio semplificato, stessi obiettivi</div>',
+                unsafe_allow_html=True
+            )
+            if st.button("Genera →", use_container_width=True, key="gen_var_R_action"):
                 with st.spinner("Generazione BES/DSA…"):
                     try:
                         res = _genera_variante("R", mod_id, gp, vA)
@@ -3199,7 +3334,14 @@ def _render_stage_final():
                     mime="application/pdf", use_container_width=True, key="dl_pdf_S_action",
                 )
         else:
-            if st.button("✅ Genera Soluzioni", use_container_width=True, key="gen_var_S_action"):
+            st.markdown(
+                f'<div style="font-size:.7rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
+                f'margin-bottom:.25rem;font-weight:600;">✅ Soluzioni</div>'
+                f'<div style="font-size:.68rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
+                f'margin-bottom:.3rem;">Solo per il docente</div>',
+                unsafe_allow_html=True
+            )
+            if st.button("Genera →", use_container_width=True, key="gen_var_S_action"):
                 with st.spinner("Generazione soluzioni…"):
                     try:
                         res = _genera_variante("S", mod_id, gp, vA)
@@ -3208,12 +3350,12 @@ def _render_stage_final():
                     except Exception as e:
                         st.error(f"Errore: {e}")
 
-    # 3. Nuova verifica / Rivedi — riga secondaria
-    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+    # ── 3. Nuova verifica / Rivedi ─────────────────────────────────────────────
+    st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
     _nav_c1, _nav_c2 = st.columns([1, 1], gap="small")
     with _nav_c1:
         if st.button(
-            "🆕 Nuova verifica",
+            "🆕 Crea nuova verifica",
             type="primary",
             use_container_width=True,
             key="btn_new_s3_top",
