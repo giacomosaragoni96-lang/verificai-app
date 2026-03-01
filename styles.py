@@ -1096,8 +1096,8 @@ def get_css(T: dict) -> str:
     font-family: 'DM Sans', sans-serif;
     letter-spacing: 0.03em;
   }}
-  .monthly-bar-count.limit-reached {{ color: #ef4444; }}
-  .monthly-bar-count.limit-near    {{ color: #D97706; }}
+  .monthly-bar-count.limit-reached {{ color: #ffffff; }}
+  .monthly-bar-count.limit-near    {{ color: #ffffff; }}
   .monthly-progress {{
     background: #252320;
     border-radius: 100px;
@@ -1555,4 +1555,5 @@ def _is_light_color(hex_color: str) -> bool:
         return luminance > 0.5
     except Exception:
         return False
+
 
