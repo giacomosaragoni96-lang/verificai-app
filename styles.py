@@ -304,7 +304,7 @@ def get_css(T: dict) -> str:
   }}
   .hero-title {{
     font-family: 'DM Sans', sans-serif;
-    font-size: 96px !important;
+    font-size: 108px !important;
     font-weight: 900 !important;
     color: {T['text']};
     line-height: 1.0;
@@ -1350,7 +1350,23 @@ def get_css(T: dict) -> str:
   /* ════ RESPONSIVE ════ */
   /* ── Mobile ≤640px ── */
   @media (max-width: 640px) {{
-    .hero-title {{ font-size: 40px !important; }}
+    .hero-title {{ font-size: 52px !important; }}
+    /* Breadcrumb pill compatto su mobile */
+    .breadcrumb-pill {{
+      padding: .45rem .9rem !important;
+      gap: 6px !important;
+    }}
+    .breadcrumb-pill .bc-label {{
+      font-size: .72rem !important;
+    }}
+    .breadcrumb-pill .bc-circle {{
+      width: 22px !important;
+      height: 22px !important;
+      font-size: .6rem !important;
+    }}
+    .breadcrumb-pill .bc-sep {{
+      width: 16px !important;
+    }}
     .block-container {{
       padding: 3.5rem 0.75rem 2.5rem !important;
       width: 100% !important;
