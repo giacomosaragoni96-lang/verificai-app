@@ -1085,19 +1085,19 @@ def get_css(T: dict) -> str:
   .monthly-bar-label {{
     font-size: 0.7rem;
     font-weight: 600;
-    color: #ffffff;
+    color: #9B9890;
     font-family: 'DM Sans', sans-serif;
     letter-spacing: .03em;
   }}
   .monthly-bar-count {{
     font-size: 0.72rem;
     font-weight: 800;
-    color: #ffffff;
+    color: #D4D2CA;
     font-family: 'DM Sans', sans-serif;
     letter-spacing: 0.03em;
   }}
-  .monthly-bar-count.limit-reached {{ color: #ffffff; }}
-  .monthly-bar-count.limit-near    {{ color: #ffffff; }}
+  .monthly-bar-count.limit-reached {{ color: #ef4444; }}
+  .monthly-bar-count.limit-near    {{ color: #D97706; }}
   .monthly-progress {{
     background: #252320;
     border-radius: 100px;
@@ -1542,6 +1542,23 @@ def get_css(T: dict) -> str:
       max-width: 955px !important;
     }}
   }}
+
+  /* ════ Bottoni secondari (back / rimuovi) piccoli e discreti ════ */
+  /* Applica a tutti i button dentro colonne molto strette (ratio 1/12 o 1/9) */
+  div[data-testid="column"]:has(> div > div > div > div > button[kind="secondary"]) button[kind="secondary"],
+  div[data-testid="stButton"] > button[kind="secondary"] {{
+    font-size: .72rem !important;
+    padding: 3px 10px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    line-height: 1.4 !important;
+    border-radius: 7px !important;
+    color: {T['muted']} !important;
+    border-color: {T['border2']} !important;
+    background: transparent !important;
+    white-space: nowrap;
+  }}
+
 </style>
 """
 
@@ -1555,5 +1572,3 @@ def _is_light_color(hex_color: str) -> bool:
         return luminance > 0.5
     except Exception:
         return False
-
-
