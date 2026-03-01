@@ -534,8 +534,7 @@ st.markdown(
 )
 st.markdown(
     '<div class="hero-wrap"><div class="hero-left">'
-    '<h1 class="hero-title"><span class="hero-icon">' + APP_ICON + '</span>'
-    ' Verific<span class="hero-ai">AI</span></h1>'
+    '<h1 class="hero-title">Verific<span class="hero-ai">AI</span></h1>'
     '<p class="hero-sub">' + APP_TAGLINE + '</p>'
     '<span class="hero-beta">Versione Beta</span>'
     '</div></div>',
@@ -552,13 +551,13 @@ def _render_breadcrumb():
     steps = [("01","Configura",STAGE_INPUT),("02","Revisione",STAGE_REVIEW),("03","Download",STAGE_FINAL)]
     completed = {STAGE_INPUT: stage in (STAGE_REVIEW,STAGE_FINAL),
                  STAGE_REVIEW: stage == STAGE_FINAL, STAGE_FINAL: False}
-    # Contenitore centrato e compatto
     html = (
         '<div style="display:flex;justify-content:center;margin-bottom:1.6rem;">'
-        '<div style="display:inline-flex;align-items:center;gap:10px;'
+        '<div class="breadcrumb-pill" style="display:inline-flex;align-items:center;gap:10px;'
         'padding:.7rem 1.6rem;'
         'background:' + T["card"] + ';border:1.5px solid ' + T["border"] + ';'
-        'border-radius:100px;box-shadow:' + T["shadow_md"] + ';">'
+        'border-radius:100px;box-shadow:' + T["shadow_md"] + ';'
+        'max-width:calc(100vw - 2rem);overflow:hidden;">'
     )
     for i, (num, label, s) in enumerate(steps):
         is_active = s == stage
@@ -574,19 +573,19 @@ def _render_breadcrumb():
             icon = num
         _op = "1" if (is_active or is_done) else ".4"
         html += (
-            '<div style="display:flex;align-items:center;gap:7px;opacity:' + _op + ';">'
-            '<div style="background:' + cb + ';border-radius:50%;'
+            '<div style="display:flex;align-items:center;gap:6px;opacity:' + _op + ';">'
+            '<div class="bc-circle" style="background:' + cb + ';border-radius:50%;'
             'width:28px;height:28px;display:flex;align-items:center;'
             'justify-content:center;font-size:.72rem;font-weight:800;'
             'color:' + cc + ';flex-shrink:0;box-shadow:0 2px 8px ' + cb + '44;">' + icon + '</div>'
-            '<span style="font-size:.88rem;font-weight:' + lw + ';color:' + lc + ';'
+            '<span class="bc-label" style="font-size:.82rem;font-weight:' + lw + ';color:' + lc + ';'
             'font-family:DM Sans,sans-serif;white-space:nowrap;letter-spacing:-.01em;">' + label + '</span>'
             '</div>'
         )
         if i < 2:
             _sep_c = T["success"] if is_done else T["border2"]
             html += (
-                '<div style="width:28px;height:1.5px;background:' + _sep_c + ';'
+                '<div class="bc-sep" style="width:24px;height:1.5px;background:' + _sep_c + ';'
                 'opacity:.4;flex-shrink:0;border-radius:2px;"></div>'
             )
     html += "</div></div>"
@@ -652,7 +651,7 @@ def _render_stage_input():
         unsafe_allow_html=True
     )
     st.markdown('<div class="personalizza-wrap">', unsafe_allow_html=True)
-    with st.expander("⚙️ Opzioni verifica", expanded=False):
+    with st.expander("Opzioni verifica", expanded=False):
 
         # Numero esercizi — selectbox compatta
         _es_options = list(range(1, 16))
@@ -748,28 +747,34 @@ def _render_stage_input():
         )
 
         # ── DOCUMENTO DI ISPIRAZIONE ───────────────────────────────────────────
-        st.markdown("""
-        <div style="margin-top:0.9rem;background:linear-gradient(135deg,#0D1F35,#0A2416);
-                    border:1px solid #1A3A55;border-radius:12px;padding:0.75rem 1rem;">
-          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">
-            <span style="font-size:1.05rem;">📎</span>
-            <span style="font-size:0.8rem;font-weight:700;color:#60AAEE;
-                         font-family:'DM Sans',sans-serif;letter-spacing:.02em;">
-              Documento di ispirazione
-            </span>
-            <span style="font-size:0.68rem;background:#0A3060;color:#4A90D9;
-                         border-radius:4px;padding:1px 6px;font-weight:600;margin-left:auto;">
-              Nuovo
-            </span>
-          </div>
-          <p style="font-size:0.75rem;color:#8AB8D8;margin:0;line-height:1.5;
-                    font-family:'DM Sans',sans-serif;">
-            Carica una tua verifica precedente, un capitolo del libro, appunti o una foto della lavagna.
-            L'AI la analizzerà per rispettare il tuo stile, coprire gli argomenti giusti e seguire
-            le tue istruzioni.
-          </p>
-        </div>
-        """, unsafe_allow_html=True)
+        _doc_bg      = T.get("card2", T["card"])
+        _doc_border  = T.get("border2", T["border"])
+        _doc_accent  = T["accent"]
+        _doc_text    = T["text2"]
+        _doc_muted   = T["muted"]
+        _doc_badge_bg   = T.get("accent_light", T["card"])
+        st.markdown(
+            f'<div style="margin-top:0.9rem;background:{_doc_bg};'
+            f'border:1px solid {_doc_border};border-radius:12px;padding:0.75rem 1rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">'
+            f'<span style="font-size:1.05rem;">📎</span>'
+            f'<span style="font-size:0.8rem;font-weight:700;color:{_doc_accent};'
+            f'font-family:DM Sans,sans-serif;letter-spacing:.02em;">'
+            f'Documento di ispirazione'
+            f'</span>'
+            f'<span style="font-size:0.68rem;background:{_doc_badge_bg};color:{_doc_accent};'
+            f'border:1px solid {_doc_border};border-radius:4px;padding:1px 6px;'
+            f'font-weight:600;margin-left:auto;">Nuovo</span>'
+            f'</div>'
+            f'<p style="font-size:0.75rem;color:{_doc_muted};margin:0;line-height:1.5;'
+            f'font-family:DM Sans,sans-serif;">'
+            f'Carica una tua verifica precedente, un capitolo del libro, appunti o una foto della lavagna. '
+            f"L'AI la analizzerà per rispettare il tuo stile, coprire gli argomenti giusti e seguire "
+            f'le tue istruzioni.'
+            f'</p>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
 
         file_doc = st.file_uploader(
             "Carica documento",
@@ -956,7 +961,6 @@ def _render_stage_review():
         'border:2px solid ' + T["accent"] + ';border-radius:16px;overflow:hidden;margin-bottom:1.2rem;">'
         '<div style="background:linear-gradient(120deg,#D97706 0%,#16a34a 100%);padding:.85rem 1.2rem;">'
         '<div style="display:flex;align-items:center;gap:12px;">'
-        '<span style="font-size:1.5rem;">✏️</span>'
         '<div style="flex:1;">'
         '<div style="font-family:DM Sans,sans-serif;font-size:1rem;font-weight:900;color:#fff;'
         'text-shadow:0 1px 4px rgba(0,0,0,.25);">'
@@ -1183,7 +1187,7 @@ def _render_stage_review():
         st.markdown(
             '<div style="font-size:.72rem;font-weight:700;color:' + T["muted"] + ';'
             'text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;">'
-            '📄 Anteprima PDF completo</div>',
+            'Anteprima PDF completo</div>',
             unsafe_allow_html=True
         )
         imgs = st.session_state.preview_images
@@ -1415,7 +1419,6 @@ def _render_stage_final():
         'border:2px solid ' + T["success"] + ';border-radius:16px;overflow:hidden;margin-bottom:1.3rem;">'
         '<div style="background:linear-gradient(120deg,#059669 0%,#0284C7 100%);padding:.85rem 1.2rem;">'
         '<div style="display:flex;align-items:center;gap:12px;">'
-        '<span style="font-size:1.5rem;">🎉</span>'
         '<div style="flex:1;">'
         '<div style="font-family:DM Sans,sans-serif;font-size:1rem;font-weight:900;color:#fff;'
         'text-shadow:0 1px 4px rgba(0,0,0,.2);">'
@@ -1425,37 +1428,11 @@ def _render_stage_final():
         '</div></div></div>'
         '<div style="padding:.7rem 1.2rem;background:' + T["card"] + ';">'
         '<div style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:' + T["text2"] + ';line-height:1.5;">'
-        '<span style="font-size:1rem;">⚠️</span>'
         '<span>Controlla sempre il contenuto prima di distribuire agli studenti. '
         'Il docente è responsabile del materiale finale.</span>'
         '</div></div></div>',
         unsafe_allow_html=True
     )
-
-    # ── Badge timer + risparmio tempo ────────────────────────────────────────
-    _gen_sec = st.session_state.get("gen_time_sec")
-    _n_es    = gp.get("num_esercizi", 4)
-    _risparmio_min = max(10, _n_es * 8)  # ~8 min per esercizio fatto manualmente
-    if _gen_sec:
-        _t_label = (f"{_gen_sec}s" if _gen_sec < 60
-                    else f"{_gen_sec // 60}m {_gen_sec % 60}s")
-        st.markdown(
-            f'<div style="display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap;">'
-            f'<div style="background:#0A2010;border:1px solid #1A4A28;border-radius:8px;'
-            f'padding:.35rem .8rem;display:flex;align-items:center;gap:.4rem;">'
-            f'<span style="font-size:.9rem;">⚡</span>'
-            f'<span style="font-size:.75rem;font-weight:700;color:#34D399;'
-            f'font-family:DM Sans,sans-serif;">Generata in {_t_label}</span>'
-            f'</div>'
-            f'<div style="background:#0A1A30;border:1px solid #1A3A5A;border-radius:8px;'
-            f'padding:.35rem .8rem;display:flex;align-items:center;gap:.4rem;">'
-            f'<span style="font-size:.9rem;">🕐</span>'
-            f'<span style="font-size:.75rem;font-weight:700;color:#60AAEE;'
-            f'font-family:DM Sans,sans-serif;">~{_risparmio_min} min risparmiati vs. manuale</span>'
-            f'</div>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
 
     # 1. PREVIEW
     st.markdown(
@@ -1674,16 +1651,22 @@ if _prev_stage != _current_stage:
     components.html(
         "<script>"
         "(function(){"
-        "var tries=0;"
-        "function scroll(){"
-        "  var m=window.parent.document.querySelector('.main');"
-        "  if(m){m.scrollTop=0;}"
-        "  var a=window.parent.document.querySelector('[data-testid=\"stAppViewContainer\"]');"
-        "  if(a){a.scrollTop=0;}"
+        "var n=0;"
+        "function s(){"
+        "  var doc=window.parent.document;"
+        "  var targets=["
+        "    doc.querySelector('[data-testid=\"stAppViewContainer\"]'),"
+        "    doc.querySelector('.main'),"
+        "    doc.querySelector('section.main'),"
+        "    doc.documentElement,"
+        "    doc.body"
+        "  ];"
+        "  targets.forEach(function(el){if(el){el.scrollTop=0;}});"
         "  window.parent.scrollTo(0,0);"
-        "  if(tries++<5)setTimeout(scroll,80);"
+        "  window.scrollTo(0,0);"
+        "  if(++n<12) setTimeout(s,80);"
         "}"
-        "scroll();"
+        "s();"
         "})();"
         "</script>",
         height=0
@@ -1698,7 +1681,7 @@ elif _current == STAGE_FINAL:  _render_stage_final()
 # ── FOOTER ────────────────────────────────────────────────────────────────────
 st.markdown(
     '<div class="app-footer">'
-    '⚠️ Le verifiche generate dall\'AI sono suggerimenti didattici — '
+    'Le verifiche generate dall\'AI sono suggerimenti didattici — '
     'rivedi sempre il contenuto prima di distribuirlo.<br>'
     '<span style="opacity:.5;">VerificAI · Versione Beta</span>'
     '</div>',
