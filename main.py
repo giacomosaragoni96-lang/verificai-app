@@ -19,6 +19,7 @@ from generation import genera_verifica, analizza_documento_caricato, compila_con
 from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
     prompt_modifica, prompt_qa_verifica,
+    prompt_rubrica_valutazione, prompt_da_template, prompt_variante_rapida,
 )
 from docx_export import latex_to_docx_via_ai
 from latex_utils import (
@@ -501,6 +502,13 @@ if "_preferiti"        not in st.session_state: st.session_state._preferiti = se
 if "_storico_page"     not in st.session_state: st.session_state._storico_page = 1
 if "_saved_to_storico" not in st.session_state: st.session_state._saved_to_storico = False
 if "gen_time_sec"      not in st.session_state: st.session_state.gen_time_sec = None
+# ── Idea #19: Rubrica valutazione ────────────────────────────────────────────
+if "rubrica_testo"     not in st.session_state: st.session_state.rubrica_testo = None
+if "_rubrica_gen"      not in st.session_state: st.session_state._rubrica_gen = False
+# ── Idea #8: Template gallery ────────────────────────────────────────────────
+if "_template_sel"     not in st.session_state: st.session_state._template_sel = None
+# ── Idea #2: One-click variant state ─────────────────────────────────────────
+if "_variant_rapida_gen" not in st.session_state: st.session_state._variant_rapida_gen = False
 if "file_ispirazione"  not in st.session_state: st.session_state.file_ispirazione = None
 if "mathpix_context"   not in st.session_state: st.session_state.mathpix_context = None
 if "mathpix_file_hash" not in st.session_state: st.session_state.mathpix_file_hash = None
@@ -1191,8 +1199,36 @@ def _render_percorso_a_upload():
         _hash_new = hash(_new_bytes)
         _hashes_esistenti = {d["file_hash"] for d in lista}
         if _hash_new not in _hashes_esistenti:
-            with st.spinner("Analizzo il documento…"):
-                _esegui_analisi_documento(_new_bytes, _new_mime, _new_name)
+            # ── IDEA #11: Skeleton OCR animato ────────────────────────────────
+            _ocr_placeholder = st.empty()
+            _ocr_placeholder.markdown(
+                f'<div class="ocr-skeleton-wrap">'
+                f'  <div class="ocr-skeleton-header">'
+                f'    <div class="ocr-skeleton-icon">🔬</div>'
+                f'    <div>'
+                f'      <div class="ocr-skeleton-title">Analisi AI in corso…</div>'
+                f'      <div class="ocr-skeleton-sub">'
+                f'        Lettura documento · Riconoscimento scrittura · Classificazione'
+                f'      </div>'
+                f'    </div>'
+                f'  </div>'
+                f'  <div class="ocr-skeleton-doc">'
+                f'    <div class="ocr-skeleton-scan"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:88%;animation-delay:.0s"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:72%;animation-delay:.15s"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:95%;animation-delay:.3s"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:61%;animation-delay:.45s"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:83%;animation-delay:.6s"></div>'
+                f'  </div>'
+                f'  <div class="ocr-skeleton-step" style="animation-delay:.2s">'
+                f'    <div class="ocr-skeleton-dot"></div>'
+                f'    Estrazione testo e formule (OCR)…'
+                f'  </div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+            _esegui_analisi_documento(_new_bytes, _new_mime, _new_name)
+            _ocr_placeholder.empty()
 
     # ─────────────────────────────────────────────────────────────────────────
     # SEZIONE 2 — Lista file caricati
@@ -1945,6 +1981,155 @@ def _render_percorso_b_form():
     Percorso B: form tradizionale pulito, senza upload.
     Restituisce tutti i parametri necessari a genera_verifica().
     """
+    # ── IDEA #8: Template Gallery ─────────────────────────────────────────────
+    _TEMPLATES = [
+        {
+            "id": "classico_misto",
+            "nome": "Classico Misto",
+            "icon": "📝",
+            "desc": "Struttura bilanciata: aperto + scelta multipla + V/F",
+            "materie": ["Tutte"],
+            "esercizi": [
+                {"tipo": "Aperto",          "desc": "Problema/domanda aperta",        "items": 3},
+                {"tipo": "Scelta multipla", "desc": "4 domande a risposta chiusa",    "items": 4},
+                {"tipo": "Vero/Falso",      "desc": "Serie affermazioni V/F",         "items": 5},
+            ],
+        },
+        {
+            "id": "stem_calcolo",
+            "nome": "STEM — Calcolo",
+            "icon": "🧮",
+            "desc": "Per Matematica, Fisica, Chimica: esercizi numerici",
+            "materie": ["Matematica", "Fisica", "Chimica"],
+            "esercizi": [
+                {"tipo": "Aperto", "desc": "Esercizio numerico con sottopunti",  "items": 4},
+                {"tipo": "Aperto", "desc": "Problema applicativo",               "items": 3},
+                {"tipo": "Aperto", "desc": "Dimostrare / Verificare",            "items": 2},
+            ],
+        },
+        {
+            "id": "letterario",
+            "nome": "Letterario/Umanistico",
+            "icon": "📖",
+            "desc": "Analisi testuale, comprensione, produzione scritta",
+            "materie": ["Italiano", "Storia", "Filosofia", "Latino", "Greco"],
+            "esercizi": [
+                {"tipo": "Aperto",          "desc": "Comprensione testo",            "items": 3},
+                {"tipo": "Aperto",          "desc": "Analisi / commento",            "items": 3},
+                {"tipo": "Completamento",   "desc": "Completamento lacune",          "items": 5},
+                {"tipo": "Scelta multipla", "desc": "Conoscenze teoriche",           "items": 4},
+            ],
+        },
+        {
+            "id": "breve_bes",
+            "nome": "Verifica Breve BES/DSA",
+            "icon": "🌟",
+            "desc": "Struttura semplificata, esercizi chiari e diretti",
+            "materie": ["Tutte"],
+            "esercizi": [
+                {"tipo": "Vero/Falso",      "desc": "Affermazioni chiave",           "items": 4},
+                {"tipo": "Scelta multipla", "desc": "Domande a risposta guidata",    "items": 3},
+                {"tipo": "Completamento",   "desc": "Riempi gli spazi",              "items": 4},
+            ],
+        },
+        {
+            "id": "interrogazione_orale",
+            "nome": "Traccia Interrogazione",
+            "icon": "🎤",
+            "desc": "Domande per interrogazione orale strutturata",
+            "materie": ["Tutte"],
+            "esercizi": [
+                {"tipo": "Aperto", "desc": "Domanda di apertura (ampia)",  "items": 1},
+                {"tipo": "Aperto", "desc": "Domande di approfondimento",   "items": 3},
+                {"tipo": "Aperto", "desc": "Collegamento interdisciplinare", "items": 1},
+            ],
+        },
+        {
+            "id": "ripasso_veloce",
+            "nome": "Quiz Ripasso",
+            "icon": "⚡",
+            "desc": "Test rapido fine-unità: solo domande chiuse",
+            "materie": ["Tutte"],
+            "esercizi": [
+                {"tipo": "Scelta multipla", "desc": "Domande rapide",     "items": 6},
+                {"tipo": "Vero/Falso",      "desc": "Affermazioni chiave", "items": 6},
+            ],
+        },
+    ]
+
+    # ── Mostra la gallery ─────────────────────────────────────────────────────
+    st.markdown(
+        f'<div class="template-gallery-header">'
+        f'  <div>'
+        f'    <div class="template-gallery-title">📚 Scegli un template — oppure configura liberamente</div>'
+        f'    <div class="template-gallery-sub">'
+        f'      Strutture predefinite per partire subito · Tutte personalizzabili'
+        f'    </div>'
+        f'  </div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+    _sel_id = st.session_state.get("_template_sel")
+
+    # Grid 3 colonne
+    _rows = [_TEMPLATES[i:i+3] for i in range(0, len(_TEMPLATES), 3)]
+    for _row in _rows:
+        _cols = st.columns(len(_row), gap="small")
+        for _ci, (_col, _tmpl) in enumerate(zip(_cols, _row)):
+            with _col:
+                _is_sel = (_sel_id == _tmpl["id"])
+                _card_class = "template-card selected" if _is_sel else "template-card"
+                _tags_html = "".join(
+                    f'<span class="template-tag">{t}</span>'
+                    for t in _tmpl["materie"][:2]
+                )
+                _es_list = " · ".join(e["tipo"] for e in _tmpl["esercizi"])
+                st.markdown(
+                    f'<div class="{_card_class}">'
+                    f'  <div class="template-icon">{_tmpl["icon"]}</div>'
+                    f'  <div class="template-name">{_tmpl["nome"]}</div>'
+                    f'  <div class="template-meta">{_tmpl["desc"]}</div>'
+                    f'  <div class="template-meta" style="margin-top:.25rem;opacity:.75;">'
+                    f'    {len(_tmpl["esercizi"])} esercizi · {_es_list}'
+                    f'  </div>'
+                    f'  <div class="template-tags">{_tags_html}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+                _btn_label = "✓ Selezionato" if _is_sel else "Usa questo"
+                if st.button(
+                    _btn_label,
+                    key=f"tmpl_btn_{_tmpl['id']}",
+                    use_container_width=True,
+                    type="primary" if _is_sel else "secondary",
+                ):
+                    if _is_sel:
+                        st.session_state._template_sel = None
+                    else:
+                        st.session_state._template_sel = _tmpl["id"]
+                    st.rerun()
+
+    # Mostra badge template selezionato
+    _tmpl_attivo = None
+    if _sel_id:
+        _tmpl_attivo = next((t for t in _TEMPLATES if t["id"] == _sel_id), None)
+    if _tmpl_attivo:
+        _es_count = len(_tmpl_attivo["esercizi"])
+        st.markdown(
+            f'<div class="template-selected-badge">'
+            f'  {_tmpl_attivo["icon"]} Template attivo: <strong>{_tmpl_attivo["nome"]}</strong>'
+            f'  &nbsp;·&nbsp; {_es_count} esercizi predefiniti'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
+    st.markdown(
+        f'<div style="height:2px;background:{T["border"]};border-radius:100px;'
+        f'margin:.9rem 0 1rem;opacity:.5;"></div>',
+        unsafe_allow_html=True
+    )
+
     # Indicatore modalità manuale (header compatto)
     st.markdown(
         f'<div style="background:{T["card"]};border:1px solid {T["border"]};'
@@ -2348,6 +2533,24 @@ def _render_stage_input():
             st.warning("⚠️ Inserisci l'argomento della verifica.")
             return
 
+        # ── Idea #8: se template selezionato, inietta struttura nelle note ──
+        _tmpl_sel_id = st.session_state.get("_template_sel")
+        _tmpl_nota_extra = ""
+        if _tmpl_sel_id:
+            _TMPL_MAP = {
+                "classico_misto":     "Struttura: 1 esercizio aperto (3 sottopunti), 1 scelta multipla (4 domande), 1 vero/falso (5 affermazioni).",
+                "stem_calcolo":       "Struttura: 3 esercizi numerici aperti. Es.1: problema con 4 sottopunti. Es.2: applicativo con 3 sottopunti. Es.3: dimostrazione/verifica con 2 sottopunti.",
+                "letterario":         "Struttura: 1 comprensione testo (3 domande), 1 analisi/commento (3 domande), 1 completamento (5 lacune), 1 scelta multipla teorica (4 domande).",
+                "breve_bes":          "Struttura semplificata BES/DSA: 1 vero/falso (4 affermazioni brevi), 1 scelta multipla (3 domande chiare), 1 completamento (4 spazi). Linguaggio diretto, frasi brevi.",
+                "interrogazione_orale": "Struttura per orale: 1 domanda aperta ampia, 3 domande di approfondimento mirate, 1 domanda di collegamento interdisciplinare. Formato lista domande.",
+                "ripasso_veloce":     "Struttura quiz rapido: 6 scelte multiple (1 risposta corretta su 4), 6 vero/falso. Domande brevi, nessun esercizio aperto.",
+            }
+            _tmpl_nota_extra = _TMPL_MAP.get(_tmpl_sel_id, "")
+
+        _note_finale = note_extra
+        if _tmpl_nota_extra:
+            _note_finale = (_tmpl_nota_extra + "\n\n" + note_extra).strip()
+
         s_es, imgs_es = _build_prompt_esercizi(
             st.session_state.esercizi_custom,
             num_esercizi_totali,
@@ -2364,7 +2567,7 @@ def _render_stage_input():
             punti_totali=punti_totali,
             mostra_punteggi=mostra_punteggi,
             con_griglia=con_griglia,
-            note_generali=note_extra,
+            note_generali=_note_finale,
             s_es=s_es,
             imgs_es=imgs_es,
             file_ispirazione=None,
@@ -2530,6 +2733,20 @@ def _render_stage_review():
         'Usa il campo di modifica per richiedere cambiamenti — l\'AI rigenererà solo l\'esercizio selezionato. '
         'Quando sei soddisfatto, premi <strong>Conferma e genera PDF</strong>.'
         '</div></div></div>',
+        unsafe_allow_html=True
+    )
+
+    # ── IDEA #3: Smart Preview hint ──────────────────────────────────────────
+    st.markdown(
+        f'<div class="smart-preview-hint">'
+        f'  <span style="font-size:1rem;flex-shrink:0;">💡</span>'
+        f'  <div>'
+        f'    <strong>Modifica in tempo reale:</strong> seleziona un esercizio, '
+        f'    scrivi la tua istruzione nel campo di testo e premi '
+        f'    <strong>Rigenera esercizio</strong> — l\'AI aggiorna solo quel blocco '
+        f'    senza toccare il resto. L\'anteprima PDF si aggiorna dopo ogni modifica confermata.'
+        f'  </div>'
+        f'</div>',
         unsafe_allow_html=True
     )
 
@@ -3012,6 +3229,92 @@ def _render_stage_final():
             unsafe_allow_html=True
         )
 
+    # ── IDEA #2: One-Click Variant — card prominente ─────────────────────────
+    _has_fila_b_already = bool(vB.get("latex"))
+    if not _has_fila_b_already:
+        st.markdown(
+            f'<div class="one-click-variant-card">'
+            f'  <div>'
+            f'    <span class="one-click-badge">⚡ ONE-CLICK</span>'
+            f'  </div>'
+            f'  <div class="one-click-body">'
+            f'    <div class="one-click-title">Genera Fila B istantaneamente</div>'
+            f'    <div class="one-click-desc">'
+            f'      Stessa struttura, stessi punteggi — solo i dati numerici cambiano. '
+            f'      Pronto in secondi, nessuna configurazione richiesta.'
+            f'    </div>'
+            f'  </div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        if st.button(
+            "⚡ Genera Fila B — One Click",
+            key="one_click_variant_top",
+            use_container_width=True,
+            type="primary",
+        ):
+            st.session_state._variant_rapida_gen = True
+            st.rerun()
+
+        # Gestione generazione variante rapida
+        if st.session_state.get("_variant_rapida_gen"):
+            st.session_state._variant_rapida_gen = False
+            _ocr_ph = st.empty()
+            _ocr_ph.markdown(
+                f'<div class="ocr-skeleton-wrap">'
+                f'  <div class="ocr-skeleton-header">'
+                f'    <div class="ocr-skeleton-icon">⚡</div>'
+                f'    <div>'
+                f'      <div class="ocr-skeleton-title">Generazione Fila B in corso…</div>'
+                f'      <div class="ocr-skeleton-sub">Cambio dati numerici · Anti-spoiler grafico · QA coerenza</div>'
+                f'    </div>'
+                f'  </div>'
+                f'  <div class="ocr-skeleton-doc">'
+                f'    <div class="ocr-skeleton-scan"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:90%;animation-delay:.0s"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:70%;animation-delay:.2s"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:85%;animation-delay:.4s"></div>'
+                f'  </div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+            try:
+                _mod_obj_vr = genai.GenerativeModel(mod_id)
+                _latex_a    = vA.get("latex", "")
+                _prmpt_vr   = prompt_variante_rapida(_latex_a, mat_str)
+                _resp_vr    = _mod_obj_vr.generate_content(
+                    [_prmpt_vr],
+                    generation_config=genai.GenerationConfig(temperature=0.7),
+                )
+                _latex_b_new = _resp_vr.text.strip()
+                # Rimuovi eventuali backtick
+                if _latex_b_new.startswith("```"):
+                    _latex_b_new = re.sub(r"^```[a-z]*\n?", "", _latex_b_new)
+                    _latex_b_new = re.sub(r"\n?```$", "", _latex_b_new)
+                from latex_utils import compila_pdf as _cpdf
+                _pdf_b_new, _ = _cpdf(_latex_b_new)
+                st.session_state.verifiche["B"]["latex"] = _latex_b_new
+                if _pdf_b_new:
+                    st.session_state.verifiche["B"]["pdf"] = _pdf_b_new
+                _ocr_ph.empty()
+                st.toast("✅ Fila B generata!", icon="⚡")
+                st.rerun()
+            except Exception as _e_vr:
+                _ocr_ph.empty()
+                st.error(f"Errore generazione Fila B: {_e_vr}")
+
+    else:
+        # Fila B già generata — mostra badge
+        st.markdown(
+            f'<div style="display:inline-flex;align-items:center;gap:.5rem;'
+            f'background:{T["success"]}18;border:1.5px solid {T["success"]}55;'
+            f'border-radius:8px;padding:.35rem .85rem;margin-bottom:.7rem;'
+            f'font-size:.78rem;font-weight:700;color:{T["success"]};font-family:DM Sans,sans-serif;">'
+            f'✓ Fila B disponibile — vedi sezione download'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
     # 1. PREVIEW
     st.markdown(
         '<div class="s3-section-title">Anteprima</div>',
@@ -3129,6 +3432,115 @@ def _render_stage_final():
             _primary_card_unified("Soluzioni", "✅", "S", vS, "Soluzioni", "Scarica Soluzioni (PDF)")
 
 
+    # ── IDEA #19: Rubrica di Valutazione AI ───────────────────────────────────
+    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+    st.markdown(
+        '<div class="s3-section-title">Rubrica di Valutazione</div>',
+        unsafe_allow_html=True
+    )
+
+    _punti_tot_r = gp.get("punti_totali", 100)
+    _latex_a_r   = vA.get("latex", "")
+
+    if st.session_state.rubrica_testo:
+        # Rubrica già generata — mostrala
+        import markdown as _md_lib
+        try:
+            _rubrica_html = _md_lib.markdown(
+                st.session_state.rubrica_testo,
+                extensions=["tables"]
+            )
+        except Exception:
+            # Fallback: usa il testo raw come preformattato
+            _rubrica_html = st.session_state.rubrica_testo.replace("\n", "<br>")
+
+        st.markdown(
+            f'<div class="rubrica-wrap">'
+            f'  <div class="rubrica-header">'
+            f'    <span style="font-size:1.1rem;">📊</span>'
+            f'    <div class="rubrica-title">Rubrica di Valutazione</div>'
+            f'    <span class="rubrica-badge">MIM — per competenze</span>'
+            f'  </div>'
+            f'  <div class="rubrica-content">{_rubrica_html}</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        _col_r1, _col_r2 = st.columns([2, 1])
+        with _col_r1:
+            st.download_button(
+                "⬇ Scarica rubrica (.txt)",
+                data=st.session_state.rubrica_testo.encode("utf-8"),
+                file_name=arg_str + "_Rubrica.txt",
+                mime="text/plain",
+                key="dl_rubrica_txt",
+                use_container_width=True,
+            )
+        with _col_r2:
+            if st.button("🔄 Rigenera", key="btn_rigenera_rubrica", use_container_width=True):
+                st.session_state.rubrica_testo = None
+                st.session_state._rubrica_gen  = False
+                st.rerun()
+    else:
+        # Rubrica non ancora generata
+        st.markdown(
+            f'<div style="background:{T["card2"]};border:1px solid {T["border"]};'
+            f'border-radius:10px;padding:.7rem 1rem;margin-bottom:.6rem;'
+            f'font-size:.78rem;color:{T["text2"]};font-family:DM Sans,sans-serif;line-height:1.55;">'
+            f'<strong style="color:{T["text"]};">Genera automaticamente</strong> una rubrica di valutazione '
+            f'con indicatori qualitativi per fascia di voto, allineata alle Linee Guida MIM '
+            f'sulla valutazione per competenze.'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        if st.button(
+            "📊 Genera Rubrica di Valutazione",
+            key="btn_gen_rubrica",
+            use_container_width=True,
+        ):
+            st.session_state._rubrica_gen = True
+            st.rerun()
+
+        if st.session_state.get("_rubrica_gen"):
+            st.session_state._rubrica_gen = False
+            _rub_ph = st.empty()
+            _rub_ph.markdown(
+                f'<div class="ocr-skeleton-wrap">'
+                f'  <div class="ocr-skeleton-header">'
+                f'    <div class="ocr-skeleton-icon">📊</div>'
+                f'    <div>'
+                f'      <div class="ocr-skeleton-title">Generazione rubrica in corso…</div>'
+                f'      <div class="ocr-skeleton-sub">Analisi esercizi · Fasce di voto · Indicatori MIM</div>'
+                f'    </div>'
+                f'  </div>'
+                f'  <div class="ocr-skeleton-doc">'
+                f'    <div class="ocr-skeleton-scan"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:88%"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:65%"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:80%"></div>'
+                f'  </div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+            try:
+                _mod_rub = genai.GenerativeModel(mod_id)
+                _prompt_rub = prompt_rubrica_valutazione(
+                    corpo_latex=_latex_a_r,
+                    materia=mat_str,
+                    livello=scu_str,
+                    punti_totali=_punti_tot_r,
+                )
+                _resp_rub = _mod_rub.generate_content(
+                    [_prompt_rub],
+                    generation_config=genai.GenerationConfig(temperature=0.5),
+                )
+                st.session_state.rubrica_testo = _resp_rub.text.strip()
+                _rub_ph.empty()
+                st.toast("✅ Rubrica generata!", icon="📊")
+                st.rerun()
+            except Exception as _e_rub:
+                _rub_ph.empty()
+                st.error(f"Errore generazione rubrica: {_e_rub}")
+
     # ── Genera Varianti on-demand ──────────────────────────────────────────────
     st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
     st.markdown(
@@ -3202,6 +3614,11 @@ def _render_stage_final():
         st.session_state.esercizi_custom       = []
         st.session_state._saved_to_storico     = False
         st.session_state["_es_custom_da_file"] = {}
+        # Reset nuove feature
+        st.session_state.rubrica_testo         = None
+        st.session_state._rubrica_gen          = False
+        st.session_state._template_sel         = None
+        st.session_state._variant_rapida_gen   = False
         st.rerun()
 
     # Link feedback
