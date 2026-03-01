@@ -216,6 +216,7 @@ def genera_corpo_streaming(
     titolo_header: str = "",
     preambolo: str = "",
     e_mat: bool = False,
+    mathpix_context: str | None = None,
     on_token=None,      # callback(token: str) -> None  chiamato per ogni chunk testo
     on_done=None,       # callback(corpo_latex: str) -> None  chiamato al completamento
 ) -> str:
@@ -230,6 +231,7 @@ def genera_corpo_streaming(
             num_esercizi, punti_totali, mostra_punteggi,
             con_griglia, note_generali, istruzioni_esercizi,
             e_mat, titolo_header, preambolo,
+            mathpix_context=mathpix_context,
         )
     ]
     if file_ispirazione:
@@ -316,6 +318,7 @@ def genera_verifica(
     istruzioni_esercizi: str,   # stringa da costruisci_prompt_esercizi()
     immagini_esercizi: list,    # lista di {'idx', 'data', 'mime_type'}
     file_ispirazione=None,      # oggetto file Streamlit o None
+    mathpix_context: str | None = None,   # LaTeX estratto da Mathpix OCR
     on_progress=None,           # callback(testo: str) -> None
 ) -> dict:
     """
@@ -369,6 +372,7 @@ def genera_verifica(
             num_esercizi, punti_totali, mostra_punteggi,
             con_griglia, note_generali, istruzioni_esercizi,
             e_mat, titolo_header_a, preambolo_a,
+            mathpix_context=mathpix_context,
         )
     ]
     if file_ispirazione:
@@ -519,6 +523,7 @@ def genera_verifica_streaming(
     istruzioni_esercizi: str,
     immagini_esercizi: list,
     file_ispirazione=None,
+    mathpix_context: str | None = None,   # LaTeX estratto da Mathpix OCR
     on_progress=None,       # callback(testo: str) — aggiorna barra stato
     on_token=None,          # callback(token: str) — chunk streaming live
     on_corpo_grezzo=None,   # callback(corpo_latex: str) — corpo grezzo prima del QA
@@ -580,6 +585,7 @@ def genera_verifica_streaming(
             num_esercizi, punti_totali, mostra_punteggi,
             con_griglia, note_generali, istruzioni_esercizi,
             e_mat, titolo_header_a, preambolo_a,
+            mathpix_context=mathpix_context,
         )
     ]
     if file_ispirazione:
