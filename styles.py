@@ -1085,14 +1085,14 @@ def get_css(T: dict) -> str:
   .monthly-bar-label {{
     font-size: 0.7rem;
     font-weight: 600;
-    color: #9B9890;
+    color: #ffffff;
     font-family: 'DM Sans', sans-serif;
     letter-spacing: .03em;
   }}
   .monthly-bar-count {{
     font-size: 0.72rem;
     font-weight: 800;
-    color: #D4D2CA;
+    color: #ffffff;
     font-family: 'DM Sans', sans-serif;
     letter-spacing: 0.03em;
   }}
@@ -1555,3 +1555,4 @@ def _is_light_color(hex_color: str) -> bool:
         return luminance > 0.5
     except Exception:
         return False
+
