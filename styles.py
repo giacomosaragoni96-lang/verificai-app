@@ -1847,6 +1847,363 @@ def get_css(T: dict) -> str:
     white-space: nowrap;
   }}
 
+  /* ═══════════════════════════════════════════════════════════════════
+     IDEA #11 — SKELETON OCR ANIMATO
+     Mostra un'animazione "lettura documento" durante l'analisi AI.
+  ═══════════════════════════════════════════════════════════════════ */
+
+  @keyframes skeletonPulse {{
+    0%   {{ opacity: .35; transform: scaleX(.92); }}
+    50%  {{ opacity: .85; transform: scaleX(1); }}
+    100% {{ opacity: .35; transform: scaleX(.92); }}
+  }}
+  @keyframes scanLine {{
+    0%   {{ top: 6px; opacity: .9; }}
+    100% {{ top: calc(100% - 6px); opacity: .3; }}
+  }}
+  @keyframes fadeInUp {{
+    from {{ opacity: 0; transform: translateY(10px); }}
+    to   {{ opacity: 1; transform: translateY(0); }}
+  }}
+  @keyframes badgePop {{
+    0%   {{ opacity: 0; transform: translateY(-6px) scale(.92); }}
+    70%  {{ transform: translateY(2px) scale(1.03); }}
+    100% {{ opacity: 1; transform: translateY(0) scale(1); }}
+  }}
+  @keyframes pulseGlow {{
+    0%, 100% {{ box-shadow: 0 0 0 0 {T['accent']}44; }}
+    50%       {{ box-shadow: 0 0 0 8px {T['accent']}00; }}
+  }}
+
+  .ocr-skeleton-wrap {{
+    background: {T['card']};
+    border: 1.5px solid {T['border']};
+    border-radius: 14px;
+    padding: 1.1rem 1.3rem 1rem;
+    margin: .6rem 0 1rem;
+    position: relative;
+    overflow: hidden;
+  }}
+  .ocr-skeleton-header {{
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    margin-bottom: .9rem;
+  }}
+  .ocr-skeleton-icon {{
+    font-size: 1.3rem;
+    animation: skeletonPulse 1.4s ease-in-out infinite;
+  }}
+  .ocr-skeleton-title {{
+    font-size: .82rem;
+    font-weight: 700;
+    color: {T['text']};
+    font-family: DM Sans, sans-serif;
+  }}
+  .ocr-skeleton-sub {{
+    font-size: .7rem;
+    color: {T['muted']};
+    font-family: DM Sans, sans-serif;
+    margin-top: 1px;
+  }}
+  .ocr-skeleton-doc {{
+    background: {T['card2']};
+    border: 1px solid {T['border']};
+    border-radius: 8px;
+    padding: .7rem .9rem;
+    position: relative;
+    overflow: hidden;
+  }}
+  .ocr-skeleton-scan {{
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, {T['accent']}cc, transparent);
+    animation: scanLine 1.8s linear infinite;
+    pointer-events: none;
+  }}
+  .ocr-skeleton-line {{
+    height: 8px;
+    border-radius: 100px;
+    background: {T['border2']};
+    margin-bottom: 7px;
+    transform-origin: left center;
+    animation: skeletonPulse 1.6s ease-in-out infinite;
+  }}
+  .ocr-skeleton-step {{
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-top: .75rem;
+    font-size: .72rem;
+    font-weight: 600;
+    color: {T['accent']};
+    font-family: DM Sans, sans-serif;
+    animation: fadeInUp .4s ease both;
+  }}
+  .ocr-skeleton-dot {{
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: {T['accent']};
+    animation: skeletonPulse 1s ease-in-out infinite;
+    flex-shrink: 0;
+  }}
+
+  /* Badge classificazione — animazione entrata */
+  .classif-badge-animated {{
+    animation: badgePop .45s cubic-bezier(.34,1.56,.64,1) both;
+  }}
+
+  /* Bottone primario con pulse quando abilitato */
+  .genera-ready-btn > button {{
+    animation: pulseGlow 2.2s ease-in-out infinite !important;
+  }}
+
+  /* ═══════════════════════════════════════════════════════════════════
+     IDEA #2 — ONE-CLICK VARIANT
+     Badge e card per la generazione rapida Fila B
+  ═══════════════════════════════════════════════════════════════════ */
+
+  .one-click-variant-card {{
+    background: linear-gradient(135deg, {T['card2']} 0%, {T['card']} 100%);
+    border: 2px solid {T['accent']};
+    border-radius: 14px;
+    padding: .95rem 1.1rem;
+    margin-bottom: .8rem;
+    display: flex;
+    align-items: flex-start;
+    gap: .85rem;
+    position: relative;
+    overflow: hidden;
+  }}
+  .one-click-variant-card::before {{
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, {T['accent']}, {T['accent']}66);
+    border-radius: 14px 14px 0 0;
+  }}
+  .one-click-badge {{
+    background: {T['accent']};
+    color: #fff;
+    font-size: .6rem;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 100px;
+    letter-spacing: .06em;
+    font-family: DM Sans, sans-serif;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }}
+  .one-click-body {{
+    flex: 1;
+  }}
+  .one-click-title {{
+    font-size: .88rem;
+    font-weight: 800;
+    color: {T['accent']};
+    font-family: DM Sans, sans-serif;
+    line-height: 1.2;
+    margin-bottom: .2rem;
+  }}
+  .one-click-desc {{
+    font-size: .74rem;
+    color: {T['text2']};
+    font-family: DM Sans, sans-serif;
+    line-height: 1.5;
+  }}
+
+  /* ═══════════════════════════════════════════════════════════════════
+     IDEA #8 — TEMPLATE GALLERY
+  ═══════════════════════════════════════════════════════════════════ */
+
+  .template-gallery-header {{
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    margin-bottom: 1rem;
+  }}
+  .template-gallery-title {{
+    font-size: .95rem;
+    font-weight: 800;
+    color: {T['text']};
+    font-family: DM Sans, sans-serif;
+  }}
+  .template-gallery-sub {{
+    font-size: .72rem;
+    color: {T['muted']};
+    font-family: DM Sans, sans-serif;
+    margin-top: 1px;
+  }}
+  .template-card {{
+    background: {T['card']};
+    border: 1.5px solid {T['border']};
+    border-radius: 12px;
+    padding: .85rem 1rem;
+    cursor: pointer;
+    transition: border-color .15s ease, box-shadow .15s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+  }}
+  .template-card:hover {{
+    border-color: {T['accent']};
+    box-shadow: 0 4px 18px {T['accent']}22;
+  }}
+  .template-card.selected {{
+    border-color: {T['accent']};
+    background: linear-gradient(135deg, {T['accent_light']} 0%, {T['card']} 100%);
+    box-shadow: 0 2px 12px {T['accent']}33;
+  }}
+  .template-icon {{
+    font-size: 1.4rem;
+    line-height: 1;
+  }}
+  .template-name {{
+    font-size: .82rem;
+    font-weight: 800;
+    color: {T['text']};
+    font-family: DM Sans, sans-serif;
+    line-height: 1.2;
+  }}
+  .template-meta {{
+    font-size: .68rem;
+    color: {T['muted']};
+    font-family: DM Sans, sans-serif;
+    line-height: 1.4;
+  }}
+  .template-tags {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem;
+    margin-top: .2rem;
+  }}
+  .template-tag {{
+    font-size: .6rem;
+    background: {T['card2']};
+    border: 1px solid {T['border']};
+    border-radius: 5px;
+    padding: 1px 7px;
+    color: {T['text2']};
+    font-family: DM Sans, sans-serif;
+  }}
+  .template-selected-badge {{
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    background: {T['accent']}18;
+    border: 1.5px solid {T['accent']}55;
+    border-radius: 8px;
+    padding: .4rem .85rem;
+    font-size: .78rem;
+    font-weight: 700;
+    color: {T['accent']};
+    font-family: DM Sans, sans-serif;
+    margin-bottom: .6rem;
+    animation: fadeInUp .3s ease both;
+  }}
+
+  /* ═══════════════════════════════════════════════════════════════════
+     IDEA #19 — RUBRICA DI VALUTAZIONE
+  ═══════════════════════════════════════════════════════════════════ */
+
+  .rubrica-wrap {{
+    background: {T['card']};
+    border: 1.5px solid {T['border']};
+    border-left: 4px solid {T['success']};
+    border-radius: 0 12px 12px 0;
+    padding: 1rem 1.2rem;
+    margin-top: .8rem;
+    animation: fadeInUp .35s ease both;
+  }}
+  .rubrica-header {{
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-bottom: .65rem;
+  }}
+  .rubrica-title {{
+    font-size: .85rem;
+    font-weight: 800;
+    color: {T['success']};
+    font-family: DM Sans, sans-serif;
+  }}
+  .rubrica-badge {{
+    background: {T['success']}18;
+    border: 1px solid {T['success']}55;
+    border-radius: 100px;
+    padding: 2px 9px;
+    font-size: .62rem;
+    font-weight: 700;
+    color: {T['success']};
+    font-family: DM Sans, sans-serif;
+    letter-spacing: .04em;
+  }}
+  .rubrica-content {{
+    font-size: .78rem;
+    color: {T['text2']};
+    font-family: DM Sans, sans-serif;
+    line-height: 1.65;
+  }}
+  .rubrica-content h2, .rubrica-content h3 {{
+    font-size: .82rem;
+    font-weight: 700;
+    color: {T['text']};
+    margin: .7rem 0 .25rem;
+  }}
+  .rubrica-content strong {{
+    color: {T['accent']};
+    font-weight: 700;
+  }}
+  .rubrica-content ul, .rubrica-content ol {{
+    margin: .2rem 0 .2rem 1.1rem;
+    padding: 0;
+  }}
+  .rubrica-content li {{
+    margin-bottom: .15rem;
+  }}
+
+  /* ═══════════════════════════════════════════════════════════════════
+     IDEA #3 — SMART PREVIEW HINT
+     Banner informativo nell'editor blocchi
+  ═══════════════════════════════════════════════════════════════════ */
+
+  .smart-preview-hint {{
+    background: linear-gradient(135deg, {T['card2']} 0%, {T['card']} 100%);
+    border: 1px solid {T['border']};
+    border-left: 3px solid {T['accent']};
+    border-radius: 0 10px 10px 0;
+    padding: .55rem .9rem;
+    margin-bottom: .7rem;
+    display: flex;
+    align-items: flex-start;
+    gap: .5rem;
+    font-size: .72rem;
+    color: {T['text2']};
+    font-family: DM Sans, sans-serif;
+    line-height: 1.5;
+  }}
+  .smart-preview-hint strong {{
+    color: {T['accent']};
+  }}
+
+  /* ═══════════════════════════════════════════════════════════════════
+     FIX WORKFLOW — Login page gradient top bar + CTA hierarchy
+  ═══════════════════════════════════════════════════════════════════ */
+
+  /* Pulsante primario principale con ombra accent più pronunciata */
+  div.stButton > button[kind="primary"] {{
+    box-shadow: 0 4px 20px {T['accent']}55 !important;
+    transition: box-shadow .2s ease, filter .15s ease !important;
+  }}
+  div.stButton > button[kind="primary"]:hover {{
+    box-shadow: 0 6px 28px {T['accent']}77 !important;
+    filter: brightness(1.08) !important;
+  }}
+
 </style>
 """
 
