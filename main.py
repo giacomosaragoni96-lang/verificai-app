@@ -52,9 +52,10 @@ except ImportError:
 
 
 # ── COSTANTI STAGE ────────────────────────────────────────────────────────────
-STAGE_INPUT  = "INPUT"
-STAGE_REVIEW = "REVIEW"
-STAGE_FINAL  = "FINAL"
+STAGE_INPUT   = "INPUT"
+STAGE_PREVIEW = "PREVIEW"   # Fase 2.5 — Anteprima Rapida post-generazione
+STAGE_REVIEW  = "REVIEW"
+STAGE_FINAL   = "FINAL"
 
 # ── PAGE CONFIG ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -481,6 +482,7 @@ def _build_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_pun
 # ═══════════════════════════════════════════════════════════════════════════════
 
 if "stage"             not in st.session_state: st.session_state.stage = STAGE_INPUT
+if "quick_preview_done" not in st.session_state: st.session_state.quick_preview_done = False
 if "verifiche"         not in st.session_state:
     st.session_state.verifiche = {
         "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
@@ -583,9 +585,18 @@ st.markdown(
 
 def _render_breadcrumb():
     stage = st.session_state.stage
-    steps = [("01","Configura",STAGE_INPUT),("02","Revisione",STAGE_REVIEW),("03","Download",STAGE_FINAL)]
-    completed = {STAGE_INPUT: stage in (STAGE_REVIEW,STAGE_FINAL),
-                 STAGE_REVIEW: stage == STAGE_FINAL, STAGE_FINAL: False}
+    steps = [
+        ("01", "Configura",  STAGE_INPUT),
+        ("02", "Anteprima",  STAGE_PREVIEW),
+        ("03", "Revisione",  STAGE_REVIEW),
+        ("04", "Download",   STAGE_FINAL),
+    ]
+    completed = {
+        STAGE_INPUT:   stage in (STAGE_PREVIEW, STAGE_REVIEW, STAGE_FINAL),
+        STAGE_PREVIEW: stage in (STAGE_REVIEW, STAGE_FINAL),
+        STAGE_REVIEW:  stage == STAGE_FINAL,
+        STAGE_FINAL:   False,
+    }
     # Contenitore centrato e compatto
     html = (
         '<div style="display:flex;justify-content:center;margin-bottom:1.6rem;">'
@@ -617,7 +628,7 @@ def _render_breadcrumb():
             'font-family:DM Sans,sans-serif;white-space:nowrap;letter-spacing:-.01em;">' + label + '</span>'
             '</div>'
         )
-        if i < 2:
+        if i < 3:
             _sep_c = T["success"] if is_done else T["border2"]
             html += (
                 '<div style="width:28px;height:1.5px;background:' + _sep_c + ';'
@@ -817,9 +828,11 @@ def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str)
     else:
         mathpix_ctx = st.session_state.get("mathpix_context")
 
-    # Analisi AI metadati
+    # Analisi AI metadati — usa gemini-1.5-flash (veloce + multimodale, no 404)
+    # gemini-2.0-flash-lite è deprecato; fallback progressivo su modello più stabile
+    _ANALISI_MODEL = "gemini-1.5-flash"
     try:
-        _model_fast = genai.GenerativeModel("gemini-2.0-flash-lite")
+        _model_fast = genai.GenerativeModel(_ANALISI_MODEL)
         result = analizza_documento_caricato(
             model=_model_fast,
             file_bytes=file_bytes,
@@ -1817,15 +1830,17 @@ def _lancia_generazione(
                 "scuola": difficolta, "latex_a": ris["A"]["latex"] or None,
                 "latex_b": None, "latex_r": None, "modello": modello_id,
                 "num_esercizi": num_esercizi_totali,
-                "percorso_scelto": st.session_state.get("input_percorso"),
-                "file_mode":       st.session_state.get("file_mode"),
+                # ── Campi percorso: sempre salvati (None per Percorso B) ────────
+                "percorso_scelto": st.session_state.get("input_percorso"),   # "A" | "B" | None
+                "file_mode":       st.session_state.get("file_mode"),         # es. "stile_e_struttura"
             }).execute()
             st.session_state._storico_refresh += 1
             st.toast("✅ Bozza salvata!", icon="💾")
         except Exception as _e:
             st.warning(f"⚠️ Salvataggio storico non riuscito: {_e}")
 
-        st.session_state.stage = STAGE_REVIEW
+        # ── Transita a STAGE_PREVIEW (Fase 2.5 — Anteprima Rapida) ────────────
+        st.session_state.stage = STAGE_PREVIEW
         st.rerun()
 
     except Exception as _e:
@@ -1880,17 +1895,33 @@ def _render_stage_input():
             ad        = st.session_state.analisi_doc or {}
             file_mode = st.session_state.get("file_mode", "stile_e_struttura")
 
-            # Argomento override: il docente ha scritto qualcosa nel box istruzioni?
-            # Usa euristiche: se inizia con "l'argomento", "argomento è" o è breve (<40 car)
-            # e non contiene parole-chiave di istruzione, lo trattiamo come argomento.
+            # ── Argomento override: il box di testo ha SEMPRE priorità sull'argomento
+            # rilevato dal file. Logica:
+            # 1. Se il box contiene keyword esplicite ("argomento è", "tema:") → estrai solo
+            #    l'argomento indicato.
+            # 2. Se il box è breve (≤ 80 car) e non contiene parole-istruzione tipiche
+            #    ("aggiungi", "rimuovi", "cambia", "includi", "fai", "usa", "rendi") →
+            #    trattalo integralmente come argomento override.
+            # 3. Altrimenti il testo è istruzione generica → passa solo come note.
             argomento_override = None
             _istr_lower = istruzioni_extra.lower()
-            _arg_keywords = ("argomento è", "argomento:", "l'argomento", "tema:")
+            _arg_keywords = ("argomento è", "argomento:", "l'argomento", "tema:", "argomento nuovo")
+            _istr_keywords = ("aggiungi", "rimuovi", "cambia", "includi", "fai", "usa", "rendi",
+                              "aumenta", "diminuisci", "togli", "sostituisci", "modifica")
+
+            # Ricerca keyword esplicite di argomento
             for _kw in _arg_keywords:
                 if _kw in _istr_lower:
                     _idx_kw = _istr_lower.find(_kw)
                     argomento_override = istruzioni_extra[_idx_kw + len(_kw):].split(".")[0].strip()
                     break
+
+            # Se nessuna keyword esplicita, usa il box come argomento se è "breve e pulito"
+            if not argomento_override and istruzioni_extra:
+                _is_short  = len(istruzioni_extra) <= 80
+                _has_instr = any(k in _istr_lower for k in _istr_keywords)
+                if _is_short and not _has_instr:
+                    argomento_override = istruzioni_extra.strip()
 
             argomento, note_generali = compila_contesto_generazione(
                 analisi=ad,
@@ -1977,6 +2008,198 @@ def _render_stage_input():
         return
 
 
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  STAGE_PREVIEW — Fase 2.5: Anteprima Rapida post-generazione
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _render_stage_preview():
+    """
+    Fase 2.5 — Mostra la preview PDF della bozza appena generata e propone un bivio:
+      · "Sì, è perfetta"     → STAGE_FINAL (download diretto, salta revisione)
+      · "Voglio modificarla" → STAGE_REVIEW (editor blocchi, percorso normale)
+    """
+    gp          = st.session_state.gen_params
+    mat_str     = gp.get("materia", "")
+    scu_str     = gp.get("difficolta", "")
+    arg_str     = gp.get("argomento", "Verifica")
+    n_es        = gp.get("num_esercizi", 4)
+    gen_sec     = st.session_state.get("gen_time_sec")
+
+    # ── Intestazione ──────────────────────────────────────────────────────────
+    st.markdown(
+        f'<div style="background:linear-gradient(135deg,{T["accent_light"]} 0%,{T["card"]} 100%);'
+        f'border:2px solid {T["accent"]};border-radius:16px;overflow:hidden;margin-bottom:1.2rem;">'
+        f'<div style="background:linear-gradient(120deg,{T["accent"]} 0%,{T["success"]} 100%);'
+        f'padding:.85rem 1.2rem;">'
+        f'<div style="display:flex;align-items:center;gap:12px;">'
+        f'<span style="font-size:1.5rem;">✨</span>'
+        f'<div style="flex:1;">'
+        f'<div style="font-family:DM Sans,sans-serif;font-size:1rem;font-weight:900;color:#fff;'
+        f'text-shadow:0 1px 4px rgba(0,0,0,.25);">Bozza Generata — Cosa vuoi fare?</div>'
+        f'<div style="font-size:.72rem;color:#fff;opacity:.9;margin-top:1px;">'
+        f'{mat_str} · {scu_str} · {arg_str} · {n_es} esercizi'
+        + (f' · generata in {gen_sec}s' if gen_sec else '') +
+        f'</div>'
+        f'</div></div></div>'
+        f'<div style="padding:.75rem 1.2rem;background:{T["card"]};">'
+        f'<div style="font-size:.8rem;color:{T["text2"]};line-height:1.6;">'
+        f'Controlla l\'anteprima PDF qui sotto. '
+        f'Se la bozza ti soddisfa, scaricala direttamente. '
+        f'Altrimenti entra nell\'editor per modificare ogni esercizio.'
+        f'</div></div></div>',
+        unsafe_allow_html=True
+    )
+
+    # ── Preview PDF ───────────────────────────────────────────────────────────
+    imgs = st.session_state.get("preview_images", [])
+    vA_pdf = st.session_state.verifiche["A"].get("pdf")
+
+    col_prev, col_act = st.columns([3, 2], gap="large")
+
+    with col_prev:
+        st.markdown(
+            f'<div style="font-size:.72rem;font-weight:700;color:{T["muted"]};'
+            f'text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;">'
+            f'📄 Anteprima Bozza</div>',
+            unsafe_allow_html=True
+        )
+        if imgs:
+            n_pages = len(imgs)
+            _pg = max(0, min(st.session_state.get("preview_page", 0), n_pages - 1))
+            st.image(imgs[_pg], use_container_width=True)
+            if n_pages > 1:
+                _pc, _pm, _pn = st.columns([1, 2, 1])
+                with _pc:
+                    if st.button("◀", key="prev_pg_pv", use_container_width=True,
+                                 disabled=(_pg == 0)):
+                        st.session_state.preview_page = _pg - 1; st.rerun()
+                with _pm:
+                    st.markdown(
+                        f'<div style="text-align:center;font-size:.75rem;font-weight:600;'
+                        f'color:{T["text2"]};font-family:DM Sans,sans-serif;padding:.35rem 0;">'
+                        f'Pag. {_pg+1} / {n_pages}</div>',
+                        unsafe_allow_html=True
+                    )
+                with _pn:
+                    if st.button("▶", key="next_pg_pv", use_container_width=True,
+                                 disabled=(_pg == n_pages - 1)):
+                        st.session_state.preview_page = _pg + 1; st.rerun()
+        elif vA_pdf:
+            b64 = base64.b64encode(vA_pdf).decode()
+            st.markdown(
+                f'<iframe src="data:application/pdf;base64,{b64}#toolbar=0&navpanes=0" '
+                f'style="width:100%;height:600px;border:none;border-radius:8px;"></iframe>',
+                unsafe_allow_html=True
+            )
+        else:
+            st.info("⚠️ Anteprima non disponibile — il PDF verrà generato al download.")
+
+    # ── Bivio decisionale ─────────────────────────────────────────────────────
+    with col_act:
+        st.markdown(
+            f'<div style="background:{T["card"]};border:2px solid {T["border2"]};'
+            f'border-radius:16px;padding:1.4rem 1.2rem;margin-top:.2rem;">'
+            f'<div style="font-size:1.05rem;font-weight:900;color:{T["text"]};'
+            f'font-family:DM Sans,sans-serif;margin-bottom:.6rem;text-align:center;">'
+            f'🎯 La bozza ti soddisfa?'
+            f'</div>'
+            f'<div style="font-size:.78rem;color:{T["text2"]};line-height:1.6;margin-bottom:1rem;text-align:center;">'
+            f'Scegli come procedere:'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
+        # Card "Sì, è perfetta" — vai a FINAL
+        st.markdown(
+            f'<div style="background:linear-gradient(135deg,#052E16,#0D4A28);'
+            f'border:2px solid {T["success"]};border-radius:14px;'
+            f'padding:1rem 1rem .8rem;margin-bottom:.8rem;">'
+            f'<div style="font-size:.95rem;font-weight:800;color:{T["success"]};'
+            f'font-family:DM Sans,sans-serif;margin-bottom:.25rem;">✅ Sì, è perfetta</div>'
+            f'<div style="font-size:.73rem;color:#86EFAC;line-height:1.5;">'
+            f'Vai direttamente al download. Potrai generare varianti '
+            f'(Versione B, BES/DSA, Soluzioni) nella schermata finale.'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        if st.button(
+            "✅  Scarica direttamente",
+            key="btn_preview_ok",
+            use_container_width=True,
+            type="primary",
+        ):
+            # Compila il PDF finale dal LaTeX corrente (già post-processato)
+            with st.spinner("⏳ Preparazione PDF finale…"):
+                from latex_utils import compila_pdf as _cp
+                _lat = st.session_state.verifiche["A"].get("latex", "")
+                if _lat and not st.session_state.verifiche["A"].get("pdf"):
+                    _pdf, _ = _cp(_lat)
+                    if _pdf:
+                        st.session_state.verifiche["A"]["pdf"]     = _pdf
+                        st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
+                        st.session_state.verifiche["A"]["preview"] = True
+            st.session_state.stage = STAGE_FINAL
+            st.rerun()
+
+        st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
+
+        # Card "Voglio modificarla" — vai a REVIEW
+        st.markdown(
+            f'<div style="background:{T["card2"]};'
+            f'border:2px solid {T["border"]};border-radius:14px;'
+            f'padding:1rem 1rem .8rem;margin-bottom:.8rem;">'
+            f'<div style="font-size:.95rem;font-weight:800;color:{T["accent"]};'
+            f'font-family:DM Sans,sans-serif;margin-bottom:.25rem;">✏️ Voglio fare modifiche</div>'
+            f'<div style="font-size:.73rem;color:{T["text2"]};line-height:1.5;">'
+            f'Entra nell\'editor esercizi: modifica ogni blocco con l\'AI, '
+            f'ricalibra i punteggi e genera il PDF definitivo.'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        if st.button(
+            "✏️  Entra nell'editor",
+            key="btn_preview_edit",
+            use_container_width=True,
+        ):
+            st.session_state.stage = STAGE_REVIEW
+            st.rerun()
+
+        st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
+
+        # Rigenera da zero
+        st.markdown(
+            f'<div style="text-align:center;margin-top:.4rem;">'
+            f'<span style="font-size:.72rem;color:{T["muted"]};'
+            f'font-family:DM Sans,sans-serif;">'
+            f'Non ti piace la struttura generale?'
+            f'</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        if st.button(
+            "🔄  Riconfigura e rigenera",
+            key="btn_preview_redo",
+            use_container_width=True,
+        ):
+            st.session_state.stage = STAGE_INPUT
+            st.rerun()
+
+        # Suggerimento download PDF bozza
+        if vA_pdf:
+            st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
+            st.download_button(
+                label="⬇️ Scarica bozza PDF",
+                data=vA_pdf,
+                file_name=f"bozza_{arg_str[:30].replace(' ','_')}.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                key="dl_bozza_pv",
+            )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2431,7 +2654,131 @@ def _render_stage_review():
     # ── Pulsante RICONFIGURA — piccolo, discreto, sotto ───────────────────────
     st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
     st.markdown('<div class="btn-riconfigura-small">', unsafe_allow_html=True)
-    if st.button("← Riconfigura", use_container_width=False, key="btn_riconfigura"):
+    if st.button("← Torna all'anteprima", use_container_width=False, key="btn_riconfigura"):
+        st.session_state.stage = STAGE_PREVIEW; st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  STAGE_PREVIEW  (Fase 2.5 — Anteprima Rapida)
+#  Mostra il PDF generato e chiede all'utente se la bozza lo soddisfa.
+#  • "Sì, è perfetta" → STAGE_FINAL (salta l'editor blocchi)
+#  • "Voglio fare modifiche" → STAGE_REVIEW (editor a blocchi)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _render_stage_preview():
+    gp  = st.session_state.gen_params
+    vA  = st.session_state.verifiche["A"]
+
+    mat_str  = gp.get("materia", "")
+    scu_str  = gp.get("difficolta", "")
+    arg_str  = gp.get("argomento", "Verifica")
+    gen_time = st.session_state.get("gen_time_sec")
+
+    # ── Header card ───────────────────────────────────────────────────────────
+    st.markdown(
+        '<div style="background:linear-gradient(135deg,' + T["accent_light"] + ' 0%,' + T["card"] + ' 100%);'
+        'border:2px solid ' + T["accent"] + ';border-radius:16px;overflow:hidden;margin-bottom:1.2rem;">'
+        '<div style="background:linear-gradient(120deg,#7C3AED 0%,#0A84FF 100%);padding:.85rem 1.2rem;">'
+        '<div style="display:flex;align-items:center;gap:12px;">'
+        '<span style="font-size:1.5rem;">🎯</span>'
+        '<div style="flex:1;">'
+        '<div style="font-family:DM Sans,sans-serif;font-size:1rem;font-weight:900;color:#fff;'
+        'text-shadow:0 1px 4px rgba(0,0,0,.25);">'
+        'Anteprima Bozza</div>'
+        '<div style="font-size:.72rem;color:#fff;opacity:.9;margin-top:1px;">'
+        + mat_str + ' · ' + scu_str + ' · ' + arg_str
+        + (f' · generata in {gen_time}s' if gen_time else '') + '</div>'
+        '</div>'
+        '</div></div>'
+        '<div style="padding:.75rem 1.2rem;background:' + T["card"] + ';">'
+        '<div style="font-size:.82rem;color:' + T["text2"] + ';line-height:1.5;">'
+        'La bozza è pronta! Scorri il PDF qui sotto e decidi se procedere direttamente '
+        'al download oppure aprire l\'editor per modificare i singoli esercizi.'
+        '</div></div></div>',
+        unsafe_allow_html=True
+    )
+
+    # ── Bivio decisionale ─────────────────────────────────────────────────────
+    st.markdown(
+        f'<div style="text-align:center;font-size:1rem;font-weight:800;'
+        f'color:{T["text"]};font-family:DM Sans,sans-serif;margin:.8rem 0 .5rem;">'
+        f'La bozza ti soddisfa? 🎯'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+    col_ok, col_mod = st.columns(2, gap="medium")
+    with col_ok:
+        btn_ok = st.button(
+            "✅  Sì, è perfetta — Download",
+            use_container_width=True,
+            type="primary",
+            key="preview_btn_ok",
+            help="Vai direttamente alla schermata di download senza modificare nulla",
+        )
+    with col_mod:
+        btn_mod = st.button(
+            "✏️  Voglio fare modifiche",
+            use_container_width=True,
+            key="preview_btn_mod",
+            help="Apri l'editor blocchi per rigenerare o modificare i singoli esercizi",
+        )
+
+    if btn_ok:
+        st.session_state.stage = STAGE_FINAL
+        st.rerun()
+
+    if btn_mod:
+        st.session_state.stage = STAGE_REVIEW
+        st.rerun()
+
+    st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
+
+    # ── PDF preview (paginated) ───────────────────────────────────────────────
+    imgs = st.session_state.get("preview_images", [])
+
+    if imgs:
+        n_pages = len(imgs)
+        pg = st.session_state.get("preview_page", 0)
+        pg = max(0, min(pg, n_pages - 1))
+
+        if n_pages > 1:
+            _pc1, _pc2, _pc3 = st.columns([1, 4, 1])
+            with _pc1:
+                if st.button("◀", key="prev_pg_preview", disabled=(pg == 0)):
+                    st.session_state.preview_page = pg - 1; st.rerun()
+            with _pc2:
+                st.markdown(
+                    f'<div style="text-align:center;font-size:.78rem;color:{T["muted"]};'
+                    f'font-family:DM Sans,sans-serif;padding-top:.4rem;">'
+                    f'Pagina {pg+1} / {n_pages}</div>',
+                    unsafe_allow_html=True
+                )
+            with _pc3:
+                if st.button("▶", key="next_pg_preview", disabled=(pg == n_pages - 1)):
+                    st.session_state.preview_page = pg + 1; st.rerun()
+
+        st.image(imgs[pg], use_container_width=True)
+
+    elif vA.get("pdf"):
+        # PDF disponibile ma le immagini non sono state generate — mostra download diretto
+        st.info("📄 PDF generato. Usa i pulsanti sopra per procedere.")
+        st.download_button(
+            "⬇ Scarica bozza PDF",
+            data=vA["pdf"],
+            file_name=f"bozza_{arg_str.replace(' ', '_')}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+            key="preview_dl_pdf",
+        )
+    else:
+        st.warning("⚠️ Anteprima PDF non disponibile — la verifica è comunque salvata.")
+
+    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+    # Pulsante riconfigura discreto
+    st.markdown('<div class="btn-riconfigura-small">', unsafe_allow_html=True)
+    if st.button("← Riconfigura da capo", use_container_width=False, key="btn_riconfigura_preview"):
         st.session_state.stage = STAGE_INPUT; st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -2666,10 +3013,15 @@ def _render_stage_final():
     # ── Pulsanti di navigazione ────────────────────────────────────────────────
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 
-    # "Rivedi esercizi" — riga separata, outline accent
+    # "Rivedi esercizi" / "Torna anteprima" — riga separata, outline accent
     st.markdown('<div class="btn-secondary-accent">', unsafe_allow_html=True)
-    if st.button("← Rivedi esercizi", use_container_width=True, key="btn_rev_s3"):
-        st.session_state.stage = STAGE_REVIEW; st.rerun()
+    _nav_c1, _nav_c2 = st.columns(2)
+    with _nav_c1:
+        if st.button("← Torna all'anteprima", use_container_width=True, key="btn_prev_s3"):
+            st.session_state.stage = STAGE_PREVIEW; st.rerun()
+    with _nav_c2:
+        if st.button("✏️ Rivedi esercizi", use_container_width=True, key="btn_rev_s3"):
+            st.session_state.stage = STAGE_REVIEW; st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
@@ -2734,9 +3086,10 @@ if _prev_stage != _current_stage:
     )
 
 _current = _current_stage
-if   _current == STAGE_INPUT:  _render_stage_input()
-elif _current == STAGE_REVIEW: _render_stage_review()
-elif _current == STAGE_FINAL:  _render_stage_final()
+if   _current == STAGE_INPUT:   _render_stage_input()
+elif _current == STAGE_PREVIEW: _render_stage_preview()
+elif _current == STAGE_REVIEW:  _render_stage_review()
+elif _current == STAGE_FINAL:   _render_stage_final()
 
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
@@ -2770,4 +3123,3 @@ components.html(
     "</script>",
     height=30
 )
-
