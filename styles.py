@@ -1329,6 +1329,273 @@ def get_css(T: dict) -> str:
     border-color: transparent {T['accent']} transparent transparent;
   }}
 
+  /* ════ OCR HINT BANNER — banner suggerimento upload con scrittura a mano ════ */
+  .ocr-hint-banner {{
+    background: linear-gradient(135deg, {T['accent']}18 0%, {T['card2']} 100%);
+    border: 1.5px solid {T['accent']}55;
+    border-radius: 14px;
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+  }}
+  .ocr-hint-banner::after {{
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 60px; height: 100%;
+    background: linear-gradient(90deg, transparent, {T['accent']}08);
+    pointer-events: none;
+  }}
+  .ocr-hint-icon {{
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    line-height: 1;
+    margin-top: 2px;
+  }}
+  .ocr-hint-body {{
+    flex: 1;
+    min-width: 0;
+  }}
+  .ocr-hint-title {{
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: {T['accent']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 0.2rem;
+    letter-spacing: 0.01em;
+  }}
+  .ocr-hint-desc {{
+    font-size: 0.73rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.5;
+  }}
+  .ocr-hint-desc strong {{
+    color: {T['text']};
+    font-weight: 700;
+  }}
+  .ocr-hint-tags {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.45rem;
+  }}
+  .ocr-hint-tag {{
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: {T['accent']}22;
+    color: {T['accent']};
+    border: 1px solid {T['accent']}44;
+    border-radius: 100px;
+    padding: 2px 9px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }}
+
+  /* ════ DOC TYPE BADGE — badge tipo documento nella lista file ════ */
+  .doc-type-verifica  {{ background: #0D3D2B !important; color: #34D399 !important; border: 1px solid #34D39944 !important; }}
+  .doc-type-esercizi  {{ background: #1A2D4A !important; color: #60A5FA !important; border: 1px solid #60A5FA44 !important; }}
+  .doc-type-esercizio {{ background: #1A2D4A !important; color: #60A5FA !important; border: 1px solid #60A5FA44 !important; }}
+  .doc-type-appunti   {{ background: #2D1A3A !important; color: #C084FC !important; border: 1px solid #C084FC44 !important; }}
+  .doc-type-libro     {{ background: #2A1F0A !important; color: #FCD34D !important; border: 1px solid #FCD34D44 !important; }}
+  .doc-type-misto     {{ background: #1C1C1E !important; color: #9CA3AF !important; border: 1px solid #4A4A4C44 !important; }}
+  /* Light mode overrides for doc badges */
+  .doc-type-verifica-light  {{ background: #D1FAE5 !important; color: #065F46 !important; border: 1px solid #6EE7B7 !important; }}
+  .doc-type-esercizi-light  {{ background: #DBEAFE !important; color: #1E40AF !important; border: 1px solid #93C5FD !important; }}
+  .doc-type-appunti-light   {{ background: #EDE9FE !important; color: #5B21B6 !important; border: 1px solid #C4B5FD !important; }}
+  .doc-type-libro-light     {{ background: #FEF3C7 !important; color: #92400E !important; border: 1px solid #FDE68A !important; }}
+
+  /* ════ DOC PILL CONFIRMED — pill file confermato con label uso ════ */
+  .doc-pill-confirmed {{
+    background: {T['card']};
+    border: 1px solid {T['border']};
+    border-radius: 10px;
+    padding: 0.5rem 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }}
+  .doc-pill-confirmed:hover {{
+    border-color: {T['border2']};
+    background: {T['bg2']};
+  }}
+  .doc-pill-fname {{
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }}
+  .doc-pill-arg {{
+    font-size: 0.63rem;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    margin-left: auto;
+    flex-shrink: 0;
+  }}
+  .doc-pill-label-uso {{
+    font-size: 0.62rem;
+    font-weight: 600;
+    background: {T['hint_bg']};
+    color: {T['hint_text']};
+    border: 1px solid {T['hint_border']};
+    border-radius: 5px;
+    padding: 2px 8px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }}
+
+  /* ════ CLASSIFICAZIONE BADGE — verifica vs esercizi ════ */
+  .classif-verifica {{
+    display: inline-flex; align-items: center; gap: 5px;
+    background: {T['success']}18;
+    border: 1.5px solid {T['success']}66;
+    border-radius: 8px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: {T['success']};
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.03em;
+  }}
+  .classif-esercizi {{
+    display: inline-flex; align-items: center; gap: 5px;
+    background: {T['accent']}15;
+    border: 1.5px solid {T['accent']}66;
+    border-radius: 8px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: {T['accent']};
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.03em;
+  }}
+
+  /* ════ ESERCIZI RECAP CARDS — card per ogni esercizio rilevato ════ */
+  .es-recap-card {{
+    background: {T['card2']};
+    border: 1px solid {T['border']};
+    border-left: 3px solid {T['accent']};
+    border-radius: 0 10px 10px 0;
+    padding: 0.55rem 0.85rem;
+    margin-bottom: 0.45rem;
+  }}
+  .es-recap-card:hover {{
+    border-left-color: {T['accent']};
+    box-shadow: 0 2px 10px {T['accent']}15;
+  }}
+  .es-recap-header {{
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.3rem;
+  }}
+  .es-recap-num {{
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: {T['accent']};
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .es-recap-tipo {{
+    font-size: 0.63rem;
+    background: {T['accent_light']};
+    color: {T['accent']};
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-weight: 700;
+  }}
+  .es-recap-source {{
+    font-size: 0.62rem;
+    color: {T['muted']};
+    margin-left: auto;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .es-recap-testo {{
+    font-size: 0.75rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
+    line-height: 1.45;
+    margin-top: 0.1rem;
+  }}
+
+  /* ════ DELETE BAR — barra di gestione/eliminazione in fondo alla lista ════ */
+  .delete-bar {{
+    background: {T['bg2']};
+    border: 1px solid {T['border']};
+    border-radius: 10px;
+    padding: 0.5rem 0.8rem;
+    margin-top: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }}
+  .delete-bar-label {{
+    font-size: 0.72rem;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.03em;
+  }}
+
+  /* ════ SEZIONE TITOLI UPLOAD con accento ════ */
+  .upload-section-header {{
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+  }}
+  .upload-section-dot {{
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: {T['accent']};
+    box-shadow: 0 0 6px {T['accent']}88;
+    flex-shrink: 0;
+  }}
+  .upload-section-title {{
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.01em;
+  }}
+  .upload-section-sub {{
+    font-size: 0.7rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    margin-left: auto;
+    flex-shrink: 0;
+  }}
+
+  /* ════ OPZIONE MENU DROPDOWN — stile migliorato ════ */
+  .opzione-menu-row {{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0;
+  }}
+  .opzione-menu-icon {{
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    width: 20px;
+    text-align: center;
+  }}
+  .opzione-menu-label {{
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+  }}
+
   /* ════ OVERFLOW — impedisce scroll orizzontale su mobile/tablet ════ */
   html, body {{
     overflow-x: hidden !important;
