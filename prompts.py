@@ -312,12 +312,16 @@ def prompt_analisi_documento(
         f"nessun testo prima/dopo, nessun markdown, nessun ```json.\n\n"
         f"SCHEMA OBBLIGATORIO (usa null per i campi non determinabili):\n"
         f"{{\n"
-        f'  "pertinente": <true se il documento è scolastico/educativo (verifiche, appunti, libri, esercizi, dispense, schemi, mappe concettuali); false se è completamente estraneo alla scuola (es. ricevute, foto personali, documenti aziendali, menu, ecc.)>,\n'
-        f'  "messaggio_rifiuto": "<SOLO se pertinente=false: messaggio gentile e specifico che spiega perché il file non è riconosciuto come materiale scolastico. Altrimenti null>",\n'
-        f'  "messaggio_proattivo": "<SOLO se pertinente=true: messaggio breve e amichevole in italiano che descrive cosa hai trovato nel documento, '
-        f'es. \'Ho visto che hai caricato una verifica di Matematica sulle equazioni di secondo grado 📐. '
-        f'Come vuoi che usi questo materiale?\'. Max 2 frasi, tono da assistente scolastico.>",\n'
-        f'  "tipo_documento": "<una di: verifica, appunti, libro, esercizi_sciolti, misto, altro>",\n'
+        f'  "pertinente": <true se il documento è scolastico/educativo; false se completamente estraneo (ricevute, foto personali, menu, documenti aziendali, ecc.)>,\n'
+        f'  "messaggio_rifiuto": "<SOLO se pertinente=false: messaggio gentile specifico. Altrimenti null>",\n'
+        f'  "messaggio_proattivo": "<SOLO se pertinente=true: messaggio breve in italiano che descrive cosa hai trovato, max 2 frasi, tono da assistente scolastico. NON usare emoji nel messaggio.>",\n'
+        f'  "tipo_documento": "<UNA di queste 6 opzioni ESATTE — scegli con attenzione:\n'
+        f'    - esercizio_singolo: UNO o DUE esercizi isolati (foto di un problema, un singolo esercizio ritagliato o fotografato, max 2 esercizi senza struttura da verifica)\n'
+        f'    - esercizi_sciolti: raccolta di 3 o più esercizi NON organizzati come verifica formale (no intestazione, no punteggi totali, no struttura da compito)\n'
+        f'    - verifica: documento formale con struttura da compito scolastico (intestazione con nome/data/classe, titolo, punteggi assegnati agli esercizi, più sezioni numerate)\n'
+        f'    - appunti: appunti scritti a mano o digitati, schemi, mappe, riassunti, dispense\n'
+        f'    - libro: pagine di libro, capitoli, paragrafi con teoria ed esercizi misti\n'
+        f'    - misto: documento che combina più tipologie impossibili da classificare nelle precedenti>",\n'
         f'  "materia": "<una di: {materie_str}, oppure null>",\n'
         f'  "scuola": "<una di: Scuola Media, Liceo Scientifico, Liceo Classico, '
         f'Liceo Linguistico, Istituto Tecnico, Istituto Professionale, Università, oppure null>",\n'
@@ -338,22 +342,22 @@ def prompt_analisi_documento(
         f'      "ha_dati_numerici": <true se ha numeri specifici riutilizzabili>\n'
         f'    }}\n'
         f'  ],\n'
-        f'  "modalita_uso_consigliata": "<una di: '
-        f'stile_e_struttura (copia la forma non il contenuto), '
-        f'base_conoscenza (usa il contenuto come fonte per generare domande), '
-        f'copia_fedele (riproduce fedelmente), '
-        f'difficolta_e_livello (usa solo il livello percepito)>",\n'
+        f'  "modalita_uso_consigliata": "<una di: base_conoscenza | stile_e_struttura | copia_fedele | includi_esercizio>",\n'
         f'  "motivazione_uso": "<1 frase che spiega il perché della modalità>",\n'
         f'  "confidence": <float 0.0-1.0>\n'
         f"}}\n\n"
-        f"REGOLE CRITICHE:\n"
-        f"- Valuta 'pertinente' con buon senso: una foto di un quaderno scolastico è pertinente, "
-        f"una foto del menu di un ristorante non lo è.\n"
+        f"REGOLE CRITICHE PER tipo_documento — LEGGI CON ATTENZIONE:\n"
+        f"- Se vedi UNO o DUE esercizi (anche con sottopunti) senza intestazione formale → esercizio_singolo\n"
+        f"- Se vedi una raccolta di esercizi numerati (3+) senza struttura da compito → esercizi_sciolti\n"
+        f"- Se vedi un documento con intestazione (Nome:___ Data:___), titolo e più sezioni numerate → verifica\n"
+        f"- Se vedi testo scritto a mano o digitato come riassunto/schema → appunti\n"
+        f"- Il tipo sbagliato INVALIDA tutta l'analisi: scegli con la massima precisione.\n"
+        f"REGOLE per modalita_uso_consigliata:\n"
+        f"- appunti, libro → base_conoscenza\n"
+        f"- verifica → stile_e_struttura\n"
+        f"- esercizi_sciolti → stile_e_struttura\n"
+        f"- esercizio_singolo → includi_esercizio\n"
         f"- 'contenuto_argomento' e 'stile_desc' NON si sovrappongono mai.\n"
-        f"- 'contenuto_argomento' = di cosa parla (es. 'equazioni di 2° grado').\n"
-        f"- 'stile_desc' = come è strutturato (es. '3 esercizi, 4 sottopunti, punteggi presenti').\n"
-        f"- Se tipo_documento è 'appunti' o 'libro': modalita_uso_consigliata = 'base_conoscenza'.\n"
-        f"- Se tipo_documento è 'verifica': modalita_uso_consigliata default = 'stile_e_struttura'.\n"
         f"- 'esercizi_trovati' può essere [] se non ci sono esercizi numerati.\n"
         f"- NON inventare. SOLO JSON."
     )
