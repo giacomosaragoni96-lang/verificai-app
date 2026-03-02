@@ -1114,30 +1114,25 @@ def _consolida_info():
 
 def _render_bivio():
     """
-    Home page stile Tally: logo + titolo centrato, headline grande,
-    un solo CTA "Genera Verifica →". Nessuna scelta di percorso.
+    Home page: logo + titolo MOLTO GRANDE centrato, un solo CTA.
     """
 
-    # ── Logo + brand centrato ─────────────────────────────────────────────────
-    st.markdown(
-        f'<div class="landing-logo-wrap">'
-        f'  <div class="landing-logo-icon">{APP_ICON}</div>'
-        f'  <div class="landing-logo-name">Verific<span class="landing-logo-ai">AI</span></div>'
-        f'  <span class="landing-logo-beta">Beta</span>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
-
-    # ── Hero headline ─────────────────────────────────────────────────────────
+    # ── Logo + headline unificati, tutto centrato ─────────────────────────────
     st.markdown(
         f'''
-        <div class="tally-hero">
-          <h2 class="tally-headline">
-            Crea verifiche<br>
-            <span class="tally-headline-accent">professionali in secondi</span>
+        <div class="landing-hero-unified">
+          <div class="landing-logo-row">
+            <span class="landing-logo-icon-xl">{APP_ICON}</span>
+            <span class="landing-logo-name-xl">Verific<span class="landing-logo-ai-xl">AI</span></span>
+            <span class="landing-logo-beta-xl">Beta</span>
+          </div>
+          <h2 class="landing-headline-xl">
+            Crea verifiche professionali<br>
+            <span class="landing-headline-accent-xl">in pochi secondi</span>
           </h2>
-          <p class="tally-sub">
-            Scegli materia, livello e argomento —<br>l'AI costruisce la verifica, tu la revisioni e scarichi.
+          <p class="landing-sub-xl">
+            Scegli materia, livello e argomento.<br>
+            L'AI costruisce la verifica, tu la revisioni e scarichi.
           </p>
         </div>
         ''',
@@ -1145,7 +1140,6 @@ def _render_bivio():
     )
 
     # ── CTA unico — centrato ─────────────────────────────────────────────────
-    st.markdown('<div class="tally-cta-wrap">', unsafe_allow_html=True)
     _c1, _c2, _c3 = st.columns([1.4, 2, 1.4])
     with _c2:
         if st.button(
@@ -1156,7 +1150,6 @@ def _render_bivio():
         ):
             st.session_state.input_percorso = "B"
             st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
     # ── Feature chips ─────────────────────────────────────────────────────────
     st.markdown(
@@ -1175,7 +1168,6 @@ def _render_bivio():
         ''',
         unsafe_allow_html=True,
     )
-
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  _render_facsimile_dedicato()  ← NUOVA funzione, aggiungere prima di _render_stage_input
@@ -2314,6 +2306,17 @@ def _render_percorso_b_form():
         # ── CTA: Genera Bozza ─────────────────────────────────────────────────
         _manca_arg = not argomento
         st.markdown("<div style='height:.9rem'></div>", unsafe_allow_html=True)
+
+        # Hint SOPRA il pulsante
+        if not _manca_arg and not _limite:
+            st.markdown(
+                f'<div class="cta-hint-above">'
+                f'<span>✏️</span>'
+                f'<span>Potrai modificare ogni singolo esercizio dopo la generazione</span>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
         st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
         genera_btn = st.button(
             "🚀  Genera Bozza",
@@ -2324,19 +2327,14 @@ def _render_percorso_b_form():
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
+        # Placeholder progress bar — apparirà subito sotto il pulsante
+        _prog_placeholder = st.empty()
+
         if _manca_arg and not _limite:
             st.markdown(
                 f'<div style="text-align:center;font-size:.82rem;color:{T["warn"]};'
                 f'font-family:DM Sans,sans-serif;margin-top:.3rem;">'
                 f'Inserisci l\'argomento per continuare.</div>',
-                unsafe_allow_html=True,
-            )
-        elif not _manca_arg and not _limite:
-            st.markdown(
-                f'<div class="cta-hint-below">'
-                f'<span>✏️</span>'
-                f'<span>Potrai modificare ogni singolo esercizio dopo la generazione</span>'
-                f'</div>',
                 unsafe_allow_html=True,
             )
         if _limite:
@@ -2347,13 +2345,13 @@ def _render_percorso_b_form():
                 unsafe_allow_html=True,
             )
 
-        # ── Back link discreto ────────────────────────────────────────────────
-        st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-        st.markdown('<div class="btn-back-discrete">', unsafe_allow_html=True)
-        if st.button("← Cambia percorso", key="btn_back_b", use_container_width=True):
+    # ── Back link — piccolo e in fondo ────────────────────────────────────────
+    st.markdown("<div style='height:2.5rem'></div>", unsafe_allow_html=True)
+    _bk1, _bk2, _bk3 = st.columns([2, 1, 2])
+    with _bk2:
+        if st.button("← Indietro", key="btn_back_b", use_container_width=True):
             st.session_state.input_percorso = None
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
     # ═════════════════════════════════════════════════════════════════════════
     #  COLONNA DESTRA — MATERIALE & UPLOAD
@@ -2617,6 +2615,7 @@ def _render_percorso_b_form():
         num_esercizi,
         note_extra_finale,
         genera_btn,
+        _prog_placeholder,
     )
 
 
@@ -2656,6 +2655,7 @@ def _lancia_generazione(
     imgs_es: list,
     file_ispirazione=None,
     mathpix_context: str | None = None,
+    prog_placeholder=None,          # st.empty() creato nel form, vicino al pulsante
 ):
     """
     Funzione condivisa dai due percorsi: lancia genera_verifica,
@@ -2665,7 +2665,8 @@ def _lancia_generazione(
     _t_start = time.time()
     _n_steps = 4
     _step    = [0]
-    _prog    = st.empty()
+    # Usa il placeholder passato (vicino al pulsante) oppure crea uno nuovo
+    _prog    = prog_placeholder if prog_placeholder is not None else st.empty()
 
     def _avanza(testo):
         _step[0] += 1
@@ -3067,6 +3068,7 @@ def _render_stage_input():
             argomento, materia_scelta, difficolta,
             mostra_punteggi, con_griglia, punti_totali,
             num_esercizi_totali, note_extra, genera_btn,
+            _prog_ph_b,
         ) = _render_percorso_b_form()
 
         if not genera_btn or _limite:
@@ -3153,6 +3155,7 @@ def _render_stage_input():
             imgs_es=imgs_es_finale,
             file_ispirazione=None,
             mathpix_context=None,
+            prog_placeholder=_prog_ph_b,
         )
         return
 
