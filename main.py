@@ -537,8 +537,6 @@ if "qa_file_hash"         not in st.session_state: st.session_state.qa_file_hash
 # Preferenze docente (caricate da Supabase)
 if "_docente_prefs"       not in st.session_state: st.session_state._docente_prefs = {}
 if "_facsimile_mode"      not in st.session_state: st.session_state["_facsimile_mode"] = False
-if "_fac_uploaded_doc"   not in st.session_state: st.session_state["_fac_uploaded_doc"] = None
-if "_fac_genera_now"     not in st.session_state: st.session_state["_fac_genera_now"] = False
 # Wizard state (Percorso A)
 if "wizard_step"           not in st.session_state: st.session_state["wizard_step"] = "upload"
 if "wizard_intent_pending" not in st.session_state: st.session_state["wizard_intent_pending"] = None
@@ -952,12 +950,11 @@ def _consolida_info():
 
 def _render_bivio():
     """
-    Landing page: 3 card colorate con pulsante CTA INTERNO + card facsimile viola.
-    Tecnica: st.container() per ogni card → CSS trasforma il container in card,
-    il button è dentro il container → appare visivamente dentro il bordo.
+    Landing page: 3 card colorate uguali per dimensione (blu/verde/arancio)
+    + card facsimile one-click in stile 'Genera Fila B'.
     """
     st.markdown(
-        f'<div style="text-align:center;padding:.8rem 0 1.4rem;">'
+        f'<div style="text-align:center;padding:.8rem 0 1.2rem;">'
         f'<div style="font-size:1.1rem;font-weight:900;color:{T["text"]};'
         f'font-family:DM Sans,sans-serif;letter-spacing:-.02em;margin-bottom:.3rem;">'
         f'Come vuoi creare la verifica?'
@@ -969,532 +966,279 @@ def _render_bivio():
         unsafe_allow_html=True
     )
 
-    # ── CSS: stile container Streamlit come card colorate ────────────────────
-    st.markdown(f"""
-    <style>
-    /* ── Colora i border-container di Streamlit per colonna ── */
+    # CSS card colorate + pulsanti colorati per key specifica
+    st.markdown(
+        f"""
+        <style>
+        .mcard {{
+            border-radius:20px;
+            padding:1.8rem 1.5rem 1.4rem;
+            min-height:270px;
+            display:flex;flex-direction:column;gap:.6rem;
+            position:relative;
+            transition:transform .18s ease, box-shadow .18s ease;
+        }}
+        .mcard:hover {{ transform:translateY(-4px); }}
 
-    /* Colonna 1 → BLU */
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1)
-      [data-testid="stVerticalBlockBorderWrapper"] {{
-        border: 2px solid #3B82F6 !important;
-        border-radius: 18px !important;
-        background: linear-gradient(150deg, #1D4ED80d 0%, {T["card"]} 70%) !important;
-        box-shadow: 0 4px 18px #3B82F618 !important;
-        transition: box-shadow .2s, transform .2s !important;
-        padding: 1.1rem 1.1rem .8rem !important;
-    }}
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1)
-      [data-testid="stVerticalBlockBorderWrapper"]:hover {{
-        box-shadow: 0 10px 32px #3B82F638 !important;
-        transform: translateY(-3px) !important;
-    }}
-    /* Bottone BLU */
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1)
-      [data-testid="stVerticalBlockBorderWrapper"] button[kind="primary"] {{
-        background: linear-gradient(135deg, #3B82F6, #2563EB) !important;
-        color: #fff !important; border: none !important;
-        border-radius: 10px !important; font-weight: 700 !important;
-        font-size: .82rem !important;
-        box-shadow: 0 3px 10px #3B82F640 !important;
-    }}
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1)
-      [data-testid="stVerticalBlockBorderWrapper"] button[kind="primary"]:hover {{
-        background: linear-gradient(135deg, #60A5FA, #3B82F6) !important;
-        box-shadow: 0 5px 16px #3B82F660 !important;
-    }}
+        /* BLU */
+        .mcard-blu {{
+            background:linear-gradient(150deg,#1D4ED812 0%,{T["card"]} 68%);
+            border:2px solid #3B82F6;
+            box-shadow:0 4px 18px #3B82F622;
+        }}
+        .mcard-blu:hover {{ box-shadow:0 12px 36px #3B82F644; }}
 
-    /* Colonna 2 → VERDE */
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2)
-      [data-testid="stVerticalBlockBorderWrapper"] {{
-        border: 2px solid #10B981 !important;
-        border-radius: 18px !important;
-        background: linear-gradient(150deg, #05966910 0%, {T["card"]} 70%) !important;
-        box-shadow: 0 4px 18px #10B98118 !important;
-        transition: box-shadow .2s, transform .2s !important;
-        padding: 1.1rem 1.1rem .8rem !important;
-    }}
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2)
-      [data-testid="stVerticalBlockBorderWrapper"]:hover {{
-        box-shadow: 0 10px 32px #10B98138 !important;
-        transform: translateY(-3px) !important;
-    }}
-    /* Bottone VERDE */
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2)
-      [data-testid="stVerticalBlockBorderWrapper"] button[kind="primary"] {{
-        background: linear-gradient(135deg, #10B981, #059669) !important;
-        color: #fff !important; border: none !important;
-        border-radius: 10px !important; font-weight: 700 !important;
-        font-size: .82rem !important;
-        box-shadow: 0 3px 10px #10B98140 !important;
-    }}
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2)
-      [data-testid="stVerticalBlockBorderWrapper"] button[kind="primary"]:hover {{
-        background: linear-gradient(135deg, #34D399, #10B981) !important;
-        box-shadow: 0 5px 16px #10B98160 !important;
-    }}
+        /* VERDE */
+        .mcard-verde {{
+            background:linear-gradient(150deg,#05966912 0%,{T["card"]} 68%);
+            border:2px solid #10B981;
+            box-shadow:0 4px 18px #10B98122;
+        }}
+        .mcard-verde:hover {{ box-shadow:0 12px 36px #10B98144; }}
 
-    /* Colonna 3 → ARANCIO */
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3)
-      [data-testid="stVerticalBlockBorderWrapper"] {{
-        border: 2px solid #F59E0B !important;
-        border-radius: 18px !important;
-        background: linear-gradient(150deg, #D9770610 0%, {T["card"]} 70%) !important;
-        box-shadow: 0 4px 18px #F59E0B18 !important;
-        transition: box-shadow .2s, transform .2s !important;
-        padding: 1.1rem 1.1rem .8rem !important;
-    }}
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3)
-      [data-testid="stVerticalBlockBorderWrapper"]:hover {{
-        box-shadow: 0 10px 32px #F59E0B38 !important;
-        transform: translateY(-3px) !important;
-    }}
-    /* Bottone ARANCIO */
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3)
-      [data-testid="stVerticalBlockBorderWrapper"] button[kind="primary"] {{
-        background: linear-gradient(135deg, #F59E0B, #D97706) !important;
-        color: #fff !important; border: none !important;
-        border-radius: 10px !important; font-weight: 700 !important;
-        font-size: .82rem !important;
-        box-shadow: 0 3px 10px #F59E0B40 !important;
-    }}
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3)
-      [data-testid="stVerticalBlockBorderWrapper"] button[kind="primary"]:hover {{
-        background: linear-gradient(135deg, #FCD34D, #F59E0B) !important;
-        box-shadow: 0 5px 16px #F59E0B60 !important;
-    }}
+        /* ARANCIO */
+        .mcard-arancio {{
+            background:linear-gradient(150deg,#D9770612 0%,{T["card"]} 68%);
+            border:2px solid #F59E0B;
+            box-shadow:0 4px 18px #F59E0B22;
+        }}
+        .mcard-arancio:hover {{ box-shadow:0 12px 36px #F59E0B44; }}
 
-    /* Facsimile viola (colonna centrale della riga a 3 col [1,6,1]) */
-    div[data-testid="stHorizontalBlock"]:has(#btn_facsimile_home)
-      [data-testid="stVerticalBlockBorderWrapper"] {{
-        border: 2px solid #7C3AED !important;
-        border-radius: 18px !important;
-        background: linear-gradient(135deg, #7C3AED0d 0%, {T["card"]} 70%) !important;
-        box-shadow: 0 4px 20px #7C3AED18 !important;
-        transition: box-shadow .2s, transform .2s !important;
-        padding: 1.1rem 1.4rem .9rem !important;
-    }}
-    div[data-testid="stHorizontalBlock"]:has(#btn_facsimile_home)
-      [data-testid="stVerticalBlockBorderWrapper"]:hover {{
-        box-shadow: 0 8px 30px #7C3AED38 !important;
-    }}
-    div[data-testid="stHorizontalBlock"]:has(#btn_facsimile_home) button[kind="primary"] {{
-        background: linear-gradient(135deg, #7C3AED, #6D28D9) !important;
-        color: #fff !important; border: none !important;
-        border-radius: 10px !important; font-weight: 700 !important;
-        font-size: .88rem !important;
-        box-shadow: 0 3px 12px #7C3AED40 !important;
-    }}
-    div[data-testid="stHorizontalBlock"]:has(#btn_facsimile_home) button[kind="primary"]:hover {{
-        background: linear-gradient(135deg, #A78BFA, #7C3AED) !important;
-        box-shadow: 0 5px 20px #7C3AED60 !important;
-    }}
+        .mcard-badge {{
+            position:absolute;top:-.8rem;left:1.1rem;
+            color:#fff;font-size:.6rem;font-weight:800;
+            padding:3px 10px;border-radius:100px;
+            font-family:DM Sans,sans-serif;letter-spacing:.05em;
+        }}
+        .mcard-icon {{ font-size:2.5rem;line-height:1;margin-bottom:.1rem; }}
+        .mcard-title {{
+            font-size:1.05rem;font-weight:900;
+            font-family:DM Sans,sans-serif;line-height:1.2;
+        }}
+        .mcard-desc {{
+            font-size:.8rem;color:{T["text2"]};
+            font-family:DM Sans,sans-serif;line-height:1.65;flex:1;
+        }}
+        .mcard-hint {{
+            font-size:.71rem;color:{T["muted"]};
+            font-family:DM Sans,sans-serif;
+            padding:.35rem .55rem;background:{T["card2"]};
+            border-radius:7px;
+        }}
+        .mcard-chips {{ display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.1rem; }}
+        .mcard-chip {{
+            font-size:.63rem;background:{T["card2"]};
+            border-radius:6px;padding:2px 8px;color:{T["text2"]};
+        }}
 
-    /* Chip stile */
-    .mcard-chip {{
-        font-size: .63rem; background: {T["card2"]};
-        border-radius: 6px; padding: 2px 8px; color: {T["text2"]};
-        display: inline-block; margin: 2px 2px 0 0;
-    }}
-    .mcard-hint {{
-        font-size: .71rem; color: {T["muted"]};
-        font-family: DM Sans, sans-serif;
-        padding: .3rem .5rem; background: {T["card2"]};
-        border-radius: 6px;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
+        /* ── Pulsanti card — selettori posizionali per colonna (funziona in Streamlit) ── */
+
+        /* Colonna 1 (BLU) — Creazione guidata */
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(1) button {{
+            background: linear-gradient(135deg, #3B82F6, #2563EB) !important;
+            color: #fff !important; border: none !important;
+            border-radius: 12px !important; font-weight: 700 !important;
+            font-size: .88rem !important;
+            box-shadow: 0 4px 16px #3B82F644 !important;
+            transition: background .2s, box-shadow .2s !important;
+        }}
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(1) button:hover {{
+            background: linear-gradient(135deg, #60A5FA, #3B82F6) !important;
+            box-shadow: 0 6px 24px #3B82F666 !important;
+        }}
+
+        /* Colonna 2 (VERDE) — Descrizione libera */
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(2) button {{
+            background: linear-gradient(135deg, #10B981, #059669) !important;
+            color: #fff !important; border: none !important;
+            border-radius: 12px !important; font-weight: 700 !important;
+            font-size: .88rem !important;
+            box-shadow: 0 4px 16px #10B98144 !important;
+            transition: background .2s, box-shadow .2s !important;
+        }}
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(2) button:hover {{
+            background: linear-gradient(135deg, #34D399, #10B981) !important;
+            box-shadow: 0 6px 24px #10B98166 !important;
+        }}
+
+        /* Colonna 3 (ARANCIO) — Genera da file */
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(3) button {{
+            background: linear-gradient(135deg, #F59E0B, #D97706) !important;
+            color: #fff !important; border: none !important;
+            border-radius: 12px !important; font-weight: 700 !important;
+            font-size: .88rem !important;
+            box-shadow: 0 4px 16px #F59E0B44 !important;
+            transition: background .2s, box-shadow .2s !important;
+        }}
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(3) button:hover {{
+            background: linear-gradient(135deg, #FCD34D, #F59E0B) !important;
+            box-shadow: 0 6px 24px #F59E0B66 !important;
+        }}
+
+        /* VIOLA — Facsimile (btn_facsimile_home, colonna centrale) */
+        .mbtn-viola button,
+        .mbtn-viola button:focus {{
+            background: linear-gradient(135deg, #7C3AED, #6D28D9) !important;
+            color: #fff !important; border: none !important;
+            border-radius: 12px !important; font-weight: 700 !important;
+            font-size: .92rem !important;
+            box-shadow: 0 4px 20px #7C3AED44 !important;
+            transition: background .2s, box-shadow .2s !important;
+        }}
+        .mbtn-viola button:hover {{
+            background: linear-gradient(135deg, #A78BFA, #7C3AED) !important;
+            box-shadow: 0 6px 28px #7C3AED66 !important;
+        }}
+
+        /* Card Facsimile viola */
+        .fac-card {{
+            background: linear-gradient(135deg, #7C3AED14 0%, {T["card"]} 70%);
+            border: 2px solid #7C3AED;
+            border-radius: 18px;
+            padding: 1.1rem 1.4rem 1rem;
+            display: flex; align-items: center; gap: 1.2rem;
+            box-shadow: 0 4px 20px #7C3AED22;
+            transition: box-shadow .18s ease;
+        }}
+        .fac-card:hover {{ box-shadow: 0 8px 32px #7C3AED44; }}
+        .fac-badge {{
+            display: inline-flex; align-items: center; gap: .3rem;
+            background: #7C3AED; color: #fff;
+            font-size: .62rem; font-weight: 800;
+            padding: 3px 10px; border-radius: 100px;
+            font-family: DM Sans, sans-serif; letter-spacing: .05em;
+            white-space: nowrap; margin-bottom: .4rem;
+        }}
+        .fac-title {{
+            font-size: .95rem; font-weight: 900;
+            color: #7C3AED; font-family: DM Sans, sans-serif;
+            margin-bottom: .2rem;
+        }}
+        .fac-desc {{
+            font-size: .77rem; color: {T["text2"]};
+            font-family: DM Sans, sans-serif; line-height: 1.55;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
     col_a, col_b, col_c = st.columns(3, gap="medium")
 
     # ── Card A: Creazione Guidata — BLU ──────────────────────────────────────
     with col_a:
-        with st.container(border=True):
-            st.markdown(
-                f'<div style="padding:.2rem 0 .5rem;">'
-                f'<span style="background:#3B82F6;color:#fff;font-size:.58rem;font-weight:800;'
-                f'padding:2px 9px;border-radius:100px;font-family:DM Sans,sans-serif;'
-                f'letter-spacing:.05em;">✦ Più usato</span>'
-                f'<div style="font-size:2rem;line-height:1;margin:.6rem 0 .3rem;">✍️</div>'
-                f'<div style="font-size:.98rem;font-weight:900;color:#3B82F6;'
-                f'font-family:DM Sans,sans-serif;line-height:1.2;margin-bottom:.4rem;">Creazione guidata</div>'
-                f'<div style="font-size:.77rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
-                f'line-height:1.6;margin-bottom:.5rem;">'
-                f'Scegli materia, classe e argomento. '
-                f'L\'AI costruisce la verifica rispettando il tuo livello scolastico e il numero di esercizi.'
-                f'</div>'
-                f'<div class="mcard-hint" style="margin-bottom:.5rem;">Compila i campi e premi Genera — è semplice.</div>'
-                f'<div style="margin-bottom:.8rem;">'
-                f'<span class="mcard-chip">⚙️ Struttura custom</span>'
-                f'<span class="mcard-chip">🎯 Controllo totale</span>'
-                f'</div>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-            if st.button("Scegli questo percorso →", key="btn_percorso_b",
-                         use_container_width=True, type="primary"):
-                st.session_state.input_percorso = "B"
-                st.rerun()
+        st.markdown(
+            f'<div class="mcard mcard-blu">'
+            f'<div class="mcard-badge" style="background:#3B82F6;">✦ Più usato</div>'
+            f'<div class="mcard-icon">✍️</div>'
+            f'<div class="mcard-title" style="color:#3B82F6;">Creazione guidata</div>'
+            f'<div class="mcard-desc">'
+            f'Scegli materia, classe e argomento. '
+            f'L\'AI costruisce la verifica rispettando il tuo livello scolastico '
+            f'e il numero di esercizi che vuoi.'
+            f'</div>'
+            f'<div class="mcard-hint">Compila i campi e premi Genera — è semplice.</div>'
+            f'<div class="mcard-chips">'
+            f'<span class="mcard-chip">⚙️ Struttura custom</span>'
+            f'<span class="mcard-chip">🎯 Controllo totale</span>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        st.markdown('<div class="mbtn-blu">', unsafe_allow_html=True)
+        if st.button("Scegli questo percorso →", key="btn_percorso_b",
+                     use_container_width=True, type="primary"):
+            st.session_state.input_percorso = "B"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # ── Card B: Descrizione Libera — VERDE ───────────────────────────────────
     with col_b:
-        with st.container(border=True):
-            st.markdown(
-                f'<div style="padding:.2rem 0 .5rem;">'
-                f'<div style="font-size:2rem;line-height:1;margin:.6rem 0 .3rem;">💬</div>'
-                f'<div style="font-size:.98rem;font-weight:900;color:#10B981;'
-                f'font-family:DM Sans,sans-serif;line-height:1.2;margin-bottom:.4rem;">Descrizione libera</div>'
-                f'<div style="font-size:.77rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
-                f'line-height:1.6;margin-bottom:.5rem;">'
-                f'Scrivi con parole tue cosa vuoi: "Verifica su equazioni di secondo grado con 3 problemi". '
-                f'L\'AI interpreta e genera.'
-                f'</div>'
-                f'<div class="mcard-hint" style="margin-bottom:.5rem;">Ideale se hai già in mente la struttura ma non vuoi compilare campi.</div>'
-                f'<div style="margin-bottom:.8rem;">'
-                f'<span class="mcard-chip">🗣️ Linguaggio naturale</span>'
-                f'<span class="mcard-chip">⚡ Rapido</span>'
-                f'</div>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-            if st.button("Scegli questo percorso →", key="btn_percorso_libera",
-                         use_container_width=True, type="primary"):
-                st.session_state.input_percorso = "LIBERA"
-                st.rerun()
+        st.markdown(
+            f'<div class="mcard mcard-verde">'
+            f'<div class="mcard-icon">💬</div>'
+            f'<div class="mcard-title" style="color:#10B981;">Descrizione libera</div>'
+            f'<div class="mcard-desc">'
+            f'Scrivi con parole tue cosa vuoi: "Verifica su equazioni di secondo grado '
+            f'con 3 problemi". L\'AI interpreta e genera.'
+            f'</div>'
+            f'<div class="mcard-hint">Ideale se hai già in mente la struttura ma non vuoi compilare campi.</div>'
+            f'<div class="mcard-chips">'
+            f'<span class="mcard-chip">🗣️ Linguaggio naturale</span>'
+            f'<span class="mcard-chip">⚡ Rapido</span>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        st.markdown('<div class="mbtn-verde">', unsafe_allow_html=True)
+        if st.button("Scegli questo percorso →", key="btn_percorso_libera",
+                     use_container_width=True, type="primary"):
+            st.session_state.input_percorso = "LIBERA"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # ── Card C: Genera da File — ARANCIONE ───────────────────────────────────
     with col_c:
-        with st.container(border=True):
-            st.markdown(
-                f'<div style="padding:.2rem 0 .5rem;">'
-                f'<div style="font-size:2rem;line-height:1;margin:.6rem 0 .3rem;">📂</div>'
-                f'<div style="font-size:.98rem;font-weight:900;color:#F59E0B;'
-                f'font-family:DM Sans,sans-serif;line-height:1.2;margin-bottom:.4rem;">Genera da file</div>'
-                f'<div style="font-size:.77rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
-                f'line-height:1.6;margin-bottom:.5rem;">'
-                f'Carica una verifica precedente, appunti o foto della lavagna. '
-                f'L\'AI legge il materiale e genera una verifica coerente.'
-                f'</div>'
-                f'<div class="mcard-hint" style="margin-bottom:.5rem;">Il file viene usato solo per generare la verifica.</div>'
-                f'<div style="margin-bottom:.8rem;">'
-                f'<span class="mcard-chip">📝 Verifiche</span>'
-                f'<span class="mcard-chip">📒 Appunti</span>'
-                f'<span class="mcard-chip">📷 Foto</span>'
-                f'</div>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-            if st.button("Scegli questo percorso →", key="btn_percorso_a",
-                         use_container_width=True, type="primary"):
-                st.session_state.input_percorso = "A"
-                st.session_state["_analisi_rifiuto"] = None
-                st.rerun()
-
-    # ── Facsimile Istantaneo — card viola, flusso dedicato ───────────────────
-    st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
-    _fc1, _fc2, _fc3 = st.columns([1, 6, 1])
-    with _fc2:
-        with st.container(border=True):
-            st.markdown(
-                f'<div style="display:flex;align-items:flex-start;gap:1rem;padding:.3rem 0 .6rem;">'
-                f'  <div style="font-size:1.8rem;flex-shrink:0;margin-top:.1rem;">⚡</div>'
-                f'  <div style="flex:1;">'
-                f'    <div style="display:inline-flex;align-items:center;gap:.3rem;'
-                f'    background:#7C3AED;color:#fff;font-size:.6rem;font-weight:800;'
-                f'    padding:2px 9px;border-radius:100px;font-family:DM Sans,sans-serif;'
-                f'    letter-spacing:.05em;margin-bottom:.35rem;">⚡ ISTANTANEO</div>'
-                f'    <div style="font-size:.93rem;font-weight:900;color:#7C3AED;'
-                f'    font-family:DM Sans,sans-serif;margin-bottom:.2rem;">'
-                f'    Crea Facsimile da verifica esistente</div>'
-                f'    <div style="font-size:.76rem;color:{T["text2"]};font-family:DM Sans,sans-serif;line-height:1.55;">'
-                f'    Carica la tua verifica → l\'AI genera subito una variante con dati diversi. '
-                f'    Stessa struttura, stessi punteggi. <strong>Zero configurazione. Un solo step.</strong>'
-                f'    </div>'
-                f'  </div>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-            if st.button(
-                "⚡  Carica verifica e genera variante istantanea →",
-                key="btn_facsimile_home",
-                use_container_width=True,
-                type="primary",
-            ):
-                st.session_state.input_percorso = "FACSIMILE"
-                st.session_state["_analisi_rifiuto"] = None
-                st.session_state["_facsimile_mode"] = True
-                st.rerun()
-
-
-def _render_percorso_facsimile():
-    """
-    Flusso dedicato Facsimile Istantaneo — massima semplicità, minimo click:
-      1. Upload verifica (unico step UI)
-      2. Analisi AI automatica
-      3. Generazione variante rapida (prompt_variante_rapida)
-      4. → STAGE_PREVIEW direttamente
-    L'utente sa già cosa vuole: nessuna configurazione, nessuna domanda.
-    """
-    # Header viola
-    st.markdown(
-        f'<div style="background:linear-gradient(135deg,#7C3AED18,{T["card"]});'
-        f'border:2px solid #7C3AED55;border-radius:16px;padding:.9rem 1.2rem;margin-bottom:1rem;'
-        f'display:flex;align-items:center;gap:.9rem;">'
-        f'<span style="font-size:1.6rem;">⚡</span>'
-        f'<div>'
-        f'<div style="font-size:.95rem;font-weight:900;color:#7C3AED;font-family:DM Sans,sans-serif;">'
-        f'Facsimile Istantaneo</div>'
-        f'<div style="font-size:.74rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin-top:2px;">'
-        f'Carica la verifica → generazione automatica → revisione bozza. Tre passi, zero configurazione.'
-        f'</div>'
-        f'</div>'
-        f'</div>',
-        unsafe_allow_html=True
-    )
-
-    # Guardrail rifiuto
-    _rifiuto = st.session_state.get("_analisi_rifiuto")
-    if _rifiuto:
         st.markdown(
-            f'<div style="background:linear-gradient(135deg,#3B0000,#1C0000);'
-            f'border:2px solid #FF453A;border-radius:14px;padding:.9rem 1.1rem;margin-bottom:.8rem;">'
-            f'<div style="font-size:.85rem;font-weight:800;color:#FF453A;font-family:DM Sans,sans-serif;margin-bottom:.2rem;">'
-            f'File non riconosciuto come verifica scolastica</div>'
-            f'<div style="font-size:.75rem;color:#FFBBB8;font-family:DM Sans,sans-serif;line-height:1.5;">'
-            f'{_rifiuto.get("messaggio","Carica una verifica o un compito in classe.")}'
-            f'</div></div>',
-            unsafe_allow_html=True
-        )
-        if st.button("Chiudi e riprova", key="btn_chiudi_rifiuto_fac"):
-            st.session_state["_analisi_rifiuto"] = None
-            st.rerun()
-
-    # ── Step 1: Upload ────────────────────────────────────────────────────────
-    _fac_doc = st.session_state.get("_fac_uploaded_doc")
-
-    if not _fac_doc:
-        st.markdown(
-            f'<div style="font-size:.82rem;font-weight:700;color:{T["text"]};'
-            f'font-family:DM Sans,sans-serif;margin-bottom:.5rem;">'
-            f'📂 Carica la verifica da cui creare il facsimile</div>',
-            unsafe_allow_html=True
-        )
-        st.markdown(
-            f'<div style="font-size:.74rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
-            f'margin-bottom:.7rem;line-height:1.5;">'
-            f'Formati supportati: PDF, immagine (JPG/PNG). '
-            f'Funziona anche con foto del foglio o della lavagna.'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-        _fac_file = st.file_uploader(
-            "Carica verifica",
-            type=["pdf", "png", "jpg", "jpeg"],
-            key="fac_uploader",
-            label_visibility="collapsed",
-        )
-        if _fac_file:
-            _fb = _fac_file.getvalue()
-            _fm = _fac_file.type or "image/png"
-            _fn = _fac_file.name
-
-            # Analisi + skeleton
-            _ph = st.empty()
-            _ph.markdown(
-                f'<div class="ocr-skeleton-wrap">'
-                f'  <div class="ocr-skeleton-header">'
-                f'    <div class="ocr-skeleton-icon">🔬</div>'
-                f'    <div>'
-                f'      <div class="ocr-skeleton-title">Analisi verifica in corso…</div>'
-                f'      <div class="ocr-skeleton-sub">Lettura · Struttura · Contenuto</div>'
-                f'    </div>'
-                f'  </div>'
-                f'  <div class="ocr-skeleton-doc">'
-                f'    <div class="ocr-skeleton-scan"></div>'
-                f'    <div class="ocr-skeleton-line" style="width:88%"></div>'
-                f'    <div class="ocr-skeleton-line" style="width:72%"></div>'
-                f'    <div class="ocr-skeleton-line" style="width:91%"></div>'
-                f'  </div>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-            _esegui_analisi_documento(_fb, _fm, _fn)  # popola analisi_docs_list
-            _ph.empty()
-
-            # Recupera risultato analisi
-            _lista = st.session_state.analisi_docs_list
-            if _lista and not _lista[-1].get("confirmed", True):
-                _analisi = _lista[-1]["analisi"]
-                # Salva dati per step 2
-                st.session_state["_fac_uploaded_doc"] = {
-                    "bytes":   _fb,
-                    "mime":    _fm,
-                    "name":    _fn,
-                    "analisi": _analisi,
-                }
-                # Segna come confermato con mode facsimile
-                st.session_state.analisi_docs_list[-1]["confirmed"] = True
-                st.session_state.analisi_docs_list[-1]["file_mode"] = "facsimile"
-                st.session_state.file_ispirazione = _fac_file
-                st.rerun()
-
-    else:
-        # ── Step 2: Documento caricato → mostra info + genera subito ─────────
-        _analisi = _fac_doc.get("analisi", {})
-        _mat   = _analisi.get("materia", "Non rilevata")
-        _arg   = _analisi.get("contenuto_argomento", "")
-        _scu   = _analisi.get("scuola", "")
-        _fname = _fac_doc.get("name", "")
-
-        # Card di conferma documento
-        _chips = ""
-        if _mat:  _chips += f'<span style="font-size:.7rem;background:{T["card2"]};border-radius:5px;padding:2px 8px;color:{T["text2"]};margin-right:4px;">{_mat}</span>'
-        if _scu:  _chips += f'<span style="font-size:.7rem;background:{T["card2"]};border-radius:5px;padding:2px 8px;color:{T["text2"]};margin-right:4px;">{_scu}</span>'
-        if _arg:  _chips += f'<span style="font-size:.7rem;background:{T["card2"]};border-radius:5px;padding:2px 8px;color:{T["text2"]};">{(_arg[:60]+"…") if len(_arg)>60 else _arg}</span>'
-
-        st.markdown(
-            f'<div style="background:linear-gradient(135deg,#7C3AED12,{T["card"]});'
-            f'border:1.5px solid #7C3AED44;border-radius:14px;padding:.85rem 1.1rem;margin-bottom:1rem;">'
-            f'<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem;">'
-            f'<span style="font-size:1.2rem;">✅</span>'
-            f'<div style="font-size:.85rem;font-weight:800;color:{T["text"]};font-family:DM Sans,sans-serif;">'
-            f'Verifica caricata: {_fname}</div>'
+            f'<div class="mcard mcard-arancio">'
+            f'<div class="mcard-icon">📂</div>'
+            f'<div class="mcard-title" style="color:#F59E0B;">Genera da file</div>'
+            f'<div class="mcard-desc">'
+            f'Carica una verifica precedente, appunti o foto della lavagna. '
+            f'L\'AI legge il materiale e genera una verifica coerente.'
             f'</div>'
-            f'<div style="display:flex;flex-wrap:wrap;gap:.3rem;">{_chips}</div>'
+            f'<div class="mcard-hint">Il file viene usato solo per generare la verifica.</div>'
+            f'<div class="mcard-chips">'
+            f'<span class="mcard-chip">📝 Verifiche</span>'
+            f'<span class="mcard-chip">📒 Appunti</span>'
+            f'<span class="mcard-chip">📷 Foto</span>'
+            f'</div>'
             f'</div>',
             unsafe_allow_html=True
         )
-
-        st.markdown(
-            f'<div style="font-size:.78rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
-            f'line-height:1.5;margin-bottom:1rem;padding:.6rem .8rem;background:{T["card2"]};'
-            f'border-radius:10px;border-left:3px solid #7C3AED;">'
-            f'⚡ L\'AI genererà ora una variante della verifica con dati numerici diversi, '
-            f'mantenendo struttura, punteggi e tipo di esercizi identici.'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-
-        # Pulsante Genera + logica generazione
-        _gen_ph = st.empty()
-        if st.session_state.get("_fac_genera_now"):
-            st.session_state["_fac_genera_now"] = False
-            _gen_ph.markdown(
-                f'<div class="ocr-skeleton-wrap">'
-                f'  <div class="ocr-skeleton-header">'
-                f'    <div class="ocr-skeleton-icon">⚡</div>'
-                f'    <div>'
-                f'      <div class="ocr-skeleton-title">Generazione facsimile in corso…</div>'
-                f'      <div class="ocr-skeleton-sub">Cambio dati · Anti-spoiler · Coerenza struttura</div>'
-                f'    </div>'
-                f'  </div>'
-                f'  <div class="ocr-skeleton-doc">'
-                f'    <div class="ocr-skeleton-scan"></div>'
-                f'    <div class="ocr-skeleton-line" style="width:90%"></div>'
-                f'    <div class="ocr-skeleton-line" style="width:70%"></div>'
-                f'    <div class="ocr-skeleton-line" style="width:85%"></div>'
-                f'  </div>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-            try:
-                # Usa prompt_variante_rapida su file ispirazione
-                _mat_gen = _analisi.get("materia", "Materia non specificata")
-                _scu_gen = _analisi.get("scuola", "Generico")
-                _arg_gen = _analisi.get("contenuto_argomento", "argomento non specificato")
-
-                # Prepara file_ispirazione bytes per genera_verifica
-                _fac_bytes = _fac_doc["bytes"]
-                _fac_mime  = _fac_doc["mime"]
-
-                calibrazione = CALIBRAZIONE_SCUOLA.get(_scu_gen, "")
-                _t0 = time.time()
-                model_obj = genai.GenerativeModel(modello_id)
-                ris = genera_verifica(
-                    model=model_obj,
-                    materia=_mat_gen,
-                    argomento=_arg_gen,
-                    difficolta=_scu_gen,
-                    calibrazione=calibrazione,
-                    durata="1 ora",
-                    num_esercizi=_analisi.get("num_esercizi_rilevati") or 4,
-                    punti_totali=100,
-                    mostra_punteggi=True,
-                    con_griglia=False,
-                    doppia_fila=False,
-                    bes_dsa=False,
-                    perc_ridotta=25,
-                    bes_dsa_b=False,
-                    genera_soluzioni=False,
-                    note_generali="Genera una variante della verifica caricata: stessa struttura, dati numerici diversi.",
-                    istruzioni_esercizi="",
-                    immagini_esercizi=[],
-                    file_ispirazione={"bytes": _fac_bytes, "mime": _fac_mime},
-                    mathpix_context=st.session_state.get("mathpix_context"),
-                    on_progress=lambda x: None,
-                )
-
-                def _agg(fid, d):
-                    v = st.session_state.verifiche[fid]
-                    if d.get("latex"): v["latex"] = v["latex_originale"] = d["latex"]
-                    if d.get("pdf"):   v["pdf"] = d["pdf"]; v["pdf_ts"] = time.time(); v["preview"] = True
-
-                _agg("A", ris["A"]); _agg("B", ris["B"])
-                _agg("R", ris["R"]); _agg("RB", ris["RB"])
-
-                st.session_state.gen_time_sec = int(time.time() - _t0)
-                st.session_state.gen_params = {
-                    "materia": _mat_gen, "difficolta": _scu_gen,
-                    "argomento": ris.get("titolo", _arg_gen),
-                    "durata": "1 ora", "num_esercizi": _analisi.get("num_esercizi_rilevati") or 4,
-                    "punti_totali": 100, "mostra_punteggi": True,
-                    "con_griglia": False, "perc_ridotta": 25, "modello_id": modello_id,
-                }
-                preamble, blocks = _extract_blocks(st.session_state.verifiche["A"]["latex"])
-                st.session_state.review_preamble = preamble
-                st.session_state.review_blocks   = blocks
-                st.session_state.review_sel_idx  = 0
-                if st.session_state.verifiche["A"]["pdf"]:
-                    imgs, _ = pdf_to_images_bytes(st.session_state.verifiche["A"]["pdf"])
-                    st.session_state.preview_images = imgs or []
-
-                _gen_ph.empty()
-                st.toast("✅ Facsimile generato!", icon="⚡")
-                st.session_state.stage = STAGE_PREVIEW
-                st.rerun()
-            except Exception as _e:
-                _gen_ph.empty()
-                st.error(f"❌ Errore generazione: {_e}")
-        else:
-            _c1, _c2, _c3 = st.columns([2, 3, 2])
-            with _c2:
-                if st.button("⚡  Genera Facsimile ora →", key="btn_fac_genera",
-                             use_container_width=True, type="primary"):
-                    st.session_state["_fac_genera_now"] = True
-                    st.rerun()
-
-        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
-        if st.button("← Carica un altro file", key="btn_fac_back", use_container_width=False):
-            st.session_state["_fac_uploaded_doc"] = None
-            st.session_state["_analisi_rifiuto"]  = None
-            st.session_state.analisi_docs_list     = []
-            st.session_state.info_consolidate      = {}
-            st.rerun()
-
-    # Back al bivio
-    st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
-    _bb1, _bb2, _bb3 = st.columns([3, 2, 3])
-    with _bb2:
-        if st.button("← Cambia percorso", key="btn_back_facsimile", use_container_width=True):
-            st.session_state.input_percorso = None
-            st.session_state["_facsimile_mode"] = False
-            st.session_state["_fac_uploaded_doc"] = None
+        st.markdown('<div class="mbtn-arancio">', unsafe_allow_html=True)
+        if st.button("Scegli questo percorso →", key="btn_percorso_a",
+                     use_container_width=True, type="primary"):
+            st.session_state.input_percorso = "A"
             st.session_state["_analisi_rifiuto"] = None
-            st.session_state.analisi_docs_list = []
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ── Facsimile Istantaneo — card viola ────────────────────────────────────
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+    _fc1, _fc2, _fc3 = st.columns([1, 5, 1])
+    with _fc2:
+        st.markdown(
+            f'<div class="fac-card">'
+            f'  <div style="font-size:2.2rem;flex-shrink:0;">⚡</div>'
+            f'  <div style="flex:1;">'
+            f'    <div class="fac-badge">⚡ ISTANTANEO</div>'
+            f'    <div class="fac-title">Crea Facsimile da verifica esistente</div>'
+            f'    <div class="fac-desc">'
+            f'      Carica una verifica che hai già → l\'AI genera subito una variante '
+            f'      con dati diversi. Stessa struttura, stessi punteggi. '
+            f'      <strong>Zero configurazione.</strong>'
+            f'    </div>'
+            f'  </div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+        st.markdown('<div class="mbtn-viola">', unsafe_allow_html=True)
+        if st.button(
+            "⚡  Carica verifica e genera variante istantanea →",
+            key="btn_facsimile_home",
+            use_container_width=True,
+            type="primary",
+        ):
+            st.session_state.input_percorso = "A"
+            st.session_state["_analisi_rifiuto"] = None
+            st.session_state["_facsimile_mode"] = True
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 
-
+def _render_percorso_a_wizard():
     """
     Percorso A — Wizard sequenziale a 4 passi:
     upload → intent → loop → review → genera
@@ -2737,11 +2481,6 @@ def _render_stage_input():
         _render_bivio()
         return
 
-    # ── FACSIMILE ISTANTANEO — flusso dedicato ───────────────────────────────
-    if percorso == "FACSIMILE":
-        _render_percorso_facsimile()
-        return
-
     # ── PERCORSO A ────────────────────────────────────────────────────────────
     if percorso == "A":
         _render_percorso_a_wizard()
@@ -3674,8 +3413,6 @@ def _render_stage_final():
             st.session_state["wizard_step"]     = "upload"
             st.session_state["_analisi_rifiuto"] = None
             st.session_state["_facsimile_mode"] = False
-            st.session_state["_fac_uploaded_doc"] = None
-            st.session_state["_fac_genera_now"]   = False
             # QA mode
             st.session_state.qa_mode            = False
             st.rerun()
