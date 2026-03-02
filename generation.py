@@ -123,6 +123,17 @@ def _costruisci_preambolo(
     ), titolo_header
 
 
+def _rimuovi_tutti_punteggi(latex: str) -> str:
+    """
+    Rimozione deterministica di tutti i punteggi (X pt) dal LaTeX.
+    Usata come guardia quando mostra_punteggi=False, a prescindere da
+    ciò che il modello AI ha generato.
+    """
+    # Rimuovi pattern come (5 pt), (10 pt), (10 punti), etc. — inline
+    latex = re.sub(r"\s*\(\s*\d+\s*(?:pt|punt(?:i|o)?|p\.)\s*\)", "", latex)
+    return latex
+
+
 def _assembla_e_compila(
     preambolo: str,
     corpo: str,
@@ -140,11 +151,14 @@ def _assembla_e_compila(
     if mostra_punteggi:
         latex = rimuovi_punti_subsection(latex)
         latex = riscala_punti(latex, punti_totali)
+    else:
+        # Guardia deterministica: rimuove punteggi residui anche se l'AI li ha inseriti
+        latex = _rimuovi_tutti_punteggi(latex)
 
-    latex_final = inietta_griglia(latex, punti_totali) if con_griglia else latex
+    latex_final = inietta_griglia(latex, punti_totali) if (con_griglia and mostra_punteggi) else latex
     pdf, _ = compila_pdf(latex_final)
 
-    if pdf is None and con_griglia:
+    if pdf is None and con_griglia and mostra_punteggi:
         # fallback senza griglia
         pdf, _ = compila_pdf(latex)
 
@@ -389,7 +403,7 @@ def genera_verifica(
     # ── 4. CONTROLLO QUALITÀ ──────────────────────────────────────────────────
     _avanza("🔎  Controllo qualità e correzione errori…")
     rc = model.generate_content(
-        prompt_controllo_qualita(materia, difficolta, corpo_a)
+        prompt_controllo_qualita(materia, difficolta, corpo_a, mostra_punteggi)
     )
     corpo_corretto = pulisci_corpo_latex(_pulisci_risposta(rc.text))
 
@@ -399,8 +413,6 @@ def genera_verifica(
         corpo_a = corpo_corretto
 
     corpo_a = _tronca_al_numero_giusto(corpo_a, num_esercizi)
-
-    # ── 5. ASSEMBLA E COMPILA FILA A ──────────────────────────────────────────
     _avanza("🖨️  Compilazione PDF…")
     latex_a, pdf_a = _assembla_e_compila(
         preambolo_a, corpo_a, mostra_punteggi, punti_totali, con_griglia
@@ -618,15 +630,13 @@ def genera_verifica_streaming(
     # ── 4. CONTROLLO QUALITÀ ──────────────────────────────────────────────────
     _avanza("🔎  Controllo qualità e correzione errori…")
     rc = model.generate_content(
-        prompt_controllo_qualita(materia, difficolta, corpo_a)
+        prompt_controllo_qualita(materia, difficolta, corpo_a, mostra_punteggi)
     )
     corpo_corretto = pulisci_corpo_latex(_pulisci_risposta(rc.text))
-
     n_orig = len(re.findall(r"\\subsection\*", corpo_a))
     n_corr = len(re.findall(r"\\subsection\*", corpo_corretto))
     if corpo_corretto and n_corr == n_orig:
         corpo_a = corpo_corretto
-
     corpo_a = _tronca_al_numero_giusto(corpo_a, num_esercizi)
 
     # ── 5. SPLIT IN BLOCCHI ───────────────────────────────────────────────────
@@ -990,12 +1000,21 @@ def compila_contesto_generazione(
         )
 
     elif file_mode == "includi_esercizio":
-        # Un esercizio specifico viene incluso tra gli esercizi custom
-        # (gestito separatamente in main.py tramite esercizi_custom)
+        # Esercizio specifico dal file — MASSIMA PRIORITÀ, deve comparire nell'output
         parti_note.append(
-            "Un esercizio specifico dal file è già stato incluso nella struttura.\n"
-            f"Genera i restanti esercizi sull'argomento '{argomento}'.\n"
-            "Mantieni coerenza di stile con l'esercizio preimpostato."
+            "╔══════════════════════════════════════════════════════════╗\n"
+            "║  ⚠️  ISTRUZIONE CRITICA — ESERCIZIO DA INCLUDERE          ║\n"
+            "╚══════════════════════════════════════════════════════════╝\n"
+            "Il docente ha fornito un'immagine/file contenente UN ESERCIZIO SPECIFICO.\n"
+            "REGOLA ASSOLUTA E INVIOLABILE:\n"
+            "  • L'esercizio nell'immagine DEVE comparire nella verifica finale — OBBLIGATORIO.\n"
+            "  • È VIETATO ignorarlo, parafrasarlo o sostituirlo con uno simile.\n"
+            "  • Trascrivi il testo dell'esercizio FEDELMENTE in LaTeX con la stessa struttura.\n"
+            "  • Se le istruzioni del docente dicono 'stessi dati': mantieni numeri e dati identici.\n"
+            "  • Se le istruzioni del docente dicono 'dati diversi': cambia solo i valori numerici, "
+            "mantieni identica la struttura e le tipologie di richiesta.\n"
+            "  • Inserisci questo esercizio come PRIMO esercizio (Esercizio 1) della verifica.\n"
+            f"  • Genera poi i restanti {max(0, len(es_trovati)-1)} esercizi sull'argomento '{argomento}'."
         )
 
     # ── Istruzioni extra del docente (massima priorità) ───────────────────────
