@@ -1031,38 +1031,44 @@ def _render_bivio():
             border-radius:6px;padding:2px 8px;color:{T["text2"]};
         }}
 
-        /* Pulsante BLU */
+        /* Pulsante BLU — sovrascrive il primary di Streamlit */
         .mbtn-blu button {{
             background:linear-gradient(135deg,#3B82F6,#2563EB) !important;
             color:#fff !important; border:none !important;
             border-radius:12px !important; font-weight:700 !important;
+            font-size:.85rem !important; padding:.55rem 1rem !important;
             box-shadow:0 4px 14px #3B82F644 !important;
+            transition:box-shadow .18s ease, filter .18s ease !important;
         }}
         .mbtn-blu button:hover {{
-            box-shadow:0 6px 20px #3B82F666 !important;
-            filter:brightness(1.07) !important;
+            box-shadow:0 6px 22px #3B82F666 !important;
+            filter:brightness(1.08) !important;
         }}
         /* Pulsante VERDE */
         .mbtn-verde button {{
             background:linear-gradient(135deg,#10B981,#059669) !important;
             color:#fff !important; border:none !important;
             border-radius:12px !important; font-weight:700 !important;
+            font-size:.85rem !important; padding:.55rem 1rem !important;
             box-shadow:0 4px 14px #10B98144 !important;
+            transition:box-shadow .18s ease, filter .18s ease !important;
         }}
         .mbtn-verde button:hover {{
-            box-shadow:0 6px 20px #10B98166 !important;
-            filter:brightness(1.07) !important;
+            box-shadow:0 6px 22px #10B98166 !important;
+            filter:brightness(1.08) !important;
         }}
         /* Pulsante ARANCIO */
         .mbtn-arancio button {{
             background:linear-gradient(135deg,#F59E0B,#D97706) !important;
             color:#fff !important; border:none !important;
             border-radius:12px !important; font-weight:700 !important;
+            font-size:.85rem !important; padding:.55rem 1rem !important;
             box-shadow:0 4px 14px #F59E0B44 !important;
+            transition:box-shadow .18s ease, filter .18s ease !important;
         }}
         .mbtn-arancio button:hover {{
-            box-shadow:0 6px 20px #F59E0B66 !important;
-            filter:brightness(1.07) !important;
+            box-shadow:0 6px 22px #F59E0B66 !important;
+            filter:brightness(1.08) !important;
         }}
         </style>
         """,
@@ -1118,7 +1124,7 @@ def _render_bivio():
         )
         st.markdown('<div class="mbtn-verde">', unsafe_allow_html=True)
         if st.button("Scegli questo percorso →", key="btn_percorso_libera",
-                     use_container_width=True):
+                     use_container_width=True, type="primary"):
             st.session_state.input_percorso = "LIBERA"
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
@@ -1144,7 +1150,7 @@ def _render_bivio():
         )
         st.markdown('<div class="mbtn-arancio">', unsafe_allow_html=True)
         if st.button("Scegli questo percorso →", key="btn_percorso_a",
-                     use_container_width=True):
+                     use_container_width=True, type="primary"):
             st.session_state.input_percorso = "A"
             st.session_state["_analisi_rifiuto"] = None
             st.rerun()
@@ -3158,13 +3164,7 @@ def _render_stage_final():
     # ═══════════════════════════════════════════════════════════════════════════
     _fname_a = arg_str + "_FilaA"
     if vA.get("pdf"):
-        st.markdown(
-            f'<div style="background:linear-gradient(135deg,{T["accent"]}18,{T["card"]});'
-            f'border:2px solid {T["accent"]}66;border-radius:16px;padding:1rem 1.2rem;margin-bottom:.8rem;">'
-            f'<div style="font-size:.65rem;font-weight:800;color:{T["accent"]};letter-spacing:.08em;'
-            f'font-family:DM Sans,sans-serif;margin-bottom:.4rem;">⬇ DOWNLOAD VERIFICA</div>',
-            unsafe_allow_html=True
-        )
+        st.markdown("<div style='margin-bottom:.8rem;'>", unsafe_allow_html=True)
         st.download_button(
             label=f"📄  Scarica Verifica PDF  ·  {_stima(vA['pdf'])}",
             data=vA["pdf"], file_name=_fname_a + ".pdf",
@@ -3332,8 +3332,11 @@ def _render_stage_final():
     with _nav1:
         if st.button("🆕 Nuova verifica", type="primary",
                      use_container_width=True, key="btn_new_s3_top"):
+            # Reset completo — l'utente riparte dalla Home come nuovo accesso
             st.session_state.stage            = STAGE_INPUT
             st.session_state["_prev_stage"]   = None
+            st.session_state.input_percorso   = None          # → torna al bivio
+            # Dati verifica
             st.session_state.verifiche         = {
                 "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
                 "S": {"latex": None, "testo": None, "pdf": None},
@@ -3351,10 +3354,17 @@ def _render_stage_final():
             st.session_state._rubrica_gen          = False
             st.session_state._template_sel         = None
             st.session_state._variant_rapida_gen   = False
-            st.session_state["_facsimile_mode"]    = False
             st.session_state["_gen_fila_b"]        = False
             st.session_state["_gen_bes"]           = False
             st.session_state["_gen_sol"]           = False
+            # Dati upload / wizard percorso A
+            st.session_state.analisi_docs_list  = []
+            st.session_state.info_consolidate   = {}
+            st.session_state["wizard_step"]     = "upload"
+            st.session_state["_analisi_rifiuto"] = None
+            st.session_state["_facsimile_mode"] = False
+            # QA mode
+            st.session_state.qa_mode            = False
             st.rerun()
     with _nav2:
         if st.button("← Rivedi esercizi", use_container_width=True, key="btn_rev_s3_top"):
