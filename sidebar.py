@@ -6,6 +6,37 @@ import streamlit as st
 from datetime import datetime, timezone
 
 
+def _tempo_fa(iso_str: str) -> str:
+    """Converte un timestamp ISO in formato umano relativo (es. '2 ore fa', 'ieri')."""
+    try:
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        now = datetime.now(timezone.utc)
+        diff = now - dt
+        seconds = int(diff.total_seconds())
+        if seconds < 60:
+            return "ora"
+        minutes = seconds // 60
+        if minutes < 60:
+            return f"{minutes} min fa"
+        hours = minutes // 60
+        if hours < 24:
+            return f"{hours} {'ora' if hours == 1 else 'ore'} fa"
+        days = hours // 24
+        if days == 1:
+            return "ieri"
+        if days < 7:
+            return f"{days} giorni fa"
+        weeks = days // 7
+        if weeks < 4:
+            return f"{weeks} sett. fa"
+        months = days // 30
+        if months < 12:
+            return f"{months} {'mese' if months == 1 else 'mesi'} fa"
+        return dt.strftime("%d/%m/%Y")
+    except Exception:
+        return iso_str[:10] if iso_str else ""
+
+
 def render_sidebar(
     supabase_admin,
     utente,
@@ -219,10 +250,22 @@ def render_sidebar(
         _page_size    = 5
         _storico_limit = st.session_state._storico_page * _page_size
 
+        # ── Filtro ricerca storico ─────────────────────────────────────────
+        _storico_search = st.text_input(
+            "Cerca nelle verifiche",
+            placeholder="🔍 Cerca per materia, argomento…",
+            key="storico_search_input",
+            label_visibility="collapsed",
+        ).strip().lower()
+
+        # Filtro materia — init session state
+        if "_storico_filter_mat" not in st.session_state:
+            st.session_state._storico_filter_mat = None
+
         try:
             storico = (
                 supabase_admin.table("verifiche_storico")
-                .select("id, materia, argomento, created_at, latex_a, latex_b, latex_r, scuola")
+                .select("id, materia, argomento, created_at, latex_a, latex_b, latex_r, scuola, num_esercizi, modello")
                 .eq("user_id", utente.id)
                 .is_("deleted_at", "null")
                 .order("created_at", desc=True)
@@ -231,34 +274,115 @@ def render_sidebar(
             )
 
             if storico.data:
-                _ha_altri      = len(storico.data) > _storico_limit
-                dati_pagina    = storico.data[:_storico_limit]
+                # ── Materia filter chips ──────────────────────────────────
+                _all_materie = sorted(set(
+                    v.get("materia", "") for v in storico.data if v.get("materia")
+                ))
+                if len(_all_materie) > 1:
+                    _active_mat = st.session_state._storico_filter_mat
+                    _chips_html = '<div class="storico-filter">'
+                    _chips_html += (
+                        f'<span class="storico-filter-chip'
+                        f'{" storico-filter-chip-active" if not _active_mat else ""}">'
+                        f'Tutte</span>'
+                    )
+                    for _m in _all_materie:
+                        _is_active = _active_mat == _m
+                        _chips_html += (
+                            f'<span class="storico-filter-chip'
+                            f'{" storico-filter-chip-active" if _is_active else ""}">'
+                            f'{_m}</span>'
+                        )
+                    _chips_html += '</div>'
+                    st.markdown(_chips_html, unsafe_allow_html=True)
+
+                    # Streamlit buttons per i filtri (non possiamo usare onclick CSS)
+                    _filter_cols = st.columns(min(len(_all_materie) + 1, 4))
+                    with _filter_cols[0]:
+                        if st.button("Tutte", key="filter_all",
+                                     use_container_width=True,
+                                     type="primary" if not _active_mat else "secondary"):
+                            st.session_state._storico_filter_mat = None
+                            st.rerun()
+                    for _fi, _fm in enumerate(_all_materie[:3]):
+                        with _filter_cols[min(_fi + 1, len(_filter_cols) - 1)]:
+                            if st.button(_fm[:8], key=f"filter_{_fm}",
+                                         use_container_width=True,
+                                         type="primary" if _active_mat == _fm else "secondary"):
+                                st.session_state._storico_filter_mat = _fm
+                                st.rerun()
+
+                # Applica filtri combinati (search + materia)
+                _filtered = storico.data
+                if st.session_state._storico_filter_mat:
+                    _filtered = [
+                        v for v in _filtered
+                        if v.get("materia") == st.session_state._storico_filter_mat
+                    ]
+                if _storico_search:
+                    _filtered = [
+                        v for v in _filtered
+                        if _storico_search in (
+                            v.get("materia","") + " " +
+                            v.get("argomento","") + " " +
+                            v.get("scuola","")
+                        ).lower()
+                    ]
+
+                _ha_altri      = len(storico.data) > _storico_limit and not _storico_search
+                dati_pagina    = _filtered[:_storico_limit] if not _storico_search else _filtered
                 _pref          = st.session_state._preferiti
 
                 # Ordina: preferiti SEMPRE prima (stabili), poi per data decrescente
                 dati_per_data    = sorted(dati_pagina, key=lambda x: x["created_at"], reverse=True)
                 dati_ordinati    = sorted(dati_per_data, key=lambda x: 0 if x["id"] in _pref else 1)
 
-                with st.expander(f"Storico ({len(dati_pagina)} verifiche)", expanded=False):
+                _n_show = len(dati_ordinati)
+                _n_total = len(storico.data)
+
+                with st.expander(
+                    f"Storico ({_n_show}{' filtrate' if _storico_search or st.session_state._storico_filter_mat else ''} / {_n_total} verifiche)",
+                    expanded=bool(_storico_search) or bool(st.session_state._storico_filter_mat),
+                ):
+                  if not dati_ordinati and (_storico_search or st.session_state._storico_filter_mat):
+                      st.caption(f"Nessun risultato per il filtro selezionato.")
                   for v in dati_ordinati:
-                    data_str       = v["created_at"][:10]
+                    # ── Tempo relativo (es. "2 ore fa", "ieri") ───────────
+                    _time_ago      = _tempo_fa(v["created_at"])
                     is_pref        = v["id"] in _pref
                     star_ico       = "★" if is_pref else "☆"
-                    arg_trunc      = v["argomento"][:22] + ("…" if len(v["argomento"]) > 22 else "")
+                    arg_trunc      = v["argomento"][:28] + ("…" if len(v["argomento"]) > 28 else "")
                     mat_str        = v['materia']
+                    scu_str        = v.get('scuola', '')
+                    n_es_str       = v.get('num_esercizi', '')
+                    _has_b         = bool(v.get("latex_b"))
+                    _has_r         = bool(v.get("latex_r"))
+
+                    # ── Card visuale con tempo relativo ───────────────────
+                    _badge_html = ""
+                    if scu_str:
+                        _badge_html += f'<span style="background:#2A2923;color:#8b8980;font-size:.58rem;font-weight:600;padding:1px 5px;border-radius:4px;margin-right:3px;">{scu_str[:16]}</span>'
+                    if _has_b:
+                        _badge_html += '<span style="background:#1E3A5F;color:#60AAEE;font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:4px;margin-right:3px;">FILA B</span>'
+                    if _has_r:
+                        _badge_html += '<span style="background:#2D1B4E;color:#A78BFA;font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:4px;">BES</span>'
 
                     st.markdown(
-                        f'<div style="margin-top:.6rem;padding-bottom:.25rem;'
-                        f'border-bottom:1px solid #252420;">'
-                        f'<span style="font-size:.78rem;font-weight:700;color:#d8d6ce;'
-                        f'font-family:DM Sans,sans-serif;">{mat_str}</span>'
-                        f'<span style="font-size:.68rem;color:#6b6960;margin-left:.4rem;">{data_str}</span><br>'
-                        f'<span style="font-size:.72rem;color:#9b9890;font-family:DM Sans,sans-serif;">{arg_trunc}</span>'
+                        f'<div class="storico-card">'
+                        f'  <div class="storico-card-top">'
+                        f'    <span class="storico-card-mat">{mat_str}</span>'
+                        f'    <span class="storico-card-date">{_time_ago}</span>'
+                        f'  </div>'
+                        f'  <div class="storico-card-arg">{arg_trunc}</div>'
+                        + (f'  <div class="storico-card-meta">'
+                           + (f'<span class="storico-card-nes">{n_es_str} esercizi</span>' if n_es_str else '')
+                           + f'</div>' if n_es_str else '')
+                        + f'  <div class="storico-card-badges">{_badge_html}</div>'
                         f'</div>',
                         unsafe_allow_html=True
                     )
 
-                    # ── Riga azioni: stella + elimina affiancati ──────────────
+                    # ── Azioni: stella + elimina ──────────────────────────────
                     _col_star, _col_del, _col_spacer = st.columns([1, 1, 2])
                     with _col_star:
                         st.markdown(
@@ -289,9 +413,10 @@ def render_sidebar(
                                 st.error(f"Errore: {del_err}")
                         st.markdown("</div>", unsafe_allow_html=True)
 
+                    # ── Azioni principali: Apri + Riusa impostazioni ──────────
                     if v.get("latex_a"):
                         if st.button(
-                            "Apri verifica",
+                            "📄 Apri verifica",
                             key=f"reload_a_{v['id']}_{_refresh_key}",
                             use_container_width=True
                         ):
@@ -352,6 +477,28 @@ def render_sidebar(
                                 st.session_state._saved_to_storico = True  # già in storico
                                 st.session_state.stage = "FINAL"
                                 st.rerun()
+
+                        # ── IDEA #1: Riusa impostazioni (pre-fill form senza caricare verifica) ──
+                        if st.button(
+                            "🔄 Riusa impostazioni",
+                            key=f"reuse_{v['id']}_{_refresh_key}",
+                            use_container_width=True,
+                            help="Pre-compila il form con materia, scuola e numero esercizi di questa verifica"
+                        ):
+                            st.session_state.gen_params = {
+                                "materia":         v.get("materia", ""),
+                                "difficolta":      v.get("scuola", ""),
+                                "argomento":       "",   # Lascia vuoto — nuovo argomento
+                                "num_esercizi":    v.get("num_esercizi", 4),
+                                "mostra_punteggi": True,
+                                "punti_totali":    100,
+                                "con_griglia":     True,
+                            }
+                            st.session_state.input_percorso = "B"
+                            st.session_state.stage = "INPUT"
+                            st.session_state["_prev_stage"] = None
+                            st.toast(f"✅ Impostazioni di «{v.get('argomento','')}» caricate!", icon="🔄")
+                            st.rerun()
 
                         if v.get("latex_b"):
                             if st.button(
