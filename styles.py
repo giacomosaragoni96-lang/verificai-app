@@ -31,7 +31,7 @@ def get_css(T: dict) -> str:
 
   .block-container {{
     padding: 5rem 1.5rem 4rem !important;
-    max-width: 1050px !important;
+    max-width: 860px !important;
     margin: 0 auto !important;
   }}
 
@@ -2202,76 +2202,6 @@ def get_css(T: dict) -> str:
   div.stButton > button[kind="primary"]:hover {{
     box-shadow: 0 6px 28px {T['accent']}77 !important;
     filter: brightness(1.08) !important;
-  }}
-
-  /* ═══════════════════════════════════════════════════════════════════
-     WIZARD UX — Nuovi componenti restyling 2024
-  ═══════════════════════════════════════════════════════════════════ */
-
-  /* Header centrato per le pagine wizard */
-  .wizard-header {{
-    text-align: center;
-    padding: .9rem 0 1.4rem;
-  }}
-  .wizard-header-title {{
-    font-size: 1.2rem;
-    font-weight: 900;
-    color: {T['text']};
-    font-family: DM Sans, sans-serif;
-    letter-spacing: -.02em;
-    margin-bottom: .35rem;
-  }}
-  .wizard-header-sub {{
-    font-size: .8rem;
-    color: {T['muted']};
-    font-family: DM Sans, sans-serif;
-  }}
-
-  /* Header step (Percorso B, Libera ecc.) */
-  .wizard-step-header {{
-    background: {T['card']};
-    border: 1.5px solid {T['border']};
-    border-radius: 14px;
-    padding: .85rem 1.1rem;
-    margin-bottom: 1rem;
-  }}
-
-  /* Field label — sopra ogni campo del form */
-  .field-label {{
-    font-size: .8rem;
-    font-weight: 700;
-    color: {T['text2']};
-    font-family: DM Sans, sans-serif;
-    margin-bottom: .25rem;
-    margin-top: .6rem;
-    letter-spacing: .005em;
-  }}
-
-  /* Card modalità bivio — classe base */
-  .bivio-card {{
-    background: {T['card']};
-    border: 2px solid {T['border2']};
-    border-radius: 20px;
-    padding: 1.8rem 1.5rem 1.5rem;
-    min-height: 240px;
-    display: flex; flex-direction: column; gap: .6rem;
-    cursor: pointer;
-    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-    position: relative;
-  }}
-  .bivio-card:hover {{
-    transform: translateY(-2px);
-    box-shadow: 0 10px 36px {T['accent']}28;
-    border-color: {T['accent']}88;
-  }}
-  .bivio-chip {{
-    font-size: .65rem;
-    background: {T['card2']};
-    border-radius: 5px;
-    padding: 2px 8px;
-    color: {T['text2']};
-    display: inline-block;
-    margin: 1px;
   }}
 
 </style>
