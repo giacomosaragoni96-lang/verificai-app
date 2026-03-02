@@ -606,29 +606,30 @@ st.markdown(
 
 def _render_breadcrumb():
     stage = st.session_state.stage
+    # ── 3-step progress: Impostazioni → Revisione → Scarica ──
     steps = [
-        ("01", "Configura",  STAGE_INPUT),
-        ("02", "Anteprima",  STAGE_PREVIEW),
-        ("03", "Revisione",  STAGE_REVIEW),
-        ("04", "Download",   STAGE_FINAL),
+        ("01", "Impostazioni", STAGE_INPUT),
+        ("02", "Revisione",    STAGE_REVIEW),
+        ("03", "Scarica",      STAGE_FINAL),
     ]
+    # Map PREVIEW → same visual as INPUT (still in step 1 → 2 transition)
+    _visual_stage = STAGE_REVIEW if stage == STAGE_PREVIEW else stage
     completed = {
-        STAGE_INPUT:   stage in (STAGE_PREVIEW, STAGE_REVIEW, STAGE_FINAL),
-        STAGE_PREVIEW: stage in (STAGE_REVIEW, STAGE_FINAL),
-        STAGE_REVIEW:  stage == STAGE_FINAL,
-        STAGE_FINAL:   False,
+        STAGE_INPUT:  _visual_stage in (STAGE_REVIEW, STAGE_FINAL),
+        STAGE_REVIEW: _visual_stage == STAGE_FINAL,
+        STAGE_FINAL:  False,
     }
-    # Contenitore centrato e compatto
+    # ── Pill container
     html = (
-        '<div style="display:flex;justify-content:center;margin-bottom:1.6rem;">'
-        '<div style="display:inline-flex;align-items:center;gap:10px;'
+        '<div class="breadcrumb-wrap">'
+        '<div class="breadcrumb-pill" style="display:inline-flex;align-items:center;gap:10px;'
         'padding:.7rem 1.6rem;'
         'background:' + T["card"] + ';border:1.5px solid ' + T["border"] + ';'
-        'border-radius:100px;box-shadow:' + T["shadow_md"] + ';">'
+        'border-radius:100px;box-shadow:' + T.get("shadow_md", "0 4px 20px rgba(0,0,0,.08)") + ';">'
     )
     for i, (num, label, s) in enumerate(steps):
-        is_active = s == stage
-        is_done   = completed[s]
+        is_active = s == _visual_stage
+        is_done   = completed.get(s, False)
         if is_active:
             cb, cc, lc, lw = T["accent"], "#fff", T["accent"], "800"
             icon = num
@@ -649,7 +650,7 @@ def _render_breadcrumb():
             'font-family:DM Sans,sans-serif;white-space:nowrap;letter-spacing:-.01em;">' + label + '</span>'
             '</div>'
         )
-        if i < 2:
+        if i < len(steps) - 1:
             _sep_c = T["success"] if is_done else T["border2"]
             html += (
                 '<div style="width:28px;height:1.5px;background:' + _sep_c + ';'
@@ -960,8 +961,8 @@ def _render_bivio():
         f'<div class="home-landing-wrap">'
         f'<div class="home-landing-title">Come vuoi creare la verifica?</div>'
         f'<div class="home-landing-desc">'
-        f'Scegli il percorso più adatto alle tue esigenze. '
-        f'Puoi sempre modificare ogni esercizio dopo la generazione.'
+        f'Scegli il percorso più adatto. '
+        f'Potrai sempre modificare ogni singolo esercizio dopo la generazione.'
         f'</div>'
         f'</div>',
         unsafe_allow_html=True,
@@ -971,7 +972,6 @@ def _render_bivio():
     st.markdown(
         f"""<style>
         .mcard-blu  {{ border-color: #3B82F6 !important; }}
-        .mcard-verde {{ border-color: #10B981 !important; }}
         .mcard-arancio {{ border-color: #F59E0B !important; }}
         /* Colonna 1 — BLU */
         div[data-testid="stHorizontalBlock"]:has(.mcard-blu) >
@@ -1031,8 +1031,8 @@ def _render_bivio():
         unsafe_allow_html=True,
     )
 
-    # ── 3 card percorsi ───────────────────────────────────────────────────────
-    col_a, col_b, col_c = st.columns(3, gap="medium")
+    # ── 2 card percorsi principali ─────────────────────────────────────────────
+    col_a, col_b = st.columns(2, gap="large")
 
     with col_a:
         st.markdown(
@@ -1058,42 +1058,22 @@ def _render_bivio():
             st.session_state.input_percorso = "B"
             st.rerun()
 
-    with col_b:
-        st.markdown(
-            f'<div class="mcard mcard-verde">'
-            f'<div class="mcard-icon">💬</div>'
-            f'<div class="mcard-title" style="color:#10B981;">Descrizione libera</div>'
-            f'<div class="mcard-desc">'
-            f'Scrivi con parole tue cosa vuoi: <em>"Verifica su equazioni di secondo grado '
-            f'con 3 problemi aperti"</em>. L\'AI interpreta e genera.'
-            f'</div>'
-            f'<div class="mcard-hint">Ideale se hai già in mente la struttura.</div>'
-            f'<div class="mcard-chips">'
-            f'<span class="mcard-chip">🗣️ Linguaggio naturale</span>'
-            f'<span class="mcard-chip">⚡ Rapido</span>'
-            f'</div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-        if st.button("💬  Descrivi e genera →", key="btn_percorso_libera",
-                     use_container_width=True, type="primary"):
-            st.session_state.input_percorso = "LIBERA"
-            st.rerun()
 
-    with col_c:
+
+    with col_b:
         st.markdown(
             f'<div class="mcard mcard-arancio">'
             f'<div class="mcard-icon">📂</div>'
             f'<div class="mcard-title" style="color:#F59E0B;">Genera da file</div>'
             f'<div class="mcard-desc">'
-            f'Carica una verifica precedente, appunti o foto della lavagna. '
-            f'Il wizard analizza il materiale e guida la generazione passo per passo.'
+            f'Carica una verifica, appunti, foto della lavagna o pagine di libro. '
+            f'L\'AI analizza il materiale e ti guida passo passo nella generazione.'
             f'</div>'
             f'<div class="mcard-hint">Il file viene usato solo per generare la verifica.</div>'
             f'<div class="mcard-chips">'
             f'<span class="mcard-chip">📝 Verifiche</span>'
             f'<span class="mcard-chip">📒 Appunti</span>'
-            f'<span class="mcard-chip">📷 Foto</span>'
+            f'<span class="mcard-chip">✍️ Scrittura a mano</span>'
             f'</div>'
             f'</div>',
             unsafe_allow_html=True,
@@ -1117,7 +1097,7 @@ def _render_bivio():
             f'    <div class="fac-desc">'
             f'      Hai già una verifica? Carica il file → l\'AI genera subito una variante '
             f'      con dati diversi, stessa struttura, stessi punteggi. '
-            f'      <strong>Zero configurazione richiesta.</strong>'
+            f'      <strong>Zero configurazione.</strong>'
             f'    </div>'
             f'  </div>'
             f'</div>',
