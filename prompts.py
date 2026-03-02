@@ -147,7 +147,20 @@ def prompt_controllo_qualita(
     materia: str,
     difficolta: str,
     corpo_latex: str,
+    mostra_punteggi: bool = True,
 ) -> str:
+    if mostra_punteggi:
+        punti_check = (
+            "CONTROLLO PUNTEGGI OBBLIGATORIO: prima di restituire il testo, somma TUTTI i (X pt) presenti.\n"
+            "La somma DEVE essere uguale alla somma originale. Se non lo è, ribilancia i punteggi.\n"
+            "Assicurati che ogni \\item abbia esattamente un (X pt) al termine del testo.\n\n"
+        )
+    else:
+        punti_check = (
+            "CONTROLLO PUNTEGGI: questa verifica NON deve avere punteggi.\n"
+            "Se trovi qualsiasi occorrenza di '(X pt)', '(X punti)' o simili, RIMUOVILE tutte.\n"
+            "NON aggiungere punteggi in nessun caso.\n\n"
+        )
     return (
         f"Sei un docente esperto di {materia} e devi fare un CONTROLLO DI QUALITÀ RIGOROSO su questa verifica "
         f"scolastica prima che venga consegnata agli studenti.\n\n"
@@ -163,14 +176,12 @@ def prompt_controllo_qualita(
         f"3. UNIVOCITÀ: la domanda ha una sola risposta corretta e non è ambigua?\n\n"
         f"SE trovi problemi: CORREGGILI DIRETTAMENTE modificando i dati dell'esercizio finché l'esercizio sia "
         f"corretto, sensato e risolvibile. NON eliminare esercizi, correggili.\n\n"
-        f"CONTROLLO PUNTEGGI OBBLIGATORIO: prima di restituire il testo, somma TUTTI i (X pt) presenti.\n"
-        f"La somma DEVE essere uguale alla somma originale. Se non lo è, ribilancia i punteggi.\n"
-        f"Assicurati che ogni \\item abbia esattamente un (X pt) al termine del testo.\n\n"
+        f"{punti_check}"
         f"SE tutto è corretto: restituisci il testo IDENTICO senza modifiche.\n\n"
         f"REGOLE OUTPUT:\n"
         f"- Restituisci SOLO il corpo LaTeX corretto (\\subsection* ecc.), senza preambolo.\n"
         f"- Mantieni ESATTAMENTE la stessa struttura LaTeX (\\item[a)], \\item[b)], ecc.).\n"
-        f"- Assicurati che ogni esercizio abbia almeno un \\item con label esplicita e punteggio (X pt).\n"
+        f"- Assicurati che ogni esercizio abbia almeno un \\item con label esplicita.\n"
         f"- NON aggiungere commenti, spiegazioni o note al di fuori del LaTeX.\n"
         f"- TERMINA con \\end{{document}}.\n"
         f"- Se hai modificato dati, mantieni la stessa difficoltà complessiva e lo stesso tipo di esercizio."
