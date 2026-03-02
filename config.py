@@ -70,6 +70,103 @@ def get_model_id_per_piano(piano: str, materia: str = "") -> str:
 # ───────────────────────────────────────────────────────────────────────────────
 
 THEMES = {
+    # ═══════════════════════════════════════════════════════════════════════
+    #  CHIARO — Warm Sand & Amber Accents
+    #  Sfondo caldo, non bianco puro; card con bordi morbidi;
+    #  accent ambra/arancio per CTA, verde per success, viola per facsimile.
+    # ═══════════════════════════════════════════════════════════════════════
+    "chiaro": {
+        # Superfici (3 livelli di elevazione)
+        "bg":         "#F8F6F2",     # sfondo principale — warm sand, non bianco puro
+        "bg2":        "#F0EDE6",     # sfondo secondario (aree interne)
+        "card":       "#FFFFFF",     # card primarie — bianco vero per contrasto
+        "card2":      "#F5F3EE",     # card secondarie / overlay morbido
+
+        # Testo (3 livelli di gerarchia)
+        "text":       "#1A1815",     # titoli e testo primario — quasi nero warm
+        "text2":      "#5C574D",     # testo secondario / descrizioni
+        "muted":      "#9B9588",     # label, hint, placeholder
+
+        # Bordi (2 livelli)
+        "border":     "#E5E0D8",     # bordo principale
+        "border2":    "#D4CFC5",     # bordo accentuato (card in rilievo)
+
+        # Accent — Amber/Arancio dorato (CTA primarie)
+        "accent":       "#C96B00",   # arancio dorato — high contrast su bianco
+        "accent2":      "#D97706",   # gradient endpoint
+        "accent_light": "#FEF3C7",   # sfondo tinta accent (badge, hint)
+
+        # Interazione
+        "hover":      "#F0EDE6",     # hover su card
+
+        # Semantici
+        "success":    "#16A34A",     # verde — azione completata
+        "warn":       "#D97706",     # arancio — attenzione
+        "error":      "#DC2626",     # rosso — errore
+
+        # Ombre
+        "shadow":     "0 1px 3px rgba(0,0,0,.04)",
+        "shadow_md":  "0 4px 20px rgba(0,0,0,.06)",
+
+        # Sidebar (sempre dark)
+        "sidebar_bg":      "linear-gradient(180deg, #111110 0%, #0e0e0d 100%)",
+        "sidebar_border":  "#252420",
+        "sidebar_accent":  "#D97706",
+
+        # Hint boxes
+        "hint_bg":      "#FEF3C7",     # giallo tenue
+        "hint_border":  "#FDE68A",     # giallo bordo
+        "hint_text":    "#92400E",     # testo ambra scuro
+    },
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  SCURO — Deep Charcoal & Amber Glow
+    #  Sfondo carbone profondo (non nero puro); card con elevazione sottile;
+    #  accent ambra/arancio luminoso per visibilità su dark; verde neon per success.
+    # ═══════════════════════════════════════════════════════════════════════
+    "scuro": {
+        # Superfici
+        "bg":         "#0E0E0D",     # carbone profondo — non nero puro
+        "bg2":        "#141412",     # secondo livello
+        "card":       "#1A1917",     # card primarie — elevazione 1
+        "card2":      "#1F1E1B",     # card secondarie — elevazione 2
+
+        # Testo
+        "text":       "#F5F3ED",     # titoli — bianco caldo
+        "text2":      "#B8B5AB",     # testo secondario
+        "muted":      "#6B6860",     # label, hint, placeholder
+
+        # Bordi
+        "border":     "#2A2824",     # bordo principale
+        "border2":    "#3A3730",     # bordo accentuato
+
+        # Accent
+        "accent":       "#D97706",   # ambra luminoso — pop su dark
+        "accent2":      "#F59E0B",   # gradient endpoint più chiaro
+        "accent_light": "#D9770618", # sfondo tinta accent (trasparente)
+
+        # Interazione
+        "hover":      "#242320",     # hover
+
+        # Semantici
+        "success":    "#22C55E",     # verde neon — visibility su dark
+        "warn":       "#F59E0B",     # giallo ambra
+        "error":      "#EF4444",     # rosso vivo
+
+        # Ombre
+        "shadow":     "0 1px 4px rgba(0,0,0,.25)",
+        "shadow_md":  "0 4px 24px rgba(0,0,0,.35)",
+
+        # Sidebar
+        "sidebar_bg":      "linear-gradient(180deg, #111110 0%, #0e0e0d 100%)",
+        "sidebar_border":  "#252420",
+        "sidebar_accent":  "#D97706",
+
+        # Hint boxes
+        "hint_bg":      "#1C1A15",     # carbone caldo
+        "hint_border":  "#3A3420",     # bordo ambra tenue
+        "hint_text":    "#D4A554",     # testo ambra morbido
+    },
 
     # ── SCURO — Slate Carbon (default) ───────────────────────────────────────
     "slate_carbon": {
@@ -101,7 +198,7 @@ THEMES = {
     },
 
     # ── CHIARO — Arctic Blue ─────────────────────────────────────────────────
-    "chiaro": {
+    "chiaro🌕": {
         "bg":           "#E8F4FD",
         "bg2":          "#FFFFFF",
         "card":         "#FFFFFF",
