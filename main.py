@@ -966,7 +966,7 @@ def _render_bivio():
         unsafe_allow_html=True
     )
 
-    # CSS card colorate + pulsanti colorati
+    # CSS card colorate + pulsanti colorati per key specifica
     st.markdown(
         f"""
         <style>
@@ -1031,44 +1031,103 @@ def _render_bivio():
             border-radius:6px;padding:2px 8px;color:{T["text2"]};
         }}
 
-        /* Pulsante BLU — sovrascrive il primary di Streamlit */
-        .mbtn-blu button {{
+        /* ── Pulsanti card — selettore per key univoca ── */
+        /* BLU: btn_percorso_b */
+        [data-testid="stBaseButton-primary"][key="btn_percorso_b"],
+        button[key="btn_percorso_b"],
+        div:has(> [key="btn_percorso_b"]) button,
+        .mbtn-blu button,
+        .mbtn-blu button:focus,
+        .mbtn-blu button:active {{
             background:linear-gradient(135deg,#3B82F6,#2563EB) !important;
             color:#fff !important; border:none !important;
             border-radius:12px !important; font-weight:700 !important;
-            font-size:.85rem !important; padding:.55rem 1rem !important;
+            font-size:.85rem !important;
             box-shadow:0 4px 14px #3B82F644 !important;
-            transition:box-shadow .18s ease, filter .18s ease !important;
         }}
         .mbtn-blu button:hover {{
+            background:linear-gradient(135deg,#60A5FA,#3B82F6) !important;
             box-shadow:0 6px 22px #3B82F666 !important;
-            filter:brightness(1.08) !important;
         }}
-        /* Pulsante VERDE */
-        .mbtn-verde button {{
+
+        /* VERDE: btn_percorso_libera */
+        [data-testid="stBaseButton-primary"][key="btn_percorso_libera"],
+        button[key="btn_percorso_libera"],
+        div:has(> [key="btn_percorso_libera"]) button,
+        .mbtn-verde button,
+        .mbtn-verde button:focus,
+        .mbtn-verde button:active {{
             background:linear-gradient(135deg,#10B981,#059669) !important;
             color:#fff !important; border:none !important;
             border-radius:12px !important; font-weight:700 !important;
-            font-size:.85rem !important; padding:.55rem 1rem !important;
+            font-size:.85rem !important;
             box-shadow:0 4px 14px #10B98144 !important;
-            transition:box-shadow .18s ease, filter .18s ease !important;
         }}
         .mbtn-verde button:hover {{
+            background:linear-gradient(135deg,#34D399,#10B981) !important;
             box-shadow:0 6px 22px #10B98166 !important;
-            filter:brightness(1.08) !important;
         }}
-        /* Pulsante ARANCIO */
-        .mbtn-arancio button {{
+
+        /* ARANCIO: btn_percorso_a */
+        [data-testid="stBaseButton-primary"][key="btn_percorso_a"],
+        button[key="btn_percorso_a"],
+        div:has(> [key="btn_percorso_a"]) button,
+        .mbtn-arancio button,
+        .mbtn-arancio button:focus,
+        .mbtn-arancio button:active {{
             background:linear-gradient(135deg,#F59E0B,#D97706) !important;
             color:#fff !important; border:none !important;
             border-radius:12px !important; font-weight:700 !important;
-            font-size:.85rem !important; padding:.55rem 1rem !important;
+            font-size:.85rem !important;
             box-shadow:0 4px 14px #F59E0B44 !important;
-            transition:box-shadow .18s ease, filter .18s ease !important;
         }}
         .mbtn-arancio button:hover {{
+            background:linear-gradient(135deg,#FCD34D,#F59E0B) !important;
             box-shadow:0 6px 22px #F59E0B66 !important;
-            filter:brightness(1.08) !important;
+        }}
+
+        /* VIOLA: btn_facsimile_home */
+        .mbtn-viola button,
+        .mbtn-viola button:focus,
+        .mbtn-viola button:active {{
+            background:linear-gradient(135deg,#7C3AED,#6D28D9) !important;
+            color:#fff !important; border:none !important;
+            border-radius:12px !important; font-weight:700 !important;
+            font-size:.9rem !important;
+            box-shadow:0 4px 18px #7C3AED44 !important;
+        }}
+        .mbtn-viola button:hover {{
+            background:linear-gradient(135deg,#A78BFA,#7C3AED) !important;
+            box-shadow:0 6px 26px #7C3AED66 !important;
+        }}
+
+        /* Card Facsimile viola */
+        .fac-card {{
+            background:linear-gradient(135deg,#7C3AED14 0%,{T["card"]} 70%);
+            border:2px solid #7C3AED;
+            border-radius:18px;
+            padding:1.1rem 1.4rem 1rem;
+            display:flex;align-items:center;gap:1.2rem;
+            box-shadow:0 4px 20px #7C3AED22;
+            transition:box-shadow .18s ease;
+        }}
+        .fac-card:hover {{ box-shadow:0 8px 32px #7C3AED44; }}
+        .fac-badge {{
+            display:inline-flex;align-items:center;gap:.3rem;
+            background:#7C3AED;color:#fff;
+            font-size:.62rem;font-weight:800;
+            padding:3px 10px;border-radius:100px;
+            font-family:DM Sans,sans-serif;letter-spacing:.05em;
+            white-space:nowrap;margin-bottom:.4rem;
+        }}
+        .fac-title {{
+            font-size:.95rem;font-weight:900;
+            color:{T["text"]};font-family:DM Sans,sans-serif;
+            margin-bottom:.2rem;
+        }}
+        .fac-desc {{
+            font-size:.77rem;color:{T["text2"]};
+            font-family:DM Sans,sans-serif;line-height:1.55;
         }}
         </style>
         """,
@@ -1156,28 +1215,29 @@ def _render_bivio():
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── Facsimile Istantaneo — stile one-click card ──────────────────────────
+    # ── Facsimile Istantaneo — card viola ────────────────────────────────────
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
     _fc1, _fc2, _fc3 = st.columns([1, 5, 1])
     with _fc2:
         st.markdown(
-            f'<div class="one-click-variant-card">'
-            f'  <div>'
-            f'    <span class="one-click-badge">⚡ ISTANTANEO</span>'
-            f'  </div>'
-            f'  <div class="one-click-body">'
-            f'    <div class="one-click-title">Crea Facsimile da verifica esistente</div>'
-            f'    <div class="one-click-desc">'
-            f'      Carica una verifica che hai già → l\'AI genera subito una variante con dati diversi. '
-            f'      Stessa struttura, stessi punteggi. '
+            f'<div class="fac-card">'
+            f'  <div style="font-size:2.2rem;flex-shrink:0;">⚡</div>'
+            f'  <div style="flex:1;">'
+            f'    <div class="fac-badge">⚡ ISTANTANEO</div>'
+            f'    <div class="fac-title">Crea Facsimile da verifica esistente</div>'
+            f'    <div class="fac-desc">'
+            f'      Carica una verifica che hai già → l\'AI genera subito una variante '
+            f'      con dati diversi. Stessa struttura, stessi punteggi. '
             f'      <strong>Zero configurazione.</strong>'
             f'    </div>'
             f'  </div>'
             f'</div>',
             unsafe_allow_html=True
         )
+        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+        st.markdown('<div class="mbtn-viola">', unsafe_allow_html=True)
         if st.button(
-            "⚡ Carica verifica e genera variante istantanea →",
+            "⚡  Carica verifica e genera variante istantanea →",
             key="btn_facsimile_home",
             use_container_width=True,
             type="primary",
@@ -1186,6 +1246,7 @@ def _render_bivio():
             st.session_state["_analisi_rifiuto"] = None
             st.session_state["_facsimile_mode"] = True
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 
 def _render_percorso_a_wizard():
