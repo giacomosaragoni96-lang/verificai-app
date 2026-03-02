@@ -31,7 +31,7 @@ def get_css(T: dict) -> str:
 
   .block-container {{
     padding: 5rem 1.5rem 4rem !important;
-    max-width: 860px !important;
+    max-width: 1400px !important;
     margin: 0 auto !important;
   }}
 
