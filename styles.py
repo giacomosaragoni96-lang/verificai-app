@@ -433,95 +433,108 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     TALLY-STYLE LANDING — Hero centrato, unico CTA
+     LANDING HERO — Logo MOLTO GRANDE + headline centrati
      ════════════════════════════════════════════════════════════════════════ */
 
-  /* Logo centrato sulla landing */
-  .landing-logo-wrap {{
+  /* Wrapper unico centrato — tutto in una colonna */
+  .landing-hero-unified {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 3rem 1rem 1.2rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }}
+
+  /* Riga logo: emoji + nome + badge */
+  .landing-logo-row {{
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 2.5rem 0 0;
-    margin-bottom: .2rem;
+    gap: 14px;
+    margin-bottom: 1.6rem;
   }}
-  .landing-logo-icon {{
-    font-size: 2rem;
+  .landing-logo-icon-xl {{
+    font-size: 3.6rem;
     line-height: 1;
+    filter: drop-shadow(0 4px 18px {_acc}55);
   }}
-  .landing-logo-name {{
+  .landing-logo-name-xl {{
     font-family: 'DM Sans', sans-serif;
-    font-size: 1.6rem;
+    font-size: clamp(2.4rem, 6vw, 3.8rem);
     font-weight: 900;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.05em;
     color: {T['text']};
     line-height: 1;
   }}
-  .landing-logo-ai {{
+  .landing-logo-ai-xl {{
     background: linear-gradient(135deg, {_acc}, {T.get('accent2', _acc)});
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }}
-  .landing-logo-beta {{
-    font-size: .58rem;
-    font-weight: 700;
+  .landing-logo-beta-xl {{
+    font-size: .62rem;
+    font-weight: 800;
     letter-spacing: .1em;
     text-transform: uppercase;
     background: {_acc_soft};
     color: {_acc};
     border: 1px solid {_acc_med};
     border-radius: 20px;
-    padding: 3px 9px;
+    padding: 4px 10px;
     align-self: flex-start;
-    margin-top: 4px;
+    margin-top: 6px;
     font-family: 'DM Sans', sans-serif;
   }}
 
-  .tally-hero {{
-    text-align: center;
-    padding: 2rem 1rem 1.4rem;
-    max-width: 700px;
-    margin: 0 auto;
-  }}
-  .tally-eyebrow {{
-    display: inline-block;
-    font-size: .72rem;
-    font-weight: 700;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: {_acc};
-    background: {_acc_soft};
-    border: 1px solid {_acc_med};
-    border-radius: 20px;
-    padding: 4px 14px;
-    margin-bottom: 1.4rem;
+  /* Headline grande */
+  .landing-headline-xl {{
     font-family: 'DM Sans', sans-serif;
-  }}
-  .tally-headline {{
-    font-family: 'DM Sans', sans-serif;
-    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    font-size: clamp(2rem, 4.5vw, 3rem);
     font-weight: 900;
-    line-height: 1.1;
+    line-height: 1.12;
     letter-spacing: -0.04em;
     color: {T['text']};
     margin: 0 0 1.1rem 0;
     padding: 0;
+    text-align: center;
   }}
-  .tally-headline-accent {{
+  .landing-headline-accent-xl {{
     background: linear-gradient(135deg, {_acc}, {T.get('accent2', _acc)}cc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }}
-  .tally-sub {{
-    font-size: 1rem;
+
+  /* Sottotitolo — centrato, leggibile */
+  .landing-sub-xl {{
+    font-size: 1.05rem;
     color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
-    line-height: 1.6;
-    margin: 0 auto;
-    max-width: 480px;
+    line-height: 1.65;
     text-align: center;
+    max-width: 480px;
+    margin: 0 auto 0;
+  }}
+
+  /* Classi legacy mantenute per compatibilità */
+  .landing-logo-wrap {{ display:none; }}
+  .tally-hero {{ text-align:center; padding:2rem 1rem 1.4rem; max-width:700px; margin:0 auto; }}
+  .tally-eyebrow {{ display:none; }}
+  .tally-headline {{
+    font-family:'DM Sans',sans-serif; font-size:clamp(2.2rem,5vw,3.2rem);
+    font-weight:900; line-height:1.1; letter-spacing:-0.04em;
+    color:{T['text']}; margin:0 0 1.1rem 0; padding:0;
+  }}
+  .tally-headline-accent {{
+    background:linear-gradient(135deg,{_acc},{T.get('accent2',_acc)}cc);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  }}
+  .tally-sub {{
+    font-size:1rem; color:{T['text2']}; font-family:'DM Sans',sans-serif;
+    line-height:1.6; margin:0 auto; max-width:480px; text-align:center;
   }}
 
   /* CTA button wrapper */
@@ -554,7 +567,7 @@ def get_css(T: dict) -> str:
     align-items: center;
     justify-content: center;
     gap: 6px 4px;
-    margin: 1.2rem auto 0;
+    margin: 1.4rem auto 0;
     max-width: 640px;
     padding-bottom: .5rem;
   }}
@@ -571,33 +584,9 @@ def get_css(T: dict) -> str:
     margin: 0 2px;
   }}
 
-  /* Social proof strip (mantenuta per compatibilità) */
-  .tally-proof {{
-    text-align: center;
-    font-size: .72rem;
-    color: {T['muted']};
-    font-family: 'DM Sans', sans-serif;
-    margin-top: 2.2rem;
-    margin-bottom: .5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    letter-spacing: .01em;
-  }}
-  .tally-proof-dot {{
-    display: inline-block;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: {T.get('success', '#10B981')};
-    flex-shrink: 0;
-    box-shadow: 0 0 0 3px {T.get('success', '#10B981')}33;
-    animation: pulse-dot 2.5s ease-in-out infinite;
-  }}
-  @keyframes pulse-dot {{
-    0%, 100% {{ box-shadow: 0 0 0 3px {T.get('success','#10B981')}33; }}
-    50%       {{ box-shadow: 0 0 0 6px {T.get('success','#10B981')}18; }}
-  }}
+  /* Social proof (compatibilità) */
+  .tally-proof {{ display: none; }}
+  .tally-proof-dot {{ display: none; }}
 
   /* ════════════════════════════════════════════════════════════════════════
      SIDE-BOX — Colonna destra form (sostituisce facsimile-shortcut + side-panel-card)
@@ -895,6 +884,15 @@ def get_css(T: dict) -> str:
     letter-spacing: -.01em !important;
     border-radius: 14px !important;
   }}
+  .cta-hint-above {{
+    display: flex; align-items: center; justify-content: center;
+    gap: .4rem;
+    font-size: .76rem;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .55rem;
+    text-align: center;
+  }}
   .cta-hint-below {{
     display: flex; align-items: center; justify-content: center;
     gap: .4rem;
@@ -903,6 +901,23 @@ def get_css(T: dict) -> str:
     font-family: 'DM Sans', sans-serif;
     margin-top: .4rem;
     text-align: center;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     BACK BUTTON micro — piccolo, muted, in fondo
+     ════════════════════════════════════════════════════════════════════════ */
+  /* Stile per il pulsante "← Indietro" in fondo al form (colonne plain) */
+  [data-testid="stHorizontalBlock"] .stButton button[data-testid*="btn_back"],
+  .stButton > button[data-testid*="btn_back"] {{
+    background: transparent !important;
+    color: {T['muted']} !important;
+    border: 1px solid {T['border']} !important;
+    font-size: .78rem !important;
+    font-weight: 500 !important;
+    min-height: 30px !important;
+    padding: 0 .7rem !important;
+    box-shadow: none !important;
+    border-radius: 8px !important;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -1336,7 +1351,7 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     BACK BUTTON — Discrete link style
+     BACK BUTTON — Discrete link style (piccolo, muted, in fondo)
      ════════════════════════════════════════════════════════════════════════ */
   .btn-back-discrete > div.stButton > button,
   .btn-back-discrete .stButton > button {{
@@ -1344,14 +1359,14 @@ def get_css(T: dict) -> str:
     color: {T['muted']} !important;
     border: 1px solid transparent !important;
     border-radius: 8px !important;
-    font-size: .82rem !important;
-    font-weight: 600 !important;
-    min-height: 34px !important;
-    padding: 0 .85rem !important;
+    font-size: .76rem !important;
+    font-weight: 500 !important;
+    min-height: 28px !important;
+    padding: 0 .8rem !important;
     box-shadow: none !important;
     transform: none !important;
     transition: color .12s ease, border-color .12s ease !important;
-    width: 100% !important;
+    width: auto !important;
   }}
   .btn-back-discrete > div.stButton > button:hover,
   .btn-back-discrete .stButton > button:hover {{
