@@ -536,6 +536,14 @@ if "qa_result"            not in st.session_state: st.session_state.qa_result = 
 if "qa_file_hash"         not in st.session_state: st.session_state.qa_file_hash = None
 # Preferenze docente (caricate da Supabase)
 if "_docente_prefs"       not in st.session_state: st.session_state._docente_prefs = {}
+# ── Idea #1: Preferenze silenti (materia, scuola, num_esercizi, punteggi) ────
+if "_user_defaults"       not in st.session_state: st.session_state._user_defaults = None
+if "_user_defaults_loaded" not in st.session_state: st.session_state._user_defaults_loaded = False
+# ── Idea #5: Condivisione con dipartimento ──────────────────────────────────
+if "_share_code"          not in st.session_state: st.session_state._share_code = None
+if "_share_generating"    not in st.session_state: st.session_state._share_generating = False
+# ── Idea #3: Quick regen state ──────────────────────────────────────────────
+if "_quick_regen_idx"     not in st.session_state: st.session_state._quick_regen_idx = None
 if "_facsimile_mode"      not in st.session_state: st.session_state["_facsimile_mode"] = False
 if "_pb_argomento_source"    not in st.session_state: st.session_state["_pb_argomento_source"] = None
 if "_pb_argomento_manual_val" not in st.session_state: st.session_state["_pb_argomento_manual_val"] = ""
@@ -699,6 +707,152 @@ def _salva_docente_preferenze(materia: str, prefs: dict) -> None:
         }, on_conflict="user_id,materia").execute()
         # Aggiorna cache locale
         st.session_state._docente_prefs[materia] = prefs
+    except Exception:
+        pass
+
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  IDEA #1 — PREFERENZE SILENTI (salva/carica defaults form utente)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _load_user_defaults() -> dict:
+    """
+    Carica le preferenze form silenti dell'utente da Supabase.
+    Chiave: user_id con materia='__defaults__'.
+    Restituisce {} se non trovate.
+    Viene chiamata UNA volta all'avvio e cachata in session_state.
+    """
+    if st.session_state._user_defaults_loaded:
+        return st.session_state._user_defaults or {}
+    if not st.session_state.utente:
+        return {}
+    try:
+        res = supabase_admin.table("docente_preferenze") \
+            .select("preferenze") \
+            .eq("user_id", st.session_state.utente.id) \
+            .eq("materia", "__defaults__") \
+            .limit(1).execute()
+        defaults = res.data[0].get("preferenze", {}) if res.data else {}
+        st.session_state._user_defaults = defaults
+        st.session_state._user_defaults_loaded = True
+        return defaults
+    except Exception:
+        st.session_state._user_defaults_loaded = True
+        return {}
+
+
+def _save_user_defaults_silent(materia: str, scuola: str,
+                                num_esercizi: int, mostra_punteggi: bool,
+                                punti_totali: int) -> None:
+    """
+    Salva silenziosamente i defaults del form.
+    Chiamata dopo ogni generazione o quando i campi cambiano.
+    Non-blocking: errori ignorati.
+    """
+    from datetime import datetime, timezone
+    if not st.session_state.utente:
+        return
+    defaults = {
+        "materia": materia,
+        "scuola": scuola,
+        "num_esercizi": num_esercizi,
+        "mostra_punteggi": mostra_punteggi,
+        "punti_totali": punti_totali,
+    }
+    # Evita write se nulla è cambiato
+    cached = st.session_state._user_defaults or {}
+    if cached == defaults:
+        return
+    try:
+        supabase_admin.table("docente_preferenze").upsert({
+            "user_id":    st.session_state.utente.id,
+            "materia":    "__defaults__",
+            "preferenze": defaults,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }, on_conflict="user_id,materia").execute()
+        st.session_state._user_defaults = defaults
+    except Exception:
+        pass
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  IDEA #5 — CONDIVISIONE CON IL DIPARTIMENTO
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _generate_share_code() -> str:
+    """Genera un codice breve univoco per la condivisione (6 caratteri alfanumerici)."""
+    import hashlib
+    seed = f"{time.time()}-{st.session_state.utente.id}-{id(st.session_state)}"
+    return hashlib.sha256(seed.encode()).hexdigest()[:8].upper()
+
+
+def _create_share_link(latex_a: str, materia: str, argomento: str,
+                        scuola: str, num_esercizi: int) -> str | None:
+    """
+    Salva la verifica nella tabella shared_verifiche e restituisce il codice.
+    TTL: 30 giorni. Restituisce None in caso di errore.
+    """
+    from datetime import datetime, timezone, timedelta
+    if not st.session_state.utente or not latex_a:
+        return None
+    code = _generate_share_code()
+    try:
+        now = datetime.now(timezone.utc)
+        supabase_admin.table("shared_verifiche").insert({
+            "short_code":    code,
+            "user_id":       st.session_state.utente.id,
+            "latex_a":       latex_a,
+            "materia":       materia,
+            "argomento":     argomento,
+            "scuola":        scuola,
+            "num_esercizi":  num_esercizi,
+            "created_at":    now.isoformat(),
+            "expires_at":    (now + timedelta(days=30)).isoformat(),
+            "view_count":    0,
+            "clone_count":   0,
+        }).execute()
+        return code
+    except Exception:
+        return None
+
+
+def _load_shared_verifica(code: str) -> dict | None:
+    """
+    Carica una verifica condivisa dal codice. Restituisce il record o None.
+    Incrementa il view_count.
+    """
+    try:
+        res = supabase_admin.table("shared_verifiche") \
+            .select("*") \
+            .eq("short_code", code) \
+            .limit(1).execute()
+        if not res.data:
+            return None
+        record = res.data[0]
+        # Incrementa view_count
+        try:
+            supabase_admin.table("shared_verifiche") \
+                .update({"view_count": (record.get("view_count", 0) or 0) + 1}) \
+                .eq("short_code", code).execute()
+        except Exception:
+            pass
+        return record
+    except Exception:
+        return None
+
+
+def _increment_clone_count(code: str) -> None:
+    """Incrementa il contatore cloni per una verifica condivisa."""
+    try:
+        res = supabase_admin.table("shared_verifiche") \
+            .select("clone_count") \
+            .eq("short_code", code) \
+            .limit(1).execute()
+        current = res.data[0].get("clone_count", 0) if res.data else 0
+        supabase_admin.table("shared_verifiche") \
+            .update({"clone_count": (current or 0) + 1}) \
+            .eq("short_code", code).execute()
     except Exception:
         pass
 
@@ -2039,6 +2193,8 @@ def _render_percorso_b_form():
     with col_main:
 
         _prev = st.session_state.gen_params or {}
+        # ── IDEA #1: carica defaults silenti come fallback ────────────────
+        _udef = _load_user_defaults()
 
         # ── Section header: Materia & Scuola ──────────────────────────────────
         st.markdown(
@@ -2052,9 +2208,9 @@ def _render_percorso_b_form():
 
         _col_m, _col_s = st.columns(2, gap="small")
         _mat_list = MATERIE + ["✏️ Altra materia..."]
-        _mat_prev = _prev.get("materia", "Matematica")
+        _mat_prev = _prev.get("materia") or _udef.get("materia", "Matematica")
         _mat_idx  = _mat_list.index(_mat_prev) if _mat_prev in _mat_list else 0
-        _scu_prev = _prev.get("difficolta", "")
+        _scu_prev = _prev.get("difficolta") or _udef.get("scuola", "")
         _scu_idx  = SCUOLE.index(_scu_prev) if _scu_prev in SCUOLE else 0
 
         # Auto-fill da analisi file se disponibile
@@ -2137,7 +2293,7 @@ def _render_percorso_b_form():
             f'</div>',
             unsafe_allow_html=True,
         )
-        _n_default = 4
+        _n_default = _udef.get("num_esercizi", 4)
         if _info_cons.get("num_esercizi_rilevati"):
             try:
                 _n_default = max(1, min(int(_info_cons["num_esercizi_rilevati"]), 15))
@@ -2192,14 +2348,15 @@ def _render_percorso_b_form():
 
             _tog = st.toggle(
                 "Aggiungi punteggi e griglia di valutazione",
-                value=True, key="toggle_punteggi_b",
+                value=_udef.get("mostra_punteggi", True), key="toggle_punteggi_b",
             )
             mostra_punteggi = _tog
             con_griglia = _tog
             punti_totali = 100
             if _tog:
                 _pt_opts = list(range(10, 105, 5))
-                _pt_idx  = _pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts) - 1
+                _pt_saved = _udef.get("punti_totali", 100)
+                _pt_idx  = _pt_opts.index(_pt_saved) if _pt_saved in _pt_opts else (_pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts) - 1)
                 st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
                 punti_totali = st.selectbox(
                     "Punti totali", options=_pt_opts, index=_pt_idx,
@@ -2701,6 +2858,14 @@ def _lancia_generazione(
             st.toast("✅ Bozza salvata!", icon="💾")
         except Exception as _e:
             st.warning(f"⚠️ Salvataggio storico non riuscito: {_e}")
+
+        # ── IDEA #1: Salva preferenze silenti dopo generazione riuscita ────
+        _save_user_defaults_silent(
+            materia=materia_scelta, scuola=difficolta,
+            num_esercizi=num_esercizi_totali,
+            mostra_punteggi=mostra_punteggi,
+            punti_totali=punti_totali,
+        )
 
         # ── Transita a STAGE_PREVIEW (anteprima rapida) invece di STAGE_REVIEW
         st.session_state.stage = STAGE_PREVIEW
@@ -3257,6 +3422,24 @@ def _render_stage_review():
             if re.search(r"\\begin\{(tikzpicture|axis)\}", body):
                 st.info("📊 Grafici TikZ/pgfplots visibili nel PDF finale.")
 
+            # ── IDEA #3: Quick Regen — variante rapida one-click ──────────
+            st.markdown(
+                '<div class="quick-regen-row">'
+                '<div class="quick-regen-label">'
+                '🎲 <strong>Variante rapida</strong>'
+                '<span class="quick-regen-hint">'
+                'Stessa struttura e difficoltà, dati diversi'
+                '</span>'
+                '</div>'
+                '</div>',
+                unsafe_allow_html=True
+            )
+            quick_regen = st.button(
+                "🎲 Genera variante",
+                key=f"quick_regen_{idx}",
+                use_container_width=True,
+            )
+
             st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
 
             # ── Expander: Modifica con AI ──────────────────────────────────────
@@ -3449,6 +3632,87 @@ def _render_stage_review():
                 )
             else:
                 st.caption("Anteprima non disponibile.")
+
+    # ── IDEA #3: Quick Regen — variante rapida handler ──────────────────────
+    if quick_regen:
+        _pts_custom_qr = st.session_state.get("recalibra_pts", [])
+        if _pts_custom_qr and len(_pts_custom_qr) == n_blocks:
+            _qr_target_pts = int(_pts_custom_qr[idx])
+        else:
+            _qr_target_pts = _parse_pts_from_block_body(body)
+
+        if mostra_punteggi and _qr_target_pts > 0:
+            _qr_punti_nota = (
+                f"Assegna esattamente {_qr_target_pts} pt in totale a questo esercizio, "
+                f"distribuendoli tra i sotto-punti con il formato (N pt) su ogni \\item. "
+                f"La somma DEVE essere {_qr_target_pts} pt."
+            )
+        elif mostra_punteggi:
+            _qr_punti_nota = f"Mantieni il formato (X pt) su ogni \\item."
+        else:
+            _qr_punti_nota = "NON inserire punteggi (X pt)."
+
+        _qr_prompt = (
+            f"Sei un docente esperto di {materia_str} e LaTeX.\n"
+            f"Devi creare una VARIANTE di questo esercizio: cambia i dati numerici, "
+            f"i nomi delle variabili, i valori specifici — mantenendo IDENTICA "
+            f"la struttura, la tipologia e il livello di difficoltà.\n\n"
+            f"MATERIA: {materia_str}\n"
+            f"ARGOMENTO: {argomento_str}\n"
+            f"⚠️ L'esercizio DEVE restare su '{argomento_str}' in '{materia_str}'.\n\n"
+            f"ESERCIZIO ORIGINALE:\n\\subsection*{{{title}}}\n{body}\n\n"
+            f"REGOLE:\n"
+            f"- Cambia SOLO i dati (numeri, coefficienti, nomi, valori) — "
+            f"NON la struttura, NON il tipo, NON la difficoltà.\n"
+            f"- Se ci sono grafici TikZ/pgfplots, adatta i parametri ai nuovi dati.\n"
+            f"- Mantieni lo STESSO numero di sotto-punti.\n"
+            f"- {_qr_punti_nota}\n"
+            f"- Restituisci SOLO il blocco \\subsection*{{...}} con la variante.\n"
+            f"- NON includere preambolo o \\begin{{document}}.\n"
+            f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
+        )
+        with st.spinner(f"🎲 Generazione variante esercizio {idx+1}…"):
+            try:
+                _qr_model = genai.GenerativeModel(modello_rw)
+                _qr_resp = _qr_model.generate_content(_qr_prompt)
+                _qr_nuovo = _qr_resp.text.replace("```latex","").replace("```","").strip()
+                _qr_m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", _qr_nuovo, re.DOTALL)
+                if _qr_m:
+                    _qr_new_title = _qr_m.group(1)
+                    _qr_new_body  = _qr_m.group(2).strip()
+                else:
+                    _qr_new_title = title
+                    _qr_new_body  = _qr_nuovo
+                _qr_new_title = re.sub(r'\s*\(\d+\s*pt\)', '', _qr_new_title).strip()
+                if mostra_punteggi and _qr_target_pts > 0:
+                    _qr_new_body = _riscala_single_block(_qr_new_title, _qr_new_body, _qr_target_pts)
+                st.session_state.review_blocks[idx]["title"] = _qr_new_title
+                st.session_state.review_blocks[idx]["body"]  = _qr_new_body
+                if "recalibra_pts" in st.session_state:
+                    del st.session_state["recalibra_pts"]
+                _qr_latex = _reconstruct_latex(
+                    st.session_state.review_preamble,
+                    st.session_state.review_blocks
+                )
+                _qr_latex = fix_items_environment(_qr_latex)
+                _qr_latex = rimuovi_vspace_corpo(_qr_latex)
+                _qr_latex = rimuovi_punti_subsection(_qr_latex)
+                if con_griglia:
+                    _qr_latex = inietta_griglia(_qr_latex, punti_totali)
+                st.session_state.verifiche["A"]["latex"]           = _qr_latex
+                st.session_state.verifiche["A"]["latex_originale"] = _qr_latex
+                _qr_pdf, _ = compila_pdf(_qr_latex)
+                if _qr_pdf:
+                    st.session_state.verifiche["A"]["pdf"]    = _qr_pdf
+                    st.session_state.verifiche["A"]["pdf_ts"] = time.time()
+                    st.session_state.verifiche["A"]["preview"] = True
+                    _qr_imgs, _ = pdf_to_images_bytes(_qr_pdf)
+                    st.session_state.preview_images = _qr_imgs or []
+                    st.session_state.preview_page   = 0
+                st.toast(f"🎲 Variante esercizio {idx+1} generata!", icon="🎲")
+                time.sleep(0.3); st.rerun()
+            except Exception as _qr_e:
+                st.error(f"❌ Errore: {_qr_e}")
 
     # ── Logica modifica AI ────────────────────────────────────────────────────
     if rigenera and istruzione.strip():
@@ -3897,10 +4161,108 @@ def _render_stage_final():
             st.session_state["_facsimile_mode"] = False
             # QA mode
             st.session_state.qa_mode            = False
+            # Share
+            st.session_state._share_code        = None
+            st.session_state._share_generating   = False
             st.rerun()
     with _nav2:
         if st.button("← Rivedi esercizi", use_container_width=True, key="btn_rev_s3_top"):
             st.session_state.stage = STAGE_REVIEW; st.rerun()
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    #  IDEA #5 — CONDIVIDI CON IL DIPARTIMENTO
+    # ═══════════════════════════════════════════════════════════════════════════
+    st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
+
+    _share_code = st.session_state._share_code
+    _latex_a_share = vA.get("latex", "")
+
+    if _latex_a_share:
+        st.markdown(
+            f'<div class="share-dept-card">'
+            f'  <div class="share-dept-header">'
+            f'    <span class="share-dept-icon">📤</span>'
+            f'    <div class="share-dept-title-wrap">'
+            f'      <div class="share-dept-title">Condividi con il Dipartimento</div>'
+            f'      <div class="share-dept-subtitle">'
+            f'I colleghi potranno visualizzare la tua verifica e generare la propria variante con un click.'
+            f'      </div>'
+            f'    </div>'
+            f'  </div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
+        if _share_code:
+            # Link già generato — mostra con copy
+            _share_full_url = f"{SHARE_URL}?share={_share_code}"
+            st.markdown(
+                f'<div class="share-link-box">'
+                f'  <div class="share-link-status">'
+                f'    <span class="share-link-dot"></span>'
+                f'    Link attivo · scade tra 30 giorni'
+                f'  </div>'
+                f'  <div class="share-link-url">{_share_full_url}</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+            _sh_c1, _sh_c2 = st.columns([3, 1])
+            with _sh_c1:
+                # Copy button via components.html
+                components.html(
+                    "<style>body{margin:0;padding:0;background:transparent}"
+                    ".cb{background:#D97706;color:#fff;border:none;border-radius:8px;"
+                    "padding:8px 16px;cursor:pointer;font-size:.82rem;font-weight:700;"
+                    "font-family:DM Sans,sans-serif;width:100%;transition:all .15s}"
+                    ".cb:hover{background:#B45309;transform:translateY(-1px)}"
+                    ".cb.ok{background:#059669}</style>"
+                    f"<button class='cb' id='cpb' onclick='doCopy()'>📋 Copia link</button>"
+                    "<script>function doCopy(){"
+                    f"var t=document.createElement('textarea');t.value='{_share_full_url}';"
+                    "t.style.cssText='position:fixed;opacity:0';document.body.appendChild(t);"
+                    "t.select();var ok=false;try{ok=document.execCommand('copy')}catch(e){}"
+                    "document.body.removeChild(t);var b=document.getElementById('cpb');"
+                    "if(ok){b.className='cb ok';b.innerText='✅ Copiato!';"
+                    "setTimeout(function(){b.className='cb';b.innerText='📋 Copia link'},2500)}"
+                    "}</script>",
+                    height=42,
+                )
+            with _sh_c2:
+                if st.button("🔄", key="share_new_link", help="Genera nuovo link"):
+                    st.session_state._share_code = None
+                    st.rerun()
+
+            st.markdown(
+                f'<div style="font-size:.7rem;color:{T["muted"]};margin-top:.3rem;'
+                f'font-family:DM Sans,sans-serif;line-height:1.4;">'
+                f'👥 Quando un collega apre il link, vede un\'anteprima e può generare '
+                f'la propria variante con dati nuovi — senza accedere alla tua verifica originale.'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+        else:
+            # Genera link
+            if st.button("📤 Genera link di condivisione", key="btn_share_gen",
+                         use_container_width=True):
+                st.session_state._share_generating = True
+                st.rerun()
+
+            if st.session_state.get("_share_generating"):
+                st.session_state._share_generating = False
+                with st.spinner("📤 Creazione link di condivisione…"):
+                    _new_code = _create_share_link(
+                        latex_a=_latex_a_share,
+                        materia=mat_str,
+                        argomento=arg_str,
+                        scuola=scu_str,
+                        num_esercizi=gp.get("num_esercizi", 4),
+                    )
+                if _new_code:
+                    st.session_state._share_code = _new_code
+                    st.toast("📤 Link di condivisione creato!", icon="📤")
+                    st.rerun()
+                else:
+                    st.error("Errore nella creazione del link. Riprova.")
 
     # ── Sezioni secondarie collassabili ───────────────────────────────────────
     st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
@@ -4091,7 +4453,132 @@ def _render_stage_final():
 #  ROUTING
 # ═══════════════════════════════════════════════════════════════════════════════
 
-_render_breadcrumb()
+# ── IDEA #5: Intercetta link condiviso ?share=CODE ────────────────────────────
+_share_param = st.query_params.get("share", None)
+_share_view_active = False
+
+if _share_param and isinstance(_share_param, str) and len(_share_param) >= 6:
+    _shared_record = _load_shared_verifica(_share_param)
+    if _shared_record:
+        _share_view_active = True
+        _sh_mat  = _shared_record.get("materia", "")
+        _sh_arg  = _shared_record.get("argomento", "")
+        _sh_scu  = _shared_record.get("scuola", "")
+        _sh_lat  = _shared_record.get("latex_a", "")
+        _sh_date = _shared_record.get("created_at", "")[:10]
+        _sh_n_es = _shared_record.get("num_esercizi", "?")
+
+        st.markdown(
+            f'<div class="shared-view-banner">'
+            f'  <div class="shared-view-header">'
+            f'    <span style="font-size:1.5rem;">📤</span>'
+            f'    <div>'
+            f'      <div class="shared-view-title">Verifica condivisa da un collega</div>'
+            f'      <div class="shared-view-meta">'
+            f'{_sh_mat} · {_sh_scu} · {_sh_arg}'
+            f'      </div>'
+            f'    </div>'
+            f'  </div>'
+            f'  <div class="shared-view-badges">'
+            f'    <span class="shared-view-badge">📝 {_sh_n_es} esercizi</span>'
+            f'    <span class="shared-view-badge">📅 {_sh_date}</span>'
+            f'    <span class="shared-view-badge">🔒 Solo lettura</span>'
+            f'  </div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
+        # Compila PDF per anteprima
+        if _sh_lat:
+            _sh_pdf, _sh_err = compila_pdf(_sh_lat)
+            if _sh_pdf:
+                _sh_imgs, _ = pdf_to_images_bytes(_sh_pdf)
+                if _sh_imgs:
+                    st.markdown(
+                        f'<div style="font-size:.72rem;font-weight:700;color:{T["muted"]};'
+                        f'text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;">'
+                        f'📄 Anteprima verifica</div>',
+                        unsafe_allow_html=True
+                    )
+                    _sh_cols = st.columns(min(3, len(_sh_imgs)))
+                    for _shi, _sh_img in enumerate(_sh_imgs[:3]):
+                        with _sh_cols[_shi]:
+                            st.image(_sh_img, use_container_width=True, caption=f"Pag. {_shi+1}")
+
+                st.download_button(
+                    f"📄  Scarica PDF originale",
+                    data=_sh_pdf, file_name=f"{_sh_arg}_condivisa.pdf",
+                    mime="application/pdf", use_container_width=True,
+                    key="dl_shared_pdf",
+                )
+
+            st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
+
+            # CTA: genera la tua variante
+            st.markdown(
+                f'<div class="shared-cta-card">'
+                f'  <div class="shared-cta-icon">🎲</div>'
+                f'  <div class="shared-cta-title">Genera la tua variante</div>'
+                f'  <div class="shared-cta-desc">'
+                f'Crea una versione con dati nuovi e stessa struttura — '
+                f'perfetta come Fila B per la tua classe.'
+                f'  </div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+
+            if st.session_state.utente:
+                # Utente autenticato → può generare variante
+                if st.button("🎲 Genera la mia variante", type="primary",
+                             use_container_width=True, key="btn_shared_variant"):
+                    _increment_clone_count(_share_param)
+                    st.session_state.verifiche["A"]["latex"] = _sh_lat
+                    st.session_state.verifiche["A"]["latex_originale"] = _sh_lat
+                    if _sh_pdf:
+                        st.session_state.verifiche["A"]["pdf"] = _sh_pdf
+                        st.session_state.verifiche["A"]["preview"] = True
+                        _sh_imgs_2, _ = pdf_to_images_bytes(_sh_pdf)
+                        st.session_state.preview_images = _sh_imgs_2 or []
+                    _sh_pre, _sh_blks = _extract_blocks(_sh_lat)
+                    if _sh_blks:
+                        st.session_state.review_preamble = _sh_pre
+                        st.session_state.review_blocks = _sh_blks
+                    st.session_state.gen_params = {
+                        "materia":    _sh_mat, "difficolta": _sh_scu,
+                        "argomento":  _sh_arg, "num_esercizi": _sh_n_es,
+                        "mostra_punteggi": True, "punti_totali": 100,
+                        "con_griglia": True,
+                    }
+                    st.session_state.stage = STAGE_FINAL
+                    # Genera Fila B automaticamente
+                    st.session_state["_gen_fila_b"] = True
+                    st.query_params.clear()
+                    st.rerun()
+            else:
+                st.info(
+                    "🔐 Per generare la tua variante, accedi con il tuo account VerificAI. "
+                    "È gratis!"
+                )
+                if st.button("🔐 Accedi per generare", use_container_width=True, key="btn_shared_login"):
+                    st.query_params.clear()
+                    st.rerun()
+
+            st.markdown(
+                f'<div style="text-align:center;font-size:.72rem;color:{T["muted"]};'
+                f'font-family:DM Sans,sans-serif;margin-top:1rem;">'
+                f'Link condiviso con VerificAI · <a href="{SHARE_URL}" '
+                f'style="color:{T["accent"]};">Crea la tua prima verifica gratis →</a>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+    else:
+        st.warning("⚠️ Link di condivisione non valido o scaduto.")
+        if st.button("← Torna alla home", key="btn_shared_back"):
+            st.query_params.clear()
+            st.rerun()
+
+if not _share_view_active:
+    _render_breadcrumb()
 
 # ── SCROLL TO TOP on stage change ─────────────────────────────────────────────
 _current_stage = st.session_state.stage
@@ -4116,11 +4603,12 @@ if _prev_stage != _current_stage:
         height=0
     )
 
-_current = _current_stage
-if   _current == STAGE_INPUT:   _render_stage_input()
-elif _current == STAGE_PREVIEW: _render_stage_preview()
-elif _current == STAGE_REVIEW:  _render_stage_review()
-elif _current == STAGE_FINAL:   _render_stage_final()
+if not _share_view_active:
+    _current = _current_stage
+    if   _current == STAGE_INPUT:   _render_stage_input()
+    elif _current == STAGE_PREVIEW: _render_stage_preview()
+    elif _current == STAGE_REVIEW:  _render_stage_review()
+    elif _current == STAGE_FINAL:   _render_stage_final()
 
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
