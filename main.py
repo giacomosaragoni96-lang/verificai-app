@@ -537,6 +537,8 @@ if "qa_file_hash"         not in st.session_state: st.session_state.qa_file_hash
 # Preferenze docente (caricate da Supabase)
 if "_docente_prefs"       not in st.session_state: st.session_state._docente_prefs = {}
 if "_facsimile_mode"      not in st.session_state: st.session_state["_facsimile_mode"] = False
+if "_pb_argomento_source"    not in st.session_state: st.session_state["_pb_argomento_source"] = None
+if "_pb_argomento_manual_val" not in st.session_state: st.session_state["_pb_argomento_manual_val"] = ""
 # Wizard state (Percorso A)
 if "wizard_step"           not in st.session_state: st.session_state["wizard_step"] = "upload"
 if "wizard_intent_pending" not in st.session_state: st.session_state["wizard_intent_pending"] = None
@@ -950,182 +952,88 @@ def _consolida_info():
 
 def _render_bivio():
     """
-    Landing page: 3 card colorate uguali per dimensione (blu/verde/arancio)
-    + card facsimile one-click in stile 'Genera Fila B'.
+    Home page migliorata: gerarchia visiva chiara, accenti di colore,
+    separazione percorso guidato vs percorso rapido (facsimile).
     """
+    # ── Titolo sezione ────────────────────────────────────────────────────────
     st.markdown(
-        f'<div style="text-align:center;padding:.8rem 0 1.2rem;">'
-        f'<div style="font-size:1.1rem;font-weight:900;color:{T["text"]};'
-        f'font-family:DM Sans,sans-serif;letter-spacing:-.02em;margin-bottom:.3rem;">'
-        f'Come vuoi creare la verifica?'
-        f'</div>'
-        f'<div style="font-size:.8rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
-        f'Scegli il percorso più adatto — puoi cambiare idea in qualsiasi momento'
+        f'<div class="home-landing-wrap">'
+        f'<div class="home-landing-title">Come vuoi creare la verifica?</div>'
+        f'<div class="home-landing-desc">'
+        f'Scegli il percorso più adatto alle tue esigenze. '
+        f'Puoi sempre modificare ogni esercizio dopo la generazione.'
         f'</div>'
         f'</div>',
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
-    # CSS card colorate + pulsanti colorati per key specifica
+    # ── Iniezione CSS card pulsanti colorati ──────────────────────────────────
     st.markdown(
-        f"""
-        <style>
-        .mcard {{
-            border-radius:20px;
-            padding:1.8rem 1.5rem 1.4rem;
-            min-height:270px;
-            display:flex;flex-direction:column;gap:.6rem;
-            position:relative;
-            transition:transform .18s ease, box-shadow .18s ease;
+        f"""<style>
+        .mcard-blu  {{ border-color: #3B82F6 !important; }}
+        .mcard-verde {{ border-color: #10B981 !important; }}
+        .mcard-arancio {{ border-color: #F59E0B !important; }}
+        /* Colonna 1 — BLU */
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) >
+          div[data-testid="column"]:nth-child(1) button {{
+            background: linear-gradient(135deg,#3B82F6,#2563EB) !important;
+            color:#fff !important; border:none !important;
+            border-radius:12px !important; font-weight:700 !important;
+            font-size:.9rem !important;
+            box-shadow:0 4px 16px #3B82F644 !important;
         }}
-        .mcard:hover {{ transform:translateY(-4px); }}
-
-        /* BLU */
-        .mcard-blu {{
-            background:linear-gradient(150deg,#1D4ED812 0%,{T["card"]} 68%);
-            border:2px solid #3B82F6;
-            box-shadow:0 4px 18px #3B82F622;
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) >
+          div[data-testid="column"]:nth-child(1) button:hover {{
+            background:linear-gradient(135deg,#60A5FA,#3B82F6) !important;
+            box-shadow:0 6px 24px #3B82F666 !important;
         }}
-        .mcard-blu:hover {{ box-shadow:0 12px 36px #3B82F644; }}
-
-        /* VERDE */
-        .mcard-verde {{
-            background:linear-gradient(150deg,#05966912 0%,{T["card"]} 68%);
-            border:2px solid #10B981;
-            box-shadow:0 4px 18px #10B98122;
+        /* Colonna 2 — VERDE */
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) >
+          div[data-testid="column"]:nth-child(2) button {{
+            background:linear-gradient(135deg,#10B981,#059669) !important;
+            color:#fff !important; border:none !important;
+            border-radius:12px !important; font-weight:700 !important;
+            font-size:.9rem !important;
+            box-shadow:0 4px 16px #10B98144 !important;
         }}
-        .mcard-verde:hover {{ box-shadow:0 12px 36px #10B98144; }}
-
-        /* ARANCIO */
-        .mcard-arancio {{
-            background:linear-gradient(150deg,#D9770612 0%,{T["card"]} 68%);
-            border:2px solid #F59E0B;
-            box-shadow:0 4px 18px #F59E0B22;
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) >
+          div[data-testid="column"]:nth-child(2) button:hover {{
+            background:linear-gradient(135deg,#34D399,#10B981) !important;
+            box-shadow:0 6px 24px #10B98166 !important;
         }}
-        .mcard-arancio:hover {{ box-shadow:0 12px 36px #F59E0B44; }}
-
-        .mcard-badge {{
-            position:absolute;top:-.8rem;left:1.1rem;
-            color:#fff;font-size:.6rem;font-weight:800;
-            padding:3px 10px;border-radius:100px;
-            font-family:DM Sans,sans-serif;letter-spacing:.05em;
+        /* Colonna 3 — ARANCIO */
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) >
+          div[data-testid="column"]:nth-child(3) button {{
+            background:linear-gradient(135deg,#F59E0B,#D97706) !important;
+            color:#fff !important; border:none !important;
+            border-radius:12px !important; font-weight:700 !important;
+            font-size:.9rem !important;
+            box-shadow:0 4px 16px #F59E0B44 !important;
         }}
-        .mcard-icon {{ font-size:2.5rem;line-height:1;margin-bottom:.1rem; }}
-        .mcard-title {{
-            font-size:1.05rem;font-weight:900;
-            font-family:DM Sans,sans-serif;line-height:1.2;
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) >
+          div[data-testid="column"]:nth-child(3) button:hover {{
+            background:linear-gradient(135deg,#FCD34D,#F59E0B) !important;
+            box-shadow:0 6px 24px #F59E0B66 !important;
         }}
-        .mcard-desc {{
-            font-size:.8rem;color:{T["text2"]};
-            font-family:DM Sans,sans-serif;line-height:1.65;flex:1;
-        }}
-        .mcard-hint {{
-            font-size:.71rem;color:{T["muted"]};
-            font-family:DM Sans,sans-serif;
-            padding:.35rem .55rem;background:{T["card2"]};
-            border-radius:7px;
-        }}
-        .mcard-chips {{ display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.1rem; }}
-        .mcard-chip {{
-            font-size:.63rem;background:{T["card2"]};
-            border-radius:6px;padding:2px 8px;color:{T["text2"]};
-        }}
-
-        /* ── Pulsanti card — selettori posizionali per colonna (funziona in Streamlit) ── */
-
-        /* Colonna 1 (BLU) — Creazione guidata */
-        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(1) button {{
-            background: linear-gradient(135deg, #3B82F6, #2563EB) !important;
-            color: #fff !important; border: none !important;
-            border-radius: 12px !important; font-weight: 700 !important;
-            font-size: .88rem !important;
-            box-shadow: 0 4px 16px #3B82F644 !important;
-            transition: background .2s, box-shadow .2s !important;
-        }}
-        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(1) button:hover {{
-            background: linear-gradient(135deg, #60A5FA, #3B82F6) !important;
-            box-shadow: 0 6px 24px #3B82F666 !important;
-        }}
-
-        /* Colonna 2 (VERDE) — Descrizione libera */
-        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(2) button {{
-            background: linear-gradient(135deg, #10B981, #059669) !important;
-            color: #fff !important; border: none !important;
-            border-radius: 12px !important; font-weight: 700 !important;
-            font-size: .88rem !important;
-            box-shadow: 0 4px 16px #10B98144 !important;
-            transition: background .2s, box-shadow .2s !important;
-        }}
-        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(2) button:hover {{
-            background: linear-gradient(135deg, #34D399, #10B981) !important;
-            box-shadow: 0 6px 24px #10B98166 !important;
-        }}
-
-        /* Colonna 3 (ARANCIO) — Genera da file */
-        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(3) button {{
-            background: linear-gradient(135deg, #F59E0B, #D97706) !important;
-            color: #fff !important; border: none !important;
-            border-radius: 12px !important; font-weight: 700 !important;
-            font-size: .88rem !important;
-            box-shadow: 0 4px 16px #F59E0B44 !important;
-            transition: background .2s, box-shadow .2s !important;
-        }}
-        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(3) button:hover {{
-            background: linear-gradient(135deg, #FCD34D, #F59E0B) !important;
-            box-shadow: 0 6px 24px #F59E0B66 !important;
-        }}
-
-        /* VIOLA — Facsimile (btn_facsimile_home, colonna centrale) */
-        .mbtn-viola button,
-        .mbtn-viola button:focus {{
-            background: linear-gradient(135deg, #7C3AED, #6D28D9) !important;
-            color: #fff !important; border: none !important;
-            border-radius: 12px !important; font-weight: 700 !important;
-            font-size: .92rem !important;
-            box-shadow: 0 4px 20px #7C3AED44 !important;
-            transition: background .2s, box-shadow .2s !important;
+        /* VIOLA — Facsimile */
+        .mbtn-viola button {{
+            background:linear-gradient(135deg,#7C3AED,#6D28D9) !important;
+            color:#fff !important; border:none !important;
+            border-radius:12px !important; font-weight:700 !important;
+            font-size:.92rem !important;
+            box-shadow:0 4px 20px #7C3AED44 !important;
         }}
         .mbtn-viola button:hover {{
-            background: linear-gradient(135deg, #A78BFA, #7C3AED) !important;
-            box-shadow: 0 6px 28px #7C3AED66 !important;
+            background:linear-gradient(135deg,#A78BFA,#7C3AED) !important;
+            box-shadow:0 6px 28px #7C3AED66 !important;
         }}
-
-        /* Card Facsimile viola */
-        .fac-card {{
-            background: linear-gradient(135deg, #7C3AED14 0%, {T["card"]} 70%);
-            border: 2px solid #7C3AED;
-            border-radius: 18px;
-            padding: 1.1rem 1.4rem 1rem;
-            display: flex; align-items: center; gap: 1.2rem;
-            box-shadow: 0 4px 20px #7C3AED22;
-            transition: box-shadow .18s ease;
-        }}
-        .fac-card:hover {{ box-shadow: 0 8px 32px #7C3AED44; }}
-        .fac-badge {{
-            display: inline-flex; align-items: center; gap: .3rem;
-            background: #7C3AED; color: #fff;
-            font-size: .62rem; font-weight: 800;
-            padding: 3px 10px; border-radius: 100px;
-            font-family: DM Sans, sans-serif; letter-spacing: .05em;
-            white-space: nowrap; margin-bottom: .4rem;
-        }}
-        .fac-title {{
-            font-size: .95rem; font-weight: 900;
-            color: #7C3AED; font-family: DM Sans, sans-serif;
-            margin-bottom: .2rem;
-        }}
-        .fac-desc {{
-            font-size: .77rem; color: {T["text2"]};
-            font-family: DM Sans, sans-serif; line-height: 1.55;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
+        </style>""",
+        unsafe_allow_html=True,
     )
 
+    # ── 3 card percorsi ───────────────────────────────────────────────────────
     col_a, col_b, col_c = st.columns(3, gap="medium")
 
-    # ── Card A: Creazione Guidata — BLU ──────────────────────────────────────
     with col_a:
         st.markdown(
             f'<div class="mcard mcard-blu">'
@@ -1134,50 +1042,44 @@ def _render_bivio():
             f'<div class="mcard-title" style="color:#3B82F6;">Creazione guidata</div>'
             f'<div class="mcard-desc">'
             f'Scegli materia, classe e argomento. '
-            f'L\'AI costruisce la verifica rispettando il tuo livello scolastico '
-            f'e il numero di esercizi che vuoi.'
+            f'L\'AI costruisce la verifica rispettando livello scolastico '
+            f'e numero di esercizi che vuoi. Puoi allegare materiale opzionale.'
             f'</div>'
-            f'<div class="mcard-hint">Compila i campi e premi Genera — è semplice.</div>'
+            f'<div class="mcard-hint">Compila i campi, allega file se vuoi — poi premi Genera.</div>'
             f'<div class="mcard-chips">'
-            f'<span class="mcard-chip">⚙️ Struttura custom</span>'
-            f'<span class="mcard-chip">🎯 Controllo totale</span>'
+            f'<span class="mcard-chip">⚙️ Controllo totale</span>'
+            f'<span class="mcard-chip">📂 Upload opzionale</span>'
             f'</div>'
             f'</div>',
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
-        st.markdown('<div class="mbtn-blu">', unsafe_allow_html=True)
-        if st.button("Scegli questo percorso →", key="btn_percorso_b",
+        if st.button("✍️  Crea verifica guidata →", key="btn_percorso_b",
                      use_container_width=True, type="primary"):
             st.session_state.input_percorso = "B"
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── Card B: Descrizione Libera — VERDE ───────────────────────────────────
     with col_b:
         st.markdown(
             f'<div class="mcard mcard-verde">'
             f'<div class="mcard-icon">💬</div>'
             f'<div class="mcard-title" style="color:#10B981;">Descrizione libera</div>'
             f'<div class="mcard-desc">'
-            f'Scrivi con parole tue cosa vuoi: "Verifica su equazioni di secondo grado '
-            f'con 3 problemi". L\'AI interpreta e genera.'
+            f'Scrivi con parole tue cosa vuoi: <em>"Verifica su equazioni di secondo grado '
+            f'con 3 problemi aperti"</em>. L\'AI interpreta e genera.'
             f'</div>'
-            f'<div class="mcard-hint">Ideale se hai già in mente la struttura ma non vuoi compilare campi.</div>'
+            f'<div class="mcard-hint">Ideale se hai già in mente la struttura.</div>'
             f'<div class="mcard-chips">'
             f'<span class="mcard-chip">🗣️ Linguaggio naturale</span>'
             f'<span class="mcard-chip">⚡ Rapido</span>'
             f'</div>'
             f'</div>',
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
-        st.markdown('<div class="mbtn-verde">', unsafe_allow_html=True)
-        if st.button("Scegli questo percorso →", key="btn_percorso_libera",
+        if st.button("💬  Descrivi e genera →", key="btn_percorso_libera",
                      use_container_width=True, type="primary"):
             st.session_state.input_percorso = "LIBERA"
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── Card C: Genera da File — ARANCIONE ───────────────────────────────────
     with col_c:
         st.markdown(
             f'<div class="mcard mcard-arancio">'
@@ -1185,7 +1087,7 @@ def _render_bivio():
             f'<div class="mcard-title" style="color:#F59E0B;">Genera da file</div>'
             f'<div class="mcard-desc">'
             f'Carica una verifica precedente, appunti o foto della lavagna. '
-            f'L\'AI legge il materiale e genera una verifica coerente.'
+            f'Il wizard analizza il materiale e guida la generazione passo per passo.'
             f'</div>'
             f'<div class="mcard-hint">Il file viene usato solo per generare la verifica.</div>'
             f'<div class="mcard-chips">'
@@ -1194,48 +1096,67 @@ def _render_bivio():
             f'<span class="mcard-chip">📷 Foto</span>'
             f'</div>'
             f'</div>',
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
-        st.markdown('<div class="mbtn-arancio">', unsafe_allow_html=True)
-        if st.button("Scegli questo percorso →", key="btn_percorso_a",
+        if st.button("📂  Carica e genera →", key="btn_percorso_a",
                      use_container_width=True, type="primary"):
             st.session_state.input_percorso = "A"
             st.session_state["_analisi_rifiuto"] = None
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── Facsimile Istantaneo — card viola ────────────────────────────────────
-    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-    _fc1, _fc2, _fc3 = st.columns([1, 5, 1])
+    # ── Facsimile — card viola in evidenza ────────────────────────────────────
+    st.markdown("<div style='height:1.1rem'></div>", unsafe_allow_html=True)
+    _fc1, _fc2, _fc3 = st.columns([1, 6, 1])
     with _fc2:
         st.markdown(
             f'<div class="fac-card">'
-            f'  <div style="font-size:2.2rem;flex-shrink:0;">⚡</div>'
+            f'  <div style="font-size:2.2rem;flex-shrink:0;line-height:1;">⚡</div>'
             f'  <div style="flex:1;">'
-            f'    <div class="fac-badge">⚡ ISTANTANEO</div>'
+            f'    <div class="fac-badge">⚡ PERCORSO RAPIDO</div>'
             f'    <div class="fac-title">Crea Facsimile da verifica esistente</div>'
             f'    <div class="fac-desc">'
-            f'      Carica una verifica che hai già → l\'AI genera subito una variante '
-            f'      con dati diversi. Stessa struttura, stessi punteggi. '
-            f'      <strong>Zero configurazione.</strong>'
+            f'      Hai già una verifica? Carica il file → l\'AI genera subito una variante '
+            f'      con dati diversi, stessa struttura, stessi punteggi. '
+            f'      <strong>Zero configurazione richiesta.</strong>'
             f'    </div>'
             f'  </div>'
             f'</div>',
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
-        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
         st.markdown('<div class="mbtn-viola">', unsafe_allow_html=True)
         if st.button(
-            "⚡  Carica verifica e genera variante istantanea →",
+            "⚡  Carica verifica esistente → genera variante istantanea",
             key="btn_facsimile_home",
             use_container_width=True,
             type="primary",
         ):
-            st.session_state.input_percorso = "A"
+            st.session_state.input_percorso = "FACSIMILE"
             st.session_state["_analisi_rifiuto"] = None
-            st.session_state["_facsimile_mode"] = True
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
+
+    # ── QA section link ───────────────────────────────────────────────────────
+    st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
+    _qa1, _qa2, _qa3 = st.columns([2, 3, 2])
+    with _qa2:
+        st.markdown(
+            f'<div style="text-align:center;">'
+            f'<span style="font-size:.8rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
+            f'Hai una verifica già pronta e vuoi un parere critico?</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+        if st.button("🔍 Analizza qualità verifica", key="btn_qa_from_bivio",
+                     use_container_width=True):
+            st.session_state.input_percorso = "QA"
+            st.session_state.qa_mode = True
+            st.rerun()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  _render_facsimile_dedicato()  ← NUOVA funzione, aggiungere prima di _render_stage_input
+# ═══════════════════════════════════════════════════════════════════════════════
 
 
 def _render_percorso_a_wizard():
@@ -2096,223 +2017,569 @@ def _render_percorso_a_configura(num_esercizi_totali_ref: list):
 
 def _render_percorso_b_form():
     """
-    Percorso B: form tradizionale pulito, senza upload.
-    Restituisce tutti i parametri necessari a genera_verifica().
+    Percorso B — Layout a due colonne (3:1):
+    ┌─────────────────────────────────┬────────────────┐
+    │  IL PROGETTO (col. principale)  │  MATERIALE     │
+    │  Materia · Scuola · Argomento  │  Facsimile     │
+    │  N° Esercizi · Note             │  Uploader      │
+    │  ─────────────────────────────  │  File Recap    │
+    │  🚀 GENERA BOZZA                │                │
+    └─────────────────────────────────┴────────────────┘
     """
-    # ── Nota: template gallery rimossa per semplicità ──────────────────────────
 
-    # Indicatore modalità manuale (header compatto)
+    # ── Onboarding hint banner (full width) ───────────────────────────────────
     st.markdown(
-        f'<div style="background:{T["card"]};border:1px solid {T["border"]};'
-        f'border-radius:10px;padding:.5rem .85rem;margin-bottom:.8rem;'
-        f'display:flex;align-items:center;gap:.6rem;">'
-        f'<span style="font-size:1rem;">✍️</span>'
-        f'<div>'
-        f'<div style="font-size:.8rem;font-weight:700;color:{T["text"]};'
-        f'font-family:DM Sans,sans-serif;">Configurazione manuale</div>'
-        f'<div style="font-size:.68rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
-        f'Compila i campi — nessun upload disponibile in questa modalità</div>'
+        f'<div class="onboarding-hint-banner">'
+        f'<div class="onboarding-hint-icon">💡</div>'
+        f'<div class="onboarding-hint-body">'
+        f'<div class="onboarding-hint-title">'
+        f'Più dettagli fornisci, più la verifica rispecchierà le tue aspettative'
+        f'</div>'
+        f'<div class="onboarding-hint-desc">'
+        f'Specifica l\'argomento con esempi concreti, scegli il tipo di scuola '
+        f'e — se vuoi — allega materiale nella colonna destra. '
+        f'<strong>Potrai sempre modificare i singoli esercizi generati.</strong>'
+        f'</div>'
+        f'<div class="onboarding-hint-tags">'
+        f'<span class="onboarding-hint-tag">✏️ Modifica ogni esercizio</span>'
+        f'<span class="onboarding-hint-tag">📐 Punteggi automatici</span>'
+        f'<span class="onboarding-hint-tag">📄 Export PDF + DOCX</span>'
+        f'</div>'
         f'</div>'
         f'</div>',
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
-    _prev = st.session_state.gen_params or {}
+    # ── Due colonne: 3 (form) + 1 (materiale) ────────────────────────────────
+    col_main, col_side = st.columns([3, 1], gap="large")
 
-    # Materia + Scuola
-    st.markdown(
-        f'<div class="step-label">'
-        f'<span class="step-title">Materia e tipo di scuola</span>'
-        f'<span class="step-line"></span>'
-        f'</div>',
-        unsafe_allow_html=True
-    )
-    _col_m, _col_s = st.columns(2)
-    _mat_list = MATERIE + ["✏️ Altra materia..."]
-    _mat_prev = _prev.get("materia", "Matematica")
-    _mat_idx  = _mat_list.index(_mat_prev) if _mat_prev in _mat_list else 0
-    _scu_prev = _prev.get("difficolta", "")
-    _scu_idx  = SCUOLE.index(_scu_prev) if _scu_prev in SCUOLE else 0
+    # ═════════════════════════════════════════════════════════════════════════
+    #  COLONNA SINISTRA — IL PROGETTO
+    # ═════════════════════════════════════════════════════════════════════════
+    with col_main:
 
-    with _col_m:
-        _sel_m = st.selectbox(
-            "Materia", _mat_list, index=_mat_idx,
-            label_visibility="collapsed", key="sel_materia_b",
-        )
-        materia_scelta = (
-            st.text_input("Scrivi materia:", key="_mat_custom_b",
-                          label_visibility="collapsed").strip() or "Matematica"
-            if _sel_m == "✏️ Altra materia..."
-            else (_sel_m or "Matematica")
-        )
-    with _col_s:
-        difficolta = st.selectbox(
-            "Scuola", SCUOLE, index=_scu_idx,
-            label_visibility="collapsed", key="sel_scuola_b",
-        )
+        _prev = st.session_state.gen_params or {}
 
-    # Argomento
-    st.markdown(
-        f'<div class="ai-hint"><span class="ai-hint-icon">💡</span>'
-        f'<span><strong>Suggerimento:</strong> più dettagli = verifica più precisa. '
-        f'"Equazioni di II grado con discriminante" funziona meglio di "algebra".</span>'
-        f'</div>'
-        f'<div class="step-label">'
-        f'<span class="step-title">Argomento della verifica</span>'
-        f'<span class="step-line"></span>'
-        f'</div>',
-        unsafe_allow_html=True
-    )
-    argomento = st.text_area(
-        "argomento",
-        placeholder=(
-            "es. Le equazioni di secondo grado\n"
-            "es. La Rivoluzione Francese\n"
-            "es. Il ciclo dell'acqua"
-        ),
-        height=90, label_visibility="collapsed", key="argomento_area_b",
-    ).strip()
-
-    # Numero esercizi — slider sopra il pulsante
-    st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-    st.markdown(
-        f'<div class="opt-label" style="margin-bottom:3px;">Numero di esercizi</div>',
-        unsafe_allow_html=True
-    )
-    num_esercizi = st.slider(
-        "Numero esercizi",
-        min_value=1, max_value=15, value=4,
-        label_visibility="collapsed", key="sel_num_es_b",
-    )
-
-    st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-    genera_btn = st.button(
-        "🚀  Genera Bozza",
-        use_container_width=True,
-        type="primary",
-        disabled=_limite,
-        key="genera_btn_b",
-    )
-
-    if _limite:
+        # ── Section header: Materia & Scuola ──────────────────────────────────
         st.markdown(
-            '<div style="text-align:center;font-size:.82rem;color:#EF4444;margin-top:.4rem;'
-            'font-family:DM Sans,sans-serif;font-weight:600;">'
-            '⛔ Limite mensile raggiunto.'
-            '</div>',
-            unsafe_allow_html=True
+            f'<div class="form-section-header">'
+            f'<div class="form-section-dot"></div>'
+            f'<span class="form-section-title">Materia e tipo di scuola</span>'
+            f'<div class="form-section-line"></div>'
+            f'</div>',
+            unsafe_allow_html=True,
         )
 
-    # Personalizzazione Avanzata
-    _prefs = st.session_state._docente_prefs.get(materia_scelta, {})
-    if not _prefs and st.session_state.utente and materia_scelta in MATERIE:
-        _prefs = _carica_docente_preferenze(st.session_state.utente.id, materia_scelta)
-        st.session_state._docente_prefs[materia_scelta] = _prefs
+        _col_m, _col_s = st.columns(2, gap="small")
+        _mat_list = MATERIE + ["✏️ Altra materia..."]
+        _mat_prev = _prev.get("materia", "Matematica")
+        _mat_idx  = _mat_list.index(_mat_prev) if _mat_prev in _mat_list else 0
+        _scu_prev = _prev.get("difficolta", "")
+        _scu_idx  = SCUOLE.index(_scu_prev) if _scu_prev in SCUOLE else 0
 
-    with st.expander("Personalizzazione Avanzata ⚙️", expanded=False):
-        if _prefs.get("stile_desc"):
+        # Auto-fill da analisi file se disponibile
+        _info_cons = st.session_state.info_consolidate
+        if _info_cons.get("materia") and _info_cons["materia"] in _mat_list:
+            _mat_idx = _mat_list.index(_info_cons["materia"])
+        if _info_cons.get("scuola") and _info_cons["scuola"] in SCUOLE:
+            _scu_idx = SCUOLE.index(_info_cons["scuola"])
+
+        with _col_m:
+            _sel_m = st.selectbox(
+                "Materia", _mat_list, index=_mat_idx,
+                label_visibility="collapsed", key="sel_materia_b",
+            )
+            materia_scelta = (
+                st.text_input("Scrivi materia:", key="_mat_custom_b",
+                              label_visibility="collapsed").strip() or "Matematica"
+                if _sel_m == "✏️ Altra materia..."
+                else (_sel_m or "Matematica")
+            )
+        with _col_s:
+            difficolta = st.selectbox(
+                "Scuola", SCUOLE, index=_scu_idx,
+                label_visibility="collapsed", key="sel_scuola_b",
+            )
+
+        # ── Section header: Argomento ─────────────────────────────────────────
+        st.markdown(
+            f'<div class="form-section-header" style="margin-top:1.4rem;">'
+            f'<div class="form-section-dot"></div>'
+            f'<span class="form-section-title">Argomento della verifica</span>'
+            f'<div class="form-section-line"></div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+        # Badge auto-rilevato se argomento viene dai file
+        _auto_arg = _info_cons.get("contenuto_argomento", "")
+        _arg_source = st.session_state.get("_pb_argomento_source")
+        if _auto_arg and _arg_source != "manual":
             st.markdown(
-                f'<div style="background:{T["hint_bg"]};border:1px solid {T["hint_border"]};'
-                f'border-radius:8px;padding:.4rem .7rem;font-size:.72rem;color:{T["hint_text"]};'
-                f'font-family:DM Sans,sans-serif;margin-bottom:.6rem;">'
-                f'✨ Preferenze salvate per <b>{materia_scelta}</b>: {_prefs["stile_desc"]}'
+                f'<div class="context-sync-badge">'
+                f'✅ Argomento rilevato dal file caricato'
                 f'</div>',
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
-        _tog = st.toggle(
-            "Aggiungi punteggi e griglia di valutazione",
-            value=True, key="toggle_punteggi_b",
+        # Valore default: argomento dai file (se non già modificato manualmente)
+        _arg_default = ""
+        if _arg_source == "manual":
+            _arg_default = st.session_state.get("_pb_argomento_manual_val", "")
+        elif _auto_arg:
+            _arg_default = _auto_arg
+
+        st.markdown('<div class="argomento-field-wrap">', unsafe_allow_html=True)
+        argomento_raw = st.text_area(
+            "argomento",
+            value=_arg_default,
+            placeholder="es. Equazioni di secondo grado\nes. La Rivoluzione Francese\nes. Il ciclo dell'acqua",
+            height=105,
+            label_visibility="collapsed",
+            key="argomento_area_b",
         )
-        mostra_punteggi = _tog
-        con_griglia     = _tog
-        punti_totali    = 100
-        if _tog:
-            _pt_opts = list(range(10, 105, 5))
-            _pt_idx  = _pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts) - 1
-            st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
-            punti_totali = st.selectbox(
-                "Punti totali", options=_pt_opts, index=_pt_idx,
-                label_visibility="collapsed", key="sel_punti_b",
-                format_func=lambda x: f"{x} pt",
-            )
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown('<div class="opt-label">Struttura esercizi</div>', unsafe_allow_html=True)
-        with st.expander("Definisci tipo e contenuto di ogni esercizio", expanded=False):
-            n_custom = len(st.session_state.esercizi_custom)
-            n_liberi = max(0, num_esercizi - n_custom)
-            if n_custom == 0:
-                st.info(f"Tutti i {num_esercizi} esercizi generati liberamente dall'AI.")
-            elif n_custom >= num_esercizi:
-                st.warning(f"Limite raggiunto ({n_custom}/{num_esercizi}).")
-            else:
-                st.success(f"✅ {n_custom} definiti + {n_liberi} liberi = {num_esercizi}")
+        # Traccia se l'utente ha modificato manualmente l'argomento
+        argomento = argomento_raw.strip()
+        if argomento and argomento != _auto_arg:
+            st.session_state["_pb_argomento_source"] = "manual"
+            st.session_state["_pb_argomento_manual_val"] = argomento
+        elif not argomento and _arg_source == "manual":
+            st.session_state["_pb_argomento_source"] = None
 
-            _to_remove = None
-            for _i, _ex in enumerate(st.session_state.esercizi_custom):
-                st.markdown(f"**Esercizio {_i+1}**")
-                _t = st.selectbox(
-                    "Tipo", TIPI_ESERCIZIO,
-                    index=TIPI_ESERCIZIO.index(_ex.get("tipo", "Aperto")),
-                    key=f"tipo_b_{_i}",
-                )
-                st.session_state.esercizi_custom[_i]["tipo"] = _t
-                _d = st.text_area(
-                    "Desc", value=_ex.get("descrizione", ""),
-                    key=f"desc_b_{_i}", height=70,
-                    label_visibility="collapsed",
-                )
-                st.session_state.esercizi_custom[_i]["descrizione"] = _d
-                _c1, _c2 = st.columns([3, 1])
-                with _c1:
-                    _img = st.file_uploader(
-                        "Immagine", type=["png","jpg","jpeg"],
-                        key=f"img_b_{_i}", label_visibility="collapsed",
-                    )
-                    if _img:
-                        st.session_state.esercizi_custom[_i]["immagine"] = _img
-                    if st.session_state.esercizi_custom[_i].get("immagine"):
-                        st.image(st.session_state.esercizi_custom[_i]["immagine"], width=55)
-                with _c2:
-                    if st.button("🗑 Rimuovi", key=f"rm_b_{_i}", use_container_width=True):
-                        _to_remove = _i
-                st.divider()
+        # ── N° Esercizi ───────────────────────────────────────────────────────
+        st.markdown(
+            f'<div class="form-section-header" style="margin-top:1.2rem;">'
+            f'<div class="form-section-dot"></div>'
+            f'<span class="form-section-title">Numero di esercizi</span>'
+            f'<div class="form-section-line"></div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+        _n_default = 4
+        if _info_cons.get("num_esercizi_rilevati"):
+            try:
+                _n_default = max(1, min(int(_info_cons["num_esercizi_rilevati"]), 15))
+            except (ValueError, TypeError):
+                pass
+        num_esercizi = st.slider(
+            "Numero esercizi",
+            min_value=1, max_value=15, value=_n_default,
+            label_visibility="collapsed", key="sel_num_es_b",
+        )
 
-            if _to_remove is not None:
-                st.session_state.esercizi_custom.pop(_to_remove)
-                st.rerun()
-
-            if st.button(
-                "＋ Aggiungi esercizio",
-                disabled=len(st.session_state.esercizi_custom) >= num_esercizi,
-                key="add_es_b",
-            ):
-                st.session_state.esercizi_custom.append(
-                    {"tipo": "Aperto", "descrizione": "", "immagine": None}
-                )
-                st.rerun()
-
-        st.markdown('<div class="opt-label">Note per l\'AI</div>', unsafe_allow_html=True)
+        # ── Note libere per l'AI ──────────────────────────────────────────────
+        st.markdown(
+            f'<div class="form-section-header" style="margin-top:1.1rem;">'
+            f'<div class="form-section-dot" style="background:{T["muted"]};'
+            f'box-shadow:none;opacity:.6;"></div>'
+            f'<span class="form-section-title" style="color:{T["muted"]};">'
+            f'Note aggiuntive <span style="font-weight:400;letter-spacing:0;">'
+            f'— opzionale</span></span>'
+            f'<div class="form-section-line" style="background:linear-gradient(90deg,'
+            f'{T["border"]} 0%,transparent 100%);"></div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown('<div class="note-field-wrap">', unsafe_allow_html=True)
         note_extra = st.text_area(
             "Note AI",
             placeholder=NOTE_PLACEHOLDER.get(materia_scelta, ""),
-            height=65, key="note_area_b", label_visibility="collapsed",
+            height=72,
+            label_visibility="collapsed",
+            key="note_area_b",
         )
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── Torna indietro — in fondo alla pagina ────────────────────────────────
-    st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
-    _bb1, _bb2, _bb3 = st.columns([3, 2, 3])
-    with _bb2:
-        if st.button("← Cambia percorso", key="btn_back_b",
-                     use_container_width=True):
+        # ── Personalizzazione Avanzata ────────────────────────────────────────
+        _prefs = st.session_state._docente_prefs.get(materia_scelta, {})
+        if not _prefs and st.session_state.utente and materia_scelta in MATERIE:
+            _prefs = _carica_docente_preferenze(st.session_state.utente.id, materia_scelta)
+            st.session_state._docente_prefs[materia_scelta] = _prefs
+
+        st.markdown('<div class="personalizza-wrap">', unsafe_allow_html=True)
+        with st.expander("⚙️ Personalizzazione Avanzata", expanded=False):
+            if _prefs.get("stile_desc"):
+                st.markdown(
+                    f'<div style="background:{T["hint_bg"]};border:1px solid {T["hint_border"]};'
+                    f'border-radius:8px;padding:.4rem .7rem;font-size:.78rem;color:{T["hint_text"]};'
+                    f'font-family:DM Sans,sans-serif;margin-bottom:.6rem;">'
+                    f'✨ Preferenze salvate per <b>{materia_scelta}</b>: {_prefs["stile_desc"]}'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+            _tog = st.toggle(
+                "Aggiungi punteggi e griglia di valutazione",
+                value=True, key="toggle_punteggi_b",
+            )
+            mostra_punteggi = _tog
+            con_griglia = _tog
+            punti_totali = 100
+            if _tog:
+                _pt_opts = list(range(10, 105, 5))
+                _pt_idx  = _pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts) - 1
+                st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
+                punti_totali = st.selectbox(
+                    "Punti totali", options=_pt_opts, index=_pt_idx,
+                    label_visibility="collapsed", key="sel_punti_b",
+                    format_func=lambda x: f"{x} pt",
+                )
+
+            # Struttura esercizi custom
+            st.markdown('<div class="opt-label">Struttura esercizi</div>', unsafe_allow_html=True)
+            with st.expander("Definisci tipo e contenuto di ogni esercizio", expanded=False):
+                n_custom = len(st.session_state.esercizi_custom)
+                n_liberi = max(0, num_esercizi - n_custom)
+                if n_custom == 0:
+                    st.info(f"Tutti i {num_esercizi} esercizi generati liberamente dall'AI.")
+                elif n_custom >= num_esercizi:
+                    st.warning(f"Limite raggiunto ({n_custom}/{num_esercizi}).")
+                else:
+                    st.success(f"✅ {n_custom} definiti + {n_liberi} liberi = {num_esercizi}")
+
+                _to_remove = None
+                for _i, _ex in enumerate(st.session_state.esercizi_custom):
+                    st.markdown(f"**Esercizio {_i+1}**")
+                    _t = st.selectbox(
+                        "Tipo", TIPI_ESERCIZIO,
+                        index=TIPI_ESERCIZIO.index(_ex.get("tipo", "Aperto")),
+                        key=f"tipo_b_{_i}",
+                    )
+                    st.session_state.esercizi_custom[_i]["tipo"] = _t
+                    _d = st.text_area(
+                        "Desc", value=_ex.get("descrizione", ""),
+                        key=f"desc_b_{_i}", height=70,
+                        label_visibility="collapsed",
+                    )
+                    st.session_state.esercizi_custom[_i]["descrizione"] = _d
+                    _c1, _c2 = st.columns([3, 1])
+                    with _c1:
+                        _img = st.file_uploader(
+                            "Immagine", type=["png", "jpg", "jpeg"],
+                            key=f"img_b_{_i}", label_visibility="collapsed",
+                        )
+                        if _img:
+                            st.session_state.esercizi_custom[_i]["immagine"] = _img
+                        if st.session_state.esercizi_custom[_i].get("immagine"):
+                            st.image(st.session_state.esercizi_custom[_i]["immagine"], width=55)
+                    with _c2:
+                        if st.button("🗑 Rimuovi", key=f"rm_b_{_i}", use_container_width=True):
+                            _to_remove = _i
+                    st.divider()
+
+                if _to_remove is not None:
+                    st.session_state.esercizi_custom.pop(_to_remove)
+                    st.rerun()
+
+                if st.button(
+                    "＋ Aggiungi esercizio",
+                    disabled=len(st.session_state.esercizi_custom) >= num_esercizi,
+                    key="add_es_b",
+                ):
+                    st.session_state.esercizi_custom.append(
+                        {"tipo": "Aperto", "descrizione": "", "immagine": None}
+                    )
+                    st.rerun()
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # ── CTA: Genera Bozza ─────────────────────────────────────────────────
+        _manca_arg = not argomento
+        st.markdown("<div style='height:.9rem'></div>", unsafe_allow_html=True)
+        st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
+        genera_btn = st.button(
+            "🚀  Genera Bozza",
+            use_container_width=True,
+            type="primary",
+            disabled=_limite or _manca_arg,
+            key="genera_btn_b",
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        if _manca_arg and not _limite:
+            st.markdown(
+                f'<div style="text-align:center;font-size:.82rem;color:{T["warn"]};'
+                f'font-family:DM Sans,sans-serif;margin-top:.3rem;">'
+                f'Inserisci l\'argomento per continuare.</div>',
+                unsafe_allow_html=True,
+            )
+        elif not _manca_arg and not _limite:
+            st.markdown(
+                f'<div class="cta-hint-below">'
+                f'<span>✏️</span>'
+                f'<span>Potrai modificare ogni singolo esercizio dopo la generazione</span>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+        if _limite:
+            st.markdown(
+                f'<div style="text-align:center;font-size:.82rem;color:#EF4444;'
+                f'font-family:DM Sans,sans-serif;font-weight:600;margin-top:.4rem;">'
+                f'⛔ Limite mensile raggiunto.</div>',
+                unsafe_allow_html=True,
+            )
+
+        # ── Back link discreto ────────────────────────────────────────────────
+        st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+        st.markdown('<div class="btn-back-discrete">', unsafe_allow_html=True)
+        if st.button("← Cambia percorso", key="btn_back_b", use_container_width=True):
             st.session_state.input_percorso = None
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ═════════════════════════════════════════════════════════════════════════
+    #  COLONNA DESTRA — MATERIALE & UPLOAD
+    # ═════════════════════════════════════════════════════════════════════════
+    with col_side:
+        _lista_b = st.session_state.analisi_docs_list
+
+        # ── Facsimile shortcut (solo se nessun file) ──────────────────────────
+        if not _lista_b:
+            st.markdown(
+                f'<div class="facsimile-shortcut">'
+                f'<div class="facsimile-shortcut-badge">⚡ RAPIDO</div>'
+                f'<div class="facsimile-shortcut-question">'
+                f'Hai già una verifica da replicare?'
+                f'</div>'
+                f'<div class="facsimile-shortcut-desc">'
+                f'Carica la verifica originale e ottieni una variante con dati nuovi '
+                f'e stessa struttura. Senza compilare nessun campo.'
+                f'</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            st.markdown('<div class="facsimile-shortcut-btn">', unsafe_allow_html=True)
+            if st.button("⚡ Crea Facsimile", key="btn_fac_shortcut",
+                         use_container_width=True):
+                st.session_state.input_percorso = "FACSIMILE"
+                st.session_state["_analisi_rifiuto"] = None
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+
+        # ── Upload intelligente ───────────────────────────────────────────────
+        st.markdown(
+            f'<div class="side-panel-card">'
+            f'<div class="side-panel-card-title">'
+            f'<div class="side-panel-card-title-dot"></div>'
+            f'Materiale di studio'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+        # Nota: il div viene chiuso sopra — usiamo un box separato per l'hint
+        st.markdown(
+            f'<div class="upload-hint-compact">'
+            f'✍️ <strong>Inserisci</strong> verifiche, appunti, foto a mano o PDF. '
+            f'L\'IA riconosce perfettamente la tua scrittura!'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+        # Uploader (chiave dinamica per forzare reset dopo aggiunta)
+        _upload_key_b = f"pb_file_up_{len(_lista_b)}"
+        st.markdown('<div class="file-uploader-compact">', unsafe_allow_html=True)
+        _file_b = st.file_uploader(
+            "Inserisci materiale",
+            type=["pdf", "png", "jpg", "jpeg"],
+            key=_upload_key_b,
+            label_visibility="collapsed",
+            help="PDF, immagini, foto di appunti. Puoi aggiungerne più di uno.",
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        if _file_b:
+            _fb_bytes = _file_b.getvalue()
+            _fb_hash  = hash(_fb_bytes)
+            _existing_b = {d["file_hash"] for d in _lista_b}
+            if _fb_hash not in _existing_b:
+                _ph_b = st.empty()
+                _ph_b.markdown(
+                    f'<div class="ocr-skeleton-wrap">'
+                    f'  <div class="ocr-skeleton-header">'
+                    f'    <div class="ocr-skeleton-icon">🔬</div>'
+                    f'    <div>'
+                    f'      <div class="ocr-skeleton-title">Analisi AI…</div>'
+                    f'      <div class="ocr-skeleton-sub">Lettura · Classificazione</div>'
+                    f'    </div>'
+                    f'  </div>'
+                    f'  <div class="ocr-skeleton-doc">'
+                    f'    <div class="ocr-skeleton-scan"></div>'
+                    f'    <div class="ocr-skeleton-line" style="width:90%"></div>'
+                    f'    <div class="ocr-skeleton-line" style="width:70%"></div>'
+                    f'  </div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+                st.session_state.file_ispirazione = _file_b
+                _esegui_analisi_documento(_fb_bytes, _file_b.type or "image/png", _file_b.name)
+                _ph_b.empty()
+                # Auto-sync argomento se non già inserito manualmente
+                if st.session_state.get("_pb_argomento_source") != "manual":
+                    st.session_state["_pb_argomento_source"] = None  # refresh da info_consolidate
+            else:
+                st.info("File già presente nel pool.", icon="ℹ️")
+
+        # ── Recap file caricati ───────────────────────────────────────────────
+        if _lista_b:
+            st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
+            st.markdown(
+                f'<div style="font-size:.7rem;font-weight:700;letter-spacing:.07em;'
+                f'text-transform:uppercase;color:{T["muted"]};font-family:DM Sans,sans-serif;'
+                f'margin-bottom:.4rem;">'
+                f'File nel pool ({len(_lista_b)})'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+            _MODO_OPTIONS = {
+                "base_conoscenza":   "📚 Fonte di studio",
+                "stile_e_struttura": "📋 Copia struttura",
+                "copia_fedele":      "⚡ Variante (dati diversi)",
+                "ignora":            "❌ Ignora",
+            }
+            _TIPO_ICONS = {
+                "verifica": "📋", "appunti": "📒",
+                "libro": "📚", "misto": "📄",
+                "esercizi_sciolti": "📝", "esercizio_singolo": "✏️",
+            }
+            _TIPO_BADGE_CLASS = {
+                "verifica": "file-item-b-badge-verifica",
+                "appunti":  "file-item-b-badge-appunti",
+            }
+
+            _rimuovi_idx = None
+            for _fi, _fentry in enumerate(_lista_b):
+                _fhash_str = str(_fentry["file_hash"])
+                _fanalisi  = _fentry.get("analisi", {})
+                _ftipo     = _fanalisi.get("tipo_documento", "altro")
+                _fbadge_c  = _TIPO_BADGE_CLASS.get(_ftipo, "file-item-b-badge-altro")
+                _ficon     = _TIPO_ICONS.get(_ftipo, "📄")
+                _ftipo_lbl = _ftipo.replace("_", " ").title()
+
+                st.markdown(
+                    f'<div class="file-item-b">'
+                    f'  <div class="file-item-b-header">'
+                    f'    <span class="file-item-b-icon">{_ficon}</span>'
+                    f'    <span class="file-item-b-name">{_fentry["file_name"][:28]}'
+                    f'{"…" if len(_fentry["file_name"]) > 28 else ""}</span>'
+                    f'    <span class="file-item-b-badge {_fbadge_c}">{_ftipo_lbl}</span>'
+                    f'  </div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+                # Dropdown: come usare il file
+                _modo_prev = _fentry.get("file_mode", "base_conoscenza")
+                _modo_opts = list(_MODO_OPTIONS.keys())
+                _modo_idx  = _modo_opts.index(_modo_prev) if _modo_prev in _modo_opts else 0
+                st.markdown(
+                    f'<div class="file-item-b-mode-label">Come usarlo</div>',
+                    unsafe_allow_html=True,
+                )
+                _sel_modo = st.selectbox(
+                    f"Modalità uso file {_fi}",
+                    options=_modo_opts,
+                    index=_modo_idx,
+                    format_func=lambda x: _MODO_OPTIONS[x],
+                    key=f"pb_mode_{_fhash_str}",
+                    label_visibility="collapsed",
+                )
+                # Aggiorna file_mode in lista
+                if _sel_modo != _lista_b[_fi].get("file_mode"):
+                    st.session_state.analisi_docs_list[_fi]["file_mode"] = _sel_modo
+                    st.session_state.analisi_docs_list[_fi]["confirmed"] = (_sel_modo != "ignora")
+                    _consolida_info()
+
+                # Istruzioni specifiche per il file (espandibile)
+                _istr_prev = st.session_state.istruzioni_per_file.get(_fhash_str, "")
+                _istr_new  = st.text_area(
+                    f"Istruzioni file {_fi}",
+                    value=_istr_prev,
+                    placeholder="es. Usa solo il secondo esercizio…",
+                    height=56,
+                    key=f"pb_istr_{_fhash_str}",
+                    label_visibility="collapsed",
+                )
+                if _istr_new != _istr_prev:
+                    st.session_state.istruzioni_per_file[_fhash_str] = _istr_new
+
+                # Pulsante Rimuovi — discreto, in fondo alla card
+                st.markdown('<div class="file-item-b-delete">', unsafe_allow_html=True)
+                if st.button(f"✕ Rimuovi", key=f"pb_rm_{_fhash_str}_{_fi}",
+                              use_container_width=True):
+                    _rimuovi_idx = _fi
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            # ── Gestione rimozione ────────────────────────────────────────────
+            if _rimuovi_idx is not None:
+                _rimosso = st.session_state.analisi_docs_list.pop(_rimuovi_idx)
+                _rimosso_hash = _rimosso.get("file_hash")
+                # Rimuovi istruzioni associate
+                st.session_state.istruzioni_per_file.pop(str(_rimosso_hash), None)
+                _consolida_info()
+                # Reset argomento se era auto-rilevato da questo file
+                if st.session_state.get("_pb_argomento_source") != "manual":
+                    st.session_state["_pb_argomento_source"] = None
+                    # Se non ci sono più file, pulisce l'argomento auto
+                    if not st.session_state.analisi_docs_list:
+                        st.session_state.info_consolidate = {}
+                st.rerun()
+
+    # ── Costruisci nota finale con istruzioni per-file ────────────────────────
+    _istr_per_file_testi = []
+    for _fentry in st.session_state.analisi_docs_list:
+        _fh_str = str(_fentry["file_hash"])
+        _istr = st.session_state.istruzioni_per_file.get(_fh_str, "").strip()
+        if _istr:
+            _istr_per_file_testi.append(f"[File: {_fentry['file_name']}] {_istr}")
+    _istruzioni_combinate = "\n".join(_istr_per_file_testi)
+
+    note_extra_raw = st.session_state.get("note_area_b", "")
+    if note_extra_raw and _istruzioni_combinate:
+        note_extra_finale = note_extra_raw + "\n\n" + _istruzioni_combinate
+
+
+    elif _istruzioni_combinate:
+        note_extra_finale = _istruzioni_combinate
+    else:
+        note_extra_finale = note_extra_raw
 
     return (
-        argomento, materia_scelta, difficolta,
-        mostra_punteggi, con_griglia, punti_totali,
-        num_esercizi, note_extra, genera_btn,
+        argomento,
+        materia_scelta,
+        difficolta,
+        mostra_punteggi,
+        con_griglia,
+        punti_totali,
+        num_esercizi,
+        note_extra_finale,
+        genera_btn,
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  _render_stage_input()  ← AGGIUNGERE routing per "FACSIMILE" (linea ~2471)
+#
+#  Nel blocco if/elif della funzione esistente, aggiungere PRIMA di "if percorso == 'A'":
+#
+#      if percorso == "FACSIMILE":
+#          _render_facsimile_dedicato()
+#          return
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  SESSION STATE INIT PATCH (~linea 519 main.py)
+#  Aggiungere nel blocco di inizializzazione:
+#
+#      if "_pb_argomento_source"    not in st.session_state:
+#          st.session_state["_pb_argomento_source"]     = None
+#      if "_pb_argomento_manual_val" not in st.session_state:
+#          st.session_state["_pb_argomento_manual_val"] = ""
+# ═══════════════════════════════════════════════════════════════════════════════
 
 
 def _lancia_generazione(
@@ -2468,6 +2735,236 @@ def _lancia_generazione(
 #  STAGE_INPUT — orchestratore principale
 # ═══════════════════════════════════════════════════════════════════════════════
 
+def _render_facsimile_dedicato():
+    """
+    Pagina Facsimile Rapido — Percorso dedicato:
+    Solo un'area di upload, poi AI analizza e genera la variante.
+    """
+    # ── Header pagina ─────────────────────────────────────────────────────────
+    st.markdown(
+        f'<div class="facsimile-page-wrap">'
+        f'<span class="facsimile-page-icon">⚡</span>'
+        f'<div class="facsimile-page-title">Facsimile Istantaneo</div>'
+        f'<div class="facsimile-page-desc">'
+        f'Carica la verifica che vuoi replicare. '
+        f'L\'AI mantiene struttura e punteggi, '
+        f'cambia tutti i dati e i numeri.'
+        f'</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    # ── Area upload ───────────────────────────────────────────────────────────
+    _fac_lista = st.session_state.analisi_docs_list
+
+    if not _fac_lista:
+        st.markdown(
+            f'<div class="facsimile-page-uploader">'
+            f'<div style="text-align:center;margin-bottom:.6rem;">'
+            f'<div style="font-size:.82rem;font-weight:700;color:#9F7AEA;'
+            f'font-family:DM Sans,sans-serif;margin-bottom:.3rem;">'
+            f'📂 Inserisci la verifica originale</div>'
+            f'<div style="font-size:.75rem;color:{T["text2"]};font-family:DM Sans,sans-serif;">'
+            f'PDF, immagine o foto della verifica stampata</div>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    _fac_upload_key = f"fac_upload_{len(_fac_lista)}"
+    _fac_file = st.file_uploader(
+        "Carica verifica originale",
+        type=["pdf", "png", "jpg", "jpeg"],
+        key=_fac_upload_key,
+        label_visibility="collapsed",
+        help="Carica la verifica che vuoi replicare — anche una foto.",
+    )
+
+    if _fac_file:
+        _fb = _fac_file.getvalue()
+        _fhash = hash(_fb)
+        _existing = {d["file_hash"] for d in _fac_lista}
+        if _fhash not in _existing:
+            _fac_ph = st.empty()
+            _fac_ph.markdown(
+                f'<div class="ocr-skeleton-wrap">'
+                f'  <div class="ocr-skeleton-header">'
+                f'    <div class="ocr-skeleton-icon">⚡</div>'
+                f'    <div>'
+                f'      <div class="ocr-skeleton-title">Analisi verifica in corso…</div>'
+                f'      <div class="ocr-skeleton-sub">Struttura · Punteggi · Esercizi</div>'
+                f'    </div>'
+                f'  </div>'
+                f'  <div class="ocr-skeleton-doc">'
+                f'    <div class="ocr-skeleton-scan"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:90%"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:68%"></div>'
+                f'    <div class="ocr-skeleton-line" style="width:82%"></div>'
+                f'  </div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            st.session_state.file_ispirazione = _fac_file
+            st.session_state["_facsimile_mode"] = True
+            _esegui_analisi_documento(_fb, _fac_file.type or "image/png", _fac_file.name)
+            _fac_ph.empty()
+
+    # ── Recap file caricato + analisi punteggi ────────────────────────────────
+    if _fac_lista:
+        _fac_entry = _fac_lista[-1]
+        _fac_analisi = _fac_entry.get("analisi", {})
+        _fac_nome = _fac_entry["file_name"]
+        _fac_tipo = _fac_analisi.get("tipo_documento", "altro")
+        _fac_mat = _fac_analisi.get("materia", "")
+        _fac_arg = _fac_analisi.get("contenuto_argomento", "")
+        _fac_pt = _fac_analisi.get("num_esercizi_rilevati", "?")
+
+        _tipo_icon = {"verifica": "📋", "appunti": "📒"}.get(_fac_tipo, "📄")
+
+        st.markdown(
+            f'<div class="file-item-b" style="border:2px solid #7C3AED55;margin-bottom:.75rem;">'
+            f'  <div class="file-item-b-header">'
+            f'    <span class="file-item-b-icon">{_tipo_icon}</span>'
+            f'    <span class="file-item-b-name">{_fac_nome}</span>'
+            f'    <span class="file-item-b-badge file-item-b-badge-verifica">'
+            f'      {_fac_tipo.replace("_"," ").title()}'
+            f'    </span>'
+            f'  </div>'
+            + (
+                f'<div style="font-size:.78rem;color:{T["text2"]};'
+                f'font-family:DM Sans,sans-serif;line-height:1.5;">'
+                + (f'<strong>{_fac_mat}</strong> · ' if _fac_mat else "")
+                + (_fac_arg[:80] + ("…" if len(_fac_arg) > 80 else "") if _fac_arg else "")
+                + f'</div>'
+                if _fac_mat or _fac_arg else ""
+            )
+            + f'</div>',
+            unsafe_allow_html=True,
+        )
+
+        # ── Analisi punteggi ─────────────────────────────────────────────────
+        _ha_griglia = _fac_analisi.get("ha_tabella_punti", False)
+        if _ha_griglia:
+            st.markdown(
+                f'<div style="background:{T["success"]}18;border:1px solid {T["success"]}44;'
+                f'border-radius:9px;padding:.5rem .85rem;margin-bottom:.6rem;'
+                f'font-size:.8rem;color:{T["success"]};font-family:DM Sans,sans-serif;'
+                f'display:flex;align-items:center;gap:.5rem;">'
+                f'<span>✅</span> '
+                f'Tabella punti rilevata — il totale sarà mantenuto identico nella variante.'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                f'<div style="background:{T["warn"]}18;border:1px solid {T["warn"]}44;'
+                f'border-radius:9px;padding:.5rem .85rem;margin-bottom:.6rem;'
+                f'font-size:.8rem;color:{T["warn"]};font-family:DM Sans,sans-serif;'
+                f'display:flex;align-items:center;gap:.5rem;">'
+                f'<span>ℹ️</span> '
+                f'Nessuna tabella punti rilevata. '
+                f'Vuoi aggiungerne una?</div>',
+                unsafe_allow_html=True,
+            )
+            _add_griglia = st.toggle(
+                "Genera tabella di valutazione automaticamente",
+                value=True,
+                key="fac_add_griglia",
+            )
+
+        # ── Pulsante Genera ───────────────────────────────────────────────────
+        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
+        st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
+        _fac_gen_btn = st.button(
+            "⚡  Genera Variante",
+            use_container_width=True,
+            type="primary",
+            key="btn_fac_genera",
+            disabled=_limite,
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="cta-hint-below">'
+            f'<span>🔒</span> <span>Stessa struttura · Dati completamente nuovi</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+        if _limite:
+            st.markdown(
+                f'<div style="text-align:center;font-size:.82rem;color:#EF4444;'
+                f'font-family:DM Sans,sans-serif;margin-top:.3rem;">'
+                f'⛔ Limite mensile raggiunto.</div>',
+                unsafe_allow_html=True,
+            )
+
+        if _fac_gen_btn and not _limite:
+            # Conferma il file e transita al wizard
+            _fac_idx = next(
+                (i for i, e in enumerate(st.session_state.analisi_docs_list)
+                 if e["file_hash"] == _fac_entry["file_hash"]),
+                0,
+            )
+            st.session_state.analisi_docs_list[_fac_idx]["confirmed"] = True
+            st.session_state.analisi_docs_list[_fac_idx]["file_mode"] = "copia_fedele"
+            st.session_state.file_mode = "copia_fedele"
+            st.session_state["_facsimile_mode"] = True
+            _consolida_info()
+
+            # Lancia generazione diretta
+            _info = st.session_state.info_consolidate
+            _con_griglia_fac = _ha_griglia or st.session_state.get("fac_add_griglia", True)
+            argomento_fac, note_fac = compila_contesto_generazione(
+                analisi=_info,
+                file_mode="copia_fedele",
+                istruzioni_extra="",
+                argomento_override=None,
+            )
+            _mat_fac = _info.get("materia", "Matematica")
+            _scu_fac = _info.get("scuola", SCUOLE[0])
+            _n_fac = _info.get("num_esercizi_rilevati", 4) or 4
+            _n_fac = max(1, min(int(_n_fac), 15))
+            _calibr_fac = CALIBRAZIONE_SCUOLA.get(_scu_fac, "")
+
+            s_es_fac, imgs_es_fac = _build_prompt_esercizi(
+                [], _n_fac, 100, True
+            )
+            _lancia_generazione(
+                materia_scelta=_mat_fac,
+                argomento=argomento_fac,
+                difficolta=_scu_fac,
+                durata_scelta="1 ora",
+                num_esercizi_totali=_n_fac,
+                punti_totali=100,
+                mostra_punteggi=True,
+                con_griglia=_con_griglia_fac,
+                note_generali=note_fac,
+                s_es=s_es_fac,
+                imgs_es=imgs_es_fac,
+                file_ispirazione=st.session_state.get("file_ispirazione"),
+                mathpix_context=st.session_state.get("mathpix_context"),
+            )
+            return
+
+    # ── Back link ─────────────────────────────────────────────────────────────
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+    _fb1, _fb2, _fb3 = st.columns([2, 3, 2])
+    with _fb2:
+        st.markdown('<div class="btn-back-discrete">', unsafe_allow_html=True)
+        if st.button("← Torna alla scelta percorso", key="btn_back_fac",
+                     use_container_width=True):
+            _reset_percorso()
+            st.session_state.input_percorso = None
+            st.session_state["_facsimile_mode"] = False
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  _render_percorso_b_form()  ← SOSTITUISCE la versione esistente (linea 2097)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
 def _render_stage_input():
     percorso = st.session_state.get("input_percorso")
 
@@ -2479,6 +2976,11 @@ def _render_stage_input():
     # ── BIVIO ─────────────────────────────────────────────────────────────────
     if percorso is None:
         _render_bivio()
+        return
+
+    # ── PERCORSO FACSIMILE ──────────────────────────────────────────────────────
+    if percorso == "FACSIMILE":
+        _render_facsimile_dedicato()
         return
 
     # ── PERCORSO A ────────────────────────────────────────────────────────────
