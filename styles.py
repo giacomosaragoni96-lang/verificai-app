@@ -653,6 +653,43 @@ def get_css(T: dict) -> str:
     line-height: 1.55;
   }}
 
+  /* ── File AI summary (cosa ha capito l'AI) ── */
+  .file-ai-summary {{
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    background: {_acc_soft};
+    border: 1px solid {_acc_med};
+    border-radius: 8px;
+    padding: .4rem .7rem;
+    margin: .35rem 0 .45rem;
+    font-size: .74rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.45;
+  }}
+  .file-ai-summary-icon {{
+    flex-shrink: 0;
+    font-size: .82rem;
+    margin-top: .05rem;
+  }}
+  .file-ai-summary-text {{
+    flex: 1;
+  }}
+
+  /* ── Hint "esercizio da inserire" ── */
+  .file-includi-hint {{
+    background: {T.get('hint_bg', '#FEF3C7')};
+    border: 1px solid {T.get('hint_border', '#FDE68A')};
+    border-radius: 8px;
+    padding: .45rem .75rem;
+    margin: .3rem 0 .4rem;
+    font-size: .74rem;
+    color: {T.get('hint_text', '#92400E')};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.5;
+  }}
+
   /* ── Percorso Card ── */
   .mcard {{
     background: {T['card']};
