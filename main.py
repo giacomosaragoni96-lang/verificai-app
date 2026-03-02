@@ -1031,103 +1031,92 @@ def _render_bivio():
             border-radius:6px;padding:2px 8px;color:{T["text2"]};
         }}
 
-        /* ── Pulsanti card — selettore per key univoca ── */
-        /* BLU: btn_percorso_b */
-        [data-testid="stBaseButton-primary"][key="btn_percorso_b"],
-        button[key="btn_percorso_b"],
-        div:has(> [key="btn_percorso_b"]) button,
-        .mbtn-blu button,
-        .mbtn-blu button:focus,
-        .mbtn-blu button:active {{
-            background:linear-gradient(135deg,#3B82F6,#2563EB) !important;
-            color:#fff !important; border:none !important;
-            border-radius:12px !important; font-weight:700 !important;
-            font-size:.85rem !important;
-            box-shadow:0 4px 14px #3B82F644 !important;
+        /* ── Pulsanti card — selettori posizionali per colonna (funziona in Streamlit) ── */
+
+        /* Colonna 1 (BLU) — Creazione guidata */
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(1) button {{
+            background: linear-gradient(135deg, #3B82F6, #2563EB) !important;
+            color: #fff !important; border: none !important;
+            border-radius: 12px !important; font-weight: 700 !important;
+            font-size: .88rem !important;
+            box-shadow: 0 4px 16px #3B82F644 !important;
+            transition: background .2s, box-shadow .2s !important;
         }}
-        .mbtn-blu button:hover {{
-            background:linear-gradient(135deg,#60A5FA,#3B82F6) !important;
-            box-shadow:0 6px 22px #3B82F666 !important;
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(1) button:hover {{
+            background: linear-gradient(135deg, #60A5FA, #3B82F6) !important;
+            box-shadow: 0 6px 24px #3B82F666 !important;
         }}
 
-        /* VERDE: btn_percorso_libera */
-        [data-testid="stBaseButton-primary"][key="btn_percorso_libera"],
-        button[key="btn_percorso_libera"],
-        div:has(> [key="btn_percorso_libera"]) button,
-        .mbtn-verde button,
-        .mbtn-verde button:focus,
-        .mbtn-verde button:active {{
-            background:linear-gradient(135deg,#10B981,#059669) !important;
-            color:#fff !important; border:none !important;
-            border-radius:12px !important; font-weight:700 !important;
-            font-size:.85rem !important;
-            box-shadow:0 4px 14px #10B98144 !important;
+        /* Colonna 2 (VERDE) — Descrizione libera */
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(2) button {{
+            background: linear-gradient(135deg, #10B981, #059669) !important;
+            color: #fff !important; border: none !important;
+            border-radius: 12px !important; font-weight: 700 !important;
+            font-size: .88rem !important;
+            box-shadow: 0 4px 16px #10B98144 !important;
+            transition: background .2s, box-shadow .2s !important;
         }}
-        .mbtn-verde button:hover {{
-            background:linear-gradient(135deg,#34D399,#10B981) !important;
-            box-shadow:0 6px 22px #10B98166 !important;
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(2) button:hover {{
+            background: linear-gradient(135deg, #34D399, #10B981) !important;
+            box-shadow: 0 6px 24px #10B98166 !important;
         }}
 
-        /* ARANCIO: btn_percorso_a */
-        [data-testid="stBaseButton-primary"][key="btn_percorso_a"],
-        button[key="btn_percorso_a"],
-        div:has(> [key="btn_percorso_a"]) button,
-        .mbtn-arancio button,
-        .mbtn-arancio button:focus,
-        .mbtn-arancio button:active {{
-            background:linear-gradient(135deg,#F59E0B,#D97706) !important;
-            color:#fff !important; border:none !important;
-            border-radius:12px !important; font-weight:700 !important;
-            font-size:.85rem !important;
-            box-shadow:0 4px 14px #F59E0B44 !important;
+        /* Colonna 3 (ARANCIO) — Genera da file */
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(3) button {{
+            background: linear-gradient(135deg, #F59E0B, #D97706) !important;
+            color: #fff !important; border: none !important;
+            border-radius: 12px !important; font-weight: 700 !important;
+            font-size: .88rem !important;
+            box-shadow: 0 4px 16px #F59E0B44 !important;
+            transition: background .2s, box-shadow .2s !important;
         }}
-        .mbtn-arancio button:hover {{
-            background:linear-gradient(135deg,#FCD34D,#F59E0B) !important;
-            box-shadow:0 6px 22px #F59E0B66 !important;
+        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(3) button:hover {{
+            background: linear-gradient(135deg, #FCD34D, #F59E0B) !important;
+            box-shadow: 0 6px 24px #F59E0B66 !important;
         }}
 
-        /* VIOLA: btn_facsimile_home */
+        /* VIOLA — Facsimile (btn_facsimile_home, colonna centrale) */
         .mbtn-viola button,
-        .mbtn-viola button:focus,
-        .mbtn-viola button:active {{
-            background:linear-gradient(135deg,#7C3AED,#6D28D9) !important;
-            color:#fff !important; border:none !important;
-            border-radius:12px !important; font-weight:700 !important;
-            font-size:.9rem !important;
-            box-shadow:0 4px 18px #7C3AED44 !important;
+        .mbtn-viola button:focus {{
+            background: linear-gradient(135deg, #7C3AED, #6D28D9) !important;
+            color: #fff !important; border: none !important;
+            border-radius: 12px !important; font-weight: 700 !important;
+            font-size: .92rem !important;
+            box-shadow: 0 4px 20px #7C3AED44 !important;
+            transition: background .2s, box-shadow .2s !important;
         }}
         .mbtn-viola button:hover {{
-            background:linear-gradient(135deg,#A78BFA,#7C3AED) !important;
-            box-shadow:0 6px 26px #7C3AED66 !important;
+            background: linear-gradient(135deg, #A78BFA, #7C3AED) !important;
+            box-shadow: 0 6px 28px #7C3AED66 !important;
         }}
 
         /* Card Facsimile viola */
         .fac-card {{
-            background:linear-gradient(135deg,#7C3AED14 0%,{T["card"]} 70%);
-            border:2px solid #7C3AED;
-            border-radius:18px;
-            padding:1.1rem 1.4rem 1rem;
-            display:flex;align-items:center;gap:1.2rem;
-            box-shadow:0 4px 20px #7C3AED22;
-            transition:box-shadow .18s ease;
+            background: linear-gradient(135deg, #7C3AED14 0%, {T["card"]} 70%);
+            border: 2px solid #7C3AED;
+            border-radius: 18px;
+            padding: 1.1rem 1.4rem 1rem;
+            display: flex; align-items: center; gap: 1.2rem;
+            box-shadow: 0 4px 20px #7C3AED22;
+            transition: box-shadow .18s ease;
         }}
-        .fac-card:hover {{ box-shadow:0 8px 32px #7C3AED44; }}
+        .fac-card:hover {{ box-shadow: 0 8px 32px #7C3AED44; }}
         .fac-badge {{
-            display:inline-flex;align-items:center;gap:.3rem;
-            background:#7C3AED;color:#fff;
-            font-size:.62rem;font-weight:800;
-            padding:3px 10px;border-radius:100px;
-            font-family:DM Sans,sans-serif;letter-spacing:.05em;
-            white-space:nowrap;margin-bottom:.4rem;
+            display: inline-flex; align-items: center; gap: .3rem;
+            background: #7C3AED; color: #fff;
+            font-size: .62rem; font-weight: 800;
+            padding: 3px 10px; border-radius: 100px;
+            font-family: DM Sans, sans-serif; letter-spacing: .05em;
+            white-space: nowrap; margin-bottom: .4rem;
         }}
         .fac-title {{
-            font-size:.95rem;font-weight:900;
-            color:{T["text"]};font-family:DM Sans,sans-serif;
-            margin-bottom:.2rem;
+            font-size: .95rem; font-weight: 900;
+            color: #7C3AED; font-family: DM Sans, sans-serif;
+            margin-bottom: .2rem;
         }}
         .fac-desc {{
-            font-size:.77rem;color:{T["text2"]};
-            font-family:DM Sans,sans-serif;line-height:1.55;
+            font-size: .77rem; color: {T["text2"]};
+            font-family: DM Sans, sans-serif; line-height: 1.55;
         }}
         </style>
         """,
