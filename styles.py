@@ -2282,6 +2282,669 @@ def get_css(T: dict) -> str:
   }}
 
 </style>
+
+  /* ╔══════════════════════════════════════════════════════════════════════
+     ██  RESTYLING STRATEGICO — MODULO CREAZIONE VERIFICHE
+     ██  Gerarchia visiva · Due Colonne · Tipografia ≥16px · Accenti
+     ╚══════════════════════════════════════════════════════════════════════ */
+
+  /* ════ TIPOGRAFIA PRINCIPALE — min 16px per docenti ════ */
+  .stTextInput input,
+  .stNumberInput input {{
+    font-size: 1rem !important;
+    min-height: 52px !important;
+  }}
+  .stTextArea textarea {{
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+  }}
+  .stSelectbox [data-baseweb="select"] span {{
+    font-size: 1rem !important;
+  }}
+  .stCheckbox label,
+  .stToggle label,
+  .stToggle span,
+  .stRadio [data-testid="stMarkdownContainer"] p {{
+    font-size: 1rem !important;
+  }}
+
+  /* ════ ONBOARDING HINT BANNER — tutta la larghezza, in alto nel form ════ */
+  .onboarding-hint-banner {{
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: linear-gradient(135deg, {T['accent']}14 0%, {T['card2']} 60%, {T['card']} 100%);
+    border: 1.5px solid {T['accent']}44;
+    border-radius: 16px;
+    padding: 1rem 1.3rem;
+    margin-bottom: 1.4rem;
+    position: relative;
+    overflow: hidden;
+  }}
+  .onboarding-hint-banner::before {{
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, {T['accent']}, {T['accent2']});
+    border-radius: 16px 16px 0 0;
+  }}
+  .onboarding-hint-icon {{
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+    line-height: 1;
+  }}
+  .onboarding-hint-body {{
+    flex: 1;
+    min-width: 0;
+  }}
+  .onboarding-hint-title {{
+    font-size: 1rem;
+    font-weight: 800;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .25rem;
+    letter-spacing: -.01em;
+  }}
+  .onboarding-hint-desc {{
+    font-size: .9rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.55;
+  }}
+  .onboarding-hint-desc strong {{ color: {T['accent']}; font-weight: 700; }}
+  .onboarding-hint-tags {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+    margin-top: .5rem;
+  }}
+  .onboarding-hint-tag {{
+    font-size: .72rem;
+    font-weight: 700;
+    background: {T['accent']}22;
+    color: {T['accent']};
+    border: 1px solid {T['accent']}44;
+    border-radius: 100px;
+    padding: 2px 10px;
+    letter-spacing: .03em;
+    font-family: 'DM Sans', sans-serif;
+  }}
+
+  /* ════ FORM SECTION HEADERS — intestazioni sezione con dot accent ════ */
+  .form-section-header {{
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    margin: 1.6rem 0 .75rem 0;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .form-section-dot {{
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: {T['accent']};
+    box-shadow: 0 0 8px {T['accent']}77;
+    flex-shrink: 0;
+  }}
+  .form-section-title {{
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: {T['accent']};
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+  }}
+  .form-section-line {{
+    flex: 1;
+    height: 1.5px;
+    background: linear-gradient(90deg, {T['accent']}55 0%, transparent 100%);
+    border-radius: 2px;
+  }}
+
+  /* ════ CTA GENERA BOZZA — grande, alto contrasto, hint ════ */
+  .cta-genera-wrap {{
+    margin-top: 1.8rem;
+    position: relative;
+  }}
+  .cta-genera-wrap > div.stButton > button[kind="primary"] {{
+    min-height: 60px !important;
+    font-size: 1.1rem !important;
+    font-weight: 900 !important;
+    letter-spacing: .02em !important;
+    border-radius: 16px !important;
+    box-shadow: 0 6px 28px {T['accent']}55 !important;
+    background: linear-gradient(135deg, {T['accent']} 0%, {T['accent2']} 100%) !important;
+    color: #fff !important;
+    transition: transform .2s cubic-bezier(.175,.885,.32,1.275),
+                box-shadow .2s ease,
+                filter .2s ease !important;
+  }}
+  .cta-genera-wrap > div.stButton > button[kind="primary"]:hover {{
+    transform: translateY(-3px) scale(1.02) !important;
+    box-shadow: 0 10px 36px {T['accent']}77 !important;
+    filter: brightness(1.07) !important;
+  }}
+  .cta-genera-wrap > div.stButton > button[kind="primary"]:active {{
+    transform: translateY(0) scale(0.98) !important;
+  }}
+  .cta-genera-wrap > div.stButton > button[kind="primary"]:disabled {{
+    background: {T['border2']} !important;
+    box-shadow: none !important;
+    transform: none !important;
+    opacity: .55 !important;
+    cursor: not-allowed !important;
+  }}
+  .cta-hint-below {{
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    justify-content: center;
+    margin-top: .5rem;
+    font-size: .78rem;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .cta-hint-below span {{ opacity: .6; }}
+
+  /* ════ SIDE PANEL — colonna destra del form a due colonne ════ */
+  .side-panel {{
+    position: sticky;
+    top: 1rem;
+  }}
+  .side-panel-card {{
+    background: {T['card']};
+    border: 1.5px solid {T['border']};
+    border-radius: 14px;
+    padding: 1rem 1rem .85rem;
+    margin-bottom: 1rem;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }}
+  .side-panel-card:hover {{
+    border-color: {T['border2']};
+  }}
+  .side-panel-card-title {{
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .65rem;
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+  }}
+  .side-panel-card-title-dot {{
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: {T['accent']};
+    flex-shrink: 0;
+  }}
+
+  /* ════ FACSIMILE SHORTCUT — box viola nella colonna destra ════ */
+  .facsimile-shortcut {{
+    background: linear-gradient(135deg, #7C3AED1A 0%, {T['card']} 100%);
+    border: 2px solid #7C3AED88;
+    border-radius: 14px;
+    padding: .85rem 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }}
+  .facsimile-shortcut:hover {{
+    border-color: #7C3AED;
+    box-shadow: 0 6px 24px #7C3AED22;
+  }}
+  .facsimile-shortcut-badge {{
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    background: #7C3AED;
+    color: #fff;
+    font-size: .58rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 100px;
+    letter-spacing: .06em;
+    font-family: 'DM Sans', sans-serif;
+    width: fit-content;
+  }}
+  .facsimile-shortcut-question {{
+    font-size: .85rem;
+    font-weight: 800;
+    color: #9F7AEA;
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.35;
+  }}
+  .facsimile-shortcut-desc {{
+    font-size: .75rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.45;
+  }}
+  /* Pulsante viola facsimile shortcut */
+  .facsimile-shortcut-btn > div.stButton > button,
+  .facsimile-shortcut-btn .stButton > button {{
+    background: #7C3AED !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: .85rem !important;
+    min-height: 40px !important;
+    padding: .5rem .9rem !important;
+    box-shadow: 0 4px 16px #7C3AED44 !important;
+    transition: all .18s ease !important;
+    width: 100% !important;
+  }}
+  .facsimile-shortcut-btn > div.stButton > button:hover {{
+    background: #9F5CFF !important;
+    box-shadow: 0 6px 22px #7C3AED66 !important;
+    transform: translateY(-1px) !important;
+  }}
+
+  /* ════ FILE ITEM COMPACT — card file nella colonna destra ════ */
+  .file-item-b {{
+    background: {T['card2']};
+    border: 1.5px solid {T['border']};
+    border-radius: 12px;
+    padding: .75rem .9rem .65rem;
+    margin-bottom: .6rem;
+    transition: border-color .12s ease;
+  }}
+  .file-item-b:hover {{
+    border-color: {T['accent']}66;
+  }}
+  .file-item-b-header {{
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: .4rem;
+  }}
+  .file-item-b-icon {{
+    font-size: 1rem;
+    flex-shrink: 0;
+    line-height: 1;
+  }}
+  .file-item-b-name {{
+    font-size: .78rem;
+    font-weight: 700;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }}
+  .file-item-b-badge {{
+    font-size: .6rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    letter-spacing: .04em;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .file-item-b-badge-verifica {{
+    background: {T['success']}22;
+    color: {T['success']};
+    border: 1px solid {T['success']}44;
+  }}
+  .file-item-b-badge-appunti {{
+    background: #C084FC22;
+    color: #A855F7;
+    border: 1px solid #C084FC44;
+  }}
+  .file-item-b-badge-altro {{
+    background: {T['card']};
+    color: {T['muted']};
+    border: 1px solid {T['border2']};
+  }}
+  .file-item-b-mode-label {{
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 3px;
+  }}
+  /* Dropdown e textarea dentro file-item-b */
+  .file-item-b .stSelectbox [data-baseweb="select"] > div:first-child {{
+    background: {T['card']} !important;
+    border: 1px solid {T['border']} !important;
+    min-height: 38px !important;
+    font-size: .82rem !important;
+  }}
+  .file-item-b .stSelectbox [data-baseweb="select"] span {{
+    font-size: .82rem !important;
+  }}
+  .file-item-b .stTextArea textarea {{
+    font-size: .82rem !important;
+    min-height: 56px !important;
+    background: {T['card']} !important;
+    border-color: {T['border']} !important;
+  }}
+  /* Pulsante Rimuovi discreto */
+  .file-item-b-delete > div.stButton > button,
+  .file-item-b-delete .stButton > button {{
+    background: transparent !important;
+    color: {T['muted']} !important;
+    border: 1px solid {T['border']} !important;
+    border-radius: 7px !important;
+    font-size: .7rem !important;
+    font-weight: 600 !important;
+    min-height: 28px !important;
+    padding: 0 8px !important;
+    box-shadow: none !important;
+    transform: none !important;
+    width: 100% !important;
+    transition: color .12s ease, border-color .12s ease !important;
+  }}
+  .file-item-b-delete > div.stButton > button:hover,
+  .file-item-b-delete .stButton > button:hover {{
+    color: #EF4444 !important;
+    border-color: #EF4444 !important;
+    background: #EF444408 !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }}
+
+  /* ════ UPLOAD HINT — colonna destra, hint OCR ════ */
+  .upload-hint-compact {{
+    background: linear-gradient(135deg, {T['accent']}12 0%, {T['card2']} 100%);
+    border: 1px dashed {T['accent']}55;
+    border-radius: 10px;
+    padding: .65rem .9rem;
+    margin-bottom: .75rem;
+    font-size: .78rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.5;
+  }}
+  .upload-hint-compact strong {{ color: {T['accent']}; font-weight: 700; }}
+
+  /* File uploader compact */
+  .file-uploader-compact [data-testid="stFileUploader"] section {{
+    padding: .5rem .75rem !important;
+    min-height: unset !important;
+  }}
+  .file-uploader-compact [data-testid="stFileUploadDropzone"] {{
+    min-height: unset !important;
+  }}
+
+  /* ════ CONTEXT SYNC BADGE — banner argomento auto-rilevato ════ */
+  .context-sync-badge {{
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    background: {T['success']}18;
+    border: 1.5px solid {T['success']}44;
+    border-radius: 8px;
+    padding: .35rem .75rem;
+    font-size: .72rem;
+    font-weight: 700;
+    color: {T['success']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .4rem;
+    animation: fadeInUp .3s ease both;
+  }}
+
+  /* ════ HOME LANDING — nuovo CTA unico ════ */
+  .home-landing-wrap {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+    padding: 1.5rem 0 2rem;
+    text-align: center;
+  }}
+  .home-landing-title {{
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: -.02em;
+  }}
+  .home-landing-desc {{
+    font-size: 1rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    max-width: 560px;
+    line-height: 1.6;
+  }}
+  /* Pulsante CTA home */
+  .home-cta-btn > div.stButton > button[kind="primary"] {{
+    min-height: 58px !important;
+    font-size: 1.15rem !important;
+    font-weight: 900 !important;
+    border-radius: 18px !important;
+    padding: .8rem 2.5rem !important;
+    background: linear-gradient(135deg, {T['accent']} 0%, {T['accent2']} 100%) !important;
+    box-shadow: 0 8px 32px {T['accent']}55 !important;
+    letter-spacing: .02em !important;
+    color: #fff !important;
+    animation: pulseGlow 3s ease-in-out infinite !important;
+  }}
+  .home-cta-btn > div.stButton > button[kind="primary"]:hover {{
+    transform: translateY(-3px) scale(1.03) !important;
+    box-shadow: 0 12px 40px {T['accent']}77 !important;
+    filter: brightness(1.1) !important;
+    animation: none !important;
+  }}
+
+  /* ════ BIVIO MIGLIORATO — card più compatte e chiare ════ */
+  .mcard {{
+    background: {T['card']};
+    border-radius: 16px;
+    padding: 1.2rem 1.1rem 1rem;
+    border: 2px solid {T['border']};
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    position: relative;
+    overflow: hidden;
+  }}
+  .mcard:hover {{
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,.15);
+  }}
+  .mcard-badge {{
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    color: #fff;
+    font-size: .6rem;
+    font-weight: 800;
+    padding: 2px 9px;
+    border-radius: 100px;
+    letter-spacing: .06em;
+    font-family: 'DM Sans', sans-serif;
+    width: fit-content;
+    margin-bottom: .1rem;
+  }}
+  .mcard-icon {{
+    font-size: 1.8rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }}
+  .mcard-title {{
+    font-size: 1.05rem;
+    font-weight: 900;
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.2;
+    letter-spacing: -.01em;
+  }}
+  .mcard-desc {{
+    font-size: .88rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.55;
+    flex: 1;
+  }}
+  .mcard-hint {{
+    font-size: .75rem;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
+    border-top: 1px solid {T['border']};
+    padding-top: .5rem;
+    margin-top: auto;
+  }}
+  .mcard-chips {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem;
+    margin-top: .1rem;
+  }}
+  .mcard-chip {{
+    font-size: .68rem;
+    background: {T['card2']};
+    color: {T['text2']};
+    border: 1px solid {T['border']};
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+  }}
+  /* Hover effect colori */
+  .mcard-blu:hover   {{ border-color: #3B82F6 !important; box-shadow: 0 12px 32px #3B82F622 !important; }}
+  .mcard-verde:hover {{ border-color: #10B981 !important; box-shadow: 0 12px 32px #10B98122 !important; }}
+  .mcard-arancio:hover {{ border-color: #F59E0B !important; box-shadow: 0 12px 32px #F59E0B22 !important; }}
+
+  /* ════ FACSIMILE DEDICATO PAGE — pagina rapida con solo upload ════ */
+  .facsimile-page-wrap {{
+    max-width: 580px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 1rem 0;
+  }}
+  .facsimile-page-icon {{
+    font-size: 3rem;
+    margin-bottom: .5rem;
+    display: block;
+  }}
+  .facsimile-page-title {{
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .4rem;
+    letter-spacing: -.02em;
+  }}
+  .facsimile-page-desc {{
+    font-size: 1rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }}
+  /* Area upload centrale facsimile */
+  .facsimile-page-uploader {{
+    background: linear-gradient(135deg, #7C3AED14 0%, {T['card2']} 100%);
+    border: 2.5px dashed #7C3AED88;
+    border-radius: 18px;
+    padding: 1.5rem 1.5rem 1rem;
+    margin-bottom: 1rem;
+    transition: border-color .15s ease;
+  }}
+  .facsimile-page-uploader:hover {{ border-color: #7C3AED; }}
+
+  /* ════ PROGRESS BAR GENERAZIONE — improved ════ */
+  .gen-progress-wrap {{
+    background: {T['card']};
+    border: 1.5px solid {T['border']};
+    border-radius: 14px;
+    padding: 1.2rem 1.4rem;
+    margin: .8rem 0 1.2rem;
+    animation: fadeInUp .3s ease both;
+  }}
+  .gen-progress-label {{
+    font-size: .9rem;
+    font-weight: 700;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .7rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }}
+  .gen-progress-label-dot {{
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: {T['accent']};
+    animation: pulseGlow 1.2s ease-in-out infinite;
+    flex-shrink: 0;
+  }}
+
+  /* ════ ARGOMENTO FIELD ENHANCED — campo principale, visibilità ════ */
+  .argomento-field-wrap .stTextArea textarea {{
+    font-size: 1rem !important;
+    min-height: 100px !important;
+    border-left: 3px solid {T['accent']} !important;
+    border-radius: 0 10px 10px 0 !important;
+    padding-left: 14px !important;
+    background: {T['card2']} !important;
+  }}
+  .argomento-field-wrap .stTextArea textarea:focus {{
+    border-color: {T['accent']} !important;
+    border-left-width: 4px !important;
+    box-shadow: 0 0 0 3px {T['accent_light']} !important;
+  }}
+
+  /* ════ NOTA EXTRA — campo note con stile discreto ════ */
+  .note-field-wrap .stTextArea textarea {{
+    font-size: .9rem !important;
+    font-style: italic;
+    min-height: 72px !important;
+    background: {T['card']} !important;
+    border-style: dashed !important;
+  }}
+
+  /* ════ BACK BUTTON DISCRETE ════ */
+  .btn-back-discrete > div.stButton > button,
+  .btn-back-discrete .stButton > button {{
+    background: transparent !important;
+    color: {T['muted']} !important;
+    border: 1px solid {T['border']} !important;
+    border-radius: 9px !important;
+    font-size: .8rem !important;
+    font-weight: 500 !important;
+    min-height: 34px !important;
+    padding: 0 .85rem !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: color .12s ease, border-color .12s ease !important;
+    width: 100% !important;
+  }}
+  .btn-back-discrete > div.stButton > button:hover,
+  .btn-back-discrete .stButton > button:hover {{
+    color: {T['text2']} !important;
+    border-color: {T['border2']} !important;
+    background: {T['hover']} !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }}
+
+  /* ════ RESPONSIVE — due colonne form su tablet ════ */
+  @media (max-width: 767px) {{
+    .onboarding-hint-banner {{
+      flex-direction: column;
+      gap: .6rem;
+    }}
+    .facsimile-shortcut {{
+      display: none;  /* Nasconde shortcut su mobile, accesso via percorso A */
+    }}
+  }}
+
+</style>
 """
 
 
