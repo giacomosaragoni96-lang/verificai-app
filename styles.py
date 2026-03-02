@@ -1165,6 +1165,311 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
+     FEATURE #3 — Quick Regen (variante rapida one-click)
+     ════════════════════════════════════════════════════════════════════════ */
+  .quick-regen-row {{
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .55rem .75rem;
+    background: linear-gradient(135deg, {_acc}12, {_acc}06);
+    border: 1px dashed {_acc}40;
+    border-radius: 10px;
+    margin: .5rem 0 .3rem 0;
+  }}
+  .quick-regen-label {{
+    font-size: .78rem;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.45;
+  }}
+  .quick-regen-label strong {{
+    color: {_acc};
+    font-weight: 800;
+  }}
+  .quick-regen-hint {{
+    display: block;
+    font-size: .68rem;
+    color: {T['muted']};
+    font-weight: 400;
+    margin-top: 1px;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     FEATURE #5 — Condivisione Dipartimento
+     ════════════════════════════════════════════════════════════════════════ */
+
+  /* Card principale */
+  .share-dept-card {{
+    background: linear-gradient(135deg, {T['card']} 0%, {T['card2']} 100%);
+    border: 2px solid {_acc}30;
+    border-radius: 16px;
+    padding: 1rem 1.2rem;
+    margin-bottom: .8rem;
+    position: relative;
+    overflow: hidden;
+  }}
+  .share-dept-card::before {{
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, {_acc}, #7C3AED, {_acc});
+    background-size: 200% 100%;
+    animation: gradientSlide 3s ease infinite;
+  }}
+  @keyframes gradientSlide {{
+    0%,100% {{ background-position: 0% 50%; }}
+    50% {{ background-position: 100% 50%; }}
+  }}
+  .share-dept-header {{
+    display: flex;
+    align-items: flex-start;
+    gap: .8rem;
+  }}
+  .share-dept-icon {{
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }}
+  .share-dept-title-wrap {{
+    flex: 1;
+  }}
+  .share-dept-title {{
+    font-size: .92rem;
+    font-weight: 800;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .share-dept-subtitle {{
+    font-size: .74rem;
+    color: {T['text2']};
+    line-height: 1.5;
+    margin-top: 3px;
+  }}
+
+  /* Link box (dopo generazione) */
+  .share-link-box {{
+    background: {T['bg2']};
+    border: 1px solid {T['border']};
+    border-radius: 10px;
+    padding: .6rem .9rem;
+    margin: .6rem 0;
+  }}
+  .share-link-status {{
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .68rem;
+    color: {T['success']};
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .35rem;
+  }}
+  .share-link-dot {{
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: {T['success']};
+    animation: pulse-dot 2s ease infinite;
+    flex-shrink: 0;
+  }}
+  .share-link-url {{
+    font-size: .76rem;
+    color: {_acc};
+    font-family: 'DM Sans', monospace;
+    word-break: break-all;
+    font-weight: 600;
+    padding: .3rem .5rem;
+    background: {_acc}08;
+    border-radius: 6px;
+    border: 1px solid {_acc}20;
+  }}
+
+  /* Shared view (colleghi che aprono il link) */
+  .shared-view-banner {{
+    background: linear-gradient(135deg, #7C3AED20, {_acc}15);
+    border: 2px solid #7C3AED40;
+    border-radius: 16px;
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 1rem;
+  }}
+  .shared-view-header {{
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    margin-bottom: .7rem;
+  }}
+  .shared-view-title {{
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .shared-view-meta {{
+    font-size: .76rem;
+    color: {T['text2']};
+    margin-top: 2px;
+  }}
+  .shared-view-badges {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+  }}
+  .shared-view-badge {{
+    background: {T['card2']};
+    border: 1px solid {T['border']};
+    border-radius: 20px;
+    padding: .2rem .65rem;
+    font-size: .68rem;
+    font-weight: 600;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+  }}
+
+  /* CTA variante (per colleghi) */
+  .shared-cta-card {{
+    background: linear-gradient(135deg, {_acc}12, {_acc}06);
+    border: 2px solid {_acc}35;
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+    margin: .7rem 0;
+    text-align: center;
+  }}
+  .shared-cta-icon {{
+    font-size: 1.8rem;
+    margin-bottom: .3rem;
+  }}
+  .shared-cta-title {{
+    font-size: .95rem;
+    font-weight: 800;
+    color: {_acc};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .3rem;
+  }}
+  .shared-cta-desc {{
+    font-size: .76rem;
+    color: {T['text2']};
+    line-height: 1.5;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     STORICO — Sidebar migliorato
+     ════════════════════════════════════════════════════════════════════════ */
+
+  /* Card verifica nello storico */
+  .storico-card {{
+    background: #1A1917;
+    border: 1px solid #2A2923;
+    border-radius: 10px;
+    padding: .6rem .75rem;
+    margin-bottom: .5rem;
+    transition: border-color .2s, background .2s;
+  }}
+  .storico-card:hover {{
+    border-color: {_acc}50;
+    background: #1E1D1A;
+  }}
+  .storico-card-top {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: .25rem;
+  }}
+  .storico-card-mat {{
+    font-size: .76rem;
+    font-weight: 700;
+    color: #d8d6ce;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .storico-card-date {{
+    font-size: .62rem;
+    color: #6b6960;
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+  }}
+  .storico-card-arg {{
+    font-size: .72rem;
+    color: #9b9890;
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: .3rem;
+  }}
+  .storico-card-meta {{
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .62rem;
+    color: #6b6960;
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .3rem;
+  }}
+  .storico-card-scu {{
+    color: #7b7970;
+  }}
+  .storico-card-nes {{
+    color: #6b6960;
+  }}
+  .storico-card-badges {{
+    display: flex;
+    gap: .3rem;
+    flex-wrap: wrap;
+  }}
+  /* Filtro materia chips (sidebar) */
+  .storico-filter {{
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    margin-bottom: .5rem;
+    flex-wrap: wrap;
+  }}
+  .storico-filter-chip {{
+    font-size: .62rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid #2A2923;
+    background: transparent;
+    color: #8b8980;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .storico-filter-chip-active {{
+    background: {_acc}20;
+    border-color: {_acc};
+    color: {_acc};
+  }}
+  /* Stella e delete in storico */
+  .stella-btn, .stella-btn-on {{
+    margin: 0;
+  }}
+  .stella-btn button, .stella-btn-on button {{
+    background: transparent !important;
+    border: none !important;
+    padding: 2px 4px !important;
+    font-size: .82rem !important;
+    min-height: auto !important;
+    line-height: 1 !important;
+  }}
+  .stella-btn-on button {{
+    color: {_acc} !important;
+  }}
+  .elimina-btn button {{
+    background: transparent !important;
+    border: 1px dashed #3a3930 !important;
+    padding: 2px 6px !important;
+    font-size: .72rem !important;
+    min-height: auto !important;
+    opacity: .5;
+    transition: all .15s;
+  }}
+  .elimina-btn button:hover {{
+    opacity: 1;
+    border-color: #EF4444 !important;
+    color: #EF4444 !important;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
      RESPONSIVE
      ════════════════════════════════════════════════════════════════════════ */
   @media (max-width: 767px) {{
@@ -1184,6 +1489,234 @@ def get_css(T: dict) -> str:
     .mcard {{
       min-height: auto;
     }}
+  }}
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     IDEA #3 — QUICK REGEN (variante rapida)
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .quick-regen-row {{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: .5rem .6rem;
+    background: linear-gradient(135deg, {T.get("card2", T["card"])} 0%, {T["card"]} 100%);
+    border: 1px dashed {T["accent"]}55;
+    border-radius: 10px;
+    margin-bottom: .4rem;
+  }}
+  .quick-regen-label {{
+    font-size: .78rem;
+    font-family: 'DM Sans', sans-serif;
+    color: {T["text2"]};
+    line-height: 1.4;
+  }}
+  .quick-regen-label strong {{
+    color: {T["accent"]};
+  }}
+  .quick-regen-hint {{
+    display: block;
+    font-size: .68rem;
+    color: {T["muted"]};
+    font-weight: 400;
+    margin-top: 1px;
+  }}
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     IDEA #5 — SHARE WITH DEPARTMENT
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .share-dept-card {{
+    background: linear-gradient(135deg, {T.get("card2", T["card"])} 0%, {T["card"]} 100%);
+    border: 1px solid {T["border"]};
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+    margin-bottom: .6rem;
+  }}
+  .share-dept-header {{
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }}
+  .share-dept-icon {{
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }}
+  .share-dept-title-wrap {{
+    flex: 1;
+  }}
+  .share-dept-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: .92rem;
+    font-weight: 800;
+    color: {T["text"]};
+    margin-bottom: 4px;
+  }}
+  .share-dept-subtitle {{
+    font-size: .76rem;
+    color: {T["text2"]};
+    line-height: 1.45;
+  }}
+
+  .share-link-box {{
+    background: {T.get("card2", T["card"])};
+    border: 2px solid {T["success"]}44;
+    border-radius: 10px;
+    padding: .7rem .9rem;
+    margin-bottom: .5rem;
+  }}
+  .share-link-status {{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .7rem;
+    font-weight: 700;
+    color: {T["success"]};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 6px;
+  }}
+  .share-link-dot {{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: {T["success"]};
+    animation: pulse-dot 2s ease-in-out infinite;
+  }}
+  .share-link-url {{
+    font-size: .72rem;
+    color: {T["muted"]};
+    font-family: 'DM Sans', monospace;
+    word-break: break-all;
+    padding: .3rem .5rem;
+    background: {T["bg"]};
+    border-radius: 6px;
+    border: 1px solid {T["border"]};
+  }}
+
+  /* ── Shared view (link aperto da collega) ──────────────────────── */
+  .shared-view-banner {{
+    background: linear-gradient(135deg, {T.get("card2", T["card"])} 0%, {T["card"]} 100%);
+    border: 2px solid {T["accent"]}55;
+    border-radius: 16px;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1rem;
+  }}
+  .shared-view-header {{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: .7rem;
+  }}
+  .shared-view-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: {T["accent"]};
+  }}
+  .shared-view-meta {{
+    font-size: .78rem;
+    color: {T["text2"]};
+    margin-top: 2px;
+  }}
+  .shared-view-badges {{
+    display: flex;
+    gap: .4rem;
+    flex-wrap: wrap;
+  }}
+  .shared-view-badge {{
+    background: {T.get("card2", T["card"])};
+    border: 1px solid {T["border"]};
+    border-radius: 8px;
+    padding: .2rem .6rem;
+    font-size: .7rem;
+    font-weight: 600;
+    color: {T["text2"]};
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .shared-cta-card {{
+    background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+    border-radius: 14px;
+    padding: 1.1rem 1.3rem;
+    margin-bottom: .7rem;
+    text-align: center;
+  }}
+  .shared-cta-icon {{
+    font-size: 1.8rem;
+    margin-bottom: .3rem;
+  }}
+  .shared-cta-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: .3rem;
+  }}
+  .shared-cta-desc {{
+    font-size: .78rem;
+    color: #ffffffcc;
+    line-height: 1.45;
+  }}
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     STORICO — Card redesign
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .storico-card {{
+    margin-top: .6rem;
+    padding: .45rem .5rem .35rem;
+    border-bottom: 1px solid #252420;
+    border-left: 3px solid transparent;
+    transition: border-left-color .15s;
+  }}
+  .storico-card:hover {{
+    border-left-color: {T["accent"]};
+  }}
+  .storico-card-top {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+  }}
+  .storico-card-mat {{
+    font-size: .78rem;
+    font-weight: 700;
+    color: #d8d6ce;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .storico-card-date {{
+    font-size: .62rem;
+    color: #6b6960;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .storico-card-arg {{
+    font-size: .74rem;
+    color: #9b9890;
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 3px;
+    line-height: 1.3;
+  }}
+  .storico-card-meta {{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .64rem;
+    color: #5e5d56;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .storico-card-scu {{
+    background: #1a1917;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid #2a2924;
+  }}
+  .storico-card-nes {{
+    opacity: .8;
+  }}
+  .storico-card-badges {{
+    display: flex;
+    gap: 3px;
+    margin-top: 4px;
   }}
 
 </style>
