@@ -2016,6 +2016,83 @@ def get_css(T: dict) -> str:
   }}
 
   /* ═══════════════════════════════════════════════════════════════════
+     HOME CARD BUTTONS — selettori posizionali per colonna (Streamlit-compatible)
+     Identificazione tramite presenza di .mcard-blu nella riga di 3 colonne
+  ═══════════════════════════════════════════════════════════════════ */
+
+  /* Colonna 1 (BLU) — Creazione guidata */
+  div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(1) button,
+  .mbtn-blu button {{
+    background: linear-gradient(135deg, #3B82F6, #2563EB) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-size: .88rem !important;
+    box-shadow: 0 4px 16px #3B82F644 !important;
+    transition: background .2s ease, box-shadow .2s ease !important;
+  }}
+  div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(1) button:hover,
+  .mbtn-blu button:hover {{
+    background: linear-gradient(135deg, #60A5FA, #3B82F6) !important;
+    box-shadow: 0 6px 24px #3B82F666 !important;
+  }}
+
+  /* Colonna 2 (VERDE) — Descrizione libera */
+  div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(2) button,
+  .mbtn-verde button {{
+    background: linear-gradient(135deg, #10B981, #059669) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-size: .88rem !important;
+    box-shadow: 0 4px 16px #10B98144 !important;
+    transition: background .2s ease, box-shadow .2s ease !important;
+  }}
+  div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(2) button:hover,
+  .mbtn-verde button:hover {{
+    background: linear-gradient(135deg, #34D399, #10B981) !important;
+    box-shadow: 0 6px 24px #10B98166 !important;
+  }}
+
+  /* Colonna 3 (ARANCIO) — Genera da file */
+  div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(3) button,
+  .mbtn-arancio button {{
+    background: linear-gradient(135deg, #F59E0B, #D97706) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-size: .88rem !important;
+    box-shadow: 0 4px 16px #F59E0B44 !important;
+    transition: background .2s ease, box-shadow .2s ease !important;
+  }}
+  div[data-testid="stHorizontalBlock"]:has(.mcard-blu) > div[data-testid="column"]:nth-child(3) button:hover,
+  .mbtn-arancio button:hover {{
+    background: linear-gradient(135deg, #FCD34D, #F59E0B) !important;
+    box-shadow: 0 6px 24px #F59E0B66 !important;
+  }}
+
+  /* VIOLA — Facsimile istantaneo */
+  .mbtn-viola button,
+  .mbtn-viola button:focus,
+  .mbtn-viola button:active {{
+    background: linear-gradient(135deg, #7C3AED, #6D28D9) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-size: .9rem !important;
+    box-shadow: 0 4px 18px #7C3AED44 !important;
+    transition: background .18s ease, box-shadow .18s ease !important;
+  }}
+  .mbtn-viola button:hover {{
+    background: linear-gradient(135deg, #A78BFA, #7C3AED) !important;
+    box-shadow: 0 6px 28px #7C3AED66 !important;
+  }}
+
+  /* ═══════════════════════════════════════════════════════════════════
      IDEA #8 — TEMPLATE GALLERY
   ═══════════════════════════════════════════════════════════════════ */
 
