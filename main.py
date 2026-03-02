@@ -590,18 +590,18 @@ if settings.get("theme_changed"):
     T = THEMES[st.session_state.theme]
     st.rerun()
 
-# ── HINT SIDEBAR MINIMALE (top-left, fuori dal flusso) ───────────────────────
-st.markdown(
-    '<div class="sidebar-hint-inline">'
-    '☰ Impostazioni, storico e logout'
-    '</div>',
-    unsafe_allow_html=True
-)
+# ── HINT SIDEBAR MINIMALE (solo fuori dalla landing) ─────────────────────────
 _on_landing = (
     st.session_state.stage == STAGE_INPUT
     and st.session_state.get("input_percorso") is None
 )
 if not _on_landing:
+    st.markdown(
+        '<div class="sidebar-hint-inline">'
+        '☰ Impostazioni, storico e logout'
+        '</div>',
+        unsafe_allow_html=True
+    )
     st.markdown(
         '<div class="hero-wrap"><div class="hero-left">'
         '<h1 class="hero-title"><span class="hero-icon">' + APP_ICON + '</span>'
@@ -1112,23 +1112,30 @@ def _consolida_info():
 
 def _render_bivio():
     """
-    Home page — design ispirato a Tally: hero centrato, headline grande,
-    un solo CTA "Genera Verifica →". Niente scelte di percorso: tutto parte
-    dal form manuale (Percorso B) che copre tutti i casi d'uso.
+    Home page stile Tally: logo + titolo centrato, headline grande,
+    un solo CTA "Genera Verifica →". Nessuna scelta di percorso.
     """
 
-    # ── Hero section ─────────────────────────────────────────────────────────
+    # ── Logo + brand centrato ─────────────────────────────────────────────────
+    st.markdown(
+        f'<div class="landing-logo-wrap">'
+        f'  <div class="landing-logo-icon">{APP_ICON}</div>'
+        f'  <div class="landing-logo-name">Verific<span class="landing-logo-ai">AI</span></div>'
+        f'  <span class="landing-logo-beta">Beta</span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    # ── Hero headline ─────────────────────────────────────────────────────────
     st.markdown(
         f'''
         <div class="tally-hero">
-          <div class="tally-eyebrow">✦ Pensato per i docenti italiani</div>
           <h2 class="tally-headline">
             Crea verifiche<br>
             <span class="tally-headline-accent">professionali in secondi</span>
           </h2>
           <p class="tally-sub">
-            Scegli materia, livello e argomento.<br>
-            L'AI costruisce la verifica — tu la revisioni e scarichi.
+            Scegli materia, livello e argomento —<br>l'AI costruisce la verifica, tu la revisioni e scarichi.
           </p>
         </div>
         ''',
@@ -1157,22 +1164,11 @@ def _render_bivio():
           <span class="tally-feat-sep">·</span>
           <span class="tally-feat">🔢 Punteggi calibrati</span>
           <span class="tally-feat-sep">·</span>
-          <span class="tally-feat">♿ Versione BES/DSA</span>
+          <span class="tally-feat">⭐ Versione BES/DSA</span>
           <span class="tally-feat-sep">·</span>
           <span class="tally-feat">🎲 Fila A e B</span>
           <span class="tally-feat-sep">·</span>
           <span class="tally-feat">✏️ DOCX modificabile</span>
-        </div>
-        ''',
-        unsafe_allow_html=True,
-    )
-
-    # ── Social proof strip ────────────────────────────────────────────────────
-    st.markdown(
-        f'''
-        <div class="tally-proof">
-          <span class="tally-proof-dot"></span>
-          Liceo Scientifico · Scuola Media · ITI · Liceo Classico · Istituto Professionale
         </div>
         ''',
         unsafe_allow_html=True,
@@ -2363,18 +2359,18 @@ def _render_percorso_b_form():
     with col_side:
         _lista_b = st.session_state.analisi_docs_list
 
-        # ── Facsimile shortcut (solo se nessun file) ──────────────────────────
+        # ── Box 1: Facsimile shortcut (solo se nessun file) ──────────────────
         if not _lista_b:
             st.markdown(
-                f'<div class="facsimile-shortcut">'
-                f'<div class="facsimile-shortcut-badge">⚡ RAPIDO</div>'
-                f'<div class="facsimile-shortcut-question">'
-                f'Hai già una verifica da replicare?'
-                f'</div>'
-                f'<div class="facsimile-shortcut-desc">'
+                f'<div class="side-box">'
+                f'  <div class="side-box-header">'
+                f'    <span class="side-box-badge side-box-badge-violet">⚡ RAPIDO</span>'
+                f'  </div>'
+                f'  <div class="side-box-title">Hai già una verifica da replicare?</div>'
+                f'  <div class="side-box-desc">'
                 f'Carica la verifica originale e ottieni una variante con dati nuovi '
                 f'e stessa struttura. Senza compilare nessun campo.'
-                f'</div>'
+                f'  </div>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
@@ -2385,23 +2381,19 @@ def _render_percorso_b_form():
                 st.session_state["_analisi_rifiuto"] = None
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
-            st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
 
-        # ── Upload intelligente ───────────────────────────────────────────────
+        # ── Box 2: Materiale di studio + upload ──────────────────────────────
         st.markdown(
-            f'<div class="side-panel-card">'
-            f'<div class="side-panel-card-title">'
-            f'<div class="side-panel-card-title-dot"></div>'
-            f'Materiale di studio'
-            f'</div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-        # Nota: il div viene chiuso sopra — usiamo un box separato per l'hint
-        st.markdown(
-            f'<div class="upload-hint-compact">'
-            f'✍️ <strong>Inserisci</strong> verifiche, appunti, foto a mano o PDF. '
-            f'L\'IA riconosce perfettamente la tua scrittura!'
+            f'<div class="side-box">'
+            f'  <div class="side-box-title side-box-title-flex">'
+            f'    <span class="side-box-dot"></span>'
+            f'    Materiale di studio'
+            f'  </div>'
+            f'  <div class="side-box-desc">'
+            f'✍️ Inserisci verifiche, appunti, foto a mano o PDF. '
+            f"L'IA riconosce perfettamente la tua scrittura!"
+            f'  </div>'
             f'</div>',
             unsafe_allow_html=True,
         )
@@ -4469,7 +4461,13 @@ if _share_param and isinstance(_share_param, str) and len(_share_param) >= 6:
             st.rerun()
 
 if not _share_view_active:
-    _render_breadcrumb()
+    # Mostra breadcrumb solo quando NON si è sulla landing iniziale
+    _show_bc = not (
+        st.session_state.stage == STAGE_INPUT
+        and st.session_state.get("input_percorso") is None
+    )
+    if _show_bc:
+        _render_breadcrumb()
 
 # ── SCROLL TO TOP on stage change ─────────────────────────────────────────────
 _current_stage = st.session_state.stage
