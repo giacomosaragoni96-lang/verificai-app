@@ -597,15 +597,20 @@ st.markdown(
     '</div>',
     unsafe_allow_html=True
 )
-st.markdown(
-    '<div class="hero-wrap"><div class="hero-left">'
-    '<h1 class="hero-title"><span class="hero-icon">' + APP_ICON + '</span>'
-    ' Verific<span class="hero-ai">AI</span></h1>'
-    '<p class="hero-sub">' + APP_TAGLINE + '</p>'
-    '<span class="hero-beta">Versione Beta</span>'
-    '</div></div>',
-    unsafe_allow_html=True
+_on_landing = (
+    st.session_state.stage == STAGE_INPUT
+    and st.session_state.get("input_percorso") is None
 )
+if not _on_landing:
+    st.markdown(
+        '<div class="hero-wrap"><div class="hero-left">'
+        '<h1 class="hero-title"><span class="hero-icon">' + APP_ICON + '</span>'
+        ' Verific<span class="hero-ai">AI</span></h1>'
+        '<p class="hero-sub">' + APP_TAGLINE + '</p>'
+        '<span class="hero-beta">Versione Beta</span>'
+        '</div></div>',
+        unsafe_allow_html=True
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1107,185 +1112,71 @@ def _consolida_info():
 
 def _render_bivio():
     """
-    Home page migliorata: gerarchia visiva chiara, accenti di colore,
-    separazione percorso guidato vs percorso rapido (facsimile).
+    Home page — design ispirato a Tally: hero centrato, headline grande,
+    un solo CTA "Genera Verifica →". Niente scelte di percorso: tutto parte
+    dal form manuale (Percorso B) che copre tutti i casi d'uso.
     """
-    # ── Titolo sezione ────────────────────────────────────────────────────────
+
+    # ── Hero section ─────────────────────────────────────────────────────────
     st.markdown(
-        f'<div class="home-landing-wrap">'
-        f'<div class="home-landing-title">Come vuoi creare la verifica?</div>'
-        f'<div class="home-landing-desc">'
-        f'Scegli il percorso più adatto. '
-        f'Potrai sempre modificare ogni singolo esercizio dopo la generazione.'
-        f'</div>'
-        f'</div>',
+        f'''
+        <div class="tally-hero">
+          <div class="tally-eyebrow">✦ Pensato per i docenti italiani</div>
+          <h2 class="tally-headline">
+            Crea verifiche<br>
+            <span class="tally-headline-accent">professionali in secondi</span>
+          </h2>
+          <p class="tally-sub">
+            Scegli materia, livello e argomento.<br>
+            L'AI costruisce la verifica — tu la revisioni e scarichi.
+          </p>
+        </div>
+        ''',
         unsafe_allow_html=True,
     )
 
-    # ── Iniezione CSS card pulsanti colorati ──────────────────────────────────
-    st.markdown(
-        f"""<style>
-        .mcard-blu  {{ border-color: #3B82F6 !important; }}
-        .mcard-arancio {{ border-color: #F59E0B !important; }}
-        /* Colonna 1 — BLU */
-        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) >
-          div[data-testid="column"]:nth-child(1) button {{
-            background: linear-gradient(135deg,#3B82F6,#2563EB) !important;
-            color:#fff !important; border:none !important;
-            border-radius:12px !important; font-weight:700 !important;
-            font-size:.9rem !important;
-            box-shadow:0 4px 16px #3B82F644 !important;
-        }}
-        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) >
-          div[data-testid="column"]:nth-child(1) button:hover {{
-            background:linear-gradient(135deg,#60A5FA,#3B82F6) !important;
-            box-shadow:0 6px 24px #3B82F666 !important;
-        }}
-        /* Colonna 2 — VERDE */
-        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) >
-          div[data-testid="column"]:nth-child(2) button {{
-            background:linear-gradient(135deg,#10B981,#059669) !important;
-            color:#fff !important; border:none !important;
-            border-radius:12px !important; font-weight:700 !important;
-            font-size:.9rem !important;
-            box-shadow:0 4px 16px #10B98144 !important;
-        }}
-        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) >
-          div[data-testid="column"]:nth-child(2) button:hover {{
-            background:linear-gradient(135deg,#34D399,#10B981) !important;
-            box-shadow:0 6px 24px #10B98166 !important;
-        }}
-        /* Colonna 3 — ARANCIO */
-        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) >
-          div[data-testid="column"]:nth-child(3) button {{
-            background:linear-gradient(135deg,#F59E0B,#D97706) !important;
-            color:#fff !important; border:none !important;
-            border-radius:12px !important; font-weight:700 !important;
-            font-size:.9rem !important;
-            box-shadow:0 4px 16px #F59E0B44 !important;
-        }}
-        div[data-testid="stHorizontalBlock"]:has(.mcard-blu) >
-          div[data-testid="column"]:nth-child(3) button:hover {{
-            background:linear-gradient(135deg,#FCD34D,#F59E0B) !important;
-            box-shadow:0 6px 24px #F59E0B66 !important;
-        }}
-        /* VIOLA — Facsimile */
-        .mbtn-viola button {{
-            background:linear-gradient(135deg,#7C3AED,#6D28D9) !important;
-            color:#fff !important; border:none !important;
-            border-radius:12px !important; font-weight:700 !important;
-            font-size:.92rem !important;
-            box-shadow:0 4px 20px #7C3AED44 !important;
-        }}
-        .mbtn-viola button:hover {{
-            background:linear-gradient(135deg,#A78BFA,#7C3AED) !important;
-            box-shadow:0 6px 28px #7C3AED66 !important;
-        }}
-        </style>""",
-        unsafe_allow_html=True,
-    )
-
-    # ── 2 card percorsi principali ─────────────────────────────────────────────
-    col_a, col_b = st.columns(2, gap="large")
-
-    with col_a:
-        st.markdown(
-            f'<div class="mcard mcard-blu">'
-            f'<div class="mcard-badge" style="background:#3B82F6;">✦ Più usato</div>'
-            f'<div class="mcard-icon">✍️</div>'
-            f'<div class="mcard-title" style="color:#3B82F6;">Creazione guidata</div>'
-            f'<div class="mcard-desc">'
-            f'Scegli materia, classe e argomento. '
-            f'L\'AI costruisce la verifica rispettando livello scolastico '
-            f'e numero di esercizi che vuoi. Puoi allegare materiale opzionale.'
-            f'</div>'
-            f'<div class="mcard-hint">Compila i campi, allega file se vuoi — poi premi Genera.</div>'
-            f'<div class="mcard-chips">'
-            f'<span class="mcard-chip">⚙️ Controllo totale</span>'
-            f'<span class="mcard-chip">📂 Upload opzionale</span>'
-            f'</div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-        if st.button("✍️  Crea verifica guidata →", key="btn_percorso_b",
-                     use_container_width=True, type="primary"):
-            st.session_state.input_percorso = "B"
-            st.rerun()
-
-
-
-    with col_b:
-        st.markdown(
-            f'<div class="mcard mcard-arancio">'
-            f'<div class="mcard-icon">📂</div>'
-            f'<div class="mcard-title" style="color:#F59E0B;">Genera da file</div>'
-            f'<div class="mcard-desc">'
-            f'Carica una verifica, appunti, foto della lavagna o pagine di libro. '
-            f'L\'AI analizza il materiale e ti guida passo passo nella generazione.'
-            f'</div>'
-            f'<div class="mcard-hint">Il file viene usato solo per generare la verifica.</div>'
-            f'<div class="mcard-chips">'
-            f'<span class="mcard-chip">📝 Verifiche</span>'
-            f'<span class="mcard-chip">📒 Appunti</span>'
-            f'<span class="mcard-chip">✍️ Scrittura a mano</span>'
-            f'</div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-        if st.button("📂  Carica e genera →", key="btn_percorso_a",
-                     use_container_width=True, type="primary"):
-            st.session_state.input_percorso = "A"
-            st.session_state["_analisi_rifiuto"] = None
-            st.rerun()
-
-    # ── Facsimile — card viola in evidenza ────────────────────────────────────
-    st.markdown("<div style='height:1.1rem'></div>", unsafe_allow_html=True)
-    _fc1, _fc2, _fc3 = st.columns([1, 6, 1])
-    with _fc2:
-        st.markdown(
-            f'<div class="fac-card">'
-            f'  <div style="font-size:2.2rem;flex-shrink:0;line-height:1;">⚡</div>'
-            f'  <div style="flex:1;">'
-            f'    <div class="fac-badge">⚡ PERCORSO RAPIDO</div>'
-            f'    <div class="fac-title">Crea Facsimile da verifica esistente</div>'
-            f'    <div class="fac-desc">'
-            f'      Hai già una verifica? Carica il file → l\'AI genera subito una variante '
-            f'      con dati diversi, stessa struttura, stessi punteggi. '
-            f'      <strong>Zero configurazione.</strong>'
-            f'    </div>'
-            f'  </div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-        st.markdown('<div class="mbtn-viola">', unsafe_allow_html=True)
+    # ── CTA unico — centrato ─────────────────────────────────────────────────
+    st.markdown('<div class="tally-cta-wrap">', unsafe_allow_html=True)
+    _c1, _c2, _c3 = st.columns([1.4, 2, 1.4])
+    with _c2:
         if st.button(
-            "⚡  Carica verifica esistente → genera variante istantanea",
-            key="btn_facsimile_home",
+            "Genera Verifica  →",
+            key="btn_genera_verifica_home",
             use_container_width=True,
             type="primary",
         ):
-            st.session_state.input_percorso = "FACSIMILE"
-            st.session_state["_analisi_rifiuto"] = None
+            st.session_state.input_percorso = "B"
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── QA section link ───────────────────────────────────────────────────────
-    st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
-    _qa1, _qa2, _qa3 = st.columns([2, 3, 2])
-    with _qa2:
-        st.markdown(
-            f'<div style="text-align:center;">'
-            f'<span style="font-size:.8rem;color:{T["muted"]};font-family:DM Sans,sans-serif;">'
-            f'Hai una verifica già pronta e vuoi un parere critico?</span>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-        if st.button("🔍 Analizza qualità verifica", key="btn_qa_from_bivio",
-                     use_container_width=True):
-            st.session_state.input_percorso = "QA"
-            st.session_state.qa_mode = True
-            st.rerun()
+    # ── Feature chips ─────────────────────────────────────────────────────────
+    st.markdown(
+        f'''
+        <div class="tally-features">
+          <span class="tally-feat">📄 PDF pronto da stampare</span>
+          <span class="tally-feat-sep">·</span>
+          <span class="tally-feat">🔢 Punteggi calibrati</span>
+          <span class="tally-feat-sep">·</span>
+          <span class="tally-feat">♿ Versione BES/DSA</span>
+          <span class="tally-feat-sep">·</span>
+          <span class="tally-feat">🎲 Fila A e B</span>
+          <span class="tally-feat-sep">·</span>
+          <span class="tally-feat">✏️ DOCX modificabile</span>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    # ── Social proof strip ────────────────────────────────────────────────────
+    st.markdown(
+        f'''
+        <div class="tally-proof">
+          <span class="tally-proof-dot"></span>
+          Liceo Scientifico · Scuola Media · ITI · Liceo Classico · Istituto Professionale
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
