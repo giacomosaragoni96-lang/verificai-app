@@ -1074,6 +1074,8 @@ def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str)
             st.session_state.analisi_docs_list.append({
                 "file_hash":  file_hash,
                 "file_name":  file_name,
+                "file_bytes": file_bytes,   # ← bytes grezzi per vision AI
+                "mime_type":  mime_type,    # ← mime per vision AI
                 "analisi":    result,
                 "file_mode":  result.get("modalita_uso_consigliata", "stile_e_struttura"),
                 "confirmed":  False,   # attende conferma modalità
@@ -2455,10 +2457,8 @@ def _render_percorso_b_form():
             )
 
             _MODO_OPTIONS = {
-                "base_conoscenza":   "📚 Fonte di studio",
-                "stile_e_struttura": "📋 Copia struttura",
-                "copia_fedele":      "⚡ Variante (dati diversi)",
-                "ignora":            "❌ Ignora",
+                "base_conoscenza":    "📚 Fonte di studio",
+                "includi_esercizio":  "✏️ Esercizio da inserire",
             }
             _TIPO_ICONS = {
                 "verifica": "📋", "appunti": "📒",
@@ -2491,10 +2491,34 @@ def _render_percorso_b_form():
                     unsafe_allow_html=True,
                 )
 
+                # ── Riepilogo analisi AI (cosa ha capito) ─────────────────────
+                _fa = _fentry.get("analisi", {})
+                _fa_mat = _fa.get("materia", "")
+                _fa_arg = _fa.get("contenuto_argomento", "")
+                _fa_es  = _fa.get("num_esercizi_rilevati")
+                _fa_desc_parts = []
+                if _fa_mat:
+                    _fa_desc_parts.append(f"<strong>{_fa_mat}</strong>")
+                if _fa_arg:
+                    _fa_desc_parts.append(_fa_arg[:60] + ("…" if len(_fa_arg) > 60 else ""))
+                if _fa_es:
+                    _fa_desc_parts.append(f"{_fa_es} esercizi rilevati")
+                if _fa_desc_parts:
+                    st.markdown(
+                        f'<div class="file-ai-summary">'
+                        f'<span class="file-ai-summary-icon">🤖</span>'
+                        f'<span class="file-ai-summary-text">{" · ".join(_fa_desc_parts)}</span>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+
                 # Dropdown: come usare il file
                 _modo_prev = _fentry.get("file_mode", "base_conoscenza")
+                # Normalizza vecchie modalità non più disponibili
+                if _modo_prev not in _MODO_OPTIONS:
+                    _modo_prev = "base_conoscenza"
                 _modo_opts = list(_MODO_OPTIONS.keys())
-                _modo_idx  = _modo_opts.index(_modo_prev) if _modo_prev in _modo_opts else 0
+                _modo_idx  = _modo_opts.index(_modo_prev)
                 st.markdown(
                     f'<div class="file-item-b-mode-label">Come usarlo</div>',
                     unsafe_allow_html=True,
@@ -2513,12 +2537,28 @@ def _render_percorso_b_form():
                     st.session_state.analisi_docs_list[_fi]["confirmed"] = (_sel_modo != "ignora")
                     _consolida_info()
 
+                # ── Hint contestuale per "esercizio da inserire" ───────────────
+                if _sel_modo == "includi_esercizio":
+                    st.markdown(
+                        f'<div class="file-includi-hint">'
+                        f'📌 L\'AI inserirà questo esercizio come <strong>Esercizio 1</strong>. '
+                        f'Nelle note sotto specifica se vuoi <strong>stessi dati</strong> '
+                        f'o <strong>dati diversi</strong> (stessa struttura, numeri cambiati).'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+
                 # Istruzioni specifiche per il file (espandibile)
                 _istr_prev = st.session_state.istruzioni_per_file.get(_fhash_str, "")
+                _placeholder_istr = (
+                    "es. Stessi dati, oppure: Cambia i valori numerici mantenendo la struttura…"
+                    if _sel_modo == "includi_esercizio"
+                    else "es. Usa solo il secondo esercizio…"
+                )
                 _istr_new  = st.text_area(
                     f"Istruzioni file {_fi}",
                     value=_istr_prev,
-                    placeholder="es. Usa solo il secondo esercizio…",
+                    placeholder=_placeholder_istr,
                     height=56,
                     key=f"pb_istr_{_fhash_str}",
                     label_visibility="collapsed",
@@ -3061,6 +3101,44 @@ def _render_stage_input():
             mostra_punteggi,
         )
 
+        # ── Estrai file "includi_esercizio" → vision input ─────────────────────
+        # I file marcati come "esercizio da inserire" vengono passati come immagini
+        # al modello vision affinché l'esercizio compaia OBBLIGATORIAMENTE nell'output.
+        _imgs_esercizio: list = []
+        _note_esercizi_inclusi: list = []
+        for _idx_fe, _fe in enumerate(st.session_state.analisi_docs_list):
+            if _fe.get("file_mode") == "includi_esercizio":
+                _fb = _fe.get("file_bytes")
+                _fm = _fe.get("mime_type", "image/png")
+                if _fb:
+                    _imgs_esercizio.append({
+                        "idx":       _idx_fe + 1,
+                        "data":      _fb,
+                        "mime_type": _fm,
+                    })
+                _istr_fe = st.session_state.istruzioni_per_file.get(str(_fe["file_hash"]), "").strip()
+                _nota_fe = f"File '{_fe['file_name']}' — esercizio da includere obbligatoriamente"
+                if _istr_fe:
+                    _nota_fe += f": {_istr_fe}"
+                _note_esercizi_inclusi.append(_nota_fe)
+
+        # Combina immagini: prima quelle da includi_esercizio, poi quelle da esercizi_custom
+        imgs_es_finale = _imgs_esercizio + imgs_es
+
+        # Aggiungi alle note generali le istruzioni per gli esercizi obbligatori
+        if _note_esercizi_inclusi:
+            _nota_includi = (
+                "\n\n╔═══════════════════════════════════════════════╗\n"
+                "║ ⚠️ ESERCIZI DA INCLUDERE OBBLIGATORIAMENTE     ║\n"
+                "╚═══════════════════════════════════════════════╝\n"
+                + "\n".join(_note_esercizi_inclusi)
+                + "\nL'immagine allegata contiene l'esercizio. Trascrivilo fedelmente in LaTeX "
+                "come Esercizio 1 e genera gli esercizi restanti normalmente."
+            )
+            _note_finale = (_note_finale + _nota_includi).strip() if _note_finale else _nota_includi.strip()
+        else:
+            imgs_es_finale = imgs_es
+
         _lancia_generazione(
             materia_scelta=materia_scelta,
             argomento=argomento,
@@ -3072,7 +3150,7 @@ def _render_stage_input():
             con_griglia=con_griglia,
             note_generali=_note_finale,
             s_es=s_es,
-            imgs_es=imgs_es,
+            imgs_es=imgs_es_finale,
             file_ispirazione=None,
             mathpix_context=None,
         )
