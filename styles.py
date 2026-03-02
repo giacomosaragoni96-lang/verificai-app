@@ -408,6 +408,129 @@ def get_css(T: dict) -> str:
     line-height: 1.55;
   }}
 
+  /* ════════════════════════════════════════════════════════════════════════
+     TALLY-STYLE LANDING — Hero centrato, unico CTA
+     ════════════════════════════════════════════════════════════════════════ */
+  .tally-hero {{
+    text-align: center;
+    padding: 3.5rem 1rem 1.8rem;
+    max-width: 700px;
+    margin: 0 auto;
+  }}
+  .tally-eyebrow {{
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: {_acc};
+    background: {_acc_soft};
+    border: 1px solid {_acc_med};
+    border-radius: 20px;
+    padding: 4px 14px;
+    margin-bottom: 1.4rem;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .tally-headline {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+    color: {T['text']};
+    margin: 0 0 1.1rem 0;
+    padding: 0;
+  }}
+  .tally-headline-accent {{
+    background: linear-gradient(135deg, {_acc}, {T.get('accent2', _acc)}cc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }}
+  .tally-sub {{
+    font-size: 1.05rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.6;
+    margin: 0 auto;
+    max-width: 480px;
+  }}
+
+  /* CTA button wrapper — ingrandisce il bottone primario */
+  .tally-cta-wrap {{
+    margin: 1.8rem auto .5rem;
+    max-width: 420px;
+  }}
+  .tally-cta-wrap button[kind="primary"],
+  .tally-cta-wrap button[data-testid="baseButton-primary"] {{
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    padding: .85rem 2rem !important;
+    height: auto !important;
+    min-height: 54px !important;
+    border-radius: 14px !important;
+    letter-spacing: -.01em !important;
+    box-shadow: 0 6px 28px {_acc}44 !important;
+    transition: transform .15s ease, box-shadow .15s ease !important;
+  }}
+  .tally-cta-wrap button[kind="primary"]:hover,
+  .tally-cta-wrap button[data-testid="baseButton-primary"]:hover {{
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 36px {_acc}55 !important;
+  }}
+
+  /* Feature strip */
+  .tally-features {{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 4px;
+    margin: 1.2rem auto 0;
+    max-width: 640px;
+    padding-bottom: .5rem;
+  }}
+  .tally-feat {{
+    font-size: .75rem;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    color: {T['text2']};
+    white-space: nowrap;
+  }}
+  .tally-feat-sep {{
+    font-size: .75rem;
+    color: {T['border2']};
+    margin: 0 2px;
+  }}
+
+  /* Social proof strip */
+  .tally-proof {{
+    text-align: center;
+    font-size: .72rem;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    margin-top: 2.2rem;
+    margin-bottom: .5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: .01em;
+  }}
+  .tally-proof-dot {{
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: {T.get('success', '#10B981')};
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px {T.get('success', '#10B981')}33;
+    animation: pulse-dot 2.5s ease-in-out infinite;
+  }}
+  @keyframes pulse-dot {{
+    0%, 100% {{ box-shadow: 0 0 0 3px {T.get('success','#10B981')}33; }}
+    50%       {{ box-shadow: 0 0 0 6px {T.get('success','#10B981')}18; }}
+  }}
+
   /* ── Percorso Card ── */
   .mcard {{
     background: {T['card']};
