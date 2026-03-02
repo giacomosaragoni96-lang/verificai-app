@@ -286,13 +286,37 @@ def get_css(T: dict) -> str:
 
   [data-testid="stSelectbox"] [data-baseweb="select"] > div:first-child {{
     background: {_surf_overlay} !important;
-    border: 1.5px solid {T['border']} !important;
+    border: 1.5px solid {T['border2']} !important;
     border-radius: 10px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06) !important;
+  }}
+  [data-testid="stSelectbox"] [data-baseweb="select"] > div:first-child:focus-within,
+  [data-testid="stSelectbox"] [data-baseweb="select"] > div:first-child:hover {{
+    border-color: {_acc} !important;
+    box-shadow: 0 0 0 3px {_acc_soft} !important;
   }}
   [data-testid="stSelectbox"] [data-baseweb="select"] span {{
     color: {T['text']} !important;
     font-size: .92rem !important;
     font-family: 'DM Sans', sans-serif !important;
+  }}
+  /* Dropdown option list */
+  [data-baseweb="popover"] [data-baseweb="menu"] {{
+    background: {T['card']} !important;
+    border: 1.5px solid {T['border2']} !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,.12) !important;
+  }}
+  [data-baseweb="popover"] [role="option"] {{
+    background: {T['card']} !important;
+    color: {T['text']} !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: .9rem !important;
+  }}
+  [data-baseweb="popover"] [role="option"]:hover,
+  [data-baseweb="popover"] [aria-selected="true"] {{
+    background: {_acc_soft} !important;
+    color: {_acc} !important;
   }}
 
   .stCheckbox label span[data-baseweb="checkbox"] {{
@@ -411,9 +435,52 @@ def get_css(T: dict) -> str:
   /* ════════════════════════════════════════════════════════════════════════
      TALLY-STYLE LANDING — Hero centrato, unico CTA
      ════════════════════════════════════════════════════════════════════════ */
+
+  /* Logo centrato sulla landing */
+  .landing-logo-wrap {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 2.5rem 0 0;
+    margin-bottom: .2rem;
+  }}
+  .landing-logo-icon {{
+    font-size: 2rem;
+    line-height: 1;
+  }}
+  .landing-logo-name {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: {T['text']};
+    line-height: 1;
+  }}
+  .landing-logo-ai {{
+    background: linear-gradient(135deg, {_acc}, {T.get('accent2', _acc)});
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }}
+  .landing-logo-beta {{
+    font-size: .58rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    background: {_acc_soft};
+    color: {_acc};
+    border: 1px solid {_acc_med};
+    border-radius: 20px;
+    padding: 3px 9px;
+    align-self: flex-start;
+    margin-top: 4px;
+    font-family: 'DM Sans', sans-serif;
+  }}
+
   .tally-hero {{
     text-align: center;
-    padding: 3.5rem 1rem 1.8rem;
+    padding: 2rem 1rem 1.4rem;
     max-width: 700px;
     margin: 0 auto;
   }}
@@ -448,15 +515,16 @@ def get_css(T: dict) -> str:
     background-clip: text;
   }}
   .tally-sub {{
-    font-size: 1.05rem;
+    font-size: 1rem;
     color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
     line-height: 1.6;
     margin: 0 auto;
     max-width: 480px;
+    text-align: center;
   }}
 
-  /* CTA button wrapper — ingrandisce il bottone primario */
+  /* CTA button wrapper */
   .tally-cta-wrap {{
     margin: 1.8rem auto .5rem;
     max-width: 420px;
@@ -503,7 +571,7 @@ def get_css(T: dict) -> str:
     margin: 0 2px;
   }}
 
-  /* Social proof strip */
+  /* Social proof strip (mantenuta per compatibilità) */
   .tally-proof {{
     text-align: center;
     font-size: .72rem;
@@ -529,6 +597,60 @@ def get_css(T: dict) -> str:
   @keyframes pulse-dot {{
     0%, 100% {{ box-shadow: 0 0 0 3px {T.get('success','#10B981')}33; }}
     50%       {{ box-shadow: 0 0 0 6px {T.get('success','#10B981')}18; }}
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     SIDE-BOX — Colonna destra form (sostituisce facsimile-shortcut + side-panel-card)
+     ════════════════════════════════════════════════════════════════════════ */
+  .side-box {{
+    background: {T['card']};
+    border: 1.5px solid {T['border2']};
+    border-radius: 14px;
+    padding: 1rem 1.1rem .9rem;
+    margin-bottom: .5rem;
+    box-shadow: {T.get('shadow', '0 1px 3px rgba(0,0,0,.04)')};
+  }}
+  .side-box-header {{
+    margin-bottom: .45rem;
+  }}
+  .side-box-badge {{
+    font-size: .58rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    border-radius: 20px;
+    padding: 3px 9px;
+    display: inline-block;
+  }}
+  .side-box-badge-violet {{
+    background: #7C3AED18;
+    color: #8B5CF6;
+    border: 1px solid #7C3AED33;
+  }}
+  .side-box-title {{
+    font-size: .88rem;
+    font-weight: 800;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .35rem;
+  }}
+  .side-box-title-flex {{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }}
+  .side-box-dot {{
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: {_acc};
+    box-shadow: 0 0 6px {_acc_med};
+    flex-shrink: 0;
+  }}
+  .side-box-desc {{
+    font-size: .78rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.55;
   }}
 
   /* ── Percorso Card ── */
