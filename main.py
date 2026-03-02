@@ -1032,35 +1032,35 @@ def _render_bivio():
         }}
 
         /* Pulsante BLU */
-        div[data-testid="stButton"].mbtn-blu > button {{
+        .mbtn-blu button {{
             background:linear-gradient(135deg,#3B82F6,#2563EB) !important;
             color:#fff !important; border:none !important;
             border-radius:12px !important; font-weight:700 !important;
             box-shadow:0 4px 14px #3B82F644 !important;
         }}
-        div[data-testid="stButton"].mbtn-blu > button:hover {{
+        .mbtn-blu button:hover {{
             box-shadow:0 6px 20px #3B82F666 !important;
             filter:brightness(1.07) !important;
         }}
         /* Pulsante VERDE */
-        div[data-testid="stButton"].mbtn-verde > button {{
+        .mbtn-verde button {{
             background:linear-gradient(135deg,#10B981,#059669) !important;
             color:#fff !important; border:none !important;
             border-radius:12px !important; font-weight:700 !important;
             box-shadow:0 4px 14px #10B98144 !important;
         }}
-        div[data-testid="stButton"].mbtn-verde > button:hover {{
+        .mbtn-verde button:hover {{
             box-shadow:0 6px 20px #10B98166 !important;
             filter:brightness(1.07) !important;
         }}
         /* Pulsante ARANCIO */
-        div[data-testid="stButton"].mbtn-arancio > button {{
+        .mbtn-arancio button {{
             background:linear-gradient(135deg,#F59E0B,#D97706) !important;
             color:#fff !important; border:none !important;
             border-radius:12px !important; font-weight:700 !important;
             box-shadow:0 4px 14px #F59E0B44 !important;
         }}
-        div[data-testid="stButton"].mbtn-arancio > button:hover {{
+        .mbtn-arancio button:hover {{
             box-shadow:0 6px 20px #F59E0B66 !important;
             filter:brightness(1.07) !important;
         }}
