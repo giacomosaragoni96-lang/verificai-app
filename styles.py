@@ -3,15 +3,11 @@ def get_css(T: dict) -> str:
     Restituisce il CSS dell'app adattato dinamicamente al tema T.
     Tutti i colori vengono estratti dal dizionario T passato come argomento.
 
-    DESIGN SYSTEM v3 — Principi:
-    • Scala tipografica modulare coerente (1.125 ratio)
-    • Gerarchia font-weight: 900 solo brand/hero, 700-800 titoli, 500-600 label, 400 body
-    • 4 livelli border-radius: xs(8px), sm(10px), md(14px), lg(20px), full(100px)
-    • 3 livelli shadow: sm, md, lg + accent
-    • Continuità visiva landing ↔ inner pages (accent-bar)
-    • Contrasti WCAG AA compliant (muted text fix)
-    • Min font-size: 0.65rem (niente sotto)
-    • Nessuna regola CSS duplicata
+    DESIGN SYSTEM v2 — Principi:
+    • Gerarchia visiva con accenti di colore mirati (no "tutto bianco" / "tutto nero")
+    • Font grandi e leggibili per docenti non tecnici
+    • Effetti di caricamento professionali
+    • Linguaggio non tecnico (hint, label)
     """
     _SB_ACCENT = T.get("sidebar_accent", "#D97706")
     _SB_BG_CSS = T.get("sidebar_bg", "linear-gradient(180deg, #111110 0%, #0e0e0d 100%)")
@@ -32,39 +28,22 @@ def get_css(T: dict) -> str:
     _surf_raised = T.get("card", T["bg2"])
     _surf_overlay = T.get("card2", T["bg2"])
 
-    # ── DESIGN TOKENS ──────────────────────────────────────────────────────
-    # Border-radius scale (4 livelli + full)
-    _R_XS   = "8px"
-    _R_SM   = "10px"
-    _R_MD   = "14px"
-    _R_LG   = "20px"
-    _R_FULL = "100px"
-
-    # Shadow scale (3 livelli + accent)
-    _SH_SM  = T.get("shadow",    "0 1px 3px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.03)")
-    _SH_MD  = T.get("shadow_md", "0 4px 16px rgba(0,0,0,.08)")
-    _SH_LG  = "0 8px 32px rgba(0,0,0,.12)"
-    _SH_ACC = f"0 4px 20px {_acc_med}"
-
-    # Muted text fix — miglior contrasto WCAG AA
-    _MUTED_FIX = T.get("muted", "#7A7568") if _is_light else T.get("muted", "#6B6860")
-
     return f"""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
   *, *::before, *::after {{ box-sizing: border-box; }}
 
   .stApp {{
     background-color: {T['bg']} !important;
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'DM Sans', 'Inter', sans-serif;
     color: {T['text']};
     transition: background-color 0.3s ease, color 0.3s ease;
   }}
 
-  /* ─── FIX #7: Padding ridotto (era 4.5rem top, troppo spazio sprecato) ─── */
   .block-container {{
-    padding: 3rem 2rem 3rem !important;
+    padding: 4.5rem 1.5rem 4rem !important;
     max-width: 1400px !important;
     margin: 0 auto !important;
   }}
@@ -87,7 +66,7 @@ def get_css(T: dict) -> str:
   header button {{
     background: {T['card']} !important;
     border: 1.5px solid {T['border2']} !important;
-    border-radius: {_R_XS} !important;
+    border-radius: 8px !important;
     color: {T['text']} !important;
   }}
   header button:hover {{
@@ -146,14 +125,14 @@ def get_css(T: dict) -> str:
   [data-testid="stSidebar"] .stNumberInput input {{
     background: #1a1916 !important;
     border: 1px solid {_SB_BORDER} !important;
-    border-radius: {_R_XS} !important;
+    border-radius: 8px !important;
     color: #f5f3ed !important;
     font-size: 0.88rem !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:first-child {{
     background: #1a1916 !important;
     border: 1px solid {_SB_BORDER} !important;
-    border-radius: {_R_XS} !important;
+    border-radius: 8px !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{
     color: #e8e6e0 !important;
@@ -167,7 +146,7 @@ def get_css(T: dict) -> str:
     background: #1c1b18 !important;
     color: #d8d6ce !important;
     border: 1px solid {_SB_BORDER} !important;
-    border-radius: {_R_XS} !important;
+    border-radius: 8px !important;
     font-size: 0.82rem !important;
     font-weight: 600 !important;
   }}
@@ -193,7 +172,7 @@ def get_css(T: dict) -> str:
   [data-testid="collapsedControl"] button {{
     background: {T['card']} !important;
     border: 2px solid {_acc} !important;
-    border-radius: {_R_SM} !important;
+    border-radius: 10px !important;
     color: {_acc} !important;
     width: 40px !important;
     height: 40px !important;
@@ -225,7 +204,7 @@ def get_css(T: dict) -> str:
   [data-testid="stSidebar"] .sidebar-label,
   .sidebar-label {{
     font-size: 0.65rem !important;
-    font-weight: 700 !important;
+    font-weight: 800 !important;
     letter-spacing: 0.12em !important;
     text-transform: uppercase !important;
     color: {_SB_ACCENT} !important;
@@ -234,54 +213,62 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     HERO / HEADER — Inner Pages
-     FIX #6: Continuità visiva con la landing tramite accent-bar 3px
-     FIX #1: Titolo ingrandito da 1.7rem → 1.85rem per ridurre il salto
+     HERO / HEADER — mantenuti per retrocompatibilità (non più usati)
      ════════════════════════════════════════════════════════════════════════ */
-  .hero-wrap {{
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 1.6rem; padding: 0 0 1rem 0;
-    border-bottom: 3px solid {_acc};
+  .hero-wrap {{ display: none; }}
+  .sidebar-hint-inline {{ display: none; }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     PAGE HEADER UNIFIED — stesso stile della landing, tutte le pagine
+     ════════════════════════════════════════════════════════════════════════ */
+  .page-header-unified {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.4rem 1rem .8rem;
+    margin-bottom: .6rem;
+    border-bottom: 1px solid {T['border']};
   }}
-  .hero-left {{
-    display: flex; flex-direction: column; gap: 6px;
+  .page-header-logo-row {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
   }}
-  .hero-title {{
+  .page-header-icon {{
+    font-size: 2rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 10px {_acc}44);
+  }}
+  .page-header-name {{
     font-family: 'DM Sans', sans-serif;
-    font-size: 1.85rem; font-weight: 900; line-height: 1.1;
-    letter-spacing: -0.03em;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
     color: {T['text']};
-    display: flex; align-items: center; gap: 10px;
-    margin: 0; padding: 0;
+    line-height: 1;
   }}
-  .hero-icon {{ font-size: 1.5rem; }}
-  .hero-ai {{
+  .page-header-ai {{
     background: linear-gradient(135deg, {_acc}, {T.get('accent2', _acc)});
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }}
-  .hero-sub {{
-    font-size: .88rem; color: {T['text2']};
-    margin: 0; font-weight: 400; line-height: 1.4;
-  }}
-  /* FIX #5: Badge beta — font ingrandito da .6rem a .65rem per leggibilità */
-  .hero-beta {{
-    display: inline-block;
-    font-size: .65rem; font-weight: 700;
-    letter-spacing: .08em; text-transform: uppercase;
+  .page-header-beta {{
+    font-size: .55rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
     background: {_acc_soft};
-    color: {_acc}; border: 1px solid {_acc_ring};
-    border-radius: {_R_LG}; padding: 3px 10px;
-    margin-top: 2px;
+    color: {_acc};
+    border: 1px solid {_acc_med};
+    border-radius: 20px;
+    padding: 3px 8px;
+    align-self: flex-start;
+    margin-top: 4px;
+    font-family: 'DM Sans', sans-serif;
   }}
 
-  .sidebar-hint-inline {{
-    font-size: .72rem; color: {_MUTED_FIX};
-    font-family: 'DM Sans', sans-serif;
-    margin-bottom: .2rem;
-    opacity: .7;
-  }}
 
   /* ════════════════════════════════════════════════════════════════════════
      GLOBAL — Form Inputs
@@ -290,7 +277,7 @@ def get_css(T: dict) -> str:
   [data-testid="stTextArea"] textarea {{
     background: {_surf_overlay} !important;
     border: 1.5px solid {T['border']} !important;
-    border-radius: {_R_SM} !important;
+    border-radius: 10px !important;
     color: {T['text']} !important;
     font-family: 'DM Sans', sans-serif !important;
     font-size: .92rem !important;
@@ -305,13 +292,13 @@ def get_css(T: dict) -> str:
   }}
   [data-testid="stTextInput"] input::placeholder,
   [data-testid="stTextArea"] textarea::placeholder {{
-    color: {_MUTED_FIX} !important; opacity: .8 !important;
+    color: {T['muted']} !important; opacity: .8 !important;
   }}
 
   [data-testid="stSelectbox"] [data-baseweb="select"] > div:first-child {{
     background: {_surf_overlay} !important;
     border: 1.5px solid {T['border2']} !important;
-    border-radius: {_R_SM} !important;
+    border-radius: 10px !important;
     box-shadow: 0 1px 3px rgba(0,0,0,.06) !important;
   }}
   [data-testid="stSelectbox"] [data-baseweb="select"] > div:first-child:focus-within,
@@ -328,8 +315,8 @@ def get_css(T: dict) -> str:
   [data-baseweb="popover"] [data-baseweb="menu"] {{
     background: {T['card']} !important;
     border: 1.5px solid {T['border2']} !important;
-    border-radius: {_R_SM} !important;
-    box-shadow: {_SH_LG} !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,.12) !important;
   }}
   [data-baseweb="popover"] [role="option"] {{
     background: {T['card']} !important;
@@ -365,20 +352,19 @@ def get_css(T: dict) -> str:
 
   /* ════════════════════════════════════════════════════════════════════════
      BUTTONS — Primary & Secondary
-     FIX #4: Radius uniforme con token system
      ════════════════════════════════════════════════════════════════════════ */
   div.stButton > button[kind="primary"],
   div.stButton > button[data-testid="stBaseButton-primary"] {{
     background: linear-gradient(135deg, {_acc}, {T.get('accent2', _acc)}) !important;
     color: #ffffff !important;
     border: none !important;
-    border-radius: {_R_MD} !important;
+    border-radius: 12px !important;
     font-family: 'DM Sans', sans-serif !important;
     font-weight: 800 !important;
     font-size: .95rem !important;
     min-height: 50px !important;
     letter-spacing: -.01em !important;
-    box-shadow: {_SH_ACC} !important;
+    box-shadow: 0 4px 20px {_acc_ring} !important;
     transition: filter .15s ease, box-shadow .2s ease, transform .15s ease !important;
   }}
   div.stButton > button[kind="primary"]:hover,
@@ -403,7 +389,7 @@ def get_css(T: dict) -> str:
     background: {_surf_raised} !important;
     color: {T['text']} !important;
     border: 1.5px solid {T['border']} !important;
-    border-radius: {_R_SM} !important;
+    border-radius: 10px !important;
     font-family: 'DM Sans', sans-serif !important;
     font-weight: 600 !important;
     font-size: .88rem !important;
@@ -428,13 +414,12 @@ def get_css(T: dict) -> str:
     padding: .7rem 1.6rem;
     background: {T['card']};
     border: 1.5px solid {T['border']};
-    border-radius: {_R_FULL};
-    box-shadow: {_SH_MD};
+    border-radius: 100px;
+    box-shadow: {T.get('shadow_md', '0 4px 20px rgba(0,0,0,.08)')};
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     HOME LANDING — Titolo centrato (per pagine non-bivio)
-     FIX #1: Dimensione allineata a hero-title (1.85rem)
+     HOME LANDING
      ════════════════════════════════════════════════════════════════════════ */
   .home-landing-wrap {{
     text-align: center;
@@ -443,11 +428,11 @@ def get_css(T: dict) -> str:
   }}
   .home-landing-title {{
     font-family: 'DM Sans', sans-serif;
-    font-size: 1.85rem;
+    font-size: 1.6rem;
     font-weight: 900;
     letter-spacing: -0.03em;
     color: {T['text']};
-    margin-bottom: .6rem;
+    margin-bottom: .5rem;
   }}
   .home-landing-desc {{
     font-size: .92rem;
@@ -456,22 +441,19 @@ def get_css(T: dict) -> str:
     max-width: 520px;
     margin: 0 auto;
     line-height: 1.55;
-    font-weight: 400;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     LANDING HERO — Logo GRANDE + headline centrati
-     FIX #1: Headline ridotta rispetto al logo (era quasi uguale)
-     FIX #2: Font-weight headline 800 (non 900, riservato a brand)
-     FIX #7: Spacing aumentato tra headline e subtitle
+     LANDING HERO — Logo MOLTO GRANDE + headline centrati
      ════════════════════════════════════════════════════════════════════════ */
 
+  /* Wrapper unico centrato — tutto in una colonna */
   .landing-hero-unified {{
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 2.5rem 1rem 1rem;
+    padding: 3rem 1rem 1.2rem;
     max-width: 800px;
     margin: 0 auto;
   }}
@@ -482,16 +464,16 @@ def get_css(T: dict) -> str:
     align-items: center;
     justify-content: center;
     gap: 14px;
-    margin-bottom: 2rem;
+    margin-bottom: 1.6rem;
   }}
   .landing-logo-icon-xl {{
-    font-size: 3.2rem;
+    font-size: 3.6rem;
     line-height: 1;
     filter: drop-shadow(0 4px 18px {_acc}55);
   }}
   .landing-logo-name-xl {{
     font-family: 'DM Sans', sans-serif;
-    font-size: clamp(2.6rem, 6vw, 4rem);
+    font-size: clamp(2.4rem, 6vw, 3.8rem);
     font-weight: 900;
     letter-spacing: -0.05em;
     color: {T['text']};
@@ -504,29 +486,29 @@ def get_css(T: dict) -> str:
     background-clip: text;
   }}
   .landing-logo-beta-xl {{
-    font-size: .65rem;
-    font-weight: 700;
+    font-size: .62rem;
+    font-weight: 800;
     letter-spacing: .1em;
     text-transform: uppercase;
     background: {_acc_soft};
     color: {_acc};
     border: 1px solid {_acc_med};
-    border-radius: {_R_LG};
+    border-radius: 20px;
     padding: 4px 10px;
     align-self: flex-start;
     margin-top: 6px;
     font-family: 'DM Sans', sans-serif;
   }}
 
-  /* Headline — proporzione nettamente più piccola del logo name */
+  /* Headline grande */
   .landing-headline-xl {{
     font-family: 'DM Sans', sans-serif;
-    font-size: clamp(1.8rem, 4vw, 2.6rem);
-    font-weight: 800;
-    line-height: 1.15;
-    letter-spacing: -0.03em;
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    font-weight: 900;
+    line-height: 1.12;
+    letter-spacing: -0.04em;
     color: {T['text']};
-    margin: 0 0 1.4rem 0;
+    margin: 0 0 1.1rem 0;
     padding: 0;
     text-align: center;
   }}
@@ -537,16 +519,15 @@ def get_css(T: dict) -> str:
     background-clip: text;
   }}
 
-  /* Sottotitolo — ridotto per rispettare la gerarchia */
+  /* Sottotitolo — centrato, leggibile */
   .landing-sub-xl {{
-    font-size: .92rem;
+    font-size: 1.05rem;
     color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
     line-height: 1.65;
     text-align: center;
-    max-width: 460px;
+    max-width: 480px;
     margin: 0 auto 0;
-    font-weight: 400;
   }}
 
   /* Classi legacy mantenute per compatibilità */
@@ -554,23 +535,22 @@ def get_css(T: dict) -> str:
   .tally-hero {{ text-align:center; padding:2rem 1rem 1.4rem; max-width:700px; margin:0 auto; }}
   .tally-eyebrow {{ display:none; }}
   .tally-headline {{
-    font-family:'DM Sans',sans-serif; font-size:clamp(2rem,5vw,2.8rem);
-    font-weight:800; line-height:1.12; letter-spacing:-0.03em;
-    color:{T['text']}; margin:0 0 1.4rem 0; padding:0;
+    font-family:'DM Sans',sans-serif; font-size:clamp(2.2rem,5vw,3.2rem);
+    font-weight:900; line-height:1.1; letter-spacing:-0.04em;
+    color:{T['text']}; margin:0 0 1.1rem 0; padding:0;
   }}
   .tally-headline-accent {{
     background:linear-gradient(135deg,{_acc},{T.get('accent2',_acc)}cc);
     -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
   }}
   .tally-sub {{
-    font-size:.92rem; color:{T['text2']}; font-family:'DM Sans',sans-serif;
-    line-height:1.6; margin:0 auto; max-width:460px; text-align:center;
-    font-weight: 400;
+    font-size:1rem; color:{T['text2']}; font-family:'DM Sans',sans-serif;
+    line-height:1.6; margin:0 auto; max-width:480px; text-align:center;
   }}
 
   /* CTA button wrapper */
   .tally-cta-wrap {{
-    margin: 2rem auto .5rem;
+    margin: 1.8rem auto .5rem;
     max-width: 420px;
   }}
   .tally-cta-wrap button[kind="primary"],
@@ -580,7 +560,7 @@ def get_css(T: dict) -> str:
     padding: .85rem 2rem !important;
     height: auto !important;
     min-height: 54px !important;
-    border-radius: {_R_MD} !important;
+    border-radius: 14px !important;
     letter-spacing: -.01em !important;
     box-shadow: 0 6px 28px {_acc}44 !important;
     transition: transform .15s ease, box-shadow .15s ease !important;
@@ -591,56 +571,67 @@ def get_css(T: dict) -> str:
     box-shadow: 0 10px 36px {_acc}55 !important;
   }}
 
-  /* Feature strip — FIX #7: gap e peso migliorati */
+  /* Feature strip — singole pill con underline */
   .tally-features {{
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: 8px 6px;
-    margin: 1.6rem auto 0;
-    max-width: 640px;
-    padding-bottom: .5rem;
+    margin: 1.4rem auto 0;
+    max-width: 680px;
+    padding-bottom: .6rem;
   }}
-  .tally-feat {{
-    font-size: .78rem;
-    font-weight: 500;
+  .tally-feat-pill {{
+    font-size: .82rem;
+    font-weight: 600;
     font-family: 'DM Sans', sans-serif;
     color: {T['text2']};
     white-space: nowrap;
+    padding: .25rem .7rem;
+    border-radius: 20px;
+    border: 1px solid {T['border2']};
+    background: {T['card']};
+    border-bottom: 2px solid {_acc_med};
+    transition: border-color .15s, color .15s;
   }}
-  .tally-feat-sep {{
-    font-size: .78rem;
-    color: {T['border2']};
-    margin: 0 2px;
+  .tally-feat-pill:hover {{
+    color: {T['text']};
+    border-color: {_acc};
+    border-bottom-color: {_acc};
   }}
+  /* Legacy classes kept for compatibility */
+  .tally-feat {{
+    font-size: .82rem; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    color: {T['text2']}; white-space: nowrap;
+  }}
+  .tally-feat-sep {{ display: none; }}
 
   /* Social proof (compatibilità) */
   .tally-proof {{ display: none; }}
   .tally-proof-dot {{ display: none; }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     SIDE-BOX — Colonna destra form
-     FIX #2: Font-weight ridotto a 700 (non 800)
-     FIX #4: Radius con token
+     SIDE-BOX — Colonna destra form (sostituisce facsimile-shortcut + side-panel-card)
      ════════════════════════════════════════════════════════════════════════ */
   .side-box {{
     background: {T['card']};
     border: 1.5px solid {T['border2']};
-    border-radius: {_R_MD};
+    border-radius: 14px;
     padding: 1rem 1.1rem .9rem;
     margin-bottom: .5rem;
-    box-shadow: {_SH_SM};
+    box-shadow: {T.get('shadow', '0 1px 3px rgba(0,0,0,.04)')};
   }}
   .side-box-header {{
     margin-bottom: .45rem;
   }}
   .side-box-badge {{
-    font-size: .65rem;
-    font-weight: 700;
+    font-size: .58rem;
+    font-weight: 800;
     letter-spacing: .08em;
     text-transform: uppercase;
-    border-radius: {_R_LG};
+    border-radius: 20px;
     padding: 3px 9px;
     display: inline-block;
   }}
@@ -649,9 +640,31 @@ def get_css(T: dict) -> str:
     color: #8B5CF6;
     border: 1px solid #7C3AED33;
   }}
+
+  /* Facsimile shortcut — visivamente distaccato dal form principale */
+  .side-box-facsimile {{
+    background: linear-gradient(135deg, #7C3AED0E, {T['card']});
+    border: 1.5px solid #7C3AED44 !important;
+    border-left: 3px solid #8B5CF6 !important;
+    box-shadow: 0 2px 12px #7C3AED14;
+  }}
+  .side-box-facsimile .side-box-title {{
+    color: #A78BFA;
+  }}
+  .facsimile-shortcut-btn button {{
+    background: linear-gradient(135deg,#7C3AED,#6D28D9) !important;
+    color: #fff !important; border: none !important;
+    font-weight: 700 !important; font-size: .84rem !important;
+    border-radius: 10px !important;
+    box-shadow: 0 3px 14px #7C3AED33 !important;
+  }}
+  .facsimile-shortcut-btn button:hover {{
+    background: linear-gradient(135deg,#A78BFA,#7C3AED) !important;
+    box-shadow: 0 4px 20px #7C3AED55 !important;
+  }}
   .side-box-title {{
     font-size: .88rem;
-    font-weight: 700;
+    font-weight: 800;
     color: {T['text']};
     font-family: 'DM Sans', sans-serif;
     margin-bottom: .35rem;
@@ -673,20 +686,19 @@ def get_css(T: dict) -> str:
     color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
     line-height: 1.55;
-    font-weight: 400;
   }}
 
-  /* ── File AI summary ── */
+  /* ── File AI summary (cosa ha capito l'AI) ── */
   .file-ai-summary {{
     display: flex;
     align-items: flex-start;
     gap: 6px;
     background: {_acc_soft};
     border: 1px solid {_acc_med};
-    border-radius: {_R_XS};
+    border-radius: 8px;
     padding: .4rem .7rem;
     margin: .35rem 0 .45rem;
-    font-size: .76rem;
+    font-size: .74rem;
     color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
     line-height: 1.45;
@@ -704,41 +716,38 @@ def get_css(T: dict) -> str:
   .file-includi-hint {{
     background: {T.get('hint_bg', '#FEF3C7')};
     border: 1px solid {T.get('hint_border', '#FDE68A')};
-    border-radius: {_R_XS};
+    border-radius: 8px;
     padding: .45rem .75rem;
     margin: .3rem 0 .4rem;
-    font-size: .76rem;
+    font-size: .74rem;
     color: {T.get('hint_text', '#92400E')};
     font-family: 'DM Sans', sans-serif;
     line-height: 1.5;
   }}
 
-  /* ── Percorso Card ──
-     FIX #2: mcard-title 700 (non 900)
-     FIX #4: min-height ridotto, radius da token
-     ── */
+  /* ── Percorso Card ── */
   .mcard {{
     background: {T['card']};
     border: 2px solid {T['border2']};
-    border-radius: {_R_MD};
+    border-radius: 16px;
     padding: 1.3rem 1.2rem 1.1rem;
     position: relative;
     transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
-    min-height: 180px;
+    min-height: 220px;
     display: flex;
     flex-direction: column;
     gap: .4rem;
   }}
   .mcard:hover {{
     transform: translateY(-2px);
-    box-shadow: {_SH_LG};
+    box-shadow: 0 8px 32px rgba(0,0,0,.08);
   }}
   .mcard-badge {{
     position: absolute; top: -10px; right: 14px;
-    font-size: .65rem; font-weight: 700;
+    font-size: .6rem; font-weight: 800;
     letter-spacing: .06em; text-transform: uppercase;
     padding: 3px 10px;
-    border-radius: {_R_LG};
+    border-radius: 20px;
     color: #fff;
   }}
   .mcard-icon {{
@@ -748,7 +757,7 @@ def get_css(T: dict) -> str:
   .mcard-title {{
     font-family: 'DM Sans', sans-serif;
     font-size: 1.05rem;
-    font-weight: 700;
+    font-weight: 900;
     letter-spacing: -0.01em;
   }}
   .mcard-desc {{
@@ -756,12 +765,11 @@ def get_css(T: dict) -> str:
     color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
     line-height: 1.55;
-    font-weight: 400;
     flex: 1;
   }}
   .mcard-hint {{
     font-size: .72rem;
-    color: {_MUTED_FIX};
+    color: {T['muted']};
     font-style: italic;
     line-height: 1.4;
     margin-top: .3rem;
@@ -776,17 +784,17 @@ def get_css(T: dict) -> str:
     font-family: 'DM Sans', sans-serif;
     background: {_surf_overlay};
     border: 1px solid {T['border']};
-    border-radius: {_R_LG};
+    border-radius: 20px;
     padding: 3px 10px;
     color: {T['text2']};
     white-space: nowrap;
   }}
 
-  /* ── Facsimile Card — Viola ── */
+  /* ── Facsimile Card — Viola/Accento speciale ── */
   .fac-card {{
     background: linear-gradient(135deg, #7C3AED14, {T['card']});
     border: 2px solid #7C3AED44;
-    border-radius: {_R_MD};
+    border-radius: 18px;
     padding: 1.1rem 1.4rem;
     display: flex;
     align-items: center;
@@ -798,7 +806,7 @@ def get_css(T: dict) -> str:
     box-shadow: 0 4px 24px #7C3AED22;
   }}
   .fac-badge {{
-    font-size: .65rem; font-weight: 700;
+    font-size: .6rem; font-weight: 800;
     letter-spacing: .08em; text-transform: uppercase;
     color: #A78BFA;
     margin-bottom: .15rem;
@@ -806,7 +814,7 @@ def get_css(T: dict) -> str:
   .fac-title {{
     font-family: 'DM Sans', sans-serif;
     font-size: 1.05rem;
-    font-weight: 700;
+    font-weight: 900;
     color: {T['text']};
     margin-bottom: .15rem;
   }}
@@ -815,14 +823,13 @@ def get_css(T: dict) -> str:
     color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
     line-height: 1.5;
-    font-weight: 400;
   }}
 
   /* viola button override */
   .mbtn-viola button {{
     background: linear-gradient(135deg,#7C3AED,#6D28D9) !important;
     color: #fff !important; border: none !important;
-    border-radius: {_R_MD} !important; font-weight: 700 !important;
+    border-radius: 12px !important; font-weight: 700 !important;
     font-size: .92rem !important;
     box-shadow: 0 4px 20px #7C3AED44 !important;
   }}
@@ -832,8 +839,7 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     FORM SECTION HEADERS
-     FIX #2: form-section-title 700 (non 800)
+     FORM SECTION HEADERS — Percorso B
      ════════════════════════════════════════════════════════════════════════ */
   .form-section-header {{
     display: flex; align-items: center; gap: 10px;
@@ -847,7 +853,7 @@ def get_css(T: dict) -> str:
     box-shadow: 0 0 8px {_acc_med};
   }}
   .form-section-title {{
-    font-size: .82rem; font-weight: 700;
+    font-size: .82rem; font-weight: 800;
     letter-spacing: .02em;
     color: {T['text']};
     font-family: 'DM Sans', sans-serif;
@@ -860,7 +866,7 @@ def get_css(T: dict) -> str:
 
   .opt-label {{
     font-size: .78rem;
-    font-weight: 600;
+    font-weight: 700;
     color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
     margin-bottom: 4px;
@@ -868,8 +874,7 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     ONBOARDING HINT BANNER
-     FIX #2: onboarding-hint-title 700 (non 800)
+     ONBOARDING HINT BANNER (Percorso B top)
      ════════════════════════════════════════════════════════════════════════ */
   .onboarding-hint-banner {{
     display: flex;
@@ -877,7 +882,7 @@ def get_css(T: dict) -> str:
     gap: 1rem;
     background: linear-gradient(135deg, {_acc_soft}, {T['card']});
     border: 1.5px solid {_acc_ring};
-    border-radius: {_R_MD};
+    border-radius: 16px;
     padding: 1rem 1.3rem;
     margin-bottom: 1.2rem;
   }}
@@ -891,7 +896,7 @@ def get_css(T: dict) -> str:
   }}
   .onboarding-hint-title {{
     font-size: .92rem;
-    font-weight: 700;
+    font-weight: 800;
     color: {T['text']};
     font-family: 'DM Sans', sans-serif;
     margin-bottom: .3rem;
@@ -902,7 +907,6 @@ def get_css(T: dict) -> str:
     color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
     line-height: 1.55;
-    font-weight: 400;
   }}
   .onboarding-hint-tags {{
     display: flex; flex-wrap: wrap; gap: 6px; margin-top: .5rem;
@@ -911,7 +915,7 @@ def get_css(T: dict) -> str:
     font-size: .65rem; font-weight: 600;
     background: {T['card']};
     border: 1px solid {T['border']};
-    border-radius: {_R_LG};
+    border-radius: 20px;
     padding: 3px 10px;
     color: {T['text2']};
   }}
@@ -922,15 +926,34 @@ def get_css(T: dict) -> str:
   .cta-genera-wrap button {{
     min-height: 56px !important;
     font-size: 1.05rem !important;
-    font-weight: 800 !important;
+    font-weight: 900 !important;
     letter-spacing: -.01em !important;
-    border-radius: {_R_MD} !important;
+    border-radius: 14px !important;
+  }}
+  /* CTA hint prominente — vicino al pulsante Genera */
+  .cta-hint-prominent {{
+    display: flex; align-items: center; justify-content: center;
+    gap: .5rem;
+    font-size: .82rem;
+    font-weight: 600;
+    color: {T['hint_text']};
+    font-family: 'DM Sans', sans-serif;
+    background: {T['hint_bg']};
+    border: 1px solid {T['hint_border']};
+    border-radius: 10px;
+    padding: .5rem .9rem;
+    margin-bottom: .4rem;
+    text-align: center;
+    line-height: 1.4;
+  }}
+  .cta-hint-prominent-icon {{
+    font-size: 1rem; flex-shrink: 0;
   }}
   .cta-hint-above {{
     display: flex; align-items: center; justify-content: center;
     gap: .4rem;
     font-size: .76rem;
-    color: {_MUTED_FIX};
+    color: {T['muted']};
     font-family: 'DM Sans', sans-serif;
     margin-bottom: .55rem;
     text-align: center;
@@ -939,26 +962,27 @@ def get_css(T: dict) -> str:
     display: flex; align-items: center; justify-content: center;
     gap: .4rem;
     font-size: .76rem;
-    color: {_MUTED_FIX};
+    color: {T['muted']};
     font-family: 'DM Sans', sans-serif;
     margin-top: .4rem;
     text-align: center;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     BACK BUTTON micro
+     BACK BUTTON micro — piccolo, muted, in fondo
      ════════════════════════════════════════════════════════════════════════ */
+  /* Stile per il pulsante "← Indietro" in fondo al form (colonne plain) */
   [data-testid="stHorizontalBlock"] .stButton button[data-testid*="btn_back"],
   .stButton > button[data-testid*="btn_back"] {{
     background: transparent !important;
-    color: {_MUTED_FIX} !important;
+    color: {T['muted']} !important;
     border: 1px solid {T['border']} !important;
     font-size: .78rem !important;
     font-weight: 500 !important;
     min-height: 30px !important;
     padding: 0 .7rem !important;
     box-shadow: none !important;
-    border-radius: {_R_XS} !important;
+    border-radius: 8px !important;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -967,12 +991,12 @@ def get_css(T: dict) -> str:
   .side-panel-card {{
     background: {_surf_raised};
     border: 1.5px solid {T['border']};
-    border-radius: {_R_MD};
+    border-radius: 14px;
     padding: .85rem 1rem .6rem;
     margin-bottom: .3rem;
   }}
   .side-panel-card-title {{
-    font-size: .82rem; font-weight: 700;
+    font-size: .82rem; font-weight: 800;
     color: {T['text']};
     font-family: 'DM Sans', sans-serif;
     display: flex; align-items: center; gap: 8px;
@@ -990,59 +1014,28 @@ def get_css(T: dict) -> str:
     font-family: 'DM Sans', sans-serif;
     line-height: 1.5;
     padding: .4rem 0 .6rem;
-    font-weight: 400;
   }}
 
   .file-uploader-compact {{
     margin-bottom: .5rem;
   }}
   .file-uploader-compact [data-testid="stFileUploader"] {{
-    border-radius: {_R_MD} !important;
+    border-radius: 12px !important;
   }}
 
-  /* ═══ Facsimile Shortcut (sidebar col) ═══ */
-  .facsimile-shortcut {{
-    background: linear-gradient(135deg, #7C3AED12, {T['card']});
-    border: 1.5px solid #7C3AED33;
-    border-radius: {_R_MD};
-    padding: .85rem 1rem;
-    margin-bottom: .6rem;
-  }}
-  .facsimile-shortcut-badge {{
-    font-size: .65rem; font-weight: 700;
-    letter-spacing: .08em; text-transform: uppercase;
-    color: #A78BFA; margin-bottom: .3rem;
-  }}
-  .facsimile-shortcut-question {{
-    font-size: .88rem; font-weight: 700;
-    color: {T['text']}; font-family: 'DM Sans', sans-serif;
-    margin-bottom: .3rem;
-  }}
-  .facsimile-shortcut-desc {{
-    font-size: .75rem; color: {T['text2']};
-    font-family: 'DM Sans', sans-serif; line-height: 1.5;
-    font-weight: 400;
-  }}
-  .facsimile-shortcut-btn button {{
-    background: linear-gradient(135deg,#7C3AED,#6D28D9) !important;
-    color: #fff !important; border: none !important;
-    font-weight: 700 !important; font-size: .84rem !important;
-    border-radius: {_R_SM} !important;
-    box-shadow: 0 3px 14px #7C3AED33 !important;
-  }}
-  .facsimile-shortcut-btn button:hover {{
-    background: linear-gradient(135deg,#A78BFA,#7C3AED) !important;
-    box-shadow: 0 4px 20px #7C3AED55 !important;
-  }}
+  /* ═══ Facsimile Shortcut — stile distinto (gestito via .side-box-facsimile) ═══ */
+  .facsimile-shortcut {{ display: none; }}
+  .facsimile-shortcut-badge {{ display: none; }}
+  .facsimile-shortcut-question {{ display: none; }}
+  .facsimile-shortcut-desc {{ display: none; }}
 
   /* ════════════════════════════════════════════════════════════════════════
      FILE ITEMS — Compact list (Percorso B sidebar)
-     FIX #5: font-size minimo .65rem (era .58rem)
      ════════════════════════════════════════════════════════════════════════ */
   .file-item-b {{
     background: {_surf_overlay};
     border: 1.5px solid {T['border']};
-    border-radius: {_R_SM};
+    border-radius: 12px;
     padding: .55rem .8rem;
     margin-bottom: .3rem;
     transition: border-color .15s ease;
@@ -1056,13 +1049,13 @@ def get_css(T: dict) -> str:
   }}
   .file-item-b-icon {{ font-size: .9rem; flex-shrink: 0; }}
   .file-item-b-name {{
-    font-size: .78rem; font-weight: 600;
+    font-size: .78rem; font-weight: 700;
     color: {T['text']}; font-family: 'DM Sans', sans-serif;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     flex: 1; min-width: 0;
   }}
   .file-item-b-badge {{
-    font-size: .65rem; font-weight: 600;
+    font-size: .58rem; font-weight: 700;
     padding: 2px 7px; border-radius: 5px;
     white-space: nowrap; flex-shrink: 0;
   }}
@@ -1080,7 +1073,7 @@ def get_css(T: dict) -> str:
   }}
   .file-item-b-mode-label {{
     font-size: .68rem; font-weight: 600;
-    color: {_MUTED_FIX}; font-family: 'DM Sans', sans-serif;
+    color: {T['muted']}; font-family: 'DM Sans', sans-serif;
     margin: .2rem 0 .15rem;
   }}
   .file-item-b-delete {{
@@ -1089,7 +1082,7 @@ def get_css(T: dict) -> str:
   .file-item-b-delete button {{
     min-height: 28px !important;
     font-size: .7rem !important;
-    color: {_MUTED_FIX} !important;
+    color: {T['muted']} !important;
     background: transparent !important;
     border: 1px dashed {T['border']} !important;
     border-radius: 6px !important;
@@ -1110,12 +1103,12 @@ def get_css(T: dict) -> str:
     color: {T['success']}; font-family: 'DM Sans', sans-serif;
     background: {T['success']}14;
     border: 1px solid {T['success']}33;
-    border-radius: {_R_XS}; padding: 4px 10px;
+    border-radius: 8px; padding: 4px 10px;
     margin-bottom: .4rem;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     OCR SKELETON LOADING
+     OCR SKELETON LOADING — Premium Effect
      ════════════════════════════════════════════════════════════════════════ */
   @keyframes shimmer {{
     0% {{ background-position: -200% 0; }}
@@ -1134,7 +1127,7 @@ def get_css(T: dict) -> str:
   .ocr-skeleton-wrap {{
     background: {_surf_raised};
     border: 1.5px solid {T['border']};
-    border-radius: {_R_MD};
+    border-radius: 16px;
     padding: 1.1rem 1.2rem;
     margin: .6rem 0;
     overflow: hidden;
@@ -1148,18 +1141,18 @@ def get_css(T: dict) -> str:
     animation: pulse-dot 1.2s ease-in-out infinite;
   }}
   .ocr-skeleton-title {{
-    font-size: .88rem; font-weight: 700;
+    font-size: .88rem; font-weight: 800;
     color: {T['text']}; font-family: 'DM Sans', sans-serif;
   }}
   .ocr-skeleton-sub {{
-    font-size: .72rem; color: {_MUTED_FIX};
+    font-size: .72rem; color: {T['muted']};
     font-family: 'DM Sans', sans-serif;
     margin-top: 1px;
   }}
   .ocr-skeleton-doc {{
     background: {T['bg']};
     border: 1px solid {T['border']};
-    border-radius: {_R_SM};
+    border-radius: 10px;
     padding: .9rem 1rem;
     position: relative;
     overflow: hidden;
@@ -1187,29 +1180,28 @@ def get_css(T: dict) -> str:
     display: flex; align-items: flex-start; gap: .9rem;
     background: linear-gradient(135deg, {T.get('hint_bg', _surf_raised)}, {T['card']});
     border: 1.5px solid {T.get('hint_border', T['border'])};
-    border-radius: {_R_MD};
+    border-radius: 16px;
     padding: .9rem 1.1rem;
     margin-bottom: .8rem;
   }}
   .ocr-hint-icon {{ font-size: 1.3rem; flex-shrink: 0; }}
   .ocr-hint-body {{ flex: 1; }}
   .ocr-hint-title {{
-    font-size: .88rem; font-weight: 700;
+    font-size: .88rem; font-weight: 800;
     color: {T['text']}; font-family: 'DM Sans', sans-serif;
     margin-bottom: .2rem;
   }}
   .ocr-hint-desc {{
     font-size: .78rem; color: {T['text2']};
     font-family: 'DM Sans', sans-serif; line-height: 1.5;
-    font-weight: 400;
   }}
   .ocr-hint-tags {{
     display: flex; flex-wrap: wrap; gap: 5px; margin-top: .45rem;
   }}
   .ocr-hint-tag {{
-    font-size: .65rem; font-weight: 600;
+    font-size: .63rem; font-weight: 600;
     background: {T['card']}; border: 1px solid {T['border']};
-    border-radius: {_R_LG}; padding: 3px 9px;
+    border-radius: 20px; padding: 3px 9px;
     color: {T['text2']};
   }}
 
@@ -1228,7 +1220,7 @@ def get_css(T: dict) -> str:
   }}
   .facsimile-page-title {{
     font-family: 'DM Sans', sans-serif;
-    font-size: 1.4rem; font-weight: 800;
+    font-size: 1.4rem; font-weight: 900;
     color: #A78BFA;
     letter-spacing: -.02em;
     margin-bottom: .3rem;
@@ -1240,12 +1232,11 @@ def get_css(T: dict) -> str:
     max-width: 480px;
     margin: 0 auto;
     line-height: 1.55;
-    font-weight: 400;
   }}
   .facsimile-page-uploader {{
     background: {_surf_raised};
     border: 2px dashed #7C3AED44;
-    border-radius: {_R_MD};
+    border-radius: 18px;
     padding: 1.3rem 1.2rem;
     margin-bottom: .5rem;
   }}
@@ -1258,7 +1249,7 @@ def get_css(T: dict) -> str:
     color: {T['success']}; font-family: 'DM Sans', sans-serif;
     background: {T['success']}14;
     border: 1px solid {T['success']}33;
-    border-radius: {_R_XS}; padding: .4rem .7rem;
+    border-radius: 8px; padding: .4rem .7rem;
     margin-top: .3rem;
   }}
   .recalibra-sum-err {{
@@ -1266,7 +1257,7 @@ def get_css(T: dict) -> str:
     color: {T['warn']}; font-family: 'DM Sans', sans-serif;
     background: {T['warn']}14;
     border: 1px solid {T['warn']}33;
-    border-radius: {_R_XS}; padding: .4rem .7rem;
+    border-radius: 8px; padding: .4rem .7rem;
     margin-top: .3rem;
   }}
 
@@ -1276,7 +1267,7 @@ def get_css(T: dict) -> str:
   .rubrica-wrap {{
     background: {_surf_overlay};
     border: 1.5px solid {T['border']};
-    border-radius: {_R_MD};
+    border-radius: 14px;
     padding: .8rem 1rem;
     margin-bottom: .6rem;
   }}
@@ -1285,21 +1276,20 @@ def get_css(T: dict) -> str:
     margin-bottom: .5rem;
   }}
   .rubrica-title {{
-    font-size: .88rem; font-weight: 700;
+    font-size: .88rem; font-weight: 800;
     color: {T['text']}; font-family: 'DM Sans', sans-serif;
   }}
   .rubrica-badge {{
-    font-size: .65rem; font-weight: 600;
+    font-size: .6rem; font-weight: 700;
     background: {_acc_soft}; color: {_acc};
     border: 1px solid {_acc_ring};
-    border-radius: {_R_LG}; padding: 2px 8px;
+    border-radius: 20px; padding: 2px 8px;
     margin-left: auto;
   }}
   .rubrica-content {{
     font-size: .8rem; color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
     line-height: 1.6;
-    font-weight: 400;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -1310,12 +1300,12 @@ def get_css(T: dict) -> str:
     z-index: 998;
     background: {T['card']};
     color: {T['text2']} !important;
-    font-size: .72rem; font-weight: 600;
+    font-size: .72rem; font-weight: 700;
     font-family: 'DM Sans', sans-serif;
     padding: .45rem .85rem;
-    border-radius: {_R_FULL};
+    border-radius: 100px;
     border: 1.5px solid {T['border']};
-    box-shadow: {_SH_MD};
+    box-shadow: {T.get('shadow_md', '0 4px 20px rgba(0,0,0,.08)')};
     text-decoration: none !important;
     transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
   }}
@@ -1332,7 +1322,7 @@ def get_css(T: dict) -> str:
   .app-footer {{
     text-align: center;
     font-size: .72rem;
-    color: {_MUTED_FIX};
+    color: {T['muted']};
     font-family: 'DM Sans', sans-serif;
     padding: 1.5rem 0 .5rem;
     line-height: 1.6;
@@ -1346,12 +1336,12 @@ def get_css(T: dict) -> str:
   details[data-testid="stExpander"] {{
     background: {_surf_raised} !important;
     border: 1.5px solid {T['border']} !important;
-    border-radius: {_R_MD} !important;
+    border-radius: 14px !important;
   }}
   details[data-testid="stExpander"] summary {{
     font-family: 'DM Sans', sans-serif !important;
     font-size: .88rem !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     color: {T['text']} !important;
   }}
   details[data-testid="stExpander"] summary:hover {{
@@ -1364,7 +1354,7 @@ def get_css(T: dict) -> str:
   [data-testid="stFileUploader"] {{
     background: {_surf_overlay} !important;
     border: 2px dashed {T['border2']} !important;
-    border-radius: {_R_MD} !important;
+    border-radius: 14px !important;
     padding: .8rem !important;
     transition: border-color .2s ease !important;
   }}
@@ -1375,12 +1365,12 @@ def get_css(T: dict) -> str:
     background: {_acc} !important;
     color: #fff !important;
     border: none !important;
-    border-radius: {_R_XS} !important;
+    border-radius: 8px !important;
     font-weight: 700 !important;
     font-size: .82rem !important;
   }}
   [data-testid="stFileUploader"] small {{
-    color: {_MUTED_FIX} !important;
+    color: {T['muted']} !important;
     font-family: 'DM Sans', sans-serif !important;
   }}
 
@@ -1390,22 +1380,22 @@ def get_css(T: dict) -> str:
   [data-testid="stToast"] {{
     background: {T['card']} !important;
     border: 1.5px solid {T['border']} !important;
-    border-radius: {_R_MD} !important;
-    box-shadow: {_SH_LG} !important;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,.15) !important;
   }}
   [data-testid="stToast"] [data-testid="stMarkdownContainer"] {{
     color: {T['text']} !important;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     BACK BUTTON — Discrete link style
+     BACK BUTTON — Discrete link style (piccolo, muted, in fondo)
      ════════════════════════════════════════════════════════════════════════ */
   .btn-back-discrete > div.stButton > button,
   .btn-back-discrete .stButton > button {{
     background: transparent !important;
-    color: {_MUTED_FIX} !important;
+    color: {T['muted']} !important;
     border: 1px solid transparent !important;
-    border-radius: {_R_XS} !important;
+    border-radius: 8px !important;
     font-size: .76rem !important;
     font-weight: 500 !important;
     min-height: 28px !important;
@@ -1425,7 +1415,7 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     TEMPLATE GALLERY
+     TEMPLATE GALLERY (optional)
      ════════════════════════════════════════════════════════════════════════ */
   .tmpl-gallery-wrap {{
     display: flex; flex-wrap: wrap; gap: 8px;
@@ -1434,7 +1424,7 @@ def get_css(T: dict) -> str:
   .tmpl-card {{
     background: {_surf_overlay};
     border: 1.5px solid {T['border']};
-    border-radius: {_R_SM};
+    border-radius: 10px;
     padding: .5rem .7rem;
     cursor: pointer;
     transition: border-color .15s, box-shadow .15s;
@@ -1450,13 +1440,13 @@ def get_css(T: dict) -> str:
     background: {_acc_soft} !important;
   }}
   .tmpl-card-title {{
-    font-size: .76rem; font-weight: 600;
+    font-size: .76rem; font-weight: 700;
     color: {T['text']}; font-family: 'DM Sans', sans-serif;
     margin-bottom: 2px;
   }}
   .tmpl-card-desc {{
-    font-size: .68rem;
-    color: {_MUTED_FIX}; font-family: 'DM Sans', sans-serif;
+    font-size: .66rem;
+    color: {T['muted']}; font-family: 'DM Sans', sans-serif;
     line-height: 1.4;
   }}
 
@@ -1466,10 +1456,10 @@ def get_css(T: dict) -> str:
   [data-testid="stDownloadButton"] > button {{
     background: {_surf_raised} !important;
     border: 1.5px solid {T['border']} !important;
-    border-radius: {_R_SM} !important;
+    border-radius: 10px !important;
     color: {T['text']} !important;
     font-family: 'DM Sans', sans-serif !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     font-size: .85rem !important;
     transition: border-color .15s ease, background .15s ease !important;
   }}
@@ -1497,19 +1487,19 @@ def get_css(T: dict) -> str:
   }}
   .gen-progress-bar {{
     background: {T['border']};
-    border-radius: {_R_FULL};
+    border-radius: 100px;
     height: 8px;
     overflow: hidden;
   }}
   .gen-progress-fill {{
     background: linear-gradient(90deg, {_acc}, {_acc}cc);
     height: 100%;
-    border-radius: {_R_FULL};
+    border-radius: 100px;
     transition: width .4s ease;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     QUICK REGEN (variante rapida)
+     FEATURE #3 — Quick Regen (variante rapida one-click)
      ════════════════════════════════════════════════════════════════════════ */
   .quick-regen-row {{
     display: flex;
@@ -1518,7 +1508,7 @@ def get_css(T: dict) -> str:
     padding: .55rem .75rem;
     background: linear-gradient(135deg, {_acc}12, {_acc}06);
     border: 1px dashed {_acc}40;
-    border-radius: {_R_SM};
+    border-radius: 10px;
     margin: .5rem 0 .3rem 0;
   }}
   .quick-regen-label {{
@@ -1529,25 +1519,115 @@ def get_css(T: dict) -> str:
   }}
   .quick-regen-label strong {{
     color: {_acc};
-    font-weight: 700;
+    font-weight: 800;
   }}
   .quick-regen-hint {{
     display: block;
     font-size: .68rem;
-    color: {_MUTED_FIX};
+    color: {T['muted']};
     font-weight: 400;
     margin-top: 1px;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     CONDIVISIONE DIPARTIMENTO (unica definizione)
-     FIX #3: Rimossi duplicati — questa è la versione canonica
+     VARIANT CARDS — Download page (Fila B, BES/DSA, Soluzioni)
+     ════════════════════════════════════════════════════════════════════════ */
+  .variant-section-label {{
+    font-size: .63rem;
+    font-weight: 800;
+    color: {T['muted']};
+    letter-spacing: .1em;
+    font-family: 'DM Sans', sans-serif;
+    text-transform: uppercase;
+    margin-bottom: .55rem;
+  }}
+  .variant-card {{
+    background: {T['card']};
+    border: 1.5px solid {T['border2']};
+    border-radius: 16px;
+    padding: 1rem 1rem .85rem;
+    margin-bottom: .35rem;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    min-height: 130px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }}
+  .variant-card::before {{
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }}
+  .variant-card:hover {{
+    box-shadow: {T.get('shadow_md', '0 4px 20px rgba(0,0,0,.1)')};
+  }}
+  /* Blue (Fila B) */
+  .variant-card-blue::before {{ background: linear-gradient(90deg, {_acc}, {T.get('accent2', _acc)}); }}
+  .variant-card-blue:hover {{ border-color: {_acc}66; }}
+  /* Violet (BES/DSA) */
+  .variant-card-violet::before {{ background: linear-gradient(90deg, #7C3AED, #A78BFA); }}
+  .variant-card-violet:hover {{ border-color: #7C3AED66; }}
+  /* Green (Soluzioni) */
+  .variant-card-green::before {{ background: linear-gradient(90deg, #059669, #34D399); }}
+  .variant-card-green:hover {{ border-color: #05966966; }}
+
+  .variant-card-badge {{
+    display: inline-block;
+    font-size: .56rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    border-radius: 20px;
+    padding: 2px 8px;
+    background: {_acc_soft};
+    color: {_acc};
+    border: 1px solid {_acc_med};
+    font-family: 'DM Sans', sans-serif;
+    align-self: flex-start;
+    text-decoration: none !important;
+  }}
+  .variant-card-badge-violet {{
+    background: #7C3AED14;
+    color: #A78BFA;
+    border: 1px solid #7C3AED30;
+  }}
+  .variant-card-badge-green {{
+    background: #05966914;
+    color: #059669;
+    border: 1px solid #05966930;
+  }}
+  .variant-card-icon {{
+    font-size: 1.5rem;
+    line-height: 1;
+    margin-top: .1rem;
+  }}
+  .variant-card-title {{
+    font-size: .9rem;
+    font-weight: 800;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.2;
+  }}
+  .variant-card-desc {{
+    font-size: .74rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.5;
+    flex: 1;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     FEATURE #5 — Condivisione Dipartimento
      ════════════════════════════════════════════════════════════════════════ */
 
+  /* Card principale */
   .share-dept-card {{
-    background: linear-gradient(135deg, {T['card']} 0%, {T.get('card2', T['card'])} 100%);
+    background: linear-gradient(135deg, {T['card']} 0%, {T['card2']} 100%);
     border: 2px solid {_acc}30;
-    border-radius: {_R_MD};
+    border-radius: 16px;
     padding: 1rem 1.2rem;
     margin-bottom: .8rem;
     position: relative;
@@ -1581,22 +1661,22 @@ def get_css(T: dict) -> str:
   }}
   .share-dept-title {{
     font-size: .92rem;
-    font-weight: 700;
+    font-weight: 800;
     color: {T['text']};
     font-family: 'DM Sans', sans-serif;
   }}
   .share-dept-subtitle {{
-    font-size: .76rem;
+    font-size: .74rem;
     color: {T['text2']};
     line-height: 1.5;
     margin-top: 3px;
-    font-weight: 400;
   }}
 
+  /* Link box (dopo generazione) */
   .share-link-box {{
-    background: {T.get('bg2', T['card'])};
+    background: {T['bg2']};
     border: 1px solid {T['border']};
-    border-radius: {_R_SM};
+    border-radius: 10px;
     padding: .6rem .9rem;
     margin: .6rem 0;
   }}
@@ -1629,10 +1709,11 @@ def get_css(T: dict) -> str:
     border: 1px solid {_acc}20;
   }}
 
+  /* Shared view (colleghi che aprono il link) */
   .shared-view-banner {{
     background: linear-gradient(135deg, #7C3AED20, {_acc}15);
     border: 2px solid #7C3AED40;
-    border-radius: {_R_MD};
+    border-radius: 16px;
     padding: 1.1rem 1.3rem;
     margin-bottom: 1rem;
   }}
@@ -1644,7 +1725,7 @@ def get_css(T: dict) -> str:
   }}
   .shared-view-title {{
     font-size: 1.05rem;
-    font-weight: 800;
+    font-weight: 900;
     color: {T['text']};
     font-family: 'DM Sans', sans-serif;
   }}
@@ -1659,9 +1740,9 @@ def get_css(T: dict) -> str:
     gap: .4rem;
   }}
   .shared-view-badge {{
-    background: {T.get('card2', T['card'])};
+    background: {T['card2']};
     border: 1px solid {T['border']};
-    border-radius: {_R_LG};
+    border-radius: 20px;
     padding: .2rem .65rem;
     font-size: .68rem;
     font-weight: 600;
@@ -1669,10 +1750,11 @@ def get_css(T: dict) -> str:
     font-family: 'DM Sans', sans-serif;
   }}
 
+  /* CTA variante (per colleghi) */
   .shared-cta-card {{
     background: linear-gradient(135deg, {_acc}12, {_acc}06);
     border: 2px solid {_acc}35;
-    border-radius: {_R_MD};
+    border-radius: 14px;
     padding: 1rem 1.2rem;
     margin: .7rem 0;
     text-align: center;
@@ -1683,7 +1765,7 @@ def get_css(T: dict) -> str:
   }}
   .shared-cta-title {{
     font-size: .95rem;
-    font-weight: 700;
+    font-weight: 800;
     color: {_acc};
     font-family: 'DM Sans', sans-serif;
     margin-bottom: .3rem;
@@ -1692,19 +1774,17 @@ def get_css(T: dict) -> str:
     font-size: .76rem;
     color: {T['text2']};
     line-height: 1.5;
-    font-weight: 400;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     STORICO — Sidebar (unica definizione, tokenizzata)
-     FIX #3: Rimossi duplicati
-     FIX #9: Usa token _SB_BORDER per bordi
+     STORICO — Sidebar migliorato
      ════════════════════════════════════════════════════════════════════════ */
 
+  /* Card verifica nello storico */
   .storico-card {{
     background: #1A1917;
-    border: 1px solid {_SB_BORDER};
-    border-radius: {_R_SM};
+    border: 1px solid #2A2923;
+    border-radius: 10px;
     padding: .6rem .75rem;
     margin-bottom: .5rem;
     transition: border-color .2s, background .2s;
@@ -1721,12 +1801,12 @@ def get_css(T: dict) -> str:
   }}
   .storico-card-mat {{
     font-size: .76rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #d8d6ce;
     font-family: 'DM Sans', sans-serif;
   }}
   .storico-card-date {{
-    font-size: .65rem;
+    font-size: .62rem;
     color: #6b6960;
     font-family: 'DM Sans', sans-serif;
     white-space: nowrap;
@@ -1739,14 +1819,12 @@ def get_css(T: dict) -> str:
     overflow: hidden;
     text-overflow: ellipsis;
     margin-bottom: .3rem;
-    line-height: 1.3;
-    font-weight: 400;
   }}
   .storico-card-meta {{
     display: flex;
     align-items: center;
     gap: .3rem;
-    font-size: .65rem;
+    font-size: .62rem;
     color: #6b6960;
     font-family: 'DM Sans', sans-serif;
     margin-bottom: .3rem;
@@ -1762,7 +1840,6 @@ def get_css(T: dict) -> str:
     gap: .3rem;
     flex-wrap: wrap;
   }}
-
   /* Filtro materia chips (sidebar) */
   .storico-filter {{
     display: flex;
@@ -1772,11 +1849,11 @@ def get_css(T: dict) -> str:
     flex-wrap: wrap;
   }}
   .storico-filter-chip {{
-    font-size: .65rem;
+    font-size: .62rem;
     font-weight: 600;
     padding: 2px 8px;
-    border-radius: {_R_SM};
-    border: 1px solid {_SB_BORDER};
+    border-radius: 10px;
+    border: 1px solid #2A2923;
     background: transparent;
     color: #8b8980;
     font-family: 'DM Sans', sans-serif;
@@ -1786,7 +1863,6 @@ def get_css(T: dict) -> str:
     border-color: {_acc};
     color: {_acc};
   }}
-
   /* Stella e delete in storico */
   .stella-btn, .stella-btn-on {{
     margin: 0;
@@ -1818,55 +1894,252 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     RESPONSIVE — FIX #10: 3 breakpoint (mobile, tablet, desktop)
+     RESPONSIVE
      ════════════════════════════════════════════════════════════════════════ */
-
-  /* Tablet (768px–1024px) */
-  @media (max-width: 1024px) {{
-    .block-container {{
-      padding: 2.5rem 1.5rem 2.5rem !important;
-    }}
-    .landing-hero-unified {{
-      padding: 2rem 1rem 1rem;
-    }}
-    .hero-title {{
-      font-size: 1.6rem;
-    }}
-    .facsimile-shortcut {{
-      display: none;
-    }}
-  }}
-
-  /* Mobile (≤767px) */
   @media (max-width: 767px) {{
-    .block-container {{
-      padding: 2rem 1rem 2rem !important;
-    }}
     .onboarding-hint-banner {{
       flex-direction: column;
       gap: .6rem;
     }}
-    .facsimile-shortcut {{
-      display: none;
+    .facsimile-shortcut {{ display: none; }}
+    .hero-title {{ font-size: 1.3rem; }}
+    .home-landing-title {{ font-size: 1.3rem; }}
+    .mcard {{ min-height: auto; }}
+    .page-header-name {{
+      font-size: 1.6rem;
     }}
-    .hero-title {{
-      font-size: 1.4rem;
-    }}
-    .home-landing-title {{
-      font-size: 1.4rem;
-    }}
-    .landing-headline-xl {{
-      font-size: clamp(1.4rem, 5vw, 2rem);
-    }}
-    .mcard {{
-      min-height: auto;
-    }}
-    .tally-features {{
-      gap: 6px 4px;
-    }}
-    .tally-feat {{
-      font-size: .72rem;
-    }}
+    .page-header-icon {{ font-size: 1.6rem; }}
+    .tally-features {{ gap: 5px 4px; }}
+    .tally-feat-pill {{ font-size: .74rem; }}
+    .variant-card {{ min-height: auto; }}
+  }}
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     IDEA #3 — QUICK REGEN (variante rapida)
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .quick-regen-row {{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: .5rem .6rem;
+    background: linear-gradient(135deg, {T.get("card2", T["card"])} 0%, {T["card"]} 100%);
+    border: 1px dashed {T["accent"]}55;
+    border-radius: 10px;
+    margin-bottom: .4rem;
+  }}
+  .quick-regen-label {{
+    font-size: .78rem;
+    font-family: 'DM Sans', sans-serif;
+    color: {T["text2"]};
+    line-height: 1.4;
+  }}
+  .quick-regen-label strong {{
+    color: {T["accent"]};
+  }}
+  .quick-regen-hint {{
+    display: block;
+    font-size: .68rem;
+    color: {T["muted"]};
+    font-weight: 400;
+    margin-top: 1px;
+  }}
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     IDEA #5 — SHARE WITH DEPARTMENT
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .share-dept-card {{
+    background: linear-gradient(135deg, {T.get("card2", T["card"])} 0%, {T["card"]} 100%);
+    border: 1px solid {T["border"]};
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+    margin-bottom: .6rem;
+  }}
+  .share-dept-header {{
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }}
+  .share-dept-icon {{
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }}
+  .share-dept-title-wrap {{
+    flex: 1;
+  }}
+  .share-dept-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: .92rem;
+    font-weight: 800;
+    color: {T["text"]};
+    margin-bottom: 4px;
+  }}
+  .share-dept-subtitle {{
+    font-size: .76rem;
+    color: {T["text2"]};
+    line-height: 1.45;
+  }}
+
+  .share-link-box {{
+    background: {T.get("card2", T["card"])};
+    border: 2px solid {T["success"]}44;
+    border-radius: 10px;
+    padding: .7rem .9rem;
+    margin-bottom: .5rem;
+  }}
+  .share-link-status {{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .7rem;
+    font-weight: 700;
+    color: {T["success"]};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 6px;
+  }}
+  .share-link-dot {{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: {T["success"]};
+    animation: pulse-dot 2s ease-in-out infinite;
+  }}
+  .share-link-url {{
+    font-size: .72rem;
+    color: {T["muted"]};
+    font-family: 'DM Sans', monospace;
+    word-break: break-all;
+    padding: .3rem .5rem;
+    background: {T["bg"]};
+    border-radius: 6px;
+    border: 1px solid {T["border"]};
+  }}
+
+  /* ── Shared view (link aperto da collega) ──────────────────────── */
+  .shared-view-banner {{
+    background: linear-gradient(135deg, {T.get("card2", T["card"])} 0%, {T["card"]} 100%);
+    border: 2px solid {T["accent"]}55;
+    border-radius: 16px;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1rem;
+  }}
+  .shared-view-header {{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: .7rem;
+  }}
+  .shared-view-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: {T["accent"]};
+  }}
+  .shared-view-meta {{
+    font-size: .78rem;
+    color: {T["text2"]};
+    margin-top: 2px;
+  }}
+  .shared-view-badges {{
+    display: flex;
+    gap: .4rem;
+    flex-wrap: wrap;
+  }}
+  .shared-view-badge {{
+    background: {T.get("card2", T["card"])};
+    border: 1px solid {T["border"]};
+    border-radius: 8px;
+    padding: .2rem .6rem;
+    font-size: .7rem;
+    font-weight: 600;
+    color: {T["text2"]};
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .shared-cta-card {{
+    background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+    border-radius: 14px;
+    padding: 1.1rem 1.3rem;
+    margin-bottom: .7rem;
+    text-align: center;
+  }}
+  .shared-cta-icon {{
+    font-size: 1.8rem;
+    margin-bottom: .3rem;
+  }}
+  .shared-cta-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: .3rem;
+  }}
+  .shared-cta-desc {{
+    font-size: .78rem;
+    color: #ffffffcc;
+    line-height: 1.45;
+  }}
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     STORICO — Card redesign
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .storico-card {{
+    margin-top: .6rem;
+    padding: .45rem .5rem .35rem;
+    border-bottom: 1px solid #252420;
+    border-left: 3px solid transparent;
+    transition: border-left-color .15s;
+  }}
+  .storico-card:hover {{
+    border-left-color: {T["accent"]};
+  }}
+  .storico-card-top {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+  }}
+  .storico-card-mat {{
+    font-size: .78rem;
+    font-weight: 700;
+    color: #d8d6ce;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .storico-card-date {{
+    font-size: .62rem;
+    color: #6b6960;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .storico-card-arg {{
+    font-size: .74rem;
+    color: #9b9890;
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 3px;
+    line-height: 1.3;
+  }}
+  .storico-card-meta {{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .64rem;
+    color: #5e5d56;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .storico-card-scu {{
+    background: #1a1917;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid #2a2924;
+  }}
+  .storico-card-nes {{
+    opacity: .8;
+  }}
+  .storico-card-badges {{
+    display: flex;
+    gap: 3px;
+    margin-top: 4px;
   }}
 
 </style>
