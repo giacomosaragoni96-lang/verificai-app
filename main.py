@@ -1174,19 +1174,34 @@ def _render_bivio():
             st.session_state.input_percorso = "B"
             st.rerun()
 
-    # ── Feature chips ─────────────────────────────────────────────────────────
+    # ── Feature pill-cards ────────────────────────────────────────────────────
     st.markdown(
         f'''
-        <div class="tally-features">
-          <span class="tally-feat">📄 PDF pronto da stampare</span>
-          <span class="tally-feat-sep">·</span>
-          <span class="tally-feat">🔢 Punteggi calibrati</span>
-          <span class="tally-feat-sep">·</span>
-          <span class="tally-feat">⭐ Versione BES/DSA</span>
-          <span class="tally-feat-sep">·</span>
-          <span class="tally-feat">🎲 Fila A e B</span>
-          <span class="tally-feat-sep">·</span>
-          <span class="tally-feat">✏️ DOCX modificabile</span>
+        <div class="feature-pills-row">
+          <div class="feature-pill">
+            <span class="feature-pill-icon">📄</span>
+            <span class="feature-pill-label">PDF da stampare</span>
+          </div>
+          <div class="feature-pill">
+            <span class="feature-pill-icon">🔢</span>
+            <span class="feature-pill-label">Punteggi calibrati</span>
+          </div>
+          <div class="feature-pill">
+            <span class="feature-pill-icon">⭐</span>
+            <span class="feature-pill-label">Versione BES/DSA</span>
+          </div>
+          <div class="feature-pill">
+            <span class="feature-pill-icon">🎲</span>
+            <span class="feature-pill-label">Fila A e B</span>
+          </div>
+          <div class="feature-pill">
+            <span class="feature-pill-icon">✅</span>
+            <span class="feature-pill-label">Soluzioni</span>
+          </div>
+          <div class="feature-pill">
+            <span class="feature-pill-icon">✏️</span>
+            <span class="feature-pill-label">DOCX modificabile</span>
+          </div>
         </div>
         ''',
         unsafe_allow_html=True,
@@ -2188,7 +2203,33 @@ def _render_percorso_b_form():
         elif not argomento and _arg_source == "manual":
             st.session_state["_pb_argomento_source"] = None
 
-        # ── Personalizzazione Avanzata (num esercizi + note + punteggi + struttura) ──
+        # ── Numero di esercizi — fuori dall'expander (parametro fondamentale) ─────
+        st.markdown(
+            f'<div class="form-section-header" style="margin-top:1.2rem;">'
+            f'<div class="form-section-dot"></div>'
+            f'<span class="form-section-title">Numero di esercizi</span>'
+            f'<div class="form-section-line"></div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+        _n_default = _udef.get("num_esercizi", 4)
+        if _info_cons.get("num_esercizi_rilevati"):
+            try:
+                _n_default = max(1, min(int(_info_cons["num_esercizi_rilevati"]), 15))
+            except (ValueError, TypeError):
+                pass
+        _n_opts = list(range(1, 16))
+        _n_idx  = _n_opts.index(_n_default) if _n_default in _n_opts else 3
+        num_esercizi = st.selectbox(
+            "Numero esercizi",
+            options=_n_opts,
+            index=_n_idx,
+            format_func=lambda x: f"{x} esercizi",
+            label_visibility="collapsed",
+            key="sel_num_es_b",
+        )
+
+        # ── Personalizzazione Avanzata (note + punteggi + struttura) ─────────────
         _prefs = st.session_state._docente_prefs.get(materia_scelta, {})
         if not _prefs and st.session_state.utente and materia_scelta in MATERIE:
             _prefs = _carica_docente_preferenze(st.session_state.utente.id, materia_scelta)
@@ -2206,30 +2247,9 @@ def _render_percorso_b_form():
                     unsafe_allow_html=True,
                 )
 
-            # ── Numero di esercizi ─────────────────────────────────────────
-            st.markdown(
-                f'<div class="form-section-header" style="margin-top:.4rem;">'
-                f'<div class="form-section-dot"></div>'
-                f'<span class="form-section-title">Numero di esercizi</span>'
-                f'<div class="form-section-line"></div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-            _n_default = _udef.get("num_esercizi", 4)
-            if _info_cons.get("num_esercizi_rilevati"):
-                try:
-                    _n_default = max(1, min(int(_info_cons["num_esercizi_rilevati"]), 15))
-                except (ValueError, TypeError):
-                    pass
-            num_esercizi = st.slider(
-                "Numero esercizi",
-                min_value=1, max_value=15, value=_n_default,
-                label_visibility="collapsed", key="sel_num_es_b",
-            )
-
             # ── Note libere per l'AI ───────────────────────────────────────
             st.markdown(
-                f'<div class="form-section-header" style="margin-top:.9rem;">'
+                f'<div class="form-section-header" style="margin-top:.2rem;">'
                 f'<div class="form-section-dot" style="background:{T["muted"]};'
                 f'box-shadow:none;opacity:.6;"></div>'
                 f'<span class="form-section-title" style="color:{T["muted"]};">'
@@ -2936,10 +2956,7 @@ def _render_facsimile_dedicato():
         )
 
         # ── Analisi punteggi ─────────────────────────────────────────────────
-        _ha_punteggi   = _fac_analisi.get("ha_punteggi", False)
-        _ha_griglia    = _fac_analisi.get("ha_tabella_punti", False)
-        _punti_rilevati = _fac_analisi.get("punti_totali_rilevati") or 100
-
+        _ha_griglia = _fac_analisi.get("ha_tabella_punti", False)
         if _ha_griglia:
             st.markdown(
                 f'<div style="background:{T["success"]}18;border:1px solid {T["success"]}44;'
@@ -2947,26 +2964,9 @@ def _render_facsimile_dedicato():
                 f'font-size:.8rem;color:{T["success"]};font-family:DM Sans,sans-serif;'
                 f'display:flex;align-items:center;gap:.5rem;">'
                 f'<span>✅</span> '
-                f'Tabella punteggi rilevata ({_punti_rilevati} pt totali) — struttura mantenuta.'
+                f'Tabella punti rilevata — il totale sarà mantenuto identico nella variante.'
                 f'</div>',
                 unsafe_allow_html=True,
-            )
-        elif _ha_punteggi:
-            st.markdown(
-                f'<div style="background:{T["success"]}12;border:1px solid {T["success"]}33;'
-                f'border-radius:9px;padding:.5rem .85rem;margin-bottom:.6rem;'
-                f'font-size:.8rem;color:{T["success"]};font-family:DM Sans,sans-serif;'
-                f'display:flex;align-items:center;gap:.5rem;">'
-                f'<span>📊</span> '
-                f'Punteggi rilevati sui sottopunti ({_punti_rilevati} pt totali). '
-                f'Vuoi aggiungere anche la tabella riassuntiva?'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-            _add_griglia = st.toggle(
-                "Aggiungi tabella di valutazione finale",
-                value=True,
-                key="fac_add_griglia",
             )
         else:
             st.markdown(
@@ -2975,13 +2975,13 @@ def _render_facsimile_dedicato():
                 f'font-size:.8rem;color:{T["warn"]};font-family:DM Sans,sans-serif;'
                 f'display:flex;align-items:center;gap:.5rem;">'
                 f'<span>ℹ️</span> '
-                f'Nessun punteggio rilevato nell\'originale. '
-                f'Vuoi aggiungerne una nella variante?</div>',
+                f'Nessuna tabella punti rilevata. '
+                f'Vuoi aggiungerne una?</div>',
                 unsafe_allow_html=True,
             )
             _add_griglia = st.toggle(
                 "Genera tabella di valutazione automaticamente",
-                value=False,
+                value=True,
                 key="fac_add_griglia",
             )
 
@@ -3026,16 +3026,7 @@ def _render_facsimile_dedicato():
 
             # Lancia generazione diretta
             _info = st.session_state.info_consolidate
-
-            # ── Parametri scoring: usa i valori rilevati dall'analisi ────────
-            # _ha_griglia    → verifica ha tabella esplicita → mantienila
-            # _ha_punteggi   → verifica ha punteggi sui sottopunti
-            # _punti_rilevati → totale punti originale (fallback 100)
-            _mostra_pts_fac  = _ha_punteggi or _ha_griglia
-            _con_griglia_fac = _ha_griglia or st.session_state.get("fac_add_griglia", False)
-            _punti_fac       = _punti_rilevati  # già estratto sopra con fallback 100
-            # ─────────────────────────────────────────────────────────────────
-
+            _con_griglia_fac = _ha_griglia or st.session_state.get("fac_add_griglia", True)
             argomento_fac, note_fac = compila_contesto_generazione(
                 analisi=_info,
                 file_mode="copia_fedele",
@@ -3049,7 +3040,7 @@ def _render_facsimile_dedicato():
             _calibr_fac = CALIBRAZIONE_SCUOLA.get(_scu_fac, "")
 
             s_es_fac, imgs_es_fac = _build_prompt_esercizi(
-                [], _n_fac, _punti_fac, _mostra_pts_fac
+                [], _n_fac, 100, True
             )
             _lancia_generazione(
                 materia_scelta=_mat_fac,
@@ -3057,8 +3048,8 @@ def _render_facsimile_dedicato():
                 difficolta=_scu_fac,
                 durata_scelta="1 ora",
                 num_esercizi_totali=_n_fac,
-                punti_totali=_punti_fac,
-                mostra_punteggi=_mostra_pts_fac,
+                punti_totali=100,
+                mostra_punteggi=True,
                 con_griglia=_con_griglia_fac,
                 note_generali=note_fac,
                 s_es=s_es_fac,
@@ -4488,6 +4479,18 @@ def _render_stage_final():
         '</div>',
         unsafe_allow_html=True
     )
+
+    # ── Bottone "indietro" — molto discreto, solo per chi vuole tornare indietro ──
+    st.markdown(
+        f'<div style="text-align:center;margin-top:1.4rem;padding-bottom:.2rem;">',
+        unsafe_allow_html=True
+    )
+    if st.button("← Rivedi esercizi", key="btn_back_final_discrete",
+                 use_container_width=False, type="secondary",
+                 help="Torna alla fase di revisione per apportare modifiche"):
+        st.session_state.stage = STAGE_REVIEW
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
