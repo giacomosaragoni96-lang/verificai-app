@@ -213,62 +213,51 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     HERO / HEADER — mantenuti per retrocompatibilità (non più usati)
+     HERO / HEADER
      ════════════════════════════════════════════════════════════════════════ */
-  .hero-wrap {{ display: none; }}
-  .sidebar-hint-inline {{ display: none; }}
-
-  /* ════════════════════════════════════════════════════════════════════════
-     PAGE HEADER UNIFIED — stesso stile della landing, tutte le pagine
-     ════════════════════════════════════════════════════════════════════════ */
-  .page-header-unified {{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.4rem 1rem .8rem;
-    margin-bottom: .6rem;
+  .hero-wrap {{
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.8rem; padding: 0 0 1rem 0;
     border-bottom: 1px solid {T['border']};
   }}
-  .page-header-logo-row {{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+  .hero-left {{
+    display: flex; flex-direction: column; gap: 4px;
   }}
-  .page-header-icon {{
-    font-size: 2rem;
-    line-height: 1;
-    filter: drop-shadow(0 2px 10px {_acc}44);
-  }}
-  .page-header-name {{
+  .hero-title {{
     font-family: 'DM Sans', sans-serif;
-    font-size: clamp(1.6rem, 4vw, 2.4rem);
-    font-weight: 900;
-    letter-spacing: -0.04em;
+    font-size: 1.7rem; font-weight: 900; line-height: 1.1;
+    letter-spacing: -0.03em;
     color: {T['text']};
-    line-height: 1;
+    display: flex; align-items: center; gap: 8px;
+    margin: 0; padding: 0;
   }}
-  .page-header-ai {{
+  .hero-icon {{ font-size: 1.5rem; }}
+  .hero-ai {{
     background: linear-gradient(135deg, {_acc}, {T.get('accent2', _acc)});
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }}
-  .page-header-beta {{
-    font-size: .55rem;
-    font-weight: 800;
-    letter-spacing: .1em;
-    text-transform: uppercase;
+  .hero-sub {{
+    font-size: .85rem; color: {T['text2']};
+    margin: 0; font-weight: 400; line-height: 1.4;
+  }}
+  .hero-beta {{
+    display: inline-block;
+    font-size: .6rem; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
     background: {_acc_soft};
-    color: {_acc};
-    border: 1px solid {_acc_med};
-    border-radius: 20px;
-    padding: 3px 8px;
-    align-self: flex-start;
+    color: {_acc}; border: 1px solid {_acc_ring};
+    border-radius: 20px; padding: 2px 10px;
     margin-top: 4px;
-    font-family: 'DM Sans', sans-serif;
   }}
 
+  .sidebar-hint-inline {{
+    font-size: .7rem; color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .2rem;
+    opacity: .7;
+  }}
 
   /* ════════════════════════════════════════════════════════════════════════
      GLOBAL — Form Inputs
@@ -469,7 +458,6 @@ def get_css(T: dict) -> str:
   .landing-logo-icon-xl {{
     font-size: 3.6rem;
     line-height: 1;
-    filter: drop-shadow(0 4px 18px {_acc}55);
   }}
   .landing-logo-name-xl {{
     font-family: 'DM Sans', sans-serif;
@@ -571,42 +559,67 @@ def get_css(T: dict) -> str:
     box-shadow: 0 10px 36px {_acc}55 !important;
   }}
 
-  /* Feature strip — singole pill con underline */
+  /* Feature strip */
   .tally-features {{
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 8px 6px;
+    gap: 6px 4px;
     margin: 1.4rem auto 0;
-    max-width: 680px;
-    padding-bottom: .6rem;
+    max-width: 640px;
+    padding-bottom: .5rem;
   }}
-  .tally-feat-pill {{
-    font-size: .82rem;
+  .tally-feat {{
+    font-size: .75rem;
     font-weight: 600;
     font-family: 'DM Sans', sans-serif;
     color: {T['text2']};
     white-space: nowrap;
-    padding: .25rem .7rem;
-    border-radius: 20px;
-    border: 1px solid {T['border2']};
+  }}
+  .tally-feat-sep {{
+    font-size: .75rem;
+    color: {T['border2']};
+    margin: 0 2px;
+  }}
+
+  /* Feature pill-cards — landing page */
+  .feature-pills-row {{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 1.6rem auto 0;
+    max-width: 680px;
+    padding-bottom: .5rem;
+  }}
+  .feature-pill {{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     background: {T['card']};
-    border-bottom: 2px solid {_acc_med};
-    transition: border-color .15s, color .15s;
+    border: 1.5px solid {T['border']};
+    border-radius: 100px;
+    padding: 5px 14px 5px 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    transition: transform .12s ease, box-shadow .12s ease;
   }}
-  .tally-feat-pill:hover {{
-    color: {T['text']};
-    border-color: {_acc};
-    border-bottom-color: {_acc};
+  .feature-pill:hover {{
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0,0,0,.10);
   }}
-  /* Legacy classes kept for compatibility */
-  .tally-feat {{
-    font-size: .82rem; font-weight: 600;
+  .feature-pill-icon {{
+    font-size: 1rem;
+    line-height: 1;
+  }}
+  .feature-pill-label {{
+    font-size: .8rem;
+    font-weight: 700;
     font-family: 'DM Sans', sans-serif;
-    color: {T['text2']}; white-space: nowrap;
+    color: {T['text']};
+    white-space: nowrap;
   }}
-  .tally-feat-sep {{ display: none; }}
 
   /* Social proof (compatibilità) */
   .tally-proof {{ display: none; }}
@@ -639,28 +652,6 @@ def get_css(T: dict) -> str:
     background: #7C3AED18;
     color: #8B5CF6;
     border: 1px solid #7C3AED33;
-  }}
-
-  /* Facsimile shortcut — visivamente distaccato dal form principale */
-  .side-box-facsimile {{
-    background: linear-gradient(135deg, #7C3AED0E, {T['card']});
-    border: 1.5px solid #7C3AED44 !important;
-    border-left: 3px solid #8B5CF6 !important;
-    box-shadow: 0 2px 12px #7C3AED14;
-  }}
-  .side-box-facsimile .side-box-title {{
-    color: #A78BFA;
-  }}
-  .facsimile-shortcut-btn button {{
-    background: linear-gradient(135deg,#7C3AED,#6D28D9) !important;
-    color: #fff !important; border: none !important;
-    font-weight: 700 !important; font-size: .84rem !important;
-    border-radius: 10px !important;
-    box-shadow: 0 3px 14px #7C3AED33 !important;
-  }}
-  .facsimile-shortcut-btn button:hover {{
-    background: linear-gradient(135deg,#A78BFA,#7C3AED) !important;
-    box-shadow: 0 4px 20px #7C3AED55 !important;
   }}
   .side-box-title {{
     font-size: .88rem;
@@ -930,25 +921,6 @@ def get_css(T: dict) -> str:
     letter-spacing: -.01em !important;
     border-radius: 14px !important;
   }}
-  /* CTA hint prominente — vicino al pulsante Genera */
-  .cta-hint-prominent {{
-    display: flex; align-items: center; justify-content: center;
-    gap: .5rem;
-    font-size: .82rem;
-    font-weight: 600;
-    color: {T['hint_text']};
-    font-family: 'DM Sans', sans-serif;
-    background: {T['hint_bg']};
-    border: 1px solid {T['hint_border']};
-    border-radius: 10px;
-    padding: .5rem .9rem;
-    margin-bottom: .4rem;
-    text-align: center;
-    line-height: 1.4;
-  }}
-  .cta-hint-prominent-icon {{
-    font-size: 1rem; flex-shrink: 0;
-  }}
   .cta-hint-above {{
     display: flex; align-items: center; justify-content: center;
     gap: .4rem;
@@ -1023,11 +995,39 @@ def get_css(T: dict) -> str:
     border-radius: 12px !important;
   }}
 
-  /* ═══ Facsimile Shortcut — stile distinto (gestito via .side-box-facsimile) ═══ */
-  .facsimile-shortcut {{ display: none; }}
-  .facsimile-shortcut-badge {{ display: none; }}
-  .facsimile-shortcut-question {{ display: none; }}
-  .facsimile-shortcut-desc {{ display: none; }}
+  /* ═══ Facsimile Shortcut (sidebar col) ═══ */
+  .facsimile-shortcut {{
+    background: linear-gradient(135deg, #7C3AED12, {T['card']});
+    border: 1.5px solid #7C3AED33;
+    border-radius: 14px;
+    padding: .85rem 1rem;
+    margin-bottom: .6rem;
+  }}
+  .facsimile-shortcut-badge {{
+    font-size: .58rem; font-weight: 800;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: #A78BFA; margin-bottom: .3rem;
+  }}
+  .facsimile-shortcut-question {{
+    font-size: .88rem; font-weight: 800;
+    color: {T['text']}; font-family: 'DM Sans', sans-serif;
+    margin-bottom: .3rem;
+  }}
+  .facsimile-shortcut-desc {{
+    font-size: .75rem; color: {T['text2']};
+    font-family: 'DM Sans', sans-serif; line-height: 1.5;
+  }}
+  .facsimile-shortcut-btn button {{
+    background: linear-gradient(135deg,#7C3AED,#6D28D9) !important;
+    color: #fff !important; border: none !important;
+    font-weight: 700 !important; font-size: .84rem !important;
+    border-radius: 10px !important;
+    box-shadow: 0 3px 14px #7C3AED33 !important;
+  }}
+  .facsimile-shortcut-btn button:hover {{
+    background: linear-gradient(135deg,#A78BFA,#7C3AED) !important;
+    box-shadow: 0 4px 20px #7C3AED55 !important;
+  }}
 
   /* ════════════════════════════════════════════════════════════════════════
      FILE ITEMS — Compact list (Percorso B sidebar)
@@ -1530,96 +1530,6 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     VARIANT CARDS — Download page (Fila B, BES/DSA, Soluzioni)
-     ════════════════════════════════════════════════════════════════════════ */
-  .variant-section-label {{
-    font-size: .63rem;
-    font-weight: 800;
-    color: {T['muted']};
-    letter-spacing: .1em;
-    font-family: 'DM Sans', sans-serif;
-    text-transform: uppercase;
-    margin-bottom: .55rem;
-  }}
-  .variant-card {{
-    background: {T['card']};
-    border: 1.5px solid {T['border2']};
-    border-radius: 16px;
-    padding: 1rem 1rem .85rem;
-    margin-bottom: .35rem;
-    display: flex;
-    flex-direction: column;
-    gap: .35rem;
-    min-height: 130px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color .2s ease, box-shadow .2s ease;
-  }}
-  .variant-card::before {{
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-  }}
-  .variant-card:hover {{
-    box-shadow: {T.get('shadow_md', '0 4px 20px rgba(0,0,0,.1)')};
-  }}
-  /* Blue (Fila B) */
-  .variant-card-blue::before {{ background: linear-gradient(90deg, {_acc}, {T.get('accent2', _acc)}); }}
-  .variant-card-blue:hover {{ border-color: {_acc}66; }}
-  /* Violet (BES/DSA) */
-  .variant-card-violet::before {{ background: linear-gradient(90deg, #7C3AED, #A78BFA); }}
-  .variant-card-violet:hover {{ border-color: #7C3AED66; }}
-  /* Green (Soluzioni) */
-  .variant-card-green::before {{ background: linear-gradient(90deg, #059669, #34D399); }}
-  .variant-card-green:hover {{ border-color: #05966966; }}
-
-  .variant-card-badge {{
-    display: inline-block;
-    font-size: .56rem;
-    font-weight: 800;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    border-radius: 20px;
-    padding: 2px 8px;
-    background: {_acc_soft};
-    color: {_acc};
-    border: 1px solid {_acc_med};
-    font-family: 'DM Sans', sans-serif;
-    align-self: flex-start;
-    text-decoration: none !important;
-  }}
-  .variant-card-badge-violet {{
-    background: #7C3AED14;
-    color: #A78BFA;
-    border: 1px solid #7C3AED30;
-  }}
-  .variant-card-badge-green {{
-    background: #05966914;
-    color: #059669;
-    border: 1px solid #05966930;
-  }}
-  .variant-card-icon {{
-    font-size: 1.5rem;
-    line-height: 1;
-    margin-top: .1rem;
-  }}
-  .variant-card-title {{
-    font-size: .9rem;
-    font-weight: 800;
-    color: {T['text']};
-    font-family: 'DM Sans', sans-serif;
-    line-height: 1.2;
-  }}
-  .variant-card-desc {{
-    font-size: .74rem;
-    color: {T['text2']};
-    font-family: 'DM Sans', sans-serif;
-    line-height: 1.5;
-    flex: 1;
-  }}
-
-  /* ════════════════════════════════════════════════════════════════════════
      FEATURE #5 — Condivisione Dipartimento
      ════════════════════════════════════════════════════════════════════════ */
 
@@ -1901,17 +1811,18 @@ def get_css(T: dict) -> str:
       flex-direction: column;
       gap: .6rem;
     }}
-    .facsimile-shortcut {{ display: none; }}
-    .hero-title {{ font-size: 1.3rem; }}
-    .home-landing-title {{ font-size: 1.3rem; }}
-    .mcard {{ min-height: auto; }}
-    .page-header-name {{
-      font-size: 1.6rem;
+    .facsimile-shortcut {{
+      display: none;
     }}
-    .page-header-icon {{ font-size: 1.6rem; }}
-    .tally-features {{ gap: 5px 4px; }}
-    .tally-feat-pill {{ font-size: .74rem; }}
-    .variant-card {{ min-height: auto; }}
+    .hero-title {{
+      font-size: 1.3rem;
+    }}
+    .home-landing-title {{
+      font-size: 1.3rem;
+    }}
+    .mcard {{
+      min-height: auto;
+    }}
   }}
 
   /* ═══════════════════════════════════════════════════════════════════════
