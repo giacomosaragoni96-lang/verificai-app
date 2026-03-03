@@ -896,6 +896,16 @@ def analizza_documento_caricato(
         "num_esercizi_rilevati":     int(data.get("num_esercizi_rilevati") or 0),
         "ha_grafici":                bool(data.get("ha_grafici", False)),
         "ha_formule":                bool(data.get("ha_formule", False)),
+        # ── Campi scoring (NUOVO) ─────────────────────────────────────────────
+        "ha_punteggi":               bool(data.get("ha_punteggi", False)),
+        "ha_tabella_punti":          bool(data.get("ha_tabella_punti", False)),
+        "punti_totali_rilevati":     (
+            int(data["punti_totali_rilevati"])
+            if isinstance(data.get("punti_totali_rilevati"), (int, float))
+            and data["punti_totali_rilevati"] > 0
+            else None
+        ),
+        # ─────────────────────────────────────────────────────────────────────
         "esercizi_trovati":          esercizi_trovati,
         "modalita_uso_consigliata":  modalita,
         "motivazione_uso":           (data.get("motivazione_uso") or None),
@@ -973,6 +983,38 @@ def compila_contesto_generazione(
         )
 
     elif file_mode == "copia_fedele":
+        ha_punteggi    = analisi.get("ha_punteggi", False)
+        ha_tab_punti   = analisi.get("ha_tabella_punti", False)
+        punti_rilevati = analisi.get("punti_totali_rilevati", None)
+
+        # Costruisci nota scoring specifica e contestuale
+        if ha_punteggi and punti_rilevati:
+            _nota_scoring = (
+                f"- PUNTEGGI: la verifica originale ha punteggi sui sottopunti "
+                f"(totale rilevato: {punti_rilevati} pt). "
+                f"Replica la distribuzione proporzionale dei punti tra gli esercizi. "
+                f"Usa il formato ESATTO (X pt) su ogni \\item."
+            )
+        elif ha_punteggi:
+            _nota_scoring = (
+                "- PUNTEGGI: la verifica originale ha punteggi annotati sui sottopunti. "
+                "Replica la distribuzione proporzionale. "
+                "Usa il formato ESATTO (X pt) su ogni \\item."
+            )
+        else:
+            _nota_scoring = (
+                "- PUNTEGGI: la verifica originale NON ha punteggi annotati. "
+                "Se ti viene chiesto di aggiungerne, distribuiscili proporzionalmente alla difficoltà."
+            )
+
+        if ha_tab_punti:
+            _nota_griglia = (
+                "- TABELLA PUNTEGGI: la verifica originale ha una tabella di valutazione finale. "
+                "NON generarla nel corpo — verrà aggiunta automaticamente."
+            )
+        else:
+            _nota_griglia = ""
+
         parti_note.append(
             "╔══════════════════════════════════════════════════╗\n"
             "║  USO FILE: COPIA FEDELE (RIELABORAZIONE)         ║\n"
@@ -980,7 +1022,9 @@ def compila_contesto_generazione(
             "Il docente vuole una verifica molto simile al file allegato.\n"
             "- Mantieni la stessa struttura, lo stesso numero di esercizi e gli stessi tipi.\n"
             "- Cambia SOLO i dati numerici specifici (numeri, date, nomi propri) per evitare plagio.\n"
-            "- Mantieni lo stesso argomento e livello di difficoltà."
+            "- Mantieni lo stesso argomento e livello di difficoltà.\n"
+            + _nota_scoring
+            + ("\n" + _nota_griglia if _nota_griglia else "")
         )
         if ha_grafici:
             parti_note.append(
