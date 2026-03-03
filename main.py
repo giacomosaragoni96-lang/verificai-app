@@ -2936,7 +2936,10 @@ def _render_facsimile_dedicato():
         )
 
         # ── Analisi punteggi ─────────────────────────────────────────────────
-        _ha_griglia = _fac_analisi.get("ha_tabella_punti", False)
+        _ha_punteggi   = _fac_analisi.get("ha_punteggi", False)
+        _ha_griglia    = _fac_analisi.get("ha_tabella_punti", False)
+        _punti_rilevati = _fac_analisi.get("punti_totali_rilevati") or 100
+
         if _ha_griglia:
             st.markdown(
                 f'<div style="background:{T["success"]}18;border:1px solid {T["success"]}44;'
@@ -2944,9 +2947,26 @@ def _render_facsimile_dedicato():
                 f'font-size:.8rem;color:{T["success"]};font-family:DM Sans,sans-serif;'
                 f'display:flex;align-items:center;gap:.5rem;">'
                 f'<span>✅</span> '
-                f'Tabella punti rilevata — il totale sarà mantenuto identico nella variante.'
+                f'Tabella punteggi rilevata ({_punti_rilevati} pt totali) — struttura mantenuta.'
                 f'</div>',
                 unsafe_allow_html=True,
+            )
+        elif _ha_punteggi:
+            st.markdown(
+                f'<div style="background:{T["success"]}12;border:1px solid {T["success"]}33;'
+                f'border-radius:9px;padding:.5rem .85rem;margin-bottom:.6rem;'
+                f'font-size:.8rem;color:{T["success"]};font-family:DM Sans,sans-serif;'
+                f'display:flex;align-items:center;gap:.5rem;">'
+                f'<span>📊</span> '
+                f'Punteggi rilevati sui sottopunti ({_punti_rilevati} pt totali). '
+                f'Vuoi aggiungere anche la tabella riassuntiva?'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            _add_griglia = st.toggle(
+                "Aggiungi tabella di valutazione finale",
+                value=True,
+                key="fac_add_griglia",
             )
         else:
             st.markdown(
@@ -2955,13 +2975,13 @@ def _render_facsimile_dedicato():
                 f'font-size:.8rem;color:{T["warn"]};font-family:DM Sans,sans-serif;'
                 f'display:flex;align-items:center;gap:.5rem;">'
                 f'<span>ℹ️</span> '
-                f'Nessuna tabella punti rilevata. '
-                f'Vuoi aggiungerne una?</div>',
+                f'Nessun punteggio rilevato nell\'originale. '
+                f'Vuoi aggiungerne una nella variante?</div>',
                 unsafe_allow_html=True,
             )
             _add_griglia = st.toggle(
                 "Genera tabella di valutazione automaticamente",
-                value=True,
+                value=False,
                 key="fac_add_griglia",
             )
 
@@ -3006,7 +3026,16 @@ def _render_facsimile_dedicato():
 
             # Lancia generazione diretta
             _info = st.session_state.info_consolidate
-            _con_griglia_fac = _ha_griglia or st.session_state.get("fac_add_griglia", True)
+
+            # ── Parametri scoring: usa i valori rilevati dall'analisi ────────
+            # _ha_griglia    → verifica ha tabella esplicita → mantienila
+            # _ha_punteggi   → verifica ha punteggi sui sottopunti
+            # _punti_rilevati → totale punti originale (fallback 100)
+            _mostra_pts_fac  = _ha_punteggi or _ha_griglia
+            _con_griglia_fac = _ha_griglia or st.session_state.get("fac_add_griglia", False)
+            _punti_fac       = _punti_rilevati  # già estratto sopra con fallback 100
+            # ─────────────────────────────────────────────────────────────────
+
             argomento_fac, note_fac = compila_contesto_generazione(
                 analisi=_info,
                 file_mode="copia_fedele",
@@ -3020,7 +3049,7 @@ def _render_facsimile_dedicato():
             _calibr_fac = CALIBRAZIONE_SCUOLA.get(_scu_fac, "")
 
             s_es_fac, imgs_es_fac = _build_prompt_esercizi(
-                [], _n_fac, 100, True
+                [], _n_fac, _punti_fac, _mostra_pts_fac
             )
             _lancia_generazione(
                 materia_scelta=_mat_fac,
@@ -3028,8 +3057,8 @@ def _render_facsimile_dedicato():
                 difficolta=_scu_fac,
                 durata_scelta="1 ora",
                 num_esercizi_totali=_n_fac,
-                punti_totali=100,
-                mostra_punteggi=True,
+                punti_totali=_punti_fac,
+                mostra_punteggi=_mostra_pts_fac,
                 con_griglia=_con_griglia_fac,
                 note_generali=note_fac,
                 s_es=s_es_fac,
