@@ -345,6 +345,14 @@ def prompt_analisi_documento(
         f'  "num_esercizi_rilevati": <int, numero esercizi trovati, 0 se n/a>,\n'
         f'  "ha_grafici": <true se contiene grafici, schemi o immagini integrate>,\n'
         f'  "ha_formule": <true se contiene formule matematiche>,\n'
+        f'  "ha_punteggi": <true se la verifica ha punteggi annotati su singoli esercizi o sottopunti '
+        f'(es. "(5 pt)", "(3 punti)", "/10", marcature tipo "5p" sui margini). '
+        f'Non richiede una tabella formale — bastano annotazioni sui singoli item.>,\n'
+        f'  "ha_tabella_punti": <true SOLO se la verifica ha una tabella/griglia di valutazione '
+        f'esplicita (es. "Tabella Punteggi", "Griglia di valutazione", tabella con colonne '
+        f'Es.1/Max/Punti). false se i punteggi sono solo annotati sugli esercizi senza tabella.>,\n'
+        f'  "punti_totali_rilevati": <int con la somma totale dei punti se determinabile con certezza '
+        f'(es. 100 se gli esercizi sommano a 100, 30 se è su 30). null se non determinabile.>,\n'
         f'  "esercizi_trovati": [\n'
         f'    {{\n'
         f'      "numero": <int 1-based>,\n'
@@ -363,6 +371,14 @@ def prompt_analisi_documento(
         f"- Se vedi un documento con intestazione (Nome:___ Data:___), titolo e più sezioni numerate → verifica\n"
         f"- Se vedi testo scritto a mano o digitato come riassunto/schema → appunti\n"
         f"- Il tipo sbagliato INVALIDA tutta l'analisi: scegli con la massima precisione.\n"
+        f"REGOLE CRITICHE PER i campi punteggio — LEGGI CON ATTENZIONE:\n"
+        f"- 'ha_punteggi': metti true se vedi QUALSIASI annotazione tipo (5 pt), 5p, /10, '3 punti', "
+        f"anche su singoli item. Non è necessaria una tabella — bastano i punteggi inline.\n"
+        f"- 'ha_tabella_punti': metti true SOLO se esiste una TABELLA SEPARATA di valutazione, "
+        f"tipicamente in fondo alla verifica con righe tipo 'Es.1 | Es.2 | Totale | Voto'. "
+        f"NON confonderla con i punteggi annotati accanto agli esercizi.\n"
+        f"- 'punti_totali_rilevati': somma TUTTI i punteggi visibili. Esempio: se vedi (5 pt)+(10 pt)+(8 pt) "
+        f"scrivi 23. Se c'è scritto 'Totale: 100 pt' scrivi 100. null SOLO se davvero impossibile.\n"
         f"REGOLE per modalita_uso_consigliata:\n"
         f"- appunti, libro → base_conoscenza\n"
         f"- verifica → stile_e_struttura\n"
