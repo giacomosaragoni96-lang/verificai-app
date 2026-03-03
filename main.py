@@ -216,14 +216,14 @@ def _riscala_single_block(title: str, body: str, target_pts: int) -> str:
     return m.group(1) if m else body
 
 
-# Parole chiave che indicano che l'utente sta chiedendo una modifica ai punteggi.
-# In quel caso il prompt AI viene bloccato e viene mostrato un suggerimento
-# a usare il pannello Ricalibra Punteggi.
-_SCORE_KEYWORDS = {
-    'pt', 'punt', 'punti', 'punteggio', 'punteggi', 'punto',
-    'voto', 'voti', 'score', 'valut', 'peso', 'perc', '%',
-    '5 pt', '10 pt', '15 pt', '20 pt', '25 pt', '30 pt',
-}
+# Pattern regex per rilevare richieste di modifica punteggi.
+# Usa \b (word-boundary) per evitare falsi positivi come "sottopunto" che contiene "punto".
+_SCORE_PATTERN = re.compile(
+    r'\b(punti|punteggio|punteggi|punto|voto|voti|score|valutazione|peso)\b'
+    r'|\b\d+\s*pt\b'
+    r'|(?<!\w)%(?!\w)',
+    re.IGNORECASE
+)
 
 
 # ── KaTeX HTML renderer ────────────────────────────────────────────────────────
@@ -597,13 +597,20 @@ _on_landing = (
 )
 if not _on_landing:
     st.markdown(
-        '<div class="page-header-unified">'
-        '  <div class="page-header-logo-row">'
-        '    <span class="page-header-icon">' + APP_ICON + '</span>'
-        '    <span class="page-header-name">Verific<span class="page-header-ai">AI</span></span>'
-        '    <span class="page-header-beta">Beta</span>'
-        '  </div>'
+        '<div class="sidebar-hint-inline">'
+        '☰ Impostazioni, storico e logout'
         '</div>',
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        '<div class="hero-wrap"><div class="hero-left">'
+        '<h1 class="hero-title">'
+        '<span class="hero-icon">' + APP_ICON + '</span>'
+        ' Verific<span class="hero-ai">AI</span>'
+        '</h1>'
+        '<p class="hero-sub">' + APP_TAGLINE + '</p>'
+        '<span class="hero-beta">Versione Beta</span>'
+        '</div></div>',
         unsafe_allow_html=True
     )
 
@@ -1146,16 +1153,19 @@ def _render_bivio():
             st.session_state.input_percorso = "B"
             st.rerun()
 
-    # ── Feature pills ────────────────────────────────────────────────────────
+    # ── Feature chips ─────────────────────────────────────────────────────────
     st.markdown(
         f'''
         <div class="tally-features">
-          <span class="tally-feat-pill">📄 PDF pronto da stampare</span>
-          <span class="tally-feat-pill">🔢 Punteggi calibrati</span>
-          <span class="tally-feat-pill">⭐ Versione BES/DSA</span>
-          <span class="tally-feat-pill">🎲 Fila A e B</span>
-          <span class="tally-feat-pill">✏️ DOCX modificabile</span>
-          <span class="tally-feat-pill">📋 Soluzioni</span>
+          <span class="tally-feat">📄 PDF pronto da stampare</span>
+          <span class="tally-feat-sep">·</span>
+          <span class="tally-feat">🔢 Punteggi calibrati</span>
+          <span class="tally-feat-sep">·</span>
+          <span class="tally-feat">⭐ Versione BES/DSA</span>
+          <span class="tally-feat-sep">·</span>
+          <span class="tally-feat">🎲 Fila A e B</span>
+          <span class="tally-feat-sep">·</span>
+          <span class="tally-feat">✏️ DOCX modificabile</span>
         </div>
         ''',
         unsafe_allow_html=True,
@@ -2047,6 +2057,11 @@ def _render_percorso_b_form():
         f'e — se vuoi — allega materiale nella colonna destra. '
         f'<strong>Potrai sempre modificare i singoli esercizi generati.</strong>'
         f'</div>'
+        f'<div class="onboarding-hint-tags">'
+        f'<span class="onboarding-hint-tag">✏️ Modifica ogni esercizio</span>'
+        f'<span class="onboarding-hint-tag">📐 Punteggi automatici</span>'
+        f'<span class="onboarding-hint-tag">📄 Export PDF + DOCX</span>'
+        f'</div>'
         f'</div>'
         f'</div>',
         unsafe_allow_html=True,
@@ -2152,43 +2167,58 @@ def _render_percorso_b_form():
         elif not argomento and _arg_source == "manual":
             st.session_state["_pb_argomento_source"] = None
 
-
-        _prefs = st.session_state._docente_prefs.get(materia_scelta, {})
-        if not _prefs and st.session_state.utente and materia_scelta in MATERIE:
-            _prefs = _carica_docente_preferenze(st.session_state.utente.id, materia_scelta)
-            st.session_state._docente_prefs[materia_scelta] = _prefs
-
-        # Calcola default num_esercizi (serve dentro l'expander)
+        # ── N° Esercizi ───────────────────────────────────────────────────────
+        st.markdown(
+            f'<div class="form-section-header" style="margin-top:1.2rem;">'
+            f'<div class="form-section-dot"></div>'
+            f'<span class="form-section-title">Numero di esercizi</span>'
+            f'<div class="form-section-line"></div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
         _n_default = _udef.get("num_esercizi", 4)
         if _info_cons.get("num_esercizi_rilevati"):
             try:
                 _n_default = max(1, min(int(_info_cons["num_esercizi_rilevati"]), 15))
             except (ValueError, TypeError):
                 pass
+        num_esercizi = st.slider(
+            "Numero esercizi",
+            min_value=1, max_value=15, value=_n_default,
+            label_visibility="collapsed", key="sel_num_es_b",
+        )
+
+        # ── Note libere per l'AI ──────────────────────────────────────────────
+        st.markdown(
+            f'<div class="form-section-header" style="margin-top:1.1rem;">'
+            f'<div class="form-section-dot" style="background:{T["muted"]};'
+            f'box-shadow:none;opacity:.6;"></div>'
+            f'<span class="form-section-title" style="color:{T["muted"]};">'
+            f'Note aggiuntive <span style="font-weight:400;letter-spacing:0;">'
+            f'— opzionale</span></span>'
+            f'<div class="form-section-line" style="background:linear-gradient(90deg,'
+            f'{T["border"]} 0%,transparent 100%);"></div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown('<div class="note-field-wrap">', unsafe_allow_html=True)
+        note_extra = st.text_area(
+            "Note AI",
+            placeholder=NOTE_PLACEHOLDER.get(materia_scelta, ""),
+            height=72,
+            label_visibility="collapsed",
+            key="note_area_b",
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # ── Personalizzazione Avanzata ────────────────────────────────────────
+        _prefs = st.session_state._docente_prefs.get(materia_scelta, {})
+        if not _prefs and st.session_state.utente and materia_scelta in MATERIE:
+            _prefs = _carica_docente_preferenze(st.session_state.utente.id, materia_scelta)
+            st.session_state._docente_prefs[materia_scelta] = _prefs
 
         st.markdown('<div class="personalizza-wrap">', unsafe_allow_html=True)
         with st.expander("⚙️ Personalizzazione Avanzata", expanded=False):
-
-            # ── Numero di esercizi ────────────────────────────────────────────
-            st.markdown('<div class="opt-label">Numero di esercizi</div>', unsafe_allow_html=True)
-            num_esercizi = st.slider(
-                "Numero esercizi",
-                min_value=1, max_value=15, value=_n_default,
-                label_visibility="collapsed", key="sel_num_es_b",
-            )
-
-            # ── Note libere per l'AI ──────────────────────────────────────────
-            st.markdown('<div class="opt-label" style="margin-top:.6rem;">Note aggiuntive <span style="font-weight:400;opacity:.6;">— opzionale</span></div>', unsafe_allow_html=True)
-            note_extra = st.text_area(
-                "Note AI",
-                placeholder=NOTE_PLACEHOLDER.get(materia_scelta, ""),
-                height=72,
-                label_visibility="collapsed",
-                key="note_area_b",
-            )
-
-            st.markdown('<div style="height:.4rem"></div>', unsafe_allow_html=True)
-
             if _prefs.get("stile_desc"):
                 st.markdown(
                     f'<div style="background:{T["hint_bg"]};border:1px solid {T["hint_border"]};'
@@ -2279,11 +2309,11 @@ def _render_percorso_b_form():
         _manca_arg = not argomento
         st.markdown("<div style='height:.9rem'></div>", unsafe_allow_html=True)
 
-        # Hint SOPRA il pulsante — prominente, vicino al CTA
+        # Hint SOPRA il pulsante
         if not _manca_arg and not _limite:
             st.markdown(
-                f'<div class="cta-hint-prominent">'
-                f'<span class="cta-hint-prominent-icon">✏️</span>'
+                f'<div class="cta-hint-above">'
+                f'<span>✏️</span>'
                 f'<span>Potrai modificare ogni singolo esercizio dopo la generazione</span>'
                 f'</div>',
                 unsafe_allow_html=True,
@@ -2334,7 +2364,7 @@ def _render_percorso_b_form():
         # ── Box 1: Facsimile shortcut (solo se nessun file) ──────────────────
         if not _lista_b:
             st.markdown(
-                f'<div class="side-box side-box-facsimile">'
+                f'<div class="side-box">'
                 f'  <div class="side-box-header">'
                 f'    <span class="side-box-badge side-box-badge-violet">⚡ RAPIDO</span>'
                 f'  </div>'
@@ -3170,21 +3200,22 @@ def _render_stage_preview():
     # ── Preview PDF — tutte le pagine ────────────────────────────────────────
     if preview_imgs:
         n_prev = len(preview_imgs)
-        if n_prev == 1:
-            st.image(preview_imgs[0], use_container_width=True)
-        else:
-            # Due o più pagine: prima in full-width, resto a coppie fianco a fianco
-            st.image(preview_imgs[0], use_container_width=True,
-                     caption="Pagina 1")
-            for _pi in range(1, n_prev, 2):
-                _pc1, _pc2 = st.columns(2, gap="small")
-                with _pc1:
-                    st.image(preview_imgs[_pi], use_container_width=True,
-                             caption=f"Pagina {_pi + 1}")
-                with _pc2:
-                    if _pi + 1 < n_prev:
-                        st.image(preview_imgs[_pi + 1], use_container_width=True,
-                                 caption=f"Pagina {_pi + 2}")
+        # Centra e limita la larghezza delle immagini per non occupare tutto lo schermo
+        _pc_l, _pc_m, _pc_r = st.columns([0.5, 3, 0.5])
+        with _pc_m:
+            if n_prev == 1:
+                st.image(preview_imgs[0], use_container_width=True)
+            else:
+                st.image(preview_imgs[0], use_container_width=True, caption="Pagina 1")
+                for _pi in range(1, n_prev, 2):
+                    _pp1, _pp2 = st.columns(2, gap="small")
+                    with _pp1:
+                        st.image(preview_imgs[_pi], use_container_width=True,
+                                 caption=f"Pagina {_pi + 1}")
+                    with _pp2:
+                        if _pi + 1 < n_prev:
+                            st.image(preview_imgs[_pi + 1], use_container_width=True,
+                                     caption=f"Pagina {_pi + 2}")
     elif vA.get("latex"):
         with st.expander("Anteprima LaTeX (PDF non disponibile)", expanded=True):
             st.code(vA["latex"][:3000], language="latex")
@@ -3358,13 +3389,14 @@ def _render_stage_review():
             if re.search(r"\\begin\{(tikzpicture|axis)\}", body):
                 st.info("📊 Grafici TikZ/pgfplots visibili nel PDF finale.")
 
-            # ── IDEA #3: Quick Regen — variante rapida one-click ──────────
+            # ── IDEA #3: Variante rapida / Esercizio diverso ──────────────
             st.markdown(
                 '<div class="quick-regen-row">'
                 '<div class="quick-regen-label">'
-                '🎲 <strong>Variante rapida</strong>'
+                '🔄 <strong>Modifica veloce</strong>'
                 '<span class="quick-regen-hint">'
-                'Stessa struttura e difficoltà, dati diversi'
+                '<b>Cambia i dati</b>: stessa struttura, numeri diversi &nbsp;·&nbsp; '
+                '<b>Esercizio diverso</b>: stessa difficoltà, approccio nuovo'
                 '</span>'
                 '</div>'
                 '</div>',
@@ -3373,17 +3405,20 @@ def _render_stage_review():
             _qr_col1, _qr_col2 = st.columns(2, gap="small")
             with _qr_col1:
                 quick_regen = st.button(
-                    "🎲 Genera variante",
+                    "🔄 Cambia i dati",
                     key=f"quick_regen_{idx}",
                     use_container_width=True,
+                    help="Stessa struttura e difficoltà, solo i dati numerici cambiano",
                 )
             with _qr_col2:
-                cambia_tutto = st.button(
-                    "🔄 Cambia esercizio",
-                    key=f"cambia_tutto_{idx}",
+                cambia_esercizio = st.button(
+                    "🎯 Esercizio diverso",
+                    key=f"cambia_es_{idx}",
                     use_container_width=True,
-                    help="Genera un esercizio completamente diverso in struttura e tipologia, mantenendo argomento e pertinenza didattica",
+                    help="Stesso argomento e difficoltà, struttura completamente diversa",
                 )
+            # Placeholder per feedback veloce (rimane nella colonna sinistra)
+            _qr_status_ph = st.empty()
 
             st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
 
@@ -3394,7 +3429,7 @@ def _render_stage_review():
                     'font-family:DM Sans,sans-serif;line-height:1.45;">'
                     'Descrivi la modifica — l\'AI rigenererà solo questo esercizio.<br>'
                     '<span style="color:' + T["muted"] + ';font-size:.7rem;">'
-                    '⚠️ Per cambiare i <strong>punteggi</strong> usa il pannello qui sotto.</span>'
+                    '⚠️ Per cambiare i <strong>punteggi</strong> usa il pannello <em>⚖️ Ricalibra Punteggi</em> qui sotto.</span>'
                     '</div>',
                     unsafe_allow_html=True
                 )
@@ -3409,13 +3444,12 @@ def _render_stage_review():
                     "✏️ Applica Modifica", key=f"rw_btn_{idx}",
                     use_container_width=True, disabled=not istruzione.strip()
                 )
-                # Fix: messaggio di elaborazione visibile subito sotto il pulsante
-                if rigenera and istruzione.strip():
-                    st.info(f"⏳ Elaborazione in corso — sto modificando l'esercizio {idx+1}…")
+                # Placeholder per feedback AI modifica (dentro la colonna sinistra)
+                _rw_status_ph = st.empty()
 
             # ── Expander: Ricalibra Punteggi ──────────────────────────────────
             if mostra_punteggi and n_blocks > 0:
-                with st.expander("⚖️ Ricalibra Punteggi", expanded=False):
+                with st.expander("⚖️ Ricalibra Punteggi", expanded=True):
                     st.markdown(
                         '<div style="font-size:.74rem;color:' + T["text2"] + ';margin-bottom:.7rem;'
                         'font-family:DM Sans,sans-serif;line-height:1.45;">'
@@ -3579,7 +3613,7 @@ def _render_stage_review():
                 st.caption("Anteprima non disponibile.")
 
     # ── IDEA #3: Quick Regen — variante rapida handler ──────────────────────
-    if quick_regen:
+    if quick_regen or cambia_esercizio:
         _pts_custom_qr = st.session_state.get("recalibra_pts", [])
         if _pts_custom_qr and len(_pts_custom_qr) == n_blocks:
             _qr_target_pts = int(_pts_custom_qr[idx])
@@ -3597,67 +3631,93 @@ def _render_stage_review():
         else:
             _qr_punti_nota = "NON inserire punteggi (X pt)."
 
-        _qr_prompt = (
-            f"Sei un docente esperto di {materia_str} e LaTeX.\n"
-            f"Devi creare una VARIANTE di questo esercizio: cambia i dati numerici, "
-            f"i nomi delle variabili, i valori specifici — mantenendo IDENTICA "
-            f"la struttura, la tipologia e il livello di difficoltà.\n\n"
-            f"MATERIA: {materia_str}\n"
-            f"ARGOMENTO: {argomento_str}\n"
-            f"⚠️ L'esercizio DEVE restare su '{argomento_str}' in '{materia_str}'.\n\n"
-            f"ESERCIZIO ORIGINALE:\n\\subsection*{{{title}}}\n{body}\n\n"
-            f"REGOLE:\n"
-            f"- Cambia SOLO i dati (numeri, coefficienti, nomi, valori) — "
-            f"NON la struttura, NON il tipo, NON la difficoltà.\n"
-            f"- Se ci sono grafici TikZ/pgfplots, adatta i parametri ai nuovi dati.\n"
-            f"- Mantieni lo STESSO numero di sotto-punti.\n"
-            f"- {_qr_punti_nota}\n"
-            f"- Restituisci SOLO il blocco \\subsection*{{...}} con la variante.\n"
-            f"- NON includere preambolo o \\begin{{document}}.\n"
-            f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
-        )
-        with st.spinner(f"🎲 Generazione variante esercizio {idx+1}…"):
-            try:
-                _qr_model = genai.GenerativeModel(modello_rw)
-                _qr_resp = _qr_model.generate_content(_qr_prompt)
-                _qr_nuovo = _qr_resp.text.replace("```latex","").replace("```","").strip()
-                _qr_m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", _qr_nuovo, re.DOTALL)
-                if _qr_m:
-                    _qr_new_title = _qr_m.group(1)
-                    _qr_new_body  = _qr_m.group(2).strip()
-                else:
-                    _qr_new_title = title
-                    _qr_new_body  = _qr_nuovo
-                _qr_new_title = re.sub(r'\s*\(\d+\s*pt\)', '', _qr_new_title).strip()
-                if mostra_punteggi and _qr_target_pts > 0:
-                    _qr_new_body = _riscala_single_block(_qr_new_title, _qr_new_body, _qr_target_pts)
+        if quick_regen:
+            _qr_prompt = (
+                f"Sei un docente esperto di {materia_str} e LaTeX.\n"
+                f"Devi creare una VARIANTE di questo esercizio: cambia i dati numerici, "
+                f"i nomi delle variabili, i valori specifici — mantenendo IDENTICA "
+                f"la struttura, la tipologia e il livello di difficoltà.\n\n"
+                f"MATERIA: {materia_str}\n"
+                f"ARGOMENTO: {argomento_str}\n"
+                f"⚠️ L'esercizio DEVE restare su '{argomento_str}' in '{materia_str}'.\n\n"
+                f"ESERCIZIO ORIGINALE:\n\\subsection*{{{title}}}\n{body}\n\n"
+                f"REGOLE:\n"
+                f"- Cambia SOLO i dati (numeri, coefficienti, nomi, valori) — "
+                f"NON la struttura, NON il tipo, NON la difficoltà.\n"
+                f"- Se ci sono grafici TikZ/pgfplots, adatta i parametri ai nuovi dati.\n"
+                f"- Mantieni lo STESSO numero di sotto-punti.\n"
+                f"- {_qr_punti_nota}\n"
+                f"- Restituisci SOLO il blocco \\subsection*{{...}} con la variante.\n"
+                f"- NON includere preambolo o \\begin{{document}}.\n"
+                f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
+            )
+            _spin_label = f"🔄 Cambio dati esercizio {idx+1}…"
+        else:  # cambia_esercizio
+            _qr_prompt = (
+                f"Sei un docente esperto di {materia_str} e LaTeX.\n"
+                f"Devi creare un ESERCIZIO COMPLETAMENTE NUOVO sullo stesso argomento, "
+                f"con struttura e approccio diversi rispetto all'originale, mantenendo "
+                f"lo stesso livello di difficoltà e punteggio totale.\n\n"
+                f"MATERIA: {materia_str}\n"
+                f"ARGOMENTO: {argomento_str}\n"
+                f"⚠️ L'esercizio DEVE restare su '{argomento_str}' in '{materia_str}'.\n\n"
+                f"ESERCIZIO ORIGINALE (da cui NON devi copiare la struttura):\n"
+                f"\\subsection*{{{title}}}\n{body}\n\n"
+                f"REGOLE:\n"
+                f"- Crea un esercizio con approccio DIVERSO (es. cambia il tipo di domanda, "
+                f"  usa un contesto applicativo diverso, scegli un'altra modalità di risoluzione).\n"
+                f"- Mantieni lo stesso livello di difficoltà e lo stesso numero di sotto-punti.\n"
+                f"- {_qr_punti_nota}\n"
+                f"- Restituisci SOLO il blocco \\subsection*{{...}} con il nuovo esercizio.\n"
+                f"- NON includere preambolo o \\begin{{document}}.\n"
+                f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
+            )
+            _spin_label = f"🎯 Generazione esercizio diverso {idx+1}…"
+
+        _qr_status_ph.info(f"⏳ {_spin_label}")
+        try:
+            _qr_model = genai.GenerativeModel(modello_rw)
+            _qr_resp = _qr_model.generate_content(_qr_prompt)
+            _qr_nuovo = _qr_resp.text.replace("```latex","").replace("```","").strip()
+            _qr_m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", _qr_nuovo, re.DOTALL)
+            if _qr_m:
+                _qr_new_title = _qr_m.group(1)
+                _qr_new_body  = _qr_m.group(2).strip()
+            else:
+                _qr_new_title = title
+                _qr_new_body  = _qr_nuovo
+            _qr_new_title = re.sub(r'\s*\(\d+\s*pt\)', '', _qr_new_title).strip()
+            if mostra_punteggi and _qr_target_pts > 0:
+                _qr_new_body = _riscala_single_block(_qr_new_title, _qr_new_body, _qr_target_pts)
                 st.session_state.review_blocks[idx]["title"] = _qr_new_title
-                st.session_state.review_blocks[idx]["body"]  = _qr_new_body
-                if "recalibra_pts" in st.session_state:
-                    del st.session_state["recalibra_pts"]
-                _qr_latex = _reconstruct_latex(
-                    st.session_state.review_preamble,
-                    st.session_state.review_blocks
-                )
-                _qr_latex = fix_items_environment(_qr_latex)
-                _qr_latex = rimuovi_vspace_corpo(_qr_latex)
-                _qr_latex = rimuovi_punti_subsection(_qr_latex)
-                if con_griglia:
-                    _qr_latex = inietta_griglia(_qr_latex, punti_totali)
-                st.session_state.verifiche["A"]["latex"]           = _qr_latex
-                st.session_state.verifiche["A"]["latex_originale"] = _qr_latex
-                _qr_pdf, _ = compila_pdf(_qr_latex)
-                if _qr_pdf:
-                    st.session_state.verifiche["A"]["pdf"]    = _qr_pdf
-                    st.session_state.verifiche["A"]["pdf_ts"] = time.time()
-                    st.session_state.verifiche["A"]["preview"] = True
-                    _qr_imgs, _ = pdf_to_images_bytes(_qr_pdf)
-                    st.session_state.preview_images = _qr_imgs or []
-                    st.session_state.preview_page   = 0
-                st.toast(f"🎲 Variante esercizio {idx+1} generata!", icon="🎲")
-                time.sleep(0.3); st.rerun()
-            except Exception as _qr_e:
-                st.error(f"❌ Errore: {_qr_e}")
+            st.session_state.review_blocks[idx]["body"]  = _qr_new_body
+            if "recalibra_pts" in st.session_state:
+                del st.session_state["recalibra_pts"]
+            _qr_latex = _reconstruct_latex(
+                st.session_state.review_preamble,
+                st.session_state.review_blocks
+            )
+            _qr_latex = fix_items_environment(_qr_latex)
+            _qr_latex = rimuovi_vspace_corpo(_qr_latex)
+            _qr_latex = rimuovi_punti_subsection(_qr_latex)
+            if con_griglia:
+                _qr_latex = inietta_griglia(_qr_latex, punti_totali)
+            st.session_state.verifiche["A"]["latex"]           = _qr_latex
+            st.session_state.verifiche["A"]["latex_originale"] = _qr_latex
+            _qr_pdf, _ = compila_pdf(_qr_latex)
+            if _qr_pdf:
+                st.session_state.verifiche["A"]["pdf"]    = _qr_pdf
+                st.session_state.verifiche["A"]["pdf_ts"] = time.time()
+                st.session_state.verifiche["A"]["preview"] = True
+                _qr_imgs, _ = pdf_to_images_bytes(_qr_pdf)
+                st.session_state.preview_images = _qr_imgs or []
+                st.session_state.preview_page   = 0
+            _icon = "🔄" if quick_regen else "🎯"
+            _label = "Variante" if quick_regen else "Esercizio diverso"
+            st.toast(f"{_icon} {_label} esercizio {idx+1} generato!", icon=_icon)
+            time.sleep(0.3); st.rerun()
+        except Exception as _qr_e:
+            _qr_status_ph.error(f"❌ Errore: {_qr_e}")
 
     # ── Logica modifica AI ────────────────────────────────────────────────────
     if rigenera and istruzione.strip():
@@ -3665,9 +3725,9 @@ def _render_stage_review():
 
         # ── Rilevamento richieste punteggio ───────────────────────────────────
         # Se l'utente chiede di cambiare punti/punteggio reindirizza al pannello.
-        _is_score_req = any(kw in _istr_low for kw in _SCORE_KEYWORDS)
+        _is_score_req = bool(_SCORE_PATTERN.search(_istr_low))
         if _is_score_req:
-            st.warning(
+            _rw_status_ph.warning(
                 "⚠️ **Hai menzionato punteggi / punti.**\n\n"
                 "Per modificare i punti usa il pannello **⚖️ Ricalibra Punteggi** "
                 "qui sopra — imposta i valori desiderati e premi **Applica Punteggi**. "
@@ -3720,135 +3780,59 @@ def _render_stage_review():
                 f"- NON includere preambolo o \\begin{{document}}.\n"
                 f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
             )
-            with st.spinner(f"⏳ Rigenerando esercizio {idx+1} e aggiornando PDF…"):
-                try:
-                    model_rw_obj = genai.GenerativeModel(modello_rw)
-                    resp  = model_rw_obj.generate_content(_prompt_rw)
-                    nuovo = resp.text.replace("```latex","").replace("```","").strip()
-                    m_rw  = re.match(r"\\subsection\*\{([^}]*)\}(.*)", nuovo, re.DOTALL)
-                    if m_rw:
-                        new_title = m_rw.group(1)
-                        new_body  = m_rw.group(2).strip()
-                    else:
-                        new_title = title
-                        new_body  = nuovo
-
-                    # Rimuovi eventuale (N pt) che l'AI ha messo nel titolo
-                    new_title = re.sub(r'\s*\(\d+\s*pt\)', '', new_title).strip()
-
-                    # Correzione deterministica dei punti: porta la somma esatta
-                    # al valore che aveva l'esercizio prima della modifica AI.
-                    if mostra_punteggi and _exercise_target_pts > 0:
-                        new_body = _riscala_single_block(new_title, new_body, _exercise_target_pts)
-
-                    st.session_state.review_blocks[idx]["title"] = new_title
-                    st.session_state.review_blocks[idx]["body"]  = new_body
-
-                    # Reset pannello ricalibra: rilegge i punteggi aggiornati
-                    if "recalibra_pts" in st.session_state:
-                        del st.session_state["recalibra_pts"]
-
-                    # Fix: ricompila il PDF e aggiorna la preview dopo la modifica
-                    _latex_rw = _reconstruct_latex(
-                        st.session_state.review_preamble,
-                        st.session_state.review_blocks
-                    )
-                    _latex_rw = fix_items_environment(_latex_rw)
-                    _latex_rw = rimuovi_vspace_corpo(_latex_rw)
-                    _latex_rw = rimuovi_punti_subsection(_latex_rw)
-                    if con_griglia:
-                        _latex_rw = inietta_griglia(_latex_rw, punti_totali)
-                    st.session_state.verifiche["A"]["latex"]           = _latex_rw
-                    st.session_state.verifiche["A"]["latex_originale"] = _latex_rw
-                    _pdf_rw, _err_rw = compila_pdf(_latex_rw)
-                    if _pdf_rw:
-                        st.session_state.verifiche["A"]["pdf"]    = _pdf_rw
-                        st.session_state.verifiche["A"]["pdf_ts"] = time.time()
-                        st.session_state.verifiche["A"]["preview"] = True
-                        _imgs_rw, _ = pdf_to_images_bytes(_pdf_rw)
-                        st.session_state.preview_images = _imgs_rw or []
-                        st.session_state.preview_page   = 0
-
-                    st.success(f"✅ Esercizio {idx+1} rigenerato — punteggio preservato ({_exercise_target_pts} pt).")
-                    time.sleep(0.4); st.rerun()
-                except Exception as e:
-                    st.error(f"❌ Errore: {e}")
-
-    # ── Logica "Cambia totalmente" — struttura diversa, argomento uguale ─────
-    if cambia_tutto:
-        _ct_pts = st.session_state.get("recalibra_pts", [])
-        _ct_target_pts = (
-            int(_ct_pts[idx]) if _ct_pts and len(_ct_pts) == n_blocks
-            else _parse_pts_from_block_body(body)
-        )
-        _ct_punti_nota = (
-            f"Assegna esattamente {_ct_target_pts} pt totali, distribuendoli tra i sotto-punti con (N pt) su ogni \\item."
-            if mostra_punteggi and _ct_target_pts > 0
-            else ("Mantieni formato (X pt) su ogni \\item." if mostra_punteggi else "NON inserire punteggi.")
-        )
-        _prompt_ct = (
-            f"Sei un docente esperto di {materia_str} e LaTeX.\n"
-            f"Genera un esercizio COMPLETAMENTE DIVERSO — diverso in struttura, tipologia e contenuto specifico — "
-            f"ma che rimanga strettamente pertinente all'argomento e agli obiettivi didattici della verifica.\n\n"
-            f"MATERIA: {materia_str}\n"
-            f"ARGOMENTO DELLA VERIFICA: {argomento_str}\n"
-            f"ESERCIZIO DA SOSTITUIRE (struttura e tipo da NON replicare):\n\\subsection*{{{title}}}\n{body}\n\n"
-            f"REGOLE:\n"
-            f"- Cambia TIPO di esercizio (es. da calcolo numerico a dimostrazione, da aperto a V/F, ecc.).\n"
-            f"- Cambia i concetti specifici testati, scegliendo aspetti diversi ma coerenti con '{argomento_str}'.\n"
-            f"- L'esercizio DEVE restare su '{argomento_str}' in '{materia_str}'. NON introdurre altri argomenti.\n"
-            f"- Restituisci SOLO il blocco \\subsection*{{...}} con il nuovo esercizio.\n"
-            f"- Mantieni la struttura LaTeX (\\subsection*, enumerate, \\item[a)], ecc.).\n"
-            f"- {_ct_punti_nota}\n"
-            f"- NON includere preambolo o \\begin{{document}}.\n"
-        )
-        with st.spinner(f"🔄 Generazione nuovo esercizio {idx+1}…"):
+            _rw_status_ph.info(f"⏳ Rigenerando esercizio {idx+1}…")
             try:
-                _ct_model = genai.GenerativeModel(MODEL_FAST_ID)
-                _ct_resp = _ct_model.generate_content(
-                    [_prompt_ct],
-                    generation_config=genai.GenerationConfig(temperature=0.95),
-                ).text.strip()
-                if _ct_resp.startswith("```"):
-                    _ct_resp = re.sub(r"^```[a-z]*\n?", "", _ct_resp)
-                    _ct_resp = re.sub(r"\n?```$", "", _ct_resp)
-                _ct_m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", _ct_resp, re.DOTALL)
-                if _ct_m:
-                    _ct_title = _ct_m.group(1)
-                    _ct_body  = _ct_m.group(2).strip()
-                    _ct_title = re.sub(r'\s*\(\d+\s*pt\)', '', _ct_title).strip()
+                model_rw_obj = genai.GenerativeModel(modello_rw)
+                resp  = model_rw_obj.generate_content(_prompt_rw)
+                nuovo = resp.text.replace("```latex","").replace("```","").strip()
+                m_rw  = re.match(r"\\subsection\*\{([^}]*)\}(.*)", nuovo, re.DOTALL)
+                if m_rw:
+                    new_title = m_rw.group(1)
+                    new_body  = m_rw.group(2).strip()
                 else:
-                    _ct_title = title
-                    _ct_body  = _ct_resp
-                if mostra_punteggi and _ct_target_pts > 0:
-                    _ct_body = _riscala_single_block(_ct_title, _ct_body, _ct_target_pts)
-                st.session_state.review_blocks[idx] = {
-                    "title": _ct_title or title,
-                    "body":  _ct_body,
-                }
-                _ct_latex = _reconstruct_latex(
+                    new_title = title
+                    new_body  = nuovo
+
+                # Rimuovi eventuale (N pt) che l'AI ha messo nel titolo
+                new_title = re.sub(r'\s*\(\d+\s*pt\)', '', new_title).strip()
+
+                # Correzione deterministica dei punti: porta la somma esatta
+                # al valore che aveva l'esercizio prima della modifica AI.
+                if mostra_punteggi and _exercise_target_pts > 0:
+                    new_body = _riscala_single_block(new_title, new_body, _exercise_target_pts)
+
+                st.session_state.review_blocks[idx]["title"] = new_title
+                st.session_state.review_blocks[idx]["body"]  = new_body
+
+                # Reset pannello ricalibra: rilegge i punteggi aggiornati
+                if "recalibra_pts" in st.session_state:
+                    del st.session_state["recalibra_pts"]
+
+                # Ricompila il PDF e aggiorna la preview dopo la modifica
+                _latex_rw = _reconstruct_latex(
                     st.session_state.review_preamble,
                     st.session_state.review_blocks
                 )
-                _ct_latex = fix_items_environment(_ct_latex)
-                _ct_latex = rimuovi_vspace_corpo(_ct_latex)
-                _ct_latex = rimuovi_punti_subsection(_ct_latex)
+                _latex_rw = fix_items_environment(_latex_rw)
+                _latex_rw = rimuovi_vspace_corpo(_latex_rw)
+                _latex_rw = rimuovi_punti_subsection(_latex_rw)
                 if con_griglia:
-                    _ct_latex = inietta_griglia(_ct_latex, punti_totali)
-                st.session_state.verifiche["A"]["latex"]           = _ct_latex
-                st.session_state.verifiche["A"]["latex_originale"] = _ct_latex
-                _ct_pdf, _ = compila_pdf(_ct_latex)
-                if _ct_pdf:
-                    st.session_state.verifiche["A"]["pdf"]    = _ct_pdf
+                    _latex_rw = inietta_griglia(_latex_rw, punti_totali)
+                st.session_state.verifiche["A"]["latex"]           = _latex_rw
+                st.session_state.verifiche["A"]["latex_originale"] = _latex_rw
+                _pdf_rw, _err_rw = compila_pdf(_latex_rw)
+                if _pdf_rw:
+                    st.session_state.verifiche["A"]["pdf"]    = _pdf_rw
                     st.session_state.verifiche["A"]["pdf_ts"] = time.time()
                     st.session_state.verifiche["A"]["preview"] = True
-                    _ct_imgs, _ = pdf_to_images_bytes(_ct_pdf)
-                    st.session_state.preview_images = _ct_imgs or []
+                    _imgs_rw, _ = pdf_to_images_bytes(_pdf_rw)
+                    st.session_state.preview_images = _imgs_rw or []
                     st.session_state.preview_page   = 0
-                st.toast(f"🔄 Esercizio {idx+1} cambiato completamente!", icon="🔄")
-                time.sleep(0.3); st.rerun()
-            except Exception as _ct_e:
-                st.error(f"❌ Errore: {_ct_e}")
+
+                st.toast(f"✅ Esercizio {idx+1} modificato!", icon="✅")
+                time.sleep(0.4); st.rerun()
+            except Exception as e:
+                _rw_status_ph.error(f"❌ Errore: {e}")
 
     # ── Pulsante CONFERMA — oro, piena larghezza ──────────────────────────────
     st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
@@ -3958,7 +3942,23 @@ def _render_stage_final():
         unsafe_allow_html=True
     )
 
-    # (timer badges rimossi — non necessari per il docente)
+    # ── Badge timer ───────────────────────────────────────────────────────────
+    _gen_sec = st.session_state.get("gen_time_sec")
+    _n_es    = gp.get("num_esercizi", 4)
+    _risparmio_min = max(10, _n_es * 8)
+    if _gen_sec:
+        _t_label = (f"{_gen_sec}s" if _gen_sec < 60 else f"{_gen_sec // 60}m {_gen_sec % 60}s")
+        st.markdown(
+            f'<div style="display:flex;gap:.5rem;margin-bottom:.7rem;flex-wrap:wrap;">'
+            f'<span style="background:{T["card2"]};border:1px solid {T["border"]};border-radius:8px;'
+            f'padding:.28rem .75rem;font-size:.72rem;font-weight:700;color:{T["success"]};'
+            f'font-family:DM Sans,sans-serif;">⚡ Generata in {_t_label}</span>'
+            f'<span style="background:{T["card2"]};border:1px solid {T["border"]};border-radius:8px;'
+            f'padding:.28rem .75rem;font-size:.72rem;font-weight:700;color:{T["text2"]};'
+            f'font-family:DM Sans,sans-serif;">🕐 ~{_risparmio_min} min risparmiati</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  DOWNLOAD PRINCIPALE
@@ -3974,13 +3974,15 @@ def _render_stage_final():
         st.markdown('</div>', unsafe_allow_html=True)
 
     # ═══════════════════════════════════════════════════════════════════════════
-    #  VARIANTI ONE-CLICK — 3 card in colonna, stile "Genera Fila B"
+    #  VARIANTI — 4 card in griglia 2×2
     # ═══════════════════════════════════════════════════════════════════════════
     st.markdown(
-        f'<div class="variant-section-label">VARIANTI — UN CLICK PER GENERARE E SCARICARE</div>',
+        f'<div style="font-size:.66rem;font-weight:800;color:{T["muted"]};letter-spacing:.08em;'
+        f'font-family:DM Sans,sans-serif;margin-bottom:.45rem;">VARIANTI — UN CLICK PER GENERARE E SCARICARE</div>',
         unsafe_allow_html=True
     )
-    _vc1, _vc2, _vc3 = st.columns(3, gap="medium")
+    _vc1, _vc2 = st.columns(2, gap="medium")
+    _vc3, _vc4 = st.columns(2, gap="medium")
 
     # ── FILA B ────────────────────────────────────────────────────────────────
     with _vc1:
@@ -3988,11 +3990,11 @@ def _render_stage_final():
         _b_lat = vB.get("latex")
 
         st.markdown(
-            f'<div class="variant-card variant-card-blue">'
-            f'  <div class="variant-card-badge">⚡ ONE-CLICK</div>'
-            f'  <div class="variant-card-icon">📋</div>'
-            f'  <div class="variant-card-title">Fila B</div>'
-            f'  <div class="variant-card-desc">Stessa struttura, stessi punteggi — solo i dati cambiano. Pronta in secondi.</div>'
+            f'<div class="one-click-variant-card">'
+            f'  <div class="one-click-body">'
+            f'    <div class="one-click-title">📋 Fila B</div>'
+            f'    <div class="one-click-desc">Stessa struttura, stessi punteggi — solo i dati cambiano. Pronta in secondi.</div>'
+            f'  </div>'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -4041,11 +4043,11 @@ def _render_stage_final():
         _r_lat = vR.get("latex")
 
         st.markdown(
-            f'<div class="variant-card variant-card-violet">'
-            f'  <div class="variant-card-badge variant-card-badge-violet">🌟 INCLUSIONE</div>'
-            f'  <div class="variant-card-icon">🌟</div>'
-            f'  <div class="variant-card-title">Versione BES/DSA</div>'
-            f'  <div class="variant-card-desc">Linguaggio semplificato, struttura alleggerita. Stessi obiettivi didattici.</div>'
+            f'<div class="one-click-variant-card">'
+            f'  <div class="one-click-body">'
+            f'    <div class="one-click-title">🌟 Versione BES/DSA</div>'
+            f'    <div class="one-click-desc">Linguaggio semplificato, struttura alleggerita. Stessi obiettivi didattici.</div>'
+            f'  </div>'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -4085,11 +4087,11 @@ def _render_stage_final():
         _s_lat = vS.get("latex")
 
         st.markdown(
-            f'<div class="variant-card variant-card-green">'
-            f'  <div class="variant-card-badge variant-card-badge-green">✅ DOCENTE</div>'
-            f'  <div class="variant-card-icon">📝</div>'
-            f'  <div class="variant-card-title">Soluzioni</div>'
-            f'  <div class="variant-card-desc">Documento riservato al docente con risposte complete e svolgimenti.</div>'
+            f'<div class="one-click-variant-card">'
+            f'  <div class="one-click-body">'
+            f'    <div class="one-click-title">✅ Soluzioni</div>'
+            f'    <div class="one-click-desc">Documento riservato al docente con risposte complete e svolgimenti.</div>'
+            f'  </div>'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -4123,10 +4125,105 @@ def _render_stage_final():
             except Exception as _e:
                 _ph_s.empty(); st.error(f"Errore: {_e}")
 
+    # ── RUBRICA DI VALUTAZIONE (MIM) — 4ª card ────────────────────────────────
+    _punti_tot_r = gp.get("punti_totali", 100)
+    _latex_a_r   = vA.get("latex", "")
+
+    with _vc4:
+        st.markdown(
+            f'<div class="one-click-variant-card">'
+            f'  <div class="one-click-body">'
+            f'    <div class="one-click-title">📊 Rubrica di Valutazione</div>'
+            f'    <div class="one-click-desc">Indicatori qualitativi per fascia di voto, allineati alle Linee Guida MIM.</div>'
+            f'  </div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        if st.session_state.rubrica_testo:
+            # Rubrica già generata — mostra download e rigenera
+            st.download_button(
+                "⬇ Scarica Rubrica (.txt)",
+                data=st.session_state.rubrica_testo.encode("utf-8"),
+                file_name=arg_str + "_Rubrica.txt", mime="text/plain",
+                key="dl_rubrica_card", use_container_width=True,
+            )
+            if st.button("🔄 Rigenera Rubrica", key="btn_rigenera_rubrica_card",
+                         use_container_width=True):
+                st.session_state.rubrica_testo = None
+                st.session_state._rubrica_gen  = False
+                st.rerun()
+            # Anteprima rubrica in expander
+            with st.expander("👁 Visualizza rubrica", expanded=False):
+                def _md_to_html(text: str) -> str:
+                    import re as _re
+                    t = text
+                    t = _re.sub(r'^### (.+)$', r'<h3>\1</h3>', t, flags=_re.MULTILINE)
+                    t = _re.sub(r'^## (.+)$',  r'<h2>\1</h2>', t, flags=_re.MULTILINE)
+                    t = _re.sub(r'^# (.+)$',   r'<h1>\1</h1>', t, flags=_re.MULTILINE)
+                    t = _re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', t)
+                    t = _re.sub(r'\*(.+?)\*',     r'<em>\1</em>', t)
+                    lines = t.split('\n'); out = []; in_table = False
+                    for line in lines:
+                        if '|' in line and line.strip().startswith('|'):
+                            cells = [c.strip() for c in line.strip().strip('|').split('|')]
+                            if not in_table:
+                                out.append('<table style="width:100%;border-collapse:collapse;font-size:.8rem;">')
+                                in_table = True
+                            if all(set(c) <= set('-: ') for c in cells): continue
+                            row = ''.join(f'<td style="border:1px solid #444;padding:4px 8px;">{c}</td>' for c in cells)
+                            out.append(f'<tr>{row}</tr>')
+                        else:
+                            if in_table: out.append('</table>'); in_table = False
+                            out.append(line)
+                    if in_table: out.append('</table>')
+                    t = '\n'.join(out)
+                    t = _re.sub(r'\n\n+', '</p><p>', t)
+                    return '<p>' + t + '</p>'
+                try:
+                    _rubrica_html = _md_to_html(st.session_state.rubrica_testo)
+                except Exception:
+                    _rubrica_html = st.session_state.rubrica_testo.replace("\n", "<br>")
+                st.markdown(
+                    f'<div class="rubrica-wrap">'
+                    f'  <div class="rubrica-header">'
+                    f'    <span style="font-size:1.1rem;">📊</span>'
+                    f'    <div class="rubrica-title">Rubrica di Valutazione</div>'
+                    f'    <span class="rubrica-badge">MIM — per competenze</span>'
+                    f'  </div>'
+                    f'  <div class="rubrica-content">{_rubrica_html}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+        else:
+            if st.button("📊 Genera Rubrica MIM", key="btn_gen_rubrica_card",
+                         use_container_width=True, type="primary"):
+                st.session_state._rubrica_gen = True
+                st.rerun()
+            if st.session_state.get("_rubrica_gen"):
+                st.session_state._rubrica_gen = False
+                _rub_ph = st.empty()
+                _rub_ph.markdown(
+                    _skeleton_html("📊", "Generazione rubrica…", "Indicatori · Fasce di voto · MIM"),
+                    unsafe_allow_html=True
+                )
+                try:
+                    _mod_rub = genai.GenerativeModel(mod_id)
+                    _prompt_rub = prompt_rubrica_valutazione(
+                        corpo_latex=_latex_a_r, materia=mat_str,
+                        livello=scu_str, punti_totali=_punti_tot_r,
+                    )
+                    _resp_rub = _mod_rub.generate_content(
+                        [_prompt_rub], generation_config=genai.GenerationConfig(temperature=0.5),
+                    )
+                    st.session_state.rubrica_testo = _resp_rub.text.strip()
+                    _rub_ph.empty(); st.toast("✅ Rubrica generata!", icon="📊"); st.rerun()
+                except Exception as _e_rub:
+                    _rub_ph.empty(); st.error(f"Errore generazione rubrica: {_e_rub}")
+
     # ── Navigazione ───────────────────────────────────────────────────────────
     st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
-    _nav_c1, _nav_c2, _nav_c3 = st.columns([1, 2, 1])
-    with _nav_c2:
+    _nav1, _nav2 = st.columns(2, gap="small")
+    with _nav1:
         if st.button("🆕 Nuova verifica", type="primary",
                      use_container_width=True, key="btn_new_s3_top"):
             # Reset completo — l'utente riparte dalla Home come nuovo accesso
@@ -4166,6 +4263,9 @@ def _render_stage_final():
             st.session_state._share_code        = None
             st.session_state._share_generating   = False
             st.rerun()
+    with _nav2:
+        if st.button("← Rivedi esercizi", use_container_width=True, key="btn_rev_s3_top"):
+            st.session_state.stage = STAGE_REVIEW; st.rerun()
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  IDEA #5 — CONDIVIDI CON IL DIPARTIMENTO
@@ -4327,115 +4427,16 @@ def _render_stage_final():
                 if vRB.get("latex"): _show_extra_formats("RB", vRB, "BES_FilaB")
                 if vS.get("latex"): _show_extra_formats("S", vS, "Soluzioni")
 
-    # ── Rubrica di Valutazione (expander) ────────────────────────────────────
-    _punti_tot_r = gp.get("punti_totali", 100)
-    _latex_a_r   = vA.get("latex", "")
-
-    with st.expander("📊 Rubrica di Valutazione (MIM)", expanded=False):
-        if st.session_state.rubrica_testo:
-            def _md_to_html(text: str) -> str:
-                import re as _re
-                t = text
-                t = _re.sub(r'^### (.+)$', r'<h3>\1</h3>', t, flags=_re.MULTILINE)
-                t = _re.sub(r'^## (.+)$',  r'<h2>\1</h2>', t, flags=_re.MULTILINE)
-                t = _re.sub(r'^# (.+)$',   r'<h1>\1</h1>', t, flags=_re.MULTILINE)
-                t = _re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', t)
-                t = _re.sub(r'\*(.+?)\*',     r'<em>\1</em>', t)
-                lines = t.split('\n'); out = []; in_table = False
-                for line in lines:
-                    if '|' in line and line.strip().startswith('|'):
-                        cells = [c.strip() for c in line.strip().strip('|').split('|')]
-                        if not in_table:
-                            out.append('<table style="width:100%;border-collapse:collapse;font-size:.8rem;">')
-                            in_table = True
-                        if all(set(c) <= set('-: ') for c in cells): continue
-                        row = ''.join(f'<td style="border:1px solid #444;padding:4px 8px;">{c}</td>' for c in cells)
-                        out.append(f'<tr>{row}</tr>')
-                    else:
-                        if in_table: out.append('</table>'); in_table = False
-                        out.append(line)
-                if in_table: out.append('</table>')
-                t = '\n'.join(out)
-                t = _re.sub(r'\n\n+', '</p><p>', t)
-                return '<p>' + t + '</p>'
-            try:
-                _rubrica_html = _md_to_html(st.session_state.rubrica_testo)
-            except Exception:
-                _rubrica_html = st.session_state.rubrica_testo.replace("\n", "<br>")
-            st.markdown(
-                f'<div class="rubrica-wrap">'
-                f'  <div class="rubrica-header">'
-                f'    <span style="font-size:1.1rem;">📊</span>'
-                f'    <div class="rubrica-title">Rubrica di Valutazione</div>'
-                f'    <span class="rubrica-badge">MIM — per competenze</span>'
-                f'  </div>'
-                f'  <div class="rubrica-content">{_rubrica_html}</div>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-            _col_r1, _col_r2 = st.columns([2, 1])
-            with _col_r1:
-                st.download_button(
-                    "⬇ Scarica rubrica (.txt)",
-                    data=st.session_state.rubrica_testo.encode("utf-8"),
-                    file_name=arg_str + "_Rubrica.txt", mime="text/plain",
-                    key="dl_rubrica_txt", use_container_width=True,
-                )
-            with _col_r2:
-                if st.button("🔄 Rigenera", key="btn_rigenera_rubrica", use_container_width=True):
-                    st.session_state.rubrica_testo = None
-                    st.session_state._rubrica_gen  = False
-                    st.rerun()
-        else:
-            st.markdown(
-                f'<div style="background:{T["card2"]};border:1px solid {T["border"]};'
-                f'border-radius:10px;padding:.7rem 1rem;margin-bottom:.6rem;'
-                f'font-size:.78rem;color:{T["text2"]};font-family:DM Sans,sans-serif;line-height:1.55;">'
-                f'<strong style="color:{T["text"]};">Genera automaticamente</strong> una rubrica di valutazione '
-                f'con indicatori qualitativi per fascia di voto, allineata alle Linee Guida MIM '
-                f'sulla valutazione per competenze.'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-            if st.button("📊 Genera Rubrica di Valutazione", key="btn_gen_rubrica", use_container_width=True):
-                st.session_state._rubrica_gen = True
-                st.rerun()
-            if st.session_state.get("_rubrica_gen"):
-                st.session_state._rubrica_gen = False
-                _rub_ph = st.empty()
-                _rub_ph.markdown(
-                    f'<div class="ocr-skeleton-wrap">'
-                    f'  <div class="ocr-skeleton-header">'
-                    f'    <div class="ocr-skeleton-icon">📊</div>'
-                    f'    <div>'
-                    f'      <div class="ocr-skeleton-title">Generazione rubrica in corso…</div>'
-                    f'      <div class="ocr-skeleton-sub">Analisi esercizi · Fasce di voto · Indicatori MIM</div>'
-                    f'    </div>'
-                    f'  </div>'
-                    f'  <div class="ocr-skeleton-doc">'
-                    f'    <div class="ocr-skeleton-scan"></div>'
-                    f'    <div class="ocr-skeleton-line" style="width:88%"></div>'
-                    f'    <div class="ocr-skeleton-line" style="width:65%"></div>'
-                    f'    <div class="ocr-skeleton-line" style="width:80%"></div>'
-                    f'  </div>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-                try:
-                    _mod_rub = genai.GenerativeModel(mod_id)
-                    _prompt_rub = prompt_rubrica_valutazione(
-                        corpo_latex=_latex_a_r, materia=mat_str,
-                        livello=scu_str, punti_totali=_punti_tot_r,
-                    )
-                    _resp_rub = _mod_rub.generate_content(
-                        [_prompt_rub], generation_config=genai.GenerationConfig(temperature=0.5),
-                    )
-                    st.session_state.rubrica_testo = _resp_rub.text.strip()
-                    _rub_ph.empty(); st.toast("✅ Rubrica generata!", icon="📊"); st.rerun()
-                except Exception as _e_rub:
-                    _rub_ph.empty(); st.error(f"Errore generazione rubrica: {_e_rub}")
-
     # Link feedback
+    st.markdown(
+        '<div style="margin-top:14px;text-align:center;font-size:.78rem;'
+        'font-family:DM Sans,sans-serif;color:' + T["muted"] + ';">'
+        'Qualcosa non va o hai un suggerimento? '
+        '<a href="' + FEEDBACK_FORM_URL + '" target="_blank" '
+        'style="color:' + T["accent"] + ';font-weight:600;">Lasciaci un feedback 💬</a>'
+        '</div>',
+        unsafe_allow_html=True
+    )
     st.markdown(
         '<div style="margin-top:14px;text-align:center;font-size:.78rem;'
         'font-family:DM Sans,sans-serif;color:' + T["muted"] + ';">'
