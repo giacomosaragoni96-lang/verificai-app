@@ -589,9 +589,9 @@ def get_css(T: dict) -> str:
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    margin: 1.6rem auto 0;
-    max-width: 680px;
+    gap: 10px 8px;
+    margin: 1.4rem 0 0;
+    width: 100%;
     padding-bottom: .5rem;
   }}
   .feature-pill {{
@@ -624,6 +624,155 @@ def get_css(T: dict) -> str:
   /* Social proof (compatibilità) */
   .tally-proof {{ display: none; }}
   .tally-proof-dot {{ display: none; }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     CHOICE CARDS — Bivio iniziale "Parto da zero" / "Ho già una verifica"
+     ════════════════════════════════════════════════════════════════════════ */
+  .choice-card {{
+    background: {T['card']};
+    border: 2px solid {T['border2']};
+    border-radius: 20px;
+    padding: 1.6rem 1.4rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+    min-height: 190px;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .15s ease;
+    margin-bottom: .65rem;
+    animation: fadeSlideUp .3s ease both;
+  }}
+  .choice-card:hover {{
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,.10);
+  }}
+  .choice-card-primary {{
+    border-color: {_acc}55;
+    box-shadow: 0 2px 16px {_acc}14;
+  }}
+  .choice-card-primary:hover {{
+    border-color: {_acc}99;
+    box-shadow: 0 8px 32px {_acc}22;
+  }}
+  .choice-card-secondary {{
+    border-color: {T['border2']};
+  }}
+  .choice-card-icon {{
+    font-size: 2rem;
+    line-height: 1;
+  }}
+  .choice-card-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: -.02em;
+    color: {T['text']};
+    line-height: 1.15;
+  }}
+  .choice-card-desc {{
+    font-size: .83rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.55;
+    flex: 1;
+  }}
+  .choice-card-chips {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: .1rem;
+  }}
+  .choice-chip {{
+    font-size: .65rem;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: .02em;
+    background: {_acc_soft};
+    color: {_acc};
+    border: 1px solid {_acc_ring};
+    border-radius: 20px;
+    padding: 2px 9px;
+    white-space: nowrap;
+  }}
+  .choice-card-secondary .choice-chip {{
+    background: {T.get('card2', T['card'])};
+    color: {T['text2']};
+    border-color: {T['border']};
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     BREADCRUMB STEPS — Nativo st.columns con bottoni reali
+     ════════════════════════════════════════════════════════════════════════ */
+  .breadcrumb-wrap {{
+    margin: .8rem 0 .6rem;
+    padding: .1rem 0;
+  }}
+
+  /* Step completato — avvolge il bottone Streamlit */
+  .bc-step-done button,
+  .bc-step-done [data-testid="baseButton-secondary"] {{
+    background: {T.get('card2', T['card'])} !important;
+    border: 1.5px solid {T['success']}55 !important;
+    color: {T['success']} !important;
+    font-size: .78rem !important;
+    font-weight: 700 !important;
+    font-family: 'DM Sans', sans-serif !important;
+    border-radius: 100px !important;
+    padding: .25rem .6rem !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    letter-spacing: .01em !important;
+    transition: background .15s, border-color .15s, transform .12s !important;
+  }}
+  .bc-step-done button:hover,
+  .bc-step-done [data-testid="baseButton-secondary"]:hover {{
+    background: {T['success']}18 !important;
+    border-color: {T['success']}99 !important;
+    transform: translateY(-1px) !important;
+  }}
+
+  /* Step attivo */
+  .bc-step-active {{
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: .25rem .3rem;
+  }}
+  .bc-num {{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: {_acc};
+    color: #fff;
+    font-size: .68rem; font-weight: 800;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px {_acc}44;
+  }}
+  .bc-label {{
+    font-size: .82rem; font-weight: 800;
+    color: {_acc};
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+  }}
+
+  /* Step futuro */
+  .bc-step-future {{
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: .25rem .3rem;
+    opacity: .35;
+  }}
+  .bc-num-future {{
+    background: {T['border2']};
+    color: {T['muted']};
+    box-shadow: none;
+  }}
+  .bc-label-future {{
+    color: {T['muted']};
+    font-weight: 500;
+  }}
 
   /* ════════════════════════════════════════════════════════════════════════
      SIDE-BOX — Colonna destra form (sostituisce facsimile-shortcut + side-panel-card)
@@ -844,8 +993,9 @@ def get_css(T: dict) -> str:
     box-shadow: 0 0 8px {_acc_med};
   }}
   .form-section-title {{
-    font-size: .82rem; font-weight: 800;
-    letter-spacing: .02em;
+    font-size: .75rem; font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
     color: {T['text']};
     font-family: 'DM Sans', sans-serif;
     white-space: nowrap;
@@ -856,12 +1006,42 @@ def get_css(T: dict) -> str:
   }}
 
   .opt-label {{
-    font-size: .78rem;
-    font-weight: 700;
-    color: {T['text2']};
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: {T['muted']};
     font-family: 'DM Sans', sans-serif;
     margin-bottom: 4px;
-    letter-spacing: .01em;
+  }}
+
+  /* ── Sistema tipografico globale unificato ── */
+  .type-eyebrow {{
+    font-size: .68rem; font-weight: 800;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .3rem;
+  }}
+  .type-section-heading {{
+    font-size: 1rem; font-weight: 900;
+    letter-spacing: -.02em;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.2;
+    margin: 0 0 .35rem 0;
+  }}
+  .type-body {{
+    font-size: .85rem; font-weight: 400;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.6;
+  }}
+  .type-hint {{
+    font-size: .72rem; font-weight: 500;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -1292,6 +1472,49 @@ def get_css(T: dict) -> str:
     line-height: 1.6;
   }}
 
+
+  /* ════════════════════════════════════════════════════════════════════════
+     STAGE_FINAL — Variant Cards (Fila B, BES/DSA, Soluzioni, Rubrica)
+     Altezza minima uniforme + layout flex per allineare i bottoni in fondo.
+     ════════════════════════════════════════════════════════════════════════ */
+  .one-click-variant-card {{
+    background: {T['card']};
+    border: 1.5px solid {T['border2']};
+    border-radius: 16px;
+    padding: 1.1rem 1.1rem .85rem;
+    margin-bottom: .75rem;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .15s ease;
+    animation: fadeSlideUp .3s ease both;
+  }}
+  .one-click-variant-card:hover {{
+    border-color: {_acc}66;
+    box-shadow: 0 4px 20px {_acc}18;
+    transform: translateY(-1px);
+  }}
+  .one-click-body {{
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }}
+  .one-click-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: .95rem; font-weight: 900;
+    letter-spacing: -.01em;
+    color: {T['text']};
+    margin-bottom: .3rem;
+  }}
+  .one-click-desc {{
+    font-size: .78rem; font-weight: 400;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.5;
+    flex: 1;
+  }}
+
   /* ════════════════════════════════════════════════════════════════════════
      FAB — Floating feedback button
      ════════════════════════════════════════════════════════════════════════ */
@@ -1329,6 +1552,42 @@ def get_css(T: dict) -> str:
     border-top: 1px solid {T['border']};
     margin-top: 2rem;
   }}
+  /* ════════════════════════════════════════════════════════════════════════
+     DARK MODE — Profondità e contrasto aumentati
+     Queste regole sovrascrivono le globali per il tema scuro.
+     Controllato dal tema T: border più luminosi, shadow più forti.
+     ════════════════════════════════════════════════════════════════════════ */
+  .dark-card-elevated {{
+    background: {T.get('card2', T['card'])};
+    border: 1px solid {T['border2']};
+    border-radius: 14px;
+    box-shadow: {T.get('shadow_md', '0 4px 24px rgba(0,0,0,.35)')};
+  }}
+
+  /* Rende card in Streamlit con bordi più leggibili in dark */
+  [data-theme="dark"] [data-testid="stVerticalBlock"] > div:first-child {{
+    border-color: {T['border2']} !important;
+  }}
+
+  /* Dividers più visibili in dark */
+  .dark-divider {{
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      {T['border2']} 20%,
+      {T['border2']} 80%,
+      transparent 100%
+    );
+    margin: 1rem 0;
+    opacity: .7;
+  }}
+
+  /* Section label con glow sottile in dark (accent tenue) */
+  .form-section-dot {{
+    box-shadow: 0 0 6px {_acc}66, 0 0 2px {_acc};
+  }}
+
+
 
   /* ════════════════════════════════════════════════════════════════════════
      EXPANDER — Streamlit override
@@ -1806,6 +2065,7 @@ def get_css(T: dict) -> str:
   /* ════════════════════════════════════════════════════════════════════════
      RESPONSIVE
      ════════════════════════════════════════════════════════════════════════ */
+  /* ── Tablet: 768px → un po' più stretto ── */
   @media (max-width: 767px) {{
     .onboarding-hint-banner {{
       flex-direction: column;
@@ -1822,6 +2082,109 @@ def get_css(T: dict) -> str:
     }}
     .mcard {{
       min-height: auto;
+    }}
+    .landing-headline-xl {{
+      font-size: clamp(1.6rem, 7vw, 2.4rem);
+    }}
+    .landing-logo-name-xl {{
+      font-size: clamp(2rem, 8vw, 3rem);
+    }}
+    .feature-pills-row {{
+      gap: 6px;
+    }}
+    .feature-pill-label {{
+      font-size: .72rem;
+    }}
+  }}
+
+  /* ── Mobile stretto: < 640px — single-column layout ── */
+  @media (max-width: 640px) {{
+    /* Hero landing */
+    .landing-hero-unified {{
+      padding: 1.4rem 1rem;
+    }}
+    .landing-headline-xl {{
+      font-size: 1.55rem;
+      letter-spacing: -.025em;
+    }}
+    .landing-logo-icon-xl {{
+      font-size: 2.6rem;
+    }}
+    .landing-logo-name-xl {{
+      font-size: 2rem;
+    }}
+    .landing-sub-xl {{
+      font-size: .88rem;
+    }}
+
+    /* Feature pills — impila su 2 per riga */
+    .feature-pills-row {{
+      gap: 5px;
+      max-width: 100%;
+    }}
+    .feature-pill {{
+      padding: 4px 10px 4px 8px;
+    }}
+    .feature-pill-label {{
+      font-size: .7rem;
+    }}
+
+    /* Form sections */
+    .form-section-title {{
+      font-size: .68rem;
+    }}
+    .opt-label {{
+      font-size: .65rem;
+    }}
+
+    /* Card varianti — full width stacked */
+    .one-click-variant-card {{
+      min-height: auto;
+      padding: .9rem .85rem .7rem;
+    }}
+    .one-click-title {{
+      font-size: .88rem;
+    }}
+    .one-click-desc {{
+      font-size: .74rem;
+    }}
+
+    /* Breadcrumb — riduci font */
+    .breadcrumb-wrap {{
+      overflow-x: auto;
+      padding-bottom: .3rem;
+    }}
+
+    /* Expander summary più grande (touch target) */
+    details[data-testid="stExpander"] summary {{
+      font-size: .95rem !important;
+      padding: .7rem .8rem !important;
+      min-height: 44px;
+    }}
+
+    /* Pulsanti — altezza touch-friendly */
+    [data-testid="baseButton-primary"],
+    [data-testid="baseButton-secondary"],
+    button[kind="primary"],
+    button[kind="secondary"] {{
+      min-height: 44px !important;
+      font-size: .88rem !important;
+    }}
+
+    /* Nascondi elementi decorativi pesanti su mobile */
+    .sidebar-hint-inline {{
+      display: none;
+    }}
+
+    /* Hero wrap non-landing */
+    .hero-wrap .hero-sub {{
+      display: none;
+    }}
+    .hero-title {{
+      font-size: 1.15rem;
+    }}
+    .hero-beta {{
+      display: none;
     }}
   }}
 
