@@ -641,59 +641,88 @@ if not _on_landing:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def _render_breadcrumb():
+    """
+    Breadcrumb a 3 step completamente cliccabile tramite st.columns nativi.
+    - Step COMPLETATO  -> bottone Streamlit reale (cliccabile, verde check)
+    - Step ATTIVO      -> badge accent colorato + label in evidenza
+    - Step FUTURO      -> muted, non interattivo
+    """
     stage = st.session_state.stage
-    # ── 3-step progress: Impostazioni → Revisione → Scarica ──
-    steps = [
-        ("01", "Impostazioni", STAGE_INPUT),
-        ("02", "Revisione",    STAGE_REVIEW),
-        ("03", "Scarica",      STAGE_FINAL),
-    ]
-    # Map PREVIEW → same visual as INPUT (still in step 1 → 2 transition)
     _visual_stage = STAGE_REVIEW if stage == STAGE_PREVIEW else stage
     completed = {
         STAGE_INPUT:  _visual_stage in (STAGE_REVIEW, STAGE_FINAL),
         STAGE_REVIEW: _visual_stage == STAGE_FINAL,
         STAGE_FINAL:  False,
     }
-    # ── Pill container
-    html = (
-        '<div class="breadcrumb-wrap">'
-        '<div class="breadcrumb-pill" style="display:inline-flex;align-items:center;gap:10px;'
-        'padding:.7rem 1.6rem;'
-        'background:' + T["card"] + ';border:1.5px solid ' + T["border"] + ';'
-        'border-radius:100px;box-shadow:' + T.get("shadow_md", "0 4px 20px rgba(0,0,0,.08)") + ';">'
+
+    st.markdown('<div class="breadcrumb-wrap">', unsafe_allow_html=True)
+
+    _bc_pl, _bc1, _bc_s1, _bc2, _bc_s2, _bc3, _bc_pr = st.columns(
+        [0.5, 3, 0.35, 3, 0.35, 3, 0.5], gap='small'
     )
-    for i, (num, label, s) in enumerate(steps):
+
+    def _render_bc_sep(col, done):
+        col.markdown(
+            '<div style="display:flex;align-items:center;height:100%;padding-top:.42rem;">'
+            '<div style="width:100%;height:1.5px;border-radius:2px;'
+            'background:' + (T['success'] if 'done_placeholder' else T['border2']) + ';'
+            'opacity:.5;"></div></div>',
+            unsafe_allow_html=True,
+        )
+
+    def _render_bc_step(col, num, label, s):
         is_active = s == _visual_stage
         is_done   = completed.get(s, False)
-        if is_active:
-            cb, cc, lc, lw = T["accent"], "#fff", T["accent"], "800"
-            icon = num
-        elif is_done:
-            cb, cc, lc, lw = T["success"], "#fff", T["success"], "700"
-            icon = "✓"
-        else:
-            cb, cc, lc, lw = T["border2"], T["muted"], T["muted"], "500"
-            icon = num
-        _op = "1" if (is_active or is_done) else ".4"
-        html += (
-            '<div style="display:flex;align-items:center;gap:7px;opacity:' + _op + ';">'
-            '<div style="background:' + cb + ';border-radius:50%;'
-            'width:28px;height:28px;display:flex;align-items:center;'
-            'justify-content:center;font-size:.72rem;font-weight:800;'
-            'color:' + cc + ';flex-shrink:0;box-shadow:0 2px 8px ' + cb + '44;">' + icon + '</div>'
-            '<span style="font-size:.88rem;font-weight:' + lw + ';color:' + lc + ';'
-            'font-family:DM Sans,sans-serif;white-space:nowrap;letter-spacing:-.01em;">' + label + '</span>'
-            '</div>'
-        )
-        if i < len(steps) - 1:
-            _sep_c = T["success"] if is_done else T["border2"]
-            html += (
-                '<div style="width:28px;height:1.5px;background:' + _sep_c + ';'
-                'opacity:.4;flex-shrink:0;border-radius:2px;"></div>'
-            )
-    html += "</div></div>"
-    st.markdown(html, unsafe_allow_html=True)
+        with col:
+            if is_done:
+                st.markdown('<div class="bc-step-done">', unsafe_allow_html=True)
+                if st.button(
+                    f"✓  {label}",
+                    key=f"bc_btn_{s}",
+                    use_container_width=True,
+                    help=f"Torna a: {label}",
+                ):
+                    st.session_state.stage = s
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+            elif is_active:
+                st.markdown(
+                    f'<div class="bc-step-active">'
+                    f'<span class="bc-num">{num}</span>'
+                    f'<span class="bc-label">{label}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    f'<div class="bc-step-future">'
+                    f'<span class="bc-num bc-num-future">{num}</span>'
+                    f'<span class="bc-label bc-label-future">{label}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+    # Risolto: costruiamo i separatori con valori calcolati, non lambda
+    _render_bc_step(_bc1, '01', 'Impostazioni', STAGE_INPUT)
+    _bc_s1.markdown(
+        '<div style="display:flex;align-items:center;height:100%;padding-top:.42rem;">'
+        '<div style="width:100%;height:1.5px;border-radius:2px;background:'
+        + (T['success'] if completed[STAGE_INPUT] else T['border2'])
+        + ';opacity:' + ('.6' if completed[STAGE_INPUT] else '.35') + ';"></div></div>',
+        unsafe_allow_html=True,
+    )
+    _render_bc_step(_bc2, '02', 'Revisione', STAGE_REVIEW)
+    _bc_s2.markdown(
+        '<div style="display:flex;align-items:center;height:100%;padding-top:.42rem;">'
+        '<div style="width:100%;height:1.5px;border-radius:2px;background:'
+        + (T['success'] if completed[STAGE_REVIEW] else T['border2'])
+        + ';opacity:' + ('.6' if completed[STAGE_REVIEW] else '.35') + ';"></div></div>',
+        unsafe_allow_html=True,
+    )
+    _render_bc_step(_bc3, '03', 'Scarica', STAGE_FINAL)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1137,10 +1166,12 @@ def _consolida_info():
 
 def _render_bivio():
     """
-    Home page: logo + titolo MOLTO GRANDE centrato, un solo CTA.
+    Home page: logo + headline centrati, poi due card di scelta chiare.
+    Card A: "Parto da zero"  →  percorso B (form manuale)
+    Card B: "Ho già una verifica"  →  percorso A (upload + analisi AI)
     """
 
-    # ── Logo + headline unificati, tutto centrato ─────────────────────────────
+    # ── Hero centrato ─────────────────────────────────────────────────────────
     st.markdown(
         f'''
         <div class="landing-hero-unified">
@@ -1154,30 +1185,65 @@ def _render_bivio():
             <span class="landing-headline-accent-xl">in pochi secondi</span>
           </h2>
           <p class="landing-sub-xl">
-            Scegli materia, livello e argomento.<br>
-            L'AI costruisce la verifica, tu la revisioni e scarichi.
+            Come vuoi iniziare?
           </p>
         </div>
         ''',
         unsafe_allow_html=True,
     )
 
-    # ── CTA unico — centrato ─────────────────────────────────────────────────
-    _c1, _c2, _c3 = st.columns([1.4, 2, 1.4])
-    with _c2:
+    # ── Due card di scelta ────────────────────────────────────────────────────
+    _gap_l, _card_l, _card_sep, _card_r, _gap_r = st.columns([0.6, 5, 0.4, 5, 0.6])
+
+    with _card_l:
+        st.markdown(
+            f'''<div class="choice-card choice-card-primary">
+              <div class="choice-card-icon">✏️</div>
+              <div class="choice-card-title">Parto da zero</div>
+              <div class="choice-card-desc">Scrivo l'argomento e l'AI genera la verifica completa</div>
+              <div class="choice-card-chips">
+                <span class="choice-chip">Veloce</span>
+                <span class="choice-chip">Guidato</span>
+                <span class="choice-chip">Consigliato</span>
+              </div>
+            </div>''',
+            unsafe_allow_html=True,
+        )
         if st.button(
-            "Genera Verifica  →",
-            key="btn_genera_verifica_home",
+            "✨ Inizia da zero  →",
+            key="btn_parto_da_zero",
             use_container_width=True,
             type="primary",
         ):
             st.session_state.input_percorso = "B"
             st.rerun()
 
-    # ── Feature pill-cards ────────────────────────────────────────────────────
-    st.markdown(
-        f'''
-        <div class="feature-pills-row">
+    with _card_r:
+        st.markdown(
+            f'''<div class="choice-card choice-card-secondary">
+              <div class="choice-card-icon">📂</div>
+              <div class="choice-card-title">Ho già una verifica</div>
+              <div class="choice-card-desc">Carico un file e l'AI la replica, adatta o trasforma</div>
+              <div class="choice-card-chips">
+                <span class="choice-chip">Upload PDF/Word</span>
+                <span class="choice-chip">Analisi AI</span>
+              </div>
+            </div>''',
+            unsafe_allow_html=True,
+        )
+        if st.button(
+            "📂 Carica un file  →",
+            key="btn_ho_una_verifica",
+            use_container_width=True,
+        ):
+            st.session_state.input_percorso = "A"
+            st.rerun()
+
+    # ── Feature pill-cards — centrate con colonna Streamlit ─────────────────
+    _fp_l, _fp_m, _fp_r = st.columns([0.3, 3.4, 0.3])
+    with _fp_m:
+        st.markdown(
+            '''<div class="feature-pills-row">
           <div class="feature-pill">
             <span class="feature-pill-icon">📄</span>
             <span class="feature-pill-label">PDF da stampare</span>
@@ -1202,10 +1268,9 @@ def _render_bivio():
             <span class="feature-pill-icon">✏️</span>
             <span class="feature-pill-label">DOCX modificabile</span>
           </div>
-        </div>
-        ''',
-        unsafe_allow_html=True,
-    )
+        </div>''',
+            unsafe_allow_html=True,
+        )
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  _render_facsimile_dedicato()  ← NUOVA funzione, aggiungere prima di _render_stage_input
@@ -3485,7 +3550,7 @@ def _render_stage_review():
                     height=80,
                 )
                 rigenera = st.button(
-                    "✏️ Applica Modifica", key=f"rw_btn_{idx}",
+                    "✏️ Aggiorna esercizio", key=f"rw_btn_{idx}",
                     use_container_width=True, disabled=not istruzione.strip()
                 )
                 # Placeholder per feedback AI modifica (dentro la colonna sinistra)
@@ -3563,7 +3628,7 @@ def _render_stage_review():
                     st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
 
                     if st.button(
-                        "✅ Applica Punteggi e Rigenera PDF" if _ok else
+                        "✅ Applica punteggi e rigenera" if _ok else
                         f"⛔ Applica Punteggi (somma: {_somma} ≠ {punti_totali} pt)",
                         key="rc_applica",
                         disabled=not _ok,
@@ -3882,7 +3947,7 @@ def _render_stage_review():
     st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
     st.markdown('<div class="btn-confirm-gold">', unsafe_allow_html=True)
     confirm_pdf = st.button(
-        "🎯 Conferma e genera PDF finale",
+        "✅ Perfetto — scarica il PDF",
         type="primary",
         use_container_width=True,
         key="btn_confirm_final"
@@ -4045,7 +4110,7 @@ def _render_stage_final():
         )
         if _b_pdf:
             st.download_button(
-                f"⬇ Scarica Fila B (PDF) · {_stima(_b_pdf)}",
+                f"⬇ Fila B  · {_stima(_b_pdf)}",
                 data=_b_pdf, file_name=arg_str+"_FilaB.pdf",
                 mime="application/pdf", use_container_width=True, key="dl_pdf_B_v2",
             )
@@ -4057,7 +4122,7 @@ def _render_stage_final():
                 if _pdf_bc:
                     st.session_state.verifiche["B"]["pdf"] = _pdf_bc; st.rerun()
         else:
-            if st.button("⚡ Genera Fila B — One Click", key="one_click_B_v2",
+            if st.button("⚡ Crea la Fila B", key="one_click_B_v2",
                          use_container_width=True, type="primary"):
                 st.session_state["_gen_fila_b"] = True; st.rerun()
 
@@ -4098,7 +4163,7 @@ def _render_stage_final():
         )
         if _r_pdf:
             st.download_button(
-                f"⬇ Scarica BES/DSA (PDF) · {_stima(_r_pdf)}",
+                f"⬇ BES/DSA  · {_stima(_r_pdf)}",
                 data=_r_pdf, file_name=arg_str+"_BES_FilaA.pdf",
                 mime="application/pdf", use_container_width=True, key="dl_pdf_R_v2",
             )
@@ -4110,7 +4175,7 @@ def _render_stage_final():
                 if _pdf_rc:
                     st.session_state.verifiche["R"]["pdf"] = _pdf_rc; st.rerun()
         else:
-            if st.button("🌟 Genera BES/DSA — One Click", key="one_click_R_v2",
+            if st.button("🌟 Crea versione BES/DSA", key="one_click_R_v2",
                          use_container_width=True, type="primary"):
                 st.session_state["_gen_bes"] = True; st.rerun()
 
@@ -4142,7 +4207,7 @@ def _render_stage_final():
         )
         if _s_pdf:
             st.download_button(
-                f"⬇ Scarica Soluzioni (PDF) · {_stima(_s_pdf)}",
+                f"⬇ Soluzioni  · {_stima(_s_pdf)}",
                 data=_s_pdf, file_name=arg_str+"_Soluzioni.pdf",
                 mime="application/pdf", use_container_width=True, key="dl_pdf_S_v2",
             )
@@ -4154,7 +4219,7 @@ def _render_stage_final():
                 if _pdf_sc:
                     st.session_state.verifiche["S"]["pdf"] = _pdf_sc; st.rerun()
         else:
-            if st.button("✅ Genera Soluzioni — One Click", key="one_click_S_v2",
+            if st.button("✅ Crea le soluzioni", key="one_click_S_v2",
                          use_container_width=True, type="primary"):
                 st.session_state["_gen_sol"] = True; st.rerun()
 
@@ -4187,12 +4252,12 @@ def _render_stage_final():
         if st.session_state.rubrica_testo:
             # Rubrica già generata — mostra download e rigenera
             st.download_button(
-                "⬇ Scarica Rubrica (.txt)",
+                "⬇ Salva la rubrica",
                 data=st.session_state.rubrica_testo.encode("utf-8"),
                 file_name=arg_str + "_Rubrica.txt", mime="text/plain",
                 key="dl_rubrica_card", use_container_width=True,
             )
-            if st.button("🔄 Rigenera Rubrica", key="btn_rigenera_rubrica_card",
+            if st.button("🔄 Rifai la rubrica", key="btn_rigenera_rubrica_card",
                          use_container_width=True):
                 st.session_state.rubrica_testo = None
                 st.session_state._rubrica_gen  = False
@@ -4485,7 +4550,7 @@ def _render_stage_final():
         f'<div style="text-align:center;margin-top:1.4rem;padding-bottom:.2rem;">',
         unsafe_allow_html=True
     )
-    if st.button("← Rivedi esercizi", key="btn_back_final_discrete",
+    if st.button("← Rivedi gli esercizi", key="btn_back_final_discrete",
                  use_container_width=False, type="secondary",
                  help="Torna alla fase di revisione per apportare modifiche"):
         st.session_state.stage = STAGE_REVIEW
@@ -4617,7 +4682,7 @@ if _share_param and isinstance(_share_param, str) and len(_share_param) >= 6:
             )
     else:
         st.warning("⚠️ Link di condivisione non valido o scaduto.")
-        if st.button("← Torna alla home", key="btn_shared_back"):
+        if st.button("← Torna all'inizio", key="btn_shared_back"):
             st.query_params.clear()
             st.rerun()
 
