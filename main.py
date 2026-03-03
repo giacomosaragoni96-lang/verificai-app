@@ -139,6 +139,30 @@ def _stima(b):
     return f"{kb:.0f} KB" if kb < 1024 else f"{kb/1024:.1f} MB"
 
 
+def _scroll_to_top():
+    """Forza scroll-to-top con JS multi-selettore — chiamare all'inizio di ogni stage render."""
+    components.html(
+        "<script>"
+        "(function(){"
+        "var n=0;"
+        "function top(){"
+        "  var sels=['[data-testid=\"stMainBlockContainer\"]',"
+        "    '[data-testid=\"stAppViewContainer\"]',"
+        "    '.stMainBlockContainer','.main','section.main'];"
+        "  sels.forEach(function(s){"
+        "    var el=window.parent.document.querySelector(s);"
+        "    if(el){el.scrollTop=0;el.scrollTo({top:0,behavior:'instant'});}"
+        "  });"
+        "  window.parent.scrollTo({top:0,behavior:'instant'});"
+        "  if(n++<10)setTimeout(top,50);"
+        "}"
+        "top();"
+        "})();"
+        "</script>",
+        height=1
+    )
+
+
 def _vf():
     return {"latex": "", "pdf": None, "preview": False,
             "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""}
@@ -565,6 +589,9 @@ _limite         = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
 
 # ── CSS + FEEDBACK ────────────────────────────────────────────────────────────
 st.markdown(get_css(T), unsafe_allow_html=True)
+# Anchor invisibile all'inizio della pagina — usato come target per scroll-to-top
+st.markdown('<div id="verificai-top" style="position:absolute;top:0;left:0;height:0;width:0;"></div>',
+            unsafe_allow_html=True)
 st.markdown(
     '<a class="fab-link" href="' + FEEDBACK_FORM_URL + '" target="_blank" '
     'rel="noopener noreferrer">💬 Feedback</a>',
@@ -596,12 +623,6 @@ _on_landing = (
     and st.session_state.get("input_percorso") is None
 )
 if not _on_landing:
-    st.markdown(
-        '<div class="sidebar-hint-inline">'
-        '☰ Impostazioni, storico e logout'
-        '</div>',
-        unsafe_allow_html=True
-    )
     st.markdown(
         '<div class="hero-wrap"><div class="hero-left">'
         '<h1 class="hero-title">'
@@ -2167,51 +2188,7 @@ def _render_percorso_b_form():
         elif not argomento and _arg_source == "manual":
             st.session_state["_pb_argomento_source"] = None
 
-        # ── N° Esercizi ───────────────────────────────────────────────────────
-        st.markdown(
-            f'<div class="form-section-header" style="margin-top:1.2rem;">'
-            f'<div class="form-section-dot"></div>'
-            f'<span class="form-section-title">Numero di esercizi</span>'
-            f'<div class="form-section-line"></div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-        _n_default = _udef.get("num_esercizi", 4)
-        if _info_cons.get("num_esercizi_rilevati"):
-            try:
-                _n_default = max(1, min(int(_info_cons["num_esercizi_rilevati"]), 15))
-            except (ValueError, TypeError):
-                pass
-        num_esercizi = st.slider(
-            "Numero esercizi",
-            min_value=1, max_value=15, value=_n_default,
-            label_visibility="collapsed", key="sel_num_es_b",
-        )
-
-        # ── Note libere per l'AI ──────────────────────────────────────────────
-        st.markdown(
-            f'<div class="form-section-header" style="margin-top:1.1rem;">'
-            f'<div class="form-section-dot" style="background:{T["muted"]};'
-            f'box-shadow:none;opacity:.6;"></div>'
-            f'<span class="form-section-title" style="color:{T["muted"]};">'
-            f'Note aggiuntive <span style="font-weight:400;letter-spacing:0;">'
-            f'— opzionale</span></span>'
-            f'<div class="form-section-line" style="background:linear-gradient(90deg,'
-            f'{T["border"]} 0%,transparent 100%);"></div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown('<div class="note-field-wrap">', unsafe_allow_html=True)
-        note_extra = st.text_area(
-            "Note AI",
-            placeholder=NOTE_PLACEHOLDER.get(materia_scelta, ""),
-            height=72,
-            label_visibility="collapsed",
-            key="note_area_b",
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # ── Personalizzazione Avanzata ────────────────────────────────────────
+        # ── Personalizzazione Avanzata (num esercizi + note + punteggi + struttura) ──
         _prefs = st.session_state._docente_prefs.get(materia_scelta, {})
         if not _prefs and st.session_state.utente and materia_scelta in MATERIE:
             _prefs = _carica_docente_preferenze(st.session_state.utente.id, materia_scelta)
@@ -2229,8 +2206,53 @@ def _render_percorso_b_form():
                     unsafe_allow_html=True,
                 )
 
+            # ── Numero di esercizi ─────────────────────────────────────────
+            st.markdown(
+                f'<div class="form-section-header" style="margin-top:.4rem;">'
+                f'<div class="form-section-dot"></div>'
+                f'<span class="form-section-title">Numero di esercizi</span>'
+                f'<div class="form-section-line"></div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            _n_default = _udef.get("num_esercizi", 4)
+            if _info_cons.get("num_esercizi_rilevati"):
+                try:
+                    _n_default = max(1, min(int(_info_cons["num_esercizi_rilevati"]), 15))
+                except (ValueError, TypeError):
+                    pass
+            num_esercizi = st.slider(
+                "Numero esercizi",
+                min_value=1, max_value=15, value=_n_default,
+                label_visibility="collapsed", key="sel_num_es_b",
+            )
+
+            # ── Note libere per l'AI ───────────────────────────────────────
+            st.markdown(
+                f'<div class="form-section-header" style="margin-top:.9rem;">'
+                f'<div class="form-section-dot" style="background:{T["muted"]};'
+                f'box-shadow:none;opacity:.6;"></div>'
+                f'<span class="form-section-title" style="color:{T["muted"]};">'
+                f'Note per l\'AI <span style="font-weight:400;letter-spacing:0;">'
+                f'— opzionale</span></span>'
+                f'<div class="form-section-line" style="background:linear-gradient(90deg,'
+                f'{T["border"]} 0%,transparent 100%);"></div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            st.markdown('<div class="note-field-wrap">', unsafe_allow_html=True)
+            note_extra = st.text_area(
+                "Note AI",
+                placeholder=NOTE_PLACEHOLDER.get(materia_scelta, ""),
+                height=72,
+                label_visibility="collapsed",
+                key="note_area_b",
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            # ── Punteggi ──────────────────────────────────────────────────
             _tog = st.toggle(
-                "Aggiungi punteggi e griglia di valutazione",
+                "Aggiungi punteggi e tabella punteggi",
                 value=_udef.get("mostra_punteggi", True), key="toggle_punteggi_b",
             )
             mostra_punteggi = _tog
@@ -3175,6 +3197,7 @@ def _render_stage_preview():
     Il docente sceglie se andare direttamente al salvataggio finale
     oppure entrare nell'editor dei blocchi (STAGE_REVIEW).
     """
+    _scroll_to_top()
     gp             = st.session_state.get("gen_params", {})
     materia_str    = gp.get("materia", "")
     argomento_str  = gp.get("argomento", "Verifica")
@@ -3285,6 +3308,7 @@ def _render_stage_preview():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def _render_stage_review():
+    _scroll_to_top()
     gp              = st.session_state.gen_params
     blocks          = st.session_state.review_blocks
     materia_str     = gp.get("materia","")
@@ -3893,6 +3917,7 @@ def _render_stage_review():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def _render_stage_final():
+    _scroll_to_top()
     gp   = st.session_state.gen_params
     vA   = st.session_state.verifiche["A"]
     vB   = st.session_state.verifiche["B"]
@@ -4222,8 +4247,8 @@ def _render_stage_final():
 
     # ── Navigazione ───────────────────────────────────────────────────────────
     st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
-    _nav1, _nav2 = st.columns(2, gap="small")
-    with _nav1:
+    _nav_l, _nav_c, _nav_r = st.columns([1, 2, 1])
+    with _nav_c:
         if st.button("🆕 Nuova verifica", type="primary",
                      use_container_width=True, key="btn_new_s3_top"):
             # Reset completo — l'utente riparte dalla Home come nuovo accesso
@@ -4263,9 +4288,6 @@ def _render_stage_final():
             st.session_state._share_code        = None
             st.session_state._share_generating   = False
             st.rerun()
-    with _nav2:
-        if st.button("← Rivedi esercizi", use_container_width=True, key="btn_rev_s3_top"):
-            st.session_state.stage = STAGE_REVIEW; st.rerun()
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  IDEA #5 — CONDIVIDI CON IL DIPARTIMENTO
@@ -4437,15 +4459,6 @@ def _render_stage_final():
         '</div>',
         unsafe_allow_html=True
     )
-    st.markdown(
-        '<div style="margin-top:14px;text-align:center;font-size:.78rem;'
-        'font-family:DM Sans,sans-serif;color:' + T["muted"] + ';">'
-        'Qualcosa non va o hai un suggerimento? '
-        '<a href="' + FEEDBACK_FORM_URL + '" target="_blank" '
-        'style="color:' + T["accent"] + ';font-weight:600;">Lasciaci un feedback 💬</a>'
-        '</div>',
-        unsafe_allow_html=True
-    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -4586,6 +4599,8 @@ if not _share_view_active:
         _render_breadcrumb()
 
 # ── SCROLL TO TOP on stage change ─────────────────────────────────────────────
+# Strategia: inietta anchor #top-anchor al top della pagina (prima del contenuto)
+# e quando lo stage cambia, forza scroll con JS multi-selettore + retry loop.
 _current_stage = st.session_state.stage
 _prev_stage = st.session_state.get("_prev_stage", None)
 if _prev_stage != _current_stage:
@@ -4593,19 +4608,22 @@ if _prev_stage != _current_stage:
     components.html(
         "<script>"
         "(function(){"
-        "var tries=0;"
-        "function scroll(){"
-        "  var m=window.parent.document.querySelector('.main');"
-        "  if(m){m.scrollTop=0;}"
-        "  var a=window.parent.document.querySelector('[data-testid=\"stAppViewContainer\"]');"
-        "  if(a){a.scrollTop=0;}"
-        "  window.parent.scrollTo(0,0);"
-        "  if(tries++<5)setTimeout(scroll,80);"
+        "var n=0;"
+        "function top(){"
+        "  var sels=['[data-testid=\"stMainBlockContainer\"]',"
+        "    '[data-testid=\"stAppViewContainer\"]',"
+        "    '.stMainBlockContainer','.main','section.main'];"
+        "  sels.forEach(function(s){"
+        "    var el=window.parent.document.querySelector(s);"
+        "    if(el){el.scrollTop=0;el.scrollTo({top:0,behavior:'instant'});}"
+        "  });"
+        "  window.parent.scrollTo({top:0,behavior:'instant'});"
+        "  if(n++<8)setTimeout(top,60);"
         "}"
-        "scroll();"
+        "top();"
         "})();"
         "</script>",
-        height=0
+        height=1
     )
 
 if not _share_view_active:
