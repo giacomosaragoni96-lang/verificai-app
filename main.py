@@ -597,18 +597,13 @@ _on_landing = (
 )
 if not _on_landing:
     st.markdown(
-        '<div class="sidebar-hint-inline">'
-        '☰ Impostazioni, storico e logout'
+        '<div class="page-header-unified">'
+        '  <div class="page-header-logo-row">'
+        '    <span class="page-header-icon">' + APP_ICON + '</span>'
+        '    <span class="page-header-name">Verific<span class="page-header-ai">AI</span></span>'
+        '    <span class="page-header-beta">Beta</span>'
+        '  </div>'
         '</div>',
-        unsafe_allow_html=True
-    )
-    st.markdown(
-        '<div class="hero-wrap"><div class="hero-left">'
-        '<h1 class="hero-title"><span class="hero-icon">' + APP_ICON + '</span>'
-        ' Verific<span class="hero-ai">AI</span></h1>'
-        '<p class="hero-sub">' + APP_TAGLINE + '</p>'
-        '<span class="hero-beta">Versione Beta</span>'
-        '</div></div>',
         unsafe_allow_html=True
     )
 
@@ -1151,19 +1146,16 @@ def _render_bivio():
             st.session_state.input_percorso = "B"
             st.rerun()
 
-    # ── Feature chips ─────────────────────────────────────────────────────────
+    # ── Feature pills ────────────────────────────────────────────────────────
     st.markdown(
         f'''
         <div class="tally-features">
-          <span class="tally-feat">📄 PDF pronto da stampare</span>
-          <span class="tally-feat-sep">·</span>
-          <span class="tally-feat">🔢 Punteggi calibrati</span>
-          <span class="tally-feat-sep">·</span>
-          <span class="tally-feat">⭐ Versione BES/DSA</span>
-          <span class="tally-feat-sep">·</span>
-          <span class="tally-feat">🎲 Fila A e B</span>
-          <span class="tally-feat-sep">·</span>
-          <span class="tally-feat">✏️ DOCX modificabile</span>
+          <span class="tally-feat-pill">📄 PDF pronto da stampare</span>
+          <span class="tally-feat-pill">🔢 Punteggi calibrati</span>
+          <span class="tally-feat-pill">⭐ Versione BES/DSA</span>
+          <span class="tally-feat-pill">🎲 Fila A e B</span>
+          <span class="tally-feat-pill">✏️ DOCX modificabile</span>
+          <span class="tally-feat-pill">📋 Soluzioni</span>
         </div>
         ''',
         unsafe_allow_html=True,
@@ -2055,11 +2047,6 @@ def _render_percorso_b_form():
         f'e — se vuoi — allega materiale nella colonna destra. '
         f'<strong>Potrai sempre modificare i singoli esercizi generati.</strong>'
         f'</div>'
-        f'<div class="onboarding-hint-tags">'
-        f'<span class="onboarding-hint-tag">✏️ Modifica ogni esercizio</span>'
-        f'<span class="onboarding-hint-tag">📐 Punteggi automatici</span>'
-        f'<span class="onboarding-hint-tag">📄 Export PDF + DOCX</span>'
-        f'</div>'
         f'</div>'
         f'</div>',
         unsafe_allow_html=True,
@@ -2165,58 +2152,43 @@ def _render_percorso_b_form():
         elif not argomento and _arg_source == "manual":
             st.session_state["_pb_argomento_source"] = None
 
-        # ── N° Esercizi ───────────────────────────────────────────────────────
-        st.markdown(
-            f'<div class="form-section-header" style="margin-top:1.2rem;">'
-            f'<div class="form-section-dot"></div>'
-            f'<span class="form-section-title">Numero di esercizi</span>'
-            f'<div class="form-section-line"></div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
+
+        _prefs = st.session_state._docente_prefs.get(materia_scelta, {})
+        if not _prefs and st.session_state.utente and materia_scelta in MATERIE:
+            _prefs = _carica_docente_preferenze(st.session_state.utente.id, materia_scelta)
+            st.session_state._docente_prefs[materia_scelta] = _prefs
+
+        # Calcola default num_esercizi (serve dentro l'expander)
         _n_default = _udef.get("num_esercizi", 4)
         if _info_cons.get("num_esercizi_rilevati"):
             try:
                 _n_default = max(1, min(int(_info_cons["num_esercizi_rilevati"]), 15))
             except (ValueError, TypeError):
                 pass
-        num_esercizi = st.slider(
-            "Numero esercizi",
-            min_value=1, max_value=15, value=_n_default,
-            label_visibility="collapsed", key="sel_num_es_b",
-        )
-
-        # ── Note libere per l'AI ──────────────────────────────────────────────
-        st.markdown(
-            f'<div class="form-section-header" style="margin-top:1.1rem;">'
-            f'<div class="form-section-dot" style="background:{T["muted"]};'
-            f'box-shadow:none;opacity:.6;"></div>'
-            f'<span class="form-section-title" style="color:{T["muted"]};">'
-            f'Note aggiuntive <span style="font-weight:400;letter-spacing:0;">'
-            f'— opzionale</span></span>'
-            f'<div class="form-section-line" style="background:linear-gradient(90deg,'
-            f'{T["border"]} 0%,transparent 100%);"></div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown('<div class="note-field-wrap">', unsafe_allow_html=True)
-        note_extra = st.text_area(
-            "Note AI",
-            placeholder=NOTE_PLACEHOLDER.get(materia_scelta, ""),
-            height=72,
-            label_visibility="collapsed",
-            key="note_area_b",
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # ── Personalizzazione Avanzata ────────────────────────────────────────
-        _prefs = st.session_state._docente_prefs.get(materia_scelta, {})
-        if not _prefs and st.session_state.utente and materia_scelta in MATERIE:
-            _prefs = _carica_docente_preferenze(st.session_state.utente.id, materia_scelta)
-            st.session_state._docente_prefs[materia_scelta] = _prefs
 
         st.markdown('<div class="personalizza-wrap">', unsafe_allow_html=True)
         with st.expander("⚙️ Personalizzazione Avanzata", expanded=False):
+
+            # ── Numero di esercizi ────────────────────────────────────────────
+            st.markdown('<div class="opt-label">Numero di esercizi</div>', unsafe_allow_html=True)
+            num_esercizi = st.slider(
+                "Numero esercizi",
+                min_value=1, max_value=15, value=_n_default,
+                label_visibility="collapsed", key="sel_num_es_b",
+            )
+
+            # ── Note libere per l'AI ──────────────────────────────────────────
+            st.markdown('<div class="opt-label" style="margin-top:.6rem;">Note aggiuntive <span style="font-weight:400;opacity:.6;">— opzionale</span></div>', unsafe_allow_html=True)
+            note_extra = st.text_area(
+                "Note AI",
+                placeholder=NOTE_PLACEHOLDER.get(materia_scelta, ""),
+                height=72,
+                label_visibility="collapsed",
+                key="note_area_b",
+            )
+
+            st.markdown('<div style="height:.4rem"></div>', unsafe_allow_html=True)
+
             if _prefs.get("stile_desc"):
                 st.markdown(
                     f'<div style="background:{T["hint_bg"]};border:1px solid {T["hint_border"]};'
@@ -2307,11 +2279,11 @@ def _render_percorso_b_form():
         _manca_arg = not argomento
         st.markdown("<div style='height:.9rem'></div>", unsafe_allow_html=True)
 
-        # Hint SOPRA il pulsante
+        # Hint SOPRA il pulsante — prominente, vicino al CTA
         if not _manca_arg and not _limite:
             st.markdown(
-                f'<div class="cta-hint-above">'
-                f'<span>✏️</span>'
+                f'<div class="cta-hint-prominent">'
+                f'<span class="cta-hint-prominent-icon">✏️</span>'
                 f'<span>Potrai modificare ogni singolo esercizio dopo la generazione</span>'
                 f'</div>',
                 unsafe_allow_html=True,
@@ -2362,7 +2334,7 @@ def _render_percorso_b_form():
         # ── Box 1: Facsimile shortcut (solo se nessun file) ──────────────────
         if not _lista_b:
             st.markdown(
-                f'<div class="side-box">'
+                f'<div class="side-box side-box-facsimile">'
                 f'  <div class="side-box-header">'
                 f'    <span class="side-box-badge side-box-badge-violet">⚡ RAPIDO</span>'
                 f'  </div>'
@@ -3398,11 +3370,20 @@ def _render_stage_review():
                 '</div>',
                 unsafe_allow_html=True
             )
-            quick_regen = st.button(
-                "🎲 Genera variante",
-                key=f"quick_regen_{idx}",
-                use_container_width=True,
-            )
+            _qr_col1, _qr_col2 = st.columns(2, gap="small")
+            with _qr_col1:
+                quick_regen = st.button(
+                    "🎲 Genera variante",
+                    key=f"quick_regen_{idx}",
+                    use_container_width=True,
+                )
+            with _qr_col2:
+                cambia_tutto = st.button(
+                    "🔄 Cambia esercizio",
+                    key=f"cambia_tutto_{idx}",
+                    use_container_width=True,
+                    help="Genera un esercizio completamente diverso in struttura e tipologia, mantenendo argomento e pertinenza didattica",
+                )
 
             st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
 
@@ -3793,6 +3774,82 @@ def _render_stage_review():
                 except Exception as e:
                     st.error(f"❌ Errore: {e}")
 
+    # ── Logica "Cambia totalmente" — struttura diversa, argomento uguale ─────
+    if cambia_tutto:
+        _ct_pts = st.session_state.get("recalibra_pts", [])
+        _ct_target_pts = (
+            int(_ct_pts[idx]) if _ct_pts and len(_ct_pts) == n_blocks
+            else _parse_pts_from_block_body(body)
+        )
+        _ct_punti_nota = (
+            f"Assegna esattamente {_ct_target_pts} pt totali, distribuendoli tra i sotto-punti con (N pt) su ogni \\item."
+            if mostra_punteggi and _ct_target_pts > 0
+            else ("Mantieni formato (X pt) su ogni \\item." if mostra_punteggi else "NON inserire punteggi.")
+        )
+        _prompt_ct = (
+            f"Sei un docente esperto di {materia_str} e LaTeX.\n"
+            f"Genera un esercizio COMPLETAMENTE DIVERSO — diverso in struttura, tipologia e contenuto specifico — "
+            f"ma che rimanga strettamente pertinente all'argomento e agli obiettivi didattici della verifica.\n\n"
+            f"MATERIA: {materia_str}\n"
+            f"ARGOMENTO DELLA VERIFICA: {argomento_str}\n"
+            f"ESERCIZIO DA SOSTITUIRE (struttura e tipo da NON replicare):\n\\subsection*{{{title}}}\n{body}\n\n"
+            f"REGOLE:\n"
+            f"- Cambia TIPO di esercizio (es. da calcolo numerico a dimostrazione, da aperto a V/F, ecc.).\n"
+            f"- Cambia i concetti specifici testati, scegliendo aspetti diversi ma coerenti con '{argomento_str}'.\n"
+            f"- L'esercizio DEVE restare su '{argomento_str}' in '{materia_str}'. NON introdurre altri argomenti.\n"
+            f"- Restituisci SOLO il blocco \\subsection*{{...}} con il nuovo esercizio.\n"
+            f"- Mantieni la struttura LaTeX (\\subsection*, enumerate, \\item[a)], ecc.).\n"
+            f"- {_ct_punti_nota}\n"
+            f"- NON includere preambolo o \\begin{{document}}.\n"
+        )
+        with st.spinner(f"🔄 Generazione nuovo esercizio {idx+1}…"):
+            try:
+                _ct_model = genai.GenerativeModel(MODEL_FAST_ID)
+                _ct_resp = _ct_model.generate_content(
+                    [_prompt_ct],
+                    generation_config=genai.GenerationConfig(temperature=0.95),
+                ).text.strip()
+                if _ct_resp.startswith("```"):
+                    _ct_resp = re.sub(r"^```[a-z]*\n?", "", _ct_resp)
+                    _ct_resp = re.sub(r"\n?```$", "", _ct_resp)
+                _ct_m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", _ct_resp, re.DOTALL)
+                if _ct_m:
+                    _ct_title = _ct_m.group(1)
+                    _ct_body  = _ct_m.group(2).strip()
+                    _ct_title = re.sub(r'\s*\(\d+\s*pt\)', '', _ct_title).strip()
+                else:
+                    _ct_title = title
+                    _ct_body  = _ct_resp
+                if mostra_punteggi and _ct_target_pts > 0:
+                    _ct_body = _riscala_single_block(_ct_title, _ct_body, _ct_target_pts)
+                st.session_state.review_blocks[idx] = {
+                    "title": _ct_title or title,
+                    "body":  _ct_body,
+                }
+                _ct_latex = _reconstruct_latex(
+                    st.session_state.review_preamble,
+                    st.session_state.review_blocks
+                )
+                _ct_latex = fix_items_environment(_ct_latex)
+                _ct_latex = rimuovi_vspace_corpo(_ct_latex)
+                _ct_latex = rimuovi_punti_subsection(_ct_latex)
+                if con_griglia:
+                    _ct_latex = inietta_griglia(_ct_latex, punti_totali)
+                st.session_state.verifiche["A"]["latex"]           = _ct_latex
+                st.session_state.verifiche["A"]["latex_originale"] = _ct_latex
+                _ct_pdf, _ = compila_pdf(_ct_latex)
+                if _ct_pdf:
+                    st.session_state.verifiche["A"]["pdf"]    = _ct_pdf
+                    st.session_state.verifiche["A"]["pdf_ts"] = time.time()
+                    st.session_state.verifiche["A"]["preview"] = True
+                    _ct_imgs, _ = pdf_to_images_bytes(_ct_pdf)
+                    st.session_state.preview_images = _ct_imgs or []
+                    st.session_state.preview_page   = 0
+                st.toast(f"🔄 Esercizio {idx+1} cambiato completamente!", icon="🔄")
+                time.sleep(0.3); st.rerun()
+            except Exception as _ct_e:
+                st.error(f"❌ Errore: {_ct_e}")
+
     # ── Pulsante CONFERMA — oro, piena larghezza ──────────────────────────────
     st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
     st.markdown('<div class="btn-confirm-gold">', unsafe_allow_html=True)
@@ -3901,23 +3958,7 @@ def _render_stage_final():
         unsafe_allow_html=True
     )
 
-    # ── Badge timer ───────────────────────────────────────────────────────────
-    _gen_sec = st.session_state.get("gen_time_sec")
-    _n_es    = gp.get("num_esercizi", 4)
-    _risparmio_min = max(10, _n_es * 8)
-    if _gen_sec:
-        _t_label = (f"{_gen_sec}s" if _gen_sec < 60 else f"{_gen_sec // 60}m {_gen_sec % 60}s")
-        st.markdown(
-            f'<div style="display:flex;gap:.5rem;margin-bottom:.7rem;flex-wrap:wrap;">'
-            f'<span style="background:{T["card2"]};border:1px solid {T["border"]};border-radius:8px;'
-            f'padding:.28rem .75rem;font-size:.72rem;font-weight:700;color:{T["success"]};'
-            f'font-family:DM Sans,sans-serif;">⚡ Generata in {_t_label}</span>'
-            f'<span style="background:{T["card2"]};border:1px solid {T["border"]};border-radius:8px;'
-            f'padding:.28rem .75rem;font-size:.72rem;font-weight:700;color:{T["text2"]};'
-            f'font-family:DM Sans,sans-serif;">🕐 ~{_risparmio_min} min risparmiati</span>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
+    # (timer badges rimossi — non necessari per il docente)
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  DOWNLOAD PRINCIPALE
@@ -3936,8 +3977,7 @@ def _render_stage_final():
     #  VARIANTI ONE-CLICK — 3 card in colonna, stile "Genera Fila B"
     # ═══════════════════════════════════════════════════════════════════════════
     st.markdown(
-        f'<div style="font-size:.66rem;font-weight:800;color:{T["muted"]};letter-spacing:.08em;'
-        f'font-family:DM Sans,sans-serif;margin-bottom:.45rem;">VARIANTI — UN CLICK PER GENERARE E SCARICARE</div>',
+        f'<div class="variant-section-label">VARIANTI — UN CLICK PER GENERARE E SCARICARE</div>',
         unsafe_allow_html=True
     )
     _vc1, _vc2, _vc3 = st.columns(3, gap="medium")
@@ -3948,12 +3988,11 @@ def _render_stage_final():
         _b_lat = vB.get("latex")
 
         st.markdown(
-            f'<div class="one-click-variant-card">'
-            f'  <div><span class="one-click-badge">⚡ ONE-CLICK</span></div>'
-            f'  <div class="one-click-body">'
-            f'    <div class="one-click-title">Fila B</div>'
-            f'    <div class="one-click-desc">Stessa struttura, stessi punteggi — solo i dati cambiano. Pronta in secondi.</div>'
-            f'  </div>'
+            f'<div class="variant-card variant-card-blue">'
+            f'  <div class="variant-card-badge">⚡ ONE-CLICK</div>'
+            f'  <div class="variant-card-icon">📋</div>'
+            f'  <div class="variant-card-title">Fila B</div>'
+            f'  <div class="variant-card-desc">Stessa struttura, stessi punteggi — solo i dati cambiano. Pronta in secondi.</div>'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -4002,12 +4041,11 @@ def _render_stage_final():
         _r_lat = vR.get("latex")
 
         st.markdown(
-            f'<div class="one-click-variant-card">'
-            f'  <div><span class="one-click-badge" style="background:#7C3AED;">🌟 INCLUSIONE</span></div>'
-            f'  <div class="one-click-body">'
-            f'    <div class="one-click-title">Versione BES/DSA</div>'
-            f'    <div class="one-click-desc">Linguaggio semplificato, struttura alleggerita. Stessi obiettivi didattici.</div>'
-            f'  </div>'
+            f'<div class="variant-card variant-card-violet">'
+            f'  <div class="variant-card-badge variant-card-badge-violet">🌟 INCLUSIONE</div>'
+            f'  <div class="variant-card-icon">🌟</div>'
+            f'  <div class="variant-card-title">Versione BES/DSA</div>'
+            f'  <div class="variant-card-desc">Linguaggio semplificato, struttura alleggerita. Stessi obiettivi didattici.</div>'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -4047,12 +4085,11 @@ def _render_stage_final():
         _s_lat = vS.get("latex")
 
         st.markdown(
-            f'<div class="one-click-variant-card">'
-            f'  <div><span class="one-click-badge" style="background:#059669;">✅ DOCENTE</span></div>'
-            f'  <div class="one-click-body">'
-            f'    <div class="one-click-title">Soluzioni</div>'
-            f'    <div class="one-click-desc">Documento riservato al docente con risposte complete e svolgimenti.</div>'
-            f'  </div>'
+            f'<div class="variant-card variant-card-green">'
+            f'  <div class="variant-card-badge variant-card-badge-green">✅ DOCENTE</div>'
+            f'  <div class="variant-card-icon">📝</div>'
+            f'  <div class="variant-card-title">Soluzioni</div>'
+            f'  <div class="variant-card-desc">Documento riservato al docente con risposte complete e svolgimenti.</div>'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -4088,8 +4125,8 @@ def _render_stage_final():
 
     # ── Navigazione ───────────────────────────────────────────────────────────
     st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
-    _nav1, _nav2 = st.columns(2, gap="small")
-    with _nav1:
+    _nav_c1, _nav_c2, _nav_c3 = st.columns([1, 2, 1])
+    with _nav_c2:
         if st.button("🆕 Nuova verifica", type="primary",
                      use_container_width=True, key="btn_new_s3_top"):
             # Reset completo — l'utente riparte dalla Home come nuovo accesso
@@ -4129,9 +4166,6 @@ def _render_stage_final():
             st.session_state._share_code        = None
             st.session_state._share_generating   = False
             st.rerun()
-    with _nav2:
-        if st.button("← Rivedi esercizi", use_container_width=True, key="btn_rev_s3_top"):
-            st.session_state.stage = STAGE_REVIEW; st.rerun()
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  IDEA #5 — CONDIVIDI CON IL DIPARTIMENTO
