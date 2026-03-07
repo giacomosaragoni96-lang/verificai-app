@@ -170,8 +170,8 @@ def _rubrica_to_pdf(rubrica_testo: str, materia: str = "", livello: str = "") ->
         from latex_utils import compila_pdf
 
         def _esc(t: str) -> str:
+            t = t.replace('\\', r'\textbackslash{}')
             for a, b in [
-                ('\\', r'\textbackslash{}'),
                 ('&',  r'\&'), ('%', r'\%'), ('#', r'\#'),
                 ('_',  r'\_'), ('^', r'\^{}'), ('~', r'\~{}'),
                 ('{',  r'\{'), ('}', r'\}'), ('$', r'\$'),
@@ -184,38 +184,73 @@ def _rubrica_to_pdf(rubrica_testo: str, materia: str = "", livello: str = "") ->
 
         meta_esc = _esc(f"{materia} · {livello}") if (materia or livello) else ""
 
+        # ── Strip AI preamble: skip everything before the first ## / ### ────────
+        lines_raw = rubrica_testo.strip().split("\n")
+        start_idx = 0
+        for _i, _l in enumerate(lines_raw):
+            if _l.strip().startswith("## ") or _l.strip().startswith("### "):
+                start_idx = _i
+                break
+        lines_raw = lines_raw[start_idx:]
+
         body_lines: list[str] = []
-        in_list = False
-        for line in rubrica_testo.strip().split("\n"):
+        in_list   = False
+        prev_blank = False   # collapse consecutive blank lines
+
+        for line in lines_raw:
             s = line.strip()
+
+            # ── Blank line ────────────────────────────────────────────────────
             if not s:
                 if in_list:
                     body_lines.append(r'\end{itemize}')
                     in_list = False
-                body_lines.append(r'\vspace{4pt}')
+                if not prev_blank:          # only one vspace per blank group
+                    body_lines.append(r'\vspace{5pt}')
+                prev_blank = True
                 continue
-            if s.startswith("## Rubrica"):
+            prev_blank = False
+
+            # ── Top-level section marker (skip, title is in the header) ───────
+            if s.startswith("## "):
                 continue
+
+            # ── ### Sub-section (Legenda fasce / Indicatori per esercizio) ────
             if s.startswith("### "):
                 if in_list:
                     body_lines.append(r'\end{itemize}')
                     in_list = False
-                body_lines.append(f'\\subsection*{{{_md2tex(_esc(s[4:]))}}}')
-            elif s.startswith("**") and s.endswith("**") and s.count("**") == 2:
+                body_lines.append(
+                    f'\\section*{{{_md2tex(_esc(s[4:]))}}}'
+                )
+
+            # ── Bullet item (handles "- " and "  - " after strip) ────────────
+            elif s.startswith("- ") or s.startswith("* "):
+                if not in_list:
+                    body_lines.append(
+                        r'\begin{itemize}[noitemsep,topsep=2pt,leftmargin=1.4em]'
+                    )
+                    in_list = True
+                body_lines.append(f'  \\item {_md2tex(_esc(s[2:]))}')
+
+            # ── Bold line: **full** OR **partial** (extra text) ───────────────
+            elif s.startswith("**") and "**" in s[2:]:
                 if in_list:
                     body_lines.append(r'\end{itemize}')
                     in_list = False
-                body_lines.append(f'\\textbf{{{_md2tex(_esc(s[2:-2]))}}}\\\\[2pt]')
-            elif s.startswith("- "):
-                if not in_list:
-                    body_lines.append(r'\begin{itemize}[noitemsep,topsep=2pt,leftmargin=1.4em]')
-                    in_list = True
-                body_lines.append(f'  \\item {_md2tex(_esc(s[2:]))}')
+                tex_line = _md2tex(_esc(s))
+                body_lines.append(
+                    r'\vspace{4pt}' '\n'
+                    r'\noindent ' + tex_line + r'\\[-1pt]'
+                )
+
+            # ── Plain paragraph ───────────────────────────────────────────────
             else:
                 if in_list:
                     body_lines.append(r'\end{itemize}')
                     in_list = False
-                body_lines.append(_md2tex(_esc(s)) + r'\\[2pt]')
+                body_lines.append(_md2tex(_esc(s)))
+
         if in_list:
             body_lines.append(r'\end{itemize}')
 
@@ -228,21 +263,22 @@ def _rubrica_to_pdf(rubrica_testo: str, materia: str = "", livello: str = "") ->
             r'\usepackage[dvipsnames]{xcolor}' '\n'
             r'\usepackage{titlesec}' '\n'
             r'\usepackage{enumitem}' '\n'
-            r'\usepackage{parskip}' '\n'
+            r'\usepackage{microtype}' '\n'
             r'\definecolor{rubTeal}{HTML}{0A8F72}' '\n'
             r'\definecolor{rubDark}{HTML}{1A2E25}' '\n'
             r'\definecolor{rubGray}{HTML}{6B7280}' '\n'
-            r'\titleformat{\section}{\large\bfseries\color{rubTeal}}{}{0em}{}' '\n'
-            r'\titleformat{\subsection}{\normalsize\bfseries\color{rubDark}}{}{0em}{}' '\n'
-            r'\titlespacing*{\subsection}{0pt}{10pt}{3pt}' '\n'
-            r'\setlength{\parskip}{5pt}\setlength{\parindent}{0pt}' '\n'
+            r'\titleformat{\section}{\normalsize\bfseries\color{rubTeal}}'
+            r'{}{0em}{}[\vspace{-3pt}{\color{rubTeal!40}\hrule height 0.5pt}\vspace{1pt}]' '\n'
+            r'\titlespacing*{\section}{0pt}{10pt}{4pt}' '\n'
+            r'\setlength{\parskip}{3pt}\setlength{\parindent}{0pt}' '\n'
+            r'\pagestyle{empty}' '\n'
             r'\begin{document}' '\n'
             r'\begin{center}' '\n'
-            r'{\large\bfseries\color{rubTeal} Rubrica di Valutazione}\\[4pt]' '\n'
-            + (f'{{\\small\\color{{rubGray}} {meta_esc}}}\\\\[2pt]\n' if meta_esc else '')
-            + r'\end{center}' '\n'
-            r'{\color{rubTeal}\rule{\linewidth}{1.2pt}}' '\n'
-            r'\vspace{8pt}' '\n'
+            r'{\large\bfseries\color{rubTeal} Rubrica di Valutazione}\\[3pt]' '\n'
+            + (f'{{\\small\\color{{rubGray}} {meta_esc}}}\\\\[3pt]\n' if meta_esc else '')
+            + r'{\color{rubTeal}\rule{\linewidth}{1.4pt}}' '\n'
+            r'\end{center}' '\n'
+            r'\vspace{4pt}' '\n'
             + '\n'.join(body_lines) + '\n'
             r'\end{document}'
         )
@@ -658,8 +694,8 @@ if _STYLED_AVAILABLE:
         _styl.set("button", "border_radius", "12px")
         _styl.set("button", "font_size", "0.95rem")
         # Input
-        _styl.set("text_input", "border_radius", "10px")
-        _styl.set("text_area",  "border_radius", "10px")
+        _styl.set("text_input", "border_radius", "12px")
+        _styl.set("text_area",  "border_radius", "12px")
     except Exception:
         pass
 
@@ -845,7 +881,7 @@ def _render_sticky_header():
     'justify-content:space-between',
     'gap:1rem',
     'font-family:DM Sans,sans-serif',
-    'box-shadow:0 2px 16px rgba(0,0,0,.35)',
+    'box-shadow:{T.get("shadow_md","0 4px 16px rgba(0,0,0,.20)")}',
     'box-sizing:border-box',
     'pointer-events:none',
   ].join(';');
@@ -868,6 +904,151 @@ def _render_sticky_header():
 }})();
 </script>
 """, height=0)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  STEP PROGRESS BAR — inline, centered, visible on all non-landing pages
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _render_step_progress() -> None:
+    """
+    Renders an elegant centered stepper (Impostazioni → Revisiona → Scarica)
+    as an inline Streamlit element.  Called on every non-landing page.
+    """
+    stage   = st.session_state.stage
+    visual  = STAGE_REVIEW if stage == STAGE_PREVIEW else stage
+
+    steps = [
+        (STAGE_INPUT,  "01", "Impostazioni"),
+        (STAGE_REVIEW, "02", "Revisiona"),
+        (STAGE_FINAL,  "03", "Scarica"),
+    ]
+    order = {s: i for i, (s, _, _) in enumerate(steps)}
+    cur   = order.get(visual, 0)
+
+    # ── Percent for the connecting progress fill ──────────────────────────────
+    pct = {0: 0, 1: 50, 2: 100}[cur]
+
+    # ── Theme colors ──────────────────────────────────────────────────────────
+    accent  = T["accent"]
+    success = T["success"]
+    muted   = T["muted"]
+    text    = T["text"]
+    text2   = T["text2"]
+    card    = T["card"]
+    border  = T["border"]
+
+    # ── Build step nodes HTML ─────────────────────────────────────────────────
+    nodes_html = ""
+    for i, (s, num, label) in enumerate(steps):
+        is_active = (s == visual)
+        is_done   = order.get(s, 0) < cur
+
+        if is_active:
+            circle_bg  = accent
+            circle_txt = "#fff"
+            label_col  = text
+            label_wt   = "800"
+            badge      = num
+            circle_shadow = f"0 0 0 4px {accent}28, 0 2px 12px {accent}55"
+            circle_border = f"2px solid {accent}"
+        elif is_done:
+            circle_bg  = success
+            circle_txt = "#fff"
+            label_col  = success
+            label_wt   = "700"
+            badge      = "✓"
+            circle_shadow = f"0 0 0 3px {success}22"
+            circle_border = f"2px solid {success}"
+        else:
+            circle_bg  = card
+            circle_txt = muted
+            label_col  = muted
+            label_wt   = "500"
+            badge      = num
+            circle_shadow = "none"
+            circle_border = f"1.5px solid {border}"
+
+        node = (
+            f'<div class="sp-step" data-state="{"active" if is_active else "done" if is_done else "future"}">'
+            f'  <div class="sp-circle" style="'
+            f'background:{circle_bg};color:{circle_txt};'
+            f'border:{circle_border};box-shadow:{circle_shadow};">'
+            f'    {badge}'
+            f'  </div>'
+            f'  <div class="sp-label" style="color:{label_col};font-weight:{label_wt};">'
+            f'    {label}'
+            f'  </div>'
+            f'</div>'
+        )
+        nodes_html += node
+        if i < len(steps) - 1:
+            nodes_html += '<div class="sp-connector"></div>'
+
+    # ── Full HTML block ───────────────────────────────────────────────────────
+    html = f"""
+<style>
+  .sp-wrap {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: .9rem 1.2rem 1.1rem;
+    margin-bottom: .6rem;
+    position: relative;
+  }}
+  .sp-step {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    position: relative;
+    z-index: 1;
+  }}
+  .sp-circle {{
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .82rem;
+    font-weight: 800;
+    font-family: 'DM Sans', sans-serif;
+    transition: all .25s ease;
+    flex-shrink: 0;
+  }}
+  .sp-label {{
+    font-size: .78rem;
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+    letter-spacing: .01em;
+    transition: color .25s;
+  }}
+  .sp-connector {{
+    position: relative;
+    width: 72px;
+    height: 2px;
+    background: {border};
+    border-radius: 2px;
+    flex-shrink: 0;
+    margin-bottom: 22px;
+    overflow: hidden;
+  }}
+  .sp-connector::after {{
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: {pct}%;
+    background: linear-gradient(90deg, {success}, {accent});
+    border-radius: 2px;
+    transition: width .4s ease;
+  }}
+</style>
+<div class="sp-wrap">
+  {nodes_html}
+</div>
+"""
+    st.markdown(html, unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2616,69 +2797,66 @@ def _render_percorso_b_form():
     if _toast_msg:
         st.toast(f"✅ Documento analizzato — {_toast_msg}", icon="🔬")
 
-    # ── Due colonne: form unica, senza colonna laterale ──────────────────────
-    # (col_main è ora l'intera larghezza — col_side rimossa)
-
     # ═════════════════════════════════════════════════════════════════════════
-    #  FORM PRINCIPALE — layout a colonna singola
+    #  FORM PRINCIPALE — colonna sinistra (form) | colonna destra (upload)
     # ═════════════════════════════════════════════════════════════════════════
     if True:
         _prev = st.session_state.gen_params or {}
         # ── IDEA #1: carica defaults silenti come fallback ────────────────
         _udef = _load_user_defaults()
 
-        # ── Dashboard: sezione form (layout bilanciato) ───────────────────────
-        # ── Section header: Materia & Scuola ──────────────────────────────────
-        st.markdown(
-            f'<div class="form-section-header">'
-            f'<div class="form-section-dot"></div>'
-            f'<span class="form-section-title">Materia e tipo di scuola</span>'
-            f'<div class="form-section-line"></div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-
-        _col_m, _col_s = st.columns(2, gap="small")
-        _mat_list = MATERIE + ["✏️ Altra materia..."]
-        _mat_prev = _prev.get("materia") or _udef.get("materia", "Matematica")
-        _mat_idx  = _mat_list.index(_mat_prev) if _mat_prev in _mat_list else 0
-        _scu_prev = _prev.get("difficolta") or _udef.get("scuola", "")
-        _scu_idx  = SCUOLE.index(_scu_prev) if _scu_prev in SCUOLE else 0
-
-        # Auto-fill da analisi file se disponibile
-        _info_cons = st.session_state.info_consolidate
-        _mat_autofilled = False
-        _scu_autofilled = False
-        if _info_cons.get("materia") and _info_cons["materia"] in _mat_list:
-            _mat_idx = _mat_list.index(_info_cons["materia"])
-            _mat_autofilled = True
-        if _info_cons.get("scuola") and _info_cons["scuola"] in SCUOLE:
-            _scu_idx = SCUOLE.index(_info_cons["scuola"])
-            _scu_autofilled = True
-
-        with _col_m:
-            _sel_m = st.selectbox(
-                "Materia", _mat_list, index=_mat_idx,
-                label_visibility="collapsed", key="sel_materia_b",
-                help="Materia della verifica. Se hai caricato un file, viene rilevata automaticamente.",
-            )
-            materia_scelta = (
-                st.text_input("Scrivi materia:", key="_mat_custom_b",
-                              label_visibility="collapsed").strip() or "Matematica"
-                if _sel_m == "✏️ Altra materia..."
-                else (_sel_m or "Matematica")
-            )
-        with _col_s:
-            difficolta = st.selectbox(
-                "Scuola", SCUOLE, index=_scu_idx,
-                help="Tipo di scuola e livello. Se hai caricato un file, viene rilevato automaticamente.",
-                label_visibility="collapsed", key="sel_scuola_b",
-            )
-
-        # ── Layout: sinistra form (argomento + poi N° esercizi, Genera), destra upload + File nel pool ─
-        _col_main, _col_side = st.columns([3, 1], gap="medium")
+        # ── Layout: colonna form | colonna upload (full height) ───────────────
+        _col_main, _col_side = st.columns([2.5, 1.5], gap="medium")
 
         with _col_main:
+            # ── Dashboard: sezione form (layout bilanciato) ───────────────────────
+            # ── Section header: Materia & Scuola ──────────────────────────────────
+            st.markdown(
+                f'<div class="form-section-header">'
+                f'<div class="form-section-dot"></div>'
+                f'<span class="form-section-title">Materia e tipo di scuola</span>'
+                f'<div class="form-section-line"></div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+            _col_m, _col_s = st.columns(2, gap="small")
+            _mat_list = MATERIE + ["✏️ Altra materia..."]
+            _mat_prev = _prev.get("materia") or _udef.get("materia", "Matematica")
+            _mat_idx  = _mat_list.index(_mat_prev) if _mat_prev in _mat_list else 0
+            _scu_prev = _prev.get("difficolta") or _udef.get("scuola", "")
+            _scu_idx  = SCUOLE.index(_scu_prev) if _scu_prev in SCUOLE else 0
+
+            # Auto-fill da analisi file se disponibile
+            _info_cons = st.session_state.info_consolidate
+            _mat_autofilled = False
+            _scu_autofilled = False
+            if _info_cons.get("materia") and _info_cons["materia"] in _mat_list:
+                _mat_idx = _mat_list.index(_info_cons["materia"])
+                _mat_autofilled = True
+            if _info_cons.get("scuola") and _info_cons["scuola"] in SCUOLE:
+                _scu_idx = SCUOLE.index(_info_cons["scuola"])
+                _scu_autofilled = True
+
+            with _col_m:
+                _sel_m = st.selectbox(
+                    "Materia", _mat_list, index=_mat_idx,
+                    label_visibility="collapsed", key="sel_materia_b",
+                    help="Materia della verifica. Se hai caricato un file, viene rilevata automaticamente.",
+                )
+                materia_scelta = (
+                    st.text_input("Scrivi materia:", key="_mat_custom_b",
+                                  label_visibility="collapsed").strip() or "Matematica"
+                    if _sel_m == "✏️ Altra materia..."
+                    else (_sel_m or "Matematica")
+                )
+            with _col_s:
+                difficolta = st.selectbox(
+                    "Scuola", SCUOLE, index=_scu_idx,
+                    help="Tipo di scuola e livello. Se hai caricato un file, viene rilevato automaticamente.",
+                    label_visibility="collapsed", key="sel_scuola_b",
+                )
+
             # ── Section header: Argomento ─────────────────────────────────────
             st.markdown(
                 f'<div class="form-section-header" style="margin-top:0;">'
@@ -2914,7 +3092,7 @@ def _render_percorso_b_form():
                 st.rerun()
 
         with _col_side:
-            # ── Intestazione colonna ──────────────────────────────────────────
+            # ── Header ────────────────────────────────────────────────────────
             st.markdown(
                 '<div class="upload-column-label">📎 Documenti</div>',
                 unsafe_allow_html=True,
@@ -2965,46 +3143,33 @@ def _render_percorso_b_form():
                     if st.session_state.get("_pb_argomento_source") != "manual":
                         st.session_state["_pb_argomento_source"] = None
                 else:
-                    st.info("File già presente nel pool.", icon="ℹ️")
+                    st.toast("File già presente.", icon="ℹ️")
 
-            # ── Document management dashboard ─────────────────────────────────
+            # ── Document pool ─────────────────────────────────────────────────
             _lista_b_curr = st.session_state.analisi_docs_list
-            _n_docs_curr  = len(_lista_b_curr)
 
             if not _lista_b_curr:
-                # Empty state
                 st.markdown(
                     '<div class="doc-pool-empty">'
                     '<div class="doc-pool-empty-icon">📂</div>'
                     '<div class="doc-pool-empty-title">Nessun documento</div>'
                     '<div class="doc-pool-empty-sub">'
-                    'Carica una verifica, degli appunti o un libro. '
-                    'L\'AI estrarrà automaticamente argomento, materia e tipo.'
+                    'Carica una verifica o degli appunti — '
+                    'l\'AI rileva argomento, materia e tipo in automatico.'
                     '</div>'
                     '</div>',
                     unsafe_allow_html=True,
                 )
             else:
-                # Dashboard header: count only
-                st.markdown(
-                    f'<div class="doc-pool-header">'
-                    f'<span class="doc-pool-title">Documenti caricati'
-                    f'<span class="doc-pool-count">{_n_docs_curr}</span>'
-                    f'</span>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-
                 _MODO_OPTIONS = {
-                    "base_conoscenza":   "📚 Fonte di studio",
-                    "includi_esercizio": "✏️ Adatta esercizi",
+                    "base_conoscenza":   "📚 Fonte",
+                    "includi_esercizio": "✏️ Adatta",
                 }
                 _rimuovi_idx = None
 
                 for _fi, _fentry in enumerate(_lista_b_curr):
                     _fhash_str = str(_fentry["file_hash"])
                     _fa        = _fentry.get("analisi", {})
-                    _fa_arg    = _fa.get("contenuto_argomento", "")
                     _fa_mat    = _fa.get("materia", "")
                     _fa_es     = _fa.get("num_esercizi_rilevati") or 0
 
@@ -3014,48 +3179,36 @@ def _render_percorso_b_form():
                         "tipo": "doc-tag-tipo", "content": "doc-tag-content",
                         "formula": "doc-tag-formula", "grafico": "doc-tag-grafico",
                     }
-                    _tags_html = ""
-                    if _tags:
-                        _pills = "".join(
-                            f'<span class="doc-tag {_tag_class_map.get(k, "doc-tag-content")}">{ico} {lbl}</span>'
-                            for ico, lbl, k in _tags
-                        )
-                        _tags_html = f'<div class="doc-tags">{_pills}</div>'
+                    _tags_html = "".join(
+                        f'<span class="doc-tag {_tag_class_map.get(k,"doc-tag-content")}">{ico} {lbl}</span>'
+                        for ico, lbl, k in _tags
+                    ) if _tags else ""
 
-                    # Snippet
-                    _snippet_html = ""
-                    if _fa_arg:
-                        _snip = _fa_arg[:110] + ("…" if len(_fa_arg) > 110 else "")
-                        _snippet_html = f'<div class="doc-snippet">{_snip}</div>'
-
-                    # Info line: materia · n esercizi
-                    _info_parts = []
+                    # Meta pill: materia · n es.
+                    _meta_parts = []
                     if _fa_mat:
-                        _info_parts.append(f"<strong>{_fa_mat}</strong>")
+                        _meta_parts.append(f"<strong>{_fa_mat}</strong>")
                     if _fa_es:
-                        _info_parts.append(f"{_fa_es} eserc.")
-                    _info_html = (
-                        f'<span class="doc-card-meta">{" · ".join(_info_parts)}</span>'
-                        if _info_parts else ""
-                    )
+                        _meta_parts.append(f"{_fa_es} es.")
+                    _meta_str = " · ".join(_meta_parts)
 
                     _fname_display = _fentry["file_name"]
-                    if len(_fname_display) > 26:
-                        _fname_display = _fname_display[:23] + "…"
+                    if len(_fname_display) > 22:
+                        _fname_display = _fname_display[:19] + "…"
 
+                    _meta_span = f'<span class="fpc-meta">{_meta_str}</span>' if _meta_str else ""
                     st.markdown(
                         f'<div class="file-pool-card">'
-                        f'  <div class="file-item-b-header">'
-                        f'    <span class="file-item-b-name">{_fname_display}</span>'
-                        f'    {_info_html}'
+                        f'  <div class="fpc-header">'
+                        f'    <span class="fpc-name">📄 {_fname_display}</span>'
+                        f'    {_meta_span}'
                         f'  </div>'
-                        f'  {_tags_html}'
-                        f'  {_snippet_html}'
-                        f'</div>',
+                        + (f'  <div class="doc-tags">{_tags_html}</div>' if _tags_html else '')
+                        + '</div>',
                         unsafe_allow_html=True,
                     )
 
-                    # Mode selection — radio with clear labels
+                    # Mode toggle — compact pill radio
                     _modo_prev = _fentry.get("file_mode", "base_conoscenza")
                     if _modo_prev not in _MODO_OPTIONS:
                         _modo_prev = "base_conoscenza"
@@ -3073,47 +3226,26 @@ def _render_percorso_b_form():
                         st.session_state.analisi_docs_list[_fi]["confirmed"] = (_sel_modo != "ignora")
                         _consolida_info()
 
-                    # Context-aware hint for "Adatta esercizi"
+                    # Context hint (Adatta only)
                     if _sel_modo == "includi_esercizio":
                         if _fa_es > 1:
                             _hint_txt = (
-                                f'L\'AI prenderà i <strong>{_fa_es} esercizi</strong> trovati '
-                                f'nel documento come traccia: stessa struttura, dati completamente nuovi.'
+                                f'Struttura dei <strong>{_fa_es} esercizi</strong> '
+                                f'conservata, dati completamente nuovi.'
                             )
                         elif _fa_es == 1:
-                            _hint_txt = (
-                                'L\'AI adatterà l\'esercizio trovato '
-                                '(struttura invariata, dati e valori nuovi).'
-                            )
+                            _hint_txt = 'Struttura conservata, dati e valori nuovi.'
                         else:
-                            _hint_txt = (
-                                'L\'AI userà il contenuto di questo file come base '
-                                'per costruire gli esercizi della verifica.'
-                            )
+                            _hint_txt = 'Il contenuto diventa la traccia per gli esercizi.'
                         st.markdown(
                             f'<div class="file-includi-hint">💡 {_hint_txt}</div>',
                             unsafe_allow_html=True,
                         )
 
-                    # Optional per-file instructions
-                    _istr_prev = st.session_state.istruzioni_per_file.get(_fhash_str, "")
-                    _istr_new  = st.text_area(
-                        f"Note aggiuntive per il file {_fi}",
-                        value=_istr_prev,
-                        placeholder=(
-                            "es. Cambia i valori numerici ma mantieni la struttura…"
-                            if _sel_modo == "includi_esercizio"
-                            else "es. Usa solo la sezione sulle frazioni…"
-                        ),
-                        height=42,
-                        key=f"pb_istr_{_fhash_str}",
-                        label_visibility="collapsed",
-                    )
-                    if _istr_new != _istr_prev:
-                        st.session_state.istruzioni_per_file[_fhash_str] = _istr_new
-
-                    st.markdown('<div class="file-item-b-delete">', unsafe_allow_html=True)
-                    if st.button("✕ Rimuovi", key=f"pb_rm_{_fhash_str}_{_fi}", use_container_width=True):
+                    # Remove button — tiny, right-aligned
+                    st.markdown('<div class="fpc-delete-row">', unsafe_allow_html=True)
+                    if st.button("✕ rimuovi", key=f"pb_rm_{_fhash_str}_{_fi}",
+                                 help="Rimuovi questo file dal pool"):
                         _rimuovi_idx = _fi
                     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -4383,181 +4515,6 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             if rigenera and istruzione.strip():
                 _loading_ph.info(f"Elaborazione in corso — modifico l'esercizio {idx+1}…")
 
-            # ── Expander: Ricalibra Punteggi — per singolo sottopunto ──────────
-            if mostra_punteggi and n_blocks > 0:
-                with st.expander("⚖️ Ricalibra Punteggi", expanded=False):
-                    st.markdown(
-                        f'<div style="font-size:.74rem;color:{T["text2"]};margin-bottom:.6rem;'
-                        f'font-family:DM Sans,sans-serif;line-height:1.45;">'
-                        f'Modifica i punti per ogni singolo sottopunto. '
-                        f'<strong>Applica</strong> si attiva quando la somma = '
-                        f'<strong>{punti_totali} pt</strong>.</div>',
-                        unsafe_allow_html=True
-                    )
-
-                    # ── Raccogli tutti i sottopunti di tutti gli esercizi ──────────
-                    _all_new_item_pts = {}   # {ex_idx: [pt1, pt2, ...]}
-                    _grand_total_rc   = 0
-
-                    for _i, _b in enumerate(st.session_state.review_blocks):
-                        _items_rc = parse_items_from_block(_b["body"], _b.get("title", ""))
-                        _title_rc = re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]).strip()
-                        _title_rc = (_title_rc[:30] + "…") if len(_title_rc) > 30 else _title_rc
-
-                        # Separatore tra esercizi
-                        if _i > 0:
-                            st.markdown(
-                                f'<hr style="border:none;border-top:1px solid {T["border"]};margin:.5rem 0;">',
-                                unsafe_allow_html=True
-                            )
-
-                        st.markdown(
-                            f'<div style="font-size:.76rem;font-weight:800;color:{T["text"]};'
-                            f'font-family:DM Sans,sans-serif;margin-bottom:.3rem;">'
-                            f'Es. {_i+1} — {_title_rc}</div>',
-                            unsafe_allow_html=True
-                        )
-
-                        if not _items_rc:
-                            st.markdown(
-                                f'<div style="font-size:.7rem;color:{T["muted"]};'
-                                f'font-family:DM Sans,sans-serif;font-style:italic;margin-bottom:.3rem;">'
-                                f'Nessun sottopunto con punteggio rilevato.</div>',
-                                unsafe_allow_html=True
-                            )
-                            _all_new_item_pts[_i] = []
-                            continue
-
-                        _ex_new_pts_rc = []
-                        _n_items = len(_items_rc)
-                        _n_cols_item = min(_n_items, 4)
-                        _rows_items = [_items_rc[j:j+_n_cols_item]
-                                       for j in range(0, _n_items, _n_cols_item)]
-
-                        for _row_items in _rows_items:
-                            _item_cols = st.columns(_n_cols_item)
-                            for _col_j, (_lbl, _short, _cur_pt) in enumerate(_row_items):
-                                _item_key = f"item_pt_{_i}_{len(_ex_new_pts_rc)}"
-                                with _item_cols[_col_j]:
-                                    st.markdown(
-                                        f'<div style="font-size:.72rem;font-weight:700;color:{T["text2"]};'
-                                        f'font-family:DM Sans,sans-serif;line-height:1.2;">'
-                                        f'<span style="background:{T["accent_light"]};border-radius:4px;'
-                                        f'padding:1px 6px;margin-right:3px;">{_lbl}</span></div>',
-                                        unsafe_allow_html=True
-                                    )
-                                    if _short:
-                                        st.markdown(
-                                            f'<div style="font-size:.62rem;color:{T["muted"]};'
-                                            f'font-family:DM Sans,sans-serif;white-space:nowrap;'
-                                            f'overflow:hidden;text-overflow:ellipsis;'
-                                            f'margin-bottom:2px;">{_short}</div>',
-                                            unsafe_allow_html=True
-                                        )
-                                    _new_pt_item = st.number_input(
-                                        f"pt {_lbl}",
-                                        min_value=0, max_value=punti_totali,
-                                        value=_cur_pt, step=1,
-                                        key=_item_key,
-                                        label_visibility="collapsed",
-                                    )
-                                    _ex_new_pts_rc.append(int(_new_pt_item))
-
-                        _ex_subtotal = sum(_ex_new_pts_rc)
-                        _grand_total_rc += _ex_subtotal
-                        _all_new_item_pts[_i] = _ex_new_pts_rc
-
-                        st.markdown(
-                            f'<div style="font-size:.7rem;font-weight:600;color:{T["text2"]};'
-                            f'font-family:DM Sans,sans-serif;text-align:right;margin-top:.2rem;">'
-                            f'Subtotale Es.{_i+1}: <strong>{_ex_subtotal} pt</strong></div>',
-                            unsafe_allow_html=True
-                        )
-
-                    # ── Totale generale + pulsante Applica ──────────────────────
-                    st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-                    _rc_ok   = (_grand_total_rc == punti_totali)
-                    _rc_diff = _grand_total_rc - punti_totali
-                    _rc_diff_str = ("+" if _rc_diff > 0 else "") + str(_rc_diff)
-
-                    if _rc_ok:
-                        st.markdown(
-                            '<div class="recalibra-sum-ok">'
-                            f'✅ Totale: <strong>{_grand_total_rc} pt</strong> = {punti_totali} pt'
-                            '</div>',
-                            unsafe_allow_html=True
-                        )
-                    else:
-                        st.markdown(
-                            '<div class="recalibra-sum-err">'
-                            f'⚠️ Totale: <strong>{_grand_total_rc} pt</strong>'
-                            f' ({_rc_diff_str} rispetto a {punti_totali} pt)'
-                            '</div>',
-                            unsafe_allow_html=True
-                        )
-
-                    if st.button(
-                        "✅ Applica Punteggi e Rigenera PDF" if _rc_ok else
-                        f"⛔ Applica ({_grand_total_rc} ≠ {punti_totali} pt)",
-                        key="rc_applica",
-                        disabled=not _rc_ok,
-                        use_container_width=True,
-                        type="primary",
-                    ):
-                        # Applica item pts direttamente ai blocchi
-                        for _i, _b in enumerate(st.session_state.review_blocks):
-                            if _all_new_item_pts.get(_i):
-                                _new_body_rc = apply_item_pts_to_body(
-                                    _b["body"], _all_new_item_pts[_i]
-                                )
-                                st.session_state.review_blocks[_i]["body"] = _new_body_rc
-                                # Aggiorna titolo col subtotale
-                                _clean_rc = re.sub(r"\s*\(\d+\s*pt\)", "",
-                                                   _b["title"]).strip()
-                                _ex_tot_rc = sum(_all_new_item_pts[_i])
-                                st.session_state.review_blocks[_i]["title"] = (
-                                    f"{_clean_rc} ({_ex_tot_rc} pt)"
-                                )
-
-                        _latex_rc = reconstruct_latex(
-                            st.session_state.review_preamble,
-                            st.session_state.review_blocks
-                        )
-                        _latex_rc = fix_items_environment(_latex_rc)
-                        _latex_rc = rimuovi_vspace_corpo(_latex_rc)
-                        _latex_rc = rimuovi_punti_subsection(_latex_rc)
-                        # NON chiamare riscala_punti_custom: i pt sono già esatti per item
-                        if con_griglia:
-                            _latex_rc = inietta_griglia(_latex_rc, punti_totali)
-
-                        st.session_state.verifiche["A"]["latex"]           = _latex_rc
-                        st.session_state.verifiche["A"]["latex_originale"] = _latex_rc
-
-                        with st.spinner("⏳ Ricompilazione PDF…"):
-                            _pdf_rc, _err_rc = compila_pdf(_latex_rc)
-                        if _pdf_rc:
-                            st.session_state.verifiche["A"]["pdf"]     = _pdf_rc
-                            st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
-                            st.session_state.verifiche["A"]["preview"] = True
-                            _imgs_rc, _ = pdf_to_images_bytes(_pdf_rc)
-                            st.session_state.preview_images = _imgs_rc or []
-                            st.session_state.preview_page   = 0
-                            _new_preamble, _new_blocks = extract_blocks(_latex_rc)
-                            if _new_blocks:
-                                st.session_state.review_preamble = _new_preamble
-                                st.session_state.review_blocks   = _new_blocks
-                            # Reset item_pt_ keys — si reinizializzeranno dai nuovi dati
-                            for _kk in list(st.session_state.keys()):
-                                if re.match(r"^item_pt_\d+_\d+$", _kk):
-                                    del st.session_state[_kk]
-                            if "recalibra_pts" in st.session_state:
-                                del st.session_state["recalibra_pts"]
-                            st.toast("✅ Punteggi applicati — PDF aggiornato!", icon="⚖️")
-                            st.rerun()
-                        else:
-                            st.error("❌ Errore di compilazione.")
-                            with st.expander("Log errore"):
-                                st.text(_err_rc)
 
     # ── COLONNA DESTRA — anteprima PDF una pagina alla volta ─────────────────
     with col_pdf:
@@ -4902,6 +4859,184 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             except Exception as _ct_e:
                 st.error(f"Errore: {_ct_e}")
 
+
+    # ── Ricalibra Punteggi — sopra il pulsante Conferma ──────────────────
+    # ── Expander: Ricalibra Punteggi — per singolo sottopunto ──────────
+    if mostra_punteggi and n_blocks > 0:
+        with st.expander("⚖️ Ricalibra Punteggi", expanded=False):
+            st.markdown(
+                f'<div style="font-size:.74rem;color:{T["text2"]};margin-bottom:.6rem;'
+                f'font-family:DM Sans,sans-serif;line-height:1.45;">'
+                f'Modifica i punti per ogni singolo sottopunto. '
+                f'<strong>Applica</strong> si attiva quando la somma = '
+                f'<strong>{punti_totali} pt</strong>.</div>',
+                unsafe_allow_html=True
+            )
+
+            # ── Raccogli tutti i sottopunti di tutti gli esercizi ──────────
+            _all_new_item_pts = {}   # {ex_idx: [pt1, pt2, ...]}
+            _grand_total_rc   = 0
+
+            for _i, _b in enumerate(st.session_state.review_blocks):
+                _items_rc = parse_items_from_block(_b["body"], _b.get("title", ""))
+                _title_rc = re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]).strip()
+                _title_rc = (_title_rc[:30] + "…") if len(_title_rc) > 30 else _title_rc
+
+                # Separatore tra esercizi
+                if _i > 0:
+                    st.markdown(
+                        f'<hr style="border:none;border-top:1px solid {T["border"]};margin:.5rem 0;">',
+                        unsafe_allow_html=True
+                    )
+
+                st.markdown(
+                    f'<div style="font-size:.76rem;font-weight:800;color:{T["text"]};'
+                    f'font-family:DM Sans,sans-serif;margin-bottom:.3rem;">'
+                    f'Es. {_i+1} — {_title_rc}</div>',
+                    unsafe_allow_html=True
+                )
+
+                if not _items_rc:
+                    st.markdown(
+                        f'<div style="font-size:.7rem;color:{T["muted"]};'
+                        f'font-family:DM Sans,sans-serif;font-style:italic;margin-bottom:.3rem;">'
+                        f'Nessun sottopunto con punteggio rilevato.</div>',
+                        unsafe_allow_html=True
+                    )
+                    _all_new_item_pts[_i] = []
+                    continue
+
+                _ex_new_pts_rc = []
+                _n_items = len(_items_rc)
+                _n_cols_item = min(_n_items, 4)
+                _rows_items = [_items_rc[j:j+_n_cols_item]
+                               for j in range(0, _n_items, _n_cols_item)]
+
+                for _row_items in _rows_items:
+                    _item_cols = st.columns(_n_cols_item)
+                    for _col_j, (_lbl, _short, _cur_pt) in enumerate(_row_items):
+                        _item_key = f"item_pt_{_i}_{len(_ex_new_pts_rc)}"
+                        with _item_cols[_col_j]:
+                            st.markdown(
+                                f'<div style="font-size:.72rem;font-weight:700;color:{T["text2"]};'
+                                f'font-family:DM Sans,sans-serif;line-height:1.2;">'
+                                f'<span style="background:{T["accent_light"]};border-radius:4px;'
+                                f'padding:1px 6px;margin-right:3px;">{_lbl}</span></div>',
+                                unsafe_allow_html=True
+                            )
+                            if _short:
+                                st.markdown(
+                                    f'<div style="font-size:.62rem;color:{T["muted"]};'
+                                    f'font-family:DM Sans,sans-serif;white-space:nowrap;'
+                                    f'overflow:hidden;text-overflow:ellipsis;'
+                                    f'margin-bottom:2px;">{_short}</div>',
+                                    unsafe_allow_html=True
+                                )
+                            _new_pt_item = st.number_input(
+                                f"pt {_lbl}",
+                                min_value=0, max_value=punti_totali,
+                                value=_cur_pt, step=1,
+                                key=_item_key,
+                                label_visibility="collapsed",
+                            )
+                            _ex_new_pts_rc.append(int(_new_pt_item))
+
+                _ex_subtotal = sum(_ex_new_pts_rc)
+                _grand_total_rc += _ex_subtotal
+                _all_new_item_pts[_i] = _ex_new_pts_rc
+
+                st.markdown(
+                    f'<div style="font-size:.7rem;font-weight:600;color:{T["text2"]};'
+                    f'font-family:DM Sans,sans-serif;text-align:right;margin-top:.2rem;">'
+                    f'Subtotale Es.{_i+1}: <strong>{_ex_subtotal} pt</strong></div>',
+                    unsafe_allow_html=True
+                )
+
+            # ── Totale generale + pulsante Applica ──────────────────────
+            st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
+            _rc_ok   = (_grand_total_rc == punti_totali)
+            _rc_diff = _grand_total_rc - punti_totali
+            _rc_diff_str = ("+" if _rc_diff > 0 else "") + str(_rc_diff)
+
+            if _rc_ok:
+                st.markdown(
+                    '<div class="recalibra-sum-ok">'
+                    f'✅ Totale: <strong>{_grand_total_rc} pt</strong> = {punti_totali} pt'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown(
+                    '<div class="recalibra-sum-err">'
+                    f'⚠️ Totale: <strong>{_grand_total_rc} pt</strong>'
+                    f' ({_rc_diff_str} rispetto a {punti_totali} pt)'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
+
+            if st.button(
+                "✅ Applica Punteggi e Rigenera PDF" if _rc_ok else
+                f"⛔ Applica ({_grand_total_rc} ≠ {punti_totali} pt)",
+                key="rc_applica",
+                disabled=not _rc_ok,
+                use_container_width=True,
+                type="primary",
+            ):
+                # Applica item pts direttamente ai blocchi
+                for _i, _b in enumerate(st.session_state.review_blocks):
+                    if _all_new_item_pts.get(_i):
+                        _new_body_rc = apply_item_pts_to_body(
+                            _b["body"], _all_new_item_pts[_i]
+                        )
+                        st.session_state.review_blocks[_i]["body"] = _new_body_rc
+                        # Aggiorna titolo col subtotale
+                        _clean_rc = re.sub(r"\s*\(\d+\s*pt\)", "",
+                                           _b["title"]).strip()
+                        _ex_tot_rc = sum(_all_new_item_pts[_i])
+                        st.session_state.review_blocks[_i]["title"] = (
+                            f"{_clean_rc} ({_ex_tot_rc} pt)"
+                        )
+
+                _latex_rc = reconstruct_latex(
+                    st.session_state.review_preamble,
+                    st.session_state.review_blocks
+                )
+                _latex_rc = fix_items_environment(_latex_rc)
+                _latex_rc = rimuovi_vspace_corpo(_latex_rc)
+                _latex_rc = rimuovi_punti_subsection(_latex_rc)
+                # NON chiamare riscala_punti_custom: i pt sono già esatti per item
+                if con_griglia:
+                    _latex_rc = inietta_griglia(_latex_rc, punti_totali)
+
+                st.session_state.verifiche["A"]["latex"]           = _latex_rc
+                st.session_state.verifiche["A"]["latex_originale"] = _latex_rc
+
+                with st.spinner("⏳ Ricompilazione PDF…"):
+                    _pdf_rc, _err_rc = compila_pdf(_latex_rc)
+                if _pdf_rc:
+                    st.session_state.verifiche["A"]["pdf"]     = _pdf_rc
+                    st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
+                    st.session_state.verifiche["A"]["preview"] = True
+                    _imgs_rc, _ = pdf_to_images_bytes(_pdf_rc)
+                    st.session_state.preview_images = _imgs_rc or []
+                    st.session_state.preview_page   = 0
+                    _new_preamble, _new_blocks = extract_blocks(_latex_rc)
+                    if _new_blocks:
+                        st.session_state.review_preamble = _new_preamble
+                        st.session_state.review_blocks   = _new_blocks
+                    # Reset item_pt_ keys — si reinizializzeranno dai nuovi dati
+                    for _kk in list(st.session_state.keys()):
+                        if re.match(r"^item_pt_\d+_\d+$", _kk):
+                            del st.session_state[_kk]
+                    if "recalibra_pts" in st.session_state:
+                        del st.session_state["recalibra_pts"]
+                    st.toast("✅ Punteggi applicati — PDF aggiornato!", icon="⚖️")
+                    st.rerun()
+                else:
+                    st.error("❌ Errore di compilazione.")
+                    with st.expander("Log errore"):
+                        st.text(_err_rc)
+
     # ── Pulsante CONFERMA — oro, piena larghezza ──────────────────────────────
     st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
     st.markdown('<div class="btn-confirm-gold">', unsafe_allow_html=True)
@@ -4997,10 +5132,10 @@ def _render_stage_final():
     # ── Header ────────────────────────────────────────────────────────────────
     st.markdown(
         f'<div style="background:{T["card"]};border:1.5px solid {T["border2"]};'
-        f'border-left:4px solid #10B981;border-radius:16px;padding:1.1rem 1.4rem;margin-bottom:.9rem;'
-        f'box-shadow:0 2px 16px rgba(16,185,129,.10);">'
+        f'border-left:4px solid {T["success"]};border-radius:16px;padding:1.1rem 1.4rem;margin-bottom:.9rem;'
+        f'box-shadow:0 2px 16px {T["success"]}1A;">'
         f'<div style="display:flex;align-items:center;gap:14px;">'
-        f'<div style="background:linear-gradient(135deg,#059669,#10B981);border-radius:12px;'
+        f'<div style="background:linear-gradient(135deg,{T["success"]}cc,{T["success"]});border-radius:12px;'
         f'width:48px;height:48px;display:flex;align-items:center;justify-content:center;'
         f'flex-shrink:0;font-size:1.6rem;">🎉</div>'
         f'<div style="flex:1;">'
@@ -5615,43 +5750,15 @@ if not _share_view_active:
     )
     if _show_bc:
         _render_sticky_header()
-        # ── Progress bar colorata in cima alla pagina ─────────────────────
-        _pb_stage = st.session_state.stage
-        _pb_visual = STAGE_REVIEW if _pb_stage == STAGE_PREVIEW else _pb_stage
-        _pb_pct = {STAGE_INPUT: 33, STAGE_REVIEW: 66, STAGE_FINAL: 100}.get(_pb_visual, 33)
-        _pb_color = {
-            STAGE_INPUT:  T["accent"],
-            STAGE_REVIEW: "#D97706",
-            STAGE_FINAL:  "#059669",
-        }.get(_pb_visual, T["accent"])
-        components.html(f"""
-<script>
-(function() {{
-  var doc = window.parent.document;
-  var PB_ID = '_vai_progress_bar';
-  var old = doc.getElementById(PB_ID);
-  if (old) old.remove();
-  // Container
-  var wrap = doc.createElement('div');
-  wrap.id = PB_ID;
-  wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:1500;height:3px;background:rgba(255,255,255,.08);pointer-events:none;';
-  // Fill
-  var fill = doc.createElement('div');
-  fill.style.cssText = 'height:100%;width:{_pb_pct}%;background:{_pb_color};transition:width .6s cubic-bezier(.4,0,.2,1);border-radius:0 2px 2px 0;box-shadow:0 0 8px {_pb_color}88;';
-  wrap.appendChild(fill);
-  doc.body.insertBefore(wrap, doc.body.firstChild);
-}})();
-</script>""", height=0)
+        _render_step_progress()
     else:
-        # Sulla landing: rimuovi l'eventuale sticky header e progress bar rimasti
+        # Sulla landing: rimuovi l'eventuale sticky header rimasto
         components.html("""
 <script>
 (function() {
   var doc = window.parent.document;
   var old = doc.getElementById('_vai_sticky_hdr');
   if (old) old.remove();
-  var pb = doc.getElementById('_vai_progress_bar');
-  if (pb) pb.remove();
   // Ripristina padding-top del container
   var main = doc.querySelector('.main .block-container');
   if (main) main.style.paddingTop = '';

@@ -181,8 +181,8 @@ def render_sidebar(
             unsafe_allow_html=True
         )
         _perc_uso   = min(100, int(verifiche_mese_count / LIMITE_MENSILE * 100))
-        _color_bar  = ("#EF4444" if limite_raggiunto
-                       else ("#F59E0B" if _perc_uso >= 70 else "#10B981"))
+        _color_bar  = (T["error"] if limite_raggiunto
+                       else (T["warn"] if _perc_uso >= 70 else T["success"]))
         _count_class = ("limit-reached" if limite_raggiunto
                         else ("limit-near" if _perc_uso >= 70 else ""))
 
@@ -206,7 +206,7 @@ def render_sidebar(
             <div class="monthly-progress-fill"
                  style="width:{_perc_uso}%;background:{_color_bar};"></div>
           </div>
-          <div style="text-align:right;font-size:0.68rem;color:#6b6960;
+          <div style="text-align:right;font-size:0.68rem;color:{T['muted']};
                       margin-top:4px;font-family:'DM Sans',sans-serif;">
             🔄 {_reset_str}
           </div>
@@ -226,18 +226,17 @@ def render_sidebar(
                 _msg = f"Ti restano {_rimaste} {'verifica' if _rimaste==1 else 'verifiche'}."
                 _sub = "Con Pro avresti accesso illimitato."
             st.markdown(f"""
-            <div style="background:linear-gradient(135deg,#0D1B35,#0A2A1C);
-                        border:1px solid #1E3A5F;border-radius:10px;
-                        padding:.65rem .9rem;margin:.5rem 0 .3rem 0;">
-              <div style="font-size:.73rem;font-weight:700;color:#60AAEE;
+            <div style="background:{T['hint_bg']};border:1px solid {T['hint_border']};
+                        border-radius:12px;padding:.65rem .9rem;margin:.5rem 0 .3rem 0;">
+              <div style="font-size:.73rem;font-weight:700;color:{T['accent']};
                            font-family:'DM Sans',sans-serif;margin-bottom:2px;">
                 ✦ VerificAI Pro
               </div>
-              <div style="font-size:.7rem;color:#C8C6BC;font-family:'DM Sans',sans-serif;
+              <div style="font-size:.7rem;color:{T['text2']};font-family:'DM Sans',sans-serif;
                           margin-bottom:.45rem;line-height:1.4;">
                 {_msg} {_sub}
               </div>
-              <div style="font-size:.68rem;color:#4A8FC8;font-family:'DM Sans',sans-serif;">
+              <div style="font-size:.68rem;color:{T['muted']};font-family:'DM Sans',sans-serif;">
                 Verifiche illimitate · Fila B · BES/DSA · Soluzioni
               </div>
             </div>
@@ -349,11 +348,11 @@ def render_sidebar(
                     # ── Card visuale con tempo relativo ───────────────────
                     _badge_html = ""
                     if scu_str:
-                        _badge_html += f'<span style="background:#2A2923;color:#8b8980;font-size:.58rem;font-weight:600;padding:1px 5px;border-radius:4px;margin-right:3px;">{scu_str[:16]}</span>'
+                        _badge_html += f'<span style="background:{T["bg2"]};color:{T["muted"]};font-size:.58rem;font-weight:600;padding:1px 5px;border-radius:4px;margin-right:3px;">{scu_str[:16]}</span>'
                     if _has_b:
-                        _badge_html += '<span style="background:#1E3A5F;color:#60AAEE;font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:4px;margin-right:3px;">FILA B</span>'
+                        _badge_html += f'<span style="background:{T["accent_light"]};color:{T["accent"]};font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:4px;margin-right:3px;">FILA B</span>'
                     if _has_r:
-                        _badge_html += '<span style="background:#2D1B4E;color:#A78BFA;font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:4px;">BES</span>'
+                        _badge_html += f'<span style="background:{T["hint_bg"]};color:{T["hint_text"]};font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:4px;">BES</span>'
 
                     st.markdown(
                         f'<div class="storico-card">'

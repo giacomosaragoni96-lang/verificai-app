@@ -171,7 +171,7 @@ def get_css(T: dict) -> str:
     background: {_surf_raised} !important;
     background-color: {_surf_raised} !important;
     border: 2px solid {T['border2']} !important;
-    border-radius: 14px !important;
+    border-radius: {_radius_lg} !important;
     overflow: hidden !important;
     margin-bottom: .5rem !important;
   }}
@@ -996,7 +996,7 @@ def get_css(T: dict) -> str:
   .side-box {{
     background: {T['card']};
     border: 1px solid {T['border2']};
-    border-radius: 14px;
+    border-radius: {_radius_lg};
     padding: 1.1rem 1.2rem 1rem;
     margin-bottom: .65rem;
     box-shadow: {_shadow_sm};
@@ -1084,9 +1084,9 @@ def get_css(T: dict) -> str:
 
   /* ── Facsimile Card — Viola/Accento speciale ── */
   .fac-card {{
-    background: linear-gradient(135deg, #7C3AED14, {T['card']});
-    border: 2px solid #7C3AED44;
-    border-radius: 18px;
+    background: linear-gradient(135deg, {_acc}14, {T['card']});
+    border: 2px solid {_acc}44;
+    border-radius: {_radius_lg};
     padding: 1.1rem 1.4rem;
     display: flex;
     align-items: center;
@@ -1094,13 +1094,13 @@ def get_css(T: dict) -> str:
     transition: border-color .2s ease, box-shadow .2s ease;
   }}
   .fac-card:hover {{
-    border-color: #7C3AED88;
-    box-shadow: 0 4px 24px #7C3AED22;
+    border-color: {_acc}88;
+    box-shadow: 0 4px 24px {_acc}22;
   }}
   .fac-badge {{
-    font-size: 0.9rem; font-weight: 800;
+    font-size: 0.9rem; font-weight: 700;
     letter-spacing: .08em; text-transform: uppercase;
-    color: #A78BFA;
+    color: {_acc};
     margin-bottom: .15rem;
   }}
   .fac-title {{
@@ -1176,7 +1176,7 @@ def get_css(T: dict) -> str:
     font-size: 1.15rem !important;
     font-weight: 900 !important;
     letter-spacing: -.01em !important;
-    border-radius: 14px !important;
+    border-radius: {_radius_lg} !important;
   }}
   /* Nuovo: hint testuale leggero sopra il pulsante Genera */
   .cta-hint-text {{
@@ -1213,7 +1213,7 @@ def get_css(T: dict) -> str:
   .side-panel-card {{
     background: {_surf_raised};
     border: 1.5px solid {T['border']};
-    border-radius: 14px;
+    border-radius: {_radius_lg};
     padding: .85rem 1rem .6rem;
     margin-bottom: .3rem;
   }}
@@ -1363,212 +1363,154 @@ def get_css(T: dict) -> str:
   
 
   /* ════════════════════════════════════════════════════════════════════════
-     FILE POOL — Sezione e card (contenitore unico per file caricati)
+     FILE POOL — Card compatta per ogni documento caricato
      ════════════════════════════════════════════════════════════════════════ */
   .file-pool-card {{
     background: {T['bg2']};
     border: 1px solid {T['border2']};
     border-radius: {_radius_sm};
-    padding: 0.7rem 0.85rem;
-    margin-bottom: 0.55rem;
-    box-shadow: {_shadow_xs};
+    padding: 0.55rem 0.7rem 0.45rem;
+    margin-bottom: 0.5rem;
     transition: border-color {_transition}, box-shadow {_transition};
   }}
   .file-pool-card:hover {{
     border-color: {_acc_med};
-    box-shadow: {_shadow_sm};
+    box-shadow: 0 2px 10px {_acc}18;
   }}
-  .file-pool-card:last-of-type {{
-    margin-bottom: 0;
+
+  /* ── Header row: icon + name + meta ────────────────────────────────── */
+  .fpc-header {{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.4rem;
+    margin-bottom: 0.3rem;
   }}
-  .file-pool-card .file-ai-summary {{
-    margin: 0.25rem 0 0.15rem;
-    padding: 0.25rem 0.4rem;
+  .fpc-name {{
     font-size: 0.8rem;
+    font-weight: 700;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
   }}
-  /* doc-card-meta: riga materia · n esercizi */
-  .doc-card-meta {{
-    font-size: 0.71rem;
+  .fpc-meta {{
+    font-size: 0.68rem;
     color: {T['muted']};
     font-family: 'DM Sans', sans-serif;
     white-space: nowrap;
+    flex-shrink: 0;
   }}
-  .doc-card-meta strong {{ color: {T['text2']}; }}
+  .fpc-meta strong {{ color: {T['text2']}; }}
 
-  /* Radio toggle inside file card */
+  /* ── Mode radio — pill toggle ───────────────────────────────────────── */
   .file-pool-card [data-testid="stRadio"] {{
-    margin: 0.35rem 0 0 !important;
+    margin: 0.3rem 0 0.1rem !important;
   }}
   .file-pool-card [data-testid="stRadio"] > div {{
-    gap: 0.4rem !important;
+    gap: 0.35rem !important;
     flex-wrap: nowrap !important;
   }}
   .file-pool-card [data-testid="stRadio"] label {{
-    font-size: 0.78rem !important;
-    padding: 3px 8px !important;
-    border-radius: 6px !important;
+    font-size: 0.75rem !important;
+    padding: 2px 9px !important;
+    border-radius: 20px !important;
     border: 1px solid {T['border2']} !important;
-    background: {T['bg2']} !important;
+    background: transparent !important;
     color: {T['text2']} !important;
     cursor: pointer !important;
-    transition: background 0.15s, border-color 0.15s !important;
+    transition: all 0.15s !important;
     white-space: nowrap !important;
+    font-family: 'DM Sans', sans-serif !important;
   }}
   .file-pool-card [data-testid="stRadio"] label:has(input:checked) {{
     background: {_acc_soft} !important;
-    border-color: {_acc_ring} !important;
+    border-color: {_acc} !important;
     color: {_acc} !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
   }}
   .file-pool-card [data-testid="stRadio"] input[type="radio"] {{
     display: none !important;
   }}
 
-  .file-pool-card .file-item-b-mode-label {{
-    margin: 0.1rem 0 0.05rem;
-    font-size: 0.8rem;
+  /* ── Delete row — tiny right-aligned button ──────────────────────────── */
+  .fpc-delete-row {{
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
   }}
-  .file-pool-card .file-item-b-delete {{
-    margin-top: 0.15rem;
+  .fpc-delete-row button {{
+    min-height: 22px !important;
+    height: 22px !important;
+    padding: 0 8px !important;
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    color: {T['muted']} !important;
+    background: transparent !important;
+    border: 1px solid {T['border2']} !important;
+    border-radius: 20px !important;
+    line-height: 1 !important;
+    transition: color 0.15s, border-color 0.15s !important;
+    box-shadow: none !important;
   }}
-  .file-pool-card .file-item-b-delete button {{
-    min-height: 26px !important;
-    font-size: 0.82rem !important;
-  }}
-  .file-pool-card .facsimile-detection-banner {{
-    margin: 0.4rem 0 0.25rem;
-    padding: 0.5rem 0.65rem;
-  }}
-  .file-pool-card .facsimile-detection-title {{
-    font-size: 0.85rem !important;
-  }}
-  .file-pool-card .facsimile-detection-sub {{
-    font-size: 0.75rem !important;
-  }}
-  .file-pool-card .facsimile-inline-btn button {{
-    min-height: 42px !important;
-    font-size: 0.9rem !important;
+  .fpc-delete-row button:hover {{
+    color: {T['error']} !important;
+    border-color: {T['error']}40 !important;
+    background: {T['error']}08 !important;
   }}
 
-  /* ── Document Dashboard ─────────────────────────────────────────────── */
-  .doc-pool-header {{
+  /* ── Tag pills ──────────────────────────────────────────────────────── */
+  .doc-tags {{
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.55rem;
-    padding-bottom: 0.4rem;
-    border-bottom: 1px solid {T['border2']};
+    flex-wrap: wrap;
+    gap: 0.2rem;
+    margin-bottom: 0.2rem;
   }}
-  .doc-pool-title {{
-    font-size: 0.64rem;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: {T['muted']};
-    font-family: 'DM Sans', sans-serif;
-  }}
-  .doc-pool-count {{
+  .doc-tag {{
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: 18px; height: 18px;
-    background: {_acc_soft};
-    color: {_acc};
-    border-radius: 50%;
-    font-size: 0.7rem;
-    font-weight: 700;
-    margin-left: 0.3rem;
+    gap: 0.1rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-family: 'DM Sans', sans-serif;
   }}
+  .doc-tag-tipo    {{ background:{_acc_soft}; color:{_acc};    border:1px solid {_acc_ring}; }}
+  .doc-tag-content {{ background:{T['border2']}44; color:{T['text2']}; border:1px solid {T['border2']}; }}
+  .doc-tag-formula {{ background:{_acc}12; color:{_acc}; border:1px solid {_acc}28; }}
+  .doc-tag-grafico {{ background:{T['warn']}12; color:{T['warn']}; border:1px solid {T['warn']}28; }}
 
-  /* Empty state */
+  /* ── Empty state ────────────────────────────────────────────────────── */
   .doc-pool-empty {{
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 1.8rem 1rem;
+    padding: 1.4rem 1rem 1.2rem;
     text-align: center;
-    gap: 0.5rem;
+    gap: 0.35rem;
   }}
-  .doc-pool-empty-icon {{
-    font-size: 2.2rem;
-    opacity: 0.5;
-    margin-bottom: 0.2rem;
-  }}
+  .doc-pool-empty-icon  {{ font-size: 1.8rem; opacity: 0.4; }}
   .doc-pool-empty-title {{
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 600;
     color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
   }}
   .doc-pool-empty-sub {{
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: {T['muted']};
     line-height: 1.45;
-    max-width: 180px;
-  }}
-
-  /* Tag pills */
-  .doc-tags {{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    margin: 0.3rem 0 0.25rem;
-  }}
-  .doc-tag {{
-    display: inline-flex;
-    align-items: center;
-    gap: 0.15rem;
-    font-size: 0.68rem;
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: 4px;
-    white-space: nowrap;
-    letter-spacing: 0.03em;
-    font-family: 'DM Sans', sans-serif;
-  }}
-  .doc-tag-tipo {{
-    background: {_acc_soft};
-    color: {_acc};
-    border: 1px solid {_acc_ring};
-  }}
-  .doc-tag-content {{
-    background: {T['border2']}55;
-    color: {T['text2']};
-    border: 1px solid {T['border2']};
-  }}
-  .doc-tag-formula {{
-    background: #A855F715;
-    color: #A855F7;
-    border: 1px solid #A855F730;
-  }}
-  .doc-tag-grafico {{
-    background: #F59E0B15;
-    color: #D97706;
-    border: 1px solid #F59E0B30;
-  }}
-
-  /* Snippet text */
-  .doc-snippet {{
-    font-size: 0.75rem;
-    color: {T['text2']};
-    line-height: 1.45;
-    margin: 0.2rem 0 0.3rem;
-    padding: 0.3rem 0.45rem;
-    background: {T['bg2']};
-    border-left: 2px solid {_acc_soft};
-    border-radius: 0 {_radius_sm} {_radius_sm} 0;
-    font-style: italic;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    max-width: 190px;
   }}
 
   /* Confirm pulisci */
   .confirm-pulisci-box {{
-    background: #EF444415;
-    border: 1px solid #EF444430;
+    background: {T['error']}15;
+    border: 1px solid {T['error']}30;
     border-radius: {_radius_sm};
     padding: 0.55rem 0.65rem;
     margin: 0.4rem 0 0.2rem;
@@ -1576,7 +1518,7 @@ def get_css(T: dict) -> str:
     color: {T['text']};
   }}
   .confirm-pulisci-box strong {{
-    color: #EF4444;
+    color: {T['error']};
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -1637,12 +1579,12 @@ def get_css(T: dict) -> str:
     white-space: nowrap; flex-shrink: 0;
   }}
   .file-item-b-badge-verifica {{
-    background: #3B82F618; color: #3B82F6;
-    border: 1px solid #3B82F633;
+    background: {_acc_soft}; color: {_acc};
+    border: 1px solid {_acc_med};
   }}
   .file-item-b-badge-appunti {{
-    background: #10B98118; color: #10B981;
-    border: 1px solid #10B98133;
+    background: {T['success']}18; color: {T['success']};
+    border: 1px solid {T['success']}33;
   }}
   .file-item-b-badge-altro {{
     background: {T['border2']}44; color: {T['text2']};
@@ -1668,9 +1610,9 @@ def get_css(T: dict) -> str:
   }}
   .file-item-b-delete button:hover {{
     opacity: 1;
-    color: #EF4444 !important;
-    border-color: #EF4444 !important;
-    background: #EF444408 !important;
+    color: {T['error']} !important;
+    border-color: {T['error']} !important;
+    background: {T['error']}08 !important;
   }}
 
   /* ═══ Context sync badge ═══ */
@@ -1827,7 +1769,7 @@ def get_css(T: dict) -> str:
   .facsimile-page-title {{
     font-family: 'DM Sans', sans-serif;
     font-size: 1.4rem; font-weight: 900;
-    color: #A78BFA;
+    color: {T['text']};
     letter-spacing: -.02em;
     margin-bottom: .3rem;
   }}
@@ -1841,8 +1783,8 @@ def get_css(T: dict) -> str:
   }}
   .facsimile-page-uploader {{
     background: {_surf_raised};
-    border: 2px dashed #7C3AED44;
-    border-radius: 18px;
+    border: 2px dashed {_acc}44;
+    border-radius: {_radius_lg};
     padding: 1.3rem 1.2rem;
     margin-bottom: .5rem;
   }}
@@ -1873,7 +1815,7 @@ def get_css(T: dict) -> str:
   .rubrica-wrap {{
     background: {_surf_overlay};
     border: 1.5px solid {T['border']};
-    border-radius: 14px;
+    border-radius: {_radius_lg};
     padding: .8rem 1rem;
     margin-bottom: .6rem;
   }}
@@ -1951,7 +1893,7 @@ def get_css(T: dict) -> str:
     background: {T['card']} !important;
     background-color: {T['card']} !important;
     border: 2px solid {T['border2']} !important;
-    border-radius: 14px !important;
+    border-radius: {_radius_lg} !important;
     color: {T['text']} !important;
     -webkit-text-fill-color: {T['text']} !important;
     font-family: 'DM Sans', sans-serif !important;
@@ -1959,7 +1901,7 @@ def get_css(T: dict) -> str:
     font-weight: 700 !important;
     padding: .75rem 1.1rem !important;
     text-align: left !important;
-    box-shadow: 0 2px 8px rgba(10,143,114,.08) !important;
+    box-shadow: 0 2px 8px {_acc}14 !important;
     transition: background .2s, border-color .2s !important;
   }}
   .pers-toggle-closed button:hover {{
@@ -1975,7 +1917,7 @@ def get_css(T: dict) -> str:
     background-color: {T['accent']} !important;
     border: 2px solid {T['accent']} !important;
     border-bottom: 2px solid {T['accent2']} !important;
-    border-radius: 14px 14px 0 0 !important;
+    border-radius: {_radius_lg} {_radius_lg} 0 0 !important;
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
     font-family: 'DM Sans', sans-serif !important;
@@ -1983,7 +1925,7 @@ def get_css(T: dict) -> str:
     font-weight: 700 !important;
     padding: .75rem 1.1rem !important;
     text-align: left !important;
-    box-shadow: 0 2px 12px rgba(10,143,114,.25) !important;
+    box-shadow: 0 2px 12px {_acc}40 !important;
   }}
   .pers-toggle-open button:hover {{
     background: linear-gradient(135deg, {T['accent2']} 0%, {T['accent']} 100%) !important;
@@ -1993,10 +1935,10 @@ def get_css(T: dict) -> str:
     background: {T['card']} !important;
     border: 2px solid {T['accent']} !important;
     border-top: none !important;
-    border-radius: 0 0 14px 14px !important;
+    border-radius: 0 0 {_radius_lg} {_radius_lg} !important;
     padding: 1.1rem 1.2rem 1.3rem !important;
     margin-bottom: .5rem !important;
-    box-shadow: 0 4px 16px rgba(10,143,114,.10) !important;
+    box-shadow: 0 4px 16px {_acc}1A !important;
   }}
 
   /* st.container(border=True) che segue il toggle aperto.
@@ -2004,7 +1946,7 @@ def get_css(T: dict) -> str:
      Override del bordo grigio con il teal accent, collegato visivamente all'header. */
   [data-testid="stVerticalBlockBorderWrapper"] {{
     border: 2px solid {T['border2']} !important;
-    border-radius: 14px !important;
+    border-radius: {_radius_lg} !important;
   }}
   /* Dentro pers-toggle-wrap aperto: collegato all'header senza angoli in alto */
   .pers-toggle-open ~ [data-testid="stVerticalBlockBorderWrapper"],
@@ -2012,16 +1954,16 @@ def get_css(T: dict) -> str:
   .pers-toggle-open ~ div > [data-testid="stVerticalBlockBorderWrapper"]:first-child {{
     border: 2px solid {T['accent']} !important;
     border-top: none !important;
-    border-radius: 0 0 14px 14px !important;
+    border-radius: 0 0 {_radius_lg} {_radius_lg} !important;
     background: {T['card']} !important;
     margin-top: -2px !important;
-    box-shadow: 0 4px 16px rgba(10,143,114,.10) !important;
+    box-shadow: 0 4px 16px {_acc}1A !important;
   }}
   .personalizza-wrap details[data-testid="stExpander"] {{
     --background-color: {_surf_raised};
     background: {_surf_raised} !important;
     border: 2px solid {T['border2']} !important;
-    border-radius: 14px !important;
+    border-radius: {_radius_lg} !important;
     overflow: hidden !important;
     box-shadow: 0 2px 12px rgba(0,0,0,.04) !important;
   }}
@@ -2220,7 +2162,7 @@ def get_css(T: dict) -> str:
   [data-testid="stToast"] {{
     background: {T['card']} !important;
     border: 1.5px solid {T['border']} !important;
-    border-radius: 14px !important;
+    border-radius: {_radius_lg} !important;
     box-shadow: 0 8px 32px rgba(0,0,0,.15) !important;
   }}
   [data-testid="stToast"] [data-testid="stMarkdownContainer"] {{
@@ -2550,31 +2492,7 @@ def get_css(T: dict) -> str:
     animation: none !important;
   }}
 
-  /* CTA variante (per colleghi) */
-  .shared-cta-card {{
-    background: linear-gradient(135deg, {_acc}12, {_acc}06);
-    border: 2px solid {_acc}35;
-    border-radius: 14px;
-    padding: 1rem 1.2rem;
-    margin: .7rem 0;
-    text-align: center;
-  }}
-  .shared-cta-icon {{
-    font-size: 1.8rem;
-    margin-bottom: .3rem;
-  }}
-  .shared-cta-title {{
-    font-size: .95rem;
-    font-weight: 800;
-    color: {_acc};
-    font-family: 'DM Sans', sans-serif;
-    margin-bottom: .3rem;
-  }}
-  .shared-cta-desc {{
-    font-size: 0.96rem;
-    color: {T['text2']};
-    line-height: 1.5;
-  }}
+  /* CTA variante (per colleghi) — definita una sola volta più in basso */
 
   /* ════════════════════════════════════════════════════════════════════════
      STORICO — Sidebar migliorato
@@ -2591,12 +2509,12 @@ def get_css(T: dict) -> str:
   }}
   .storico-filter-chip {{
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 700;
     padding: 2px 8px;
     border-radius: 10px;
-    border: 1px solid #30363D;
+    border: 1px solid {T['border']};
     background: transparent;
-    color: #6E7681;
+    color: {T['muted']};
     font-family: 'DM Sans', sans-serif;
   }}
   .storico-filter-chip-active {{
@@ -2621,7 +2539,7 @@ def get_css(T: dict) -> str:
   }}
   .elimina-btn button {{
     background: transparent !important;
-    border: 1px dashed #3D444D !important;
+    border: 1px dashed {T['border2']} !important;
     padding: 2px 6px !important;
     font-size: 0.92rem !important;
     min-height: auto !important;
@@ -2630,8 +2548,8 @@ def get_css(T: dict) -> str:
   }}
   .elimina-btn button:hover {{
     opacity: 1;
-    border-color: #EF4444 !important;
-    color: #EF4444 !important;
+    border-color: {T['error']} !important;
+    color: {T['error']} !important;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -2698,7 +2616,7 @@ def get_css(T: dict) -> str:
   .share-dept-card {{
     background: linear-gradient(135deg, {T.get("card2", T["card"])} 0%, {T["card"]} 100%);
     border: 1px solid {T["border"]};
-    border-radius: 14px;
+    border-radius: {_radius_lg};
     padding: 1rem 1.2rem;
     margin-bottom: .6rem;
   }}
@@ -2803,9 +2721,11 @@ def get_css(T: dict) -> str:
     color: {T["text2"]};
     font-family: 'DM Sans', sans-serif;
   }}
+  /* CTA variante (per colleghi) */
   .shared-cta-card {{
-    background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
-    border-radius: 14px;
+    background: linear-gradient(135deg, {T['warn']}22 0%, {T['warn']}0e 100%);
+    border: 2px solid {T['warn']}40;
+    border-radius: {_radius_lg};
     padding: 1.1rem 1.3rem;
     margin-bottom: .7rem;
     text-align: center;
@@ -2817,13 +2737,13 @@ def get_css(T: dict) -> str:
   .shared-cta-title {{
     font-family: 'DM Sans', sans-serif;
     font-size: 1rem;
-    font-weight: 900;
-    color: #fff;
+    font-weight: 800;
+    color: {T['warn']};
     margin-bottom: .3rem;
   }}
   .shared-cta-desc {{
     font-size: 0.88rem;
-    color: #ffffffcc;
+    color: {T['text2']};
     line-height: 1.45;
   }}
 
@@ -3100,6 +3020,171 @@ def get_css(T: dict) -> str:
     border-color: ''' + T['border2'] + ''' !important;
   }}
   ''' if _is_light else '/* Dark mode: no additional overrides needed */'}
+
+
+  /* ════════════════════════════════════════════════════════════════════════
+     RESPONSIVE — Mobile & Tablet
+     Breakpoint 768px: tablet/phone; 480px: phone piccoli.
+     Nessuna modifica a layout desktop (> 768px).
+     ════════════════════════════════════════════════════════════════════════ */
+
+  @media (max-width: 768px) {{
+
+    /* ── Container: padding laterale ridotto ─────────────────────────── */
+    .main .block-container,
+    .block-container {{
+      padding-left: 0.65rem !important;
+      padding-right: 0.65rem !important;
+      padding-top: 0.8rem !important;
+      padding-bottom: 2rem !important;
+      max-width: 100% !important;
+    }}
+
+    /* ── Streamlit columns: stack verticale ──────────────────────────── */
+    [data-testid="stHorizontalBlock"] {{
+      flex-direction: column !important;
+      gap: 0.6rem !important;
+    }}
+    [data-testid="stColumn"] {{
+      width: 100% !important;
+      flex: none !important;
+      min-width: unset !important;
+      max-width: 100% !important;
+    }}
+
+    /* ── Upload column: rimuovi altezza fissa, full-width ────────────── */
+    [data-testid="stColumn"]:has(.upload-column-label),
+    [data-testid="stColumn"]:has(> div > [data-testid="stFileUploader"]),
+    [data-testid="stColumn"]:has(> div > div > [data-testid="stFileUploader"]) {{
+      height: auto !important;
+      max-height: 60vh !important;
+      min-width: unset !important;
+      max-width: 100% !important;
+      overflow-y: auto !important;
+    }}
+
+    /* ── Step progress: connettori più corti ─────────────────────────── */
+    .sp-wrap  {{ padding: 0.55rem 0.4rem 0.7rem; }}
+    .sp-circle {{ width: 30px; height: 30px; font-size: .72rem; }}
+    .sp-label  {{ font-size: .68rem; }}
+    .sp-connector {{ width: 36px; }}
+
+    /* ── Landing: headline ridotta ───────────────────────────────────── */
+    .landing-headline-xl {{
+      font-size: clamp(1.7rem, 7vw, 2.4rem) !important;
+      letter-spacing: -0.025em !important;
+    }}
+    .landing-sub-xl {{ font-size: 0.95rem !important; }}
+
+    /* ── Feature pills: leggermente più piccole ──────────────────────── */
+    .tally-feat-pill {{ font-size: .88rem; padding: .3rem .75rem; }}
+
+    /* ── Form section headers: meno spazio ───────────────────────────── */
+    .form-section-header {{ margin-top: 0.5rem !important; }}
+
+    /* ── File pool card: padding compatto ────────────────────────────── */
+    .file-pool-card {{ padding: 0.5rem 0.65rem 0.4rem; }}
+
+    /* ── Genera bozza CTA: altezza ridotta ───────────────────────────── */
+    .cta-genera-wrap button {{ min-height: 52px !important; font-size: 1rem !important; }}
+
+    /* ── Pulsante conferma PDF ───────────────────────────────────────── */
+    .btn-confirm-gold button,
+    [data-testid="stButton"]:has(.btn-confirm-gold) button {{
+      min-height: 58px !important;
+    }}
+
+    /* ── Download CTA button ─────────────────────────────────────────── */
+    .dl-cta-wrap button {{
+      min-height: 60px !important;
+      font-size: 1.05rem !important;
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
+    }}
+
+    /* ── Storico sidebar card ────────────────────────────────────────── */
+    .storico-card {{ padding: 0.55rem 0.7rem; }}
+
+    /* ── Radio buttons: a capo se serve ──────────────────────────────── */
+    .file-pool-card [data-testid="stRadio"] > div {{
+      flex-wrap: wrap !important;
+      gap: 0.3rem !important;
+    }}
+
+    /* ── Select: no troncamento ──────────────────────────────────────── */
+    [data-testid="stSelectbox"] > div > div {{ min-width: 0 !important; }}
+
+    /* ── Site header (logo landing) ──────────────────────────────────── */
+    .site-header {{ padding: 0.6rem 0.8rem; }}
+    .site-header-name {{ font-size: 1.1rem !important; }}
+
+    /* ── Context sync badge ──────────────────────────────────────────── */
+    .context-sync-badge {{ font-size: 0.72rem; padding: 0.3rem 0.55rem; }}
+
+    /* ── Number input group (Ricalibra punteggi) ─────────────────────── */
+    [data-testid="stNumberInput"] input {{ font-size: 0.9rem !important; }}
+
+    /* ── Expander label ──────────────────────────────────────────────── */
+    details[data-testid="stExpander"] summary span {{
+      font-size: 0.9rem !important;
+    }}
+
+    /* ── KaTeX iframe: altezza massima ───────────────────────────────── */
+    [data-testid="stIFrame"] {{ max-height: 420px !important; }}
+
+    /* ── Anteprima PDF (colonna destra review): adatta ───────────────── */
+    [data-testid="stImage"] img {{ border-radius: 8px; }}
+
+    /* ── variant-card: altezza auto su mobile ────────────────────────── */
+    .variant-card {{ min-height: 100px !important; height: auto !important; }}
+
+    /* ── Rubrica button full width ───────────────────────────────────── */
+    .btn-outline-accent-marker ~ div button {{ width: 100% !important; }}
+  }}
+
+  @media (max-width: 480px) {{
+
+    /* ── Padding ultra-compatto ──────────────────────────────────────── */
+    .main .block-container,
+    .block-container {{
+      padding-left: 0.4rem !important;
+      padding-right: 0.4rem !important;
+    }}
+
+    /* ── Landing headline ancora più piccola ─────────────────────────── */
+    .landing-headline-xl {{
+      font-size: clamp(1.5rem, 8.5vw, 2rem) !important;
+    }}
+    .landing-sub-xl {{ font-size: 0.88rem !important; line-height: 1.55 !important; }}
+    .tally-feat-pill {{ font-size: .8rem; padding: .25rem .6rem; }}
+
+    /* ── Step progress: ancora più compatto ──────────────────────────── */
+    .sp-connector {{ width: 22px; }}
+    .sp-circle {{ width: 26px; height: 26px; font-size: .62rem; }}
+    .sp-label  {{ font-size: .6rem; letter-spacing: 0; }}
+    .sp-wrap   {{ gap: 4px; }}
+
+    /* ── Heading scale ridotta ───────────────────────────────────────── */
+    .stApp h1, .stMarkdown h1 {{
+      font-size: 1.55rem !important;
+    }}
+    .stApp h2, .stMarkdown h2 {{
+      font-size: 1.2rem !important;
+    }}
+
+    /* ── Global font size base ───────────────────────────────────────── */
+    .stApp {{
+      font-size: 15px !important;
+    }}
+    .stApp p, .stApp li, .stApp label,
+    .stApp [data-testid="stMarkdownContainer"] p {{
+      font-size: 0.94rem !important;
+    }}
+
+    /* ── Bottoni primari: altezza gestibile ──────────────────────────── */
+    .cta-genera-wrap button {{ min-height: 46px !important; }}
+    .dl-cta-wrap button      {{ min-height: 52px !important; font-size: 0.95rem !important; }}
+  }}
 
 </style>
 """

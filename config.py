@@ -215,12 +215,240 @@ THEMES = {
         "hint_border":  "#86EFAC",
         "hint_text":    "#166534",
     },
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  VIOLA — Midnight Purple  (deep space, editorial luxury)
+    #  Palette: Purple-black bg · Violet 400 accent · warm off-white text
+    # ═══════════════════════════════════════════════════════════════════════
+    "viola": {
+        # Superfici
+        "bg":         "#0C0A1A",
+        "bg2":        "#140F2A",
+        "card":       "#1A1434",
+        "card2":      "#1F193C",
+
+        # Testo — violet-tinted warm white
+        "text":       "#EDE9FE",   # Violet 50
+        "text2":      "#A89ECA",   # muted violet
+        "muted":      "#6B5F8A",   # muted purple
+
+        # Bordi
+        "border":     "#2E2648",
+        "border2":    "#3D3464",
+
+        # Accent — Violet 400 (bright on dark purple)
+        "accent":       "#A78BFA",
+        "accent2":      "#C4B5FD",   # Violet 300 hover
+        "accent_light": "#1E1543",   # dark violet pill
+
+        # Interazione
+        "hover":      "#17102E",
+
+        # Semantici
+        "success":    "#4ADE80",   # Green 400
+        "warn":       "#FCD34D",   # Amber 300
+        "error":      "#FC8181",   # Red 300
+
+        # Ombre
+        "shadow":     "0 1px 3px rgba(0,0,0,.50)",
+        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
+        "shadow_soft": "0 8px 32px rgba(12,10,26,.70), 0 2px 8px rgba(0,0,0,.30)",
+
+        # Design system
+        "radius_sm":  "8px",
+        "radius_md":  "12px",
+        "radius_lg":  "16px",
+
+        # Sidebar — deep purple-black
+        "sidebar_bg":       "linear-gradient(180deg, #07040F 0%, #0C0A1A 100%)",
+        "sidebar_border":   "#2E2648",
+        "sidebar_accent":   "#C4B5FD",
+        "sidebar_input_bg":  "#140F2A",
+        "sidebar_input_text": "#EDE9FE",
+
+        # Hint boxes
+        "hint_bg":      "#1E1543",
+        "hint_border":  "#4C3B8A",
+        "hint_text":    "#C4B5FD",
+    },
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  CARBONE — Warm Charcoal + Amber  (candlelight, burnished gold)
+    #  Palette: Warm black bg · Amber 500 accent · cream text
+    # ═══════════════════════════════════════════════════════════════════════
+    "carbone": {
+        # Superfici — warm charcoal
+        "bg":         "#111009",
+        "bg2":        "#1A1812",
+        "card":       "#21201A",
+        "card2":      "#28271F",
+
+        # Testo — warm cream, high contrast on warm black
+        "text":       "#F5EDD7",   # warm cream
+        "text2":      "#C9B98A",   # warm gold-gray
+        "muted":      "#8A7A5A",   # warm muted
+
+        # Bordi — warm dark
+        "border":     "#35311F",
+        "border2":    "#46422D",
+
+        # Accent — Amber / Gold
+        "accent":       "#F59E0B",   # Amber 500
+        "accent2":      "#FBB124",   # Amber 400 hover
+        "accent_light": "#261A00",   # dark amber pill
+
+        # Interazione
+        "hover":      "#1C1A10",
+
+        # Semantici
+        "success":    "#4ADE80",   # Green 400
+        "warn":       "#FB923C",   # Orange 400
+        "error":      "#F87171",   # Red 400
+
+        # Ombre
+        "shadow":     "0 1px 3px rgba(0,0,0,.50)",
+        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
+        "shadow_soft": "0 8px 32px rgba(17,16,9,.70), 0 2px 8px rgba(0,0,0,.30)",
+
+        # Design system
+        "radius_sm":  "8px",
+        "radius_md":  "12px",
+        "radius_lg":  "16px",
+
+        # Sidebar — near-black warm
+        "sidebar_bg":       "linear-gradient(180deg, #080704 0%, #111009 100%)",
+        "sidebar_border":   "#35311F",
+        "sidebar_accent":   "#FBB124",
+        "sidebar_input_bg":  "#1A1812",
+        "sidebar_input_text": "#F5EDD7",
+
+        # Hint boxes
+        "hint_bg":      "#261A00",
+        "hint_border":  "#92400E",
+        "hint_text":    "#FBB124",
+    },
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  AURORA — Nordic Dark + Cyan  (northern lights, arctic, futuristic)
+    #  Palette: Deep navy bg · Cyan #06D6C8 accent · icy blue-white text
+    # ═══════════════════════════════════════════════════════════════════════
+    "aurora": {
+        # Superfici — deep dark navy
+        "bg":         "#080D14",
+        "bg2":        "#0D1622",
+        "card":       "#111F30",
+        "card2":      "#162638",
+
+        # Testo — icy pale blue-white
+        "text":       "#D4E5F7",
+        "text2":      "#6FA3CC",
+        "muted":      "#3D7CA8",
+
+        # Bordi — dark navy
+        "border":     "#1B3350",
+        "border2":    "#224467",
+
+        # Accent — bright cyan-teal
+        "accent":       "#06D6C8",
+        "accent2":      "#2DE8DA",   # lighter hover
+        "accent_light": "#002825",   # dark cyan pill
+
+        # Interazione
+        "hover":      "#0E2035",
+
+        # Semantici
+        "success":    "#34D399",   # Emerald 400
+        "warn":       "#FBBF24",   # Amber 400
+        "error":      "#FC8181",   # Red 300
+
+        # Ombre
+        "shadow":     "0 1px 3px rgba(0,0,0,.50)",
+        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
+        "shadow_soft": "0 8px 32px rgba(8,13,20,.70), 0 2px 8px rgba(0,0,0,.30)",
+
+        # Design system
+        "radius_sm":  "8px",
+        "radius_md":  "12px",
+        "radius_lg":  "16px",
+
+        # Sidebar — near-black navy
+        "sidebar_bg":       "linear-gradient(180deg, #040810 0%, #080D14 100%)",
+        "sidebar_border":   "#1B3350",
+        "sidebar_accent":   "#2DE8DA",
+        "sidebar_input_bg":  "#0D1622",
+        "sidebar_input_text": "#D4E5F7",
+
+        # Hint boxes
+        "hint_bg":      "#002825",
+        "hint_border":  "#007A74",
+        "hint_text":    "#2DE8DA",
+    },
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  OSSIDIANA — Obsidian + Coral  (volcanic stone, editorial noir)
+    #  Palette: True dark bg · Coral #FF8A70 accent · warm off-white text
+    # ═══════════════════════════════════════════════════════════════════════
+    "ossidiana": {
+        # Superfici — near-true black, warm undertone
+        "bg":         "#0D0D0D",
+        "bg2":        "#171717",
+        "card":       "#1E1E1E",
+        "card2":      "#252525",
+
+        # Testo — warm off-white (max contrast on true black)
+        "text":       "#F2EDE8",
+        "text2":      "#B09E90",
+        "muted":      "#7A6B5E",
+
+        # Bordi — subtle warm
+        "border":     "#2E2A26",
+        "border2":    "#3E3A36",
+
+        # Accent — Coral (warm, distinctive on near-black)
+        "accent":       "#FF8A70",
+        "accent2":      "#FFA38E",   # lighter coral hover
+        "accent_light": "#2A100D",   # dark coral pill
+
+        # Interazione
+        "hover":      "#1E1A17",
+
+        # Semantici
+        "success":    "#4ADE80",   # Green 400
+        "warn":       "#FBBF24",   # Amber 400
+        "error":      "#EF4444",   # Red 500
+
+        # Ombre
+        "shadow":     "0 1px 3px rgba(0,0,0,.60)",
+        "shadow_md":  "0 4px 24px rgba(0,0,0,.75)",
+        "shadow_soft": "0 8px 32px rgba(13,13,13,.80), 0 2px 8px rgba(0,0,0,.40)",
+
+        # Design system
+        "radius_sm":  "8px",
+        "radius_md":  "12px",
+        "radius_lg":  "16px",
+
+        # Sidebar — true black gradient
+        "sidebar_bg":       "linear-gradient(180deg, #050505 0%, #0D0D0D 100%)",
+        "sidebar_border":   "#2E2A26",
+        "sidebar_accent":   "#FFA38E",
+        "sidebar_input_bg":  "#171717",
+        "sidebar_input_text": "#F2EDE8",
+
+        # Hint boxes
+        "hint_bg":      "#2A100D",
+        "hint_border":  "#7C2D12",
+        "hint_text":    "#FFA38E",
+    },
 }
 
 THEME_LABELS = {
-    "notte":   "🌙 Notte",
-    "chiaro":  "☀️ Giorno",
-    "foresta": "🌿 Foresta",
+    "notte":     "🌙 Notte",
+    "chiaro":    "☀️ Giorno",
+    "foresta":   "🌿 Foresta",
+    "viola":     "🔮 Viola",
+    "carbone":   "🔥 Carbone",
+    "aurora":    "❄️ Aurora",
+    "ossidiana": "🖤 Ossidiana",
 }
 
 DEFAULT_THEME = "notte"

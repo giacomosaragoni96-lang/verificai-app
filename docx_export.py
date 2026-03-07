@@ -22,7 +22,11 @@ _GRAPH_RE = re.compile(r'__DOCXGRAPH_(\d+)__')
 
 
 def _tikz_to_png_bytes(tikz_code: str) -> bytes | None:
-    """Compiles a TikZ/pgfplots block to a PNG image. Returns None on failure."""
+    """
+    Compiles a TikZ/pgfplots block to a PNG image.
+    Conversion chain: PyMuPDF → pdf2image → pdftoppm CLI.
+    Returns None on total failure.
+    """
     needs_pgfplots = (
         r'\begin{axis}' in tikz_code
         or 'pgfplots' in tikz_code
@@ -50,7 +54,21 @@ def _tikz_to_png_bytes(tikz_code: str) -> bytes | None:
             )
             if not os.path.exists(pdf_path):
                 return None
-            # Convert PDF → PNG via pdf2image
+
+            # ── Method 1: PyMuPDF — self-contained, works on Windows ──────────
+            try:
+                import fitz  # PyMuPDF
+                fitz_doc = fitz.open(pdf_path)
+                page = fitz_doc[0]
+                # 2.5× zoom ≈ 180 DPI (base 72 dpi)
+                mat  = fitz.Matrix(2.5, 2.5)
+                pix  = page.get_pixmap(matrix=mat, alpha=False)
+                fitz_doc.close()
+                return pix.tobytes('png')
+            except Exception:
+                pass
+
+            # ── Method 2: pdf2image (needs poppler in PATH) ───────────────────
             try:
                 from pdf2image import convert_from_path
                 pages = convert_from_path(pdf_path, dpi=180)
@@ -60,7 +78,8 @@ def _tikz_to_png_bytes(tikz_code: str) -> bytes | None:
                     return buf.getvalue()
             except Exception:
                 pass
-            # Fallback: pdftoppm CLI
+
+            # ── Method 3: pdftoppm CLI ────────────────────────────────────────
             try:
                 out_base = os.path.join(tmpdir, 'out')
                 subprocess.run(

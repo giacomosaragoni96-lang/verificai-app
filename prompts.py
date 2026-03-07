@@ -539,7 +539,9 @@ def prompt_rubrica_valutazione(
         f"- NON riscrivere gli esercizi per intero.\n"
         f"- NON usare LaTeX, usa solo Markdown semplice.\n"
         f"- Lunghezza massima: 400 parole totali.\n"
-        f"- Se la verifica non ha punteggi espliciti, stima proporzionalmente."
+        f"- Se la verifica non ha punteggi espliciti, stima proporzionalmente.\n"
+        f"- INIZIA DIRETTAMENTE con '## Rubrica di Valutazione' — NESSUN testo introduttivo, "
+        f"NESSUNA frase tipo 'Ecco la rubrica' o 'Assolutamente!'. Solo il documento."
     )
 
 

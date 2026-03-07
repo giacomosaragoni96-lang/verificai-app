@@ -135,7 +135,7 @@ def mostra_auth(supabase):
     /* ═══ Card principale — Elegant: bordo sottile, ombra profonda ═══ */
     [data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"] {{
         background: {_N_CARD};
-        border-radius: 24px;
+        border-radius: 20px;
         border: 1px solid {_N_BORDER};
         margin: 0 auto;
         max-width: 440px;
@@ -154,7 +154,7 @@ def mostra_auth(supabase):
         content: '';
         position: absolute; top: 0; left: 0; right: 0; height: 3px;
         background: linear-gradient(90deg, {_N_ACC}, {_N_ACC2});
-        border-radius: 24px 24px 0 0;
+        border-radius: 20px 20px 0 0;
     }}
 
     /* ── Padding interno della card ── */
@@ -166,7 +166,7 @@ def mostra_auth(supabase):
     [data-testid="stTextInput"] input {{
         background: {_N_BG2} !important;
         border: 1px solid {_N_BORDER} !important;
-        border-radius: 14px !important;
+        border-radius: 12px !important;
         color: {_N_TEXT} !important;
         -webkit-text-fill-color: {_N_TEXT} !important;
         font-family: 'DM Sans', sans-serif !important;
@@ -178,7 +178,7 @@ def mostra_auth(supabase):
     }}
     [data-testid="stTextInput"] input:focus {{
         border-color: {_N_ACC} !important;
-        box-shadow: 0 0 0 3px rgba(88,166,255,.15) !important;
+        box-shadow: 0 0 0 3px {_N_ACC}26 !important;
         outline: none !important;
     }}
     [data-testid="stTextInput"] input::placeholder {{
@@ -195,7 +195,7 @@ def mostra_auth(supabase):
     /* ═══ Tabs — pill selector, clean ═══ */
     [data-testid="stTabs"] [data-baseweb="tab-list"] {{
         background: {_N_BG2} !important;
-        border-radius: 14px !important;
+        border-radius: 12px !important;
         padding: 5px !important;
         gap: 4px !important;
         border: 1px solid {_N_BORDER} !important;
@@ -227,21 +227,21 @@ def mostra_auth(supabase):
     div.stButton > button[kind="primary"],
     div.stButton > button[data-testid="stBaseButton-primary"] {{
         background: linear-gradient(135deg, {_N_ACC}, {_N_ACC2}) !important;
-        color: #0D1117 !important;
-        -webkit-text-fill-color: #0D1117 !important;
+        color: {_N_BG} !important;
+        -webkit-text-fill-color: {_N_BG} !important;
         border: none !important;
-        border-radius: 14px !important;
+        border-radius: 12px !important;
         font-family: 'DM Sans', sans-serif !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
         min-height: 50px !important;
         letter-spacing: .01em !important;
-        box-shadow: 0 2px 12px rgba(88,166,255,.2) !important;
+        box-shadow: 0 2px 12px {_N_ACC}33 !important;
         transition: box-shadow .25s ease, transform .25s ease !important;
     }}
     div.stButton > button[kind="primary"]:hover,
     div.stButton > button[data-testid="stBaseButton-primary"]:hover {{
-        box-shadow: 0 6px 24px rgba(88,166,255,.28) !important;
+        box-shadow: 0 6px 24px {_N_ACC}47 !important;
         transform: translateY(-1px) !important;
     }}
 
