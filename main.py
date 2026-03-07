@@ -604,7 +604,11 @@ if "_share_code"          not in st.session_state: st.session_state._share_code 
 if "_share_generating"    not in st.session_state: st.session_state._share_generating = False
 # ── Idea #3: Quick regen state ──────────────────────────────────────────────
 if "_quick_regen_idx"     not in st.session_state: st.session_state._quick_regen_idx = None
-if "_facsimile_mode"      not in st.session_state: st.session_state["_facsimile_mode"] = False
+if "_facsimile_mode"        not in st.session_state: st.session_state["_facsimile_mode"]        = False
+if "_fac_dialog_pending"   not in st.session_state: st.session_state["_fac_dialog_pending"]   = False
+if "_fac_dialog_data"      not in st.session_state: st.session_state["_fac_dialog_data"]      = {}
+if "_fac_dialog_shown_for" not in st.session_state: st.session_state["_fac_dialog_shown_for"] = None
+if "_fac_confirmed"        not in st.session_state: st.session_state["_fac_confirmed"]        = False
 if "_pers_open"           not in st.session_state: st.session_state["_pers_open"] = False
 if "_pb_argomento_source"    not in st.session_state: st.session_state["_pb_argomento_source"] = None
 if "_pb_argomento_manual_val" not in st.session_state: st.session_state["_pb_argomento_manual_val"] = ""
@@ -1445,6 +1449,17 @@ def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str)
         st.session_state.analisi_doc = result
         _consolida_info()
 
+        # ── Proposta facsimile: se è una verifica con alta confidence → apri dialog ─
+        _is_verifica_ai = (
+            result.get("tipo_documento") == "verifica"
+            and float(result.get("confidence", 0)) >= 0.70
+            and st.session_state.get("_fac_dialog_shown_for") != file_hash
+        )
+        if _is_verifica_ai:
+            st.session_state["_fac_dialog_pending"] = True
+            st.session_state["_fac_dialog_data"]    = result
+            st.session_state["_fac_dialog_shown_for"] = file_hash
+
         # ── Prepara toast da mostrare al prossimo render ────────────────────────
         _det_materia = result.get("materia", "")
         _det_arg     = result.get("contenuto_argomento", "")
@@ -1455,7 +1470,7 @@ def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str)
         if _det_arg:
             _short_arg = _det_arg[:60] + "…" if len(_det_arg) > 60 else _det_arg
             _toast_parts.append(f"**Argomento:** {_short_arg}")
-        if _det_tipo:
+        if _det_tipo and _det_tipo != "verifica":
             _toast_parts.append(f"**Tipo:** {_det_tipo.replace('_', ' ').title()}")
         st.session_state["_toast_analisi"] = " · ".join(_toast_parts) if _toast_parts else "Documento analizzato."
 
@@ -2469,18 +2484,118 @@ def _render_percorso_a_configura(num_esercizi_totali_ref: list):
     return ("", "Matematica", "Generico", True, True, 100, False)
 
 
+@st.dialog("📋 Verifica rilevata!")
+def _mostra_dialogo_facsimile():
+    """Popup che appare quando l'AI rileva che il file caricato è una verifica."""
+    _a    = st.session_state.get("_fac_dialog_data", {})
+    _mat  = _a.get("materia", "")
+    _arg  = (_a.get("contenuto_argomento") or "")
+    _n_es = _a.get("num_esercizi_rilevati") or "?"
+    _pt   = _a.get("punti_totali_rilevati")
+    _conf = int(float(_a.get("confidence", 0)) * 100)
+
+    _pt_str  = f" da **{_pt} pt**" if _pt else ""
+    _arg_str = f" su *{_arg[:70]}{'…' if len(_arg) > 70 else ''}*" if _arg else ""
+    _mat_str = f" di **{_mat}**" if _mat else ""
+
+    st.markdown(
+        f"Ho analizzato il file e ho trovato una **verifica{_mat_str}** "
+        f"con **{_n_es} esercizi**{_pt_str}{_arg_str}."
+    )
+    st.markdown(
+        "Vuoi generare subito un **facsimile**? Stessa struttura e punteggi, "
+        "ma dati, valori e quesiti completamente nuovi."
+    )
+    if _pt:
+        st.caption(f"Punteggio rilevato: {_pt} pt · Confidenza AI: {_conf}%")
+    st.divider()
+    _d1, _d2 = st.columns(2)
+    with _d1:
+        if st.button("⚡ Sì, genera facsimile", type="primary", use_container_width=True,
+                     disabled=_limite):
+            st.session_state["_fac_dialog_pending"] = False
+            st.session_state["_fac_confirmed"]      = True
+            st.rerun()
+    with _d2:
+        if st.button("Continua a configurare", use_container_width=True):
+            st.session_state["_fac_dialog_pending"] = False
+            st.rerun()
+
+
 def _render_percorso_b_form():
     """
     Percorso B — Layout a colonna singola con upload inline:
     ┌─────────────────────────────────────────────────┐
     │  Materia  │  Scuola                              │
     │  Argomento (2/3)  │  📎 Documento (1/3)          │
-    │  ⚡ Facsimile banner (se verifica rilevata)      │
     │  N° Esercizi                                     │
     │  ⚙️ Personalizzazione Avanzata (expander)        │
     │  🚀 GENERA BOZZA                                 │
     └─────────────────────────────────────────────────┘
     """
+
+    # ── Popup facsimile se verifica rilevata ─────────────────────────────────
+    if st.session_state.get("_fac_dialog_pending"):
+        _mostra_dialogo_facsimile()
+
+    # ── Generazione facsimile confermata dal dialog ───────────────────────────
+    if st.session_state.get("_fac_confirmed"):
+        st.session_state["_fac_confirmed"] = False
+        _a_fac = st.session_state.get("_fac_dialog_data", {})
+        if _a_fac and not _limite:
+            # Trova il file nel pool e marcalo come copia_fedele
+            _fac_hash = _a_fac.get("file_hash")
+            for _idx_f, _ef in enumerate(st.session_state.analisi_docs_list):
+                if _ef["file_hash"] == _fac_hash:
+                    st.session_state.analisi_docs_list[_idx_f]["confirmed"] = True
+                    st.session_state.analisi_docs_list[_idx_f]["file_mode"] = "copia_fedele"
+                    break
+            st.session_state.file_mode        = "copia_fedele"
+            st.session_state["_facsimile_mode"] = True
+            _consolida_info()
+            _info_fac      = st.session_state.info_consolidate
+            _ha_griglia_fac = _a_fac.get("ha_tabella_punti", False)
+            _pt_fac = 100
+            if isinstance(_a_fac.get("punti_totali_rilevati"), (int, float)) and _a_fac["punti_totali_rilevati"] > 0:
+                _pt_fac = int(_a_fac["punti_totali_rilevati"])
+            _mat_fac = _info_fac.get("materia", "Matematica")
+            _scu_fac = _info_fac.get("scuola", SCUOLE[0])
+            _n_fac   = max(1, min(int(_a_fac.get("num_esercizi_rilevati") or 4), 15))
+            argomento_fac, note_fac = compila_contesto_generazione(
+                analisi=_info_fac,
+                file_mode="copia_fedele",
+                istruzioni_extra="",
+                argomento_override=None,
+            )
+            note_fac = (
+                "╔══════════════════════════════════════════════════════════════╗\n"
+                "║  ⚠️  ISTRUZIONE CRITICA — FACSIMILE: DATI COMPLETAMENTE NUOVI  ║\n"
+                "╚══════════════════════════════════════════════════════════════╝\n"
+                "Stai generando un FACSIMILE della verifica allegata.\n"
+                "REGOLA ASSOLUTA: struttura identica, stessi punteggi totali, stessa materia e argomento; "
+                "tutti i dati numerici e testuali COMPLETAMENTE DIVERSI.\n"
+                "NON usare gli stessi valori nemmeno come riferimento.\n"
+                "Il docente NON deve riconoscere i dati originali.\n"
+            ) + "\n\n" + note_fac
+            _s_es_fac, _imgs_es_fac = _build_prompt_esercizi([], _n_fac, _pt_fac, True)
+            _prog_fac = st.empty()
+            _lancia_generazione(
+                materia_scelta=_mat_fac,
+                argomento=argomento_fac,
+                difficolta=_scu_fac,
+                durata_scelta="1 ora",
+                num_esercizi_totali=_n_fac,
+                punti_totali=_pt_fac,
+                mostra_punteggi=True,
+                con_griglia=_ha_griglia_fac or True,
+                note_generali=note_fac,
+                s_es=_s_es_fac,
+                imgs_es=_imgs_es_fac,
+                file_ispirazione=st.session_state.get("file_ispirazione"),
+                mathpix_context=st.session_state.get("mathpix_context"),
+                prog_placeholder=_prog_fac,
+            )
+            return
 
     # ── Toast post-analisi file (mostrato una volta sola dopo il rerun) ──────────
     _toast_msg = st.session_state.pop("_toast_analisi", None)
@@ -2554,12 +2669,6 @@ def _render_percorso_b_form():
                 label_visibility="collapsed", key="sel_materia_b",
                 help="Materia della verifica. Se hai caricato un file, viene rilevata automaticamente.",
             )
-            if _mat_autofilled:
-                st.markdown(
-                    f'<div style="font-size:.75rem;color:{T["accent"]};font-family:DM Sans,sans-serif;'
-                    f'margin-top:2px;">✦ Rilevata dal file</div>',
-                    unsafe_allow_html=True,
-                )
             materia_scelta = (
                 st.text_input("Scrivi materia:", key="_mat_custom_b",
                               label_visibility="collapsed").strip() or "Matematica"
@@ -2572,12 +2681,6 @@ def _render_percorso_b_form():
                 help="Tipo di scuola e livello. Se hai caricato un file, viene rilevato automaticamente.",
                 label_visibility="collapsed", key="sel_scuola_b",
             )
-            if _scu_autofilled:
-                st.markdown(
-                    f'<div style="font-size:.75rem;color:{T["accent"]};font-family:DM Sans,sans-serif;'
-                    f'margin-top:2px;">✦ Rilevata dal file</div>',
-                    unsafe_allow_html=True,
-                )
 
         # ── Layout: sinistra form (argomento + poi N° esercizi, Genera), destra upload + File nel pool ─
         _col_main, _col_side = st.columns([3, 1], gap="medium")
@@ -3036,105 +3139,6 @@ def _render_percorso_b_form():
                     if st.button("✕ Rimuovi", key=f"pb_rm_{_fhash_str}_{_fi}", use_container_width=True):
                         _rimuovi_idx = _fi
                     st.markdown('</div>', unsafe_allow_html=True)
-
-                    # Facsimile: solo sull'ultimo file se riconosciuto come verifica (≥70%)
-                    _is_last = (_fi == len(_lista_b_curr) - 1)
-                    _last_analisi_b = _fentry.get("analisi", {})
-                    _is_verifica_inline = (
-                        _is_last
-                        and _last_analisi_b.get("tipo_documento") == "verifica"
-                        and float(_last_analisi_b.get("confidence", 0.0)) >= 0.70
-                    )
-                    if _is_verifica_inline:
-                        _n_es_det = _last_analisi_b.get("num_esercizi_rilevati") or "?"
-                        _pt_det   = _last_analisi_b.get("punti_totali_rilevati")
-                        _mat_det  = _last_analisi_b.get("materia") or materia_scelta
-                        _pt_label = f" · {_pt_det} pt" if _pt_det else ""
-                        _conf_pct = int(float(_last_analisi_b.get("confidence", 0)) * 100)
-                        _prog_fac = st.empty()
-                        st.markdown(
-                            f'<div class="facsimile-detection-banner">'
-                            f'  <div class="facsimile-detection-icon">📋</div>'
-                            f'  <div class="facsimile-detection-body">'
-                            f'    <div class="facsimile-detection-title">'
-                            f'      Verifica rilevata — {_mat_det} · {_n_es_det} esercizi{_pt_label}'
-                            f'    </div>'
-                            f'    <div class="facsimile-detection-sub">'
-                            f'      Genera una variante facsimile: stessa struttura e punteggi, dati e quesiti variati. '
-                            f'      Clicca per andare direttamente alla revisione ({_conf_pct}% confidenza).'
-                            f'    </div>'
-                            f'  </div>'
-                            f'</div>',
-                            unsafe_allow_html=True,
-                        )
-                        st.markdown('<div class="facsimile-inline-btn">', unsafe_allow_html=True)
-                        _btn_fac_inline = st.button(
-                            "⚡ Genera Facsimile Istantaneo",
-                            key="btn_fac_inline_b",
-                            use_container_width=True,
-                            disabled=_limite,
-                            help=(
-                                "Genera subito una variante con la stessa struttura della verifica "
-                                "caricata e reindirizza alla pagina di revisione."
-                            ),
-                        )
-                        st.markdown('</div>', unsafe_allow_html=True)
-
-                        if _btn_fac_inline and not _limite:
-                            _fac_idx_b = next(
-                                (i for i, e in enumerate(st.session_state.analisi_docs_list)
-                                 if e["file_hash"] == _fentry["file_hash"]),
-                                0,
-                            )
-                            st.session_state.analisi_docs_list[_fac_idx_b]["confirmed"] = True
-                            st.session_state.analisi_docs_list[_fac_idx_b]["file_mode"] = "copia_fedele"
-                            st.session_state.file_mode = "copia_fedele"
-                            st.session_state["_facsimile_mode"] = True
-                            _consolida_info()
-
-                            _info_fac = st.session_state.info_consolidate
-                            _ha_griglia_fac = _last_analisi_b.get("ha_tabella_punti", False)
-                            _pt_fac = 100
-                            if isinstance(_last_analisi_b.get("punti_totali_rilevati"), (int, float)) and _last_analisi_b["punti_totali_rilevati"] > 0:
-                                _pt_fac = int(_last_analisi_b["punti_totali_rilevati"])
-                            argomento_fac, note_fac = compila_contesto_generazione(
-                                analisi=_info_fac,
-                                file_mode="copia_fedele",
-                                istruzioni_extra="",
-                                argomento_override=None,
-                            )
-                            _facsimile_override = (
-                                "╔══════════════════════════════════════════════════════════════╗\n"
-                                "║  ⚠️  ISTRUZIONE CRITICA — FACSIMILE: DATI COMPLETAMENTE NUOVI  ║\n"
-                                "╚══════════════════════════════════════════════════════════════╝\n"
-                                "Stai generando un FACSIMILE della verifica allegata.\n"
-                                "REGOLA ASSOLUTA: struttura identica, stessi punteggi totali, stessa materia e argomento; "
-                                "tutti i dati numerici e testuali COMPLETAMENTE DIVERSI.\n"
-                                "NON usare gli stessi valori nemmeno come riferimento.\n"
-                                "Il docente NON deve riconoscere i dati originali.\n"
-                            )
-                            note_fac = _facsimile_override + "\n\n" + note_fac
-                            _mat_fac  = _info_fac.get("materia", "Matematica")
-                            _scu_fac  = _info_fac.get("scuola", SCUOLE[0])
-                            _n_fac    = max(1, min(int(_last_analisi_b.get("num_esercizi_rilevati") or 4), 15))
-                            _s_es_fac, _imgs_es_fac = _build_prompt_esercizi([], _n_fac, _pt_fac, True)
-                            _lancia_generazione(
-                                materia_scelta=_mat_fac,
-                                argomento=argomento_fac,
-                                difficolta=_scu_fac,
-                                durata_scelta="1 ora",
-                                num_esercizi_totali=_n_fac,
-                                punti_totali=_pt_fac,
-                                mostra_punteggi=True,
-                                con_griglia=_ha_griglia_fac or True,
-                                note_generali=note_fac,
-                                s_es=_s_es_fac,
-                                imgs_es=_imgs_es_fac,
-                                file_ispirazione=st.session_state.get("file_ispirazione"),
-                                mathpix_context=st.session_state.get("mathpix_context"),
-                                prog_placeholder=_prog_fac,
-                            )
-                            return
 
                 if _rimuovi_idx is not None:
                     _rimosso = st.session_state.analisi_docs_list.pop(_rimuovi_idx)
