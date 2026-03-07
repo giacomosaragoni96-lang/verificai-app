@@ -1570,11 +1570,11 @@ def get_css(T: dict) -> str:
     border: 1px solid {T['border2']} !important;
     border-left: 3px solid {_acc} !important;
     border-radius: {_radius_lg} !important;
-    padding: 0.85rem 0.9rem !important;
-    min-width: 240px !important;
-    max-width: 340px !important;
-    height: 70vh !important;
-    max-height: 70vh !important;
+    padding: 1rem 1.1rem !important;
+    min-width: 280px !important;
+    max-width: 420px !important;
+    height: 72vh !important;
+    max-height: 72vh !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     overscroll-behavior: contain !important;
@@ -1595,11 +1595,11 @@ def get_css(T: dict) -> str:
     border: 1px solid {T['border2']} !important;
     border-left: 3px solid {_acc} !important;
     border-radius: {_radius_lg} !important;
-    padding: 0.85rem 0.9rem !important;
-    min-width: 240px !important;
-    max-width: 340px !important;
-    height: 70vh !important;
-    max-height: 70vh !important;
+    padding: 1rem 1.1rem !important;
+    min-width: 280px !important;
+    max-width: 420px !important;
+    height: 72vh !important;
+    max-height: 72vh !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     align-self: flex-start !important;
@@ -1670,8 +1670,8 @@ def get_css(T: dict) -> str:
     background: {T['bg2']};
     border: 1px solid {T['border2']};
     border-radius: {_radius_sm};
-    padding: 0.6rem 0.7rem;
-    margin-bottom: 0.5rem;
+    padding: 0.7rem 0.85rem;
+    margin-bottom: 0.55rem;
     box-shadow: {_shadow_xs};
     transition: border-color {_transition}, box-shadow {_transition};
   }}

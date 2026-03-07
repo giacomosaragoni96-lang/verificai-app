@@ -2580,7 +2580,7 @@ def _render_percorso_b_form():
                 )
 
         # ── Layout: sinistra form (argomento + poi N° esercizi, Genera), destra upload + File nel pool ─
-        _col_main, _col_side = st.columns([4, 1], gap="small")
+        _col_main, _col_side = st.columns([3, 1], gap="medium")
 
         with _col_main:
             # ── Section header: Argomento ─────────────────────────────────────
