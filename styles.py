@@ -1249,25 +1249,31 @@ def get_css(T: dict) -> str:
     padding: .4rem 0 .6rem;
   }}
 
+  /* Colonna upload — header integrato */
+  .upload-column-label {{
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: {_acc};
+    font-family: 'DM Sans', sans-serif;
+    padding: 0.75rem 1rem 0.6rem;
+    border-bottom: 1px solid {T['border']};
+    margin-bottom: 0.6rem;
+  }}
+  .file-uploader-narrow [data-testid="stFileUploader"] {{
+    min-height: 76px !important;
+  }}
+  /* File uploader wrap: padding laterale uniforme */
   .file-uploader-compact {{
+    padding: 0 1rem;
     margin-bottom: .5rem;
   }}
   .file-uploader-compact [data-testid="stFileUploader"] {{
     border-radius: 12px !important;
-  }}
-
-  /* Colonna sinistra dedicata upload — label e area compatti */
-  .upload-column-label {{
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: {T['muted']};
-    font-family: 'DM Sans', sans-serif;
-    margin-bottom: 0.35rem;
-  }}
-  .file-uploader-narrow [data-testid="stFileUploader"] {{
-    min-height: 86px !important;
   }}
   .argomento-label-inline {{
     font-size: 0.75rem;
@@ -1297,24 +1303,24 @@ def get_css(T: dict) -> str:
 
   /* Colonna upload (destra): dashboard documenti */
   [data-testid="stColumn"]:has(.upload-column-label) {{
-    background-color: {T['card']} !important;
     background: {T['card']} !important;
     border: 1px solid {T['border2']} !important;
-    border-left: 3px solid {_acc} !important;
+    border-top: 2px solid {_acc} !important;
     border-radius: {_radius_lg} !important;
-    padding: 1rem 1.1rem !important;
+    padding: 0 !important;
     min-width: 280px !important;
     max-width: 420px !important;
-    height: 72vh !important;
-    max-height: 72vh !important;
+    height: fit-content !important;
+    max-height: 76vh !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     overscroll-behavior: contain !important;
     align-self: flex-start !important;
-    margin-top: 2.2rem !important;
+    margin-top: 1.9rem !important;
     box-shadow: {_shadow_sm} !important;
   }}
   [data-testid="stColumn"]:has(.upload-column-label) > div {{
+    padding: 0 !important;
     max-height: 100% !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -1323,20 +1329,19 @@ def get_css(T: dict) -> str:
   /* Fallback: colonna con file uploader (se .upload-column-label non matcha) */
   [data-testid="stColumn"]:has(> div > [data-testid="stFileUploader"]),
   [data-testid="stColumn"]:has(> div > div > [data-testid="stFileUploader"]) {{
-    background-color: {T['card']} !important;
     background: {T['card']} !important;
     border: 1px solid {T['border2']} !important;
-    border-left: 3px solid {_acc} !important;
+    border-top: 2px solid {_acc} !important;
     border-radius: {_radius_lg} !important;
-    padding: 1rem 1.1rem !important;
+    padding: 0 !important;
     min-width: 280px !important;
     max-width: 420px !important;
-    height: 72vh !important;
-    max-height: 72vh !important;
+    height: fit-content !important;
+    max-height: 76vh !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     align-self: flex-start !important;
-    margin-top: 2.2rem !important;
+    margin-top: 1.9rem !important;
     box-shadow: {_shadow_sm} !important;
   }}
 
@@ -1378,6 +1383,12 @@ def get_css(T: dict) -> str:
   /* ════════════════════════════════════════════════════════════════════════
      FILE POOL — Card compatta per ogni documento caricato
      ════════════════════════════════════════════════════════════════════════ */
+  /* Doc pool — padding laterale (la colonna ha padding:0) */
+  [data-testid="stColumn"]:has(.upload-column-label) .stMarkdown:has(.file-pool-card),
+  [data-testid="stColumn"]:has(.upload-column-label) .stMarkdown:has(.doc-pool-empty) {{
+    padding: 0 1rem !important;
+  }}
+
   .file-pool-card {{
     background: {T['bg2']};
     border: 1px solid {T['border2']};
@@ -1502,22 +1513,27 @@ def get_css(T: dict) -> str:
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 1.4rem 1rem 1.2rem;
+    padding: 1.6rem 1.2rem 1.4rem;
     text-align: center;
-    gap: 0.35rem;
+    gap: 0.4rem;
   }}
-  .doc-pool-empty-icon  {{ font-size: 1.8rem; opacity: 0.4; }}
+  .doc-pool-empty-icon {{
+    width: 36px; height: 36px;
+    opacity: 0.3;
+    margin-bottom: .2rem;
+  }}
   .doc-pool-empty-title {{
-    font-size: 0.82rem;
-    font-weight: 600;
+    font-size: 0.8rem;
+    font-weight: 700;
     color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
   }}
   .doc-pool-empty-sub {{
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: {T['muted']};
-    line-height: 1.45;
-    max-width: 190px;
+    line-height: 1.5;
+    max-width: 200px;
+    font-family: 'DM Sans', sans-serif;
   }}
 
   /* Confirm pulisci */
@@ -2188,60 +2204,79 @@ def get_css(T: dict) -> str:
     border-radius: 12px !important;
     padding: 0 !important;
   }}
+  /* Hide the default cloud-upload SVG icon from Streamlit */
+  [data-testid="stFileUploaderDropzone"] svg {{
+    display: none !important;
+  }}
   [data-testid="stFileUploaderDropzone"],
   section[data-testid="stFileUploaderDropzone"] {{
     background: {T['bg2']} !important;
-    border: 2px dashed {T['border2']} !important;
+    border: 1.5px dashed {T['border2']} !important;
     border-radius: 12px !important;
     color-scheme: {_color_scheme} !important;
-    padding: .8rem !important;
+    padding: .65rem 1rem !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: .75rem !important;
+    transition: border-color .15s, background .15s !important;
   }}
   [data-testid="stFileUploaderDropzone"]:hover,
   section[data-testid="stFileUploaderDropzone"]:hover {{
     border-color: {_acc} !important;
-    background: {T['card']} !important;
+    background: {_acc}0A !important;
   }}
-  [data-testid="stFileDropzoneInstructions"],
+  /* Instructions block: shrink and tidy */
+  [data-testid="stFileDropzoneInstructions"] {{
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1px !important;
+  }}
   [data-testid="stFileDropzoneInstructions"] *,
   [data-testid="stFileDropzoneInstructions"] span,
   [data-testid="stFileDropzoneInstructions"] p,
   [data-testid="stFileDropzoneInstructions"] div {{
-    color: {T['text']} !important;
-    -webkit-text-fill-color: {T['text']} !important;
-    font-family: 'DM Sans', sans-serif !important;
-  }}
-  [data-testid="stFileDropzoneInstructions"] small,
-  [data-testid="stFileDropzoneInstructions"] span + span {{
     color: {T['text2']} !important;
     -webkit-text-fill-color: {T['text2']} !important;
-    font-size: 0.88rem !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.8rem !important;
+    line-height: 1.3 !important;
+    margin: 0 !important;
+  }}
+  [data-testid="stFileDropzoneInstructions"] small,
+  [data-testid="stFileDropzoneInstructions"] span + span,
+  [data-testid="stFileDropzoneInstructions"] p + p {{
+    color: {T['muted']} !important;
+    -webkit-text-fill-color: {T['muted']} !important;
+    font-size: 0.7rem !important;
   }}
   [data-testid="stFileUploaderDropzone"] span,
   [data-testid="stFileUploaderDropzone"] p,
-  [data-testid="stFileUploaderDropzone"] div:not(button) {{
-    color: {T['text']} !important;
-    -webkit-text-fill-color: {T['text']} !important;
+  [data-testid="stFileUploaderDropzone"] div:not(button):not([data-testid]) {{
+    color: {T['text2']} !important;
+    -webkit-text-fill-color: {T['text2']} !important;
   }}
+  /* "Browse files" button — accent filled */
   [data-testid="stFileUploaderDropzone"] button,
   section[data-testid="stFileUploaderDropzone"] button {{
-    background: transparent !important;
-    color: {T['text']} !important;
-    -webkit-text-fill-color: {T['text']} !important;
-    border: 1.5px solid {T['border2']} !important;
+    background: {_acc} !important;
+    color: #0D1117 !important;
+    -webkit-text-fill-color: #0D1117 !important;
+    border: none !important;
     border-radius: 8px !important;
-    font-weight: 700 !important;
-    font-size: 0.89rem !important;
+    font-weight: 800 !important;
+    font-size: 0.78rem !important;
     font-family: 'DM Sans', sans-serif !important;
     cursor: pointer !important;
-    padding: .35rem 1rem !important;
+    padding: .4rem .85rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    transition: filter .12s !important;
   }}
   [data-testid="stFileUploaderDropzone"] button:hover,
   section[data-testid="stFileUploaderDropzone"] button:hover {{
-    background: {T['accent']} !important;
-    background-color: {T['accent']} !important;
-    color: #fff !important;
-    -webkit-text-fill-color: #fff !important;
-    border-color: {T['accent']} !important;
+    filter: brightness(1.12) !important;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
