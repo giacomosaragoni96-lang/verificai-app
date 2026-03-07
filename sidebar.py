@@ -70,11 +70,16 @@ def render_sidebar(
     _sb_guard_key = f"_sb_rendered_{_sb_run_id}"
 
     with st.sidebar:
-        st.markdown('<div class="sidebar-logo">📝 Verific<span style="background:linear-gradient(135deg,#D97706,#F59E0B);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">AI</span></div>', unsafe_allow_html=True)
-
+        _acc = T.get("sidebar_accent", "#79C0FF")
+        _acc2 = T.get("accent2", _acc)
         st.markdown(
-            '<div style="height:2px;background:linear-gradient(90deg,#D97706,#16a34a,transparent);'
-            'border-radius:2px;margin-bottom:1rem;opacity:.6;"></div>',
+            f'<div class="sidebar-logo">📝 Verific<span style="background:linear-gradient(135deg,{_acc},{_acc2});'
+            f'-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">AI</span></div>',
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            f'<div style="height:2px;background:linear-gradient(90deg,{_acc},transparent);'
+            f'border-radius:2px;margin-bottom:1rem;opacity:.5;"></div>',
             unsafe_allow_html=True
         )
         # ── MODELLO AI — routing per piano ───────────────────────────────────

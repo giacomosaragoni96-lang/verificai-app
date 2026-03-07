@@ -61,14 +61,14 @@ def cancella_sessione_cookie():
     st.query_params.pop("rt", None)
 
 
-# ── FORM LOGIN / REGISTRAZIONE — Notte Design ────────────────────────────────
+# ── FORM LOGIN / REGISTRAZIONE — Elegant dark (Notte-style) ──────────────────
 def mostra_auth(supabase):
     # ── CSS scoped alla pagina di login ──────────────────────────────────────
     st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
 
-    /* ═══ Base page — Notte palette ═══ */
+    /* ═══ Base page — Notte palette, elegant ═══ */
     html, body,
     [data-testid="stAppViewContainer"],
     .stApp {{
@@ -78,36 +78,26 @@ def mostra_auth(supabase):
         color-scheme: dark !important;
     }}
 
-    /* ── Ambient glow: pennellata blu in alto, scuro in basso ── */
+    /* ── Ambient: soft mesh glow (sottile, elegante) ── */
     [data-testid="stAppViewContainer"]::before {{
         content: '';
-        position: fixed; top: -140px; left: 50%;
+        position: fixed; top: -200px; left: 50%;
         transform: translateX(-50%);
-        width: 700px; height: 520px;
-        background: radial-gradient(ellipse at center,
-            rgba(88,166,255,.14)  0%,
-            rgba(121,192,255,.06) 45%,
+        width: 900px; height: 500px;
+        background: radial-gradient(ellipse 80% 50% at 50% 0%,
+            rgba(88,166,255,.08)  0%,
+            rgba(121,192,255,.03) 40%,
             transparent 70%);
         pointer-events: none; z-index: 0;
-        animation: aGlow1 11s ease-in-out infinite;
     }}
     [data-testid="stAppViewContainer"]::after {{
         content: '';
-        position: fixed; bottom: -100px; right: -80px;
-        width: 400px; height: 320px;
-        background: radial-gradient(ellipse at center,
-            rgba(13,36,64,.18)  0%,
-            transparent 65%);
+        position: fixed; bottom: -120px; right: -60px;
+        width: 380px; height: 380px;
+        background: radial-gradient(circle,
+            rgba(13,36,64,.12)  0%,
+            transparent 60%);
         pointer-events: none; z-index: 0;
-        animation: aGlow2 14s ease-in-out infinite;
-    }}
-    @keyframes aGlow1 {{
-        0%,100% {{ transform: translateX(-50%) translateY(0px);   }}
-        50%      {{ transform: translateX(-50%) translateY(18px);  }}
-    }}
-    @keyframes aGlow2 {{
-        0%,100% {{ transform: translateY(0px)   scale(1);    }}
-        50%      {{ transform: translateY(-13px) scale(1.04); }}
     }}
 
     /* ── Nascondi chrome Streamlit ── */
@@ -118,71 +108,59 @@ def mostra_auth(supabase):
 
     /* ── Layout centrato ── */
     .block-container {{
-        padding: 2rem 1rem !important;
-        max-width: 480px !important;
+        padding: 2.5rem 1.25rem !important;
+        max-width: 440px !important;
         margin: 0 auto !important;
     }}
     [data-testid="stMainBlockContainer"] {{ padding: 0 !important; }}
 
-    /* ═══ Card principale — Minimal SaaS: ombre morbide, bordi sottili ═══ */
+    /* ═══ Card principale — Elegant: bordo sottile, ombra profonda ═══ */
     [data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"] {{
         background: {_N_CARD};
-        border-radius: 20px;
+        border-radius: 24px;
         border: 1px solid {_N_BORDER};
         margin: 0 auto;
-        max-width: 480px;
+        max-width: 440px;
         box-shadow:
-            0 2px 8px  rgba(0,0,0,.06),
-            0 8px 32px rgba(0,0,0,.12),
-            0 0 0 1px  rgba(88,166,255,.06);
+            0 0 0 1px rgba(88,166,255,.04),
+            0 4px 24px rgba(0,0,0,.2),
+            0 24px 48px rgba(0,0,0,.15);
         position: relative;
         overflow: hidden;
         color-scheme: dark !important;
-        transition: box-shadow .25s ease;
+        transition: box-shadow .3s ease, border-color .3s ease;
     }}
 
-    /* ── Barra superiore animata — gradient blu ── */
+    /* ── Barra superiore — linea accent sottile (non animata, più elegante) ── */
     [data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"]::before {{
         content: '';
-        position: absolute; top: 0; left: 0; right: 0; height: 4px;
-        background: linear-gradient(90deg,
-            {_N_ACC}  0%,
-            {_N_ACC2} 40%,
-            {_N_SB_DARK} 65%,
-            {_N_ACC2} 80%,
-            {_N_ACC}  100%);
-        background-size: 200% 100%;
-        animation: topBarSlide 5s linear infinite;
-        border-radius: 20px 20px 0 0;
-    }}
-    @keyframes topBarSlide {{
-        0%   {{ background-position: 0% 0; }}
-        100% {{ background-position: 200% 0; }}
+        position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, {_N_ACC}, {_N_ACC2});
+        border-radius: 24px 24px 0 0;
     }}
 
     /* ── Padding interno della card ── */
     [data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"] > div {{
-        padding: 2.2rem 2.4rem 1.8rem !important;
+        padding: 2rem 2.2rem 1.75rem !important;
     }}
 
-    /* ═══ Inputs — design pulito, focus ring ═══ */
+    /* ═══ Inputs — elegant, focus ring ═══ */
     [data-testid="stTextInput"] input {{
         background: {_N_BG2} !important;
         border: 1px solid {_N_BORDER} !important;
-        border-radius: 12px !important;
+        border-radius: 14px !important;
         color: {_N_TEXT} !important;
         -webkit-text-fill-color: {_N_TEXT} !important;
         font-family: 'DM Sans', sans-serif !important;
         font-size: 1rem !important;
-        padding: 14px 16px !important;
-        min-height: 52px !important;
-        transition: border-color .2s ease, box-shadow .2s ease, background .2s ease !important;
+        padding: 14px 18px !important;
+        min-height: 50px !important;
+        transition: border-color .25s ease, box-shadow .25s ease !important;
         color-scheme: dark !important;
     }}
     [data-testid="stTextInput"] input:focus {{
         border-color: {_N_ACC} !important;
-        box-shadow: 0 0 0 3px rgba(88,166,255,.18) !important;
-        background: {_N_CARD} !important;
+        box-shadow: 0 0 0 3px rgba(88,166,255,.15) !important;
         outline: none !important;
     }}
     [data-testid="stTextInput"] input::placeholder {{
@@ -190,29 +168,30 @@ def mostra_auth(supabase):
     }}
     [data-testid="stTextInput"] label p {{
         color: {_N_TEXT2} !important;
-        font-size: .82rem !important;
+        font-size: .8rem !important;
         font-weight: 600 !important;
+        letter-spacing: .02em !important;
         font-family: 'DM Sans', sans-serif !important;
     }}
 
-    /* ═══ Tabs — pill selector blu ═══ */
+    /* ═══ Tabs — pill selector, clean ═══ */
     [data-testid="stTabs"] [data-baseweb="tab-list"] {{
         background: {_N_BG2} !important;
-        border-radius: 12px !important;
-        padding: 4px !important;
-        gap: 2px !important;
-        border: 1.5px solid {_N_BORDER} !important;
-        margin-bottom: 1.4rem !important;
+        border-radius: 14px !important;
+        padding: 5px !important;
+        gap: 4px !important;
+        border: 1px solid {_N_BORDER} !important;
+        margin-bottom: 1.5rem !important;
     }}
     [data-testid="stTabs"] [data-baseweb="tab"] {{
-        border-radius: 9px !important;
-        font-size: .85rem !important;
+        border-radius: 10px !important;
+        font-size: .84rem !important;
         font-weight: 600 !important;
         color: {_N_TEXT2} !important;
         -webkit-text-fill-color: {_N_TEXT2} !important;
         font-family: 'DM Sans', sans-serif !important;
-        padding: .55rem 1.1rem !important;
-        transition: background .18s, color .18s !important;
+        padding: .5rem 1rem !important;
+        transition: background .2s, color .2s !important;
     }}
     [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {{
         background: {_N_CARD} !important;
@@ -220,33 +199,32 @@ def mostra_auth(supabase):
         color: {_N_ACC} !important;
         -webkit-text-fill-color: {_N_ACC} !important;
         font-weight: 700 !important;
-        box-shadow: 0 1px 4px rgba(0,0,0,.30) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,.25) !important;
     }}
     [data-testid="stTabs"] [role="tabpanel"] {{
         padding: 0 !important;
     }}
 
-    /* ═══ Primary button — Minimal SaaS: ombra morbida, hover lift ═══ */
+    /* ═══ Primary button — elegant, subtle lift ═══ */
     div.stButton > button[kind="primary"],
     div.stButton > button[data-testid="stBaseButton-primary"] {{
         background: linear-gradient(135deg, {_N_ACC}, {_N_ACC2}) !important;
         color: #0D1117 !important;
         -webkit-text-fill-color: #0D1117 !important;
         border: none !important;
-        border-radius: 12px !important;
+        border-radius: 14px !important;
         font-family: 'DM Sans', sans-serif !important;
-        font-weight: 800 !important;
+        font-weight: 700 !important;
         font-size: 1rem !important;
-        min-height: 52px !important;
-        letter-spacing: -.02em !important;
-        box-shadow: 0 4px 16px rgba(88,166,255,.22) !important;
-        transition: filter .2s ease, box-shadow .2s ease, transform .2s ease !important;
+        min-height: 50px !important;
+        letter-spacing: .01em !important;
+        box-shadow: 0 2px 12px rgba(88,166,255,.2) !important;
+        transition: box-shadow .25s ease, transform .25s ease !important;
     }}
     div.stButton > button[kind="primary"]:hover,
     div.stButton > button[data-testid="stBaseButton-primary"]:hover {{
-        filter: brightness(1.08) !important;
-        box-shadow: 0 8px 28px rgba(88,166,255,.32) !important;
-        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 24px rgba(88,166,255,.28) !important;
+        transform: translateY(-1px) !important;
     }}
 
     /* ═══ Warning / error messages — toast-like, bordi sottili ═══ */
@@ -290,12 +268,12 @@ def mostra_auth(supabase):
         font-family: 'DM Sans', sans-serif;
     }}
 
-    /* divisore orizzontale decorativo */
+    /* divisore orizzontale */
     .auth-hr {{
-        height: 1.5px;
-        background: linear-gradient(90deg,
-            transparent, {_N_BORDER}, {_N_BORDER2}, {_N_BORDER}, transparent);
-        margin: 0 0 1.3rem; border-radius: 2px;
+        height: 1px;
+        background: {_N_BORDER};
+        margin: 0 0 1.4rem; border-radius: 1px;
+        opacity: .8;
     }}
 
     /* hint reset password */
@@ -311,30 +289,32 @@ def mostra_auth(supabase):
 
     /* trust bar in fondo */
     .auth-trust {{
-        display: flex; justify-content: center; gap: 1.3rem;
-        margin-top: .9rem; padding-top: .9rem;
-        border-top: 1.5px solid {_N_BORDER};
+        display: flex; justify-content: center; gap: 1.5rem;
+        margin-top: 1rem; padding-top: 1rem;
+        border-top: 1px solid {_N_BORDER};
+        opacity: .9;
     }}
     .auth-trust-item {{
-        display: flex; align-items: center; gap: .28rem;
-        font-size: .66rem; color: {_N_MUTED};
+        display: flex; align-items: center; gap: .3rem;
+        font-size: .7rem; color: {_N_MUTED};
         font-family: 'DM Sans', sans-serif;
+        letter-spacing: .02em;
     }}
     </style>
     """, unsafe_allow_html=True)
 
     # ── Wordmark + headline ───────────────────────────────────────────────────
     st.markdown(f"""
-    <div style="text-align:center; padding:.85rem 0 1.15rem;">
+    <div style="text-align:center; padding:.75rem 0 1.25rem;">
 
-      <!-- Logo wordmark — titolo elegante, font grande e bilanciato -->
+      <!-- Logo wordmark — elegante, bilanciato -->
       <div style="
           font-family: 'DM Sans', sans-serif;
-          font-size: clamp(2.6rem, 6vw, 3.4rem);
+          font-size: clamp(2.4rem, 5.5vw, 3.2rem);
           font-weight: 900;
-          letter-spacing: -0.04em;
+          letter-spacing: -0.035em;
           color: {_N_TEXT}; line-height: 1.1;
-          margin-bottom: .55rem;">
+          margin-bottom: .6rem;">
         📝&thinsp;Verific<span style="
           background: linear-gradient(135deg,{_N_ACC},{_N_ACC2});
           -webkit-background-clip: text;
@@ -343,27 +323,25 @@ def mostra_auth(supabase):
       </div>
 
       <!-- Tagline -->
-      <p style="font-size:.93rem; font-weight:500;
-                color:{_N_TEXT2}; margin:0 0 .55rem;
-                line-height:1.55; font-family:'DM Sans',sans-serif;">
-        Crea&nbsp;<strong style="color:{_N_TEXT}; font-weight:800;">verifiche scolastiche professionali</strong><br>
-        in&nbsp;<strong style="color:{_N_ACC}; font-weight:800;">30 secondi</strong>&nbsp;invece di 45 minuti.
+      <p style="font-size:.9rem; font-weight:500;
+                color:{_N_TEXT2}; margin:0 0 .6rem;
+                line-height:1.5; font-family:'DM Sans',sans-serif;">
+        Verifiche scolastiche professionali in <strong style="color:{_N_ACC}; font-weight:700;">30 secondi</strong>.
       </p>
 
       <!-- Stat pills -->
       <div class="auth-stats">
-        <div class="auth-stat-pill">⚡&nbsp;<span class="auth-stat-num">30s</span>&thinsp;media generazione</div>
-        <div class="auth-stat-pill">📊&nbsp;Rubrica MIM inclusa</div>
-        <div class="auth-stat-pill">🌟&nbsp;BES/DSA automatico</div>
+        <div class="auth-stat-pill">⚡&nbsp;<span class="auth-stat-num">30s</span>&thinsp;media</div>
+        <div class="auth-stat-pill">📊&nbsp;Rubrica MIM</div>
+        <div class="auth-stat-pill">🌟&nbsp;BES/DSA</div>
       </div>
 
       <!-- Feature pills -->
       <div class="auth-feat-wrap">
         <span class="auth-feat-pill">✍️ Scrittura a mano</span>
-        <span class="auth-feat-pill">📚 Template gallery</span>
-        <span class="auth-feat-pill">⚡ Fila B one-click</span>
-        <span class="auth-feat-pill">📐 Grafici TikZ</span>
-        <span class="auth-feat-pill">✏️ DOCX modificabile</span>
+        <span class="auth-feat-pill">📚 Template</span>
+        <span class="auth-feat-pill">⚡ Fila B</span>
+        <span class="auth-feat-pill">✏️ DOCX</span>
       </div>
 
     </div>

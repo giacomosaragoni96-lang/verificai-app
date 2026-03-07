@@ -14,6 +14,8 @@ def get_css(T: dict) -> str:
     _SB_BORDER = T.get("sidebar_border", "#21262D")
     _SB_MUTED  = T.get("muted", "#6E7681")
     _SB_TEXT   = T.get("text", "#E6EDF3")
+    _SB_INPUT_BG   = T.get("sidebar_input_bg", "#0D1117")
+    _SB_INPUT_TEXT = T.get("sidebar_input_text", "#E6EDF3")
 
     _is_light = _is_light_color(T["bg"])
     _btn_primary_bg = T["accent"]
@@ -319,18 +321,19 @@ def get_css(T: dict) -> str:
   .stMarkdown h1 a, .stMarkdown h2 a, .stMarkdown h3 a {{ display: none !important; }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     SIDEBAR — Fixed Dark Premium
+     SIDEBAR — Elegant, theme-aware (dark panel per tutti i temi)
      ════════════════════════════════════════════════════════════════════════ */
   [data-testid="stSidebar"] {{
     background: {_SB_BG_CSS} !important;
     border-right: 1px solid {_SB_BORDER} !important;
+    box-shadow: 2px 0 24px rgba(0,0,0,.12) !important;
   }}
   .sidebar-title {{
     font-family: 'DM Sans', sans-serif;
     font-size: .95rem !important;
     font-weight: 800 !important;
     letter-spacing: -0.01em;
-    color: #E6EDF3 !important;
+    color: {_SB_TEXT} !important;
     margin: 0 0 1.2rem 0;
     padding: .6rem 0 .8rem 0;
     border-bottom: 1px solid {_SB_BORDER};
@@ -352,8 +355,8 @@ def get_css(T: dict) -> str:
   [data-testid="stSidebar"] .stSelectbox label p,
   [data-testid="stSidebar"] .stNumberInput label p {{
     color: {_SB_MUTED} !important;
-    font-size: 0.9rem !important;
-    letter-spacing: 0.08em !important;
+    font-size: 0.82rem !important;
+    letter-spacing: 0.06em !important;
     text-transform: uppercase !important;
     font-weight: 700 !important;
   }}
@@ -363,19 +366,26 @@ def get_css(T: dict) -> str:
   }}
   [data-testid="stSidebar"] .stTextInput input,
   [data-testid="stSidebar"] .stNumberInput input {{
-    background: #0D1117 !important;
+    background: {_SB_INPUT_BG} !important;
     border: 1px solid {_SB_BORDER} !important;
-    border-radius: 8px !important;
-    color: #E6EDF3 !important;
+    border-radius: 10px !important;
+    color: {_SB_INPUT_TEXT} !important;
     font-size: 0.88rem !important;
+    transition: border-color .2s ease, box-shadow .2s ease !important;
+  }}
+  [data-testid="stSidebar"] .stTextInput input:focus,
+  [data-testid="stSidebar"] .stNumberInput input:focus {{
+    border-color: {_SB_ACCENT} !important;
+    box-shadow: 0 0 0 2px {_SB_ACCENT}33 !important;
+    outline: none !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:first-child {{
-    background: #0D1117 !important;
+    background: {_SB_INPUT_BG} !important;
     border: 1px solid {_SB_BORDER} !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {{
-    color: #E6EDF3 !important;
+    color: {_SB_INPUT_TEXT} !important;
     font-size: 0.88rem !important;
   }}
   [data-testid="stSidebar"] .stRadio label,
@@ -383,23 +393,24 @@ def get_css(T: dict) -> str:
     color: {_SB_TEXT} !important;
   }}
   [data-testid="stSidebar"] .stButton button {{
-    background: #1C2128 !important;
-    color: #E6EDF3 !important;
+    background: {_SB_INPUT_BG} !important;
+    color: {_SB_INPUT_TEXT} !important;
     border: 1px solid {_SB_BORDER} !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     font-size: 0.92rem !important;
     font-weight: 600 !important;
+    transition: border-color .2s ease, background .2s ease !important;
   }}
   [data-testid="stSidebar"] .stButton button:hover {{
-    background: #21262D !important;
     border-color: {_SB_ACCENT} !important;
-    color: #E6EDF3 !important;
+    color: {_SB_INPUT_TEXT} !important;
+    background: {_SB_BORDER} !important;
   }}
   [data-testid="stSidebar"] .stSelectSlider [data-testid="stMarkdownContainer"] p {{
     color: {_SB_TEXT} !important;
   }}
   [data-testid="stSidebar"] .section-label {{
-    color: #6E7681 !important;
+    color: {_SB_MUTED} !important;
     border-bottom-color: {_SB_BORDER} !important;
   }}
 
@@ -510,16 +521,16 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     SIDEBAR LOGO — rimpiazza "Impostazioni" con branding compatto
+     SIDEBAR LOGO — branding compatto, colore da tema (sidebar_accent)
      ════════════════════════════════════════════════════════════════════════ */
   .sidebar-logo {{
     font-family: 'DM Sans', sans-serif;
-    font-size: 1.05rem !important;
+    font-size: 1.08rem !important;
     font-weight: 900 !important;
     letter-spacing: -0.02em;
-    color: #E6EDF3 !important;
+    color: {_SB_TEXT} !important;
     margin: 0 0 1rem 0;
-    padding: .3rem 0 .85rem 0;
+    padding: .35rem 0 .9rem 0;
     border-bottom: 1px solid {_SB_BORDER};
     display: block;
   }}

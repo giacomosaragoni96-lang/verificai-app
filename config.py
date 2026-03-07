@@ -95,6 +95,8 @@ THEMES = {
         "sidebar_bg":      "linear-gradient(180deg, #010409 0%, #0D1117 100%)",
         "sidebar_border":  "#21262D",
         "sidebar_accent":  "#79C0FF",
+        "sidebar_input_bg":  "#0D1117",
+        "sidebar_input_text": "#E6EDF3",
 
         # Hint boxes
         "hint_bg":      "#0D2340",
@@ -103,122 +105,121 @@ THEMES = {
     },
 
     # ═══════════════════════════════════════════════════════════════════════
-    #  CHIARO — White Smoke + Sea Green  (tema chiaro professionale)
-    #  Palette: Carbon Black #1C2321, White Smoke #F3F3F3,
-    #           Sea Green #058C42, Tomato Jam #C3423F, Orange #F9A620
+    #  CHIARO (Giorno) — Elegant light: cream, warm gray, teal accent
+    #  Palette: Cream #FAF9F7, Warm Gray, Teal #0D9488, Slate sidebar
     # ═══════════════════════════════════════════════════════════════════════
     "chiaro": {
-        # Superfici — White Smoke come base, degradate verso il grigio
-        "bg":         "#EAEAEA",     # White Smoke scurito leggermente (no abbagliamento)
-        "bg2":        "#E0E0E0",     # secondo livello
-        "card":       "#F3F3F3",     # card — White Smoke puro
-        "card2":      "#FFFFFF",     # card overlay — bianco per contrasto
+        # Superfici — cream e bianco caldo, nessun grigio freddo
+        "bg":         "#F5F4F0",     # Warm cream — base elegante
+        "bg2":        "#EBE9E4",     # secondo livello
+        "card":       "#FFFFFF",     # card bianca pura
+        "card2":      "#FAFAF9",     # overlay leggermente caldo
 
-        # Testo — Carbon Black come base
-        "text":       "#1C2321",     # Carbon Black — massimo contrasto
-        "text2":      "#3D5048",     # Carbon Black schiarito — secondario
-        "muted":      "#6B8078",     # muted verdino su fondo chiaro
+        # Testo — charcoal caldo, massima leggibilità
+        "text":       "#1C1917",     # Warm black
+        "text2":      "#44403C",     # secondario
+        "muted":      "#78716C",     # stone muted
 
-        # Bordi
-        "border":     "#C4CECA",     # bordo grigio-verde leggero
-        "border2":    "#A8B8B2",     # bordo più marcato
+        # Bordi — sottili, caldi
+        "border":     "#E7E5E4",     # stone 200
+        "border2":    "#D6D3D1",     # stone 300
 
-        # Accent — Sea Green su sfondo chiaro: contrasto AAA
-        "accent":       "#058C42",   # Sea Green
-        "accent2":      "#047A3A",   # Sea Green leggermente più scuro (hover)
-        "accent_light": "#D4F0E2",   # tinta chiarissima per sfondi pill
+        # Accent — Teal elegante (non verde piatto)
+        "accent":       "#0D9488",   # Teal 600
+        "accent2":      "#0F766E",   # Teal 700 (hover)
+        "accent_light": "#CCFBF1",   # Teal 100 — pill/hint
 
         # Interazione
-        "hover":      "#D8E8E2",     # hover card — verde chiarissimo
+        "hover":      "#F0FDFA",     # Teal 50
 
         # Semantici
-        "success":    "#058C42",     # Sea Green
-        "warn":       "#E09010",     # Orange scurito per contrasto su chiaro
-        "error":      "#C3423F",     # Tomato Jam
+        "success":    "#059669",     # Emerald 600
+        "warn":       "#D97706",     # Amber 600
+        "error":      "#DC2626",     # Red 600
 
-        # Ombre — più leggere su tema chiaro
-        "shadow":     "0 1px 3px rgba(28,35,33,.12)",
-        "shadow_md":  "0 4px 20px rgba(28,35,33,.18)",
-        "shadow_soft": "0 8px 32px rgba(28,35,33,.10), 0 2px 8px rgba(28,35,33,.06)",
+        # Ombre — morbide, eleganti
+        "shadow":     "0 1px 2px rgba(28,25,23,.06)",
+        "shadow_md":  "0 4px 20px rgba(28,25,23,.08), 0 1px 3px rgba(28,25,23,.04)",
+        "shadow_soft": "0 12px 40px rgba(28,25,23,.06), 0 2px 8px rgba(28,25,23,.03)",
 
-        # Design system (Minimal SaaS)
+        # Design system
         "radius_sm":  "8px",
         "radius_md":  "12px",
         "radius_lg":  "16px",
 
-        # Sidebar — Carbon Black leggero per contrasto con area principale
-        "sidebar_bg":      "linear-gradient(180deg, #2A3533 0%, #1C2321 100%)",
-        "sidebar_border":  "#3A4E47",
-        "sidebar_accent":  "#07C45A",
+        # Sidebar — slate scuro elegante, accent teal
+        "sidebar_bg":      "linear-gradient(180deg, #1E293B 0%, #0F172A 100%)",
+        "sidebar_border":  "#334155",
+        "sidebar_accent":  "#2DD4BF",   # Teal 400
+        "sidebar_input_bg":  "#1E293B",
+        "sidebar_input_text": "#E2E8F0",
 
         # Hint boxes
-        "hint_bg":      "#D4F0E2",
-        "hint_border":  "#7DD4A8",
-        "hint_text":    "#036830",
+        "hint_bg":      "#CCFBF1",
+        "hint_border":  "#5EEAD4",
+        "hint_text":    "#0F766E",
     },
 
     # ═══════════════════════════════════════════════════════════════════════
-    #  FORESTA — Tema CHIARO azzurro (sfondo cielo, non scuro)
-    #  Palette:  Cielo Azzurro  #C2E0F0  (sfondo principale — chiaro)
-    #            Carta          #EAF4F8  (card, superfici chiare)
-    #            Blu Acciaio    #3A7CA5  (accent primario)
-    #            Verde Salvia   #4A8C6A  (accent secondario / success)
-    #            Inchiostro     #1A3040  (testo principale)
+    #  FORESTA — Elegant paper/sage: calm, study, nature, professional
+    #  Palette: Paper #F5F7F4, Sage #E8EDE4, Forest #166534, Deep green sidebar
     # ═══════════════════════════════════════════════════════════════════════
     "foresta": {
-        # Superfici — azzurro chiaro (tema chiaro, non scuro)
-        "bg":         "#C2E0F0",     # Cielo Azzurro chiaro — sfondo principale
-        "bg2":        "#B5D6E8",     # secondo livello, sempre chiaro
-        "card":       "#EAF4F8",     # carta quasi-bianca con tono freddo
-        "card2":      "#D6EAEF",     # card secondaria, tono intermedio
+        # Superfici — carta e sage chiarissimo, non cielo azzurro
+        "bg":         "#F2F5F0",     # Paper — verde-grigio molto chiaro
+        "bg2":        "#E8EDE4",     # Sage chiaro
+        "card":       "#FFFFFF",     # carta bianca
+        "card2":      "#F8FAF6",     # overlay con hint verde
 
-        # Testo — inchiostro scuro per contrasto elevato su azzurro
-        "text":       "#1A3040",     # Inchiostro Notte — leggibilità massima
-        "text2":      "#2E5268",     # blu-grigio medio
-        "muted":      "#5A7F96",     # muted freddo
+        # Testo — inchiostro verde scuro (forest ink)
+        "text":       "#1A2E1A",     # Forest black
+        "text2":      "#2D4A2D",     # secondario
+        "muted":      "#527352",     # muted sage
 
-        # Bordi
-        "border":     "#8CBDD0",     # bordo azzurro medio
-        "border2":    "#6A9FB8",     # bordo più marcato
+        # Bordi — sottili, verdi neutri
+        "border":     "#D1DED1",     # bordo sage
+        "border2":    "#B5C9B5",     # bordo più marcato
 
-        # Accent — Blu Acciaio come primario, Verde Salvia come secondario
-        "accent":       "#3A7CA5",   # Blu Acciaio — buon contrasto su azzurro chiaro
-        "accent2":      "#2E6A90",   # Blu Acciaio scurito (hover)
-        "accent_light": "#C8E4EF",   # tinta chiarissima per sfondi pill
+        # Accent — Forest green elegante
+        "accent":       "#166534",   # Green 800 — forest
+        "accent2":      "#15803D",   # Green 700 (hover)
+        "accent_light": "#DCFCE7",   # Green 100 — pill/hint
 
         # Interazione
-        "hover":      "#C4DDE8",     # hover card — azzurro leggermente più scuro
+        "hover":      "#ECFDF5",     # Green 50
 
         # Semantici
-        "success":    "#4A8C6A",     # Verde Salvia
-        "warn":       "#C07820",     # ambra scurito (contrasto su azzurro)
-        "error":      "#B03A3A",     # rosso mattone (leggibile su azzurro)
+        "success":    "#15803D",     # Green 700
+        "warn":       "#CA8A04",     # Yellow 700
+        "error":      "#B91C1C",     # Red 700
 
-        # Ombre
-        "shadow":     "0 1px 4px rgba(26,48,64,.14)",
-        "shadow_md":  "0 4px 20px rgba(26,48,64,.20)",
-        "shadow_soft": "0 8px 32px rgba(26,48,64,.12), 0 2px 8px rgba(26,48,64,.08)",
+        # Ombre — morbide, naturali
+        "shadow":     "0 1px 2px rgba(22,101,52,.06)",
+        "shadow_md":  "0 4px 20px rgba(22,101,52,.08), 0 1px 3px rgba(22,101,52,.04)",
+        "shadow_soft": "0 12px 40px rgba(22,101,52,.06), 0 2px 8px rgba(22,101,52,.03)",
 
-        # Design system (Minimal SaaS)
+        # Design system
         "radius_sm":  "8px",
         "radius_md":  "12px",
         "radius_lg":  "16px",
 
-        # Sidebar — blu acciaio scuro, contrasto con area principale azzurra
-        "sidebar_bg":      "linear-gradient(180deg, #1A3040 0%, #22485E 100%)",
-        "sidebar_border":  "#2E5268",
-        "sidebar_accent":  "#7DCAE0",
+        # Sidebar — forest scuro, elegante
+        "sidebar_bg":      "linear-gradient(180deg, #14532D 0%, #052E16 100%)",
+        "sidebar_border":  "#166534",
+        "sidebar_accent":  "#86EFAC",   # Green 300
+        "sidebar_input_bg":  "#14532D",
+        "sidebar_input_text": "#BBF7D0",
 
         # Hint boxes
-        "hint_bg":      "#C8E4EF",
-        "hint_border":  "#7BB8CE",
-        "hint_text":    "#1E5470",
+        "hint_bg":      "#DCFCE7",
+        "hint_border":  "#86EFAC",
+        "hint_text":    "#166534",
     },
 }
 
 THEME_LABELS = {
     "notte":   "🌙 Notte",
-    "chiaro":  "☀️ Chiaro",
+    "chiaro":  "☀️ Giorno",
     "foresta": "🌿 Foresta",
 }
 
