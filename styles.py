@@ -1818,36 +1818,64 @@ def get_css(T: dict) -> str:
     50% {{ opacity: 1; }}
   }}
 
+  /* ── Analysis skeleton card ── */
   .ocr-skeleton-wrap {{
-    background: {_surf_raised};
-    border: 1.5px solid {T['border']};
+    background: {T['card']};
+    border: 1px solid {T['border2']};
     border-radius: 16px;
     padding: 1.1rem 1.2rem;
     margin: .6rem 0;
     overflow: hidden;
+    box-shadow: {_shadow_sm};
   }}
   .ocr-skeleton-header {{
     display: flex; align-items: center; gap: .75rem;
-    margin-bottom: .8rem;
+    margin-bottom: .7rem;
   }}
   .ocr-skeleton-icon {{
     font-size: 1.4rem;
     animation: pulse-dot 1.2s ease-in-out infinite;
   }}
   .ocr-skeleton-title {{
-    font-size: 0.95rem; font-weight: 800;
+    font-size: .95rem; font-weight: 800;
     color: {T['text']}; font-family: 'DM Sans', sans-serif;
   }}
   .ocr-skeleton-sub {{
-    font-size: 0.92rem; color: {T['muted']};
+    font-size: .82rem; color: {T['muted']};
     font-family: 'DM Sans', sans-serif;
-    margin-top: 1px;
+    margin-top: 2px;
   }}
+
+  /* ── 3-step progress row inside skeleton ── */
+  .ocr-skeleton-steps {{
+    display: flex; gap: 6px; margin-bottom: .75rem;
+  }}
+  .ocr-skeleton-step {{
+    flex: 1;
+    font-size: .75rem; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    color: {T['muted']};
+    background: {T['bg2']};
+    border: 1px solid {T['border']};
+    border-radius: 8px;
+    padding: .3rem .5rem;
+    text-align: center;
+    opacity: .55;
+    transition: opacity .3s ease, background .3s ease;
+  }}
+  .ocr-skeleton-step.ocr-step-active {{
+    color: {_acc};
+    background: {_acc_soft};
+    border-color: {_acc_med};
+    opacity: 1;
+    animation: pulse-dot 1.4s ease-in-out infinite;
+  }}
+
   .ocr-skeleton-doc {{
-    background: {T['bg']};
+    background: {T['bg2']};
     border: 1px solid {T['border']};
     border-radius: 10px;
-    padding: .9rem 1rem;
+    padding: .8rem 1rem;
     position: relative;
     overflow: hidden;
   }}
@@ -1858,7 +1886,7 @@ def get_css(T: dict) -> str:
     animation: scanLine 2s ease-in-out infinite;
   }}
   .ocr-skeleton-line {{
-    height: 10px;
+    height: 9px;
     border-radius: 6px;
     margin-bottom: 8px;
     background: linear-gradient(90deg,
@@ -1866,6 +1894,7 @@ def get_css(T: dict) -> str:
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
   }}
+
 
   /* ════════════════════════════════════════════════════════════════════════
      OCR HINT BANNER

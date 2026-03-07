@@ -245,7 +245,8 @@ def _vf():
             "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""}
 
 
-def _render_back_button(label: str = "← Indietro", key: str = "btn_back") -> bool:
+def _render_back_button(label: str = "← Indietro", key: str = "btn_back",
+                         help: str = "Torna alla schermata precedente") -> bool:
     """
     Renderizza un pulsante ← Indietro piccolo, discreto e allineato a sinistra.
     Uniforme in tutta l'app. Restituisce True se cliccato.
@@ -254,7 +255,7 @@ def _render_back_button(label: str = "← Indietro", key: str = "btn_back") -> b
     _col, _spacer = st.columns([1, 4])
     with _col:
         st.markdown('<div class="btn-back-discrete">', unsafe_allow_html=True)
-        clicked = st.button(label, key=key, use_container_width=True)
+        clicked = st.button(label, key=key, use_container_width=True, help=help)
         st.markdown('</div>', unsafe_allow_html=True)
     return clicked
 
@@ -1443,6 +1444,21 @@ def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str)
         # Retrocompatibilità: slot singolo usato da compila_contesto_generazione
         st.session_state.analisi_doc = result
         _consolida_info()
+
+        # ── Prepara toast da mostrare al prossimo render ────────────────────────
+        _det_materia = result.get("materia", "")
+        _det_arg     = result.get("contenuto_argomento", "")
+        _det_tipo    = result.get("tipo_documento", "")
+        _toast_parts = []
+        if _det_materia:
+            _toast_parts.append(f"**Materia:** {_det_materia}")
+        if _det_arg:
+            _short_arg = _det_arg[:60] + "…" if len(_det_arg) > 60 else _det_arg
+            _toast_parts.append(f"**Argomento:** {_short_arg}")
+        if _det_tipo:
+            _toast_parts.append(f"**Tipo:** {_det_tipo.replace('_', ' ').title()}")
+        st.session_state["_toast_analisi"] = " · ".join(_toast_parts) if _toast_parts else "Documento analizzato."
+
         st.rerun()
     except Exception as e:
         st.warning(f"⚠️ Analisi non riuscita: {e}. Compila i campi manualmente.", icon="🔬")
@@ -1502,6 +1518,7 @@ def _render_bivio():
             key="btn_genera_verifica_home",
             use_container_width=True,
             type="primary",
+            help="Scegli materia, scuola e argomento — l'AI costruisce la verifica in pochi secondi.",
         ):
             st.session_state.input_percorso = "B"
             st.rerun()
@@ -1680,20 +1697,24 @@ def _render_percorso_a_wizard():
             if _hash_new not in _hashes_esistenti:
                 _ocr_ph = st.empty()
                 _ocr_ph.markdown(
-                    f'<div class="ocr-skeleton-wrap">' +
-                    f'  <div class="ocr-skeleton-header">' +
-                    f'    <div class="ocr-skeleton-icon">🔬</div>' +
-                    f'    <div>' +
-                    f'      <div class="ocr-skeleton-title">Analisi AI in corso…</div>' +
-                    f'      <div class="ocr-skeleton-sub">Lettura · Riconoscimento · Classificazione</div>' +
-                    f'    </div>' +
-                    f'  </div>' +
-                    f'  <div class="ocr-skeleton-doc">' +
-                    f'    <div class="ocr-skeleton-scan"></div>' +
-                    f'    <div class="ocr-skeleton-line" style="width:88%"></div>' +
-                    f'    <div class="ocr-skeleton-line" style="width:72%"></div>' +
-                    f'    <div class="ocr-skeleton-line" style="width:91%"></div>' +
-                    f'  </div></div>',
+                    f'<div class="ocr-skeleton-wrap">'
+                    f'<div class="ocr-skeleton-header">'
+                    f'<div class="ocr-skeleton-icon">🔬</div>'
+                    f'<div style="flex:1">'
+                    f'<div class="ocr-skeleton-title">Analisi AI in corso…</div>'
+                    f'<div class="ocr-skeleton-sub">Lettura · Riconoscimento argomento · Classificazione</div>'
+                    f'</div></div>'
+                    f'<div class="ocr-skeleton-steps">'
+                    f'<div class="ocr-skeleton-step ocr-step-active"><span>📖</span> Lettura file</div>'
+                    f'<div class="ocr-skeleton-step"><span>🧠</span> Identificazione argomento</div>'
+                    f'<div class="ocr-skeleton-step"><span>🏷️</span> Classificazione</div>'
+                    f'</div>'
+                    f'<div class="ocr-skeleton-doc">'
+                    f'<div class="ocr-skeleton-scan"></div>'
+                    f'<div class="ocr-skeleton-line" style="width:88%"></div>'
+                    f'<div class="ocr-skeleton-line" style="width:72%"></div>'
+                    f'<div class="ocr-skeleton-line" style="width:91%"></div>'
+                    f'</div></div>',
                     unsafe_allow_html=True
                 )
                 _esegui_analisi_documento(_new_bytes, _new_mime, _new_name)
@@ -2420,6 +2441,11 @@ def _render_percorso_b_form():
     └─────────────────────────────────────────────────┘
     """
 
+    # ── Toast post-analisi file (mostrato una volta sola dopo il rerun) ──────────
+    _toast_msg = st.session_state.pop("_toast_analisi", None)
+    if _toast_msg:
+        st.toast(f"✅ Documento analizzato — {_toast_msg}", icon="🔬")
+
     # ── Onboarding hint banner (full width) ───────────────────────────────────
     st.markdown(
         f'<div class="onboarding-hint-banner">'
@@ -2472,16 +2498,27 @@ def _render_percorso_b_form():
 
         # Auto-fill da analisi file se disponibile
         _info_cons = st.session_state.info_consolidate
+        _mat_autofilled = False
+        _scu_autofilled = False
         if _info_cons.get("materia") and _info_cons["materia"] in _mat_list:
             _mat_idx = _mat_list.index(_info_cons["materia"])
+            _mat_autofilled = True
         if _info_cons.get("scuola") and _info_cons["scuola"] in SCUOLE:
             _scu_idx = SCUOLE.index(_info_cons["scuola"])
+            _scu_autofilled = True
 
         with _col_m:
             _sel_m = st.selectbox(
                 "Materia", _mat_list, index=_mat_idx,
                 label_visibility="collapsed", key="sel_materia_b",
+                help="Materia della verifica. Se hai caricato un file, viene rilevata automaticamente.",
             )
+            if _mat_autofilled:
+                st.markdown(
+                    f'<div style="font-size:.75rem;color:{T["accent"]};font-family:DM Sans,sans-serif;'
+                    f'margin-top:2px;">✦ Rilevata dal file</div>',
+                    unsafe_allow_html=True,
+                )
             materia_scelta = (
                 st.text_input("Scrivi materia:", key="_mat_custom_b",
                               label_visibility="collapsed").strip() or "Matematica"
@@ -2491,8 +2528,15 @@ def _render_percorso_b_form():
         with _col_s:
             difficolta = st.selectbox(
                 "Scuola", SCUOLE, index=_scu_idx,
+                help="Tipo di scuola e livello. Se hai caricato un file, viene rilevato automaticamente.",
                 label_visibility="collapsed", key="sel_scuola_b",
             )
+            if _scu_autofilled:
+                st.markdown(
+                    f'<div style="font-size:.75rem;color:{T["accent"]};font-family:DM Sans,sans-serif;'
+                    f'margin-top:2px;">✦ Rilevata dal file</div>',
+                    unsafe_allow_html=True,
+                )
 
         # ── Layout: sinistra form (argomento + poi N° esercizi, Genera), destra upload + File nel pool ─
         _col_main, _col_side = st.columns([4, 1], gap="small")
@@ -2513,9 +2557,18 @@ def _render_percorso_b_form():
                 _current = st.session_state.get("argomento_area_b", "")
                 if _current != _auto_arg:
                     st.session_state["argomento_area_b"] = _auto_arg
+                # Badge arricchito con materia + tipo rilevati
+                _badge_mat  = _info_cons.get("materia", "")
+                _badge_tipo = _info_cons.get("tipo_documento", "")
+                _badge_extras = []
+                if _badge_mat:
+                    _badge_extras.append(f"<strong>{_badge_mat}</strong>")
+                if _badge_tipo:
+                    _badge_extras.append(_badge_tipo.replace("_", " "))
+                _badge_extra_str = (" · " + " · ".join(_badge_extras)) if _badge_extras else ""
                 st.markdown(
                     f'<div class="context-sync-badge">'
-                    f'✅ Argomento rilevato dal file caricato'
+                    f'✅ Compilato automaticamente dal file caricato{_badge_extra_str}'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
@@ -2712,6 +2765,7 @@ def _render_percorso_b_form():
                 type="primary",
                 disabled=_limite or _manca_arg,
                 key="genera_btn_b",
+                help="Avvia la generazione AI della verifica. Potrai modificare ogni esercizio prima di scaricare il PDF.",
             )
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -2762,19 +2816,22 @@ def _render_percorso_b_form():
                     _ph_b = st.empty()
                     _ph_b.markdown(
                         f'<div class="ocr-skeleton-wrap">'
-                        f'  <div class="ocr-skeleton-header">'
-                        f'    <div class="ocr-skeleton-icon">🔬</div>'
-                        f'    <div>'
-                        f'      <div class="ocr-skeleton-title">Analisi AI…</div>'
-                        f'      <div class="ocr-skeleton-sub">Lettura · Classificazione</div>'
-                        f'    </div>'
-                        f'  </div>'
-                        f'  <div class="ocr-skeleton-doc">'
-                        f'    <div class="ocr-skeleton-scan"></div>'
-                        f'    <div class="ocr-skeleton-line" style="width:90%"></div>'
-                        f'    <div class="ocr-skeleton-line" style="width:70%"></div>'
-                        f'  </div>'
-                        f'</div>',
+                        f'<div class="ocr-skeleton-header">'
+                        f'<div class="ocr-skeleton-icon">🔬</div>'
+                        f'<div style="flex:1">'
+                        f'<div class="ocr-skeleton-title">Analisi AI in corso…</div>'
+                        f'<div class="ocr-skeleton-sub">Lettura · Identificazione argomento · Classificazione</div>'
+                        f'</div></div>'
+                        f'<div class="ocr-skeleton-steps">'
+                        f'<div class="ocr-skeleton-step ocr-step-active"><span>📖</span> Lettura</div>'
+                        f'<div class="ocr-skeleton-step"><span>🧠</span> Argomento</div>'
+                        f'<div class="ocr-skeleton-step"><span>🏷️</span> Tipo documento</div>'
+                        f'</div>'
+                        f'<div class="ocr-skeleton-doc">'
+                        f'<div class="ocr-skeleton-scan"></div>'
+                        f'<div class="ocr-skeleton-line" style="width:90%"></div>'
+                        f'<div class="ocr-skeleton-line" style="width:70%"></div>'
+                        f'</div></div>',
                         unsafe_allow_html=True,
                     )
                     st.session_state.file_ispirazione = _file_b
@@ -3075,24 +3132,32 @@ def _lancia_generazione(
     """
     calibrazione = CALIBRAZIONE_SCUOLA.get(difficolta, "")
     _t_start = time.time()
-    _n_steps = 4
+    _n_steps = 5   # titolo · esercizi · QA · PDF · salvataggio
     _step    = [0]
     # Usa il placeholder passato (vicino al pulsante) oppure crea uno nuovo
     _prog    = prog_placeholder if prog_placeholder is not None else st.empty()
 
     def _avanza(testo):
         _step[0] += 1
-        perc      = int(min(_step[0] / _n_steps, 0.97) * 100)
-        _acc      = T["accent"]
-        _acc_fade = _acc + "cc"
+        perc  = int(min(_step[0] / _n_steps, 0.97) * 100)
+        _acc  = T["accent"]
+        _bg   = T["border"]
+        _txt  = T["text2"]
         _prog.markdown(
-            '<div style="margin:.6rem 0 1rem 0;">'
-            '<div style="font-size:.82rem;font-weight:600;color:' + T["text2"] + ';'
-            'font-family:DM Sans,sans-serif;margin-bottom:6px;">' + testo + '</div>'
-            '<div style="background:' + T["border"] + ';border-radius:100px;height:8px;overflow:hidden;">'
-            '<div style="background:linear-gradient(90deg,' + _acc + ',' + _acc_fade + ');'
-            'width:' + str(perc) + '%;height:100%;border-radius:100px;transition:width .4s ease;"></div>'
-            '</div></div>',
+            f'<div style="margin:.6rem 0 1rem 0;padding:.7rem 1rem;'
+            f'background:{T["card"]};border:1px solid {T["border2"]};'
+            f'border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);">'
+            f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
+            f'<div style="width:8px;height:8px;border-radius:50%;background:{_acc};'
+            f'animation:pulse-dot 1.2s ease-in-out infinite;flex-shrink:0;"></div>'
+            f'<div style="font-size:.85rem;font-weight:600;color:{_txt};'
+            f'font-family:DM Sans,sans-serif;">{testo}</div>'
+            f'<div style="margin-left:auto;font-size:.75rem;color:{_txt};opacity:.6;">{perc}%</div>'
+            f'</div>'
+            f'<div style="background:{_bg};border-radius:100px;height:6px;overflow:hidden;">'
+            f'<div style="background:linear-gradient(90deg,{_acc},{_acc}cc);'
+            f'width:{perc}%;height:100%;border-radius:100px;transition:width .5s cubic-bezier(.4,0,.2,1);"></div>'
+            f'</div></div>',
             unsafe_allow_html=True
         )
 
@@ -3692,7 +3757,8 @@ def _render_stage_preview():
         )
         st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
         if st.button("Scarica PDF", use_container_width=True,
-                     type="primary", key="preview_ok"):
+                     type="primary", key="preview_ok",
+                     help="Vai direttamente al download del PDF — la verifica è pronta."):
             st.session_state.stage = STAGE_FINAL
             st.rerun()
 
@@ -3712,14 +3778,16 @@ def _render_stage_preview():
         )
         st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
         if st.button("Apri editor", use_container_width=True,
-                     key="preview_edit"):
+                     key="preview_edit",
+                     help="Apri l'editor interattivo per rifinire testo, punteggi e struttura di ogni esercizio."):
             st.session_state.stage = STAGE_REVIEW
             st.rerun()
 
     st.markdown("<br/>", unsafe_allow_html=True)
 
     # ── Link "torna alla configurazione" ────────────────────────────────────
-    if st.button("← Ricomincia da capo", key="preview_back"):
+    if st.button("← Ricomincia da capo", key="preview_back",
+                 help="Cancella questa verifica e torna all'inizio per crearne una nuova."):
         for _k in ("stage", "verifiche", "gen_params", "review_blocks",
                    "review_preamble", "preview_images", "input_percorso",
                    "dialogo_stato", "analisi_doc", "file_mode"):
@@ -4062,7 +4130,8 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 
     if not blocks:
         st.warning("⚠️ Nessun esercizio trovato. Torna indietro e rigenera.")
-        if st.button("← Torna alla configurazione"):
+        if st.button("← Torna alla configurazione",
+                     help="Torna al form di configurazione per cambiare materia, argomento o numero di esercizi."):
             st.session_state.stage = STAGE_INPUT; st.rerun()
         return
 
@@ -4888,6 +4957,7 @@ def _render_stage_final():
             mime="application/pdf",
             use_container_width=True,
             key="dl_pdf_hero_A",
+            help="Scarica il PDF della verifica Fila A, già formattato e pronto per la stampa.",
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
