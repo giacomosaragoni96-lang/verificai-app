@@ -328,9 +328,9 @@ def _riscala_single_block(title: str, body: str, target_pts: int) -> str:
     return m.group(1) if m else body
 
 
-def _parse_items_from_body(body: str) -> list:
-    """Parse sottopunti dal corpo LaTeX.
-    Supporta: \\item[a)] Testo (X pt)  E  \\item Testo (X pt) senza label.
+def _parse_items_from_body(body: str, title: str = "") -> list:
+    """Parse sottopunti dal corpo LaTeX (e opzionalmente dal titolo).
+    Supporta: \\item[a)] Testo (X pt), \\item Testo (X pt), e titolo con (X pt) per esercizi senza \\item.
     Restituisce list di (label, short_text, pts).
     """
     auto_labels = list('abcdefghijklmnopqrstuvwxyz')
@@ -367,11 +367,37 @@ def _parse_items_from_body(body: str) -> list:
         items.append((label, short, pts))
         auto_idx += 1
 
+    if items:
+        return items
+
+    # Pattern 3: nessun \item nel body — punteggio nel titolo (es. "Equazione della Parabola (25 pt)")
+    if title:
+        pt_title = re.search(r'\((\d+)\s*pt\)', title)
+        if pt_title:
+            pts = int(pt_title.group(1))
+            clean_title = re.sub(r'\s*\(\d+\s*pt\)', '', title).strip()
+            clean_title = re.sub(r'\s+', ' ', clean_title)
+            short = (clean_title[:42] + '\u2026') if len(clean_title) > 42 else clean_title
+            items.append(("—", short, pts))
+            return items
+
+    # Pattern 4: (N pt) ovunque nel body ma senza \item (es. paragrafo unico con punteggio)
+    pt_in_body = re.findall(r'\((\d+)\s*pt\)', body)
+    if pt_in_body:
+        total = sum(int(p) for p in pt_in_body)
+        short = (body.strip()[:42] + '\u2026') if len(body.strip()) > 42 else body.strip()
+        short = re.sub(r'\s+', ' ', re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', short))
+        short = re.sub(r'\$[^$]*\$', '[formula]', short)
+        items.append(("—", short or "Esercizio", total))
+        return items
+
     return items
 
 def _apply_item_pts_direct(body: str, new_pts_list: list) -> str:
     """Sostituisce (X pt) su ogni riga \\item con i valori da new_pts_list.
-    Supporta sia \\item[label] che \\item senza label."""
+    Supporta \\item[label], \\item senza label, e body senza \\item (un solo punteggio)."""
+    if not new_pts_list:
+        return body
     count = [0]
     def replacer(m):
         line = m.group(0)
@@ -381,11 +407,15 @@ def _apply_item_pts_direct(body: str, new_pts_list: list) -> str:
             line = re.sub(r'\s*\(\d+\s*pt\)', '', line).rstrip()
             line += f' ({new_pts_list[i]} pt)'
         return line
-    # Se ci sono label esplicite usa quella regex, altrimenti match \item generico
+    # Se ci sono \item, sostituisci (N pt) su ogni \item
     if re.search(r'\\item\[', body):
         return re.sub(r'\\item\[[^\]]*\][^\n]*', replacer, body)
-    else:
+    if re.search(r'\\item\s+', body):
         return re.sub(r'\\item\s+[^\n]+', replacer, body)
+    # Nessun \item (esercizio con punteggio solo in titolo o un solo (N pt) nel body)
+    if len(new_pts_list) == 1:
+        return re.sub(r'\(\d+\s*pt\)', f'({new_pts_list[0]} pt)', body, count=1)
+    return body
 
 
 # Parole chiave che indicano che l'utente sta chiedendo una modifica ai punteggi.
@@ -4380,7 +4410,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     _grand_total_rc   = 0
 
                     for _i, _b in enumerate(st.session_state.review_blocks):
-                        _items_rc = _parse_items_from_body(_b["body"])
+                        _items_rc = _parse_items_from_body(_b["body"], _b.get("title", ""))
                         _title_rc = re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]).strip()
                         _title_rc = (_title_rc[:30] + "…") if len(_title_rc) > 30 else _title_rc
 
