@@ -146,17 +146,17 @@ THEMES = {
     },
 
     # ═══════════════════════════════════════════════════════════════════════
-    #  FORESTA — Azure Cielo + Verde Salvia  (tema chiaro freddo)
-    #  Palette:  Cielo Azzurro  #B8D8E8  (sfondo principale)
+    #  FORESTA — Tema CHIARO azzurro (sfondo cielo, non scuro)
+    #  Palette:  Cielo Azzurro  #C2E0F0  (sfondo principale — chiaro)
     #            Carta          #EAF4F8  (card, superfici chiare)
     #            Blu Acciaio    #3A7CA5  (accent primario)
     #            Verde Salvia   #4A8C6A  (accent secondario / success)
     #            Inchiostro     #1A3040  (testo principale)
     # ═══════════════════════════════════════════════════════════════════════
     "foresta": {
-        # Superfici — azzurro medio-chiaro come base (non troppo pallido)
-        "bg":         "#B8D8E8",     # Cielo Azzurro — sfondo principale
-        "bg2":        "#AACEDD",     # leggermente più saturo per profondità
+        # Superfici — azzurro chiaro (tema chiaro, non scuro)
+        "bg":         "#C2E0F0",     # Cielo Azzurro chiaro — sfondo principale
+        "bg2":        "#B5D6E8",     # secondo livello, sempre chiaro
         "card":       "#EAF4F8",     # carta quasi-bianca con tono freddo
         "card2":      "#D6EAEF",     # card secondaria, tono intermedio
 

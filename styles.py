@@ -1362,50 +1362,48 @@ def get_css(T: dict) -> str:
     display: none !important;
   }}
 
-  /* Selettore preciso: la colonna che contiene DIRETTAMENTE stFileUploader */
+  /* Colonna che contiene il file uploader — usa token tema (chiaro su foresta/chiaro) */
   [data-testid="stColumn"]:has(> div > [data-testid="stFileUploader"]),
   [data-testid="stColumn"]:has(> div > div > [data-testid="stFileUploader"]) {{
-    background-color: #0D1117 !important;
-    background: #0D1117 !important;
-    border: 1.5px solid #21262D !important;
+    background-color: {T['card']} !important;
+    background: {T['card']} !important;
+    border: 1.5px solid {T['border2']} !important;
     border-radius: 16px !important;
     padding: .9rem .9rem 1rem !important;
   }}
 
-  /* Tutti gli elementi dentro la colonna scura */
   [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-title,
   [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-dot {{
-    color: #C9D1D9 !important;
+    color: {T['text']} !important;
   }}
   [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-desc {{
-    color: #8B949E !important;
+    color: {T['text2']} !important;
   }}
   [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box {{
-    background: #0D1117 !important;
-    border-color: #21262D !important;
+    background: {T['card']} !important;
+    border-color: {T['border2']} !important;
   }}
   [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-facsimile {{
-    background: #0D1117 !important;
-    border-color: #58A6FF44 !important;
-    border-left-color: #F59E0B !important;
+    background: {T['card']} !important;
+    border-color: {_acc}44 !important;
+    border-left-color: {T['warn']} !important;
   }}
   [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-badge-violet {{
-    background: #F59E0B22 !important;
-    color: #F59E0B !important;
-    border-color: #F59E0B44 !important;
+    background: {T['warn']}22 !important;
+    color: {T['warn']} !important;
+    border-color: {T['warn']}44 !important;
   }}
   [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-facsimile .side-box-title {{
-    color: #F59E0B !important;
+    color: {T['warn']} !important;
   }}
   [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-facsimile .side-box-desc {{
-    color: #B8935A !important;
+    color: {T['text2']} !important;
   }}
-  /* Pulsanti non-uploader nella colonna scura */
   [data-testid="stColumn"]:has([data-testid="stFileUploader"])
   button:not([kind="primary"]) {{
-    background: #0D1117 !important;
-    border-color: #21262D !important;
-    color: #C9D1D9 !important;
+    background: {T['card']} !important;
+    border-color: {T['border2']} !important;
+    color: {T['text']} !important;
   }}
   
   /* ═══ Facsimile Shortcut — stile distinto (gestito via .side-box-facsimile) ═══ */
@@ -1930,58 +1928,53 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     FILE UPLOADER — Streamlit override
-     Dropzone: sfondo scuro (#0D1117) con bordo tratteggiato blu e testo chiaro.
+     FILE UPLOADER — Streamlit override (usa token tema: chiaro su foresta/chiaro)
      ════════════════════════════════════════════════════════════════════════ */
   [data-testid="stFileUploader"] {{
     background: transparent !important;
     border-radius: 12px !important;
     padding: 0 !important;
   }}
-  /* Dropzone — sfondo scuro coerente con la colonna */
   [data-testid="stFileUploaderDropzone"],
   section[data-testid="stFileUploaderDropzone"] {{
-    background: #0D1117 !important;
-    border: 2px dashed #21262D !important;
+    background: {T['bg2']} !important;
+    border: 2px dashed {T['border2']} !important;
     border-radius: 12px !important;
     color-scheme: {_color_scheme} !important;
     padding: .8rem !important;
   }}
   [data-testid="stFileUploaderDropzone"]:hover,
   section[data-testid="stFileUploaderDropzone"]:hover {{
-    border-color: #58A6FF !important;
-    background: #161B22 !important;
+    border-color: {_acc} !important;
+    background: {T['card']} !important;
   }}
-  /* Istruzioni testo — chiaro su fondo scuro del dropzone */
   [data-testid="stFileDropzoneInstructions"],
   [data-testid="stFileDropzoneInstructions"] *,
   [data-testid="stFileDropzoneInstructions"] span,
   [data-testid="stFileDropzoneInstructions"] p,
   [data-testid="stFileDropzoneInstructions"] div {{
-    color: #C9D1D9 !important;
-    -webkit-text-fill-color: #C9D1D9 !important;
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
     font-family: 'DM Sans', sans-serif !important;
   }}
   [data-testid="stFileDropzoneInstructions"] small,
   [data-testid="stFileDropzoneInstructions"] span + span {{
-    color: #8B949E !important;
-    -webkit-text-fill-color: #8B949E !important;
+    color: {T['text2']} !important;
+    -webkit-text-fill-color: {T['text2']} !important;
     font-size: 0.88rem !important;
   }}
-  /* Override anche per testo generico dentro il dropzone (drag and drop, limit) */
   [data-testid="stFileUploaderDropzone"] span,
   [data-testid="stFileUploaderDropzone"] p,
   [data-testid="stFileUploaderDropzone"] div:not(button) {{
-    color: #C9D1D9 !important;
-    -webkit-text-fill-color: #C9D1D9 !important;
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
   }}
-  /* Pulsante Browse files — outline teal visibile su sfondo scuro */
   [data-testid="stFileUploaderDropzone"] button,
   section[data-testid="stFileUploaderDropzone"] button {{
     background: transparent !important;
-    color: #C9D1D9 !important;
-    -webkit-text-fill-color: #C9D1D9 !important;
-    border: 1.5px solid #21262D !important;
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
+    border: 1.5px solid {T['border2']} !important;
     border-radius: 8px !important;
     font-weight: 700 !important;
     font-size: 0.89rem !important;

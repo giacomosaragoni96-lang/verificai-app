@@ -2549,9 +2549,10 @@ def _render_percorso_b_form():
         f'Più dettagli fornisci, più la verifica rispecchierà le tue aspettative'
         f'</div>'
         f'<div class="onboarding-hint-desc">'
-        f'Specifica l\'argomento con esempi concreti, scegli il tipo di scuola '
-        f'e — se vuoi — allega materiale di riferimento accanto all\'argomento. '
-        f'<strong>Potrai sempre modificare i singoli esercizi generati.</strong>'
+        f'Scegli materia e scuola, poi inserisci l\'argomento e — se vuoi — '
+        f'carica un documento nella colonna accanto. Se carichi una verifica, '
+        f'potrai generare un facsimile con un clic. <strong>Potrai sempre modificare '
+        f'i singoli esercizi generati.</strong>'
         f'</div>'
         f'</div>'
         f'</div>',
@@ -2611,58 +2612,26 @@ def _render_percorso_b_form():
                 label_visibility="collapsed", key="sel_scuola_b",
             )
 
-        # ── Section header: Argomento ─────────────────────────────────────────
+        # ── Section header: Argomento e materiale (stessa riga, stile Materia|Scuola) ─
         st.markdown(
             f'<div class="form-section-header" style="margin-top:1.4rem;">'
             f'<div class="form-section-dot"></div>'
-            f'<span class="form-section-title">Argomento della verifica</span>'
+            f'<span class="form-section-title">Argomento e materiale di riferimento</span>'
             f'<div class="form-section-line"></div>'
             f'</div>',
             unsafe_allow_html=True,
         )
 
-        # ── RIGA INLINE: Argomento [2] | Documento di riferimento [1.1] ──────
-        _col_arg_w, _col_up_w = st.columns([2, 1.1], gap="medium")
-
-        with _col_arg_w:
-            # Badge auto-rilevato se argomento viene dai file
-            _auto_arg = _info_cons.get("contenuto_argomento", "")
-            _arg_source = st.session_state.get("_pb_argomento_source")
-            if _auto_arg and _arg_source != "manual":
-                st.markdown(
-                    f'<div class="context-sync-badge">'
-                    f'✅ Argomento rilevato dal file caricato'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-
-            # Valore default
-            _arg_default = ""
-            if _arg_source == "manual":
-                _arg_default = st.session_state.get("_pb_argomento_manual_val", "")
-            elif _auto_arg:
-                _arg_default = _auto_arg
-
-            st.markdown('<div class="argomento-field-wrap">', unsafe_allow_html=True)
-            argomento_raw = st.text_area(
-                "argomento",
-                value=_arg_default,
-                placeholder="es. Equazioni di secondo grado\nes. La Rivoluzione Francese\nes. Il ciclo dell'acqua",
-                height=105,
-                label_visibility="collapsed",
-                key="argomento_area_b",
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
+        # ── RIGA INLINE: Documento di riferimento | Argomento (stesso stile Materia|Scuola) ─
+        _col_up_w, _col_arg_w = st.columns(2, gap="small")
 
         with _col_up_w:
-            # ── Label sezione upload ───────────────────────────────────────────
             st.markdown(
                 f'<div style="font-size:.75rem;font-weight:700;letter-spacing:.06em;'
                 f'text-transform:uppercase;color:{T["muted"]};font-family:DM Sans,sans-serif;'
                 f'margin-bottom:.3rem;">📎 Documento di riferimento</div>',
                 unsafe_allow_html=True,
             )
-
             _lista_b = st.session_state.analisi_docs_list
             _upload_key_b = f"pb_file_up_{len(_lista_b)}"
             st.markdown('<div class="file-uploader-compact">', unsafe_allow_html=True)
@@ -2672,10 +2641,9 @@ def _render_percorso_b_form():
                 key=_upload_key_b,
                 label_visibility="collapsed",
                 help="Carica una verifica precedente, appunti o un capitolo del libro. "
-                     "L'AI calibrerà stile e struttura.",
+                     "L'AI analizza in tempo reale e, se rileva una verifica, puoi generare un facsimile.",
             )
             st.markdown('</div>', unsafe_allow_html=True)
-
             if _file_b:
                 _fb_bytes = _file_b.getvalue()
                 _fb_hash  = hash(_fb_bytes)
@@ -2707,117 +2675,144 @@ def _render_percorso_b_form():
                 else:
                     st.info("File già presente.", icon="ℹ️")
 
-            # ── Recap file caricati (compatto, dentro la colonna upload) ─────
-            _lista_b_curr = st.session_state.analisi_docs_list
-            if _lista_b_curr:
+        with _col_arg_w:
+            _auto_arg = _info_cons.get("contenuto_argomento", "")
+            _arg_source = st.session_state.get("_pb_argomento_source")
+            if _auto_arg and _arg_source != "manual":
                 st.markdown(
-                    f'<div style="font-size:.68rem;font-weight:700;letter-spacing:.07em;'
-                    f'text-transform:uppercase;color:{T["muted"]};font-family:DM Sans,'
-                    f'sans-serif;margin:.5rem 0 .3rem;">File nel pool ({len(_lista_b_curr)})</div>',
+                    f'<div class="context-sync-badge">'
+                    f'✅ Argomento rilevato dal file caricato'
+                    f'</div>',
                     unsafe_allow_html=True,
                 )
-                _MODO_OPTIONS = {
-                    "base_conoscenza":   "📚 Fonte di studio",
-                    "includi_esercizio": "✏️ Includi esercizio",
-                }
-                _TIPO_ICONS = {
-                    "verifica": "📋", "appunti": "📒",
-                    "libro": "📚", "misto": "📄",
-                    "esercizi_sciolti": "📝", "esercizio_singolo": "✏️",
-                }
-                _TIPO_BADGE_CLASS = {
-                    "verifica": "file-item-b-badge-verifica",
-                    "appunti":  "file-item-b-badge-appunti",
-                }
-                _rimuovi_idx = None
-                for _fi, _fentry in enumerate(_lista_b_curr):
-                    _fhash_str = str(_fentry["file_hash"])
-                    _fanalisi  = _fentry.get("analisi", {})
-                    _ftipo     = _fanalisi.get("tipo_documento", "altro")
-                    _fbadge_c  = _TIPO_BADGE_CLASS.get(_ftipo, "file-item-b-badge-altro")
-                    _ficon     = _TIPO_ICONS.get(_ftipo, "📄")
-                    _ftipo_lbl = _ftipo.replace("_", " ").title()
+            _arg_default = ""
+            if _arg_source == "manual":
+                _arg_default = st.session_state.get("_pb_argomento_manual_val", "")
+            elif _auto_arg:
+                _arg_default = _auto_arg
+            st.markdown('<div style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:' + T["muted"] + ';font-family:DM Sans,sans-serif;margin-bottom:.3rem;">Argomento della verifica</div>', unsafe_allow_html=True)
+            st.markdown('<div class="argomento-field-wrap">', unsafe_allow_html=True)
+            argomento_raw = st.text_area(
+                "argomento",
+                value=_arg_default,
+                placeholder="es. Equazioni di secondo grado\nes. La Rivoluzione Francese\nes. Il ciclo dell'acqua",
+                height=105,
+                label_visibility="collapsed",
+                key="argomento_area_b",
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # ── Recap file caricati (full width, sotto la riga Argomento|Upload) ─────
+        _lista_b_curr = st.session_state.analisi_docs_list
+        if _lista_b_curr:
+            st.markdown(
+                f'<div style="font-size:.68rem;font-weight:700;letter-spacing:.07em;'
+                f'text-transform:uppercase;color:{T["muted"]};font-family:DM Sans,'
+                f'sans-serif;margin:.5rem 0 .3rem;">File nel pool ({len(_lista_b_curr)})</div>',
+                unsafe_allow_html=True,
+            )
+            _MODO_OPTIONS = {
+                "base_conoscenza":   "📚 Fonte di studio",
+                "includi_esercizio": "✏️ Includi esercizio",
+            }
+            _TIPO_ICONS = {
+                "verifica": "📋", "appunti": "📒",
+                "libro": "📚", "misto": "📄",
+                "esercizi_sciolti": "📝", "esercizio_singolo": "✏️",
+            }
+            _TIPO_BADGE_CLASS = {
+                "verifica": "file-item-b-badge-verifica",
+                "appunti":  "file-item-b-badge-appunti",
+            }
+            _rimuovi_idx = None
+            for _fi, _fentry in enumerate(_lista_b_curr):
+                _fhash_str = str(_fentry["file_hash"])
+                _fanalisi  = _fentry.get("analisi", {})
+                _ftipo     = _fanalisi.get("tipo_documento", "altro")
+                _fbadge_c  = _TIPO_BADGE_CLASS.get(_ftipo, "file-item-b-badge-altro")
+                _ficon     = _TIPO_ICONS.get(_ftipo, "📄")
+                _ftipo_lbl = _ftipo.replace("_", " ").title()
+                st.markdown(
+                    f'<div class="file-item-b">'
+                    f'  <div class="file-item-b-header">'
+                    f'    <span class="file-item-b-icon">{_ficon}</span>'
+                    f'    <span class="file-item-b-name">{_fentry["file_name"][:22]}'
+                    f'{"…" if len(_fentry["file_name"]) > 22 else ""}</span>'
+                    f'    <span class="file-item-b-badge {_fbadge_c}">{_ftipo_lbl}</span>'
+                    f'  </div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+                _fa = _fentry.get("analisi", {})
+                _fa_mat = _fa.get("materia", "")
+                _fa_arg = _fa.get("contenuto_argomento", "")
+                _fa_es  = _fa.get("num_esercizi_rilevati")
+                _fa_parts = []
+                if _fa_mat: _fa_parts.append(f"<strong>{_fa_mat}</strong>")
+                if _fa_arg: _fa_parts.append(_fa_arg[:45] + ("…" if len(_fa_arg) > 45 else ""))
+                if _fa_es:  _fa_parts.append(f"{_fa_es} esercizi")
+                if _fa_parts:
                     st.markdown(
-                        f'<div class="file-item-b">'
-                        f'  <div class="file-item-b-header">'
-                        f'    <span class="file-item-b-icon">{_ficon}</span>'
-                        f'    <span class="file-item-b-name">{_fentry["file_name"][:22]}'
-                        f'{"…" if len(_fentry["file_name"]) > 22 else ""}</span>'
-                        f'    <span class="file-item-b-badge {_fbadge_c}">{_ftipo_lbl}</span>'
-                        f'  </div>'
+                        f'<div class="file-ai-summary">'
+                        f'<span class="file-ai-summary-icon">🤖</span>'
+                        f'<span class="file-ai-summary-text">{" · ".join(_fa_parts)}</span>'
                         f'</div>',
                         unsafe_allow_html=True,
                     )
-                    _fa = _fentry.get("analisi", {})
-                    _fa_mat = _fa.get("materia", "")
-                    _fa_arg = _fa.get("contenuto_argomento", "")
-                    _fa_es  = _fa.get("num_esercizi_rilevati")
-                    _fa_parts = []
-                    if _fa_mat: _fa_parts.append(f"<strong>{_fa_mat}</strong>")
-                    if _fa_arg: _fa_parts.append(_fa_arg[:45] + ("…" if len(_fa_arg) > 45 else ""))
-                    if _fa_es:  _fa_parts.append(f"{_fa_es} esercizi")
-                    if _fa_parts:
-                        st.markdown(
-                            f'<div class="file-ai-summary">'
-                            f'<span class="file-ai-summary-icon">🤖</span>'
-                            f'<span class="file-ai-summary-text">{" · ".join(_fa_parts)}</span>'
-                            f'</div>',
-                            unsafe_allow_html=True,
-                        )
-                    _modo_prev = _fentry.get("file_mode", "base_conoscenza")
-                    if _modo_prev not in _MODO_OPTIONS:
-                        _modo_prev = "base_conoscenza"
-                    _modo_opts = list(_MODO_OPTIONS.keys())
-                    _modo_idx  = _modo_opts.index(_modo_prev)
-                    st.markdown('<div class="file-item-b-mode-label">Come usarlo</div>', unsafe_allow_html=True)
-                    _sel_modo = st.selectbox(
-                        f"Modalità uso file {_fi}",
-                        options=_modo_opts,
-                        index=_modo_idx,
-                        format_func=lambda x: _MODO_OPTIONS[x],
-                        key=f"pb_mode_{_fhash_str}",
-                        label_visibility="collapsed",
-                    )
-                    if _sel_modo != _lista_b_curr[_fi].get("file_mode"):
-                        st.session_state.analisi_docs_list[_fi]["file_mode"] = _sel_modo
-                        st.session_state.analisi_docs_list[_fi]["confirmed"] = (_sel_modo != "ignora")
-                        _consolida_info()
-                    if _sel_modo == "includi_esercizio":
-                        st.markdown(
-                            f'<div class="file-includi-hint">'
-                            f'📌 L\'AI inserirà questo esercizio come <strong>Esercizio 1</strong>.'
-                            f'</div>',
-                            unsafe_allow_html=True,
-                        )
-                    _istr_prev = st.session_state.istruzioni_per_file.get(_fhash_str, "")
-                    _istr_new  = st.text_area(
-                        f"Istruzioni file {_fi}",
-                        value=_istr_prev,
-                        placeholder=(
-                            "es. Stessi dati, oppure: Cambia i valori…"
-                            if _sel_modo == "includi_esercizio"
-                            else "es. Usa solo il secondo esercizio…"
-                        ),
-                        height=52,
-                        key=f"pb_istr_{_fhash_str}",
-                        label_visibility="collapsed",
-                    )
-                    if _istr_new != _istr_prev:
-                        st.session_state.istruzioni_per_file[_fhash_str] = _istr_new
-                    st.markdown('<div class="file-item-b-delete">', unsafe_allow_html=True)
-                    if st.button(f"✕ Rimuovi", key=f"pb_rm_{_fhash_str}_{_fi}", use_container_width=True):
-                        _rimuovi_idx = _fi
-                    st.markdown('</div>', unsafe_allow_html=True)
-
-                if _rimuovi_idx is not None:
-                    _rimosso = st.session_state.analisi_docs_list.pop(_rimuovi_idx)
-                    st.session_state.istruzioni_per_file.pop(str(_rimosso.get("file_hash")), None)
+                _modo_prev = _fentry.get("file_mode", "base_conoscenza")
+                if _modo_prev not in _MODO_OPTIONS:
+                    _modo_prev = "base_conoscenza"
+                _modo_opts = list(_MODO_OPTIONS.keys())
+                _modo_idx  = _modo_opts.index(_modo_prev)
+                st.markdown('<div class="file-item-b-mode-label">Come usarlo</div>', unsafe_allow_html=True)
+                _sel_modo = st.selectbox(
+                    f"Modalità uso file {_fi}",
+                    options=_modo_opts,
+                    index=_modo_idx,
+                    format_func=lambda x: _MODO_OPTIONS[x],
+                    key=f"pb_mode_{_fhash_str}",
+                    label_visibility="collapsed",
+                )
+                if _sel_modo != _lista_b_curr[_fi].get("file_mode"):
+                    st.session_state.analisi_docs_list[_fi]["file_mode"] = _sel_modo
+                    st.session_state.analisi_docs_list[_fi]["confirmed"] = (_sel_modo != "ignora")
                     _consolida_info()
-                    if st.session_state.get("_pb_argomento_source") != "manual":
-                        st.session_state["_pb_argomento_source"] = None
-                        if not st.session_state.analisi_docs_list:
-                            st.session_state.info_consolidate = {}
-                    st.rerun()
+                if _sel_modo == "includi_esercizio":
+                    st.markdown(
+                        f'<div class="file-includi-hint">'
+                        f'📌 L\'AI inserirà questo esercizio come <strong>Esercizio 1</strong>.'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+                _istr_prev = st.session_state.istruzioni_per_file.get(_fhash_str, "")
+                _istr_new  = st.text_area(
+                    f"Istruzioni file {_fi}",
+                    value=_istr_prev,
+                    placeholder=(
+                        "es. Stessi dati, oppure: Cambia i valori…"
+                        if _sel_modo == "includi_esercizio"
+                        else "es. Usa solo il secondo esercizio…"
+                    ),
+                    height=52,
+                    key=f"pb_istr_{_fhash_str}",
+                    label_visibility="collapsed",
+                )
+                if _istr_new != _istr_prev:
+                    st.session_state.istruzioni_per_file[_fhash_str] = _istr_new
+                st.markdown('<div class="file-item-b-delete">', unsafe_allow_html=True)
+                if st.button(f"✕ Rimuovi", key=f"pb_rm_{_fhash_str}_{_fi}", use_container_width=True):
+                    _rimuovi_idx = _fi
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            if _rimuovi_idx is not None:
+                _rimosso = st.session_state.analisi_docs_list.pop(_rimuovi_idx)
+                st.session_state.istruzioni_per_file.pop(str(_rimosso.get("file_hash")), None)
+                _consolida_info()
+                if st.session_state.get("_pb_argomento_source") != "manual":
+                    st.session_state["_pb_argomento_source"] = None
+                    if not st.session_state.analisi_docs_list:
+                        st.session_state.info_consolidate = {}
+                st.rerun()
 
         # ── Traccia modifica manuale argomento ────────────────────────────────
         _auto_arg_ref = _info_cons.get("contenuto_argomento", "")
@@ -2846,6 +2841,7 @@ def _render_percorso_b_form():
                 _mat_det  = _last_analisi_b.get("materia") or materia_scelta
                 _pt_label = f" · {_pt_det} pt" if _pt_det else ""
                 _conf_pct = int(float(_last_analisi_b.get("confidence", 0)) * 100)
+                _prog_fac = st.empty()
                 st.markdown(
                     f'<div class="facsimile-detection-banner">'
                     f'  <div class="facsimile-detection-icon">📋</div>'
@@ -2854,8 +2850,8 @@ def _render_percorso_b_form():
                     f'      Verifica rilevata — {_mat_det} · {_n_es_det} esercizi{_pt_label}'
                     f'    </div>'
                     f'    <div class="facsimile-detection-sub">'
-                    f'      Genera una variante facsimile con dati completamente nuovi'
-                    f'      e stessa struttura ({_conf_pct}% di confidenza)'
+                    f'      Genera una variante facsimile: stessa struttura e punteggi, dati e quesiti variati. '
+                    f'      Clicca per andare direttamente alla revisione ({_conf_pct}% confidenza).'
                     f'    </div>'
                     f'  </div>'
                     f'</div>',
@@ -2869,13 +2865,12 @@ def _render_percorso_b_form():
                     disabled=_limite,
                     help=(
                         "Genera subito una variante con la stessa struttura della verifica "
-                        "caricata, ma con tutti i dati e le domande completamente nuovi."
+                        "caricata e reindirizza alla pagina di revisione."
                     ),
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
 
                 if _btn_fac_inline and not _limite:
-                    # Conferma file in modalità copia_fedele e lancia generazione
                     _fac_idx_b = next(
                         (i for i, e in enumerate(st.session_state.analisi_docs_list)
                          if e["file_hash"] == _last_doc["file_hash"]),
@@ -2889,6 +2884,9 @@ def _render_percorso_b_form():
 
                     _info_fac = st.session_state.info_consolidate
                     _ha_griglia_fac = _last_analisi_b.get("ha_tabella_punti", False)
+                    _pt_fac = 100
+                    if isinstance(_last_analisi_b.get("punti_totali_rilevati"), (int, float)) and _last_analisi_b["punti_totali_rilevati"] > 0:
+                        _pt_fac = int(_last_analisi_b["punti_totali_rilevati"])
                     argomento_fac, note_fac = compila_contesto_generazione(
                         analisi=_info_fac,
                         file_mode="copia_fedele",
@@ -2900,8 +2898,8 @@ def _render_percorso_b_form():
                         "║  ⚠️  ISTRUZIONE CRITICA — FACSIMILE: DATI COMPLETAMENTE NUOVI  ║\n"
                         "╚══════════════════════════════════════════════════════════════╝\n"
                         "Stai generando un FACSIMILE della verifica allegata.\n"
-                        "REGOLA ASSOLUTA: struttura identica, tutti i dati numerici e "
-                        "testuali COMPLETAMENTE DIVERSI al 100%.\n"
+                        "REGOLA ASSOLUTA: struttura identica, stessi punteggi totali, stessa materia e argomento; "
+                        "tutti i dati numerici e testuali COMPLETAMENTE DIVERSI.\n"
                         "NON usare gli stessi valori nemmeno come riferimento.\n"
                         "Il docente NON deve riconoscere i dati originali.\n"
                     )
@@ -2909,15 +2907,14 @@ def _render_percorso_b_form():
                     _mat_fac  = _info_fac.get("materia", "Matematica")
                     _scu_fac  = _info_fac.get("scuola", SCUOLE[0])
                     _n_fac    = max(1, min(int(_last_analisi_b.get("num_esercizi_rilevati") or 4), 15))
-                    _calibr_fac = CALIBRAZIONE_SCUOLA.get(_scu_fac, "")
-                    _s_es_fac, _imgs_es_fac = _build_prompt_esercizi([], _n_fac, 100, True)
+                    _s_es_fac, _imgs_es_fac = _build_prompt_esercizi([], _n_fac, _pt_fac, True)
                     _lancia_generazione(
                         materia_scelta=_mat_fac,
                         argomento=argomento_fac,
                         difficolta=_scu_fac,
                         durata_scelta="1 ora",
                         num_esercizi_totali=_n_fac,
-                        punti_totali=100,
+                        punti_totali=_pt_fac,
                         mostra_punteggi=True,
                         con_griglia=_ha_griglia_fac or True,
                         note_generali=note_fac,
@@ -2925,6 +2922,7 @@ def _render_percorso_b_form():
                         imgs_es=_imgs_es_fac,
                         file_ispirazione=st.session_state.get("file_ispirazione"),
                         mathpix_context=st.session_state.get("mathpix_context"),
+                        prog_placeholder=_prog_fac,
                     )
                     return
 
