@@ -101,11 +101,13 @@ def get_css(T: dict) -> str:
     transition: background-color {_transition}, color {_transition};
   }}
 
-  /* Breathing room: il main container non cola sui bordi */
+  /* Breathing room: pagina larga e centrata */
   .main .block-container {{
-    padding-top: 1.8rem !important;
+    padding-top: 1.6rem !important;
     padding-bottom: 3rem !important;
-    max-width: 1100px !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 1440px !important;
   }}
 
   /* ── Streamlit CSS custom properties override (previene dark bleed) ── */
@@ -278,8 +280,8 @@ def get_css(T: dict) -> str:
   }}
 
   .block-container {{
-    padding: 4rem 2rem 4rem !important;
-    max-width: 1200px !important;
+    padding: 3.5rem 2rem 3.5rem !important;
+    max-width: 1440px !important;
     margin: 0 auto !important;
   }}
 
@@ -1561,18 +1563,18 @@ def get_css(T: dict) -> str:
     align-items: flex-start !important;
   }}
 
-  /* Colonna upload (destra): sidebar fissa, altezza limitata, scroll interno */
+  /* Colonna upload (destra): dashboard documenti */
   [data-testid="stColumn"]:has(.upload-column-label) {{
     background-color: {T['card']} !important;
     background: {T['card']} !important;
     border: 1px solid {T['border2']} !important;
     border-left: 3px solid {_acc} !important;
     border-radius: {_radius_lg} !important;
-    padding: 0.75rem 0.85rem !important;
-    min-width: 200px !important;
-    max-width: 280px !important;
-    height: 65vh !important;
-    max-height: 65vh !important;
+    padding: 0.85rem 0.9rem !important;
+    min-width: 240px !important;
+    max-width: 340px !important;
+    height: 70vh !important;
+    max-height: 70vh !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     overscroll-behavior: contain !important;
@@ -1593,11 +1595,11 @@ def get_css(T: dict) -> str:
     border: 1px solid {T['border2']} !important;
     border-left: 3px solid {_acc} !important;
     border-radius: {_radius_lg} !important;
-    padding: 0.75rem 0.85rem !important;
-    min-width: 200px !important;
-    max-width: 280px !important;
-    height: 65vh !important;
-    max-height: 65vh !important;
+    padding: 0.85rem 0.9rem !important;
+    min-width: 240px !important;
+    max-width: 340px !important;
+    height: 70vh !important;
+    max-height: 70vh !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     align-self: flex-start !important;
@@ -1709,6 +1711,135 @@ def get_css(T: dict) -> str:
   .file-pool-card .facsimile-inline-btn button {{
     min-height: 42px !important;
     font-size: 0.9rem !important;
+  }}
+
+  /* ── Document Dashboard ─────────────────────────────────────────────── */
+  .doc-pool-header {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.55rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid {T['border2']};
+  }}
+  .doc-pool-title {{
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .doc-pool-count {{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px; height: 18px;
+    background: {_acc_soft};
+    color: {_acc};
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: 0.3rem;
+  }}
+
+  /* Empty state */
+  .doc-pool-empty {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.8rem 1rem;
+    text-align: center;
+    gap: 0.5rem;
+  }}
+  .doc-pool-empty-icon {{
+    font-size: 2.2rem;
+    opacity: 0.5;
+    margin-bottom: 0.2rem;
+  }}
+  .doc-pool-empty-title {{
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .doc-pool-empty-sub {{
+    font-size: 0.75rem;
+    color: {T['muted']};
+    line-height: 1.45;
+    max-width: 180px;
+  }}
+
+  /* Tag pills */
+  .doc-tags {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin: 0.3rem 0 0.25rem;
+  }}
+  .doc-tag {{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .doc-tag-tipo {{
+    background: {_acc_soft};
+    color: {_acc};
+    border: 1px solid {_acc_ring};
+  }}
+  .doc-tag-content {{
+    background: {T['border2']}55;
+    color: {T['text2']};
+    border: 1px solid {T['border2']};
+  }}
+  .doc-tag-formula {{
+    background: #A855F715;
+    color: #A855F7;
+    border: 1px solid #A855F730;
+  }}
+  .doc-tag-grafico {{
+    background: #F59E0B15;
+    color: #D97706;
+    border: 1px solid #F59E0B30;
+  }}
+
+  /* Snippet text */
+  .doc-snippet {{
+    font-size: 0.75rem;
+    color: {T['text2']};
+    line-height: 1.45;
+    margin: 0.2rem 0 0.3rem;
+    padding: 0.3rem 0.45rem;
+    background: {T['bg2']};
+    border-left: 2px solid {_acc_soft};
+    border-radius: 0 {_radius_sm} {_radius_sm} 0;
+    font-style: italic;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }}
+
+  /* Confirm pulisci */
+  .confirm-pulisci-box {{
+    background: #EF444415;
+    border: 1px solid #EF444430;
+    border-radius: {_radius_sm};
+    padding: 0.55rem 0.65rem;
+    margin: 0.4rem 0 0.2rem;
+    font-size: 0.8rem;
+    color: {T['text']};
+  }}
+  .confirm-pulisci-box strong {{
+    color: #EF4444;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════

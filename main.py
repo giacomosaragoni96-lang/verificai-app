@@ -1464,6 +1464,47 @@ def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str)
         st.warning(f"⚠️ Analisi non riuscita: {e}. Compila i campi manualmente.", icon="🔬")
 
 
+def _compute_file_tags(analisi: dict) -> list:
+    """Restituisce una lista di tag descrittivi (max 6) derivati dall'analisi AI del file."""
+    tags = []
+    tipo = analisi.get("tipo_documento", "")
+    _tipo_map = {
+        "verifica": ("📋", "Verifica", "tipo"),
+        "appunti": ("📒", "Appunti", "tipo"),
+        "libro": ("📚", "Libro", "tipo"),
+        "esercizi_sciolti": ("📝", "Esercizi", "tipo"),
+        "esercizio_singolo": ("✏️", "Esercizio", "tipo"),
+        "misto": ("📄", "Misto", "tipo"),
+    }
+    if tipo in _tipo_map:
+        icon, label, kind = _tipo_map[tipo]
+        tags.append((icon, label, kind))
+
+    tipi_domande = analisi.get("tipi_domande") or []
+    for td in tipi_domande:
+        if td == "Aperto":
+            tags.append(("💬", "Aperto", "content"))
+        elif td == "Scelta multipla":
+            tags.append(("🔘", "Quiz", "content"))
+        elif td == "Vero/Falso":
+            tags.append(("✔", "V/F", "content"))
+        elif td == "Completamento":
+            tags.append(("✍️", "Completamento", "content"))
+
+    stile = (analisi.get("stile_desc") or "").lower()
+    if any(w in stile for w in ("teoria", "definizione", "concetto", "spiegazione")):
+        tags.append(("📖", "Teoria", "content"))
+    elif any(w in stile for w in ("sintesi", "riassunto", "schema", "mappa")):
+        tags.append(("🗂️", "Sintesi", "content"))
+
+    if analisi.get("ha_formule"):
+        tags.append(("∑", "Formule", "formula"))
+    if analisi.get("ha_grafici"):
+        tags.append(("📈", "Grafici", "grafico"))
+
+    return tags[:6]
+
+
 def _consolida_info():
     """
     Ricalcola info_consolidate da tutti i file in analisi_docs_list.
@@ -2793,10 +2834,13 @@ def _render_percorso_b_form():
                 st.rerun()
 
         with _col_side:
+            # ── Intestazione colonna ──────────────────────────────────────────
             st.markdown(
-                f'<div class="upload-column-label">📎 Documento di riferimento</div>',
+                '<div class="upload-column-label">📎 Documenti</div>',
                 unsafe_allow_html=True,
             )
+
+            # ── File uploader ─────────────────────────────────────────────────
             _lista_b = st.session_state.analisi_docs_list
             _upload_key_b = f"pb_file_up_{len(_lista_b)}"
             st.markdown('<div class="file-uploader-compact file-uploader-narrow">', unsafe_allow_html=True)
@@ -2805,9 +2849,10 @@ def _render_percorso_b_form():
                 type=["pdf", "png", "jpg", "jpeg"],
                 key=_upload_key_b,
                 label_visibility="collapsed",
-                help="Carica una verifica, appunti o un capitolo. L'AI analizza e aggiorna l'argomento.",
+                help="Carica una verifica, appunti o un capitolo. L'AI analizza il contenuto e aggiorna i campi automaticamente.",
             )
             st.markdown('</div>', unsafe_allow_html=True)
+
             if _file_b:
                 _fb_bytes = _file_b.getvalue()
                 _fb_hash  = hash(_fb_bytes)
@@ -2815,23 +2860,23 @@ def _render_percorso_b_form():
                 if _fb_hash not in _existing_b:
                     _ph_b = st.empty()
                     _ph_b.markdown(
-                        f'<div class="ocr-skeleton-wrap">'
-                        f'<div class="ocr-skeleton-header">'
-                        f'<div class="ocr-skeleton-icon">🔬</div>'
-                        f'<div style="flex:1">'
-                        f'<div class="ocr-skeleton-title">Analisi AI in corso…</div>'
-                        f'<div class="ocr-skeleton-sub">Lettura · Identificazione argomento · Classificazione</div>'
-                        f'</div></div>'
-                        f'<div class="ocr-skeleton-steps">'
-                        f'<div class="ocr-skeleton-step ocr-step-active"><span>📖</span> Lettura</div>'
-                        f'<div class="ocr-skeleton-step"><span>🧠</span> Argomento</div>'
-                        f'<div class="ocr-skeleton-step"><span>🏷️</span> Tipo documento</div>'
-                        f'</div>'
-                        f'<div class="ocr-skeleton-doc">'
-                        f'<div class="ocr-skeleton-scan"></div>'
-                        f'<div class="ocr-skeleton-line" style="width:90%"></div>'
-                        f'<div class="ocr-skeleton-line" style="width:70%"></div>'
-                        f'</div></div>',
+                        '<div class="ocr-skeleton-wrap">'
+                        '<div class="ocr-skeleton-header">'
+                        '<div class="ocr-skeleton-icon">🔬</div>'
+                        '<div style="flex:1">'
+                        '<div class="ocr-skeleton-title">Analisi AI in corso…</div>'
+                        '<div class="ocr-skeleton-sub">Lettura · Identificazione · Classificazione</div>'
+                        '</div></div>'
+                        '<div class="ocr-skeleton-steps">'
+                        '<div class="ocr-skeleton-step ocr-step-active"><span>📖</span> Lettura</div>'
+                        '<div class="ocr-skeleton-step"><span>🧠</span> Argomento</div>'
+                        '<div class="ocr-skeleton-step"><span>🏷️</span> Tipo</div>'
+                        '</div>'
+                        '<div class="ocr-skeleton-doc">'
+                        '<div class="ocr-skeleton-scan"></div>'
+                        '<div class="ocr-skeleton-line" style="width:90%"></div>'
+                        '<div class="ocr-skeleton-line" style="width:70%"></div>'
+                        '</div></div>',
                         unsafe_allow_html=True,
                     )
                     st.session_state.file_ispirazione = _file_b
@@ -2840,74 +2885,141 @@ def _render_percorso_b_form():
                     if st.session_state.get("_pb_argomento_source") != "manual":
                         st.session_state["_pb_argomento_source"] = None
                 else:
-                    st.info("File già presente.", icon="ℹ️")
+                    st.info("File già presente nel pool.", icon="ℹ️")
 
-            # ── File nel pool (dentro colonna destra) ─────────────────────────
+            # ── Document management dashboard ─────────────────────────────────
             _lista_b_curr = st.session_state.analisi_docs_list
-            if _lista_b_curr:
+            _n_docs_curr  = len(_lista_b_curr)
+
+            if not _lista_b_curr:
+                # Empty state
                 st.markdown(
-                    f'<div class="file-pool-section">'
-                    f'<div class="file-pool-section-title">File nel pool ({len(_lista_b_curr)})</div>',
+                    '<div class="doc-pool-empty">'
+                    '<div class="doc-pool-empty-icon">📂</div>'
+                    '<div class="doc-pool-empty-title">Nessun documento</div>'
+                    '<div class="doc-pool-empty-sub">'
+                    'Carica una verifica, degli appunti o un libro. '
+                    'L\'AI estrarrà automaticamente argomento, materia e tipo.'
+                    '</div>'
+                    '</div>',
                     unsafe_allow_html=True,
                 )
+            else:
+                # Dashboard header: count + Pulisci Tutto
+                st.markdown(
+                    f'<div class="doc-pool-header">'
+                    f'<span class="doc-pool-title">Pool documenti'
+                    f'<span class="doc-pool-count">{_n_docs_curr}</span>'
+                    f'</span>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+                # Pulisci Tutto button + confirmation flow
+                _confirm_key = "_confirm_pulisci_pool"
+                if not st.session_state.get(_confirm_key, False):
+                    st.markdown('<div class="file-item-b-delete">', unsafe_allow_html=True)
+                    if st.button("🗑️ Pulisci tutto", key="btn_pulisci_tutto", use_container_width=True,
+                                 help="Rimuovi tutti i documenti dal pool e azzera l'analisi."):
+                        st.session_state[_confirm_key] = True
+                        st.rerun()
+                    st.markdown('</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(
+                        '<div class="confirm-pulisci-box">'
+                        '<strong>⚠️ Sei sicuro?</strong> Tutti i documenti e le analisi verranno rimossi.'
+                        '</div>',
+                        unsafe_allow_html=True,
+                    )
+                    _c_yes, _c_no = st.columns(2)
+                    with _c_yes:
+                        if st.button("✓ Sì, pulisci", key="btn_pulisci_si", use_container_width=True):
+                            st.session_state.analisi_docs_list = []
+                            st.session_state.istruzioni_per_file = {}
+                            st.session_state.info_consolidate = {}
+                            st.session_state.file_ispirazione = None
+                            st.session_state.mathpix_context = None
+                            st.session_state[_confirm_key] = False
+                            if st.session_state.get("_pb_argomento_source") != "manual":
+                                st.session_state["_pb_argomento_source"] = None
+                            st.rerun()
+                    with _c_no:
+                        if st.button("✗ Annulla", key="btn_pulisci_no", use_container_width=True):
+                            st.session_state[_confirm_key] = False
+                            st.rerun()
+
                 _MODO_OPTIONS = {
                     "base_conoscenza":   "📚 Fonte di studio",
                     "includi_esercizio": "✏️ Includi esercizio",
                 }
-                _TIPO_ICONS = {
-                    "verifica": "📋", "appunti": "📒",
-                    "libro": "📚", "misto": "📄",
-                    "esercizi_sciolti": "📝", "esercizio_singolo": "✏️",
-                }
-                _TIPO_BADGE_CLASS = {
-                    "verifica": "file-item-b-badge-verifica",
-                    "appunti":  "file-item-b-badge-appunti",
-                }
                 _rimuovi_idx = None
+
                 for _fi, _fentry in enumerate(_lista_b_curr):
                     _fhash_str = str(_fentry["file_hash"])
-                    _fanalisi  = _fentry.get("analisi", {})
-                    _ftipo     = _fanalisi.get("tipo_documento", "altro")
-                    _fbadge_c  = _TIPO_BADGE_CLASS.get(_ftipo, "file-item-b-badge-altro")
-                    _ficon     = _TIPO_ICONS.get(_ftipo, "📄")
-                    _ftipo_lbl = _ftipo.replace("_", " ").title()
-                    _fa = _fentry.get("analisi", {})
-                    _fa_mat = _fa.get("materia", "")
-                    _fa_arg = _fa.get("contenuto_argomento", "")
-                    _fa_es  = _fa.get("num_esercizi_rilevati")
-                    _fa_parts = []
-                    if _fa_mat: _fa_parts.append(f"<strong>{_fa_mat}</strong>")
-                    if _fa_arg: _fa_parts.append(_fa_arg[:45] + ("…" if len(_fa_arg) > 45 else ""))
-                    if _fa_es:  _fa_parts.append(f"{_fa_es} esercizi")
-                    _summary_html = ""
-                    if _fa_parts:
-                        _summary_html = (
-                            f'<div class="file-ai-summary">'
-                            f'<span class="file-ai-summary-icon">🤖</span>'
-                            f'<span class="file-ai-summary-text">{" · ".join(_fa_parts)}</span>'
-                            f'</div>'
+                    _fa        = _fentry.get("analisi", {})
+                    _ftipo     = _fa.get("tipo_documento", "altro")
+                    _fa_arg    = _fa.get("contenuto_argomento", "")
+                    _fa_mat    = _fa.get("materia", "")
+                    _fa_es     = _fa.get("num_esercizi_rilevati")
+
+                    # Compute AI tags
+                    _tags = _compute_file_tags(_fa)
+                    _tags_html = ""
+                    if _tags:
+                        _tag_class_map = {
+                            "tipo": "doc-tag-tipo",
+                            "content": "doc-tag-content",
+                            "formula": "doc-tag-formula",
+                            "grafico": "doc-tag-grafico",
+                        }
+                        _pills = "".join(
+                            f'<span class="doc-tag {_tag_class_map.get(k, "doc-tag-content")}">{ico} {lbl}</span>'
+                            for ico, lbl, k in _tags
                         )
+                        _tags_html = f'<div class="doc-tags">{_pills}</div>'
+
+                    # Snippet: contenuto_argomento as preview text
+                    _snippet_html = ""
+                    if _fa_arg:
+                        _snip = _fa_arg[:110] + ("…" if len(_fa_arg) > 110 else "")
+                        _snippet_html = f'<div class="doc-snippet">{_snip}</div>'
+
+                    # Summary line (materia + num esercizi)
+                    _info_parts = []
+                    if _fa_mat:
+                        _info_parts.append(f"<strong>{_fa_mat}</strong>")
+                    if _fa_es:
+                        _info_parts.append(f"{_fa_es} esercizi")
+                    _info_html = (
+                        f'<span style="font-size:0.72rem;color:var(--text2,#888)">{" · ".join(_info_parts)}</span>'
+                        if _info_parts else ""
+                    )
+
+                    _fname_display = _fentry["file_name"]
+                    if len(_fname_display) > 24:
+                        _fname_display = _fname_display[:21] + "…"
+
                     st.markdown(
                         f'<div class="file-pool-card">'
                         f'  <div class="file-item-b">'
                         f'    <div class="file-item-b-header">'
-                        f'      <span class="file-item-b-icon">{_ficon}</span>'
-                        f'      <span class="file-item-b-name">{_fentry["file_name"][:22]}'
-                        f'{"…" if len(_fentry["file_name"]) > 22 else ""}</span>'
-                        f'      <span class="file-item-b-badge {_fbadge_c}">{_ftipo_lbl}</span>'
+                        f'      <span class="file-item-b-name">{_fname_display}</span>'
+                        f'      {_info_html}'
                         f'    </div>'
                         f'  </div>'
-                        f'  {_summary_html}'
+                        f'  {_tags_html}'
+                        f'  {_snippet_html}'
                         f'  <div class="file-item-b-mode-label">Come usarlo</div>'
                         f'</div>',
                         unsafe_allow_html=True,
                     )
+
                     _modo_prev = _fentry.get("file_mode", "base_conoscenza")
                     if _modo_prev not in _MODO_OPTIONS:
                         _modo_prev = "base_conoscenza"
                     _modo_opts = list(_MODO_OPTIONS.keys())
                     _modo_idx  = _modo_opts.index(_modo_prev)
-                    _sel_modo = st.selectbox(
+                    _sel_modo  = st.selectbox(
                         f"Modalità uso file {_fi}",
                         options=_modo_opts,
                         index=_modo_idx,
@@ -2921,9 +3033,9 @@ def _render_percorso_b_form():
                         _consolida_info()
                     if _sel_modo == "includi_esercizio":
                         st.markdown(
-                            f'<div class="file-includi-hint">'
-                            f'📌 L\'AI inserirà questo esercizio come <strong>Esercizio 1</strong>.'
-                            f'</div>',
+                            '<div class="file-includi-hint">'
+                            '📌 L\'AI inserirà questo esercizio come <strong>Esercizio 1</strong>.'
+                            '</div>',
                             unsafe_allow_html=True,
                         )
                     _istr_prev = st.session_state.istruzioni_per_file.get(_fhash_str, "")
@@ -2941,8 +3053,9 @@ def _render_percorso_b_form():
                     )
                     if _istr_new != _istr_prev:
                         st.session_state.istruzioni_per_file[_fhash_str] = _istr_new
+
                     st.markdown('<div class="file-item-b-delete">', unsafe_allow_html=True)
-                    if st.button(f"✕ Rimuovi", key=f"pb_rm_{_fhash_str}_{_fi}", use_container_width=True):
+                    if st.button("✕ Rimuovi", key=f"pb_rm_{_fhash_str}_{_fi}", use_container_width=True):
                         _rimuovi_idx = _fi
                     st.markdown('</div>', unsafe_allow_html=True)
 
