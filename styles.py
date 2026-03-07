@@ -1494,7 +1494,51 @@ def get_css(T: dict) -> str:
   .facsimile-shortcut-desc {{ display: none; }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     FILE ITEMS — Compact list (Percorso B sidebar)
+     FILE POOL — Sezione e card (contenitore unico per file caricati)
+     ════════════════════════════════════════════════════════════════════════ */
+  .file-pool-section {{
+    background: {T['card']};
+    border: 1px solid {T['border']};
+    border-radius: {_radius_lg};
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+  }}
+  .file-pool-section-title {{
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    margin: 0 0 0.75rem 0;
+  }}
+  .file-pool-card {{
+    background: {T['bg2']};
+    border: 1px solid {T['border']};
+    border-radius: {_radius_md};
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.75rem;
+    transition: border-color .15s ease;
+  }}
+  .file-pool-card:last-of-type {{
+    margin-bottom: 0;
+  }}
+  .file-pool-card .file-ai-summary {{
+    margin: 0.3rem 0 0.2rem;
+  }}
+  .file-pool-card .file-item-b-mode-label {{
+    margin: 0.15rem 0 0.1rem;
+  }}
+  .file-pool-card .file-item-b-delete {{
+    margin-top: 0.2rem;
+  }}
+  .file-pool-card .facsimile-detection-banner {{
+    margin: 0.6rem 0 0.35rem;
+    padding: 0.7rem 1rem;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     FILE ITEMS — Compact list (Percorso B, dentro file-pool-card)
      ════════════════════════════════════════════════════════════════════════ */
   .file-item-b {{
     background: {_surf_overlay};
