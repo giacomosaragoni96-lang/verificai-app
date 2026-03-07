@@ -2905,149 +2905,127 @@ def _render_percorso_b_form():
                     unsafe_allow_html=True,
                 )
             else:
-                # Dashboard header: count + Pulisci Tutto
+                # Dashboard header: count only
                 st.markdown(
                     f'<div class="doc-pool-header">'
-                    f'<span class="doc-pool-title">Pool documenti'
+                    f'<span class="doc-pool-title">Documenti caricati'
                     f'<span class="doc-pool-count">{_n_docs_curr}</span>'
                     f'</span>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
 
-                # Pulisci Tutto button + confirmation flow
-                _confirm_key = "_confirm_pulisci_pool"
-                if not st.session_state.get(_confirm_key, False):
-                    st.markdown('<div class="file-item-b-delete">', unsafe_allow_html=True)
-                    if st.button("🗑️ Pulisci tutto", key="btn_pulisci_tutto", use_container_width=True,
-                                 help="Rimuovi tutti i documenti dal pool e azzera l'analisi."):
-                        st.session_state[_confirm_key] = True
-                        st.rerun()
-                    st.markdown('</div>', unsafe_allow_html=True)
-                else:
-                    st.markdown(
-                        '<div class="confirm-pulisci-box">'
-                        '<strong>⚠️ Sei sicuro?</strong> Tutti i documenti e le analisi verranno rimossi.'
-                        '</div>',
-                        unsafe_allow_html=True,
-                    )
-                    _c_yes, _c_no = st.columns(2)
-                    with _c_yes:
-                        if st.button("✓ Sì, pulisci", key="btn_pulisci_si", use_container_width=True):
-                            st.session_state.analisi_docs_list = []
-                            st.session_state.istruzioni_per_file = {}
-                            st.session_state.info_consolidate = {}
-                            st.session_state.file_ispirazione = None
-                            st.session_state.mathpix_context = None
-                            st.session_state[_confirm_key] = False
-                            if st.session_state.get("_pb_argomento_source") != "manual":
-                                st.session_state["_pb_argomento_source"] = None
-                            st.rerun()
-                    with _c_no:
-                        if st.button("✗ Annulla", key="btn_pulisci_no", use_container_width=True):
-                            st.session_state[_confirm_key] = False
-                            st.rerun()
-
                 _MODO_OPTIONS = {
                     "base_conoscenza":   "📚 Fonte di studio",
-                    "includi_esercizio": "✏️ Includi esercizio",
+                    "includi_esercizio": "✏️ Adatta esercizi",
                 }
                 _rimuovi_idx = None
 
                 for _fi, _fentry in enumerate(_lista_b_curr):
                     _fhash_str = str(_fentry["file_hash"])
                     _fa        = _fentry.get("analisi", {})
-                    _ftipo     = _fa.get("tipo_documento", "altro")
                     _fa_arg    = _fa.get("contenuto_argomento", "")
                     _fa_mat    = _fa.get("materia", "")
-                    _fa_es     = _fa.get("num_esercizi_rilevati")
+                    _fa_es     = _fa.get("num_esercizi_rilevati") or 0
 
-                    # Compute AI tags
+                    # AI tags
                     _tags = _compute_file_tags(_fa)
+                    _tag_class_map = {
+                        "tipo": "doc-tag-tipo", "content": "doc-tag-content",
+                        "formula": "doc-tag-formula", "grafico": "doc-tag-grafico",
+                    }
                     _tags_html = ""
                     if _tags:
-                        _tag_class_map = {
-                            "tipo": "doc-tag-tipo",
-                            "content": "doc-tag-content",
-                            "formula": "doc-tag-formula",
-                            "grafico": "doc-tag-grafico",
-                        }
                         _pills = "".join(
                             f'<span class="doc-tag {_tag_class_map.get(k, "doc-tag-content")}">{ico} {lbl}</span>'
                             for ico, lbl, k in _tags
                         )
                         _tags_html = f'<div class="doc-tags">{_pills}</div>'
 
-                    # Snippet: contenuto_argomento as preview text
+                    # Snippet
                     _snippet_html = ""
                     if _fa_arg:
                         _snip = _fa_arg[:110] + ("…" if len(_fa_arg) > 110 else "")
                         _snippet_html = f'<div class="doc-snippet">{_snip}</div>'
 
-                    # Summary line (materia + num esercizi)
+                    # Info line: materia · n esercizi
                     _info_parts = []
                     if _fa_mat:
                         _info_parts.append(f"<strong>{_fa_mat}</strong>")
                     if _fa_es:
-                        _info_parts.append(f"{_fa_es} esercizi")
+                        _info_parts.append(f"{_fa_es} eserc.")
                     _info_html = (
-                        f'<span style="font-size:0.72rem;color:var(--text2,#888)">{" · ".join(_info_parts)}</span>'
+                        f'<span class="doc-card-meta">{" · ".join(_info_parts)}</span>'
                         if _info_parts else ""
                     )
 
                     _fname_display = _fentry["file_name"]
-                    if len(_fname_display) > 24:
-                        _fname_display = _fname_display[:21] + "…"
+                    if len(_fname_display) > 26:
+                        _fname_display = _fname_display[:23] + "…"
 
                     st.markdown(
                         f'<div class="file-pool-card">'
-                        f'  <div class="file-item-b">'
-                        f'    <div class="file-item-b-header">'
-                        f'      <span class="file-item-b-name">{_fname_display}</span>'
-                        f'      {_info_html}'
-                        f'    </div>'
+                        f'  <div class="file-item-b-header">'
+                        f'    <span class="file-item-b-name">{_fname_display}</span>'
+                        f'    {_info_html}'
                         f'  </div>'
                         f'  {_tags_html}'
                         f'  {_snippet_html}'
-                        f'  <div class="file-item-b-mode-label">Come usarlo</div>'
                         f'</div>',
                         unsafe_allow_html=True,
                     )
 
+                    # Mode selection — radio with clear labels
                     _modo_prev = _fentry.get("file_mode", "base_conoscenza")
                     if _modo_prev not in _MODO_OPTIONS:
                         _modo_prev = "base_conoscenza"
-                    _modo_opts = list(_MODO_OPTIONS.keys())
-                    _modo_idx  = _modo_opts.index(_modo_prev)
-                    _sel_modo  = st.selectbox(
-                        f"Modalità uso file {_fi}",
-                        options=_modo_opts,
-                        index=_modo_idx,
+                    _sel_modo = st.radio(
+                        f"Modalità file {_fi}",
+                        options=list(_MODO_OPTIONS.keys()),
+                        index=list(_MODO_OPTIONS.keys()).index(_modo_prev),
                         format_func=lambda x: _MODO_OPTIONS[x],
                         key=f"pb_mode_{_fhash_str}",
+                        horizontal=True,
                         label_visibility="collapsed",
                     )
                     if _sel_modo != _lista_b_curr[_fi].get("file_mode"):
                         st.session_state.analisi_docs_list[_fi]["file_mode"] = _sel_modo
                         st.session_state.analisi_docs_list[_fi]["confirmed"] = (_sel_modo != "ignora")
                         _consolida_info()
+
+                    # Context-aware hint for "Adatta esercizi"
                     if _sel_modo == "includi_esercizio":
+                        if _fa_es > 1:
+                            _hint_txt = (
+                                f'L\'AI prenderà i <strong>{_fa_es} esercizi</strong> trovati '
+                                f'nel documento come traccia: stessa struttura, dati completamente nuovi.'
+                            )
+                        elif _fa_es == 1:
+                            _hint_txt = (
+                                'L\'AI adatterà l\'esercizio trovato '
+                                '(struttura invariata, dati e valori nuovi).'
+                            )
+                        else:
+                            _hint_txt = (
+                                'L\'AI userà il contenuto di questo file come base '
+                                'per costruire gli esercizi della verifica.'
+                            )
                         st.markdown(
-                            '<div class="file-includi-hint">'
-                            '📌 L\'AI inserirà questo esercizio come <strong>Esercizio 1</strong>.'
-                            '</div>',
+                            f'<div class="file-includi-hint">💡 {_hint_txt}</div>',
                             unsafe_allow_html=True,
                         )
+
+                    # Optional per-file instructions
                     _istr_prev = st.session_state.istruzioni_per_file.get(_fhash_str, "")
                     _istr_new  = st.text_area(
-                        f"Istruzioni file {_fi}",
+                        f"Note aggiuntive per il file {_fi}",
                         value=_istr_prev,
                         placeholder=(
-                            "es. Stessi dati, oppure: Cambia i valori…"
+                            "es. Cambia i valori numerici ma mantieni la struttura…"
                             if _sel_modo == "includi_esercizio"
-                            else "es. Usa solo il secondo esercizio…"
+                            else "es. Usa solo la sezione sulle frazioni…"
                         ),
-                        height=38,
+                        height=42,
                         key=f"pb_istr_{_fhash_str}",
                         label_visibility="collapsed",
                     )

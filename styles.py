@@ -1687,6 +1687,44 @@ def get_css(T: dict) -> str:
     padding: 0.25rem 0.4rem;
     font-size: 0.8rem;
   }}
+  /* doc-card-meta: riga materia · n esercizi */
+  .doc-card-meta {{
+    font-size: 0.71rem;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+  }}
+  .doc-card-meta strong {{ color: {T['text2']}; }}
+
+  /* Radio toggle inside file card */
+  .file-pool-card [data-testid="stRadio"] {{
+    margin: 0.35rem 0 0 !important;
+  }}
+  .file-pool-card [data-testid="stRadio"] > div {{
+    gap: 0.4rem !important;
+    flex-wrap: nowrap !important;
+  }}
+  .file-pool-card [data-testid="stRadio"] label {{
+    font-size: 0.78rem !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    border: 1px solid {T['border2']} !important;
+    background: {T['bg2']} !important;
+    color: {T['text2']} !important;
+    cursor: pointer !important;
+    transition: background 0.15s, border-color 0.15s !important;
+    white-space: nowrap !important;
+  }}
+  .file-pool-card [data-testid="stRadio"] label:has(input:checked) {{
+    background: {_acc_soft} !important;
+    border-color: {_acc_ring} !important;
+    color: {_acc} !important;
+    font-weight: 600 !important;
+  }}
+  .file-pool-card [data-testid="stRadio"] input[type="radio"] {{
+    display: none !important;
+  }}
+
   .file-pool-card .file-item-b-mode-label {{
     margin: 0.1rem 0 0.05rem;
     font-size: 0.8rem;
@@ -1858,8 +1896,23 @@ def get_css(T: dict) -> str:
     margin-bottom: 0.2rem;
     border-radius: {_radius_sm};
   }}
+  /* header diretto nella card (senza wrapper .file-item-b) */
+  .file-pool-card .file-item-b-header {{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.4rem;
+    margin-bottom: 0.1rem;
+  }}
   .file-pool-card .file-item-b-name {{
-    font-size: 0.82rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: {T['text']};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
   }}
   .file-pool-card .file-item-b-badge {{
     font-size: 0.75rem;
