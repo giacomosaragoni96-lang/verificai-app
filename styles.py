@@ -18,27 +18,42 @@ def get_css(T: dict) -> str:
     _SB_INPUT_TEXT = T.get("sidebar_input_text", "#E6EDF3")
 
     _is_light = _is_light_color(T["bg"])
-    _btn_primary_bg = T["accent"]
 
-    # Accent derived colors
-    _acc = T["accent"]
-    _acc_soft = _acc + "18"
-    _acc_med  = _acc + "33"
-    _acc_ring = _acc + "44"
+    # ── Design System — Accent tokens ─────────────────────────────────────────
+    _acc  = T["accent"]
+    _acc2 = T.get("accent2", _acc)
+    _acc_soft = _acc + "14"     # hover/fill molto leggero
+    _acc_med  = _acc + "30"     # border, separatori
+    _acc_ring = _acc + "40"     # focus ring
+    _acc_glow = _acc + "22"     # ombra glow sui bottoni primari
 
-    # Surface elevation tokens
-    _surf_raised = T.get("card", T["bg2"])
+    # ── Surface elevation tokens ───────────────────────────────────────────────
+    _surf_raised  = T.get("card", T["bg2"])
     _surf_overlay = T.get("card2", T["bg2"])
 
-    # Design system — radius e ombre morbide (Minimal SaaS)
+    # ── Design system — radius scale ───────────────────────────────────────────
     _radius_sm = T.get("radius_sm", "8px")
     _radius_md = T.get("radius_md", "12px")
     _radius_lg = T.get("radius_lg", "16px")
-    _shadow_soft = T.get("shadow_soft", T.get("shadow_md", "0 4px 20px rgba(0,0,0,.15)"))
 
-    # Placeholder: colore con buon contrasto su qualsiasi sfondo del tema
-    _placeholder_color = "#6E7681" if not _is_light else "#718096"
+    # ── Shadow scale (morbida, elegante su temi chiari e scuri) ───────────────
+    _shadow_xs   = T.get("shadow", "0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04)")
+    _shadow_sm   = "0 2px 8px rgba(0,0,0,.07), 0 1px 3px rgba(0,0,0,.04)"
+    _shadow_md   = T.get("shadow_md", "0 4px 16px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04)")
+    _shadow_soft = T.get("shadow_soft", "0 8px 32px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.04)")
+    _shadow_lg   = "0 16px 48px rgba(0,0,0,.10), 0 4px 16px rgba(0,0,0,.06)"
+
+    # ── Primary button text color ─────────────────────────────────────────────
+    # Su temi chiari l'accent è spesso scuro (teal, forest green) → testo bianco.
+    # Se l'accent è chiaro (es. light yellow) usare testo scuro.
+    _btn_text = "#ffffff" if not _is_light_color(_acc) else T["text"]
+
+    # ── Placeholder e color-scheme ─────────────────────────────────────────────
+    _placeholder_color = T.get("muted", "#6E7681")
     _color_scheme = "light" if _is_light else "dark"
+
+    # ── Transition standard ────────────────────────────────────────────────────
+    _transition = "0.2s cubic-bezier(.4,0,.2,1)"
 
  
     
@@ -66,23 +81,31 @@ def get_css(T: dict) -> str:
     position: relative !important;
   }}
 
-  /* Global readable font size for all Streamlit content */
+  /* ── Global typography ── */
   .stApp p,
   .stApp li,
   .stApp label,
   .stApp [data-testid="stMarkdownContainer"] p,
   .stApp [data-testid="stMarkdownContainer"] li {{
     font-size: 1rem !important;
-    line-height: 1.6 !important;
+    line-height: 1.65 !important;
     font-family: 'DM Sans', sans-serif !important;
+    color: {T['text']} !important;
   }}
 
   .stApp {{
     background-color: {T['bg']} !important;
-    font-family: 'DM Sans', 'Inter', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 16px;
     color: {T['text']};
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color {_transition}, color {_transition};
+  }}
+
+  /* Breathing room: il main container non cola sui bordi */
+  .main .block-container {{
+    padding-top: 1.8rem !important;
+    padding-bottom: 3rem !important;
+    max-width: 1100px !important;
   }}
 
   /* ── Streamlit CSS custom properties override (previene dark bleed) ── */
@@ -91,6 +114,42 @@ def get_css(T: dict) -> str:
     --background-color: {T['bg']} !important;
     --secondary-background-color: {T['bg2']} !important;
     --text-color: {T['text']} !important;
+  }}
+
+  /* ── Typographic hierarchy — heading scale elegante ── */
+  .stApp h1, .stMarkdown h1 {{
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: clamp(1.75rem, 3vw, 2.25rem) !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.03em !important;
+    line-height: 1.15 !important;
+    color: {T['text']} !important;
+    margin-bottom: .5rem !important;
+  }}
+  .stApp h2, .stMarkdown h2 {{
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: clamp(1.35rem, 2.5vw, 1.7rem) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.025em !important;
+    line-height: 1.2 !important;
+    color: {T['text']} !important;
+    margin-bottom: .4rem !important;
+  }}
+  .stApp h3, .stMarkdown h3 {{
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em !important;
+    color: {T['text']} !important;
+    margin-bottom: .3rem !important;
+  }}
+  .stApp h4, .stMarkdown h4 {{
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: {T['text2']} !important;
+    text-transform: uppercase !important;
+    letter-spacing: .06em !important;
   }}
 
   /* ══════════════════════════════════════════════════════════════════════════
@@ -219,8 +278,8 @@ def get_css(T: dict) -> str:
   }}
 
   .block-container {{
-    padding: 4.5rem 1.5rem 4rem !important;
-    max-width: 1400px !important;
+    padding: 4rem 2rem 4rem !important;
+    max-width: 1200px !important;
     margin: 0 auto !important;
   }}
 
@@ -232,10 +291,14 @@ def get_css(T: dict) -> str:
   }}
   .dashboard-card {{
     background: {T['card']};
-    border: 1px solid {T['border']};
+    border: 1px solid {T['border2']};
     border-radius: {_radius_lg};
-    box-shadow: {_shadow_soft};
-    padding: 1.5rem;
+    box-shadow: {_shadow_sm};
+    padding: 1.6rem 1.8rem;
+    transition: box-shadow {_transition};
+  }}
+  .dashboard-card:hover {{
+    box-shadow: {_shadow_md};
   }}
   .divider-minimal {{
     height: 1px;
@@ -326,7 +389,7 @@ def get_css(T: dict) -> str:
   [data-testid="stSidebar"] {{
     background: {_SB_BG_CSS} !important;
     border-right: 1px solid {_SB_BORDER} !important;
-    box-shadow: 2px 0 24px rgba(0,0,0,.12) !important;
+    box-shadow: 4px 0 32px rgba(0,0,0,.14) !important;
   }}
   .sidebar-title {{
     font-family: 'DM Sans', sans-serif;
@@ -370,13 +433,14 @@ def get_css(T: dict) -> str:
     border: 1px solid {_SB_BORDER} !important;
     border-radius: 10px !important;
     color: {_SB_INPUT_TEXT} !important;
-    font-size: 0.88rem !important;
-    transition: border-color .2s ease, box-shadow .2s ease !important;
+    font-size: 0.9rem !important;
+    padding: 10px 12px !important;
+    transition: border-color {_transition}, box-shadow {_transition} !important;
   }}
   [data-testid="stSidebar"] .stTextInput input:focus,
   [data-testid="stSidebar"] .stNumberInput input:focus {{
     border-color: {_SB_ACCENT} !important;
-    box-shadow: 0 0 0 2px {_SB_ACCENT}33 !important;
+    box-shadow: 0 0 0 3px {_SB_ACCENT}30 !important;
     outline: none !important;
   }}
   [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:first-child {{
@@ -542,18 +606,19 @@ def get_css(T: dict) -> str:
   [data-testid="stTextInput"] input,
   [data-testid="stTextArea"] textarea {{
     background: {_surf_overlay} !important;
-    border: 1.5px solid {T['border']} !important;
+    border: 1.5px solid {T['border2']} !important;
     border-radius: {_radius_md} !important;
     color: {T['text']} !important;
     font-family: 'DM Sans', sans-serif !important;
-    font-size: 1.02rem !important;
-    padding: 13px 15px !important;
-    transition: border-color .2s ease, box-shadow .2s ease !important;
+    font-size: 1rem !important;
+    padding: 14px 16px !important;
+    box-shadow: {_shadow_xs} !important;
+    transition: border-color {_transition}, box-shadow {_transition} !important;
   }}
   [data-testid="stTextInput"] input:focus,
   [data-testid="stTextArea"] textarea:focus {{
     border-color: {_acc} !important;
-    box-shadow: 0 0 0 3px {_acc_soft} !important;
+    box-shadow: 0 0 0 3px {_acc_ring}, {_shadow_xs} !important;
     outline: none !important;
   }}
   /* Placeholder — vendor prefixes per browser coverage + alto contrasto */
@@ -719,34 +784,35 @@ def get_css(T: dict) -> str:
      ════════════════════════════════════════════════════════════════════════ */
   div.stButton > button[kind="primary"],
   div.stButton > button[data-testid="stBaseButton-primary"] {{
-    background: linear-gradient(135deg, {_acc}, {T.get('accent2', _acc)}) !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+    background: linear-gradient(135deg, {_acc} 0%, {_acc2} 100%) !important;
+    color: {_btn_text} !important;
+    -webkit-text-fill-color: {_btn_text} !important;
     border: none !important;
     border-radius: {_radius_md} !important;
     font-family: 'DM Sans', sans-serif !important;
-    font-weight: 800 !important;
-    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    font-size: 1.02rem !important;
     min-height: 50px !important;
     letter-spacing: -.01em !important;
-    box-shadow: 0 4px 20px {_acc_ring} !important;
-    transition: filter .2s ease, box-shadow .2s ease, transform .2s ease !important;
+    box-shadow: 0 4px 20px {_acc_glow}, 0 1px 4px {_acc_med} !important;
+    transition: filter {_transition}, box-shadow {_transition}, transform {_transition} !important;
   }}
   div.stButton > button[kind="primary"]:hover,
   div.stButton > button[data-testid="stBaseButton-primary"]:hover {{
-    filter: brightness(1.08) !important;
-    box-shadow: 0 6px 28px {_acc}55 !important;
+    filter: brightness(1.06) !important;
+    box-shadow: 0 8px 28px {_acc_ring}, 0 2px 6px {_acc_med} !important;
     transform: translateY(-2px) !important;
   }}
   div.stButton > button[kind="primary"]:active,
   div.stButton > button[data-testid="stBaseButton-primary"]:active {{
-    transform: translateY(0) !important;
-    box-shadow: 0 2px 12px {_acc_med} !important;
+    transform: translateY(0) scale(.98) !important;
+    box-shadow: 0 2px 10px {_acc_med} !important;
+    filter: brightness(.97) !important;
   }}
   div.stButton > button[kind="primary"]:disabled {{
     opacity: .45 !important;
     box-shadow: none !important;
-    filter: none !important;
+    filter: grayscale(.3) !important;
     transform: none !important;
   }}
 
@@ -755,27 +821,31 @@ def get_css(T: dict) -> str:
     background: {_surf_raised} !important;
     color: {T['text']} !important;
     -webkit-text-fill-color: {T['text']} !important;
-    border: 1.5px solid {T['border']} !important;
+    border: 1.5px solid {T['border2']} !important;
     border-radius: {_radius_md} !important;
     font-family: 'DM Sans', sans-serif !important;
     font-weight: 600 !important;
-    font-size: 1.02rem !important;
+    font-size: 1rem !important;
     min-height: 48px !important;
-    transition: background .15s ease, border-color .15s ease, box-shadow .15s ease !important;
+    box-shadow: {_shadow_xs} !important;
+    transition: background {_transition}, border-color {_transition}, box-shadow {_transition}, transform {_transition} !important;
   }}
   div.stButton > button[kind="secondary"]:hover,
   div.stButton > button:not([kind="primary"]):hover {{
     background: {T['hover']} !important;
     border-color: {_acc} !important;
-    box-shadow: 0 2px 12px {_acc_soft} !important;
+    box-shadow: 0 4px 16px {_acc_soft}, {_shadow_xs} !important;
+    transform: translateY(-1px) !important;
   }}
   div.stButton > button[kind="secondary"]:active,
   div.stButton > button:not([kind="primary"]):active {{
     transform: scale(0.98) !important;
+    box-shadow: none !important;
   }}
   div.stButton > button:focus-visible {{
     outline: 2px solid {_acc} !important;
-    outline-offset: 2px !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 0 4px {_acc_ring} !important;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -814,12 +884,12 @@ def get_css(T: dict) -> str:
     display: flex; justify-content: center; margin-bottom: 1.6rem;
   }}
   .breadcrumb-pill {{
-    display: inline-flex; align-items: center; gap: 10px;
-    padding: .7rem 1.6rem;
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: .65rem 1.8rem;
     background: {T['card']};
-    border: 1.5px solid {T['border']};
+    border: 1px solid {T['border2']};
     border-radius: 100px;
-    box-shadow: {T.get('shadow_md', '0 4px 20px rgba(0,0,0,.08)')};
+    box-shadow: {_shadow_md};
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -986,11 +1056,16 @@ def get_css(T: dict) -> str:
      ════════════════════════════════════════════════════════════════════════ */
   .side-box {{
     background: {T['card']};
-    border: 1.5px solid {T['border2']};
+    border: 1px solid {T['border2']};
     border-radius: 14px;
-    padding: 1rem 1.1rem .9rem;
-    margin-bottom: .5rem;
-    box-shadow: {T.get('shadow', '0 1px 3px rgba(0,0,0,.04)')};
+    padding: 1.1rem 1.2rem 1rem;
+    margin-bottom: .65rem;
+    box-shadow: {_shadow_sm};
+    transition: box-shadow {_transition}, border-color {_transition};
+  }}
+  .side-box:hover {{
+    box-shadow: {_shadow_md};
+    border-color: {T['border']};
   }}
   .side-box-header {{
     margin-bottom: .45rem;
@@ -1167,18 +1242,20 @@ def get_css(T: dict) -> str:
   /* ── Percorso Card ── */
   .mcard {{
     background: {T['card']};
-    border: 1px solid {T['border']};
+    border: 1px solid {T['border2']};
     border-radius: {_radius_lg};
-    padding: 1.3rem 1.2rem 1.1rem;
+    padding: 1.4rem 1.3rem 1.2rem;
     position: relative;
-    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+    box-shadow: {_shadow_sm};
+    transition: border-color {_transition}, box-shadow {_transition}, transform {_transition};
     min-height: 220px;
     display: flex;
     flex-direction: column;
-    gap: .4rem;
+    gap: .45rem;
   }}
   .mcard:hover {{
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    border-color: {_acc_med};
     box-shadow: {_shadow_soft};
   }}
   .mcard-badge {{
@@ -1282,19 +1359,21 @@ def get_css(T: dict) -> str:
      ════════════════════════════════════════════════════════════════════════ */
   .form-section-header {{
     display: flex; align-items: center; gap: 10px;
-    margin-bottom: .7rem;
+    margin: 1.4rem 0 .8rem;
   }}
   .form-section-dot {{
-    width: 9px; height: 9px;
+    width: 8px; height: 8px;
     border-radius: 50%;
     background: {_acc};
     flex-shrink: 0;
-    box-shadow: 0 0 8px {_acc_med};
+    box-shadow: 0 0 0 3px {_acc_soft};
   }}
   .form-section-title {{
-    font-size: .96rem; font-weight: 800;
-    letter-spacing: .02em;
-    color: {T['text']};
+    font-size: .82rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: {T.get('muted', T['text2'])};
     font-family: 'DM Sans', sans-serif;
     white-space: nowrap;
   }}
@@ -1486,10 +1565,10 @@ def get_css(T: dict) -> str:
   [data-testid="stColumn"]:has(.upload-column-label) {{
     background-color: {T['card']} !important;
     background: {T['card']} !important;
-    border: 1px solid {T['border']} !important;
-    border-left: 2px solid {T['border2']} !important;
+    border: 1px solid {T['border2']} !important;
+    border-left: 3px solid {_acc} !important;
     border-radius: {_radius_lg} !important;
-    padding: 0.65rem 0.75rem !important;
+    padding: 0.75rem 0.85rem !important;
     min-width: 200px !important;
     max-width: 280px !important;
     height: 65vh !important;
@@ -1498,6 +1577,7 @@ def get_css(T: dict) -> str:
     overflow-x: hidden !important;
     overscroll-behavior: contain !important;
     align-self: flex-start !important;
+    box-shadow: {_shadow_sm} !important;
   }}
   [data-testid="stColumn"]:has(.upload-column-label) > div {{
     max-height: 100% !important;
@@ -1510,10 +1590,10 @@ def get_css(T: dict) -> str:
   [data-testid="stColumn"]:has(> div > div > [data-testid="stFileUploader"]) {{
     background-color: {T['card']} !important;
     background: {T['card']} !important;
-    border: 1px solid {T['border']} !important;
-    border-left: 2px solid {T['border2']} !important;
+    border: 1px solid {T['border2']} !important;
+    border-left: 3px solid {_acc} !important;
     border-radius: {_radius_lg} !important;
-    padding: 0.65rem 0.75rem !important;
+    padding: 0.75rem 0.85rem !important;
     min-width: 200px !important;
     max-width: 280px !important;
     height: 65vh !important;
@@ -1521,6 +1601,7 @@ def get_css(T: dict) -> str:
     overflow-y: auto !important;
     overflow-x: hidden !important;
     align-self: flex-start !important;
+    box-shadow: {_shadow_sm} !important;
   }}
 
   [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-title,
@@ -1585,11 +1666,16 @@ def get_css(T: dict) -> str:
   }}
   .file-pool-card {{
     background: {T['bg2']};
-    border: 1px solid {T['border']};
+    border: 1px solid {T['border2']};
     border-radius: {_radius_sm};
-    padding: 0.5rem 0.6rem;
+    padding: 0.6rem 0.7rem;
     margin-bottom: 0.5rem;
-    transition: border-color .15s ease;
+    box-shadow: {_shadow_xs};
+    transition: border-color {_transition}, box-shadow {_transition};
+  }}
+  .file-pool-card:hover {{
+    border-color: {_acc_med};
+    box-shadow: {_shadow_sm};
   }}
   .file-pool-card:last-of-type {{
     margin-bottom: 0;
@@ -2822,14 +2908,16 @@ def get_css(T: dict) -> str:
      ═══════════════════════════════════════════════════════════════════════ */
 
   .storico-card {{
-    margin-top: .6rem;
-    padding: .45rem .5rem .35rem;
-    border-bottom: 1px solid {T["border2"]};
+    margin-top: .5rem;
+    padding: .55rem .65rem .45rem;
+    border-radius: 8px;
     border-left: 3px solid transparent;
-    transition: border-left-color .15s;
+    background: transparent;
+    transition: border-left-color {_transition}, background {_transition};
   }}
   .storico-card:hover {{
     border-left-color: {T["accent"]};
+    background: {T.get("hover", T["bg2"])};
   }}
   .storico-card-top {{
     display: flex;
@@ -2883,16 +2971,18 @@ def get_css(T: dict) -> str:
      ═══════════════════════════════════════════════════════════════════════ */
   .landing-feat-card {{
     background: {T['card']};
-    border: 1px solid {T['border']};
+    border: 1px solid {T['border2']};
     border-radius: {_radius_lg};
-    padding: 1.2rem 1.1rem;
+    padding: 1.4rem 1.3rem;
     text-align: left;
-    transition: border-color .2s, transform .15s;
+    box-shadow: {_shadow_sm};
+    transition: border-color {_transition}, box-shadow {_transition}, transform {_transition};
     height: 100%;
   }}
   .landing-feat-card:hover {{
     border-color: {_acc};
-    transform: translateY(-3px);
+    box-shadow: {_shadow_md};
+    transform: translateY(-4px);
   }}
   .landing-feat-badge {{
     display: inline-block;
@@ -2924,46 +3014,165 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     LIGHT THEME OVERRIDES — selettore condizionale via _is_light
-     Forza widget Streamlit a usare colori corretti in tema chiaro
+     LIGHT THEME OVERRIDES — applicate solo su temi chiari (Giorno, Foresta)
+     Forza ogni widget Streamlit a usare la palette del tema in modo coerente.
      ════════════════════════════════════════════════════════════════════════ */
-  {'/* Light mode: override Streamlit widget backgrounds */' if _is_light else '/* Dark mode: no additional overrides needed */'}
 
   {'''
-  /* Force Streamlit's internal widgets to respect light theme */
-  .stApp [data-testid="stSelectbox"] > div > div,
-  .stApp [data-testid="stMultiSelect"] > div > div,
-  .stApp [data-testid="stTextInput"] > div > div > input,
+  /* ── Reset background globale ── */
+  .stApp,
+  .main,
+  section.main,
+  [data-testid="stAppViewContainer"] {{
+    background-color: ''' + T['bg'] + ''' !important;
+  }}
+
+  /* ── Streamlit header e toolbar ── */
+  header[data-testid="stHeader"] {{
+    background: ''' + T['bg'] + ''' !important;
+    border-bottom: 1px solid ''' + T['border2'] + ''' !important;
+  }}
+
+  /* ── Form widgets: input, textarea, number ── */
+  .stApp [data-testid="stTextInput"] input,
   .stApp [data-testid="stTextArea"] textarea,
   .stApp [data-testid="stNumberInput"] input,
   .stApp [data-testid="stDateInput"] input {{
     background-color: ''' + T['card'] + ''' !important;
+    background: ''' + T['card'] + ''' !important;
     color: ''' + T['text'] + ''' !important;
-    border-color: ''' + T['border2'] + ''' !important;
+    -webkit-text-fill-color: ''' + T['text'] + ''' !important;
+    border: 1.5px solid ''' + T['border2'] + ''' !important;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06) !important;
   }}
-  .stApp [data-testid="stSelectbox"] svg,
-  .stApp [data-testid="stMultiSelect"] svg {{
-    fill: ''' + T['text2'] + ''' !important;
+  .stApp [data-testid="stTextInput"] input:focus,
+  .stApp [data-testid="stTextArea"] textarea:focus,
+  .stApp [data-testid="stNumberInput"] input:focus {{
+    border-color: ''' + T['accent'] + ''' !important;
+    box-shadow: 0 0 0 3px ''' + T['accent'] + '''22 !important;
   }}
+
+  /* ── Selectbox & MultiSelect ── */
+  .stApp [data-testid="stSelectbox"] > div > div,
+  .stApp [data-testid="stMultiSelect"] > div > div,
   .stApp .stSelectbox [data-baseweb="select"] > div,
   .stApp .stTextArea [data-baseweb="textarea"],
   .stApp .stTextInput [data-baseweb="input"] {{
     background-color: ''' + T['card'] + ''' !important;
+    background: ''' + T['card'] + ''' !important;
     border-color: ''' + T['border2'] + ''' !important;
+    border-radius: 12px !important;
   }}
-  .stApp [data-testid="stWidgetLabel"] label,
-  .stApp [data-testid="stWidgetLabel"] p {{
+  .stApp [data-testid="stSelectbox"] span,
+  .stApp [data-testid="stSelectbox"] div[class] {{
     color: ''' + T['text'] + ''' !important;
     -webkit-text-fill-color: ''' + T['text'] + ''' !important;
   }}
-  /* Info/success/warning/error boxes in light mode */
-  .stApp [data-testid="stInfo"],
-  .stApp [data-testid="stSuccess"],
-  .stApp [data-testid="stWarning"],
-  .stApp [data-testid="stError"] {{
-    background-color: ''' + T['card'] + ''' !important;
+  .stApp [data-testid="stSelectbox"] svg,
+  .stApp [data-testid="stMultiSelect"] svg {{
+    fill: ''' + T['text2'] + ''' !important;
+    stroke: ''' + T['text2'] + ''' !important;
   }}
-  ''' if _is_light else ''}
+
+  /* ── Labels e testi widget ── */
+  .stApp [data-testid="stWidgetLabel"] label,
+  .stApp [data-testid="stWidgetLabel"] p,
+  .stApp label, .stApp p {{
+    color: ''' + T['text'] + ''' !important;
+    -webkit-text-fill-color: ''' + T['text'] + ''' !important;
+  }}
+  .stApp h1, .stApp h2, .stApp h3, .stApp h4 {{
+    color: ''' + T['text'] + ''' !important;
+  }}
+
+  /* ── Markdown container ── */
+  .stApp [data-testid="stMarkdownContainer"] p,
+  .stApp [data-testid="stMarkdownContainer"] span,
+  .stApp [data-testid="stMarkdownContainer"] li {{
+    color: ''' + T['text'] + ''' !important;
+  }}
+
+  /* ── Metric ── */
+  .stApp [data-testid="stMetricValue"],
+  .stApp [data-testid="stMetricLabel"],
+  .stApp [data-testid="stMetricDelta"] {{
+    color: ''' + T['text'] + ''' !important;
+  }}
+
+  /* ── Alert boxes ── */
+  .stApp [data-testid="stInfo"] {{
+    background-color: ''' + T['accent'] + '''12 !important;
+    border-color: ''' + T['accent'] + '''44 !important;
+    color: ''' + T['text'] + ''' !important;
+  }}
+  .stApp [data-testid="stSuccess"] {{
+    background-color: #16a34a12 !important;
+    border-color: #16a34a44 !important;
+  }}
+  .stApp [data-testid="stWarning"] {{
+    background-color: #d9770612 !important;
+    border-color: #d9770644 !important;
+  }}
+  .stApp [data-testid="stError"] {{
+    background-color: #dc262612 !important;
+    border-color: #dc262644 !important;
+  }}
+
+  /* ── Number input step buttons ── */
+  .stApp [data-testid="stNumberInput"] button {{
+    background: ''' + T['card'] + ''' !important;
+    border-color: ''' + T['border2'] + ''' !important;
+    color: ''' + T['text'] + ''' !important;
+  }}
+
+  /* ── Slider ── */
+  .stApp [data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {{
+    background: ''' + T['accent'] + ''' !important;
+    border-color: ''' + T['accent'] + ''' !important;
+  }}
+
+  /* ── Checkbox & Toggle ── */
+  .stApp .stCheckbox label, .stApp .stToggle label {{
+    color: ''' + T['text'] + ''' !important;
+  }}
+
+  /* ── File uploader ── */
+  .stApp [data-testid="stFileUploader"] {{
+    background: ''' + T['card'] + ''' !important;
+    border-color: ''' + T['border2'] + ''' !important;
+  }}
+  .stApp [data-testid="stFileUploader"] label,
+  .stApp [data-testid="stFileUploader"] p,
+  .stApp [data-testid="stFileUploader"] span,
+  .stApp [data-testid="stFileUploader"] small {{
+    color: ''' + T['text2'] + ''' !important;
+  }}
+
+  /* ── Expander (body content) on light ── */
+  .stApp details[data-testid="stExpander"] > div {{
+    background: ''' + T['card'] + ''' !important;
+  }}
+
+  /* ── Toast ── */
+  .stApp [data-testid="stToast"] {{
+    background: ''' + T['card'] + ''' !important;
+    color: ''' + T['text'] + ''' !important;
+    border-color: ''' + T['border2'] + ''' !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,.10) !important;
+  }}
+
+  /* ── Spinner ── */
+  .stApp [data-testid="stSpinner"] {{
+    color: ''' + T['accent'] + ''' !important;
+  }}
+
+  /* ── Dataframe / Table ── */
+  .stApp [data-testid="stDataFrame"] {{
+    background: ''' + T['card'] + ''' !important;
+    border-color: ''' + T['border2'] + ''' !important;
+  }}
+  ''' if _is_light else '/* Dark mode: no additional overrides needed */'}
 
 </style>
 """
