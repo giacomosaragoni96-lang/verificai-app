@@ -433,6 +433,8 @@ def get_css(T: dict) -> str:
     border-radius: 10px !important;
     font-size: 0.92rem !important;
     font-weight: 600 !important;
+    min-height: 40px !important;
+    padding: .4rem 1rem !important;
     transition: border-color .2s ease, background .2s ease !important;
   }}
   [data-testid="stSidebar"] .stButton button:hover {{
@@ -754,8 +756,9 @@ def get_css(T: dict) -> str:
     border-radius: {_radius_md} !important;
     font-family: 'DM Sans', sans-serif !important;
     font-weight: 700 !important;
-    font-size: 1.02rem !important;
-    min-height: 50px !important;
+    font-size: 1.08rem !important;
+    min-height: 62px !important;
+    padding: .9rem 1.6rem !important;
     letter-spacing: -.01em !important;
     box-shadow: 0 4px 20px {_acc_glow}, 0 1px 4px {_acc_med} !important;
     transition: filter {_transition}, box-shadow {_transition}, transform {_transition} !important;
@@ -788,8 +791,9 @@ def get_css(T: dict) -> str:
     border-radius: {_radius_md} !important;
     font-family: 'DM Sans', sans-serif !important;
     font-weight: 600 !important;
-    font-size: 1rem !important;
-    min-height: 48px !important;
+    font-size: 1.05rem !important;
+    min-height: 58px !important;
+    padding: .85rem 1.4rem !important;
     box-shadow: {_shadow_xs} !important;
     transition: background {_transition}, border-color {_transition}, box-shadow {_transition}, transform {_transition} !important;
   }}
@@ -977,6 +981,12 @@ def get_css(T: dict) -> str:
     color: {T['text']};
     border-color: {_acc};
     border-bottom-color: {_acc};
+  }}
+  .pill-emoji {{
+    font-size: 1.28em;
+    vertical-align: -0.06em;
+    display: inline-block;
+    margin-right: .1em;
   }}
   /* Legacy classes kept for compatibility */
   .tally-feat {{
@@ -1216,6 +1226,38 @@ def get_css(T: dict) -> str:
     padding: 0 .7rem !important;
     box-shadow: none !important;
     border-radius: 8px !important;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     PAGE NAV BUTTONS — Precedente / Successiva (anteprima multi-pagina)
+     ════════════════════════════════════════════════════════════════════════ */
+  .page-nav-btn-wrap + div button,
+  .element-container:has(.page-nav-btn-wrap) + .element-container button {{
+    background: {T['card']} !important;
+    color: {T['text2']} !important;
+    -webkit-text-fill-color: {T['text2']} !important;
+    border: 1px solid {T['border']} !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    min-height: 34px !important;
+    padding: .2rem .8rem !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    opacity: .8 !important;
+    letter-spacing: 0 !important;
+  }}
+  .page-nav-btn-wrap + div button:hover,
+  .element-container:has(.page-nav-btn-wrap) + .element-container button:hover {{
+    opacity: 1 !important;
+    border-color: {_acc} !important;
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }}
+  .page-nav-btn-wrap + div button:disabled,
+  .element-container:has(.page-nav-btn-wrap) + .element-container button:disabled {{
+    opacity: .25 !important;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -1744,20 +1786,26 @@ def get_css(T: dict) -> str:
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }}
 
-  /* Item rows */
-  .rc-items-wrap {{ margin-bottom: .1rem; }}
-  .rc-item-row {{
-    display: flex; align-items: center; gap: .5rem;
-    padding: .3rem 0;
-    border-bottom: 1px solid {T['border']}1A;
+  /* Item grid — 2 per row */
+  .rc-items-wrap {{ margin-bottom: .3rem; }}
+  .rc-item-chip {{
+    display: flex; align-items: center; gap: .35rem;
+    padding: .22rem 0 .1rem;
   }}
   .rc-item-badge {{
-    font-size: .7rem; font-weight: 800;
+    font-size: .68rem; font-weight: 800;
     color: {T['text2']}; font-family: 'DM Sans', sans-serif;
     background: {T['border2']}66;
     border-radius: 4px; padding: 1px 6px;
-    flex-shrink: 0; min-width: 22px; text-align: center;
+    flex-shrink: 0; min-width: 20px; text-align: center;
   }}
+  .rc-item-text-sm {{
+    font-size: .73rem; color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex: 1;
+  }}
+  /* legacy compat */
   .rc-item-text {{
     font-size: .8rem; color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
@@ -1765,24 +1813,21 @@ def get_css(T: dict) -> str:
     flex: 1;
   }}
 
-  /* Number input wrapper — compact, right-aligned */
-  .rc-num-wrap [data-testid="stNumberInput"] {{
-    margin: 0 !important;
-  }}
-  .rc-num-wrap [data-testid="stNumberInput"] input {{
-    text-align: center !important;
-    font-size: .9rem !important;
+  /* Compact selectbox for recalibra */
+  .rc-sel-wrap {{ margin-bottom: .55rem; }}
+  .rc-sel-wrap [data-testid="stSelectbox"] {{ margin: 0 !important; }}
+  .rc-sel-wrap [data-testid="stSelectbox"] [data-baseweb="select"] > div:first-child {{
+    min-height: 30px !important;
+    height: 30px !important;
+    padding: 0 .5rem !important;
+    font-size: .88rem !important;
     font-weight: 700 !important;
-    padding: 4px 6px !important;
-    min-height: 32px !important;
-    height: 32px !important;
+    background: {T['card2']} !important;
+    border: 1.5px solid {T['border2']} !important;
+    border-radius: 6px !important;
   }}
-  .rc-num-wrap [data-testid="stNumberInputStepDown"],
-  .rc-num-wrap [data-testid="stNumberInputStepUp"] {{
-    width: 28px !important;
-    min-width: 28px !important;
-    height: 32px !important;
-    font-size: .8rem !important;
+  .rc-sel-wrap [data-testid="stSelectbox"] [data-baseweb="select"] svg {{
+    width: 14px !important; height: 14px !important;
   }}
 
   /* Subtotal per exercise */
@@ -2329,9 +2374,10 @@ def get_css(T: dict) -> str:
     color: #0D1117 !important;
     font-family: 'DM Sans', sans-serif !important;
     font-weight: 800 !important;
-    font-size: 0.97rem !important;
+    font-size: 1.08rem !important;
     letter-spacing: .02em !important;
-    padding: .65rem 1.4rem !important;
+    min-height: 62px !important;
+    padding: .9rem 1.8rem !important;
     animation: dl-glow 2.4s ease-in-out infinite !important;
     transition: filter .15s ease, transform .12s ease !important;
   }}
@@ -2487,40 +2533,52 @@ def get_css(T: dict) -> str:
   /* ════════════════════════════════════════════════════════════════════════
      DOWNLOAD CTA — pulsante oro in STAGE_FINAL
      ════════════════════════════════════════════════════════════════════════ */
+  @keyframes dl-shimmer {{
+    0%   {{ background-position: 200% center; }}
+    100% {{ background-position: -200% center; }}
+  }}
   @keyframes dl-pulse {{
     0%, 100% {{ box-shadow: 0 4px 28px #D9770660, 0 0 0 0 #F59E0B00; }}
-    50%       {{ box-shadow: 0 6px 36px #D9770680, 0 0 0 6px #F59E0B22; }}
+    50%       {{ box-shadow: 0 8px 40px #D9770699, 0 0 0 8px #F59E0B18; }}
   }}
   .dl-cta-wrap {{
     margin-bottom: 1.1rem;
   }}
   .dl-cta-wrap button {{
-    background: linear-gradient(135deg, #D97706 0%, #F59E0B 60%, #FCD34D 100%) !important;
-    color: #1C1000 !important;
-    -webkit-text-fill-color: #1C1000 !important;
-    border: 2px solid #F59E0B !important;
+    background: linear-gradient(
+      105deg,
+      #c05c00 0%,
+      #E07B00 15%,
+      #F59E0B 35%,
+      #FDE68A 50%,
+      #F59E0B 65%,
+      #E07B00 85%,
+      #c05c00 100%
+    ) !important;
+    background-size: 250% auto !important;
+    color: #1a0d00 !important;
+    -webkit-text-fill-color: #1a0d00 !important;
+    border: none !important;
     border-radius: 16px !important;
-    font-size: 1.22rem !important;
+    font-size: 1.18rem !important;
     font-weight: 900 !important;
-    letter-spacing: .05em !important;
-    min-height: 76px !important;
+    letter-spacing: .06em !important;
+    min-height: 74px !important;
     box-shadow: 0 4px 28px #D9770660, 0 1px 6px #D9770630 !important;
-    animation: dl-pulse 2.6s ease-in-out infinite !important;
-    transition: all .18s ease !important;
+    animation: dl-shimmer 3.2s linear infinite, dl-pulse 2.8s ease-in-out infinite !important;
+    transition: transform .18s ease, filter .18s ease !important;
     font-family: 'DM Sans', sans-serif !important;
     text-transform: uppercase !important;
   }}
   .dl-cta-wrap button:hover {{
-    background: linear-gradient(135deg, #B45309 0%, #D97706 100%) !important;
-    color: #fff !important;
-    -webkit-text-fill-color: #fff !important;
-    box-shadow: 0 8px 40px #D9770680 !important;
+    filter: brightness(1.1) saturate(1.2) !important;
+    box-shadow: 0 10px 44px #D9770688 !important;
     transform: translateY(-3px) !important;
     animation: none !important;
   }}
   .dl-cta-wrap button:active {{
-    transform: translateY(0) !important;
-    box-shadow: 0 2px 10px #D9770640 !important;
+    transform: translateY(0) scale(.98) !important;
+    filter: brightness(.96) !important;
     animation: none !important;
   }}
 
@@ -2890,6 +2948,185 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
+     LANDING — Section headers & kicker labels
+     ════════════════════════════════════════════════════════════════════════ */
+  .landing-kicker {{
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: {_acc};
+    font-family: 'DM Sans', sans-serif;
+    background: {_acc_soft};
+    border: 1px solid {_acc_med};
+    border-radius: 20px;
+    padding: .22rem .75rem;
+    margin-bottom: 1.1rem;
+  }}
+  .landing-section-kicker {{
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: {_acc};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .45rem;
+  }}
+  .landing-section-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 900;
+    color: {T['text']};
+    letter-spacing: -.025em;
+    line-height: 1.2;
+    margin-bottom: .5rem;
+  }}
+  .landing-section-sub {{
+    font-size: .95rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.6;
+    max-width: 460px;
+    margin: 0 auto;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     PREVIEW GALLERY — "Cosa aspettarsi"
+     ════════════════════════════════════════════════════════════════════════ */
+  .preview-gallery-section {{
+    position: relative;
+    margin: 0 -1rem;
+  }}
+  .preview-gallery {{
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: .6rem 1.5rem 1.1rem;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: {_acc_med} transparent;
+  }}
+  .preview-gallery::-webkit-scrollbar {{ height: 4px; }}
+  .preview-gallery::-webkit-scrollbar-thumb {{ background: {_acc_med}; border-radius: 2px; }}
+  .preview-gallery::-webkit-scrollbar-track {{ background: transparent; }}
+  .preview-gallery-fade {{
+    position: absolute;
+    right: 0; top: 0; bottom: 1.1rem;
+    width: 64px;
+    background: linear-gradient(to right, transparent, {T['bg']});
+    pointer-events: none;
+  }}
+  .preview-gallery-hint {{
+    text-align: center;
+    font-size: .72rem;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    padding: 0 0 .6rem;
+    letter-spacing: .05em;
+  }}
+  .preview-doc {{
+    flex: 0 0 194px;
+    background: #f5f6f8;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,.24), 0 1px 4px rgba(0,0,0,.08);
+    scroll-snap-align: start;
+    transition: transform .22s ease, box-shadow .22s ease;
+  }}
+  .preview-doc:hover {{
+    transform: translateY(-6px) scale(1.015);
+    box-shadow: 0 14px 40px rgba(0,0,0,.32), 0 2px 6px rgba(0,0,0,.1);
+  }}
+  .preview-doc-header {{
+    padding: .62rem .78rem .52rem;
+    color: #fff;
+  }}
+  .preview-doc-subject {{
+    font-size: .78rem;
+    font-weight: 800;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: .01em;
+    margin-bottom: .1rem;
+  }}
+  .preview-doc-class {{
+    font-size: .61rem;
+    font-weight: 500;
+    opacity: .88;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .preview-doc-body {{
+    padding: .62rem .7rem .68rem;
+    background: #f5f6f8;
+  }}
+  .preview-doc-title {{
+    font-size: .66rem;
+    font-weight: 800;
+    color: #1c1c2e;
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .26rem;
+    line-height: 1.3;
+  }}
+  .preview-doc-meta {{
+    font-size: .52rem;
+    color: #888;
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .52rem;
+    padding-bottom: .36rem;
+    border-bottom: 1px solid #ddd;
+  }}
+  .preview-doc-ex {{ margin-bottom: .4rem; }}
+  .preview-doc-ex-head {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .16rem;
+  }}
+  .preview-doc-ex-label {{
+    font-size: .59rem;
+    font-weight: 800;
+    color: #1c1c2e;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: .01em;
+  }}
+  .preview-doc-ex-pts {{
+    font-size: .51rem;
+    font-weight: 700;
+    color: #fff;
+    border-radius: 8px;
+    padding: 1px 5px;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .preview-doc-ex-text {{
+    font-size: .56rem;
+    color: #555;
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.42;
+    margin-bottom: .2rem;
+  }}
+  .preview-doc-inline {{
+    font-size: .56rem;
+    color: #333;
+    font-family: 'DM Sans', sans-serif;
+    margin: .18rem 0 .26rem;
+    padding-left: .35rem;
+    line-height: 1.5;
+  }}
+  .preview-doc-lines {{ display: flex; flex-direction: column; gap: 3px; }}
+  .preview-doc-line {{ height: 1.5px; background: #d2d2d2; border-radius: 1px; width: 100%; }}
+  .preview-doc-line.short {{ width: 56%; }}
+  .preview-doc-footer {{
+    margin-top: .42rem;
+    padding-top: .32rem;
+    border-top: 1px solid #e0e0e0;
+    font-size: .51rem;
+    color: #aaa;
+    font-family: 'DM Sans', sans-serif;
+    text-align: right;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
      LIGHT THEME OVERRIDES — applicate solo su temi chiari (Giorno, Foresta)
      Forza ogni widget Streamlit a usare la palette del tema in modo coerente.
      ════════════════════════════════════════════════════════════════════════ */
@@ -3086,10 +3323,10 @@ def get_css(T: dict) -> str:
 
 
     /* ── Step progress: più compatto su tablet ──────────────────────── */
-    .sp-pill {{ padding: .4rem 1rem; }}
-    .sp-dot  {{ width: 26px; height: 26px; }}
-    .sp-lbl  {{ font-size: .63rem; }}
-    .sp-line {{ width: 38px; }}
+    .sp-pill {{ padding: .5rem 1.2rem; }}
+    .sp-dot  {{ width: 34px; height: 34px; }}
+    .sp-lbl  {{ font-size: .75rem; }}
+    .sp-line {{ width: 48px; }}
 
     /* ── Landing: headline ridotta ───────────────────────────────────── */
     .landing-headline-xl {{
@@ -3181,10 +3418,10 @@ def get_css(T: dict) -> str:
     .tally-feat-pill {{ font-size: .8rem; padding: .25rem .6rem; }}
 
     /* ── Step progress: compatto su mobile ──────────────────────────── */
-    .sp-pill {{ padding: .3rem .7rem; }}
-    .sp-dot  {{ width: 22px; height: 22px; }}
-    .sp-lbl  {{ font-size: .56rem; letter-spacing: 0; }}
-    .sp-line {{ width: 22px; }}
+    .sp-pill {{ padding: .4rem .9rem; }}
+    .sp-dot  {{ width: 30px; height: 30px; }}
+    .sp-lbl  {{ font-size: .65rem; letter-spacing: 0; }}
+    .sp-line {{ width: 28px; }}
 
     /* ── Heading scale ridotta ───────────────────────────────────────── */
     .stApp h1, .stMarkdown h1 {{

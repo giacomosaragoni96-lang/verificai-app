@@ -289,6 +289,247 @@ def _rubrica_to_pdf(rubrica_testo: str, materia: str = "", livello: str = "") ->
         return None
 
 
+def _set_cell_bg(cell, hex_color: str) -> None:
+    """Helper python-docx: imposta colore sfondo cella."""
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    for _s in tcPr.findall(qn('w:shd')):
+        tcPr.remove(_s)
+    shd = OxmlElement('w:shd')
+    shd.set(qn('w:val'), 'clear')
+    shd.set(qn('w:color'), 'auto')
+    shd.set(qn('w:fill'), hex_color)
+    tcPr.append(shd)
+
+
+def _set_cell_margins(cell, top=60, bottom=60, left=80, right=80) -> None:
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    tcMar = OxmlElement('w:tcMar')
+    for side, val in [('top', top), ('bottom', bottom), ('left', left), ('right', right)]:
+        el = OxmlElement(f'w:{side}')
+        el.set(qn('w:w'), str(val))
+        el.set(qn('w:type'), 'dxa')
+        tcMar.append(el)
+    tcPr.append(tcMar)
+
+
+def _rubrica_to_docx(
+    rubrica_testo: str,
+    materia: str = "",
+    livello: str = "",
+    argomento: str = "",
+) -> bytes | None:
+    """
+    Genera un DOCX professionale dalla rubrica di valutazione.
+    Input: testo pipe-delimited dall'AI (FASCE: + ESERCIZI:).
+    Output: bytes del file .docx.
+    """
+    try:
+        import io
+        from docx import Document
+        from docx.shared import Pt, Cm, RGBColor
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+        # ── Parse pipe-delimited content ─────────────────────────────────────
+        fasce: list[list[str]] = []
+        esercizi: list[list[str]] = []
+        section = None
+        for raw_line in rubrica_testo.strip().split('\n'):
+            line = raw_line.strip()
+            if line == 'FASCE:':
+                section = 'fasce'
+                continue
+            if line == 'ESERCIZI:':
+                section = 'esercizi'
+                continue
+            if '|' not in line or line.startswith('#') or line.startswith('('):
+                continue
+            parts = [p.strip() for p in line.split('|')]
+            if section == 'fasce' and len(parts) >= 6:
+                fasce.append(parts[:6])
+            elif section == 'esercizi' and len(parts) >= 6:
+                esercizi.append(parts[:6])
+
+        # ── Colors ───────────────────────────────────────────────────────────
+        C_TEAL      = RGBColor(0x0A, 0x8F, 0x72)
+        C_TEAL_DARK = RGBColor(0x07, 0x6B, 0x56)
+        C_GRAY      = RGBColor(0x6B, 0x72, 0x80)
+        C_WHITE     = RGBColor(0xFF, 0xFF, 0xFF)
+        C_DARK      = RGBColor(0x1A, 0x1A, 0x2E)
+
+        FASCIA_BG = ['D4EDDA', 'D1ECF1', 'FFF3CD', 'F8D7DA']  # verde, azzurro, giallo, rosso
+
+        doc = Document()
+
+        # ── Page layout ───────────────────────────────────────────────────────
+        sec = doc.sections[0]
+        sec.top_margin    = Cm(1.8)
+        sec.bottom_margin = Cm(1.8)
+        sec.left_margin   = Cm(2.0)
+        sec.right_margin  = Cm(2.0)
+
+        # ── Title block ───────────────────────────────────────────────────────
+        p_title = doc.add_paragraph()
+        p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r = p_title.add_run('GRIGLIA DI VALUTAZIONE PER COMPETENZE')
+        r.bold = True
+        r.font.size = Pt(15)
+        r.font.color.rgb = C_TEAL_DARK
+
+        meta_parts = [x for x in [materia, livello] if x]
+        if meta_parts:
+            p_meta = doc.add_paragraph()
+            p_meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            rm = p_meta.add_run(' · '.join(meta_parts))
+            rm.font.size = Pt(10)
+            rm.font.color.rgb = C_GRAY
+
+        if argomento:
+            p_arg = doc.add_paragraph()
+            p_arg.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            ra = p_arg.add_run(f'Argomento: {argomento}')
+            ra.font.size = Pt(9.5)
+            ra.font.color.rgb = C_GRAY
+            ra.italic = True
+
+        # Horizontal rule (via paragraph border)
+        from docx.oxml.ns import qn
+        from docx.oxml import OxmlElement
+        p_rule = doc.add_paragraph()
+        p_rule.paragraph_format.space_before = Pt(2)
+        p_rule.paragraph_format.space_after  = Pt(2)
+        pPr = p_rule._p.get_or_add_pPr()
+        pBdr = OxmlElement('w:pBdr')
+        bottom_bdr = OxmlElement('w:bottom')
+        bottom_bdr.set(qn('w:val'), 'single')
+        bottom_bdr.set(qn('w:sz'), '12')
+        bottom_bdr.set(qn('w:space'), '1')
+        bottom_bdr.set(qn('w:color'), '0A8F72')
+        pBdr.append(bottom_bdr)
+        pPr.append(pBdr)
+
+        # ── Section 1: Fasce di Voto ──────────────────────────────────────────
+        p_s1 = doc.add_paragraph()
+        p_s1.paragraph_format.space_before = Pt(8)
+        p_s1.paragraph_format.space_after  = Pt(4)
+        rs1 = p_s1.add_run('Fasce di Voto')
+        rs1.bold = True
+        rs1.font.size = Pt(11)
+        rs1.font.color.rgb = C_TEAL
+
+        HDR_FASCE = ['Fascia', 'Punti', 'Voto', 'Comprensione dei contenuti',
+                     'Applicazione delle conoscenze', 'Esposizione e precisione']
+        W_FASCE   = [Cm(2.2), Cm(2.0), Cm(1.4), Cm(4.2), Cm(4.2), Cm(3.0)]
+
+        tbl1 = doc.add_table(rows=1 + len(fasce), cols=6)
+        tbl1.style = 'Table Grid'
+
+        # Header row
+        hdr_row = tbl1.rows[0]
+        for ci, (hdr_txt, w) in enumerate(zip(HDR_FASCE, W_FASCE)):
+            cell = hdr_row.cells[ci]
+            cell.width = w
+            _set_cell_bg(cell, '0A7A62')
+            _set_cell_margins(cell)
+            p = cell.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            rr = p.add_run(hdr_txt)
+            rr.bold = True
+            rr.font.size = Pt(8.5)
+            rr.font.color.rgb = C_WHITE
+
+        # Data rows
+        for ri, row_data in enumerate(fasce):
+            row = tbl1.rows[ri + 1]
+            bg = FASCIA_BG[ri] if ri < len(FASCIA_BG) else 'FFFFFF'
+            for ci, val in enumerate(row_data[:6]):
+                cell = row.cells[ci]
+                cell.width = W_FASCE[ci]
+                _set_cell_bg(cell, bg)
+                _set_cell_margins(cell)
+                p = cell.paragraphs[0]
+                p.alignment = (
+                    WD_ALIGN_PARAGRAPH.CENTER if ci < 3
+                    else WD_ALIGN_PARAGRAPH.LEFT
+                )
+                rr = p.add_run(val)
+                rr.font.size = Pt(8.5)
+                if ci == 0:
+                    rr.bold = True
+                    rr.font.color.rgb = C_DARK
+
+        # ── Section 2: Griglia per Esercizio ─────────────────────────────────
+        if esercizi:
+            p_s2 = doc.add_paragraph()
+            p_s2.paragraph_format.space_before = Pt(10)
+            p_s2.paragraph_format.space_after  = Pt(4)
+            rs2 = p_s2.add_run('Griglia per Esercizio')
+            rs2.bold = True
+            rs2.font.size = Pt(11)
+            rs2.font.color.rgb = C_TEAL
+
+            HDR_ES = ['Es.', 'Argomento', 'Punti', 'Criterio valutato',
+                      'Risposta eccellente (9-10)', 'Risposta sufficiente (6)']
+            W_ES   = [Cm(1.0), Cm(3.2), Cm(1.4), Cm(3.5), Cm(4.4), Cm(3.5)]
+
+            tbl2 = doc.add_table(rows=1 + len(esercizi), cols=6)
+            tbl2.style = 'Table Grid'
+
+            hdr_row2 = tbl2.rows[0]
+            for ci, (hdr_txt, w) in enumerate(zip(HDR_ES, W_ES)):
+                cell = hdr_row2.cells[ci]
+                cell.width = w
+                _set_cell_bg(cell, '0A7A62')
+                _set_cell_margins(cell)
+                p = cell.paragraphs[0]
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                rr = p.add_run(hdr_txt)
+                rr.bold = True
+                rr.font.size = Pt(8.5)
+                rr.font.color.rgb = C_WHITE
+
+            for ri, row_data in enumerate(esercizi):
+                row = tbl2.rows[ri + 1]
+                bg = 'F0FAF8' if ri % 2 == 0 else 'FFFFFF'
+                for ci, val in enumerate(row_data[:6]):
+                    cell = row.cells[ci]
+                    cell.width = W_ES[ci]
+                    _set_cell_bg(cell, bg)
+                    _set_cell_margins(cell)
+                    p = cell.paragraphs[0]
+                    p.alignment = (
+                        WD_ALIGN_PARAGRAPH.CENTER if ci < 3
+                        else WD_ALIGN_PARAGRAPH.LEFT
+                    )
+                    rr = p.add_run(val)
+                    rr.font.size = Pt(8.5)
+                    if ci == 0:
+                        rr.bold = True
+
+        # ── Footer ────────────────────────────────────────────────────────────
+        p_foot = doc.add_paragraph()
+        p_foot.paragraph_format.space_before = Pt(10)
+        p_foot.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        rf = p_foot.add_run(
+            'Generato con VerificAI  ·  Allineato alle Linee Guida MIM sulla valutazione per competenze'
+        )
+        rf.font.size = Pt(7.5)
+        rf.font.color.rgb = C_GRAY
+        rf.italic = True
+
+        buf = io.BytesIO()
+        doc.save(buf)
+        return buf.getvalue()
+
+    except Exception:
+        return None
+
+
 def _vf():
     return {"latex": "", "pdf": None, "preview": False,
             "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""}
@@ -614,6 +855,7 @@ if "gen_time_sec"      not in st.session_state: st.session_state.gen_time_sec = 
 if "rubrica_testo"     not in st.session_state: st.session_state.rubrica_testo = None
 if "_rubrica_gen"      not in st.session_state: st.session_state._rubrica_gen = False
 if "_rubrica_pdf"      not in st.session_state: st.session_state["_rubrica_pdf"] = None
+if "_rubrica_docx"     not in st.session_state: st.session_state["_rubrica_docx"] = None
 # ── Idea #8: Template gallery ────────────────────────────────────────────────
 if "_template_sel"     not in st.session_state: st.session_state._template_sel = None
 # ── Idea #2: One-click variant state ─────────────────────────────────────────
@@ -940,7 +1182,7 @@ def _render_step_progress() -> None:
 
     # SVG checkmark path
     _chk = (
-        '<svg width="11" height="9" viewBox="0 0 11 9" fill="none" '
+        '<svg width="14" height="11" viewBox="0 0 11 9" fill="none" '
         'xmlns="http://www.w3.org/2000/svg">'
         '<path d="M1 4.5L4 7.5L10 1" stroke="currentColor" stroke-width="2" '
         'stroke-linecap="round" stroke-linejoin="round"/></svg>'
@@ -957,14 +1199,14 @@ def _render_step_progress() -> None:
             dot_color  = "#fff"
             dot_border = f"2px solid {acc}"
             dot_shadow = f"0 0 0 3px {acc}30, 0 2px 10px {acc}40"
-            dot_content = f'<span style="font-size:.75rem;font-weight:800;font-family:DM Sans,sans-serif;">{num}</span>'
+            dot_content = f'<span style="font-size:.9rem;font-weight:800;font-family:DM Sans,sans-serif;">{num}</span>'
             lbl_color  = txt
             lbl_weight = "700"
         elif is_done:
             dot_bg     = ok
             dot_color  = "#fff"
             dot_border = f"2px solid {ok}"
-            dot_shadow = f"0 0 0 3px {ok}25"
+            dot_shadow = f"0 0 0 4px {ok}25"
             dot_content = _chk
             lbl_color  = ok
             lbl_weight = "600"
@@ -973,7 +1215,7 @@ def _render_step_progress() -> None:
             dot_color  = muted
             dot_border = f"1.5px solid {bdr2}"
             dot_shadow = "none"
-            dot_content = f'<span style="font-size:.75rem;font-weight:600;font-family:DM Sans,sans-serif;opacity:.6;">{num}</span>'
+            dot_content = f'<span style="font-size:.9rem;font-weight:600;font-family:DM Sans,sans-serif;opacity:.6;">{num}</span>'
             lbl_color  = muted
             lbl_weight = "500"
 
@@ -1002,34 +1244,34 @@ def _render_step_progress() -> None:
 <style>
   .sp-track {{
     display: flex; align-items: center; justify-content: center;
-    padding: 0; margin: .6rem auto 1.1rem;
+    padding: 0; margin: .8rem auto 1.4rem;
   }}
   .sp-pill {{
     display: inline-flex; align-items: center;
-    padding: .5rem 2rem;
+    padding: .6rem 2.4rem;
     gap: 0;
   }}
   .sp-node {{
     display: flex; flex-direction: column;
-    align-items: center; gap: 6px;
+    align-items: center; gap: 8px;
     position: relative; z-index: 1;
   }}
   .sp-dot {{
-    width: 30px; height: 30px;
+    width: 40px; height: 40px;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     transition: box-shadow .3s ease, background .3s ease;
   }}
   .sp-lbl {{
-    font-size: .68rem; font-family: 'DM Sans', sans-serif;
-    white-space: nowrap; letter-spacing: .03em;
+    font-size: .82rem; font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; letter-spacing: .02em;
     transition: color .25s;
   }}
   .sp-line {{
-    height: 1px; width: 56px;
+    height: 2px; width: 72px;
     flex-shrink: 0; border-radius: 2px;
-    margin-bottom: 22px;
+    margin-bottom: 30px;
     opacity: .7;
   }}
 </style>
@@ -1738,6 +1980,7 @@ def _render_bivio():
     st.markdown(
         f'''
         <div class="landing-hero-unified">
+          <div class="landing-kicker">AI per i docenti italiani</div>
           <h2 class="landing-headline-xl">
             Crea verifiche professionali<br>
             <span class="landing-headline-accent-xl">in pochi secondi</span>
@@ -1764,34 +2007,269 @@ def _render_bivio():
             st.session_state.input_percorso = "B"
             st.rerun()
 
-    # ── Feature pills ────────────────────────────────────────────────────────
+    # ── Feature pills — emoji più grandi ─────────────────────────────────────
     st.markdown(
-        f'''
+        '''
         <div class="tally-features">
-          <span class="tally-feat-pill">📄 PDF pronto da stampare</span>
-          <span class="tally-feat-pill">🔢 Punteggi calibrati</span>
-          <span class="tally-feat-pill">⭐ Versione BES/DSA</span>
-          <span class="tally-feat-pill">🎲 Fila A e B</span>
-          <span class="tally-feat-pill">✏️ DOCX modificabile</span>
-          <span class="tally-feat-pill">📋 Soluzioni</span>
-          <span class="tally-feat-pill">📊 Griglia di Valutazione</span>
+          <span class="tally-feat-pill"><span class="pill-emoji">📄</span> PDF da stampare</span>
+          <span class="tally-feat-pill"><span class="pill-emoji">🔢</span> Punteggi calibrati</span>
+          <span class="tally-feat-pill"><span class="pill-emoji">⭐</span> Versione BES/DSA</span>
+          <span class="tally-feat-pill"><span class="pill-emoji">🎲</span> Fila A e B</span>
+          <span class="tally-feat-pill"><span class="pill-emoji">✏️</span> DOCX modificabile</span>
+          <span class="tally-feat-pill"><span class="pill-emoji">📋</span> Soluzioni</span>
+          <span class="tally-feat-pill"><span class="pill-emoji">📊</span> Griglia di Valutazione</span>
         </div>
         ''',
         unsafe_allow_html=True,
     )
 
-    # ── Feature cards — HTML dark-themed ────────────────────────────────────
-    st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
+    # ── "Cosa aspettarsi" — gallery di anteprime ─────────────────────────────
+    st.markdown("<div style='height:2.6rem'></div>", unsafe_allow_html=True)
+    st.markdown(
+        '''<div style="text-align:center;margin-bottom:1.5rem;">
+          <div class="landing-section-kicker">Esempi reali generati dall'AI</div>
+          <div class="landing-section-title">Cosa produce VerificAI</div>
+          <div class="landing-section-sub">Verifiche pronte per la stampa, su ogni materia e livello scolastico.</div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '''
+        <div class="preview-gallery-section">
+          <div class="preview-gallery">
+
+            <!-- Matematica -->
+            <div class="preview-doc">
+              <div class="preview-doc-header" style="background:linear-gradient(135deg,#4361ee,#3a0ca3)">
+                <div class="preview-doc-subject">📐 Matematica</div>
+                <div class="preview-doc-class">3ª Media · Secondaria I°</div>
+              </div>
+              <div class="preview-doc-body">
+                <div class="preview-doc-title">Equazioni di 2° grado</div>
+                <div class="preview-doc-meta">Nome: _______________&nbsp; Data: ________</div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 1</span>
+                    <span class="preview-doc-ex-pts" style="background:#4361ee">6 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Risolvi le equazioni e verifica le soluzioni:</div>
+                  <div class="preview-doc-inline">a) x² – 5x + 6 = 0<br>b) 2x² + 3x – 2 = 0</div>
+                  <div class="preview-doc-lines"><div class="preview-doc-line"></div><div class="preview-doc-line"></div></div>
+                </div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 2</span>
+                    <span class="preview-doc-ex-pts" style="background:#4361ee">4 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Calcola il discriminante — quante soluzioni reali esistono?</div>
+                  <div class="preview-doc-lines"><div class="preview-doc-line"></div><div class="preview-doc-line short"></div></div>
+                </div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 3</span>
+                    <span class="preview-doc-ex-pts" style="background:#4361ee">8 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Problema: area rettangolare di 24 m², base doppia dell'altezza.</div>
+                  <div class="preview-doc-lines"><div class="preview-doc-line"></div><div class="preview-doc-line short"></div></div>
+                </div>
+                <div class="preview-doc-footer">Totale: 18 pt &nbsp;·&nbsp; Sufficienza: 11 pt</div>
+              </div>
+            </div>
+
+            <!-- Italiano -->
+            <div class="preview-doc">
+              <div class="preview-doc-header" style="background:linear-gradient(135deg,#d62828,#a4161a)">
+                <div class="preview-doc-subject">📚 Italiano</div>
+                <div class="preview-doc-class">2ª Liceo · Classico</div>
+              </div>
+              <div class="preview-doc-body">
+                <div class="preview-doc-title">Analisi del testo narrativo</div>
+                <div class="preview-doc-meta">Nome: _______________&nbsp; Data: ________</div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 1</span>
+                    <span class="preview-doc-ex-pts" style="background:#d62828">5 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Leggi il brano e rispondi alle domande di comprensione:</div>
+                  <div class="preview-doc-lines"><div class="preview-doc-line"></div><div class="preview-doc-line"></div><div class="preview-doc-line short"></div></div>
+                </div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 2</span>
+                    <span class="preview-doc-ex-pts" style="background:#d62828">6 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Individua e analizza le figure retoriche nel testo:</div>
+                  <div class="preview-doc-lines"><div class="preview-doc-line"></div><div class="preview-doc-line"></div></div>
+                </div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 3</span>
+                    <span class="preview-doc-ex-pts" style="background:#d62828">4 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Colloca il testo nel contesto storico-letterario:</div>
+                  <div class="preview-doc-lines"><div class="preview-doc-line"></div><div class="preview-doc-line short"></div></div>
+                </div>
+                <div class="preview-doc-footer">Totale: 15 pt &nbsp;·&nbsp; Sufficienza: 9 pt</div>
+              </div>
+            </div>
+
+            <!-- Scienze -->
+            <div class="preview-doc">
+              <div class="preview-doc-header" style="background:linear-gradient(135deg,#2d9d5e,#1b7a48)">
+                <div class="preview-doc-subject">🧬 Scienze</div>
+                <div class="preview-doc-class">1ª Media · Secondaria I°</div>
+              </div>
+              <div class="preview-doc-body">
+                <div class="preview-doc-title">Il ciclo dell'acqua e gli stati della materia</div>
+                <div class="preview-doc-meta">Nome: _______________&nbsp; Data: ________</div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 1</span>
+                    <span class="preview-doc-ex-pts" style="background:#2d9d5e">4 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Descrivi le fasi del ciclo dell'acqua con parole tue:</div>
+                  <div class="preview-doc-lines"><div class="preview-doc-line"></div><div class="preview-doc-line"></div><div class="preview-doc-line short"></div></div>
+                </div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 2</span>
+                    <span class="preview-doc-ex-pts" style="background:#2d9d5e">3 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Vero/Falso — indica V o F per ogni affermazione:</div>
+                  <div class="preview-doc-inline">○ L'evaporazione avviene solo a 100°C __<br>○ La condensazione forma le nuvole __<br>○ La neve è acqua allo stato gassoso __</div>
+                </div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 3</span>
+                    <span class="preview-doc-ex-pts" style="background:#2d9d5e">5 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Collega ogni termine alla definizione corretta:</div>
+                  <div class="preview-doc-lines"><div class="preview-doc-line"></div><div class="preview-doc-line short"></div></div>
+                </div>
+                <div class="preview-doc-footer">Totale: 12 pt &nbsp;·&nbsp; Sufficienza: 7 pt</div>
+              </div>
+            </div>
+
+            <!-- Storia -->
+            <div class="preview-doc">
+              <div class="preview-doc-header" style="background:linear-gradient(135deg,#8b5e3c,#6f4b2f)">
+                <div class="preview-doc-subject">🗺️ Storia</div>
+                <div class="preview-doc-class">3ª Liceo · Scientifico</div>
+              </div>
+              <div class="preview-doc-body">
+                <div class="preview-doc-title">Prima Guerra Mondiale: cause e sviluppo</div>
+                <div class="preview-doc-meta">Nome: _______________&nbsp; Data: ________</div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 1</span>
+                    <span class="preview-doc-ex-pts" style="background:#8b5e3c">6 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Elenca e spiega le principali cause dello scoppio:</div>
+                  <div class="preview-doc-lines"><div class="preview-doc-line"></div><div class="preview-doc-line"></div><div class="preview-doc-line short"></div></div>
+                </div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 2</span>
+                    <span class="preview-doc-ex-pts" style="background:#8b5e3c">4 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Scelta multipla — sviluppo del conflitto:</div>
+                  <div class="preview-doc-inline">1. L'Italia entrò in guerra nel:<br>a) 1914 &nbsp;b) 1915 &nbsp;c) 1916 &nbsp;d) 1917</div>
+                </div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 3</span>
+                    <span class="preview-doc-ex-pts" style="background:#8b5e3c">5 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Analizza il passaggio dell'Italia dalla neutralità all'intervento:</div>
+                  <div class="preview-doc-lines"><div class="preview-doc-line"></div><div class="preview-doc-line short"></div></div>
+                </div>
+                <div class="preview-doc-footer">Totale: 15 pt &nbsp;·&nbsp; Sufficienza: 9 pt</div>
+              </div>
+            </div>
+
+            <!-- Fisica -->
+            <div class="preview-doc">
+              <div class="preview-doc-header" style="background:linear-gradient(135deg,#7b2d8b,#5c1f6b)">
+                <div class="preview-doc-subject">⚗️ Fisica</div>
+                <div class="preview-doc-class">4ª Liceo · Scientifico</div>
+              </div>
+              <div class="preview-doc-body">
+                <div class="preview-doc-title">Le leggi di Newton e la dinamica</div>
+                <div class="preview-doc-meta">Nome: _______________&nbsp; Data: ________</div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 1</span>
+                    <span class="preview-doc-ex-pts" style="background:#7b2d8b">5 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Un corpo di 8 kg è soggetto a 24 N. Calcola:</div>
+                  <div class="preview-doc-inline">a) accelerazione del corpo<br>b) velocità dopo 3 secondi</div>
+                  <div class="preview-doc-lines"><div class="preview-doc-line"></div><div class="preview-doc-line short"></div></div>
+                </div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 2</span>
+                    <span class="preview-doc-ex-pts" style="background:#7b2d8b">6 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Enuncia il III principio e fornisci un esempio pratico:</div>
+                  <div class="preview-doc-lines"><div class="preview-doc-line"></div><div class="preview-doc-line"></div></div>
+                </div>
+                <div class="preview-doc-ex">
+                  <div class="preview-doc-ex-head">
+                    <span class="preview-doc-ex-label">Es. 3</span>
+                    <span class="preview-doc-ex-pts" style="background:#7b2d8b">4 pt</span>
+                  </div>
+                  <div class="preview-doc-ex-text">Vero/Falso sui principi della dinamica:</div>
+                  <div class="preview-doc-lines"><div class="preview-doc-line"></div><div class="preview-doc-line short"></div></div>
+                </div>
+                <div class="preview-doc-footer">Totale: 15 pt &nbsp;·&nbsp; Sufficienza: 9 pt</div>
+              </div>
+            </div>
+
+          </div>
+          <div class="preview-gallery-fade"></div>
+        </div>
+        <div class="preview-gallery-hint">← scorri per scoprire altri esempi →</div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    # ── Feature cards — 6 card, 2 righe ─────────────────────────────────────
+    st.markdown("<div style='height:2.5rem'></div>", unsafe_allow_html=True)
+    st.markdown(
+        '''<div style="text-align:center;margin-bottom:1.4rem;">
+          <div class="landing-section-kicker">Tutto quello di cui hai bisogno</div>
+          <div class="landing-section-title">Una verifica completa, subito</div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
     _feat_cards = [
         ("PDF", "📄", "Stampa professionale",
-         "LaTeX compilato sul momento, pronto in secondi. Layout pulito per ogni materia."),
-        ("AI", "🤖", "Calibrazione per livello",
+         "LaTeX compilato in pochi secondi. Layout pulito, pronto da consegnare."),
+        ("AI", "🤖", "Calibrata per livello",
          "Media, Liceo, ITI, Professionale: ogni verifica adattata alla classe."),
         ("BES", "⭐", "Versione BES/DSA",
-         "Genera automaticamente la variante semplificata per alunni con bisogni speciali."),
+         "Variante semplificata automatica per alunni con bisogni educativi speciali."),
+        ("FILA B", "🎲", "Anti-copia Fila B",
+         "Dati e ordine variati — ideale per aule numerose. Un click, due versioni."),
+        ("EDITOR", "✏️", "Editor interattivo",
+         "Modifica ogni esercizio con l'AI: testo, punteggi e difficoltà su misura."),
+        ("GRIGLIA", "📊", "Griglia di valutazione",
+         "Criteri di correzione e griglia di voto allegati ad ogni verifica generata."),
     ]
-    _cols = st.columns(3, gap="medium")
-    for _col, (_badge, _icon, _title, _desc) in zip(_cols, _feat_cards):
+    _cols1 = st.columns(3, gap="medium")
+    for _col, (_badge, _icon, _title, _desc) in zip(_cols1, _feat_cards[:3]):
+        with _col:
+            st.markdown(
+                f'<div class="landing-feat-card">'
+                f'<div class="landing-feat-badge">{_icon} {_badge}</div>'
+                f'<div class="landing-feat-title">{_title}</div>'
+                f'<div class="landing-feat-desc">{_desc}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+    st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
+    _cols2 = st.columns(3, gap="medium")
+    for _col, (_badge, _icon, _title, _desc) in zip(_cols2, _feat_cards[3:]):
         with _col:
             st.markdown(
                 f'<div class="landing-feat-card">'
@@ -3871,17 +4349,16 @@ def _render_stage_preview():
     preview_imgs   = st.session_state.get("preview_images", [])
 
     # ── Header ────────────────────────────────────────────────────────────────
+    _h_acc  = T["accent"]
+    _h_acc2 = T.get("accent2", _h_acc)
     st.markdown(
-        '<div style="background:linear-gradient(135deg,#D97706 0%,#F59E0B 100%);'
-        'border-radius:14px;padding:1.1rem 1.5rem;margin-bottom:1.2rem;">'
-        '<div style="display:flex;align-items:center;gap:14px;">'
-        '<span style="font-size:2rem;">📄</span>'
-        '<div>'
-        '<div style="font-family:DM Sans,sans-serif;font-size:1.35rem;font-weight:900;color:#fff;">'
-        'Anteprima Verifica</div>'
-        '<div style="font-size:1rem;color:#ffffffcc;margin-top:3px;">'
+        f'<div style="background:linear-gradient(135deg,{_h_acc} 0%,{_h_acc2} 100%);'
+        f'border-radius:14px;padding:1.2rem 1.8rem;margin-bottom:1.2rem;text-align:center;">'
+        f'<div style="font-family:DM Sans,sans-serif;font-size:1.4rem;font-weight:900;'
+        f'color:#fff;margin-bottom:.3rem;">📄 Anteprima Verifica</div>'
+        f'<div style="font-size:.95rem;color:#ffffffd0;font-family:DM Sans,sans-serif;">'
         + materia_str + ' · ' + scuola_str + ' · ' + argomento_str +
-        '</div></div></div></div>',
+        f'</div></div>',
         unsafe_allow_html=True
     )
 
@@ -3902,6 +4379,7 @@ def _render_stage_preview():
             st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
             _nav_l, _nav_info, _nav_r = st.columns([1, 2, 1])
             with _nav_l:
+                st.markdown('<div class="page-nav-btn-wrap"></div>', unsafe_allow_html=True)
                 if st.button("◀ Precedente", key="prev_page_btn",
                              disabled=(cur_page == 0),
                              use_container_width=True):
@@ -3909,10 +4387,13 @@ def _render_stage_preview():
                     st.rerun()
             with _nav_info:
                 st.markdown(
-                    f'<div style="text-align:center;font-size:.82rem;font-weight:600;'                    f'color:{T["muted"]};font-family:DM Sans,sans-serif;'                    f'padding:.45rem 0;">Pagina {cur_page + 1} di {n_prev}</div>',
+                    f'<div style="text-align:center;font-size:.78rem;font-weight:500;'
+                    f'color:{T["muted"]};font-family:DM Sans,sans-serif;'
+                    f'padding:.45rem 0;">Pagina {cur_page + 1} di {n_prev}</div>',
                     unsafe_allow_html=True
                 )
             with _nav_r:
+                st.markdown('<div class="page-nav-btn-wrap"></div>', unsafe_allow_html=True)
                 if st.button("Successiva ▶", key="next_page_btn",
                              disabled=(cur_page == n_prev - 1),
                              use_container_width=True):
@@ -4500,7 +4981,16 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             # ── Placeholder feedback immediato sotto il pulsante cliccato ─────
             _loading_ph = st.empty()
             if rigenera and istruzione.strip():
-                _loading_ph.info(f"Elaborazione in corso — modifico l'esercizio {idx+1}…")
+                _istr_low_quick = istruzione.lower()
+                if any(kw in _istr_low_quick for kw in _SCORE_KEYWORDS):
+                    _loading_ph.warning(
+                        "⚠️ **Hai menzionato punteggi / punti.**\n\n"
+                        "Per modificare i punti usa il pannello **⚖️ Ricalibra Punteggi** "
+                        "qui sopra — imposta i valori desiderati e premi **Applica Punteggi**. "
+                        "Il pannello AI è riservato alle modifiche al contenuto (testo, difficoltà, formato)."
+                    )
+                else:
+                    _loading_ph.info(f"Elaborazione in corso — modifico l'esercizio {idx+1}…")
 
 
     # ── COLONNA DESTRA — anteprima PDF una pagina alla volta ─────────────────
@@ -4639,16 +5129,9 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
         _istr_low = istruzione.lower()
 
         # ── Rilevamento richieste punteggio ───────────────────────────────────
-        # Se l'utente chiede di cambiare punti/punteggio reindirizza al pannello.
+        # L'avviso è già mostrato inline sotto il pulsante (via _loading_ph).
         _is_score_req = any(kw in _istr_low for kw in _SCORE_KEYWORDS)
-        if _is_score_req:
-            st.warning(
-                "⚠️ **Hai menzionato punteggi / punti.**\n\n"
-                "Per modificare i punti usa il pannello **⚖️ Ricalibra Punteggi** "
-                "qui sopra — imposta i valori desiderati e premi **Applica Punteggi**. "
-                "Il pannello AI è riservato alle modifiche al contenuto (testo, difficoltà, formato)."
-            )
-        else:
+        if not _is_score_req:
             # ── Regen AI con preservazione punti ─────────────────────────────
             # Cattura i punti correnti dell'esercizio PRIMA della regen.
             # Se recalibra_pts è stato già impostato dall'utente usa quello,
@@ -4885,34 +5368,45 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     unsafe_allow_html=True
                 )
 
-                # ── Items: one per row, full width ─────────────────────────
-                st.markdown('<div class="rc-items-wrap">', unsafe_allow_html=True)
-                for _lbl, _short, _cur_pt in _items_rc:
-                    _item_key = f"item_pt_{_i}_{len(_ex_new_pts_rc)}"
-                    _col_text, _col_num = st.columns([5, 2], gap="small")
-                    with _col_text:
-                        _full_q = _short or ""
-                        _q_display = (_full_q[:55] + "…") if len(_full_q) > 55 else _full_q
-                        st.markdown(
-                            f'<div class="rc-item-row">'
-                            f'<span class="rc-item-badge">{_lbl}</span>'
-                            + (f'<span class="rc-item-text" title="{_full_q}">'
-                               f'{_q_display}</span>' if _q_display else '')
-                            + '</div>',
-                            unsafe_allow_html=True
-                        )
-                    with _col_num:
-                        st.markdown('<div class="rc-num-wrap">', unsafe_allow_html=True)
-                        _new_pt_item = st.number_input(
-                            f"pt {_lbl}",
-                            min_value=0, max_value=punti_totali,
-                            value=_cur_pt, step=1,
-                            key=_item_key,
-                            label_visibility="collapsed",
-                        )
-                        st.markdown('</div>', unsafe_allow_html=True)
-                    _ex_new_pts_rc.append(int(_new_pt_item))
-                st.markdown('</div>', unsafe_allow_html=True)
+                # ── Items: 2 per row, selectbox compatto ───────────────────
+                _n_items_rc = len(_items_rc)
+                _ex_item_vals = {}  # abs_idx -> int
+                _max_sel = min(punti_totali, 40)
+                for _row_start in range(0, _n_items_rc, 2):
+                    _row_slice = _items_rc[_row_start:_row_start + 2]
+                    _row_cols = st.columns(len(_row_slice), gap="medium")
+                    for _ci, (_rc_col, (_lbl, _short, _cur_pt)) in enumerate(
+                        zip(_row_cols, _row_slice)
+                    ):
+                        _abs_j = _row_start + _ci
+                        _item_key = f"item_pt_{_i}_{_abs_j}"
+                        with _rc_col:
+                            _q_disp = (
+                                (_short[:26] + "…") if len(_short or "") > 26
+                                else (_short or "")
+                            )
+                            st.markdown(
+                                f'<div class="rc-item-chip">'
+                                f'<span class="rc-item-badge">{_lbl}</span>'
+                                + (f'<span class="rc-item-text-sm">{_q_disp}</span>'
+                                   if _q_disp else '')
+                                + '</div>',
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                '<div class="rc-sel-wrap">', unsafe_allow_html=True
+                            )
+                            _sel_val = st.selectbox(
+                                f"pt {_lbl}",
+                                options=list(range(0, _max_sel + 1)),
+                                index=min(_cur_pt, _max_sel),
+                                key=_item_key,
+                                label_visibility="collapsed",
+                            )
+                            st.markdown('</div>', unsafe_allow_html=True)
+                            _ex_item_vals[_abs_j] = int(_sel_val)
+                for _j in range(_n_items_rc):
+                    _ex_new_pts_rc.append(_ex_item_vals.get(_j, 0))
 
                 _ex_subtotal = sum(_ex_new_pts_rc)
                 _grand_total_rc += _ex_subtotal
@@ -5108,21 +5602,22 @@ def _render_stage_final():
 
     # ── Header ────────────────────────────────────────────────────────────────
     st.markdown(
-        f'<div style="background:{T["card"]};border:1.5px solid {T["border2"]};'
-        f'border-left:4px solid {T["success"]};border-radius:16px;padding:1.1rem 1.4rem;margin-bottom:.9rem;'
-        f'box-shadow:0 2px 16px {T["success"]}1A;">'
-        f'<div style="display:flex;align-items:center;gap:14px;">'
-        f'<div style="background:linear-gradient(135deg,{T["success"]}cc,{T["success"]});border-radius:12px;'
-        f'width:48px;height:48px;display:flex;align-items:center;justify-content:center;'
-        f'flex-shrink:0;font-size:1.6rem;">🎉</div>'
-        f'<div style="flex:1;">'
-        f'<div style="font-family:DM Sans,sans-serif;font-size:1.3rem;font-weight:900;'
-        f'color:{T["text"]};">La verifica è pronta!</div>'
-        f'<div style="font-size:.95rem;color:{T["text2"]};margin-top:3px;font-family:DM Sans,sans-serif;">'
-        + mat_str + ' · ' + scu_str + ' · ' + arg_str +
-        f'</div></div></div>'
-        f'<div style="font-size:.82rem;color:{T["muted"]};margin-top:.55rem;padding-top:.4rem;'
-        f'border-top:1px solid {T["border"]};font-family:DM Sans,sans-serif;">'
+        f'<div style="'
+        f'background:linear-gradient(160deg,{T["success"]}22 0%,{T["card"]} 55%,{T["accent"]}12 100%);'
+        f'border:1.5px solid {T["success"]}55;border-radius:20px;'
+        f'padding:2rem 1.8rem 1.3rem;margin-bottom:1rem;text-align:center;'
+        f'box-shadow:0 4px 32px {T["success"]}20,0 1px 8px {T["success"]}12;">'
+        f'<div style="font-size:3rem;line-height:1;margin-bottom:.7rem;'
+        f'filter:drop-shadow(0 2px 10px {T["success"]}66);">🎉</div>'
+        f'<div style="font-family:DM Sans,sans-serif;font-size:1.6rem;font-weight:900;'
+        f'color:{T["text"]};letter-spacing:-.025em;margin-bottom:.4rem;line-height:1.15;">'
+        f'La verifica è pronta!</div>'
+        f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
+        f'letter-spacing:.01em;">'
+        + mat_str + ' &nbsp;·&nbsp; ' + scu_str + ' &nbsp;·&nbsp; ' + arg_str +
+        f'</div>'
+        f'<div style="font-size:.74rem;color:{T["muted"]};margin-top:1rem;padding-top:.7rem;'
+        f'border-top:1px solid {T["border"]}66;font-family:DM Sans,sans-serif;">'
         f'⚠️ Controlla sempre il contenuto prima di distribuire agli studenti.'
         f'</div></div>',
         unsafe_allow_html=True
@@ -5317,38 +5812,41 @@ def _render_stage_final():
             unsafe_allow_html=True
         )
         if _rub_ready:
-            # Genera PDF al volo se non ancora cached
-            if not st.session_state.get('_rubrica_pdf'):
-                _rub_pdf_bytes = _rubrica_to_pdf(
+            # Genera DOCX al volo se non ancora cached
+            if not st.session_state.get('_rubrica_docx'):
+                _docx_bytes = _rubrica_to_docx(
                     st.session_state.rubrica_testo,
                     materia=mat_str,
                     livello=scu_str,
+                    argomento=arg_str,
                 )
-                if _rub_pdf_bytes:
-                    st.session_state['_rubrica_pdf'] = _rub_pdf_bytes
+                if _docx_bytes:
+                    st.session_state['_rubrica_docx'] = _docx_bytes
             _rbc1, _rbc2 = st.columns([3, 1])
             with _rbc1:
-                _rub_pdf = st.session_state.get('_rubrica_pdf')
-                if _rub_pdf:
+                _rub_docx = st.session_state.get('_rubrica_docx')
+                if _rub_docx:
                     st.download_button(
-                        f"⬇ Scarica griglia (.pdf)",
-                        data=_rub_pdf,
-                        file_name=arg_str + '_GrigliaValutazione.pdf',
-                        mime='application/pdf',
-                        key='dl_rubrica_pdf_v2', use_container_width=True,
+                        '⬇ Scarica Griglia (.docx)',
+                        data=_rub_docx,
+                        file_name=arg_str + '_GrigliaValutazione.docx',
+                        mime='application/vnd.openxmlformats-officedocument'
+                             '.wordprocessingml.document',
+                        key='dl_rubrica_docx_v2', use_container_width=True,
                     )
                 else:
                     st.download_button(
-                        f"⬇ Scarica griglia (.txt)",
+                        '⬇ Scarica griglia (.txt)',
                         data=st.session_state.rubrica_testo.encode('utf-8'),
                         file_name=arg_str + '_Griglia.txt',
                         mime='text/plain', key='dl_rubrica_v2', use_container_width=True,
                     )
             with _rbc2:
                 if st.button('🔄', key='btn_regen_rub_v2', use_container_width=True,
-                             help='Rigenera'):
+                             help='Rigenera la griglia di valutazione'):
                     st.session_state.rubrica_testo = None
                     st.session_state['_rubrica_pdf']  = None
+                    st.session_state['_rubrica_docx'] = None
                     st.session_state._rubrica_gen  = False
                     st.rerun()
         else:
@@ -5573,6 +6071,7 @@ def _render_stage_final():
             st.session_state["_es_custom_da_file"] = {}
             st.session_state.rubrica_testo         = None
             st.session_state["_rubrica_pdf"]       = None
+            st.session_state["_rubrica_docx"]      = None
             st.session_state._rubrica_gen          = False
             st.session_state._template_sel         = None
             st.session_state._variant_rapida_gen   = False
