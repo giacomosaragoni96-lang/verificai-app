@@ -912,140 +912,134 @@ def _render_sticky_header():
 
 def _render_step_progress() -> None:
     """
-    Renders an elegant centered stepper (Impostazioni → Revisiona → Scarica)
-    as an inline Streamlit element.  Called on every non-landing page.
+    Renders an elegant centered stepper (Impostazioni → Revisiona → Scarica).
+    Pill-container style with SVG checkmark, gradient lines, refined typography.
     """
-    stage   = st.session_state.stage
-    visual  = STAGE_REVIEW if stage == STAGE_PREVIEW else stage
+    stage  = st.session_state.stage
+    visual = STAGE_REVIEW if stage == STAGE_PREVIEW else stage
 
     steps = [
-        (STAGE_INPUT,  "01", "Impostazioni"),
-        (STAGE_REVIEW, "02", "Revisiona"),
-        (STAGE_FINAL,  "03", "Scarica"),
+        (STAGE_INPUT,  "1", "Impostazioni"),
+        (STAGE_REVIEW, "2", "Revisiona"),
+        (STAGE_FINAL,  "3", "Scarica"),
     ]
     order = {s: i for i, (s, _, _) in enumerate(steps)}
     cur   = order.get(visual, 0)
 
-    # ── Percent for the connecting progress fill ──────────────────────────────
-    pct = {0: 0, 1: 50, 2: 100}[cur]
-
-    # ── Theme colors ──────────────────────────────────────────────────────────
-    accent  = T["accent"]
-    success = T["success"]
+    # ── Theme tokens ──────────────────────────────────────────────────────────
+    acc     = T["accent"]
+    ok      = T["success"]
     muted   = T["muted"]
-    text    = T["text"]
-    text2   = T["text2"]
+    txt     = T["text"]
+    txt2    = T["text2"]
     card    = T["card"]
-    border  = T["border"]
+    card2   = T.get("card2", T["bg2"])
+    bdr     = T["border"]
+    bdr2    = T["border2"]
+    shadow  = T.get("shadow", "0 1px 3px rgba(0,0,0,.06)")
 
-    # ── Build step nodes HTML ─────────────────────────────────────────────────
+    # SVG checkmark path
+    _chk = (
+        '<svg width="11" height="9" viewBox="0 0 11 9" fill="none" '
+        'xmlns="http://www.w3.org/2000/svg">'
+        '<path d="M1 4.5L4 7.5L10 1" stroke="currentColor" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    )
+
+    # ── Build nodes ───────────────────────────────────────────────────────────
     nodes_html = ""
     for i, (s, num, label) in enumerate(steps):
         is_active = (s == visual)
         is_done   = order.get(s, 0) < cur
 
         if is_active:
-            circle_bg  = accent
-            circle_txt = "#fff"
-            label_col  = text
-            label_wt   = "800"
-            badge      = num
-            circle_shadow = f"0 0 0 4px {accent}28, 0 2px 12px {accent}55"
-            circle_border = f"2px solid {accent}"
+            dot_bg     = acc
+            dot_color  = "#fff"
+            dot_border = f"2px solid {acc}"
+            dot_shadow = f"0 0 0 3px {acc}30, 0 2px 10px {acc}40"
+            dot_content = f'<span style="font-size:.75rem;font-weight:800;font-family:DM Sans,sans-serif;">{num}</span>'
+            lbl_color  = txt
+            lbl_weight = "700"
         elif is_done:
-            circle_bg  = success
-            circle_txt = "#fff"
-            label_col  = success
-            label_wt   = "700"
-            badge      = "✓"
-            circle_shadow = f"0 0 0 3px {success}22"
-            circle_border = f"2px solid {success}"
+            dot_bg     = ok
+            dot_color  = "#fff"
+            dot_border = f"2px solid {ok}"
+            dot_shadow = f"0 0 0 3px {ok}25"
+            dot_content = _chk
+            lbl_color  = ok
+            lbl_weight = "600"
         else:
-            circle_bg  = card
-            circle_txt = muted
-            label_col  = muted
-            label_wt   = "500"
-            badge      = num
-            circle_shadow = "none"
-            circle_border = f"1.5px solid {border}"
+            dot_bg     = card2
+            dot_color  = muted
+            dot_border = f"1.5px solid {bdr2}"
+            dot_shadow = "none"
+            dot_content = f'<span style="font-size:.75rem;font-weight:600;font-family:DM Sans,sans-serif;opacity:.6;">{num}</span>'
+            lbl_color  = muted
+            lbl_weight = "500"
 
-        node = (
-            f'<div class="sp-step" data-state="{"active" if is_active else "done" if is_done else "future"}">'
-            f'  <div class="sp-circle" style="'
-            f'background:{circle_bg};color:{circle_txt};'
-            f'border:{circle_border};box-shadow:{circle_shadow};">'
-            f'    {badge}'
-            f'  </div>'
-            f'  <div class="sp-label" style="color:{label_col};font-weight:{label_wt};">'
-            f'    {label}'
-            f'  </div>'
+        nodes_html += (
+            f'<div class="sp-node">'
+            f'  <div class="sp-dot" style="background:{dot_bg};color:{dot_color};'
+            f'border:{dot_border};box-shadow:{dot_shadow};">{dot_content}</div>'
+            f'  <div class="sp-lbl" style="color:{lbl_color};font-weight:{lbl_weight};">{label}</div>'
             f'</div>'
         )
-        nodes_html += node
-        if i < len(steps) - 1:
-            nodes_html += '<div class="sp-connector"></div>'
 
-    # ── Full HTML block ───────────────────────────────────────────────────────
+        if i < len(steps) - 1:
+            # Line: solid gradient if already passed, dashed/muted if not yet reached
+            is_filled = cur > i
+            if is_filled:
+                line_bg = f"linear-gradient(90deg, {ok}, {acc})"
+                line_style = ""
+            else:
+                line_bg = bdr2
+                line_style = ""
+            nodes_html += (
+                f'<div class="sp-line" style="background:{line_bg};{line_style}"></div>'
+            )
+
     html = f"""
 <style>
-  .sp-wrap {{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: .9rem 1.2rem 1.1rem;
-    margin-bottom: .6rem;
-    position: relative;
+  .sp-track {{
+    display: flex; align-items: center; justify-content: center;
+    padding: 0; margin: .5rem auto .8rem;
   }}
-  .sp-step {{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 7px;
-    position: relative;
-    z-index: 1;
+  .sp-pill {{
+    display: inline-flex; align-items: center;
+    background: {card}; border: 1px solid {bdr};
+    border-radius: 100px;
+    padding: .6rem 1.8rem .55rem;
+    gap: 0;
+    box-shadow: {shadow};
   }}
-  .sp-circle {{
-    width: 36px;
-    height: 36px;
+  .sp-node {{
+    display: flex; flex-direction: column;
+    align-items: center; gap: 5px;
+    position: relative; z-index: 1;
+  }}
+  .sp-dot {{
+    width: 28px; height: 28px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: .82rem;
-    font-weight: 800;
-    font-family: 'DM Sans', sans-serif;
-    transition: all .25s ease;
+    display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
+    transition: box-shadow .3s ease, background .3s ease;
   }}
-  .sp-label {{
-    font-size: .78rem;
-    font-family: 'DM Sans', sans-serif;
-    white-space: nowrap;
-    letter-spacing: .01em;
+  .sp-lbl {{
+    font-size: .7rem; font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; letter-spacing: .02em;
     transition: color .25s;
   }}
-  .sp-connector {{
-    position: relative;
-    width: 72px;
-    height: 2px;
-    background: {border};
-    border-radius: 2px;
-    flex-shrink: 0;
-    margin-bottom: 22px;
-    overflow: hidden;
-  }}
-  .sp-connector::after {{
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: {pct}%;
-    background: linear-gradient(90deg, {success}, {accent});
-    border-radius: 2px;
-    transition: width .4s ease;
+  .sp-line {{
+    height: 1.5px; width: 60px;
+    flex-shrink: 0; border-radius: 2px;
+    margin-bottom: 20px;
+    opacity: .85;
   }}
 </style>
-<div class="sp-wrap">
-  {nodes_html}
+<div class="sp-track">
+  <div class="sp-pill">
+    {nodes_html}
+  </div>
 </div>
 """
     st.markdown(html, unsafe_allow_html=True)
@@ -2952,7 +2946,7 @@ def _render_percorso_b_form():
             con_griglia  = mostra_punteggi
             punti_totali = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
 
-            with st.expander("⚙️  Personalizzazione Avanzata", expanded=False):
+            with st.expander("✏️ Aggiungi istruzioni o preferenze (opzionale)", expanded=False):
 
                 if _prefs.get("stile_desc"):
                     st.markdown(
@@ -3094,7 +3088,7 @@ def _render_percorso_b_form():
         with _col_side:
             # ── Header ────────────────────────────────────────────────────────
             st.markdown(
-                '<div class="upload-column-label">📎 Documenti</div>',
+                '<div class="upload-column-label">📎 Carica un documento (opzionale)</div>',
                 unsafe_allow_html=True,
             )
 
@@ -3162,8 +3156,8 @@ def _render_percorso_b_form():
                 )
             else:
                 _MODO_OPTIONS = {
-                    "base_conoscenza":   "📚 Fonte",
-                    "includi_esercizio": "✏️ Adatta",
+                    "base_conoscenza":   "📚 Usa come fonte",
+                    "includi_esercizio": "✏️ Riadatta esercizi",
                 }
                 _rimuovi_idx = None
 
@@ -3226,21 +3220,27 @@ def _render_percorso_b_form():
                         st.session_state.analisi_docs_list[_fi]["confirmed"] = (_sel_modo != "ignora")
                         _consolida_info()
 
-                    # Context hint (Adatta only)
+                    # Context hint — always visible, describes the active mode
                     if _sel_modo == "includi_esercizio":
                         if _fa_es > 1:
                             _hint_txt = (
-                                f'Struttura dei <strong>{_fa_es} esercizi</strong> '
-                                f'conservata, dati completamente nuovi.'
+                                f'L\'AI riprende la struttura dei <strong>{_fa_es} esercizi</strong> '
+                                f'del file e genera valori completamente nuovi.'
                             )
                         elif _fa_es == 1:
-                            _hint_txt = 'Struttura conservata, dati e valori nuovi.'
+                            _hint_txt = "L'AI riprende la struttura delle domande del file e cambia i valori."
                         else:
-                            _hint_txt = 'Il contenuto diventa la traccia per gli esercizi.'
-                        st.markdown(
-                            f'<div class="file-includi-hint">💡 {_hint_txt}</div>',
-                            unsafe_allow_html=True,
+                            _hint_txt = "L'AI riadatta le domande del file inserendo dati e contesti nuovi."
+                    else:
+                        _hint_txt = (
+                            "L'AI legge il documento e crea esercizi <strong>originali</strong> "
+                            "sull'argomento trattato."
                         )
+                    _hint_cls = "file-includi-hint" if _sel_modo == "includi_esercizio" else "file-fonte-hint"
+                    st.markdown(
+                        f'<div class="{_hint_cls}">💡 {_hint_txt}</div>',
+                        unsafe_allow_html=True,
+                    )
 
                     # Remove button — tiny, right-aligned
                     st.markdown('<div class="fpc-delete-row">', unsafe_allow_html=True)
@@ -4376,7 +4376,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             components.html(katex_html, height=est_height, scrolling=True)
 
             if re.search(r"\\begin\{(tikzpicture|axis)\}", body):
-                st.info("📊 Grafici TikZ/pgfplots visibili nel PDF finale.")
+                st.info("📊 Questo esercizio contiene un grafico — sarà visibile nel PDF scaricato.")
 
             # ── Pulsante ANNULLA MODIFICA ─────────────────────────────────
             _undo_key = f"_undo_block_{idx}"
@@ -4461,9 +4461,10 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     unsafe_allow_html=True
                 )
                 quick_regen = st.button(
-                    "Cambia i dati",
+                    "Cambia i numeri",
                     key=f"quick_regen_{idx}",
                     use_container_width=True,
+                    help="Genera nuovi valori e dati numerici mantenendo la stessa struttura dell'esercizio.",
                 )
             with _qr_col2:
                 st.markdown(
@@ -4506,9 +4507,10 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 height=80,
             )
             rigenera = st.button(
-                "Applica Modifica", key=f"rw_btn_{idx}",
+                "✏️ Applica modifica", key=f"rw_btn_{idx}",
                 use_container_width=True, disabled=not istruzione.strip(),
                 type="primary",
+                help="L'AI applica le tue istruzioni e rigenera solo questo esercizio, senza modificare gli altri.",
             )
             # ── Placeholder feedback immediato sotto il pulsante cliccato ─────
             _loading_ph = st.empty()
@@ -4861,103 +4863,90 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 
 
     # ── Ricalibra Punteggi — sopra il pulsante Conferma ──────────────────
-    # ── Expander: Ricalibra Punteggi — per singolo sottopunto ──────────
     if mostra_punteggi and n_blocks > 0:
         with st.expander("⚖️ Ricalibra Punteggi", expanded=False):
+
+            # ── Intestazione compatta ──────────────────────────────────────
             st.markdown(
-                f'<div style="font-size:.74rem;color:{T["text2"]};margin-bottom:.6rem;'
-                f'font-family:DM Sans,sans-serif;line-height:1.45;">'
-                f'Modifica i punti per ogni singolo sottopunto. '
-                f'<strong>Applica</strong> si attiva quando la somma = '
-                f'<strong>{punti_totali} pt</strong>.</div>',
+                f'<div class="rc-header-desc">'
+                f'Imposta i punti per ogni sottopunto. '
+                f'Il pulsante si sblocca quando il totale è esattamente '
+                f'<strong>{punti_totali} pt</strong>.'
+                f'</div>',
                 unsafe_allow_html=True
             )
 
             # ── Raccogli tutti i sottopunti di tutti gli esercizi ──────────
-            _all_new_item_pts = {}   # {ex_idx: [pt1, pt2, ...]}
+            _all_new_item_pts = {}
             _grand_total_rc   = 0
 
             for _i, _b in enumerate(st.session_state.review_blocks):
                 _items_rc = parse_items_from_block(_b["body"], _b.get("title", ""))
                 _title_rc = re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]).strip()
-                _title_rc = (_title_rc[:30] + "…") if len(_title_rc) > 30 else _title_rc
-
-                # Separatore tra esercizi
-                if _i > 0:
-                    st.markdown(
-                        f'<hr style="border:none;border-top:1px solid {T["border"]};margin:.5rem 0;">',
-                        unsafe_allow_html=True
-                    )
-
-                st.markdown(
-                    f'<div style="font-size:.76rem;font-weight:800;color:{T["text"]};'
-                    f'font-family:DM Sans,sans-serif;margin-bottom:.3rem;">'
-                    f'Es. {_i+1} — {_title_rc}</div>',
-                    unsafe_allow_html=True
-                )
+                _title_short = (_title_rc[:45] + "…") if len(_title_rc) > 45 else _title_rc
 
                 if not _items_rc:
-                    st.markdown(
-                        f'<div style="font-size:.7rem;color:{T["muted"]};'
-                        f'font-family:DM Sans,sans-serif;font-style:italic;margin-bottom:.3rem;">'
-                        f'Nessun sottopunto con punteggio rilevato.</div>',
-                        unsafe_allow_html=True
-                    )
                     _all_new_item_pts[_i] = []
                     continue
 
                 _ex_new_pts_rc = []
-                _n_items = len(_items_rc)
-                _n_cols_item = min(_n_items, 4)
-                _rows_items = [_items_rc[j:j+_n_cols_item]
-                               for j in range(0, _n_items, _n_cols_item)]
 
-                for _row_items in _rows_items:
-                    _item_cols = st.columns(_n_cols_item)
-                    for _col_j, (_lbl, _short, _cur_pt) in enumerate(_row_items):
-                        _item_key = f"item_pt_{_i}_{len(_ex_new_pts_rc)}"
-                        with _item_cols[_col_j]:
-                            st.markdown(
-                                f'<div style="font-size:.72rem;font-weight:700;color:{T["text2"]};'
-                                f'font-family:DM Sans,sans-serif;line-height:1.2;">'
-                                f'<span style="background:{T["accent_light"]};border-radius:4px;'
-                                f'padding:1px 6px;margin-right:3px;">{_lbl}</span></div>',
-                                unsafe_allow_html=True
-                            )
-                            if _short:
-                                st.markdown(
-                                    f'<div style="font-size:.62rem;color:{T["muted"]};'
-                                    f'font-family:DM Sans,sans-serif;white-space:nowrap;'
-                                    f'overflow:hidden;text-overflow:ellipsis;'
-                                    f'margin-bottom:2px;">{_short}</div>',
-                                    unsafe_allow_html=True
-                                )
-                            _new_pt_item = st.number_input(
-                                f"pt {_lbl}",
-                                min_value=0, max_value=punti_totali,
-                                value=_cur_pt, step=1,
-                                key=_item_key,
-                                label_visibility="collapsed",
-                            )
-                            _ex_new_pts_rc.append(int(_new_pt_item))
+                # ── Exercise header ────────────────────────────────────────
+                st.markdown(
+                    f'<div class="rc-ex-header">'
+                    f'<span class="rc-ex-num">Es. {_i+1}</span>'
+                    f'<span class="rc-ex-title">{_title_short}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+
+                # ── Items: one per row, full width ─────────────────────────
+                st.markdown('<div class="rc-items-wrap">', unsafe_allow_html=True)
+                for _lbl, _short, _cur_pt in _items_rc:
+                    _item_key = f"item_pt_{_i}_{len(_ex_new_pts_rc)}"
+                    _col_text, _col_num = st.columns([5, 2], gap="small")
+                    with _col_text:
+                        _full_q = _short or ""
+                        _q_display = (_full_q[:55] + "…") if len(_full_q) > 55 else _full_q
+                        st.markdown(
+                            f'<div class="rc-item-row">'
+                            f'<span class="rc-item-badge">{_lbl}</span>'
+                            + (f'<span class="rc-item-text" title="{_full_q}">'
+                               f'{_q_display}</span>' if _q_display else '')
+                            + '</div>',
+                            unsafe_allow_html=True
+                        )
+                    with _col_num:
+                        st.markdown('<div class="rc-num-wrap">', unsafe_allow_html=True)
+                        _new_pt_item = st.number_input(
+                            f"pt {_lbl}",
+                            min_value=0, max_value=punti_totali,
+                            value=_cur_pt, step=1,
+                            key=_item_key,
+                            label_visibility="collapsed",
+                        )
+                        st.markdown('</div>', unsafe_allow_html=True)
+                    _ex_new_pts_rc.append(int(_new_pt_item))
+                st.markdown('</div>', unsafe_allow_html=True)
 
                 _ex_subtotal = sum(_ex_new_pts_rc)
                 _grand_total_rc += _ex_subtotal
                 _all_new_item_pts[_i] = _ex_new_pts_rc
 
+                # ── Subtotal per exercise ──────────────────────────────────
                 st.markdown(
-                    f'<div style="font-size:.7rem;font-weight:600;color:{T["text2"]};'
-                    f'font-family:DM Sans,sans-serif;text-align:right;margin-top:.2rem;">'
-                    f'Subtotale Es.{_i+1}: <strong>{_ex_subtotal} pt</strong></div>',
+                    f'<div class="rc-ex-subtotal">'
+                    f'Subtotale Es. {_i+1}: <strong>{_ex_subtotal} pt</strong>'
+                    f'</div>',
                     unsafe_allow_html=True
                 )
 
-            # ── Totale generale + pulsante Applica ──────────────────────
-            st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
+            # ── Barra totale ───────────────────────────────────────────────
             _rc_ok   = (_grand_total_rc == punti_totali)
             _rc_diff = _grand_total_rc - punti_totali
             _rc_diff_str = ("+" if _rc_diff > 0 else "") + str(_rc_diff)
 
+            st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
             if _rc_ok:
                 st.markdown(
                     '<div class="recalibra-sum-ok">'
@@ -4966,17 +4955,20 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     unsafe_allow_html=True
                 )
             else:
+                _missing = abs(_rc_diff)
+                _direction = "in eccesso" if _rc_diff > 0 else "mancanti"
                 st.markdown(
                     '<div class="recalibra-sum-err">'
-                    f'⚠️ Totale: <strong>{_grand_total_rc} pt</strong>'
-                    f' ({_rc_diff_str} rispetto a {punti_totali} pt)'
+                    f'⚠️ Totale: <strong>{_grand_total_rc} pt</strong> — '
+                    f'{_missing} pt {_direction} rispetto a {punti_totali} pt'
                     '</div>',
                     unsafe_allow_html=True
                 )
 
+            st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
             if st.button(
                 "✅ Applica Punteggi e Rigenera PDF" if _rc_ok else
-                f"⛔ Applica ({_grand_total_rc} ≠ {punti_totali} pt)",
+                f"Totale {_grand_total_rc} pt — aggiusta per sbloccare",
                 key="rc_applica",
                 disabled=not _rc_ok,
                 use_container_width=True,
@@ -5049,7 +5041,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
     st.markdown('</div>', unsafe_allow_html=True)
 
     if confirm_pdf:
-        with st.spinner("⏳ Compilazione PDF finale…"):
+        with st.spinner("⏳ Creazione PDF in corso…"):
             latex_final = reconstruct_latex(
                 st.session_state.review_preamble,
                 st.session_state.review_blocks
@@ -5177,7 +5169,7 @@ def _render_stage_final():
     #  VARIANTI — 4 card in colonna
     # ═══════════════════════════════════════════════════════════════════════════
     st.markdown(
-        f'<div class="variant-section-label">VARIANTI — UN CLICK PER GENERARE E SCARICARE</div>',
+        f'<div class="variant-section-label">GENERA ULTERIORI VERSIONI DELLA VERIFICA</div>',
         unsafe_allow_html=True
     )
     _vc1, _vc2, _vc3, _vc4 = st.columns(4, gap="medium")
@@ -5204,14 +5196,14 @@ def _render_stage_final():
                 mime="application/pdf", use_container_width=True, key="dl_pdf_B_v2",
             )
         elif _b_lat:
-            if st.button("📄 Compila PDF Fila B", key="compile_B_v2",
+            if st.button("📄 Crea PDF Fila B", key="compile_B_v2",
                          use_container_width=True, type="primary"):
-                with st.spinner("Compilazione…"):
+                with st.spinner("Creazione PDF in corso…"):
                     _pdf_bc, _ = compila_pdf(_b_lat)
                 if _pdf_bc:
                     st.session_state.verifiche["B"]["pdf"] = _pdf_bc; st.rerun()
         else:
-            if st.button("⚡ Genera Fila B — One Click", key="one_click_B_v2",
+            if st.button("⚡ Genera Fila B", key="one_click_B_v2",
                          use_container_width=True, type="primary"):
                 st.session_state["_gen_fila_b"] = True; st.rerun()
 
@@ -5219,7 +5211,7 @@ def _render_stage_final():
             st.session_state["_gen_fila_b"] = False
             _ph_b = st.empty()
             _ph_b.markdown(_skeleton_html("⚡", "Generazione Fila B…",
-                           "Cambio dati · Anti-spoiler · QA coerenza"), unsafe_allow_html=True)
+                           "Cambio numeri · Verifica coerenza · Controllo qualità"), unsafe_allow_html=True)
             try:
                 _mod_b = genai.GenerativeModel(mod_id)
                 _latex_b_new = _mod_b.generate_content(
@@ -5247,7 +5239,7 @@ def _render_stage_final():
             f'    <span class="variant-card-icon">🌟</span>'
             f'    <span class="variant-card-title">Versione BES/DSA</span>'
             f'  </div>'
-            f'  <div class="variant-card-desc">Linguaggio semplificato, struttura alleggerita. Stessi obiettivi didattici.</div>'
+            f'  <div class="variant-card-desc">Per studenti con Bisogni Educativi Speciali o DSA: linguaggio semplificato, struttura alleggerita, stessi obiettivi.</div>'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -5258,14 +5250,14 @@ def _render_stage_final():
                 mime="application/pdf", use_container_width=True, key="dl_pdf_R_v2",
             )
         elif _r_lat:
-            if st.button("📄 Compila PDF BES/DSA", key="compile_R_v2",
+            if st.button("📄 Crea PDF BES/DSA", key="compile_R_v2",
                          use_container_width=True, type="primary"):
-                with st.spinner("Compilazione…"):
+                with st.spinner("Creazione PDF in corso…"):
                     _pdf_rc, _ = compila_pdf(_r_lat)
                 if _pdf_rc:
                     st.session_state.verifiche["R"]["pdf"] = _pdf_rc; st.rerun()
         else:
-            if st.button("🌟 Genera BES/DSA — One Click", key="one_click_R_v2",
+            if st.button("🌟 Genera BES/DSA", key="one_click_R_v2",
                          use_container_width=True, type="primary"):
                 st.session_state["_gen_bes"] = True; st.rerun()
 
@@ -5303,14 +5295,14 @@ def _render_stage_final():
                 mime="application/pdf", use_container_width=True, key="dl_pdf_S_v2",
             )
         elif _s_lat:
-            if st.button("📄 Compila PDF Soluzioni", key="compile_S_v2",
+            if st.button("📄 Crea PDF Soluzioni", key="compile_S_v2",
                          use_container_width=True, type="primary"):
-                with st.spinner("Compilazione…"):
+                with st.spinner("Creazione PDF in corso…"):
                     _pdf_sc, _ = compila_pdf(_s_lat)
                 if _pdf_sc:
                     st.session_state.verifiche["S"]["pdf"] = _pdf_sc; st.rerun()
         else:
-            if st.button("✅ Genera Soluzioni — One Click", key="one_click_S_v2",
+            if st.button("✅ Genera Soluzioni", key="one_click_S_v2",
                          use_container_width=True, type="primary"):
                 st.session_state["_gen_sol"] = True; st.rerun()
 
@@ -5427,7 +5419,7 @@ def _render_stage_final():
                 f'<div class="share-link-box">'
                 f'  <div class="share-link-status">'
                 f'    <span class="share-link-dot"></span>'
-                f'    Link attivo · scade tra 30 giorni'
+                f'    Link attivo · valido per 30 giorni dalla creazione'
                 f'  </div>'
                 f'  <div class="share-link-url">{_share_full_url}</div>'
                 f'</div>',
@@ -5455,7 +5447,7 @@ def _render_stage_final():
                     height=42,
                 )
             with _sh_c2:
-                if st.button("🔄", key="share_new_link", help="Genera nuovo link"):
+                if st.button("🔄", key="share_new_link", help="Genera un nuovo link. Attenzione: il link precedente smetterà di funzionare."):
                     st.session_state._share_code = None
                     st.rerun()
 

@@ -1073,12 +1073,23 @@ def get_css(T: dict) -> str:
     background: {T.get('hint_bg', '#FEF3C7')};
     border: 1px solid {T.get('hint_border', '#FDE68A')};
     border-radius: 8px;
-    padding: .45rem .75rem;
-    margin: .3rem 0 .4rem;
-    font-size: 0.94rem;
+    padding: .4rem .7rem;
+    margin: .25rem 0 .35rem;
+    font-size: 0.8rem;
     color: {T.get('hint_text', '#92400E')};
     font-family: 'DM Sans', sans-serif;
-    line-height: 1.5;
+    line-height: 1.45;
+  }}
+  .file-fonte-hint {{
+    background: {_acc_soft};
+    border: 1px solid {_acc_med};
+    border-radius: 8px;
+    padding: .4rem .7rem;
+    margin: .25rem 0 .35rem;
+    font-size: 0.8rem;
+    color: {_acc};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.45;
   }}
 
 
@@ -1300,6 +1311,7 @@ def get_css(T: dict) -> str:
     overflow-x: hidden !important;
     overscroll-behavior: contain !important;
     align-self: flex-start !important;
+    margin-top: 2.2rem !important;
     box-shadow: {_shadow_sm} !important;
   }}
   [data-testid="stColumn"]:has(.upload-column-label) > div {{
@@ -1324,6 +1336,7 @@ def get_css(T: dict) -> str:
     overflow-y: auto !important;
     overflow-x: hidden !important;
     align-self: flex-start !important;
+    margin-top: 2.2rem !important;
     box-shadow: {_shadow_sm} !important;
   }}
 
@@ -1792,21 +1805,96 @@ def get_css(T: dict) -> str:
   /* ════════════════════════════════════════════════════════════════════════
      RECALIBRA PUNTEGGI
      ════════════════════════════════════════════════════════════════════════ */
+  /* ── Ricalibra Punteggi — redesign ─────────────────────────────────── */
+  .rc-header-desc {{
+    font-size: .8rem; color: {T['text2']};
+    font-family: 'DM Sans', sans-serif; line-height: 1.5;
+    margin-bottom: .9rem; padding-bottom: .65rem;
+    border-bottom: 1px solid {T['border']};
+  }}
+
+  /* Exercise header row */
+  .rc-ex-header {{
+    display: flex; align-items: center; gap: .5rem;
+    margin: .75rem 0 .4rem;
+  }}
+  .rc-ex-num {{
+    font-size: .72rem; font-weight: 800;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: {_acc}; font-family: 'DM Sans', sans-serif;
+    background: {_acc_soft}; border: 1px solid {_acc_med};
+    border-radius: 6px; padding: 2px 8px;
+    flex-shrink: 0;
+  }}
+  .rc-ex-title {{
+    font-size: .85rem; font-weight: 700;
+    color: {T['text']}; font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }}
+
+  /* Item rows */
+  .rc-items-wrap {{ margin-bottom: .1rem; }}
+  .rc-item-row {{
+    display: flex; align-items: center; gap: .5rem;
+    padding: .3rem 0;
+    border-bottom: 1px solid {T['border']}1A;
+  }}
+  .rc-item-badge {{
+    font-size: .7rem; font-weight: 800;
+    color: {T['text2']}; font-family: 'DM Sans', sans-serif;
+    background: {T['border2']}66;
+    border-radius: 4px; padding: 1px 6px;
+    flex-shrink: 0; min-width: 22px; text-align: center;
+  }}
+  .rc-item-text {{
+    font-size: .8rem; color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex: 1;
+  }}
+
+  /* Number input wrapper — compact, right-aligned */
+  .rc-num-wrap [data-testid="stNumberInput"] {{
+    margin: 0 !important;
+  }}
+  .rc-num-wrap [data-testid="stNumberInput"] input {{
+    text-align: center !important;
+    font-size: .9rem !important;
+    font-weight: 700 !important;
+    padding: 4px 6px !important;
+    min-height: 32px !important;
+    height: 32px !important;
+  }}
+  .rc-num-wrap [data-testid="stNumberInputStepDown"],
+  .rc-num-wrap [data-testid="stNumberInputStepUp"] {{
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 32px !important;
+    font-size: .8rem !important;
+  }}
+
+  /* Subtotal per exercise */
+  .rc-ex-subtotal {{
+    font-size: .75rem; font-weight: 600;
+    color: {T['muted']}; font-family: 'DM Sans', sans-serif;
+    text-align: right; padding: .3rem 0 .1rem;
+  }}
+  .rc-ex-subtotal strong {{ color: {T['text2']}; }}
+
+  /* Grand total rows */
   .recalibra-sum-ok {{
-    font-size: 0.88rem; font-weight: 600;
+    font-size: .88rem; font-weight: 700;
     color: {T['success']}; font-family: 'DM Sans', sans-serif;
     background: {T['success']}14;
     border: 1px solid {T['success']}33;
-    border-radius: 8px; padding: .4rem .7rem;
-    margin-top: .3rem;
+    border-radius: {_radius_sm}; padding: .45rem .8rem;
   }}
   .recalibra-sum-err {{
-    font-size: 0.88rem; font-weight: 600;
+    font-size: .88rem; font-weight: 600;
     color: {T['warn']}; font-family: 'DM Sans', sans-serif;
     background: {T['warn']}14;
     border: 1px solid {T['warn']}33;
-    border-radius: 8px; padding: .4rem .7rem;
-    margin-top: .3rem;
+    border-radius: {_radius_sm}; padding: .45rem .8rem;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -2299,19 +2387,32 @@ def get_css(T: dict) -> str:
   /* ════════════════════════════════════════════════════════════════════════
      DOWNLOAD BUTTONS
      ════════════════════════════════════════════════════════════════════════ */
+  @keyframes dl-glow {{
+    0%, 100% {{ box-shadow: 0 0 0 0 {_acc}44, 0 4px 20px {_acc}30 !important; }}
+    50%       {{ box-shadow: 0 0 0 6px {_acc}00, 0 4px 28px {_acc}55 !important; }}
+  }}
   [data-testid="stDownloadButton"] > button {{
-    background: {_surf_raised} !important;
-    border: 1.5px solid {T['border']} !important;
-    border-radius: 10px !important;
-    color: {T['text']} !important;
+    background: linear-gradient(135deg, {_acc} 0%, {_acc}cc 100%) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    color: #0D1117 !important;
     font-family: 'DM Sans', sans-serif !important;
-    font-weight: 700 !important;
-    font-size: 0.92rem !important;
-    transition: border-color .15s ease, background .15s ease !important;
+    font-weight: 800 !important;
+    font-size: 0.97rem !important;
+    letter-spacing: .02em !important;
+    padding: .65rem 1.4rem !important;
+    animation: dl-glow 2.4s ease-in-out infinite !important;
+    transition: filter .15s ease, transform .12s ease !important;
   }}
   [data-testid="stDownloadButton"] > button:hover {{
-    border-color: {_acc} !important;
-    background: {T['hover']} !important;
+    filter: brightness(1.12) !important;
+    transform: translateY(-2px) !important;
+    animation: none !important;
+    box-shadow: 0 6px 28px {_acc}55 !important;
+  }}
+  [data-testid="stDownloadButton"] > button:active {{
+    transform: translateY(0) !important;
+    filter: brightness(.96) !important;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -3061,13 +3162,14 @@ def get_css(T: dict) -> str:
       min-width: unset !important;
       max-width: 100% !important;
       overflow-y: auto !important;
+      margin-top: 0 !important;
     }}
 
-    /* ── Step progress: connettori più corti ─────────────────────────── */
-    .sp-wrap  {{ padding: 0.55rem 0.4rem 0.7rem; }}
-    .sp-circle {{ width: 30px; height: 30px; font-size: .72rem; }}
-    .sp-label  {{ font-size: .68rem; }}
-    .sp-connector {{ width: 36px; }}
+    /* ── Step progress: pill più compatta su tablet ─────────────────── */
+    .sp-pill {{ padding: .5rem 1.1rem; }}
+    .sp-dot  {{ width: 24px; height: 24px; }}
+    .sp-lbl  {{ font-size: .65rem; }}
+    .sp-line {{ width: 40px; }}
 
     /* ── Landing: headline ridotta ───────────────────────────────────── */
     .landing-headline-xl {{
@@ -3158,11 +3260,11 @@ def get_css(T: dict) -> str:
     .landing-sub-xl {{ font-size: 0.88rem !important; line-height: 1.55 !important; }}
     .tally-feat-pill {{ font-size: .8rem; padding: .25rem .6rem; }}
 
-    /* ── Step progress: ancora più compatto ──────────────────────────── */
-    .sp-connector {{ width: 22px; }}
-    .sp-circle {{ width: 26px; height: 26px; font-size: .62rem; }}
-    .sp-label  {{ font-size: .6rem; letter-spacing: 0; }}
-    .sp-wrap   {{ gap: 4px; }}
+    /* ── Step progress: ancora più compatto su mobile ───────────────── */
+    .sp-pill {{ padding: .4rem .9rem; border-radius: 100px; }}
+    .sp-dot  {{ width: 22px; height: 22px; }}
+    .sp-lbl  {{ font-size: .58rem; letter-spacing: 0; }}
+    .sp-line {{ width: 24px; }}
 
     /* ── Heading scale ridotta ───────────────────────────────────────── */
     .stApp h1, .stMarkdown h1 {{

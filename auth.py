@@ -352,7 +352,7 @@ def mostra_auth(supabase):
 
     # ── Tabs ─────────────────────────────────────────────────────────────────
     tab_login, tab_reg, tab_reset = st.tabs(
-        ["Accedi", "Registrati", "Reset password"]
+        ["Accedi", "Registrati", "Password dimenticata?"]
     )
 
     with tab_login:
@@ -375,7 +375,7 @@ def mostra_auth(supabase):
                 except Exception as e:
                     err = str(e).lower()
                     if "invalid login" in err or "invalid credentials" in err:
-                        st.warning("Password errata. Usa il tab **Password** per reimpostarla.")
+                        st.warning("Password errata. Clicca su **Password dimenticata?** qui sopra per reimpostarla.")
                     elif "email not confirmed" in err:
                         st.warning("Email non confermata. Controlla la casella di posta.")
                     elif "user not found" in err or "no user" in err:
@@ -408,7 +408,11 @@ def mostra_auth(supabase):
                     time.sleep(1)
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Errore durante la registrazione: {e}")
+                    _err_str = str(e).lower()
+                    if "already registered" in _err_str or "already exists" in _err_str:
+                        st.error("Questa email è già registrata. Prova ad accedere oppure clicca su **Password dimenticata?**.")
+                    else:
+                        st.error("Registrazione non riuscita. Controlla i dati inseriti e riprova, o contattaci se il problema persiste.")
 
     with tab_reset:
         st.markdown(

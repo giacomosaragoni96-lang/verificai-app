@@ -88,7 +88,7 @@ def render_sidebar(
         # Pro    → Flash, con upgrade a Pro se materia STEM (gold necessario)
         # Il model_id effettivo viene poi eventualmente aggiornato in main.py
         # tramite get_model_id_per_piano(piano, materia) al momento della generazione.
-        st.markdown('<div class="sidebar-label">Modello AI</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-label">Qualità generazione</div>', unsafe_allow_html=True)
 
         # Determina piano corrente (admin sovrascrive tutto)
         _piano = "admin" if is_admin else st.session_state.get("piano_utente", "free")
@@ -122,7 +122,7 @@ def render_sidebar(
             modello_id = MODELLI_DISPONIBILI[_sel_pro]["id"]
             st.markdown(
                 f'<div style="font-size:0.72rem;color:{T["muted"]};padding:3px 0 0 2px;">'
-                f'⚡ Piano Pro attivo. Per materie STEM considera il Piano Gold.</div>',
+                f'⚡ Piano Pro attivo. Per materie scientifiche (matematica, fisica, chimica) considera il Piano Gold.</div>',
                 unsafe_allow_html=True
             )
         elif _piano == "gold":
@@ -149,7 +149,7 @@ def render_sidebar(
                 f'margin:4px 0;font-family:DM Sans,sans-serif;">'
                 f'⚡ <b>Flash 2.5 Lite</b> — Piano Free<br/>'
                 f'<span style="opacity:.8;">Passa al Piano Pro per Flash 2.5 (umanistiche) '
-                f'o Gold per Gemini 2.5 Pro (STEM).</span></div>',
+                f'o Gold per il motore avanzato (materie scientifiche).</span></div>',
                 unsafe_allow_html=True
             )
 
@@ -188,11 +188,11 @@ def render_sidebar(
 
         _gg_reset, _hh_reset = giorni_al_reset_func()
         if _gg_reset == 0:
-            _reset_str = f"Reset tra {_hh_reset}h"
+            _reset_str = f"Si rinnova tra {_hh_reset} ore"
         elif _gg_reset == 1:
-            _reset_str = "Reset domani"
+            _reset_str = "Si rinnova domani"
         else:
-            _reset_str = f"Reset tra {_gg_reset}gg"
+            _reset_str = f"Si rinnova tra {_gg_reset} giorni"
 
         st.markdown(f"""
         <div class="monthly-bar">
@@ -237,7 +237,7 @@ def render_sidebar(
                 {_msg} {_sub}
               </div>
               <div style="font-size:.68rem;color:{T['muted']};font-family:'DM Sans',sans-serif;">
-                Verifiche illimitate · Fila B · BES/DSA · Soluzioni
+                Verifiche illimitate · Versione anti-copia (Fila B) · Adattata BES/DSA · Soluzioni per il docente
               </div>
             </div>
             """, unsafe_allow_html=True)
