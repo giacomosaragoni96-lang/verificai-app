@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import time
 
 # ── NIENTE PIÙ COOKIE — usiamo i query params dell'URL ───────────────────────
@@ -63,6 +64,20 @@ def cancella_sessione_cookie():
 
 # ── FORM LOGIN / REGISTRAZIONE — Elegant dark (Notte-style) ──────────────────
 def mostra_auth(supabase):
+    # Rimuovi sticky header e progress bar (residui da sessione precedente)
+    components.html("""
+<script>
+(function() {
+  var doc = window.parent.document;
+  var old = doc.getElementById('_vai_sticky_hdr');
+  if (old) old.remove();
+  var pb = doc.getElementById('_vai_progress_bar');
+  if (pb) pb.remove();
+  var main = doc.querySelector('.main .block-container');
+  if (main) main.style.paddingTop = '';
+})();
+</script>""", height=0)
+
     # ── CSS scoped alla pagina di login ──────────────────────────────────────
     st.markdown(f"""
     <style>
