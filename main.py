@@ -1002,38 +1002,35 @@ def _render_step_progress() -> None:
 <style>
   .sp-track {{
     display: flex; align-items: center; justify-content: center;
-    padding: 0; margin: .5rem auto .8rem;
+    padding: 0; margin: .6rem auto 1.1rem;
   }}
   .sp-pill {{
     display: inline-flex; align-items: center;
-    background: {card}; border: 1px solid {bdr};
-    border-radius: 100px;
-    padding: .6rem 1.8rem .55rem;
+    padding: .5rem 2rem;
     gap: 0;
-    box-shadow: {shadow};
   }}
   .sp-node {{
     display: flex; flex-direction: column;
-    align-items: center; gap: 5px;
+    align-items: center; gap: 6px;
     position: relative; z-index: 1;
   }}
   .sp-dot {{
-    width: 28px; height: 28px;
+    width: 30px; height: 30px;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     transition: box-shadow .3s ease, background .3s ease;
   }}
   .sp-lbl {{
-    font-size: .7rem; font-family: 'DM Sans', sans-serif;
-    white-space: nowrap; letter-spacing: .02em;
+    font-size: .68rem; font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; letter-spacing: .03em;
     transition: color .25s;
   }}
   .sp-line {{
-    height: 1.5px; width: 60px;
+    height: 1px; width: 56px;
     flex-shrink: 0; border-radius: 2px;
-    margin-bottom: 20px;
-    opacity: .85;
+    margin-bottom: 22px;
+    opacity: .7;
   }}
 </style>
 <div class="sp-track">
@@ -2799,19 +2796,16 @@ def _render_percorso_b_form():
         # ── IDEA #1: carica defaults silenti come fallback ────────────────
         _udef = _load_user_defaults()
 
-        # ── Layout: colonna form | colonna upload (full height) ───────────────
-        _col_main, _col_side = st.columns([2.5, 1.5], gap="medium")
-
-        with _col_main:
+        if True:  # blocco unico -- layout a singola colonna
             # ── Dashboard: sezione form (layout bilanciato) ───────────────────────
             # ── Section header: Materia & Scuola ──────────────────────────────────
             st.markdown(
-                f'<div class="form-section-header">'
-                f'<div class="form-section-dot"></div>'
-                f'<span class="form-section-title">Materia e tipo di scuola</span>'
-                f'<div class="form-section-line"></div>'
-                f'</div>',
-                unsafe_allow_html=True,
+            f'<div class="form-section-header">'
+            f'<div class="form-section-dot"></div>'
+            f'<span class="form-section-title">Materia e tipo di scuola</span>'
+            f'<div class="form-section-line"></div>'
+            f'</div>',
+            unsafe_allow_html=True,
             )
 
             _col_m, _col_s = st.columns(2, gap="small")
@@ -3047,6 +3041,172 @@ def _render_percorso_b_form():
                         )
                         st.rerun()
 
+            # ── Expander upload documento ──────────────────────────────────────
+            _lista_b_curr_pre = st.session_state.analisi_docs_list
+            _n_docs = len(_lista_b_curr_pre)
+            _upload_label = (
+                f"📎 {_n_docs} documento{'i' if _n_docs > 1 else ''} caricato{'i' if _n_docs > 1 else ''}"
+                if _n_docs else "📎 Carica un documento (opzionale)"
+            )
+            with st.expander(_upload_label, expanded=bool(_n_docs)):
+
+                _lista_b = st.session_state.analisi_docs_list
+                _upload_key_b = f"pb_file_up_{len(_lista_b)}"
+                st.markdown('<div class="file-uploader-compact file-uploader-narrow">', unsafe_allow_html=True)
+                _file_b = st.file_uploader(
+                    "Inserisci materiale",
+                    type=["pdf", "png", "jpg", "jpeg"],
+                    key=_upload_key_b,
+                    label_visibility="collapsed",
+                    help="Carica una verifica, appunti o un capitolo. L'AI analizza il contenuto e aggiorna i campi automaticamente.",
+                )
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                if _file_b:
+                    _fb_bytes = _file_b.getvalue()
+                    _fb_hash  = hash(_fb_bytes)
+                    _existing_b = {d["file_hash"] for d in _lista_b}
+                    if _fb_hash not in _existing_b:
+                        _ph_b = st.empty()
+                        _ph_b.markdown(
+                            '<div class="ocr-skeleton-wrap">'
+                            '<div class="ocr-skeleton-header">'
+                            '<div class="ocr-skeleton-icon">🔬</div>'
+                            '<div style="flex:1">'
+                            '<div class="ocr-skeleton-title">Analisi AI in corso…</div>'
+                            '<div class="ocr-skeleton-sub">Lettura · Identificazione · Classificazione</div>'
+                            '</div></div>'
+                            '<div class="ocr-skeleton-steps">'
+                            '<div class="ocr-skeleton-step ocr-step-active"><span>📖</span> Lettura</div>'
+                            '<div class="ocr-skeleton-step"><span>🧠</span> Argomento</div>'
+                            '<div class="ocr-skeleton-step"><span>🏷️</span> Tipo</div>'
+                            '</div>'
+                            '<div class="ocr-skeleton-doc">'
+                            '<div class="ocr-skeleton-scan"></div>'
+                            '<div class="ocr-skeleton-line" style="width:90%"></div>'
+                            '<div class="ocr-skeleton-line" style="width:70%"></div>'
+                            '</div></div>',
+                            unsafe_allow_html=True,
+                        )
+                        st.session_state.file_ispirazione = _file_b
+                        _esegui_analisi_documento(_fb_bytes, _file_b.type or "image/png", _file_b.name)
+                        _ph_b.empty()
+                        if st.session_state.get("_pb_argomento_source") != "manual":
+                            st.session_state["_pb_argomento_source"] = None
+                    else:
+                        st.toast("File già presente.", icon="ℹ️")
+
+                _lista_b_curr = st.session_state.analisi_docs_list
+
+                if not _lista_b_curr:
+                    st.markdown(
+                        f'<div style="text-align:center;padding:1rem .5rem .5rem;color:{T["muted"]};'
+                        f'font-size:.8rem;font-family:DM Sans,sans-serif;line-height:1.5;">'
+                        f'Appunti, libro di testo o una verifica precedente —'
+                        f'<br>l\'AI la userà come riferimento per generare gli esercizi.'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    _MODO_OPTIONS = {
+                        "base_conoscenza":   "📚 Usa come fonte",
+                        "includi_esercizio": "✏️ Riadatta esercizi",
+                    }
+                    _rimuovi_idx = None
+
+                    for _fi, _fentry in enumerate(_lista_b_curr):
+                        _fhash_str = str(_fentry["file_hash"])
+                        _fa        = _fentry.get("analisi", {})
+                        _fa_mat    = _fa.get("materia", "")
+                        _fa_es     = _fa.get("num_esercizi_rilevati") or 0
+
+                        _tags = _compute_file_tags(_fa)
+                        _tag_class_map = {
+                            "tipo": "doc-tag-tipo", "content": "doc-tag-content",
+                            "formula": "doc-tag-formula", "grafico": "doc-tag-grafico",
+                        }
+                        _tags_html = "".join(
+                            f'<span class="doc-tag {_tag_class_map.get(k,"doc-tag-content")}">{ico} {lbl}</span>'
+                            for ico, lbl, k in _tags
+                        ) if _tags else ""
+
+                        _meta_parts = []
+                        if _fa_mat:
+                            _meta_parts.append(f"<strong>{_fa_mat}</strong>")
+                        if _fa_es:
+                            _meta_parts.append(f"{_fa_es} es.")
+                        _meta_str = " · ".join(_meta_parts)
+
+                        _fname_display = _fentry["file_name"]
+                        if len(_fname_display) > 30:
+                            _fname_display = _fname_display[:27] + "…"
+
+                        _meta_span = f'<span class="fpc-meta">{_meta_str}</span>' if _meta_str else ""
+                        st.markdown(
+                            f'<div class="file-pool-card">'
+                            f'  <div class="fpc-header">'
+                            f'    <span class="fpc-name">📄 {_fname_display}</span>'
+                            f'    {_meta_span}'
+                            f'  </div>'
+                            + (f'  <div class="doc-tags">{_tags_html}</div>' if _tags_html else '')
+                            + '</div>',
+                            unsafe_allow_html=True,
+                        )
+
+                        _modo_prev = _fentry.get("file_mode", "base_conoscenza")
+                        if _modo_prev not in _MODO_OPTIONS:
+                            _modo_prev = "base_conoscenza"
+                        _sel_modo = st.radio(
+                            f"Modalità file {_fi}",
+                            options=list(_MODO_OPTIONS.keys()),
+                            index=list(_MODO_OPTIONS.keys()).index(_modo_prev),
+                            format_func=lambda x: _MODO_OPTIONS[x],
+                            key=f"pb_mode_{_fhash_str}",
+                            horizontal=True,
+                            label_visibility="collapsed",
+                        )
+                        if _sel_modo != _lista_b_curr[_fi].get("file_mode"):
+                            st.session_state.analisi_docs_list[_fi]["file_mode"] = _sel_modo
+                            st.session_state.analisi_docs_list[_fi]["confirmed"] = (_sel_modo != "ignora")
+                            _consolida_info()
+
+                        if _sel_modo == "includi_esercizio":
+                            if _fa_es > 1:
+                                _hint_txt = (
+                                    f'L\'AI riprende la struttura dei <strong>{_fa_es} esercizi</strong> '
+                                    f'del file e genera valori completamente nuovi.'
+                                )
+                            elif _fa_es == 1:
+                                _hint_txt = "L'AI riprende la struttura delle domande del file e cambia i valori."
+                            else:
+                                _hint_txt = "L'AI riadatta le domande del file inserendo dati e contesti nuovi."
+                        else:
+                            _hint_txt = (
+                                "L'AI legge il documento e crea esercizi <strong>originali</strong> "
+                                "sull'argomento trattato."
+                            )
+                        _hint_cls = "file-includi-hint" if _sel_modo == "includi_esercizio" else "file-fonte-hint"
+                        st.markdown(
+                            f'<div class="{_hint_cls}">💡 {_hint_txt}</div>',
+                            unsafe_allow_html=True,
+                        )
+
+                        st.markdown('<div class="fpc-delete-row">', unsafe_allow_html=True)
+                        if st.button("✕ rimuovi", key=f"pb_rm_{_fhash_str}_{_fi}",
+                                     help="Rimuovi questo file dal pool"):
+                            _rimuovi_idx = _fi
+                        st.markdown('</div>', unsafe_allow_html=True)
+
+                    if _rimuovi_idx is not None:
+                        _rimosso = st.session_state.analisi_docs_list.pop(_rimuovi_idx)
+                        st.session_state.istruzioni_per_file.pop(str(_rimosso.get("file_hash")), None)
+                        _consolida_info()
+                        if st.session_state.get("_pb_argomento_source") != "manual":
+                            st.session_state["_pb_argomento_source"] = None
+                            if not st.session_state.analisi_docs_list:
+                                st.session_state.info_consolidate = {}
+                        st.rerun()
+
             # ── CTA: Genera Bozza ─────────────────────────────────────────────────
             _manca_arg = not argomento
             st.markdown("<div style='height:.9rem'></div>", unsafe_allow_html=True)
@@ -3079,198 +3239,10 @@ def _render_percorso_b_form():
                     f'⛔ Limite mensile raggiunto.</div>',
                     unsafe_allow_html=True,
                 )
-
             # ── Back link ─────────────────────────────────────────────────────────
             if _render_back_button("← Indietro", key="btn_back_b"):
                 st.session_state.input_percorso = None
                 st.rerun()
-
-        with _col_side:
-            # ── Header ────────────────────────────────────────────────────────
-            st.markdown(
-                '<div class="upload-column-label">'
-                '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
-                'stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">'
-                '<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66'
-                'l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>'
-                '</svg>'
-                'Carica un documento (opzionale)'
-                '</div>',
-                unsafe_allow_html=True,
-            )
-
-            # ── File uploader ─────────────────────────────────────────────────
-            _lista_b = st.session_state.analisi_docs_list
-            _upload_key_b = f"pb_file_up_{len(_lista_b)}"
-            st.markdown('<div class="file-uploader-compact file-uploader-narrow">', unsafe_allow_html=True)
-            _file_b = st.file_uploader(
-                "Inserisci materiale",
-                type=["pdf", "png", "jpg", "jpeg"],
-                key=_upload_key_b,
-                label_visibility="collapsed",
-                help="Carica una verifica, appunti o un capitolo. L'AI analizza il contenuto e aggiorna i campi automaticamente.",
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
-
-            if _file_b:
-                _fb_bytes = _file_b.getvalue()
-                _fb_hash  = hash(_fb_bytes)
-                _existing_b = {d["file_hash"] for d in _lista_b}
-                if _fb_hash not in _existing_b:
-                    _ph_b = st.empty()
-                    _ph_b.markdown(
-                        '<div class="ocr-skeleton-wrap">'
-                        '<div class="ocr-skeleton-header">'
-                        '<div class="ocr-skeleton-icon">🔬</div>'
-                        '<div style="flex:1">'
-                        '<div class="ocr-skeleton-title">Analisi AI in corso…</div>'
-                        '<div class="ocr-skeleton-sub">Lettura · Identificazione · Classificazione</div>'
-                        '</div></div>'
-                        '<div class="ocr-skeleton-steps">'
-                        '<div class="ocr-skeleton-step ocr-step-active"><span>📖</span> Lettura</div>'
-                        '<div class="ocr-skeleton-step"><span>🧠</span> Argomento</div>'
-                        '<div class="ocr-skeleton-step"><span>🏷️</span> Tipo</div>'
-                        '</div>'
-                        '<div class="ocr-skeleton-doc">'
-                        '<div class="ocr-skeleton-scan"></div>'
-                        '<div class="ocr-skeleton-line" style="width:90%"></div>'
-                        '<div class="ocr-skeleton-line" style="width:70%"></div>'
-                        '</div></div>',
-                        unsafe_allow_html=True,
-                    )
-                    st.session_state.file_ispirazione = _file_b
-                    _esegui_analisi_documento(_fb_bytes, _file_b.type or "image/png", _file_b.name)
-                    _ph_b.empty()
-                    if st.session_state.get("_pb_argomento_source") != "manual":
-                        st.session_state["_pb_argomento_source"] = None
-                else:
-                    st.toast("File già presente.", icon="ℹ️")
-
-            # ── Document pool ─────────────────────────────────────────────────
-            _lista_b_curr = st.session_state.analisi_docs_list
-
-            if not _lista_b_curr:
-                st.markdown(
-                    '<div class="doc-pool-empty">'
-                    '<svg class="doc-pool-empty-icon" viewBox="0 0 24 24" fill="none" '
-                    'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'
-                    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>'
-                    '<polyline points="14 2 14 8 20 8"/>'
-                    '<line x1="12" y1="18" x2="12" y2="12"/>'
-                    '<line x1="9" y1="15" x2="15" y2="15"/>'
-                    '</svg>'
-                    '<div class="doc-pool-empty-title">Nessun documento</div>'
-                    '<div class="doc-pool-empty-sub">'
-                    'Carica una verifica o degli appunti — '
-                    'l\'AI rileva argomento, materia e tipo in automatico.'
-                    '</div>'
-                    '</div>',
-                    unsafe_allow_html=True,
-                )
-            else:
-                _MODO_OPTIONS = {
-                    "base_conoscenza":   "📚 Usa come fonte",
-                    "includi_esercizio": "✏️ Riadatta esercizi",
-                }
-                _rimuovi_idx = None
-
-                for _fi, _fentry in enumerate(_lista_b_curr):
-                    _fhash_str = str(_fentry["file_hash"])
-                    _fa        = _fentry.get("analisi", {})
-                    _fa_mat    = _fa.get("materia", "")
-                    _fa_es     = _fa.get("num_esercizi_rilevati") or 0
-
-                    # AI tags
-                    _tags = _compute_file_tags(_fa)
-                    _tag_class_map = {
-                        "tipo": "doc-tag-tipo", "content": "doc-tag-content",
-                        "formula": "doc-tag-formula", "grafico": "doc-tag-grafico",
-                    }
-                    _tags_html = "".join(
-                        f'<span class="doc-tag {_tag_class_map.get(k,"doc-tag-content")}">{ico} {lbl}</span>'
-                        for ico, lbl, k in _tags
-                    ) if _tags else ""
-
-                    # Meta pill: materia · n es.
-                    _meta_parts = []
-                    if _fa_mat:
-                        _meta_parts.append(f"<strong>{_fa_mat}</strong>")
-                    if _fa_es:
-                        _meta_parts.append(f"{_fa_es} es.")
-                    _meta_str = " · ".join(_meta_parts)
-
-                    _fname_display = _fentry["file_name"]
-                    if len(_fname_display) > 22:
-                        _fname_display = _fname_display[:19] + "…"
-
-                    _meta_span = f'<span class="fpc-meta">{_meta_str}</span>' if _meta_str else ""
-                    st.markdown(
-                        f'<div class="file-pool-card">'
-                        f'  <div class="fpc-header">'
-                        f'    <span class="fpc-name">📄 {_fname_display}</span>'
-                        f'    {_meta_span}'
-                        f'  </div>'
-                        + (f'  <div class="doc-tags">{_tags_html}</div>' if _tags_html else '')
-                        + '</div>',
-                        unsafe_allow_html=True,
-                    )
-
-                    # Mode toggle — compact pill radio
-                    _modo_prev = _fentry.get("file_mode", "base_conoscenza")
-                    if _modo_prev not in _MODO_OPTIONS:
-                        _modo_prev = "base_conoscenza"
-                    _sel_modo = st.radio(
-                        f"Modalità file {_fi}",
-                        options=list(_MODO_OPTIONS.keys()),
-                        index=list(_MODO_OPTIONS.keys()).index(_modo_prev),
-                        format_func=lambda x: _MODO_OPTIONS[x],
-                        key=f"pb_mode_{_fhash_str}",
-                        horizontal=True,
-                        label_visibility="collapsed",
-                    )
-                    if _sel_modo != _lista_b_curr[_fi].get("file_mode"):
-                        st.session_state.analisi_docs_list[_fi]["file_mode"] = _sel_modo
-                        st.session_state.analisi_docs_list[_fi]["confirmed"] = (_sel_modo != "ignora")
-                        _consolida_info()
-
-                    # Context hint — always visible, describes the active mode
-                    if _sel_modo == "includi_esercizio":
-                        if _fa_es > 1:
-                            _hint_txt = (
-                                f'L\'AI riprende la struttura dei <strong>{_fa_es} esercizi</strong> '
-                                f'del file e genera valori completamente nuovi.'
-                            )
-                        elif _fa_es == 1:
-                            _hint_txt = "L'AI riprende la struttura delle domande del file e cambia i valori."
-                        else:
-                            _hint_txt = "L'AI riadatta le domande del file inserendo dati e contesti nuovi."
-                    else:
-                        _hint_txt = (
-                            "L'AI legge il documento e crea esercizi <strong>originali</strong> "
-                            "sull'argomento trattato."
-                        )
-                    _hint_cls = "file-includi-hint" if _sel_modo == "includi_esercizio" else "file-fonte-hint"
-                    st.markdown(
-                        f'<div class="{_hint_cls}">💡 {_hint_txt}</div>',
-                        unsafe_allow_html=True,
-                    )
-
-                    # Remove button — tiny, right-aligned
-                    st.markdown('<div class="fpc-delete-row">', unsafe_allow_html=True)
-                    if st.button("✕ rimuovi", key=f"pb_rm_{_fhash_str}_{_fi}",
-                                 help="Rimuovi questo file dal pool"):
-                        _rimuovi_idx = _fi
-                    st.markdown('</div>', unsafe_allow_html=True)
-
-                if _rimuovi_idx is not None:
-                    _rimosso = st.session_state.analisi_docs_list.pop(_rimuovi_idx)
-                    st.session_state.istruzioni_per_file.pop(str(_rimosso.get("file_hash")), None)
-                    _consolida_info()
-                    if st.session_state.get("_pb_argomento_source") != "manual":
-                        st.session_state["_pb_argomento_source"] = None
-                        if not st.session_state.analisi_docs_list:
-                            st.session_state.info_consolidate = {}
-                    st.rerun()
 
     # ── Costruisci nota finale con istruzioni per-file ────────────────────────
     _istr_per_file_testi = []

@@ -1249,31 +1249,15 @@ def get_css(T: dict) -> str:
     padding: .4rem 0 .6rem;
   }}
 
-  /* Colonna upload — header integrato */
-  .upload-column-label {{
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: {_acc};
-    font-family: 'DM Sans', sans-serif;
-    padding: 0.75rem 1rem 0.6rem;
-    border-bottom: 1px solid {T['border']};
-    margin-bottom: 0.6rem;
-  }}
-  .file-uploader-narrow [data-testid="stFileUploader"] {{
-    min-height: 76px !important;
-  }}
-  /* File uploader wrap: padding laterale uniforme */
+  /* File uploader compact wrap — usato nell'expander inline */
   .file-uploader-compact {{
-    padding: 0 1rem;
     margin-bottom: .5rem;
   }}
   .file-uploader-compact [data-testid="stFileUploader"] {{
     border-radius: 12px !important;
+  }}
+  .file-uploader-narrow [data-testid="stFileUploader"] {{
+    min-height: 76px !important;
   }}
   .argomento-label-inline {{
     font-size: 0.75rem;
@@ -1296,98 +1280,10 @@ def get_css(T: dict) -> str:
     display: none !important;
   }}
 
-  /* Riga form+upload: colonne allineate in alto, la destra non allunga la pagina */
-  [data-testid="stHorizontalBlock"]:has(.upload-column-label) {{
-    align-items: flex-start !important;
-  }}
-
-  /* Colonna upload (destra): dashboard documenti */
-  [data-testid="stColumn"]:has(.upload-column-label) {{
-    background: {T['card']} !important;
-    border: 1px solid {T['border2']} !important;
-    border-top: 2px solid {_acc} !important;
-    border-radius: {_radius_lg} !important;
-    padding: 0 !important;
-    min-width: 280px !important;
-    max-width: 420px !important;
-    height: fit-content !important;
-    max-height: 76vh !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    overscroll-behavior: contain !important;
-    align-self: flex-start !important;
-    margin-top: 1.9rem !important;
-    box-shadow: {_shadow_sm} !important;
-  }}
-  [data-testid="stColumn"]:has(.upload-column-label) > div {{
-    padding: 0 !important;
-    max-height: 100% !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-  }}
-
-  /* Fallback: colonna con file uploader (se .upload-column-label non matcha) */
-  [data-testid="stColumn"]:has(> div > [data-testid="stFileUploader"]),
-  [data-testid="stColumn"]:has(> div > div > [data-testid="stFileUploader"]) {{
-    background: {T['card']} !important;
-    border: 1px solid {T['border2']} !important;
-    border-top: 2px solid {_acc} !important;
-    border-radius: {_radius_lg} !important;
-    padding: 0 !important;
-    min-width: 280px !important;
-    max-width: 420px !important;
-    height: fit-content !important;
-    max-height: 76vh !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    align-self: flex-start !important;
-    margin-top: 1.9rem !important;
-    box-shadow: {_shadow_sm} !important;
-  }}
-
-  [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-title,
-  [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-dot {{
-    color: {T['text']} !important;
-  }}
-  [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-desc {{
-    color: {T['text2']} !important;
-  }}
-  [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box {{
-    background: {T['card']} !important;
-    border-color: {T['border2']} !important;
-  }}
-  [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-facsimile {{
-    background: {T['card']} !important;
-    border-color: {_acc}44 !important;
-    border-left-color: {T['warn']} !important;
-  }}
-  [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-badge-violet {{
-    background: {T['warn']}22 !important;
-    color: {T['warn']} !important;
-    border-color: {T['warn']}44 !important;
-  }}
-  [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-facsimile .side-box-title {{
-    color: {T['warn']} !important;
-  }}
-  [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-facsimile .side-box-desc {{
-    color: {T['text2']} !important;
-  }}
-  [data-testid="stColumn"]:has([data-testid="stFileUploader"])
-  button:not([kind="primary"]) {{
-    background: {T['card']} !important;
-    border-color: {T['border2']} !important;
-    color: {T['text']} !important;
-  }}
-  
 
   /* ════════════════════════════════════════════════════════════════════════
-     FILE POOL — Card compatta per ogni documento caricato
+     FILE POOL — Card compatta per ogni documento caricato (in expander inline)
      ════════════════════════════════════════════════════════════════════════ */
-  /* Doc pool — padding laterale (la colonna ha padding:0) */
-  [data-testid="stColumn"]:has(.upload-column-label) .stMarkdown:has(.file-pool-card),
-  [data-testid="stColumn"]:has(.upload-column-label) .stMarkdown:has(.doc-pool-empty) {{
-    padding: 0 1rem !important;
-  }}
 
   .file-pool-card {{
     background: {T['bg2']};
@@ -3188,23 +3084,12 @@ def get_css(T: dict) -> str:
       max-width: 100% !important;
     }}
 
-    /* ── Upload column: rimuovi altezza fissa, full-width ────────────── */
-    [data-testid="stColumn"]:has(.upload-column-label),
-    [data-testid="stColumn"]:has(> div > [data-testid="stFileUploader"]),
-    [data-testid="stColumn"]:has(> div > div > [data-testid="stFileUploader"]) {{
-      height: auto !important;
-      max-height: 60vh !important;
-      min-width: unset !important;
-      max-width: 100% !important;
-      overflow-y: auto !important;
-      margin-top: 0 !important;
-    }}
 
-    /* ── Step progress: pill più compatta su tablet ─────────────────── */
-    .sp-pill {{ padding: .5rem 1.1rem; }}
-    .sp-dot  {{ width: 24px; height: 24px; }}
-    .sp-lbl  {{ font-size: .65rem; }}
-    .sp-line {{ width: 40px; }}
+    /* ── Step progress: più compatto su tablet ──────────────────────── */
+    .sp-pill {{ padding: .4rem 1rem; }}
+    .sp-dot  {{ width: 26px; height: 26px; }}
+    .sp-lbl  {{ font-size: .63rem; }}
+    .sp-line {{ width: 38px; }}
 
     /* ── Landing: headline ridotta ───────────────────────────────────── */
     .landing-headline-xl {{
@@ -3295,11 +3180,11 @@ def get_css(T: dict) -> str:
     .landing-sub-xl {{ font-size: 0.88rem !important; line-height: 1.55 !important; }}
     .tally-feat-pill {{ font-size: .8rem; padding: .25rem .6rem; }}
 
-    /* ── Step progress: ancora più compatto su mobile ───────────────── */
-    .sp-pill {{ padding: .4rem .9rem; border-radius: 100px; }}
+    /* ── Step progress: compatto su mobile ──────────────────────────── */
+    .sp-pill {{ padding: .3rem .7rem; }}
     .sp-dot  {{ width: 22px; height: 22px; }}
-    .sp-lbl  {{ font-size: .58rem; letter-spacing: 0; }}
-    .sp-line {{ width: 24px; }}
+    .sp-lbl  {{ font-size: .56rem; letter-spacing: 0; }}
+    .sp-line {{ width: 22px; }}
 
     /* ── Heading scale ridotta ───────────────────────────────────────── */
     .stApp h1, .stMarkdown h1 {{
