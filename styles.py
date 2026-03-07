@@ -108,6 +108,7 @@ def get_css(T: dict) -> str:
     padding-left: 2rem !important;
     padding-right: 2rem !important;
     max-width: 1440px !important;
+    margin: 0 auto !important;
   }}
 
   /* ── Streamlit CSS custom properties override (previene dark bleed) ── */
@@ -160,13 +161,6 @@ def get_css(T: dict) -> str:
      2. Prefisso html body .stApp per specificità massima
      3. Ogni proprietà con !important doppio livello
      ══════════════════════════════════════════════════════════════════════════ */
-
-  /* 0. Sovrascrive le CSS vars di Streamlit che causano il nero */
-  .stApp {{
-    --background-color: {T['bg']} !important;
-    --secondary-background-color: {T['bg2']} !important;
-    --text-color: {T['text']} !important;
-  }}
 
   /* 1. Contenitore details */
   html body .stApp details[data-testid="stExpander"],
@@ -280,35 +274,9 @@ def get_css(T: dict) -> str:
   }}
 
   .block-container {{
-    padding: 3.5rem 2rem 3.5rem !important;
     max-width: 1440px !important;
-    margin: 0 auto !important;
   }}
 
-  /* ════════════════════════════════════════════════════════════════════════
-     DASHBOARD LAYOUT — spaziature e contenitori (Minimal SaaS)
-     ════════════════════════════════════════════════════════════════════════ */
-  .dashboard-section {{
-    margin-bottom: 2rem;
-  }}
-  .dashboard-card {{
-    background: {T['card']};
-    border: 1px solid {T['border2']};
-    border-radius: {_radius_lg};
-    box-shadow: {_shadow_sm};
-    padding: 1.6rem 1.8rem;
-    transition: box-shadow {_transition};
-  }}
-  .dashboard-card:hover {{
-    box-shadow: {_shadow_md};
-  }}
-  .divider-minimal {{
-    height: 1px;
-    background: {T['border']};
-    margin: 1.5rem 0;
-    border-radius: 1px;
-    border: none;
-  }}
 
   /* ════════════════════════════════════════════════════════════════════════
      ALERTS / TOAST — success, error, warning (feedback visivo)
@@ -484,7 +452,6 @@ def get_css(T: dict) -> str:
   [data-testid="collapsedControl"] {{
     top: 0.75rem !important;
     left: 0.75rem !important;
-    z-index: 999 !important;
   }}
   [data-testid="collapsedControl"] button {{
     background: {T['card']} !important;
@@ -529,12 +496,6 @@ def get_css(T: dict) -> str:
     font-family: 'DM Sans', sans-serif !important;
   }}
 
-  /* ════════════════════════════════════════════════════════════════════════
-     HERO / HEADER — legacy (non più usati direttamente)
-     ════════════════════════════════════════════════════════════════════════ */
-  .hero-wrap {{ display: none; }}
-  .sidebar-hint-inline {{ display: none; }}
-  .page-header-unified {{ display: none; }}
 
   /* ════════════════════════════════════════════════════════════════════════
      SITE HEADER — header globale, identico su OGNI pagina, sempre centrato
@@ -973,8 +934,6 @@ def get_css(T: dict) -> str:
 
   /* Classi legacy mantenute per compatibilità */
   .landing-logo-wrap {{ display:none; }}
-  .tally-hero {{ text-align:center; padding:2rem 1rem 1.4rem; max-width:700px; margin:0 auto; }}
-  .tally-eyebrow {{ display:none; }}
   .tally-headline {{
     font-family:'DM Sans',sans-serif; font-size:clamp(2.2rem,5vw,3.2rem);
     font-weight:900; line-height:1.1; letter-spacing:-0.04em;
@@ -989,28 +948,6 @@ def get_css(T: dict) -> str:
     line-height:1.6; margin:0 auto; max-width:480px; text-align:center;
   }}
 
-  /* CTA button wrapper */
-  .tally-cta-wrap {{
-    margin: 2rem auto .5rem;
-    max-width: 480px;
-  }}
-  .tally-cta-wrap button[kind="primary"],
-  .tally-cta-wrap button[data-testid="baseButton-primary"] {{
-    font-size: 1.2rem !important;
-    font-weight: 800 !important;
-    padding: 1rem 2.2rem !important;
-    height: auto !important;
-    min-height: 62px !important;
-    border-radius: 16px !important;
-    letter-spacing: -.01em !important;
-    box-shadow: 0 6px 28px {_acc}44 !important;
-    transition: transform .15s ease, box-shadow .15s ease !important;
-  }}
-  .tally-cta-wrap button[kind="primary"]:hover,
-  .tally-cta-wrap button[data-testid="baseButton-primary"]:hover {{
-    transform: translateY(-2px) !important;
-    box-shadow: 0 10px 36px {_acc}55 !important;
-  }}
 
   /* Feature strip — singole pill con underline */
   .tally-features {{
@@ -1081,103 +1018,6 @@ def get_css(T: dict) -> str:
     padding: 3px 9px;
     display: inline-block;
   }}
-  .side-box-badge-violet {{
-    background: #D9770618;
-    color: #D97706;
-    border: 1px solid #D9770633;
-  }}
-
-
-
-  /* Facsimile shortcut — visivamente distaccato dal form principale */
-  .side-box-facsimile {{
-    background: linear-gradient(135deg, #D977060E, {T['card']});
-    border: 1.5px solid #D9770644 !important;
-    border-left: 3px solid #F59E0B !important;
-    box-shadow: 0 2px 12px #D9770614;
-  }}
-  .side-box-facsimile .side-box-title {{
-    color: #D97706;
-  }}
-  .facsimile-shortcut-btn button {{
-    background: transparent !important;
-    color: #F59E0B !important;
-    -webkit-text-fill-color: #F59E0B !important;
-    border: 2px solid #F59E0B !important;
-    font-weight: 700 !important; font-size: 0.91rem !important;
-    border-radius: 10px !important;
-    box-shadow: 0 2px 10px #D9770622 !important;
-    transition: background .18s, color .18s !important;
-  }}
-  .facsimile-shortcut-btn button:hover {{
-    background: #F59E0B !important;
-    background-color: #F59E0B !important;
-    color: #fff !important;
-    -webkit-text-fill-color: #fff !important;
-    box-shadow: 0 4px 20px #D9770655 !important;
-  }}
-
-  /* ═══ Facsimile Detection Banner — inline sotto argomento/upload ═══ */
-  .facsimile-detection-banner {{
-    display: flex;
-    align-items: flex-start;
-    gap: .85rem;
-    background: linear-gradient(135deg, #D977060D, {T['card']});
-    border: 1.5px solid #F59E0B55;
-    border-left: 3px solid #F59E0B;
-    border-radius: 14px;
-    padding: .85rem 1.1rem;
-    margin: .8rem 0 .4rem;
-    box-shadow: 0 2px 12px #D9770618;
-  }}
-  .facsimile-detection-icon {{
-    font-size: 1.5rem;
-    flex-shrink: 0;
-    padding-top: 1px;
-  }}
-  .facsimile-detection-body {{
-    flex: 1;
-    min-width: 0;
-  }}
-  .facsimile-detection-title {{
-    font-size: .93rem;
-    font-weight: 800;
-    color: #B45309;
-    font-family: 'DM Sans', sans-serif;
-    margin-bottom: .2rem;
-    line-height: 1.35;
-  }}
-  .facsimile-detection-sub {{
-    font-size: .82rem;
-    color: {T['text2']};
-    font-family: 'DM Sans', sans-serif;
-    line-height: 1.4;
-  }}
-
-  /* ═══ Facsimile Inline Button (CTA sotto detection banner) ═══ */
-  .facsimile-inline-btn {{
-    margin-bottom: .9rem;
-  }}
-  .facsimile-inline-btn button {{
-    background: transparent !important;
-    color: #D97706 !important;
-    -webkit-text-fill-color: #D97706 !important;
-    border: 2px solid #F59E0B !important;
-    font-weight: 800 !important;
-    font-size: 1rem !important;
-    border-radius: 12px !important;
-    min-height: 50px !important;
-    box-shadow: 0 2px 14px #D9770628 !important;
-    transition: background .18s, color .18s, box-shadow .18s !important;
-    letter-spacing: -.01em !important;
-  }}
-  .facsimile-inline-btn button:hover {{
-    background: linear-gradient(90deg, #F59E0B, #D97706) !important;
-    background-color: #F59E0B !important;
-    color: #fff !important;
-    -webkit-text-fill-color: #fff !important;
-    box-shadow: 0 4px 22px #D9770650 !important;
-  }}
   .side-box-title {{
     font-size: 0.95rem;
     font-weight: 800;
@@ -1241,72 +1081,6 @@ def get_css(T: dict) -> str:
     line-height: 1.5;
   }}
 
-  /* ── Percorso Card ── */
-  .mcard {{
-    background: {T['card']};
-    border: 1px solid {T['border2']};
-    border-radius: {_radius_lg};
-    padding: 1.4rem 1.3rem 1.2rem;
-    position: relative;
-    box-shadow: {_shadow_sm};
-    transition: border-color {_transition}, box-shadow {_transition}, transform {_transition};
-    min-height: 220px;
-    display: flex;
-    flex-direction: column;
-    gap: .45rem;
-  }}
-  .mcard:hover {{
-    transform: translateY(-3px);
-    border-color: {_acc_med};
-    box-shadow: {_shadow_soft};
-  }}
-  .mcard-badge {{
-    position: absolute; top: -10px; right: 14px;
-    font-size: 0.9rem; font-weight: 800;
-    letter-spacing: .06em; text-transform: uppercase;
-    padding: 3px 10px;
-    border-radius: 20px;
-    color: #fff;
-  }}
-  .mcard-icon {{
-    font-size: 1.6rem;
-    margin-bottom: .2rem;
-  }}
-  .mcard-title {{
-    font-family: 'DM Sans', sans-serif;
-    font-size: 1.05rem;
-    font-weight: 900;
-    letter-spacing: -0.01em;
-  }}
-  .mcard-desc {{
-    font-size: 0.89rem;
-    color: {T['text2']};
-    font-family: 'DM Sans', sans-serif;
-    line-height: 1.55;
-    flex: 1;
-  }}
-  .mcard-hint {{
-    font-size: 0.92rem;
-    color: {T['muted']};
-    font-style: italic;
-    line-height: 1.4;
-    margin-top: .3rem;
-  }}
-  .mcard-chips {{
-    display: flex; flex-wrap: wrap; gap: 6px;
-    margin-top: .5rem;
-  }}
-  .mcard-chip {{
-    font-size: 0.9rem;
-    font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    background: {_surf_overlay};
-    border: 1px solid {T['border']};
-    border-radius: 20px;
-    padding: 3px 10px;
-    color: {T['text2']};
-    white-space: nowrap;
-  }}
 
   /* ── Facsimile Card — Viola/Accento speciale ── */
   .fac-card {{
@@ -1393,52 +1167,6 @@ def get_css(T: dict) -> str:
     letter-spacing: .01em;
   }}
 
-  /* ════════════════════════════════════════════════════════════════════════
-     ONBOARDING HINT BANNER (Percorso B top)
-     ════════════════════════════════════════════════════════════════════════ */
-  .onboarding-hint-banner {{
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    background: linear-gradient(135deg, {_acc_soft}, {T['card']});
-    border: 1.5px solid {_acc_ring};
-    border-radius: 16px;
-    padding: 1.1rem 1.4rem;
-    margin-bottom: 1.4rem;
-  }}
-  .onboarding-hint-icon {{
-    font-size: 1.6rem;
-    flex-shrink: 0;
-    padding-top: 2px;
-  }}
-  .onboarding-hint-body {{
-    flex: 1;
-  }}
-  .onboarding-hint-title {{
-    font-size: 1.05rem;
-    font-weight: 800;
-    color: {T['text']};
-    font-family: 'DM Sans', sans-serif;
-    margin-bottom: .3rem;
-    line-height: 1.3;
-  }}
-  .onboarding-hint-desc {{
-    font-size: 0.99rem;
-    color: {T['text2']};
-    font-family: 'DM Sans', sans-serif;
-    line-height: 1.55;
-  }}
-  .onboarding-hint-tags {{
-    display: flex; flex-wrap: wrap; gap: 6px; margin-top: .5rem;
-  }}
-  .onboarding-hint-tag {{
-    font-size: 0.95rem; font-weight: 600;
-    background: {T['card']};
-    border: 1px solid {T['border']};
-    border-radius: 20px;
-    padding: 4px 12px;
-    color: {T['text2']};
-  }}
 
   /* ════════════════════════════════════════════════════════════════════════
      CTA GENERA — High Impact Button Wrap
@@ -1449,13 +1177,6 @@ def get_css(T: dict) -> str:
     font-weight: 900 !important;
     letter-spacing: -.01em !important;
     border-radius: 14px !important;
-  }}
-  /* CTA hint — testo sottile, non sembra un pulsante */
-  .cta-hint-prominent {{
-    display: none; /* deprecato — sostituito da cta-hint-text */
-  }}
-  .cta-hint-prominent-icon {{
-    font-size: 1rem; flex-shrink: 0;
   }}
   /* Nuovo: hint testuale leggero sopra il pulsante Genera */
   .cta-hint-text {{
@@ -1640,32 +1361,10 @@ def get_css(T: dict) -> str:
     color: {T['text']} !important;
   }}
   
-  /* ═══ Facsimile Shortcut — stile distinto (gestito via .side-box-facsimile) ═══ */
-  .facsimile-shortcut {{ display: none; }}
-  .facsimile-shortcut-badge {{ display: none; }}
-  .facsimile-shortcut-question {{ display: none; }}
-  .facsimile-shortcut-desc {{ display: none; }}
 
   /* ════════════════════════════════════════════════════════════════════════
      FILE POOL — Sezione e card (contenitore unico per file caricati)
      ════════════════════════════════════════════════════════════════════════ */
-  /* Sezione e card compatte (dentro colonna a scroll) */
-  .file-pool-section {{
-    background: transparent;
-    border: none;
-    padding: 0.5rem 0 0;
-    margin-top: 0.6rem;
-    margin-bottom: 0;
-  }}
-  .file-pool-section-title {{
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: {T['muted']};
-    font-family: 'DM Sans', sans-serif;
-    margin: 0 0 0.4rem 0;
-  }}
   .file-pool-card {{
     background: {T['bg2']};
     border: 1px solid {T['border2']};
@@ -3320,16 +3019,19 @@ def get_css(T: dict) -> str:
     color: ''' + T['text'] + ''' !important;
   }}
   .stApp [data-testid="stSuccess"] {{
-    background-color: #16a34a12 !important;
-    border-color: #16a34a44 !important;
+    background-color: ''' + T['success'] + '''12 !important;
+    border-color: ''' + T['success'] + '''44 !important;
+    color: ''' + T['text'] + ''' !important;
   }}
   .stApp [data-testid="stWarning"] {{
-    background-color: #d9770612 !important;
-    border-color: #d9770644 !important;
+    background-color: ''' + T['warn'] + '''12 !important;
+    border-color: ''' + T['warn'] + '''44 !important;
+    color: ''' + T['text'] + ''' !important;
   }}
   .stApp [data-testid="stError"] {{
-    background-color: #dc262612 !important;
-    border-color: #dc262644 !important;
+    background-color: ''' + T['error'] + '''12 !important;
+    border-color: ''' + T['error'] + '''44 !important;
+    color: ''' + T['text'] + ''' !important;
   }}
 
   /* ── Number input step buttons ── */

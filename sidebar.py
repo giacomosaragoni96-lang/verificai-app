@@ -283,23 +283,8 @@ def render_sidebar(
                 ))
                 if len(_all_materie) > 1:
                     _active_mat = st.session_state._storico_filter_mat
-                    _chips_html = '<div class="storico-filter">'
-                    _chips_html += (
-                        f'<span class="storico-filter-chip'
-                        f'{" storico-filter-chip-active" if not _active_mat else ""}">'
-                        f'Tutte</span>'
-                    )
-                    for _m in _all_materie:
-                        _is_active = _active_mat == _m
-                        _chips_html += (
-                            f'<span class="storico-filter-chip'
-                            f'{" storico-filter-chip-active" if _is_active else ""}">'
-                            f'{_m}</span>'
-                        )
-                    _chips_html += '</div>'
-                    st.markdown(_chips_html, unsafe_allow_html=True)
 
-                    # Streamlit buttons per i filtri (non possiamo usare onclick CSS)
+                    # Streamlit buttons per i filtri
                     _filter_cols = st.columns(min(len(_all_materie) + 1, 4))
                     with _filter_cols[0]:
                         if st.button("Tutte", key="filter_all",
@@ -516,8 +501,6 @@ def render_sidebar(
                                     st.session_state.verifiche["B"]["preview"] = True
                                 st.rerun()
 
-                        st.markdown("<div style='height:.25rem'></div>", unsafe_allow_html=True)
-
                   if _ha_altri:
                     if st.button("Carica altre", key="storico_load_more",
                                  use_container_width=True):
@@ -532,21 +515,24 @@ def render_sidebar(
             st.caption("Storico non disponibile.")
 
         # ── USER + LOGOUT ─────────────────────────────────────────────────────
-        st.markdown("---")
         email_utente = utente.email or ""
         iniziale     = email_utente[0].upper() if email_utente else "?"
 
+        _piano_label = {
+            "admin": "Admin",
+            "gold":  "Piano Gold",
+            "pro":   "Piano Pro",
+        }.get(_piano, "Piano gratuito")
         st.markdown(f"""
         <div class="user-pill">
           <div class="user-avatar">{iniziale}</div>
           <div class="user-info">
             <div class="user-email">{email_utente}</div>
-            <div class="user-role">Docente · Piano gratuito</div>
+            <div class="user-role">Docente · {_piano_label}</div>
           </div>
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown('<div style="height:0.5rem;"></div>', unsafe_allow_html=True)
         st.markdown('<div class="logout-btn-wrap">', unsafe_allow_html=True)
         if st.button("↩ Esci dall'account", key="logout_btn"):
             from auth import cancella_sessione_cookie

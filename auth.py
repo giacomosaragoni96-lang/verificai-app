@@ -24,7 +24,6 @@ _N_BORDER2  = _N.get("border2", "#3D444D")
 _N_ACC      = _N.get("accent", "#58A6FF")
 _N_ACC2     = _N.get("accent2", "#79C0FF")
 _N_ACC_L    = _N.get("accent_light", "#0D2340")
-_N_SB_DARK  = "#010409"
 
 
 def get_cookie_controller():
@@ -324,16 +323,15 @@ def mostra_auth(supabase):
 
     # ── Wordmark + headline ───────────────────────────────────────────────────
     st.markdown(f"""
-    <div style="text-align:center; padding:.75rem 0 1.25rem;">
+    <div style="text-align:center; padding:.75rem 0 1rem;">
 
-      <!-- Logo wordmark — elegante, bilanciato -->
       <div style="
           font-family: 'DM Sans', sans-serif;
           font-size: clamp(2.4rem, 5.5vw, 3.2rem);
           font-weight: 900;
           letter-spacing: -0.035em;
           color: {_N_TEXT}; line-height: 1.1;
-          margin-bottom: .6rem;">
+          margin-bottom: .55rem;">
         📝&thinsp;Verific<span style="
           background: linear-gradient(135deg,{_N_ACC},{_N_ACC2});
           -webkit-background-clip: text;
@@ -341,45 +339,26 @@ def mostra_auth(supabase):
           background-clip: text;">AI</span>
       </div>
 
-      <!-- Tagline -->
       <p style="font-size:.9rem; font-weight:500;
-                color:{_N_TEXT2}; margin:0 0 .6rem;
+                color:{_N_TEXT2}; margin:0;
                 line-height:1.5; font-family:'DM Sans',sans-serif;">
         Verifiche scolastiche professionali in <strong style="color:{_N_ACC}; font-weight:700;">30 secondi</strong>.
       </p>
 
-      <!-- Stat pills -->
-      <div class="auth-stats">
-        <div class="auth-stat-pill">⚡&nbsp;<span class="auth-stat-num">30s</span>&thinsp;media</div>
-        <div class="auth-stat-pill">📊&nbsp;Rubrica MIM</div>
-        <div class="auth-stat-pill">🌟&nbsp;BES/DSA</div>
-      </div>
-
-      <!-- Feature pills -->
-      <div class="auth-feat-wrap">
-        <span class="auth-feat-pill">✍️ Scrittura a mano</span>
-        <span class="auth-feat-pill">📚 Template</span>
-        <span class="auth-feat-pill">⚡ Fila B</span>
-        <span class="auth-feat-pill">✏️ DOCX</span>
-      </div>
-
     </div>
 
-    <!-- Divisore sottile -->
     <div class="auth-hr"></div>
     """, unsafe_allow_html=True)
 
     # ── Tabs ─────────────────────────────────────────────────────────────────
     tab_login, tab_reg, tab_reset = st.tabs(
-        ["  Accedi  ", "  Registrati  ", "  Password  "]
+        ["Accedi", "Registrati", "Reset password"]
     )
 
     with tab_login:
-        st.write("")
         email    = st.text_input("Email",    key="login_email", placeholder="docente@scuola.it")
         password = st.text_input("Password", key="login_pass",  placeholder="••••••••",
                                  type="password")
-        st.write("")
         if st.button("Accedi →", type="primary", use_container_width=True, key="btn_login"):
             if not email or not password:
                 st.warning("Inserisci email e password.")
@@ -406,13 +385,11 @@ def mostra_auth(supabase):
                     time.sleep(2)
 
     with tab_reg:
-        st.write("")
         email_r    = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
         password_r = st.text_input(
             "Password (min. 6 caratteri)", key="reg_pass",
             placeholder="••••••••", type="password",
         )
-        st.write("")
         if st.button("Crea account gratuito →", type="primary",
                      use_container_width=True, key="btn_reg"):
             if not email_r or not password_r:
@@ -434,7 +411,6 @@ def mostra_auth(supabase):
                     st.error(f"Errore durante la registrazione: {e}")
 
     with tab_reset:
-        st.write("")
         st.markdown(
             '<div class="auth-reset-hint">'
             "Inserisci la tua email. Riceverai un link per reimpostare la password."
@@ -442,7 +418,6 @@ def mostra_auth(supabase):
             unsafe_allow_html=True,
         )
         email_reset = st.text_input("Email", key="reset_email", placeholder="docente@scuola.it")
-        st.write("")
         if st.button("Invia link di reset →", type="primary",
                      use_container_width=True, key="btn_reset"):
             if not email_reset:
@@ -461,13 +436,10 @@ def mostra_auth(supabase):
       <div class="auth-trust-item">🇮🇹&ensp;Per docenti italiani</div>
       <div class="auth-trust-item">⚡&ensp;Gratis per iniziare</div>
     </div>
-    <div style="text-align:center; padding:.78rem 0 .12rem; font-family:'DM Sans',sans-serif;">
-      <p style="font-size:.7rem; color:{_N_MUTED}; margin:0;">
+    <div style="text-align:center; padding:.6rem 0 .1rem; font-family:'DM Sans',sans-serif;">
+      <p style="font-size:.72rem; color:{_N_MUTED}; margin:0;">
         Accedendo accetti i&nbsp;<a href="#"
           style="color:{_N_TEXT2}; font-weight:600; text-decoration:none;">termini di utilizzo</a>.
-      </p>
-      <p style="font-size:.64rem; color:{_N_BORDER2}; margin:.25rem 0 0;">
-        VerificAI · Beta · Per i docenti italiani
       </p>
     </div>
     """, unsafe_allow_html=True)

@@ -2370,6 +2370,7 @@ def _render_percorso_a_wizard():
             type="primary",
             disabled=_limite or _manca_ancora,
             key="rev_genera_btn",
+            help="Avvia la generazione AI della verifica. Potrai modificare ogni singolo esercizio prima di scaricare il PDF.",
         )
         if _manca_ancora and not _limite:
             st.markdown(
@@ -2602,39 +2603,18 @@ def _render_percorso_b_form():
     if _toast_msg:
         st.toast(f"✅ Documento analizzato — {_toast_msg}", icon="🔬")
 
-    # ── Onboarding hint banner (full width) ───────────────────────────────────
-    st.markdown(
-        f'<div class="onboarding-hint-banner">'
-        f'<div class="onboarding-hint-icon">💡</div>'
-        f'<div class="onboarding-hint-body">'
-        f'<div class="onboarding-hint-title">'
-        f'Più dettagli fornisci, più la verifica rispecchierà le tue aspettative'
-        f'</div>'
-        f'<div class="onboarding-hint-desc">'
-        f'Scegli materia e scuola, poi inserisci l\'argomento e — se vuoi — '
-        f'carica un documento nella colonna accanto. Se carichi una verifica, '
-        f'potrai generare un facsimile con un clic. <strong>Potrai sempre modificare '
-        f'i singoli esercizi generati.</strong>'
-        f'</div>'
-        f'</div>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
-
     # ── Due colonne: form unica, senza colonna laterale ──────────────────────
     # (col_main è ora l'intera larghezza — col_side rimossa)
 
     # ═════════════════════════════════════════════════════════════════════════
     #  FORM PRINCIPALE — layout a colonna singola
     # ═════════════════════════════════════════════════════════════════════════
-    if True:  # blocco unico — sostituisce "with col_main:"
-
+    if True:
         _prev = st.session_state.gen_params or {}
         # ── IDEA #1: carica defaults silenti come fallback ────────────────
         _udef = _load_user_defaults()
 
         # ── Dashboard: sezione form (layout bilanciato) ───────────────────────
-        st.markdown('<div class="dashboard-section">', unsafe_allow_html=True)
         # ── Section header: Materia & Scuola ──────────────────────────────────
         st.markdown(
             f'<div class="form-section-header">'
@@ -2721,7 +2701,6 @@ def _render_percorso_b_form():
                 _arg_default = st.session_state.get("_pb_argomento_manual_val", "")
             elif _auto_arg:
                 _arg_default = _auto_arg
-            st.markdown('<div class="argomento-field-wrap">', unsafe_allow_html=True)
             argomento_raw = st.text_area(
                 "argomento",
                 value=_arg_default,
@@ -2730,7 +2709,6 @@ def _render_percorso_b_form():
                 label_visibility="collapsed",
                 key="argomento_area_b",
             )
-            st.markdown('</div>', unsafe_allow_html=True)
 
             # ── Traccia modifica manuale argomento ────────────────────────────────
             _auto_arg_ref = _info_cons.get("contenuto_argomento", "")
@@ -2783,7 +2761,6 @@ def _render_percorso_b_form():
             con_griglia  = mostra_punteggi
             punti_totali = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
 
-            st.markdown('<div class="personalizza-wrap">', unsafe_allow_html=True)
             with st.expander("⚙️  Personalizzazione Avanzata", expanded=False):
 
                 if _prefs.get("stile_desc"):
@@ -2834,11 +2811,9 @@ def _render_percorso_b_form():
                 with st.expander("Definisci tipo e contenuto di ogni esercizio", expanded=False):
                     n_custom = len(st.session_state.esercizi_custom)
                     n_liberi = max(0, num_esercizi - n_custom)
-                    if n_custom == 0:
-                        st.info(f"Tutti i {num_esercizi} esercizi generati liberamente dall'AI.")
-                    elif n_custom >= num_esercizi:
+                    if n_custom >= num_esercizi:
                         st.warning(f"Limite raggiunto ({n_custom}/{num_esercizi}).")
-                    else:
+                    elif n_custom > 0:
                         st.success(f"✅ {n_custom} definiti + {n_liberi} liberi = {num_esercizi}")
 
                     _to_remove = None
@@ -2887,20 +2862,9 @@ def _render_percorso_b_form():
                         )
                         st.rerun()
 
-            st.markdown('</div>', unsafe_allow_html=True)
-
             # ── CTA: Genera Bozza ─────────────────────────────────────────────────
             _manca_arg = not argomento
             st.markdown("<div style='height:.9rem'></div>", unsafe_allow_html=True)
-
-            # Hint sottile SOPRA il pulsante
-            if not _manca_arg and not _limite:
-                st.markdown(
-                    f'<div class="cta-hint-text">'
-                    f'✏️ Potrai modificare ogni singolo esercizio dopo la generazione'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
 
             st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
             genera_btn = st.button(
@@ -2909,7 +2873,7 @@ def _render_percorso_b_form():
                 type="primary",
                 disabled=_limite or _manca_arg,
                 key="genera_btn_b",
-                help="Avvia la generazione AI della verifica. Potrai modificare ogni esercizio prima di scaricare il PDF.",
+                help="Avvia la generazione AI della verifica. Potrai modificare ogni singolo esercizio prima di scaricare il PDF.",
             )
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -3672,7 +3636,6 @@ def _render_stage_input():
             return
 
         if not argomento:
-            st.warning("⚠️ Inserisci l'argomento della verifica.")
             return
 
         # ── Idea #8: se template selezionato, inietta struttura nelle note ──
@@ -5455,7 +5418,7 @@ def _render_stage_final():
     st.markdown("<div style='height:1.4rem'></div>", unsafe_allow_html=True)
     _nav_c1, _nav_c2 = st.columns([1, 2])
     with _nav_c1:
-        if _render_back_button("←", key="btn_back_final"):
+        if _render_back_button("← Indietro", key="btn_back_final"):
             st.session_state.stage = STAGE_REVIEW
             st.rerun()
     with _nav_c2:
