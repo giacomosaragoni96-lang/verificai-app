@@ -2614,36 +2614,23 @@ def _render_percorso_b_form():
                 label_visibility="collapsed", key="sel_scuola_b",
             )
 
-        # ── Section header: Argomento e materiale (stessa riga, stile Materia|Scuola) ─
-        st.markdown(
-            f'<div class="form-section-header" style="margin-top:1.4rem;">'
-            f'<div class="form-section-dot"></div>'
-            f'<span class="form-section-title">Argomento e materiale di riferimento</span>'
-            f'<div class="form-section-line"></div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
+        # ── Layout: colonna sinistra dedicata all'upload (stretta), destra argomento + pool ─
+        _col_upload, _col_main = st.columns([1, 4], gap="small")
 
-        # ── RIGA INLINE: Documento di riferimento | Argomento (stesso stile Materia|Scuola) ─
-        _col_up_w, _col_arg_w = st.columns(2, gap="small")
-
-        with _col_up_w:
+        with _col_upload:
             st.markdown(
-                f'<div style="font-size:.75rem;font-weight:700;letter-spacing:.06em;'
-                f'text-transform:uppercase;color:{T["muted"]};font-family:DM Sans,sans-serif;'
-                f'margin-bottom:.3rem;">📎 Documento di riferimento</div>',
+                f'<div class="upload-column-label">📎 Documento di riferimento</div>',
                 unsafe_allow_html=True,
             )
             _lista_b = st.session_state.analisi_docs_list
             _upload_key_b = f"pb_file_up_{len(_lista_b)}"
-            st.markdown('<div class="file-uploader-compact">', unsafe_allow_html=True)
+            st.markdown('<div class="file-uploader-compact file-uploader-narrow">', unsafe_allow_html=True)
             _file_b = st.file_uploader(
                 "Inserisci materiale",
                 type=["pdf", "png", "jpg", "jpeg"],
                 key=_upload_key_b,
                 label_visibility="collapsed",
-                help="Carica una verifica precedente, appunti o un capitolo del libro. "
-                     "L'AI analizza in tempo reale e, se rileva una verifica, puoi generare un facsimile.",
+                help="Carica una verifica, appunti o un capitolo. L'AI analizza e aggiorna l'argomento.",
             )
             st.markdown('</div>', unsafe_allow_html=True)
             if _file_b:
@@ -2677,10 +2664,23 @@ def _render_percorso_b_form():
                 else:
                     st.info("File già presente.", icon="ℹ️")
 
-        with _col_arg_w:
+        with _col_main:
+            # ── Section header: Argomento e materiale ─────────────────────────
+            st.markdown(
+                f'<div class="form-section-header" style="margin-top:0;">'
+                f'<div class="form-section-dot"></div>'
+                f'<span class="form-section-title">Argomento e materiale di riferimento</span>'
+                f'<div class="form-section-line"></div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
             _auto_arg = _info_cons.get("contenuto_argomento", "")
             _arg_source = st.session_state.get("_pb_argomento_source")
+            # Sincronizza la text area con l'argomento rilevato dall'AI (aggiorna solo se non in modalità manuale)
             if _auto_arg and _arg_source != "manual":
+                _current = st.session_state.get("argomento_area_b", "")
+                if _current != _auto_arg:
+                    st.session_state["argomento_area_b"] = _auto_arg
                 st.markdown(
                     f'<div class="context-sync-badge">'
                     f'✅ Argomento rilevato dal file caricato'
@@ -2692,7 +2692,7 @@ def _render_percorso_b_form():
                 _arg_default = st.session_state.get("_pb_argomento_manual_val", "")
             elif _auto_arg:
                 _arg_default = _auto_arg
-            st.markdown('<div style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:' + T["muted"] + ';font-family:DM Sans,sans-serif;margin-bottom:.3rem;">Argomento della verifica</div>', unsafe_allow_html=True)
+            st.markdown('<div class="argomento-label-inline">Argomento della verifica</div>', unsafe_allow_html=True)
             st.markdown('<div class="argomento-field-wrap">', unsafe_allow_html=True)
             argomento_raw = st.text_area(
                 "argomento",
@@ -2704,7 +2704,7 @@ def _render_percorso_b_form():
             )
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── Recap file caricati (full width, sotto la riga Argomento|Upload) ─────
+        # ── Recap file caricati (full width, sotto la riga Upload | Argomento) ─
         _lista_b_curr = st.session_state.analisi_docs_list
         if _lista_b_curr:
             st.markdown(

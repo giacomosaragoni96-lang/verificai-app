@@ -1432,6 +1432,29 @@ def get_css(T: dict) -> str:
     border-radius: 12px !important;
   }}
 
+  /* Colonna sinistra dedicata upload — label e area compatti */
+  .upload-column-label {{
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 0.35rem;
+  }}
+  .file-uploader-narrow [data-testid="stFileUploader"] {{
+    min-height: 120px !important;
+  }}
+  .argomento-label-inline {{
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 0.35rem;
+  }}
+
   /* ════════════════════════════════════════════════════════════════════════
      RIGHT COLUMN — colonna upload/materiale
      Strategia: target direttamente la colonna che CONTIENE il file uploader,
@@ -1496,12 +1519,14 @@ def get_css(T: dict) -> str:
   /* ════════════════════════════════════════════════════════════════════════
      FILE POOL — Sezione e card (contenitore unico per file caricati)
      ════════════════════════════════════════════════════════════════════════ */
+  /* Sezione e card con aspetto unito (stesso bordo/radius) */
   .file-pool-section {{
     background: {T['card']};
     border: 1px solid {T['border']};
     border-radius: {_radius_lg};
     padding: 1rem 1.25rem;
     margin-top: 1rem;
+    margin-bottom: 0.25rem;
   }}
   .file-pool-section-title {{
     font-size: 0.68rem;
@@ -1513,7 +1538,7 @@ def get_css(T: dict) -> str:
     margin: 0 0 0.75rem 0;
   }}
   .file-pool-card {{
-    background: {T['bg2']};
+    background: {T['card']};
     border: 1px solid {T['border']};
     border-radius: {_radius_md};
     padding: 0.85rem 1rem;
