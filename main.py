@@ -2655,208 +2655,208 @@ def _render_percorso_b_form():
             )
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── Traccia modifica manuale argomento ────────────────────────────────
-        _auto_arg_ref = _info_cons.get("contenuto_argomento", "")
-        argomento = argomento_raw.strip()
-        if argomento and argomento != _auto_arg_ref:
-            st.session_state["_pb_argomento_source"] = "manual"
-            st.session_state["_pb_argomento_manual_val"] = argomento
-        elif not argomento and st.session_state.get("_pb_argomento_source") == "manual":
-            st.session_state["_pb_argomento_source"] = None
+            # ── Traccia modifica manuale argomento ────────────────────────────────
+            _auto_arg_ref = _info_cons.get("contenuto_argomento", "")
+            argomento = argomento_raw.strip()
+            if argomento and argomento != _auto_arg_ref:
+                st.session_state["_pb_argomento_source"] = "manual"
+                st.session_state["_pb_argomento_manual_val"] = argomento
+            elif not argomento and st.session_state.get("_pb_argomento_source") == "manual":
+                st.session_state["_pb_argomento_source"] = None
 
-        _prefs = st.session_state._docente_prefs.get(materia_scelta, {})
-        if not _prefs and st.session_state.utente and materia_scelta in MATERIE:
-            _prefs = _carica_docente_preferenze(st.session_state.utente.id, materia_scelta)
-            st.session_state._docente_prefs[materia_scelta] = _prefs
+            _prefs = st.session_state._docente_prefs.get(materia_scelta, {})
+            if not _prefs and st.session_state.utente and materia_scelta in MATERIE:
+                _prefs = _carica_docente_preferenze(st.session_state.utente.id, materia_scelta)
+                st.session_state._docente_prefs[materia_scelta] = _prefs
 
-        # Calcola default num_esercizi (serve dentro l'expander)
-        _n_default = _udef.get("num_esercizi", 4)
-        if _info_cons.get("num_esercizi_rilevati"):
-            try:
-                _n_default = max(1, min(int(_info_cons["num_esercizi_rilevati"]), 15))
-            except (ValueError, TypeError):
-                pass
+            # Calcola default num_esercizi (serve dentro l'expander)
+            _n_default = _udef.get("num_esercizi", 4)
+            if _info_cons.get("num_esercizi_rilevati"):
+                try:
+                    _n_default = max(1, min(int(_info_cons["num_esercizi_rilevati"]), 15))
+                except (ValueError, TypeError):
+                    pass
 
-        # ── Numero esercizi — fuori dall'expander, visibile subito ────────────
-        st.markdown(
-            f'<div class="form-section-header" style="margin-top:1.2rem;">'
-            f'<div class="form-section-dot"></div>'
-            f'<span class="form-section-title">N° di esercizi</span>'
-            f'<div class="form-section-line"></div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-        _n_opts = list(range(1, 16))
-        _n_idx  = (_n_opts.index(_n_default) if _n_default in _n_opts else 3)
-        num_esercizi = st.selectbox(
-            "Numero esercizi",
-            options=_n_opts,
-            index=_n_idx,
-            label_visibility="collapsed",
-            key="sel_num_es_b",
-            format_func=lambda x: f"{x} esercizi",
-        )
+            # ── Numero esercizi — fuori dall'expander, visibile subito ────────────
+            st.markdown(
+                f'<div class="form-section-header" style="margin-top:1.2rem;">'
+                f'<div class="form-section-dot"></div>'
+                f'<span class="form-section-title">N° di esercizi</span>'
+                f'<div class="form-section-line"></div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            _n_opts = list(range(1, 16))
+            _n_idx  = (_n_opts.index(_n_default) if _n_default in _n_opts else 3)
+            num_esercizi = st.selectbox(
+                "Numero esercizi",
+                options=_n_opts,
+                index=_n_idx,
+                label_visibility="collapsed",
+                key="sel_num_es_b",
+                format_func=lambda x: f"{x} esercizi",
+            )
 
-        # ── Divisore sottile prima di Personalizzazione ──────────────────────
-        st.markdown('<div class="divider-minimal"></div>', unsafe_allow_html=True)
-        # ── Personalizzazione Avanzata — st.expander standard ────────────────
-        # Defaults da session state (validi anche quando expander è chiuso)
-        note_extra   = st.session_state.get("_pers_note", "")
-        mostra_punteggi = st.session_state.get("_pers_punteggi", _udef.get("mostra_punteggi", True))
-        con_griglia  = mostra_punteggi
-        punti_totali = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
+            # ── Divisore sottile prima di Personalizzazione ──────────────────────
+            st.markdown('<div class="divider-minimal"></div>', unsafe_allow_html=True)
+            # ── Personalizzazione Avanzata — st.expander standard ────────────────
+            # Defaults da session state (validi anche quando expander è chiuso)
+            note_extra   = st.session_state.get("_pers_note", "")
+            mostra_punteggi = st.session_state.get("_pers_punteggi", _udef.get("mostra_punteggi", True))
+            con_griglia  = mostra_punteggi
+            punti_totali = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
 
-        st.markdown('<div class="personalizza-wrap">', unsafe_allow_html=True)
-        with st.expander("⚙️  Personalizzazione Avanzata", expanded=False):
+            st.markdown('<div class="personalizza-wrap">', unsafe_allow_html=True)
+            with st.expander("⚙️  Personalizzazione Avanzata", expanded=False):
 
-            if _prefs.get("stile_desc"):
+                if _prefs.get("stile_desc"):
+                    st.markdown(
+                        f'<div style="background:{T["hint_bg"]};border:1px solid {T["hint_border"]};'
+                        f'border-radius:8px;padding:.4rem .7rem;font-size:.9rem;color:{T["hint_text"]};'
+                        f'font-family:DM Sans,sans-serif;margin-bottom:.7rem;">'
+                        f'Preferenze salvate per <b>{materia_scelta}</b>: {_prefs["stile_desc"]}'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+
+                # ── Note aggiuntive — DENTRO l'expander ──────────────────────────
+                st.markdown('<div class="opt-label">Note aggiuntive <span style="font-weight:400;opacity:.55;">— opzionale</span></div>', unsafe_allow_html=True)
+                note_extra = st.text_area(
+                    "Note AI",
+                    placeholder=NOTE_PLACEHOLDER if isinstance(NOTE_PLACEHOLDER, str) else NOTE_PLACEHOLDER.get(materia_scelta, ""),
+                    value=note_extra,
+                    height=80,
+                    label_visibility="collapsed",
+                    key="note_area_b",
+                )
+                st.session_state["_pers_note"] = note_extra
+                st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
+
+                _tog = st.toggle(
+                    "Aggiungi punteggi e griglia di valutazione",
+                    value=mostra_punteggi, key="toggle_punteggi_b",
+                )
+                mostra_punteggi = _tog
+                con_griglia = _tog
+                st.session_state["_pers_punteggi"] = _tog
+                punti_totali = 100
+                if _tog:
+                    _pt_opts = list(range(10, 105, 5))
+                    _pt_saved = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
+                    _pt_idx  = _pt_opts.index(_pt_saved) if _pt_saved in _pt_opts else (_pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts) - 1)
+                    st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
+                    punti_totali = st.selectbox(
+                        "Punti totali", options=_pt_opts, index=_pt_idx,
+                        label_visibility="collapsed", key="sel_punti_b",
+                        format_func=lambda x: f"{x} pt",
+                    )
+                    st.session_state["_pers_pt"] = punti_totali
+
+                # Struttura esercizi custom
+                st.markdown('<div class="opt-label" style="margin-top:.5rem;">Struttura esercizi</div>', unsafe_allow_html=True)
+                with st.expander("Definisci tipo e contenuto di ogni esercizio", expanded=False):
+                    n_custom = len(st.session_state.esercizi_custom)
+                    n_liberi = max(0, num_esercizi - n_custom)
+                    if n_custom == 0:
+                        st.info(f"Tutti i {num_esercizi} esercizi generati liberamente dall'AI.")
+                    elif n_custom >= num_esercizi:
+                        st.warning(f"Limite raggiunto ({n_custom}/{num_esercizi}).")
+                    else:
+                        st.success(f"✅ {n_custom} definiti + {n_liberi} liberi = {num_esercizi}")
+
+                    _to_remove = None
+                    for _i, _ex in enumerate(st.session_state.esercizi_custom):
+                        st.markdown(f"**Esercizio {_i+1}**")
+                        _tipo_val = _ex.get("tipo", "Aperto")
+                        _tipo_idx = TIPI_ESERCIZIO.index(_tipo_val) if _tipo_val in TIPI_ESERCIZIO else 0
+                        _t = st.selectbox(
+                            "Tipo", TIPI_ESERCIZIO,
+                            index=_tipo_idx,
+                            key=f"tipo_b_{_i}",
+                        )
+                        st.session_state.esercizi_custom[_i]["tipo"] = _t
+                        _d = st.text_area(
+                            "Desc", value=_ex.get("descrizione", ""),
+                            key=f"desc_b_{_i}", height=70,
+                            label_visibility="collapsed",
+                        )
+                        st.session_state.esercizi_custom[_i]["descrizione"] = _d
+                        _c1, _c2 = st.columns([3, 1])
+                        with _c1:
+                            _img = st.file_uploader(
+                                "Immagine", type=["png", "jpg", "jpeg"],
+                                key=f"img_b_{_i}", label_visibility="collapsed",
+                            )
+                            if _img:
+                                st.session_state.esercizi_custom[_i]["immagine"] = _img
+                            if st.session_state.esercizi_custom[_i].get("immagine"):
+                                st.image(st.session_state.esercizi_custom[_i]["immagine"], width=55)
+                        with _c2:
+                            if st.button("🗑 Rimuovi", key=f"rm_b_{_i}", use_container_width=True):
+                                _to_remove = _i
+                        st.divider()
+
+                    if _to_remove is not None:
+                        st.session_state.esercizi_custom.pop(_to_remove)
+                        st.rerun()
+
+                    if st.button(
+                        "＋ Aggiungi esercizio",
+                        disabled=len(st.session_state.esercizi_custom) >= num_esercizi,
+                        key="add_es_b",
+                    ):
+                        st.session_state.esercizi_custom.append(
+                            {"tipo": "Aperto", "descrizione": "", "immagine": None}
+                        )
+                        st.rerun()
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            # ── CTA: Genera Bozza ─────────────────────────────────────────────────
+            _manca_arg = not argomento
+            st.markdown("<div style='height:.9rem'></div>", unsafe_allow_html=True)
+
+            # Hint sottile SOPRA il pulsante
+            if not _manca_arg and not _limite:
                 st.markdown(
-                    f'<div style="background:{T["hint_bg"]};border:1px solid {T["hint_border"]};'
-                    f'border-radius:8px;padding:.4rem .7rem;font-size:.9rem;color:{T["hint_text"]};'
-                    f'font-family:DM Sans,sans-serif;margin-bottom:.7rem;">'
-                    f'Preferenze salvate per <b>{materia_scelta}</b>: {_prefs["stile_desc"]}'
+                    f'<div class="cta-hint-text">'
+                    f'✏️ Potrai modificare ogni singolo esercizio dopo la generazione'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
 
-            # ── Note aggiuntive — DENTRO l'expander ──────────────────────────
-            st.markdown('<div class="opt-label">Note aggiuntive <span style="font-weight:400;opacity:.55;">— opzionale</span></div>', unsafe_allow_html=True)
-            note_extra = st.text_area(
-                "Note AI",
-                placeholder=NOTE_PLACEHOLDER if isinstance(NOTE_PLACEHOLDER, str) else NOTE_PLACEHOLDER.get(materia_scelta, ""),
-                value=note_extra,
-                height=80,
-                label_visibility="collapsed",
-                key="note_area_b",
+            st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
+            genera_btn = st.button(
+                "🚀  Genera Bozza",
+                use_container_width=True,
+                type="primary",
+                disabled=_limite or _manca_arg,
+                key="genera_btn_b",
             )
-            st.session_state["_pers_note"] = note_extra
-            st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
-            _tog = st.toggle(
-                "Aggiungi punteggi e griglia di valutazione",
-                value=mostra_punteggi, key="toggle_punteggi_b",
-            )
-            mostra_punteggi = _tog
-            con_griglia = _tog
-            st.session_state["_pers_punteggi"] = _tog
-            punti_totali = 100
-            if _tog:
-                _pt_opts = list(range(10, 105, 5))
-                _pt_saved = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
-                _pt_idx  = _pt_opts.index(_pt_saved) if _pt_saved in _pt_opts else (_pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts) - 1)
-                st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
-                punti_totali = st.selectbox(
-                    "Punti totali", options=_pt_opts, index=_pt_idx,
-                    label_visibility="collapsed", key="sel_punti_b",
-                    format_func=lambda x: f"{x} pt",
+            # Placeholder progress bar — apparirà subito sotto il pulsante
+            _prog_placeholder = st.empty()
+
+            if _manca_arg and not _limite:
+                st.markdown(
+                    f'<div style="text-align:center;font-size:.82rem;color:{T["warn"]};'
+                    f'font-family:DM Sans,sans-serif;margin-top:.3rem;">'
+                    f'Inserisci l\'argomento per continuare.</div>',
+                    unsafe_allow_html=True,
                 )
-                st.session_state["_pers_pt"] = punti_totali
+            if _limite:
+                st.markdown(
+                    f'<div style="text-align:center;font-size:.82rem;color:#EF4444;'
+                    f'font-family:DM Sans,sans-serif;font-weight:600;margin-top:.4rem;">'
+                    f'⛔ Limite mensile raggiunto.</div>',
+                    unsafe_allow_html=True,
+                )
 
-            # Struttura esercizi custom
-            st.markdown('<div class="opt-label" style="margin-top:.5rem;">Struttura esercizi</div>', unsafe_allow_html=True)
-            with st.expander("Definisci tipo e contenuto di ogni esercizio", expanded=False):
-                n_custom = len(st.session_state.esercizi_custom)
-                n_liberi = max(0, num_esercizi - n_custom)
-                if n_custom == 0:
-                    st.info(f"Tutti i {num_esercizi} esercizi generati liberamente dall'AI.")
-                elif n_custom >= num_esercizi:
-                    st.warning(f"Limite raggiunto ({n_custom}/{num_esercizi}).")
-                else:
-                    st.success(f"✅ {n_custom} definiti + {n_liberi} liberi = {num_esercizi}")
-
-                _to_remove = None
-                for _i, _ex in enumerate(st.session_state.esercizi_custom):
-                    st.markdown(f"**Esercizio {_i+1}**")
-                    _tipo_val = _ex.get("tipo", "Aperto")
-                    _tipo_idx = TIPI_ESERCIZIO.index(_tipo_val) if _tipo_val in TIPI_ESERCIZIO else 0
-                    _t = st.selectbox(
-                        "Tipo", TIPI_ESERCIZIO,
-                        index=_tipo_idx,
-                        key=f"tipo_b_{_i}",
-                    )
-                    st.session_state.esercizi_custom[_i]["tipo"] = _t
-                    _d = st.text_area(
-                        "Desc", value=_ex.get("descrizione", ""),
-                        key=f"desc_b_{_i}", height=70,
-                        label_visibility="collapsed",
-                    )
-                    st.session_state.esercizi_custom[_i]["descrizione"] = _d
-                    _c1, _c2 = st.columns([3, 1])
-                    with _c1:
-                        _img = st.file_uploader(
-                            "Immagine", type=["png", "jpg", "jpeg"],
-                            key=f"img_b_{_i}", label_visibility="collapsed",
-                        )
-                        if _img:
-                            st.session_state.esercizi_custom[_i]["immagine"] = _img
-                        if st.session_state.esercizi_custom[_i].get("immagine"):
-                            st.image(st.session_state.esercizi_custom[_i]["immagine"], width=55)
-                    with _c2:
-                        if st.button("🗑 Rimuovi", key=f"rm_b_{_i}", use_container_width=True):
-                            _to_remove = _i
-                    st.divider()
-
-                if _to_remove is not None:
-                    st.session_state.esercizi_custom.pop(_to_remove)
-                    st.rerun()
-
-                if st.button(
-                    "＋ Aggiungi esercizio",
-                    disabled=len(st.session_state.esercizi_custom) >= num_esercizi,
-                    key="add_es_b",
-                ):
-                    st.session_state.esercizi_custom.append(
-                        {"tipo": "Aperto", "descrizione": "", "immagine": None}
-                    )
-                    st.rerun()
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # ── CTA: Genera Bozza ─────────────────────────────────────────────────
-        _manca_arg = not argomento
-        st.markdown("<div style='height:.9rem'></div>", unsafe_allow_html=True)
-
-        # Hint sottile SOPRA il pulsante
-        if not _manca_arg and not _limite:
-            st.markdown(
-                f'<div class="cta-hint-text">'
-                f'✏️ Potrai modificare ogni singolo esercizio dopo la generazione'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-
-        st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
-        genera_btn = st.button(
-            "🚀  Genera Bozza",
-            use_container_width=True,
-            type="primary",
-            disabled=_limite or _manca_arg,
-            key="genera_btn_b",
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # Placeholder progress bar — apparirà subito sotto il pulsante
-        _prog_placeholder = st.empty()
-
-        if _manca_arg and not _limite:
-            st.markdown(
-                f'<div style="text-align:center;font-size:.82rem;color:{T["warn"]};'
-                f'font-family:DM Sans,sans-serif;margin-top:.3rem;">'
-                f'Inserisci l\'argomento per continuare.</div>',
-                unsafe_allow_html=True,
-            )
-        if _limite:
-            st.markdown(
-                f'<div style="text-align:center;font-size:.82rem;color:#EF4444;'
-                f'font-family:DM Sans,sans-serif;font-weight:600;margin-top:.4rem;">'
-                f'⛔ Limite mensile raggiunto.</div>',
-                unsafe_allow_html=True,
-            )
-
-        # ── Back link ─────────────────────────────────────────────────────────
-        if _render_back_button("← Indietro", key="btn_back_b"):
-            st.session_state.input_percorso = None
-            st.rerun()
+            # ── Back link ─────────────────────────────────────────────────────────
+            if _render_back_button("← Indietro", key="btn_back_b"):
+                st.session_state.input_percorso = None
+                st.rerun()
 
         with _col_side:
             st.markdown(
