@@ -28,6 +28,12 @@ def get_css(T: dict) -> str:
     _surf_raised = T.get("card", T["bg2"])
     _surf_overlay = T.get("card2", T["bg2"])
 
+    # Design system — radius e ombre morbide (Minimal SaaS)
+    _radius_sm = T.get("radius_sm", "8px")
+    _radius_md = T.get("radius_md", "12px")
+    _radius_lg = T.get("radius_lg", "16px")
+    _shadow_soft = T.get("shadow_soft", T.get("shadow_md", "0 4px 20px rgba(0,0,0,.15)"))
+
     # Placeholder: colore con buon contrasto su qualsiasi sfondo del tema
     _placeholder_color = "#6E7681" if not _is_light else "#718096"
     _color_scheme = "light" if _is_light else "dark"
@@ -214,6 +220,72 @@ def get_css(T: dict) -> str:
     padding: 4.5rem 1.5rem 4rem !important;
     max-width: 1400px !important;
     margin: 0 auto !important;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     DASHBOARD LAYOUT — spaziature e contenitori (Minimal SaaS)
+     ════════════════════════════════════════════════════════════════════════ */
+  .dashboard-section {{
+    margin-bottom: 2rem;
+  }}
+  .dashboard-card {{
+    background: {T['card']};
+    border: 1px solid {T['border']};
+    border-radius: {_radius_lg};
+    box-shadow: {_shadow_soft};
+    padding: 1.5rem;
+  }}
+  .divider-minimal {{
+    height: 1px;
+    background: {T['border']};
+    margin: 1.5rem 0;
+    border-radius: 1px;
+    border: none;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     ALERTS / TOAST — success, error, warning (feedback visivo)
+     ════════════════════════════════════════════════════════════════════════ */
+  [data-testid="stAlert"] {{
+    border-radius: {_radius_md} !important;
+    border: 1px solid {T['border']} !important;
+    box-shadow: {T.get('shadow', '0 1px 3px rgba(0,0,0,.08)')} !important;
+    font-family: 'DM Sans', sans-serif !important;
+    padding: 1rem 1.25rem !important;
+    transition: box-shadow .2s ease, transform .15s ease !important;
+  }}
+  [data-testid="stAlert"]:has([data-baseweb="notification"][kind="positive"]) {{
+    border-left: 4px solid {T['success']} !important;
+    background: {T.get('accent_light', _surf_raised)} !important;
+  }}
+  [data-testid="stAlert"]:has([data-baseweb="notification"][kind="negative"]) {{
+    border-left: 4px solid {T['error']} !important;
+    background: {_surf_raised} !important;
+  }}
+  [data-testid="stAlert"]:has([data-baseweb="notification"][kind="warning"]) {{
+    border-left: 4px solid {T['warn']} !important;
+    background: {_surf_raised} !important;
+  }}
+  [data-testid="stAlert"] [data-baseweb="notification"] {{
+    background: transparent !important;
+    border: none !important;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     SPINNER — caricamento (micro-interazione, colore tema)
+     ════════════════════════════════════════════════════════════════════════ */
+  [data-testid="stSpinner"] {{
+    color: {_acc} !important;
+  }}
+  [data-testid="stSpinner"] > div {{
+    border-color: {_acc}33 !important;
+    border-top-color: {_acc} !important;
+    animation-duration: 0.9s !important;
+  }}
+  [data-testid="stSpinner"] + div {{
+    color: {T['text2']} !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.95rem !important;
   }}
 
   #MainMenu, footer {{ visibility: hidden; }}
@@ -460,7 +532,7 @@ def get_css(T: dict) -> str:
   [data-testid="stTextArea"] textarea {{
     background: {_surf_overlay} !important;
     border: 1.5px solid {T['border']} !important;
-    border-radius: 10px !important;
+    border-radius: {_radius_md} !important;
     color: {T['text']} !important;
     font-family: 'DM Sans', sans-serif !important;
     font-size: 1.02rem !important;
@@ -500,7 +572,7 @@ def get_css(T: dict) -> str:
     background: {_surf_raised} !important;
     background-color: {_surf_raised} !important;
     border: 1.5px solid {T['border2']} !important;
-    border-radius: 10px !important;
+    border-radius: {_radius_md} !important;
     box-shadow: 0 1px 3px rgba(0,0,0,.06) !important;
     color-scheme: {_color_scheme} !important;
   }}
@@ -640,22 +712,23 @@ def get_css(T: dict) -> str:
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
     border: none !important;
-    border-radius: 12px !important;
+    border-radius: {_radius_md} !important;
     font-family: 'DM Sans', sans-serif !important;
     font-weight: 800 !important;
     font-size: 1.05rem !important;
     min-height: 50px !important;
     letter-spacing: -.01em !important;
     box-shadow: 0 4px 20px {_acc_ring} !important;
-    transition: filter .15s ease, box-shadow .2s ease, transform .15s ease !important;
+    transition: filter .2s ease, box-shadow .2s ease, transform .2s ease !important;
   }}
   div.stButton > button[kind="primary"]:hover,
   div.stButton > button[data-testid="stBaseButton-primary"]:hover {{
     filter: brightness(1.08) !important;
     box-shadow: 0 6px 28px {_acc}55 !important;
-    transform: translateY(-1px) !important;
+    transform: translateY(-2px) !important;
   }}
-  div.stButton > button[kind="primary"]:active {{
+  div.stButton > button[kind="primary"]:active,
+  div.stButton > button[data-testid="stBaseButton-primary"]:active {{
     transform: translateY(0) !important;
     box-shadow: 0 2px 12px {_acc_med} !important;
   }}
@@ -672,7 +745,7 @@ def get_css(T: dict) -> str:
     color: {T['text']} !important;
     -webkit-text-fill-color: {T['text']} !important;
     border: 1.5px solid {T['border']} !important;
-    border-radius: 10px !important;
+    border-radius: {_radius_md} !important;
     font-family: 'DM Sans', sans-serif !important;
     font-weight: 600 !important;
     font-size: 1.02rem !important;
@@ -684,6 +757,14 @@ def get_css(T: dict) -> str:
     background: {T['hover']} !important;
     border-color: {_acc} !important;
     box-shadow: 0 2px 12px {_acc_soft} !important;
+  }}
+  div.stButton > button[kind="secondary"]:active,
+  div.stButton > button:not([kind="primary"]):active {{
+    transform: scale(0.98) !important;
+  }}
+  div.stButton > button:focus-visible {{
+    outline: 2px solid {_acc} !important;
+    outline-offset: 2px !important;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -1075,8 +1156,8 @@ def get_css(T: dict) -> str:
   /* ── Percorso Card ── */
   .mcard {{
     background: {T['card']};
-    border: 2px solid {T['border2']};
-    border-radius: 16px;
+    border: 1px solid {T['border']};
+    border-radius: {_radius_lg};
     padding: 1.3rem 1.2rem 1.1rem;
     position: relative;
     transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
@@ -1087,7 +1168,7 @@ def get_css(T: dict) -> str:
   }}
   .mcard:hover {{
     transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0,0,0,.08);
+    box-shadow: {_shadow_soft};
   }}
   .mcard-badge {{
     position: absolute; top: -10px; right: 14px;
@@ -2219,8 +2300,8 @@ def get_css(T: dict) -> str:
 
   .variant-card {{
     background: {T['card']};
-    border: 1.5px solid {T['border2']};
-    border-radius: 16px;
+    border: 1px solid {T['border']};
+    border-radius: {_radius_lg};
     padding: 1.1rem 1rem 1rem;
     margin-bottom: .35rem;
     display: flex;
@@ -2658,8 +2739,8 @@ def get_css(T: dict) -> str:
      ═══════════════════════════════════════════════════════════════════════ */
   .landing-feat-card {{
     background: {T['card']};
-    border: 1.5px solid {T['border']};
-    border-radius: 16px;
+    border: 1px solid {T['border']};
+    border-radius: {_radius_lg};
     padding: 1.2rem 1.1rem;
     text-align: left;
     transition: border-color .2s, transform .15s;

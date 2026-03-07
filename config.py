@@ -84,6 +84,12 @@ THEMES = {
         # Ombre
         "shadow":     "0 1px 3px rgba(0,0,0,.35)",
         "shadow_md":  "0 4px 24px rgba(0,0,0,.50)",
+        "shadow_soft": "0 8px 32px rgba(0,0,0,.25), 0 2px 8px rgba(0,0,0,.15)",
+
+        # Design system (Minimal SaaS)
+        "radius_sm":  "8px",
+        "radius_md":  "12px",
+        "radius_lg":  "16px",
 
         # Sidebar
         "sidebar_bg":      "linear-gradient(180deg, #010409 0%, #0D1117 100%)",
@@ -133,6 +139,12 @@ THEMES = {
         # Ombre — più leggere su tema chiaro
         "shadow":     "0 1px 3px rgba(28,35,33,.12)",
         "shadow_md":  "0 4px 20px rgba(28,35,33,.18)",
+        "shadow_soft": "0 8px 32px rgba(28,35,33,.10), 0 2px 8px rgba(28,35,33,.06)",
+
+        # Design system (Minimal SaaS)
+        "radius_sm":  "8px",
+        "radius_md":  "12px",
+        "radius_lg":  "16px",
 
         # Sidebar — Carbon Black leggero per contrasto con area principale
         "sidebar_bg":      "linear-gradient(180deg, #2A3533 0%, #1C2321 100%)",
@@ -185,6 +197,12 @@ THEMES = {
         # Ombre
         "shadow":     "0 1px 4px rgba(26,48,64,.14)",
         "shadow_md":  "0 4px 20px rgba(26,48,64,.20)",
+        "shadow_soft": "0 8px 32px rgba(26,48,64,.12), 0 2px 8px rgba(26,48,64,.08)",
+
+        # Design system (Minimal SaaS)
+        "radius_sm":  "8px",
+        "radius_md":  "12px",
+        "radius_lg":  "16px",
 
         # Sidebar — blu acciaio scuro, contrasto con area principale azzurra
         "sidebar_bg":      "linear-gradient(180deg, #1A3040 0%, #22485E 100%)",

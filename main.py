@@ -2571,6 +2571,8 @@ def _render_percorso_b_form():
         # ── IDEA #1: carica defaults silenti come fallback ────────────────
         _udef = _load_user_defaults()
 
+        # ── Dashboard: sezione form (layout bilanciato) ───────────────────────
+        st.markdown('<div class="dashboard-section">', unsafe_allow_html=True)
         # ── Section header: Materia & Scuola ──────────────────────────────────
         st.markdown(
             f'<div class="form-section-header">'
@@ -2960,6 +2962,8 @@ def _render_percorso_b_form():
             format_func=lambda x: f"{x} esercizi",
         )
 
+        # ── Divisore sottile prima di Personalizzazione ──────────────────────
+        st.markdown('<div class="divider-minimal"></div>', unsafe_allow_html=True)
         # ── Personalizzazione Avanzata — st.expander standard ────────────────
         # Defaults da session state (validi anche quando expander è chiuso)
         note_extra   = st.session_state.get("_pers_note", "")

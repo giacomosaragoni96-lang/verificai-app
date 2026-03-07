@@ -124,20 +124,21 @@ def mostra_auth(supabase):
     }}
     [data-testid="stMainBlockContainer"] {{ padding: 0 !important; }}
 
-    /* ═══ Card principale — dark, bordo blu tenue, glow blu ═══ */
+    /* ═══ Card principale — Minimal SaaS: ombre morbide, bordi sottili ═══ */
     [data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"] {{
         background: {_N_CARD};
-        border-radius: 22px;
-        border: 1.5px solid {_N_BORDER};
+        border-radius: 20px;
+        border: 1px solid {_N_BORDER};
         margin: 0 auto;
         max-width: 480px;
         box-shadow:
-            0 2px 4px  rgba(0,0,0,.30),
-            0 14px 50px rgba(0,0,0,.45),
-            0 0 0 1px  rgba(88,166,255,.08);
+            0 2px 8px  rgba(0,0,0,.06),
+            0 8px 32px rgba(0,0,0,.12),
+            0 0 0 1px  rgba(88,166,255,.06);
         position: relative;
         overflow: hidden;
         color-scheme: dark !important;
+        transition: box-shadow .25s ease;
     }}
 
     /* ── Barra superiore animata — gradient blu ── */
@@ -152,7 +153,7 @@ def mostra_auth(supabase):
             {_N_ACC}  100%);
         background-size: 200% 100%;
         animation: topBarSlide 5s linear infinite;
-        border-radius: 22px 22px 0 0;
+        border-radius: 20px 20px 0 0;
     }}
     @keyframes topBarSlide {{
         0%   {{ background-position: 0% 0; }}
@@ -164,23 +165,23 @@ def mostra_auth(supabase):
         padding: 2.2rem 2.4rem 1.8rem !important;
     }}
 
-    /* ═══ Inputs ═══ */
+    /* ═══ Inputs — design pulito, focus ring ═══ */
     [data-testid="stTextInput"] input {{
         background: {_N_BG2} !important;
-        border: 1.5px solid {_N_BORDER} !important;
-        border-radius: 10px !important;
+        border: 1px solid {_N_BORDER} !important;
+        border-radius: 12px !important;
         color: {_N_TEXT} !important;
         -webkit-text-fill-color: {_N_TEXT} !important;
         font-family: 'DM Sans', sans-serif !important;
-        font-size: .95rem !important;
-        padding: 12px 14px !important;
-        min-height: 48px !important;
+        font-size: 1rem !important;
+        padding: 14px 16px !important;
+        min-height: 52px !important;
         transition: border-color .2s ease, box-shadow .2s ease, background .2s ease !important;
         color-scheme: dark !important;
     }}
     [data-testid="stTextInput"] input:focus {{
         border-color: {_N_ACC} !important;
-        box-shadow: 0 0 0 3px rgba(88,166,255,.15) !important;
+        box-shadow: 0 0 0 3px rgba(88,166,255,.18) !important;
         background: {_N_CARD} !important;
         outline: none !important;
     }}
@@ -225,7 +226,7 @@ def mostra_auth(supabase):
         padding: 0 !important;
     }}
 
-    /* ═══ Primary button ═══ */
+    /* ═══ Primary button — Minimal SaaS: ombra morbida, hover lift ═══ */
     div.stButton > button[kind="primary"],
     div.stButton > button[data-testid="stBaseButton-primary"] {{
         background: linear-gradient(135deg, {_N_ACC}, {_N_ACC2}) !important;
@@ -235,26 +236,28 @@ def mostra_auth(supabase):
         border-radius: 12px !important;
         font-family: 'DM Sans', sans-serif !important;
         font-weight: 800 !important;
-        font-size: .97rem !important;
+        font-size: 1rem !important;
         min-height: 52px !important;
-        letter-spacing: -.01em !important;
-        box-shadow: 0 4px 20px rgba(88,166,255,.25) !important;
-        transition: filter .15s ease, box-shadow .2s ease, transform .15s ease !important;
+        letter-spacing: -.02em !important;
+        box-shadow: 0 4px 16px rgba(88,166,255,.22) !important;
+        transition: filter .2s ease, box-shadow .2s ease, transform .2s ease !important;
     }}
     div.stButton > button[kind="primary"]:hover,
     div.stButton > button[data-testid="stBaseButton-primary"]:hover {{
-        filter: brightness(1.10) !important;
-        box-shadow: 0 6px 28px rgba(88,166,255,.35) !important;
-        transform: translateY(-1px) !important;
+        filter: brightness(1.08) !important;
+        box-shadow: 0 8px 28px rgba(88,166,255,.32) !important;
+        transform: translateY(-2px) !important;
     }}
 
-    /* ═══ Warning / error messages ═══ */
+    /* ═══ Warning / error messages — toast-like, bordi sottili ═══ */
     [data-testid="stAlert"] {{
         background: {_N_CARD2} !important;
-        border-color: {_N_BORDER} !important;
+        border: 1px solid {_N_BORDER} !important;
+        border-radius: 12px !important;
         color: {_N_TEXT} !important;
-        border-radius: 10px !important;
         font-family: 'DM Sans', sans-serif !important;
+        padding: 1rem 1.25rem !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,.08) !important;
     }}
 
     /* ═══ Stat row ═══ */
@@ -324,12 +327,13 @@ def mostra_auth(supabase):
     st.markdown(f"""
     <div style="text-align:center; padding:.85rem 0 1.15rem;">
 
-      <!-- Logo wordmark — identico al site-header dell'app principale -->
+      <!-- Logo wordmark — titolo elegante, font grande e bilanciato -->
       <div style="
           font-family: 'DM Sans', sans-serif;
-          font-size: 3.2rem; font-weight: 900;
-          letter-spacing: -0.05em;
-          color: {_N_TEXT}; line-height: 1;
+          font-size: clamp(2.6rem, 6vw, 3.4rem);
+          font-weight: 900;
+          letter-spacing: -0.04em;
+          color: {_N_TEXT}; line-height: 1.1;
           margin-bottom: .55rem;">
         📝&thinsp;Verific<span style="
           background: linear-gradient(135deg,{_N_ACC},{_N_ACC2});
