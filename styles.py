@@ -1466,19 +1466,50 @@ def get_css(T: dict) -> str:
     display: none !important;
   }}
 
-  /* Colonna che contiene il file uploader — altezza fissa, scroll interno, non sposta Genera */
-  [data-testid="stColumn"]:has(.upload-column-label),
+  /* Riga form+upload: colonne allineate in alto, la destra non allunga la pagina */
+  [data-testid="stHorizontalBlock"]:has(.upload-column-label) {{
+    align-items: flex-start !important;
+  }}
+
+  /* Colonna upload (destra): sidebar fissa, altezza limitata, scroll interno */
+  [data-testid="stColumn"]:has(.upload-column-label) {{
+    background-color: {T['card']} !important;
+    background: {T['card']} !important;
+    border: 1px solid {T['border']} !important;
+    border-left: 2px solid {T['border2']} !important;
+    border-radius: {_radius_lg} !important;
+    padding: 0.65rem 0.75rem !important;
+    min-width: 200px !important;
+    max-width: 280px !important;
+    height: 65vh !important;
+    max-height: 65vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain !important;
+    align-self: flex-start !important;
+  }}
+  [data-testid="stColumn"]:has(.upload-column-label) > div {{
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }}
+
+  /* Fallback: colonna con file uploader (se .upload-column-label non matcha) */
   [data-testid="stColumn"]:has(> div > [data-testid="stFileUploader"]),
   [data-testid="stColumn"]:has(> div > div > [data-testid="stFileUploader"]) {{
     background-color: {T['card']} !important;
     background: {T['card']} !important;
     border: 1px solid {T['border']} !important;
+    border-left: 2px solid {T['border2']} !important;
     border-radius: {_radius_lg} !important;
     padding: 0.65rem 0.75rem !important;
-    max-height: min(420px, 55vh) !important;
+    min-width: 200px !important;
+    max-width: 280px !important;
+    height: 65vh !important;
+    max-height: 65vh !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    overscroll-behavior: contain !important;
+    align-self: flex-start !important;
   }}
 
   [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-title,
