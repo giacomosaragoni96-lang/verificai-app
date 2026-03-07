@@ -5437,7 +5437,7 @@ def _render_stage_final():
     st.markdown("<div style='height:1.4rem'></div>", unsafe_allow_html=True)
     _nav_c1, _nav_c2 = st.columns([1, 2])
     with _nav_c1:
-        if _render_back_button("← Indietro", key="btn_back_final"):
+        if _render_back_button("←", key="btn_back_final"):
             st.session_state.stage = STAGE_REVIEW
             st.rerun()
     with _nav_c2:
