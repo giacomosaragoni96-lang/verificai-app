@@ -2795,7 +2795,7 @@ def _render_percorso_b_form():
                             if _sel_modo == "includi_esercizio"
                             else "es. Usa solo il secondo esercizio…"
                         ),
-                        height=52,
+                        height=38,
                         key=f"pb_istr_{_fhash_str}",
                         label_visibility="collapsed",
                     )

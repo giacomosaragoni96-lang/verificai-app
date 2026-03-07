@@ -1443,7 +1443,7 @@ def get_css(T: dict) -> str:
     margin-bottom: 0.35rem;
   }}
   .file-uploader-narrow [data-testid="stFileUploader"] {{
-    min-height: 120px !important;
+    min-height: 86px !important;
   }}
   .argomento-label-inline {{
     font-size: 0.75rem;
@@ -1466,14 +1466,19 @@ def get_css(T: dict) -> str:
     display: none !important;
   }}
 
-  /* Colonna che contiene il file uploader — usa token tema (chiaro su foresta/chiaro) */
+  /* Colonna che contiene il file uploader — altezza fissa, scroll interno, non sposta Genera */
+  [data-testid="stColumn"]:has(.upload-column-label),
   [data-testid="stColumn"]:has(> div > [data-testid="stFileUploader"]),
   [data-testid="stColumn"]:has(> div > div > [data-testid="stFileUploader"]) {{
     background-color: {T['card']} !important;
     background: {T['card']} !important;
-    border: 1.5px solid {T['border2']} !important;
-    border-radius: 16px !important;
-    padding: .9rem .9rem 1rem !important;
+    border: 1px solid {T['border']} !important;
+    border-radius: {_radius_lg} !important;
+    padding: 0.65rem 0.75rem !important;
+    max-height: min(420px, 55vh) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain !important;
   }}
 
   [data-testid="stColumn"]:has([data-testid="stFileUploader"]) .side-box-title,
@@ -1519,47 +1524,63 @@ def get_css(T: dict) -> str:
   /* ════════════════════════════════════════════════════════════════════════
      FILE POOL — Sezione e card (contenitore unico per file caricati)
      ════════════════════════════════════════════════════════════════════════ */
-  /* Sezione e card con aspetto unito (stesso bordo/radius) */
+  /* Sezione e card compatte (dentro colonna a scroll) */
   .file-pool-section {{
-    background: {T['card']};
-    border: 1px solid {T['border']};
-    border-radius: {_radius_lg};
-    padding: 1rem 1.25rem;
-    margin-top: 1rem;
-    margin-bottom: 0.25rem;
+    background: transparent;
+    border: none;
+    padding: 0.5rem 0 0;
+    margin-top: 0.6rem;
+    margin-bottom: 0;
   }}
   .file-pool-section-title {{
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.07em;
     text-transform: uppercase;
     color: {T['muted']};
     font-family: 'DM Sans', sans-serif;
-    margin: 0 0 0.75rem 0;
+    margin: 0 0 0.4rem 0;
   }}
   .file-pool-card {{
-    background: {T['card']};
+    background: {T['bg2']};
     border: 1px solid {T['border']};
-    border-radius: {_radius_md};
-    padding: 0.85rem 1rem;
-    margin-bottom: 0.75rem;
+    border-radius: {_radius_sm};
+    padding: 0.5rem 0.6rem;
+    margin-bottom: 0.5rem;
     transition: border-color .15s ease;
   }}
   .file-pool-card:last-of-type {{
     margin-bottom: 0;
   }}
   .file-pool-card .file-ai-summary {{
-    margin: 0.3rem 0 0.2rem;
+    margin: 0.25rem 0 0.15rem;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.8rem;
   }}
   .file-pool-card .file-item-b-mode-label {{
-    margin: 0.15rem 0 0.1rem;
+    margin: 0.1rem 0 0.05rem;
+    font-size: 0.8rem;
   }}
   .file-pool-card .file-item-b-delete {{
-    margin-top: 0.2rem;
+    margin-top: 0.15rem;
+  }}
+  .file-pool-card .file-item-b-delete button {{
+    min-height: 26px !important;
+    font-size: 0.82rem !important;
   }}
   .file-pool-card .facsimile-detection-banner {{
-    margin: 0.6rem 0 0.35rem;
-    padding: 0.7rem 1rem;
+    margin: 0.4rem 0 0.25rem;
+    padding: 0.5rem 0.65rem;
+  }}
+  .file-pool-card .facsimile-detection-title {{
+    font-size: 0.85rem !important;
+  }}
+  .file-pool-card .facsimile-detection-sub {{
+    font-size: 0.75rem !important;
+  }}
+  .file-pool-card .facsimile-inline-btn button {{
+    min-height: 42px !important;
+    font-size: 0.9rem !important;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -1572,6 +1593,18 @@ def get_css(T: dict) -> str:
     padding: .55rem .8rem;
     margin-bottom: .3rem;
     transition: border-color .15s ease;
+  }}
+  .file-pool-card .file-item-b {{
+    padding: 0.35rem 0.5rem;
+    margin-bottom: 0.2rem;
+    border-radius: {_radius_sm};
+  }}
+  .file-pool-card .file-item-b-name {{
+    font-size: 0.82rem;
+  }}
+  .file-pool-card .file-item-b-badge {{
+    font-size: 0.75rem;
+    padding: 1px 5px;
   }}
   .file-item-b:hover {{
     border-color: {_acc_ring};
