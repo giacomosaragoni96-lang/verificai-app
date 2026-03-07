@@ -4996,17 +4996,23 @@ def _render_stage_final():
 
     # ── Header ────────────────────────────────────────────────────────────────
     st.markdown(
-        '<div style="background:linear-gradient(135deg,#059669 0%,#10B981 100%);'
-        'border-radius:16px;padding:1.1rem 1.4rem;margin-bottom:.9rem;">'
-        '<div style="display:flex;align-items:center;gap:14px;">'
-        '<span style="font-size:2rem;">🎉</span>'
-        '<div style="flex:1;">'
-        '<div style="font-family:DM Sans,sans-serif;font-size:1.35rem;font-weight:900;color:#fff;">La verifica è pronta!</div>'
-        '<div style="font-size:1rem;color:#ffffffcc;margin-top:3px;">' + mat_str + ' · ' + scu_str + ' · ' + arg_str + '</div>'
-        '</div></div>'
-        '<div style="font-size:.88rem;color:#ffffff99;margin-top:.5rem;padding-top:.45rem;border-top:1px solid #ffffff22;">'
-        'Controlla sempre il contenuto prima di distribuire agli studenti.'
-        '</div></div>',
+        f'<div style="background:{T["card"]};border:1.5px solid {T["border2"]};'
+        f'border-left:4px solid #10B981;border-radius:16px;padding:1.1rem 1.4rem;margin-bottom:.9rem;'
+        f'box-shadow:0 2px 16px rgba(16,185,129,.10);">'
+        f'<div style="display:flex;align-items:center;gap:14px;">'
+        f'<div style="background:linear-gradient(135deg,#059669,#10B981);border-radius:12px;'
+        f'width:48px;height:48px;display:flex;align-items:center;justify-content:center;'
+        f'flex-shrink:0;font-size:1.6rem;">🎉</div>'
+        f'<div style="flex:1;">'
+        f'<div style="font-family:DM Sans,sans-serif;font-size:1.3rem;font-weight:900;'
+        f'color:{T["text"]};">La verifica è pronta!</div>'
+        f'<div style="font-size:.95rem;color:{T["text2"]};margin-top:3px;font-family:DM Sans,sans-serif;">'
+        + mat_str + ' · ' + scu_str + ' · ' + arg_str +
+        f'</div></div></div>'
+        f'<div style="font-size:.82rem;color:{T["muted"]};margin-top:.55rem;padding-top:.4rem;'
+        f'border-top:1px solid {T["border"]};font-family:DM Sans,sans-serif;">'
+        f'⚠️ Controlla sempre il contenuto prima di distribuire agli studenti.'
+        f'</div></div>',
         unsafe_allow_html=True
     )
 

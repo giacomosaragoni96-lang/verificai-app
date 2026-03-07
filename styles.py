@@ -2438,6 +2438,7 @@ def get_css(T: dict) -> str:
     flex: 1 !important;
     display: flex !important;
     flex-direction: column !important;
+    height: 100% !important;
   }}
 
   .variant-card {{
@@ -2450,7 +2451,8 @@ def get_css(T: dict) -> str:
     flex-direction: column;
     gap: .5rem;
     flex: 1;
-    min-height: 120px;
+    height: 100%;
+    min-height: 160px;
     position: relative;
     overflow: hidden;
     transition: border-color .2s ease, box-shadow .2s ease, transform .15s ease;
@@ -2511,31 +2513,41 @@ def get_css(T: dict) -> str:
   /* ════════════════════════════════════════════════════════════════════════
      DOWNLOAD CTA — pulsante oro in STAGE_FINAL
      ════════════════════════════════════════════════════════════════════════ */
+  @keyframes dl-pulse {{
+    0%, 100% {{ box-shadow: 0 4px 28px #D9770660, 0 0 0 0 #F59E0B00; }}
+    50%       {{ box-shadow: 0 6px 36px #D9770680, 0 0 0 6px #F59E0B22; }}
+  }}
   .dl-cta-wrap {{
-    margin-bottom: 1rem;
+    margin-bottom: 1.1rem;
   }}
   .dl-cta-wrap button {{
-    background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%) !important;
-    color: #fff !important;
-    -webkit-text-fill-color: #fff !important;
-    border: none !important;
-    border-radius: 14px !important;
-    font-size: 1.08rem !important;
+    background: linear-gradient(135deg, #D97706 0%, #F59E0B 60%, #FCD34D 100%) !important;
+    color: #1C1000 !important;
+    -webkit-text-fill-color: #1C1000 !important;
+    border: 2px solid #F59E0B !important;
+    border-radius: 16px !important;
+    font-size: 1.22rem !important;
     font-weight: 900 !important;
-    letter-spacing: .04em !important;
-    min-height: 62px !important;
-    box-shadow: 0 4px 24px #D9770650, 0 1px 4px #D9770630 !important;
+    letter-spacing: .05em !important;
+    min-height: 76px !important;
+    box-shadow: 0 4px 28px #D9770660, 0 1px 6px #D9770630 !important;
+    animation: dl-pulse 2.6s ease-in-out infinite !important;
     transition: all .18s ease !important;
     font-family: 'DM Sans', sans-serif !important;
+    text-transform: uppercase !important;
   }}
   .dl-cta-wrap button:hover {{
     background: linear-gradient(135deg, #B45309 0%, #D97706 100%) !important;
-    box-shadow: 0 6px 32px #D9770670 !important;
-    transform: translateY(-2px) !important;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+    box-shadow: 0 8px 40px #D9770680 !important;
+    transform: translateY(-3px) !important;
+    animation: none !important;
   }}
   .dl-cta-wrap button:active {{
     transform: translateY(0) !important;
     box-shadow: 0 2px 10px #D9770640 !important;
+    animation: none !important;
   }}
 
   /* CTA variante (per colleghi) */
