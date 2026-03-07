@@ -91,6 +91,158 @@ def parse_esercizi(latex: str) -> list:
     return esercizi
 
 
+# ── BLOCK EXTRACTION & RECONSTRUCTION (usato da main e sidebar) ───────────────
+
+def extract_blocks(latex: str) -> tuple:
+    """Estrae preambolo e lista di blocchi {title, body} da LaTeX (split su \\subsection*)."""
+    parts = re.split(r"(?=\\subsection\*\{)", latex)
+    if len(parts) <= 1:
+        return latex, []
+    preamble = parts[0]
+    blocks = []
+    for raw in parts[1:]:
+        m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", raw, re.DOTALL)
+        if m:
+            body = m.group(2)
+            body = re.sub(r"\s*\\end\{document\}\s*$", "", body)
+            body = re.sub(r"\s*\\vfill.*$", "", body, flags=re.DOTALL)
+            body = re.sub(r"\s*%\s*GRIGLIA.*$", "", body, flags=re.DOTALL)
+            body = body.rstrip()
+            blocks.append({"title": m.group(1), "body": body})
+    return preamble, blocks
+
+
+def reconstruct_latex(preamble: str, blocks: list) -> str:
+    """Ricostruisce LaTeX da preambolo e lista di blocchi."""
+    r = preamble
+    for b in blocks:
+        r += f"\\subsection*{{{b['title']}}}\n{b['body']}\n\n"
+    if "\\end{document}" not in r:
+        r += "\n\\end{document}"
+    return r
+
+
+def extract_corpo(latex: str) -> str:
+    """Estrae solo il corpo esercizi (dopo \\end{center}) dal LaTeX completo."""
+    m = re.search(r"\\end\{center\}(.*?)(?=\\end\{document\})", latex, re.DOTALL)
+    return m.group(1).strip() if m else ""
+
+
+def extract_preambolo(latex: str) -> str:
+    """Estrae il preambolo fino a \\end{center} incluso."""
+    m = re.search(r"^(.*?\\end\{center\})", latex, re.DOTALL)
+    return m.group(1) + "\n" if m else ""
+
+
+# ── SCORE PARSING PER BLOCCO (UI Ricalibra Punteggi) ───────────────────────────
+
+def parse_pts_from_block_body(body: str) -> int:
+    """Somma tutti i (N pt) nel corpo del blocco."""
+    return sum(int(p) for p in re.findall(r'\((\d+)\s*pt\)', body))
+
+
+def valida_totale(pts_list: list, target: int) -> tuple:
+    """Ricalcola somma da zero, forza int. Restituisce (somma, ok, diff)."""
+    somma = sum(int(p) for p in pts_list)
+    return somma, (somma == target), (somma - target)
+
+
+def riscala_single_block(title: str, body: str, target_pts: int) -> str:
+    """Applica riscala_punti_custom su un singolo blocco, portando la somma a target_pts."""
+    if target_pts <= 0:
+        return body
+    mini = f"\\subsection*{{{title}}}\n{body}"
+    fixed = riscala_punti_custom(mini, [target_pts])
+    m = re.match(r'[^\n]*\n(.*)', fixed, re.DOTALL)
+    return m.group(1) if m else body
+
+
+def parse_items_from_block(body: str, title: str = "") -> list:
+    """
+    Parse sottopunti da corpo LaTeX (e opz. titolo).
+    Restituisce list di (label, short_text, pts) per il widget Ricalibra Punteggi.
+    """
+    auto_labels = list('abcdefghijklmnopqrstuvwxyz')
+    items = []
+
+    labeled = list(re.finditer(r'\\item\[([^\]]+)\]([^\n]*)', body))
+    if labeled:
+        for m in labeled:
+            label = m.group(1).strip()
+            text = m.group(2).strip()
+            pts_m = re.search(r'\((\d+)\s*pt\)', text)
+            pts = int(pts_m.group(1)) if pts_m else 0
+            clean = re.sub(r'\(\d+\s*pt\)', '', text).strip()
+            clean = re.sub(r'\s+', ' ', clean)
+            clean = re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', clean)
+            clean = re.sub(r'\$[^$]*\$', '[formula]', clean)
+            short = (clean[:42] + '\u2026') if len(clean) > 42 else clean
+            items.append((label, short, pts))
+        return items
+
+    auto_idx = 0
+    for m in re.finditer(r'\\item\s+([^\n]+)', body):
+        text = m.group(1).strip()
+        pts_m = re.search(r'\((\d+)\s*pt\)', text)
+        pts = int(pts_m.group(1)) if pts_m else 0
+        clean = re.sub(r'\(\d+\s*pt\)', '', text).strip()
+        clean = re.sub(r'\s+', ' ', clean)
+        clean = re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', clean)
+        clean = re.sub(r'\$[^$]*\$', '[formula]', clean)
+        short = (clean[:42] + '\u2026') if len(clean) > 42 else clean
+        label = auto_labels[auto_idx] + ')' if auto_idx < len(auto_labels) else f'{auto_idx+1})'
+        items.append((label, short, pts))
+        auto_idx += 1
+
+    if items:
+        return items
+
+    if title:
+        pt_title = re.search(r'\((\d+)\s*pt\)', title)
+        if pt_title:
+            pts = int(pt_title.group(1))
+            clean_title = re.sub(r'\s*\(\d+\s*pt\)', '', title).strip()
+            clean_title = re.sub(r'\s+', ' ', clean_title)
+            short = (clean_title[:42] + '\u2026') if len(clean_title) > 42 else clean_title
+            items.append(("—", short, pts))
+            return items
+
+    pt_in_body = re.findall(r'\((\d+)\s*pt\)', body)
+    if pt_in_body:
+        total = sum(int(p) for p in pt_in_body)
+        short = (body.strip()[:42] + '\u2026') if len(body.strip()) > 42 else body.strip()
+        short = re.sub(r'\s+', ' ', re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', short))
+        short = re.sub(r'\$[^$]*\$', '[formula]', short)
+        items.append(("—", short or "Esercizio", total))
+        return items
+
+    return items
+
+
+def apply_item_pts_to_body(body: str, new_pts_list: list) -> str:
+    """Sostituisce (X pt) su ogni \\item (o unico (N pt) nel body) con i valori da new_pts_list."""
+    if not new_pts_list:
+        return body
+    count = [0]
+
+    def replacer(m):
+        line = m.group(0)
+        i = count[0]
+        count[0] += 1
+        if i < len(new_pts_list):
+            line = re.sub(r'\s*\(\d+\s*pt\)', '', line).rstrip()
+            line += f' ({new_pts_list[i]} pt)'
+        return line
+
+    if re.search(r'\\item\[', body):
+        return re.sub(r'\\item\[[^\]]*\][^\n]*', replacer, body)
+    if re.search(r'\\item\s+', body):
+        return re.sub(r'\\item\s+[^\n]+', replacer, body)
+    if len(new_pts_list) == 1:
+        return re.sub(r'\(\d+\s*pt\)', f'({new_pts_list[0]} pt)', body, count=1)
+    return body
+
+
 def build_griglia_latex(esercizi: list, punti_totali: int) -> str:
     """
     Genera il codice LaTeX della griglia di valutazione a partire

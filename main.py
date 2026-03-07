@@ -26,6 +26,9 @@ from latex_utils import (
     compila_pdf, inietta_griglia, riscala_punti, riscala_punti_custom,
     fix_items_environment, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
+    extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
+    parse_pts_from_block_body, valida_totale, riscala_single_block,
+    parse_items_from_block, apply_item_pts_to_body,
 )
 from config import (
     APP_NAME, APP_ICON, APP_TAGLINE, SHARE_URL, FEEDBACK_FORM_URL,
@@ -256,168 +259,6 @@ def _render_back_button(label: str = "← Indietro", key: str = "btn_back") -> b
     return clicked
 
 
-# ── Block parsing ─────────────────────────────────────────────────────────────
-
-def _extract_blocks(latex: str) -> tuple:
-    parts = re.split(r"(?=\\subsection\*\{)", latex)
-    if len(parts) <= 1:
-        return latex, []
-    preamble = parts[0]
-    blocks = []
-    for raw in parts[1:]:
-        m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", raw, re.DOTALL)
-        if m:
-            body = m.group(2)
-            # Rimuovi \end{document}
-            body = re.sub(r"\s*\\end\{document\}\s*$", "", body)
-            # Rimuovi la griglia di valutazione (tabella finale) e tutto ciò che segue \vfill
-            # La griglia è iniettata dopo \vfill % GRIGLIA o semplicemente dopo \vfill
-            body = re.sub(r"\s*\\vfill.*$", "", body, flags=re.DOTALL)
-            # Rimuovi anche eventuali \begin{tabular} residui (griglia senza \vfill)
-            body = re.sub(r"\s*%\s*GRIGLIA.*$", "", body, flags=re.DOTALL)
-            body = body.rstrip()
-            blocks.append({"title": m.group(1), "body": body})
-    return preamble, blocks
-
-
-def _reconstruct_latex(preamble: str, blocks: list) -> str:
-    r = preamble
-    for b in blocks:
-        r += f"\\subsection*{{{b['title']}}}\n{b['body']}\n\n"
-    if "\\end{document}" not in r:
-        r += "\n\\end{document}"
-    return r
-
-
-def _extract_corpo(latex: str) -> str:
-    """Estrae solo il corpo esercizi (dopo \\end{center}) dal LaTeX completo."""
-    m = re.search(r"\\end\{center\}(.*?)(?=\\end\{document\})", latex, re.DOTALL)
-    return m.group(1).strip() if m else ""
-
-
-def _extract_preambolo(latex: str) -> str:
-    """Estrae il preambolo fino a \\end{center} incluso."""
-    m = re.search(r"^(.*?\\end\{center\})", latex, re.DOTALL)
-    return m.group(1) + "\n" if m else ""
-
-
-# ── Score helpers ──────────────────────────────────────────────────────────────
-
-def _parse_pts_from_block_body(body: str) -> int:
-    """Somma tutti i (N pt) nel CORPO del blocco, escludendo il titolo."""
-    return sum(int(p) for p in re.findall(r'\((\d+)\s*pt\)', body))
-
-
-def _valida_totale(pts_list: list, target: int) -> tuple:
-    """Ricalcola somma da zero, forza int. Restituisce (somma, ok, diff)."""
-    somma = sum(int(p) for p in pts_list)
-    return somma, (somma == target), (somma - target)
-
-
-def _riscala_single_block(title: str, body: str, target_pts: int) -> str:
-    """
-    Applica riscala_punti_custom su un singolo blocco (titolo + corpo),
-    preservando le proporzioni tra gli item e portando la somma a target_pts.
-    Usato dopo ogni regen AI per ripristinare i punti corretti dell'esercizio.
-    """
-    if target_pts <= 0:
-        return body
-    mini = f"\\subsection*{{{title}}}\n{body}"
-    fixed = riscala_punti_custom(mini, [target_pts])
-    m = re.match(r'[^\n]*\n(.*)', fixed, re.DOTALL)
-    return m.group(1) if m else body
-
-
-def _parse_items_from_body(body: str, title: str = "") -> list:
-    """Parse sottopunti dal corpo LaTeX (e opzionalmente dal titolo).
-    Supporta: \\item[a)] Testo (X pt), \\item Testo (X pt), e titolo con (X pt) per esercizi senza \\item.
-    Restituisce list di (label, short_text, pts).
-    """
-    auto_labels = list('abcdefghijklmnopqrstuvwxyz')
-    items = []
-
-    # Pattern 1: \\item[label] — formato principale
-    labeled = list(re.finditer(r'\\item\[([^\]]+)\]([^\n]*)', body))
-    if labeled:
-        for m in labeled:
-            label = m.group(1).strip()
-            text  = m.group(2).strip()
-            pts_m = re.search(r'\((\d+)\s*pt\)', text)
-            pts   = int(pts_m.group(1)) if pts_m else 0
-            clean = re.sub(r'\(\d+\s*pt\)', '', text).strip()
-            clean = re.sub(r'\s+', ' ', clean)
-            clean = re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', clean)
-            clean = re.sub(r'\$[^$]*\$', '[formula]', clean)
-            short = (clean[:42] + '\u2026') if len(clean) > 42 else clean
-            items.append((label, short, pts))
-        return items
-
-    # Pattern 2: \\item senza label — fallback con auto-etichette
-    auto_idx = 0
-    for m in re.finditer(r'\\item\s+([^\n]+)', body):
-        text  = m.group(1).strip()
-        pts_m = re.search(r'\((\d+)\s*pt\)', text)
-        pts   = int(pts_m.group(1)) if pts_m else 0
-        clean = re.sub(r'\(\d+\s*pt\)', '', text).strip()
-        clean = re.sub(r'\s+', ' ', clean)
-        clean = re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', clean)
-        clean = re.sub(r'\$[^$]*\$', '[formula]', clean)
-        short = (clean[:42] + '\u2026') if len(clean) > 42 else clean
-        label = auto_labels[auto_idx] + ')' if auto_idx < len(auto_labels) else f'{auto_idx+1})'
-        items.append((label, short, pts))
-        auto_idx += 1
-
-    if items:
-        return items
-
-    # Pattern 3: nessun \item nel body — punteggio nel titolo (es. "Equazione della Parabola (25 pt)")
-    if title:
-        pt_title = re.search(r'\((\d+)\s*pt\)', title)
-        if pt_title:
-            pts = int(pt_title.group(1))
-            clean_title = re.sub(r'\s*\(\d+\s*pt\)', '', title).strip()
-            clean_title = re.sub(r'\s+', ' ', clean_title)
-            short = (clean_title[:42] + '\u2026') if len(clean_title) > 42 else clean_title
-            items.append(("—", short, pts))
-            return items
-
-    # Pattern 4: (N pt) ovunque nel body ma senza \item (es. paragrafo unico con punteggio)
-    pt_in_body = re.findall(r'\((\d+)\s*pt\)', body)
-    if pt_in_body:
-        total = sum(int(p) for p in pt_in_body)
-        short = (body.strip()[:42] + '\u2026') if len(body.strip()) > 42 else body.strip()
-        short = re.sub(r'\s+', ' ', re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', short))
-        short = re.sub(r'\$[^$]*\$', '[formula]', short)
-        items.append(("—", short or "Esercizio", total))
-        return items
-
-    return items
-
-def _apply_item_pts_direct(body: str, new_pts_list: list) -> str:
-    """Sostituisce (X pt) su ogni riga \\item con i valori da new_pts_list.
-    Supporta \\item[label], \\item senza label, e body senza \\item (un solo punteggio)."""
-    if not new_pts_list:
-        return body
-    count = [0]
-    def replacer(m):
-        line = m.group(0)
-        i = count[0]
-        count[0] += 1
-        if i < len(new_pts_list):
-            line = re.sub(r'\s*\(\d+\s*pt\)', '', line).rstrip()
-            line += f' ({new_pts_list[i]} pt)'
-        return line
-    # Se ci sono \item, sostituisci (N pt) su ogni \item
-    if re.search(r'\\item\[', body):
-        return re.sub(r'\\item\[[^\]]*\][^\n]*', replacer, body)
-    if re.search(r'\\item\s+', body):
-        return re.sub(r'\\item\s+[^\n]+', replacer, body)
-    # Nessun \item (esercizio con punteggio solo in titolo o un solo (N pt) nel body)
-    if len(new_pts_list) == 1:
-        return re.sub(r'\(\d+\s*pt\)', f'({new_pts_list[0]} pt)', body, count=1)
-    return body
-
-
 # Parole chiave che indicano che l'utente sta chiedendo una modifica ai punteggi.
 # In quel caso il prompt AI viene bloccato e viene mostrato un suggerimento
 # a usare il pannello Ricalibra Punteggi.
@@ -566,8 +407,8 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
     argomento       = gp.get("argomento", "")
 
     latex_a    = vA.get("latex", "")
-    corpo_a    = _extract_corpo(latex_a)
-    preamb_a   = _extract_preambolo(latex_a)
+    corpo_a    = extract_corpo(latex_a)
+    preamb_a   = extract_preambolo(latex_a)
 
     def _post(corpo: str) -> str:
         corpo = fix_items_environment(corpo)
@@ -586,7 +427,10 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
         return latex, pdf
 
     if tipo == "B":
-        resp   = model_v.generate_content(prompt_versione_b(corpo_a))
+        try:
+            resp   = model_v.generate_content(prompt_versione_b(corpo_a))
+        except Exception as e:
+            raise RuntimeError(f"Variante B: {e}") from e
         corpo  = pulisci_corpo_latex(resp.text.replace("```latex","").replace("```","").strip())
         corpo  = _post(corpo)
         preamb = preamb_a.replace("Versione A", "Versione B")
@@ -597,9 +441,12 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
                 "latex_originale": latex}
 
     if tipo == "R":
-        resp  = model_v.generate_content(
-            prompt_versione_ridotta(corpo_a, materia, perc_ridotta,
-                                    mostra_punteggi, punti_totali))
+        try:
+            resp  = model_v.generate_content(
+                prompt_versione_ridotta(corpo_a, materia, perc_ridotta,
+                                        mostra_punteggi, punti_totali))
+        except Exception as e:
+            raise RuntimeError(f"Verifica ridotta: {e}") from e
         corpo = pulisci_corpo_latex(resp.text.replace("```latex","").replace("```","").strip())
         corpo = _post(corpo)
         latex, pdf = _compile(preamb_a + "\n" + corpo)
@@ -607,7 +454,10 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
                 "latex_originale": latex}
 
     if tipo == "S":
-        resp     = model_v.generate_content(prompt_soluzioni(corpo_a, materia))
+        try:
+            resp     = model_v.generate_content(prompt_soluzioni(corpo_a, materia))
+        except Exception as e:
+            raise RuntimeError(f"Soluzioni: {e}") from e
         testo    = resp.text.strip()
         titolo_s = "Soluzioni — " + materia + ": " + argomento
         latex_s  = (
@@ -804,7 +654,7 @@ settings   = render_sidebar(
     giorni_al_reset_func=_giorni_al_reset, compila_pdf_func=compila_pdf,
     supabase_client=supabase, current_stage=st.session_state.stage,
     THEMES=THEMES, THEME_LABELS=THEME_LABELS,
-    extract_blocks_func=_extract_blocks,
+    extract_blocks_func=extract_blocks,
     pdf_to_images_func=pdf_to_images_bytes,
 )
 modello_id = settings.get("modello_id", "gemini-2.5-flash-lite")
@@ -3309,7 +3159,7 @@ def _lancia_generazione(
             "perc_ridotta": 25, "modello_id": _modello_id_eff,
         }
 
-        preamble, blocks = _extract_blocks(st.session_state.verifiche["A"]["latex"])
+        preamble, blocks = extract_blocks(st.session_state.verifiche["A"]["latex"])
         st.session_state.review_preamble  = preamble
         st.session_state.review_blocks    = blocks
         st.session_state.review_sel_idx   = 0
@@ -4300,7 +4150,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                                 del st.session_state[_k]
                         if "recalibra_pts" in st.session_state:
                             del st.session_state["recalibra_pts"]
-                        _undo_latex = _reconstruct_latex(
+                        _undo_latex = reconstruct_latex(
                             st.session_state.review_preamble,
                             st.session_state.review_blocks
                         )
@@ -4410,7 +4260,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     _grand_total_rc   = 0
 
                     for _i, _b in enumerate(st.session_state.review_blocks):
-                        _items_rc = _parse_items_from_body(_b["body"], _b.get("title", ""))
+                        _items_rc = parse_items_from_block(_b["body"], _b.get("title", ""))
                         _title_rc = re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]).strip()
                         _title_rc = (_title_rc[:30] + "…") if len(_title_rc) > 30 else _title_rc
 
@@ -4517,7 +4367,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         # Applica item pts direttamente ai blocchi
                         for _i, _b in enumerate(st.session_state.review_blocks):
                             if _all_new_item_pts.get(_i):
-                                _new_body_rc = _apply_item_pts_direct(
+                                _new_body_rc = apply_item_pts_to_body(
                                     _b["body"], _all_new_item_pts[_i]
                                 )
                                 st.session_state.review_blocks[_i]["body"] = _new_body_rc
@@ -4529,7 +4379,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                                     f"{_clean_rc} ({_ex_tot_rc} pt)"
                                 )
 
-                        _latex_rc = _reconstruct_latex(
+                        _latex_rc = reconstruct_latex(
                             st.session_state.review_preamble,
                             st.session_state.review_blocks
                         )
@@ -4552,7 +4402,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                             _imgs_rc, _ = pdf_to_images_bytes(_pdf_rc)
                             st.session_state.preview_images = _imgs_rc or []
                             st.session_state.preview_page   = 0
-                            _new_preamble, _new_blocks = _extract_blocks(_latex_rc)
+                            _new_preamble, _new_blocks = extract_blocks(_latex_rc)
                             if _new_blocks:
                                 st.session_state.review_preamble = _new_preamble
                                 st.session_state.review_blocks   = _new_blocks
@@ -4620,7 +4470,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
         if _pts_custom_qr and len(_pts_custom_qr) == n_blocks:
             _qr_target_pts = int(_pts_custom_qr[idx])
         else:
-            _qr_target_pts = _parse_pts_from_block_body(body)
+            _qr_target_pts = parse_pts_from_block_body(body)
 
         if mostra_punteggi and _qr_target_pts > 0:
             _qr_punti_nota = (
@@ -4670,12 +4520,12 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     _qr_new_body  = _qr_nuovo
                 _qr_new_title = re.sub(r'\s*\(\d+\s*pt\)', '', _qr_new_title).strip()
                 if mostra_punteggi and _qr_target_pts > 0:
-                    _qr_new_body = _riscala_single_block(_qr_new_title, _qr_new_body, _qr_target_pts)
+                    _qr_new_body = riscala_single_block(_qr_new_title, _qr_new_body, _qr_target_pts)
                 st.session_state.review_blocks[idx]["title"] = _qr_new_title
                 st.session_state.review_blocks[idx]["body"]  = _qr_new_body
                 if "recalibra_pts" in st.session_state:
                     del st.session_state["recalibra_pts"]
-                _qr_latex = _reconstruct_latex(
+                _qr_latex = reconstruct_latex(
                     st.session_state.review_preamble,
                     st.session_state.review_blocks
                 )
@@ -4723,10 +4573,10 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             if _pts_custom and len(_pts_custom) == n_blocks:
                 _exercise_target_pts = int(_pts_custom[idx])
             else:
-                _exercise_target_pts = _parse_pts_from_block_body(body)
+                _exercise_target_pts = parse_pts_from_block_body(body)
 
             # Il prompt dice all'AI quanti pt deve assegnare a questo esercizio.
-            # La funzione _riscala_single_block lo corregge deterministicamente dopo.
+            # La funzione riscala_single_block lo corregge deterministicamente dopo.
             if mostra_punteggi and _exercise_target_pts > 0:
                 punti_nota = (
                     f"Assegna esattamente {_exercise_target_pts} pt in totale a questo esercizio, "
@@ -4795,7 +4645,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     # Correzione deterministica dei punti: porta la somma esatta
                     # al valore che aveva l'esercizio prima della modifica AI.
                     if mostra_punteggi and _exercise_target_pts > 0:
-                        new_body = _riscala_single_block(new_title, new_body, _exercise_target_pts)
+                        new_body = riscala_single_block(new_title, new_body, _exercise_target_pts)
 
                     st.session_state.review_blocks[idx]["title"] = new_title
                     st.session_state.review_blocks[idx]["body"]  = new_body
@@ -4805,7 +4655,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         del st.session_state["recalibra_pts"]
 
                     # Fix: ricompila il PDF e aggiorna la preview dopo la modifica
-                    _latex_rw = _reconstruct_latex(
+                    _latex_rw = reconstruct_latex(
                         st.session_state.review_preamble,
                         st.session_state.review_blocks
                     )
@@ -4835,7 +4685,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
         _ct_pts = st.session_state.get("recalibra_pts", [])
         _ct_target_pts = (
             int(_ct_pts[idx]) if _ct_pts and len(_ct_pts) == n_blocks
-            else _parse_pts_from_block_body(body)
+            else parse_pts_from_block_body(body)
         )
         _ct_punti_nota = (
             f"Assegna esattamente {_ct_target_pts} pt totali, distribuendoli tra i sotto-punti con (N pt) su ogni \\item."
@@ -4882,12 +4732,12 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     _ct_title = title
                     _ct_body  = _ct_resp
                 if mostra_punteggi and _ct_target_pts > 0:
-                    _ct_body = _riscala_single_block(_ct_title, _ct_body, _ct_target_pts)
+                    _ct_body = riscala_single_block(_ct_title, _ct_body, _ct_target_pts)
                 st.session_state.review_blocks[idx] = {
                     "title": _ct_title or title,
                     "body":  _ct_body,
                 }
-                _ct_latex = _reconstruct_latex(
+                _ct_latex = reconstruct_latex(
                     st.session_state.review_preamble,
                     st.session_state.review_blocks
                 )
@@ -4925,7 +4775,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 
     if confirm_pdf:
         with st.spinner("⏳ Compilazione PDF finale…"):
-            latex_final = _reconstruct_latex(
+            latex_final = reconstruct_latex(
                 st.session_state.review_preamble,
                 st.session_state.review_blocks
             )
@@ -5572,7 +5422,7 @@ if _share_param and isinstance(_share_param, str) and len(_share_param) >= 6:
                         st.session_state.verifiche["A"]["preview"] = True
                         _sh_imgs_2, _ = pdf_to_images_bytes(_sh_pdf)
                         st.session_state.preview_images = _sh_imgs_2 or []
-                    _sh_pre, _sh_blks = _extract_blocks(_sh_lat)
+                    _sh_pre, _sh_blks = extract_blocks(_sh_lat)
                     if _sh_blks:
                         st.session_state.review_preamble = _sh_pre
                         st.session_state.review_blocks = _sh_blks

@@ -6,21 +6,25 @@ import time
 # Dopo il login l'URL diventa: https://tuaapp.streamlit.app/?rt=TOKEN
 # Il token sopravvive al refresh perché è nell'URL stesso.
 
-# ── Palette Notte — hardcoded per non importare config ───────────────────────
-# (evita dipendenze circolari; questi valori devono rimanere in sync con config.py)
-_N_BG       = "#0D1117"   # sfondo pagina
-_N_CARD     = "#1C2128"   # card principale
-_N_CARD2    = "#21262D"   # superficie secondaria
-_N_BG2      = "#161B22"   # terzo livello
-_N_TEXT     = "#E6EDF3"   # testo principale
-_N_TEXT2    = "#8B949E"   # testo secondario
-_N_MUTED    = "#6E7681"   # testo muted
-_N_BORDER   = "#30363D"   # bordo
-_N_BORDER2  = "#3D444D"   # bordo medio
-_N_ACC      = "#58A6FF"   # accent primario (blu elettrico)
-_N_ACC2     = "#79C0FF"   # accent secondario
-_N_ACC_L    = "#0D2340"   # accent light (sfondo pill, dark)
-_N_SB_DARK  = "#010409"   # sidebar/top bar ultra-dark
+# Palette login: tema Notte da config (singola fonte di verità)
+try:
+    from config import THEMES
+    _N = THEMES.get("notte", {})
+except ImportError:
+    _N = {}
+_N_BG       = _N.get("bg", "#0D1117")
+_N_CARD     = _N.get("card", "#1C2128")
+_N_CARD2    = _N.get("card2", "#21262D")
+_N_BG2      = _N.get("bg2", "#161B22")
+_N_TEXT     = _N.get("text", "#E6EDF3")
+_N_TEXT2    = _N.get("text2", "#8B949E")
+_N_MUTED    = _N.get("muted", "#6E7681")
+_N_BORDER   = _N.get("border", "#30363D")
+_N_BORDER2  = _N.get("border2", "#3D444D")
+_N_ACC      = _N.get("accent", "#58A6FF")
+_N_ACC2     = _N.get("accent2", "#79C0FF")
+_N_ACC_L    = _N.get("accent_light", "#0D2340")
+_N_SB_DARK  = "#010409"
 
 
 def get_cookie_controller():

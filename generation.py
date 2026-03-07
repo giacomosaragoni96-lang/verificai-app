@@ -67,6 +67,14 @@ from latex_utils import (
 
 # ── HELPER INTERNO ────────────────────────────────────────────────────────────────
 
+def _safe_generate(model, prompt_or_parts, step_name: str = "API"):
+    """Esegue model.generate_content; in caso di errore rilancia RuntimeError con contesto."""
+    try:
+        return model.generate_content(prompt_or_parts)
+    except Exception as e:
+        raise RuntimeError(f"{step_name}: {e}") from e
+
+
 def _pulisci_risposta(testo: str) -> str:
     return testo.replace("```latex", "").replace("```", "").strip()
 
@@ -375,7 +383,7 @@ def genera_verifica(
 
     # ── 1. TITOLO ─────────────────────────────────────────────────────────────
     _avanza("✍️  Elaborazione titolo…")
-    resp_titolo = model.generate_content(prompt_titolo(materia, argomento))
+    resp_titolo = _safe_generate(model, prompt_titolo(materia, argomento), "Generazione titolo")
     titolo_clean = resp_titolo.text.strip().strip('"').strip("'").strip()
     if not titolo_clean:
         titolo_clean = argomento.strip()
@@ -406,13 +414,15 @@ def genera_verifica(
         inp.append({"mime_type": im["mime_type"], "data": im["data"]})
         inp[0] += f"\nUsa l'immagine come riferimento per l'Esercizio {im['idx']}."
 
-    ra = model.generate_content(inp)
+    ra = _safe_generate(model, inp, "Generazione esercizi")
     corpo_a = pulisci_corpo_latex(_pulisci_risposta(ra.text))
 
     # ── 4. CONTROLLO QUALITÀ ──────────────────────────────────────────────────
     _avanza("🔎  Controllo qualità e correzione errori…")
-    rc = model.generate_content(
-        prompt_controllo_qualita(materia, difficolta, corpo_a, mostra_punteggi)
+    rc = _safe_generate(
+        model,
+        prompt_controllo_qualita(materia, difficolta, corpo_a, mostra_punteggi),
+        "Controllo qualità",
     )
     corpo_corretto = pulisci_corpo_latex(_pulisci_risposta(rc.text))
 
@@ -583,7 +593,7 @@ def genera_verifica_streaming(
 
     # ── 1. TITOLO ─────────────────────────────────────────────────────────────
     _avanza("✍️  Elaborazione titolo…")
-    resp_titolo = model.generate_content(prompt_titolo(materia, argomento))
+    resp_titolo = _safe_generate(model, prompt_titolo(materia, argomento), "Generazione titolo")
     titolo_clean = resp_titolo.text.strip().strip('"').strip("'").strip()
     if not titolo_clean:
         titolo_clean = argomento.strip()
@@ -638,8 +648,10 @@ def genera_verifica_streaming(
 
     # ── 4. CONTROLLO QUALITÀ ──────────────────────────────────────────────────
     _avanza("🔎  Controllo qualità e correzione errori…")
-    rc = model.generate_content(
-        prompt_controllo_qualita(materia, difficolta, corpo_a, mostra_punteggi)
+    rc = _safe_generate(
+        model,
+        prompt_controllo_qualita(materia, difficolta, corpo_a, mostra_punteggi),
+        "Controllo qualità",
     )
     corpo_corretto = pulisci_corpo_latex(_pulisci_risposta(rc.text))
     n_orig = len(re.findall(r"\\subsection\*", corpo_a))
