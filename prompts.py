@@ -39,25 +39,32 @@ def prompt_corpo_verifica(
     # ── CONTESTO MATHPIX OCR ──────────────────────────────────────────────────
     # Se il docente ha caricato un documento (verifica precedente, libro, appunti)
     # e Mathpix ha estratto il testo matematico, lo iniettiamo come contesto ad
-    # alta priorità. Il modello deve usarlo come riferimento per stile, struttura
-    # e terminologia — NON copiarlo letteralmente.
-    s_mathpix = (
-        f"\n\n╔══════════════════════════════════════════════════════════╗\n"
-        f"║  DOCUMENTO DI RIFERIMENTO — ESTRATTO DA MATHPIX OCR       ║\n"
-        f"╚══════════════════════════════════════════════════════════╝\n"
-        f"Il docente ha allegato un documento (verifica precedente / libro / appunti).\n"
-        f"Di seguito il suo contenuto matematico estratto con OCR preciso.\n"
-        f"ISTRUZIONI D'USO:\n"
-        f"• Analizza lo STILE degli esercizi (tipologia, livello, formulazione).\n"
-        f"• Usa la stessa TERMINOLOGIA e la stessa struttura grammaticale.\n"
-        f"• Rispetta il LIVELLO DI DIFFICOLTÀ implicito nel documento.\n"
-        f"• NON copiare esercizi pari pari — generane di nuovi ISPIRATI al documento.\n"
-        f"• Se il documento contiene formule/grafici, prendi spunto per i dati.\n\n"
-        f"CONTENUTO OCR:\n"
-        f"{'─' * 60}\n"
-        f"{mathpix_context.strip()}\n"
-        f"{'─' * 60}\n"
-    ) if mathpix_context and mathpix_context.strip() else ""
+    # alta priorità. Tronchiamo a 3000 chars per non saturare la context window.
+    _MAX_MATHPIX_CHARS = 3000
+    if mathpix_context and mathpix_context.strip():
+        _mctx = mathpix_context.strip()
+        if len(_mctx) > _MAX_MATHPIX_CHARS:
+            _mctx = _mctx[:_MAX_MATHPIX_CHARS] + "\n… [contesto troncato per brevità]"
+        s_mathpix = (
+            f"\n\n╔══════════════════════════════════════════════════════════╗\n"
+            f"║  DOCUMENTO DI RIFERIMENTO — ESTRATTO DA MATHPIX OCR       ║\n"
+            f"╚══════════════════════════════════════════════════════════╝\n"
+            f"Il docente ha allegato un documento (verifica precedente / libro / appunti).\n"
+            f"Di seguito il suo contenuto matematico estratto con OCR preciso.\n"
+            f"ISTRUZIONI D'USO:\n"
+            f"• Analizza lo STILE degli esercizi (tipologia, livello, formulazione).\n"
+            f"• Usa la stessa TERMINOLOGIA e la stessa struttura grammaticale.\n"
+            f"• Rispetta il LIVELLO DI DIFFICOLTÀ implicito nel documento.\n"
+            f"• NON copiare esercizi pari pari — generane di nuovi ISPIRATI al documento.\n"
+            f"• Se il documento contiene formule/grafici, prendi spunto per i dati.\n"
+            f"• Mantieni coerenza con gli argomenti trattati nel documento.\n\n"
+            f"CONTENUTO OCR:\n"
+            f"{'─' * 60}\n"
+            f"{_mctx}\n"
+            f"{'─' * 60}\n"
+        )
+    else:
+        s_mathpix = ""
 
     if mostra_punteggi:
         punti_rule = (
@@ -97,6 +104,35 @@ def prompt_corpo_verifica(
     else:
         grafici_rule = ""
 
+    # ── Regola diversità tipologie — in base al numero di esercizi ─────────────
+    if num_esercizi <= 2:
+        diversita_rule = (
+            "- VARIETÀ TIPOLOGIE: con soli 1-2 esercizi usa domande aperte articolate "
+            "in più sottopunti (a, b, c…) che coprono sia la procedura sia la comprensione concettuale."
+        )
+    elif num_esercizi <= 4:
+        diversita_rule = (
+            "- VARIETÀ TIPOLOGIE PEDAGOGICA: devi mixare ALMENO 2 tipologie diverse tra quelle adatte alla materia:\n"
+            "  • Esercizio aperto (calcolo / dimostrazione / analisi)\n"
+            "  • Scelta multipla (\\begin{enumerate}[a)] con 4 opzioni) — 1 sola corretta\n"
+            "  • Vero/Falso ($\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F})\n"
+            "  • Completamento (\\underline{\\hspace{3cm}})\n"
+            "  Non clonare la stessa tipologia per tutti gli esercizi.\n"
+            "  Disponi gli esercizi dal più semplice al più complesso (facilità decrescente)."
+        )
+    else:
+        diversita_rule = (
+            "- VARIETÀ TIPOLOGIE PEDAGOGICA — REGOLA FONDAMENTALE:\n"
+            "  Distribuisci le tipologie su tutti gli esercizi per valutare competenze diverse:\n"
+            f"  • ~{max(1, num_esercizi // 3)} esercizi aperti (calcolo / dimostrazione / analisi / problema)\n"
+            f"  • ~{max(1, num_esercizi // 4)} esercizi a scelta multipla (4 opzioni, 1 sola corretta)\n"
+            f"  • ~{max(1, num_esercizi // 5)} esercizi Vero/Falso o completamento\n"
+            "  • I restanti: domande di comprensione concettuale, definizioni, esempi.\n"
+            "  NON generare 5+ esercizi tutti della stessa tipologia.\n"
+            "  L'ordine deve seguire la tassonomia di Bloom: ricorda → comprendi → applica → analizza.\n"
+            "  Il primo esercizio deve essere accessibile anche agli studenti in difficoltà."
+        )
+
     return (
         f"Sei un docente esperto di {materia} e LaTeX. Genera SOLO il corpo degli esercizi "
         f"(senza preambolo, senza \\documentclass, senza \\begin{{document}}) per una verifica su: {argomento}.\n"
@@ -110,6 +146,7 @@ def prompt_corpo_verifica(
         f"- BILANCIAMENTO CONTESTO E MODELLAZIONE: NON esagerare con i problemi applicati alla realtà o fortemente "
         f"interdisciplinari. MASSIMO 1 o 2 esercizi possono essere contestualizzati. I restanti DEVONO essere "
         f"esercizi canonici, diretti e focalizzati sulla procedura pura.\n"
+        f"{diversita_rule}\n"
         f"- REGISTRO LINGUISTICO — REGOLA ASSOLUTA: il testo degli esercizi deve essere CONCISO e DIRETTO.\n"
         f"- DATI PULITI — REGOLA ASSOLUTA: prima di scrivere ogni esercizio, risolvilo mentalmente tu stesso. "
         f"Scegli SOLO dati che portano a risultati interi o frazioni semplici. MAI scegliere dati che rendono "
@@ -155,12 +192,17 @@ def prompt_controllo_qualita(
     difficolta: str,
     corpo_latex: str,
     mostra_punteggi: bool = True,
+    punti_totali: int = 100,
 ) -> str:
     if mostra_punteggi:
         punti_check = (
-            "CONTROLLO PUNTEGGI OBBLIGATORIO: prima di restituire il testo, somma TUTTI i (X pt) presenti.\n"
-            "La somma DEVE essere uguale alla somma originale. Se non lo è, ribilancia i punteggi.\n"
-            "Assicurati che ogni \\item abbia esattamente un (X pt) al termine del testo.\n\n"
+            f"CONTROLLO PUNTEGGI OBBLIGATORIO:\n"
+            f"1. Conta quanti \\item ci sono nel corpo.\n"
+            f"2. Somma TUTTI i valori (X pt) presenti.\n"
+            f"3. La somma DEVE essere ESATTAMENTE {punti_totali} pt.\n"
+            f"4. Ogni \\item DEVE avere esattamente un '(X pt)' alla fine.\n"
+            f"5. Se la somma non è {punti_totali}, ribilancia i punteggi proporzionalmente.\n"
+            f"6. NON inserire (X pt) nei titoli \\subsection* — solo negli \\item.\n\n"
         )
     else:
         punti_check = (
@@ -179,8 +221,12 @@ def prompt_controllo_qualita(
         f"e corretta? Se risolvo l'esercizio io stesso, ottengo una risposta pulita e sensata?\n"
         f"   - Esempi di ERRORI GRAVI: sistema sovradeterminato o contraddittorio, dati incoerenti (es. due condizioni "
         f"incompatibili), risposta che richiede conoscenze non adatte al livello, calcoli che portano a risultati assurdi.\n\n"
-        f"2. ADEGUATEZZA AL LIVELLO ({difficolta}): la complessità è appropriata?\n\n"
+        f"2. ADEGUATEZZA AL LIVELLO ({difficolta}): la complessità è appropriata per questo tipo di scuola?\n\n"
         f"3. UNIVOCITÀ: la domanda ha una sola risposta corretta e non è ambigua?\n\n"
+        f"4. COERENZA LATEX: le parentesi graffe sono bilanciate? Gli ambienti enumerate/itemize sono aperti e chiusi "
+        f"correttamente? Non ci sono comandi LaTeX non validi?\n\n"
+        f"5. SCELTA MULTIPLA: se presente, ogni domanda a scelta multipla deve avere ESATTAMENTE 4 opzioni "
+        f"e UNA SOLA risposta corretta. Le opzioni devono essere distinte e plausibili.\n\n"
         f"SE trovi problemi: CORREGGILI DIRETTAMENTE modificando i dati dell'esercizio finché l'esercizio sia "
         f"corretto, sensato e risolvibile. NON eliminare esercizi, correggili.\n\n"
         f"{punti_check}"

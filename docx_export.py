@@ -224,11 +224,12 @@ def _strip_latex_math(text: str) -> str:
 
 
 def _clean_latex_line(text: str) -> str:
+    """Strip LaTeX → plain text (formatting lost). Used for headers and parsing."""
     if not text:
         return ''
 
     text = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
-                  '[Grafico]', text, flags=re.DOTALL)
+                  '[Figura]', text, flags=re.DOTALL)
     text = re.sub(r'\\begin\{axis\}.*?\\end\{axis\}',
                   '[Grafico]', text, flags=re.DOTALL)
     text = re.sub(r'\\vspace\*?\{[^}]*\}', '', text)
@@ -245,6 +246,58 @@ def _clean_latex_line(text: str) -> str:
         r'\\(?:small|large|Large|LARGE|huge|Huge|normalsize|footnotesize)\b', '', text
     )
     return _strip_latex_math(text).strip()
+
+
+def _add_rich_runs(paragraph, text: str, base_size_pt: int = 11) -> None:
+    """
+    Aggiunge runs al paragrafo preservando \\textbf{} → bold e \\textit{} → italic.
+    Math inline ($...$) viene preservata come testo. TikZ → [Figura].
+    """
+    from docx.shared import Pt
+
+    # Rimuovi TikZ e grafico prima
+    text = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
+                  ' [Figura] ', text, flags=re.DOTALL)
+    text = re.sub(r'\\begin\{axis\}.*?\\end\{axis\}',
+                  ' [Grafico] ', text, flags=re.DOTALL)
+
+    # Tokenizza: cerca \textbf{...} e \textit{...}/\emph{...}
+    # Token: ('bold', content), ('italic', content), ('plain', content)
+    tokens: list[tuple[str, str]] = []
+    pattern = re.compile(
+        r'\\textbf\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}'
+        r'|\\(?:textit|emph)\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}'
+        r'|\\underline\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}'
+    )
+    last_end = 0
+    for m in pattern.finditer(text):
+        if m.start() > last_end:
+            tokens.append(('plain', text[last_end:m.start()]))
+        if m.group(1) is not None:
+            tokens.append(('bold', m.group(1)))
+        elif m.group(2) is not None:
+            tokens.append(('italic', m.group(2)))
+        else:
+            tokens.append(('underline', m.group(3)))
+        last_end = m.end()
+    if last_end < len(text):
+        tokens.append(('plain', text[last_end:]))
+
+    for kind, content in tokens:
+        # Pulisci contenuto
+        content = _strip_latex_math(content)
+        content = re.sub(r'\\[a-zA-Z]+\s*', '', content)
+        content = content.replace('{', '').replace('}', '').strip()
+        if not content:
+            continue
+        run = paragraph.add_run(content)
+        run.font.size = Pt(base_size_pt)
+        if kind == 'bold':
+            run.bold = True
+        elif kind == 'italic':
+            run.italic = True
+        elif kind == 'underline':
+            run.underline = True
 
 
 def _estrai_punti(text: str) -> str:
@@ -465,16 +518,46 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
         style.font.name = 'Arial'
         style.font.size = Pt(11)
 
-        # Titolo
+        # ── INTESTAZIONE PROFESSIONALE ────────────────────────────────────────────
+        # Riga istituto (campo vuoto da compilare)
+        p_ist = doc.add_paragraph()
+        p_ist.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r_ist = p_ist.add_run("Istituto: _________________________________________")
+        r_ist.font.size = Pt(9)
+        r_ist.font.color.rgb = None   # grigio di sistema
+        p_ist.paragraph_format.space_before = Pt(0)
+        p_ist.paragraph_format.space_after  = Pt(2)
+
+        # Titolo principale (grande, grassetto, centrato)
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after  = Pt(4)
         rt = p.add_run(data.get('titolo', 'Verifica'))
         rt.bold = True
-        rt.font.size = Pt(14)
+        rt.font.size = Pt(15)
 
-        # Tabella intestazione (Nome / Classe e Data)
-        _cw = [int(PAGE_W_DXA * 0.62), PAGE_W_DXA - int(PAGE_W_DXA * 0.62)]
-        hdr_tbl = doc.add_table(rows=1, cols=2)
+        # Separatore orizzontale (simulato con paragrafo con bordo inferiore)
+        p_sep = doc.add_paragraph()
+        p_sep.paragraph_format.space_before = Pt(2)
+        p_sep.paragraph_format.space_after  = Pt(6)
+        pPr = p_sep._p.get_or_add_pPr()
+        pBdr = _OE('w:pBdr')
+        bdr_el = _OE('w:bottom')
+        bdr_el.set(_qn('w:val'), 'single')
+        bdr_el.set(_qn('w:sz'), '6')
+        bdr_el.set(_qn('w:space'), '1')
+        bdr_el.set(_qn('w:color'), '444444')
+        pBdr.append(bdr_el)
+        pPr.append(pBdr)
+
+        # Tabella intestazione (Nome / Classe / Data — 3 colonne)
+        _cw3 = [
+            int(PAGE_W_DXA * 0.40),
+            int(PAGE_W_DXA * 0.30),
+            PAGE_W_DXA - int(PAGE_W_DXA * 0.40) - int(PAGE_W_DXA * 0.30),
+        ]
+        hdr_tbl = doc.add_table(rows=1, cols=3)
         hdr_el  = hdr_tbl._tbl
         tblPr_h = hdr_el.find(_qn('w:tblPr'))
         if tblPr_h is None:
@@ -502,18 +585,19 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
         if ex_b_h is not None:
             tblPr_h.remove(ex_b_h)
         tblPr_h.append(tblB_h)
-        _fix_tbl_grid(hdr_el, _cw, _qn, _OE)
+        _fix_tbl_grid(hdr_el, _cw3, _qn, _OE)
 
         hdr_cells_data = [
-            [("Nome: ", "_______________________________")],
-            [("Classe e Data: ", "______________________")],
+            [("Nome: ", "_____________________________")],
+            [("Classe: ", "_______________")],
+            [("Data: ", "_______________")],
         ]
-        for ci_h, runs in enumerate(hdr_cells_data):
+        for ci_h, (runs, cw_val) in enumerate(zip(hdr_cells_data, _cw3)):
             cell_h = hdr_tbl.cell(0, ci_h)
             tc_h   = cell_h._tc
             tcPr_h = tc_h.get_or_add_tcPr()
             tcW_h  = _OE('w:tcW')
-            tcW_h.set(_qn('w:w'), str(_cw[ci_h]))
+            tcW_h.set(_qn('w:w'), str(cw_val))
             tcW_h.set(_qn('w:type'), 'dxa')
             ex_w_h = tcPr_h.find(_qn('w:tcW'))
             if ex_w_h is not None:
@@ -538,59 +622,72 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
                 r2_h = p_h.add_run(line_h)
                 r2_h.font.size = Pt(10)
 
-        # Nota intestazione
+        # Nota intestazione (durata, istruzioni)
         nota = data.get('intestazione_nota', '')
         if nota:
             p3 = doc.add_paragraph()
             p3.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p3.paragraph_format.space_before = Pt(6)
+            p3.paragraph_format.space_after  = Pt(2)
             r3 = p3.add_run(nota)
             r3.italic = True
             r3.font.size = Pt(10)
 
         doc.add_paragraph()
 
-        # Esercizi
+        # ── ESERCIZI ──────────────────────────────────────────────────────────────
         for ex in data.get('esercizi', []):
             pe = doc.add_paragraph()
-            pe.paragraph_format.space_before = Pt(10)
-            pe.paragraph_format.space_after  = Pt(3)
+            pe.paragraph_format.space_before = Pt(12)
+            pe.paragraph_format.space_after  = Pt(4)
             rt = pe.add_run(ex.get('titolo', ''))
             rt.bold = True
             rt.font.size = Pt(12)
 
             intro = ex.get('testo_intro', '').strip()
             if intro:
-                pi = doc.add_paragraph(intro)
+                pi = doc.add_paragraph()
                 pi.paragraph_format.space_before = Pt(0)
-                pi.paragraph_format.space_after  = Pt(3)
+                pi.paragraph_format.space_after  = Pt(4)
+                pi.paragraph_format.left_indent  = Cm(0.0)
+                _add_rich_runs(pi, intro, base_size_pt=11)
 
             for sp in ex.get('sottopunti', []):
-                label  = sp.get('label', '').strip()
-                testo  = sp.get('testo', '').strip()
+                label   = sp.get('label', '').strip()
+                testo   = sp.get('testo', '').strip()
                 opzioni = sp.get('opzioni', [])
+                punti_sp = sp.get('punti', '')
 
                 ps = doc.add_paragraph()
-                ps.paragraph_format.left_indent  = Cm(0.4)
-                ps.paragraph_format.space_before = Pt(2)
+                ps.paragraph_format.left_indent  = Cm(0.5)
+                ps.paragraph_format.space_before = Pt(3)
                 ps.paragraph_format.space_after  = Pt(2)
-                rl = ps.add_run(label + "  ")
-                rl.bold = True
-                rl.font.size = Pt(11)
+                if label:
+                    rl = ps.add_run(label + "  ")
+                    rl.bold = True
+                    rl.font.size = Pt(11)
                 if testo:
-                    ps.add_run(testo).font.size = Pt(11)
+                    _add_rich_runs(ps, testo, base_size_pt=11)
 
                 if opzioni:
                     for opt in opzioni:
                         po = doc.add_paragraph()
-                        po.paragraph_format.left_indent  = Cm(1.2)
+                        po.paragraph_format.left_indent  = Cm(1.3)
                         po.paragraph_format.space_before = Pt(0)
-                        po.paragraph_format.space_after  = Pt(1)
-                        po.add_run(str(opt)).font.size = Pt(11)
+                        po.paragraph_format.space_after  = Pt(2)
+                        _add_rich_runs(po, str(opt), base_size_pt=11)
                 else:
+                    # Spazio proporzionale ai punti: min 18pt, max 60pt
+                    try:
+                        _pts_val = float(str(punti_sp).replace(',', '.'))
+                    except (ValueError, TypeError):
+                        _pts_val = 0
+                    # Regola: ~6pt per punto, minimo 18, massimo 60
+                    _space_after = min(60, max(18, int(_pts_val * 6)))
                     pr = doc.add_paragraph()
-                    pr.paragraph_format.left_indent  = Cm(0.4)
-                    pr.paragraph_format.space_before = Pt(1)
-                    pr.paragraph_format.space_after  = Pt(8)
+                    pr.paragraph_format.left_indent  = Cm(0.5)
+                    pr.paragraph_format.space_before = Pt(2)
+                    pr.paragraph_format.space_after  = Pt(_space_after)
 
         # Griglia di valutazione
         esercizi_parsed = parse_esercizi(codice_latex) if con_griglia else []

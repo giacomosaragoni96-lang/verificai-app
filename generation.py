@@ -67,12 +67,21 @@ from latex_utils import (
 
 # ── HELPER INTERNO ────────────────────────────────────────────────────────────────
 
-def _safe_generate(model, prompt_or_parts, step_name: str = "API"):
-    """Esegue model.generate_content; in caso di errore rilancia RuntimeError con contesto."""
-    try:
-        return model.generate_content(prompt_or_parts)
-    except Exception as e:
-        raise RuntimeError(f"{step_name}: {e}") from e
+def _safe_generate(model, prompt_or_parts, step_name: str = "API", retries: int = 2):
+    """
+    Esegue model.generate_content con retry esponenziale.
+    - retries: numero di tentativi extra dopo il primo fallimento.
+    - Rilancia RuntimeError con contesto se tutti i tentativi falliscono.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(1 + retries):
+        try:
+            return model.generate_content(prompt_or_parts)
+        except Exception as e:
+            last_exc = e
+            if attempt < retries:
+                time.sleep(2 ** attempt)   # 1s, 2s
+    raise RuntimeError(f"{step_name}: {last_exc}") from last_exc
 
 
 def _pulisci_risposta(testo: str) -> str:
@@ -421,13 +430,14 @@ def genera_verifica(
     _avanza("🔎  Controllo qualità e correzione errori…")
     rc = _safe_generate(
         model,
-        prompt_controllo_qualita(materia, difficolta, corpo_a, mostra_punteggi),
+        prompt_controllo_qualita(materia, difficolta, corpo_a, mostra_punteggi, punti_totali),
         "Controllo qualità",
     )
     corpo_corretto = pulisci_corpo_latex(_pulisci_risposta(rc.text))
 
     n_orig = len(re.findall(r"\\subsection\*", corpo_a))
     n_corr = len(re.findall(r"\\subsection\*", corpo_corretto))
+    # Accetta la versione QA solo se il conteggio blocchi rimane identico
     if corpo_corretto and n_corr == n_orig:
         corpo_a = corpo_corretto
 
@@ -441,8 +451,10 @@ def genera_verifica(
     # ── 6. VERIFICA RIDOTTA A ─────────────────────────────────────────────────
     if bes_dsa and perc_ridotta:
         _avanza("⛳ Generazione verifica ridotta…")
-        rb_bes = model.generate_content(
-            prompt_versione_ridotta(corpo_a, materia, perc_ridotta, mostra_punteggi, punti_totali)
+        rb_bes = _safe_generate(
+            model,
+            prompt_versione_ridotta(corpo_a, materia, perc_ridotta, mostra_punteggi, punti_totali),
+            "Verifica ridotta A",
         )
         corpo_r = pulisci_corpo_latex(_pulisci_risposta(rb_bes.text))
         latex_r, pdf_r = _assembla_e_compila(
@@ -455,7 +467,11 @@ def genera_verifica(
     preambolo_b = ""
     if doppia_fila:
         _avanza("📄  Generazione Versione B…")
-        rb = model.generate_content(prompt_variante_rapida(corpo_a, materia))
+        rb = _safe_generate(
+            model,
+            prompt_variante_rapida(corpo_a, materia),
+            "Variante B",
+        )
         corpo_b = pulisci_corpo_latex(_pulisci_risposta(rb.text))
 
         preambolo_b, _ = _costruisci_preambolo(materia, titolo_clean, "Versione B", e_mat)
@@ -469,10 +485,12 @@ def genera_verifica(
         # ── 8. VERIFICA RIDOTTA B ─────────────────────────────────────────────
         if bes_dsa_b and perc_ridotta and corpo_b:
             _avanza("⛳ Generazione verifica ridotta Fila B…")
-            rb_bes_b = model.generate_content(
+            rb_bes_b = _safe_generate(
+                model,
                 prompt_versione_ridotta(
                     corpo_b, materia, perc_ridotta, mostra_punteggi, punti_totali, "Fila B"
-                )
+                ),
+                "Verifica ridotta B",
             )
             corpo_rb = pulisci_corpo_latex(_pulisci_risposta(rb_bes_b.text))
             preambolo_rb, _ = _costruisci_preambolo(
@@ -488,12 +506,12 @@ def genera_verifica(
         _avanza("📋 Generazione soluzioni…")
 
         label_a = "Fila A" if doppia_fila else ""
-        rs_a = model.generate_content(prompt_soluzioni(corpo_a, materia, label_a))
+        rs_a = _safe_generate(model, prompt_soluzioni(corpo_a, materia, label_a), "Soluzioni A")
         testo_sol_a = rs_a.text.strip()
 
         testo_sol_b = ""
         if doppia_fila and corpo_b:
-            rs_b = model.generate_content(prompt_soluzioni(corpo_b, materia, "Fila B"))
+            rs_b = _safe_generate(model, prompt_soluzioni(corpo_b, materia, "Fila B"), "Soluzioni B")
             testo_sol_b = rs_b.text.strip()
 
         titolo_sol = f"Soluzioni — {materia}: {titolo_clean}"
@@ -650,7 +668,7 @@ def genera_verifica_streaming(
     _avanza("🔎  Controllo qualità e correzione errori…")
     rc = _safe_generate(
         model,
-        prompt_controllo_qualita(materia, difficolta, corpo_a, mostra_punteggi),
+        prompt_controllo_qualita(materia, difficolta, corpo_a, mostra_punteggi, punti_totali),
         "Controllo qualità",
     )
     corpo_corretto = pulisci_corpo_latex(_pulisci_risposta(rc.text))
@@ -676,8 +694,10 @@ def genera_verifica_streaming(
     # ── 7. VERIFICA RIDOTTA A ─────────────────────────────────────────────────
     if bes_dsa and perc_ridotta:
         _avanza("⛳ Generazione verifica ridotta…")
-        rb_bes = model.generate_content(
-            prompt_versione_ridotta(corpo_a, materia, perc_ridotta, mostra_punteggi, punti_totali)
+        rb_bes = _safe_generate(
+            model,
+            prompt_versione_ridotta(corpo_a, materia, perc_ridotta, mostra_punteggi, punti_totali),
+            "Verifica ridotta A",
         )
         corpo_r = pulisci_corpo_latex(_pulisci_risposta(rb_bes.text))
         latex_r, pdf_r = _assembla_e_compila(
@@ -690,7 +710,7 @@ def genera_verifica_streaming(
     preambolo_b = ""
     if doppia_fila:
         _avanza("📄  Generazione Versione B…")
-        rb = model.generate_content(prompt_variante_rapida(corpo_a, materia))
+        rb = _safe_generate(model, prompt_variante_rapida(corpo_a, materia), "Variante B")
         corpo_b = pulisci_corpo_latex(_pulisci_risposta(rb.text))
 
         preambolo_b, _ = _costruisci_preambolo(materia, titolo_clean, "Versione B", e_mat)
@@ -704,10 +724,12 @@ def genera_verifica_streaming(
         # Ridotta B
         if bes_dsa_b and perc_ridotta and corpo_b:
             _avanza("⛳ Generazione verifica ridotta Fila B…")
-            rb_bes_b = model.generate_content(
+            rb_bes_b = _safe_generate(
+                model,
                 prompt_versione_ridotta(
                     corpo_b, materia, perc_ridotta, mostra_punteggi, punti_totali, "Fila B"
-                )
+                ),
+                "Verifica ridotta B",
             )
             corpo_rb = pulisci_corpo_latex(_pulisci_risposta(rb_bes_b.text))
             preambolo_rb, _ = _costruisci_preambolo(
@@ -723,12 +745,12 @@ def genera_verifica_streaming(
         _avanza("📋 Generazione soluzioni…")
 
         label_a = "Fila A" if doppia_fila else ""
-        rs_a = model.generate_content(prompt_soluzioni(corpo_a, materia, label_a))
+        rs_a = _safe_generate(model, prompt_soluzioni(corpo_a, materia, label_a), "Soluzioni A")
         testo_sol_a = rs_a.text.strip()
 
         testo_sol_b = ""
         if doppia_fila and corpo_b:
-            rs_b = model.generate_content(prompt_soluzioni(corpo_b, materia, "Fila B"))
+            rs_b = _safe_generate(model, prompt_soluzioni(corpo_b, materia, "Fila B"), "Soluzioni B")
             testo_sol_b = rs_b.text.strip()
 
         titolo_sol = f"Soluzioni — {materia}: {titolo_clean}"
