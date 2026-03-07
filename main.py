@@ -164,78 +164,91 @@ def _stima(b):
 
 
 def _rubrica_to_pdf(rubrica_testo: str, materia: str = "", livello: str = "") -> bytes | None:
-    """Converte il testo Markdown della rubrica di valutazione in PDF (reportlab).
-    Restituisce None se la generazione fallisce (fallback al .txt già esistente).
-    """
+    """Converte il testo Markdown della rubrica di valutazione in PDF via LaTeX/pdflatex."""
     try:
-        import io as _io
         import re as _re
-        from reportlab.lib.pagesizes import A4
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.units import cm
-        from reportlab.lib import colors as _colors
-        from reportlab.platypus import (
-            SimpleDocTemplate, Paragraph, Spacer, HRFlowable,
-        )
+        from latex_utils import compila_pdf
 
-        buf = _io.BytesIO()
-        doc = SimpleDocTemplate(
-            buf, pagesize=A4,
-            leftMargin=2 * cm, rightMargin=2 * cm,
-            topMargin=2.2 * cm, bottomMargin=2 * cm,
-        )
-        _SS     = getSampleStyleSheet()
-        TEAL    = _colors.HexColor("#0A8F72")
-        DARK    = _colors.HexColor("#1A2E25")
-        MUTED   = _colors.HexColor("#6B7280")
-        LGRAY   = _colors.HexColor("#E5E7EB")
+        def _esc(t: str) -> str:
+            for a, b in [
+                ('\\', r'\textbackslash{}'),
+                ('&',  r'\&'), ('%', r'\%'), ('#', r'\#'),
+                ('_',  r'\_'), ('^', r'\^{}'), ('~', r'\~{}'),
+                ('{',  r'\{'), ('}', r'\}'), ('$', r'\$'),
+            ]:
+                t = t.replace(a, b)
+            return t
 
-        s_h1   = ParagraphStyle("RH1", parent=_SS["Normal"], fontSize=16,
-                     fontName="Helvetica-Bold", textColor=TEAL, spaceAfter=5)
-        s_meta = ParagraphStyle("RMeta", parent=_SS["Normal"], fontSize=8.5,
-                     fontName="Helvetica", textColor=MUTED, spaceAfter=4)
-        s_h2   = ParagraphStyle("RH2", parent=_SS["Normal"], fontSize=11.5,
-                     fontName="Helvetica-Bold", textColor=DARK, spaceAfter=3, spaceBefore=10)
-        s_h3   = ParagraphStyle("RH3", parent=_SS["Normal"], fontSize=10,
-                     fontName="Helvetica-Bold", textColor=TEAL, spaceAfter=3, spaceBefore=7)
-        s_body = ParagraphStyle("RBody", parent=_SS["Normal"], fontSize=9.5,
-                     fontName="Helvetica", textColor=DARK, spaceAfter=2,
-                     leftIndent=10, leading=14)
-        s_blt  = ParagraphStyle("RBlt", parent=_SS["Normal"], fontSize=9,
-                     fontName="Helvetica", textColor=DARK, spaceAfter=2,
-                     leftIndent=18, leading=13)
+        def _md2tex(t: str) -> str:
+            return _re.sub(r'\*\*([^*]+)\*\*', r'\\textbf{\1}', t)
 
-        story = [Paragraph("Rubrica di Valutazione", s_h1)]
-        if materia or livello:
-            story.append(Paragraph(f"{materia} · {livello}", s_meta))
-        story.append(HRFlowable(width="100%", thickness=2, color=TEAL, spaceAfter=8))
+        meta_esc = _esc(f"{materia} · {livello}") if (materia or livello) else ""
 
-        def _md_bold(txt: str) -> str:
-            return _re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", txt)
-
+        body_lines: list[str] = []
+        in_list = False
         for line in rubrica_testo.strip().split("\n"):
             s = line.strip()
             if not s:
-                story.append(Spacer(1, 4))
+                if in_list:
+                    body_lines.append(r'\end{itemize}')
+                    in_list = False
+                body_lines.append(r'\vspace{4pt}')
                 continue
-            if s.startswith("## Rubrica"):          # già in header
+            if s.startswith("## Rubrica"):
                 continue
             if s.startswith("### "):
-                story.append(Paragraph(s[4:], s_h2))
-                story.append(HRFlowable(width="100%", thickness=0.5,
-                                        color=LGRAY, spaceAfter=4))
-                continue
-            if s.startswith("**") and s.endswith("**"):
-                story.append(Paragraph(s[2:-2], s_h3))
-                continue
-            if s.startswith("- "):
-                story.append(Paragraph(f"• {_md_bold(s[2:])}", s_blt))
-                continue
-            story.append(Paragraph(_md_bold(s), s_body))
+                if in_list:
+                    body_lines.append(r'\end{itemize}')
+                    in_list = False
+                body_lines.append(f'\\subsection*{{{_md2tex(_esc(s[4:]))}}}')
+            elif s.startswith("**") and s.endswith("**") and s.count("**") == 2:
+                if in_list:
+                    body_lines.append(r'\end{itemize}')
+                    in_list = False
+                body_lines.append(f'\\textbf{{{_md2tex(_esc(s[2:-2]))}}}\\\\[2pt]')
+            elif s.startswith("- "):
+                if not in_list:
+                    body_lines.append(r'\begin{itemize}[noitemsep,topsep=2pt,leftmargin=1.4em]')
+                    in_list = True
+                body_lines.append(f'  \\item {_md2tex(_esc(s[2:]))}')
+            else:
+                if in_list:
+                    body_lines.append(r'\end{itemize}')
+                    in_list = False
+                body_lines.append(_md2tex(_esc(s)) + r'\\[2pt]')
+        if in_list:
+            body_lines.append(r'\end{itemize}')
 
-        doc.build(story)
-        buf.seek(0)
-        return buf.read()
+        latex = (
+            r'\documentclass[a4paper,11pt]{article}' '\n'
+            r'\usepackage[utf8]{inputenc}' '\n'
+            r'\usepackage[T1]{fontenc}' '\n'
+            r'\usepackage[italian]{babel}' '\n'
+            r'\usepackage[top=2cm,bottom=2cm,left=2.2cm,right=2.2cm]{geometry}' '\n'
+            r'\usepackage[dvipsnames]{xcolor}' '\n'
+            r'\usepackage{titlesec}' '\n'
+            r'\usepackage{enumitem}' '\n'
+            r'\usepackage{parskip}' '\n'
+            r'\definecolor{rubTeal}{HTML}{0A8F72}' '\n'
+            r'\definecolor{rubDark}{HTML}{1A2E25}' '\n'
+            r'\definecolor{rubGray}{HTML}{6B7280}' '\n'
+            r'\titleformat{\section}{\large\bfseries\color{rubTeal}}{}{0em}{}' '\n'
+            r'\titleformat{\subsection}{\normalsize\bfseries\color{rubDark}}{}{0em}{}' '\n'
+            r'\titlespacing*{\subsection}{0pt}{10pt}{3pt}' '\n'
+            r'\setlength{\parskip}{5pt}\setlength{\parindent}{0pt}' '\n'
+            r'\begin{document}' '\n'
+            r'\begin{center}' '\n'
+            r'{\large\bfseries\color{rubTeal} Rubrica di Valutazione}\\[4pt]' '\n'
+            + (f'{{\\small\\color{{rubGray}} {meta_esc}}}\\\\[2pt]\n' if meta_esc else '')
+            + r'\end{center}' '\n'
+            r'{\color{rubTeal}\rule{\linewidth}{1.2pt}}' '\n'
+            r'\vspace{8pt}' '\n'
+            + '\n'.join(body_lines) + '\n'
+            r'\end{document}'
+        )
+
+        pdf_bytes, _ = compila_pdf(latex)
+        return pdf_bytes
     except Exception:
         return None
 

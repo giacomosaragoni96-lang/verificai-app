@@ -7,9 +7,150 @@
 # ───────────────────────────────────────────────────────────────────────────────
 
 import io
+import os
 import re
+import subprocess
+import tempfile
 
 from latex_utils import parse_esercizi
+
+
+# ── GRAFICO: TikZ/pgfplots → PNG ──────────────────────────────────────────────
+
+_GRAPH_MARKER = "__DOCXGRAPH_{n}__"
+_GRAPH_RE = re.compile(r'__DOCXGRAPH_(\d+)__')
+
+
+def _tikz_to_png_bytes(tikz_code: str) -> bytes | None:
+    """Compiles a TikZ/pgfplots block to a PNG image. Returns None on failure."""
+    needs_pgfplots = (
+        r'\begin{axis}' in tikz_code
+        or 'pgfplots' in tikz_code
+        or 'addplot' in tikz_code
+    )
+    latex = (
+        r'\documentclass[border=4pt]{standalone}' '\n'
+        r'\usepackage{tikz}' '\n'
+    )
+    if needs_pgfplots:
+        latex += r'\usepackage{pgfplots}' '\n'
+        latex += r'\pgfplotsset{compat=1.18}' '\n'
+    latex += r'\begin{document}' '\n' + tikz_code + '\n' r'\end{document}'
+
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tex_path = os.path.join(tmpdir, 'g.tex')
+            pdf_path = os.path.join(tmpdir, 'g.pdf')
+            with open(tex_path, 'w', encoding='utf-8') as f:
+                f.write(latex)
+            subprocess.run(
+                ['pdflatex', '-interaction=nonstopmode',
+                 '-output-directory', tmpdir, tex_path],
+                capture_output=True, timeout=30,
+            )
+            if not os.path.exists(pdf_path):
+                return None
+            # Convert PDF → PNG via pdf2image
+            try:
+                from pdf2image import convert_from_path
+                pages = convert_from_path(pdf_path, dpi=180)
+                if pages:
+                    buf = io.BytesIO()
+                    pages[0].save(buf, 'PNG')
+                    return buf.getvalue()
+            except Exception:
+                pass
+            # Fallback: pdftoppm CLI
+            try:
+                out_base = os.path.join(tmpdir, 'out')
+                subprocess.run(
+                    ['pdftoppm', '-png', '-r', '180', '-singlefile',
+                     pdf_path, out_base],
+                    capture_output=True, timeout=15,
+                )
+                out_path = out_base + '.png'
+                if os.path.exists(out_path):
+                    with open(out_path, 'rb') as f:
+                        return f.read()
+            except Exception:
+                pass
+    except Exception:
+        pass
+    return None
+
+
+def _pre_render_graphs(latex: str) -> tuple[str, dict]:
+    """
+    Extracts TikZ/pgfplots blocks from latex, renders each to PNG, and
+    replaces the block with a __DOCXGRAPH_N__ placeholder.
+    Returns (modified_latex, {N: png_bytes_or_None}).
+    """
+    graphs: dict[int, bytes | None] = {}
+    counter = [0]
+
+    def _replace(m: re.Match) -> str:
+        n = counter[0]
+        counter[0] += 1
+        graphs[n] = _tikz_to_png_bytes(m.group(0))
+        return f'__DOCXGRAPH_{n}__'
+
+    modified = re.sub(
+        r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
+        _replace, latex, flags=re.DOTALL,
+    )
+    modified = re.sub(
+        r'\\begin\{axis\}.*?\\end\{axis\}',
+        _replace, modified, flags=re.DOTALL,
+    )
+    return modified, graphs
+
+
+def _add_content_with_graphs(
+    doc,
+    text: str,
+    graphs: dict,
+    *,
+    left_indent_cm: float = 0.0,
+    space_before_pt: float = 0.0,
+    space_after_pt: float = 4.0,
+    base_size_pt: int = 11,
+    img_width_cm: float = 13.0,
+) -> None:
+    """
+    Splits `text` on __DOCXGRAPH_N__ markers.
+    Text parts are added as formatted paragraphs; graph markers become images.
+    """
+    from docx.shared import Pt, Cm
+
+    parts = _GRAPH_RE.split(text)
+    first = True
+    for part in parts:
+        m = _GRAPH_RE.fullmatch(part)
+        if m:
+            n = int(m.group(1))
+            png = graphs.get(n)
+            p_img = doc.add_paragraph()
+            p_img.paragraph_format.space_before = Pt(4)
+            p_img.paragraph_format.space_after  = Pt(4)
+            if png:
+                try:
+                    run = p_img.add_run()
+                    run.add_picture(io.BytesIO(png), width=Cm(img_width_cm))
+                except Exception:
+                    p_img.add_run('[Grafico]').italic = True
+            else:
+                p_img.add_run('[Grafico]').italic = True
+            first = False
+        else:
+            stripped = part.strip()
+            if not stripped:
+                continue
+            p = doc.add_paragraph()
+            p.paragraph_format.left_indent  = Cm(left_indent_cm)
+            p.paragraph_format.space_before = Pt(space_before_pt if first else 0)
+            p.paragraph_format.space_after  = Pt(space_after_pt)
+            _add_rich_runs(p, stripped, base_size_pt)
+            first = False
 
 
 # ── HELPER XML/DOCX INTERNI ────────────────────────────────────────────────────
@@ -494,6 +635,9 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
     except ImportError:
         return None, "python-docx non installato. Esegui: pip install python-docx"
 
+    # Pre-render TikZ/pgfplots blocks to PNG images
+    codice_latex, _graphs = _pre_render_graphs(codice_latex)
+
     try:
         data = _parse_latex_to_data(codice_latex)
     except Exception as e:
@@ -633,41 +777,62 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
             r3.italic = True
             r3.font.size = Pt(10)
 
-        doc.add_paragraph()
-
         # ── ESERCIZI ──────────────────────────────────────────────────────────────
-        for ex in data.get('esercizi', []):
+        for _ex_idx, ex in enumerate(data.get('esercizi', [])):
             pe = doc.add_paragraph()
-            pe.paragraph_format.space_before = Pt(12)
-            pe.paragraph_format.space_after  = Pt(4)
+            pe.paragraph_format.space_before = Pt(3) if _ex_idx == 0 else Pt(6)
+            pe.paragraph_format.space_after  = Pt(2)
             rt = pe.add_run(ex.get('titolo', ''))
             rt.bold = True
             rt.font.size = Pt(12)
 
             intro = ex.get('testo_intro', '').strip()
             if intro:
-                pi = doc.add_paragraph()
-                pi.paragraph_format.space_before = Pt(0)
-                pi.paragraph_format.space_after  = Pt(4)
-                pi.paragraph_format.left_indent  = Cm(0.0)
-                _add_rich_runs(pi, intro, base_size_pt=11)
+                if _GRAPH_RE.search(intro):
+                    _add_content_with_graphs(
+                        doc, intro, _graphs,
+                        space_before_pt=0, space_after_pt=4, base_size_pt=11,
+                    )
+                else:
+                    pi = doc.add_paragraph()
+                    pi.paragraph_format.space_before = Pt(0)
+                    pi.paragraph_format.space_after  = Pt(4)
+                    pi.paragraph_format.left_indent  = Cm(0.0)
+                    _add_rich_runs(pi, intro, base_size_pt=11)
 
             for sp in ex.get('sottopunti', []):
-                label   = sp.get('label', '').strip()
-                testo   = sp.get('testo', '').strip()
-                opzioni = sp.get('opzioni', [])
+                label    = sp.get('label', '').strip()
+                testo    = sp.get('testo', '').strip()
+                opzioni  = sp.get('opzioni', [])
                 punti_sp = sp.get('punti', '')
 
-                ps = doc.add_paragraph()
-                ps.paragraph_format.left_indent  = Cm(0.5)
-                ps.paragraph_format.space_before = Pt(3)
-                ps.paragraph_format.space_after  = Pt(2)
-                if label:
-                    rl = ps.add_run(label + "  ")
-                    rl.bold = True
-                    rl.font.size = Pt(11)
-                if testo:
-                    _add_rich_runs(ps, testo, base_size_pt=11)
+                # Check if this sub-point text contains a graph placeholder
+                if testo and _GRAPH_RE.search(testo):
+                    # Add label paragraph first if needed
+                    if label:
+                        pl = doc.add_paragraph()
+                        pl.paragraph_format.left_indent  = Cm(0.5)
+                        pl.paragraph_format.space_before = Pt(3)
+                        pl.paragraph_format.space_after  = Pt(0)
+                        rl = pl.add_run(label + "  ")
+                        rl.bold = True
+                        rl.font.size = Pt(11)
+                    _add_content_with_graphs(
+                        doc, testo, _graphs,
+                        left_indent_cm=0.5, space_before_pt=2, space_after_pt=2,
+                        base_size_pt=11,
+                    )
+                else:
+                    ps = doc.add_paragraph()
+                    ps.paragraph_format.left_indent  = Cm(0.5)
+                    ps.paragraph_format.space_before = Pt(3)
+                    ps.paragraph_format.space_after  = Pt(2)
+                    if label:
+                        rl = ps.add_run(label + "  ")
+                        rl.bold = True
+                        rl.font.size = Pt(11)
+                    if testo:
+                        _add_rich_runs(ps, testo, base_size_pt=11)
 
                 if opzioni:
                     for opt in opzioni:
@@ -676,17 +841,17 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
                         po.paragraph_format.space_before = Pt(0)
                         po.paragraph_format.space_after  = Pt(2)
                         _add_rich_runs(po, str(opt), base_size_pt=11)
-                else:
-                    # Spazio proporzionale ai punti: min 18pt, max 60pt
+                elif not (testo and _GRAPH_RE.search(testo)):
+                    # Spazio risposta proporzionale ai punti: min 10pt, max 36pt
                     try:
                         _pts_val = float(str(punti_sp).replace(',', '.'))
                     except (ValueError, TypeError):
                         _pts_val = 0
-                    # Regola: ~6pt per punto, minimo 18, massimo 60
-                    _space_after = min(60, max(18, int(_pts_val * 6)))
+                    # Regola: ~3pt per punto, minimo 10, massimo 36
+                    _space_after = min(36, max(10, int(_pts_val * 3)))
                     pr = doc.add_paragraph()
                     pr.paragraph_format.left_indent  = Cm(0.5)
-                    pr.paragraph_format.space_before = Pt(2)
+                    pr.paragraph_format.space_before = Pt(1)
                     pr.paragraph_format.space_after  = Pt(_space_after)
 
         # Griglia di valutazione
