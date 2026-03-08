@@ -1186,8 +1186,6 @@ def _render_bivio():
         '''
         <div class="preview-gallery-section">
           <div class="preview-gallery">
-
-            <!-- Matematica -->
             <div class="preview-doc">
               <div class="preview-doc-header" style="background:linear-gradient(135deg,#4361ee,#3a0ca3)">
                 <div class="preview-doc-subject">📐 Matematica</div>
@@ -1224,8 +1222,6 @@ def _render_bivio():
                 <div class="preview-doc-footer">Totale: 18 pt &nbsp;·&nbsp; Sufficienza: 11 pt</div>
               </div>
             </div>
-
-            <!-- Italiano -->
             <div class="preview-doc">
               <div class="preview-doc-header" style="background:linear-gradient(135deg,#d62828,#a4161a)">
                 <div class="preview-doc-subject">📚 Italiano</div>
@@ -1261,8 +1257,6 @@ def _render_bivio():
                 <div class="preview-doc-footer">Totale: 15 pt &nbsp;·&nbsp; Sufficienza: 9 pt</div>
               </div>
             </div>
-
-            <!-- Scienze -->
             <div class="preview-doc">
               <div class="preview-doc-header" style="background:linear-gradient(135deg,#2d9d5e,#1b7a48)">
                 <div class="preview-doc-subject">🧬 Scienze</div>
@@ -1298,8 +1292,6 @@ def _render_bivio():
                 <div class="preview-doc-footer">Totale: 12 pt &nbsp;·&nbsp; Sufficienza: 7 pt</div>
               </div>
             </div>
-
-            <!-- Storia -->
             <div class="preview-doc">
               <div class="preview-doc-header" style="background:linear-gradient(135deg,#8b5e3c,#6f4b2f)">
                 <div class="preview-doc-subject">🗺️ Storia</div>
@@ -1335,8 +1327,6 @@ def _render_bivio():
                 <div class="preview-doc-footer">Totale: 15 pt &nbsp;·&nbsp; Sufficienza: 9 pt</div>
               </div>
             </div>
-
-            <!-- Fisica -->
             <div class="preview-doc">
               <div class="preview-doc-header" style="background:linear-gradient(135deg,#7b2d8b,#5c1f6b)">
                 <div class="preview-doc-subject">⚗️ Fisica</div>
