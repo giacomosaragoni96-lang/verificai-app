@@ -210,7 +210,8 @@ def _pre_render_graphs(latex: str) -> tuple[str, dict]:
         else:
             logger.warning(f"Graph #{n} conversion FAILED - will show placeholder")
         
-        return f'__DOCXGRAPH_{n}__'
+        # Aggiungi \n\ prima e dopo per forzare a capo nel LaTeX
+        return f'\n\n__DOCXGRAPH_{n}__\n\n'
 
     modified = re.sub(
         r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
