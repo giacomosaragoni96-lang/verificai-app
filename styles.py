@@ -54,6 +54,19 @@ def get_css(T: dict) -> str:
     _placeholder_color = T.get("muted", "#6E7681")
     _color_scheme = "light" if _is_light else "dark"
 
+    # ── Expander header APERTO — adattivo chiaro/scuro ─────────────────────────
+    # Su temi scuri: gradiente accent scuro + testo bianco (come prima)
+    # Su temi chiari: sfondo accent_light (tinta chiarissima) + testo accent scuro
+    _acc_light_tint = T.get("accent_light", _acc + "18")
+    if _is_light:
+        _exp_open_bg    = f"linear-gradient(135deg, {_acc_light_tint} 0%, {_acc}1A 100%)"
+        _exp_open_text  = _acc
+        _exp_open_border = f"1px solid {_acc}44"
+    else:
+        _exp_open_bg    = f"linear-gradient(135deg, {_acc}dd 0%, {_acc} 60%, {T.get('accent2', _acc)}cc 100%)"
+        _exp_open_text  = "#ffffff"
+        _exp_open_border = "none"
+
     # ── Transition standard ────────────────────────────────────────────────────
     _transition = "0.2s cubic-bezier(.4,0,.2,1)"
 
@@ -220,16 +233,16 @@ def get_css(T: dict) -> str:
     -webkit-text-fill-color: {_acc} !important;
   }}
 
-  /* 5. Summary APERTO — gradient teal */
+  /* 5. Summary APERTO — adattivo chiaro/scuro */
   html body .stApp details[data-testid="stExpander"][open] > summary,
   html body .stApp details[data-testid="stExpander"][open] summary[role="button"],
   .stApp details[data-testid="stExpander"][open] > summary {{
-    background: linear-gradient(135deg, {T['accent']} 0%, {T['accent2']} 100%) !important;
-    background-color: {T['accent']} !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+    background: {_exp_open_bg} !important;
+    background-color: {_exp_open_text}1A !important;
+    color: {_exp_open_text} !important;
+    -webkit-text-fill-color: {_exp_open_text} !important;
     border-radius: 12px 12px 0 0 !important;
-    border-bottom: none !important;
+    border-bottom: {_exp_open_border} !important;
     color-scheme: {_color_scheme} !important;
   }}
   html body .stApp details[data-testid="stExpander"][open] > summary > *,
@@ -237,15 +250,15 @@ def get_css(T: dict) -> str:
   .stApp details[data-testid="stExpander"][open] > summary div,
   .stApp details[data-testid="stExpander"][open] > summary p,
   .stApp details[data-testid="stExpander"][open] > summary span {{
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+    color: {_exp_open_text} !important;
+    -webkit-text-fill-color: {_exp_open_text} !important;
     background: transparent !important;
     background-color: transparent !important;
   }}
   html body .stApp details[data-testid="stExpander"][open] > summary svg,
   html body .stApp details[data-testid="stExpander"][open] > summary svg * {{
-    fill: #ffffff !important;
-    stroke: #ffffff !important;
+    fill: {_exp_open_text} !important;
+    stroke: {_exp_open_text} !important;
   }}
 
   /* 6. CONTENT AREA — la causa principale del nero */
@@ -2254,24 +2267,24 @@ def get_css(T: dict) -> str:
   }}
   .stApp .personalizza-wrap details[data-testid="stExpander"][open] > summary,
   .personalizza-wrap details[data-testid="stExpander"][open] > summary {{
-    background: linear-gradient(135deg, {T['accent']} 0%, {T['accent2']} 100%) !important;
-    background-color: {T['accent']} !important;
+    background: {_exp_open_bg} !important;
+    background-color: {_exp_open_text}1A !important;
     border-radius: 12px 12px 0 0 !important;
-    border-bottom: none !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+    border-bottom: {_exp_open_border} !important;
+    color: {_exp_open_text} !important;
+    -webkit-text-fill-color: {_exp_open_text} !important;
     color-scheme: {_color_scheme} !important;
   }}
   .stApp .personalizza-wrap details[data-testid="stExpander"][open] > summary *,
   .personalizza-wrap details[data-testid="stExpander"][open] > summary * {{
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+    color: {_exp_open_text} !important;
+    -webkit-text-fill-color: {_exp_open_text} !important;
     background-color: transparent !important;
   }}
   .personalizza-wrap details[data-testid="stExpander"][open] > summary svg,
   .personalizza-wrap details[data-testid="stExpander"][open] > summary svg * {{
-    fill: #ffffff !important;
-    stroke: #ffffff !important;
+    fill: {_exp_open_text} !important;
+    stroke: {_exp_open_text} !important;
   }}
   .personalizza-wrap details[data-testid="stExpander"] > summary:hover {{
     background-color: {T['hover']} !important;
