@@ -1393,8 +1393,8 @@ def _render_bivio():
                     preview = _previews[idx]
                     with _col:
                         if preview['type'] == 'pdf_preview':
-                        # Per PDF convertito in immagine, mostra la preview
-                        st.markdown(
+                            # Per PDF convertito in immagine, mostra la preview
+                            st.markdown(
                             f'<div class="landing-feat-card preview-card">'
                             f'<img src="{preview["path"]}" alt="{preview["name"]}" '
                             f'style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">'
