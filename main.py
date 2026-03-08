@@ -31,6 +31,7 @@ from latex_utils import (
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
     parse_pts_from_block_body, valida_totale, riscala_single_block,
     parse_items_from_block, apply_item_pts_to_body,
+    prepara_esercizi_aperti, conta_punti_latex,
 )
 from config import (
     APP_NAME, APP_ICON, APP_TAGLINE, SHARE_URL, FEEDBACK_FORM_URL,
@@ -339,6 +340,7 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
         corpo = rimuovi_vspace_corpo(corpo)
         if mostra_punteggi:
             corpo = rimuovi_punti_subsection(corpo)
+            corpo = prepara_esercizi_aperti(corpo, punti_totali)
             corpo = riscala_punti(corpo, punti_totali)
         return corpo
 
@@ -3967,6 +3969,37 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
     idx = labels.index(sel_label)
     st.session_state.review_sel_idx = idx
 
+    # ── Badge punteggio totale calcolato live ─────────────────────────────────
+    if mostra_punteggi:
+        _latex_live = reconstruct_latex(
+            st.session_state.review_preamble,
+            st.session_state.review_blocks,
+        )
+        _totale_live = conta_punti_latex(_latex_live)
+        _ok   = _totale_live == punti_totali
+        _diff = _totale_live - punti_totali
+        _icon  = "✅" if _ok else ("⬆️" if _diff > 0 else "⬇️")
+        _color = T["success"] if _ok else T["warn"]
+        _label = f"{_totale_live} pt" if _ok else f"{_totale_live} pt ({_diff:+d} pt rispetto al target)"
+        st.markdown(
+            f'<div style="display:flex;align-items:center;gap:10px;'
+            f'background:{_color}18;border:1.5px solid {_color}44;'
+            f'border-radius:10px;padding:.5rem 1rem;margin-bottom:.6rem;">'
+            f'<span style="font-size:1rem;">{_icon}</span>'
+            f'<span style="font-family:\'DM Sans\',sans-serif;font-size:.88rem;'
+            f'font-weight:700;color:{_color};">'
+            f'Punteggio totale calcolato: <strong>{_label}</strong>'
+            f'</span>'
+            f'<span style="font-size:.8rem;color:{T["muted"]};margin-left:auto;">'
+            f'Target: {punti_totali} pt'
+            f'</span></div>',
+            unsafe_allow_html=True,
+        )
+        if not _ok:
+            logger.info(
+                "STAGE_REVIEW: totale live=%d pt, target=%d pt, diff=%+d pt",
+                _totale_live, punti_totali, _diff,
+            )
 
     block = blocks[idx]
     title = block["title"]
@@ -4043,6 +4076,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         _undo_latex = rimuovi_vspace_corpo(_undo_latex)
                         if mostra_punteggi:
                             _undo_latex = rimuovi_punti_subsection(_undo_latex)
+                            _undo_latex = prepara_esercizi_aperti(_undo_latex, punti_totali)
                             _undo_latex = riscala_punti(_undo_latex, punti_totali)
                         if con_griglia:
                             _undo_latex = inietta_griglia(_undo_latex, punti_totali)
@@ -4676,6 +4710,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             latex_final = rimuovi_vspace_corpo(latex_final)
             if mostra_punteggi:
                 latex_final = rimuovi_punti_subsection(latex_final)
+                latex_final = prepara_esercizi_aperti(latex_final, punti_totali)
                 _pts_custom = st.session_state.get("recalibra_pts", [])
                 if _pts_custom and len(_pts_custom) == n_blocks:
                     latex_final = riscala_punti_custom(latex_final, _pts_custom)

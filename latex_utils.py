@@ -3,11 +3,17 @@
 # Nessuna dipendenza da Streamlit — importabili e testabili in isolamento.
 # ───────────────────────────────────────────────────────────────────────────────
 
+import logging
 import os
 import re
 import io
 import subprocess
 import tempfile
+
+logger = logging.getLogger("verificai.latex_utils")
+
+# Pattern canonico per (N pt) — robusto a spazi extra dell'AI
+_PT_PATTERN = re.compile(r'\(\s*(\d+(?:[.,]\d+)?)\s*pt\s*\)', re.IGNORECASE)
 
 
 # ── PARSING ESERCIZI ───────────────────────────────────────────────────────────
@@ -138,7 +144,17 @@ def extract_preambolo(latex: str) -> str:
 
 def parse_pts_from_block_body(body: str) -> int:
     """Somma tutti i (N pt) nel corpo del blocco."""
-    return sum(int(p) for p in re.findall(r'\((\d+)\s*pt\)', body))
+    return sum(int(float(p.replace(',', '.'))) for p in _PT_PATTERN.findall(body))
+
+
+def conta_punti_latex(latex: str) -> int:
+    """
+    Conta la somma di tutti i marcatori (N pt) nel LaTeX.
+    Usa lo stesso pattern di riscala_punti — il valore restituito riflette
+    esattamente ciò che l'utente vedrà nel documento.
+    """
+    valori = [float(v.replace(',', '.')) for v in _PT_PATTERN.findall(latex)]
+    return int(round(sum(valori)))
 
 
 def valida_totale(pts_list: list, target: int) -> tuple:
@@ -526,25 +542,69 @@ def rimuovi_punti_subsection(latex: str) -> str:
 
 
 def riscala_punti(latex: str, punti_totali_target: int) -> str:
-    pattern = re.compile(r'\((\d+(?:[.,]\d+)?)\s*pt\)')
-    matches = list(pattern.finditer(latex))
+    """
+    Riscala proporzionalmente tutti i marcatori (N pt) in modo che la loro
+    somma sia ESATTAMENTE punti_totali_target.
+
+    Algoritmo:
+    1. Trova tutti i (N pt) con regex robusta (spazi opzionali).
+    2. Calcola il fattore di scala.
+    3. Applica floor a ogni valore scalato.
+    4. Distribuisce il "resto" agli item con la frazione più alta.
+    5. Garanzia finale: se per qualsiasi motivo la somma != target,
+       aggiusta l'item con valore massimo (mai lasciare totale errato).
+    """
+    matches = list(_PT_PATTERN.finditer(latex))
     if not matches:
+        logger.warning(
+            "riscala_punti: nessun marcatore (N pt) trovato — LaTeX invariato. "
+            "Verificare che prepara_esercizi_aperti sia stato chiamato prima."
+        )
         return latex
 
     valori = [float(m.group(1).replace(',', '.')) for m in matches]
     somma_attuale = sum(valori)
     if somma_attuale == 0:
+        logger.warning("riscala_punti: somma attuale è 0, skip.")
         return latex
 
     fattore      = punti_totali_target / somma_attuale
     nuovi_valori = [v * fattore for v in valori]
-    nuovi_interi = [int(v) for v in nuovi_valori]
+    nuovi_interi = [int(v) for v in nuovi_valori]          # floor per positivi
     resti        = [(nuovi_valori[i] - nuovi_interi[i], i) for i in range(len(nuovi_valori))]
-    differenza   = punti_totali_target - sum(nuovi_interi)
+    differenza   = punti_totali_target - sum(nuovi_interi)  # sempre int >= 0
     resti.sort(reverse=True)
 
-    for i in range(int(round(differenza))):
-        nuovi_interi[resti[i][1]] += 1
+    # Distribuisce il resto agli item con frazione residua più alta
+    n_resti = len(resti)
+    for i in range(differenza):
+        nuovi_interi[resti[i % n_resti][1]] += 1
+
+    # ── Garanzia matematica assoluta ────────────────────────────────────────
+    # Protegge da edge-case di floating point: se la somma non è esatta,
+    # corregge aggiungendo/sottraendo dal valore più grande.
+    _somma_finale = sum(nuovi_interi)
+    if _somma_finale != punti_totali_target:
+        _delta   = punti_totali_target - _somma_finale
+        _idx_max = nuovi_interi.index(max(nuovi_interi))
+        nuovi_interi[_idx_max] += _delta
+        logger.info(
+            "riscala_punti: correzione finale %+d pt applicata a item #%d "
+            "(edge-case floating point)",
+            _delta, _idx_max + 1,
+        )
+
+    # ── Log di debug per ogni item ───────────────────────────────────────────
+    logger.info(
+        "riscala_punti: %d marcatori trovati — somma originale %.1f pt → target %d pt",
+        len(matches), somma_attuale, punti_totali_target,
+    )
+    for i, (val_orig, val_nuovo) in enumerate(zip(valori, nuovi_interi)):
+        logger.info("  item %2d: %.1f pt → %d pt", i + 1, val_orig, val_nuovo)
+    logger.info(
+        "riscala_punti: TOTALE FINALE = %d pt  [target = %d pt]  ✓",
+        sum(nuovi_interi), punti_totali_target,
+    )
 
     risultato = latex
     offset = 0
@@ -591,8 +651,7 @@ def riscala_punti_custom(latex: str, pts_per_esercizio: list) -> str:
         header_text = block[:header_end]
         body_text   = block[header_end:]
 
-        pattern = re.compile(r'\((\d+(?:[.,]\d+)?)\s*pt\)')
-        matches = list(pattern.finditer(body_text))
+        matches = list(_PT_PATTERN.finditer(body_text))
         if not matches:
             result.append(block)
             continue
@@ -606,6 +665,7 @@ def riscala_punti_custom(latex: str, pts_per_esercizio: list) -> str:
         nuovi_int = [int(v) for v in nuovi]
         resto     = target - sum(nuovi_int)
 
+        # Garanzia: la somma per questo blocco deve essere esattamente target
         frazioni = sorted(
             range(len(nuovi)), key=lambda k: nuovi[k] - nuovi_int[k],
             reverse=(resto > 0)
