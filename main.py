@@ -1344,7 +1344,6 @@ def _render_bivio():
                     overflow: hidden;
                     box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
                 ">
-                    <!-- Header -->
                     <div style="
                         background: linear-gradient(135deg, #3b82f6, #1d4ed8);
                         color: white;
@@ -1356,9 +1355,7 @@ def _render_bivio():
                         </div>
                     </div>
                     
-                    <!-- Carousel Container -->
                     <div style="position: relative; height: 650px; background: #f8f9fa;">
-                        <!-- Navigation Arrows -->
                         <button class="carousel-prev" style="
                             position: absolute;
                             left: 1rem;
@@ -1398,7 +1395,6 @@ def _render_bivio():
                             transition: all 0.2s;
                         ">›</button>
                         
-                        <!-- Slides Container -->
                         <div class="carousel-slides" style="
                             position: relative;
                             height: 100%;
@@ -1514,7 +1510,6 @@ def _render_bivio():
                         </div>
                     </div>
                     
-                    <!-- Indicators -->
                     <div style="
                         padding: 0.75rem;
                         background: white;
