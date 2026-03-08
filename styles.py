@@ -996,6 +996,7 @@ def get_css(T: dict) -> str:
   html body .stApp div.stButton > button[kind="secondary"],
   html body .stApp div.stButton > button:not([kind="primary"]),
   html body .stApp [data-testid="stButton"] > button:not([data-testid*="primary"]),
+  html body .stApp [data-testid="stBaseButton-secondary"],
   div.stButton > button[kind="secondary"],
   div.stButton > button:not([kind="primary"]) {{
     background: {_surf_raised} !important;
@@ -1014,6 +1015,7 @@ def get_css(T: dict) -> str:
   }}
   html body .stApp div.stButton > button[kind="secondary"]:hover,
   html body .stApp div.stButton > button:not([kind="primary"]):hover,
+  html body .stApp [data-testid="stBaseButton-secondary"]:hover,
   div.stButton > button[kind="secondary"]:hover,
   div.stButton > button:not([kind="primary"]):hover {{
     background: {T['hover']} !important;
@@ -1032,6 +1034,39 @@ def get_css(T: dict) -> str:
     outline: 2px solid {_acc} !important;
     outline-offset: 3px !important;
     box-shadow: 0 0 0 4px {_acc_ring} !important;
+  }}
+
+  /* ── SIDEBAR buttons: override definitivo con specificità massima ──────
+     Deve stare DOPO le regole generali. Specificità (0,3,2) batte (0,2,2).
+     Corregge la regressione "sidebar buttons diventati bianchi".          */
+  html body .stApp [data-testid="stSidebar"] div.stButton > button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]),
+  html body .stApp [data-testid="stSidebar"] .stButton button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]),
+  html body .stApp [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"],
+  html body .stApp [data-testid="stSidebar"] [data-testid="stButton"] > button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]) {{
+    background: {_SB_INPUT_BG} !important;
+    background-color: {_SB_INPUT_BG} !important;
+    color: {_SB_INPUT_TEXT} !important;
+    -webkit-text-fill-color: {_SB_INPUT_TEXT} !important;
+    border: 1px solid {_SB_BORDER} !important;
+    border-radius: 8px !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    min-height: 34px !important;
+    padding: .3rem .6rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    box-shadow: none !important;
+  }}
+  html body .stApp [data-testid="stSidebar"] div.stButton > button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]):hover,
+  html body .stApp [data-testid="stSidebar"] .stButton button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]):hover,
+  html body .stApp [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"]:hover {{
+    background: {_SB_BORDER} !important;
+    background-color: {_SB_BORDER} !important;
+    border-color: {_SB_ACCENT} !important;
+    color: {_SB_INPUT_TEXT} !important;
+    -webkit-text-fill-color: {_SB_INPUT_TEXT} !important;
+    transform: none !important;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════

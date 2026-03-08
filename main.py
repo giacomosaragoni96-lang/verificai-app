@@ -604,7 +604,7 @@ components.html(
     f'e.style.setProperty("background-color",btnBg,"important");'
     f'e.style.setProperty("color",btnFg,"important");'
     f'e.style.setProperty("-webkit-text-fill-color",btnFg,"important");'
-    f'e.style.setProperty("border","1.5px solid "+btnBd,"important");'
+    f'e.style.setProperty("border",btnBd,"important");'
     f'}});'
     f'}}'
     f'}}'
