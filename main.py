@@ -1351,11 +1351,65 @@ def _render_bivio():
         
         # Mostra preview con navigazione tra più file
         if _previews:
-            # Se c'è più di un file, aggiungi navigazione
+            # Session state per tracciare l'indice corrente
+            if 'current_preview_index' not in st.session_state:
+                st.session_state.current_preview_index = 0
+            
+            # Mostra la preview corrente
+            current_index = st.session_state.get('current_preview_index', 0)
+            preview = _previews[current_index]
+            
+            # Titolo semplice
+            st.markdown(
+                f"""
+                <div style="text-align: center; margin-bottom: 0.5rem;">
+                    <h3 style="font-size: 1.3rem; font-weight: 600; color: #1f2937; margin: 0;">
+                        {preview["name"]}
+                    </h3>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            
+            # Immagine ENORME senza container
+            if preview['type'] == 'pdf_preview':
+                st.markdown(
+                    f'''
+                    <div style="text-align: center;">
+                        <img src="{preview["path"]}" alt="{preview["name"]}" 
+                             style="
+                                 max-width: 100%;
+                                 height: 700px;
+                                 object-fit: contain;
+                                 border-radius: 8px;
+                                 box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
+                                 background: white;
+                             ">
+                    </div>
+                    ''',
+                    unsafe_allow_html=True,
+                )
+            elif preview['type'] == 'image':
+                st.markdown(
+                    f'''
+                    <div style="text-align: center;">
+                        <img src="{preview["path"]}" alt="{preview["name"]}" 
+                             style="
+                                 max-width: 100%;
+                                 height: 700px;
+                                 object-fit: contain;
+                                 border-radius: 8px;
+                                 box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
+                                 background: white;
+                             ">
+                    </div>
+                    ''',
+                    unsafe_allow_html=True,
+                )
+            
+            # Navigazione SOTTO il PDF
             if len(_previews) > 1:
-                # Session state per tracciare l'indice corrente
-                if 'current_preview_index' not in st.session_state:
-                    st.session_state.current_preview_index = 0
+                st.markdown('<div style="margin-top: 1.5rem;"></div>', unsafe_allow_html=True)
                 
                 # Navigazione con bottoni
                 col_prev, col_center, col_next = st.columns([1, 3, 1])
@@ -1395,78 +1449,6 @@ def _render_bivio():
                 if selected_index != st.session_state.current_preview_index:
                     st.session_state.current_preview_index = selected_index
                     st.rerun()
-            
-            # Mostra la preview corrente
-            current_index = st.session_state.get('current_preview_index', 0)
-            preview = _previews[current_index]
-            
-            # Titolo semplice
-            st.markdown(
-                f"""
-                <div style="text-align: center; margin-bottom: 1rem;">
-                    <h3 style="font-size: 1.3rem; font-weight: 600; color: #1f2937; margin: 0;">
-                        {preview["name"]}
-                    </h3>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            
-            # Immagine grande senza container
-            if preview['type'] == 'pdf_preview':
-                st.markdown(
-                    f'''
-                    <div style="text-align: center;">
-                        <img src="{preview["path"]}" alt="{preview["name"]}" 
-                             style="
-                                 max-width: 100%;
-                                 height: 600px;
-                                 object-fit: contain;
-                                 border-radius: 8px;
-                                 box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
-                                 background: white;
-                             ">
-                    </div>
-                    ''',
-                    unsafe_allow_html=True,
-                )
-                
-                # Badge piccolo sotto
-                st.markdown(
-                    '''
-                    <div style="text-align: center; margin-top: 1rem;">
-                        <span style="
-                            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-                            color: white;
-                            padding: 0.4rem 1rem;
-                            border-radius: 20px;
-                            font-size: 0.8rem;
-                            font-weight: 600;
-                            display: inline-block;
-                        ">
-                            📄 400 DPI • Alta Definizione
-                        </span>
-                    </div>
-                    ''',
-                    unsafe_allow_html=True,
-                )
-            elif preview['type'] == 'image':
-                st.markdown(
-                    f'''
-                    <div style="text-align: center;">
-                        <img src="{preview["path"]}" alt="{preview["name"]}" 
-                             style="
-                                 max-width: 100%;
-                                 height: 600px;
-                                 object-fit: contain;
-                                 border-radius: 8px;
-                                 box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
-                                 background: white;
-                             ">
-                    </div>
-                    ''',
-                    unsafe_allow_html=True,
-                )
         
         st.markdown("---")
     # Se non ci sono preview, non mostra nulla
