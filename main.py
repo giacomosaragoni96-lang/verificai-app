@@ -1201,8 +1201,7 @@ def _render_bivio():
     st.markdown(
         f'''
         <div class="landing-hero-unified">
-          <div class="landing-kicker">AI per i docenti italiani</div>
-          <h2 class="landing-headline-xl">
+                    <h2 class="landing-headline-xl">
             Crea verifiche professionali<br>
             <span class="landing-headline-accent-xl">in pochi secondi</span>
           </h2>
@@ -1260,6 +1259,10 @@ def _render_bivio():
         """Carica le immagini di preview dalla cartella assets/preview"""
         import os
         import sys
+        import base64
+        from pdf2image import convert_from_bytes
+        import io
+        
         preview_dir = os.path.join(os.path.dirname(__file__), "assets", "preview")
         previews = []
         
@@ -1271,7 +1274,7 @@ def _render_bivio():
             files = sorted(os.listdir(preview_dir))
             print(f"DEBUG: Files found: {files}")
             for file in files:
-                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.svg', '.pdf')):
+                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.svg')):
                     name = os.path.splitext(file)[0].replace('-', ' ').replace('_', ' ').title()
                     # Per le immagini nel browser, usiamo path relativo dalla root
                     web_path = f"assets/preview/{file}"
@@ -1279,9 +1282,45 @@ def _render_bivio():
                         'file': file,
                         'name': name,
                         'path': web_path,
-                        'type': 'pdf' if file.lower().endswith('.pdf') else 'image'
+                        'type': 'image'
                     })
-                    print(f"DEBUG: Loaded preview: {name} ({file})")
+                    print(f"DEBUG: Loaded image preview: {name} ({file})")
+                    
+                elif file.lower().endswith('.pdf'):
+                    name = os.path.splitext(file)[0].replace('-', ' ').replace('_', ' ').title()
+                    pdf_path = os.path.join(preview_dir, file)
+                    
+                    try:
+                        # Converti la prima pagina del PDF in immagine
+                        with open(pdf_path, 'rb') as f:
+                            pdf_bytes = f.read()
+                        
+                        # Converti prima pagina in immagine
+                        images = convert_from_bytes(pdf_bytes, dpi=150, first_page=1, last_page=1)
+                        if images:
+                            # Converti l'immagine in base64 per embeddarla nell'HTML
+                            img_buffer = io.BytesIO()
+                            images[0].save(img_buffer, format='PNG')
+                            img_base64 = base64.b64encode(img_buffer.getvalue()).decode()
+                            
+                            previews.append({
+                                'file': file,
+                                'name': name,
+                                'path': f"data:image/png;base64,{img_base64}",
+                                'type': 'pdf_preview'
+                            })
+                            print(f"DEBUG: Loaded PDF preview: {name} ({file})")
+                        else:
+                            print(f"DEBUG: Failed to convert PDF to image: {file}")
+                    except Exception as e:
+                        print(f"DEBUG: Error converting PDF {file}: {e}")
+                        # Fallback: usa icona PDF
+                        previews.append({
+                            'file': file,
+                            'name': name,
+                            'path': f"assets/preview/{file}",
+                            'type': 'pdf'
+                        })
         else:
             print("DEBUG: Preview directory not found!")
         
@@ -1305,8 +1344,19 @@ def _render_bivio():
             if i < len(_previews):
                 preview = _previews[i]
                 with _col:
-                    if preview['type'] == 'pdf':
-                        # Per PDF mostra un'icona invece dell'immagine
+                    if preview['type'] == 'pdf_preview':
+                        # Per PDF convertito in immagine, mostra la preview
+                        st.markdown(
+                            f'<div class="landing-feat-card preview-card">'
+                            f'<img src="{preview["path"]}" alt="{preview["name"]}" '
+                            f'style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">'
+                            f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
+                            f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Verifica completa</div>'
+                            f'</div>',
+                            unsafe_allow_html=True,
+                        )
+                    elif preview['type'] == 'pdf':
+                        # Fallback per PDF - icona
                         st.markdown(
                             f'<div class="landing-feat-card preview-card">'
                             f'<div style="width:100%;height:200px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:8px 8px 0 0;">'
@@ -1342,32 +1392,43 @@ def _render_bivio():
                 if idx < len(_previews):
                     preview = _previews[idx]
                     with _col:
-                        if preview['type'] == 'pdf':
-                            # Per PDF mostra un'icona invece dell'immagine
-                            st.markdown(
-                                f'<div class="landing-feat-card preview-card">'
-                                f'<div style="width:100%;height:200px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:8px 8px 0 0;">'
-                                f'<div style="text-align:center;">'
-                                f'<div style="font-size:4rem;color:#dc3545;">📄</div>'
-                                f'<div style="color:#6c757d;font-size:0.9rem;margin-top:0.5rem;">PDF</div>'
-                                f'</div>'
-                                f'</div>'
-                                f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
-                                f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per aprire</div>'
-                                f'</div>',
-                                unsafe_allow_html=True,
-                            )
-                        else:
-                            # Per immagini mostra l'anteprima
-                            st.markdown(
-                                f'<div class="landing-feat-card preview-card">'
-                                f'<img src="{preview["path"]}" alt="{preview["name"]}" '
-                                f'style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">'
-                                f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
-                                f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per ingrandire</div>'
-                                f'</div>',
-                                unsafe_allow_html=True,
-                            )
+                        if preview['type'] == 'pdf_preview':
+                        # Per PDF convertito in immagine, mostra la preview
+                        st.markdown(
+                            f'<div class="landing-feat-card preview-card">'
+                            f'<img src="{preview["path"]}" alt="{preview["name"]}" '
+                            f'style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">'
+                            f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
+                            f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Verifica completa</div>'
+                            f'</div>',
+                            unsafe_allow_html=True,
+                        )
+                    elif preview['type'] == 'pdf':
+                        # Fallback per PDF - icona
+                        st.markdown(
+                            f'<div class="landing-feat-card preview-card">'
+                            f'<div style="width:100%;height:200px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:8px 8px 0 0;">'
+                            f'<div style="text-align:center;">'
+                            f'<div style="font-size:4rem;color:#dc3545;">📄</div>'
+                            f'<div style="color:#6c757d;font-size:0.9rem;margin-top:0.5rem;">PDF</div>'
+                            f'</div>'
+                            f'</div>'
+                            f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
+                            f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per aprire</div>'
+                            f'</div>',
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        # Per immagini mostra l'anteprima
+                        st.markdown(
+                            f'<div class="landing-feat-card preview-card">'
+                            f'<img src="{preview["path"]}" alt="{preview["name"]}" '
+                            f'style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">'
+                            f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
+                            f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per ingrandire</div>'
+                            f'</div>',
+                            unsafe_allow_html=True,
+                        )
     # Se non ci sono preview, non mostra nulla
 
 # ═══════════════════════════════════════════════════════════════════════════════
