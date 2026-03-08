@@ -2755,7 +2755,7 @@ def _render_percorso_a_wizard():
 
         # Argomento (sempre editabile se presente)
         if not _manca_arg:
-            st.markdown('<div class="opt-label">Argomento della verifica</div>', unsafe_allow_html=True)
+            st.markdown('<div class="opt-label">Argomento verifica ✱</div>', unsafe_allow_html=True)
             _val_argomento_in = st.text_input(
                 "Argomento",
                 value=arg_cons,
@@ -2772,7 +2772,7 @@ def _render_percorso_a_wizard():
                 with _rev_c1:
                     _mat_list_r = MATERIE + ["Altra materia…"]
                     _mat_idx_r  = _mat_list_r.index(materia_cons) if materia_cons in _mat_list_r else 0
-                    st.markdown('<div class="opt-label">Materia</div>', unsafe_allow_html=True)
+                    # Etichetta rimossa per evitare ripetizioni
                     _sel_mat_r = st.selectbox(
                         "Materia", _mat_list_r, index=_mat_idx_r,
                         label_visibility="collapsed", key="rev_mat_sel"
@@ -2784,7 +2784,7 @@ def _render_percorso_a_wizard():
             if not _manca_scu:
                 with (_rev_c2 if not _manca_mat else _rev_c1):
                     _scu_idx_r = SCUOLE.index(scuola_cons) if scuola_cons in SCUOLE else 0
-                    st.markdown('<div class="opt-label">Tipo di scuola</div>', unsafe_allow_html=True)
+                    # Etichetta rimossa per evitare ripetizioni
                     _val_scuola = st.selectbox(
                         "Scuola", SCUOLE, index=_scu_idx_r,
                         label_visibility="collapsed", key="rev_scu_sel"
@@ -2797,7 +2797,7 @@ def _render_percorso_a_wizard():
         _es_idx_r    = _es_opts.index(_es_default) if _es_default in _es_opts else 3
         _rp1, _rp2 = st.columns(2, gap="small")
         with _rp1:
-            st.markdown('<div class="opt-label">N° esercizi</div>', unsafe_allow_html=True)
+            st.markdown('<div class="opt-label">N° esercizi ✱</div>', unsafe_allow_html=True)
             num_esercizi = st.selectbox(
                 "N° esercizi", options=_es_opts, index=_es_idx_r,
                 label_visibility="collapsed", key="rev_num_es",
@@ -2852,6 +2852,13 @@ def _render_percorso_a_wizard():
         _manca_ancora  = not _arg_finale
 
         # ── Pulsante Genera ──────────────────────────────────────────────────
+        if _manca_ancora and not _limite:
+            st.markdown(
+                f'<div style="font-size:.75rem;color:{T["warn"]};text-align:center;margin-bottom:.3rem;">' +
+                f'Inserisci l\'argomento per continuare.</div>',
+                unsafe_allow_html=True
+            )
+        
         genera_btn = st.button(
             "🚀  Genera Bozza",
             use_container_width=True,
@@ -2860,12 +2867,7 @@ def _render_percorso_a_wizard():
             key="rev_genera_btn",
             help="Avvia la generazione AI della verifica. Potrai modificare ogni singolo esercizio prima di scaricare il PDF.",
         )
-        if _manca_ancora and not _limite:
-            st.markdown(
-                f'<div style="font-size:.75rem;color:{T["warn"]};text-align:center;margin-top:.3rem;">' +
-                f'Inserisci l\'argomento per continuare.</div>',
-                unsafe_allow_html=True
-            )
+        # Messaggio spostato sopra il pulsante
         if _limite:
             st.markdown(
                 '<div style="text-align:center;font-size:.82rem;color:#EF4444;margin-top:.4rem;">' +
@@ -3101,15 +3103,7 @@ def _render_percorso_b_form():
 
         if True:  # blocco unico -- layout a singola colonna
             # ── Dashboard: sezione form (layout bilanciato) ───────────────────────
-            # ── Section header: Materia & Scuola ──────────────────────────────────
-            st.markdown(
-            f'<div class="form-section-header">'
-            f'<div class="form-section-dot"></div>'
-            f'<span class="form-section-title">Materia e tipo di scuola</span>'
-            f'<div class="form-section-line"></div>'
-            f'</div>',
-            unsafe_allow_html=True,
-            )
+            # Section header rimosso per evitare ripetizioni
 
             _col_m, _col_s = st.columns(2, gap="small")
             _mat_list = MATERIE + ["✏️ Altra materia..."]
@@ -3150,15 +3144,7 @@ def _render_percorso_b_form():
                     label_visibility="collapsed", key="sel_scuola_b",
                 )
 
-            # ── Section header: Argomento ─────────────────────────────────────
-            st.markdown(
-                f'<div class="form-section-header" style="margin-top:0;">'
-                f'<div class="form-section-dot"></div>'
-                f'<span class="form-section-title">Argomento della verifica</span>'
-                f'<div class="form-section-line"></div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+            # Section header rimosso per evitare ripetizioni
             _auto_arg = _info_cons.get("contenuto_argomento", "")
             _arg_source = st.session_state.get("_pb_argomento_source")
             if _auto_arg and _arg_source != "manual":
@@ -3216,15 +3202,7 @@ def _render_percorso_b_form():
                 except (ValueError, TypeError):
                     pass
 
-            # ── Numero esercizi — fuori dall'expander, visibile subito ────────────
-            st.markdown(
-                f'<div class="form-section-header" style="margin-top:1.2rem;">'
-                f'<div class="form-section-dot"></div>'
-                f'<span class="form-section-title">N° di esercizi</span>'
-                f'<div class="form-section-line"></div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+            # Section header rimosso per evitare ripetizioni
             _n_opts = list(range(1, 16))
             _n_idx  = (_n_opts.index(_n_default) if _n_default in _n_opts else 3)
             num_esercizi = st.selectbox(
