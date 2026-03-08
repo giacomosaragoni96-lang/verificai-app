@@ -1295,8 +1295,8 @@ def _render_bivio():
                         with open(pdf_path, 'rb') as f:
                             pdf_bytes = f.read()
                         
-                        # Aumento DPI da 150 a 300 per testo leggibile
-                        images = convert_from_bytes(pdf_bytes, dpi=300, first_page=1, last_page=1)
+                        # Aumento DPI a 400 per testo molto leggibile
+                        images = convert_from_bytes(pdf_bytes, dpi=400, first_page=1, last_page=1)
                         if images:
                             # Converti l'immagine in base64 per embeddarla nell'HTML
                             img_buffer = io.BytesIO()
@@ -1357,7 +1357,7 @@ def _render_bivio():
                     </div>
                     
                     <!-- Carousel Container -->
-                    <div style="position: relative; height: 550px; background: #f8f9fa;">
+                    <div style="position: relative; height: 650px; background: #f8f9fa;">
                         <!-- Navigation Arrows -->
                         <button class="carousel-prev" style="
                             position: absolute;
@@ -1421,14 +1421,14 @@ def _render_bivio():
                         height: 100%;
                         opacity: {1 if i == 0 else 0};
                         transition: opacity 0.5s ease-in-out;
-                        padding: 1rem;
+                        padding: 0.75rem;
                         display: flex;
                         flex-direction: column;
                     ">
                         <div style="
                             background: white;
                             border-radius: 12px;
-                            padding: 1rem;
+                            padding: 0.75rem;
                             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
                             flex: 1;
                             display: flex;
@@ -1446,7 +1446,7 @@ def _render_bivio():
                                 <img src="{preview["path"]}" alt="{preview["name"]}" 
                                      style="
                                          max-width: 100%;
-                                         max-height: 420px;
+                                         max-height: 520px;
                                          object-fit: contain;
                                          border-radius: 8px;
                                          border: 2px solid #e5e7eb;
@@ -1516,7 +1516,7 @@ def _render_bivio():
                     
                     <!-- Indicators -->
                     <div style="
-                        padding: 1rem;
+                        padding: 0.75rem;
                         background: white;
                         border-top: 1px solid #e5e7eb;
                         display: flex;
