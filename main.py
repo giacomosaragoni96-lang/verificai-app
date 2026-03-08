@@ -1403,7 +1403,7 @@ def _render_bivio():
                             f'</div>',
                             unsafe_allow_html=True,
                         )
-                    elif preview['type'] == 'pdf':
+                        elif preview['type'] == 'pdf':
                         # Fallback per PDF - icona
                         st.markdown(
                             f'<div class="landing-feat-card preview-card">'
