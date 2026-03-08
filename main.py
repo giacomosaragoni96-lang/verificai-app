@@ -89,6 +89,7 @@ STAGE_INPUT   = "INPUT"
 STAGE_PREVIEW = "PREVIEW"   # ← NUOVO: anteprima rapida post-generazione
 STAGE_REVIEW  = "REVIEW"
 STAGE_FINAL   = "FINAL"
+STAGE_MIE_VERIFICHE = "MIE_VERIFICHE"  # ← NUOVO: pagina "Le tue verifiche"
 
 # ── PAGE CONFIG ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -1451,11 +1452,352 @@ def _render_bivio():
                     st.rerun()
         
         st.markdown("---")
+        
+        # Sezione Dashboard
+        st.markdown(
+            """
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.8rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem;">
+                    📊 Il Tuo Dashboard
+                </h2>
+                <p style="font-size: 1.1rem; color: #6b7280;">
+                    Gestisci e visualizza tutte le tue verifiche create
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        
+        # Stats cards
+        col1, col2, col3 = st.columns(3, gap="large")
+        
+        with col1:
+            st.markdown(
+                """
+                <div style="
+                    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                    border-radius: 16px;
+                    padding: 2rem;
+                    text-align: center;
+                    color: white;
+                    box-shadow: 0 8px 25px -5px rgba(59, 130, 246, 0.3);
+                    cursor: pointer;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                " onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 35px -5px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px -5px rgba(59, 130, 246, 0.3)'">
+                    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">
+                        📄
+                    </div>
+                    <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+                        12
+                    </div>
+                    <div style="font-size: 1rem; opacity: 0.9;">
+                        Verifiche Generate
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        
+        with col2:
+            st.markdown(
+                """
+                <div style="
+                    background: linear-gradient(135deg, #10b981, #059669);
+                    border-radius: 16px;
+                    padding: 2rem;
+                    text-align: center;
+                    color: white;
+                    box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.3);
+                ">
+                    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">
+                        📚
+                    </div>
+                    <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+                        5
+                    </div>
+                    <div style="font-size: 1rem; opacity: 0.9;">
+                        Materie Coperte
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        
+        with col3:
+            st.markdown(
+                """
+                <div style="
+                    background: linear-gradient(135deg, #f59e0b, #d97706);
+                    border-radius: 16px;
+                    padding: 2rem;
+                    text-align: center;
+                    color: white;
+                    box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.3);
+                ">
+                    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">
+                        ⭐
+                    </div>
+                    <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+                        4.8
+                    </div>
+                    <div style="font-size: 1rem; opacity: 0.9;">
+                        Qualità Media
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        
+        # Pulsante per andare alla pagina delle verifiche
+        st.markdown('<div style="text-align: center; margin-top: 2rem;">', unsafe_allow_html=True)
+        if st.button("📄 Gestisci Le Tue Verifiche →", type="primary", use_container_width=True):
+            st.session_state.stage = STAGE_MIE_VERIFICHE
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown("---")
     # Se non ci sono preview, non mostra nulla
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  _render_facsimile_dedicato()  ← NUOVA funzione, aggiungere prima di _render_stage_input
 # ═══════════════════════════════════════════════════════════════════════════════
+
+
+def _render_le_tue_verifiche():
+    """
+    Pagina "Le tue verifiche" - Gestione verifiche create dall'utente
+    """
+    st.markdown(
+        """
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h1 style="font-size: 2.5rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem;">
+                📄 Le Tue Verifiche
+            </h1>
+            <p style="font-size: 1.2rem; color: #6b7280;">
+                Gestisci, visualizza e scarica tutte le verifiche che hai creato
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    
+    # Stats in alto
+    col1, col2, col3, col4 = st.columns(4, gap="small")
+    
+    with col1:
+        st.markdown(
+            """
+            <div style="
+                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                border-radius: 12px;
+                padding: 1.5rem;
+                text-align: center;
+                color: white;
+            ">
+                <div style="font-size: 2rem; font-weight: 700;">12</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Totali</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
+    with col2:
+        st.markdown(
+            """
+            <div style="
+                background: linear-gradient(135deg, #10b981, #059669);
+                border-radius: 12px;
+                padding: 1.5rem;
+                text-align: center;
+                color: white;
+            ">
+                <div style="font-size: 2rem; font-weight: 700;">8</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Questo mese</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
+    with col3:
+        st.markdown(
+            """
+            <div style="
+                background: linear-gradient(135deg, #f59e0b, #d97706);
+                border-radius: 12px;
+                padding: 1.5rem;
+                text-align: center;
+                color: white;
+            ">
+                <div style="font-size: 2rem; font-weight: 700;">5</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Materie</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
+    with col4:
+        st.markdown(
+            """
+            <div style="
+                background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+                border-radius: 12px;
+                padding: 1.5rem;
+                text-align: center;
+                color: white;
+            ">
+                <div style="font-size: 2rem; font-weight: 700;">4.8</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Qualità</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
+    st.markdown("---")
+    
+    # Filtri e ricerca
+    col_search, col_materia, col_ordine = st.columns([3, 2, 2])
+    
+    with col_search:
+        search_query = st.text_input("🔍 Cerca verifica...", placeholder="Cerca per materia, argomento...")
+    
+    with col_materia:
+        materia_filter = st.selectbox("📚 Materia", ["Tutte", "Matematica", "Italiano", "Storia", "Fisica", "Chimica"])
+    
+    with col_ordine:
+        ordine_filter = st.selectbox("📅 Ordina per", ["Più recenti", "Più vecchie", "Alfabetico", "Materia"])
+    
+    # Lista verifiche (dati mock per ora)
+    verifiche_mock = [
+        {
+            "id": 1,
+            "titolo": "La Parabola - Matematica",
+            "materia": "Matematica",
+            "argomento": "Funzioni quadratiche",
+            "scuola": "Liceo Scientifico",
+            "data": "2024-01-15",
+            "esercizi": 3,
+            "punti": 100,
+            "latex": "% Mock LaTeX content"
+        },
+        {
+            "id": 2,
+            "titolo": "Grande Guerra - Storia",
+            "materia": "Storia",
+            "argomento": "Prima Guerra Mondiale",
+            "scuola": "Liceo Classico",
+            "data": "2024-01-12",
+            "esercizi": 5,
+            "punti": 100,
+            "latex": "% Mock LaTeX content"
+        },
+        {
+            "id": 3,
+            "titolo": "Analisi Grammaticale - Italiano",
+            "materia": "Italiano",
+            "argomento": "Analisi del periodo",
+            "scuola": "Scuola Secondaria",
+            "data": "2024-01-10",
+            "esercizi": 4,
+            "punti": 80,
+            "latex": "% Mock LaTeX content"
+        }
+    ]
+    
+    # Mostra verifiche
+    if verifiche_mock:
+        for verifica in verifiche_mock:
+            with st.container():
+                st.markdown(
+                    f"""
+                    <div style="
+                        background: white;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 12px;
+                        padding: 1.5rem;
+                        margin-bottom: 1rem;
+                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                        transition: box-shadow 0.2s;
+                    " onmouseover="this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.1)'">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="font-size: 1.3rem; font-weight: 600; color: #1f2937; margin: 0 0 0.5rem 0;">
+                                    {verifica['titolo']}
+                                </h3>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                                    <span style="background: #eff6ff; color: #1d4ed8; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
+                                        📚 {verifica['materia']}
+                                    </span>
+                                    <span style="background: #f0fdf4; color: #059669; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
+                                        🏫 {verifica['scuola']}
+                                    </span>
+                                    <span style="background: #fefce8; color: #ca8a04; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
+                                        📝 {verifica['esercizi']} esercizi
+                                    </span>
+                                    <span style="background: #f3f4f6; color: #6b7280; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
+                                        📅 {verifica['data']}
+                                    </span>
+                                </div>
+                                <p style="color: #6b7280; margin: 0; font-size: 0.95rem;">
+                                    {verifica['argomento']}
+                                </p>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button style="
+                                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                                color: white;
+                                border: none;
+                                padding: 0.5rem 1rem;
+                                border-radius: 8px;
+                                font-size: 0.9rem;
+                                font-weight: 500;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                            " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(59, 130, 246, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                👁️ Anteprima
+                            </button>
+                            <button style="
+                                background: white;
+                                color: #1f2937;
+                                border: 1px solid #e5e7eb;
+                                padding: 0.5rem 1rem;
+                                border-radius: 8px;
+                                font-size: 0.9rem;
+                                font-weight: 500;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                            " onmouseover="this.style.background='#f9fafb'; this.style.borderColor='#d1d5db'" onmouseout="this.style.background='white'; this.style.borderColor='#e5e7eb'">
+                                📄 Scarica PDF
+                            </button>
+                            <button style="
+                                background: white;
+                                color: #ef4444;
+                                border: 1px solid #fecaca;
+                                padding: 0.5rem 1rem;
+                                border-radius: 8px;
+                                font-size: 0.9rem;
+                                font-weight: 500;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                            " onmouseover="this.style.background='#fef2f2'; this.style.borderColor='#fca5a5'" onmouseout="this.style.background='white'; this.style.borderColor='#fecaca'">
+                                🗑️ Elimina
+                            </button>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+    else:
+        st.info("📝 Nessuna verifica trovata. Inizia a creare la tua prima verifica!")
+    
+    # Pulsante per creare nuova verifica
+    st.markdown("---")
+    col_center = st.columns([1, 2, 1])
+    with col_center[1]:
+        if st.button("🆕 Crea Nuova Verifica", type="primary", use_container_width=True):
+            st.session_state.stage = STAGE_INPUT
+            st.session_state.input_percorso = None
+            st.rerun()
 
 
 def _render_percorso_a_wizard():
@@ -5562,6 +5904,7 @@ if not _share_view_active:
     elif _current == STAGE_PREVIEW: _render_stage_preview()
     elif _current == STAGE_REVIEW:  _render_stage_review()
     elif _current == STAGE_FINAL:   _render_stage_final()
+    elif _current == STAGE_MIE_VERIFICHE: _render_le_tue_verifiche()
 
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
