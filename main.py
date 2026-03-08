@@ -1460,7 +1460,7 @@ def _render_bivio():
                         <img src="{preview["path"]}" alt="{preview["name"]}" 
                              style="
                                  max-width: 100%;
-                                 height: 840px;
+                                 height: 1000px;
                                  object-fit: contain;
                                  border-radius: 8px;
                                  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
@@ -1477,7 +1477,7 @@ def _render_bivio():
                         <img src="{preview["path"]}" alt="{preview["name"]}" 
                              style="
                                  max-width: 100%;
-                                 height: 840px;
+                                 height: 1000px;
                                  object-fit: contain;
                                  border-radius: 8px;
                                  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
@@ -1556,6 +1556,80 @@ def _load_user_verifiche():
     except Exception as e:
         st.error(f"⚠️ Errore nel caricamento delle verifiche: {e}")
         return []
+
+def _rinomina_verifica(verifica_id: int, nuovo_nome: str):
+    """
+    Rinomina una verifica nel database
+    """
+    try:
+        res = supabase_admin.table("verifiche_storico")\
+            .update({"argomento": nuovo_nome})\
+            .eq("id", verifica_id)\
+            .execute()
+        
+        return res.data if res.data else None
+    except Exception as e:
+        st.error(f"⚠️ Errore rinomina: {e}")
+        return None
+
+def _toggle_preferito(verifica_id: int, is_preferito: bool):
+    """
+    Aggiunge/rimuove una verifica dai preferiti
+    """
+    try:
+        res = supabase_admin.table("verifiche_storico")\
+            .update({"preferito": is_preferito})\
+            .eq("id", verifica_id)\
+            .execute()
+        
+        return res.data if res.data else None
+    except Exception as e:
+        st.error(f"⚠️ Errore preferito: {e}")
+        return None
+
+def _genera_link_condivisione(verifica_id: int):
+    """
+    Genera un link di condivisione per una verifica
+    """
+    try:
+        # Carica la verifica
+        res = supabase_admin.table("verifiche_storico")\
+            .select("*")\
+            .eq("id", verifica_id)\
+            .eq("user_id", st.session_state.utente.id)\
+            .limit(1)\
+            .execute()
+        
+        if not res.data:
+            return None
+        
+        verifica = res.data[0]
+        
+        # Genera codice di condivisione
+        code = _generate_share_code()
+        
+        # Salva nella tabella shared_verifiche
+        supabase_admin.table("shared_verifiche").insert({
+            "short_code": code,
+            "user_id": st.session_state.utente.id,
+            "latex_a": verifica.get("latex_a"),
+            "latex_b": verifica.get("latex_b"),
+            "latex_r": verifica.get("latex_r"),
+            "materia": verifica.get("materia"),
+            "argomento": verifica.get("argomento"),
+            "scuola": verifica.get("scuola"),
+            "num_esercizi": verifica.get("num_esercizi"),
+            "modello": verifica.get("modello"),
+            "percorso_scelto": verifica.get("percorso_scelto"),
+            "file_mode": verifica.get("file_mode"),
+            "created_at": verifica.get("created_at"),
+        }).execute()
+        
+        return f"{SHARE_URL}?share={code}"
+        
+    except Exception as e:
+        st.error(f"⚠️ Errore generazione link: {e}")
+        return None
 
 def _get_verifiche_stats():
     """
@@ -1782,7 +1856,7 @@ def _render_le_tue_verifiche():
                     unsafe_allow_html=True,
                 )
                 
-                # Bottoni funzionali
+                # Bottoni funzionali con nuove opzioni
                 col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
                 
                 with col1:
@@ -1912,6 +1986,100 @@ def _render_le_tue_verifiche():
                                 # Reset stato di conferma
                                 if f"confirm_delete_{verifica.get('id')}" in st.session_state:
                                     del st.session_state[f"confirm_delete_{verifica.get('id')}"]
+                
+                # Seconda riga di bottoni per le nuove funzionalità
+                st.markdown('<div style="margin-top: 0.5rem;"></div>', unsafe_allow_html=True)
+                col5, col6, col7 = st.columns([1, 1, 1])
+                
+                with col5:
+                    # Rinomina
+                    if f"rename_{verifica.get('id')}" not in st.session_state:
+                        st.session_state[f"rename_{verifica.get('id')}"] = False
+                    
+                    if not st.session_state[f"rename_{verifica.get('id')}"]:
+                        if st.button(f"✏️ Rinomina", key=f"rename_btn_{verifica.get('id')}_{i}"):
+                            st.session_state[f"rename_{verifica.get('id')}"] = True
+                            st.rerun()
+                    else:
+                        nuovo_nome = st.text_input(
+                            "Nuovo nome:",
+                            value=verifica.get("argomento", ""),
+                            key=f"rename_input_{verifica.get('id')}_{i}"
+                        )
+                        col_save, col_cancel = st.columns([1, 1])
+                        with col_save:
+                            if st.button("💾 Salva", key=f"save_rename_{verifica.get('id')}_{i}"):
+                                if nuovo_nome.strip():
+                                    result = _rinomina_verifica(verifica.get("id"), nuovo_nome.strip())
+                                    if result:
+                                        st.success("✅ Nome aggiornato!")
+                                        del st.session_state[f"rename_{verifica.get('id')}"]
+                                        st.rerun()
+                        with col_cancel:
+                            if st.button("❌ Annulla", key=f"cancel_rename_{verifica.get('id')}_{i}"):
+                                del st.session_state[f"rename_{verifica.get('id')}"]
+                                st.rerun()
+                
+                with col6:
+                    # Preferiti
+                    is_preferito = verifica.get("preferito", False)
+                    pref_icon = "❤️" if is_preferito else "🤍"
+                    pref_text = "Rimuovi dai preferiti" if is_preferito else "Aggiungi ai preferiti"
+                    
+                    if st.button(f"{pref_icon} {pref_text}", key=f"preferito_{verifica.get('id')}_{i}"):
+                        result = _toggle_preferito(verifica.get("id"), not is_preferito)
+                        if result:
+                            action = "rimossa dai" if is_preferito else "aggiunta ai"
+                            st.success(f"✅ Verifica {action} preferiti!")
+                            st.rerun()
+                
+                with col7:
+                    # Condivisione
+                    if st.button(f"🔗 Condividi", key=f"share_{verifica.get('id')}_{i}"):
+                        link = _genera_link_condivisione(verifica.get("id"))
+                        if link:
+                            st.success("🔗 Link generato!")
+                            st.markdown(
+                                f"""
+                                <div style="
+                                    background: #f0fdf4;
+                                    border: 1px solid #86efac;
+                                    border-radius: 8px;
+                                    padding: 1rem;
+                                    margin: 0.5rem 0;
+                                ">
+                                    <div style="font-size: 0.9rem; color: #059669; margin-bottom: 0.5rem;">
+                                        📋 Link da condividere:
+                                    </div>
+                                    <div style="
+                                        background: white;
+                                        border: 1px solid #d1d5db;
+                                        border-radius: 4px;
+                                        padding: 0.5rem;
+                                        font-family: monospace;
+                                        font-size: 0.8rem;
+                                        word-break: break-all;
+                                    ">
+                                        {link}
+                                    </div>
+                                    <div style="margin-top: 0.5rem;">
+                                        <button onclick="navigator.clipboard.writeText('{link}')" 
+                                                style="
+                                                    background: #059669;
+                                                    color: white;
+                                                    border: none;
+                                                    padding: 0.25rem 0.5rem;
+                                                    border-radius: 4px;
+                                                    font-size: 0.8rem;
+                                                    cursor: pointer;
+                                                ">
+                                            📋 Copia link
+                                        </button>
+                                    </div>
+                                </div>
+                                """,
+                                unsafe_allow_html=True
+                            )
                 
                 # Divider tra verifiche (tranne l'ultima)
                 if i < len(verifiche_filtrate) - 1:
