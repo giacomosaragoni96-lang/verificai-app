@@ -3494,6 +3494,14 @@ def _render_percorso_b_form():
             _manca_arg = not argomento
             st.markdown("<div style='height:.9rem'></div>", unsafe_allow_html=True)
 
+            if _manca_arg and not _limite:
+                st.markdown(
+                    f'<div style="text-align:center;font-size:.82rem;color:{T["warn"]};'
+                    f'font-family:DM Sans,sans-serif;margin-bottom:.3rem;">'
+                    f'Inserisci l\'argomento per continuare.</div>',
+                    unsafe_allow_html=True,
+                )
+
             st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
             genera_btn = st.button(
                 "🚀  Genera Bozza",
@@ -3507,14 +3515,6 @@ def _render_percorso_b_form():
 
             # Placeholder progress bar — apparirà subito sotto il pulsante
             _prog_placeholder = st.empty()
-
-            if _manca_arg and not _limite:
-                st.markdown(
-                    f'<div style="text-align:center;font-size:.82rem;color:{T["warn"]};'
-                    f'font-family:DM Sans,sans-serif;margin-top:.3rem;">'
-                    f'Inserisci l\'argomento per continuare.</div>',
-                    unsafe_allow_html=True,
-                )
             if _limite:
                 st.markdown(
                     f'<div style="text-align:center;font-size:.82rem;color:#EF4444;'
