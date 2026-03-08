@@ -764,7 +764,7 @@ THEME_LABELS = {
     "ardesia":    "🪨 Ardesia",
 }
 
-DEFAULT_THEME = "notte"
+DEFAULT_THEME = "carta"
 
 # ── SCUOLE E CALIBRAZIONE ──────────────────────────────────────────────────────
 SCUOLE = [

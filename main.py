@@ -561,31 +561,54 @@ st.markdown(get_css(T), unsafe_allow_html=True)
 # st.markdown non esegue <script>. components.html usa un iframe sandbox con
 # allow-same-origin che permette window.parent.document → accesso al DOM reale.
 _theme_is_light = _is_light_color(T.get("bg", "#000000"))
-_exp_fix_bg  = T.get("accent_light", "#E0F2FE")
-_exp_fix_fg  = T.get("accent", "#0D9488")
-_exp_fix_bdr = T.get("accent", "#0D9488") + "44"
+_exp_fix_bg   = T.get("accent_light", "#E0F2FE")
+_exp_fix_fg   = T.get("accent", "#0D9488")
+_exp_fix_bdr  = T.get("accent", "#0D9488") + "44"
+_btn_fix_bg   = T.get("card", T.get("bg2", "#FFFFFF"))
+_btn_fix_fg   = T.get("text", "#0F1117")
+_btn_fix_bdr  = T.get("border2", "#CDD1D9")
+_is_lt        = "1" if _theme_is_light else ""
 components.html(
     f'<script>'
-    f'(function(){{'                f'var p=window.parent,d=p&&p.document;'
+    f'(function(){{'
+    f'var p=window.parent,d=p&&p.document;'
     f'if(!d)return;'
-    f'var bg="{_exp_fix_bg if _theme_is_light else ""}",fg="{_exp_fix_fg if _theme_is_light else ""}",bd="1px solid {_exp_fix_bdr if _theme_is_light else ""}";'
-    f'if(!bg)return;'
-    f'var SEL=\'[data-testid="stExpander"] details[open]>summary,[data-testid="stExpander"][open]>summary\';'
+    f'var isLight="{_is_lt}";'
+    f'var ebg="{_exp_fix_bg}",efg="{_exp_fix_fg}",ebd="1px solid {_exp_fix_bdr}";'
+    f'var btnBg="{_btn_fix_bg}",btnFg="{_btn_fix_fg}",btnBd="1.5px solid {_btn_fix_bdr}";'
+    f'var ESEL=\'[data-testid="stExpander"] details[open]>summary,[data-testid="stExpander"][open]>summary\';'
+    f'var BSEL=\'[data-testid="stButton"]>button,div.stButton>button\';'
     f'function fx(){{'
-    f'd.querySelectorAll(SEL).forEach(function(e){{'
-    f'e.style.setProperty("background",bg,"important");'
-    f'e.style.setProperty("background-color",bg,"important");'
-    f'e.style.setProperty("color",fg,"important");'
-    f'e.style.setProperty("-webkit-text-fill-color",fg,"important");'
-    f'e.style.setProperty("border-bottom",bd,"important");'
+    f'if(isLight){{'
+    # Fix expander open headers on light themes
+    f'd.querySelectorAll(ESEL).forEach(function(e){{'
+    f'e.style.setProperty("background",ebg,"important");'
+    f'e.style.setProperty("background-color",ebg,"important");'
+    f'e.style.setProperty("color",efg,"important");'
+    f'e.style.setProperty("-webkit-text-fill-color",efg,"important");'
+    f'e.style.setProperty("border-bottom",ebd,"important");'
     f'e.style.setProperty("border-radius","12px 12px 0 0","important");'
     f'}});'
-    f'd.querySelectorAll(SEL.split(",").map(function(s){{return s+" *";}}).join(",")).forEach(function(e){{'
-    f'e.style.setProperty("color",fg,"important");'
-    f'e.style.setProperty("-webkit-text-fill-color",fg,"important");'
+    f'd.querySelectorAll(ESEL.split(",").map(function(s){{return s+" *";}}).join(",")).forEach(function(e){{'
+    f'e.style.setProperty("color",efg,"important");'
+    f'e.style.setProperty("-webkit-text-fill-color",efg,"important");'
     f'e.style.setProperty("background-color","transparent","important");'
-    f'}});}}'
-    f'try{{new MutationObserver(fx).observe(d.body,{{subtree:true,attributes:true,childList:true}});}}catch(e){{}}'
+    f'}});'
+    # Fix secondary buttons on light themes (main content only, not sidebar)
+    f'd.querySelectorAll(BSEL).forEach(function(e){{'
+    f'if(e.closest(\'[data-testid="stSidebar"]\'))return;'
+    f'var dt=e.getAttribute("data-testid")||"";'
+    f'var kd=e.getAttribute("kind")||"";'
+    f'if(dt.indexOf("primary")!==-1||kd==="primary")return;'
+    f'e.style.setProperty("background",btnBg,"important");'
+    f'e.style.setProperty("background-color",btnBg,"important");'
+    f'e.style.setProperty("color",btnFg,"important");'
+    f'e.style.setProperty("-webkit-text-fill-color",btnFg,"important");'
+    f'e.style.setProperty("border","1.5px solid "+btnBd,"important");'
+    f'}});'
+    f'}}'
+    f'}}'
+    f'try{{new MutationObserver(fx).observe(d.body,{{subtree:true,attributes:true,childList:true}});}}catch(err){{}}'
     f'fx();setInterval(fx,300);'
     f'}})();'
     f'</script>',

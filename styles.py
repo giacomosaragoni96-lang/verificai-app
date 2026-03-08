@@ -448,19 +448,26 @@ def get_css(T: dict) -> str:
   }}
   [data-testid="stSidebar"] .stButton button {{
     background: {_SB_INPUT_BG} !important;
+    background-color: {_SB_INPUT_BG} !important;
     color: {_SB_INPUT_TEXT} !important;
+    -webkit-text-fill-color: {_SB_INPUT_TEXT} !important;
     border: 1px solid {_SB_BORDER} !important;
-    border-radius: 10px !important;
-    font-size: 0.92rem !important;
+    border-radius: 8px !important;
+    font-size: 0.82rem !important;
     font-weight: 600 !important;
-    min-height: 40px !important;
-    padding: .4rem 1rem !important;
+    min-height: 34px !important;
+    padding: .3rem .6rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
     transition: border-color .2s ease, background .2s ease !important;
   }}
   [data-testid="stSidebar"] .stButton button:hover {{
     border-color: {_SB_ACCENT} !important;
     color: {_SB_INPUT_TEXT} !important;
+    -webkit-text-fill-color: {_SB_INPUT_TEXT} !important;
     background: {_SB_BORDER} !important;
+    background-color: {_SB_BORDER} !important;
   }}
   [data-testid="stSidebar"] .stSelectSlider [data-testid="stMarkdownContainer"] p {{
     color: {_SB_TEXT} !important;
@@ -509,13 +516,178 @@ def get_css(T: dict) -> str:
 
   [data-testid="stSidebar"] .sidebar-label,
   .sidebar-label {{
-    font-size: 0.9rem !important;
+    font-size: 0.67rem !important;
     font-weight: 800 !important;
-    letter-spacing: 0.12em !important;
+    letter-spacing: 0.16em !important;
     text-transform: uppercase !important;
     color: {_SB_ACCENT} !important;
-    margin: 1.1rem 0 0.45rem 0 !important;
+    margin: 1.2rem 0 0.4rem 0 !important;
     font-family: 'DM Sans', sans-serif !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }}
+  [data-testid="stSidebar"] .sidebar-label::before,
+  .sidebar-label::before {{
+    content: '' !important;
+    display: inline-block !important;
+    width: 3px !important;
+    height: 10px !important;
+    background: {_SB_ACCENT} !important;
+    border-radius: 2px !important;
+    flex-shrink: 0 !important;
+  }}
+
+  /* ── Sidebar: sezione divider sottile ── */
+  .sb-divider {{
+    height: 1px;
+    background: {_SB_BORDER};
+    border: none;
+    margin: .8rem 0;
+    opacity: .5;
+  }}
+
+  /* ── Sidebar: monthly usage bar ── */
+  .monthly-bar {{
+    background: {_SB_INPUT_BG};
+    border: 1px solid {_SB_BORDER};
+    border-radius: 10px;
+    padding: .6rem .75rem;
+    margin-top: .35rem;
+  }}
+  .monthly-bar-header {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .4rem;
+  }}
+  .monthly-bar-label {{
+    font-size: .78rem;
+    color: {_SB_TEXT};
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .monthly-bar-count {{
+    font-size: .8rem;
+    font-weight: 700;
+    color: {_SB_TEXT};
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .monthly-progress {{
+    height: 4px;
+    background: {_SB_BORDER};
+    border-radius: 10px;
+    overflow: hidden;
+  }}
+  .monthly-progress-fill {{
+    height: 100%;
+    border-radius: 10px;
+    transition: width .6s ease;
+  }}
+  .limit-reached {{ color: {T['error']} !important; }}
+  .limit-near    {{ color: {T['warn']}  !important; }}
+
+  /* ── Sidebar: Pro CTA card con gradient border ── */
+  .sb-pro-card {{
+    background: linear-gradient({_SB_INPUT_BG}, {_SB_INPUT_BG}) padding-box,
+                linear-gradient(135deg, {_SB_ACCENT}99, {_acc2}55) border-box;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    padding: .7rem .9rem;
+    margin: .55rem 0 .3rem 0;
+  }}
+  .sb-pro-card-header {{
+    font-size: .74rem;
+    font-weight: 700;
+    color: {_SB_ACCENT};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 4px;
+    letter-spacing: .03em;
+  }}
+  .sb-pro-card-body {{
+    font-size: .71rem;
+    color: {_SB_TEXT};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.45;
+    margin-bottom: .3rem;
+  }}
+  .sb-pro-card-footer {{
+    font-size: .64rem;
+    color: {_SB_MUTED};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.3;
+  }}
+
+  /* ── Sidebar: user pill ── */
+  .user-pill {{
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .65rem .2rem .45rem .2rem;
+    border-top: 1px solid {_SB_BORDER};
+    margin-top: 1rem;
+  }}
+  .user-avatar {{
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, {_SB_ACCENT}, {_SB_BORDER});
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .88rem;
+    font-weight: 800;
+    color: {_SB_INPUT_BG};
+    flex-shrink: 0;
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .user-info {{
+    overflow: hidden;
+    min-width: 0;
+  }}
+  .user-email {{
+    font-size: .74rem;
+    color: {_SB_TEXT};
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }}
+  .user-role {{
+    font-size: .66rem;
+    color: {_SB_MUTED};
+    font-family: 'DM Sans', sans-serif;
+  }}
+
+  /* ── Sidebar: logout button ── */
+  .logout-btn-wrap .stButton > button {{
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 1px solid {_SB_BORDER} !important;
+    color: {_SB_MUTED} !important;
+    -webkit-text-fill-color: {_SB_MUTED} !important;
+    font-size: .8rem !important;
+    min-height: 34px !important;
+    width: 100% !important;
+    margin-top: .4rem !important;
+    border-radius: 8px !important;
+    transition: border-color .15s, color .15s, background .15s !important;
+  }}
+  .logout-btn-wrap .stButton > button:hover {{
+    border-color: {T.get('error','#DC2626')} !important;
+    color: {T.get('error','#DC2626')} !important;
+    -webkit-text-fill-color: {T.get('error','#DC2626')} !important;
+    background: {T.get('error','#DC2626')}12 !important;
+    background-color: {T.get('error','#DC2626')}12 !important;
+  }}
+
+  /* ── Sidebar: logo sub-title ── */
+  .sidebar-logo-sub {{
+    font-size: .63rem;
+    color: {_SB_MUTED};
+    font-weight: 500;
+    letter-spacing: .03em;
+    margin-top: 1px;
+    font-family: 'DM Sans', sans-serif;
   }}
 
 
@@ -578,10 +750,11 @@ def get_css(T: dict) -> str:
     font-weight: 900 !important;
     letter-spacing: -0.02em;
     color: {_SB_TEXT} !important;
-    margin: 0 0 1rem 0;
-    padding: .35rem 0 .9rem 0;
-    border-bottom: 1px solid {_SB_BORDER};
-    display: block;
+    margin: 0 0 .6rem 0;
+    padding: .35rem 0 .5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }}
 
 
@@ -820,9 +993,13 @@ def get_css(T: dict) -> str:
     transform: none !important;
   }}
 
+  html body .stApp div.stButton > button[kind="secondary"],
+  html body .stApp div.stButton > button:not([kind="primary"]),
+  html body .stApp [data-testid="stButton"] > button:not([data-testid*="primary"]),
   div.stButton > button[kind="secondary"],
   div.stButton > button:not([kind="primary"]) {{
     background: {_surf_raised} !important;
+    background-color: {_surf_raised} !important;
     color: {T['text']} !important;
     -webkit-text-fill-color: {T['text']} !important;
     border: 1.5px solid {T['border2']} !important;
@@ -835,6 +1012,8 @@ def get_css(T: dict) -> str:
     box-shadow: {_shadow_xs} !important;
     transition: background {_transition}, border-color {_transition}, box-shadow {_transition}, transform {_transition} !important;
   }}
+  html body .stApp div.stButton > button[kind="secondary"]:hover,
+  html body .stApp div.stButton > button:not([kind="primary"]):hover,
   div.stButton > button[kind="secondary"]:hover,
   div.stButton > button:not([kind="primary"]):hover {{
     background: {T['hover']} !important;

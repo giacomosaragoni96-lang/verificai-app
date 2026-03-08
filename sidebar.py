@@ -77,13 +77,16 @@ def render_sidebar(
         _sb_text  = T.get("sidebar_input_text", "#E6EDF3")
         _sb_muted = T.get("sidebar_input_text", "#E6EDF3") + "99"
         st.markdown(
-            f'<div class="sidebar-logo">📝 Verific<span style="background:linear-gradient(135deg,{_acc},{_acc2});'
-            f'-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">AI</span></div>',
+            f'<div class="sidebar-logo">'
+            f'<div>📝 Verific<span style="background:linear-gradient(135deg,{_acc},{_acc2});'
+            f'-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">AI</span></div>'
+            f'<div class="sidebar-logo-sub">AI per la scuola italiana</div>'
+            f'</div>',
             unsafe_allow_html=True
         )
         st.markdown(
-            f'<div style="height:2px;background:linear-gradient(90deg,{_acc},transparent);'
-            f'border-radius:2px;margin-bottom:1rem;opacity:.5;"></div>',
+            f'<div style="height:1.5px;background:linear-gradient(90deg,{_acc}88,transparent);'
+            f'border-radius:2px;margin:.3rem 0 1rem 0;"></div>',
             unsafe_allow_html=True
         )
         # ── MODELLO AI — routing per piano ───────────────────────────────────
@@ -179,9 +182,10 @@ def render_sidebar(
                 st.session_state.theme = _sel_theme_key
                 theme_changed = True
 
+        st.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
         # ── CONTATORE MENSILE ─────────────────────────────────────────────────
         st.markdown(
-            f'<div class="sidebar-label" style="margin-top:1rem;">Utilizzo mensile</div>',
+            f'<div class="sidebar-label" style="margin-top:.3rem;">Utilizzo mensile</div>',
             unsafe_allow_html=True
         )
         _perc_uso   = min(100, int(verifiche_mese_count / LIMITE_MENSILE * 100))
@@ -224,31 +228,23 @@ def render_sidebar(
         if limite_raggiunto or _perc_uso >= 60:
             _rimaste = max(0, LIMITE_MENSILE - verifiche_mese_count)
             if limite_raggiunto:
-                _msg = "Limite raggiunto."
+                _msg = "Limite mensile raggiunto."
                 _sub = "Passa a Pro per verifiche illimitate."
             else:
-                _msg = f"Ti restano {_rimaste} {'verifica' if _rimaste==1 else 'verifiche'}."
+                _msg = f"Ti restano <b>{_rimaste} {'verifica' if _rimaste==1 else 'verifiche'}</b>."
                 _sub = "Con Pro avresti accesso illimitato."
             st.markdown(f"""
-            <div style="background:{T['hint_bg']};border:1px solid {T['hint_border']};
-                        border-radius:12px;padding:.65rem .9rem;margin:.5rem 0 .3rem 0;">
-              <div style="font-size:.73rem;font-weight:700;color:{T['accent']};
-                           font-family:'DM Sans',sans-serif;margin-bottom:2px;">
-                ✦ VerificAI Pro
-              </div>
-              <div style="font-size:.7rem;color:{T['hint_text']};font-family:'DM Sans',sans-serif;
-                          margin-bottom:.45rem;line-height:1.4;">
-                {_msg} {_sub}
-              </div>
-              <div style="font-size:.68rem;color:{T['hint_text']}AA;font-family:'DM Sans',sans-serif;">
-                Verifiche illimitate · Versione anti-copia (Fila B) · Adattata BES/DSA · Soluzioni per il docente
-              </div>
+            <div class="sb-pro-card">
+              <div class="sb-pro-card-header">✦ VerificAI Pro</div>
+              <div class="sb-pro-card-body">{_msg} {_sub}</div>
+              <div class="sb-pro-card-footer">Verifiche illimitate · Fila B anti-copia · BES/DSA · Soluzioni docente</div>
             </div>
             """, unsafe_allow_html=True)
 
+        st.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
         # ── STORICO VERIFICHE ─────────────────────────────────────────────────
         st.markdown(
-            f'<div class="sidebar-label" style="margin-top:1rem;">Le mie verifiche</div>',
+            f'<div class="sidebar-label" style="margin-top:.3rem;">Le mie verifiche</div>',
             unsafe_allow_html=True
         )
 
@@ -351,12 +347,22 @@ def render_sidebar(
 
                     # ── Card visuale con tempo relativo ───────────────────
                     _badge_html = ""
+                    _SB_ACCENT_loc = T.get("sidebar_accent", "#79C0FF")
+                    _SB_INPUT_BG_loc = T.get("sidebar_input_bg", "#0D1117")
+                    _SB_BORDER_loc = T.get("sidebar_border", "#21262D")
                     if scu_str:
-                        _badge_html += f'<span style="background:{T["bg2"]};color:{T["muted"]};font-size:.58rem;font-weight:600;padding:1px 5px;border-radius:4px;margin-right:3px;">{scu_str[:16]}</span>'
+                        _badge_html += (f'<span style="background:{_SB_INPUT_BG_loc};color:{_SB_ACCENT_loc}CC;'
+                                        f'font-size:.58rem;font-weight:600;padding:1px 5px;border-radius:4px;'
+                                        f'border:1px solid {_SB_BORDER_loc};margin-right:3px;">{scu_str[:16]}</span>')
                     if _has_b:
-                        _badge_html += f'<span style="background:{T["accent_light"]};color:{T["accent"]};font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:4px;margin-right:3px;">FILA B</span>'
+                        _badge_html += (f'<span style="background:{_SB_ACCENT_loc}22;color:{_SB_ACCENT_loc};'
+                                        f'font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:4px;'
+                                        f'border:1px solid {_SB_ACCENT_loc}44;margin-right:3px;">FILA B</span>')
                     if _has_r:
-                        _badge_html += f'<span style="background:{T["hint_bg"]};color:{T["hint_text"]};font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:4px;">BES</span>'
+                        _success = T.get("success", "#059669")
+                        _badge_html += (f'<span style="background:{_success}22;color:{_success};'
+                                        f'font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:4px;'
+                                        f'border:1px solid {_success}44;">BES</span>')
 
                     st.markdown(
                         f'<div class="storico-card">'
@@ -526,12 +532,17 @@ def render_sidebar(
             "gold":  "Piano Gold",
             "pro":   "Piano Pro",
         }.get(_piano, "Piano gratuito")
+        _piano_icon = {
+            "admin": "⚙️",
+            "gold":  "🌟",
+            "pro":   "⚡",
+        }.get(_piano, "🎓")
         st.markdown(f"""
         <div class="user-pill">
           <div class="user-avatar">{iniziale}</div>
           <div class="user-info">
             <div class="user-email">{email_utente}</div>
-            <div class="user-role">Docente · {_piano_label}</div>
+            <div class="user-role">{_piano_icon} {_piano_label}</div>
           </div>
         </div>
         """, unsafe_allow_html=True)
