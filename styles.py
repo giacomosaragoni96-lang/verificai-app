@@ -4154,6 +4154,23 @@ def get_css(T: dict) -> str:
     border: 1px solid {_SB_BORDER} !important;
   }}
 
+  /* ── PREVIEW CARDS ───────────────────────────────────────────────────────────── */
+  .preview-card {{
+    cursor: pointer !important;
+    overflow: hidden !important;
+  }}
+  .preview-card:hover {{
+    transform: translateY(-6px) !important;
+    box-shadow: 0 8px 24px {_acc_soft} !important;
+    border-color: {_acc} !important;
+  }}
+  .preview-card img {{
+    transition: transform 0.3s ease !important;
+  }}
+  .preview-card:hover img {{
+    transform: scale(1.05) !important;
+  }}
+
 </style>
 """
 

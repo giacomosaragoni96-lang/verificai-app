@@ -1453,43 +1453,104 @@ def _render_bivio():
         </div>''',
         unsafe_allow_html=True,
     )
-    _feat_cards = [
-        ("PDF", "📄", "Stampa professionale",
-         "LaTeX compilato in pochi secondi. Layout pulito, pronto da consegnare."),
-        ("AI", "🤖", "Calibrata per livello",
-         "Media, Liceo, ITI, Professionale: ogni verifica adattata alla classe."),
-        ("BES", "⭐", "Versione BES/DSA",
-         "Variante semplificata automatica per alunni con bisogni educativi speciali."),
-        ("FILA B", "🎲", "Anti-copia Fila B",
-         "Dati e ordine variati — ideale per aule numerose. Un click, due versioni."),
-        ("EDITOR", "✏️", "Editor interattivo",
-         "Modifica ogni esercizio con l'AI: testo, punteggi e difficoltà su misura."),
-        ("GRIGLIA", "📊", "Griglia di valutazione",
-         "Criteri di correzione e griglia di voto allegati ad ogni verifica generata."),
-    ]
-    _cols1 = st.columns(3, gap="medium")
-    for _col, (_badge, _icon, _title, _desc) in zip(_cols1, _feat_cards[:3]):
-        with _col:
-            st.markdown(
-                f'<div class="landing-feat-card">'
-                f'<div class="landing-feat-badge">{_icon} {_badge}</div>'
-                f'<div class="landing-feat-title">{_title}</div>'
-                f'<div class="landing-feat-desc">{_desc}</div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-    st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
-    _cols2 = st.columns(3, gap="medium")
-    for _col, (_badge, _icon, _title, _desc) in zip(_cols2, _feat_cards[3:]):
-        with _col:
-            st.markdown(
-                f'<div class="landing-feat-card">'
-                f'<div class="landing-feat-badge">{_icon} {_badge}</div>'
-                f'<div class="landing-feat-title">{_title}</div>'
-                f'<div class="landing-feat-desc">{_desc}</div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+    # Carica preview reali delle verifiche
+    def load_preview_images():
+        """Carica le immagini di preview dalla cartella assets/preview"""
+        import os
+        preview_dir = "assets/preview"
+        previews = []
+        
+        if os.path.exists(preview_dir):
+            for file in sorted(os.listdir(preview_dir)):
+                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.svg')):
+                    name = os.path.splitext(file)[0].replace('-', ' ').replace('_', ' ').title()
+                    previews.append({
+                        'file': file,
+                        'name': name,
+                        'path': os.path.join(preview_dir, file)
+                    })
+        return previews
+    
+    _previews = load_preview_images()
+    
+    # Se non ci sono preview, usa le card statiche come fallback
+    if not _previews:
+        _feat_cards = [
+            ("PDF", "📄", "Stampa professionale",
+             "LaTeX compilato in pochi secondi. Layout pulito, pronto da consegnare."),
+            ("AI", "🤖", "Calibrata per livello",
+             "Media, Liceo, ITI, Professionale: ogni verifica adattata alla classe."),
+            ("BES", "⭐", "Versione BES/DSA",
+             "Variante semplificata automatica per alunni con bisogni educativi speciali."),
+            ("FILA B", "🎲", "Anti-copia Fila B",
+             "Dati e ordine variati — ideale per aule numerose. Un click, due versioni."),
+            ("EDITOR", "✏️", "Editor interattivo",
+             "Modifica ogni esercizio con l'AI: testo, punteggi e difficoltà su misura."),
+            ("GRIGLIA", "📊", "Griglia di valutazione",
+             "Criteri di correzione e griglia di voto allegati ad ogni verifica generata."),
+        ]
+    # Mostra preview reali o card statiche
+    if _previews:
+        # Usa le preview reali
+        _cols1 = st.columns(3, gap="medium")
+        for i, _col in enumerate(_cols1):
+            if i < len(_previews):
+                preview = _previews[i]
+                with _col:
+                    st.markdown(
+                        f'<div class="landing-feat-card preview-card">'
+                        f'<img src="{preview["path"]}" alt="{preview["name"]}" '
+                        f'style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">'
+                        f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
+                        f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per ingrandire</div>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+        
+        st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
+        
+        # Seconda riga se ci sono più preview
+        if len(_previews) > 3:
+            _cols2 = st.columns(3, gap="medium")
+            for i, _col in enumerate(_cols2):
+                idx = i + 3
+                if idx < len(_previews):
+                    preview = _previews[idx]
+                    with _col:
+                        st.markdown(
+                            f'<div class="landing-feat-card preview-card">'
+                            f'<img src="{preview["path"]}" alt="{preview["name"]}" '
+                            f'style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">'
+                            f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
+                            f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per ingrandire</div>'
+                            f'</div>',
+                            unsafe_allow_html=True,
+                        )
+    else:
+        # Fallback alle card statiche
+        _cols1 = st.columns(3, gap="medium")
+        for _col, (_badge, _icon, _title, _desc) in zip(_cols1, _feat_cards[:3]):
+            with _col:
+                st.markdown(
+                    f'<div class="landing-feat-card">'
+                    f'<div class="landing-feat-badge">{_icon} {_badge}</div>'
+                    f'<div class="landing-feat-title">{_title}</div>'
+                    f'<div class="landing-feat-desc">{_desc}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+        st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
+        _cols2 = st.columns(3, gap="medium")
+        for _col, (_badge, _icon, _title, _desc) in zip(_cols2, _feat_cards[3:]):
+            with _col:
+                st.markdown(
+                    f'<div class="landing-feat-card">'
+                    f'<div class="landing-feat-badge">{_icon} {_badge}</div>'
+                    f'<div class="landing-feat-title">{_title}</div>'
+                    f'<div class="landing-feat-desc">{_desc}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  _render_facsimile_dedicato()  ← NUOVA funzione, aggiungere prima di _render_stage_input

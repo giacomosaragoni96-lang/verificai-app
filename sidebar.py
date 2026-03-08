@@ -80,7 +80,6 @@ def render_sidebar(
             f'<div class="sidebar-logo">'
             f'<div>📝 Verific<span style="background:linear-gradient(135deg,{_acc},{_acc2});'
             f'-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">AI</span></div>'
-            f'<div class="sidebar-logo-sub">AI per la scuola italiana</div>'
             f'</div>',
             unsafe_allow_html=True
         )
