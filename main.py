@@ -4499,6 +4499,12 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 _title_rc = re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]).strip()
                 _title_short = (_title_rc[:45] + "…") if len(_title_rc) > 45 else _title_rc
 
+                # Debug: mostra cosa viene rilevato
+                print(f"DEBUG: Es {_i+1} - Title: {_title_rc}")
+                print(f"DEBUG: Es {_i+1} - Items found: {len(_items_rc)}")
+                for j, (label, text, pts) in enumerate(_items_rc):
+                    print(f"  Item {j+1}: {label} - {pts}pt - {text[:30]}...")
+
                 if not _items_rc:
                     _all_new_item_pts[_i] = []
                     continue
