@@ -1349,52 +1349,103 @@ def _render_bivio():
             unsafe_allow_html=True,
         )
         
-        # Mostra una sola preview grande e centrale
+        # Mostra preview con navigazione tra più file
         if _previews:
-            preview = _previews[0]  # Prendi solo la prima preview
+            # Se c'è più di un file, aggiungi navigazione
+            if len(_previews) > 1:
+                # Session state per tracciare l'indice corrente
+                if 'current_preview_index' not in st.session_state:
+                    st.session_state.current_preview_index = 0
+                
+                # Navigazione con bottoni
+                col_prev, col_center, col_next = st.columns([1, 3, 1])
+                
+                with col_prev:
+                    if st.button("← Precedente", disabled=st.session_state.current_preview_index == 0):
+                        st.session_state.current_preview_index = max(0, st.session_state.current_preview_index - 1)
+                        st.rerun()
+                
+                with col_center:
+                    st.markdown(
+                        f"""
+                        <div style="text-align: center; padding: 0.5rem;">
+                            <span style="font-size: 1.1rem; font-weight: 600; color: #1f2937;">
+                                {st.session_state.current_preview_index + 1} / {len(_previews)}
+                            </span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                
+                with col_next:
+                    if st.button("Successivo →", disabled=st.session_state.current_preview_index == len(_previews) - 1):
+                        st.session_state.current_preview_index = min(len(_previews) - 1, st.session_state.current_preview_index + 1)
+                        st.rerun()
+                
+                # Selettore rapido
+                preview_names = [p['name'] for p in _previews]
+                selected_index = st.selectbox(
+                    "Vai direttamente a:",
+                    range(len(preview_names)),
+                    format_func=lambda x: preview_names[x],
+                    index=st.session_state.current_preview_index,
+                    key="preview_selector"
+                )
+                
+                if selected_index != st.session_state.current_preview_index:
+                    st.session_state.current_preview_index = selected_index
+                    st.rerun()
             
+            # Mostra la preview corrente
+            current_index = st.session_state.get('current_preview_index', 0)
+            preview = _previews[current_index]
+            
+            # Titolo semplice
+            st.markdown(
+                f"""
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <h3 style="font-size: 1.3rem; font-weight: 600; color: #1f2937; margin: 0;">
+                        {preview["name"]}
+                    </h3>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            
+            # Immagine grande senza container
             if preview['type'] == 'pdf_preview':
                 st.markdown(
                     f'''
-                    <div style="
-                        max-width: 700px;
-                        margin: 0 auto;
-                        background: white;
-                        border: 1px solid #e5e7eb;
-                        border-radius: 16px;
-                        padding: 2rem;
-                        box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
-                        text-align: center;
-                    ">
-                        <div style="font-size: 1.4rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem;">
-                            {preview["name"]}
-                        </div>
-                        <div style="font-size: 1rem; color: #6b7280; margin-bottom: 1.5rem;">
-                            PDF completo • 3 esercizi • 100 punti • Prima pagina
-                        </div>
+                    <div style="text-align: center;">
                         <img src="{preview["path"]}" alt="{preview["name"]}" 
                              style="
-                                 width: 100%;
-                                 height: 500px;
+                                 max-width: 100%;
+                                 height: 600px;
                                  object-fit: contain;
-                                 border-radius: 12px;
-                                 border: 2px solid #e5e7eb;
-                                 background: #f8f9fa;
-                                 margin-bottom: 1.5rem;
-                                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+                                 border-radius: 8px;
+                                 box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
+                                 background: white;
                              ">
-                        <div style="
+                    </div>
+                    ''',
+                    unsafe_allow_html=True,
+                )
+                
+                # Badge piccolo sotto
+                st.markdown(
+                    '''
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <span style="
                             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
                             color: white;
-                            padding: 0.75rem 1.5rem;
-                            border-radius: 8px;
-                            font-size: 0.95rem;
+                            padding: 0.4rem 1rem;
+                            border-radius: 20px;
+                            font-size: 0.8rem;
                             font-weight: 600;
                             display: inline-block;
-                            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
                         ">
-                            📄 Alta Definizione 400 DPI • Testo perfettamente leggibile
-                        </div>
+                            📄 400 DPI • Alta Definizione
+                        </span>
                     </div>
                     ''',
                     unsafe_allow_html=True,
@@ -1402,47 +1453,18 @@ def _render_bivio():
             elif preview['type'] == 'image':
                 st.markdown(
                     f'''
-                    <div style="
-                        max-width: 700px;
-                        margin: 0 auto;
-                        background: white;
-                        border: 1px solid #e5e7eb;
-                        border-radius: 16px;
-                        padding: 2rem;
-                        box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
-                        text-align: center;
-                    ">
-                        <div style="font-size: 1.4rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem;">
-                            {preview["name"]}
-                        </div>
-                        <div style="font-size: 1rem; color: #6b7280; margin-bottom: 1.5rem;">
-                            Anteprima immagine
-                        </div>
+                    <div style="text-align: center;">
                         <img src="{preview["path"]}" alt="{preview["name"]}" 
                              style="
-                                 width: 100%;
-                                 height: 500px;
+                                 max-width: 100%;
+                                 height: 600px;
                                  object-fit: contain;
-                                 border-radius: 12px;
-                                 border: 2px solid #e5e7eb;
-                                 background: #f8f9fa;
-                                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+                                 border-radius: 8px;
+                                 box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
+                                 background: white;
                              ">
                     </div>
                     ''',
-                    unsafe_allow_html=True,
-                )
-            
-            # Se ci sono altre preview, mostra un piccolo indicatore
-            if len(_previews) > 1:
-                st.markdown(
-                    f"""
-                    <div style="text-align: center; margin-top: 1.5rem;">
-                        <p style="color: #6b7280; font-size: 0.9rem;">
-                            E altri {len(_previews) - 1} esempi disponibili...
-                        </p>
-                    </div>
-                    """,
                     unsafe_allow_html=True,
                 )
         
