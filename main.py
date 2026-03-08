@@ -1468,12 +1468,13 @@ def _render_bivio():
             unsafe_allow_html=True,
         )
         
-        # Stats cards
+        # Stats cards con dati reali
+        stats = _get_verifiche_stats()
         col1, col2, col3 = st.columns(3, gap="large")
         
         with col1:
             st.markdown(
-                """
+                f"""
                 <div style="
                     background: linear-gradient(135deg, #3b82f6, #1d4ed8);
                     border-radius: 16px;
@@ -1488,7 +1489,7 @@ def _render_bivio():
                         📄
                     </div>
                     <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
-                        12
+                        {stats['totali']}
                     </div>
                     <div style="font-size: 1rem; opacity: 0.9;">
                         Verifiche Generate
@@ -1500,7 +1501,7 @@ def _render_bivio():
         
         with col2:
             st.markdown(
-                """
+                f"""
                 <div style="
                     background: linear-gradient(135deg, #10b981, #059669);
                     border-radius: 16px;
@@ -1513,7 +1514,7 @@ def _render_bivio():
                         📚
                     </div>
                     <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
-                        5
+                        {stats['materie']}
                     </div>
                     <div style="font-size: 1rem; opacity: 0.9;">
                         Materie Coperte
@@ -1525,7 +1526,7 @@ def _render_bivio():
         
         with col3:
             st.markdown(
-                """
+                f"""
                 <div style="
                     background: linear-gradient(135deg, #f59e0b, #d97706);
                     border-radius: 16px;
@@ -1538,7 +1539,7 @@ def _render_bivio():
                         ⭐
                     </div>
                     <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
-                        4.8
+                        {stats['qualita_media']}
                     </div>
                     <div style="font-size: 1rem; opacity: 0.9;">
                         Qualità Media
@@ -1563,6 +1564,66 @@ def _render_bivio():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
+def _load_user_verifiche():
+    """
+    Carica tutte le verifiche dell'utente da Supabase
+    """
+    if not st.session_state.utente:
+        return []
+    
+    try:
+        res = supabase_admin.table("verifiche_storico")\
+            .select("*")\
+            .eq("user_id", st.session_state.utente.id)\
+            .order("created_at", desc=True)\
+            .execute()
+        
+        return res.data if res.data else []
+    except Exception as e:
+        st.error(f"⚠️ Errore nel caricamento delle verifiche: {e}")
+        return []
+
+def _get_verifiche_stats():
+    """
+    Calcola le statistiche delle verifiche dell'utente
+    """
+    verifiche = _load_user_verifiche()
+    
+    if not verifiche:
+        return {
+            "totali": 0,
+            "questo_mese": 0,
+            "materie": set(),
+            "qualita_media": 0.0
+        }
+    
+    now = datetime.now(timezone.utc)
+    primo_mese = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    materie = set()
+    questo_mese_count = 0
+    
+    for v in verifiche:
+        if v.get("materia"):
+            materie.add(v["materia"])
+        
+        # Conta verifiche di questo mese
+        created_at = v.get("created_at")
+        if created_at:
+            try:
+                created_dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                if created_dt >= primo_mese:
+                    questo_mese_count += 1
+            except:
+                pass
+    
+    return {
+        "totali": len(verifiche),
+        "questo_mese": questo_mese_count,
+        "materie": len(materie),
+        "qualita_media": 4.8  # Placeholder - si può calcolare da feedback reali
+    }
+
 def _render_le_tue_verifiche():
     """
     Pagina "Le tue verifiche" - Gestione verifiche create dall'utente
@@ -1581,12 +1642,16 @@ def _render_le_tue_verifiche():
         unsafe_allow_html=True,
     )
     
-    # Stats in alto
+    # Carica dati reali
+    stats = _get_verifiche_stats()
+    verifiche = _load_user_verifiche()
+    
+    # Stats in alto con dati reali
     col1, col2, col3, col4 = st.columns(4, gap="small")
     
     with col1:
         st.markdown(
-            """
+            f"""
             <div style="
                 background: linear-gradient(135deg, #3b82f6, #1d4ed8);
                 border-radius: 12px;
@@ -1594,7 +1659,7 @@ def _render_le_tue_verifiche():
                 text-align: center;
                 color: white;
             ">
-                <div style="font-size: 2rem; font-weight: 700;">12</div>
+                <div style="font-size: 2rem; font-weight: 700;">{stats['totali']}</div>
                 <div style="font-size: 0.9rem; opacity: 0.9;">Totali</div>
             </div>
             """,
@@ -1603,7 +1668,7 @@ def _render_le_tue_verifiche():
     
     with col2:
         st.markdown(
-            """
+            f"""
             <div style="
                 background: linear-gradient(135deg, #10b981, #059669);
                 border-radius: 12px;
@@ -1611,7 +1676,7 @@ def _render_le_tue_verifiche():
                 text-align: center;
                 color: white;
             ">
-                <div style="font-size: 2rem; font-weight: 700;">8</div>
+                <div style="font-size: 2rem; font-weight: 700;">{stats['questo_mese']}</div>
                 <div style="font-size: 0.9rem; opacity: 0.9;">Questo mese</div>
             </div>
             """,
@@ -1620,7 +1685,7 @@ def _render_le_tue_verifiche():
     
     with col3:
         st.markdown(
-            """
+            f"""
             <div style="
                 background: linear-gradient(135deg, #f59e0b, #d97706);
                 border-radius: 12px;
@@ -1628,7 +1693,7 @@ def _render_le_tue_verifiche():
                 text-align: center;
                 color: white;
             ">
-                <div style="font-size: 2rem; font-weight: 700;">5</div>
+                <div style="font-size: 2rem; font-weight: 700;">{stats['materie']}</div>
                 <div style="font-size: 0.9rem; opacity: 0.9;">Materie</div>
             </div>
             """,
@@ -1637,7 +1702,7 @@ def _render_le_tue_verifiche():
     
     with col4:
         st.markdown(
-            """
+            f"""
             <div style="
                 background: linear-gradient(135deg, #8b5cf6, #7c3aed);
                 border-radius: 12px;
@@ -1645,7 +1710,7 @@ def _render_le_tue_verifiche():
                 text-align: center;
                 color: white;
             ">
-                <div style="font-size: 2rem; font-weight: 700;">4.8</div>
+                <div style="font-size: 2rem; font-weight: 700;">{stats['qualita_media']}</div>
                 <div style="font-size: 0.9rem; opacity: 0.9;">Qualità</div>
             </div>
             """,
@@ -1660,52 +1725,47 @@ def _render_le_tue_verifiche():
     with col_search:
         search_query = st.text_input("🔍 Cerca verifica...", placeholder="Cerca per materia, argomento...")
     
+    # Materie uniche dalle verifiche reali
+    materie_real = ["Tutte"] + sorted(list(set([v.get("materia", "Sconosciuta") for v in verifiche if v.get("materia")])))
     with col_materia:
-        materia_filter = st.selectbox("📚 Materia", ["Tutte", "Matematica", "Italiano", "Storia", "Fisica", "Chimica"])
+        materia_filter = st.selectbox("📚 Materia", materie_real)
     
     with col_ordine:
         ordine_filter = st.selectbox("📅 Ordina per", ["Più recenti", "Più vecchie", "Alfabetico", "Materia"])
     
-    # Lista verifiche (dati mock per ora)
-    verifiche_mock = [
-        {
-            "id": 1,
-            "titolo": "La Parabola - Matematica",
-            "materia": "Matematica",
-            "argomento": "Funzioni quadratiche",
-            "scuola": "Liceo Scientifico",
-            "data": "2024-01-15",
-            "esercizi": 3,
-            "punti": 100,
-            "latex": "% Mock LaTeX content"
-        },
-        {
-            "id": 2,
-            "titolo": "Grande Guerra - Storia",
-            "materia": "Storia",
-            "argomento": "Prima Guerra Mondiale",
-            "scuola": "Liceo Classico",
-            "data": "2024-01-12",
-            "esercizi": 5,
-            "punti": 100,
-            "latex": "% Mock LaTeX content"
-        },
-        {
-            "id": 3,
-            "titolo": "Analisi Grammaticale - Italiano",
-            "materia": "Italiano",
-            "argomento": "Analisi del periodo",
-            "scuola": "Scuola Secondaria",
-            "data": "2024-01-10",
-            "esercizi": 4,
-            "punti": 80,
-            "latex": "% Mock LaTeX content"
-        }
-    ]
+    # Filtra le verifiche
+    verifiche_filtrate = verifiche.copy()
     
-    # Mostra verifiche
-    if verifiche_mock:
-        for verifica in verifiche_mock:
+    if search_query:
+        verifiche_filtrate = [v for v in verifiche_filtrate if 
+            search_query.lower() in v.get("materia", "").lower() or 
+            search_query.lower() in v.get("argomento", "").lower()]
+    
+    if materia_filter != "Tutte":
+        verifiche_filtrate = [v for v in verifiche_filtrate if v.get("materia") == materia_filter]
+    
+    # Ordina le verifiche
+    if ordine_filter == "Più recenti":
+        verifiche_filtrate.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    elif ordine_filter == "Più vecchie":
+        verifiche_filtrate.sort(key=lambda x: x.get("created_at", ""))
+    elif ordine_filter == "Alfabetico":
+        verifiche_filtrate.sort(key=lambda x: x.get("argomento", ""))
+    elif ordine_filter == "Materia":
+        verifiche_filtrate.sort(key=lambda x: x.get("materia", ""))
+    
+    # Mostra verifiche reali
+    if verifiche_filtrate:
+        for verifica in verifiche_filtrate:
+            # Formatta data
+            data_formattata = "Data non disponibile"
+            if verifica.get("created_at"):
+                try:
+                    created_dt = datetime.fromisoformat(verifica["created_at"].replace('Z', '+00:00'))
+                    data_formattata = created_dt.strftime("%d/%m/%Y")
+                except:
+                    pass
+            
             with st.container():
                 st.markdown(
                     f"""
@@ -1721,24 +1781,24 @@ def _render_le_tue_verifiche():
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                             <div>
                                 <h3 style="font-size: 1.3rem; font-weight: 600; color: #1f2937; margin: 0 0 0.5rem 0;">
-                                    {verifica['titolo']}
+                                    {verifica.get('argomento', 'Verifica senza titolo')}
                                 </h3>
                                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
                                     <span style="background: #eff6ff; color: #1d4ed8; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
-                                        📚 {verifica['materia']}
+                                        📚 {verifica.get('materia', 'Sconosciuta')}
                                     </span>
                                     <span style="background: #f0fdf4; color: #059669; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
-                                        🏫 {verifica['scuola']}
+                                        🏫 {verifica.get('scuola', 'Non specificata')}
                                     </span>
                                     <span style="background: #fefce8; color: #ca8a04; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
-                                        📝 {verifica['esercizi']} esercizi
+                                        📝 {verifica.get('num_esercizi', '?')} esercizi
                                     </span>
                                     <span style="background: #f3f4f6; color: #6b7280; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
-                                        📅 {verifica['data']}
+                                        📅 {data_formattata}
                                     </span>
                                 </div>
                                 <p style="color: #6b7280; margin: 0; font-size: 0.95rem;">
-                                    {verifica['argomento']}
+                                    ID: {verifica.get('id', 'N/D')}
                                 </p>
                             </div>
                         </div>
@@ -1753,7 +1813,8 @@ def _render_le_tue_verifiche():
                                 font-weight: 500;
                                 cursor: pointer;
                                 transition: all 0.2s;
-                            " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(59, 130, 246, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                            " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(59, 130, 246, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'"
+                                onclick="alert('Anteprima in sviluppo')">
                                 👁️ Anteprima
                             </button>
                             <button style="
@@ -1766,7 +1827,8 @@ def _render_le_tue_verifiche():
                                 font-weight: 500;
                                 cursor: pointer;
                                 transition: all 0.2s;
-                            " onmouseover="this.style.background='#f9fafb'; this.style.borderColor='#d1d5db'" onmouseout="this.style.background='white'; this.style.borderColor='#e5e7eb'">
+                            " onmouseover="this.style.background='#f9fafb'; this.style.borderColor='#d1d5db'" onmouseout="this.style.background='white'; this.style.borderColor='#e5e7eb'"
+                                onclick="alert('Download in sviluppo')">
                                 📄 Scarica PDF
                             </button>
                             <button style="
@@ -1779,7 +1841,8 @@ def _render_le_tue_verifiche():
                                 font-weight: 500;
                                 cursor: pointer;
                                 transition: all 0.2s;
-                            " onmouseover="this.style.background='#fef2f2'; this.style.borderColor='#fca5a5'" onmouseout="this.style.background='white'; this.style.borderColor='#fecaca'">
+                            " onmouseover="this.style.background='#fef2f2'; this.style.borderColor='#fca5a5'" onmouseout="this.style.background='white'; this.style.borderColor='#fecaca'"
+                                onclick="alert('Eliminazione in sviluppo')">
                                 🗑️ Elimina
                             </button>
                         </div>
