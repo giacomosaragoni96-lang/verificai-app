@@ -912,6 +912,8 @@ def fix_tikz_labels(latex: str) -> str:
 # ── COMPILAZIONE PDF ───────────────────────────────────────────────────────────
 
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
+    logger.info("Inizio compilazione PDF")
+    
     # Applica fix pre-compilazione: rimuovi spoiler TikZ, poi fix label math
     codice_latex = clean_tikz_spoilers(codice_latex)
     codice_latex = fix_tikz_labels(codice_latex)
@@ -922,22 +924,45 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
         logger.error(f"Validazione TikZ fallita: {error_msg}")
         return None, f"Errore nel codice TikZ: {error_msg}"
 
+    # Controlla se pdflatex è disponibile
+    try:
+        result = subprocess.run(["pdflatex", "--version"], capture_output=True, text=True, timeout=5)
+        if result.returncode != 0:
+            logger.error(f"pdflatex non funzionante: {result.stderr}")
+            return None, "Errore: pdflatex non è installato correttamente in questo ambiente."
+    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
+        logger.error(f"pdflatex non disponibile: {e}")
+        return None, "⚠️ LaTeX non è disponibile in questo ambiente. La generazione PDF richiede l'installazione di LaTeX (pdflatex). Per favore, contatta l'amministratore del sistema per installare LaTeX o prova a utilizzare l'opzione di esportazione in formato testo."
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tex_path = os.path.join(tmpdir, "v.tex")
         pdf_path = os.path.join(tmpdir, "v.pdf")
 
-        with open(tex_path, "w", encoding="utf-8") as f:
-            f.write(codice_latex)
+        try:
+            with open(tex_path, "w", encoding="utf-8") as f:
+                f.write(codice_latex)
 
-        result = subprocess.run(
-            ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
-            capture_output=True
-        )
+            logger.info(f"Compilazione LaTeX in {tmpdir}")
+            result = subprocess.run(
+                ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
+                capture_output=True,
+                text=True,
+                timeout=30  # Timeout di 30 secondi
+            )
 
-        if os.path.exists(pdf_path):
-            return open(pdf_path, "rb").read(), None
+            if result.returncode == 0 and os.path.exists(pdf_path):
+                logger.info("PDF compilato con successo")
+                return open(pdf_path, "rb").read(), None
+            else:
+                logger.error(f"Errore compilazione LaTeX: {result.stderr}")
+                return None, f"Errore LaTeX: {result.stderr[:500]}"
 
-        return None, result.stdout.decode()
+        except subprocess.TimeoutExpired:
+            logger.error("Timeout compilazione LaTeX")
+            return None, "Errore: Timeout durante la compilazione LaTeX. Il codice potrebbe essere troppo complesso."
+        except Exception as e:
+            logger.error(f"Errore imprevisto durante compilazione: {e}")
+            return None, f"Errore durante la compilazione: {str(e)}"
 
 
 def pdf_to_images_bytes(pdf_bytes: bytes) -> tuple[list | None, str | None]:

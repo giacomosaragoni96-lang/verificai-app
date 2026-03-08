@@ -127,6 +127,19 @@ if not API_KEY:
     st.stop()
 genai.configure(api_key=API_KEY)
 
+# ── VERIFICA DISPONIBILITÀ LATEX ─────────────────────────────────────────────────
+try:
+    import subprocess
+    result = subprocess.run(["pdflatex", "--version"], capture_output=True, text=True, timeout=5)
+    if result.returncode != 0:
+        st.warning("⚠️ LaTeX (pdflatex) non è installato correttamente. La generazione PDF potrebbe non funzionare.")
+        LATEX_AVAILABLE = False
+    else:
+        LATEX_AVAILABLE = True
+except (FileNotFoundError, subprocess.TimeoutExpired):
+    st.warning("⚠️ LaTeX non è installato in questo ambiente. La generazione PDF non sarà disponibile.")
+    LATEX_AVAILABLE = False
+
 # ── AUTENTICAZIONE ────────────────────────────────────────────────────────────
 if "utente" not in st.session_state:
     st.session_state.utente = None
@@ -1899,7 +1912,11 @@ def _render_le_tue_verifiche():
                             st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
                 
                 with col2:
-                    if st.button(f"📄 Scarica PDF", key=f"download_{verifica.get('id')}_{i}"):
+                    pdf_disabled = not LATEX_AVAILABLE
+                    pdf_help = "Non disponibile: LaTeX non è installato" if pdf_disabled else "Scarica la verifica in formato PDF"
+                    
+                    if st.button(f"📄 Scarica PDF", key=f"download_{verifica.get('id')}_{i}", 
+                                 disabled=pdf_disabled, help=pdf_help):
                         if verifica.get("latex_a"):
                             try:
                                 pdf_bytes, error = compila_pdf(verifica["latex_a"])
