@@ -11,8 +11,12 @@ import os
 import re
 import subprocess
 import tempfile
+import logging
 
 from latex_utils import parse_esercizi
+
+# Setup logger per debugging grafici
+logger = logging.getLogger(__name__)
 
 
 # ── GRAFICO: TikZ/pgfplots → PNG ──────────────────────────────────────────────
@@ -27,11 +31,16 @@ def _tikz_to_png_bytes(tikz_code: str) -> bytes | None:
     Conversion chain: PyMuPDF → pdf2image → pdftoppm CLI.
     Returns None on total failure.
     """
+    logger.info(f"TikZ Conversion Attempt - Code length: {len(tikz_code)} chars")
+    logger.debug(f"TikZ Code Preview: {tikz_code[:200]}...")
+    
     needs_pgfplots = (
         r'\begin{axis}' in tikz_code
         or 'pgfplots' in tikz_code
         or 'addplot' in tikz_code
     )
+    logger.info(f"Requires pgfplots: {needs_pgfplots}")
+    
     latex = (
         r'\documentclass[border=4pt]{standalone}' '\n'
         r'\usepackage{tikz}' '\n'
@@ -40,23 +49,40 @@ def _tikz_to_png_bytes(tikz_code: str) -> bytes | None:
         latex += r'\usepackage{pgfplots}' '\n'
         latex += r'\pgfplotsset{compat=1.18}' '\n'
     latex += r'\begin{document}' '\n' + tikz_code + '\n' r'\end{document}'
+    
+    logger.debug(f"Generated LaTeX document: {len(latex)} chars")
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
+            logger.info(f"Using temp directory: {tmpdir}")
             tex_path = os.path.join(tmpdir, 'g.tex')
             pdf_path = os.path.join(tmpdir, 'g.pdf')
+            
             with open(tex_path, 'w', encoding='utf-8') as f:
                 f.write(latex)
-            subprocess.run(
+            
+            logger.info("Running pdflatex compilation...")
+            result = subprocess.run(
                 ['pdflatex', '-interaction=nonstopmode',
                  '-output-directory', tmpdir, tex_path],
                 capture_output=True, timeout=30,
             )
-            if not os.path.exists(pdf_path):
+            
+            if result.returncode != 0:
+                logger.error(f"pdflatex failed - Return code: {result.returncode}")
+                logger.error(f"pdflatex stderr: {result.stderr.decode() if result.stderr else 'None'}")
+                logger.error(f"pdflatex stdout: {result.stdout.decode() if result.stdout else 'None'}")
                 return None
+            
+            if not os.path.exists(pdf_path):
+                logger.error(f"PDF file not created at {pdf_path}")
+                return None
+            
+            logger.info("PDF compilation successful")
 
             # ── Method 1: PyMuPDF — self-contained, works on Windows ──────────
             try:
+                logger.info("Attempting PyMuPDF conversion...")
                 import fitz  # PyMuPDF
                 fitz_doc = fitz.open(pdf_path)
                 page = fitz_doc[0]
@@ -64,37 +90,58 @@ def _tikz_to_png_bytes(tikz_code: str) -> bytes | None:
                 mat  = fitz.Matrix(2.5, 2.5)
                 pix  = page.get_pixmap(matrix=mat, alpha=False)
                 fitz_doc.close()
-                return pix.tobytes('png')
-            except Exception:
+                png_bytes = pix.tobytes('png')
+                logger.info(f"PyMuPDF conversion successful - PNG size: {len(png_bytes)} bytes")
+                return png_bytes
+            except Exception as e:
+                logger.warning(f"PyMuPDF conversion failed: {e}")
                 pass
 
             # ── Method 2: pdf2image (needs poppler in PATH) ───────────────────
             try:
+                logger.info("Attempting pdf2image conversion...")
                 from pdf2image import convert_from_path
                 pages = convert_from_path(pdf_path, dpi=180)
                 if pages:
                     buf = io.BytesIO()
                     pages[0].save(buf, 'PNG')
-                    return buf.getvalue()
-            except Exception:
+                    png_bytes = buf.getvalue()
+                    logger.info(f"pdf2image conversion successful - PNG size: {len(png_bytes)} bytes")
+                    return png_bytes
+            except Exception as e:
+                logger.warning(f"pdf2image conversion failed: {e}")
                 pass
 
             # ── Method 3: pdftoppm CLI ────────────────────────────────────────
             try:
+                logger.info("Attempting pdftoppm CLI conversion...")
                 out_base = os.path.join(tmpdir, 'out')
-                subprocess.run(
+                result = subprocess.run(
                     ['pdftoppm', '-png', '-r', '180', '-singlefile',
                      pdf_path, out_base],
                     capture_output=True, timeout=15,
                 )
+                
+                if result.returncode != 0:
+                    logger.error(f"pdftoppm failed - Return code: {result.returncode}")
+                    logger.error(f"pdftoppm stderr: {result.stderr.decode() if result.stderr else 'None'}")
+                
                 out_path = out_base + '.png'
                 if os.path.exists(out_path):
                     with open(out_path, 'rb') as f:
-                        return f.read()
-            except Exception:
+                        png_bytes = f.read()
+                    logger.info(f"pdftoppm conversion successful - PNG size: {len(png_bytes)} bytes")
+                    return png_bytes
+                else:
+                    logger.error(f"pdftoppm: PNG file not created at {out_path}")
+            except Exception as e:
+                logger.warning(f"pdftoppm conversion failed: {e}")
                 pass
-    except Exception:
+    except Exception as e:
+        logger.error(f"Complete TikZ conversion failure: {e}")
         pass
+    
+    logger.error("All TikZ conversion methods failed")
     return None
 
 
@@ -104,13 +151,24 @@ def _pre_render_graphs(latex: str) -> tuple[str, dict]:
     replaces the block with a __DOCXGRAPH_N__ placeholder.
     Returns (modified_latex, {N: png_bytes_or_None}).
     """
+    logger.info("Starting pre-render of graphs...")
     graphs: dict[int, bytes | None] = {}
     counter = [0]
 
     def _replace(m: re.Match) -> str:
         n = counter[0]
         counter[0] += 1
-        graphs[n] = _tikz_to_png_bytes(m.group(0))
+        tikz_code = m.group(0)
+        logger.info(f"Processing graph #{n} - Length: {len(tikz_code)} chars")
+        
+        png_bytes = _tikz_to_png_bytes(tikz_code)
+        graphs[n] = png_bytes
+        
+        if png_bytes:
+            logger.info(f"Graph #{n} conversion SUCCESS - {len(png_bytes)} bytes")
+        else:
+            logger.warning(f"Graph #{n} conversion FAILED - will show placeholder")
+        
         return f'__DOCXGRAPH_{n}__'
 
     modified = re.sub(
@@ -121,6 +179,11 @@ def _pre_render_graphs(latex: str) -> tuple[str, dict]:
         r'\\begin\{axis\}.*?\\end\{axis\}',
         _replace, modified, flags=re.DOTALL,
     )
+    
+    total_graphs = counter[0]
+    successful = sum(1 for png in graphs.values() if png is not None)
+    logger.info(f"Pre-render complete: {successful}/{total_graphs} graphs converted successfully")
+    
     return modified, graphs
 
 
@@ -155,10 +218,13 @@ def _add_content_with_graphs(
                 try:
                     run = p_img.add_run()
                     run.add_picture(io.BytesIO(png), width=Cm(img_width_cm))
-                except Exception:
-                    p_img.add_run('[Grafico]').italic = True
+                    logger.debug(f"Graph #{n} successfully added to DOCX")
+                except Exception as e:
+                    logger.error(f"Failed to insert graph #{n} into DOCX: {e}")
+                    p_img.add_run('⚠️ Grafico non disponibile - errore inserimento').italic = True
             else:
-                p_img.add_run('[Grafico]').italic = True
+                logger.warning(f"Graph #{n} placeholder - conversion failed")
+                p_img.add_run('⚠️ Grafico non disponibile - conversione fallita').italic = True
             first = False
         else:
             stripped = part.strip()
@@ -645,29 +711,43 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
         codice_latex  – il LaTeX completo (preambolo + corpo)
         con_griglia   – se True, aggiunge la griglia di valutazione
     """
+    logger.info("=== Starting LaTeX to DOCX conversion ===")
+    logger.info(f"Input LaTeX length: {len(codice_latex)} chars")
+    logger.info(f"Grid enabled: {con_griglia}")
+    
     try:
         from docx import Document as DocxDocument
         from docx.shared import Pt, Cm
         from docx.enum.text import WD_ALIGN_PARAGRAPH
         from docx.oxml.ns import qn as _qn
         from docx.oxml import OxmlElement as _OE
-    except ImportError:
+        logger.info("python-docx imports successful")
+    except ImportError as e:
+        logger.error(f"python-docx import failed: {e}")
         return None, "python-docx non installato. Esegui: pip install python-docx"
 
     # Pre-render TikZ/pgfplots blocks to PNG images
+    logger.info("Step 1: Pre-rendering TikZ/pgfplots graphs...")
     codice_latex, _graphs = _pre_render_graphs(codice_latex)
+    logger.info(f"Graphs pre-rendered: {len(_graphs)} total")
 
     try:
+        logger.info("Step 2: Parsing LaTeX structure...")
         data = _parse_latex_to_data(codice_latex)
+        logger.info(f"Parsed {len(data.get('esercizi', []))} exercises")
     except Exception as e:
         import traceback
+        logger.error(f"LaTeX parsing failed: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return None, f"Errore parsing LaTeX: {e}\n{traceback.format_exc()}"
 
     try:
+        logger.info("Step 3: Creating DOCX document...")
         doc        = DocxDocument()
         MARGIN_CM  = 1.5
         PAGE_W_DXA = int((21.0 - 2 * MARGIN_CM) / 2.54 * 1440)
         GRIGLIA_W_DXA = PAGE_W_DXA - 80
+        logger.info(f"Document setup: margins={MARGIN_CM}cm, page_width={PAGE_W_DXA} DXA")
 
         for section in doc.sections:
             section.page_width    = Cm(21.0)
@@ -680,6 +760,7 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
         style = doc.styles['Normal']
         style.font.name = 'Arial'
         style.font.size = Pt(11)
+        logger.info("Document styling applied")
 
         # ── INTESTAZIONE PROFESSIONALE ────────────────────────────────────────────
         # Riga istituto (campo vuoto da compilare)
@@ -796,8 +877,12 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
             r3.italic = True
             r3.font.size = Pt(10)
 
+        logger.info("Step 4: Building document content...")
+        logger.info(f"Processing {len(data.get('esercizi', []))} exercises with graphs")
+
         # ── ESERCIZI ──────────────────────────────────────────────────────────────
         for _ex_idx, ex in enumerate(data.get('esercizi', [])):
+            logger.debug(f"Processing exercise {_ex_idx + 1}: {ex.get('titolo', 'Untitled')}")
             pe = doc.add_paragraph()
             pe.paragraph_format.space_before = Pt(3) if _ex_idx == 0 else Pt(6)
             pe.paragraph_format.space_after  = Pt(2)
@@ -936,10 +1021,15 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
                 if len(row_es) >= 3:
                     _build_griglia_xml(doc, row_es, row_sotto, row_max, GRIGLIA_W_DXA)
 
+        logger.info("Step 5: Saving DOCX document...")
         buf = io.BytesIO()
         doc.save(buf)
-        return buf.getvalue(), None
-
+        docx_bytes = buf.getvalue()
+        logger.info(f"DOCX conversion SUCCESS - Final file size: {len(docx_bytes)} bytes")
+        logger.info("=== LaTeX to DOCX conversion completed successfully ===")
+        return docx_bytes, None
     except Exception as e:
         import traceback
-        return None, f"Errore DOCX: {e}\n{traceback.format_exc()}"
+        logger.error(f"DOCX conversion FAILED: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return None, f"Errore durante creazione DOCX: {e}"
