@@ -1576,16 +1576,9 @@ def _toggle_preferito(verifica_id: int, is_preferito: bool):
     """
     Aggiunge/rimuove una verifica dai preferiti
     """
-    try:
-        res = supabase_admin.table("verifiche_storico")\
-            .update({"preferito": is_preferito})\
-            .eq("id", verifica_id)\
-            .execute()
-        
-        return res.data if res.data else None
-    except Exception as e:
-        st.error(f"⚠️ Errore preferito: {e}")
-        return None
+    # TEMPORANEAMENTE DISABILITATO - la colonna 'preferito' non esiste nel database
+    st.warning("⚠️ Funzionalità preferiti in sviluppo - colonna database mancante")
+    return None
 
 def _genera_link_condivisione(verifica_id: int):
     """
@@ -2025,17 +2018,9 @@ def _render_le_tue_verifiche():
                     st.markdown('</div>', unsafe_allow_html=True)
                 
                 with col6:
-                    # Preferiti
-                    is_preferito = verifica.get("preferito", False)
-                    pref_icon = "❤️" if is_preferito else "🤍"
-                    pref_text = "Rimuovi dai preferiti" if is_preferito else "Aggiungi ai preferiti"
-                    
-                    if st.button(f"{pref_icon} {pref_text}", key=f"preferito_{verifica.get('id')}_{i}"):
-                        result = _toggle_preferito(verifica.get("id"), not is_preferito)
-                        if result:
-                            action = "rimossa dai" if is_preferito else "aggiunta ai"
-                            st.success(f"✅ Verifica {action} preferiti!")
-                            st.rerun()
+                    # Preferiti (temporaneamente disabilitato)
+                    if st.button(f"🤍 Preferiti", key=f"preferito_{verifica.get('id')}_{i}"):
+                        st.info("⚠️ Funzionalità preferiti in arrivo! Presto potrai salvare le tue verifiche preferite.")
                 
                 with col7:
                     # Condivisione
