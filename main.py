@@ -1462,12 +1462,13 @@ def _render_bivio():
         
         if os.path.exists(preview_dir):
             for file in sorted(os.listdir(preview_dir)):
-                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.svg')):
+                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.svg', '.pdf')):
                     name = os.path.splitext(file)[0].replace('-', ' ').replace('_', ' ').title()
                     previews.append({
                         'file': file,
                         'name': name,
-                        'path': os.path.join(preview_dir, file)
+                        'path': os.path.join(preview_dir, file),
+                        'type': 'pdf' if file.lower().endswith('.pdf') else 'image'
                     })
         return previews
     
@@ -1497,15 +1498,32 @@ def _render_bivio():
             if i < len(_previews):
                 preview = _previews[i]
                 with _col:
-                    st.markdown(
-                        f'<div class="landing-feat-card preview-card">'
-                        f'<img src="{preview["path"]}" alt="{preview["name"]}" '
-                        f'style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">'
-                        f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
-                        f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per ingrandire</div>'
-                        f'</div>',
-                        unsafe_allow_html=True,
-                    )
+                    if preview['type'] == 'pdf':
+                        # Per PDF mostra un'icona invece dell'immagine
+                        st.markdown(
+                            f'<div class="landing-feat-card preview-card">'
+                            f'<div style="width:100%;height:200px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:8px 8px 0 0;">'
+                            f'<div style="text-align:center;">'
+                            f'<div style="font-size:4rem;color:#dc3545;">📄</div>'
+                            f'<div style="color:#6c757d;font-size:0.9rem;margin-top:0.5rem;">PDF</div>'
+                            f'</div>'
+                            f'</div>'
+                            f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
+                            f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per aprire</div>'
+                            f'</div>',
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        # Per immagini mostra l'anteprima
+                        st.markdown(
+                            f'<div class="landing-feat-card preview-card">'
+                            f'<img src="{preview["path"]}" alt="{preview["name"]}" '
+                            f'style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">'
+                            f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
+                            f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per ingrandire</div>'
+                            f'</div>',
+                            unsafe_allow_html=True,
+                        )
         
         st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
         
@@ -1517,15 +1535,32 @@ def _render_bivio():
                 if idx < len(_previews):
                     preview = _previews[idx]
                     with _col:
-                        st.markdown(
-                            f'<div class="landing-feat-card preview-card">'
-                            f'<img src="{preview["path"]}" alt="{preview["name"]}" '
-                            f'style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">'
-                            f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
-                            f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per ingrandire</div>'
-                            f'</div>',
-                            unsafe_allow_html=True,
-                        )
+                        if preview['type'] == 'pdf':
+                            # Per PDF mostra un'icona invece dell'immagine
+                            st.markdown(
+                                f'<div class="landing-feat-card preview-card">'
+                                f'<div style="width:100%;height:200px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:8px 8px 0 0;">'
+                                f'<div style="text-align:center;">'
+                                f'<div style="font-size:4rem;color:#dc3545;">📄</div>'
+                                f'<div style="color:#6c757d;font-size:0.9rem;margin-top:0.5rem;">PDF</div>'
+                                f'</div>'
+                                f'</div>'
+                                f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
+                                f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per aprire</div>'
+                                f'</div>',
+                                unsafe_allow_html=True,
+                            )
+                        else:
+                            # Per immagini mostra l'anteprima
+                            st.markdown(
+                                f'<div class="landing-feat-card preview-card">'
+                                f'<img src="{preview["path"]}" alt="{preview["name"]}" '
+                                f'style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">'
+                                f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
+                                f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per ingrandire</div>'
+                                f'</div>',
+                                unsafe_allow_html=True,
+                            )
     else:
         # Fallback alle card statiche
         _cols1 = st.columns(3, gap="medium")
