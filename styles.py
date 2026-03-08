@@ -3445,6 +3445,198 @@ def get_css(T: dict) -> str:
     .dl-cta-wrap button      {{ min-height: 52px !important; font-size: 0.95rem !important; }}
   }}
 
+  /* ════════════════════════════════════════════════════════════════════════
+     INFO CARD — componente generico riutilizzabile
+     ════════════════════════════════════════════════════════════════════════ */
+  .info-card {{
+    background: {T['card']};
+    border: 1.5px solid {T['border']};
+    border-radius: {_radius_lg};
+    padding: 1.1rem 1.3rem;
+    margin: .7rem 0;
+    box-shadow: {_shadow_xs};
+    transition: box-shadow {_transition}, border-color {_transition};
+  }}
+  .info-card:hover {{
+    box-shadow: {_shadow_sm};
+    border-color: {_acc_med};
+  }}
+  .info-card-title {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: .8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: {T['muted']};
+    margin-bottom: .45rem;
+  }}
+  .info-card-body {{
+    font-family: 'DM Sans', sans-serif;
+    font-size: .95rem;
+    color: {T['text']};
+    line-height: 1.55;
+  }}
+  .info-card-accent {{
+    border-left: 3px solid {_acc};
+    padding-left: 1rem;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     SKELETON LOADING — placeholder animato per contenuti in caricamento
+     ════════════════════════════════════════════════════════════════════════ */
+  @keyframes skeleton-shimmer {{
+    0%   {{ background-position: -400px 0; }}
+    100% {{ background-position: 400px 0; }}
+  }}
+  .skeleton {{
+    border-radius: {_radius_sm};
+    background: linear-gradient(
+      90deg,
+      {T['border']} 25%,
+      {T['border2']} 50%,
+      {T['border']} 75%
+    );
+    background-size: 800px 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  }}
+  .skeleton-text  {{ height: 14px; margin: 6px 0; width: 80%; }}
+  .skeleton-title {{ height: 22px; margin: 8px 0; width: 55%; }}
+  .skeleton-block {{ height: 80px; margin: 8px 0; width: 100%; }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     FOCUS RING — accessibilità WCAG AA
+     ════════════════════════════════════════════════════════════════════════ */
+  :focus-visible {{
+    outline: 2.5px solid {_acc} !important;
+    outline-offset: 2px !important;
+    border-radius: {_radius_sm} !important;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     STATUS BADGES — pill colorata per stati contestuali
+     ════════════════════════════════════════════════════════════════════════ */
+  .badge {{
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: .25rem .7rem;
+    border-radius: 100px;
+    font-size: .78rem;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: .01em;
+    white-space: nowrap;
+  }}
+  .badge-success {{
+    background: {T['success']}1a;
+    color: {T['success']};
+    border: 1px solid {T['success']}33;
+  }}
+  .badge-warn {{
+    background: {T['warn']}1a;
+    color: {T['warn']};
+    border: 1px solid {T['warn']}33;
+  }}
+  .badge-error {{
+    background: {T['error']}1a;
+    color: {T['error']};
+    border: 1px solid {T['error']}33;
+  }}
+  .badge-accent {{
+    background: {_acc_soft};
+    color: {_acc};
+    border: 1px solid {_acc_med};
+  }}
+  .badge-muted {{
+    background: {T['border']};
+    color: {T['muted']};
+    border: 1px solid {T['border2']};
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     DIVIDER — separatore semantico leggero
+     ════════════════════════════════════════════════════════════════════════ */
+  .section-divider {{
+    height: 1px;
+    background: linear-gradient(90deg, transparent, {T['border2']}, transparent);
+    margin: 1.5rem 0;
+    border: none;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     APP FOOTER — migliorato con separatore e layout bilanciato
+     ════════════════════════════════════════════════════════════════════════ */
+  .app-footer {{
+    text-align: center;
+    font-size: 0.82rem !important;
+    color: {T['muted']} !important;
+    font-family: 'DM Sans', sans-serif;
+    padding: 1.6rem .5rem 1rem;
+    margin-top: 2.5rem;
+    border-top: 1px solid {T['border']};
+    line-height: 1.6;
+    opacity: .75;
+    transition: opacity .2s;
+  }}
+  .app-footer:hover {{ opacity: 1; }}
+  .app-footer a {{
+    color: {_acc} !important;
+    text-decoration: none;
+  }}
+  .app-footer a:hover {{ text-decoration: underline; }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     EMPTY STATE — messaggio "nessun risultato"
+     ════════════════════════════════════════════════════════════════════════ */
+  .empty-state {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    text-align: center;
+    gap: .7rem;
+  }}
+  .empty-state-icon {{
+    font-size: 2.5rem;
+    opacity: .45;
+  }}
+  .empty-state-title {{
+    font-size: 1rem;
+    font-weight: 700;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+  }}
+  .empty-state-desc {{
+    font-size: .875rem;
+    color: {T['muted']};
+    font-family: 'DM Sans', sans-serif;
+    max-width: 340px;
+    line-height: 1.5;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     STEP TRANSITION ANIMATION — per cambio di stage fluido
+     ════════════════════════════════════════════════════════════════════════ */
+  @keyframes stage-fade-in {{
+    from {{ opacity: 0; transform: translateY(6px); }}
+    to   {{ opacity: 1; transform: translateY(0); }}
+  }}
+  .stage-enter {{
+    animation: stage-fade-in .22s ease-out both;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     MOBILE touch targets — ≥ 44px per WCAG
+     ════════════════════════════════════════════════════════════════════════ */
+  @media (max-width: 768px) {{
+    .stButton > button,
+    [data-testid="stButton"] > button {{
+      min-height: 44px !important;
+    }}
+    [data-testid="stSelectbox"] > div {{
+      min-height: 44px !important;
+    }}
+  }}
+
 </style>
 """
 

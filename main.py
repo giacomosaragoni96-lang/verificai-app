@@ -9,9 +9,11 @@ import streamlit as st
 import streamlit.components.v1 as components
 import base64
 import html as html_lib
+import logging
 import re
 import os
 import time
+
 import google.generativeai as genai
 
 from sidebar import render_sidebar
@@ -45,6 +47,12 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 from auth import mostra_auth, ripristina_sessione, cancella_sessione_cookie
 from styles import get_css
+from ui_helpers import (
+    _render_back_button, _make_katex_html, _render_sticky_header,
+    _render_step_progress, _split_download_button, _render_breadcrumb,
+)
+
+logger = logging.getLogger("verificai.main")
 try:
     from styles import _is_light_color
 except ImportError:
@@ -140,7 +148,8 @@ def _get_verifiche_mese(user_id):
             .eq("user_id", user_id)\
             .gte("created_at", primo).execute()
         return res.count or 0
-    except Exception:
+    except Exception as e:
+        logger.warning("_get_verifiche_mese failed for %s: %s", user_id, e)
         return 0
 
 
@@ -285,7 +294,8 @@ def _rubrica_to_pdf(rubrica_testo: str, materia: str = "", livello: str = "") ->
 
         pdf_bytes, _ = compila_pdf(latex)
         return pdf_bytes
-    except Exception:
+    except Exception as e:
+        logger.warning("_rubrica_to_pdf failed: %s", e)
         return None
 
 
@@ -294,19 +304,7 @@ def _vf():
             "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""}
 
 
-def _render_back_button(label: str = "← Indietro", key: str = "btn_back",
-                         help: str = "Torna alla schermata precedente") -> bool:
-    """
-    Renderizza un pulsante ← Indietro piccolo, discreto e allineato a sinistra.
-    Uniforme in tutta l'app. Restituisce True se cliccato.
-    """
-    st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
-    _col, _spacer = st.columns([1, 4])
-    with _col:
-        st.markdown('<div class="btn-back-discrete">', unsafe_allow_html=True)
-        clicked = st.button(label, key=key, use_container_width=True, help=help)
-        st.markdown('</div>', unsafe_allow_html=True)
-    return clicked
+# _render_back_button → moved to ui_helpers.py
 
 
 # Parole chiave che indicano che l'utente sta chiedendo una modifica ai punteggi.
@@ -319,130 +317,6 @@ _SCORE_KEYWORDS = {
 }
 
 
-# ── KaTeX HTML renderer ────────────────────────────────────────────────────────
-
-def _make_katex_html(title: str, body: str, T: dict, height_hint: int = 400) -> str:
-    t = body
-
-    # 0. Rimuovi commenti LaTeX (% ... fino a fine riga) — non devono apparire nella preview
-    t = re.sub(r'(?<![%])%[^\n\r]*', '', t)
-    # Rimuovi anche \includegraphics irrisolvibili (placeholder immagini AI)
-    t = re.sub(r'\\includegraphics(?:\[[^\]]*\])?\{[^}]*\}',
-               '<div class="graph-ph">🖼 Immagine — visibile nel PDF finale</div>', t)
-
-    # 1. TikZ → placeholder
-    t = re.sub(r"\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}",
-               '<div class="graph-ph">📊 Grafico TikZ — visibile nel PDF finale</div>',
-               t, flags=re.DOTALL)
-    t = re.sub(r"\\begin\{axis\}.*?\\end\{axis\}", "", t, flags=re.DOTALL)
-    t = re.sub(r"\\begin\{pgfpicture\}.*?\\end\{pgfpicture\}",
-               '<div class="graph-ph">📊 Grafico pgf — visibile nel PDF finale</div>',
-               t, flags=re.DOTALL)
-
-    # 2. Display math \[...\] → $$...$$
-    t = re.sub(r"\\\[(.*?)\\\]", r"$$\1$$", t, flags=re.DOTALL)
-    t = re.sub(r"\\begin\{(align\*?|equation\*?|gather\*?|multline\*?)\}(.*?)\\end\{\1\}",
-               r"$$\2$$", t, flags=re.DOTALL)
-
-    # 3. Liste
-    t = re.sub(r"\\begin\{enumerate\}(\[[^\]]*\])?\s*", "<ol>", t)
-    t = re.sub(r"\\end\{enumerate\}", "</ol>", t)
-    t = re.sub(r"\\begin\{itemize\}\s*", "<ul>", t)
-    t = re.sub(r"\\end\{itemize\}", "</ul>", t)
-    t = re.sub(r"\\item\[([^\]]+)\]\s*", r'<li><span class="lbl">\1</span>&ensp;', t)
-    t = re.sub(r"\\item\s*", "<li>", t)
-
-    # 4. Formattazione testo
-    t = re.sub(r"\\textbf\{([^}]*)\}", r"<strong>\1</strong>", t)
-    t = re.sub(r"\\textit\{([^}]*)\}", r"<em>\1</em>", t)
-    t = re.sub(r"\\emph\{([^}]*)\}", r"<em>\1</em>", t)
-    t = re.sub(r"\\underline\{([^}]*)\}", r"<u>\1</u>", t)
-
-    # 5. Spazi e riempitivi
-    t = re.sub(r"\\underline\{\\hspace\{[^}]*\}\}", '<span class="blank">___________</span>', t)
-    t = re.sub(r"\\hspace\*?\{[^}]*\}", "&ensp;&ensp;", t)
-    t = re.sub(r"\\vspace\*?\{[^}]*\}", "<br>", t)
-    t = re.sub(r"\\\\", "<br>", t)
-    t = re.sub(r"\\newline\b", "<br>", t)
-
-    # 6. Comandi comuni
-    t = re.sub(r"\\noindent\s*", "", t)
-    t = re.sub(r"\\quad\b", "&emsp;", t)
-    t = re.sub(r"\\qquad\b", "&emsp;&emsp;", t)
-    t = re.sub(r"\\ldots\b|\\dots\b", "…", t)
-    t = re.sub(r"\\newpage\b|\\clearpage\b", "<hr>", t)
-    t = re.sub(r"\\medskip\b|\\bigskip\b", "<br>", t)
-    t = re.sub(r"\\smallskip\b", "", t)
-
-    # 7. Rimuovi \begin/\end non-math residui
-    math_envs = r"(math|equation|align|gather|multline|pmatrix|bmatrix|vmatrix|cases)"
-    t = re.sub(r"\\begin\{(?!" + math_envs + r")[^}]*\}", "", t)
-    t = re.sub(r"\\end\{(?!" + math_envs + r")[^}]*\}", "", t)
-
-    # 8. Comandi LaTeX generici con argomento
-    t = re.sub(r"\\(?:small|large|Large|huge|Huge|normalsize|centering)\b", "", t)
-    t = re.sub(r"\\[a-zA-Z]+\*?\{([^}$]{0,80})\}", r"\1", t)
-
-    # 9. Paragrafi
-    t = re.sub(r"\n\n+", "</p><p>", t)
-    t = t.replace("\n", " ")
-    t = re.sub(r"\s{3,}", " ", t)
-
-    safe_title = html_lib.escape(title)
-    bg       = T["bg2"]
-    card     = T.get("card2", T["bg2"])
-    fg       = T["text"]
-    fg2      = T["text2"]
-    acc      = T["accent"]
-    bdr      = T["border"]
-    muted    = T["muted"]
-
-    katex_css  = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
-    katex_js   = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
-    render_js  = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
-
-    html_out = (
-        "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
-        "<link rel='stylesheet' href='" + katex_css + "'>"
-        "<script src='" + katex_js + "'></script>"
-        "<script src='" + render_js + "'></script>"
-        "<style>"
-        "*{box-sizing:border-box;margin:0;padding:0}"
-        "body{font-family:-apple-system,DM Sans,sans-serif;background:" + bg + ";"
-        "color:" + fg + ";font-size:15px;line-height:1.75;padding:4px 0 12px 0}"
-        ".t{font-size:.95rem;font-weight:800;color:" + acc + ";padding:8px 14px;"
-        "background:" + card + ";border-left:3px solid " + acc + ";"
-        "margin-bottom:10px;border-radius:0 6px 6px 0}"
-        ".b{padding:2px 10px}"
-        "ol,ul{padding-left:1.5em;margin:6px 0}"
-        "li{margin:5px 0}"
-        ".lbl{font-weight:700;color:" + acc + "}"
-        ".blank{display:inline-block;border-bottom:1.5px solid " + fg2 + ";"
-        "min-width:110px;margin:0 3px}"
-        ".graph-ph{background:" + card + ";border:1.5px dashed " + bdr + ";"
-        "border-radius:8px;padding:14px;text-align:center;color:" + muted + ";"
-        "font-size:.85rem;margin:10px 0}"
-        "p{margin:5px 0}"
-        "strong{color:" + fg + "}"
-        ".katex-display{overflow-x:auto;padding:6px 0}"
-        "hr{border:none;border-top:1px solid " + bdr + ";margin:10px 0}"
-        "</style></head><body>"
-        "<div class='t'>" + safe_title + "</div>"
-        "<div class='b'><p>" + t + "</p></div>"
-        "<script>"
-        "window.addEventListener('load',function(){"
-        "renderMathInElement(document.body,{"
-        "delimiters:["
-        "{left:'$$',right:'$$',display:true},"
-        "{left:'$',right:'$',display:false}"
-        "],"
-        "throwOnError:false"
-        "});"
-        "});"
-        "</script>"
-        "</body></html>"
-    )
-    return html_out
 
 
 # ── On-demand variant generation ───────────────────────────────────────────────
@@ -738,500 +612,12 @@ if _on_landing:
         unsafe_allow_html=True
     )
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  STICKY HEADER  (st_yled.sticky_header con fallback CSS injection)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def _render_sticky_header():
-    """
-    Header fisso che rimane visibile durante lo scroll — mostra logo + step corrente.
-
-    Strategia:
-    - Con st_yled installato  → usa st_yled.sticky_header() (libreria ufficiale)
-    - Senza st_yled           → inietta un div fixed nel parent DOM via
-                                window.parent.document (stesso pattern del
-                                MutationObserver già presente in _render_stage_review).
-
-    Il componente si auto-aggiorna ad ogni rerun sostituendo il div esistente
-    tramite l'id univoco `_vai_sticky_hdr`, senza duplicazioni.
-    """
-    stage    = st.session_state.stage
-    _visual  = STAGE_REVIEW if stage == STAGE_PREVIEW else stage
-
-    _step_info = {
-        STAGE_INPUT:  ("01", "Impostazioni", "⚙️"),
-        STAGE_REVIEW: ("02", "Revisiona",    "✏️"),
-        STAGE_FINAL:  ("03", "Scarica",      "📥"),
-    }
-    _num, _label, _icon = _step_info.get(_visual, ("01", "Impostazioni", "⚙️"))
-
-    # Colori tema
-    _bg        = T["card"]
-    _border    = T["border"]
-    _text      = T["text"]
-    _text2     = T["text2"]
-    _accent    = T["accent"]
-    _success   = T["success"]
-    _muted     = T["muted"]
-
-    # Step pills per l'header
-    _steps_html = ""
-    _steps = [
-        ("01", "Impostazioni", STAGE_INPUT),
-        ("02", "Revisiona",    STAGE_REVIEW),
-        ("03", "Scarica",      STAGE_FINAL),
-    ]
-    _completed = {
-        STAGE_INPUT:  _visual in (STAGE_REVIEW, STAGE_FINAL),
-        STAGE_REVIEW: _visual == STAGE_FINAL,
-        STAGE_FINAL:  False,
-    }
-    for _i, (_sn, _sl, _ss) in enumerate(_steps):
-        _is_active = (_ss == _visual)
-        _is_done   = _completed.get(_ss, False)
-        if _is_active:
-            _cb, _cc, _lc, _lw = _accent, "#fff", _accent, "800"
-            _si = _sn
-        elif _is_done:
-            _cb, _cc, _lc, _lw = _success, "#fff", _success, "700"
-            _si = "✓"
-        else:
-            _cb, _cc, _lc, _lw = _muted + "44", _muted, _muted, "400"
-            _si = _sn
-        _op = "1" if (_is_active or _is_done) else ".38"
-        _steps_html += (
-            f'<div style="display:flex;align-items:center;gap:8px;opacity:{_op};">'
-            f'<div style="background:{_cb};border-radius:50%;width:28px;height:28px;'
-            f'display:flex;align-items:center;justify-content:center;'
-            f'font-size:.75rem;font-weight:800;color:{_cc};flex-shrink:0;">{_si}</div>'
-            f'<span style="font-size:.92rem;font-weight:{_lw};color:{_lc};'
-            f'white-space:nowrap;">{_sl}</span>'
-            f'</div>'
-        )
-        if _i < len(_steps) - 1:
-            _sep_c = _success if _is_done else _muted + "44"
-            _steps_html += (
-                f'<div style="width:28px;height:1.5px;background:{_sep_c};'
-                f'border-radius:2px;flex-shrink:0;"></div>'
-            )
-
-    _inner_html = (
-        # Logo
-        f'<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">'
-        f'<span style="font-size:1.15rem;font-weight:900;color:{_text};'
-        f'font-family:DM Sans,sans-serif;letter-spacing:-.02em;">'
-        f'📝 Verific<span style="color:{_accent};">AI</span>'
-        f'</span>'
-        f'</div>'
-        # Steps (centro)
-        f'<div style="display:flex;align-items:center;gap:10px;">'
-        + _steps_html +
-        f'</div>'
-        # Info contestuale (destra)
-        f'<div style="font-size:.85rem;color:{_muted};font-family:DM Sans,sans-serif;'
-        f'flex-shrink:0;display:flex;align-items:center;gap:5px;">'
-        f'<span style="background:{_accent}18;color:{_accent};border:1px solid {_accent}33;'
-        f'border-radius:6px;padding:3px 11px;font-weight:700;font-size:.82rem;">'
-        f'Step {_num}/03'
-        f'</span>'
-        f'</div>'
-    )
-
-    if _STYLED_AVAILABLE:
-        # ── Percorso ufficiale: st_yled ──────────────────────────────────────
-        try:
-            _styl.init()
-            _styl.sticky_header(
-                f"📝 VerificAI  ·  Step {_num}/03 — {_label}",
-                background_color=_bg,
-                border_bottom=f"1.5px solid {_border}",
-            )
-            return
-        except Exception:
-            pass   # fallback sotto
-
-    # ── Fallback: JS injection nel parent DOM (senza iframe, senza librerie) ──
-    # Inietta il div direttamente in window.parent.document.body con id univoco
-    # in modo che ogni rerun aggiorni invece di duplicare.
-    _escaped = _inner_html.replace("`", "\\`").replace("${", "\\${")
-    components.html(f"""
-<script>
-(function() {{
-  var doc = window.parent.document;
-  var ID  = '_vai_sticky_hdr';
-
-  // Rimuovi header precedente (cambio stage → contenuto diverso)
-  var old = doc.getElementById(ID);
-  if (old) old.remove();
-
-  var hdr = doc.createElement('div');
-  hdr.id  = ID;
-  hdr.style.cssText = [
-    'position:fixed',
-    'top:0',
-    'left:0',
-    'right:0',
-    'z-index:999',
-    'background:{_bg}f2',
-    'backdrop-filter:blur(14px)',
-    '-webkit-backdrop-filter:blur(14px)',
-    'border-bottom:1.5px solid {_border}',
-    'padding:.75rem 1.8rem .75rem 3.6rem',
-    'display:flex',
-    'align-items:center',
-    'justify-content:space-between',
-    'gap:1rem',
-    'font-family:DM Sans,sans-serif',
-    'box-shadow:{T.get("shadow_md","0 4px 16px rgba(0,0,0,.20)")}',
-    'box-sizing:border-box',
-    'pointer-events:none',
-  ].join(';');
-
-  // Wrap content in inner div with pointer-events:auto so it stays clickable
-  var inner = doc.createElement('div');
-  inner.style.cssText = 'pointer-events:auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;width:100%;';
-  inner.innerHTML = `{_escaped}`;
-  hdr.appendChild(inner);
-
-  // Inserisci come primo figlio del body
-  doc.body.insertBefore(hdr, doc.body.firstChild);
-
-  // Aggiunge padding-top al container principale per non coprire il contenuto
-  var main = doc.querySelector('.main .block-container');
-  if (main) {{
-    var cur = parseInt(window.parent.getComputedStyle(main).paddingTop) || 0;
-    if (cur < 80) main.style.paddingTop = '78px';
-  }}
-}})();
-</script>
-""", height=0)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  STEP PROGRESS BAR — inline, centered, visible on all non-landing pages
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def _render_step_progress() -> None:
-    """
-    Renders an elegant centered stepper (Impostazioni → Revisiona → Scarica).
-    Pill-container style with SVG checkmark, gradient lines, refined typography.
-    """
-    stage  = st.session_state.stage
-    visual = STAGE_REVIEW if stage == STAGE_PREVIEW else stage
-
-    steps = [
-        (STAGE_INPUT,  "1", "Impostazioni"),
-        (STAGE_REVIEW, "2", "Revisiona"),
-        (STAGE_FINAL,  "3", "Scarica"),
-    ]
-    order = {s: i for i, (s, _, _) in enumerate(steps)}
-    cur   = order.get(visual, 0)
-
-    # ── Theme tokens ──────────────────────────────────────────────────────────
-    acc     = T["accent"]
-    ok      = T["success"]
-    muted   = T["muted"]
-    txt     = T["text"]
-    txt2    = T["text2"]
-    card    = T["card"]
-    card2   = T.get("card2", T["bg2"])
-    bdr     = T["border"]
-    bdr2    = T["border2"]
-    shadow  = T.get("shadow", "0 1px 3px rgba(0,0,0,.06)")
-
-    # SVG checkmark path
-    _chk = (
-        '<svg width="14" height="11" viewBox="0 0 11 9" fill="none" '
-        'xmlns="http://www.w3.org/2000/svg">'
-        '<path d="M1 4.5L4 7.5L10 1" stroke="currentColor" stroke-width="2" '
-        'stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    )
-
-    # ── Build nodes ───────────────────────────────────────────────────────────
-    nodes_html = ""
-    for i, (s, num, label) in enumerate(steps):
-        is_active = (s == visual)
-        is_done   = order.get(s, 0) < cur
-
-        if is_active:
-            dot_bg     = acc
-            dot_color  = "#fff"
-            dot_border = f"2px solid {acc}"
-            dot_shadow = f"0 0 0 3px {acc}30, 0 2px 10px {acc}40"
-            dot_content = f'<span style="font-size:.9rem;font-weight:800;font-family:DM Sans,sans-serif;">{num}</span>'
-            lbl_color  = txt
-            lbl_weight = "700"
-        elif is_done:
-            dot_bg     = ok
-            dot_color  = "#fff"
-            dot_border = f"2px solid {ok}"
-            dot_shadow = f"0 0 0 4px {ok}25"
-            dot_content = _chk
-            lbl_color  = ok
-            lbl_weight = "600"
-        else:
-            dot_bg     = card2
-            dot_color  = muted
-            dot_border = f"1.5px solid {bdr2}"
-            dot_shadow = "none"
-            dot_content = f'<span style="font-size:.9rem;font-weight:600;font-family:DM Sans,sans-serif;opacity:.6;">{num}</span>'
-            lbl_color  = muted
-            lbl_weight = "500"
-
-        nodes_html += (
-            f'<div class="sp-node">'
-            f'  <div class="sp-dot" style="background:{dot_bg};color:{dot_color};'
-            f'border:{dot_border};box-shadow:{dot_shadow};">{dot_content}</div>'
-            f'  <div class="sp-lbl" style="color:{lbl_color};font-weight:{lbl_weight};">{label}</div>'
-            f'</div>'
-        )
-
-        if i < len(steps) - 1:
-            # Line: solid gradient if already passed, dashed/muted if not yet reached
-            is_filled = cur > i
-            if is_filled:
-                line_bg = f"linear-gradient(90deg, {ok}, {acc})"
-                line_style = ""
-            else:
-                line_bg = bdr2
-                line_style = ""
-            nodes_html += (
-                f'<div class="sp-line" style="background:{line_bg};{line_style}"></div>'
-            )
-
-    html = f"""
-<style>
-  .sp-track {{
-    display: flex; align-items: center; justify-content: center;
-    padding: 0; margin: .8rem auto 1.4rem;
-  }}
-  .sp-pill {{
-    display: inline-flex; align-items: center;
-    padding: .6rem 2.4rem;
-    gap: 0;
-  }}
-  .sp-node {{
-    display: flex; flex-direction: column;
-    align-items: center; gap: 8px;
-    position: relative; z-index: 1;
-  }}
-  .sp-dot {{
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    transition: box-shadow .3s ease, background .3s ease;
-  }}
-  .sp-lbl {{
-    font-size: .82rem; font-family: 'DM Sans', sans-serif;
-    white-space: nowrap; letter-spacing: .02em;
-    transition: color .25s;
-  }}
-  .sp-line {{
-    height: 2px; width: 72px;
-    flex-shrink: 0; border-radius: 2px;
-    margin-bottom: 30px;
-    opacity: .7;
-  }}
-</style>
-<div class="sp-track">
-  <div class="sp-pill">
-    {nodes_html}
-  </div>
-</div>
-"""
-    st.markdown(html, unsafe_allow_html=True)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  SPLIT DOWNLOAD BUTTON  (st_yled.split_button con fallback st.popover)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def _split_download_button(
-    label: str,
-    data: bytes,
-    file_name: str,
-    mime: str,
-    key: str,
-    extra_downloads: list | None = None,
-):
-    """
-    Split button per il download principale in STAGE_FINAL.
-
-    Struttura visiva:
-    ┌──────────────────────────────────────┬────┐
-    │  📄 Scarica PDF Fila A  ·  340 KB   │  ⋮ │
-    └──────────────────────────────────────┴────┘
-                                            ↓
-                                    📝 Scarica DOCX (Word)
-                                    📄 Scarica sorgente .tex
-
-    Con st_yled: usa split_button() per il trigger,
-                 download_button() per i file secondari nel popover.
-    Senza st_yled: usa st.columns([10,1]) + st.popover("⋮") nativo.
-
-    Parametri
-    ---------
-    label           : etichetta bottone primario (PDF)
-    data            : bytes del file primario
-    file_name       : nome file scaricato
-    mime            : MIME type
-    key             : chiave Streamlit univoca
-    extra_downloads : lista di dict {label, data, file_name, mime, key}
-                      per le opzioni nel dropdown
-    """
-    extra_downloads = extra_downloads or []
-
-    if _STYLED_AVAILABLE and extra_downloads:
-        # ── Percorso st_yled ────────────────────────────────────────────────
-        # split_button gestisce il dropdown; download primario via st.download_button
-        try:
-            _action_labels = [d["label"] for d in extra_downloads]
-            _styl.init()
-            # Mostriamo lo split button per le azioni secondarie
-            _clicked = _styl.split_button(
-                primary_label=label,
-                actions=_action_labels,
-            )
-            # Il primary click non restituisce nulla di downloadabile da st_yled
-            # → usiamo download_button nativo per il PDF (sempre visibile)
-            st.download_button(
-                label=label,
-                data=data,
-                file_name=file_name,
-                mime=mime,
-                use_container_width=True,
-                key=key + "_dl",
-            )
-            # Azione selezionata dal dropdown
-            if _clicked and _clicked in _action_labels:
-                _idx = _action_labels.index(_clicked)
-                _dl  = extra_downloads[_idx]
-                st.download_button(
-                    label=_dl["label"],
-                    data=_dl["data"],
-                    file_name=_dl["file_name"],
-                    mime=_dl["mime"],
-                    use_container_width=True,
-                    key=_dl["key"],
-                )
-            return
-        except Exception:
-            pass   # fallback sotto
-
-    # ── Fallback nativo: st.columns + st.popover ─────────────────────────────
-    if extra_downloads:
-        _c_main, _c_pop = st.columns([11, 1], gap="small")
-        with _c_main:
-            st.download_button(
-                label=label,
-                data=data,
-                file_name=file_name,
-                mime=mime,
-                use_container_width=True,
-                key=key,
-            )
-        with _c_pop:
-            # Marker per ereditare stile outline-accent (consistente con altri btn)
-            st.markdown(
-                '<div class="btn-outline-accent-marker" style="display:none;height:0;line-height:0"></div>',
-                unsafe_allow_html=True,
-            )
-            with st.popover("⋮", use_container_width=True):
-                st.markdown(
-                    f'<div style="font-size:.72rem;font-weight:700;'
-                    f'color:{T["muted"]};text-transform:uppercase;'
-                    f'letter-spacing:.06em;margin-bottom:.5rem;'
-                    f'font-family:DM Sans,sans-serif;">Altri formati</div>',
-                    unsafe_allow_html=True,
-                )
-                for _dl in extra_downloads:
-                    if _dl.get("data"):
-                        st.download_button(
-                            label=_dl["label"],
-                            data=_dl["data"],
-                            file_name=_dl["file_name"],
-                            mime=_dl["mime"],
-                            use_container_width=True,
-                            key=_dl["key"],
-                        )
-                    else:
-                        st.markdown(
-                            f'<div style="font-size:.74rem;color:{T["muted"]};'
-                            f'font-family:DM Sans,sans-serif;padding:.2rem 0;">'
-                            f'{_dl["label"]} — <em>non disponibile</em></div>',
-                            unsafe_allow_html=True,
-                        )
-    else:
-        # Nessuna opzione extra → download button normale
-        st.download_button(
-            label=label,
-            data=data,
-            file_name=file_name,
-            mime=mime,
-            use_container_width=True,
-            key=key,
-        )
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  BREADCRUMB
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def _render_breadcrumb():
-    stage = st.session_state.stage
-    # ── 3-step progress: Impostazioni → Revisione → Scarica ──
-    steps = [
-        ("01", "Impostazioni", STAGE_INPUT),
-        ("02", "Revisione",    STAGE_REVIEW),
-        ("03", "Scarica",      STAGE_FINAL),
-    ]
-    # Map PREVIEW → same visual as INPUT (still in step 1 → 2 transition)
-    _visual_stage = STAGE_REVIEW if stage == STAGE_PREVIEW else stage
-    completed = {
-        STAGE_INPUT:  _visual_stage in (STAGE_REVIEW, STAGE_FINAL),
-        STAGE_REVIEW: _visual_stage == STAGE_FINAL,
-        STAGE_FINAL:  False,
-    }
-    # ── Pill container
-    html = (
-        '<div class="breadcrumb-wrap">'
-        '<div class="breadcrumb-pill" style="display:inline-flex;align-items:center;gap:10px;'
-        'padding:.7rem 1.6rem;'
-        'background:' + T["card"] + ';border:1.5px solid ' + T["border"] + ';'
-        'border-radius:100px;box-shadow:' + T.get("shadow_md", "0 4px 20px rgba(0,0,0,.08)") + ';">'
-    )
-    for i, (num, label, s) in enumerate(steps):
-        is_active = s == _visual_stage
-        is_done   = completed.get(s, False)
-        if is_active:
-            cb, cc, lc, lw = T["accent"], "#fff", T["accent"], "800"
-            icon = num
-        elif is_done:
-            cb, cc, lc, lw = T["success"], "#fff", T["success"], "700"
-            icon = "✓"
-        else:
-            cb, cc, lc, lw = T["border2"], T["muted"], T["muted"], "500"
-            icon = num
-        _op = "1" if (is_active or is_done) else ".4"
-        html += (
-            '<div style="display:flex;align-items:center;gap:7px;opacity:' + _op + ';">'
-            '<div style="background:' + cb + ';border-radius:50%;'
-            'width:28px;height:28px;display:flex;align-items:center;'
-            'justify-content:center;font-size:.72rem;font-weight:800;'
-            'color:' + cc + ';flex-shrink:0;box-shadow:0 2px 8px ' + cb + '44;">' + icon + '</div>'
-            '<span style="font-size:.88rem;font-weight:' + lw + ';color:' + lc + ';'
-            'font-family:DM Sans,sans-serif;white-space:nowrap;letter-spacing:-.01em;">' + label + '</span>'
-            '</div>'
-        )
-        if i < len(steps) - 1:
-            _sep_c = T["success"] if is_done else T["border2"]
-            html += (
-                '<div style="width:28px;height:1.5px;background:' + _sep_c + ';'
-                'opacity:.4;flex-shrink:0;border-radius:2px;"></div>'
-            )
-    html += "</div></div>"
-    st.markdown(html, unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1251,8 +637,8 @@ def _carica_docente_preferenze(user_id: str, materia: str) -> dict:
             .limit(1).execute()
         if res.data:
             return res.data[0].get("preferenze") or {}
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("_carica_docente_preferenze failed for %s/%s: %s", user_id, materia, e)
     return {}
 
 
@@ -1273,8 +659,8 @@ def _salva_docente_preferenze(materia: str, prefs: dict) -> None:
         }, on_conflict="user_id,materia").execute()
         # Aggiorna cache locale
         st.session_state._docente_prefs[materia] = prefs
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("_salva_docente_preferenze failed for %s: %s", materia, e)
 
 
 
@@ -1303,7 +689,8 @@ def _load_user_defaults() -> dict:
         st.session_state._user_defaults = defaults
         st.session_state._user_defaults_loaded = True
         return defaults
-    except Exception:
+    except Exception as e:
+        logger.warning("_load_user_defaults failed: %s", e)
         st.session_state._user_defaults_loaded = True
         return {}
 
@@ -1338,8 +725,8 @@ def _save_user_defaults_silent(materia: str, scuola: str,
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }, on_conflict="user_id,materia").execute()
         st.session_state._user_defaults = defaults
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("_save_user_defaults failed: %s", e)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1379,7 +766,8 @@ def _create_share_link(latex_a: str, materia: str, argomento: str,
             "clone_count":   0,
         }).execute()
         return code
-    except Exception:
+    except Exception as e:
+        logger.warning("_generate_share_code / _create_share_record failed: %s", e)
         return None
 
 
@@ -5996,8 +5384,8 @@ if not _share_view_active:
         and st.session_state.get("input_percorso") is None
     )
     if _show_bc:
-        _render_sticky_header()
-        _render_step_progress()
+        _render_sticky_header(T)
+        _render_step_progress(T)
     else:
         # Sulla landing: rimuovi l'eventuale sticky header rimasto
         components.html("""
