@@ -1457,22 +1457,42 @@ def _render_bivio():
     def load_preview_images():
         """Carica le immagini di preview dalla cartella assets/preview"""
         import os
-        preview_dir = "assets/preview"
+        import sys
+        preview_dir = os.path.join(os.path.dirname(__file__), "assets", "preview")
         previews = []
         
+        # Debug: stampa informazioni
+        print(f"DEBUG: Preview directory path: {preview_dir}")
+        print(f"DEBUG: Directory exists: {os.path.exists(preview_dir)}")
+        
         if os.path.exists(preview_dir):
-            for file in sorted(os.listdir(preview_dir)):
+            files = sorted(os.listdir(preview_dir))
+            print(f"DEBUG: Files found: {files}")
+            for file in files:
                 if file.lower().endswith(('.png', '.jpg', '.jpeg', '.svg', '.pdf')):
                     name = os.path.splitext(file)[0].replace('-', ' ').replace('_', ' ').title()
+                    # Per le immagini nel browser, usiamo path relativo dalla root
+                    web_path = f"assets/preview/{file}"
                     previews.append({
                         'file': file,
                         'name': name,
-                        'path': os.path.join(preview_dir, file),
+                        'path': web_path,
                         'type': 'pdf' if file.lower().endswith('.pdf') else 'image'
                     })
+                    print(f"DEBUG: Loaded preview: {name} ({file})")
+        else:
+            print("DEBUG: Preview directory not found!")
+        
+        print(f"DEBUG: Total previews loaded: {len(previews)}")
         return previews
     
     _previews = load_preview_images()
+    
+    # Debug: mostra quante preview sono state caricate
+    if _previews:
+        st.write(f"DEBUG: Trovate {len(_previews)} preview")
+    else:
+        st.write("DEBUG: Nessuna preview trovata - uso card statiche")
     
     # Se non ci sono preview, usa le card statiche come fallback
     if not _previews:
