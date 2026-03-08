@@ -4568,6 +4568,14 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             if mostra_punteggi and _ct_target_pts > 0
             else ("Mantieni formato (X pt) su ogni \\item." if mostra_punteggi else "NON inserire punteggi.")
         )
+        # Raccgli gli altri esercizi per controllo duplicati
+        _altri_esercizi = []
+        for j, block in enumerate(st.session_state.review_blocks):
+            if j != idx:  # Salta l'esercizio da sostituire
+                _altri_esercizi.append(f"\\subsection*{{{block['title']}}}\n{block['body'][:200]}...")
+        
+        _altri_testo = "\n".join(_altri_esercizi) if _altri_esercizi else "Nessun altro esercizio presente."
+        
         _prompt_ct = (
             f"Sei un docente esperto di {materia_str} e LaTeX.\n"
             f"Genera un esercizio COMPLETAMENTE DIVERSO — diverso in struttura, tipologia e contenuto specifico — "
@@ -4575,12 +4583,18 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             f"MATERIA: {materia_str}\n"
             f"ARGOMENTO DELLA VERIFICA: {argomento_str}\n"
             f"ESERCIZIO DA SOSTITUIRE (struttura e tipo da NON replicare):\n\\subsection*{{{title}}}\n{body}\n\n"
-            f"REGOLE:\n"
+            f"ALTRI ESERCIZI GIA PRESENTI (da NON duplicare concettualmente):\n{_altri_testo}\n\n"
+            f"REGOLE FONDAMENTALI:\n"
+            f"- VIETATO ASSOLUTO: NON inserire MAI soluzioni, risposte o risultati. MAI scrivere '= X', 'la risposta è', 'il risultato è'.\n"
+            f"- CONTROLLO DUPLICATI: ANALIZZA gli altri esercizi sopra. NON generare un esercizio che testi "
+              f"lo stesso concetto matematico o la stessa abilità. Ogni esercizio deve essere UNICO concettualmente.\n"
+            f"- MANTENIMENTO DIFFICOLTÀ: se questo è l'Esercizio 1 (Saperi Essenziali), deve rimanere accessibile e risolvibile in 5-8 minuti. "
+              f"NON aumentare la difficoltà o la complessità.\n"
             f"- Cambia TIPO di esercizio (es. da calcolo numerico a dimostrazione, da aperto a V/F, ecc.).\n"
             f"- Cambia i concetti specifici testati, scegliendo aspetti diversi ma coerenti con '{argomento_str}'.\n"
             f"- L'esercizio DEVE restare su '{argomento_str}' in '{materia_str}'. NON introdurre altri argomenti.\n"
             f"- Restituisci SOLO il blocco \\subsection*{{...}} con il nuovo esercizio.\n"
-            f"- Mantieni la struttura LaTeX (\\subsection*, enumerate, \\item[a)], ecc.).\n"
+            f"- Mantieni la struttura LaTeX (\\subsection*, enumerate, \\item[a]), ecc).\n"
             f"- {_ct_punti_nota}\n"
             f"- Se includi un grafico, usa SOLO codice TikZ/pgfplots COMPLETO e COMPILABILE. "
               f"NON usare \\includegraphics{{placeholder}} né commenti '%% inserire figura'.\n"
