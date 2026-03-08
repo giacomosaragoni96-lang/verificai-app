@@ -108,14 +108,14 @@ SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
 supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # ── TEMA — inizializzazione ───────────────────────────────────────────────────
-# Tema unico: notte (default). Fallback robusto per sessioni vecchie (aurora/luce/ecc.)
+# Tema default: carta (light). Fallback robusto per sessioni vecchie (aurora/luce/ecc.)
 if "theme" not in st.session_state:
-    st.session_state.theme = "notte"
+    st.session_state.theme = "carta"
 
 _theme_key = st.session_state.theme
-# Fallback: qualsiasi chiave non più presente in THEMES → notte
+# Fallback: qualsiasi chiave non più presente in THEMES → carta
 if _theme_key not in THEMES:
-    _theme_key = list(THEMES.keys())[0]   # sempre "notte"
+    _theme_key = list(THEMES.keys())[0]   # sempre "carta"
     st.session_state.theme = _theme_key
 T = THEMES[_theme_key]
 
@@ -1348,9 +1348,9 @@ def _render_bivio():
         unsafe_allow_html=True,
     )
     
-    # Stats cards con dati reali (solo 2 colonne)
+    # Stats cards con dati reali (3 colonne)
     stats = _get_verifiche_stats()
-    col1, col2 = st.columns(2, gap="large")
+    col1, col2, col3 = st.columns(3, gap="large")
     
     with col1:
         st.markdown(
@@ -1398,6 +1398,31 @@ def _render_bivio():
                 </div>
                 <div style="font-size: 1rem; opacity: 0.9;">
                     Materie Coperte
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
+    with col3:
+        st.markdown(
+            f"""
+            <div style="
+                background: linear-gradient(135deg, #f59e0b, #d97706);
+                border-radius: 16px;
+                padding: 2rem;
+                text-align: center;
+                color: white;
+                box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.3);
+            ">
+                <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">
+                    ✏️
+                </div>
+                <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+                    {stats['esercizi_totali']}
+                </div>
+                <div style="font-size: 1rem; opacity: 0.9;">
+                    Esercizi Generati
                 </div>
             </div>
             """,
@@ -1627,6 +1652,7 @@ def _get_verifiche_stats():
             "totali": 0,
             "questo_mese": 0,
             "materie": set(),
+            "esercizi_totali": 0,
             "qualita_media": 0.0
         }
     
@@ -1635,10 +1661,15 @@ def _get_verifiche_stats():
     
     materie = set()
     questo_mese_count = 0
+    esercizi_totali = 0
     
     for v in verifiche:
         if v.get("materia"):
             materie.add(v["materia"])
+        
+        # Somma esercizi
+        if v.get("num_esercizi"):
+            esercizi_totali += v["num_esercizi"]
         
         # Conta verifiche di questo mese
         created_at = v.get("created_at")
@@ -1654,6 +1685,7 @@ def _get_verifiche_stats():
         "totali": len(verifiche),
         "questo_mese": questo_mese_count,
         "materie": len(materie),
+        "esercizi_totali": esercizi_totali,
         "qualita_media": 4.8  # Placeholder - si può calcolare da feedback reali
     }
 

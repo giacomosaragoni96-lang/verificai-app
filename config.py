@@ -50,7 +50,63 @@ def get_model_id_per_piano(piano: str, materia: str = "") -> str:
 
 THEMES = {
     # ═══════════════════════════════════════════════════════════════════════
-    #  NOTTE — Dark Midnight Blue  (default)
+    #  CARTA — Ultra-clean Paper White  (Linear light · Stripe · GitHub light) - DEFAULT
+    #  Massima leggibilità · blue accent autorevole · tipografia precisa
+    # ═══════════════════════════════════════════════════════════════════════
+    "carta": {
+        # Superfici — bianco-carta con micro-warmth, non freddo
+        "bg":         "#FAFAFA",
+        "bg2":        "#F2F3F5",
+        "card":       "#FFFFFF",
+        "card2":      "#F8F9FA",
+
+        # Testo — near-black quasi neutro, massimo contrasto
+        "text":       "#0F1117",
+        "text2":      "#4A5166",
+        "muted":      "#7A8299",
+
+        # Bordi — minimal, ultra-sottili
+        "border":     "#E2E5EB",
+        "border2":    "#CDD1D9",
+
+        # Accent — Blue autorevole (sistema, fiducia, azione)
+        "accent":       "#2563EB",
+        "accent2":      "#1D4ED8",
+        "accent_light": "#EFF6FF",
+
+        # Interazione
+        "hover":      "#F8FAFC",
+
+        # Semantici — calibrati per light theme
+        "success":    "#059669",
+        "warn":       "#D97706",
+        "error":      "#DC2626",
+
+        # Ombre — ultra-morbide, professionali
+        "shadow":     "0 1px 2px rgba(15,17,23,.04)",
+        "shadow_md":  "0 4px 20px rgba(15,17,23,.08), 0 1px 3px rgba(15,17,23,.04)",
+        "shadow_soft": "0 12px 40px rgba(15,17,23,.06), 0 2px 8px rgba(15,17,23,.03)",
+
+        # Design system
+        "radius_sm":  "8px",
+        "radius_md":  "12px",
+        "radius_lg":  "16px",
+
+        # Sidebar — grigio chiaro professionale
+        "sidebar_bg":      "linear-gradient(180deg, #F8F9FA 0%, #FFFFFF 100%)",
+        "sidebar_border":  "#E2E5EB",
+        "sidebar_accent":  "#2563EB",
+        "sidebar_input_bg":  "#FAFAFA",
+        "sidebar_input_text": "#0F1117",
+
+        # Hint boxes
+        "hint_bg":      "#EFF6FF",
+        "hint_border":  "#BFDBFE",
+        "hint_text":    "#1D4ED8",
+    },
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  NOTTE — Dark Midnight Blue  (opzione dark)
     # ═══════════════════════════════════════════════════════════════════════
     "notte": {
         # Superfici
@@ -103,236 +159,7 @@ THEMES = {
         "hint_border":  "#1F4070",
         "hint_text":    "#79C0FF",
     },
-
-    # ═══════════════════════════════════════════════════════════════════════
-    #  CHIARO (Giorno) — Elegant light: cream, warm gray, teal accent
-    #  Palette: Cream #FAF9F7, Warm Gray, Teal #0D9488, Slate sidebar
-    # ═══════════════════════════════════════════════════════════════════════
-    "chiaro": {
-        # Superfici — cream e bianco caldo, nessun grigio freddo
-        "bg":         "#F5F4F0",     # Warm cream — base elegante
-        "bg2":        "#EBE9E4",     # secondo livello
-        "card":       "#FFFFFF",     # card bianca pura
-        "card2":      "#FAFAF9",     # overlay leggermente caldo
-
-        # Testo — charcoal caldo, massima leggibilità
-        "text":       "#1C1917",     # Warm black
-        "text2":      "#44403C",     # secondario
-        "muted":      "#78716C",     # stone muted
-
-        # Bordi — sottili, caldi
-        "border":     "#E7E5E4",     # stone 200
-        "border2":    "#D6D3D1",     # stone 300
-
-        # Accent — Teal elegante (non verde piatto)
-        "accent":       "#0D9488",   # Teal 600
-        "accent2":      "#0F766E",   # Teal 700 (hover)
-        "accent_light": "#CCFBF1",   # Teal 100 — pill/hint
-
-        # Interazione
-        "hover":      "#F0FDFA",     # Teal 50
-
-        # Semantici
-        "success":    "#059669",     # Emerald 600
-        "warn":       "#D97706",     # Amber 600
-        "error":      "#DC2626",     # Red 600
-
-        # Ombre — morbide, eleganti
-        "shadow":     "0 1px 2px rgba(28,25,23,.06)",
-        "shadow_md":  "0 4px 20px rgba(28,25,23,.08), 0 1px 3px rgba(28,25,23,.04)",
-        "shadow_soft": "0 12px 40px rgba(28,25,23,.06), 0 2px 8px rgba(28,25,23,.03)",
-
-        # Design system
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
-
-        # Sidebar — slate scuro elegante, accent teal
-        "sidebar_bg":      "linear-gradient(180deg, #1E293B 0%, #0F172A 100%)",
-        "sidebar_border":  "#334155",
-        "sidebar_accent":  "#2DD4BF",   # Teal 400
-        "sidebar_input_bg":  "#1E293B",
-        "sidebar_input_text": "#E2E8F0",
-
-        # Hint boxes
-        "hint_bg":      "#CCFBF1",
-        "hint_border":  "#5EEAD4",
-        "hint_text":    "#0F766E",
-    },
-
-    # ═══════════════════════════════════════════════════════════════════════
-    #  GRAFITE — Carbon Blue  (Vercel/Linear-inspired · precise · modern SaaS)
-    #  Near-black bg con micro cast blu · electric blue accent · cool white
-    # ═══════════════════════════════════════════════════════════════════════
-    "grafite": {
-        # Superfici — near-black con sottile cast blue-gray
-        "bg":         "#0C0D10",
-        "bg2":        "#131518",
-        "card":       "#1A1D22",
-        "card2":      "#21252C",
-
-        # Testo — cool white con gerarchia precisa
-        "text":       "#F0F2F5",
-        "text2":      "#8B93A0",
-        "muted":      "#545E6B",
-
-        # Bordi — minimal, barely-there
-        "border":     "#252B33",
-        "border2":    "#323A44",
-
-        # Accent — Electric Blue (fiducia, azione, sistema)
-        "accent":       "#3B82F6",
-        "accent2":      "#60A5FA",
-        "accent_light": "#0D1F3C",
-
-        # Interazione
-        "hover":      "#181D24",
-
-        # Semantici — calibrati per massima leggibilità su dark
-        "success":    "#34D399",
-        "warn":       "#FBBF24",
-        "error":      "#F87171",
-
-        # Ombre — profonde, cinema dark
-        "shadow":     "0 1px 3px rgba(0,0,0,.55)",
-        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
-        "shadow_soft": "0 8px 32px rgba(12,13,16,.70), 0 2px 8px rgba(0,0,0,.30)",
-
-        # Design system
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
-
-        # Sidebar — deep carbon, accent blue freddo
-        "sidebar_bg":       "linear-gradient(180deg, #070809 0%, #0C0D10 100%)",
-        "sidebar_border":   "#252B33",
-        "sidebar_accent":   "#60A5FA",
-        "sidebar_input_bg":  "#131518",
-        "sidebar_input_text": "#F0F2F5",
-
-        # Hint boxes
-        "hint_bg":      "#0D1F3C",
-        "hint_border":  "#1D3A6A",
-        "hint_text":    "#60A5FA",
-    },
-
-    # ═══════════════════════════════════════════════════════════════════════
-    #  INCHIOSTRO — Warm Editorial Dark  (espresso bg · amber gold · cream text)
-    #  Ispirazione: pubblicazione di lusso, notebook analogico, Bear dark
-    # ═══════════════════════════════════════════════════════════════════════
-    "inchiostro": {
-        # Superfici — espresso caldo, profondità senza freddo
-        "bg":         "#0D0B07",
-        "bg2":        "#151209",
-        "card":       "#1E1913",
-        "card2":      "#27211A",
-
-        # Testo — crema calda, gerarchia editoriale
-        "text":       "#F5EFE4",
-        "text2":      "#AA9880",
-        "muted":      "#6B5B48",
-
-        # Bordi — warm, organici
-        "border":     "#2E2418",
-        "border2":    "#3F3226",
-
-        # Accent — Amber Gold (calore, autorevolezza, azione)
-        "accent":       "#E8971E",
-        "accent2":      "#F5B84A",
-        "accent_light": "#2C1C00",
-
-        # Interazione
-        "hover":      "#1A1510",
-
-        # Semantici — warm-calibrated
-        "success":    "#4ADE80",
-        "warn":       "#FB923C",
-        "error":      "#F87171",
-
-        # Ombre — calde, profonde
-        "shadow":     "0 1px 3px rgba(0,0,0,.55)",
-        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
-        "shadow_soft": "0 8px 32px rgba(13,11,7,.75), 0 2px 8px rgba(0,0,0,.30)",
-
-        # Design system
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
-
-        # Sidebar — quasi nero caldo, accento oro
-        "sidebar_bg":       "linear-gradient(180deg, #070503 0%, #0D0B07 100%)",
-        "sidebar_border":   "#2E2418",
-        "sidebar_accent":   "#F5B84A",
-        "sidebar_input_bg":  "#151209",
-        "sidebar_input_text": "#F5EFE4",
-
-        # Hint boxes — ambra scura
-        "hint_bg":      "#2C1C00",
-        "hint_border":  "#6A4500",
-        "hint_text":    "#F5B84A",
-    },
-
-    # ═══════════════════════════════════════════════════════════════════════
-    #  CARTA — Ultra-clean Paper White  (Linear light · Stripe · GitHub light)
-    #  Massima leggibilità · blue accent autorevole · tipografia precisa
-    # ═══════════════════════════════════════════════════════════════════════
-    "carta": {
-        # Superfici — bianco-carta con micro-warmth, non freddo
-        "bg":         "#FAFAFA",
-        "bg2":        "#F2F3F5",
-        "card":       "#FFFFFF",
-        "card2":      "#F8F9FA",
-
-        # Testo — near-black quasi neutro, massimo contrasto
-        "text":       "#0F1117",
-        "text2":      "#4A5166",
-        "muted":      "#7A8299",
-
-        # Bordi — minimal, ultra-sottili
-        "border":     "#E2E5EB",
-        "border2":    "#CDD1D9",
-
-        # Accent — Blue autorevole (sistema, fiducia, azione)
-        "accent":       "#2563EB",
-        "accent2":      "#1D4ED8",
-        "accent_light": "#EFF6FF",
-
-        # Interazione
-        "hover":      "#F0F4FF",
-
-        # Semantici — vividi per leggibilità su bianco
-        "success":    "#059669",
-        "warn":       "#D97706",
-        "error":      "#DC2626",
-
-        # Ombre — ultra-soft, quasi impercettibili
-        "shadow":     "0 1px 2px rgba(15,17,23,.06)",
-        "shadow_md":  "0 4px 20px rgba(15,17,23,.08), 0 1px 3px rgba(15,17,23,.04)",
-        "shadow_soft": "0 12px 40px rgba(15,17,23,.06), 0 2px 8px rgba(15,17,23,.03)",
-
-        # Design system
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
-
-        # Sidebar — slate scuro, accent blue coerente
-        "sidebar_bg":       "linear-gradient(180deg, #0F172A 0%, #1E293B 100%)",
-        "sidebar_border":   "#334155",
-        "sidebar_accent":   "#60A5FA",
-        "sidebar_input_bg":  "#0F172A",
-        "sidebar_input_text": "#E2E8F0",
-
-        # Hint boxes — blue very light
-        "hint_bg":      "#EFF6FF",
-        "hint_border":  "#BFDBFE",
-        "hint_text":    "#1D4ED8",
-    },
-
-    # ═══════════════════════════════════════════════════════════════════════
-    #  AVORIO — Warm Ivory Editorial  (Notion · Readwise · Bear light)
-    #  Ivory bg caldo · violet accent ricco · charcoal caldo
-    # ═══════════════════════════════════════════════════════════════════════
-    "avorio": {
+}
         # Superfici — avorio caldo, texture carta di qualità
         "bg":         "#F8F5F0",
         "bg2":        "#EEE9E2",
