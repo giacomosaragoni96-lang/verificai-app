@@ -1994,24 +1994,35 @@ def _render_le_tue_verifiche():
                             st.session_state[f"rename_{verifica.get('id')}"] = True
                             st.rerun()
                     else:
+                        # Mostra un messaggio per il rinomina invece di rompere il layout
+                        st.info("✏️ Vedi sotto per rinominare")
+                
+                # Se è in modalità rinomina, mostra l'input in una sezione separata
+                if st.session_state.get(f"rename_{verifica.get('id')}", False):
+                    st.markdown('<div style="margin: 0.5rem 0; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">', unsafe_allow_html=True)
+                    
+                    col_input, col_save, col_cancel = st.columns([2, 1, 1])
+                    with col_input:
                         nuovo_nome = st.text_input(
                             "Nuovo nome:",
                             value=verifica.get("argomento", ""),
-                            key=f"rename_input_{verifica.get('id')}_{i}"
+                            key=f"rename_input_{verifica.get('id')}_{i}",
+                            label_visibility="collapsed"
                         )
-                        col_save, col_cancel = st.columns([1, 1])
-                        with col_save:
-                            if st.button("💾 Salva", key=f"save_rename_{verifica.get('id')}_{i}"):
-                                if nuovo_nome.strip():
-                                    result = _rinomina_verifica(verifica.get("id"), nuovo_nome.strip())
-                                    if result:
-                                        st.success("✅ Nome aggiornato!")
-                                        del st.session_state[f"rename_{verifica.get('id')}"]
-                                        st.rerun()
-                        with col_cancel:
-                            if st.button("❌ Annulla", key=f"cancel_rename_{verifica.get('id')}_{i}"):
-                                del st.session_state[f"rename_{verifica.get('id')}"]
-                                st.rerun()
+                    with col_save:
+                        if st.button("💾 Salva", key=f"save_rename_{verifica.get('id')}_{i}", use_container_width=True):
+                            if nuovo_nome.strip():
+                                result = _rinomina_verifica(verifica.get("id"), nuovo_nome.strip())
+                                if result:
+                                    st.success("✅ Nome aggiornato!")
+                                    del st.session_state[f"rename_{verifica.get('id')}"]
+                                    st.rerun()
+                    with col_cancel:
+                        if st.button("❌ Annulla", key=f"cancel_rename_{verifica.get('id')}_{i}", use_container_width=True):
+                            del st.session_state[f"rename_{verifica.get('id')}"]
+                            st.rerun()
+                    
+                    st.markdown('</div>', unsafe_allow_html=True)
                 
                 with col6:
                     # Preferiti
