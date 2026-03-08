@@ -1757,7 +1757,7 @@ def _render_le_tue_verifiche():
     
     # Mostra verifiche reali
     if verifiche_filtrate:
-        for verifica in verifiche_filtrate:
+        for i, verifica in enumerate(verifiche_filtrate):
             # Formatta data
             data_formattata = "Data non disponibile"
             if verifica.get("created_at"):
@@ -1768,6 +1768,7 @@ def _render_le_tue_verifiche():
                     pass
             
             with st.container():
+                # Header della verifica
                 st.markdown(
                     f"""
                     <div style="
@@ -1803,54 +1804,92 @@ def _render_le_tue_verifiche():
                                 </p>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button style="
-                                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-                                color: white;
-                                border: none;
-                                padding: 0.5rem 1rem;
-                                border-radius: 8px;
-                                font-size: 0.9rem;
-                                font-weight: 500;
-                                cursor: pointer;
-                                transition: all 0.2s;
-                            " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(59, 130, 246, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'"
-                                onclick="alert('Anteprima in sviluppo')">
-                                👁️ Anteprima
-                            </button>
-                            <button style="
-                                background: white;
-                                color: #1f2937;
-                                border: 1px solid #e5e7eb;
-                                padding: 0.5rem 1rem;
-                                border-radius: 8px;
-                                font-size: 0.9rem;
-                                font-weight: 500;
-                                cursor: pointer;
-                                transition: all 0.2s;
-                            " onmouseover="this.style.background='#f9fafb'; this.style.borderColor='#d1d5db'" onmouseout="this.style.background='white'; this.style.borderColor='#e5e7eb'"
-                                onclick="alert('Download in sviluppo')">
-                                📄 Scarica PDF
-                            </button>
-                            <button style="
-                                background: white;
-                                color: #ef4444;
-                                border: 1px solid #fecaca;
-                                padding: 0.5rem 1rem;
-                                border-radius: 8px;
-                                font-size: 0.9rem;
-                                font-weight: 500;
-                                cursor: pointer;
-                                transition: all 0.2s;
-                            " onmouseover="this.style.background='#fef2f2'; this.style.borderColor='#fca5a5'" onmouseout="this.style.background='white'; this.style.borderColor='#fecaca'"
-                                onclick="alert('Eliminazione in sviluppo')">
-                                🗑️ Elimina
-                            </button>
-                        </div>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
+                
+                # Bottoni funzionali
+                col1, col2, col3 = st.columns([1, 1, 1])
+                
+                with col1:
+                    if st.button(f"👁️ Anteprima", key=f"preview_{verifica.get('id')}_{i}"):
+                        if verifica.get("latex_a"):
+                            # Compila PDF per anteprima
+                            try:
+                                pdf_bytes, error = compila_pdf(verifica["latex_a"])
+                                if pdf_bytes:
+                                    # Converti in immagini per anteprima
+                                    images, _ = pdf_to_images_bytes(pdf_bytes)
+                                    if images:
+                                        st.success("📄 Anteprima generata!")
+                                        
+                                        # Mostra anteprima in un container
+                                        with st.expander("📄 Anteprima Verifica", expanded=True):
+                                            for j, img in enumerate(images[:3]):  # Max 3 pagine
+                                                st.image(img, caption=f"Pagina {j+1}", use_container_width=True)
+                                    else:
+                                        st.error("⚠️ Impossibile generare anteprima immagini")
+                                else:
+                                    st.error(f"⚠️ Errore compilazione PDF: {error}")
+                            except Exception as e:
+                                st.error(f"⚠️ Errore anteprima: {e}")
+                        else:
+                            st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
+                
+                with col2:
+                    if st.button(f"📄 Scarica PDF", key=f"download_{verifica.get('id')}_{i}"):
+                        if verifica.get("latex_a"):
+                            try:
+                                pdf_bytes, error = compila_pdf(verifica["latex_a"])
+                                if pdf_bytes:
+                                    # Nome file
+                                    filename = f"{verifica.get('argomento', 'verifica').replace(' ', '_').replace('/', '_')}_{data_formattata.replace('/', '')}.pdf"
+                                    st.download_button(
+                                        label="⬇️ Click per scaricare",
+                                        data=pdf_bytes,
+                                        file_name=filename,
+                                        mime="application/pdf",
+                                        use_container_width=True
+                                    )
+                                else:
+                                    st.error(f"⚠️ Errore generazione PDF: {error}")
+                            except Exception as e:
+                                st.error(f"⚠️ Errore download: {e}")
+                        else:
+                            st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
+                
+                with col3:
+                    if st.button(f"🗑️ Elimina", key=f"delete_{verifica.get('id')}_{i}"):
+                        # Conferma eliminazione
+                        if f"confirm_delete_{verifica.get('id')}" not in st.session_state:
+                            st.session_state[f"confirm_delete_{verifica.get('id')}"] = False
+                        
+                        if not st.session_state[f"confirm_delete_{verifica.get('id')}"]:
+                            st.session_state[f"confirm_delete_{verifica.get('id')}"] = True
+                            st.warning("⚠️ Sei sicuro? Click di nuovo per confermare l'eliminazione.")
+                            st.rerun()
+                        else:
+                            # Elimina dal database
+                            try:
+                                res = supabase_admin.table("verifiche_storico")\
+                                    .delete()\
+                                    .eq("id", verifica.get("id"))\
+                                    .execute()
+                                
+                                if res.data:
+                                    st.success("✅ Verifica eliminata con successo!")
+                                    # Rimuovi stato di conferma
+                                    del st.session_state[f"confirm_delete_{verifica.get('id')}"]
+                                    st.rerun()
+                                else:
+                                    st.error("⚠️ Errore durante l'eliminazione")
+                            except Exception as e:
+                                st.error(f"⚠️ Errore eliminazione: {e}")
+                            finally:
+                                # Reset stato di conferma
+                                if f"confirm_delete_{verifica.get('id')}" in st.session_state:
+                                    del st.session_state[f"confirm_delete_{verifica.get('id')}"]
     else:
         st.info("📝 Nessuna verifica trovata. Inizia a creare la tua prima verifica!")
     
