@@ -1601,7 +1601,7 @@ def _genera_link_condivisione(verifica_id: int):
         # Genera codice di condivisione
         code = _generate_share_code()
         
-        # Salva nella tabella shared_verifiche
+        # Salva nella tabella shared_verifiche (solo campi esistenti)
         supabase_admin.table("shared_verifiche").insert({
             "short_code": code,
             "user_id": st.session_state.utente.id,
@@ -1614,8 +1614,7 @@ def _genera_link_condivisione(verifica_id: int):
             "num_esercizi": verifica.get("num_esercizi"),
             "modello": verifica.get("modello"),
             "percorso_scelto": verifica.get("percorso_scelto"),
-            "file_mode": verifica.get("file_mode"),
-            "created_at": verifica.get("created_at"),
+            # Rimossi campi che non esistono: file_mode, created_at
         }).execute()
         
         return f"{SHARE_URL}?share={code}"
