@@ -993,10 +993,11 @@ def get_css(T: dict) -> str:
     transform: none !important;
   }}
 
+  /* ── SECONDARY BUTTONS: specificità massima per battere emotion CSS ────── */
+  html body .stApp [data-testid="stBaseButton-secondary"],
   html body .stApp div.stButton > button[kind="secondary"],
   html body .stApp div.stButton > button:not([kind="primary"]),
   html body .stApp [data-testid="stButton"] > button:not([data-testid*="primary"]),
-  html body .stApp [data-testid="stBaseButton-secondary"],
   div.stButton > button[kind="secondary"],
   div.stButton > button:not([kind="primary"]) {{
     background: {_surf_raised} !important;
@@ -1013,9 +1014,10 @@ def get_css(T: dict) -> str:
     box-shadow: {_shadow_xs} !important;
     transition: background {_transition}, border-color {_transition}, box-shadow {_transition}, transform {_transition} !important;
   }}
+  html body .stApp [data-testid="stBaseButton-secondary"]:hover,
   html body .stApp div.stButton > button[kind="secondary"]:hover,
   html body .stApp div.stButton > button:not([kind="primary"]):hover,
-  html body .stApp [data-testid="stBaseButton-secondary"]:hover,
+  html body .stApp [data-testid="stButton"] > button:not([data-testid*="primary"]):hover,
   div.stButton > button[kind="secondary"]:hover,
   div.stButton > button:not([kind="primary"]):hover {{
     background: {T['hover']} !important;
@@ -1072,8 +1074,11 @@ def get_css(T: dict) -> str:
   /* ════════════════════════════════════════════════════════════════════════
      DOWNLOAD BUTTONS — teal-accented, visivamente distinti dai bottoni azione
      ════════════════════════════════════════════════════════════════════════ */
+  /* ── DOWNLOAD BUTTONS: specificità massima per testo verde chiaro ────── */
+  html body .stApp div.stDownloadButton > button,
   div.stDownloadButton > button {{
     background: {T.get('card2', _surf_overlay)} !important;
+    background-color: {T.get('card2', _surf_overlay)} !important;
     color: {T['success']} !important;
     -webkit-text-fill-color: {T['success']} !important;
     border: 1.5px solid {T['success']}55 !important;
@@ -1086,8 +1091,10 @@ def get_css(T: dict) -> str:
     box-shadow: none !important;
     transition: background {_transition}, border-color {_transition}, box-shadow {_transition}, transform {_transition} !important;
   }}
+  html body .stApp div.stDownloadButton > button:hover,
   div.stDownloadButton > button:hover {{
     background: {T['success']}14 !important;
+    background-color: {T['success']}14 !important;
     border-color: {T['success']}99 !important;
     color: {T['success']} !important;
     -webkit-text-fill-color: {T['success']} !important;

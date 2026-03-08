@@ -594,7 +594,7 @@ components.html(
     f'e.style.setProperty("-webkit-text-fill-color",efg,"important");'
     f'e.style.setProperty("background-color","transparent","important");'
     f'}});'
-    # Fix secondary buttons on light themes (main content only, not sidebar)
+    # Fix secondary and download buttons on light themes (main content only, not sidebar)
     f'd.querySelectorAll(BSEL).forEach(function(e){{'
     f'if(e.closest(\'[data-testid="stSidebar"]\'))return;'
     f'var dt=e.getAttribute("data-testid")||"";'
@@ -605,6 +605,12 @@ components.html(
     f'e.style.setProperty("color",btnFg,"important");'
     f'e.style.setProperty("-webkit-text-fill-color",btnFg,"important");'
     f'e.style.setProperty("border",btnBd,"important");'
+    f'}});'
+    # Fix download buttons text color on light themes
+    f'd.querySelectorAll(\'div.stDownloadButton > button\').forEach(function(e){{'
+    f'if(e.closest(\'[data-testid="stSidebar"]\'))return;'
+    f'e.style.setProperty("color","{T.get("success","#059669")}","important");'
+    f'e.style.setProperty("-webkit-text-fill-color","{T.get("success","#059669")}","important");'
     f'}});'
     f'}}'
     f'}}'
