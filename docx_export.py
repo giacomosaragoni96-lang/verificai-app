@@ -269,6 +269,11 @@ def _add_content_with_graphs(
                 
                 logger.info(f"Processando placeholder per grafico #{n}")
                 
+                # Aggiungi un paragrafo vuoto per separazione dal testo
+                p_separator = doc.add_paragraph()
+                p_separator.paragraph_format.space_before = Pt(6)
+                p_separator.paragraph_format.space_after = Pt(6)
+                
                 # Forza il paragrafo: crea nuovo spazio dedicato per l'immagine
                 p_img = doc.add_paragraph()
                 p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -289,6 +294,12 @@ def _add_content_with_graphs(
                 else:
                     logger.warning(f"Graph #{n} placeholder - conversion failed")
                     p_img.add_run('⚠️ Grafico non disponibile - conversione fallita').italic = True
+                
+                # Aggiungi un altro paragrafo vuoto dopo il grafico
+                p_after = doc.add_paragraph()
+                p_after.paragraph_format.space_before = Pt(6)
+                p_after.paragraph_format.space_after = Pt(6)
+                
                 first = False
             except ValueError:
                 logger.warning(f"Parte '{part}' non è un numero di grafico valido")
