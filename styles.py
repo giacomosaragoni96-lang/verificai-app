@@ -71,8 +71,37 @@ def get_css(T: dict) -> str:
     # ── Transition standard ────────────────────────────────────────────────────
     _transition = "0.2s cubic-bezier(.4,0,.2,1)"
 
- 
-    
+    # ── JS fix expander aperto su temi chiari ─────────────────────────────────
+    # CSS !important non basta: Streamlit inietta CSS dinamicamente dopo il nostro.
+    # Il MutationObserver applica inline styles (massima priorità) ogni volta
+    # che un expander viene aperto.
+    if _is_light:
+        _exp_js_block = (
+            '<script>'
+            '(function(){'
+            'var _ebg="' + _exp_open_bg + '",_efg="' + _exp_open_text + '",_ebd="' + _exp_open_border + '";'
+            'function _efx(){'
+            'document.querySelectorAll(\'details[data-testid="stExpander"][open] > summary\').forEach(function(e){'
+            'e.style.setProperty("background",_ebg,"important");'
+            'e.style.setProperty("background-color",_ebg,"important");'
+            'e.style.setProperty("color",_efg,"important");'
+            'e.style.setProperty("-webkit-text-fill-color",_efg,"important");'
+            'e.style.setProperty("border-bottom",_ebd,"important");'
+            'e.style.setProperty("border-radius","12px 12px 0 0","important");'
+            '});'
+            'document.querySelectorAll(\'details[data-testid="stExpander"][open] > summary *\').forEach(function(e){'
+            'e.style.setProperty("color",_efg,"important");'
+            'e.style.setProperty("-webkit-text-fill-color",_efg,"important");'
+            'e.style.setProperty("background-color","transparent","important");'
+            '});}'
+            'new MutationObserver(_efx).observe(document.body,{subtree:true,attributes:true,childList:true});'
+            '_efx();setInterval(_efx,250);'
+            '})();'
+            '</script>'
+        )
+    else:
+        _exp_js_block = ""
+
     return f"""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
@@ -3904,6 +3933,7 @@ def get_css(T: dict) -> str:
   }}
 
 </style>
+{_exp_js_block}
 """
 
 
