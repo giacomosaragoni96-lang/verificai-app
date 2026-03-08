@@ -72,6 +72,10 @@ def render_sidebar(
     with st.sidebar:
         _acc = T.get("sidebar_accent", "#79C0FF")
         _acc2 = T.get("accent2", _acc)
+        # La sidebar ha sempre sfondo scuro → i colori testo devono essere CHIARI
+        # indipendentemente dal tema principale (chiaro/scuro).
+        _sb_text  = T.get("sidebar_input_text", "#E6EDF3")
+        _sb_muted = T.get("sidebar_input_text", "#E6EDF3") + "99"
         st.markdown(
             f'<div class="sidebar-logo">📝 Verific<span style="background:linear-gradient(135deg,{_acc},{_acc2});'
             f'-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">AI</span></div>',
@@ -104,7 +108,7 @@ def render_sidebar(
             )
             modello_id = MODELLI_DISPONIBILI[_sel_modello]["id"]
             st.markdown(
-                f'<div style="font-size:0.72rem;color:{T["muted"]};padding:3px 0 0 2px;">'
+                f'<div style="font-size:0.72rem;color:{_sb_muted};padding:3px 0 0 2px;">'
                 f'🔧 Admin: selezione manuale abilitata.</div>',
                 unsafe_allow_html=True
             )
@@ -121,7 +125,7 @@ def render_sidebar(
             )
             modello_id = MODELLI_DISPONIBILI[_sel_pro]["id"]
             st.markdown(
-                f'<div style="font-size:0.72rem;color:{T["muted"]};padding:3px 0 0 2px;">'
+                f'<div style="font-size:0.72rem;color:{_sb_muted};padding:3px 0 0 2px;">'
                 f'⚡ Piano Pro attivo. Per materie scientifiche (matematica, fisica, chimica) considera il Piano Gold.</div>',
                 unsafe_allow_html=True
             )
@@ -135,7 +139,7 @@ def render_sidebar(
             )
             modello_id = MODELLI_DISPONIBILI[_sel_gold]["id"]
             st.markdown(
-                f'<div style="font-size:0.72rem;color:{T["muted"]};padding:3px 0 0 2px;">'
+                f'<div style="font-size:0.72rem;color:{_sb_muted};padding:3px 0 0 2px;">'
                 f'🌟 Piano Gold attivo · Gemini 2.5 Pro disponibile.</div>',
                 unsafe_allow_html=True
             )
@@ -206,7 +210,7 @@ def render_sidebar(
             <div class="monthly-progress-fill"
                  style="width:{_perc_uso}%;background:{_color_bar};"></div>
           </div>
-          <div style="text-align:right;font-size:0.68rem;color:{T['muted']};
+          <div style="text-align:right;font-size:0.68rem;color:{_sb_muted};
                       margin-top:4px;font-family:'DM Sans',sans-serif;">
             🔄 {_reset_str}
           </div>
@@ -232,11 +236,11 @@ def render_sidebar(
                            font-family:'DM Sans',sans-serif;margin-bottom:2px;">
                 ✦ VerificAI Pro
               </div>
-              <div style="font-size:.7rem;color:{T['text2']};font-family:'DM Sans',sans-serif;
+              <div style="font-size:.7rem;color:{_sb_text};font-family:'DM Sans',sans-serif;
                           margin-bottom:.45rem;line-height:1.4;">
                 {_msg} {_sub}
               </div>
-              <div style="font-size:.68rem;color:{T['muted']};font-family:'DM Sans',sans-serif;">
+              <div style="font-size:.68rem;color:{_sb_muted};font-family:'DM Sans',sans-serif;">
                 Verifiche illimitate · Versione anti-copia (Fila B) · Adattata BES/DSA · Soluzioni per il docente
               </div>
             </div>

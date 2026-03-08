@@ -57,9 +57,10 @@ def get_css(T: dict) -> str:
     # ── Expander header APERTO — adattivo chiaro/scuro ─────────────────────────
     # Su temi scuri: gradiente accent scuro + testo bianco (come prima)
     # Su temi chiari: sfondo accent_light (tinta chiarissima) + testo accent scuro
-    _acc_light_tint = T.get("accent_light", _acc + "18")
+    _acc_light_tint = T.get("accent_light", "#E0F2FE")
     if _is_light:
-        _exp_open_bg    = f"linear-gradient(135deg, {_acc_light_tint} 0%, {_acc}1A 100%)"
+        # Sfondo SOLIDO (nessuna trasparenza) per evitare bleeding del dark bg di Streamlit
+        _exp_open_bg    = _acc_light_tint
         _exp_open_text  = _acc
         _exp_open_border = f"1px solid {_acc}44"
     else:
@@ -238,7 +239,7 @@ def get_css(T: dict) -> str:
   html body .stApp details[data-testid="stExpander"][open] summary[role="button"],
   .stApp details[data-testid="stExpander"][open] > summary {{
     background: {_exp_open_bg} !important;
-    background-color: {_exp_open_text}1A !important;
+    background-color: {_exp_open_bg} !important;
     color: {_exp_open_text} !important;
     -webkit-text-fill-color: {_exp_open_text} !important;
     border-radius: 12px 12px 0 0 !important;
@@ -2268,7 +2269,7 @@ def get_css(T: dict) -> str:
   .stApp .personalizza-wrap details[data-testid="stExpander"][open] > summary,
   .personalizza-wrap details[data-testid="stExpander"][open] > summary {{
     background: {_exp_open_bg} !important;
-    background-color: {_exp_open_text}1A !important;
+    background-color: {_exp_open_bg} !important;
     border-radius: 12px 12px 0 0 !important;
     border-bottom: {_exp_open_border} !important;
     color: {_exp_open_text} !important;
@@ -3099,8 +3100,8 @@ def get_css(T: dict) -> str:
     transition: border-left-color {_transition}, background {_transition};
   }}
   .storico-card:hover {{
-    border-left-color: {T["accent"]};
-    background: {T.get("hover", T["bg2"])};
+    border-left-color: {_SB_ACCENT};
+    background: {_SB_BORDER}33;
   }}
   .storico-card-top {{
     display: flex;
@@ -3111,17 +3112,17 @@ def get_css(T: dict) -> str:
   .storico-card-mat {{
     font-size: 0.88rem;
     font-weight: 700;
-    color: {T["text"]};
+    color: {_SB_TEXT};
     font-family: 'DM Sans', sans-serif;
   }}
   .storico-card-date {{
     font-size: 0.9rem;
-    color: {T["muted"]};
+    color: {_SB_MUTED};
     font-family: 'DM Sans', sans-serif;
   }}
   .storico-card-arg {{
     font-size: 0.94rem;
-    color: {T["text2"]};
+    color: {_SB_TEXT}CC;
     font-family: 'DM Sans', sans-serif;
     margin-bottom: 3px;
     line-height: 1.3;
@@ -3131,14 +3132,14 @@ def get_css(T: dict) -> str:
     align-items: center;
     gap: 4px;
     font-size: 0.9rem;
-    color: {T["muted"]};
+    color: {_SB_MUTED};
     font-family: 'DM Sans', sans-serif;
   }}
   .storico-card-scu {{
-    background: {T["bg2"]};
+    background: {_SB_INPUT_BG};
     padding: 1px 6px;
     border-radius: 4px;
-    border: 1px solid {T["border"]};
+    border: 1px solid {_SB_BORDER};
   }}
   .storico-card-nes {{
     opacity: .8;
