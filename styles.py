@@ -12,10 +12,12 @@ def get_css(T: dict) -> str:
     _SB_ACCENT = T.get("sidebar_accent", "#79C0FF")
     _SB_BG_CSS = T.get("sidebar_bg", "linear-gradient(180deg, #111110 0%, #0e0e0d 100%)")
     _SB_BORDER = T.get("sidebar_border", "#21262D")
-    _SB_MUTED  = T.get("muted", "#6E7681")
-    _SB_TEXT   = T.get("text", "#E6EDF3")
     _SB_INPUT_BG   = T.get("sidebar_input_bg", "#0D1117")
     _SB_INPUT_TEXT = T.get("sidebar_input_text", "#E6EDF3")
+    # La sidebar ha sempre sfondo scuro → i colori testo DEVONO essere chiari
+    # indipendentemente dal tema principale (chiaro/scuro).
+    _SB_TEXT   = _SB_INPUT_TEXT
+    _SB_MUTED  = _SB_INPUT_TEXT + "88"   # versione attenuata per label uppercase
 
     _is_light = _is_light_color(T["bg"])
 
@@ -574,11 +576,14 @@ def get_css(T: dict) -> str:
     border: 1.5px solid {T['border2']} !important;
     border-radius: {_radius_md} !important;
     color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
+    caret-color: {T['text']} !important;
     font-family: 'DM Sans', sans-serif !important;
     font-size: 1rem !important;
     padding: 14px 16px !important;
     box-shadow: {_shadow_xs} !important;
     transition: border-color {_transition}, box-shadow {_transition} !important;
+    color-scheme: {_color_scheme} !important;
   }}
   [data-testid="stTextInput"] input:focus,
   [data-testid="stTextArea"] textarea:focus {{
@@ -645,13 +650,26 @@ def get_css(T: dict) -> str:
   }}
 
   /* ── Dropdown popup menu (portal, fuori dal DOM normale) ────────── */
-  /* Dropdown popup — dark mode coerente con tema Notte */
   [data-baseweb="popover"],
   [data-baseweb="popover"] > div,
   [data-baseweb="popover"] > div > div {{
     background: {T['card']} !important;
     background-color: {T['card']} !important;
     color-scheme: {_color_scheme} !important;
+  }}
+  /* Search input nella barra in cima al dropdown — spesso lasciata nera */
+  [data-baseweb="popover"] [data-baseweb="input"],
+  [data-baseweb="popover"] [data-baseweb="input"] > div,
+  [data-baseweb="popover"] [data-baseweb="base-input"],
+  [data-baseweb="popover"] input,
+  [data-baseweb="popover"] [data-baseweb="block"] {{
+    background: {T['card']} !important;
+    background-color: {T['card']} !important;
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
+    caret-color: {T['text']} !important;
+    color-scheme: {_color_scheme} !important;
+    border-color: {T['border2']} !important;
   }}
   [data-baseweb="popover"] [data-baseweb="menu"],
   [data-baseweb="popover"] ul {{
@@ -2751,45 +2769,50 @@ def get_css(T: dict) -> str:
     100% {{ background-position: -200% center; }}
   }}
   @keyframes dl-pulse {{
-    0%, 100% {{ box-shadow: 0 4px 28px #D9770660, 0 0 0 0 #F59E0B00; }}
-    50%       {{ box-shadow: 0 8px 40px #D9770699, 0 0 0 8px #F59E0B18; }}
+    0%, 100% {{ box-shadow: 0 6px 32px #05966960, 0 0 0 0 #10B98100; }}
+    50%       {{ box-shadow: 0 10px 44px #05966990, 0 0 0 10px #10B98118; }}
   }}
   .dl-cta-wrap {{
     margin-bottom: 1.1rem;
   }}
-  .dl-cta-wrap button {{
+  /* specificità (0,0,2,2) — batte sia div.stDownloadButton>button (0,0,1,2)
+     sia [data-testid="stDownloadButton"]>button (0,1,0,1) */
+  .dl-cta-wrap div.stDownloadButton > button,
+  .dl-cta-wrap [data-testid="stDownloadButton"] > button {{
     background: linear-gradient(
-      105deg,
-      #c05c00 0%,
-      #E07B00 15%,
-      #F59E0B 35%,
-      #FDE68A 50%,
-      #F59E0B 65%,
-      #E07B00 85%,
-      #c05c00 100%
+      112deg,
+      #047857 0%,
+      #059669 20%,
+      #10B981 45%,
+      #6EE7B7 60%,
+      #10B981 75%,
+      #059669 90%,
+      #047857 100%
     ) !important;
     background-size: 250% auto !important;
-    color: #1a0d00 !important;
-    -webkit-text-fill-color: #1a0d00 !important;
+    color: #022c22 !important;
+    -webkit-text-fill-color: #022c22 !important;
     border: none !important;
     border-radius: 16px !important;
-    font-size: 1.18rem !important;
+    font-size: 1.15rem !important;
     font-weight: 900 !important;
-    letter-spacing: .06em !important;
-    min-height: 74px !important;
-    box-shadow: 0 4px 28px #D9770660, 0 1px 6px #D9770630 !important;
+    letter-spacing: .05em !important;
+    min-height: 72px !important;
+    box-shadow: 0 6px 32px #05966960, 0 2px 8px #05966930 !important;
     animation: dl-shimmer 3.2s linear infinite, dl-pulse 2.8s ease-in-out infinite !important;
     transition: transform .18s ease, filter .18s ease !important;
     font-family: 'DM Sans', sans-serif !important;
     text-transform: uppercase !important;
   }}
-  .dl-cta-wrap button:hover {{
-    filter: brightness(1.1) saturate(1.2) !important;
-    box-shadow: 0 10px 44px #D9770688 !important;
+  .dl-cta-wrap div.stDownloadButton > button:hover,
+  .dl-cta-wrap [data-testid="stDownloadButton"] > button:hover {{
+    filter: brightness(1.1) saturate(1.15) !important;
+    box-shadow: 0 12px 44px #05966980 !important;
     transform: translateY(-3px) !important;
     animation: none !important;
   }}
-  .dl-cta-wrap button:active {{
+  .dl-cta-wrap div.stDownloadButton > button:active,
+  .dl-cta-wrap [data-testid="stDownloadButton"] > button:active {{
     transform: translateY(0) scale(.98) !important;
     filter: brightness(.96) !important;
     animation: none !important;
@@ -3368,9 +3391,24 @@ def get_css(T: dict) -> str:
     background: ''' + T['card'] + ''' !important;
     color: ''' + T['text'] + ''' !important;
     -webkit-text-fill-color: ''' + T['text'] + ''' !important;
+    caret-color: ''' + T['text'] + ''' !important;
     border: 1.5px solid ''' + T['border2'] + ''' !important;
     border-radius: 12px !important;
     box-shadow: 0 1px 3px rgba(0,0,0,.06) !important;
+    color-scheme: light !important;
+  }}
+  /* ── Popover/dropdown search header su tema chiaro ── */
+  [data-baseweb="popover"] [data-baseweb="input"],
+  [data-baseweb="popover"] [data-baseweb="input"] > div,
+  [data-baseweb="popover"] [data-baseweb="base-input"],
+  [data-baseweb="popover"] input,
+  [data-baseweb="popover"] [data-baseweb="block"] {{
+    background: ''' + T['card'] + ''' !important;
+    background-color: ''' + T['card'] + ''' !important;
+    color: ''' + T['text'] + ''' !important;
+    -webkit-text-fill-color: ''' + T['text'] + ''' !important;
+    caret-color: ''' + T['text'] + ''' !important;
+    color-scheme: light !important;
   }}
   .stApp [data-testid="stTextInput"] input:focus,
   .stApp [data-testid="stTextArea"] textarea:focus,
@@ -3567,9 +3605,10 @@ def get_css(T: dict) -> str:
     }}
 
     /* ── Download CTA button ─────────────────────────────────────────── */
-    .dl-cta-wrap button {{
+    .dl-cta-wrap div.stDownloadButton > button,
+    .dl-cta-wrap [data-testid="stDownloadButton"] > button {{
       min-height: 60px !important;
-      font-size: 1.05rem !important;
+      font-size: 1.02rem !important;
       padding-left: 1rem !important;
       padding-right: 1rem !important;
     }}
