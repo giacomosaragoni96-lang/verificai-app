@@ -1354,7 +1354,7 @@ def _render_bivio():
                             📄 Esempi di Verifiche Generate
                         </div>
                     </div>
-                    <div style="position: relative; height: 650px; background: #f8f9fa; padding: 1rem;">
+                    <div style="position: relative; height: 500px; background: #f8f9fa; padding: 1rem;">
             ''',
             unsafe_allow_html=True,
         )
@@ -1381,7 +1381,7 @@ def _render_bivio():
                         <img src="{preview["path"]}" alt="{preview["name"]}" 
                              style="
                                  max-width: 100%;
-                                 max-height: 520px;
+                                 max-height: 400px;
                                  object-fit: contain;
                                  border-radius: 8px;
                                  border: 2px solid #e5e7eb;
