@@ -1330,77 +1330,106 @@ def _render_bivio():
     _previews = load_preview_images()
     
         
-    # Mostra solo le preview - se non ci sono preview non mostra nulla
-    # CAROUSEL SEMPLIFICATO
+    # Mostra preview con design semplice e diretto
     if _previews:
-        # Container principale
-        st.markdown(
-            f'''
-            <div style="max-width: 800px; margin: 0 auto; padding: 0 1rem;">
-                <div style="
-                    background: white;
-                    border: 1px solid #e5e7eb;
-                    border-radius: 12px;
-                    overflow: hidden;
-                    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
-                ">
-                    <div style="
-                        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-                        color: white;
-                        padding: 0.75rem 1rem;
-                        text-align: center;
-                    ">
-                        <div style="font-size: 1rem; font-weight: 600;">
-                            📄 Esempi di Verifiche Generate
-                        </div>
-                    </div>
-                    <div style="position: relative; height: 500px; background: #f8f9fa; padding: 1rem;">
-            ''',
-            unsafe_allow_html=True,
-        )
+        st.markdown("---")
         
-        # Mostra solo la prima preview in modo semplice
-        if _previews:
-            preview = _previews[0]
-            if preview['type'] == 'pdf_preview':
-                st.markdown(
-                    f'''
-                    <div style="
-                        background: white;
-                        border-radius: 12px;
-                        padding: 1rem;
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                        text-align: center;
-                    ">
-                        <div style="font-size: 1.2rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">
-                            {preview["name"]}
-                        </div>
-                        <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 1rem;">
-                            PDF completo • 3 esercizi • 100 punti • Alta definizione
-                        </div>
-                        <img src="{preview["path"]}" alt="{preview["name"]}" 
-                             style="
-                                 max-width: 100%;
-                                 max-height: 400px;
-                                 object-fit: contain;
-                                 border-radius: 8px;
-                                 border: 2px solid #e5e7eb;
-                                 background: white;
-                                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                             ">
-                    </div>
-                    ''',
-                    unsafe_allow_html=True,
-                )
-        
+        # Header centrale
         st.markdown(
-            '''
-                    </div>
-                </div>
+            """
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.8rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem;">
+                    📄 Esempi di Verifiche Generate
+                </h2>
+                <p style="font-size: 1.1rem; color: #6b7280;">
+                    Scopri la qualità dei nostri materiali didattici
+                </p>
             </div>
-            ''',
+            """,
             unsafe_allow_html=True,
         )
+        
+        # Mostra le preview in colonne
+        cols = st.columns(min(len(_previews), 3), gap="large")
+        
+        for i, preview in enumerate(_previews):
+            if i < 3:  # Mostra massimo 3 preview
+                with cols[i]:
+                    if preview['type'] == 'pdf_preview':
+                        st.markdown(
+                            f'''
+                            <div style="
+                                background: white;
+                                border: 1px solid #e5e7eb;
+                                border-radius: 12px;
+                                padding: 1.5rem;
+                                box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
+                                text-align: center;
+                                transition: transform 0.2s, box-shadow 0.2s;
+                            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px -2px rgba(0, 0, 0, 0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px -2px rgba(0, 0, 0, 0.1)'">
+                                <div style="font-size: 1.1rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">
+                                    {preview["name"]}
+                                </div>
+                                <div style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">
+                                    PDF • 3 esercizi • 100 punti
+                                </div>
+                                <img src="{preview["path"]}" alt="{preview["name"]}" 
+                                     style="
+                                         width: 100%;
+                                         height: 300px;
+                                         object-fit: contain;
+                                         border-radius: 8px;
+                                         border: 1px solid #e5e7eb;
+                                         background: #f9fafb;
+                                         margin-bottom: 1rem;
+                                     ">
+                                <div style="
+                                    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                                    color: white;
+                                    padding: 0.5rem 1rem;
+                                    border-radius: 6px;
+                                    font-size: 0.85rem;
+                                    font-weight: 600;
+                                    display: inline-block;
+                                ">
+                                    📄 Alta Definizione 400 DPI
+                                </div>
+                            </div>
+                            ''',
+                            unsafe_allow_html=True,
+                        )
+                    elif preview['type'] == 'image':
+                        st.markdown(
+                            f'''
+                            <div style="
+                                background: white;
+                                border: 1px solid #e5e7eb;
+                                border-radius: 12px;
+                                padding: 1.5rem;
+                                box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
+                                text-align: center;
+                            ">
+                                <div style="font-size: 1.1rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">
+                                    {preview["name"]}
+                                </div>
+                                <div style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">
+                                    Anteprima immagine
+                                </div>
+                                <img src="{preview["path"]}" alt="{preview["name"]}" 
+                                     style="
+                                         width: 100%;
+                                         height: 300px;
+                                         object-fit: cover;
+                                         border-radius: 8px;
+                                         border: 1px solid #e5e7eb;
+                                         background: #f9fafb;
+                                     ">
+                            </div>
+                            ''',
+                            unsafe_allow_html=True,
+                        )
+        
+        st.markdown("---")
     # Se non ci sono preview, non mostra nulla
 
 # ═══════════════════════════════════════════════════════════════════════════════
