@@ -3383,11 +3383,16 @@ def _render_percorso_b_form():
 
                 if not _lista_b_curr:
                     st.markdown(
-                        f'<div style="text-align:center;padding:1rem .5rem .5rem;color:{T["muted"]};'
-                        f'font-size:.8rem;font-family:DM Sans,sans-serif;line-height:1.5;">'
-                        f'Appunti, libro di testo o una verifica precedente —'
-                        f'<br>l\'AI la userà come riferimento per generare gli esercizi.'
-                        f'</div>',
+                        f'<div style="background:{T["hint_bg"]};border:1.5px solid {T["hint_border"]};'
+                        f'border-radius:12px;padding:1.2rem;margin:.8rem 0;">'
+                        f'<div style="text-align:center;">'
+                        f'<div style="font-size:2rem;margin-bottom:.5rem;">📄</div>'
+                        f'<div style="font-size:.9rem;font-weight:600;color:{T["hint_text"]};margin-bottom:.3rem;">'
+                        f'Nessun file ancora caricato</div>'
+                        f'<div style="font-size:.8rem;color:{T["hint_text"]};line-height:1.4;">'
+                        f'Carica <strong>appunti, libro di testo o una verifica precedente</strong> —<br>'
+                        f'l\'AI la userà come riferimento per generare gli esercizi.</div>'
+                        f'</div></div>',
                         unsafe_allow_html=True,
                     )
                 else:
