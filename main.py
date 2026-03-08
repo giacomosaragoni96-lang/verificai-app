@@ -443,8 +443,10 @@ def _build_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_pun
         righe.append(
             f"DISTRIBUZIONE PUNTI — VINCOLO TASSATIVO:\n"
             f"Il punteggio totale della verifica DEVE essere ESATTAMENTE {punti_totali} pt.\n"
-            f"Assegna i punti a ogni singolo \\item o sottopunto in modo che la somma sia\n"
-            f"ESATTAMENTE {punti_totali} pt. Non aggiungere, non togliere nemmeno 1 pt.\n"
+            f"REGOLA FONDAMENTALE: NON scrivere MAI il punteggio totale nell'intestazione\n"
+            f"dell'esercizio (es. NO '(20pt)' dopo 'Esercizio 1: ...').\n"
+            f"Assegna i punti SOLO ai singoli \\item o sottopunti (a), b), c) ecc.) in modo che\n"
+            f"la somma sia ESATTAMENTE {punti_totali} pt. Non aggiungere, non togliere nemmeno 1 pt.\n"
             f"Indicazione di partenza (adattala liberamente ma rispetta il totale):"
         )
         for i in range(num_totale):
