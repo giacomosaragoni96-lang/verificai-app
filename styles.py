@@ -4128,6 +4128,32 @@ def get_css(T: dict) -> str:
     }}
   }}
 
+/* ── ULTRA AGGRESSIVE FINAL OVERRIDE ───────────────────────────────────────
+     Ultima risorsa: forza TUTTI i bottoni secondari ad avere testo leggibile.
+     Questa regola è alla fine del CSS per massima priorità.                      */
+  button[data-testid="stBaseButton-secondary"],
+  button[kind="secondary"],
+  div.stButton > button:not([kind="primary"]):not([data-testid*="primary"]),
+  [data-testid="stButton"] > button:not([data-testid*="primary"]) {{
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
+    background-color: {T.get("card", T["bg2"])} !important;
+    background: {T.get("card", T["bg2"])} !important;
+  }}
+  /* Download buttons */
+  div.stDownloadButton > button {{
+    color: {T.get("success", "#059669")} !important;
+    -webkit-text-fill-color: {T.get("success", "#059669")} !important;
+  }}
+  /* Sidebar buttons - always dark */
+  [data-testid="stSidebar"] button:not([kind="primary"]):not([data-testid*="primary"]) {{
+    background: {_SB_INPUT_BG} !important;
+    background-color: {_SB_INPUT_BG} !important;
+    color: {_SB_INPUT_TEXT} !important;
+    -webkit-text-fill-color: {_SB_INPUT_TEXT} !important;
+    border: 1px solid {_SB_BORDER} !important;
+  }}
+
 </style>
 """
 
