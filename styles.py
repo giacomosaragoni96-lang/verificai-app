@@ -286,20 +286,20 @@ def get_css(T: dict) -> str:
     border: 1px solid {T['border']} !important;
     box-shadow: {T.get('shadow', '0 1px 3px rgba(0,0,0,.08)')} !important;
     font-family: 'DM Sans', sans-serif !important;
-    padding: 1rem 1.25rem !important;
+    padding: .9rem 1.1rem .9rem 1.4rem !important;
     transition: box-shadow .2s ease, transform .15s ease !important;
   }}
   [data-testid="stAlert"]:has([data-baseweb="notification"][kind="positive"]) {{
-    border-left: 4px solid {T['success']} !important;
-    background: {T.get('accent_light', _surf_raised)} !important;
+    border-left: 5px solid {T['success']} !important;
+    background: {T['success']}12 !important;
   }}
   [data-testid="stAlert"]:has([data-baseweb="notification"][kind="negative"]) {{
-    border-left: 4px solid {T['error']} !important;
-    background: {_surf_raised} !important;
+    border-left: 5px solid {T['error']} !important;
+    background: {T['error']}10 !important;
   }}
   [data-testid="stAlert"]:has([data-baseweb="notification"][kind="warning"]) {{
-    border-left: 4px solid {T['warn']} !important;
-    background: {_surf_raised} !important;
+    border-left: 5px solid {T['warn']} !important;
+    background: {T['warn']}10 !important;
   }}
   [data-testid="stAlert"] [data-baseweb="notification"] {{
     background: transparent !important;
@@ -724,10 +724,12 @@ def get_css(T: dict) -> str:
   [data-testid="stTextInput"] label p,
   [data-testid="stTextArea"] label p,
   [data-testid="stSelectbox"] label p {{
-    color: {T['text2']} !important;
-    font-size: 0.89rem !important;
-    font-weight: 600 !important;
+    color: {T['text']} !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
     font-family: 'DM Sans', sans-serif !important;
+    letter-spacing: .015em !important;
+    opacity: .82 !important;
   }}
 
   /* Toggle + Checkbox label — forza colore tema */
@@ -756,9 +758,9 @@ def get_css(T: dict) -> str:
     border-radius: {_radius_md} !important;
     font-family: 'DM Sans', sans-serif !important;
     font-weight: 700 !important;
-    font-size: 1.08rem !important;
-    min-height: 62px !important;
-    padding: .9rem 1.6rem !important;
+    font-size: 0.97rem !important;
+    min-height: 48px !important;
+    padding: .6rem 1.4rem !important;
     letter-spacing: -.01em !important;
     box-shadow: 0 4px 20px {_acc_glow}, 0 1px 4px {_acc_med} !important;
     transition: filter {_transition}, box-shadow {_transition}, transform {_transition} !important;
@@ -791,9 +793,9 @@ def get_css(T: dict) -> str:
     border-radius: {_radius_md} !important;
     font-family: 'DM Sans', sans-serif !important;
     font-weight: 600 !important;
-    font-size: 1.05rem !important;
-    min-height: 58px !important;
-    padding: .85rem 1.4rem !important;
+    font-size: 0.95rem !important;
+    min-height: 44px !important;
+    padding: .6rem 1.2rem !important;
     box-shadow: {_shadow_xs} !important;
     transition: background {_transition}, border-color {_transition}, box-shadow {_transition}, transform {_transition} !important;
   }}
@@ -801,6 +803,8 @@ def get_css(T: dict) -> str:
   div.stButton > button:not([kind="primary"]):hover {{
     background: {T['hover']} !important;
     border-color: {_acc} !important;
+    color: {_acc} !important;
+    -webkit-text-fill-color: {_acc} !important;
     box-shadow: 0 4px 16px {_acc_soft}, {_shadow_xs} !important;
     transform: translateY(-1px) !important;
   }}
@@ -813,6 +817,40 @@ def get_css(T: dict) -> str:
     outline: 2px solid {_acc} !important;
     outline-offset: 3px !important;
     box-shadow: 0 0 0 4px {_acc_ring} !important;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     DOWNLOAD BUTTONS — teal-accented, visivamente distinti dai bottoni azione
+     ════════════════════════════════════════════════════════════════════════ */
+  div.stDownloadButton > button {{
+    background: {T.get('card2', _surf_overlay)} !important;
+    color: {T['success']} !important;
+    -webkit-text-fill-color: {T['success']} !important;
+    border: 1.5px solid {T['success']}55 !important;
+    border-radius: {_radius_md} !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 0.92rem !important;
+    min-height: 44px !important;
+    padding: .55rem 1.2rem !important;
+    box-shadow: none !important;
+    transition: background {_transition}, border-color {_transition}, box-shadow {_transition}, transform {_transition} !important;
+  }}
+  div.stDownloadButton > button:hover {{
+    background: {T['success']}14 !important;
+    border-color: {T['success']}99 !important;
+    color: {T['success']} !important;
+    -webkit-text-fill-color: {T['success']} !important;
+    box-shadow: 0 3px 12px {T['success']}22 !important;
+    transform: translateY(-1px) !important;
+  }}
+  div.stDownloadButton > button:active {{
+    transform: scale(.98) !important;
+    box-shadow: none !important;
+  }}
+  div.stDownloadButton > button svg {{
+    fill: {T['success']} !important;
+    stroke: {T['success']} !important;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -953,6 +991,82 @@ def get_css(T: dict) -> str:
   }}
 
 
+  /* ════════════════════════════════════════════════════════════════════════
+     LANDING PAGE — Kicker + sezione preview gallery
+     ════════════════════════════════════════════════════════════════════════ */
+  .landing-kicker {{
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: {_acc};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }}
+  .landing-kicker::before {{
+    content: '';
+    display: inline-block;
+    width: 18px;
+    height: 2px;
+    background: {_acc};
+    border-radius: 2px;
+    flex-shrink: 0;
+  }}
+  .landing-section-kicker {{
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: {_acc};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .5rem;
+  }}
+  .landing-section-title {{
+    font-size: clamp(1.4rem, 3vw, 1.8rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: {T['text']};
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: .4rem;
+    line-height: 1.15;
+  }}
+  .landing-section-sub {{
+    font-size: 1rem;
+    color: {T['text2']};
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.6;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     ST.STATUS WIDGET — Override per coerenza visiva con il tema
+     ════════════════════════════════════════════════════════════════════════ */
+  [data-testid="stStatus"] {{
+    background: {_surf_raised} !important;
+    border: 1px solid {T['border2']} !important;
+    border-radius: {_radius_md} !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }}
+  [data-testid="stStatus"] summary,
+  [data-testid="stStatus"] > summary {{
+    background: {_surf_raised} !important;
+    color: {T['text']} !important;
+    font-weight: 700 !important;
+    font-size: 0.97rem !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }}
+  [data-testid="stStatus"][data-state="running"] summary {{
+    color: {_acc} !important;
+  }}
+  [data-testid="stStatus"][data-state="complete"] summary {{
+    color: {T['success']} !important;
+  }}
+  [data-testid="stStatus"][data-state="error"] summary {{
+    color: {T['error']} !important;
+  }}
+
   /* Feature strip — singole pill con underline */
   .tally-features {{
     display: flex;
@@ -1083,23 +1197,23 @@ def get_css(T: dict) -> str:
     background: {T.get('hint_bg', '#FEF3C7')};
     border: 1px solid {T.get('hint_border', '#FDE68A')};
     border-radius: 8px;
-    padding: .4rem .7rem;
-    margin: .25rem 0 .35rem;
-    font-size: 0.8rem;
+    padding: .45rem .8rem;
+    margin: .3rem 0 .4rem;
+    font-size: 0.87rem;
     color: {T.get('hint_text', '#92400E')};
     font-family: 'DM Sans', sans-serif;
-    line-height: 1.45;
+    line-height: 1.5;
   }}
   .file-fonte-hint {{
     background: {_acc_soft};
     border: 1px solid {_acc_med};
     border-radius: 8px;
-    padding: .4rem .7rem;
-    margin: .25rem 0 .35rem;
-    font-size: 0.8rem;
+    padding: .45rem .8rem;
+    margin: .3rem 0 .4rem;
+    font-size: 0.87rem;
     color: {_acc};
     font-family: 'DM Sans', sans-serif;
-    line-height: 1.45;
+    line-height: 1.5;
   }}
 
 
@@ -1180,23 +1294,119 @@ def get_css(T: dict) -> str:
   }}
 
   .opt-label {{
-    font-size: 0.95rem;
+    font-size: 0.84rem;
     font-weight: 700;
-    color: {T['text2']};
+    color: {T['text']};
     font-family: 'DM Sans', sans-serif;
-    margin-bottom: 4px;
-    letter-spacing: .01em;
+    margin-bottom: 5px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    opacity: .78;
   }}
 
+
+  /* ════════════════════════════════════════════════════════════════════════
+     CONTEXT SYNC BADGE — badge autofill da file caricato
+     ════════════════════════════════════════════════════════════════════════ */
+  .context-sync-badge {{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: {T['success']}14;
+    border: 1px solid {T['success']}44;
+    border-radius: 20px;
+    padding: .3rem .85rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: {T['success']};
+    font-family: 'DM Sans', sans-serif;
+    margin: .35rem 0 .5rem;
+    line-height: 1.4;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════════════
+     BTN WRAPPERS — varianti dimensionali e stilistiche per bottoni speciali
+     ════════════════════════════════════════════════════════════════════════ */
+
+  /* Oro: bottone conferma finale in STAGE_REVIEW */
+  .btn-confirm-gold button {{
+    background: linear-gradient(135deg, #D97706, #F59E0B) !important;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+    border: none !important;
+    border-radius: {_radius_lg} !important;
+    font-weight: 800 !important;
+    font-size: 1.05rem !important;
+    min-height: 56px !important;
+    letter-spacing: -.01em !important;
+    box-shadow: 0 4px 22px #D9770640, 0 1px 4px #D9770625 !important;
+    transition: filter .2s ease, box-shadow .2s ease, transform .15s ease !important;
+  }}
+  .btn-confirm-gold button:hover {{
+    filter: brightness(1.07) !important;
+    box-shadow: 0 8px 28px #D9770655 !important;
+    transform: translateY(-2px) !important;
+  }}
+  .btn-confirm-gold button:active {{
+    transform: scale(.98) !important;
+    box-shadow: none !important;
+  }}
+
+  /* Piccolo + discreto: "← Riconfigura" sotto il form review */
+  .btn-riconfigura-small button {{
+    background: transparent !important;
+    color: {T['muted']} !important;
+    -webkit-text-fill-color: {T['muted']} !important;
+    border: 1px solid {T['border']} !important;
+    font-size: 0.84rem !important;
+    font-weight: 500 !important;
+    min-height: 32px !important;
+    padding: .2rem .9rem !important;
+    box-shadow: none !important;
+    border-radius: 8px !important;
+    letter-spacing: 0 !important;
+    opacity: .7 !important;
+    transition: opacity .15s ease, border-color .15s ease !important;
+  }}
+  .btn-riconfigura-small button:hover {{
+    opacity: 1 !important;
+    border-color: {T['border2']} !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }}
+
+  /* Back discreto: usato in ui_helpers._render_back_button */
+  .btn-back-discrete button {{
+    background: transparent !important;
+    color: {T['muted']} !important;
+    -webkit-text-fill-color: {T['muted']} !important;
+    border: 1px solid {T['border']} !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    min-height: 34px !important;
+    padding: .25rem .9rem !important;
+    box-shadow: none !important;
+    border-radius: 8px !important;
+    opacity: .75 !important;
+    transition: opacity .15s ease, border-color .15s ease, color .15s ease !important;
+  }}
+  .btn-back-discrete button:hover {{
+    opacity: 1 !important;
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
+    border-color: {T['border2']} !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }}
 
   /* ════════════════════════════════════════════════════════════════════════
      CTA GENERA — High Impact Button Wrap
      ════════════════════════════════════════════════════════════════════════ */
   .cta-genera-wrap button {{
-    min-height: 60px !important;
-    font-size: 1.15rem !important;
+    min-height: 58px !important;
+    font-size: 1.12rem !important;
     font-weight: 900 !important;
-    letter-spacing: -.01em !important;
+    letter-spacing: -.02em !important;
     border-radius: {_radius_lg} !important;
   }}
   /* Nuovo: hint testuale leggero sopra il pulsante Genera */

@@ -2444,6 +2444,7 @@ def _render_percorso_b_form():
                 _scu_autofilled = True
 
             with _col_m:
+                st.markdown('<div class="opt-label">Materia ✱</div>', unsafe_allow_html=True)
                 _sel_m = st.selectbox(
                     "Materia", _mat_list, index=_mat_idx,
                     label_visibility="collapsed", key="sel_materia_b",
@@ -2456,6 +2457,7 @@ def _render_percorso_b_form():
                     else (_sel_m or "Matematica")
                 )
             with _col_s:
+                st.markdown('<div class="opt-label">Tipo di scuola ✱</div>', unsafe_allow_html=True)
                 difficolta = st.selectbox(
                     "Scuola", SCUOLE, index=_scu_idx,
                     help="Tipo di scuola e livello. Se hai caricato un file, viene rilevato automaticamente.",
@@ -4656,7 +4658,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 st.session_state.verifiche["A"]["latex"]           = _latex_rc
                 st.session_state.verifiche["A"]["latex_originale"] = _latex_rc
 
-                with st.spinner("⏳ Ricompilazione PDF…"):
+                with st.spinner("Ricompilazione PDF con i nuovi punteggi…"):
                     _pdf_rc, _err_rc = compila_pdf(_latex_rc)
                 if _pdf_rc:
                     st.session_state.verifiche["A"]["pdf"]     = _pdf_rc
@@ -4694,7 +4696,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
     st.markdown('</div>', unsafe_allow_html=True)
 
     if confirm_pdf:
-        with st.spinner("⏳ Creazione PDF in corso…"):
+        with st.spinner("Generazione PDF finale in corso… potrebbe richiedere qualche secondo"):
             latex_final = reconstruct_latex(
                 st.session_state.review_preamble,
                 st.session_state.review_blocks
@@ -4853,7 +4855,7 @@ def _render_stage_final():
         elif _b_lat:
             if st.button("📄 Crea PDF Fila B", key="compile_B_v2",
                          use_container_width=True, type="primary"):
-                with st.spinner("Creazione PDF in corso…"):
+                with st.spinner("Compilazione PDF Fila B in corso…"):
                     _pdf_bc, _ = compila_pdf(_b_lat)
                 if _pdf_bc:
                     st.session_state.verifiche["B"]["pdf"] = _pdf_bc; st.rerun()
@@ -4907,7 +4909,7 @@ def _render_stage_final():
         elif _r_lat:
             if st.button("📄 Crea PDF BES/DSA", key="compile_R_v2",
                          use_container_width=True, type="primary"):
-                with st.spinner("Creazione PDF in corso…"):
+                with st.spinner("Compilazione PDF BES/DSA in corso…"):
                     _pdf_rc, _ = compila_pdf(_r_lat)
                 if _pdf_rc:
                     st.session_state.verifiche["R"]["pdf"] = _pdf_rc; st.rerun()
@@ -4952,7 +4954,7 @@ def _render_stage_final():
         elif _s_lat:
             if st.button("📄 Crea PDF Soluzioni", key="compile_S_v2",
                          use_container_width=True, type="primary"):
-                with st.spinner("Creazione PDF in corso…"):
+                with st.spinner("Compilazione PDF Soluzioni in corso…"):
                     _pdf_sc, _ = compila_pdf(_s_lat)
                 if _pdf_sc:
                     st.session_state.verifiche["S"]["pdf"] = _pdf_sc; st.rerun()
@@ -5001,7 +5003,7 @@ def _render_stage_final():
                          use_container_width=True, type="primary"):
                 st.session_state[_docx_key] = True
             if st.session_state.get(_docx_key, False):
-                with st.spinner("Conversione Word…"):
+                with st.spinner("Conversione in formato Word in corso… (30–60 sec)"):
                     try:
                         _db, _emsg = latex_to_docx_via_ai(vA["latex"], con_griglia=con_griglia)
                     except Exception as _e:
@@ -5216,25 +5218,17 @@ def _render_stage_final():
                                  key="gen_docx_"+fid+"_extra", use_container_width=True):
                         st.session_state[_docx_key] = True
                     if st.session_state.get(_docx_key, False):
-                        with st.spinner("Conversione Word…"):
-                            print("DEBUG: Avvio esportazione DOCX iniziato")
-                            st.write("🔍 Sto esportando in formato Word...")
+                        with st.spinner("Conversione in formato Word in corso…"):
                             try:
                                 db, error_msg = latex_to_docx_via_ai(v["latex"], con_griglia=con_griglia)
                             except Exception as e:
-                                print(f"DEBUG: Eccezione durante export DOCX: {e}")
-                                st.error(f"Errore durante esportazione Word: {e}")
                                 db = None
                                 error_msg = str(e)
                         st.session_state[_docx_key] = False
                         if db:
                             st.session_state.verifiche[fid]["docx"] = db; st.rerun()
                         else:
-                            print(f"DEBUG: Export DOCX fallito - error_msg: {error_msg}")
-                            if error_msg:
-                                st.error(f"Errore Word: {error_msg}")
-                            else:
-                                st.error("Errore Word - nessun dettaglio disponibile")
+                            st.error(f"Conversione Word non riuscita: {error_msg or 'nessun dettaglio disponibile'}")
                 st.download_button(
                     f"⬇ LaTeX sorgente (.tex)",
                     data=v["latex"].encode("utf-8"), file_name=fname+".tex",
@@ -5486,6 +5480,10 @@ if _prev_stage != _current_stage:
         "  if(tries++<max)setTimeout(scrollTop,120);"
         "}"
         "scrollTop();"
+        "var bc=window.parent.document.querySelector('.main .block-container');"
+        "if(bc){bc.classList.remove('stage-enter');void bc.offsetWidth;"
+        "bc.classList.add('stage-enter');"
+        "setTimeout(function(){bc.classList.remove('stage-enter');},500);}"
         "})();"
         "</script>",
         height=0
