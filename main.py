@@ -1846,9 +1846,6 @@ def _render_le_tue_verifiche():
                                         📅 {data_formattata}
                                     </span>
                                 </div>
-                                <p style="color: #6b7280; margin: 0; font-size: 0.95rem;">
-                                    ID: {verifica.get('id', 'N/D')}
-                                </p>
                             </div>
                         </div>
                     </div>
@@ -1856,8 +1853,8 @@ def _render_le_tue_verifiche():
                     unsafe_allow_html=True,
                 )
                 
-                # Bottoni funzionali con nuove opzioni
-                col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+                # Tutti i bottoni su una sola riga
+                col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 1, 1, 1, 1, 1])
                 
                 with col1:
                     if st.button(f"👁️ Anteprima", key=f"preview_{verifica.get('id')}_{i}"):
@@ -1986,10 +1983,6 @@ def _render_le_tue_verifiche():
                                 # Reset stato di conferma
                                 if f"confirm_delete_{verifica.get('id')}" in st.session_state:
                                     del st.session_state[f"confirm_delete_{verifica.get('id')}"]
-                
-                # Seconda riga di bottoni per le nuove funzionalità
-                st.markdown('<div style="margin-top: 0.5rem;"></div>', unsafe_allow_html=True)
-                col5, col6, col7 = st.columns([1, 1, 1])
                 
                 with col5:
                     # Rinomina
