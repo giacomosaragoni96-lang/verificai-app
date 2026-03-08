@@ -243,9 +243,19 @@ def _add_content_with_graphs(
     Splits `text` on __DOCXGRAPH_N__ markers.
     Text parts are added as formatted paragraphs; graph markers become centered images.
     """
-    from docx.shared import Pt, Cm
+    from docx.shared import Pt, Cm, Inches
     from docx.enum.text import WD_ALIGN_PARAGRAPH
 
+    # Debug visivo: controlla se i placeholder sono presenti
+    logger.info(f"Testo esercizio prima dell'inserimento: {text[:100]}...")
+    placeholder_count = len(_GRAPH_RE.findall(text))
+    logger.info(f"Placeholder __DOCXGRAPH__ trovati nel testo: {placeholder_count}")
+    
+    # Fallimento esplicito: se ci sono grafici ma nessun placeholder
+    if graphs and placeholder_count == 0:
+        logger.error("Placeholder non trovato nel testo, l'immagine non può essere inserita!")
+        logger.error(f"Grafici disponibili: {list(graphs.keys())}")
+    
     parts = _GRAPH_RE.split(text)
     first = True
     for part in parts:
@@ -254,19 +264,22 @@ def _add_content_with_graphs(
             n = int(m.group(1))
             png = graphs.get(n)
             
-            # Create dedicated centered paragraph for graph
+            logger.info(f"Processando placeholder per grafico #{n}")
+            
+            # Forza il paragrafo: crea nuovo spazio dedicato per l'immagine
             p_img = doc.add_paragraph()
             p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p_img.paragraph_format.space_before = Pt(8)
-            p_img.paragraph_format.space_after  = Pt(8)
+            p_img.paragraph_format.space_before = Pt(12)  # Spazio maggiore per separazione
+            p_img.paragraph_format.space_after  = Pt(12)
             p_img.paragraph_format.left_indent = Cm(0.0)
             
             if png:
                 try:
                     run = p_img.add_run()
-                    run.add_picture(io.BytesIO(png), width=Cm(img_width_cm))
-                    logger.info(f"Final Step: Image {n} actually appended to Word document")
-                    logger.debug(f"Graph #{n} successfully added to DOCX - centered layout")
+                    # Usa Inches per migliore controllo dimensioni
+                    run.add_picture(io.BytesIO(png), width=Inches(4))
+                    logger.info(f"Final Step: Image {n} actually appended to Word document - {len(png)} bytes")
+                    logger.debug(f"Graph #{n} successfully added to DOCX - centered layout, Inches(4)")
                 except Exception as e:
                     logger.error(f"Failed to insert graph #{n} into DOCX: {e}")
                     p_img.add_run('⚠️ Grafico non disponibile - errore inserimento').italic = True
@@ -284,6 +297,10 @@ def _add_content_with_graphs(
             p.paragraph_format.space_after  = Pt(space_after_pt)
             _add_rich_runs(p, stripped, base_size_pt)
             first = False
+    
+    # Log finale per verifica completa
+    processed_graphs = sum(1 for part in parts if _GRAPH_RE.fullmatch(part))
+    logger.info(f"Elaborazione completata: {processed_graphs} placeholder processati su {len(graphs)} grafici disponibili")
 
 
 # ── HELPER XML/DOCX INTERNI ────────────────────────────────────────────────────
