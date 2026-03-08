@@ -1492,24 +1492,9 @@ def _render_bivio():
     if _previews:
         st.write(f"DEBUG: Trovate {len(_previews)} preview")
     else:
-        st.write("DEBUG: Nessuna preview trovata - uso card statiche")
+        st.write("DEBUG: Nessuna preview trovata")
     
-    # Se non ci sono preview, usa le card statiche come fallback
-    if not _previews:
-        _feat_cards = [
-            ("PDF", "📄", "Stampa professionale",
-             "LaTeX compilato in pochi secondi. Layout pulito, pronto da consegnare."),
-            ("AI", "🤖", "Calibrata per livello",
-             "Media, Liceo, ITI, Professionale: ogni verifica adattata alla classe."),
-            ("BES", "⭐", "Versione BES/DSA",
-             "Variante semplificata automatica per alunni con bisogni educativi speciali."),
-            ("FILA B", "🎲", "Anti-copia Fila B",
-             "Dati e ordine variati — ideale per aule numerose. Un click, due versioni."),
-            ("EDITOR", "✏️", "Editor interattivo",
-             "Modifica ogni esercizio con l'AI: testo, punteggi e difficoltà su misura."),
-            ("GRIGLIA", "📊", "Griglia di valutazione",
-             "Criteri di correzione e griglia di voto allegati ad ogni verifica generata."),
-        ]
+    # Mostra solo le preview - se non ci sono preview non mostra nulla
     # Mostra preview reali o card statiche
     if _previews:
         # Usa le preview reali
@@ -1581,31 +1566,7 @@ def _render_bivio():
                                 f'</div>',
                                 unsafe_allow_html=True,
                             )
-    else:
-        # Fallback alle card statiche
-        _cols1 = st.columns(3, gap="medium")
-        for _col, (_badge, _icon, _title, _desc) in zip(_cols1, _feat_cards[:3]):
-            with _col:
-                st.markdown(
-                    f'<div class="landing-feat-card">'
-                    f'<div class="landing-feat-badge">{_icon} {_badge}</div>'
-                    f'<div class="landing-feat-title">{_title}</div>'
-                    f'<div class="landing-feat-desc">{_desc}</div>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-        st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
-        _cols2 = st.columns(3, gap="medium")
-        for _col, (_badge, _icon, _title, _desc) in zip(_cols2, _feat_cards[3:]):
-            with _col:
-                st.markdown(
-                    f'<div class="landing-feat-card">'
-                    f'<div class="landing-feat-badge">{_icon} {_badge}</div>'
-                    f'<div class="landing-feat-title">{_title}</div>'
-                    f'<div class="landing-feat-desc">{_desc}</div>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
+    # Se non ci sono preview, non mostra nulla
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  _render_facsimile_dedicato()  ← NUOVA funzione, aggiungere prima di _render_stage_input
