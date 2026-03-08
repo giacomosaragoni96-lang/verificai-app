@@ -1290,37 +1290,14 @@ def _render_bivio():
                     name = os.path.splitext(file)[0].replace('-', ' ').replace('_', ' ').title()
                     pdf_path = os.path.join(preview_dir, file)
                     
-                    try:
-                        # Converti la prima pagina del PDF in immagine
-                        with open(pdf_path, 'rb') as f:
-                            pdf_bytes = f.read()
-                        
-                        # Converti prima pagina in immagine
-                        images = convert_from_bytes(pdf_bytes, dpi=150, first_page=1, last_page=1)
-                        if images:
-                            # Converti l'immagine in base64 per embeddarla nell'HTML
-                            img_buffer = io.BytesIO()
-                            images[0].save(img_buffer, format='PNG')
-                            img_base64 = base64.b64encode(img_buffer.getvalue()).decode()
-                            
-                            previews.append({
-                                'file': file,
-                                'name': name,
-                                'path': f"data:image/png;base64,{img_base64}",
-                                'type': 'pdf_preview'
-                            })
-                            print(f"DEBUG: Loaded PDF preview: {name} ({file})")
-                        else:
-                            print(f"DEBUG: Failed to convert PDF to image: {file}")
-                    except Exception as e:
-                        print(f"DEBUG: Error converting PDF {file}: {e}")
-                        # Fallback: usa icona PDF
-                        previews.append({
-                            'file': file,
-                            'name': name,
-                            'path': f"assets/preview/{file}",
-                            'type': 'pdf'
-                        })
+                    # Usa direttamente il PDF embedded
+                    previews.append({
+                        'file': file,
+                        'name': name,
+                        'path': f"assets/preview/{file}",
+                        'type': 'pdf_embed'
+                    })
+                    print(f"DEBUG: Loaded PDF for embedding: {name} ({file})")
         else:
             print("DEBUG: Preview directory not found!")
         
@@ -1344,8 +1321,8 @@ def _render_bivio():
             if i < len(_previews):
                 preview = _previews[i]
                 with _col:
-                    if preview['type'] == 'pdf_preview':
-                        # Per PDF convertito in immagine, mostra preview grande e leggibile
+                    if preview['type'] == 'pdf_embed':
+                        # Per PDF embedded, mostra iframe con il PDF reale
                         st.markdown(
                             f'''
                             <div class="landing-feat-card pdf-preview-large" style="
@@ -1365,17 +1342,17 @@ def _render_bivio():
                                 ">
                                     📄 Verifica di Matematica
                                 </div>
-                                <div style="padding: 1rem;">
-                                    <img src="{preview["path"]}" alt="{preview["name"]}" 
-                                         style="
-                                             width: 100%;
-                                             height: auto;
-                                             max-height: 400px;
-                                             object-fit: contain;
-                                             border-radius: 8px;
-                                             border: 1px solid #f3f4f6;
-                                             background: white;
-                                         ">
+                                <div style="padding: 1rem; height: 400px;">
+                                    <iframe src="{preview["path"]}" 
+                                            style="
+                                                width: 100%;
+                                                height: 100%;
+                                                border: 1px solid #f3f4f6;
+                                                border-radius: 8px;
+                                                background: white;
+                                            "
+                                            title="{preview["name"]}">
+                                    </iframe>
                                 </div>
                                 <div style="
                                     padding: 1rem;
@@ -1430,8 +1407,8 @@ def _render_bivio():
                 if idx < len(_previews):
                     preview = _previews[idx]
                     with _col:
-                        if preview['type'] == 'pdf_preview':
-                            # Per PDF convertito in immagine, mostra preview grande e leggibile
+                        if preview['type'] == 'pdf_embed':
+                            # Per PDF embedded, mostra iframe con il PDF reale
                             st.markdown(
                                 f'''
                                 <div class="landing-feat-card pdf-preview-large" style="
@@ -1451,17 +1428,17 @@ def _render_bivio():
                                     ">
                                         📄 Verifica di Matematica
                                     </div>
-                                    <div style="padding: 1rem;">
-                                        <img src="{preview["path"]}" alt="{preview["name"]}" 
-                                             style="
-                                                 width: 100%;
-                                                 height: auto;
-                                                 max-height: 400px;
-                                                 object-fit: contain;
-                                                 border-radius: 8px;
-                                                 border: 1px solid #f3f4f6;
-                                                 background: white;
-                                             ">
+                                    <div style="padding: 1rem; height: 400px;">
+                                        <iframe src="{preview["path"]}" 
+                                                style="
+                                                    width: 100%;
+                                                    height: 100%;
+                                                    border: 1px solid #f3f4f6;
+                                                    border-radius: 8px;
+                                                    background: white;
+                                                "
+                                                title="{preview["name"]}">
+                                        </iframe>
                                     </div>
                                     <div style="
                                         padding: 1rem;
