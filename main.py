@@ -2824,11 +2824,20 @@ def _render_percorso_a_wizard():
                 format_func=lambda x: f"{x} eserc.",
             )
         with _rp2:
-            st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
+            # Calcola punti totali: priorità file > default
+            _pt_rilevati = info.get("punti_totali_rilevati")
+            if isinstance(_pt_rilevati, (int, float)) and _pt_rilevati > 0:
+                punti_totali = int(_pt_rilevati)
+                st.markdown('<div class="opt-label">Punti totali <span style="font-size:.75rem;opacity:.7;">(rilevati)</span></div>', unsafe_allow_html=True)
+            else:
+                punti_totali = 100
+                st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
+            
             _pt_opts = list(range(10, 105, 5))
+            _pt_idx = _pt_opts.index(punti_totali) if punti_totali in _pt_opts else (_pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts)-1)
             punti_totali = st.selectbox(
                 "Punti", options=_pt_opts,
-                index=_pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts)-1,
+                index=_pt_idx,
                 label_visibility="collapsed", key="rev_punti",
                 format_func=lambda x: f"{x} pt",
             )
@@ -3287,12 +3296,27 @@ def _render_percorso_b_form():
                 mostra_punteggi = _tog
                 con_griglia = _tog
                 st.session_state["_pers_punteggi"] = _tog
+                
+                # Calcola punti totali: priorità file > sessione > default
                 punti_totali = 100
                 if _tog:
+                    # Prova a usare i punti rilevati dal file
+                    _pt_rilevati = _info_cons.get("punti_totali_rilevati")
+                    if isinstance(_pt_rilevati, (int, float)) and _pt_rilevati > 0:
+                        punti_totali = int(_pt_rilevati)
+                    else:
+                        # Fallback: sessione o default
+                        punti_totali = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
+                    
                     _pt_opts = list(range(10, 105, 5))
-                    _pt_saved = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
-                    _pt_idx  = _pt_opts.index(_pt_saved) if _pt_saved in _pt_opts else (_pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts) - 1)
-                    st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
+                    _pt_idx  = _pt_opts.index(punti_totali) if punti_totali in _pt_opts else (_pt_opts.index(100) if 100 in _pt_opts else len(_pt_opts) - 1)
+                    
+                    # Mostra info se i punti sono rilevati dal file
+                    if isinstance(_pt_rilevati, (int, float)) and _pt_rilevati > 0:
+                        st.markdown('<div class="opt-label">Punti totali <span style="font-size:.75rem;opacity:.7;">(rilevati dal file)</span></div>', unsafe_allow_html=True)
+                    else:
+                        st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
+                    
                     punti_totali = st.selectbox(
                         "Punti totali", options=_pt_opts, index=_pt_idx,
                         label_visibility="collapsed", key="sel_punti_b",

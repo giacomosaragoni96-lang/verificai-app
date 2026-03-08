@@ -37,6 +37,24 @@ def parse_esercizi(latex: str) -> list:
             num_match = re.search(r'(?:Esercizio\s+)?(\d+)', header)
             num_label = num_match.group(1) if num_match else str(i + 1)
 
+        # PRIMA: Cerca punteggio globale nell'header o prime righe (priorità alta)
+        # Pattern per punteggio globale: (20pt), [20 pt], ecc.
+        # Cerca solo nelle prime 3 righe dopo l'header per evitare falsi positivi
+        block_lines = block.split('\n')[:5]  # Prime 5 righe includendo l'header
+        block_sample = '\n'.join(block_lines)
+        
+        pt_global = re.search(
+            r'[\(\[]?\s*(\d+(?:[.,]\d+)?)\s*pt\b\s*[\)\]]?',
+            block_sample, re.IGNORECASE
+        )
+        
+        if pt_global:
+            # Punteggio globale trovato - usa questo invece di cercare punti individuali
+            logger.info(f"Punteggio globale trovato per esercizio {num_label}: {pt_global.group(1)}pt")
+            esercizi.append({'num': num_label, 'items': [('', pt_global.group(1))]})
+            continue
+        
+        # SECONDO: Cerca punti individuali solo se non c'è punteggio globale
         items_found = []
         lines = block.split('\n')
         lettere = 'abcdefghijklmnopqrstuvwxyz'
@@ -70,30 +88,31 @@ def parse_esercizi(latex: str) -> list:
                 r'[\(\[]?\s*(\d+(?:[.,]\d+)?)\s*(?:pt|punt[io]|p\.?)\s*[\)\]]?',
                 search_window, re.IGNORECASE
             )
-            if not pt_match:
-                continue
-
-            items_found.append((raw_label, pt_match.group(1)))
+            if pt_match:
+                items_found.append((raw_label, pt_match.group(1)))
+                logger.info(f"Punto individuale trovato per esercizio {num_label}, item {raw_label}: {pt_match.group(1)}pt")
 
         if items_found:
             # Esercizio con sottopunti e punteggi espliciti
+            total_punti = sum(float(p.replace(',', '.')) for _, p in items_found)
+            logger.info(f"Esercizio {num_label}: {len(items_found)} item individuali, totale {total_punti}pt")
             esercizi.append({'num': num_label, 'items': items_found})
         else:
-            # Cerca punteggio globale nell'intero blocco
-            # Esclude falsi positivi come F(2, 1) cercando solo valori seguiti da 'pt'
-            pt_global = re.search(
-                r'[\(\[]?\s*(\d+(?:[.,]\d+)?)\s*pt\b\s*[\)\]]?',
-                block, re.IGNORECASE
-            )
-            if pt_global:
-                # Punteggio globale: label='' (stringa vuota) per distinguerlo
-                # dal segnaposto '—'. build_griglia_latex mostra '—' per label falsy.
-                # Il widget ricalibra include questi item perché '' != '—'.
-                esercizi.append({'num': num_label, 'items': [('', pt_global.group(1))]})
-            else:
-                # Nessun punteggio trovato — segnaposto; verrà distribuito da riscala_punti
-                esercizi.append({'num': num_label, 'items': [('—', '—')]})
+            # Nessun punteggio trovato — segnaposto; verrà distribuito da riscala_punti
+            logger.info(f"Nessun punto trovato per esercizio {num_label}: uso segnaposto")
+            esercizi.append({'num': num_label, 'items': [('—', '—')]})
 
+    # Riepilogo per debugging
+    totale_calcolato = 0
+    for ex in esercizi:
+        for _, pts in ex['items']:
+            if pts != '—':
+                try:
+                    totale_calcolato += float(pts.replace(',', '.'))
+                except ValueError:
+                    pass
+    logger.info(f"RIEPILOGO PARSING: {len(esercizi)} esercizi, totale {totale_calcolato}pt")
+    
     return esercizi
 
 
@@ -318,15 +337,12 @@ def build_griglia_latex(esercizi: list, punti_totali: int) -> str:
         f" & {pts}" for ex in esercizi for _, pts in ex['items']
     ) + f" & {punti_totali} \\\\ \\hline"
 
-    total_cols = sum(len(ex['items']) for ex in esercizi) + 1
-    row_punti = "\\textbf{Punti}" + " &" * total_cols + " \\\\ \\hline"
-
     return (
         "% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n"
         "{\\renewcommand{\\arraystretch}{1.8}\n"
         f"\\adjustbox{{max width=\\textwidth}}{{\n"
         f"\\begin{{tabular}}{{{col_spec}}}\n\\hline\n"
-        f"{row_es}\n{row_sotto}\n{row_max}\n{row_punti}\n"
+        f"{row_es}\n{row_sotto}\n{row_max}\n"
         f"\\end{{tabular}}\n}}}}\n\\end{{center}}"
     )
 
