@@ -13,6 +13,13 @@ import subprocess
 import tempfile
 import logging
 
+# Configurazione logging base per vedere output nel terminale
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%H:%M:%S'
+)
+
 from latex_utils import parse_esercizi
 
 # Setup logger per debugging grafici

@@ -6011,12 +6011,24 @@ def _render_stage_final():
                         st.session_state[_docx_key] = True
                     if st.session_state.get(_docx_key, False):
                         with st.spinner("Conversione Word…"):
-                            db, _ = latex_to_docx_via_ai(v["latex"], con_griglia=con_griglia)
+                            print("DEBUG: Avvio esportazione DOCX iniziato")
+                            st.write("🔍 Sto esportando in formato Word...")
+                            try:
+                                db, error_msg = latex_to_docx_via_ai(v["latex"], con_griglia=con_griglia)
+                            except Exception as e:
+                                print(f"DEBUG: Eccezione durante export DOCX: {e}")
+                                st.error(f"Errore durante esportazione Word: {e}")
+                                db = None
+                                error_msg = str(e)
                         st.session_state[_docx_key] = False
                         if db:
                             st.session_state.verifiche[fid]["docx"] = db; st.rerun()
                         else:
-                            st.error("Errore Word")
+                            print(f"DEBUG: Export DOCX fallito - error_msg: {error_msg}")
+                            if error_msg:
+                                st.error(f"Errore Word: {error_msg}")
+                            else:
+                                st.error("Errore Word - nessun dettaglio disponibile")
                 st.download_button(
                     f"⬇ LaTeX sorgente (.tex)",
                     data=v["latex"].encode("utf-8"), file_name=fname+".tex",
