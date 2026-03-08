@@ -1331,13 +1331,13 @@ def _render_bivio():
     
         
     # Mostra solo le preview - se non ci sono preview non mostra nulla
-    # CAROUSEL CENTRALE CON PREVIEW GRANDI
+    # CAROUSEL SEMPLIFICATO
     if _previews:
+        # Container principale
         st.markdown(
             f'''
             <div style="max-width: 800px; margin: 0 auto; padding: 0 1rem;">
-                <div class="preview-carousel" style="
-                    position: relative;
+                <div style="
                     background: white;
                     border: 1px solid #e5e7eb;
                     border-radius: 12px;
@@ -1354,273 +1354,50 @@ def _render_bivio():
                             📄 Esempi di Verifiche Generate
                         </div>
                     </div>
-                    
-                    <div style="position: relative; height: 650px; background: #f8f9fa;">
-                        <button class="carousel-prev" style="
-                            position: absolute;
-                            left: 1rem;
-                            top: 50%;
-                            transform: translateY(-50%);
-                            z-index: 20;
-                            width: 48px;
-                            height: 48px;
-                            border-radius: 50%;
-                            background: white;
-                            border: 2px solid #e5e7eb;
-                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                            cursor: pointer;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 1.2rem;
-                            transition: all 0.2s;
-                        ">‹</button>
-                        <button class="carousel-next" style="
-                            position: absolute;
-                            right: 1rem;
-                            top: 50%;
-                            transform: translateY(-50%);
-                            z-index: 20;
-                            width: 48px;
-                            height: 48px;
-                            border-radius: 50%;
-                            background: white;
-                            border: 2px solid #e5e7eb;
-                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                            cursor: pointer;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 1.2rem;
-                            transition: all 0.2s;
-                        ">›</button>
-                        
-                        <div class="carousel-slides" style="
-                            position: relative;
-                            height: 100%;
-                            overflow: hidden;
-                        ">
+                    <div style="position: relative; height: 650px; background: #f8f9fa; padding: 1rem;">
             ''',
             unsafe_allow_html=True,
         )
         
-        # Genera slides per ogni preview
-        for i, preview in enumerate(_previews):
+        # Mostra solo la prima preview in modo semplice
+        if _previews:
+            preview = _previews[0]
             if preview['type'] == 'pdf_preview':
                 st.markdown(
                     f'''
-                    <div class="carousel-slide" data-slide="{i}" style="
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        opacity: {1 if i == 0 else 0};
-                        transition: opacity 0.5s ease-in-out;
-                        padding: 0.75rem;
-                        display: flex;
-                        flex-direction: column;
-                    ">
-                        <div style="
-                            background: white;
-                            border-radius: 12px;
-                            padding: 0.75rem;
-                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                            flex: 1;
-                            display: flex;
-                            flex-direction: column;
-                        ">
-                            <div style="text-align: center; margin-bottom: 1rem;">
-                                <div style="font-size: 1.2rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">
-                                    {preview["name"]}
-                                </div>
-                                <div style="font-size: 0.9rem; color: #6b7280;">
-                                    PDF completo • 3 esercizi • 100 punti • Alta definizione
-                                </div>
-                            </div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 0.5rem;">
-                                <img src="{preview["path"]}" alt="{preview["name"]}" 
-                                     style="
-                                         max-width: 100%;
-                                         max-height: 520px;
-                                         object-fit: contain;
-                                         border-radius: 8px;
-                                         border: 2px solid #e5e7eb;
-                                         background: white;
-                                         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                                     ">
-                            </div>
-                        </div>
-                    </div>
-                    ''',
-                    unsafe_allow_html=True,
-                )
-            elif preview['type'] == 'image':
-                st.markdown(
-                    f'''
-                    <div class="carousel-slide" data-slide="{i}" style="
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        opacity: {1 if i == 0 else 0};
-                        transition: opacity 0.5s ease-in-out;
-                        padding: 1.5rem;
-                        display: flex;
-                        flex-direction: column;
-                    ">
-                        <div style="
-                            background: white;
-                            border-radius: 12px;
-                            padding: 1.5rem;
-                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                            flex: 1;
-                            display: flex;
-                            flex-direction: column;
-                        ">
-                            <div style="text-align: center; margin-bottom: 1rem;">
-                                <div style="font-size: 1.2rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">
-                                    {preview["name"]}
-                                </div>
-                                <div style="font-size: 0.9rem; color: #6b7280;">
-                                    Immagine preview
-                                </div>
-                            </div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                                <img src="{preview["path"]}" alt="{preview["name"]}" 
-                                     style="
-                                         max-width: 100%;
-                                         max-height: 500px;
-                                         object-fit: contain;
-                                         border-radius: 8px;
-                                         border: 2px solid #e5e7eb;
-                                         background: white;
-                                         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                                     ">
-                            </div>
-                        </div>
-                    </div>
-                    ''',
-                    unsafe_allow_html=True,
-                )
-        
-        st.markdown(
-            f'''
-                        </div>
-                    </div>
-                    
                     <div style="
-                        padding: 0.75rem;
                         background: white;
-                        border-top: 1px solid #e5e7eb;
-                        display: flex;
-                        justify-content: center;
-                        gap: 0.5rem;
+                        border-radius: 12px;
+                        padding: 1rem;
+                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                        text-align: center;
                     ">
-            ''',
-            unsafe_allow_html=True,
-        )
-        
-        # Indicator dots
-        for i in range(len(_previews)):
-            st.markdown(
-                f'''
-                <div class="carousel-indicator" data-slide="{i}" style="
-                    width: 8px;
-                    height: 8px;
-                    border-radius: 50%;
-                    background: {'#3b82f6' if i == 0 else '#d1d5db'};
-                    cursor: pointer;
-                    transition: background 0.3s;
-                "></div>
-                ''',
-                unsafe_allow_html=True,
-            )
+                        <div style="font-size: 1.2rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">
+                            {preview["name"]}
+                        </div>
+                        <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 1rem;">
+                            PDF completo • 3 esercizi • 100 punti • Alta definizione
+                        </div>
+                        <img src="{preview["path"]}" alt="{preview["name"]}" 
+                             style="
+                                 max-width: 100%;
+                                 max-height: 520px;
+                                 object-fit: contain;
+                                 border-radius: 8px;
+                                 border: 2px solid #e5e7eb;
+                                 background: white;
+                                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                             ">
+                    </div>
+                    ''',
+                    unsafe_allow_html=True,
+                )
         
         st.markdown(
-            f'''
+            '''
                     </div>
                 </div>
             </div>
-            
-            <script>
-            document.addEventListener('DOMContentLoaded', function() {{
-                const slides = document.querySelectorAll('.carousel-slide');
-                const indicators = document.querySelectorAll('.carousel-indicator');
-                const prevBtn = document.querySelector('.carousel-prev');
-                const nextBtn = document.querySelector('.carousel-next');
-                let currentSlide = 0;
-                let autoPlayInterval;
-                
-                function showSlide(index) {{
-                    slides.forEach((slide, i) => {{
-                        slide.style.opacity = i === index ? '1' : '0';
-                    }});
-                    indicators.forEach((indicator, i) => {{
-                        indicator.style.background = i === index ? '#3b82f6' : '#d1d5db';
-                    }});
-                    currentSlide = index;
-                }}
-                
-                function nextSlide() {{
-                    showSlide((currentSlide + 1) % slides.length);
-                }}
-                
-                function prevSlide() {{
-                    showSlide((currentSlide - 1 + slides.length) % slides.length);
-                }}
-                
-                function startAutoPlay() {{
-                    autoPlayInterval = setInterval(nextSlide, 4000); // Change every 4 seconds
-                }}
-                
-                function stopAutoPlay() {{
-                    clearInterval(autoPlayInterval);
-                }}
-                
-                // Event listeners
-                prevBtn.addEventListener('click', () => {{
-                    prevSlide();
-                    stopAutoPlay();
-                    startAutoPlay();
-                }});
-                
-                nextBtn.addEventListener('click', () => {{
-                    nextSlide();
-                    stopAutoPlay();
-                    startAutoPlay();
-                }});
-                
-                indicators.forEach((indicator, index) => {{
-                    indicator.addEventListener('click', () => {{
-                        showSlide(index);
-                        stopAutoPlay();
-                        startAutoPlay();
-                    }});
-                }});
-                
-                // Start autoplay
-                startAutoPlay();
-                
-                // Pause on hover
-                const carousel = document.querySelector('.preview-carousel');
-                carousel.addEventListener('mouseenter', stopAutoPlay);
-                carousel.addEventListener('mouseleave', startAutoPlay);
-                
-                // Button hover effects
-                [prevBtn, nextBtn].forEach(btn => {{
-                    btn.addEventListener('mouseenter', () => {{
-                        btn.style.background = '#f3f4f6';
-                        btn.style.transform = 'translateY(-50%) scale(1.1)';
-                    }});
-                    btn.addEventListener('mouseleave', () => {{
-                        btn.style.background = 'white';
-                        btn.style.transform = 'translateY(-50%) scale(1)';
-                    }});
-                }});
-            }});
-            </script>
             ''',
             unsafe_allow_html=True,
         )
