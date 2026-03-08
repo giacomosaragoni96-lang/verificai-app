@@ -53,6 +53,7 @@ except ImportError:
         )
 from latex_utils import (
     compila_pdf,
+    clean_tikz_spoilers,
     inietta_griglia,
     riscala_punti,
     fix_items_environment,
@@ -164,7 +165,7 @@ def _assembla_e_compila(
     Assembla preambolo + corpo, applica le trasformazioni post-processing,
     compila in PDF. Restituisce (latex_finale, pdf_bytes_o_None).
     """
-    latex = preambolo + corpo
+    latex = preambolo + clean_tikz_spoilers(corpo)
     latex = fix_items_environment(latex)
     latex = normalizza_labels_numerici(latex)   # 1) 2) 3) → a) b) c)
     latex = semplifica_item_singoli(latex)       # enumerate 1 solo item → testo diretto

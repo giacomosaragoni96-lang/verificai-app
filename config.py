@@ -161,437 +161,237 @@ THEMES = {
     },
 
     # ═══════════════════════════════════════════════════════════════════════
-    #  FORESTA — Elegant paper/sage: calm, study, nature, professional
-    #  Palette: Paper #F5F7F4, Sage #E8EDE4, Forest #166534, Deep green sidebar
+    #  GRAFITE — Carbon Blue  (Vercel/Linear-inspired · precise · modern SaaS)
+    #  Near-black bg con micro cast blu · electric blue accent · cool white
     # ═══════════════════════════════════════════════════════════════════════
-    "foresta": {
-        # Superfici — carta e sage chiarissimo, non cielo azzurro
-        "bg":         "#F2F5F0",     # Paper — verde-grigio molto chiaro
-        "bg2":        "#E8EDE4",     # Sage chiaro
-        "card":       "#FFFFFF",     # carta bianca
-        "card2":      "#F8FAF6",     # overlay con hint verde
+    "grafite": {
+        # Superfici — near-black con sottile cast blue-gray
+        "bg":         "#0C0D10",
+        "bg2":        "#131518",
+        "card":       "#1A1D22",
+        "card2":      "#21252C",
 
-        # Testo — inchiostro verde scuro (forest ink)
-        "text":       "#1A2E1A",     # Forest black
-        "text2":      "#2D4A2D",     # secondario
-        "muted":      "#527352",     # muted sage
+        # Testo — cool white con gerarchia precisa
+        "text":       "#F0F2F5",
+        "text2":      "#8B93A0",
+        "muted":      "#545E6B",
 
-        # Bordi — sottili, verdi neutri
-        "border":     "#D1DED1",     # bordo sage
-        "border2":    "#B5C9B5",     # bordo più marcato
+        # Bordi — minimal, barely-there
+        "border":     "#252B33",
+        "border2":    "#323A44",
 
-        # Accent — Forest green elegante
-        "accent":       "#166534",   # Green 800 — forest
-        "accent2":      "#15803D",   # Green 700 (hover)
-        "accent_light": "#DCFCE7",   # Green 100 — pill/hint
+        # Accent — Electric Blue (fiducia, azione, sistema)
+        "accent":       "#3B82F6",
+        "accent2":      "#60A5FA",
+        "accent_light": "#0D1F3C",
 
         # Interazione
-        "hover":      "#ECFDF5",     # Green 50
+        "hover":      "#181D24",
 
-        # Semantici
-        "success":    "#15803D",     # Green 700
-        "warn":       "#CA8A04",     # Yellow 700
-        "error":      "#B91C1C",     # Red 700
+        # Semantici — calibrati per massima leggibilità su dark
+        "success":    "#34D399",
+        "warn":       "#FBBF24",
+        "error":      "#F87171",
 
-        # Ombre — morbide, naturali
-        "shadow":     "0 1px 2px rgba(22,101,52,.06)",
-        "shadow_md":  "0 4px 20px rgba(22,101,52,.08), 0 1px 3px rgba(22,101,52,.04)",
-        "shadow_soft": "0 12px 40px rgba(22,101,52,.06), 0 2px 8px rgba(22,101,52,.03)",
+        # Ombre — profonde, cinema dark
+        "shadow":     "0 1px 3px rgba(0,0,0,.55)",
+        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
+        "shadow_soft": "0 8px 32px rgba(12,13,16,.70), 0 2px 8px rgba(0,0,0,.30)",
 
         # Design system
         "radius_sm":  "8px",
         "radius_md":  "12px",
         "radius_lg":  "16px",
 
-        # Sidebar — forest scuro, elegante
-        "sidebar_bg":      "linear-gradient(180deg, #14532D 0%, #052E16 100%)",
-        "sidebar_border":  "#166534",
-        "sidebar_accent":  "#86EFAC",   # Green 300
-        "sidebar_input_bg":  "#14532D",
-        "sidebar_input_text": "#BBF7D0",
+        # Sidebar — deep carbon, accent blue freddo
+        "sidebar_bg":       "linear-gradient(180deg, #070809 0%, #0C0D10 100%)",
+        "sidebar_border":   "#252B33",
+        "sidebar_accent":   "#60A5FA",
+        "sidebar_input_bg":  "#131518",
+        "sidebar_input_text": "#F0F2F5",
 
         # Hint boxes
-        "hint_bg":      "#DCFCE7",
-        "hint_border":  "#86EFAC",
-        "hint_text":    "#166534",
+        "hint_bg":      "#0D1F3C",
+        "hint_border":  "#1D3A6A",
+        "hint_text":    "#60A5FA",
     },
 
     # ═══════════════════════════════════════════════════════════════════════
-    #  OSSIDIANA — Deep Indigo Slate  (professional, Figma-dark inspired)
-    #  Palette: Blue-slate bg · Indigo 500 accent · cool near-white text
+    #  INCHIOSTRO — Warm Editorial Dark  (espresso bg · amber gold · cream text)
+    #  Ispirazione: pubblicazione di lusso, notebook analogico, Bear dark
     # ═══════════════════════════════════════════════════════════════════════
-    "ossidiana": {
-        "bg":         "#0D0E14",
-        "bg2":        "#13141C",
-        "card":       "#1A1B26",
-        "card2":      "#21222E",
-        "text":       "#E8E9F0",
-        "text2":      "#8B8FA8",
-        "muted":      "#5C6080",
-        "border":     "#25273A",
-        "border2":    "#32344E",
-        "accent":       "#6366F1",
-        "accent2":      "#818CF8",
-        "accent_light": "#1A1B38",
-        "hover":      "#1C1D2A",
-        "success":    "#34D399",
-        "warn":       "#FBBF24",
-        "error":      "#F87171",
-        "shadow":     "0 1px 3px rgba(0,0,0,.50)",
-        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
-        "shadow_soft": "0 8px 32px rgba(13,14,20,.70), 0 2px 8px rgba(0,0,0,.30)",
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
-        "sidebar_bg":       "linear-gradient(180deg, #09090F 0%, #0D0E14 100%)",
-        "sidebar_border":   "#25273A",
-        "sidebar_accent":   "#818CF8",
-        "sidebar_input_bg":  "#13141C",
-        "sidebar_input_text": "#E8E9F0",
-        "hint_bg":      "#1A1B38",
-        "hint_border":  "#3A3D7A",
-        "hint_text":    "#818CF8",
-    },
+    "inchiostro": {
+        # Superfici — espresso caldo, profondità senza freddo
+        "bg":         "#0D0B07",
+        "bg2":        "#151209",
+        "card":       "#1E1913",
+        "card2":      "#27211A",
 
-    # ═══════════════════════════════════════════════════════════════════════
-    #  RAME — Warm Copper Editorial  (espresso bg · copper accent · cream text)
-    # ═══════════════════════════════════════════════════════════════════════
-    "rame": {
-        "bg":         "#0C0A08",
-        "bg2":        "#151210",
-        "card":       "#1E1916",
-        "card2":      "#262118",
-        "text":       "#F5EDE6",
-        "text2":      "#B09880",
-        "muted":      "#7A6655",
-        "border":     "#352A22",
-        "border2":    "#4A3A2E",
-        "accent":       "#C87C3C",
-        "accent2":      "#E09550",
-        "accent_light": "#2A1A08",
-        "hover":      "#1C1510",
-        "success":    "#4ADE80",
-        "warn":       "#EAA030",
-        "error":      "#F87171",
-        "shadow":     "0 1px 3px rgba(0,0,0,.50)",
-        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
-        "shadow_soft": "0 8px 32px rgba(12,10,8,.70), 0 2px 8px rgba(0,0,0,.30)",
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
-        "sidebar_bg":       "linear-gradient(180deg, #060402 0%, #0C0A08 100%)",
-        "sidebar_border":   "#352A22",
-        "sidebar_accent":   "#E09550",
-        "sidebar_input_bg":  "#151210",
-        "sidebar_input_text": "#F5EDE6",
-        "hint_bg":      "#2A1A08",
-        "hint_border":  "#6A3C10",
-        "hint_text":    "#E09550",
-    },
+        # Testo — crema calda, gerarchia editoriale
+        "text":       "#F5EFE4",
+        "text2":      "#AA9880",
+        "muted":      "#6B5B48",
 
-    # ═══════════════════════════════════════════════════════════════════════
-    #  AURORA — Northern Lights  (night blue bg · teal accent · blue-white text)
-    # ═══════════════════════════════════════════════════════════════════════
-    "aurora": {
-        "bg":         "#08090F",
-        "bg2":        "#0E1018",
-        "card":       "#141622",
-        "card2":      "#1A1E2C",
-        "text":       "#E4EAF5",
-        "text2":      "#7A90B8",
-        "muted":      "#4A5C80",
-        "border":     "#1E2438",
-        "border2":    "#28304A",
-        "accent":       "#2DD4BF",
-        "accent2":      "#5EEAD4",
-        "accent_light": "#0A201E",
-        "hover":      "#141826",
-        "success":    "#34D399",
-        "warn":       "#FBBF24",
-        "error":      "#F87171",
-        "shadow":     "0 1px 3px rgba(0,0,0,.50)",
-        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
-        "shadow_soft": "0 8px 32px rgba(8,9,15,.70), 0 2px 8px rgba(0,0,0,.30)",
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
-        "sidebar_bg":       "linear-gradient(180deg, #040407 0%, #08090F 100%)",
-        "sidebar_border":   "#1E2438",
-        "sidebar_accent":   "#5EEAD4",
-        "sidebar_input_bg":  "#0E1018",
-        "sidebar_input_text": "#E4EAF5",
-        "hint_bg":      "#0A201E",
-        "hint_border":  "#1A504A",
-        "hint_text":    "#2DD4BF",
-    },
+        # Bordi — warm, organici
+        "border":     "#2E2418",
+        "border2":    "#3F3226",
 
-    # ═══════════════════════════════════════════════════════════════════════
-    #  ARDESIA — Warm Rose Slate  (dark slate bg · rose accent · warm white text)
-    # ═══════════════════════════════════════════════════════════════════════
-    "ardesia": {
-        "bg":         "#100E0E",
-        "bg2":        "#181515",
-        "card":       "#201C1C",
-        "card2":      "#282222",
-        "text":       "#F0EAEA",
-        "text2":      "#A89090",
-        "muted":      "#6A5858",
-        "border":     "#2E2828",
-        "border2":    "#3E3434",
-        "accent":       "#FB7185",
-        "accent2":      "#FDA4AF",
-        "accent_light": "#2A0E14",
-        "hover":      "#1C1818",
-        "success":    "#34D399",
-        "warn":       "#FBBF24",
-        "error":      "#F87171",
-        "shadow":     "0 1px 3px rgba(0,0,0,.50)",
-        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
-        "shadow_soft": "0 8px 32px rgba(16,14,14,.70), 0 2px 8px rgba(0,0,0,.30)",
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
-        "sidebar_bg":       "linear-gradient(180deg, #080606 0%, #100E0E 100%)",
-        "sidebar_border":   "#2E2828",
-        "sidebar_accent":   "#FDA4AF",
-        "sidebar_input_bg":  "#181515",
-        "sidebar_input_text": "#F0EAEA",
-        "hint_bg":      "#2A0E14",
-        "hint_border":  "#6A2030",
-        "hint_text":    "#FDA4AF",
-    },
+        # Accent — Amber Gold (calore, autorevolezza, azione)
+        "accent":       "#E8971E",
+        "accent2":      "#F5B84A",
+        "accent_light": "#2C1C00",
 
-    # ═══════════════════════════════════════════════════════════════════════
-    #  AMETISTA — Soft Violet  (deep purple bg · amethyst accent · lavender text)
-    # ═══════════════════════════════════════════════════════════════════════
-    "ametista": {
-        "bg":         "#0C0B12",
-        "bg2":        "#131120",
-        "card":       "#1A1830",
-        "card2":      "#22203E",
-        "text":       "#EEEAF8",
-        "text2":      "#9990C0",
-        "muted":      "#5E5888",
-        "border":     "#242045",
-        "border2":    "#302C5E",
-        "accent":       "#A78BFA",
-        "accent2":      "#C4B5FD",
-        "accent_light": "#1E1640",
-        "hover":      "#18163A",
-        "success":    "#34D399",
-        "warn":       "#FBBF24",
-        "error":      "#F87171",
-        "shadow":     "0 1px 3px rgba(0,0,0,.50)",
-        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
-        "shadow_soft": "0 8px 32px rgba(12,11,18,.70), 0 2px 8px rgba(0,0,0,.30)",
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
-        "sidebar_bg":       "linear-gradient(180deg, #060510 0%, #0C0B12 100%)",
-        "sidebar_border":   "#242045",
-        "sidebar_accent":   "#C4B5FD",
-        "sidebar_input_bg":  "#131120",
-        "sidebar_input_text": "#EEEAF8",
-        "hint_bg":      "#1E1640",
-        "hint_border":  "#453A80",
-        "hint_text":    "#C4B5FD",
-    },
+        # Interazione
+        "hover":      "#1A1510",
 
-    # ═══════════════════════════════════════════════════════════════════════
-    #  GHIACCIO — Arctic Sky  (dark navy bg · sky-blue accent · cool white text)
-    # ═══════════════════════════════════════════════════════════════════════
-    "ghiaccio": {
-        "bg":         "#080C14",
-        "bg2":        "#0E1420",
-        "card":       "#141E30",
-        "card2":      "#1A2640",
-        "text":       "#E0EAF8",
-        "text2":      "#7098C8",
-        "muted":      "#3D6090",
-        "border":     "#1C2C44",
-        "border2":    "#263A58",
-        "accent":       "#38BDF8",
-        "accent2":      "#7DD3FC",
-        "accent_light": "#082040",
-        "hover":      "#121A2C",
-        "success":    "#34D399",
-        "warn":       "#FBBF24",
-        "error":      "#F87171",
-        "shadow":     "0 1px 3px rgba(0,0,0,.50)",
-        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
-        "shadow_soft": "0 8px 32px rgba(8,12,20,.70), 0 2px 8px rgba(0,0,0,.30)",
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
-        "sidebar_bg":       "linear-gradient(180deg, #040709 0%, #080C14 100%)",
-        "sidebar_border":   "#1C2C44",
-        "sidebar_accent":   "#7DD3FC",
-        "sidebar_input_bg":  "#0E1420",
-        "sidebar_input_text": "#E0EAF8",
-        "hint_bg":      "#082040",
-        "hint_border":  "#1A4070",
-        "hint_text":    "#38BDF8",
-    },
-
-    # ═══════════════════════════════════════════════════════════════════════
-    #  PETROLIO — Teal & Amber  (dark teal bg · amber accent · pale teal text)
-    # ═══════════════════════════════════════════════════════════════════════
-    "petrolio": {
-        "bg":         "#060F0E",
-        "bg2":        "#0A1816",
-        "card":       "#0E2220",
-        "card2":      "#122C28",
-        "text":       "#E8F5EE",
-        "text2":      "#70A890",
-        "muted":      "#3A7060",
-        "border":     "#0E3030",
-        "border2":    "#154040",
-        "accent":       "#F59E0B",
-        "accent2":      "#FCD34D",
-        "accent_light": "#2A1E00",
-        "hover":      "#0A1E1C",
-        "success":    "#34D399",
-        "warn":       "#FB923C",
-        "error":      "#F87171",
-        "shadow":     "0 1px 3px rgba(0,0,0,.50)",
-        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
-        "shadow_soft": "0 8px 32px rgba(6,15,14,.70), 0 2px 8px rgba(0,0,0,.30)",
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
-        "sidebar_bg":       "linear-gradient(180deg, #030907 0%, #060F0E 100%)",
-        "sidebar_border":   "#0E3030",
-        "sidebar_accent":   "#FCD34D",
-        "sidebar_input_bg":  "#0A1816",
-        "sidebar_input_text": "#E8F5EE",
-        "hint_bg":      "#2A1E00",
-        "hint_border":  "#6A4A00",
-        "hint_text":    "#F59E0B",
-    },
-
-    # ═══════════════════════════════════════════════════════════════════════
-    #  CENERE — Ash Lavender  (neutral dark-gray bg · soft lilac accent · near-white)
-    # ═══════════════════════════════════════════════════════════════════════
-    "cenere": {
-        "bg":         "#0E0E10",
-        "bg2":        "#161618",
-        "card":       "#1E1E22",
-        "card2":      "#24242A",
-        "text":       "#EAEAEE",
-        "text2":      "#8888A0",
-        "muted":      "#555568",
-        "border":     "#28283C",
-        "border2":    "#343450",
-        "accent":       "#C4B5FD",
-        "accent2":      "#DDD6FE",
-        "accent_light": "#1A1830",
-        "hover":      "#1C1C22",
-        "success":    "#34D399",
-        "warn":       "#FBBF24",
-        "error":      "#F87171",
-        "shadow":     "0 1px 3px rgba(0,0,0,.50)",
-        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
-        "shadow_soft": "0 8px 32px rgba(14,14,16,.70), 0 2px 8px rgba(0,0,0,.30)",
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
-        "sidebar_bg":       "linear-gradient(180deg, #08080A 0%, #0E0E10 100%)",
-        "sidebar_border":   "#28283C",
-        "sidebar_accent":   "#DDD6FE",
-        "sidebar_input_bg":  "#161618",
-        "sidebar_input_text": "#EAEAEE",
-        "hint_bg":      "#1A1830",
-        "hint_border":  "#383870",
-        "hint_text":    "#C4B5FD",
-    },
-
-    # ═══════════════════════════════════════════════════════════════════════
-    #  MOGANO — Mahogany  (deep warm-brown bg · amber gold accent · cream text)
-    # ═══════════════════════════════════════════════════════════════════════
-    "mogano": {
-        "bg":         "#0D0906",
-        "bg2":        "#160E09",
-        "card":       "#1E1510",
-        "card2":      "#261B14",
-        "text":       "#F5EDDE",
-        "text2":      "#C0986A",
-        "muted":      "#7A5E3C",
-        "border":     "#32200C",
-        "border2":    "#462C10",
-        "accent":       "#F59E0B",
-        "accent2":      "#FBB03B",
-        "accent_light": "#2A1600",
-        "hover":      "#18120A",
+        # Semantici — warm-calibrated
         "success":    "#4ADE80",
         "warn":       "#FB923C",
-        "error":      "#EF4444",
-        "shadow":     "0 1px 3px rgba(0,0,0,.50)",
+        "error":      "#F87171",
+
+        # Ombre — calde, profonde
+        "shadow":     "0 1px 3px rgba(0,0,0,.55)",
         "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
-        "shadow_soft": "0 8px 32px rgba(13,9,6,.70), 0 2px 8px rgba(0,0,0,.30)",
+        "shadow_soft": "0 8px 32px rgba(13,11,7,.75), 0 2px 8px rgba(0,0,0,.30)",
+
+        # Design system
         "radius_sm":  "8px",
         "radius_md":  "12px",
         "radius_lg":  "16px",
-        "sidebar_bg":       "linear-gradient(180deg, #060402 0%, #0D0906 100%)",
-        "sidebar_border":   "#32200C",
-        "sidebar_accent":   "#FBB03B",
-        "sidebar_input_bg":  "#160E09",
-        "sidebar_input_text": "#F5EDDE",
-        "hint_bg":      "#2A1600",
-        "hint_border":  "#6A3E00",
-        "hint_text":    "#FBB03B",
+
+        # Sidebar — quasi nero caldo, accento oro
+        "sidebar_bg":       "linear-gradient(180deg, #070503 0%, #0D0B07 100%)",
+        "sidebar_border":   "#2E2418",
+        "sidebar_accent":   "#F5B84A",
+        "sidebar_input_bg":  "#151209",
+        "sidebar_input_text": "#F5EFE4",
+
+        # Hint boxes — ambra scura
+        "hint_bg":      "#2C1C00",
+        "hint_border":  "#6A4500",
+        "hint_text":    "#F5B84A",
     },
 
     # ═══════════════════════════════════════════════════════════════════════
-    #  CARBONE — Carbon Blue  (near-black neutral bg · sky-blue accent · cool white)
+    #  CARTA — Ultra-clean Paper White  (Linear light · Stripe · GitHub light)
+    #  Massima leggibilità · blue accent autorevole · tipografia precisa
     # ═══════════════════════════════════════════════════════════════════════
-    "carbone": {
-        "bg":         "#0A0A0C",
-        "bg2":        "#111114",
-        "card":       "#18181E",
-        "card2":      "#1E1E26",
-        "text":       "#E8E9EE",
-        "text2":      "#8A90A8",
-        "muted":      "#585E78",
-        "border":     "#22242E",
-        "border2":    "#2E3040",
-        "accent":       "#0EA5E9",
-        "accent2":      "#38BDF8",
-        "accent_light": "#061828",
-        "hover":      "#161620",
-        "success":    "#34D399",
-        "warn":       "#FBBF24",
-        "error":      "#F87171",
-        "shadow":     "0 1px 3px rgba(0,0,0,.50)",
-        "shadow_md":  "0 4px 24px rgba(0,0,0,.65)",
-        "shadow_soft": "0 8px 32px rgba(10,10,12,.70), 0 2px 8px rgba(0,0,0,.30)",
+    "carta": {
+        # Superfici — bianco-carta con micro-warmth, non freddo
+        "bg":         "#FAFAFA",
+        "bg2":        "#F2F3F5",
+        "card":       "#FFFFFF",
+        "card2":      "#F8F9FA",
+
+        # Testo — near-black quasi neutro, massimo contrasto
+        "text":       "#0F1117",
+        "text2":      "#4A5166",
+        "muted":      "#7A8299",
+
+        # Bordi — minimal, ultra-sottili
+        "border":     "#E2E5EB",
+        "border2":    "#CDD1D9",
+
+        # Accent — Blue autorevole (sistema, fiducia, azione)
+        "accent":       "#2563EB",
+        "accent2":      "#1D4ED8",
+        "accent_light": "#EFF6FF",
+
+        # Interazione
+        "hover":      "#F0F4FF",
+
+        # Semantici — vividi per leggibilità su bianco
+        "success":    "#059669",
+        "warn":       "#D97706",
+        "error":      "#DC2626",
+
+        # Ombre — ultra-soft, quasi impercettibili
+        "shadow":     "0 1px 2px rgba(15,17,23,.06)",
+        "shadow_md":  "0 4px 20px rgba(15,17,23,.08), 0 1px 3px rgba(15,17,23,.04)",
+        "shadow_soft": "0 12px 40px rgba(15,17,23,.06), 0 2px 8px rgba(15,17,23,.03)",
+
+        # Design system
         "radius_sm":  "8px",
         "radius_md":  "12px",
         "radius_lg":  "16px",
-        "sidebar_bg":       "linear-gradient(180deg, #050506 0%, #0A0A0C 100%)",
-        "sidebar_border":   "#22242E",
-        "sidebar_accent":   "#38BDF8",
-        "sidebar_input_bg":  "#111114",
-        "sidebar_input_text": "#E8E9EE",
-        "hint_bg":      "#061828",
-        "hint_border":  "#0C3A5A",
-        "hint_text":    "#0EA5E9",
+
+        # Sidebar — slate scuro, accent blue coerente
+        "sidebar_bg":       "linear-gradient(180deg, #0F172A 0%, #1E293B 100%)",
+        "sidebar_border":   "#334155",
+        "sidebar_accent":   "#60A5FA",
+        "sidebar_input_bg":  "#0F172A",
+        "sidebar_input_text": "#E2E8F0",
+
+        # Hint boxes — blue very light
+        "hint_bg":      "#EFF6FF",
+        "hint_border":  "#BFDBFE",
+        "hint_text":    "#1D4ED8",
+    },
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  AVORIO — Warm Ivory Editorial  (Notion · Readwise · Bear light)
+    #  Ivory bg caldo · violet accent ricco · charcoal caldo
+    # ═══════════════════════════════════════════════════════════════════════
+    "avorio": {
+        # Superfici — avorio caldo, texture carta di qualità
+        "bg":         "#F8F5F0",
+        "bg2":        "#EEE9E2",
+        "card":       "#FFFFFF",
+        "card2":      "#FAF8F5",
+
+        # Testo — charcoal caldo, mai neutro-freddo
+        "text":       "#1A1612",
+        "text2":      "#4A4038",
+        "muted":      "#7A6E64",
+
+        # Bordi — warm, organici
+        "border":     "#E0DAD2",
+        "border2":    "#D0C8BE",
+
+        # Accent — Violet vivido (creatività, premium, editoriale)
+        "accent":       "#7C3AED",
+        "accent2":      "#6D28D9",
+        "accent_light": "#F5F3FF",
+
+        # Interazione
+        "hover":      "#F3F0FF",
+
+        # Semantici — warm-calibrated per sfondo avorio
+        "success":    "#059669",
+        "warn":       "#D97706",
+        "error":      "#DC2626",
+
+        # Ombre — calde, eleganti
+        "shadow":     "0 1px 2px rgba(26,22,18,.07)",
+        "shadow_md":  "0 4px 20px rgba(26,22,18,.09), 0 1px 3px rgba(26,22,18,.05)",
+        "shadow_soft": "0 12px 40px rgba(26,22,18,.07), 0 2px 8px rgba(26,22,18,.04)",
+
+        # Design system
+        "radius_sm":  "8px",
+        "radius_md":  "12px",
+        "radius_lg":  "16px",
+
+        # Sidebar — slate plum scuro, accent violet
+        "sidebar_bg":       "linear-gradient(180deg, #1E1B2E 0%, #2D2540 100%)",
+        "sidebar_border":   "#3D3560",
+        "sidebar_accent":   "#A78BFA",
+        "sidebar_input_bg":  "#1E1B2E",
+        "sidebar_input_text": "#EDE9FE",
+
+        # Hint boxes — lavender leggero
+        "hint_bg":      "#F5F3FF",
+        "hint_border":  "#DDD6FE",
+        "hint_text":    "#6D28D9",
     },
 }
 
 THEME_LABELS = {
-    "notte":     "🌙 Notte",
-    "chiaro":    "☀️ Giorno",
-    "foresta":   "🌿 Foresta",
-    "ossidiana": "🔮 Ossidiana",
-    "rame":      "🟤 Rame",
-    "aurora":    "✨ Aurora",
-    "ardesia":   "🌹 Ardesia",
-    "ametista":  "💜 Ametista",
-    "ghiaccio":  "❄️ Ghiaccio",
-    "petrolio":  "🌿 Petrolio",
-    "cenere":    "🌫️ Cenere",
-    "mogano":    "🪵 Mogano",
-    "carbone":   "⚫ Carbone",
+    "notte":      "🌙 Notte",
+    "chiaro":     "☀️ Giorno",
+    "grafite":    "◼ Grafite",
+    "inchiostro": "🟤 Inchiostro",
+    "carta":      "📄 Carta",
+    "avorio":     "🟡 Avorio",
 }
 
 DEFAULT_THEME = "notte"

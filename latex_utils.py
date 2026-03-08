@@ -731,6 +731,78 @@ def inietta_griglia(latex: str, punti_totali: int) -> str:
 
 # ── COMPILAZIONE PDF ───────────────────────────────────────────────────────────
 
+# ── CLEAN TIKZ SPOILERS ────────────────────────────────────────────────────────
+
+def clean_tikz_spoilers(latex: str) -> str:
+    """
+    Rimuove due classi di artefatti dall'output AI che spollerebbero le risposte:
+
+    1. Testo tecnico nel corpo della verifica (fuori da tikzpicture):
+       frasi come "ottenuto con TikZ", "generato con TikZ", "grafico TikZ", ecc.
+       Sostituisce la frase incriminata con una formulazione neutra oppure la
+       rimuove del tutto se è solo una parentetica.
+
+    2. Annotazioni \node dentro tikzpicture che etichettano quantità "risposta":
+       - coordinate del vertice  (es. \node at (0,2) {$V(0,2)$})
+       - equazione dell'asse di simmetria (es. \node {asse x=0})
+       - etichette di punti con coordinate esplicite usate come risposta
+    """
+    # ── 1. Testo tecnico nel corpo ────────────────────────────────────────────
+    # Pattern: "ottenuto/generato/prodotto con TikZ/pgfplots/PGF" (varie forme)
+    _tech_pattern = re.compile(
+        r',?\s*(?:ottenuto|generato|prodotto|creato|disegnato)\s+con\s+'
+        r'(?:TikZ|tikz|pgfplots|PGFPlots|PGF|LaTeX)\b[^.;,\n]*',
+        re.IGNORECASE,
+    )
+    latex = _tech_pattern.sub('', latex)
+
+    # Rimuovi la frase completa se contiene solo il riferimento tecnico
+    # es. "Si osservi il grafico ottenuto con TikZ di seguito." →
+    #     "Si osservi il seguente grafico."
+    latex = re.sub(
+        r'(?i)(Si osservi[^.]*?)(?:,?\s*(?:ottenuto|generato|prodotto)\s+con\s+'
+        r'(?:TikZ|tikz|pgfplots)\s*,?)([^.]*\.)',
+        r'\1\2',
+        latex,
+    )
+
+    # ── 2. \node spoiler dentro tikzpicture ──────────────────────────────────
+    # Trova tutti i blocchi tikzpicture e pulisce i \node con valori-risposta
+    def _clean_tikz_block(m: re.Match) -> str:
+        block = m.group(0)
+        # Pattern per \node che etichettano vertice, asse o coordinate esplicite:
+        # \node[...] at (...) {$V(...)} o \node {...asse x=...} o label con V(
+        spoiler_node = re.compile(
+            r'\\node\b[^;]*?\{[^}]*?'
+            r'(?:'
+            r'[Vv]ertice|[Vv]ertex'             # "Vertice" / "vertex"
+            r'|\\text\{[Aa]sse\}|[Aa]sse\s+x\s*=' # "asse x=..."
+            r'|[Aa]xis\s+x\s*='
+            r'|\$\s*[Vv]\s*\('                   # "$V("  — label vertice math
+            r'|\$\s*x\s*=\s*[-\d]'               # "$x = 0" — asse simmetria
+            r')\s*[^}]*\}\s*;',
+            re.DOTALL,
+        )
+        block = spoiler_node.sub('', block)
+        # Rimuovi anche \node con fill=red/blue/green che indicano punto speciale
+        # e hanno coordinate che coincidono con un dato matematico evidenziato
+        block = re.sub(
+            r'\\node\s*\[[^\]]*(?:fill|draw)\s*=\s*\w+[^\]]*\]\s+at\s*'
+            r'\([^)]+\)\s*\{[^}]*\$[^}]+\$[^}]*\}\s*;',
+            '',
+            block,
+        )
+        return block
+
+    latex = re.sub(
+        r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
+        _clean_tikz_block,
+        latex,
+        flags=re.DOTALL,
+    )
+    return latex
+
+
 # ── FIX TIKZ LABELS ───────────────────────────────────────────────────────────
 
 def fix_tikz_labels(latex: str) -> str:
@@ -766,7 +838,8 @@ def fix_tikz_labels(latex: str) -> str:
 # ── COMPILAZIONE PDF ───────────────────────────────────────────────────────────
 
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
-    # Applica fix pre-compilazione: TikZ label math, poi due passate pdflatex
+    # Applica fix pre-compilazione: rimuovi spoiler TikZ, poi fix label math
+    codice_latex = clean_tikz_spoilers(codice_latex)
     codice_latex = fix_tikz_labels(codice_latex)
 
     with tempfile.TemporaryDirectory() as tmpdir:
