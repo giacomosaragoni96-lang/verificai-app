@@ -4827,7 +4827,11 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     st.toast("✅ Punteggi applicati — PDF aggiornato!", icon="⚖️")
                     st.rerun()
                 else:
-                    st.error("❌ Errore di compilazione.")
+                    if "TikZ" in _err_rc:
+                        st.error("❌ Errore nel grafico TikZ. L'AI ha generato un grafico complesso non valido.")
+                        st.info("💡 Suggerimento: prova a rigenerare l'esercizio o usa 'Cambia esercizio' per ottenere una versione senza grafici complessi.")
+                    else:
+                        st.error("❌ Errore di compilazione LaTeX.")
                     with st.expander("Log errore"):
                         st.text(_err_rc)
 
@@ -4875,7 +4879,11 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 st.session_state.stage = STAGE_FINAL
                 st.rerun()
             else:
-                st.error("❌ Errore di compilazione PDF.")
+                if err and "TikZ" in err:
+                    st.error("❌ Errore nel grafico TikZ. L'AI ha generato un grafico complesso non valido.")
+                    st.info("💡 Suggerimento: prova a rigenerare la verifica o usa 'Cambia esercizio' per rimuovere grafici problematici.")
+                else:
+                    st.error("❌ Errore di compilazione PDF.")
                 with st.expander("Log errore"): st.text(err)
 
     # ── Pulsante RICONFIGURA — piccolo, discreto, sotto ───────────────────────

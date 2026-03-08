@@ -93,8 +93,10 @@ def prompt_corpo_verifica(
 
     if e_mat:
         grafici_rule = (
-            "- GRAFICI pgfplots: genera codice TikZ/pgfplots SOLO quando il grafico è un DATO"
-            " fornito allo studente (es. 'osserva il grafico e determina...', 'dal grafico ricava...').\n"
+            "- GRAFICI pgfplots: genera codice TikZ/pgfplots SOLO per grafici matematici standard "
+            "(funzioni, parabole, rette, cerchi, istogrammi, grafici a barre).\n"
+            "  ⛔ VIETATI GRAFICI COMPLESSI: NON generare MAI linee del tempo, diagrammi di flusso, "
+            "alberi genealogici, organigrammi o altri grafici non matematici. Questi spesso falliscono la compilazione.\n"
             "  ⛔ NON generare MAI codice TikZ se il testo chiede allo studente di disegnare, rappresentare,"
             " tracciare o costruire un grafico — questo è uno SPOILER della risposta.\n"
             "  ⛔ Se l'esercizio usa parole come 'rappresenta graficamente', 'disegna', 'traccia', 'costruisci':"
@@ -108,7 +110,9 @@ def prompt_corpo_verifica(
             "  ⛔ TESTO TECNICO VIETATO: NON scrivere mai nel testo dell'esercizio frasi come"
             " \"ottenuto con TikZ\", \"generato con TikZ\", \"grafico TikZ\", \"prodotto con pgfplots\""
             " o qualsiasi altra menzione dello strumento di generazione.\n"
-            "  Usa solo: \"Si osservi il seguente grafico:\" oppure \"Dal grafico riportato di seguito:\""
+            "  Usa solo: \"Si osservi il seguente grafico:\" oppure \"Dal grafico riportato di seguito:\"\n"
+            "  ⚠️ CONTROLLO QUALITÀ: prima di scrivere \\begin{tikzpicture}, verifica mentalmente che il codice sia "
+            "completo, bilanciato e compilabile. Ogni \\begin{...} deve avere il corrispondente \\end{...}."
         )
     else:
         grafici_rule = ""

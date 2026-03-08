@@ -731,6 +731,46 @@ def inietta_griglia(latex: str, punti_totali: int) -> str:
 
 # ── COMPILAZIONE PDF ───────────────────────────────────────────────────────────
 
+# ── VALIDATE TIKZ CODE ────────────────────────────────────────────────────────
+
+def validate_tikz_code(latex: str) -> tuple[bool, str]:
+    """
+    Valida il codice TikZ per errori comuni che causano fallimenti di compilazione.
+    Restituisce (is_valid, error_message).
+    """
+    # Trova tutti i blocchi tikzpicture
+    tikz_blocks = re.findall(r'\\begin\{tikzpicture\}(.*?)\\end\{tikzpicture\}', latex, re.DOTALL)
+    
+    for i, block in enumerate(tikz_blocks):
+        # Controlla begin/end bilanciati
+        begin_count = len(re.findall(r'\\begin\{([^}]+)\}', block))
+        end_count = len(re.findall(r'\\end\{([^}]+)\}', block))
+        
+        if begin_count != end_count:
+            return False, f"Errore nel blocco TikZ {i+1}: numero di \\begin e \\end non bilanciati ({begin_count} vs {end_count})"
+        
+        # Controlla caratteri problematici
+        if '—' in block or '–' in block:  # trattini speciali
+            return False, f"Errore nel blocco TikZ {i+1}: caratteri speciali non compatibili (—, –)"
+        
+        # Controlla parentesi graffe non bilanciate
+        brace_count = block.count('{') - block.count('}')
+        if brace_count != 0:
+            return False, f"Errore nel blocco TikZ {i+1}: parentesi graffe non bilanciate"
+        
+        # Controlla comandi incompleti o sospetti
+        suspicious_patterns = [
+            r'\\node\s*\[.*?\]\s*at\s*\([^)]*$',  # \node senza coordinate complete
+            r'\\draw\s*\([^)]*$',  # \draw incompleto
+            r'\\begin\{axis\}[^}]*$',  # \begin{axis} senza chiusura
+        ]
+        
+        for pattern in suspicious_patterns:
+            if re.search(pattern, block, re.MULTILINE):
+                return False, f"Errore nel blocco TikZ {i+1}: comando incompleto o sospetto"
+    
+    return True, ""
+
 # ── CLEAN TIKZ SPOILERS ────────────────────────────────────────────────────────
 
 def clean_tikz_spoilers(latex: str) -> str:
@@ -841,6 +881,12 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     # Applica fix pre-compilazione: rimuovi spoiler TikZ, poi fix label math
     codice_latex = clean_tikz_spoilers(codice_latex)
     codice_latex = fix_tikz_labels(codice_latex)
+    
+    # Validazione codice TikZ per catturare errori comuni
+    is_valid, error_msg = validate_tikz_code(codice_latex)
+    if not is_valid:
+        logger.error(f"Validazione TikZ fallita: {error_msg}")
+        return None, f"Errore nel codice TikZ: {error_msg}"
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tex_path = os.path.join(tmpdir, "v.tex")
