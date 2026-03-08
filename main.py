@@ -128,17 +128,7 @@ if not API_KEY:
 genai.configure(api_key=API_KEY)
 
 # ── VERIFICA DISPONIBILITÀ LATEX ─────────────────────────────────────────────────
-try:
-    import subprocess
-    result = subprocess.run(["pdflatex", "--version"], capture_output=True, text=True, timeout=5)
-    if result.returncode != 0:
-        st.warning("⚠️ LaTeX (pdflatex) non è installato correttamente. La generazione PDF potrebbe non funzionare.")
-        LATEX_AVAILABLE = False
-    else:
-        LATEX_AVAILABLE = True
-except (FileNotFoundError, subprocess.TimeoutExpired):
-    st.warning("⚠️ LaTeX non è installato in questo ambiente. La generazione PDF non sarà disponibile.")
-    LATEX_AVAILABLE = False
+# Sarà fatto dopo l'autenticazione per essere visibile all'utente
 
 # ── AUTENTICAZIONE ────────────────────────────────────────────────────────────
 if "utente" not in st.session_state:
@@ -148,6 +138,19 @@ if st.session_state.utente is None:
     if st.session_state.utente is None:
         mostra_auth(supabase)
         st.stop()
+
+# ── VERIFICA DISPONIBILITÀ LATEX (dopo autenticazione) ─────────────────────────────
+try:
+    import subprocess
+    result = subprocess.run(["pdflatex", "--version"], capture_output=True, text=True, timeout=5)
+    if result.returncode != 0:
+        st.error("⚠️ **PDF non disponibile** - LaTeX (pdflatex) non è installato correttamente in questo ambiente. La generazione PDF non funzionerà.")
+        LATEX_AVAILABLE = False
+    else:
+        LATEX_AVAILABLE = True
+except (FileNotFoundError, subprocess.TimeoutExpired):
+    st.error("⚠️ **PDF non disponibile** - LaTeX non è installato in questo ambiente. La generazione PDF non sarà disponibile.")
+    LATEX_AVAILABLE = False
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2891,6 +2894,18 @@ def _render_percorso_a_wizard():
                 '⛔ Limite mensile raggiunto.</div>',
                 unsafe_allow_html=True
             )
+        
+        # Avviso PDF non disponibile
+        if not LATEX_AVAILABLE:
+            st.markdown(
+                f'<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;'
+                f'padding:.8rem;margin:.5rem 0;">'
+                f'<div style="text-align:center;font-size:.85rem;color:#92400E;font-weight:600;">'
+                f'⚠️ PDF non disponibile - LaTeX non installato</div>'
+                f'<div style="text-align:center;font-size:.75rem;color:#B45309;margin-top:.2rem;">'
+                f'Potrai generare la verifica ma non scaricare il PDF</div></div>',
+                unsafe_allow_html=True,
+            )
 
         if genera_btn and not _limite and not _manca_ancora:
             # Consolida istruzioni per-file
@@ -3542,6 +3557,18 @@ def _render_percorso_b_form():
                     f'<div style="text-align:center;font-size:.82rem;color:#EF4444;'
                     f'font-family:DM Sans,sans-serif;font-weight:600;margin-top:.4rem;">'
                     f'⛔ Limite mensile raggiunto.</div>',
+                    unsafe_allow_html=True,
+                )
+            
+            # Avviso PDF non disponibile
+            if not LATEX_AVAILABLE:
+                st.markdown(
+                    f'<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;'
+                    f'padding:.8rem;margin:.5rem 0;">'
+                    f'<div style="text-align:center;font-size:.85rem;color:#92400E;font-weight:600;">'
+                    f'⚠️ PDF non disponibile - LaTeX non installato</div>'
+                    f'<div style="text-align:center;font-size:.75rem;color:#B45309;margin-top:.2rem;">'
+                    f'Potrai generare la verifica ma non scaricare il PDF</div></div>',
                     unsafe_allow_html=True,
                 )
             # ── Back link ─────────────────────────────────────────────────────────
