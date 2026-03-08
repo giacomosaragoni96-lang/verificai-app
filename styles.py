@@ -3378,15 +3378,19 @@ def get_css(T: dict) -> str:
   /* ═══════════════════════════════════════════════════════════════════════
      LANDING FEATURE CARDS — fallback per st_yled.badge_card_one
      ═══════════════════════════════════════════════════════════════════════ */
-  .landing-feat-card {{
+  .landing-fe.variant-card {{
     background: {T['card']};
-    border: 1px solid {T['border2']};
+    border: 1px solid {T['border']};
     border-radius: {_radius_lg};
-    padding: 1.4rem 1.3rem;
-    text-align: left;
-    box-shadow: {_shadow_sm};
-    transition: border-color {_transition}, box-shadow {_transition}, transform {_transition};
+    padding: 1.2rem 1rem;
+    position: relative;
+    cursor: pointer;
+    min-height: 180px;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .15s ease;
+    box-sizing: border-box;
   }}
   .landing-feat-card:hover {{
     border-color: {_acc};
