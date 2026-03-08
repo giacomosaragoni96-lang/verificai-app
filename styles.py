@@ -71,37 +71,6 @@ def get_css(T: dict) -> str:
     # ── Transition standard ────────────────────────────────────────────────────
     _transition = "0.2s cubic-bezier(.4,0,.2,1)"
 
-    # ── JS fix expander aperto su temi chiari ─────────────────────────────────
-    # CSS !important non basta: Streamlit inietta CSS dinamicamente dopo il nostro.
-    # Il MutationObserver applica inline styles (massima priorità) ogni volta
-    # che un expander viene aperto.
-    if _is_light:
-        _exp_js_block = (
-            '<script>'
-            '(function(){'
-            'var _ebg="' + _exp_open_bg + '",_efg="' + _exp_open_text + '",_ebd="' + _exp_open_border + '";'
-            'function _efx(){'
-            'document.querySelectorAll(\'details[data-testid="stExpander"][open] > summary\').forEach(function(e){'
-            'e.style.setProperty("background",_ebg,"important");'
-            'e.style.setProperty("background-color",_ebg,"important");'
-            'e.style.setProperty("color",_efg,"important");'
-            'e.style.setProperty("-webkit-text-fill-color",_efg,"important");'
-            'e.style.setProperty("border-bottom",_ebd,"important");'
-            'e.style.setProperty("border-radius","12px 12px 0 0","important");'
-            '});'
-            'document.querySelectorAll(\'details[data-testid="stExpander"][open] > summary *\').forEach(function(e){'
-            'e.style.setProperty("color",_efg,"important");'
-            'e.style.setProperty("-webkit-text-fill-color",_efg,"important");'
-            'e.style.setProperty("background-color","transparent","important");'
-            '});}'
-            'new MutationObserver(_efx).observe(document.body,{subtree:true,attributes:true,childList:true});'
-            '_efx();setInterval(_efx,250);'
-            '})();'
-            '</script>'
-        )
-    else:
-        _exp_js_block = ""
-
     return f"""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
@@ -263,10 +232,16 @@ def get_css(T: dict) -> str:
     -webkit-text-fill-color: {_acc} !important;
   }}
 
-  /* 5. Summary APERTO — adattivo chiaro/scuro */
+  /* 5. Summary APERTO — adattivo chiaro/scuro
+     Copre entrambe le strutture DOM Streamlit:
+     A) details[data-testid="stExpander"][open] (Streamlit ≤ 1.32)
+     B) div[data-testid="stExpander"] > details[open] (Streamlit ≥ 1.33+) */
   html body .stApp details[data-testid="stExpander"][open] > summary,
   html body .stApp details[data-testid="stExpander"][open] summary[role="button"],
-  .stApp details[data-testid="stExpander"][open] > summary {{
+  .stApp details[data-testid="stExpander"][open] > summary,
+  html body .stApp [data-testid="stExpander"] details[open] > summary,
+  html body .stApp [data-testid="stExpander"] details[open] summary[role="button"],
+  .stApp [data-testid="stExpander"] details[open] > summary {{
     background: {_exp_open_bg} !important;
     background-color: {_exp_open_bg} !important;
     color: {_exp_open_text} !important;
@@ -275,20 +250,20 @@ def get_css(T: dict) -> str:
     border-bottom: {_exp_open_border} !important;
     color-scheme: {_color_scheme} !important;
   }}
-  html body .stApp details[data-testid="stExpander"][open] > summary > *,
-  html body .stApp details[data-testid="stExpander"][open] summary[role="button"] > *,
-  .stApp details[data-testid="stExpander"][open] > summary div,
-  .stApp details[data-testid="stExpander"][open] > summary p,
-  .stApp details[data-testid="stExpander"][open] > summary span {{
+  html body .stApp details[data-testid="stExpander"][open] > summary *,
+  .stApp details[data-testid="stExpander"][open] > summary *,
+  html body .stApp [data-testid="stExpander"] details[open] > summary *,
+  .stApp [data-testid="stExpander"] details[open] > summary * {{
     color: {_exp_open_text} !important;
     -webkit-text-fill-color: {_exp_open_text} !important;
     background: transparent !important;
     background-color: transparent !important;
   }}
-  html body .stApp details[data-testid="stExpander"][open] > summary svg,
-  html body .stApp details[data-testid="stExpander"][open] > summary svg * {{
+  html body .stApp details[data-testid="stExpander"][open] > summary svg *,
+  html body .stApp [data-testid="stExpander"] details[open] > summary svg * {{
     fill: {_exp_open_text} !important;
     stroke: {_exp_open_text} !important;
+    background: transparent !important;
   }}
 
   /* 6. CONTENT AREA — la causa principale del nero */
@@ -3933,7 +3908,6 @@ def get_css(T: dict) -> str:
   }}
 
 </style>
-{_exp_js_block}
 """
 
 

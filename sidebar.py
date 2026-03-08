@@ -236,11 +236,11 @@ def render_sidebar(
                            font-family:'DM Sans',sans-serif;margin-bottom:2px;">
                 ✦ VerificAI Pro
               </div>
-              <div style="font-size:.7rem;color:{_sb_text};font-family:'DM Sans',sans-serif;
+              <div style="font-size:.7rem;color:{T['hint_text']};font-family:'DM Sans',sans-serif;
                           margin-bottom:.45rem;line-height:1.4;">
                 {_msg} {_sub}
               </div>
-              <div style="font-size:.68rem;color:{_sb_muted};font-family:'DM Sans',sans-serif;">
+              <div style="font-size:.68rem;color:{T['hint_text']}AA;font-family:'DM Sans',sans-serif;">
                 Verifiche illimitate · Versione anti-copia (Fila B) · Adattata BES/DSA · Soluzioni per il docente
               </div>
             </div>

@@ -47,7 +47,7 @@ except ImportError:
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from auth import mostra_auth, ripristina_sessione, cancella_sessione_cookie
-from styles import get_css
+from styles import get_css, _is_light_color
 from ui_helpers import (
     _render_back_button, _make_katex_html, _render_sticky_header,
     _render_step_progress, _split_download_button, _render_breadcrumb,
@@ -554,8 +554,44 @@ _verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_
 _is_admin       = st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False
 _limite         = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
 
-# ── CSS + FEEDBACK ────────────────────────────────────────────────────────────
+# ── CSS + FEEDBACK ────────────────────────────────────────────
 st.markdown(get_css(T), unsafe_allow_html=True)
+
+# ── JS fix expander open header ─────────────────────────────────
+# st.markdown non esegue <script>. components.html usa un iframe sandbox con
+# allow-same-origin che permette window.parent.document → accesso al DOM reale.
+_theme_is_light = _is_light_color(T.get("bg", "#000000"))
+_exp_fix_bg  = T.get("accent_light", "#E0F2FE")
+_exp_fix_fg  = T.get("accent", "#0D9488")
+_exp_fix_bdr = T.get("accent", "#0D9488") + "44"
+components.html(
+    f'<script>'
+    f'(function(){{'                f'var p=window.parent,d=p&&p.document;'
+    f'if(!d)return;'
+    f'var bg="{_exp_fix_bg if _theme_is_light else ""}",fg="{_exp_fix_fg if _theme_is_light else ""}",bd="1px solid {_exp_fix_bdr if _theme_is_light else ""}";'
+    f'if(!bg)return;'
+    f'var SEL=\'[data-testid="stExpander"] details[open]>summary,[data-testid="stExpander"][open]>summary\';'
+    f'function fx(){{'
+    f'd.querySelectorAll(SEL).forEach(function(e){{'
+    f'e.style.setProperty("background",bg,"important");'
+    f'e.style.setProperty("background-color",bg,"important");'
+    f'e.style.setProperty("color",fg,"important");'
+    f'e.style.setProperty("-webkit-text-fill-color",fg,"important");'
+    f'e.style.setProperty("border-bottom",bd,"important");'
+    f'e.style.setProperty("border-radius","12px 12px 0 0","important");'
+    f'}});'
+    f'd.querySelectorAll(SEL.split(",").map(function(s){{return s+" *";}}).join(",")).forEach(function(e){{'
+    f'e.style.setProperty("color",fg,"important");'
+    f'e.style.setProperty("-webkit-text-fill-color",fg,"important");'
+    f'e.style.setProperty("background-color","transparent","important");'
+    f'}});}}'
+    f'try{{new MutationObserver(fx).observe(d.body,{{subtree:true,attributes:true,childList:true}});}}catch(e){{}}'
+    f'fx();setInterval(fx,300);'
+    f'}})();'
+    f'</script>',
+    height=0,
+    scrolling=False,
+)
 st.markdown(
     '<a class="fab-link" href="' + FEEDBACK_FORM_URL + '" target="_blank" '
     'rel="noopener noreferrer">💬 Feedback</a>',
