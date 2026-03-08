@@ -1452,9 +1452,9 @@ def _render_bivio():
                     st.session_state.current_preview_index = selected_index
                     st.rerun()
         
+        # Sezione Dashboard (spostata sopra gli esempi)
         st.markdown("---")
         
-        # Sezione Dashboard
         st.markdown(
             """
             <div style="text-align: center; margin-bottom: 2rem;">
@@ -1469,9 +1469,9 @@ def _render_bivio():
             unsafe_allow_html=True,
         )
         
-        # Stats cards con dati reali
+        # Stats cards con dati reali (solo 2 colonne)
         stats = _get_verifiche_stats()
-        col1, col2, col3 = st.columns(3, gap="large")
+        col1, col2 = st.columns(2, gap="large")
         
         with col1:
             st.markdown(
@@ -1519,31 +1519,6 @@ def _render_bivio():
                     </div>
                     <div style="font-size: 1rem; opacity: 0.9;">
                         Materie Coperte
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        
-        with col3:
-            st.markdown(
-                f"""
-                <div style="
-                    background: linear-gradient(135deg, #f59e0b, #d97706);
-                    border-radius: 16px;
-                    padding: 2rem;
-                    text-align: center;
-                    color: white;
-                    box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.3);
-                ">
-                    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">
-                        ⭐
-                    </div>
-                    <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
-                        {stats['qualita_media']}
-                    </div>
-                    <div style="font-size: 1rem; opacity: 0.9;">
-                        Qualità Media
                     </div>
                 </div>
                 """,
