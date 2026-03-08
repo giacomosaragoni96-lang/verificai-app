@@ -1810,7 +1810,7 @@ def _render_le_tue_verifiche():
                 )
                 
                 # Bottoni funzionali
-                col1, col2, col3 = st.columns([1, 1, 1])
+                col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
                 
                 with col1:
                     if st.button(f"👁️ Anteprima", key=f"preview_{verifica.get('id')}_{i}"):
@@ -1860,6 +1860,55 @@ def _render_le_tue_verifiche():
                             st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
                 
                 with col3:
+                    if st.button(f"🎲 Parti da questa", key=f"facsimile_{verifica.get('id')}_{i}"):
+                        if verifica.get("latex_a"):
+                            try:
+                                # Carica la verifica come template per facsimile
+                                st.session_state.verifiche["A"]["latex"] = verifica["latex_a"]
+                                st.session_state.verifiche["A"]["latex_originale"] = verifica["latex_a"]
+                                
+                                # Compila PDF per preview
+                                pdf_bytes, error = compila_pdf(verifica["latex_a"])
+                                if pdf_bytes:
+                                    st.session_state.verifiche["A"]["pdf"] = pdf_bytes
+                                    st.session_state.verifiche["A"]["preview"] = True
+                                    
+                                    # Genera immagini per preview
+                                    images, _ = pdf_to_images_bytes(pdf_bytes)
+                                    st.session_state.preview_images = images or []
+                                
+                                # Estrai blocchi per review
+                                pre, blocks = extract_blocks(verifica["latex_a"])
+                                if blocks:
+                                    st.session_state.review_preamble = pre
+                                    st.session_state.review_blocks = blocks
+                                
+                                # Imposta parametri di generazione basati sulla verifica originale
+                                st.session_state.gen_params = {
+                                    "materia": verifica.get("materia", "Matematica"),
+                                    "difficolta": verifica.get("scuola", "Liceo Scientifico"),
+                                    "argomento": verifica.get("argomento", "Verifica"),
+                                    "num_esercizi": verifica.get("num_esercizi", 5),
+                                    "mostra_punteggi": True,
+                                    "punti_totali": 100,
+                                    "con_griglia": True,
+                                }
+                                
+                                # Attiva modalità facsimile e vai a preview
+                                st.session_state._facsimile_mode = True
+                                st.session_state.stage = STAGE_PREVIEW
+                                st.session_state._prev_stage = None
+                                st.session_state.input_percorso = None
+                                
+                                st.success("🎲 Facsimile generato! Vai alla preview per creare la tua variante.")
+                                st.rerun()
+                                
+                            except Exception as e:
+                                st.error(f"⚠️ Errore generazione facsimile: {e}")
+                        else:
+                            st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
+                
+                with col4:
                     if st.button(f"🗑️ Elimina", key=f"delete_{verifica.get('id')}_{i}"):
                         # Conferma eliminazione
                         if f"confirm_delete_{verifica.get('id')}" not in st.session_state:
@@ -1890,6 +1939,10 @@ def _render_le_tue_verifiche():
                                 # Reset stato di conferma
                                 if f"confirm_delete_{verifica.get('id')}" in st.session_state:
                                     del st.session_state[f"confirm_delete_{verifica.get('id')}"]
+                
+                # Divider tra verifiche (tranne l'ultima)
+                if i < len(verifiche_filtrate) - 1:
+                    st.markdown("---")
     else:
         st.info("📝 Nessuna verifica trovata. Inizia a creare la tua prima verifica!")
     
@@ -5946,16 +5999,17 @@ if _share_param and isinstance(_share_param, str) and len(_share_param) >= 6:
             st.rerun()
 
 if not _share_view_active:
-    # Mostra sticky header solo quando NON si è sulla landing iniziale
+    # Mostra sticky header solo quando NON si è sulla landing iniziale E NON sulla pagina "Le tue verifiche"
     _show_bc = not (
-        st.session_state.stage == STAGE_INPUT
-        and st.session_state.get("input_percorso") is None
+        (st.session_state.stage == STAGE_INPUT
+        and st.session_state.get("input_percorso") is None)
+        or st.session_state.stage == STAGE_MIE_VERIFICHE
     )
     if _show_bc:
         _render_sticky_header(T)
         _render_step_progress(T)
     else:
-        # Sulla landing: rimuovi l'eventuale sticky header rimasto
+        # Sulla landing o pagina "Le tue verifiche": rimuovi l'eventuale sticky header rimasto
         components.html("""
 <script>
 (function() {
