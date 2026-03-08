@@ -257,37 +257,44 @@ def _add_content_with_graphs(
         logger.error(f"Grafici disponibili: {list(graphs.keys())}")
     
     parts = _GRAPH_RE.split(text)
+    logger.info(f"Testo diviso in {len(parts)} parti: {parts}")
     first = True
-    for part in parts:
-        m = _GRAPH_RE.fullmatch(part)
-        if m:
-            n = int(m.group(1))
-            png = graphs.get(n)
-            
-            logger.info(f"Processando placeholder per grafico #{n}")
-            
-            # Forza il paragrafo: crea nuovo spazio dedicato per l'immagine
-            p_img = doc.add_paragraph()
-            p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p_img.paragraph_format.space_before = Pt(12)  # Spazio maggiore per separazione
-            p_img.paragraph_format.space_after  = Pt(12)
-            p_img.paragraph_format.left_indent = Cm(0.0)
-            
-            if png:
-                try:
-                    run = p_img.add_run()
-                    # Usa Inches per migliore controllo dimensioni
-                    run.add_picture(io.BytesIO(png), width=Inches(4))
-                    logger.info(f"Final Step: Image {n} actually appended to Word document - {len(png)} bytes")
-                    logger.debug(f"Graph #{n} successfully added to DOCX - centered layout, Inches(4)")
-                except Exception as e:
-                    logger.error(f"Failed to insert graph #{n} into DOCX: {e}")
-                    p_img.add_run('⚠️ Grafico non disponibile - errore inserimento').italic = True
-            else:
-                logger.warning(f"Graph #{n} placeholder - conversion failed")
-                p_img.add_run('⚠️ Grafico non disponibile - conversione fallita').italic = True
-            first = False
+    for i, part in enumerate(parts):
+        logger.debug(f"Processing part {i}: '{part}'")
+        # Dopo lo split, i numeri dei grafici sono nelle posizioni dispari
+        if i % 2 == 1:  # Posizioni dispari contengono i numeri dei grafici
+            try:
+                n = int(part)
+                png = graphs.get(n)
+                
+                logger.info(f"Processando placeholder per grafico #{n}")
+                
+                # Forza il paragrafo: crea nuovo spazio dedicato per l'immagine
+                p_img = doc.add_paragraph()
+                p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                p_img.paragraph_format.space_before = Pt(12)  # Spazio maggiore per separazione
+                p_img.paragraph_format.space_after  = Pt(12)
+                p_img.paragraph_format.left_indent = Cm(0.0)
+                
+                if png:
+                    try:
+                        run = p_img.add_run()
+                        # Usa Inches per migliore controllo dimensioni
+                        run.add_picture(io.BytesIO(png), width=Inches(4))
+                        logger.info(f"Final Step: Image {n} actually appended to Word document - {len(png)} bytes")
+                        logger.debug(f"Graph #{n} successfully added to DOCX - centered layout, Inches(4)")
+                    except Exception as e:
+                        logger.error(f"Failed to insert graph #{n} into DOCX: {e}")
+                        p_img.add_run('⚠️ Grafico non disponibile - errore inserimento').italic = True
+                else:
+                    logger.warning(f"Graph #{n} placeholder - conversion failed")
+                    p_img.add_run('⚠️ Grafico non disponibile - conversione fallita').italic = True
+                first = False
+            except ValueError:
+                logger.warning(f"Parte '{part}' non è un numero di grafico valido")
+                continue
         else:
+            # Questo è testo normale
             stripped = part.strip()
             if not stripped:
                 continue
@@ -299,7 +306,7 @@ def _add_content_with_graphs(
             first = False
     
     # Log finale per verifica completa
-    processed_graphs = sum(1 for part in parts if _GRAPH_RE.fullmatch(part))
+    processed_graphs = sum(1 for i, part in enumerate(parts) if i % 2 == 1 and part.strip().isdigit())
     logger.info(f"Elaborazione completata: {processed_graphs} placeholder processati su {len(graphs)} grafici disponibili")
 
 
