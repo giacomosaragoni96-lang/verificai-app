@@ -1331,7 +1331,86 @@ def _render_bivio():
     
     _previews = load_preview_images()
     
-        
+    # Sezione Dashboard (prima degli esempi)
+    st.markdown("---")
+    
+    st.markdown(
+        """
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h2 style="font-size: 1.8rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem;">
+                📊 Il Tuo Dashboard
+            </h2>
+            <p style="font-size: 1.1rem; color: #6b7280;">
+                Gestisci e visualizza tutte le tue verifiche create
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    
+    # Stats cards con dati reali (solo 2 colonne)
+    stats = _get_verifiche_stats()
+    col1, col2 = st.columns(2, gap="large")
+    
+    with col1:
+        st.markdown(
+            f"""
+            <div style="
+                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                border-radius: 16px;
+                padding: 2rem;
+                text-align: center;
+                color: white;
+                box-shadow: 0 8px 25px -5px rgba(59, 130, 246, 0.3);
+                cursor: pointer;
+                transition: transform 0.2s, box-shadow 0.2s;
+            " onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 35px -5px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px -5px rgba(59, 130, 246, 0.3)'">
+                <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">
+                    📄
+                </div>
+                <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+                    {stats['totali']}
+                </div>
+                <div style="font-size: 1rem; opacity: 0.9;">
+                    Verifiche Generate
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
+    with col2:
+        st.markdown(
+            f"""
+            <div style="
+                background: linear-gradient(135deg, #10b981, #059669);
+                border-radius: 16px;
+                padding: 2rem;
+                text-align: center;
+                color: white;
+                box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.3);
+            ">
+                <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">
+                    📚
+                </div>
+                <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+                    {stats['materie']}
+                </div>
+                <div style="font-size: 1rem; opacity: 0.9;">
+                    Materie Coperte
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
+    # Pulsante per andare alla pagina delle verifiche
+    st.markdown('<div style="text-align: center; margin-top: 2rem;">', unsafe_allow_html=True)
+    if st.button("📄 Gestisci Le Tue Verifiche →", type="primary", use_container_width=True):
+        st.session_state.stage = STAGE_MIE_VERIFICHE
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     # Mostra preview con design semplice e diretto
     if _previews:
         st.markdown("---")
@@ -1381,7 +1460,7 @@ def _render_bivio():
                         <img src="{preview["path"]}" alt="{preview["name"]}" 
                              style="
                                  max-width: 100%;
-                                 height: 700px;
+                                 height: 840px;
                                  object-fit: contain;
                                  border-radius: 8px;
                                  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
@@ -1398,7 +1477,7 @@ def _render_bivio():
                         <img src="{preview["path"]}" alt="{preview["name"]}" 
                              style="
                                  max-width: 100%;
-                                 height: 700px;
+                                 height: 840px;
                                  object-fit: contain;
                                  border-radius: 8px;
                                  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
@@ -1452,88 +1531,7 @@ def _render_bivio():
                     st.session_state.current_preview_index = selected_index
                     st.rerun()
         
-        # Sezione Dashboard (spostata sopra gli esempi)
-        st.markdown("---")
-        
-        st.markdown(
-            """
-            <div style="text-align: center; margin-bottom: 2rem;">
-                <h2 style="font-size: 1.8rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem;">
-                    📊 Il Tuo Dashboard
-                </h2>
-                <p style="font-size: 1.1rem; color: #6b7280;">
-                    Gestisci e visualizza tutte le tue verifiche create
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        
-        # Stats cards con dati reali (solo 2 colonne)
-        stats = _get_verifiche_stats()
-        col1, col2 = st.columns(2, gap="large")
-        
-        with col1:
-            st.markdown(
-                f"""
-                <div style="
-                    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-                    border-radius: 16px;
-                    padding: 2rem;
-                    text-align: center;
-                    color: white;
-                    box-shadow: 0 8px 25px -5px rgba(59, 130, 246, 0.3);
-                    cursor: pointer;
-                    transition: transform 0.2s, box-shadow 0.2s;
-                " onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 35px -5px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px -5px rgba(59, 130, 246, 0.3)'">
-                    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">
-                        📄
-                    </div>
-                    <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
-                        {stats['totali']}
-                    </div>
-                    <div style="font-size: 1rem; opacity: 0.9;">
-                        Verifiche Generate
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        
-        with col2:
-            st.markdown(
-                f"""
-                <div style="
-                    background: linear-gradient(135deg, #10b981, #059669);
-                    border-radius: 16px;
-                    padding: 2rem;
-                    text-align: center;
-                    color: white;
-                    box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.3);
-                ">
-                    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">
-                        📚
-                    </div>
-                    <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
-                        {stats['materie']}
-                    </div>
-                    <div style="font-size: 1rem; opacity: 0.9;">
-                        Materie Coperte
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        
-        # Pulsante per andare alla pagina delle verifiche
-        st.markdown('<div style="text-align: center; margin-top: 2rem;">', unsafe_allow_html=True)
-        if st.button("📄 Gestisci Le Tue Verifiche →", type="primary", use_container_width=True):
-            st.session_state.stage = STAGE_MIE_VERIFICHE
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        st.markdown("---")
-    # Se non ci sono preview, non mostra nulla
+            # Se non ci sono preview, non mostra nulla
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  _render_facsimile_dedicato()  ← NUOVA funzione, aggiungere prima di _render_stage_input
