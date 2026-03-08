@@ -144,7 +144,11 @@ def extract_preambolo(latex: str) -> str:
 
 def parse_pts_from_block_body(body: str) -> int:
     """Somma tutti i (N pt) nel corpo del blocco."""
-    return sum(int(float(p.replace(',', '.'))) for p in _PT_PATTERN.findall(body))
+    # Pattern più completo per catturare anche decimali e virgole
+    pt_pattern = re.compile(r'\((\d+(?:[.,]\d+)?)\s*pt\)', re.IGNORECASE)
+    points = pt_pattern.findall(body)
+    total = sum(int(float(p.replace(',', '.'))) for p in points)
+    return total
 
 
 def conta_punti_latex(latex: str) -> int:
@@ -181,14 +185,15 @@ def parse_items_from_block(body: str, title: str = "") -> list:
     auto_labels = list('abcdefghijklmnopqrstuvwxyz')
     items = []
 
-    labeled = list(re.finditer(r'\\item\[([^\]]+)\]([^\n]*)', body))
+    # Prima prova: item con label esplicito [a)], [b)], ecc.
+    labeled = list(re.finditer(r'\\item\[([^\]]+)\]([^{]*?)(?=\\item|\Z)', body, re.DOTALL))
     if labeled:
         for m in labeled:
             label = m.group(1).strip()
             text = m.group(2).strip()
-            pts_m = re.search(r'\((\d+)\s*pt\)', text)
-            pts = int(pts_m.group(1)) if pts_m else 0
-            clean = re.sub(r'\(\d+\s*pt\)', '', text).strip()
+            pts_m = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', text)
+            pts = int(float(pts_m.group(1).replace(',', '.'))) if pts_m else 0
+            clean = re.sub(r'\(\d+(?:[.,]\d+?)?\s*pt\)', '', text).strip()
             clean = re.sub(r'\s+', ' ', clean)
             clean = re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', clean)
             clean = re.sub(r'\$[^$]*\$', '[formula]', clean)
@@ -196,28 +201,57 @@ def parse_items_from_block(body: str, title: str = "") -> list:
             items.append((label, short, pts))
         return items
 
-    auto_idx = 0
-    for m in re.finditer(r'\\item\s+([^\n]+)', body):
-        text = m.group(1).strip()
-        pts_m = re.search(r'\((\d+)\s*pt\)', text)
-        pts = int(pts_m.group(1)) if pts_m else 0
-        clean = re.sub(r'\(\d+\s*pt\)', '', text).strip()
-        clean = re.sub(r'\s+', ' ', clean)
-        clean = re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', clean)
-        clean = re.sub(r'\$[^$]*\$', '[formula]', clean)
-        short = (clean[:42] + '\u2026') if len(clean) > 42 else clean
-        label = auto_labels[auto_idx] + ')' if auto_idx < len(auto_labels) else f'{auto_idx+1})'
-        items.append((label, short, pts))
-        auto_idx += 1
+    # Seconda prova: item senza label, auto-generati a), b), c)
+    # Cerca \item seguito da testo fino al prossimo \item o fine del blocco
+    auto_items = list(re.finditer(r'\\item\s+([^{]*?)(?=\\item|\Z)', body, re.DOTALL))
+    if auto_items:
+        auto_idx = 0
+        for m in auto_items:
+            text = m.group(1).strip()
+            if not text:  # Salta item vuoti
+                continue
+            pts_m = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', text)
+            pts = int(float(pts_m.group(1).replace(',', '.'))) if pts_m else 0
+            clean = re.sub(r'\(\d+(?:[.,]\d+?)?\s*pt\)', '', text).strip()
+            clean = re.sub(r'\s+', ' ', clean)
+            clean = re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', clean)
+            clean = re.sub(r'\$[^$]*\$', '[formula]', clean)
+            short = (clean[:42] + '\u2026') if len(clean) > 42 else clean
+            label = auto_labels[auto_idx] + ')' if auto_idx < len(auto_labels) else f'{auto_idx+1})'
+            items.append((label, short, pts))
+            auto_idx += 1
+
+        if items:
+            return items
+
+    # Terza prova: fallback - cerca qualsiasi \item
+    fallback_items = list(re.finditer(r'\\item[^\n]*', body))
+    if fallback_items:
+        auto_idx = 0
+        for m in fallback_items:
+            text = m.group(0).replace('\\item', '').strip()
+            if not text:  # Salta item vuoti
+                continue
+            pts_m = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', text)
+            pts = int(float(pts_m.group(1).replace(',', '.'))) if pts_m else 0
+            clean = re.sub(r'\(\d+(?:[.,]\d+?)?\s*pt\)', '', text).strip()
+            clean = re.sub(r'\s+', ' ', clean)
+            clean = re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', clean)
+            clean = re.sub(r'\$[^$]*\$', '[formula]', clean)
+            short = (clean[:42] + '\u2026') if len(clean) > 42 else clean
+            label = auto_labels[auto_idx] + ')' if auto_idx < len(auto_labels) else f'{auto_idx+1})'
+            items.append((label, short, pts))
+            auto_idx += 1
 
     if items:
         return items
 
+    # Ultimo fallback: controlla il titolo
     if title:
-        pt_title = re.search(r'\((\d+)\s*pt\)', title)
+        pt_title = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', title)
         if pt_title:
-            pts = int(pt_title.group(1))
-            clean_title = re.sub(r'\s*\(\d+\s*pt\)', '', title).strip()
+            pts = int(float(pt_title.group(1).replace(',', '.')))
+            clean_title = re.sub(r'\s*\(\d+(?:[.,]\d+?)?\s*pt\)', '', title).strip()
             clean_title = re.sub(r'\s+', ' ', clean_title)
             short = (clean_title[:42] + '\u2026') if len(clean_title) > 42 else clean_title
             items.append(("—", short, pts))
