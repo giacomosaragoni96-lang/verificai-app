@@ -1329,43 +1329,35 @@ def _render_bivio():
     
     _previews = load_preview_images()
     
-    # Debug: mostra quante preview sono state caricate
-    if _previews:
-        st.write(f"DEBUG: Trovate {len(_previews)} preview")
-    else:
-        st.write("DEBUG: Nessuna preview trovata")
-    
+        
     # Mostra solo le preview - se non ci sono preview non mostra nulla
     # CAROUSEL CENTRALE CON PREVIEW GRANDI
     if _previews:
         st.markdown(
             f'''
-            <div style="max-width: 900px; margin: 0 auto; padding: 0 1rem;">
+            <div style="max-width: 800px; margin: 0 auto; padding: 0 1rem;">
                 <div class="preview-carousel" style="
                     position: relative;
                     background: white;
                     border: 1px solid #e5e7eb;
-                    border-radius: 16px;
+                    border-radius: 12px;
                     overflow: hidden;
-                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+                    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
                 ">
                     <!-- Header -->
                     <div style="
                         background: linear-gradient(135deg, #3b82f6, #1d4ed8);
                         color: white;
-                        padding: 1rem 1.5rem;
+                        padding: 0.75rem 1rem;
                         text-align: center;
                     ">
-                        <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem;">
+                        <div style="font-size: 1rem; font-weight: 600;">
                             📄 Esempi di Verifiche Generate
-                        </div>
-                        <div style="font-size: 0.85rem; opacity: 0.9;">
-                            Scorri per vedere altri esempi
                         </div>
                     </div>
                     
                     <!-- Carousel Container -->
-                    <div style="position: relative; height: 700px; background: #f8f9fa;">
+                    <div style="position: relative; height: 550px; background: #f8f9fa;">
                         <!-- Navigation Arrows -->
                         <button class="carousel-prev" style="
                             position: absolute;
@@ -1429,14 +1421,14 @@ def _render_bivio():
                         height: 100%;
                         opacity: {1 if i == 0 else 0};
                         transition: opacity 0.5s ease-in-out;
-                        padding: 1.5rem;
+                        padding: 1rem;
                         display: flex;
                         flex-direction: column;
                     ">
                         <div style="
                             background: white;
                             border-radius: 12px;
-                            padding: 1.5rem;
+                            padding: 1rem;
                             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
                             flex: 1;
                             display: flex;
@@ -1450,11 +1442,11 @@ def _render_bivio():
                                     PDF completo • 3 esercizi • 100 punti • Alta definizione
                                 </div>
                             </div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 0.5rem;">
                                 <img src="{preview["path"]}" alt="{preview["name"]}" 
                                      style="
                                          max-width: 100%;
-                                         max-height: 500px;
+                                         max-height: 420px;
                                          object-fit: contain;
                                          border-radius: 8px;
                                          border: 2px solid #e5e7eb;
