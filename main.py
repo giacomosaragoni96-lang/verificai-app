@@ -1345,14 +1345,48 @@ def _render_bivio():
                 preview = _previews[i]
                 with _col:
                     if preview['type'] == 'pdf_preview':
-                        # Per PDF convertito in immagine, mostra la preview
+                        # Per PDF convertito in immagine, mostra la preview interattiva
                         st.markdown(
-                            f'<div class="landing-feat-card preview-card">'
-                            f'<img src="{preview["path"]}" alt="{preview["name"]}" '
-                            f'style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">'
-                            f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
-                            f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Verifica completa</div>'
-                            f'</div>',
+                            f'''
+                            <div class="landing-feat-card preview-card pdf-preview-container" style="position:relative;cursor:pointer;">
+                                <div class="pdf-preview-hover" style="
+                                    position:absolute;
+                                    top:0;
+                                    left:0;
+                                    right:0;
+                                    bottom:0;
+                                    background:rgba(0,0,0,0.9);
+                                    border-radius:8px 8px 0 0;
+                                    display:flex;
+                                    align-items:center;
+                                    justify-content:center;
+                                    opacity:0;
+                                    transition:opacity 0.3s ease;
+                                    z-index:10;
+                                ">
+                                    <div style="text-align:center;color:white;">
+                                        <div style="font-size:2rem;margin-bottom:0.5rem;">🔍</div>
+                                        <div style="font-size:0.9rem;font-weight:600;">Clicca per ingrandire</div>
+                                        <div style="font-size:0.8rem;opacity:0.8;margin-top:0.3rem;">Apre il PDF completo</div>
+                                    </div>
+                                </div>
+                                <img src="{preview["path"]}" alt="{preview["name"]}" 
+                                     style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">
+                                <div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>
+                                <div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per visualizzare • PDF completo</div>
+                            </div>
+                            <script>
+                            document.querySelector('.pdf-preview-container:last-child').addEventListener('click', function() {{
+                                window.open('assets/preview/{preview["file"]}', '_blank');
+                            }});
+                            document.querySelector('.pdf-preview-container:last-child').addEventListener('mouseenter', function() {{
+                                this.querySelector('.pdf-preview-hover').style.opacity = '1';
+                            }});
+                            document.querySelector('.pdf-preview-container:last-child').addEventListener('mouseleave', function() {{
+                                this.querySelector('.pdf-preview-hover').style.opacity = '0';
+                            }});
+                            </script>
+                            ''',
                             unsafe_allow_html=True,
                         )
                     elif preview['type'] == 'pdf':
@@ -1393,14 +1427,48 @@ def _render_bivio():
                     preview = _previews[idx]
                     with _col:
                         if preview['type'] == 'pdf_preview':
-                            # Per PDF convertito in immagine, mostra la preview
+                            # Per PDF convertito in immagine, mostra la preview interattiva
                             st.markdown(
-                            f'<div class="landing-feat-card preview-card">'
-                            f'<img src="{preview["path"]}" alt="{preview["name"]}" '
-                            f'style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">'
-                            f'<div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>'
-                            f'<div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Verifica completa</div>'
-                            f'</div>',
+                            f'''
+                            <div class="landing-feat-card preview-card pdf-preview-container" style="position:relative;cursor:pointer;">
+                                <div class="pdf-preview-hover" style="
+                                    position:absolute;
+                                    top:0;
+                                    left:0;
+                                    right:0;
+                                    bottom:0;
+                                    background:rgba(0,0,0,0.9);
+                                    border-radius:8px 8px 0 0;
+                                    display:flex;
+                                    align-items:center;
+                                    justify-content:center;
+                                    opacity:0;
+                                    transition:opacity 0.3s ease;
+                                    z-index:10;
+                                ">
+                                    <div style="text-align:center;color:white;">
+                                        <div style="font-size:2rem;margin-bottom:0.5rem;">🔍</div>
+                                        <div style="font-size:0.9rem;font-weight:600;">Clicca per ingrandire</div>
+                                        <div style="font-size:0.8rem;opacity:0.8;margin-top:0.3rem;">Apre il PDF completo</div>
+                                    </div>
+                                </div>
+                                <img src="{preview["path"]}" alt="{preview["name"]}" 
+                                     style="width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0;">
+                                <div class="landing-feat-title" style="padding:1rem 1rem 0.5rem 1rem;">{preview["name"]}</div>
+                                <div class="landing-feat-desc" style="padding:0 1rem 1rem 1rem;">Clicca per visualizzare • PDF completo</div>
+                            </div>
+                            <script>
+                            document.querySelector('.pdf-preview-container:last-child').addEventListener('click', function() {{
+                                window.open('assets/preview/{preview["file"]}', '_blank');
+                            }});
+                            document.querySelector('.pdf-preview-container:last-child').addEventListener('mouseenter', function() {{
+                                this.querySelector('.pdf-preview-hover').style.opacity = '1';
+                            }});
+                            document.querySelector('.pdf-preview-container:last-child').addEventListener('mouseleave', function() {{
+                                this.querySelector('.pdf-preview-hover').style.opacity = '0';
+                            }});
+                            </script>
+                            ''',
                             unsafe_allow_html=True,
                         )
                         elif preview['type'] == 'pdf':
