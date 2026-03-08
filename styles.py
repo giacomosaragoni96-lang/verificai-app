@@ -2502,6 +2502,9 @@ def get_css(T: dict) -> str:
   /* Orange (Griglia di Valutazione) */
   .variant-card-orange::before {{ background: linear-gradient(90deg, #D97706, #F59E0B); }}
   .variant-card-orange:hover {{ border-color: #D9770666; }}
+  /* Teal (Formato Word / DOCX) */
+  .variant-card-teal::before {{ background: linear-gradient(90deg, #0891B2, #22D3EE); }}
+  .variant-card-teal:hover {{ border-color: #0891B266; }}
 
   /* Icon + Title inline row */
   .variant-card-header {{

@@ -3611,6 +3611,9 @@ def _render_stage_preview():
                    "dialogo_stato", "analisi_doc", "file_mode"):
             if _k in st.session_state:
                 del st.session_state[_k]
+        for _k in list(st.session_state.keys()):
+            if _k.startswith("_undo_block_") or _k.startswith("item_pt_"):
+                del st.session_state[_k]
         st.session_state.stage = STAGE_INPUT
         st.rerun()
 
@@ -4834,7 +4837,7 @@ def _render_stage_final():
         f'<div class="variant-section-label">GENERA ULTERIORI VERSIONI DELLA VERIFICA</div>',
         unsafe_allow_html=True
     )
-    _vc1, _vc2, _vc3, _vc4 = st.columns(4, gap="medium")
+    _vc1, _vc2, _vc3, _vc4, _vc5 = st.columns(5, gap="medium")
 
     # ── FILA B ────────────────────────────────────────────────────────────────
     with _vc1:
@@ -4980,6 +4983,47 @@ def _render_stage_final():
             except Exception as _e:
                 _ph_s.empty(); st.error(f"Errore: {_e}")
 
+    # ── GENERA DOCX — 5a card ──────────────────────────────────────────────
+    with _vc5:
+        _docx_a   = vA.get("docx")
+        _docx_key = "_docx_gen_A_card"
+        st.markdown(
+            f'<div class="variant-card variant-card-teal">'
+            f'  <div class="variant-card-header">'
+            f'    <span class="variant-card-icon">📝</span>'
+            f'    <span class="variant-card-title">Formato Word</span>'
+            f'  </div>'
+            f'  <div class="variant-card-desc">Documento .docx modificabile, compatibile con Microsoft Word e Google Docs.</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        if _docx_a:
+            st.download_button(
+                f"⬇ Scarica Word (.docx) · {_stima(_docx_a)}",
+                data=_docx_a,
+                file_name=arg_str + "_FilaA.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                use_container_width=True,
+                key="dl_docx_A_card",
+            )
+        elif vA.get("latex"):
+            if st.button("📝 Genera Word", key="gen_docx_A_card",
+                         use_container_width=True, type="primary"):
+                st.session_state[_docx_key] = True
+            if st.session_state.get(_docx_key, False):
+                with st.spinner("Conversione Word…"):
+                    try:
+                        _db, _emsg = latex_to_docx_via_ai(vA["latex"], con_griglia=con_griglia)
+                    except Exception as _e:
+                        _db, _emsg = None, str(_e)
+                st.session_state[_docx_key] = False
+                if _db:
+                    st.session_state.verifiche["A"]["docx"] = _db; st.rerun()
+                else:
+                    st.error(f"Errore Word: {_emsg or 'nessun dettaglio'}")
+        else:
+            st.caption("PDF non ancora disponibile")
+
     # ── GRIGLIA DI VALUTAZIONE — 4a card one-click ──────────────────────────
     with _vc4:
         _rub_ready = bool(st.session_state.get('rubrica_testo'))
@@ -5004,33 +5048,23 @@ def _render_stage_final():
                 )
                 if _docx_bytes:
                     st.session_state['_rubrica_docx'] = _docx_bytes
-            _rbc1, _rbc2 = st.columns([3, 1])
-            with _rbc1:
-                _rub_docx = st.session_state.get('_rubrica_docx')
-                if _rub_docx:
-                    st.download_button(
-                        '⬇ Scarica Griglia (.docx)',
-                        data=_rub_docx,
-                        file_name=arg_str + '_GrigliaValutazione.docx',
-                        mime='application/vnd.openxmlformats-officedocument'
-                             '.wordprocessingml.document',
-                        key='dl_rubrica_docx_v2', use_container_width=True,
-                    )
-                else:
-                    st.download_button(
-                        '⬇ Scarica griglia (.txt)',
-                        data=st.session_state.rubrica_testo.encode('utf-8'),
-                        file_name=arg_str + '_Griglia.txt',
-                        mime='text/plain', key='dl_rubrica_v2', use_container_width=True,
-                    )
-            with _rbc2:
-                if st.button('🔄', key='btn_regen_rub_v2', use_container_width=True,
-                             help='Rigenera la griglia di valutazione'):
-                    st.session_state.rubrica_testo = None
-                    st.session_state['_rubrica_pdf']  = None
-                    st.session_state['_rubrica_docx'] = None
-                    st.session_state._rubrica_gen  = False
-                    st.rerun()
+            _rub_docx = st.session_state.get('_rubrica_docx')
+            if _rub_docx:
+                st.download_button(
+                    '⬇ Scarica Griglia (.docx)',
+                    data=_rub_docx,
+                    file_name=arg_str + '_GrigliaValutazione.docx',
+                    mime='application/vnd.openxmlformats-officedocument'
+                         '.wordprocessingml.document',
+                    key='dl_rubrica_docx_v2', use_container_width=True,
+                )
+            else:
+                st.download_button(
+                    '⬇ Scarica griglia (.txt)',
+                    data=st.session_state.rubrica_testo.encode('utf-8'),
+                    file_name=arg_str + '_Griglia.txt',
+                    mime='text/plain', key='dl_rubrica_v2', use_container_width=True,
+                )
         else:
             if st.button('📊 Genera Griglia', key='btn_gen_griglia_v2',
                          use_container_width=True, type='primary'):
@@ -5250,6 +5284,9 @@ def _render_stage_final():
             st.session_state.stage            = STAGE_INPUT
             st.session_state["_prev_stage"]   = None
             st.session_state.input_percorso   = None
+            for _k in list(st.session_state.keys()):
+                if _k.startswith("_undo_block_") or _k.startswith("item_pt_"):
+                    del st.session_state[_k]
             st.session_state.verifiche         = {
                 "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
                 "S": {"latex": None, "testo": None, "pdf": None},
@@ -5443,16 +5480,22 @@ if _prev_stage != _current_stage:
     components.html(
         "<script>"
         "(function(){"
-        "var tries=0;"
-        "function scroll(){"
-        "  var m=window.parent.document.querySelector('.main');"
-        "  if(m){m.scrollTop=0;}"
-        "  var a=window.parent.document.querySelector('[data-testid=\"stAppViewContainer\"]');"
-        "  if(a){a.scrollTop=0;}"
-        "  window.parent.scrollTo(0,0);"
-        "  if(tries++<5)setTimeout(scroll,80);"
+        "var tries=0,max=12;"
+        "function scrollTop(){"
+        "  var d=window.parent.document;"
+        "  var targets=["
+        "    d.querySelector('.main'),"
+        "    d.querySelector('.main .block-container'),"
+        "    d.querySelector('[data-testid=\"stAppViewContainer\"]'),"
+        "    d.querySelector('[data-testid=\"stMainBlockContainer\"]'),"
+        "    d.documentElement,"
+        "    d.body"
+        "  ];"
+        "  targets.forEach(function(t){if(t){t.scrollTop=0;}});"
+        "  window.parent.scrollTo({top:0,left:0,behavior:'instant'});"
+        "  if(tries++<max)setTimeout(scrollTop,120);"
         "}"
-        "scroll();"
+        "scrollTop();"
         "})();"
         "</script>",
         height=0
