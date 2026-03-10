@@ -202,14 +202,16 @@ def render_sidebar(
             _reset_str = f"Si rinnova tra {_gg_reset} giorni"
 
         st.markdown(f"""
-        <div class="monthly-bar" style="background: transparent; border: none;">
-          <div class="monthly-bar-header">
-            <span class="monthly-bar-label">Verifiche questo mese</span>
-            <span class="monthly-bar-count {_count_class}">
+        <div style="margin-bottom: 0.4rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+            <span style="font-size: 0.78rem; color: {_sb_text}; font-family: 'DM Sans', sans-serif;">
+              Verifiche questo mese
+            </span>
+            <span style="font-size: 0.8rem; font-weight: 700; color: {_sb_text}; font-family: 'DM Sans', sans-serif;">
               {verifiche_mese_count} / {LIMITE_MENSILE}
             </span>
           </div>
-          <div class="monthly-progress" style="
+          <div style="
             background: transparent !important;
             border: none !important;
             border-radius: 10px;
@@ -217,17 +219,15 @@ def render_sidebar(
             height: 4px;
             width: 100%;
           ">
-            <div class="monthly-progress-fill"
-                 style="
-                   width: {_perc_uso}%;
-                   background: {_color_bar};
-                   height: 100%;
-                   border-radius: 10px;
-                   transition: width .6s ease;
-                 "></div>
+            <div style="
+              width: {_perc_uso}%;
+              background: {_color_bar};
+              height: 100%;
+              border-radius: 10px;
+              transition: width .6s ease;
+            "></div>
           </div>
-          <div style="text-align:right;font-size:0.68rem;color:{_sb_muted};
-                      margin-top:4px;font-family:'DM Sans',sans-serif;">
+          <div style="text-align: right; font-size: 0.68rem; color: {_sb_muted}; margin-top: 4px; font-family: 'DM Sans', sans-serif;">
             🔄 {_reset_str}
           </div>
         </div>
