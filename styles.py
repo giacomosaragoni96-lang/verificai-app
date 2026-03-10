@@ -540,11 +540,12 @@ def get_css(T: dict) -> str:
 
   /* ── Sidebar: sezione divider sottile ── */
   .sb-divider {{
-    height: 1px;
-    background: {_SB_BORDER};
-    border: none;
-    margin: .8rem 0;
-    opacity: .5;
+    display: none !important;
+    height: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+    opacity: 0 !important;
   }}
 
   /* ── Sidebar: monthly usage bar ── */
