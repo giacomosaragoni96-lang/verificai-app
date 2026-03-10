@@ -1259,11 +1259,6 @@ def _render_bivio():
         st.markdown(
             '''
             <div class="cta-genera-wrap">
-            <div style="text-align: center; margin-bottom: 1rem;">
-                <p style="font-size: 1.1rem; color: #6b7280; font-weight: 500;">
-                    Pronto a iniziare?
-                </p>
-            </div>
             ''',
             unsafe_allow_html=True,
         )
@@ -1278,11 +1273,6 @@ def _render_bivio():
             st.rerun()
         st.markdown(
             '''
-            <div style="text-align: center; margin-top: 0.8rem;">
-                <p style="font-size: 0.9rem; color: #9ca3af;">
-                    ⚡ Gratis • Nessuna carta di credito • Inizia subito
-                </p>
-            </div>
             </div>
             ''',
             unsafe_allow_html=True,
