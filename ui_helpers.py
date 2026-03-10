@@ -454,13 +454,13 @@ def _render_step_progress(T: dict) -> None:
     padding: .75rem 1.5rem;
     box-shadow: none;
     width: 100%;
-    max-width: 400px;
+    max-width: 320px;
   }}
   .sp-node {{
     display: flex; flex-direction: column;
     align-items: center; gap: 8px;
     position: relative; z-index: 1;
-    margin: 0 20px;
+    margin: 0 10px;
     flex: 1;
   }}
   .sp-node:first-child {{ margin-left: 0; }}
@@ -479,7 +479,7 @@ def _render_step_progress(T: dict) -> None:
     text-align: center;
   }}
   .sp-line {{
-    height: 1px; width: 80px;
+    height: 1px; width: 60px;
     flex-shrink: 0; border-radius: 1px;
     margin-bottom: 30px;
     opacity: 0.4;
