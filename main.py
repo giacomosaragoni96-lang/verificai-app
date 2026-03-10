@@ -3099,7 +3099,7 @@ def _render_percorso_b_form():
             elif _auto_arg:
                 _arg_default = _auto_arg
             # ── LABEL ARGOMENTO ─────────────────────────────────────────────────────
-            st.markdown('<div class="sidebar-label">Argomento ✱</div>', unsafe_allow_html=True)
+            st.markdown('<div class="opt-label">Argomento ✱</div>', unsafe_allow_html=True)
             
             argomento_raw = st.text_area(
                 "argomento",
