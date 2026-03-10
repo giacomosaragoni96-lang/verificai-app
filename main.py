@@ -1259,43 +1259,64 @@ def _render_bivio():
         st.markdown(
             '''
             <div class="cta-genera-wrap" style="margin-bottom: 1rem;">
-            <button id="custom-cta-button" style="
-                min-height: 72px;
-                font-size: 1.3rem;
-                font-weight: 900;
-                border-radius: 16px;
-                background: linear-gradient(135deg, #10b981, #f59e0b);
-                border: 2px solid #10b981;
-                box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4);
-                transition: all 0.3s ease;
-                color: white;
-                width: 100%;
-                cursor: pointer;
-                font-family: system-ui, -apple-system, sans-serif;
-                letter-spacing: 0.02em;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                text-align: center;
-            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 35px -5px rgba(16, 185, 129, 0.5)'; this.style.background='linear-gradient(135deg, #059669, #d97706)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px -5px rgba(16, 185, 129, 0.4)'; this.style.background='linear-gradient(135deg, #10b981, #f59e0b)'">
-                🚀 Crea Verifica Ora
-            </button>
+            <style>
+            /* CSS con massima specificità per sovrascrivere Streamlit */
+            .element-container:has(> div > div > div > button[data-testid="baseButton-primary"]) button[data-testid="baseButton-primary"],
+            div[data-testid="stVerticalBlock"] > div > div > div > button[data-testid="baseButton-primary"],
+            button[data-testid="baseButton-primary"][kind="primary"] {
+                min-height: 72px !important;
+                font-size: 1.3rem !important;
+                font-weight: 900 !important;
+                background: linear-gradient(135deg, #10b981, #f59e0b) !important;
+                border: 2px solid #10b981 !important;
+                box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4) !important;
+                color: white !important;
+                transition: all 0.3s ease !important;
+            }
+            
+            .element-container:has(> div > div > div > button[data-testid="baseButton-primary"]) button[data-testid="baseButton-primary"]:hover,
+            div[data-testid="stVerticalBlock"] > div > div > div > button[data-testid="baseButton-primary"]:hover,
+            button[data-testid="baseButton-primary"][kind="primary"]:hover {
+                transform: translateY(-2px) !important;
+                box-shadow: 0 12px 35px -5px rgba(16, 185, 129, 0.5) !important;
+                background: linear-gradient(135deg, #059669, #d97706) !important;
+            }
+            
+            /* Forza inline styles con JavaScript */
+            </style>
             <script>
             document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(function() {
-                    const customBtn = document.getElementById('custom-cta-button');
-                    if (customBtn) {
-                        customBtn.addEventListener('click', function() {
-                            // Trova tutti i pulsanti e clicca quello con il testo vuoto (il nostro hidden button)
-                            const buttons = document.querySelectorAll('button');
-                            buttons.forEach(btn => {
-                                if (btn.textContent.trim() === '' && btn.getAttribute('data-testid') === 'baseButton-secondary') {
-                                    btn.click();
-                                }
+                    const buttons = document.querySelectorAll('button[data-testid="baseButton-primary"]');
+                    buttons.forEach(btn => {
+                        if (btn.textContent.includes('Crea Verifica Ora')) {
+                            // Forza stili inline che hanno precedenza massima
+                            btn.setAttribute('style', `
+                                min-height: 72px !important;
+                                font-size: 1.3rem !important;
+                                font-weight: 900 !important;
+                                background: linear-gradient(135deg, #10b981, #f59e0b) !important;
+                                border: 2px solid #10b981 !important;
+                                box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4) !important;
+                                color: white !important;
+                                transition: all 0.3s ease !important;
+                            `);
+                            
+                            // Aggiungi hover events
+                            btn.addEventListener('mouseenter', function() {
+                                this.style.transform = 'translateY(-2px)';
+                                this.style.boxShadow = '0 12px 35px -5px rgba(16, 185, 129, 0.5)';
+                                this.style.background = 'linear-gradient(135deg, #059669, #d97706)';
                             });
-                        });
-                    }
-                }, 100);
+                            
+                            btn.addEventListener('mouseleave', function() {
+                                this.style.transform = 'translateY(0)';
+                                this.style.boxShadow = '0 8px 25px -5px rgba(16, 185, 129, 0.4)';
+                                this.style.background = 'linear-gradient(135deg, #10b981, #f59e0b)';
+                            });
+                        }
+                    });
+                }, 200);
             });
             </script>
             </div>
@@ -1303,8 +1324,13 @@ def _render_bivio():
             unsafe_allow_html=True,
         )
         
-        # Hidden button for Streamlit state management
-        if st.button("", key="btn_genera_verifica_home_hidden", type="secondary"):
+        if st.button(
+            "🚀 Crea Verifica Ora",
+            key="btn_genera_verifica_home",
+            use_container_width=True,
+            type="primary",
+            help="Scegli materia e argomento, crea in 30 secondi",
+        ):
             st.session_state.input_percorso = "B"
             st.rerun()
 
