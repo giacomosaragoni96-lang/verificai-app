@@ -1257,7 +1257,7 @@ def _render_bivio():
     _c1, _c2, _c3 = st.columns([1, 2.5, 1])
     with _c2:
         if st.button(
-            "🚀 Crea Verifica Ora",
+            "🚀 **Crea Verifica Ora**",
             key="btn_genera_verifica_home",
             use_container_width=True,
             type="primary",
