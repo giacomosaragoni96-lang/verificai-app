@@ -2938,8 +2938,7 @@ def get_css(T: dict) -> str:
     flex-direction: column;
     gap: .5rem;
     flex: 1;
-    height: 100%;
-    min-height: 160px;
+    height: 180px;  /* Altezza fissa invece di min-height */
     position: relative;
     overflow: hidden;
     transition: border-color .2s ease, box-shadow .2s ease, transform .15s ease;
@@ -3001,6 +3000,11 @@ def get_css(T: dict) -> str:
     display: flex;
     flex-direction: column;
     justify-content: flex-start;  /* Allinea il testo in alto */
+    overflow: hidden;  /* Nasconde il testo che trabocca */
+    text-overflow: ellipsis;  /* Aggiunge "..." se il testo è troppo lungo */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;  /* Limita a 3 linee */
+    -webkit-box-orient: vertical;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -3138,7 +3142,7 @@ def get_css(T: dict) -> str:
     .page-header-icon {{ font-size: 1.6rem; }}
     .tally-features {{ gap: 5px 4px; }}
     .tally-feat-pill {{ font-size: 0.94rem; }}
-    .variant-card {{ min-height: 160px !important; }}
+    .variant-card {{ height: 180px !important; }}
   }}
 
   /* ═══════════════════════════════════════════════════════════════════════
