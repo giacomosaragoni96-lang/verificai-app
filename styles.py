@@ -2794,17 +2794,14 @@ def get_css(T: dict) -> str:
   .btn-back-discrete .stButton > button {{
     background: transparent !important;
     background-color: transparent !important;
-    color: {T['text2']} !important;
-    -webkit-text-fill-color: {T['text2']} !important;
-    border: 1.5px solid {T['border2']} !important;
-    border-radius: 8px !important;
-    font-size: 0.89rem !important;
-    font-weight: 600 !important;
-    min-height: 34px !important;
-    padding: 0 .9rem !important;
-    box-shadow: none !important;
-    transform: none !important;
-    transition: color .12s ease, border-color .12s ease, background .12s ease !important;
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
+    border: 1px solid {T['border']} !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    padding: 6px 12px !important;
+    min-height: 32px !important;
+    border-radius: 6px !important;
     width: auto !important;
     letter-spacing: -.01em;
   }}
@@ -2814,9 +2811,6 @@ def get_css(T: dict) -> str:
     -webkit-text-fill-color: {T['text']} !important;
     border-color: {T['accent']} !important;
     background: {T['hover']} !important;
-    background-color: {T['hover']} !important;
-    transform: none !important;
-    box-shadow: none !important;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
