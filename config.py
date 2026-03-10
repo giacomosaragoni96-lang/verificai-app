@@ -203,11 +203,11 @@ THEMES = {
         "radius_lg":  "12px",
 
         # Sidebar — blu scuro minimal
-        "sidebar_bg":      "linear-gradient(180deg, #1E40AF 0%, #3B82F6 100%)",
-        "sidebar_border":  "#3B82F6",
-        "sidebar_accent":  "#60A5FA",
-        "sidebar_input_bg":  "#2563EB",
-        "sidebar_input_text": "#FFFFFF",
+        "sidebar_bg":      "linear-gradient(180deg, #1E293B 0%, #334155 100%)",
+        "sidebar_border":  "#475569",
+        "sidebar_accent":  "#818CF8",
+        "sidebar_input_bg":  "#1E293B",
+        "sidebar_input_text": "#F8FAFC",
 
         # Hint boxes
         "hint_bg":      "#EFF6FF",
@@ -258,11 +258,11 @@ THEMES = {
         "radius_lg":  "12px",
 
         # Sidebar — verde scuro minimal
-        "sidebar_bg":      "linear-gradient(180deg, #14532D 0%, #16A34A 100%)",
+        "sidebar_bg":      "linear-gradient(180deg, #14532D 0%, #166534 100%)",
         "sidebar_border":  "#16A34A",
         "sidebar_accent":  "#22C55E",
-        "sidebar_input_bg":  "#15803D",
-        "sidebar_input_text": "#FFFFFF",
+        "sidebar_input_bg":  "#14532D",
+        "sidebar_input_text": "#F0FDF4",
 
         # Hint boxes
         "hint_bg":      "#F0FDF4",
@@ -316,8 +316,8 @@ THEMES = {
         "sidebar_bg":      "linear-gradient(180deg, #9A3412 0%, #EA580C 100%)",
         "sidebar_border":  "#EA580C",
         "sidebar_accent":  "#FB923C",
-        "sidebar_input_bg":  "#C2410C",
-        "sidebar_input_text": "#FFFFFF",
+        "sidebar_input_bg":  "#9A3412",
+        "sidebar_input_text": "#FFF7ED",
 
         # Hint boxes
         "hint_bg":      "#FFF7ED",
@@ -371,8 +371,8 @@ THEMES = {
         "sidebar_bg":      "linear-gradient(180deg, #6B21A8 0%, #9333EA 100%)",
         "sidebar_border":  "#9333EA",
         "sidebar_accent":  "#A855F7",
-        "sidebar_input_bg":  "#7C3AED",
-        "sidebar_input_text": "#FFFFFF",
+        "sidebar_input_bg":  "#6B21A8",
+        "sidebar_input_text": "#FAF5FF",
 
         # Hint boxes
         "hint_bg":      "#FAF5FF",
@@ -426,8 +426,8 @@ THEMES = {
         "sidebar_bg":      "linear-gradient(180deg, #92400E 0%, #D97706 100%)",
         "sidebar_border":  "#D97706",
         "sidebar_accent":  "#F59E0B",
-        "sidebar_input_bg":  "#B45309",
-        "sidebar_input_text": "#FFFFFF",
+        "sidebar_input_bg":  "#92400E",
+        "sidebar_input_text": "#FEF3C7",
 
         # Hint boxes
         "hint_bg":      "#FEF3C7",
