@@ -182,36 +182,92 @@ def parse_items_from_block(body: str, title: str = "") -> list:
     Parse sottopunti da corpo LaTeX (e opz. titolo).
     Restituisce list di (label, short_text, pts) per il widget Ricalibra Punteggi.
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"=== PARSE ITEMS FROM BLOCK ===")
+    logger.info(f"Title: {title}")
+    logger.info(f"Body (first 200 chars): {body[:200]}...")
+    
     auto_labels = list('abcdefghijklmnopqrstuvwxyz')
     items = []
 
     # Prima prova: item con label esplicito [a)], [b)], ecc.
-    labeled = list(re.finditer(r'\\item\[([^\]]+)\]([^{]*?)(?=\\item|\Z)', body, re.DOTALL))
+    labeled_pattern = r'\\item\[([^\]]+)\]([^{]*?)(?=\\item|\Z)'
+    labeled = list(re.finditer(labeled_pattern, body, re.DOTALL))
+    logger.info(f"Labeled items found: {len(labeled)} with pattern: {labeled_pattern}")
+    
     if labeled:
-        for m in labeled:
+        for i, m in enumerate(labeled):
             label = m.group(1).strip()
             text = m.group(2).strip()
-            pts_m = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', text)
-            pts = int(float(pts_m.group(1).replace(',', '.'))) if pts_m else 0
+            logger.info(f"Labeled item {i+1}: label='{label}', text='{text[:50]}...'")
+            
+            # Prova diversi regex per i punti
+            pts_patterns = [
+                r'\((\d+(?:[.,]\d+)?)\s*pt\)',      # (5 pt)
+                r'\[(\d+(?:[.,]\d+)?)\s*pt\]',      # [5 pt]
+                r'(\d+(?:[.,]\d+)?)\s*pt',           # 5 pt
+                r'\((\d+(?:[.,]\d+)?)\s*punti?\)',   # (5 punti)
+                r'(\d+(?:[.,]\d+)?)\s*punti?',       # 5 punti
+            ]
+            
+            pts_m = None
+            pts = 0
+            for pattern in pts_patterns:
+                pts_m = re.search(pattern, text)
+                if pts_m:
+                    pts = int(float(pts_m.group(1).replace(',', '.')))
+                    logger.info(f"  Points found with pattern '{pattern}': {pts_m.group(1)} -> {pts}pt")
+                    break
+            
+            if not pts_m:
+                logger.info(f"  No points found in text with any pattern")
+            
             clean = re.sub(r'\(\d+(?:[.,]\d+?)?\s*pt\)', '', text).strip()
             clean = re.sub(r'\s+', ' ', clean)
             clean = re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', clean)
             clean = re.sub(r'\$[^$]*\$', '[formula]', clean)
             short = (clean[:42] + '\u2026') if len(clean) > 42 else clean
             items.append((label, short, pts))
+        logger.info(f"Returning {len(items)} labeled items")
         return items
 
     # Seconda prova: item senza label, auto-generati a), b), c)
     # Cerca \item seguito da testo fino al prossimo \item o fine del blocco
-    auto_items = list(re.finditer(r'\\item\s+([^{]*?)(?=\\item|\Z)', body, re.DOTALL))
+    auto_pattern = r'\\item\s+([^{]*?)(?=\\item|\Z)'
+    auto_items = list(re.finditer(auto_pattern, body, re.DOTALL))
+    logger.info(f"Auto items found: {len(auto_items)} with pattern: {auto_pattern}")
+    
     if auto_items:
         auto_idx = 0
-        for m in auto_items:
+        for i, m in enumerate(auto_items):
             text = m.group(1).strip()
             if not text:  # Salta item vuoti
                 continue
-            pts_m = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', text)
-            pts = int(float(pts_m.group(1).replace(',', '.'))) if pts_m else 0
+            logger.info(f"Auto item {i+1}: text='{text[:50]}...'")
+            
+            # Prova diversi regex per i punti
+            pts_patterns = [
+                r'\((\d+(?:[.,]\d+)?)\s*pt\)',      # (5 pt)
+                r'\[(\d+(?:[.,]\d+)?)\s*pt\]',      # [5 pt]
+                r'(\d+(?:[.,]\d+)?)\s*pt',           # 5 pt
+                r'\((\d+(?:[.,]\d+)?)\s*punti?\)',   # (5 punti)
+                r'(\d+(?:[.,]\d+)?)\s*punti?',       # 5 punti
+            ]
+            
+            pts_m = None
+            pts = 0
+            for pattern in pts_patterns:
+                pts_m = re.search(pattern, text)
+                if pts_m:
+                    pts = int(float(pts_m.group(1).replace(',', '.')))
+                    logger.info(f"  Points found with pattern '{pattern}': {pts_m.group(1)} -> {pts}pt")
+                    break
+            
+            if not pts_m:
+                logger.info(f"  No points found in text with any pattern")
+            
             clean = re.sub(r'\(\d+(?:[.,]\d+?)?\s*pt\)', '', text).strip()
             clean = re.sub(r'\s+', ' ', clean)
             clean = re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', clean)
@@ -222,18 +278,43 @@ def parse_items_from_block(body: str, title: str = "") -> list:
             auto_idx += 1
 
         if items:
+            logger.info(f"Returning {len(items)} auto items")
             return items
 
     # Terza prova: fallback - cerca qualsiasi \item
-    fallback_items = list(re.finditer(r'\\item[^\n]*', body))
+    fallback_pattern = r'\\item[^\n]*'
+    fallback_items = list(re.finditer(fallback_pattern, body))
+    logger.info(f"Fallback items found: {len(fallback_items)} with pattern: {fallback_pattern}")
+    
     if fallback_items:
         auto_idx = 0
-        for m in fallback_items:
+        for i, m in enumerate(fallback_items):
             text = m.group(0).replace('\\item', '').strip()
             if not text:  # Salta item vuoti
                 continue
-            pts_m = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', text)
-            pts = int(float(pts_m.group(1).replace(',', '.'))) if pts_m else 0
+            logger.info(f"Fallback item {i+1}: text='{text[:50]}...'")
+            
+            # Prova diversi regex per i punti
+            pts_patterns = [
+                r'\((\d+(?:[.,]\d+)?)\s*pt\)',      # (5 pt)
+                r'\[(\d+(?:[.,]\d+)?)\s*pt\]',      # [5 pt]
+                r'(\d+(?:[.,]\d+)?)\s*pt',           # 5 pt
+                r'\((\d+(?:[.,]\d+)?)\s*punti?\)',   # (5 punti)
+                r'(\d+(?:[.,]\d+)?)\s*punti?',       # 5 punti
+            ]
+            
+            pts_m = None
+            pts = 0
+            for pattern in pts_patterns:
+                pts_m = re.search(pattern, text)
+                if pts_m:
+                    pts = int(float(pts_m.group(1).replace(',', '.')))
+                    logger.info(f"  Points found with pattern '{pattern}': {pts_m.group(1)} -> {pts}pt")
+                    break
+            
+            if not pts_m:
+                logger.info(f"  No points found in text with any pattern")
+            
             clean = re.sub(r'\(\d+(?:[.,]\d+?)?\s*pt\)', '', text).strip()
             clean = re.sub(r'\s+', ' ', clean)
             clean = re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', clean)
@@ -243,11 +324,10 @@ def parse_items_from_block(body: str, title: str = "") -> list:
             items.append((label, short, pts))
             auto_idx += 1
 
-    if items:
-        return items
-
-    # Ultimo fallback: controlla il titolo
-    if title:
+    logger.info(f"Final result: {len(items)} items parsed")
+    
+    # Ultimo fallback: controlla se c'è un punteggio globale nel titolo
+    if not items and title:
         pt_title = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', title)
         if pt_title:
             pts = int(float(pt_title.group(1).replace(',', '.')))
@@ -255,17 +335,9 @@ def parse_items_from_block(body: str, title: str = "") -> list:
             clean_title = re.sub(r'\s+', ' ', clean_title)
             short = (clean_title[:42] + '\u2026') if len(clean_title) > 42 else clean_title
             items.append(("—", short, pts))
-            return items
-
-    pt_in_body = re.findall(r'\((\d+)\s*pt\)', body)
-    if pt_in_body:
-        total = sum(int(p) for p in pt_in_body)
-        short = (body.strip()[:42] + '\u2026') if len(body.strip()) > 42 else body.strip()
-        short = re.sub(r'\s+', ' ', re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', short))
-        short = re.sub(r'\$[^$]*\$', '[formula]', short)
-        items.append(("—", short or "Esercizio", total))
-        return items
-
+            logger.info(f"Found global points in title: {pts}pt")
+    
+    logger.info(f"Returning {len(items)} items total")
     return items
 
 
