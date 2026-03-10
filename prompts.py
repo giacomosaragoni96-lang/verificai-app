@@ -90,6 +90,21 @@ def prompt_corpo_verifica(
     )
 
     multi_rule = "- NON includere esercizi multidisciplinari."
+    
+    tabelle_rule = (
+        "- TABELLE LaTeX — REGOLA ASSOLUTA:\n"
+        "  * PRIMA di ogni ambiente tabella (\\begin{tabular}, \\begin{array}, \\begin{table})\n"
+        "    lascia SEMPRE una riga vuota. Questo garantisce che la tabella sia su una riga separata.\n"
+        "  * Esempio CORRETTO:\n"
+        "    \"Testo della domanda.\n\n"
+        "    \\\\begin{tabular}{|c|c|}\n"
+        "    \\\\hline\n"
+        "    ...\n"
+        "    \\\\end{tabular}\"\n"
+        "  * Esempio SBAGLIATO:\n"
+        "    \"Testo della domanda. \\\\begin{tabular}{|c|c|}\"\n"
+        "  * Questa regola evita che le tabelle escano fuori dal margine o si sovrappongano al testo."
+    )
 
     if e_mat:
         grafici_rule = (
@@ -211,6 +226,7 @@ def prompt_corpo_verifica(
         f"  • VIETATO: \\item senza label esplicita tra parentesi quadre.\n"
         f"- PROTEZIONE ESERCIZIO 1 (Saperi Essenziali): nell'Esercizio 1 NON inserire MAI il simbolo (*) su nessun sottopunto.\n"
         f"{multi_rule}\n"
+        f"{tabelle_rule}\n"
         f"- Scelta multipla: le opzioni DEVONO stare in un \\begin{{enumerate}}[a)] SEPARATO dopo la domanda.\n"
         f"- Vero/Falso: $\\square$ \\textbf{{V}} $\\quad\\square$ \\textbf{{F}}\n"
         f"- Completamento: \\underline{{\\hspace{{3cm}}}}\n"
@@ -312,6 +328,8 @@ def prompt_versione_ridotta(
         f"rispetto al totale.\n"
         f"Scegli quali sottopunti eliminare partendo dai più complessi. Mantieni sempre almeno 1 sottopunto per esercizio.\n"
         f"{punti_str}\n"
+        f"IMPORTANTE: PRIMA di ogni \\begin{{tabular}} lascia SEMPRE una riga vuota per evitare\n"
+        f"sovrapposizioni con il testo. Le tabelle devono essere su righe separate.\n"
         f"NON aggiungere nessun simbolo (*), nessuna nota BES, nessuna indicazione che si tratta di una verifica ridotta.\n"
         f"TERMINA con \\end{{document}}.\n"
         f"SOLO CODICE LATEX del corpo (\\subsection* ecc.), senza preambolo."
@@ -665,8 +683,10 @@ def prompt_variante_rapida(
         f"5. PUNTEGGI: mantieni IDENTICA la distribuzione dei (X pt) originali.\n"
         f"6. ANTI-SPOILER: NON inserire le soluzioni. Se ci sono grafici, cambia i parametri\n"
         f"   della curva ma NON indicare dove passa.\n"
-        f"7. INTESTAZIONE: nella riga Nome/Classe/Data aggiungi 'Fila B' visibile.\n"
-        f"8. COHERENZA: verifica che i nuovi dati siano matematicamente coerenti\n"
+        f"7. TABELLE: PRIMA di ogni \\begin{{tabular}} lascia SEMPRE una riga vuota per evitare\n"
+        f"   sovrapposizioni con il testo. Le tabelle devono essere su righe separate.\n"
+        f"8. INTESTAZIONE: nella riga Nome/Classe/Data aggiungi 'Fila B' visibile.\n"
+        f"9. COHERENZA: verifica che i nuovi dati siano matematicamente coerenti\n"
         f"   (niente radici di negativi, divisioni per zero, misure impossibili).\n\n"
         f"OUTPUT: SOLO codice LaTeX completo identico nella struttura, "
         f"con \\end{{document}} finale. Nessuna spiegazione."
