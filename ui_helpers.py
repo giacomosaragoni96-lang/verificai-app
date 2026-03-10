@@ -449,10 +449,10 @@ def _render_step_progress(T: dict) -> None:
   }}
   .sp-pill {{
     display: flex; align-items: center; gap: 0;
-    background: {card2};
+    background: transparent;
     border-radius: 0px;
     padding: .75rem 1.5rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    box-shadow: none;
   }}
   .sp-node {{
     display: flex; flex-direction: column;
