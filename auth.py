@@ -481,6 +481,46 @@ def mostra_auth(supabase):
     </div>
 
     <div class="auth-divider"></div>
+    
+    <!-- Aggressive CSS injection for warning text -->
+    <style>
+    .stWarning, [data-testid="stWarning"], div[data-testid="stAlert"].st-warning {
+        color: #1E293B !important;
+        -webkit-text-fill-color: #1E293B !important;
+        text-shadow: none !important;
+    }
+    .stWarning *, [data-testid="stWarning"] *, div[data-testid="stAlert"].st-warning * {
+        color: #1E293B !important;
+        -webkit-text-fill-color: #1E293B !important;
+        text-shadow: none !important;
+    }
+    .stWarning p, [data-testid="stWarning"] p, div[data-testid="stAlert"].st-warning p {
+        color: #1E293B !important;
+        -webkit-text-fill-color: #1E293B !important;
+        text-shadow: none !important;
+    }
+    .stWarning div, [data-testid="stWarning"] div, div[data-testid="stAlert"].st-warning div {
+        color: #1E293B !important;
+        -webkit-text-fill-color: #1E293B !important;
+        text-shadow: none !important;
+    }
+    </style>
+    
+    <script>
+    // Force override every 50ms
+    setInterval(() => {
+      document.querySelectorAll('.stWarning, [data-testid="stWarning"], div[data-testid="stAlert"].st-warning').forEach(el => {
+        el.style.setProperty('color', '#1E293B', 'important');
+        el.style.setProperty('-webkit-text-fill-color', '#1E293B', 'important');
+        el.style.setProperty('text-shadow', 'none', 'important');
+        el.querySelectorAll('*').forEach(child => {
+          child.style.setProperty('color', '#1E293B', 'important');
+          child.style.setProperty('-webkit-text-fill-color', '#1E293B', 'important');
+          child.style.setProperty('text-shadow', 'none', 'important');
+        });
+      });
+    }, 50);
+    </script>
     """, unsafe_allow_html=True)
 
     # ── Tabs ─────────────────────────────────────────────────────────────────
