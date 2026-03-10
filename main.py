@@ -1258,7 +1258,23 @@ def _render_bivio():
     with _c2:
         st.markdown(
             '''
-            <div class="cta-genera-wrap">
+            <div class="cta-genera-wrap" style="margin-bottom: 1rem;">
+            <style>
+            div[data-testid="stVerticalBlock"] > div:has([data-testid="stButton"]) > div > div > button {
+                min-height: 72px !important;
+                font-size: 1.3rem !important;
+                font-weight: 900 !important;
+                background: linear-gradient(135deg, #10b981, #f59e0b) !important;
+                border: 2px solid #10b981 !important;
+                box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4) !important;
+                transition: all 0.3s ease !important;
+            }
+            div[data-testid="stVerticalBlock"] > div:has([data-testid="stButton"]) > div > div > button:hover {
+                transform: translateY(-2px) !important;
+                box-shadow: 0 12px 35px -5px rgba(16, 185, 129, 0.5) !important;
+                background: linear-gradient(135deg, #059669, #d97706) !important;
+            }
+            </style>
             ''',
             unsafe_allow_html=True,
         )
