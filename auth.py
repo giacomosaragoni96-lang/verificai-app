@@ -340,7 +340,7 @@ def mostra_auth(supabase):
         transform: translateY(-2px) !important;
     }}
 
-    /* ═══ Modern Messages ─══ */
+    /* ═══ Modern Messages (excluding warnings - handled inline) ═══ */
     [data-testid="stAlert"] {{
         background: rgba({_SURFACE_L.replace('#', '')},.9) !important;
         border: 1px solid rgba({_BORDER.replace('#', '')},.3) !important;
@@ -350,33 +350,6 @@ def mostra_auth(supabase):
         padding: 1.25rem 1.5rem !important;
         box-shadow: 0 4px 16px rgba(0,0,0,.1) !important;
         backdrop-filter: blur(10px);
-    }}
-    
-    /* Warning messages - orange background with white text */
-    [data-testid="stAlert"][data-testid="stWarning"],
-    .stWarning,
-    div[data-testid="stAlert"].st-warning {{
-        background: {_WARNING} !important;
-        background-color: {_WARNING} !important;
-        border: 1px solid {_WARNING} !important;
-        color: #1E293B !important;
-        -webkit-text-fill-color: #1E293B !important;
-    }}
-    [data-testid="stAlert"][data-testid="stWarning"] *,
-    .stWarning *,
-    div[data-testid="stAlert"].st-warning *,
-    [data-testid="stAlert"][data-testid="stWarning"] p,
-    [data-testid="stAlert"][data-testid="stWarning"] div,
-    [data-testid="stAlert"][data-testid="stWarning"] span {{
-        color: #1E293B !important;
-        -webkit-text-fill-color: #1E293B !important;
-        text-shadow: none !important;
-    }}
-    [data-testid="stAlert"][data-testid="stWarning"] a,
-    .stWarning a {{
-        color: #1E293B !important;
-        -webkit-text-fill-color: #1E293B !important;
-        text-decoration: underline !important;
     }}
     
     /* Error messages - red background with white text */
@@ -508,66 +481,6 @@ def mostra_auth(supabase):
     </div>
 
     <div class="auth-divider"></div>
-    
-    <!-- Force fix for warning text color -->
-    <script>
-    (function() {{
-      const observer = new MutationObserver(function(mutations) {{
-        mutations.forEach(function(mutation) {{
-          mutation.addedNodes.forEach(function(node) {{
-            if (node.nodeType === 1) {{
-              // Fix warning messages with more aggressive styling
-              const warnings = node.querySelectorAll ? node.querySelectorAll('[data-testid="stWarning"], .st-warning, [data-testid="stAlert"]') : [];
-              warnings.forEach(function(warn) {{
-                // Force dark text color
-                warn.style.setProperty('color', '#1E293B', 'important');
-                warn.style.setProperty('-webkit-text-fill-color', '#1E293B', 'important');
-                warn.style.setProperty('text-shadow', 'none', 'important');
-                
-                // Apply to all child elements
-                const allElements = warn.querySelectorAll('*');
-                allElements.forEach(function(el) {{
-                  el.style.setProperty('color', '#1E293B', 'important');
-                  el.style.setProperty('-webkit-text-fill-color', '#1E293B', 'important');
-                  el.style.setProperty('text-shadow', 'none', 'important');
-                }});
-              }});
-            }}
-          }});
-        }});
-      }});
-      
-      observer.observe(document.body, {{
-        childList: true,
-        subtree: true
-      }});
-      
-      // Initial fix and continuous monitoring
-      function fixAllWarnings() {{
-        document.querySelectorAll('[data-testid="stWarning"], .st-warning, [data-testid="stAlert"]').forEach(function(warn) {{
-          warn.style.setProperty('color', '#1E293B', 'important');
-          warn.style.setProperty('-webkit-text-fill-color', '#1E293B', 'important');
-          warn.style.setProperty('text-shadow', 'none', 'important');
-          
-          const allElements = warn.querySelectorAll('*');
-          allElements.forEach(function(el) {{
-            el.style.setProperty('color', '#1E293B', 'important');
-            el.style.setProperty('-webkit-text-fill-color', '#1E293B', 'important');
-            el.style.setProperty('text-shadow', 'none', 'important');
-          }});
-        }});
-      }}
-      
-      // Run immediately and every 100ms for 2 seconds
-      fixAllWarnings();
-      let attempts = 0;
-      const interval = setInterval(function() {{
-        fixAllWarnings();
-        attempts++;
-        if (attempts >= 20) clearInterval(interval);
-      }}, 100);
-    }})();
-    </script>
     """, unsafe_allow_html=True)
 
     # ── Tabs ─────────────────────────────────────────────────────────────────
