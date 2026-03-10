@@ -3014,28 +3014,6 @@ def get_css(T: dict) -> str:
     0%   {{ background-position: 200% center; }}
     100% {{ background-position: -200% center; }}
   }}
-  @keyframes dl-pulse {{
-    0%, 100% {{ box-shadow: 0 6px 32px #05966960, 0 0 0 0 #10B98100; }}
-    50%       {{ box-shadow: 0 10px 44px #05966990, 0 0 0 10px #10B98118; }}
-  }}
-  @keyframes dl-glow {{
-    0%, 100% {{ 
-      box-shadow: 
-        0 8px 40px #05966960, 
-        0 4px 16px #05966940,
-        inset 0 1px 0 rgba(255,255,255,0.2);
-    }}
-    50% {{ 
-      box-shadow: 
-        0 12px 48px #05966980, 
-        0 6px 20px #05966960,
-        inset 0 1px 0 rgba(255,255,255,0.4);
-    }}
-  }}
-  @keyframes border-rotate {{
-    0% {{ transform: rotate(0deg); }}
-    100% {{ transform: rotate(360deg); }}
-  }}
   .dl-cta-wrap {{
     margin-bottom: 1.5rem;
     position: relative;
@@ -3048,32 +3026,27 @@ def get_css(T: dict) -> str:
     background: linear-gradient(
       135deg,
       #047857 0%,
-      #059669 15%,
-      #10B981 35%,
-      #6EE7B7 50%,
-      #10B981 65%,
-      #059669 85%,
+      #059669 25%,
+      #10B981 50%,
+      #059669 75%,
       #047857 100%
     ) !important;
-    background-size: 300% auto !important;
+    background-size: 200% auto !important;
     color: #FFFFFF !important;
     -webkit-text-fill-color: #FFFFFF !important;
-    border: none !important;
+    border: 2px solid rgba(255,255,255,0.15) !important;
     border-radius: 16px !important;
-    font-size: 1.25rem !important;
+    font-size: 1.2rem !important;
     font-weight: 900 !important;
-    letter-spacing: .06em !important;
-    min-height: 80px !important;
-    padding: 1.2rem 2rem !important;
+    letter-spacing: .05em !important;
+    min-height: 76px !important;
+    padding: 1.1rem 2rem !important;
     box-shadow: 
-      0 8px 40px #05966960, 
-      0 4px 16px #05966940,
-      inset 0 1px 0 rgba(255,255,255,0.2) !important;
-    animation: 
-      dl-shimmer 3.2s linear infinite, 
-      dl-pulse 2.8s ease-in-out infinite,
-      dl-glow 2s ease-in-out infinite !important;
-    transition: all .25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      0 6px 24px rgba(5,150,105,0.4), 
+      0 2px 8px rgba(5,150,105,0.2),
+      inset 0 1px 0 rgba(255,255,255,0.25) !important;
+    animation: dl-shimmer 4s linear infinite !important;
+    transition: all .3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     font-family: 'DM Sans', sans-serif !important;
     text-transform: uppercase !important;
     position: relative;
@@ -3093,15 +3066,16 @@ def get_css(T: dict) -> str:
   }}
   .dl-cta-wrap div.stDownloadButton > button:hover,
   .dl-cta-wrap [data-testid="stDownloadButton"] > button:hover {{
-    filter: brightness(1.15) saturate(1.2) !important;
+    filter: brightness(1.1) saturate(1.15) !important;
     box-shadow: 
-      0 16px 56px #05966980, 
-      0 8px 24px #05966960,
-      inset 0 1px 0 rgba(255,255,255,0.3) !important;
-    transform: translateY(-4px) scale(1.02) !important;
+      0 12px 40px rgba(5,150,105,0.5), 
+      0 6px 16px rgba(5,150,105,0.3),
+      inset 0 1px 0 rgba(255,255,255,0.35) !important;
+    transform: translateY(-3px) !important;
     animation: none !important;
-    background-size: 200% auto !important;
-    background-position: 50% 0% !important;
+    background-size: 150% auto !important;
+    background-position: 25% 0% !important;
+    border-color: rgba(255,255,255,0.25) !important;
   }}
   .dl-cta-wrap div.stDownloadButton > button:active,
   .dl-cta-wrap [data-testid="stDownloadButton"] > button:active {{
