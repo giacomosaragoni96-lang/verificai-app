@@ -352,17 +352,31 @@ def mostra_auth(supabase):
         backdrop-filter: blur(10px);
     }}
     
-    /* Warning messages - orange background with dark text */
-    [data-testid="stAlert"][data-testid="stWarning"] {{
+    /* Warning messages - orange background with white text */
+    [data-testid="stAlert"][data-testid="stWarning"],
+    .stWarning,
+    div[data-testid="stAlert"].st-warning {{
         background: {_WARNING} !important;
         background-color: {_WARNING} !important;
         border: 1px solid {_WARNING} !important;
         color: white !important;
         -webkit-text-fill-color: white !important;
     }}
-    [data-testid="stAlert"][data-testid="stWarning"] * {{
+    [data-testid="stAlert"][data-testid="stWarning"] *,
+    .stWarning *,
+    div[data-testid="stAlert"].st-warning *,
+    [data-testid="stAlert"][data-testid="stWarning"] p,
+    [data-testid="stAlert"][data-testid="stWarning"] div,
+    [data-testid="stAlert"][data-testid="stWarning"] span {{
         color: white !important;
         -webkit-text-fill-color: white !important;
+        text-shadow: none !important;
+    }}
+    [data-testid="stAlert"][data-testid="stWarning"] a,
+    .stWarning a {{
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+        text-decoration: underline !important;
     }}
     
     /* Error messages - red background with white text */
@@ -494,6 +508,51 @@ def mostra_auth(supabase):
     </div>
 
     <div class="auth-divider"></div>
+    
+    <!-- Force fix for warning text color -->
+    <script>
+    (function() {{
+      const observer = new MutationObserver(function(mutations) {{
+        mutations.forEach(function(mutation) {{
+          mutation.addedNodes.forEach(function(node) {{
+            if (node.nodeType === 1) {{
+              // Fix warning messages
+              const warnings = node.querySelectorAll ? node.querySelectorAll('[data-testid="stWarning"], .st-warning, [data-testid="stAlert"]') : [];
+              warnings.forEach(function(warn) {{
+                warn.style.color = 'white !important';
+                warn.style.setProperty('color', 'white', 'important');
+                warn.style.setProperty('-webkit-text-fill-color', 'white', 'important');
+                const allText = warn.querySelectorAll('*');
+                allText.forEach(function(el) {{
+                  el.style.color = 'white !important';
+                  el.style.setProperty('color', 'white', 'important');
+                  el.style.setProperty('-webkit-text-fill-color', 'white', 'important');
+                }});
+              }});
+            }}
+          }});
+        }});
+      }});
+      
+      observer.observe(document.body, {{
+        childList: true,
+        subtree: true
+      }});
+      
+      // Initial fix
+      document.querySelectorAll('[data-testid="stWarning"], .st-warning, [data-testid="stAlert"]').forEach(function(warn) {{
+        warn.style.color = 'white !important';
+        warn.style.setProperty('color', 'white', 'important');
+        warn.style.setProperty('-webkit-text-fill-color', 'white', 'important');
+        const allText = warn.querySelectorAll('*');
+        allText.forEach(function(el) {{
+          el.style.color = 'white !important';
+          el.style.setProperty('color', 'white', 'important');
+          el.style.setProperty('-webkit-text-fill-color', 'white', 'important');
+        }});
+      }});
+    }})();
+    </script>
     """, unsafe_allow_html=True)
 
     # ── Tabs ─────────────────────────────────────────────────────────────────
