@@ -491,12 +491,17 @@ def build_griglia_latex(esercizi: list, punti_totali: int) -> str:
         f" & {pts}" for ex in esercizi for _, pts in ex['items']
     ) + f" & {punti_totali} \\\\ \\hline"
 
+    # Nuova riga per punteggio effettivo dello studente
+    row_voto = "\\textbf{Voto}" + "".join(
+        f" & \\hspace{{1.2cm}}" for ex in esercizi for _, _ in ex['items']
+    ) + " & \\hspace{{1.2cm}} \\\\ \\hline"
+
     return (
         "% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n"
         "{\\renewcommand{\\arraystretch}{1.8}\n"
         f"\\adjustbox{{max width=\\textwidth}}{{\n"
         f"\\begin{{tabular}}{{{col_spec}}}\n\\hline\n"
-        f"{row_es}\n{row_sotto}\n{row_max}\n"
+        f"{row_es}\n{row_sotto}\n{row_max}\n{row_voto}\n"
         f"\\end{{tabular}}\n}}}}\n\\end{{center}}"
     )
 
