@@ -566,7 +566,21 @@ def mostra_auth(supabase):
                                  type="password")
         if st.button("Accedi →", type="primary", use_container_width=True, key="btn_login"):
             if not email or not password:
-                st.warning("Inserisci email e password.")
+                st.markdown(f'''
+                <div style="
+                    background: {_WARNING} !important;
+                    color: white !important;
+                    padding: 1rem 1.5rem !important;
+                    border-radius: 12px !important;
+                    margin: 1rem 0 !important;
+                    font-family: 'Inter', sans-serif !important;
+                    font-weight: 500 !important;
+                    border: 1px solid {_WARNING} !important;
+                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+                ">
+                    ⚠️ Inserisci email e password.
+                </div>
+                ''', unsafe_allow_html=True)
             else:
                 try:
                     res = supabase.auth.sign_in_with_password(
@@ -580,13 +594,69 @@ def mostra_auth(supabase):
                 except Exception as e:
                     err = str(e).lower()
                     if "invalid login" in err or "invalid credentials" in err:
-                        st.warning("Password errata. Clicca su **Password dimenticata?** qui sopra per reimpostarla.")
+                        st.markdown(f'''
+                        <div style="
+                            background: {_WARNING} !important;
+                            color: white !important;
+                            padding: 1rem 1.5rem !important;
+                            border-radius: 12px !important;
+                            margin: 1rem 0 !important;
+                            font-family: 'Inter', sans-serif !important;
+                            font-weight: 500 !important;
+                            border: 1px solid {_WARNING} !important;
+                            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+                        ">
+                            ⚠️ Password errata. Clicca su <strong>Password dimenticata?</strong> qui sopra per reimpostarla.
+                        </div>
+                        ''', unsafe_allow_html=True)
                     elif "email not confirmed" in err:
-                        st.warning("Email non confermata. Controlla la casella di posta.")
+                        st.markdown(f'''
+                        <div style="
+                            background: {_WARNING} !important;
+                            color: white !important;
+                            padding: 1rem 1.5rem !important;
+                            border-radius: 12px !important;
+                            margin: 1rem 0 !important;
+                            font-family: 'Inter', sans-serif !important;
+                            font-weight: 500 !important;
+                            border: 1px solid {_WARNING} !important;
+                            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+                        ">
+                            ⚠️ Email non confermata. Controlla la casella di posta.
+                        </div>
+                        ''', unsafe_allow_html=True)
                     elif "user not found" in err or "no user" in err:
-                        st.warning("Nessun account trovato. Registrati prima.")
+                        st.markdown(f'''
+                        <div style="
+                            background: {_WARNING} !important;
+                            color: white !important;
+                            padding: 1rem 1.5rem !important;
+                            border-radius: 12px !important;
+                            margin: 1rem 0 !important;
+                            font-family: 'Inter', sans-serif !important;
+                            font-weight: 500 !important;
+                            border: 1px solid {_WARNING} !important;
+                            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+                        ">
+                            ⚠️ Nessun account trovato. Registrati prima.
+                        </div>
+                        ''', unsafe_allow_html=True)
                     else:
-                        st.warning("Accesso non riuscito. Controlla email e password.")
+                        st.markdown(f'''
+                        <div style="
+                            background: {_WARNING} !important;
+                            color: white !important;
+                            padding: 1rem 1.5rem !important;
+                            border-radius: 12px !important;
+                            margin: 1rem 0 !important;
+                            font-family: 'Inter', sans-serif !important;
+                            font-weight: 500 !important;
+                            border: 1px solid {_WARNING} !important;
+                            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+                        ">
+                            ⚠️ Accesso non riuscito. Controlla email e password.
+                        </div>
+                        ''', unsafe_allow_html=True)
                     time.sleep(2)
 
     with tab_reg:
@@ -598,9 +668,37 @@ def mostra_auth(supabase):
         if st.button("Crea account gratuito →", type="primary",
                      use_container_width=True, key="btn_reg"):
             if not email_r or not password_r:
-                st.warning("Inserisci email e password.")
+                st.markdown(f'''
+                <div style="
+                    background: {_WARNING} !important;
+                    color: white !important;
+                    padding: 1rem 1.5rem !important;
+                    border-radius: 12px !important;
+                    margin: 1rem 0 !important;
+                    font-family: 'Inter', sans-serif !important;
+                    font-weight: 500 !important;
+                    border: 1px solid {_WARNING} !important;
+                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+                ">
+                    ⚠️ Inserisci email e password.
+                </div>
+                ''', unsafe_allow_html=True)
             elif len(password_r) < 6:
-                st.warning("La password deve essere di almeno 6 caratteri.")
+                st.markdown(f'''
+                <div style="
+                    background: {_WARNING} !important;
+                    color: white !important;
+                    padding: 1rem 1.5rem !important;
+                    border-radius: 12px !important;
+                    margin: 1rem 0 !important;
+                    font-family: 'Inter', sans-serif !important;
+                    font-weight: 500 !important;
+                    border: 1px solid {_WARNING} !important;
+                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+                ">
+                    ⚠️ La password deve essere di almeno 6 caratteri.
+                </div>
+                ''', unsafe_allow_html=True)
             else:
                 try:
                     res = supabase.auth.sign_up({"email": email_r, "password": password_r})
@@ -609,15 +707,57 @@ def mostra_auth(supabase):
                         st.session_state["_sb_access_token"]  = res.session.access_token
                         st.session_state["_sb_refresh_token"] = res.session.refresh_token
                         salva_sessione_cookie(res)
-                    st.success("Benvenuto su VerificAI! Account creato.")
+                    st.markdown(f'''
+                    <div style="
+                        background: {_SUCCESS} !important;
+                        color: white !important;
+                        padding: 1rem 1.5rem !important;
+                        border-radius: 12px !important;
+                        margin: 1rem 0 !important;
+                        font-family: 'Inter', sans-serif !important;
+                        font-weight: 500 !important;
+                        border: 1px solid {_SUCCESS} !important;
+                        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+                    ">
+                        ✅ Benvenuto su VerificAI! Account creato.
+                    </div>
+                    ''', unsafe_allow_html=True)
                     time.sleep(1)
                     st.rerun()
                 except Exception as e:
                     _err_str = str(e).lower()
                     if "already registered" in _err_str or "already exists" in _err_str:
-                        st.error("Questa email è già registrata. Prova ad accedere oppure clicca su **Password dimenticata?**.")
+                        st.markdown(f'''
+                        <div style="
+                            background: {_ERROR} !important;
+                            color: white !important;
+                            padding: 1rem 1.5rem !important;
+                            border-radius: 12px !important;
+                            margin: 1rem 0 !important;
+                            font-family: 'Inter', sans-serif !important;
+                            font-weight: 500 !important;
+                            border: 1px solid {_ERROR} !important;
+                            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+                        ">
+                            ❌ Questa email è già registrata. Prova ad accedere oppure clicca su <strong>Password dimenticata?</strong>.
+                        </div>
+                        ''', unsafe_allow_html=True)
                     else:
-                        st.error("Registrazione non riuscita. Controlla i dati inseriti e riprova, o contattaci se il problema persiste.")
+                        st.markdown(f'''
+                        <div style="
+                            background: {_ERROR} !important;
+                            color: white !important;
+                            padding: 1rem 1.5rem !important;
+                            border-radius: 12px !important;
+                            margin: 1rem 0 !important;
+                            font-family: 'Inter', sans-serif !important;
+                            font-weight: 500 !important;
+                            border: 1px solid {_ERROR} !important;
+                            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+                        ">
+                            ❌ Registrazione non riuscita. Controlla i dati inseriti e riprova, o contattaci se il problema persiste.
+                        </div>
+                        ''', unsafe_allow_html=True)
 
     with tab_reset:
         st.markdown(
@@ -630,13 +770,55 @@ def mostra_auth(supabase):
         if st.button("Invia link di reset →", type="primary",
                      use_container_width=True, key="btn_reset"):
             if not email_reset:
-                st.warning("Inserisci la tua email.")
+                st.markdown(f'''
+                <div style="
+                    background: {_WARNING} !important;
+                    color: white !important;
+                    padding: 1rem 1.5rem !important;
+                    border-radius: 12px !important;
+                    margin: 1rem 0 !important;
+                    font-family: 'Inter', sans-serif !important;
+                    font-weight: 500 !important;
+                    border: 1px solid {_WARNING} !important;
+                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+                ">
+                    ⚠️ Inserisci la tua email.
+                </div>
+                ''', unsafe_allow_html=True)
             else:
                 try:
                     supabase.auth.reset_password_email(email_reset)
-                    st.success("Email inviata! Controlla la casella di posta.")
+                    st.markdown(f'''
+                    <div style="
+                        background: {_SUCCESS} !important;
+                        color: white !important;
+                        padding: 1rem 1.5rem !important;
+                        border-radius: 12px !important;
+                        margin: 1rem 0 !important;
+                        font-family: 'Inter', sans-serif !important;
+                        font-weight: 500 !important;
+                        border: 1px solid {_SUCCESS} !important;
+                        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+                    ">
+                        ✅ Email inviata! Controlla la casella di posta.
+                    </div>
+                    ''', unsafe_allow_html=True)
                 except Exception as e:
-                    st.error(f"Errore nell'invio: {e}")
+                    st.markdown(f'''
+                    <div style="
+                        background: {_ERROR} !important;
+                        color: white !important;
+                        padding: 1rem 1.5rem !important;
+                        border-radius: 12px !important;
+                        margin: 1rem 0 !important;
+                        font-family: 'Inter', sans-serif !important;
+                        font-weight: 500 !important;
+                        border: 1px solid {_ERROR} !important;
+                        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+                    ">
+                        ❌ Errore nell'invio: {e}
+                    </div>
+                    ''', unsafe_allow_html=True)
 
     # ── Modern Trust Bar + Footer ────────────────────────────────────────────
     st.markdown(f"""
