@@ -3011,8 +3011,8 @@ def _render_percorso_b_form():
     # ── HINT BOX — Suggerimenti per migliori risultati ───────────────────────
     st.markdown(f"""
     <div style="background:{T['hint_bg']};border:2px solid {T['hint_border']}; 
-                border-radius:12px;padding:12px 16px;font-size:0.82rem;color:{T['hint_text']}; 
-                margin:12px 0 20px 0;font-family:DM Sans,sans-serif;line-height:1.5;
+                border-radius:12px;padding:16px 20px;font-size:1rem;color:{T['hint_text']}; 
+                margin:12px 0 20px 0;font-family:DM Sans,sans-serif;line-height:1.6;
                 box-shadow:0 2px 8px rgba(0,0,0,0.1);">
     🎯 <b>Suggerimento per risultati perfetti:</b><br>
     Più dettagli fornisci, più la verifica sarà precisa e personalizzata. 
