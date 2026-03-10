@@ -359,8 +359,8 @@ def mostra_auth(supabase):
         background: {_WARNING} !important;
         background-color: {_WARNING} !important;
         border: 1px solid {_WARNING} !important;
-        color: white !important;
-        -webkit-text-fill-color: white !important;
+        color: #1E293B !important;
+        -webkit-text-fill-color: #1E293B !important;
     }}
     [data-testid="stAlert"][data-testid="stWarning"] *,
     .stWarning *,
@@ -368,14 +368,14 @@ def mostra_auth(supabase):
     [data-testid="stAlert"][data-testid="stWarning"] p,
     [data-testid="stAlert"][data-testid="stWarning"] div,
     [data-testid="stAlert"][data-testid="stWarning"] span {{
-        color: white !important;
-        -webkit-text-fill-color: white !important;
+        color: #1E293B !important;
+        -webkit-text-fill-color: #1E293B !important;
         text-shadow: none !important;
     }}
     [data-testid="stAlert"][data-testid="stWarning"] a,
     .stWarning a {{
-        color: white !important;
-        -webkit-text-fill-color: white !important;
+        color: #1E293B !important;
+        -webkit-text-fill-color: #1E293B !important;
         text-decoration: underline !important;
     }}
     
@@ -384,12 +384,12 @@ def mostra_auth(supabase):
         background: {_ERROR} !important;
         background-color: {_ERROR} !important;
         border: 1px solid {_ERROR} !important;
-        color: white !important;
-        -webkit-text-fill-color: white !important;
+        color: #1E293B !important;
+        -webkit-text-fill-color: #1E293B !important;
     }}
     [data-testid="stAlert"][data-testid="stError"] * {{
-        color: white !important;
-        -webkit-text-fill-color: white !important;
+        color: #1E293B !important;
+        -webkit-text-fill-color: #1E293B !important;
     }}
     
     /* Success messages - green background with white text */
@@ -397,12 +397,12 @@ def mostra_auth(supabase):
         background: {_SUCCESS} !important;
         background-color: {_SUCCESS} !important;
         border: 1px solid {_SUCCESS} !important;
-        color: white !important;
-        -webkit-text-fill-color: white !important;
+        color: #1E293B !important;
+        -webkit-text-fill-color: #1E293B !important;
     }}
     [data-testid="stAlert"][data-testid="stSuccess"] * {{
-        color: white !important;
-        -webkit-text-fill-color: white !important;
+        color: #1E293B !important;
+        -webkit-text-fill-color: #1E293B !important;
     }}
     
     /* Info messages - blue background with white text */
@@ -410,12 +410,12 @@ def mostra_auth(supabase):
         background: {_PRIMARY} !important;
         background-color: {_PRIMARY} !important;
         border: 1px solid {_PRIMARY} !important;
-        color: white !important;
-        -webkit-text-fill-color: white !important;
+        color: #1E293B !important;
+        -webkit-text-fill-color: #1E293B !important;
     }}
     [data-testid="stAlert"][data-testid="stInfo"] * {{
-        color: white !important;
-        -webkit-text-fill-color: white !important;
+        color: #1E293B !important;
+        -webkit-text-fill-color: #1E293B !important;
     }}
 
     /* ═══ Modern Typography ─══ */
@@ -569,7 +569,7 @@ def mostra_auth(supabase):
                 st.markdown(f'''
                 <div style="
                     background: {_WARNING} !important;
-                    color: white !important;
+                    color: #1E293B !important;
                     padding: 1rem 1.5rem !important;
                     border-radius: 12px !important;
                     margin: 1rem 0 !important;
@@ -597,7 +597,7 @@ def mostra_auth(supabase):
                         st.markdown(f'''
                         <div style="
                             background: {_WARNING} !important;
-                            color: white !important;
+                            color: #1E293B !important;
                             padding: 1rem 1.5rem !important;
                             border-radius: 12px !important;
                             margin: 1rem 0 !important;
@@ -613,7 +613,7 @@ def mostra_auth(supabase):
                         st.markdown(f'''
                         <div style="
                             background: {_WARNING} !important;
-                            color: white !important;
+                            color: #1E293B !important;
                             padding: 1rem 1.5rem !important;
                             border-radius: 12px !important;
                             margin: 1rem 0 !important;
@@ -629,7 +629,7 @@ def mostra_auth(supabase):
                         st.markdown(f'''
                         <div style="
                             background: {_WARNING} !important;
-                            color: white !important;
+                            color: #1E293B !important;
                             padding: 1rem 1.5rem !important;
                             border-radius: 12px !important;
                             margin: 1rem 0 !important;
@@ -645,7 +645,7 @@ def mostra_auth(supabase):
                         st.markdown(f'''
                         <div style="
                             background: {_WARNING} !important;
-                            color: white !important;
+                            color: #1E293B !important;
                             padding: 1rem 1.5rem !important;
                             border-radius: 12px !important;
                             margin: 1rem 0 !important;
@@ -671,7 +671,7 @@ def mostra_auth(supabase):
                 st.markdown(f'''
                 <div style="
                     background: {_WARNING} !important;
-                    color: white !important;
+                    color: #1E293B !important;
                     padding: 1rem 1.5rem !important;
                     border-radius: 12px !important;
                     margin: 1rem 0 !important;
@@ -687,7 +687,7 @@ def mostra_auth(supabase):
                 st.markdown(f'''
                 <div style="
                     background: {_WARNING} !important;
-                    color: white !important;
+                    color: #1E293B !important;
                     padding: 1rem 1.5rem !important;
                     border-radius: 12px !important;
                     margin: 1rem 0 !important;
@@ -710,7 +710,7 @@ def mostra_auth(supabase):
                     st.markdown(f'''
                     <div style="
                         background: {_SUCCESS} !important;
-                        color: white !important;
+                        color: #1E293B !important;
                         padding: 1rem 1.5rem !important;
                         border-radius: 12px !important;
                         margin: 1rem 0 !important;
@@ -730,7 +730,7 @@ def mostra_auth(supabase):
                         st.markdown(f'''
                         <div style="
                             background: {_ERROR} !important;
-                            color: white !important;
+                            color: #1E293B !important;
                             padding: 1rem 1.5rem !important;
                             border-radius: 12px !important;
                             margin: 1rem 0 !important;
@@ -746,7 +746,7 @@ def mostra_auth(supabase):
                         st.markdown(f'''
                         <div style="
                             background: {_ERROR} !important;
-                            color: white !important;
+                            color: #1E293B !important;
                             padding: 1rem 1.5rem !important;
                             border-radius: 12px !important;
                             margin: 1rem 0 !important;
@@ -773,7 +773,7 @@ def mostra_auth(supabase):
                 st.markdown(f'''
                 <div style="
                     background: {_WARNING} !important;
-                    color: white !important;
+                    color: #1E293B !important;
                     padding: 1rem 1.5rem !important;
                     border-radius: 12px !important;
                     margin: 1rem 0 !important;
@@ -791,7 +791,7 @@ def mostra_auth(supabase):
                     st.markdown(f'''
                     <div style="
                         background: {_SUCCESS} !important;
-                        color: white !important;
+                        color: #1E293B !important;
                         padding: 1rem 1.5rem !important;
                         border-radius: 12px !important;
                         margin: 1rem 0 !important;
@@ -807,7 +807,7 @@ def mostra_auth(supabase):
                     st.markdown(f'''
                     <div style="
                         background: {_ERROR} !important;
-                        color: white !important;
+                        color: #1E293B !important;
                         padding: 1rem 1.5rem !important;
                         border-radius: 12px !important;
                         margin: 1rem 0 !important;
