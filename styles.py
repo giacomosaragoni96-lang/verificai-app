@@ -593,12 +593,12 @@ def get_css(T: dict) -> str:
     height: 4px;
     background: transparent !important;
     border: none !important;
-    border-radius: 0 !important;
+    border-radius: 10px;
     overflow: hidden;
   }}
   .monthly-progress-fill {{
     height: 100%;
-    border-radius: 0 !important;
+    border-radius: 10px;
     transition: width .6s ease;
   }}
   .limit-reached {{ color: {T['error']} !important; }}

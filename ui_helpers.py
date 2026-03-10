@@ -450,7 +450,7 @@ def _render_step_progress(T: dict) -> None:
   .sp-pill {{
     display: flex; align-items: center; gap: 0;
     background: {card2};
-    border-radius: 100px;
+    border-radius: 0px;
     padding: .75rem 1.5rem;
     box-shadow: 0 2px 12px rgba(0,0,0,.06);
   }}
@@ -461,7 +461,7 @@ def _render_step_progress(T: dict) -> None:
   }}
   .sp-dot {{
     width: 40px; height: 40px;
-    border-radius: 50%;
+    border-radius: 0px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     transition: box-shadow .3s ease, background .3s ease;
@@ -473,7 +473,7 @@ def _render_step_progress(T: dict) -> None:
   }}
   .sp-line {{
     height: 2px; width: 72px;
-    flex-shrink: 0; border-radius: 2px;
+    flex-shrink: 0; border-radius: 0px;
     margin-bottom: 30px;
     opacity: .7;
   }}
