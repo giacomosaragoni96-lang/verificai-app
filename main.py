@@ -1269,13 +1269,6 @@ def _render_bivio():
     # ── Feature pills — più leggibili per docenti ───────────────────────────────
     st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
     st.markdown(
-        '''<div style="text-align:center;margin-bottom:1.2rem;">
-          <div class="landing-section-kicker">Tutto quello di cui hai bisogno</div>
-          <div class="landing-section-title">Una verifica completa, subito</div>
-        </div>''',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
         '''
         <div class="tally-features" style="gap: 12px; flex-wrap: wrap; justify-content: center;">
           <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
