@@ -1252,11 +1252,23 @@ def _render_bivio():
         unsafe_allow_html=True,
     )
 
-    # ── CTA unico — centrato ─────────────────────────────────────────────────
-    _c1, _c2, _c3 = st.columns([1.4, 2, 1.4])
+    # ── CTA principale — più prominente ─────────────────────────────────────────────
+    st.markdown('<div style="margin: 2.5rem 0;"></div>', unsafe_allow_html=True)
+    _c1, _c2, _c3 = st.columns([1, 2.5, 1])
     with _c2:
+        st.markdown(
+            '''
+            <div class="cta-genera-wrap">
+            <div style="text-align: center; margin-bottom: 1rem;">
+                <p style="font-size: 1.1rem; color: #6b7280; font-weight: 500;">
+                    Pronto a iniziare?
+                </p>
+            </div>
+            ''',
+            unsafe_allow_html=True,
+        )
         if st.button(
-            "Crea Verifica Ora",
+            "🚀 Crea Verifica Ora",
             key="btn_genera_verifica_home",
             use_container_width=True,
             type="primary",
@@ -1264,6 +1276,17 @@ def _render_bivio():
         ):
             st.session_state.input_percorso = "B"
             st.rerun()
+        st.markdown(
+            '''
+            <div style="text-align: center; margin-top: 0.8rem;">
+                <p style="font-size: 0.9rem; color: #9ca3af;">
+                    ⚡ Gratis • Nessuna carta di credito • Inizia subito
+                </p>
+            </div>
+            </div>
+            ''',
+            unsafe_allow_html=True,
+        )
 
     # ── Feature pills — più leggibili per docenti ───────────────────────────────
     st.markdown(

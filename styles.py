@@ -1659,15 +1659,29 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     CTA GENERA — High Impact Button Wrap
+     CTA GENERA — High Impact Button Wrap - ENHANCED
      ════════════════════════════════════════════════════════════════════════ */
   .cta-genera-wrap button {{
-    min-height: 58px !important;
-    font-size: 1.12rem !important;
+    min-height: 64px !important;
+    font-size: 1.2rem !important;
     font-weight: 900 !important;
-    letter-spacing: -.02em !important;
     border-radius: {_radius_lg} !important;
+    background: linear-gradient(135deg, {_acc}, {_acc2}) !important;
+    border: 2px solid {_acc} !important;
+    box-shadow: 0 8px 25px -5px rgba({_acc.replace('#', '')},.4) !important;
+    transition: all .3s ease !important;
+    text-transform: none !important;
+    letter-spacing: .02em !important;
   }}
+  .cta-genera-wrap button:hover {{
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 35px -5px rgba({_acc.replace('#', '')},.5) !important;
+    background: linear-gradient(135deg, {_acc2}, {_acc}) !important;
+  }}
+  .cta-genera-wrap button:active {{
+    transform: translateY(0) !important;
+  }}
+
   /* Nuovo: hint testuale leggero sopra il pulsante Genera */
   .cta-hint-text {{
     text-align: center;
