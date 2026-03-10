@@ -351,6 +351,58 @@ def mostra_auth(supabase):
         box-shadow: 0 4px 16px rgba(0,0,0,.1) !important;
         backdrop-filter: blur(10px);
     }}
+    
+    /* Warning messages - orange background with dark text */
+    [data-testid="stAlert"][data-testid="stWarning"] {{
+        background: {_WARNING} !important;
+        background-color: {_WARNING} !important;
+        border: 1px solid {_WARNING} !important;
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+    }}
+    [data-testid="stAlert"][data-testid="stWarning"] * {{
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+    }}
+    
+    /* Error messages - red background with white text */
+    [data-testid="stAlert"][data-testid="stError"] {{
+        background: {_ERROR} !important;
+        background-color: {_ERROR} !important;
+        border: 1px solid {_ERROR} !important;
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+    }}
+    [data-testid="stAlert"][data-testid="stError"] * {{
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+    }}
+    
+    /* Success messages - green background with white text */
+    [data-testid="stAlert"][data-testid="stSuccess"] {{
+        background: {_SUCCESS} !important;
+        background-color: {_SUCCESS} !important;
+        border: 1px solid {_SUCCESS} !important;
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+    }}
+    [data-testid="stAlert"][data-testid="stSuccess"] * {{
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+    }}
+    
+    /* Info messages - blue background with white text */
+    [data-testid="stAlert"][data-testid="stInfo"] {{
+        background: {_PRIMARY} !important;
+        background-color: {_PRIMARY} !important;
+        border: 1px solid {_PRIMARY} !important;
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+    }}
+    [data-testid="stAlert"][data-testid="stInfo"] * {{
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+    }}
 
     /* ═══ Modern Typography ─══ */
     .auth-heading {{
