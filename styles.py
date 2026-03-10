@@ -3014,6 +3014,20 @@ def get_css(T: dict) -> str:
     0%   {{ background-position: 200% center; }}
     100% {{ background-position: -200% center; }}
   }}
+  @keyframes dl-pulse-red {{
+    0%, 100% {{ 
+      box-shadow: 
+        0 10px 40px rgba(220,38,38,0.4), 
+        0 4px 16px rgba(220,38,38,0.3),
+        inset 0 2px 0 rgba(255,255,255,0.3);
+    }}
+    50% {{ 
+      box-shadow: 
+        0 14px 48px rgba(220,38,38,0.6), 
+        0 6px 20px rgba(220,38,38,0.4),
+        inset 0 2px 0 rgba(255,255,255,0.4);
+    }}
+  }}
   .dl-cta-wrap {{
     margin-bottom: 1.5rem;
     position: relative;
@@ -3025,32 +3039,38 @@ def get_css(T: dict) -> str:
   .dl-cta-wrap [data-testid="stDownloadButton"] > button {{
     background: linear-gradient(
       135deg,
-      #047857 0%,
-      #059669 25%,
-      #10B981 50%,
-      #059669 75%,
-      #047857 100%
+      #DC2626 0%,      /* Rosso vivo */
+      #EF4444 20%,     /* Rosso brillante */
+      #F87171 40%,     /* Rosso chiaro */
+      #EF4444 60%,     /* Rosso brillante */
+      #DC2626 80%,     /* Rosso vivo */
+      #991B1B 100%     /* Rosso scuro */
     ) !important;
-    background-size: 200% auto !important;
+    background-size: 300% auto !important;
+    background-position: 0% 50% !important;
     color: #FFFFFF !important;
     -webkit-text-fill-color: #FFFFFF !important;
-    border: 2px solid rgba(255,255,255,0.15) !important;
-    border-radius: 16px !important;
-    font-size: 1.2rem !important;
+    border: 3px solid rgba(255,255,255,0.3) !important;
+    border-radius: 18px !important;
+    font-size: 1.3rem !important;
     font-weight: 900 !important;
-    letter-spacing: .05em !important;
-    min-height: 76px !important;
-    padding: 1.1rem 2rem !important;
+    letter-spacing: .07em !important;
+    min-height: 84px !important;
+    padding: 1.3rem 2.2rem !important;
     box-shadow: 
-      0 6px 24px rgba(5,150,105,0.4), 
-      0 2px 8px rgba(5,150,105,0.2),
-      inset 0 1px 0 rgba(255,255,255,0.25) !important;
-    animation: dl-shimmer 4s linear infinite !important;
+      0 10px 40px rgba(220,38,38,0.4), 
+      0 4px 16px rgba(220,38,38,0.3),
+      inset 0 2px 0 rgba(255,255,255,0.3),
+      0 0 0 1px rgba(255,255,255,0.1) !important;
+    animation: 
+      dl-shimmer 3s linear infinite,
+      dl-pulse-red 2s ease-in-out infinite !important;
     transition: all .3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     font-family: 'DM Sans', sans-serif !important;
     text-transform: uppercase !important;
     position: relative;
     overflow: hidden;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
   }}
   .dl-cta-wrap div.stDownloadButton > button::before,
   .dl-cta-wrap [data-testid="stDownloadButton"] > button::before {{
@@ -3066,25 +3086,27 @@ def get_css(T: dict) -> str:
   }}
   .dl-cta-wrap div.stDownloadButton > button:hover,
   .dl-cta-wrap [data-testid="stDownloadButton"] > button:hover {{
-    filter: brightness(1.1) saturate(1.15) !important;
+    filter: brightness(1.2) saturate(1.3) !important;
     box-shadow: 
-      0 12px 40px rgba(5,150,105,0.5), 
-      0 6px 16px rgba(5,150,105,0.3),
-      inset 0 1px 0 rgba(255,255,255,0.35) !important;
-    transform: translateY(-3px) !important;
+      0 16px 56px rgba(220,38,38,0.6), 
+      0 8px 24px rgba(220,38,38,0.4),
+      inset 0 2px 0 rgba(255,255,255,0.4),
+      0 0 0 2px rgba(255,255,255,0.2) !important;
+    transform: translateY(-4px) scale(1.02) !important;
     animation: none !important;
-    background-size: 150% auto !important;
-    background-position: 25% 0% !important;
-    border-color: rgba(255,255,255,0.25) !important;
+    background-size: 200% auto !important;
+    background-position: 50% 0% !important;
+    border-color: rgba(255,255,255,0.4) !important;
   }}
   .dl-cta-wrap div.stDownloadButton > button:active,
   .dl-cta-wrap [data-testid="stDownloadButton"] > button:active {{
-    transform: translateY(-2px) scale(.99) !important;
-    filter: brightness(1.05) !important;
+    transform: translateY(-2px) scale(.98) !important;
+    filter: brightness(0.95) saturate(1.1) !important;
     animation: none !important;
     box-shadow: 
-      0 8px 32px #05966970, 
-      0 4px 16px #05966950 !important;
+      0 8px 32px rgba(220,38,38,0.7), 
+      0 4px 16px rgba(220,38,38,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.3) !important;
   }}
 
   /* CTA variante (per colleghi) — definita una sola volta più in basso */
