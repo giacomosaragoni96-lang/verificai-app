@@ -2624,7 +2624,7 @@ def _render_percorso_a_wizard():
                     if _rf == "arg":
                         st.markdown('<div class="opt-label">Argomento ✱</div>', unsafe_allow_html=True)
                         _val_argomento = st.text_input(
-                            "Argomento", placeholder="es. Equazioni di secondo grado",
+                            "Argomento", placeholder="es. Teorema di Pitagora (escludi dimostrazioni), frazioni (semplificazione solo), energia cinetica (no formule complesse)...",
                             label_visibility="collapsed", key="rev_arg"
                         ).strip()
                     elif _rf == "scu":
