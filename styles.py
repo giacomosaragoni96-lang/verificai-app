@@ -1217,7 +1217,7 @@ def get_css(T: dict) -> str:
     font-family: 'DM Sans', sans-serif;
     font-size: clamp(2.4rem, 5.5vw, 3.6rem);
     font-weight: 900;
-    line-height: 0.95 !important;
+    line-height: 0.85 !important;
     letter-spacing: -0.03em;
     color: {T['text']};
     margin: 0 0 0.3rem 0;
