@@ -1240,7 +1240,7 @@ def get_css(T: dict) -> str:
     line-height: 1.5;
     text-align: center;
     max-width: 520px;
-    margin: 0 auto 1.5rem;
+    margin: 0.2rem auto 1.5rem;
   }}
 
   /* Classi legacy mantenute per compatibilità */
