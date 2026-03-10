@@ -41,7 +41,28 @@ def _render_back_button(
     _col, _spacer = st.columns([1, 4])
     with _col:
         st.markdown('<div class="btn-back-discrete">', unsafe_allow_html=True)
-        clicked = st.button(label, key=key, use_container_width=True, help=help)
+        clicked = st.button(
+            label, 
+            key=key, 
+            use_container_width=True, 
+            help=help,
+            type="secondary"
+        )
+        # Force inline styles
+        st.markdown("""
+        <style>
+        div[data-testid="stVerticalBlock"] > div:has([data-testid*="%s"]) button,
+        button[data-testid*="%s"] {
+            background: transparent !important;
+            color: #1f2937 !important;
+            font-size: 0.85rem !important;
+            padding: 6px 12px !important;
+            min-height: 32px !important;
+            border-radius: 6px !important;
+            border: 1px solid #d1d5db !important;
+        }
+        </style>
+        """ % (key, key), unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     return clicked
 
