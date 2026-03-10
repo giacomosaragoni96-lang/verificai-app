@@ -6,24 +6,38 @@ import time
 # Dopo il login l'URL diventa: https://tuaapp.streamlit.app/?rt=TOKEN
 # Il token sopravvive al refresh perché è nell'URL stesso.
 
-# Palette login: tema Notte da config (singola fonte di verità)
+# Palette login: tema dinamico basato sul tema corrente
 try:
     from config import THEMES
-    _N = THEMES.get("notte", {})
+    from styles import get_theme
+    # Ottieni il tema corrente
+    theme_name = "notte"  # Default per login
+    T = THEMES.get(theme_name, {})
 except ImportError:
-    _N = {}
-_N_BG       = _N.get("bg", "#0D1117")
-_N_CARD     = _N.get("card", "#1C2128")
-_N_CARD2    = _N.get("card2", "#21262D")
-_N_BG2      = _N.get("bg2", "#161B22")
-_N_TEXT     = _N.get("text", "#E6EDF3")
-_N_TEXT2    = _N.get("text2", "#8B949E")
-_N_MUTED    = _N.get("muted", "#6E7681")
-_N_BORDER   = _N.get("border", "#30363D")
-_N_BORDER2  = _N.get("border2", "#3D444D")
-_N_ACC      = _N.get("accent", "#58A6FF")
-_N_ACC2     = _N.get("accent2", "#79C0FF")
-_N_ACC_L    = _N.get("accent_light", "#0D2340")
+    T = {}
+
+# Colori principali - coerenti con il tema
+_BG        = T.get("bg", "#0D1117")
+_CARD      = T.get("card", "#1C2128") 
+_CARD2     = T.get("card2", "#21262D")
+_BG2       = T.get("bg2", "#161B22")
+_TEXT      = T.get("text", "#E6EDF3")
+_TEXT2     = T.get("text2", "#8B949E")
+_MUTED     = T.get("muted", "#6E7681")
+_BORDER    = T.get("border", "#30363D")
+_BORDER2   = T.get("border2", "#3D444D")
+_ACCENT    = T.get("accent", "#58A6FF")
+_ACCENT2   = T.get("accent2", "#79C0FF")
+_ACCENT_L  = T.get("accent_light", "#0D2340")
+
+# Colori moderni aggiuntivi
+_PRIMARY    = _ACCENT
+_PRIMARY_L  = _ACCENT2
+_SUCCESS    = "#10B981"
+_WARNING    = "#F59E0B"
+_ERROR      = "#EF4444"
+_SURFACE    = _CARD
+_SURFACE_L  = _CARD2
 
 
 def get_cookie_controller():
@@ -81,273 +95,298 @@ def mostra_auth(supabase):
 })();
 </script>""", height=0)
 
-    # ── CSS scoped alla pagina di login ──────────────────────────────────────
+    # ── CSS Moderno Login Page ──────────────────────────────────────
     st.markdown(f"""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-    /* ═══ Base page — Notte palette, elegant ═══ */
+    /* ═══ Base Modern Design System ═══ */
     html, body,
     [data-testid="stAppViewContainer"],
     .stApp {{
-        background: {_N_BG} !important;
-        font-family: 'DM Sans', sans-serif !important;
+        background: {_BG} !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
         overflow-x: hidden;
         color-scheme: dark !important;
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     }}
 
-    /* ── Ambient: soft mesh glow (sottile, elegante) ── */
+    /* ── Modern Gradient Background ── */
     [data-testid="stAppViewContainer"]::before {{
         content: '';
-        position: fixed; top: -200px; left: 50%;
-        transform: translateX(-50%);
-        width: 900px; height: 500px;
-        background: radial-gradient(ellipse 80% 50% at 50% 0%,
-            rgba(88,166,255,.08)  0%,
-            rgba(121,192,255,.03) 40%,
-            transparent 70%);
-        pointer-events: none; z-index: 0;
-    }}
-    [data-testid="stAppViewContainer"]::after {{
-        content: '';
-        position: fixed; bottom: -120px; right: -60px;
-        width: 380px; height: 380px;
-        background: radial-gradient(circle,
-            rgba(13,36,64,.12)  0%,
-            transparent 60%);
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 20%, rgba({_PRIMARY.replace('#', '')},.08) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba({_PRIMARY_L.replace('#', '')},.06) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba({_SUCCESS.replace('#', '')},.03) 0%, transparent 70%);
         pointer-events: none; z-index: 0;
     }}
 
-    /* ── Nascondi chrome Streamlit ── */
-    [data-testid="stHeader"],
-    [data-testid="stDecoration"],
-    [data-testid="stToolbar"],
+    /* ── Hide Streamlit Chrome ── */
+    [data-testid="stHeader"], [data-testid="stDecoration"], [data-testid="stToolbar"],
     #MainMenu, footer {{ display: none !important; }}
 
-    /* ── Layout centrato ── */
+    /* ── Modern Layout ── */
     .block-container {{
-        padding: 2.5rem 1.25rem !important;
-        max-width: 440px !important;
+        padding: 2rem 1rem !important;
+        max-width: 480px !important;
         margin: 0 auto !important;
+        position: relative; z-index: 1;
     }}
     [data-testid="stMainBlockContainer"] {{ padding: 0 !important; }}
 
-    /* ═══ Card principale — Elegant: bordo sottile, ombra profonda ═══ */
+    /* ═══ Modern Glass Card ═══ */
     [data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"] {{
-        background: {_N_CARD};
-        border-radius: 20px;
-        border: 1px solid {_N_BORDER};
-        margin: 0 auto;
-        max-width: 440px;
+        background: rgba({_SURFACE.replace('#', '')},.95) !important;
+        backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba({_BORDER.replace('#', '')},.3) !important;
+        border-radius: 24px !important;
+        margin: 0 auto !important;
+        max-width: 480px !important;
         box-shadow:
-            0 0 0 1px rgba(88,166,255,.04),
-            0 4px 24px rgba(0,0,0,.2),
-            0 24px 48px rgba(0,0,0,.15);
-        position: relative;
-        overflow: hidden;
-        color-scheme: dark !important;
-        transition: box-shadow .3s ease, border-color .3s ease;
+            0 0 0 1px rgba({_PRIMARY.replace('#', '')},.1),
+            0 8px 32px rgba(0,0,0,.4),
+            0 24px 64px rgba(0,0,0,.3),
+            inset 0 1px 0 rgba(255,255,255,.05) !important;
+        position: relative !important;
+        overflow: hidden !important;
+        transition: all .3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }}
 
-    /* ── Barra superiore — linea accent sottile (non animata, più elegante) ── */
+    /* ── Modern Top Accent Bar ── */
     [data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"]::before {{
         content: '';
-        position: absolute; top: 0; left: 0; right: 0; height: 3px;
-        background: linear-gradient(90deg, {_N_ACC}, {_N_ACC2});
-        border-radius: 20px 20px 0 0;
+        position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        background: linear-gradient(90deg, 
+            {_PRIMARY} 0%, 
+            {_PRIMARY_L} 50%, 
+            {_PRIMARY} 100%);
+        border-radius: 24px 24px 0 0;
+        animation: shimmer 3s ease-in-out infinite;
     }}
 
-    /* ── Padding interno della card ── */
+    @keyframes shimmer {{
+        0%, 100% {{ opacity: 1; }}
+        50% {{ opacity: 0.8; }}
+    }}
+
+    /* ── Modern Card Padding ── */
     [data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"] > div {{
-        padding: 2rem 2.2rem 1.75rem !important;
+        padding: 2.5rem 2.5rem 2rem !important;
     }}
 
-    /* ═══ Inputs — elegant, focus ring ═══ */
+    /* ═══ Modern Inputs ─══ */
     [data-testid="stTextInput"] input {{
-        background: {_N_BG2} !important;
-        border: 1px solid {_N_BORDER} !important;
-        border-radius: 12px !important;
-        color: {_N_TEXT} !important;
-        -webkit-text-fill-color: {_N_TEXT} !important;
-        font-family: 'DM Sans', sans-serif !important;
+        background: rgba({_BG2.replace('#', '')},.8) !important;
+        border: 2px solid rgba({_BORDER.replace('#', '')},.2) !important;
+        border-radius: 16px !important;
+        color: {_TEXT} !important;
+        -webkit-text-fill-color: {_TEXT} !important;
+        font-family: 'Inter', sans-serif !important;
         font-size: 1rem !important;
-        padding: 14px 18px !important;
-        min-height: 50px !important;
-        transition: border-color .25s ease, box-shadow .25s ease !important;
+        font-weight: 500 !important;
+        padding: 16px 20px !important;
+        min-height: 56px !important;
+        transition: all .25s cubic-bezier(0.4, 0, 0.2, 1) !important;
         color-scheme: dark !important;
     }}
     [data-testid="stTextInput"] input:focus {{
-        border-color: {_N_ACC} !important;
-        box-shadow: 0 0 0 3px {_N_ACC}26 !important;
+        border-color: {_PRIMARY} !important;
+        box-shadow: 
+            0 0 0 4px rgba({_PRIMARY.replace('#', '')},.15),
+            0 0 0 1px {_PRIMARY} !important;
         outline: none !important;
+        transform: translateY(-1px) !important;
     }}
     [data-testid="stTextInput"] input::placeholder {{
-        color: {_N_MUTED} !important; opacity: 1 !important;
+        color: {_MUTED} !important; 
+        opacity: 0.8 !important;
+        font-weight: 400 !important;
     }}
     [data-testid="stTextInput"] label p {{
-        color: {_N_TEXT2} !important;
-        font-size: .8rem !important;
+        color: {_TEXT2} !important;
+        font-size: .875rem !important;
         font-weight: 600 !important;
-        letter-spacing: .02em !important;
-        font-family: 'DM Sans', sans-serif !important;
+        letter-spacing: .01em !important;
+        font-family: 'Inter', sans-serif !important;
+        margin-bottom: 0.5rem !important;
     }}
 
-    /* ═══ Tabs — pill selector, clean ═══ */
+    /* ═══ Modern Tabs ─══ */
     [data-testid="stTabs"] [data-baseweb="tab-list"] {{
-        background: {_N_BG2} !important;
-        border-radius: 12px !important;
-        padding: 5px !important;
-        gap: 4px !important;
-        border: 1px solid {_N_BORDER} !important;
-        margin-bottom: 1.5rem !important;
+        background: rgba({_SURFACE_L.replace('#', '')},.6) !important;
+        border-radius: 16px !important;
+        padding: 6px !important;
+        gap: 2px !important;
+        border: 1px solid rgba({_BORDER.replace('#', '')},.2) !important;
+        margin-bottom: 2rem !important;
+        backdrop-filter: blur(10px);
     }}
     [data-testid="stTabs"] [data-baseweb="tab"] {{
-        border-radius: 10px !important;
-        font-size: .84rem !important;
+        border-radius: 12px !important;
+        font-size: .875rem !important;
         font-weight: 600 !important;
-        color: {_N_TEXT2} !important;
-        -webkit-text-fill-color: {_N_TEXT2} !important;
-        font-family: 'DM Sans', sans-serif !important;
-        padding: .5rem 1rem !important;
-        transition: background .2s, color .2s !important;
+        color: {_TEXT2} !important;
+        -webkit-text-fill-color: {_TEXT2} !important;
+        font-family: 'Inter', sans-serif !important;
+        padding: .75rem 1.25rem !important;
+        transition: all .2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative !important;
     }}
     [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {{
-        background: {_N_CARD} !important;
-        background-color: {_N_CARD} !important;
-        color: {_N_ACC} !important;
-        -webkit-text-fill-color: {_N_ACC} !important;
+        background: rgba({_SURFACE.replace('#', '')},.9) !important;
+        color: {_PRIMARY} !important;
+        -webkit-text-fill-color: {_PRIMARY} !important;
         font-weight: 700 !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,.25) !important;
+        box-shadow: 
+            0 2px 8px rgba(0,0,0,.2),
+            0 0 0 1px rgba({_PRIMARY.replace('#', '')},.2) !important;
     }}
     [data-testid="stTabs"] [role="tabpanel"] {{
         padding: 0 !important;
     }}
 
-    /* ═══ Primary button — elegant, subtle lift ═══ */
+    /* ═══ Modern Primary Button ─══ */
     div.stButton > button[kind="primary"],
     div.stButton > button[data-testid="stBaseButton-primary"] {{
-        background: linear-gradient(135deg, {_N_ACC}, {_N_ACC2}) !important;
-        color: {_N_BG} !important;
-        -webkit-text-fill-color: {_N_BG} !important;
+        background: linear-gradient(135deg, {_PRIMARY}, {_PRIMARY_L}) !important;
+        color: white !important;
+        -webkit-text-fill-color: white !important;
         border: none !important;
-        border-radius: 12px !important;
-        font-family: 'DM Sans', sans-serif !important;
+        border-radius: 16px !important;
+        font-family: 'Inter', sans-serif !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
-        min-height: 50px !important;
+        min-height: 56px !important;
         letter-spacing: .01em !important;
-        box-shadow: 0 2px 12px {_N_ACC}33 !important;
-        transition: box-shadow .25s ease, transform .25s ease !important;
+        box-shadow: 
+            0 4px 16px rgba({_PRIMARY.replace('#', '')},.3),
+            0 0 0 1px rgba({_PRIMARY.replace('#', '')},.2) !important;
+        transition: all .25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }}
+    div.stButton > button[kind="primary"]::before,
+    div.stButton > button[data-testid="stBaseButton-primary"]::before {{
+        content: '';
+        position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+        transition: left .6s ease;
+    }}
+    div.stButton > button[kind="primary"]:hover::before,
+    div.stButton > button[data-testid="stBaseButton-primary"]:hover::before {{
+        left: 100%;
     }}
     div.stButton > button[kind="primary"]:hover,
     div.stButton > button[data-testid="stBaseButton-primary"]:hover {{
-        box-shadow: 0 6px 24px {_N_ACC}47 !important;
-        transform: translateY(-1px) !important;
+        box-shadow: 
+            0 8px 24px rgba({_PRIMARY.replace('#', '')},.4),
+            0 0 0 1px rgba({_PRIMARY.replace('#', '')},.3) !important;
+        transform: translateY(-2px) !important;
     }}
 
-    /* ═══ Warning / error messages — toast-like, bordi sottili ═══ */
+    /* ═══ Modern Messages ─══ */
     [data-testid="stAlert"] {{
-        background: {_N_CARD2} !important;
-        border: 1px solid {_N_BORDER} !important;
-        border-radius: 12px !important;
-        color: {_N_TEXT} !important;
-        font-family: 'DM Sans', sans-serif !important;
-        padding: 1rem 1.25rem !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,.08) !important;
+        background: rgba({_SURFACE_L.replace('#', '')},.9) !important;
+        border: 1px solid rgba({_BORDER.replace('#', '')},.3) !important;
+        border-radius: 16px !important;
+        color: {_TEXT} !important;
+        font-family: 'Inter', sans-serif !important;
+        padding: 1.25rem 1.5rem !important;
+        box-shadow: 0 4px 16px rgba(0,0,0,.1) !important;
+        backdrop-filter: blur(10px);
     }}
 
-    /* ═══ Stat row ═══ */
-    .auth-stats {{
-        display: flex; flex-wrap: wrap; justify-content: center;
-        gap: .28rem; margin: .5rem 0 .4rem;
+    /* ═══ Modern Typography ─══ */
+    .auth-heading {{
+        font-family: 'Inter', sans-serif;
+        font-size: clamp(2rem, 5vw, 2.8rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: {_TEXT};
+        line-height: 1.1;
+        margin-bottom: 0.75rem;
+        text-align: center;
     }}
-    .auth-stat-pill {{
-        background: {_N_CARD2};
-        border: 1.5px solid {_N_BORDER};
-        border-radius: 20px;
-        padding: .26rem .72rem;
-        font-size: .69rem; font-weight: 600;
-        color: {_N_TEXT2}; font-family: 'DM Sans', sans-serif;
-        display: inline-flex; align-items: center; gap: .28rem;
-    }}
-    .auth-stat-num {{ color: {_N_ACC}; font-weight: 800; }}
-
-    /* feature pills */
-    .auth-feat-wrap {{
-        display: flex; flex-wrap: wrap; gap: .28rem;
-        justify-content: center; margin-top: .45rem;
-    }}
-    .auth-feat-pill {{
-        font-size: .66rem; font-weight: 600;
-        color: {_N_ACC2};
-        background: {_N_ACC_L};
-        border: 1px solid rgba(88,166,255,.25);
-        border-radius: 20px; padding: .18rem .6rem;
-        font-family: 'DM Sans', sans-serif;
+    .auth-subheading {{
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+        font-weight: 500;
+        color: {_TEXT2};
+        line-height: 1.6;
+        text-align: center;
+        margin: 0;
     }}
 
-    /* divisore orizzontale */
-    .auth-hr {{
-        height: 1px;
-        background: {_N_BORDER};
-        margin: 0 0 1.4rem; border-radius: 1px;
-        opacity: .8;
-    }}
-
-    /* hint reset password */
-    .auth-reset-hint {{
-        font-size: .82rem; color: {_N_TEXT2};
-        padding: .75rem 1rem;
-        background: {_N_BG2};
-        border-radius: 10px;
-        border-left: 3px solid {_N_ACC};
-        margin-bottom: .9rem;
-        line-height: 1.5;
-    }}
-
-    /* trust bar in fondo */
+    /* ═══ Modern Trust Bar ═══ */
     .auth-trust {{
-        display: flex; justify-content: center; gap: 1.5rem;
-        margin-top: 1rem; padding-top: 1rem;
-        border-top: 1px solid {_N_BORDER};
-        opacity: .9;
+        display: flex; justify-content: center; gap: 2rem;
+        margin-top: 1.5rem; padding-top: 1.5rem;
+        border-top: 1px solid rgba({_BORDER.replace('#', '')},.2);
+        opacity: 0.9;
     }}
     .auth-trust-item {{
-        display: flex; align-items: center; gap: .3rem;
-        font-size: .7rem; color: {_N_MUTED};
-        font-family: 'DM Sans', sans-serif;
-        letter-spacing: .02em;
+        display: flex; align-items: center; gap: 0.5rem;
+        font-size: 0.8rem; color: {_MUTED};
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+    }}
+
+    /* ═══ Modern Divider ═══ */
+    .auth-divider {{
+        height: 1px;
+        background: linear-gradient(90deg, 
+            transparent, 
+            rgba({_BORDER.replace('#', '')},.3), 
+            transparent);
+        margin: 2rem 0; border-radius: 1px;
+    }}
+
+    /* ═══ Modern Reset Hint ═══ */
+    .auth-reset-hint {{
+        font-size: 0.9rem; color: {_TEXT2};
+        padding: 1rem 1.25rem;
+        background: rgba({_BG2.replace('#', '')},.6);
+        border-radius: 12px;
+        border-left: 4px solid {_PRIMARY};
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+        backdrop-filter: blur(10px);
+    }}
+
+    /* Responsive Design */
+    @media (max-width: 480px) {{
+        .block-container {{ padding: 1rem 0.5rem !important; }}
+        [data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"] > div {{
+            padding: 2rem 1.5rem 1.5rem !important;
+        }}
+        .auth-trust {{
+            flex-direction: column; gap: 1rem; align-items: center;
+        }}
     }}
     </style>
     """, unsafe_allow_html=True)
 
-    # ── Wordmark + headline ───────────────────────────────────────────────────
+    # ── Modern Header ───────────────────────────────────────────────────
     st.markdown(f"""
-    <div style="text-align:center; padding:.75rem 0 1rem;">
+    <div style="text-align:center; padding:1rem 0 1.5rem;">
 
-      <div style="
-          font-family: 'DM Sans', sans-serif;
-          font-size: clamp(2.4rem, 5.5vw, 3.2rem);
-          font-weight: 900;
-          letter-spacing: -0.035em;
-          color: {_N_TEXT}; line-height: 1.1;
-          margin-bottom: .55rem;">
+      <div class="auth-heading">
         📝&thinsp;Verific<span style="
-          background: linear-gradient(135deg,{_N_ACC},{_N_ACC2});
+          background: linear-gradient(135deg,{_PRIMARY},{_PRIMARY_L});
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;">AI</span>
       </div>
 
-      <p style="font-size:.9rem; font-weight:500;
-                color:{_N_TEXT2}; margin:0;
-                line-height:1.5; font-family:'DM Sans',sans-serif;">
-        Verifiche scolastiche professionali in <strong style="color:{_N_ACC}; font-weight:700;">30 secondi</strong>.
+      <p class="auth-subheading">
+        Verifiche scolastiche professionali in <strong style="color:{_PRIMARY}; font-weight:700;">30 secondi</strong>.
       </p>
 
     </div>
 
-    <div class="auth-hr"></div>
+    <div class="auth-divider"></div>
     """, unsafe_allow_html=True)
 
     # ── Tabs ─────────────────────────────────────────────────────────────────
@@ -433,17 +472,19 @@ def mostra_auth(supabase):
                 except Exception as e:
                     st.error(f"Errore nell'invio: {e}")
 
-    # ── Trust bar + footer ────────────────────────────────────────────────────
+    # ── Modern Trust Bar + Footer ────────────────────────────────────────────
     st.markdown(f"""
     <div class="auth-trust">
       <div class="auth-trust-item">🔒&ensp;Dati protetti</div>
       <div class="auth-trust-item">🇮🇹&ensp;Per docenti italiani</div>
       <div class="auth-trust-item">⚡&ensp;Gratis per iniziare</div>
     </div>
-    <div style="text-align:center; padding:.6rem 0 .1rem; font-family:'DM Sans',sans-serif;">
-      <p style="font-size:.72rem; color:{_N_MUTED}; margin:0;">
+    <div style="text-align:center; padding:1rem 0 0.5rem; font-family:'Inter',sans-serif;">
+      <p style="font-size:0.8rem; color:{_MUTED}; margin:0; font-weight:500;">
         Accedendo accetti i&nbsp;<a href="#"
-          style="color:{_N_TEXT2}; font-weight:600; text-decoration:none;">termini di utilizzo</a>.
+          style="color:{_TEXT2}; font-weight:600; text-decoration:none; transition:color .2s;"
+          onmouseover="this.style.color='{_PRIMARY}'" 
+          onmouseout="this.style.color='{_TEXT2}'">termini di utilizzo</a>.
       </p>
     </div>
     """, unsafe_allow_html=True)
