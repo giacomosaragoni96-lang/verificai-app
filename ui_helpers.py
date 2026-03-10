@@ -454,7 +454,7 @@ def _render_step_progress(T: dict) -> None:
     padding: .75rem 1.5rem;
     box-shadow: none;
     width: 100%;
-    max-width: 600px;
+    max-width: 400px;
     justify-content: space-between;
   }}
   .sp-node {{
@@ -479,7 +479,7 @@ def _render_step_progress(T: dict) -> None:
     width: 100%;
   }}
   .sp-line {{
-    height: 1px; width: 50px;
+    height: 1px; width: 80px;
     flex-shrink: 0; border-radius: 1px;
     margin-bottom: 30px;
     opacity: 0.4;
