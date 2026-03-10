@@ -615,7 +615,7 @@ def get_css(T: dict) -> str:
   }}
   .sb-pro-card-footer {{
     font-size: .65rem;
-    color: {_SB_MUTED}};
+    color: {_SB_MUTED};
     font-family: 'DM Sans', sans-serif;
     line-height: 1.4;
     opacity: .9;
@@ -662,7 +662,7 @@ def get_css(T: dict) -> str:
   }}
   .user-role {{
     font-size: .67rem;
-    color: {_SB_MUTED}};
+    color: {_SB_MUTED};
     font-family: 'DM Sans', sans-serif;
     font-weight: 500;
   }}
@@ -672,8 +672,8 @@ def get_css(T: dict) -> str:
     background: {_SB_INPUT_BG}33 !important;
     background-color: {_SB_INPUT_BG}33 !important;
     border: 1px solid {_SB_BORDER}66 !important;
-    color: {_SB_MUTED}} !important;
-    -webkit-text-fill-color: {_SB_MUTED}} !important;
+    color: {_SB_MUTED} !important;
+    -webkit-text-fill-color: {_SB_MUTED} !important;
     font-size: .82rem !important;
     font-weight: 600 !important;
     min-height: 36px !important;
