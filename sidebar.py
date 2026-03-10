@@ -202,7 +202,7 @@ def render_sidebar(
             _reset_str = f"Si rinnova tra {_gg_reset} giorni"
 
         st.markdown(f"""
-        <div class="monthly-bar">
+        <div class="monthly-bar" style="background: transparent; border: none;">
           <div class="monthly-bar-header">
             <span class="monthly-bar-label">Verifiche questo mese</span>
             <span class="monthly-bar-count {_count_class}">
