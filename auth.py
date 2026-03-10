@@ -503,21 +503,8 @@ def mostra_auth(supabase):
                                  type="password")
         if st.button("Accedi →", type="primary", use_container_width=True, key="btn_login"):
             if not email or not password:
-                st.markdown(f'''
-                <div style="
-                    background: {_WARNING} !important;
-                    color: white !important;
-                    padding: 1rem 1.5rem !important;
-                    border-radius: 12px !important;
-                    margin: 1rem 0 !important;
-                    font-family: 'Inter', sans-serif !important;
-                    font-weight: 500 !important;
-                    border: 1px solid {_WARNING} !important;
-                    box-shadow: 0 4px 12px rgba(146, 64, 14, 0.3) !important;
-                    display: block !important;
-                    visibility: visible !important;
-                    opacity: 1 !important;
-                ">
+                st.markdown('''
+                <div style="background: #2C3E50; color: #FFFFFF; padding: 16px 20px; border-radius: 8px; margin: 16px 0; font-family: system-ui, -apple-system, sans-serif; font-weight: 500; border-left: 4px solid #E74C3C; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                     ⚠️ Inserisci email e password.
                 </div>
                 ''', unsafe_allow_html=True)
