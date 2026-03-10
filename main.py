@@ -498,6 +498,7 @@ if "review_sel_idx"    not in st.session_state: st.session_state.review_sel_idx 
 if "gen_params"        not in st.session_state: st.session_state.gen_params = {}
 if "preview_images"    not in st.session_state: st.session_state.preview_images = []
 if "preview_page"      not in st.session_state: st.session_state.preview_page = 0
+if "last_preview_ts"   not in st.session_state: st.session_state.last_preview_ts = 0
 if "esercizi_custom"   not in st.session_state: st.session_state.esercizi_custom = []
 if "last_materia"      not in st.session_state: st.session_state.last_materia = None
 if "last_argomento"    not in st.session_state: st.session_state.last_argomento = None
@@ -4371,7 +4372,7 @@ def _render_stage_preview():
     if st.button("← Ricomincia da capo", key="preview_back",
                  help="Cancella questa verifica e torna all'inizio per crearne una nuova."):
         for _k in ("stage", "verifiche", "gen_params", "review_blocks",
-                   "review_preamble", "preview_images", "input_percorso",
+                   "review_preamble", "preview_images", "last_preview_ts", "input_percorso",
                    "dialogo_stato", "analisi_doc", "file_mode"):
             if _k in st.session_state:
                 del st.session_state[_k]
@@ -4949,6 +4950,23 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             '📄 Anteprima PDF completo</div>',
             unsafe_allow_html=True
         )
+        # Controlla se il PDF è cambiato e aggiorna le preview se necessario
+        vA = st.session_state.verifiche.get("A", {})
+        current_pdf_ts = vA.get("pdf_ts")
+        last_preview_ts = st.session_state.get("last_preview_ts", 0)
+        
+        # Se il timestamp del PDF è più recente dell'ultima preview, rigenera le immagini
+        if current_pdf_ts and current_pdf_ts > last_preview_ts:
+            vA_pdf = vA.get("pdf")
+            if vA_pdf:
+                try:
+                    new_imgs, _ = pdf_to_images_bytes(vA_pdf)
+                    st.session_state.preview_images = new_imgs or []
+                    st.session_state.last_preview_ts = current_pdf_ts
+                    logger.info(f"Preview images aggiornate - timestamp PDF: {current_pdf_ts}")
+                except Exception as e:
+                    logger.error(f"Errore aggiornamento preview: {e}")
+        
         imgs = st.session_state.preview_images
         if imgs:
             n_pages  = len(imgs)
@@ -5982,6 +6000,22 @@ def _render_stage_final():
     # ── Sezioni secondarie collassabili ───────────────────────────────────────
     st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
 
+    # Controlla se il PDF è cambiato e aggiorna le preview se necessario
+    current_pdf_ts = vA.get("pdf_ts")
+    last_preview_ts = st.session_state.get("last_preview_ts", 0)
+    
+    # Se il timestamp del PDF è più recente dell'ultima preview, rigenera le immagini
+    if current_pdf_ts and current_pdf_ts > last_preview_ts:
+        vA_pdf = vA.get("pdf")
+        if vA_pdf:
+            try:
+                new_imgs, _ = pdf_to_images_bytes(vA_pdf)
+                st.session_state.preview_images = new_imgs or []
+                st.session_state.last_preview_ts = current_pdf_ts
+                logger.info(f"Preview images aggiornate (final page) - timestamp PDF: {current_pdf_ts}")
+            except Exception as e:
+                logger.error(f"Errore aggiornamento preview (final page): {e}")
+    
     imgs = st.session_state.preview_images
     if imgs or vA.get("pdf"):
         with st.expander("📄 Anteprima PDF", expanded=False):
@@ -6086,6 +6120,7 @@ def _render_stage_final():
             st.session_state.gen_params        = {}
             st.session_state.preview_images    = []
             st.session_state.preview_page      = 0
+            st.session_state.last_preview_ts   = 0
             st.session_state.esercizi_custom       = []
             st.session_state._saved_to_storico     = False
             st.session_state["_es_custom_da_file"] = {}
