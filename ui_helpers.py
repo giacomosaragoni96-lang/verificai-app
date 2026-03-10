@@ -461,6 +461,8 @@ def _render_step_progress(T: dict) -> None:
     display: flex; flex-direction: column;
     align-items: center; gap: 8px;
     position: relative; z-index: 1;
+    flex: 1;
+    max-width: 120px;
   }}
   .sp-dot {{
     width: 40px; height: 40px;
@@ -473,6 +475,8 @@ def _render_step_progress(T: dict) -> None:
     font-size: .82rem; font-family: 'DM Sans', sans-serif;
     white-space: nowrap; letter-spacing: .02em;
     transition: color .25s;
+    text-align: center;
+    width: 100%;
   }}
   .sp-line {{
     height: 1px; width: 50px;
