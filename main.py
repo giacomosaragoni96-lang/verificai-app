@@ -1239,9 +1239,9 @@ def _render_bivio():
     st.markdown(
         f'''
         <div class="landing-hero-unified" style="padding: 1.5rem 1rem 1rem;">
-                    <h2 class="landing-headline-xl" style="margin: 0 0 0.1rem 0 !important;">
-            Crea verifiche professionali<br>
-            <span class="landing-headline-accent-xl">in pochi secondi</span>
+                    <h2 class="landing-headline-xl" style="margin: 0 0 0.1rem 0 !important; white-space: pre-line;">
+            Crea verifiche professionali
+in pochi secondi
           </h2>
           <p class="landing-sub-xl" style="margin: 0.1rem auto 1.5rem !important;">
             Scegli materia, livello e argomento.<br>
