@@ -260,12 +260,13 @@ def parse_items_from_block(body: str, title: str = "") -> list:
         return items
 
     # Seconda prova: item senza label, auto-generati a), b), c)
-    # Pattern più flessibili per diversi formati
+    # Pattern più aggressivi per catturare tutti gli items con spazi
     auto_patterns = [
-        r'\\item\s+([^{]*?)(?=\\item|\Z)',                    # Standard: \item testo
+        r'\\item\s+(.+?)(?=\\item\s+|\\end|\Z)',              # Standard: \item testo (aggressive)
         r'\\item\s+([^\n]*?)(?=\\item|\n\n|\Z)',             # Con newline: \item testo\n
         r'\\item\s*(.*?)(?=\\item|\n\n|\Z)',                  # Lazy match: \item testo
         r'\\item([^\n]*?)(?=\\item|\n\n|\Z)',                 # No space: \itemtesto
+        r'\\item\s+(.+?)(?=\\item|\\end|\Z)',                 # Fallback: cattura tutto fino a prossimo \item o \end
     ]
     
     auto_items = []
@@ -324,10 +325,11 @@ def parse_items_from_block(body: str, title: str = "") -> list:
     # Terza prova: fallback - cerca qualsiasi \item
     # Pattern più aggressivi per catturare tutto
     fallback_patterns = [
-        r'\\item[^\n]*',                    # Standard: \item testo
-        r'\\item.*?(?=\\item|\n\n|\Z)',     # Lazy match fino a prossimo item
-        r'\\item\{[^}]*\}[^\n]*',          # Item con opzioni: \item[label] testo
-        r'\\item\s*.*',                     # Qualsiasi \item seguito da qualcosa
+        r'\\item\s+(.+?)(?=\\item\s+|\\end|\Z)',         # Aggressive: cattura tutto
+        r'\\item[^\n]*',                                    # Standard: \item testo
+        r'\\item.*?(?=\\item|\n\n|\Z)',                   # Lazy match fino a prossimo item
+        r'\\item\{[^}]*\}[^\n]*',                          # Item con opzioni: \item[label] testo
+        r'\\item\s*(.+?)(?=\\item|\\end|\Z)',              # Fallback lazy
     ]
     
     fallback_items = []
@@ -381,16 +383,31 @@ def parse_items_from_block(body: str, title: str = "") -> list:
 
     logger.info(f"Final result: {len(items)} items parsed")
     
-    # Ultimo fallback: controlla se c'è un punteggio globale nel titolo
-    if not items and title:
-        pt_title = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', title)
-        if pt_title:
-            pts = int(float(pt_title.group(1).replace(',', '.')))
-            clean_title = re.sub(r'\s*\(\d+(?:[.,]\d+?)?\s*pt\)', '', title).strip()
-            clean_title = re.sub(r'\s+', ' ', clean_title)
-            short = (clean_title[:42] + '\u2026') if len(clean_title) > 42 else clean_title
-            items.append(("—", short, pts))
-            logger.info(f"Found global points in title: {pts}pt")
+    # Ultimo fallback: controlla se c'è un punteggio globale nel titolo o nel body
+    if not items:
+        # Prima controlla nel body (esercizi singoli senza \item)
+        pts_body = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', body)
+        if pts_body:
+            pts = int(float(pts_body.group(1).replace(',', '.')))
+            # Estrai il testo principale dell'esercizio
+            clean_body = re.sub(r'\s*\(\d+(?:[.,]\d+?)?\s*pt\)', '', body).strip()
+            clean_body = re.sub(r'\s+', ' ', clean_body)
+            # Rimuovi comandi LaTeX
+            clean_body = re.sub(r'\\[a-zA-Z]+\{[^}]*\}', '', clean_body)
+            clean_body = re.sub(r'\$[^$]*\$', '[formula]', clean_body)
+            short = (clean_body[:42] + '\u2026') if len(clean_body) > 42 else clean_body
+            items.append(("—", short or "Esercizio completo", pts))
+            logger.info(f"Found global points in body: {pts}pt")
+        elif title:
+            # Poi controlla nel titolo
+            pt_title = re.search(r'\((\d+(?:[.,]\d+)?)\s*pt\)', title)
+            if pt_title:
+                pts = int(float(pt_title.group(1).replace(',', '.')))
+                clean_title = re.sub(r'\s*\(\d+(?:[.,]\d+?)?\s*pt\)', '', title).strip()
+                clean_title = re.sub(r'\s+', ' ', clean_title)
+                short = (clean_title[:42] + '\u2026') if len(clean_title) > 42 else clean_title
+                items.append(("—", short, pts))
+                logger.info(f"Found global points in title: {pts}pt")
     
     logger.info(f"Returning {len(items)} items total")
     
