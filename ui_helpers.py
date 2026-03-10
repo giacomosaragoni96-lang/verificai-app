@@ -446,8 +446,6 @@ def _render_step_progress(T: dict) -> None:
     background: transparent;
     border-bottom: none;
     margin-bottom: 1.5rem;
-    position: relative;
-    height: 80px;
   }}
   .sp-pill {{
     display: flex; align-items: center; gap: 0;
@@ -458,18 +456,13 @@ def _render_step_progress(T: dict) -> None:
     width: 100%;
     max-width: 400px;
     justify-content: space-between;
-    position: relative;
   }}
   .sp-node {{
     display: flex; flex-direction: column;
     align-items: center; gap: 8px;
-    position: absolute;
-    top: 0;
-    z-index: 1;
+    position: relative; z-index: 1;
+    flex: 1;
   }}
-  .sp-node:nth-child(1) {{ left: 0; }}
-  .sp-node:nth-child(2) {{ left: 50%; transform: translateX(-50%); }}
-  .sp-node:nth-child(3) {{ right: 0; }}
   .sp-dot {{
     width: 40px; height: 40px;
     border-radius: 50%;
@@ -482,7 +475,6 @@ def _render_step_progress(T: dict) -> None:
     white-space: nowrap; letter-spacing: .02em;
     transition: color .25s;
     text-align: center;
-    width: 100%;
   }}
   .sp-line {{
     height: 1px; width: 80px;
@@ -490,12 +482,7 @@ def _render_step_progress(T: dict) -> None:
     margin-bottom: 30px;
     opacity: 0.4;
     background: currentColor;
-    position: absolute;
-    top: 20px;
-    z-index: 0;
   }}
-  .sp-line:nth-child(4) {{ left: 50%; transform: translateX(-40px); }}
-  .sp-line:nth-child(5) {{ right: 50%; transform: translateX(40px); }}
 </style>
 <div class="sp-track">
   <div class="sp-pill">
