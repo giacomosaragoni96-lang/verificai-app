@@ -1238,12 +1238,12 @@ def _render_bivio():
     # ── Logo + headline unificati, tutto centrato ─────────────────────────────
     st.markdown(
         f'''
-        <div class="landing-hero-unified">
-                    <h2 class="landing-headline-xl">
+        <div class="landing-hero-unified" style="padding: 1.5rem 1rem 1rem;">
+                    <h2 class="landing-headline-xl" style="margin: 0 0 0.1rem 0 !important;">
             Crea verifiche professionali<br>
             <span class="landing-headline-accent-xl">in pochi secondi</span>
           </h2>
-          <p class="landing-sub-xl">
+          <p class="landing-sub-xl" style="margin: 0.1rem auto 1.5rem !important;">
             Scegli materia, livello e argomento.<br>
             L'AI costruisce la verifica, tu la revisioni e scarichi.
           </p>
