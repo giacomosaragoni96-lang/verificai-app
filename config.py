@@ -92,12 +92,12 @@ THEMES = {
         "radius_md":  "12px",
         "radius_lg":  "16px",
 
-        # Sidebar — grigio chiaro professionale
-        "sidebar_bg":      "linear-gradient(180deg, #F8F9FA 0%, #FFFFFF 100%)",
-        "sidebar_border":  "#E2E5EB",
-        "sidebar_accent":  "#2563EB",
-        "sidebar_input_bg":  "#FAFAFA",
-        "sidebar_input_text": "#0F1117",
+        # Sidebar — grigio scuro professionale
+        "sidebar_bg":      "linear-gradient(180deg, #1E293B 0%, #0F172A 100%)",
+        "sidebar_border":  "#475569",
+        "sidebar_accent":  "#3B82F6",
+        "sidebar_input_bg":  "#334155",
+        "sidebar_input_text": "#F8FAFC",
 
         # Hint boxes
         "hint_bg":      "#EFF6FF",
