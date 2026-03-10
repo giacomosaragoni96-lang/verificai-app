@@ -1087,9 +1087,19 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     logger.info("Validazione codice TikZ...")
     is_valid, error_msg = validate_tikz_code(codice_latex)
     if not is_valid:
-        logger.error(f"✗ Validazione TikZ fallita: {error_msg}")
-        return None, f"Errore nel codice TikZ: {error_msg}"
-    logger.info("✓ Validazione TikZ superata")
+        logger.warning(f"⚠️ Validazione TikZ fallita: {error_msg}")
+        logger.info("Tentativo di rimuovere codice TikZ problematico...")
+        # Rimuovi tutti i blocchi tikzpicture problematici
+        codice_latex = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', 
+                            '[Grafico rimosso per errori di compilazione]', 
+                            codice_latex, flags=re.DOTALL)
+        # Rimuovi anche altri ambienti TikZ problematici
+        codice_latex = re.sub(r'\\begin\{tikzcd\}.*?\\end\{tikzcd\}', 
+                            '[Diagramma rimosso per errori di compilazione]', 
+                            codice_latex, flags=re.DOTALL)
+        logger.info("✓ Codice TikZ problematico rimosso, procedo con compilazione")
+    else:
+        logger.info("✓ Validazione TikZ superata")
 
     # Controlla se pdflatex è disponibile
     logger.info("Verifica disponibilità pdflatex...")
@@ -1133,19 +1143,41 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                     log_content = f.read()
                     logger.info(f"Contenuto log LaTeX (ultimi 1000 char): {log_content[-1000:]}")
 
-            if result.returncode == 0 and os.path.exists(pdf_path):
+            if result.returncode != 0:
+                logger.error(f"✗ Errore pdflatex (codice {result.returncode}): {result.stderr}")
+                # Log dettagliato dell'output per debugging
+                stdout_lines = result.stdout.split('\n')[-10:]  # Ultime 10 linee
+                stderr_lines = result.stderr.split('\n')[-5:]   # Ultime 5 linee
+                logger.error(f"✗ Ultime linee stdout: {stdout_lines}")
+                logger.error(f"✗ Ultime linee stderr: {stderr_lines}")
+                
+                # Analisi dell'errore per capire il tipo di problema
+                error_output = result.stderr + result.stdout
+                if "Undefined control sequence" in error_output:
+                    logger.error("✗ Errore: comando LaTeX non definito")
+                elif "Missing $ inserted" in error_output:
+                    logger.error("✗ Errore: matematica LaTeX non bilanciata")
+                elif "Package tikz Error" in error_output:
+                    logger.error("✗ Errore specifico TikZ")
+                elif "Emergency stop" in error_output:
+                    logger.error("✗ Errore grave: Emergency stop")
+                
+                return None, f"Errore durante la compilazione LaTeX: {result.stderr}"
+            
+            if os.path.exists(pdf_path):
                 pdf_size = os.path.getsize(pdf_path)
                 logger.info(f"✓ PDF compilato con successo - Dimensione: {pdf_size} bytes")
                 return open(pdf_path, "rb").read(), None
             else:
-                logger.error(f"✗ Errore compilazione LaTeX")
-                logger.error(f"Return code: {result.returncode}")
-                logger.error(f"STDOUT: {result.stdout}")
-                logger.error(f"STDERR: {result.stderr}")
-                
-                # Messaggio di errore più dettagliato
-                error_msg = f"Errore LaTeX (codice {result.returncode}): "
-                if result.stderr:
+                logger.error("✗ File PDF non generato")
+                # Controlla se ci sono file di log per capire l'errore
+                log_path = os.path.join(tmpdir, "v.log")
+                if os.path.exists(log_path):
+                    with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+                        log_content = f.read()
+                        logger.error(f"✗ Contenuto log file (ultime 20 linee): {log_content.split('\\\\n')[-20:]}")
+                return None, "File PDF non generato dopo la compilazione"
+            
                     error_msg += result.stderr[:500]
                 elif result.stdout:
                     error_msg += result.stdout[:500]
