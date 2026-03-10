@@ -589,96 +589,106 @@ def get_css(T: dict) -> str:
 
   /* ── Sidebar: Pro CTA card con gradient border ── */
   .sb-pro-card {{
-    background: linear-gradient({_SB_INPUT_BG}, {_SB_INPUT_BG}) padding-box,
+    background: linear-gradient(135deg, {_SB_INPUT_BG}ee, {_SB_INPUT_BG}cc) padding-box,
                 linear-gradient(135deg, {_SB_ACCENT}99, {_acc2}55) border-box;
     border: 1.5px solid transparent;
     border-radius: 12px;
-    padding: .7rem .9rem;
-    margin: .55rem 0 .3rem 0;
+    padding: .8rem 1rem;
+    margin: .6rem 0 .4rem 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
   }}
   .sb-pro-card-header {{
-    font-size: .74rem;
-    font-weight: 700;
+    font-size: .76rem;
+    font-weight: 800;
     color: {_SB_ACCENT};
     font-family: 'DM Sans', sans-serif;
-    margin-bottom: 4px;
-    letter-spacing: .03em;
+    margin-bottom: 6px;
+    letter-spacing: .02em;
   }}
   .sb-pro-card-body {{
-    font-size: .71rem;
+    font-size: .72rem;
     color: {_SB_TEXT};
     font-family: 'DM Sans', sans-serif;
-    line-height: 1.45;
-    margin-bottom: .3rem;
+    line-height: 1.5;
+    margin-bottom: .4rem;
+    font-weight: 500;
   }}
   .sb-pro-card-footer {{
-    font-size: .64rem;
-    color: {_SB_MUTED};
+    font-size: .65rem;
+    color: {_SB_MUTED}};
     font-family: 'DM Sans', sans-serif;
-    line-height: 1.3;
+    line-height: 1.4;
+    opacity: .9;
   }}
 
   /* ── Sidebar: user pill ── */
   .user-pill {{
     display: flex;
     align-items: center;
-    gap: .65rem;
-    padding: .65rem .2rem .45rem .2rem;
-    border-top: 1px solid {_SB_BORDER};
-    margin-top: 1rem;
+    gap: .7rem;
+    padding: .8rem .3rem .5rem .3rem;
+    border-top: 1px solid {_SB_BORDER}44;
+    margin-top: 1.2rem;
+    background: {_SB_INPUT_BG}22;
+    border-radius: 8px;
   }}
   .user-avatar {{
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: linear-gradient(135deg, {_SB_ACCENT}, {_SB_BORDER});
+    background: linear-gradient(135deg, {_SB_ACCENT}, {_acc2});
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: .88rem;
+    font-size: .9rem;
     font-weight: 800;
     color: {_SB_INPUT_BG};
     flex-shrink: 0;
     font-family: 'DM Sans', sans-serif;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2);
   }}
   .user-info {{
     overflow: hidden;
     min-width: 0;
   }}
   .user-email {{
-    font-size: .74rem;
+    font-size: .76rem;
     color: {_SB_TEXT};
     font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }}
   .user-role {{
-    font-size: .66rem;
-    color: {_SB_MUTED};
+    font-size: .67rem;
+    color: {_SB_MUTED}};
     font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
   }}
 
   /* ── Sidebar: logout button ── */
   .logout-btn-wrap .stButton > button {{
-    background: transparent !important;
-    background-color: transparent !important;
-    border: 1px solid {_SB_BORDER} !important;
-    color: {_SB_MUTED} !important;
-    -webkit-text-fill-color: {_SB_MUTED} !important;
-    font-size: .8rem !important;
-    min-height: 34px !important;
+    background: {_SB_INPUT_BG}33 !important;
+    background-color: {_SB_INPUT_BG}33 !important;
+    border: 1px solid {_SB_BORDER}66 !important;
+    color: {_SB_MUTED}} !important;
+    -webkit-text-fill-color: {_SB_MUTED}} !important;
+    font-size: .82rem !important;
+    font-weight: 600 !important;
+    min-height: 36px !important;
     width: 100% !important;
-    margin-top: .4rem !important;
+    margin-top: .6rem !important;
     border-radius: 8px !important;
-    transition: border-color .15s, color .15s, background .15s !important;
+    transition: all .2s ease !important;
   }}
   .logout-btn-wrap .stButton > button:hover {{
-    border-color: {T.get('error','#DC2626')} !important;
+    border-color: {T.get('error','#DC2626')}88 !important;
     color: {T.get('error','#DC2626')} !important;
     -webkit-text-fill-color: {T.get('error','#DC2626')} !important;
-    background: {T.get('error','#DC2626')}12 !important;
-    background-color: {T.get('error','#DC2626')}12 !important;
+    background: {T.get('error','#DC2626')}15 !important;
+    background-color: {T.get('error','#DC2626')}15 !important;
+    transform: translateY(-1px);
   }}
 
   /* ── Sidebar: logo sub-title ── */
