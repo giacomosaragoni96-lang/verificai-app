@@ -1685,7 +1685,10 @@ def get_css(T: dict) -> str:
   /* ════════════════════════════════════════════════════════════════════════
      SECONDARY BUTTONS — Green/Gold Edition
      ════════════════════════════════════════════════════════════════════════ */
-  button[data-testid="baseButton-secondary"] {{
+  button[data-testid="baseButton-secondary"],
+  button[data-testid="baseButton-primary"],
+  .element-container button,
+  div[data-testid="stVerticalBlock"] button {{
     background: linear-gradient(135deg, #10b981, #f59e0b) !important;
     border: 2px solid #10b981 !important;
     color: white !important;
@@ -1694,7 +1697,10 @@ def get_css(T: dict) -> str:
     transition: all 0.3s ease !important;
   }}
   
-  button[data-testid="baseButton-secondary"]:hover {{
+  button[data-testid="baseButton-secondary"]:hover,
+  button[data-testid="baseButton-primary"]:hover,
+  .element-container button:hover,
+  div[data-testid="stVerticalBlock"] button:hover {{
     background: linear-gradient(135deg, #059669, #d97706) !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.3) !important;
