@@ -1190,7 +1190,7 @@ def get_css(T: dict) -> str:
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 2rem 1rem 1.5rem;
+    padding: 1.5rem 1rem 1rem;
     max-width: 860px;
     margin: 0 auto;
   }}
@@ -1205,12 +1205,12 @@ def get_css(T: dict) -> str:
   /* Headline grande */
   .landing-headline-xl {{
     font-family: 'DM Sans', sans-serif;
-    font-size: clamp(2.6rem, 5.5vw, 3.8rem);
+    font-size: clamp(2.4rem, 5.5vw, 3.6rem);
     font-weight: 900;
-    line-height: 1.0 !important;
-    letter-spacing: -0.04em;
+    line-height: 0.95 !important;
+    letter-spacing: -0.03em;
     color: {T['text']};
-    margin: 0;
+    margin: 0 0 0.8rem 0;
     padding: 0;
     text-align: center;
   }}
@@ -1223,13 +1223,14 @@ def get_css(T: dict) -> str:
 
   /* Sottotitolo — centrato, leggibile */
   .landing-sub-xl {{
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
-    line-height: 1.7;
+    font-weight: 500;
+    line-height: 1.5;
     text-align: center;
-    max-width: 560px;
-    margin: 0 auto 0;
+    max-width: 520px;
+    margin: 0 auto 1.5rem;
   }}
 
   /* Classi legacy mantenute per compatibilità */
