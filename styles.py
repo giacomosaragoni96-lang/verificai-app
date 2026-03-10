@@ -2996,8 +2996,11 @@ def get_css(T: dict) -> str:
     font-size: 0.94rem;
     color: {T['text2']};
     font-family: 'DM Sans', sans-serif;
-    line-height: 1.5;
-    flex: 1;
+    line-height: 1.45;
+    flex-grow: 1;  /* Fa occupare lo spazio rimanente */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;  /* Allinea il testo in alto */
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -3135,7 +3138,7 @@ def get_css(T: dict) -> str:
     .page-header-icon {{ font-size: 1.6rem; }}
     .tally-features {{ gap: 5px 4px; }}
     .tally-feat-pill {{ font-size: 0.94rem; }}
-    .variant-card {{ min-height: auto; }}
+    .variant-card {{ min-height: 160px !important; }}
   }}
 
   /* ═══════════════════════════════════════════════════════════════════════
@@ -3385,8 +3388,8 @@ def get_css(T: dict) -> str:
     padding: 1.2rem 1rem;
     position: relative;
     cursor: pointer;
-    min-height: 180px;
-    height: 100%;
+    min-height: 160px;  /* Altezza minima fissa per tutte le cards */
+    height: 100%;  /* Assicura che tutte le cards siano della stessa altezza */
     display: flex;
     flex-direction: column;
     transition: border-color .2s ease, box-shadow .2s ease, transform .15s ease;
