@@ -187,15 +187,41 @@ def parse_items_from_block(body: str, title: str = "") -> list:
     
     logger.info(f"=== PARSE ITEMS FROM BLOCK ===")
     logger.info(f"Title: {title}")
-    logger.info(f"Body (first 200 chars): {body[:200]}...")
+    logger.info(f"Body length: {len(body)} characters")
+    logger.info(f"Body (first 500 chars): {body[:500]}...")
+    logger.info(f"Body (last 200 chars): ...{body[-200:]}")
+    
+    # Conta occorrenze di \item per debug
+    item_count = len(re.findall(r'\\item', body))
+    logger.info(f"Total \\item occurrences found: {item_count}")
+    
+    # Mostra le prime linee per vedere la struttura
+    lines = body.split('\n')[:10]
+    logger.info(f"First 10 lines:")
+    for i, line in enumerate(lines):
+        logger.info(f"  {i+1}: {repr(line)}")
     
     auto_labels = list('abcdefghijklmnopqrstuvwxyz')
     items = []
 
     # Prima prova: item con label esplicito [a)], [b)], ecc.
-    labeled_pattern = r'\\item\[([^\]]+)\]([^{]*?)(?=\\item|\Z)'
-    labeled = list(re.finditer(labeled_pattern, body, re.DOTALL))
-    logger.info(f"Labeled items found: {len(labeled)} with pattern: {labeled_pattern}")
+    # Pattern più flessibile per catturare diversi formati
+    labeled_patterns = [
+        r'\\item\[([^\]]+)\]([^{]*?)(?=\\item|\Z)',           # Standard: \item[a)] testo
+        r'\\item\[([^\]]+)\]\s*([^\n]*?)(?=\\item|\n\n|\Z)',  # Con newline: \item[a)] testo\n
+        r'\\item\[([^\]]+)\](.*?)(?=\\item|\n\n|\Z)',         # Lazy match: \item[a)] testo
+    ]
+    
+    labeled = []
+    for pattern in labeled_patterns:
+        matches = list(re.finditer(pattern, body, re.DOTALL))
+        if matches:
+            labeled = matches
+            logger.info(f"Labeled items found: {len(matches)} with pattern: {pattern}")
+            break
+    
+    if not labeled:
+        logger.info(f"No labeled items found with any pattern")
     
     if labeled:
         for i, m in enumerate(labeled):
@@ -234,10 +260,24 @@ def parse_items_from_block(body: str, title: str = "") -> list:
         return items
 
     # Seconda prova: item senza label, auto-generati a), b), c)
-    # Cerca \item seguito da testo fino al prossimo \item o fine del blocco
-    auto_pattern = r'\\item\s+([^{]*?)(?=\\item|\Z)'
-    auto_items = list(re.finditer(auto_pattern, body, re.DOTALL))
-    logger.info(f"Auto items found: {len(auto_items)} with pattern: {auto_pattern}")
+    # Pattern più flessibili per diversi formati
+    auto_patterns = [
+        r'\\item\s+([^{]*?)(?=\\item|\Z)',                    # Standard: \item testo
+        r'\\item\s+([^\n]*?)(?=\\item|\n\n|\Z)',             # Con newline: \item testo\n
+        r'\\item\s*(.*?)(?=\\item|\n\n|\Z)',                  # Lazy match: \item testo
+        r'\\item([^\n]*?)(?=\\item|\n\n|\Z)',                 # No space: \itemtesto
+    ]
+    
+    auto_items = []
+    for pattern in auto_patterns:
+        matches = list(re.finditer(pattern, body, re.DOTALL))
+        if matches:
+            auto_items = matches
+            logger.info(f"Auto items found: {len(matches)} with pattern: {pattern}")
+            break
+    
+    if not auto_items:
+        logger.info(f"No auto items found with any pattern")
     
     if auto_items:
         auto_idx = 0
@@ -282,9 +322,24 @@ def parse_items_from_block(body: str, title: str = "") -> list:
             return items
 
     # Terza prova: fallback - cerca qualsiasi \item
-    fallback_pattern = r'\\item[^\n]*'
-    fallback_items = list(re.finditer(fallback_pattern, body))
-    logger.info(f"Fallback items found: {len(fallback_items)} with pattern: {fallback_pattern}")
+    # Pattern più aggressivi per catturare tutto
+    fallback_patterns = [
+        r'\\item[^\n]*',                    # Standard: \item testo
+        r'\\item.*?(?=\\item|\n\n|\Z)',     # Lazy match fino a prossimo item
+        r'\\item\{[^}]*\}[^\n]*',          # Item con opzioni: \item[label] testo
+        r'\\item\s*.*',                     # Qualsiasi \item seguito da qualcosa
+    ]
+    
+    fallback_items = []
+    for pattern in fallback_patterns:
+        matches = list(re.finditer(pattern, body))
+        if matches:
+            fallback_items = matches
+            logger.info(f"Fallback items found: {len(matches)} with pattern: {pattern}")
+            break
+    
+    if not fallback_items:
+        logger.info(f"No fallback items found with any pattern")
     
     if fallback_items:
         auto_idx = 0
@@ -338,6 +393,23 @@ def parse_items_from_block(body: str, title: str = "") -> list:
             logger.info(f"Found global points in title: {pts}pt")
     
     logger.info(f"Returning {len(items)} items total")
+    
+    # Debug finale: mostra cosa potrebbe essere stato perso
+    if item_count > len(items):
+        logger.warning(f"⚠️  {item_count} \\item found but only {len(items)} parsed!")
+        logger.warning("This suggests some items are not being captured by any pattern")
+        
+        # Mostra tutti gli \item trovati per analisi
+        all_items = re.findall(r'\\item[^\n]*', body)
+        logger.warning("All \\item lines found:")
+        for i, item in enumerate(all_items):
+            logger.warning(f"  {i+1}: {repr(item)}")
+    elif item_count == 0 and body.strip():
+        logger.warning("⚠️  No \\item found but body is not empty - checking for other patterns...")
+        # Controlla se ci sono altri indicatori di items
+        if re.search(r'[a-z]\)|[a-z]\.', body):
+            logger.warning("Found a) b) patterns without \\item - this might be the issue")
+    
     return items
 
 
