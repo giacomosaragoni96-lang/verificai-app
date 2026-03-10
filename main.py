@@ -1259,7 +1259,7 @@ def _render_bivio():
         st.markdown(
             '''
             <div class="cta-genera-wrap" style="margin-bottom: 1rem;">
-            <button onclick="window.location.href='#?input_percorso=B'" style="
+            <button id="custom-cta-button" style="
                 min-height: 72px;
                 font-size: 1.3rem;
                 font-weight: 900;
@@ -1273,9 +1273,27 @@ def _render_bivio():
                 cursor: pointer;
                 font-family: system-ui, -apple-system, sans-serif;
                 letter-spacing: 0.02em;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
             " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 35px -5px rgba(16, 185, 129, 0.5)'; this.style.background='linear-gradient(135deg, #059669, #d97706)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px -5px rgba(16, 185, 129, 0.4)'; this.style.background='linear-gradient(135deg, #10b981, #f59e0b)'">
                 🚀 Crea Verifica Ora
             </button>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const customBtn = document.getElementById('custom-cta-button');
+                if (customBtn) {
+                    customBtn.addEventListener('click', function() {
+                        // Trova e clicca il pulsante nascosto di Streamlit
+                        const hiddenBtn = document.querySelector('button[data-testid="baseButton-secondary"]');
+                        if (hiddenBtn) {
+                            hiddenBtn.click();
+                        }
+                    });
+                }
+            });
+            </script>
             </div>
             ''',
             unsafe_allow_html=True,
