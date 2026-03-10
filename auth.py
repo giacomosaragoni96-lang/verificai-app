@@ -32,7 +32,7 @@ _ACCENT_L  = "#EFF6FF"
 _PRIMARY    = _ACCENT
 _PRIMARY_L  = _ACCENT2
 _SUCCESS    = "#10B981"
-_WARNING    = "#D97706"  # Darker orange for better contrast with light text
+_WARNING    = "#92400E"  # Very dark orange - ensures any text is readable
 _ERROR      = "#EF4444"
 _SURFACE    = _CARD
 _SURFACE_L  = _CARD2
@@ -350,6 +350,15 @@ def mostra_auth(supabase):
         padding: 1.25rem 1.5rem !important;
         box-shadow: 0 4px 16px rgba(0,0,0,.1) !important;
         backdrop-filter: blur(10px);
+    }}
+    
+    /* Force white text on dark warning background */
+    [data-testid="stAlert"][data-testid="stWarning"] {{
+        color: white !important;
+        background: {_WARNING} !important;
+    }}
+    [data-testid="stAlert"][data-testid="stWarning"] * {{
+        color: white !important;
     }}
     
     /* Error messages - red background with white text */
