@@ -174,40 +174,97 @@ def mostra_auth(supabase):
     }}
 
     /* ═══ Modern Inputs ─══ */
-    [data-testid="stTextInput"] input {{
-        background: rgba({_BG2.replace('#', '')},.8) !important;
-        border: 2px solid rgba({_BORDER.replace('#', '')},.2) !important;
+    [data-testid="stTextInput"] input,
+    .stTextInput input,
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {{
+        background: {_BG2} !important;
+        background-color: {_BG2} !important;
+        border: 2px solid {_BORDER} !important;
+        border-color: {_BORDER} !important;
         border-radius: 16px !important;
         color: {_TEXT} !important;
+        color-scheme: light !important;
         -webkit-text-fill-color: {_TEXT} !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
         font-family: 'Inter', sans-serif !important;
         font-size: 1rem !important;
         font-weight: 500 !important;
         padding: 16px 20px !important;
         min-height: 56px !important;
         transition: all .25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        color-scheme: light !important;
+        outline: none !important;
+        box-shadow: none !important;
     }}
-    [data-testid="stTextInput"] input:focus {{
+    
+    /* Force CSS custom properties */
+    [data-testid="stTextInput"] *,
+    .stTextInput * {{
+        --background-color: {_BG2} !important;
+        --text-color: {_TEXT} !important;
+        --border-color: {_BORDER} !important;
+    }}
+    
+    [data-testid="stTextInput"] input:focus,
+    .stTextInput input:focus,
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="email"]:focus {{
         border-color: {_PRIMARY} !important;
+        border: 2px solid {_PRIMARY} !important;
+        background: {_BG2} !important;
+        background-color: {_BG2} !important;
+        color: {_TEXT} !important;
+        -webkit-text-fill-color: {_TEXT} !important;
         box-shadow: 
             0 0 0 4px rgba({_PRIMARY.replace('#', '')},.15),
             0 0 0 1px {_PRIMARY} !important;
         outline: none !important;
         transform: translateY(-1px) !important;
     }}
-    [data-testid="stTextInput"] input::placeholder {{
+    
+    [data-testid="stTextInput"] input:hover,
+    .stTextInput input:hover,
+    input[type="text"]:hover,
+    input[type="password"]:hover,
+    input[type="email"]:hover {{
+        border-color: {_BORDER2} !important;
+        background: {_BG2} !important;
+        background-color: {_BG2} !important;
+    }}
+    
+    [data-testid="stTextInput"] input::placeholder,
+    .stTextInput input::placeholder,
+    input[type="text"]::placeholder,
+    input[type="password"]::placeholder,
+    input[type="email"]::placeholder {{
         color: {_MUTED} !important; 
         opacity: 0.8 !important;
         font-weight: 400 !important;
+        -webkit-text-fill-color: {_MUTED} !important;
     }}
-    [data-testid="stTextInput"] label p {{
+    
+    [data-testid="stTextInput"] label p,
+    .stTextInput label p {{
         color: {_TEXT2} !important;
         font-size: .875rem !important;
         font-weight: 600 !important;
         letter-spacing: .01em !important;
         font-family: 'Inter', sans-serif !important;
         margin-bottom: 0.5rem !important;
+        -webkit-text-fill-color: {_TEXT2} !important;
+    }}
+    
+    /* Additional override for any remaining black inputs */
+    div[data-testid="stTextInput"] > div > div > input,
+    div.stTextInput > div > div > input {{
+        background: {_BG2} !important;
+        background-color: {_BG2} !important;
+        color: {_TEXT} !important;
+        -webkit-text-fill-color: {_TEXT} !important;
+        border: 2px solid {_BORDER} !important;
     }}
 
     /* ═══ Modern Tabs ─══ */
