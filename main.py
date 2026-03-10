@@ -3089,7 +3089,7 @@ def _render_percorso_b_form():
             argomento_raw = st.text_area(
                 "argomento",
                 value=_arg_default,
-                placeholder="es. Equazioni di secondo grado\nes. La Rivoluzione Francese\nes. Il ciclo dell'acqua",
+                placeholder="es. Teorema di Pitagora (escludi dimostrazioni)\nes. Frazioni (semplificazione solo)\nes. Energia cinetica (no formule complesse)",
                 height=105,
                 label_visibility="collapsed",
                 key="argomento_area_b",
