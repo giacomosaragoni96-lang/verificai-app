@@ -1253,7 +1253,7 @@ def _render_bivio():
     )
 
     # ── CTA principale — più prominente ─────────────────────────────────────────────
-    st.markdown('<div style="margin: 2.5rem 0;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="margin: 3rem 0;"></div>', unsafe_allow_html=True)
     _c1, _c2, _c3 = st.columns([1, 2.5, 1])
     with _c2:
         st.markdown(
@@ -1279,25 +1279,26 @@ def _render_bivio():
         )
 
     # ── Feature pills — più leggibili per docenti ───────────────────────────────
+    st.markdown('<div style="margin: 2rem 0;"></div>', unsafe_allow_html=True)
     st.markdown(
         '''
-        <div class="tally-features" style="gap: 12px; flex-wrap: wrap; justify-content: center;">
-          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
+        <div class="tally-features" style="gap: 14px; flex-wrap: wrap; justify-content: center;">
+          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 10px 18px; font-weight: 600;">
             📄 PDF Stampabile
           </span>
-          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
+          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 10px 18px; font-weight: 600;">
             🎲 Fila A e B
           </span>
-          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
+          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 10px 18px; font-weight: 600;">
             ⭐ Versione BES
           </span>
-          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
+          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 10px 18px; font-weight: 600;">
             ✏️ DOCX Modificabile
           </span>
-          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
+          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 10px 18px; font-weight: 600;">
             📋 Soluzioni
           </span>
-          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
+          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 10px 18px; font-weight: 600;">
             📊 Griglia Valutazione
           </span>
         </div>
@@ -1308,9 +1309,9 @@ def _render_bivio():
     # ── Feature cards ─────────────────────────────────────
 
     # ── Feature cards — 6 card, 2 righe ─────────────────────────────────────
-    st.markdown("<div style='height:2.5rem'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:3rem'></div>", unsafe_allow_html=True)
     st.markdown(
-        '''<div style="text-align:center;margin-bottom:1.4rem;">
+        '''<div style="text-align:center;margin-bottom:1.6rem;">
           <div class="landing-section-kicker">Tutto quello di cui hai bisogno</div>
           <div class="landing-section-title">Una verifica completa, subito</div>
         </div>''',
@@ -1319,10 +1320,11 @@ def _render_bivio():
     
     # Sezione Dashboard (prima degli esempi)
     st.markdown("---")
+    st.markdown('<div style="margin: 1rem 0;"></div>', unsafe_allow_html=True)
     
     st.markdown(
         """
-        <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="text-align: center; margin-bottom: 2.5rem;">
             <h2 style="font-size: 1.8rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem;">
                 📊 Il Tuo Dashboard
             </h2>
@@ -1416,11 +1418,12 @@ def _render_bivio():
         )
     
     # Pulsante per andare alla pagina delle verifiche
-    st.markdown('<div style="text-align: center; margin-top: 2rem;">', unsafe_allow_html=True)
+    st.markdown('<div style="text-align: center; margin-top: 2.5rem;">', unsafe_allow_html=True)
     if st.button("📄 Gestisci Le Tue Verifiche →", type="primary", use_container_width=True):
         st.session_state.stage = STAGE_MIE_VERIFICHE
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div style="margin: 2rem 0;"></div>', unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  _render_facsimile_dedicato()  ← NUOVA funzione, aggiungere prima di _render_stage_input
