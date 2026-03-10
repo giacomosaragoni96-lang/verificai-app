@@ -1695,14 +1695,14 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     SECONDARY BUTTONS — Orange Edition
+     SECONDARY BUTTONS — Orange Edition (no border)
      ════════════════════════════════════════════════════════════════════════ */
   button[data-testid="baseButton-secondary"],
   button[data-testid="baseButton-primary"],
   .element-container button,
   div[data-testid="stVerticalBlock"] button {{
     background: linear-gradient(135deg, #EA580C, #FB923C) !important;
-    border: 2px solid #EA580C !important;
+    border: none !important;
     color: white !important;
     font-weight: 600 !important;
     min-height: 48px !important;
