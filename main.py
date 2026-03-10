@@ -1275,6 +1275,23 @@ def _render_bivio():
                 background: linear-gradient(135deg, #059669, #d97706) !important;
             }
             </style>
+            <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                setTimeout(function() {
+                    const buttons = document.querySelectorAll('button[data-testid="baseButton-primary"]');
+                    buttons.forEach(btn => {
+                        if (btn.textContent.includes('Crea Verifica Ora')) {
+                            btn.style.minHeight = '72px';
+                            btn.style.fontSize = '1.3rem';
+                            btn.style.fontWeight = '900';
+                            btn.style.background = 'linear-gradient(135deg, #10b981, #f59e0b)';
+                            btn.style.border = '2px solid #10b981';
+                            btn.style.boxShadow = '0 8px 25px -5px rgba(16, 185, 129, 0.4)';
+                        }
+                    });
+                }, 100);
+            });
+            </script>
             ''',
             unsafe_allow_html=True,
         )
