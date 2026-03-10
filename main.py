@@ -3098,6 +3098,9 @@ def _render_percorso_b_form():
                 _arg_default = st.session_state.get("_pb_argomento_manual_val", "")
             elif _auto_arg:
                 _arg_default = _auto_arg
+            # ── LABEL ARGOMENTO ─────────────────────────────────────────────────────
+            st.markdown('<div class="sidebar-label">Argomento ✱</div>', unsafe_allow_html=True)
+            
             argomento_raw = st.text_area(
                 "argomento",
                 value=_arg_default,
