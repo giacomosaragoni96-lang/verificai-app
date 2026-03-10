@@ -52,9 +52,12 @@ def _render_back_button(
         st.markdown("""
         <style>
         div[data-testid="stVerticalBlock"] > div:has([data-testid*="%s"]) button,
-        button[data-testid*="%s"] {
+        button[data-testid*="%s"],
+        div[data-testid="stVerticalBlock"] button[data-testid*="%s"],
+        .stButton > button[data-testid*="%s"] {
             background: transparent !important;
-            color: #1f2937 !important;
+            color: #374151 !important;
+            -webkit-text-fill-color: #374151 !important;
             font-size: 0.85rem !important;
             padding: 6px 12px !important;
             min-height: 32px !important;
@@ -62,7 +65,7 @@ def _render_back_button(
             border: 1px solid #d1d5db !important;
         }
         </style>
-        """ % (key, key), unsafe_allow_html=True)
+        """ % (key, key, key, key), unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     return clicked
 
