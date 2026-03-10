@@ -227,7 +227,8 @@ def parse_items_from_block(body: str, title: str = "") -> list:
         for i, m in enumerate(labeled):
             label = m.group(1).strip()
             text = m.group(2).strip()
-            logger.info(f"Labeled item {i+1}: label='{label}', text='{text[:50]}...'")
+            logger.info(f"Labeled item {i+1}: label='{label}', text='{text[:100]}...'")
+            logger.info(f"Labeled item {i+1}: full_text_length={len(text)}")
             
             # Prova diversi regex per i punti
             pts_patterns = [
@@ -236,6 +237,9 @@ def parse_items_from_block(body: str, title: str = "") -> list:
                 r'(\d+(?:[.,]\d+)?)\s*pt',           # 5 pt
                 r'\((\d+(?:[.,]\d+)?)\s*punti?\)',   # (5 punti)
                 r'(\d+(?:[.,]\d+)?)\s*punti?',       # 5 punti
+                r'(\d+(?:[.,]\d+)?)\s*points?',      # 5 points (inglese)
+                r'punti:\s*(\d+(?:[.,]\d+)?)',       # punti: 5
+                r'valore:\s*(\d+(?:[.,]\d+)?)',      # valore: 5
             ]
             
             pts_m = None
@@ -286,7 +290,8 @@ def parse_items_from_block(body: str, title: str = "") -> list:
             text = m.group(1).strip()
             if not text:  # Salta item vuoti
                 continue
-            logger.info(f"Auto item {i+1}: text='{text[:50]}...'")
+            logger.info(f"Auto item {i+1}: text='{text[:100]}...'")
+            logger.info(f"Auto item {i+1}: full_text_length={len(text)}")
             
             # Prova diversi regex per i punti
             pts_patterns = [
@@ -295,6 +300,9 @@ def parse_items_from_block(body: str, title: str = "") -> list:
                 r'(\d+(?:[.,]\d+)?)\s*pt',           # 5 pt
                 r'\((\d+(?:[.,]\d+)?)\s*punti?\)',   # (5 punti)
                 r'(\d+(?:[.,]\d+)?)\s*punti?',       # 5 punti
+                r'(\d+(?:[.,]\d+)?)\s*points?',      # 5 points (inglese)
+                r'punti:\s*(\d+(?:[.,]\d+)?)',       # punti: 5
+                r'valore:\s*(\d+(?:[.,]\d+)?)',      # valore: 5
             ]
             
             pts_m = None
@@ -349,7 +357,8 @@ def parse_items_from_block(body: str, title: str = "") -> list:
             text = m.group(0).replace('\\item', '').strip()
             if not text:  # Salta item vuoti
                 continue
-            logger.info(f"Fallback item {i+1}: text='{text[:50]}...'")
+            logger.info(f"Fallback item {i+1}: text='{text[:100]}...'")
+            logger.info(f"Fallback item {i+1}: full_text_length={len(text)}")
             
             # Prova diversi regex per i punti
             pts_patterns = [
@@ -358,6 +367,9 @@ def parse_items_from_block(body: str, title: str = "") -> list:
                 r'(\d+(?:[.,]\d+)?)\s*pt',           # 5 pt
                 r'\((\d+(?:[.,]\d+)?)\s*punti?\)',   # (5 punti)
                 r'(\d+(?:[.,]\d+)?)\s*punti?',       # 5 punti
+                r'(\d+(?:[.,]\d+)?)\s*points?',      # 5 points (inglese)
+                r'punti:\s*(\d+(?:[.,]\d+)?)',       # punti: 5
+                r'valore:\s*(\d+(?:[.,]\d+)?)',      # valore: 5
             ]
             
             pts_m = None
