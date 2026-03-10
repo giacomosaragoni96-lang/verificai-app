@@ -1177,14 +1177,6 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                         log_content = f.read()
                         logger.error(f"✗ Contenuto log file (ultime 20 linee): {log_content.split('\\\\n')[-20:]}")
                 return None, "File PDF non generato dopo la compilazione"
-            
-                    error_msg += result.stderr[:500]
-                elif result.stdout:
-                    error_msg += result.stdout[:500]
-                else:
-                    error_msg += "Errore sconosciuto durante la compilazione"
-                
-                return None, error_msg
 
         except subprocess.TimeoutExpired:
             logger.error("✗ Timeout compilazione LaTeX (30 secondi)")
