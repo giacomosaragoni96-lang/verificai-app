@@ -1256,37 +1256,6 @@ def _render_bivio():
     st.markdown('<div style="margin: 2rem 0;"></div>', unsafe_allow_html=True)
     _c1, _c2, _c3 = st.columns([1, 2.5, 1])
     with _c2:
-        st.markdown(
-            '''
-            <div class="cta-genera-wrap" style="margin-bottom: 1rem;">
-            <style>
-            /* CSS con massima specificità per sovrascrivere Streamlit */
-            .element-container:has(> div > div > div > button[data-testid="baseButton-primary"]) button[data-testid="baseButton-primary"],
-            div[data-testid="stVerticalBlock"] > div > div > div > button[data-testid="baseButton-primary"],
-            button[data-testid="baseButton-primary"][kind="primary"] {
-                min-height: 72px !important;
-                font-size: 1.3rem !important;
-                font-weight: 900 !important;
-                background: linear-gradient(135deg, #10b981, #f59e0b) !important;
-                border: 2px solid #10b981 !important;
-                box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4) !important;
-                color: white !important;
-                transition: all 0.3s ease !important;
-            }
-            
-            .element-container:has(> div > div > div > button[data-testid="baseButton-primary"]) button[data-testid="baseButton-primary"]:hover,
-            div[data-testid="stVerticalBlock"] > div > div > div > button[data-testid="baseButton-primary"]:hover,
-            button[data-testid="baseButton-primary"][kind="primary"]:hover {
-                transform: translateY(-2px) !important;
-                box-shadow: 0 12px 35px -5px rgba(16, 185, 129, 0.5) !important;
-                background: linear-gradient(135deg, #059669, #d97706) !important;
-            }
-            </style>
-            </div>
-            ''',
-            unsafe_allow_html=True,
-        )
-        
         if st.button(
             "🚀 Crea Verifica Ora",
             key="btn_genera_verifica_home",
@@ -1296,54 +1265,6 @@ def _render_bivio():
         ):
             st.session_state.input_percorso = "B"
             st.rerun()
-        
-        # JavaScript forzato dopo il pulsante
-        st.markdown(
-            '''
-            <script>
-            console.log("JavaScript per pulsante verde/oro in esecuzione...");
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(function() {
-                    console.log("Cercando pulsanti...");
-                    const buttons = document.querySelectorAll('button[data-testid="baseButton-primary"]');
-                    console.log("Trovati", buttons.length, "pulsanti primari");
-                    buttons.forEach((btn, index) => {
-                        console.log("Pulsante", index, "testo:", btn.textContent);
-                        if (btn.textContent.includes('Crea Verifica Ora')) {
-                            console.log("Trovato pulsante Crea Verifica Ora, applicando stili...");
-                            // Forza stili inline che hanno precedenza massima
-                            btn.setAttribute('style', `
-                                min-height: 72px !important;
-                                font-size: 1.3rem !important;
-                                font-weight: 900 !important;
-                                background: linear-gradient(135deg, #10b981, #f59e0b) !important;
-                                border: 2px solid #10b981 !important;
-                                box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4) !important;
-                                color: white !important;
-                                transition: all 0.3s ease !important;
-                            `);
-                            console.log("Stili applicati!");
-                            
-                            // Aggiungi hover events
-                            btn.addEventListener('mouseenter', function() {
-                                this.style.transform = 'translateY(-2px)';
-                                this.style.boxShadow = '0 12px 35px -5px rgba(16, 185, 129, 0.5)';
-                                this.style.background = 'linear-gradient(135deg, #059669, #d97706)';
-                            });
-                            
-                            btn.addEventListener('mouseleave', function() {
-                                this.style.transform = 'translateY(0)';
-                                this.style.boxShadow = '0 8px 25px -5px rgba(16, 185, 129, 0.4)';
-                                this.style.background = 'linear-gradient(135deg, #10b981, #f59e0b)';
-                            });
-                        }
-                    });
-                }, 300);
-            });
-            </script>
-            ''',
-            unsafe_allow_html=True,
-        )
 
     # ── Feature pills — più leggibili per docenti ───────────────────────────────
     st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
