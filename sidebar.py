@@ -76,16 +76,10 @@ def render_sidebar(
         # indipendentemente dal tema principale (chiaro/scuro).
         _sb_text  = T.get("sidebar_input_text", "#E6EDF3")
         _sb_muted = T.get("sidebar_input_text", "#E6EDF3") + "99"
+        
+        # Linea separatoria semplice
         st.markdown(
-            f'<div class="sidebar-logo">'
-            f'<div>📝 Verific<span style="background:linear-gradient(135deg,{_acc},{_acc2});'
-            f'-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">AI</span></div>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-        st.markdown(
-            f'<div style="height:1.5px;background:linear-gradient(90deg,{_acc}88,transparent);'
-            f'border-radius:2px;margin:.3rem 0 1rem 0;"></div>',
+            f'<div style="height:2px;background:{_acc};border-radius:2px;margin:1rem 0 1.5rem 0;"></div>',
             unsafe_allow_html=True
         )
         # ── MODELLO AI — routing per piano ───────────────────────────────────
