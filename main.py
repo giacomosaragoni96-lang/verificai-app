@@ -1281,15 +1281,36 @@ def _render_bivio():
                 box-shadow: 0 12px 35px -5px rgba(16, 185, 129, 0.5) !important;
                 background: linear-gradient(135deg, #059669, #d97706) !important;
             }
-            
-            /* Forza inline styles con JavaScript */
             </style>
+            </div>
+            ''',
+            unsafe_allow_html=True,
+        )
+        
+        if st.button(
+            "🚀 Crea Verifica Ora",
+            key="btn_genera_verifica_home",
+            use_container_width=True,
+            type="primary",
+            help="Scegli materia e argomento, crea in 30 secondi",
+        ):
+            st.session_state.input_percorso = "B"
+            st.rerun()
+        
+        # JavaScript forzato dopo il pulsante
+        st.markdown(
+            '''
             <script>
+            console.log("JavaScript per pulsante verde/oro in esecuzione...");
             document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(function() {
+                    console.log("Cercando pulsanti...");
                     const buttons = document.querySelectorAll('button[data-testid="baseButton-primary"]');
-                    buttons.forEach(btn => {
+                    console.log("Trovati", buttons.length, "pulsanti primari");
+                    buttons.forEach((btn, index) => {
+                        console.log("Pulsante", index, "testo:", btn.textContent);
                         if (btn.textContent.includes('Crea Verifica Ora')) {
+                            console.log("Trovato pulsante Crea Verifica Ora, applicando stili...");
                             // Forza stili inline che hanno precedenza massima
                             btn.setAttribute('style', `
                                 min-height: 72px !important;
@@ -1301,6 +1322,7 @@ def _render_bivio():
                                 color: white !important;
                                 transition: all 0.3s ease !important;
                             `);
+                            console.log("Stili applicati!");
                             
                             // Aggiungi hover events
                             btn.addEventListener('mouseenter', function() {
@@ -1316,23 +1338,12 @@ def _render_bivio():
                             });
                         }
                     });
-                }, 200);
+                }, 300);
             });
             </script>
-            </div>
             ''',
             unsafe_allow_html=True,
         )
-        
-        if st.button(
-            "🚀 Crea Verifica Ora",
-            key="btn_genera_verifica_home",
-            use_container_width=True,
-            type="primary",
-            help="Scegli materia e argomento, crea in 30 secondi",
-        ):
-            st.session_state.input_percorso = "B"
-            st.rerun()
 
     # ── Feature pills — più leggibili per docenti ───────────────────────────────
     st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
