@@ -3041,16 +3041,6 @@ def get_css(T: dict) -> str:
     position: relative;
     z-index: 10;
   }}
-  .dl-cta-wrap::before {{
-    content: '';
-    position: absolute;
-    top: -2px; left: -2px; right: -2px; bottom: -2px;
-    background: linear-gradient(45deg, #059669, #10B981, #6EE7B7, #059669);
-    border-radius: 18px;
-    z-index: -1;
-    opacity: .8;
-    animation: border-rotate 3s linear infinite;
-  }}
   /* specificità (0,0,2,2) — batte sia div.stDownloadButton>button (0,0,1,2)
      sia [data-testid="stDownloadButton"]>button (0,1,0,1) */
   .dl-cta-wrap div.stDownloadButton > button,
