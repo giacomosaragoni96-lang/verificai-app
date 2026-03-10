@@ -202,7 +202,7 @@ def render_sidebar(
             _reset_str = f"Si rinnova tra {_gg_reset} giorni"
 
         st.markdown(f"""
-        <div style="margin-bottom: 0.4rem;">
+        <div style="margin-bottom: 0.4rem; background: rgba(255,255,255,0); border: none; padding: 0;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
             <span style="font-size: 0.78rem; color: {_sb_text}; font-family: 'DM Sans', sans-serif;">
               Verifiche questo mese
@@ -212,12 +212,13 @@ def render_sidebar(
             </span>
           </div>
           <div style="
-            background: transparent !important;
+            background: rgba(255,255,255,0) !important;
             border: none !important;
             border-radius: 10px;
             overflow: hidden;
             height: 4px;
             width: 100%;
+            position: relative;
           ">
             <div style="
               width: {_perc_uso}%;
@@ -225,6 +226,9 @@ def render_sidebar(
               height: 100%;
               border-radius: 10px;
               transition: width .6s ease;
+              position: absolute;
+              top: 0;
+              left: 0;
             "></div>
           </div>
           <div style="text-align: right; font-size: 0.68rem; color: {_sb_muted}; margin-top: 4px; font-family: 'DM Sans', sans-serif;">
