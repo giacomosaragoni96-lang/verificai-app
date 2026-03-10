@@ -1695,14 +1695,14 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     SECONDARY BUTTONS — Green/Gold Edition
+     SECONDARY BUTTONS — Orange Edition
      ════════════════════════════════════════════════════════════════════════ */
   button[data-testid="baseButton-secondary"],
   button[data-testid="baseButton-primary"],
   .element-container button,
   div[data-testid="stVerticalBlock"] button {{
-    background: linear-gradient(135deg, #10b981, #f59e0b) !important;
-    border: 2px solid #10b981 !important;
+    background: linear-gradient(135deg, #EA580C, #FB923C) !important;
+    border: 2px solid #EA580C !important;
     color: white !important;
     font-weight: 600 !important;
     min-height: 48px !important;
@@ -1713,9 +1713,9 @@ def get_css(T: dict) -> str:
   button[data-testid="baseButton-primary"]:hover,
   .element-container button:hover,
   div[data-testid="stVerticalBlock"] button:hover {{
-    background: linear-gradient(135deg, #059669, #d97706) !important;
+    background: linear-gradient(135deg, #C2410C, #FCD34D) !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.3) !important;
+    box-shadow: 0 4px 12px -2px rgba(234, 88, 12, 0.3) !important;
   }}
 
   /* Forza testo bianco su tutti i pulsanti */
