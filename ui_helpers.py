@@ -422,8 +422,8 @@ def _render_step_progress(T: dict) -> None:
   .sp-track {{
     display: flex; justify-content: center;
     padding: 1rem 0 1.5rem 0;
-    background: {card2};
-    border-bottom: 1px solid {bdr2};
+    background: transparent;
+    border-bottom: none;
     margin-bottom: 1.5rem;
   }}
   .sp-pill {{
