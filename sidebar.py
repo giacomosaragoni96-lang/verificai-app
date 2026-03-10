@@ -255,16 +255,6 @@ def render_sidebar(
         if limite_raggiunto:
             st.warning(f"Limite mensile raggiunto ({LIMITE_MENSILE} verifiche). {_reset_str}.")
 
-        # ── HINT BOX — Suggerimenti per migliori risultati ───────────────────────
-        st.markdown(f"""
-        <div style="background:{T['hint_bg']};border:1px solid {T['hint_border']}; 
-                    border-radius:8px;padding:8px 12px;font-size:0.74rem;color:{T['hint_text']}; 
-                    margin:8px 0;font-family:DM Sans,sans-serif;line-height:1.4;">
-        💡 <b>Suggerimento:</b> Più dettagli fornisci, più la verifica sarà precisa. 
-        Specifica argomenti da escludere, livello di difficoltà, tipo di esercizi preferiti.
-        </div>
-        """, unsafe_allow_html=True)
-
         # ── CTA UPGRADE PRO ───────────────────────────────────────────────────
         if limite_raggiunto or _perc_uso >= 60:
             _rimaste = max(0, LIMITE_MENSILE - verifiche_mese_count)
