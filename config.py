@@ -69,10 +69,10 @@ THEMES = {
         "border":     "#E2E5EB",
         "border2":    "#CDD1D9",
 
-        # Accent — Green/Gold autorevole (success, azione, valore)
-        "accent":       "#10b981",
-        "accent2":      "#059669",
-        "accent_light": "#ecfdf5",
+        # Accent — Blue autorevole (sistema, fiducia, azione)
+        "accent":       "#2563EB",
+        "accent2":      "#1D4ED8",
+        "accent_light": "#EFF6FF",
 
         # Interazione
         "hover":      "#F8FAFC",

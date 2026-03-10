@@ -1682,6 +1682,24 @@ def get_css(T: dict) -> str:
     transform: translateY(0) !important;
   }}
 
+  /* ════════════════════════════════════════════════════════════════════════
+     SECONDARY BUTTONS — Green/Gold Edition
+     ════════════════════════════════════════════════════════════════════════ */
+  button[data-testid="baseButton-secondary"] {{
+    background: linear-gradient(135deg, #10b981, #f59e0b) !important;
+    border: 2px solid #10b981 !important;
+    color: white !important;
+    font-weight: 600 !important;
+    min-height: 48px !important;
+    transition: all 0.3s ease !important;
+  }}
+  
+  button[data-testid="baseButton-secondary"]:hover {{
+    background: linear-gradient(135deg, #059669, #d97706) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.3) !important;
+  }}
+
   /* Nuovo: hint testuale leggero sopra il pulsante Genera */
   .cta-hint-text {{
     text-align: center;
