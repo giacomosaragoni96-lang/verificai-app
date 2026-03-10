@@ -202,8 +202,28 @@ def render_sidebar(
             _reset_str = f"Si rinnova tra {_gg_reset} giorni"
 
         st.markdown(f"""
-        <div style="margin-bottom: 0.4rem; background: rgba(255,255,255,0); border: none; padding: 0;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+        <style>
+        @media (max-width: 768px) {{
+          .mobile-progress-container {{
+            margin-bottom: 0.6rem !important;
+            padding: 0.4rem !important;
+          }}
+          .mobile-progress-header {{
+            font-size: 0.7rem !important;
+            margin-bottom: 0.3rem !important;
+          }}
+          .mobile-progress-bar {{
+            height: 3px !important;
+            margin: 0.2rem 0 !important;
+          }}
+          .mobile-progress-text {{
+            font-size: 0.6rem !important;
+            margin-top: 0.3rem !important;
+          }}
+        }}
+        </style>
+        <div class="mobile-progress-container" style="margin-bottom: 0.4rem; background: rgba(255,255,255,0); border: none; padding: 0;">
+          <div class="mobile-progress-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
             <span style="font-size: 0.78rem; color: {_sb_text}; font-family: 'DM Sans', sans-serif;">
               Verifiche questo mese
             </span>
@@ -211,7 +231,7 @@ def render_sidebar(
               {verifiche_mese_count} / {LIMITE_MENSILE}
             </span>
           </div>
-          <div style="
+          <div class="mobile-progress-bar" style="
             background: rgba(255,255,255,0) !important;
             border: none !important;
             border-radius: 10px;
@@ -231,7 +251,7 @@ def render_sidebar(
               left: 0;
             "></div>
           </div>
-          <div style="text-align: right; font-size: 0.68rem; color: {_sb_muted}; margin-top: 4px; font-family: 'DM Sans', sans-serif;">
+          <div class="mobile-progress-text" style="text-align: right; font-size: 0.68rem; color: {_sb_muted}; margin-top: 4px; font-family: 'DM Sans', sans-serif;">
             🔄 {_reset_str}
           </div>
         </div>
