@@ -374,7 +374,7 @@ def _render_step_progress(T: dict) -> None:
     steps = [
         (STAGE_INPUT,  "1", "Impostazioni"),
         (STAGE_REVIEW, "2", "Revisiona"),
-        (STAGE_FINAL,  "3", "Scarica"),
+        (STAGE_FINAL,  "3", "Download"),
     ]
     order = {s: i for i, (s, _, _) in enumerate(steps)}
     cur   = order.get(visual, 0)
