@@ -461,7 +461,7 @@ def _render_step_progress(T: dict) -> None:
   }}
   .sp-dot {{
     width: 40px; height: 40px;
-    border-radius: 0px;
+    border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     transition: box-shadow .3s ease, background .3s ease;
@@ -476,6 +476,17 @@ def _render_step_progress(T: dict) -> None:
     flex-shrink: 0; border-radius: 0px;
     margin-bottom: 30px;
     opacity: .7;
+    position: relative;
+  }}
+  .sp-line::after {{
+    content: '→';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    color: inherit;
+    opacity: 0.8;
   }}
 </style>
 <div class="sp-track">
