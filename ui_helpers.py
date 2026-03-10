@@ -472,21 +472,11 @@ def _render_step_progress(T: dict) -> None:
     transition: color .25s;
   }}
   .sp-line {{
-    height: 20px; width: 60px;
-    flex-shrink: 0; border-radius: 0px;
+    height: 1px; width: 50px;
+    flex-shrink: 0; border-radius: 1px;
     margin-bottom: 30px;
-    background: transparent;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }}
-  .sp-line::after {{
-    content: '→';
-    font-size: 1.4rem;
-    color: inherit;
-    opacity: 0.7;
-    font-weight: 600;
+    opacity: 0.4;
+    background: currentColor;
   }}
 </style>
 <div class="sp-track">
