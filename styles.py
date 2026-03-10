@@ -9,15 +9,15 @@ def get_css(T: dict) -> str:
     • Effetti di caricamento professionali
     • Linguaggio non tecnico (hint, label)
     """
-    _SB_ACCENT = T.get("sidebar_accent", "#79C0FF")
-    _SB_BG_CSS = T.get("sidebar_bg", "linear-gradient(180deg, #111110 0%, #0e0e0d 100%)")
-    _SB_BORDER = T.get("sidebar_border", "#21262D")
-    _SB_INPUT_BG   = T.get("sidebar_input_bg", "#0D1117")
-    _SB_INPUT_TEXT = T.get("sidebar_input_text", "#E6EDF3")
+    _SB_ACCENT = T.get("sidebar_accent", "#3B82F6")  # Blu più vivido
+    _SB_BG_CSS = T.get("sidebar_bg", "linear-gradient(180deg, #1E293B 0%, #0F172A 100%)")  # Grigio scuro più contrasto
+    _SB_BORDER = T.get("sidebar_border", "#475569")  # Grigio medio per bordi più visibili
+    _SB_INPUT_BG   = T.get("sidebar_input_bg", "#334155")  # Input più scuri per contrasto
+    _SB_INPUT_TEXT = T.get("sidebar_input_text", "#F8FAFC")  # Bianco quasi puro
     # La sidebar ha sempre sfondo scuro → i colori testo DEVONO essere chiari
     # indipendentemente dal tema principale (chiaro/scuro).
     _SB_TEXT   = _SB_INPUT_TEXT
-    _SB_MUTED  = _SB_INPUT_TEXT + "88"   # versione attenuata per label uppercase
+    _SB_MUTED  = "#CBD5E1"   # Grigio chiaro per label (più visibile)
 
     _is_light = _is_light_color(T["bg"])
 

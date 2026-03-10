@@ -6,29 +6,27 @@ import time
 # Dopo il login l'URL diventa: https://tuaapp.streamlit.app/?rt=TOKEN
 # Il token sopravvive al refresh perché è nell'URL stesso.
 
-# Palette login: tema dinamico basato sul tema corrente
+# Palette login: tema chiaro moderno
 try:
     from config import THEMES
-    from styles import get_theme
-    # Ottieni il tema corrente
-    theme_name = "notte"  # Default per login
-    T = THEMES.get(theme_name, {})
+    # Usa tema chiaro per login
+    T = THEMES.get("giorno", {})
 except ImportError:
     T = {}
 
-# Colori principali - coerenti con il tema
-_BG        = T.get("bg", "#0D1117")
-_CARD      = T.get("card", "#1C2128") 
-_CARD2     = T.get("card2", "#21262D")
-_BG2       = T.get("bg2", "#161B22")
-_TEXT      = T.get("text", "#E6EDF3")
-_TEXT2     = T.get("text2", "#8B949E")
-_MUTED     = T.get("muted", "#6E7681")
-_BORDER    = T.get("border", "#30363D")
-_BORDER2   = T.get("border2", "#3D444D")
-_ACCENT    = T.get("accent", "#58A6FF")
-_ACCENT2   = T.get("accent2", "#79C0FF")
-_ACCENT_L  = T.get("accent_light", "#0D2340")
+# Colori tema chiaro - alta leggibilità
+_BG        = "#FFFFFF"
+_CARD      = "#F8FAFC" 
+_CARD2     = "#F1F5F9"
+_BG2       = "#F8FAFC"
+_TEXT      = "#1E293B"
+_TEXT2     = "#475569"
+_MUTED     = "#64748B"
+_BORDER    = "#E2E8F0"
+_BORDER2   = "#CBD5E1"
+_ACCENT    = "#3B82F6"
+_ACCENT2   = "#60A5FA"
+_ACCENT_L  = "#EFF6FF"
 
 # Colori moderni aggiuntivi
 _PRIMARY    = _ACCENT
@@ -100,14 +98,14 @@ def mostra_auth(supabase):
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-    /* ═══ Base Modern Design System ═══ */
+    /* ═══ Base Modern Design System - Tema Chiaro ═══ */
     html, body,
     [data-testid="stAppViewContainer"],
     .stApp {{
         background: {_BG} !important;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
         overflow-x: hidden;
-        color-scheme: dark !important;
+        color-scheme: light !important;
         font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     }}
 
@@ -188,7 +186,7 @@ def mostra_auth(supabase):
         padding: 16px 20px !important;
         min-height: 56px !important;
         transition: all .25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        color-scheme: dark !important;
+        color-scheme: light !important;
     }}
     [data-testid="stTextInput"] input:focus {{
         border-color: {_PRIMARY} !important;

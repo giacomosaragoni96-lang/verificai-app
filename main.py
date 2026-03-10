@@ -1712,6 +1712,15 @@ def _render_le_tue_verifiche():
     """
     Pagina "Le tue verifiche" - Gestione verifiche create dall'utente
     """
+    # Pulsante per tornare indietro
+    col_back, col_center = st.columns([1, 4])
+    with col_back:
+        if st.button("← Torna Indietro", key="back_from_mie_verifiche", 
+                     help="Torna alla pagina principale"):
+            st.session_state.stage = STAGE_INPUT
+            st.session_state.input_percorso = None
+            st.rerun()
+    
     st.markdown(
         """
         <div style="text-align: center; margin-bottom: 2rem;">
