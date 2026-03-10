@@ -506,14 +506,17 @@ def mostra_auth(supabase):
                 st.markdown(f'''
                 <div style="
                     background: {_WARNING} !important;
-                    color: #1E293B !important;
+                    color: white !important;
                     padding: 1rem 1.5rem !important;
                     border-radius: 12px !important;
                     margin: 1rem 0 !important;
                     font-family: 'Inter', sans-serif !important;
                     font-weight: 500 !important;
                     border: 1px solid {_WARNING} !important;
-                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+                    box-shadow: 0 4px 12px rgba(146, 64, 14, 0.3) !important;
+                    display: block !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
                 ">
                     ⚠️ Inserisci email e password.
                 </div>
