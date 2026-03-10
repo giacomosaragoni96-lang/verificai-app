@@ -3095,6 +3095,16 @@ def _render_percorso_b_form():
                 key="argomento_area_b",
             )
 
+            # ── HINT BOX — Suggerimenti per migliori risultati ───────────────────────
+            st.markdown(f"""
+            <div style="background:{T['hint_bg']};border:1px solid {T['hint_border']}; 
+                        border-radius:8px;padding:8px 12px;font-size:0.74rem;color:{T['hint_text']}; 
+                        margin:8px 0;font-family:DM Sans,sans-serif;line-height:1.4;">
+            💡 <b>Suggerimento:</b> Più dettagli fornisci, più la verifica sarà precisa. 
+            Specifica argomenti da escludere, livello di difficoltà, tipo di esercizi preferiti.
+            </div>
+            """, unsafe_allow_html=True)
+
             # ── Traccia modifica manuale argomento ────────────────────────────────
             _auto_arg_ref = _info_cons.get("contenuto_argomento", "")
             argomento = argomento_raw.strip()
