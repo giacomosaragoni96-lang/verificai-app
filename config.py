@@ -161,78 +161,78 @@ THEMES = {
     },
 
     # ═══════════════════════════════════════════════════════════════════════
-    #  OCEANO — Ocean Blue Theme (calm, professional, trustworthy)
+    #  OCEANO — Ocean Blue Theme (clean, minimal)
     #  ═══════════════════════════════════════════════════════════════════════
     "oceano": {
-        # Superfici — blu oceanico profondo
-        "bg":         "#F0F9FF",
-        "bg2":        "#E0F2FE",
+        # Superfici — bianco con accenti blu
+        "bg":         "#FFFFFF",
+        "bg2":        "#F8FAFC",
         "card":       "#FFFFFF",
         "card2":      "#F8FAFC",
 
-        # Testo — blu scuro per contrasto
-        "text":       "#0C4A6E",
-        "text2":      "#075985",
-        "muted":      "#64748B",
+        # Testo — blu scuro
+        "text":       "#1E40AF",
+        "text2":      "#3B82F6",
+        "muted":      "#6B7280",
 
-        # Bordi — blu azzurro
-        "border":     "#BAE6FD",
-        "border2":    "#7DD3FC",
+        # Bordi — blu molto leggero
+        "border":     "#EFF6FF",
+        "border2":    "#DBEAFE",
 
         # Accent — blu oceanico
-        "accent":       "#0EA5E9",
-        "accent2":      "#0284C7",
-        "accent_light": "#F0F9FF",
+        "accent":       "#3B82F6",
+        "accent2":      "#2563EB",
+        "accent_light": "#EFF6FF",
 
         # Interazione
-        "hover":      "#F0F9FF",
+        "hover":      "#F8FAFC",
 
-        # Semantici — calibrati per ocean theme
+        # Semantici
         "success":    "#059669",
-        "warn":       "#EA580C",
-        "error":      "#DC2626",
+        "warn":       "#F59E0B",
+        "error":      "#EF4444",
 
-        # Ombre — blu morbide
-        "shadow":     "0 1px 2px rgba(12, 74, 110, .04)",
-        "shadow_md":  "0 4px 20px rgba(12, 74, 110, .08), 0 1px 3px rgba(12, 74, 110, .04)",
-        "shadow_soft": "0 12px 40px rgba(12, 74, 110, .06), 0 2px 8px rgba(12, 74, 110, .03)",
+        # Ombre — minimal
+        "shadow":     "0 1px 3px rgba(0, 0, 0, .1)",
+        "shadow_md":  "0 4px 6px rgba(0, 0, 0, .1)",
+        "shadow_soft": "0 10px 15px rgba(0, 0, 0, .05)",
 
         # Design system
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
+        "radius_sm":  "6px",
+        "radius_md":  "8px",
+        "radius_lg":  "12px",
 
-        # Sidebar — blu scuro oceanico
-        "sidebar_bg":      "linear-gradient(180deg, #0C4A6E 0%, #075985 100%)",
-        "sidebar_border":  "#0EA5E9",
-        "sidebar_accent":  "#38BDF8",
-        "sidebar_input_bg":  "#0E7490",
-        "sidebar_input_text": "#F0F9FF",
+        # Sidebar — blu scuro minimal
+        "sidebar_bg":      "linear-gradient(180deg, #1E40AF 0%, #3B82F6 100%)",
+        "sidebar_border":  "#3B82F6",
+        "sidebar_accent":  "#60A5FA",
+        "sidebar_input_bg":  "#2563EB",
+        "sidebar_input_text": "#FFFFFF",
 
         # Hint boxes
-        "hint_bg":      "#F0F9FF",
-        "hint_border":  "#BAE6FD",
-        "hint_text":    "#0284C7",
+        "hint_bg":      "#EFF6FF",
+        "hint_border":  "#3B82F6",
+        "hint_text":    "#1E40AF",
     },
 
     # ═══════════════════════════════════════════════════════════════════════
-    #  FORESTA — Forest Green Theme (nature, growth, harmony)
+    #  FORESTA — Forest Green Theme (natural, clean)
     #  ═══════════════════════════════════════════════════════════════════════
     "foresta": {
-        # Superfici — verde foresta chiaro
-        "bg":         "#F0FDF4",
-        "bg2":        "#DCFCE7",
+        # Superfici — bianco con accenti verdi
+        "bg":         "#FFFFFF",
+        "bg2":        "#F8FAFC",
         "card":       "#FFFFFF",
         "card2":      "#F8FAFC",
 
-        # Testo — verde scuro foresta
+        # Testo — verde scuro
         "text":       "#14532D",
-        "text2":      "#166534",
-        "muted":      "#64748B",
+        "text2":      "#16A34A",
+        "muted":      "#6B7280",
 
-        # Bordi — verde salvia
-        "border":     "#BBF7D0",
-        "border2":    "#86EFAC",
+        # Bordi — verde molto leggero
+        "border":     "#F0FDF4",
+        "border2":    "#DCFCE7",
 
         # Accent — verde foresta
         "accent":       "#16A34A",
@@ -240,54 +240,54 @@ THEMES = {
         "accent_light": "#F0FDF4",
 
         # Interazione
-        "hover":      "#F0FDF4",
+        "hover":      "#F8FAFC",
 
-        # Semantici — calibrati per forest theme
+        # Semantici
         "success":    "#059669",
-        "warn":       "#EA580C",
-        "error":      "#DC2626",
+        "warn":       "#F59E0B",
+        "error":      "#EF4444",
 
-        # Ombre — verdi morbide
-        "shadow":     "0 1px 2px rgba(20, 83, 45, .04)",
-        "shadow_md":  "0 4px 20px rgba(20, 83, 45, .08), 0 1px 3px rgba(20, 83, 45, .04)",
-        "shadow_soft": "0 12px 40px rgba(20, 83, 45, .06), 0 2px 8px rgba(20, 83, 45, .03)",
+        # Ombre — minimal
+        "shadow":     "0 1px 3px rgba(0, 0, 0, .1)",
+        "shadow_md":  "0 4px 6px rgba(0, 0, 0, .1)",
+        "shadow_soft": "0 10px 15px rgba(0, 0, 0, .05)",
 
         # Design system
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
+        "radius_sm":  "6px",
+        "radius_md":  "8px",
+        "radius_lg":  "12px",
 
-        # Sidebar — verde scuro foresta
-        "sidebar_bg":      "linear-gradient(180deg, #14532D 0%, #166534 100%)",
+        # Sidebar — verde scuro minimal
+        "sidebar_bg":      "linear-gradient(180deg, #14532D 0%, #16A34A 100%)",
         "sidebar_border":  "#16A34A",
         "sidebar_accent":  "#22C55E",
         "sidebar_input_bg":  "#15803D",
-        "sidebar_input_text": "#F0FDF4",
+        "sidebar_input_text": "#FFFFFF",
 
         # Hint boxes
         "hint_bg":      "#F0FDF4",
-        "hint_border":  "#BBF7D0",
-        "hint_text":    "#15803D",
+        "hint_border":  "#16A34A",
+        "hint_text":    "#14532D",
     },
 
     # ═══════════════════════════════════════════════════════════════════════
-    #  TRAMONTO — Sunset Orange Theme (warm, energetic, creative)
+    #  TRAMONTO — Sunset Orange Theme (warm, simple)
     #  ═══════════════════════════════════════════════════════════════════════
     "tramonto": {
-        # Superfici — arancione tramonto chiaro
-        "bg":         "#FFF7ED",
-        "bg2":        "#FED7AA",
+        # Superfici — bianco con accenti arancioni
+        "bg":         "#FFFFFF",
+        "bg2":        "#F8FAFC",
         "card":       "#FFFFFF",
         "card2":      "#F8FAFC",
 
         # Testo — arancione scuro
-        "text":       "#7C2D12",
-        "text2":      "#9A3412",
-        "muted":      "#64748B",
+        "text":       "#9A3412",
+        "text2":      "#EA580C",
+        "muted":      "#6B7280",
 
-        # Bordi — arancione pesca
-        "border":     "#FED7AA",
-        "border2":    "#FDBA74",
+        # Bordi — arancione molto leggero
+        "border":     "#FFF7ED",
+        "border2":    "#FED7AA",
 
         # Accent — arancione tramonto
         "accent":       "#EA580C",
@@ -295,54 +295,54 @@ THEMES = {
         "accent_light": "#FFF7ED",
 
         # Interazione
-        "hover":      "#FFF7ED",
+        "hover":      "#F8FAFC",
 
-        # Semantici — calibrati per sunset theme
+        # Semantici
         "success":    "#059669",
-        "warn":       "#D97706",
-        "error":      "#DC2626",
+        "warn":       "#F59E0B",
+        "error":      "#EF4444",
 
-        # Ombre — arancioni morbide
-        "shadow":     "0 1px 2px rgba(124, 45, 18, .04)",
-        "shadow_md":  "0 4px 20px rgba(124, 45, 18, .08), 0 1px 3px rgba(124, 45, 18, .04)",
-        "shadow_soft": "0 12px 40px rgba(124, 45, 18, .06), 0 2px 8px rgba(124, 45, 18, .03)",
+        # Ombre — minimal
+        "shadow":     "0 1px 3px rgba(0, 0, 0, .1)",
+        "shadow_md":  "0 4px 6px rgba(0, 0, 0, .1)",
+        "shadow_soft": "0 10px 15px rgba(0, 0, 0, .05)",
 
         # Design system
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
+        "radius_sm":  "6px",
+        "radius_md":  "8px",
+        "radius_lg":  "12px",
 
-        # Sidebar — arancione scuro tramonto
-        "sidebar_bg":      "linear-gradient(180deg, #7C2D12 0%, #9A3412 100%)",
+        # Sidebar — arancione scuro minimal
+        "sidebar_bg":      "linear-gradient(180deg, #9A3412 0%, #EA580C 100%)",
         "sidebar_border":  "#EA580C",
         "sidebar_accent":  "#FB923C",
         "sidebar_input_bg":  "#C2410C",
-        "sidebar_input_text": "#FFF7ED",
+        "sidebar_input_text": "#FFFFFF",
 
         # Hint boxes
         "hint_bg":      "#FFF7ED",
-        "hint_border":  "#FED7AA",
-        "hint_text":    "#C2410C",
+        "hint_border":  "#EA580C",
+        "hint_text":    "#9A3412",
     },
 
     # ═══════════════════════════════════════════════════════════════════════
-    #  LAVANDA — Lavender Purple Theme (calm, creative, elegant)
+    #  LAVANDA — Lavender Purple Theme (elegant, minimal)
     #  ═══════════════════════════════════════════════════════════════════════
     "lavanda": {
-        # Superfici — lavanda chiaro
-        "bg":         "#FAF5FF",
-        "bg2":        "#F3E8FF",
+        # Superfici — bianco con accenti viola
+        "bg":         "#FFFFFF",
+        "bg2":        "#F8FAFC",
         "card":       "#FFFFFF",
         "card2":      "#F8FAFC",
 
         # Testo — viola scuro
-        "text":       "#581C87",
-        "text2":      "#6B21A8",
-        "muted":      "#64748B",
+        "text":       "#6B21A8",
+        "text2":      "#9333EA",
+        "muted":      "#6B7280",
 
-        # Bordi — lavanda
-        "border":     "#E9D5FF",
-        "border2":    "#D8B4FE",
+        # Bordi — viola molto leggero
+        "border":     "#FAF5FF",
+        "border2":    "#F3E8FF",
 
         # Accent — viola lavanda
         "accent":       "#9333EA",
@@ -350,54 +350,54 @@ THEMES = {
         "accent_light": "#FAF5FF",
 
         # Interazione
-        "hover":      "#FAF5FF",
+        "hover":      "#F8FAFC",
 
-        # Semantici — calibrati per lavender theme
+        # Semantici
         "success":    "#059669",
-        "warn":       "#D97706",
-        "error":      "#DC2626",
+        "warn":       "#F59E0B",
+        "error":      "#EF4444",
 
-        # Ombre — viola morbide
-        "shadow":     "0 1px 2px rgba(88, 28, 135, .04)",
-        "shadow_md":  "0 4px 20px rgba(88, 28, 135, .08), 0 1px 3px rgba(88, 28, 135, .04)",
-        "shadow_soft": "0 12px 40px rgba(88, 28, 135, .06), 0 2px 8px rgba(88, 28, 135, .03)",
+        # Ombre — minimal
+        "shadow":     "0 1px 3px rgba(0, 0, 0, .1)",
+        "shadow_md":  "0 4px 6px rgba(0, 0, 0, .1)",
+        "shadow_soft": "0 10px 15px rgba(0, 0, 0, .05)",
 
         # Design system
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
+        "radius_sm":  "6px",
+        "radius_md":  "8px",
+        "radius_lg":  "12px",
 
-        # Sidebar — viola scuro lavanda
-        "sidebar_bg":      "linear-gradient(180deg, #581C87 0%, #6B21A8 100%)",
+        # Sidebar — viola scuro minimal
+        "sidebar_bg":      "linear-gradient(180deg, #6B21A8 0%, #9333EA 100%)",
         "sidebar_border":  "#9333EA",
         "sidebar_accent":  "#A855F7",
         "sidebar_input_bg":  "#7C3AED",
-        "sidebar_input_text": "#FAF5FF",
+        "sidebar_input_text": "#FFFFFF",
 
         # Hint boxes
         "hint_bg":      "#FAF5FF",
-        "hint_border":  "#E9D5FF",
-        "hint_text":    "#7C3AED",
+        "hint_border":  "#9333EA",
+        "hint_text":    "#6B21A8",
     },
 
     # ═══════════════════════════════════════════════════════════════════════
-    #  CIOCCOLATO — Chocolate Brown Theme (warm, professional, sophisticated)
+    #  CIOCCOLATO — Chocolate Brown Theme (warm, professional)
     #  ═══════════════════════════════════════════════════════════════════════
     "cioccolato": {
-        # Superfici — cioccolato chiaro
-        "bg":         "#FEF3C7",
-        "bg2":        "#FDE68A",
+        # Superfici — bianco con accenti marroni
+        "bg":         "#FFFFFF",
+        "bg2":        "#F8FAFC",
         "card":       "#FFFFFF",
         "card2":      "#F8FAFC",
 
         # Testo — marrone scuro
-        "text":       "#78350F",
-        "text2":      "#92400E",
-        "muted":      "#64748B",
+        "text":       "#92400E",
+        "text2":      "#D97706",
+        "muted":      "#6B7280",
 
-        # Bordi — marrone chiaro
-        "border":     "#FDE68A",
-        "border2":    "#FCD34D",
+        # Bordi — marrone molto leggero
+        "border":     "#FEF3C7",
+        "border2":    "#FDE68A",
 
         # Accent — marrone cioccolato
         "accent":       "#D97706",
@@ -405,34 +405,34 @@ THEMES = {
         "accent_light": "#FEF3C7",
 
         # Interazione
-        "hover":      "#FEF3C7",
+        "hover":      "#F8FAFC",
 
-        # Semantici — calibrati per chocolate theme
+        # Semantici
         "success":    "#059669",
-        "warn":       "#D97706",
-        "error":      "#DC2626",
+        "warn":       "#F59E0B",
+        "error":      "#EF4444",
 
-        # Ombre — marroni morbide
-        "shadow":     "0 1px 2px rgba(120, 53, 15, .04)",
-        "shadow_md":  "0 4px 20px rgba(120, 53, 15, .08), 0 1px 3px rgba(120, 53, 15, .04)",
-        "shadow_soft": "0 12px 40px rgba(120, 53, 15, .06), 0 2px 8px rgba(120, 53, 15, .03)",
+        # Ombre — minimal
+        "shadow":     "0 1px 3px rgba(0, 0, 0, .1)",
+        "shadow_md":  "0 4px 6px rgba(0, 0, 0, .1)",
+        "shadow_soft": "0 10px 15px rgba(0, 0, 0, .05)",
 
         # Design system
-        "radius_sm":  "8px",
-        "radius_md":  "12px",
-        "radius_lg":  "16px",
+        "radius_sm":  "6px",
+        "radius_md":  "8px",
+        "radius_lg":  "12px",
 
-        # Sidebar — marrone scuro cioccolato
-        "sidebar_bg":      "linear-gradient(180deg, #78350F 0%, #92400E 100%)",
+        # Sidebar — marrone scuro minimal
+        "sidebar_bg":      "linear-gradient(180deg, #92400E 0%, #D97706 100%)",
         "sidebar_border":  "#D97706",
         "sidebar_accent":  "#F59E0B",
         "sidebar_input_bg":  "#B45309",
-        "sidebar_input_text": "#FEF3C7",
+        "sidebar_input_text": "#FFFFFF",
 
         # Hint boxes
         "hint_bg":      "#FEF3C7",
-        "hint_border":  "#FDE68A",
-        "hint_text":    "#B45309",
+        "hint_border":  "#D97706",
+        "hint_text":    "#92400E",
     },
 }
 
