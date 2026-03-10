@@ -1296,11 +1296,8 @@ def _render_bivio():
     st.markdown(
         '''
         <div style="text-align: center; margin: 2rem 0; padding: 1.5rem; background: #f8fafc; border-radius: 12px; border-left: 4px solid #3b82f6;">
-          <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem; color: #1f2937;">
+          <div style="font-size: 1.2rem; font-weight: bold; color: #1f2937;">
             📚 Usato da 500+ docenti italiani
-          </div>
-          <div style="font-size: 0.9rem; color: #6b7280; font-style: italic;">
-            "Mi salva 2 ore a settimana, verifiche sempre pronte" - Prof. Rossi, Milano
           </div>
         </div>
         ''',
