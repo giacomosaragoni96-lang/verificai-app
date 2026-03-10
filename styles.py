@@ -83,6 +83,17 @@ def get_css(T: dict) -> str:
      Il toggle sidebar deve sempre essere cliccabile
      ════════════════════════════════════════════════════════════════════════ */
   [data-testid="stSidebar"],
+  [data-testid="stSidebar"] > div,
+  [data-testid="stSidebar"] > div > div,
+  [data-testid="stSidebar"] .element-container,
+  [data-testid="stSidebar"] .stVerticalBlock,
+  [data-testid="stSidebar"] .stVerticalBlock > div,
+  [data-testid="stSidebar"] .stVerticalBlock > div > div {{
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }},
   section[data-testid="stSidebar"] {{
     z-index: 1100 !important;
   }}
