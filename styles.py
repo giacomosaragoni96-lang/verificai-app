@@ -3018,50 +3018,109 @@ def get_css(T: dict) -> str:
     0%, 100% {{ box-shadow: 0 6px 32px #05966960, 0 0 0 0 #10B98100; }}
     50%       {{ box-shadow: 0 10px 44px #05966990, 0 0 0 10px #10B98118; }}
   }}
+  @keyframes dl-glow {{
+    0%, 100% {{ 
+      box-shadow: 
+        0 8px 40px #05966960, 
+        0 4px 16px #05966940,
+        inset 0 1px 0 rgba(255,255,255,0.2);
+    }}
+    50% {{ 
+      box-shadow: 
+        0 12px 48px #05966980, 
+        0 6px 20px #05966960,
+        inset 0 1px 0 rgba(255,255,255,0.4);
+    }}
+  }}
+  @keyframes border-rotate {{
+    0% {{ transform: rotate(0deg); }}
+    100% {{ transform: rotate(360deg); }}
+  }}
   .dl-cta-wrap {{
-    margin-bottom: 1.1rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 10;
+  }}
+  .dl-cta-wrap::before {{
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    background: linear-gradient(45deg, #059669, #10B981, #6EE7B7, #059669);
+    border-radius: 18px;
+    z-index: -1;
+    opacity: .8;
+    animation: border-rotate 3s linear infinite;
   }}
   /* specificità (0,0,2,2) — batte sia div.stDownloadButton>button (0,0,1,2)
      sia [data-testid="stDownloadButton"]>button (0,1,0,1) */
   .dl-cta-wrap div.stDownloadButton > button,
   .dl-cta-wrap [data-testid="stDownloadButton"] > button {{
     background: linear-gradient(
-      112deg,
+      135deg,
       #047857 0%,
-      #059669 20%,
-      #10B981 45%,
-      #6EE7B7 60%,
-      #10B981 75%,
-      #059669 90%,
+      #059669 15%,
+      #10B981 35%,
+      #6EE7B7 50%,
+      #10B981 65%,
+      #059669 85%,
       #047857 100%
     ) !important;
-    background-size: 250% auto !important;
-    color: #022c22 !important;
-    -webkit-text-fill-color: #022c22 !important;
+    background-size: 300% auto !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
     border: none !important;
     border-radius: 16px !important;
-    font-size: 1.15rem !important;
+    font-size: 1.25rem !important;
     font-weight: 900 !important;
-    letter-spacing: .05em !important;
-    min-height: 72px !important;
-    box-shadow: 0 6px 32px #05966960, 0 2px 8px #05966930 !important;
-    animation: dl-shimmer 3.2s linear infinite, dl-pulse 2.8s ease-in-out infinite !important;
-    transition: transform .18s ease, filter .18s ease !important;
+    letter-spacing: .06em !important;
+    min-height: 80px !important;
+    padding: 1.2rem 2rem !important;
+    box-shadow: 
+      0 8px 40px #05966960, 
+      0 4px 16px #05966940,
+      inset 0 1px 0 rgba(255,255,255,0.2) !important;
+    animation: 
+      dl-shimmer 3.2s linear infinite, 
+      dl-pulse 2.8s ease-in-out infinite,
+      dl-glow 2s ease-in-out infinite !important;
+    transition: all .25s cubic-bezier(0.4, 0, 0.2, 1) !important;
     font-family: 'DM Sans', sans-serif !important;
     text-transform: uppercase !important;
+    position: relative;
+    overflow: hidden;
+  }}
+  .dl-cta-wrap div.stDownloadButton > button::before,
+  .dl-cta-wrap [data-testid="stDownloadButton"] > button::before {{
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.6s ease;
+  }}
+  .dl-cta-wrap div.stDownloadButton > button:hover::before,
+  .dl-cta-wrap [data-testid="stDownloadButton"] > button:hover::before {{
+    left: 100%;
   }}
   .dl-cta-wrap div.stDownloadButton > button:hover,
   .dl-cta-wrap [data-testid="stDownloadButton"] > button:hover {{
-    filter: brightness(1.1) saturate(1.15) !important;
-    box-shadow: 0 12px 44px #05966980 !important;
-    transform: translateY(-3px) !important;
+    filter: brightness(1.15) saturate(1.2) !important;
+    box-shadow: 
+      0 16px 56px #05966980, 
+      0 8px 24px #05966960,
+      inset 0 1px 0 rgba(255,255,255,0.3) !important;
+    transform: translateY(-4px) scale(1.02) !important;
     animation: none !important;
+    background-size: 200% auto !important;
+    background-position: 50% 0% !important;
   }}
   .dl-cta-wrap div.stDownloadButton > button:active,
   .dl-cta-wrap [data-testid="stDownloadButton"] > button:active {{
-    transform: translateY(0) scale(.98) !important;
-    filter: brightness(.96) !important;
+    transform: translateY(-2px) scale(.99) !important;
+    filter: brightness(1.05) !important;
     animation: none !important;
+    box-shadow: 
+      0 8px 32px #05966970, 
+      0 4px 16px #05966950 !important;
   }}
 
   /* CTA variante (per colleghi) — definita una sola volta più in basso */
