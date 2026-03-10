@@ -453,6 +453,9 @@ def _render_step_progress(T: dict) -> None:
     border-radius: 0px;
     padding: .75rem 1.5rem;
     box-shadow: none;
+    width: 100%;
+    max-width: 600px;
+    justify-content: space-between;
   }}
   .sp-node {{
     display: flex; flex-direction: column;
