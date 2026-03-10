@@ -1659,24 +1659,24 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     CTA GENERA — High Impact Button Wrap - ENHANCED
+     CTA GENERA — High Impact Button Wrap - GREEN/GOLD EDITION
      ════════════════════════════════════════════════════════════════════════ */
   .cta-genera-wrap button {{
-    min-height: 64px !important;
-    font-size: 1.2rem !important;
+    min-height: 72px !important;
+    font-size: 1.3rem !important;
     font-weight: 900 !important;
     border-radius: {_radius_lg} !important;
-    background: linear-gradient(135deg, {_acc}, {_acc2}) !important;
-    border: 2px solid {_acc} !important;
-    box-shadow: 0 8px 25px -5px rgba({_acc.replace('#', '')},.4) !important;
+    background: linear-gradient(135deg, #10b981, #f59e0b) !important;
+    border: 2px solid #10b981 !important;
+    box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4) !important;
     transition: all .3s ease !important;
     text-transform: none !important;
     letter-spacing: .02em !important;
   }}
   .cta-genera-wrap button:hover {{
     transform: translateY(-2px) !important;
-    box-shadow: 0 12px 35px -5px rgba({_acc.replace('#', '')},.5) !important;
-    background: linear-gradient(135deg, {_acc2}, {_acc}) !important;
+    box-shadow: 0 12px 35px -5px rgba(16, 185, 129, 0.5) !important;
+    background: linear-gradient(135deg, #059669, #d97706) !important;
   }}
   .cta-genera-wrap button:active {{
     transform: translateY(0) !important;
