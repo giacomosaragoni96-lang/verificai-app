@@ -588,6 +588,15 @@ def get_css(T: dict) -> str:
   .limit-reached {{ color: {T['error']} !important; }}
   .limit-near    {{ color: {T['warn']}  !important; }}
 
+  /* Mobile progress container - completely transparent */
+  .mobile-progress-container {{
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }}
+
   /* ── Sidebar: Pro CTA card con gradient border ── */
   .sb-pro-card {{
     background: linear-gradient(135deg, {_SB_INPUT_BG}ee, {_SB_INPUT_BG}cc) padding-box,
