@@ -32,7 +32,7 @@ _ACCENT_L  = "#EFF6FF"
 _PRIMARY    = _ACCENT
 _PRIMARY_L  = _ACCENT2
 _SUCCESS    = "#10B981"
-_WARNING    = "#F59E0B"
+_WARNING    = "#D97706"  # Darker orange for better contrast with light text
 _ERROR      = "#EF4444"
 _SURFACE    = _CARD
 _SURFACE_L  = _CARD2
@@ -516,17 +516,20 @@ def mostra_auth(supabase):
         mutations.forEach(function(mutation) {{
           mutation.addedNodes.forEach(function(node) {{
             if (node.nodeType === 1) {{
-              // Fix warning messages
+              // Fix warning messages with more aggressive styling
               const warnings = node.querySelectorAll ? node.querySelectorAll('[data-testid="stWarning"], .st-warning, [data-testid="stAlert"]') : [];
               warnings.forEach(function(warn) {{
-                warn.style.color = 'white !important';
-                warn.style.setProperty('color', 'white', 'important');
-                warn.style.setProperty('-webkit-text-fill-color', 'white', 'important');
-                const allText = warn.querySelectorAll('*');
-                allText.forEach(function(el) {{
-                  el.style.color = 'white !important';
-                  el.style.setProperty('color', 'white', 'important');
-                  el.style.setProperty('-webkit-text-fill-color', 'white', 'important');
+                // Force dark text color
+                warn.style.setProperty('color', '#1E293B', 'important');
+                warn.style.setProperty('-webkit-text-fill-color', '#1E293B', 'important');
+                warn.style.setProperty('text-shadow', 'none', 'important');
+                
+                // Apply to all child elements
+                const allElements = warn.querySelectorAll('*');
+                allElements.forEach(function(el) {{
+                  el.style.setProperty('color', '#1E293B', 'important');
+                  el.style.setProperty('-webkit-text-fill-color', '#1E293B', 'important');
+                  el.style.setProperty('text-shadow', 'none', 'important');
                 }});
               }});
             }}
@@ -539,18 +542,30 @@ def mostra_auth(supabase):
         subtree: true
       }});
       
-      // Initial fix
-      document.querySelectorAll('[data-testid="stWarning"], .st-warning, [data-testid="stAlert"]').forEach(function(warn) {{
-        warn.style.color = 'white !important';
-        warn.style.setProperty('color', 'white', 'important');
-        warn.style.setProperty('-webkit-text-fill-color', 'white', 'important');
-        const allText = warn.querySelectorAll('*');
-        allText.forEach(function(el) {{
-          el.style.color = 'white !important';
-          el.style.setProperty('color', 'white', 'important');
-          el.style.setProperty('-webkit-text-fill-color', 'white', 'important');
+      // Initial fix and continuous monitoring
+      function fixAllWarnings() {{
+        document.querySelectorAll('[data-testid="stWarning"], .st-warning, [data-testid="stAlert"]').forEach(function(warn) {{
+          warn.style.setProperty('color', '#1E293B', 'important');
+          warn.style.setProperty('-webkit-text-fill-color', '#1E293B', 'important');
+          warn.style.setProperty('text-shadow', 'none', 'important');
+          
+          const allElements = warn.querySelectorAll('*');
+          allElements.forEach(function(el) {{
+            el.style.setProperty('color', '#1E293B', 'important');
+            el.style.setProperty('-webkit-text-fill-color', '#1E293B', 'important');
+            el.style.setProperty('text-shadow', 'none', 'important');
+          }});
         }});
-      }});
+      }}
+      
+      // Run immediately and every 100ms for 2 seconds
+      fixAllWarnings();
+      let attempts = 0;
+      const interval = setInterval(function() {{
+        fixAllWarnings();
+        attempts++;
+        if (attempts >= 20) clearInterval(interval);
+      }}, 100);
     }})();
     </script>
     """, unsafe_allow_html=True)
