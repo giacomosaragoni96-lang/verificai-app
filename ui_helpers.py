@@ -472,18 +472,17 @@ def _render_step_progress(T: dict) -> None:
     transition: color .25s;
   }}
   .sp-line {{
-    height: 1px; width: 60px;
+    height: 20px; width: 60px;
     flex-shrink: 0; border-radius: 0px;
     margin-bottom: 30px;
-    opacity: 0;
+    background: transparent;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }}
   .sp-line::after {{
     content: '→';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     font-size: 1.4rem;
     color: inherit;
     opacity: 0.7;
