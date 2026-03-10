@@ -241,286 +241,51 @@ def render_sidebar(
             """, unsafe_allow_html=True)
 
         st.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
-        # ── STORICO VERIFICHE ─────────────────────────────────────────────────
-        st.markdown(
-            f'<div class="sidebar-label" style="margin-top:.3rem;">Le mie verifiche</div>',
-            unsafe_allow_html=True
-        )
-
-        _refresh_key  = st.session_state._storico_refresh
-        _page_size    = 5
-        _storico_limit = st.session_state._storico_page * _page_size
-
-        # ── Filtro ricerca storico ─────────────────────────────────────────
-        _storico_search = st.text_input(
-            "Cerca nelle verifiche",
-            placeholder="🔍 Cerca per materia, argomento…",
-            key="storico_search_input",
-            label_visibility="collapsed",
-        ).strip().lower()
-
-        # Filtro materia — init session state
-        if "_storico_filter_mat" not in st.session_state:
-            st.session_state._storico_filter_mat = None
-
+        # ── LINK STORICO VERIFICHE ─────────────────────────────────────────────
+        st.markdown('<div class="sidebar-label" style="margin-top:.3rem;">Le mie verifiche</div>', unsafe_allow_html=True)
+        
+        # Stats cards semplici
         try:
-            storico = (
+            storico_count = (
                 supabase_admin.table("verifiche_storico")
-                .select("id, materia, argomento, created_at, latex_a, latex_b, latex_r, scuola, num_esercizi, modello")
+                .select("id", count="exact")
                 .eq("user_id", utente.id)
                 .is_("deleted_at", "null")
-                .order("created_at", desc=True)
-                .limit(_storico_limit + 1)
                 .execute()
             )
-
-            if storico.data:
-                # ── Materia filter chips ──────────────────────────────────
-                _all_materie = sorted(set(
-                    v.get("materia", "") for v in storico.data if v.get("materia")
-                ))
-                if len(_all_materie) > 1:
-                    _active_mat = st.session_state._storico_filter_mat
-
-                    # Streamlit buttons per i filtri
-                    _filter_cols = st.columns(min(len(_all_materie) + 1, 4))
-                    with _filter_cols[0]:
-                        if st.button("Tutte", key="filter_all",
-                                     use_container_width=True,
-                                     type="primary" if not _active_mat else "secondary"):
-                            st.session_state._storico_filter_mat = None
-                            st.rerun()
-                    for _fi, _fm in enumerate(_all_materie[:3]):
-                        with _filter_cols[min(_fi + 1, len(_filter_cols) - 1)]:
-                            if st.button(_fm[:8], key=f"filter_{_fm}",
-                                         use_container_width=True,
-                                         type="primary" if _active_mat == _fm else "secondary"):
-                                st.session_state._storico_filter_mat = _fm
-                                st.rerun()
-
-                # Applica filtri combinati (search + materia)
-                _filtered = storico.data
-                if st.session_state._storico_filter_mat:
-                    _filtered = [
-                        v for v in _filtered
-                        if v.get("materia") == st.session_state._storico_filter_mat
-                    ]
-                if _storico_search:
-                    _filtered = [
-                        v for v in _filtered
-                        if _storico_search in (
-                            v.get("materia","") + " " +
-                            v.get("argomento","") + " " +
-                            v.get("scuola","")
-                        ).lower()
-                    ]
-
-                _ha_altri      = len(storico.data) > _storico_limit and not _storico_search
-                dati_pagina    = _filtered[:_storico_limit] if not _storico_search else _filtered
-                _pref          = st.session_state._preferiti
-
-                # Ordina: preferiti SEMPRE prima (stabili), poi per data decrescente
-                dati_per_data    = sorted(dati_pagina, key=lambda x: x["created_at"], reverse=True)
-                dati_ordinati    = sorted(dati_per_data, key=lambda x: 0 if x["id"] in _pref else 1)
-
-                _n_show = len(dati_ordinati)
-                _n_total = len(storico.data)
-
-                with st.expander(
-                    f"Storico ({_n_show}{' filtrate' if _storico_search or st.session_state._storico_filter_mat else ''} / {_n_total} verifiche)",
-                    expanded=bool(_storico_search) or bool(st.session_state._storico_filter_mat),
-                ):
-                  if not dati_ordinati and (_storico_search or st.session_state._storico_filter_mat):
-                      st.caption(f"Nessun risultato per il filtro selezionato.")
-                  for v in dati_ordinati:
-                    # ── Tempo relativo (es. "2 ore fa", "ieri") ───────────
-                    _time_ago      = _tempo_fa(v["created_at"])
-                    is_pref        = v["id"] in _pref
-                    star_ico       = "★" if is_pref else "☆"
-                    arg_trunc      = v["argomento"][:28] + ("…" if len(v["argomento"]) > 28 else "")
-                    mat_str        = v['materia']
-                    scu_str        = v.get('scuola', '')
-                    n_es_str       = v.get('num_esercizi', '')
-                    _has_b         = bool(v.get("latex_b"))
-                    _has_r         = bool(v.get("latex_r"))
-
-                    # ── Card visuale con tempo relativo ───────────────────
-                    _badge_html = ""
-                    _SB_ACCENT_loc = T.get("sidebar_accent", "#79C0FF")
-                    _SB_INPUT_BG_loc = T.get("sidebar_input_bg", "#0D1117")
-                    _SB_BORDER_loc = T.get("sidebar_border", "#21262D")
-                    if scu_str:
-                        _badge_html += (f'<span style="background:{_SB_INPUT_BG_loc};color:{_SB_ACCENT_loc}CC;'
-                                        f'font-size:.58rem;font-weight:600;padding:1px 5px;border-radius:4px;'
-                                        f'border:1px solid {_SB_BORDER_loc};margin-right:3px;">{scu_str[:16]}</span>')
-                    if _has_b:
-                        _badge_html += (f'<span style="background:{_SB_ACCENT_loc}22;color:{_SB_ACCENT_loc};'
-                                        f'font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:4px;'
-                                        f'border:1px solid {_SB_ACCENT_loc}44;margin-right:3px;">FILA B</span>')
-                    if _has_r:
-                        _success = T.get("success", "#059669")
-                        _badge_html += (f'<span style="background:{_success}22;color:{_success};'
-                                        f'font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:4px;'
-                                        f'border:1px solid {_success}44;">BES</span>')
-
-                    st.markdown(
-                        f'<div class="storico-card">'
-                        f'  <div class="storico-card-top">'
-                        f'    <span class="storico-card-mat">{mat_str}</span>'
-                        f'    <span class="storico-card-date">{_time_ago}</span>'
-                        f'  </div>'
-                        f'  <div class="storico-card-arg">{arg_trunc}</div>'
-                        + (f'  <div class="storico-card-meta">'
-                           + (f'<span class="storico-card-nes">{n_es_str} esercizi</span>' if n_es_str else '')
-                           + f'</div>' if n_es_str else '')
-                        + f'  <div class="storico-card-badges">{_badge_html}</div>'
-                        f'</div>',
-                        unsafe_allow_html=True
-                    )
-
-                    # ── Azioni: stella + elimina ──────────────────────────────
-                    _col_star, _col_del, _col_spacer = st.columns([1, 1, 2])
-                    with _col_star:
-                        st.markdown(
-                            f'<div class="{"stella-btn-on" if is_pref else "stella-btn"}">',
-                            unsafe_allow_html=True
-                        )
-                        if st.button(star_ico, key=f"star_{v['id']}_{_refresh_key}"):
-                            if v["id"] in st.session_state._preferiti:
-                                st.session_state._preferiti.discard(v["id"])
-                            else:
-                                st.session_state._preferiti.add(v["id"])
-                            st.rerun()
-                        st.markdown("</div>", unsafe_allow_html=True)
-
-                    with _col_del:
-                        st.markdown('<div class="elimina-btn">', unsafe_allow_html=True)
-                        if st.button("🗑", key=f"del_{v['id']}_{_refresh_key}"):
-                            try:
-                                supabase_admin.table("verifiche_storico") \
-                                    .update({"deleted_at": datetime.now(timezone.utc).isoformat()}) \
-                                    .eq("id", v["id"]) \
-                                    .execute()
-                                st.session_state._preferiti.discard(v["id"])
-                                st.session_state._storico_refresh += 1
-                                st.toast("Verifica rimossa.")
-                                st.rerun()
-                            except Exception as del_err:
-                                st.error(f"Errore: {del_err}")
-                        st.markdown("</div>", unsafe_allow_html=True)
-
-                    # ── Azioni principali: Apri + Riusa impostazioni ──────────
-                    if v.get("latex_a"):
-                        if st.button(
-                            "📄 Apri verifica",
-                            key=f"reload_a_{v['id']}_{_refresh_key}",
-                            use_container_width=True
-                        ):
-                                latex_a = v["latex_a"]
-                                # Reset completo dello stato verifiche per evitare
-                                # residui di sessioni precedenti
-                                st.session_state.verifiche = {
-                                    "A":  {"latex": latex_a, "latex_originale": latex_a,
-                                           "pdf": None, "preview": False,
-                                           "docx": None, "pdf_ts": None, "docx_ts": None},
-                                    "B":  {"latex": "", "pdf": None, "preview": False,
-                                           "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""},
-                                    "R":  {"latex": "", "pdf": None, "preview": False,
-                                           "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""},
-                                    "RB": {"latex": "", "pdf": None, "preview": False,
-                                           "docx": None, "pdf_ts": None, "docx_ts": None, "latex_originale": ""},
-                                    "S":  {"latex": None, "testo": None, "pdf": None},
-                                }
-                                # Compila PDF
-                                pdf, _ = compila_pdf_func(latex_a)
-                                if pdf:
-                                    st.session_state.verifiche["A"]["pdf"]     = pdf
-                                    st.session_state.verifiche["A"]["preview"] = True
-                                # Preview immagini
-                                if pdf and pdf_to_images_func:
-                                    try:
-                                        imgs, _ = pdf_to_images_func(pdf)
-                                        st.session_state.preview_images = imgs or []
-                                    except Exception:
-                                        st.session_state.preview_images = []
-                                else:
-                                    st.session_state.preview_images = []
-                                # Estrai blocchi con la funzione passata (evita import circolare)
-                                if extract_blocks_func:
-                                    try:
-                                        pre, blks = extract_blocks_func(latex_a)
-                                        st.session_state.review_preamble = pre
-                                        st.session_state.review_blocks   = blks
-                                        st.session_state.review_sel_idx  = 0
-                                    except Exception:
-                                        st.session_state.review_preamble = ""
-                                        st.session_state.review_blocks   = []
-                                # Popola gen_params dal record storico
-                                st.session_state.gen_params = {
-                                    "materia":         v.get("materia", ""),
-                                    "difficolta":      v.get("scuola", ""),
-                                    "argomento":       v.get("argomento", ""),
-                                    "durata":          "1 ora",
-                                    "num_esercizi":    v.get("num_esercizi", 4),
-                                    "punti_totali":    100,
-                                    "mostra_punteggi": True,
-                                    "con_griglia":     True,
-                                    "perc_ridotta":    25,
-                                    "modello_id":      v.get("modello", "gemini-2.5-flash-lite"),
-                                }
-                                st.session_state.preview_page      = 0
-                                st.session_state["_prev_stage"]    = None  # forza scroll top
-                                st.session_state._saved_to_storico = True  # già in storico
-                                st.session_state.stage = "FINAL"
-                                st.rerun()
-
-                        # ── IDEA #1: Riusa impostazioni (pre-fill form senza caricare verifica) ──
-                        if st.button(
-                            "🔄 Riusa impostazioni",
-                            key=f"reuse_{v['id']}_{_refresh_key}",
-                            use_container_width=True,
-                            help="Pre-compila il form con materia, scuola e numero esercizi di questa verifica"
-                        ):
-                            st.session_state.gen_params = {
-                                "materia":         v.get("materia", ""),
-                                "difficolta":      v.get("scuola", ""),
-                                "argomento":       "",   # Lascia vuoto — nuovo argomento
-                                "num_esercizi":    v.get("num_esercizi", 4),
-                                "mostra_punteggi": True,
-                                "punti_totali":    100,
-                                "con_griglia":     True,
-                            }
-                            st.session_state.input_percorso = "B"
-                            st.session_state.stage = "INPUT"
-                            st.session_state["_prev_stage"] = None
-                            st.toast(f"✅ Impostazioni di «{v.get('argomento','')}» caricate!", icon="🔄")
-                            st.rerun()
-
-                        if v.get("latex_b"):
-                            if st.button(
-                                "Ricarica Fila B",
-                                key=f"reload_b_{v['id']}_{_refresh_key}",
-                                use_container_width=True
-                            ):
-                                st.session_state.verifiche["B"]["latex"] = v["latex_b"]
-                                pdf, _ = compila_pdf_func(v["latex_b"])
-                                if pdf:
-                                    st.session_state.verifiche["B"]["pdf"]     = pdf
-                                    st.session_state.verifiche["B"]["preview"] = True
-                                st.rerun()
-
-                  if _ha_altri:
-                    if st.button("Carica altre", key="storico_load_more",
-                                 use_container_width=True):
-                        st.session_state._storico_page += 1
-                        st.rerun()
-                  elif st.session_state._storico_page > 1:
-                    st.caption(f"Tutte le {len(dati_pagina)} verifiche caricate.")
-            else:
-                st.caption("Nessuna verifica salvata ancora.")
-
-        except Exception:
-            st.caption("Storico non disponibile.")
+            total_verifiche = storico_count.count if storico_count else 0
+        except:
+            total_verifiche = 0
+        
+        # Card con stats e link
+        st.markdown(f'''
+        <div class="sb-pro-card" style="
+            background: linear-gradient({_acc}15, transparent);
+            border: 1px solid {_acc}44;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        " onclick="window.location.href='#?stage=MIE_VERIFICHE'">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                <div style="font-size: 1.1rem; font-weight: 600; color: {_sb_text};">
+                    📚 Gestisci Verifiche
+                </div>
+                <div style="background: {_acc}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                    {total_verifiche}
+                </div>
+            </div>
+            <div style="font-size: 0.85rem; color: {_sb_muted};">
+                Visualizza, modifica e scarica tutte le tue verifiche
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        # Link diretto
+        if st.button("📄 Apri Storico Completo", key="open_storico", use_container_width=True, type="secondary"):
+            st.session_state.stage = "MIE_VERIFICHE"
+            st.rerun()
 
         # ── USER + LOGOUT ─────────────────────────────────────────────────────
         email_utente = utente.email or ""
