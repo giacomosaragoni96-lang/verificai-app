@@ -550,8 +550,8 @@ def get_css(T: dict) -> str:
 
   /* ── Sidebar: monthly usage bar ── */
   .monthly-bar {{
-    background: {_SB_INPUT_BG};
-    border: 1px solid {_SB_BORDER};
+    background: transparent !important;
+    border: none !important;
     border-radius: 10px;
     padding: .6rem .75rem;
     margin-top: .35rem;
