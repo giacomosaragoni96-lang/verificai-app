@@ -209,9 +209,22 @@ def render_sidebar(
               {verifiche_mese_count} / {LIMITE_MENSILE}
             </span>
           </div>
-          <div class="monthly-progress" style="background: transparent; border: none;">
+          <div class="monthly-progress" style="
+            background: transparent !important;
+            border: none !important;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 4px;
+            width: 100%;
+          ">
             <div class="monthly-progress-fill"
-                 style="width:{_perc_uso}%;background:{_color_bar};"></div>
+                 style="
+                   width: {_perc_uso}%;
+                   background: {_color_bar};
+                   height: 100%;
+                   border-radius: 10px;
+                   transition: width .6s ease;
+                 "></div>
           </div>
           <div style="text-align:right;font-size:0.68rem;color:{_sb_muted};
                       margin-top:4px;font-family:'DM Sans',sans-serif;">
