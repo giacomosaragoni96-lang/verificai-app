@@ -574,7 +574,8 @@ def get_css(T: dict) -> str:
   }}
   .monthly-progress {{
     height: 4px;
-    background: {_SB_BORDER};
+    background: transparent !important;
+    border: none !important;
     border-radius: 10px;
     overflow: hidden;
   }}
