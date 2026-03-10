@@ -176,7 +176,6 @@ def render_sidebar(
                 st.session_state.theme = _sel_theme_key
                 theme_changed = True
 
-        st.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
         # ── CONTATORE MENSILE ─────────────────────────────────────────────────
         st.markdown(
             f'<div class="sidebar-label" style="margin-top:.3rem;">Utilizzo mensile</div>',
@@ -272,7 +271,6 @@ def render_sidebar(
             </div>
             """, unsafe_allow_html=True)
 
-        st.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
         # ── LINK STORICO VERIFICHE ─────────────────────────────────────────────
         st.markdown('<div class="sidebar-label" style="margin-top:.3rem;">Le mie verifiche</div>', unsafe_allow_html=True)
         

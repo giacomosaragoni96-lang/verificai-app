@@ -2914,7 +2914,7 @@ def _mostra_dialogo_facsimile():
     )
     if _pt:
         st.caption(f"Punteggio rilevato: {_pt} pt · Confidenza AI: {_conf}%")
-    st.divider()
+    
     _d1, _d2 = st.columns(2)
     with _d1:
         if st.button("⚡ Sì, genera facsimile", type="primary", use_container_width=True,
