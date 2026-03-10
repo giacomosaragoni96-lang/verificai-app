@@ -1259,57 +1259,32 @@ def _render_bivio():
         st.markdown(
             '''
             <div class="cta-genera-wrap" style="margin-bottom: 1rem;">
-            <style>
-            div[data-testid="stVerticalBlock"] > div:has([data-testid="stButton"]) > div > div > button {
-                min-height: 72px !important;
-                font-size: 1.3rem !important;
-                font-weight: 900 !important;
-                background: linear-gradient(135deg, #10b981, #f59e0b) !important;
-                border: 2px solid #10b981 !important;
-                box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4) !important;
-                transition: all 0.3s ease !important;
-            }
-            div[data-testid="stVerticalBlock"] > div:has([data-testid="stButton"]) > div > div > button:hover {
-                transform: translateY(-2px) !important;
-                box-shadow: 0 12px 35px -5px rgba(16, 185, 129, 0.5) !important;
-                background: linear-gradient(135deg, #059669, #d97706) !important;
-            }
-            </style>
-            <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                setTimeout(function() {
-                    const buttons = document.querySelectorAll('button[data-testid="baseButton-primary"]');
-                    buttons.forEach(btn => {
-                        if (btn.textContent.includes('Crea Verifica Ora')) {
-                            btn.style.minHeight = '72px';
-                            btn.style.fontSize = '1.3rem';
-                            btn.style.fontWeight = '900';
-                            btn.style.background = 'linear-gradient(135deg, #10b981, #f59e0b)';
-                            btn.style.border = '2px solid #10b981';
-                            btn.style.boxShadow = '0 8px 25px -5px rgba(16, 185, 129, 0.4)';
-                        }
-                    });
-                }, 100);
-            });
-            </script>
-            ''',
-            unsafe_allow_html=True,
-        )
-        if st.button(
-            "🚀 Crea Verifica Ora",
-            key="btn_genera_verifica_home",
-            use_container_width=True,
-            type="primary",
-            help="Scegli materia e argomento, crea in 30 secondi",
-        ):
-            st.session_state.input_percorso = "B"
-            st.rerun()
-        st.markdown(
-            '''
+            <button onclick="window.location.href='#?input_percorso=B'" style="
+                min-height: 72px;
+                font-size: 1.3rem;
+                font-weight: 900;
+                border-radius: 16px;
+                background: linear-gradient(135deg, #10b981, #f59e0b);
+                border: 2px solid #10b981;
+                box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4);
+                transition: all 0.3s ease;
+                color: white;
+                width: 100%;
+                cursor: pointer;
+                font-family: system-ui, -apple-system, sans-serif;
+                letter-spacing: 0.02em;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 35px -5px rgba(16, 185, 129, 0.5)'; this.style.background='linear-gradient(135deg, #059669, #d97706)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px -5px rgba(16, 185, 129, 0.4)'; this.style.background='linear-gradient(135deg, #10b981, #f59e0b)'">
+                🚀 Crea Verifica Ora
+            </button>
             </div>
             ''',
             unsafe_allow_html=True,
         )
+        
+        # Hidden button for Streamlit state management
+        if st.button("", key="btn_genera_verifica_home_hidden"):
+            st.session_state.input_percorso = "B"
+            st.rerun()
 
     # ── Feature pills — più leggibili per docenti ───────────────────────────────
     st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
