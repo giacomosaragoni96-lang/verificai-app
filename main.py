@@ -1292,19 +1292,6 @@ def _render_bivio():
         unsafe_allow_html=True,
     )
 
-    # ── Stats reali ───────────────────────────────────────────────────────────────
-    stats = _get_verifiche_stats()
-    st.markdown(
-        f'''
-        <div style="text-align: center; margin: 2rem 0; padding: 1.5rem; background: #f8fafc; border-radius: 12px; border-left: 4px solid #3b82f6;">
-          <div style="font-size: 1.2rem; font-weight: bold; color: #1f2937;">
-            📚 {stats['totali']} verifiche generate finora
-          </div>
-        </div>
-        ''',
-        unsafe_allow_html=True,
-    )
-
     # ── Feature cards ─────────────────────────────────────
 
     # ── Feature cards — 6 card, 2 righe ─────────────────────────────────────
