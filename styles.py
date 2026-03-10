@@ -1209,7 +1209,7 @@ def get_css(T: dict) -> str:
     line-height: 1.12;
     letter-spacing: -0.04em;
     color: {T['text']};
-    margin: 0 0 1.3rem 0;
+    margin: 0 0 0.8rem 0;
     padding: 0;
     text-align: center;
   }}
