@@ -455,14 +455,16 @@ def _render_step_progress(T: dict) -> None:
     box-shadow: none;
     width: 100%;
     max-width: 400px;
-    justify-content: space-between;
   }}
   .sp-node {{
     display: flex; flex-direction: column;
     align-items: center; gap: 8px;
     position: relative; z-index: 1;
+    margin: 0 20px;
     flex: 1;
   }}
+  .sp-node:first-child {{ margin-left: 0; }}
+  .sp-node:last-child {{ margin-right: 0; }}
   .sp-dot {{
     width: 40px; height: 40px;
     border-radius: 50%;
