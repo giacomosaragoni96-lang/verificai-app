@@ -909,37 +909,52 @@ def fix_tikz_labels(latex: str) -> str:
 # ── COMPILAZIONE PDF ───────────────────────────────────────────────────────────
 
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
-    logger.info("Inizio compilazione PDF")
+    logger.info("=== INIZIO COMPILAZIONE PDF ===")
+    logger.info(f"Dimensione codice LaTeX: {len(codice_latex)} caratteri")
+    
+    # Salva il codice originale per debug
+    logger.debug(f"Codice LaTeX originale (primi 500 char): {codice_latex[:500]}...")
     
     # Applica fix pre-compilazione: rimuovi spoiler TikZ, poi fix label math
+    logger.info("Applicazione fix pre-compilazione...")
     codice_latex = clean_tikz_spoilers(codice_latex)
+    logger.info("✓ clean_tikz_spoilers applicato")
     codice_latex = fix_tikz_labels(codice_latex)
+    logger.info("✓ fix_tikz_labels applicato")
     
     # Validazione codice TikZ per catturare errori comuni
+    logger.info("Validazione codice TikZ...")
     is_valid, error_msg = validate_tikz_code(codice_latex)
     if not is_valid:
-        logger.error(f"Validazione TikZ fallita: {error_msg}")
+        logger.error(f"✗ Validazione TikZ fallita: {error_msg}")
         return None, f"Errore nel codice TikZ: {error_msg}"
+    logger.info("✓ Validazione TikZ superata")
 
     # Controlla se pdflatex è disponibile
+    logger.info("Verifica disponibilità pdflatex...")
     try:
         result = subprocess.run(["pdflatex", "--version"], capture_output=True, text=True, timeout=5)
         if result.returncode != 0:
-            logger.error(f"pdflatex non funzionante: {result.stderr}")
+            logger.error(f"✗ pdflatex non funzionante: {result.stderr}")
             return None, "Errore: pdflatex non è installato correttamente in questo ambiente."
+        logger.info("✓ pdflatex disponibile")
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
-        logger.error(f"pdflatex non disponibile: {e}")
+        logger.error(f"✗ pdflatex non disponibile: {e}")
         return None, "⚠️ LaTeX non è disponibile in questo ambiente. La generazione PDF richiede l'installazione di LaTeX (pdflatex). Per favore, contatta l'amministratore del sistema per installare LaTeX o prova a utilizzare l'opzione di esportazione in formato testo."
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tex_path = os.path.join(tmpdir, "v.tex")
         pdf_path = os.path.join(tmpdir, "v.pdf")
+        log_path = os.path.join(tmpdir, "v.log")
 
         try:
+            logger.info(f"Scrittura file LaTeX in: {tex_path}")
             with open(tex_path, "w", encoding="utf-8") as f:
                 f.write(codice_latex)
+            logger.info("✓ File LaTeX scritto")
 
-            logger.info(f"Compilazione LaTeX in {tmpdir}")
+            logger.info("Avvio compilazione pdflatex...")
+            logger.info(f"Comando: pdflatex -interaction=nonstopmode -output-directory {tmpdir} {tex_path}")
             result = subprocess.run(
                 ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
                 capture_output=True,
@@ -947,18 +962,44 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                 timeout=30  # Timeout di 30 secondi
             )
 
+            logger.info(f"Return code: {result.returncode}")
+            logger.info(f"STDOUT: {result.stdout}")
+            logger.info(f"STDERR: {result.stderr}")
+            
+            # Controlla se esiste il file log
+            if os.path.exists(log_path):
+                with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+                    log_content = f.read()
+                    logger.info(f"Contenuto log LaTeX (ultimi 1000 char): {log_content[-1000:]}")
+
             if result.returncode == 0 and os.path.exists(pdf_path):
-                logger.info("PDF compilato con successo")
+                pdf_size = os.path.getsize(pdf_path)
+                logger.info(f"✓ PDF compilato con successo - Dimensione: {pdf_size} bytes")
                 return open(pdf_path, "rb").read(), None
             else:
-                logger.error(f"Errore compilazione LaTeX: {result.stderr}")
-                return None, f"Errore LaTeX: {result.stderr[:500]}"
+                logger.error(f"✗ Errore compilazione LaTeX")
+                logger.error(f"Return code: {result.returncode}")
+                logger.error(f"STDOUT: {result.stdout}")
+                logger.error(f"STDERR: {result.stderr}")
+                
+                # Messaggio di errore più dettagliato
+                error_msg = f"Errore LaTeX (codice {result.returncode}): "
+                if result.stderr:
+                    error_msg += result.stderr[:500]
+                elif result.stdout:
+                    error_msg += result.stdout[:500]
+                else:
+                    error_msg += "Errore sconosciuto durante la compilazione"
+                
+                return None, error_msg
 
         except subprocess.TimeoutExpired:
-            logger.error("Timeout compilazione LaTeX")
-            return None, "Errore: Timeout durante la compilazione LaTeX. Il codice potrebbe essere troppo complesso."
+            logger.error("✗ Timeout compilazione LaTeX (30 secondi)")
+            return None, "Errore: Timeout durante la compilazione LaTeX. Il codice potrebbe essere troppo complesso o contenere errori che bloccano la compilazione."
         except Exception as e:
-            logger.error(f"Errore imprevisto durante compilazione: {e}")
+            logger.error(f"✗ Errore imprevisto durante compilazione: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return None, f"Errore durante la compilazione: {str(e)}"
 
 

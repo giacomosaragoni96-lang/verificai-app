@@ -1911,6 +1911,27 @@ def _render_le_tue_verifiche():
                                         st.error("⚠️ Impossibile generare anteprima immagini")
                                 else:
                                     st.error(f"⚠️ Errore compilazione PDF: {error}")
+                                    # Fallback: mostra codice LaTeX con opzione di copia
+                                    st.info("📝 Mostro il codice LaTeX come alternativa:")
+                                    
+                                    with st.expander("📄 Codice LaTeX (clicca per espandere)", expanded=False):
+                                        latex_code = verifica["latex_a"]
+                                        st.code(latex_code, language="latex", line_numbers=False)
+                                        
+                                        # Pulsanti per copiare e scaricare
+                                        col1, col2 = st.columns(2)
+                                        with col1:
+                                            if st.button("📋 Copia LaTeX", key=f"copy_latex_{verifica.get('id')}_{i}"):
+                                                st.write("Codice LaTeX copiato negli appunti!")
+                                                st.code(latex_code)
+                                        with col2:
+                                            st.download_button(
+                                                "💾 Scarica .tex",
+                                                data=latex_code,
+                                                file_name=f"verifica_{verifica.get('argomento', 'verifica')}.tex",
+                                                mime="text/plain",
+                                                key=f"download_tex_{verifica.get('id')}_{i}"
+                                            )
                             except Exception as e:
                                 st.error(f"⚠️ Errore anteprima: {e}")
                         else:
@@ -1933,10 +1954,22 @@ def _render_le_tue_verifiche():
                                         data=pdf_bytes,
                                         file_name=filename,
                                         mime="application/pdf",
-                                        use_container_width=True
+                                        use_container_width=True,
+                                        key=f"final_dl_{verifica.get('id')}_{i}"
                                     )
                                 else:
-                                    st.error(f"⚠️ Errore generazione PDF: {error}")
+                                    st.error(f"⚠️ Errore compilazione PDF: {error}")
+                                    # Fallback: offri download LaTeX
+                                    st.info("💡 In alternativa, puoi scaricare il codice LaTeX:")
+                                    latex_code = verifica["latex_a"]
+                                    st.download_button(
+                                        "💾 Scarica file .tex",
+                                        data=latex_code,
+                                        file_name=f"verifica_{verifica.get('argomento', 'verifica')}.tex",
+                                        mime="text/plain",
+                                        use_container_width=True,
+                                        key=f"tex_fallback_{verifica.get('id')}_{i}"
+                                    )
                             except Exception as e:
                                 st.error(f"⚠️ Errore download: {e}")
                         else:
