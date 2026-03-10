@@ -79,8 +79,8 @@ def render_sidebar(
         
         # Linea separatoria elegante
         st.markdown(
-            f'<div style="height:1px;background:linear-gradient(90deg, {_acc}66, {_acc}22, transparent);'
-            f'border-radius:2px;margin:1.2rem 0 1.8rem 0;"></div>',
+            f'<div style="height:2px;background:linear-gradient(90deg, {_acc}88, {_acc}33, transparent);'
+            f'border-radius:2px;margin:1.5rem 0 2rem 0;"></div>',
             unsafe_allow_html=True
         )
         # ── MODELLO AI — routing per piano ───────────────────────────────────
@@ -178,7 +178,7 @@ def render_sidebar(
 
         # ── CONTATORE MENSILE ─────────────────────────────────────────────────
         st.markdown(
-            f'<div class="sidebar-label" style="margin-top:.3rem;">Utilizzo mensile</div>',
+            f'<div class="sidebar-label" style="margin-top:.5rem;font-size:0.85rem;font-weight:600;">Utilizzo mensile</div>',
             unsafe_allow_html=True
         )
         _perc_uso   = min(100, int(verifiche_mese_count / LIMITE_MENSILE * 100))
@@ -216,12 +216,12 @@ def render_sidebar(
           }}
         }}
         </style>
-        <div class="mobile-progress-container" style="margin-bottom: 0.4rem; background: rgba(255,255,255,0); border: none; padding: 0;">
-          <div class="mobile-progress-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-            <span style="font-size: 0.78rem; color: {_sb_text}; font-family: 'DM Sans', sans-serif;">
+        <div class="mobile-progress-container" style="margin-bottom: 0.6rem; background: rgba(255,255,255,0); border: none; padding: 0;">
+          <div class="mobile-progress-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+            <span style="font-size: 0.85rem; font-weight:600; color: {_sb_text}; font-family: 'DM Sans', sans-serif;">
               Verifiche questo mese
             </span>
-            <span style="font-size: 0.8rem; font-weight: 700; color: {_sb_text}; font-family: 'DM Sans', sans-serif;">
+            <span style="font-size: 0.9rem; font-weight: 800; color: {_sb_text}; font-family: 'DM Sans', sans-serif;">
               {verifiche_mese_count} / {LIMITE_MENSILE}
             </span>
           </div>
@@ -245,7 +245,7 @@ def render_sidebar(
               left: 0;
             "></div>
           </div>
-          <div class="mobile-progress-text" style="text-align: right; font-size: 0.68rem; color: {_sb_muted}; margin-top: 4px; font-family: 'DM Sans', sans-serif;">
+          <div class="mobile-progress-text" style="text-align: right; font-size: 0.75rem; font-weight:500; color: {_sb_muted}; margin-top: 6px; font-family: 'DM Sans', sans-serif;">
             🔄 {_reset_str}
           </div>
         </div>
