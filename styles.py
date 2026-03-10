@@ -1718,6 +1718,15 @@ def get_css(T: dict) -> str:
     box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.3) !important;
   }}
 
+  /* Forza testo bianco su tutti i pulsanti */
+  button[data-testid="baseButton-secondary"] *,
+  button[data-testid="baseButton-primary"] *,
+  .element-container button *,
+  div[data-testid="stVerticalBlock"] button * {{
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+  }}
+
   /* Nuovo: hint testuale leggero sopra il pulsante Genera */
   .cta-hint-text {{
     text-align: center;
