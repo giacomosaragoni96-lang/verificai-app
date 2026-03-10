@@ -1282,16 +1282,20 @@ def _render_bivio():
             </button>
             <script>
             document.addEventListener('DOMContentLoaded', function() {
-                const customBtn = document.getElementById('custom-cta-button');
-                if (customBtn) {
-                    customBtn.addEventListener('click', function() {
-                        // Trova e clicca il pulsante nascosto di Streamlit
-                        const hiddenBtn = document.querySelector('button[data-testid="baseButton-secondary"]');
-                        if (hiddenBtn) {
-                            hiddenBtn.click();
-                        }
-                    });
-                }
+                setTimeout(function() {
+                    const customBtn = document.getElementById('custom-cta-button');
+                    if (customBtn) {
+                        customBtn.addEventListener('click', function() {
+                            // Trova tutti i pulsanti e clicca quello con il testo vuoto (il nostro hidden button)
+                            const buttons = document.querySelectorAll('button');
+                            buttons.forEach(btn => {
+                                if (btn.textContent.trim() === '' && btn.getAttribute('data-testid') === 'baseButton-secondary') {
+                                    btn.click();
+                                }
+                            });
+                        });
+                    }
+                }, 100);
             });
             </script>
             </div>
@@ -1300,7 +1304,7 @@ def _render_bivio():
         )
         
         # Hidden button for Streamlit state management
-        if st.button("", key="btn_genera_verifica_home_hidden"):
+        if st.button("", key="btn_genera_verifica_home_hidden", type="secondary"):
             st.session_state.input_percorso = "B"
             st.rerun()
 
