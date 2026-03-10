@@ -3008,7 +3008,7 @@ def get_css(T: dict) -> str:
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
-     DOWNLOAD CTA — pulsante oro in STAGE_FINAL
+     DOWNLOAD CTA — pulsante ROSSO VIBRANTE v2.0 - UPDATED 2025-03-10
      ════════════════════════════════════════════════════════════════════════ */
   @keyframes dl-shimmer {{
     0%   {{ background-position: 200% center; }}
@@ -3033,10 +3033,11 @@ def get_css(T: dict) -> str:
     position: relative;
     z-index: 10;
   }}
-  /* specificità (0,0,2,2) — batte sia div.stDownloadButton>button (0,0,1,2)
-     sia [data-testid="stDownloadButton"]>button (0,1,0,1) */
+  /* specificità MASSIMA (0,0,3,3) — batte TUTTI gli altri stili di download */
   .dl-cta-wrap div.stDownloadButton > button,
-  .dl-cta-wrap [data-testid="stDownloadButton"] > button {{
+  .dl-cta-wrap [data-testid="stDownloadButton"] > button,
+  div[data-testid="stDownloadButton"] > button,
+  button[k*="dl_pdf"] {{
     background: linear-gradient(
       135deg,
       #DC2626 0%,      /* Rosso vivo */
@@ -3085,7 +3086,9 @@ def get_css(T: dict) -> str:
     left: 100%;
   }}
   .dl-cta-wrap div.stDownloadButton > button:hover,
-  .dl-cta-wrap [data-testid="stDownloadButton"] > button:hover {{
+  .dl-cta-wrap [data-testid="stDownloadButton"] > button:hover,
+  div[data-testid="stDownloadButton"] > button:hover,
+  button[k*="dl_pdf"]:hover {{
     filter: brightness(1.2) saturate(1.3) !important;
     box-shadow: 
       0 16px 56px rgba(220,38,38,0.6), 
@@ -3099,7 +3102,9 @@ def get_css(T: dict) -> str:
     border-color: rgba(255,255,255,0.4) !important;
   }}
   .dl-cta-wrap div.stDownloadButton > button:active,
-  .dl-cta-wrap [data-testid="stDownloadButton"] > button:active {{
+  .dl-cta-wrap [data-testid="stDownloadButton"] > button:active,
+  div[data-testid="stDownloadButton"] > button:active,
+  button[k*="dl_pdf"]:active {{
     transform: translateY(-2px) scale(.98) !important;
     filter: brightness(0.95) saturate(1.1) !important;
     animation: none !important;
