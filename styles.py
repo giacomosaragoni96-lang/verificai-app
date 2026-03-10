@@ -1339,19 +1339,21 @@ def get_css(T: dict) -> str:
     font-size: .95rem;
     font-weight: 600;
     font-family: 'DM Sans', sans-serif;
-    color: {T['text2']};
+    color: #0369a1;
     white-space: nowrap;
-    padding: .35rem .9rem;
+    padding: 8px 16px;
     border-radius: 20px;
-    border: 1px solid {T['border2']};
-    background: {T['card']};
-    border-bottom: 2px solid {_acc_med};
-    transition: border-color .15s, color .15s;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    transition: all .15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }}
   .tally-feat-pill:hover {{
-    color: {T['text']};
-    border-color: {_acc};
-    border-bottom-color: {_acc};
+    background: #e0f2fe;
+    border-color: #7dd3fc;
+    transform: translateY(-1px);
   }}
   .pill-emoji {{
     font-size: 1.28em;

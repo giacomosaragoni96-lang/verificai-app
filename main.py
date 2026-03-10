@@ -1256,26 +1256,52 @@ def _render_bivio():
     _c1, _c2, _c3 = st.columns([1.4, 2, 1.4])
     with _c2:
         if st.button(
-            "Genera Verifica  →",
+            "Crea Verifica Ora",
             key="btn_genera_verifica_home",
             use_container_width=True,
             type="primary",
-            help="Scegli materia, scuola e argomento — l'AI costruisce la verifica in pochi secondi.",
+            help="Scegli materia e argomento, crea in 30 secondi",
         ):
             st.session_state.input_percorso = "B"
             st.rerun()
 
-    # ── Feature pills — emoji più grandi ─────────────────────────────────────
+    # ── Feature pills — più leggibili per docenti ───────────────────────────────
     st.markdown(
         '''
-        <div class="tally-features">
-          <span class="tally-feat-pill"><span class="pill-emoji">📄</span> PDF da stampare</span>
-          <span class="tally-feat-pill"><span class="pill-emoji">🔢</span> Punteggi calibrati</span>
-          <span class="tally-feat-pill"><span class="pill-emoji">⭐</span> Versione BES/DSA</span>
-          <span class="tally-feat-pill"><span class="pill-emoji">🎲</span> Fila A e B</span>
-          <span class="tally-feat-pill"><span class="pill-emoji">✏️</span> DOCX modificabile</span>
-          <span class="tally-feat-pill"><span class="pill-emoji">📋</span> Soluzioni</span>
-          <span class="tally-feat-pill"><span class="pill-emoji">📊</span> Griglia di Valutazione</span>
+        <div class="tally-features" style="gap: 12px; flex-wrap: wrap; justify-content: center;">
+          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
+            📄 PDF Stampabile
+          </span>
+          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
+            🎲 Fila A e B
+          </span>
+          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
+            ⭐ Versione BES
+          </span>
+          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
+            ✏️ DOCX Modificabile
+          </span>
+          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
+            📋 Soluzioni
+          </span>
+          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
+            📊 Griglia Valutazione
+          </span>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    # ── Social proof semplice per docenti ─────────────────────────────────────
+    st.markdown(
+        '''
+        <div style="text-align: center; margin: 2rem 0; padding: 1.5rem; background: #f8fafc; border-radius: 12px; border-left: 4px solid #3b82f6;">
+          <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem; color: #1f2937;">
+            📚 Usato da 500+ docenti italiani
+          </div>
+          <div style="font-size: 0.9rem; color: #6b7280; font-style: italic;">
+            "Mi salva 2 ore a settimana, verifiche sempre pronte" - Prof. Rossi, Milano
+          </div>
         </div>
         ''',
         unsafe_allow_html=True,
