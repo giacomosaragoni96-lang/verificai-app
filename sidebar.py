@@ -77,9 +77,10 @@ def render_sidebar(
         _sb_text  = T.get("sidebar_input_text", "#E6EDF3")
         _sb_muted = T.get("sidebar_input_text", "#E6EDF3") + "99"
         
-        # Linea separatoria semplice
+        # Linea separatoria elegante
         st.markdown(
-            f'<div style="height:2px;background:{_acc};border-radius:2px;margin:1rem 0 1.5rem 0;"></div>',
+            f'<div style="height:1px;background:linear-gradient(90deg, {_acc}66, {_acc}22, transparent);'
+            f'border-radius:2px;margin:1.2rem 0 1.8rem 0;"></div>',
             unsafe_allow_html=True
         )
         # ── MODELLO AI — routing per piano ───────────────────────────────────
