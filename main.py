@@ -5360,7 +5360,14 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     st.toast("✅ Punteggi applicati — PDF aggiornato!", icon="⚖️")
                     st.rerun()
                 else:
-                    if "TikZ" in _err_rc:
+                    if "ERRORE_TIKZ_IRRECUPERABILE" in _err_rc:
+                        st.error("❌ Errore grave nel grafico TikZ. L'esercizio contiene elementi grafici non compilabili.")
+                        st.warning("⚠️ Questo esercizio non può essere utilizzato così com'è.")
+                        st.info("💡 **Soluzioni consigliate:**")
+                        st.info("   • Usa **'Cambia esercizio'** per generare un esercizio completamente diverso")
+                        st.info("   • Usa **'Genera variante'** per ottenere una versione senza grafici complessi")
+                        st.info("   • Se possibile, specifica nell'argomento 'senza grafici' per evitare questo problema")
+                    elif "TikZ" in _err_rc:
                         st.error("❌ Errore nel grafico TikZ. L'AI ha generato un grafico complesso non valido.")
                         st.info("💡 Suggerimento: prova a rigenerare l'esercizio o usa 'Cambia esercizio' per ottenere una versione senza grafici complessi.")
                     else:
@@ -5412,7 +5419,14 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 st.session_state.stage = STAGE_FINAL
                 st.rerun()
             else:
-                if err and "TikZ" in err:
+                if err and "ERRORE_TIKZ_IRRECUPERABILE" in err:
+                    st.error("❌ Errore grave nel grafico TikZ. La verifica contiene elementi grafici non compilabili.")
+                    st.warning("⚠️ Questa verifica non può essere generata così com'è.")
+                    st.info("💡 **Soluzioni consigliate:**")
+                    st.info("   • Usa **'Cambia esercizio'** per modificare gli esercizi problematici")
+                    st.info("   • Torna alla pagina impostazioni e specifica 'senza grafici' nell'argomento")
+                    st.info("   • Rigenera la verifica con parametri diversi")
+                elif err and "TikZ" in err:
                     st.error("❌ Errore nel grafico TikZ. L'AI ha generato un grafico complesso non valido.")
                     st.info("💡 Suggerimento: prova a rigenerare la verifica o usa 'Cambia esercizio' per rimuovere grafici problematici.")
                 else:

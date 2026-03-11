@@ -942,6 +942,62 @@ def inietta_griglia(latex: str, punti_totali: int) -> str:
 
 # ── VALIDATE TIKZ CODE ────────────────────────────────────────────────────────
 
+def attempt_tikz_fix(latex: str) -> str:
+    """
+    Tenta di correggere problemi comuni nel codice TikZ.
+    """
+    logger.info("Applicando correzioni automatiche TikZ...")
+    
+    fixed_latex = latex
+    
+    # Fix 1: Sostituisci trattini speciali con trattini normali
+    fixed_latex = fixed_latex.replace('—', '--').replace('–', '-')
+    
+    # Fix 2: Correggi parentesi graffe non bilanciate semplici
+    # Aggiungi graffa di chiusura mancante
+    brace_count = fixed_latex.count('{') - fixed_latex.count('}')
+    if brace_count > 0:
+        fixed_latex += '}' * brace_count
+        logger.info(f"✓ Aggiunte {brace_count} graffe di chiusura mancanti")
+    
+    # Fix 3: Correggi comandi \draw incompleti
+    # Aggiungi ; finale se mancante
+    fixed_latex = re.sub(r'(\\draw[^;]*?)(?=\n|$)', r'\1;', fixed_latex)
+    
+    # Fix 4: Correggi \node senza coordinate complete
+    # Aggiungi coordinate di default se mancanti
+    fixed_latex = re.sub(r'(\\node\s*\[.*?\]\s*at\s*\([^)]*)(?=\n|$)', r'\1)', fixed_latex)
+    
+    # Fix 5: Correggi ambienti axis non chiusi
+    # Aggiungi \end{axis} se mancante
+    axis_count = len(re.findall(r'\\begin\{axis\}', fixed_latex))
+    axis_end_count = len(re.findall(r'\\end\{axis\}', fixed_latex))
+    if axis_count > axis_end_count:
+        missing_ends = axis_count - axis_end_count
+        fixed_latex += '\n\\end{axis}' * missing_ends
+        logger.info(f"✓ Aggiunti {missing_ends} \\end{{axis}} mancanti")
+    
+    # Fix 6: Correggi begin/end bilanciati per altri ambienti
+    environments = ['tikzpicture', 'tikzcd', 'axis', 'scope']
+    for env in environments:
+        begin_count = len(re.findall(f'\\\\begin\\{{{env}\\}}', fixed_latex))
+        end_count = len(re.findall(f'\\\\end\\{{{env}\\}}', fixed_latex))
+        if begin_count > end_count:
+            missing_ends = begin_count - end_count
+            fixed_latex += f'\n\\end{{{env}}}' * missing_ends
+            logger.info(f"✓ Aggiunti {missing_ends} \\end{{{env}}} mancanti")
+    
+    # Fix 7: Rimuovi caratteri problematici
+    problematic_chars = ['"', '"', ''', ''', '…']
+    for char in problematic_chars:
+        if char in fixed_latex:
+            fixed_latex = fixed_latex.replace(char, '')
+            logger.info(f"✓ Rimosso carattere problematico: {repr(char)}")
+    
+    logger.info("✓ Correzioni TikZ applicate")
+    return fixed_latex
+
+
 def validate_tikz_code(latex: str) -> tuple[bool, str]:
     """
     Valida il codice TikZ per errori comuni che causano fallimenti di compilazione.
@@ -1217,16 +1273,19 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     is_valid, error_msg = validate_tikz_code(codice_latex)
     if not is_valid:
         logger.warning(f"⚠️ Validazione TikZ fallita: {error_msg}")
-        logger.info("Tentativo di rimuovere codice TikZ problematico...")
-        # Rimuovi tutti i blocchi tikzpicture problematici
-        codice_latex = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', 
-                            '[Grafico rimosso per errori di compilazione]', 
-                            codice_latex, flags=re.DOTALL)
-        # Rimuovi anche altri ambienti TikZ problematici
-        codice_latex = re.sub(r'\\begin\{tikzcd\}.*?\\end\{tikzcd\}', 
-                            '[Diagramma rimosso per errori di compilazione]', 
-                            codice_latex, flags=re.DOTALL)
-        logger.info("✓ Codice TikZ problematico rimosso, procedo con compilazione")
+        logger.info("Tentativo di correggere il codice TikZ problematico...")
+        
+        # Tenta di correggere i problemi comuni
+        codice_latex = attempt_tikz_fix(codice_latex)
+        
+        # Ri-valida dopo il fix
+        is_valid_after_fix, error_msg_after_fix = validate_tikz_code(codice_latex)
+        if not is_valid_after_fix:
+            logger.error(f"✗ Impossibile correggere il codice TikZ: {error_msg_after_fix}")
+            # Restituisci un errore speciale che indica la necessità di rigenerare l'esercizio
+            return None, "ERRORE_TIKZ_IRRECUPERABILE: L'esercizio contiene grafici non compilabili. Si consiglia di rigenerare l'esercizio con 'Cambia esercizio' o 'Genera variante'."
+        else:
+            logger.info("✓ Codice TikZ corretto con successo")
     else:
         logger.info("✓ Validazione TikZ superata")
 
