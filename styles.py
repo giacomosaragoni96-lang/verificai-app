@@ -1734,7 +1734,7 @@ def get_css(T: dict) -> str:
   div[data-testid="stVerticalBlock"] button {{
     background: linear-gradient(135deg, #EA580C, #FB923C) !important;
     border: none !important;
-    color: white !important;
+    color: black !important;
     font-weight: 600 !important;
     min-height: 48px !important;
     transition: all 0.3s ease !important;
@@ -1749,13 +1749,13 @@ def get_css(T: dict) -> str:
     box-shadow: 0 4px 12px -2px rgba(234, 88, 12, 0.3) !important;
   }}
 
-  /* Forza testo bianco su tutti i pulsanti */
+  /* Forza testo nero su tutti i pulsanti */
   button[data-testid="baseButton-secondary"] *,
   button[data-testid="baseButton-primary"] *,
   .element-container button *,
   div[data-testid="stVerticalBlock"] button * {{
-    color: white !important;
-    -webkit-text-fill-color: white !important;
+    color: black !important;
+    -webkit-text-fill-color: black !important;
   }}
 
   /* Nuovo: hint testuale leggero sopra il pulsante Genera */
