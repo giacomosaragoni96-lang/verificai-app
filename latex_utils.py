@@ -1141,14 +1141,14 @@ def fix_table_width(latex: str) -> str:
         fixed_text = text
         for pattern in tabular_patterns:
             def replacer(match):
-                env = 'tabular' if 'tabular' in pattern.group(0) else 'array'
+                env = 'tabular' if 'tabular' in match.group(0) else 'array'
                 return wrap_tabular(match, env)
             
             # Applica il pattern
             new_text = re.sub(pattern, replacer, fixed_text, flags=re.DOTALL)
             if new_text != fixed_text:
                 fixed_text = new_text
-                logger.info(f"✓ Tabella {env} sistemata con adjustbox")
+                logger.info(f"✓ Tabella sistemata con adjustbox")
         
         return fixed_text
     
