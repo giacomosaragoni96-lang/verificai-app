@@ -1090,27 +1090,72 @@ def fix_table_width(latex: str) -> str:
     """
     logger.info("Applicando fix per larghezza tabelle...")
     
-    # Pattern per trovare ambienti tabular senza adjustbox
-    tabular_pattern = r'\\begin\{tabular\}([^}]*)\}(.*?)\\end\{tabular\}'
+    # Pattern più robusto per trovare ambienti tabular
+    # Gestisce anche casi con \centering o altri elementi
+    tabular_patterns = [
+        r'\\begin\{tabular\}([^}]*)\}(.*?)\\end\{tabular\}',
+        r'\\begin\{tabular\*\}([^}]*)\}(.*?)\\end\{tabular\*\}',
+        r'\\begin\{array\}([^}]*)\}(.*?)\\end\{array\}',
+    ]
     
-    def wrap_tabular(match):
+    def wrap_tabular(match, env='tabular'):
         col_spec = match.group(1)
         content = match.group(2)
         # Avvolgi la tabella con adjustbox per limitare la larghezza
-        return f'\\adjustbox{{max width={{\\textwidth}}}}{{\\begin{{tabular}}{col_spec}}}{content}\\end{{tabular}}}}'
+        return f'\\adjustbox{{max width={{\\textwidth}}}}{{\\begin{{{env}}}{col_spec}}}{content}\\end{{{env}}}}}'
     
-    # Applica il wrapping solo se non c'è già adjustbox
     def fix_latex_tables(text):
-        # Prima controlla se c'è già adjustbox
+        # Prima controlla se c'è già adjustbox in questa sezione
         if '\\adjustbox' in text:
             return text
             
-        # Trova e avvolgi le tabelle
-        fixed_text = re.sub(tabular_pattern, wrap_tabular, text, flags=re.DOTALL)
+        fixed_text = text
+        for pattern in tabular_patterns:
+            def replacer(match):
+                env = 'tabular' if 'tabular' in pattern.group(0) else 'array'
+                return wrap_tabular(match, env)
+            
+            # Applica il pattern
+            new_text = re.sub(pattern, replacer, fixed_text, flags=re.DOTALL)
+            if new_text != fixed_text:
+                fixed_text = new_text
+                logger.info(f"✓ Tabella {env} sistemata con adjustbox")
+        
         return fixed_text
     
     # Applica il fix
     latex_fixed = fix_latex_tables(latex)
+    
+    # Secondo passaggio: gestisce tabelle dentro \centering o \begin{center}
+    center_pattern = r'\\begin\{center\}(.*?)\\end\{center\}'
+    
+    def fix_center_tables(text):
+        def replace_center(match):
+            center_content = match.group(1)
+            # Applica il fix alle tabelle dentro il center
+            fixed_center = fix_latex_tables(center_content)
+            if fixed_center != center_content:
+                return f'\\begin{{center}}{fixed_center}\\end{{center}}'
+            return match.group(0)
+        
+        return re.sub(center_pattern, replace_center, text, flags=re.DOTALL)
+    
+    latex_fixed = fix_center_tables(latex_fixed)
+    
+    # Terzo passaggio: gestisce casi con \centering\par
+    centering_pattern = r'(\\centering\s*\\par.*?)(\\begin\{tabular\}.*?\\end\{tabular\})'
+    
+    def fix_centering_tables(text):
+        def replace_centering(match):
+            prefix = match.group(1)
+            tabular = match.group(2)
+            # Applica adjustbox alla tabella
+            fixed_tabular = fix_latex_tables(tabular)
+            return prefix + fixed_tabular
+        
+        return re.sub(centering_pattern, replace_centering, text, flags=re.DOTALL)
+    
+    latex_fixed = fix_centering_tables(latex_fixed)
     
     if latex_fixed != latex:
         logger.info("✓ Tabelle sistemate con adjustbox")
