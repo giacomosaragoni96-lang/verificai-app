@@ -1419,23 +1419,22 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
         logger.error("✗ pdflatex non trovato")
         return None, "⚠️ LaTeX non è installato in questo ambiente."
 
-    logger.info(f"=== INIZIO COMPILAZIONE PDF (MODALITÀ GRAFICI SICURI) ===")
+    logger.info(f"=== INIZIO COMPILAZIONE PDF ===")
     logger.info(f"Dimensione codice LaTeX: {len(codice_latex)} caratteri")
     
-    # PULIZIA AGGRESSIVA DEI PROBLEMI
-    logger.info("🔄 Pulizia completa dei problemi LaTeX...")
+    # PULIZIA MIRATA - solo i problemi veri
+    logger.info("🔄 Pulizia mirata dei problemi LaTeX...")
     
-    # 1. Rimuovi parametri TikZ problematici
+    # 1. Rimuovi SOLO i parametri TikZ problematici, non i blocchi interi
     cleaned_latex = codice_latex
+    
+    # Rimuovi solo parametri compat e opzioni problematiche
     problematic_patterns = [
-        r'compat=.*?[,}]',  # Rimuovi compat=1.18 e simili
-        r'tikz.*?{.*?}',    # Rimuovi opzioni tikz complesse
-        r'\\usepackage\{tikz\}',
-        r'\\usepackage\{pgfplots\}',
-        r'\\usetikzlibrary\{[^}]*\}',
-        r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
-        r'\\begin\{axis\}.*?\\end\{axis\}',
-        r'\\begin\{pgfpicture\}.*?\\end\{pgfpicture\}',
+        r'compat=.*?[,}]',           # Rimuovi compat=1.18
+        r'tikz.*?{.*?}',            # Rimuovi opzioni tikz complesse
+        r'\\usepackage\{tikz\}',    # Rimuovi package tikz
+        r'\\usepackage\{pgfplots\}', # Rimuovi package pgfplots
+        r'\\usetikzlibrary\{[^}]*\}', # Rimuovi librerie tikz
     ]
     
     removed_count = 0
@@ -1446,7 +1445,30 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
             cleaned_latex = re.sub(pattern, '', cleaned_latex, flags=re.DOTALL | re.IGNORECASE)
             removed_count += len(matches)
     
-    # 2. Migliora le tabelle per evitare tagli
+    # 2. Sostituisci i blocchi TikZ con placeholder semplici (non rimuovere tutto)
+    tikz_blocks = re.findall(r'\\begin\{tikzpicture\}(.*?)\\end\{tikzpicture\}', cleaned_latex, re.DOTALL)
+    axis_blocks = re.findall(r'\\begin\{axis\}(.*?)\\end\{axis\}', cleaned_latex, re.DOTALL)
+    
+    # Sostituisci con placeholder semplici invece di rimuovere completamente
+    for block in tikz_blocks:
+        cleaned_latex = cleaned_latex.replace(
+            f'\\begin{{tikzpicture}}{block}\\end{{tikzpicture}}',
+            '\\textbf{[Grafico]}',
+            1
+        )
+        removed_count += 1
+        logger.info("📊 Sostituito TikZ picture con placeholder")
+    
+    for block in axis_blocks:
+        cleaned_latex = cleaned_latex.replace(
+            f'\\begin{{axis}}{block}\\end{{axis}}',
+            '\\textbf{[Grafico]}',
+            1
+        )
+        removed_count += 1
+        logger.info("📊 Sostituito Axis con placeholder")
+    
+    # 3. Migliora le tabelle per evitare tagli
     # Aggiungi \clearpage prima delle tabelle grandi
     cleaned_latex = re.sub(
         r'(\\begin\{center\}\s*\\textbf\{Tabella Punteggi\})',
@@ -1454,25 +1476,15 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
         cleaned_latex
     )
     
-    # 3. Migliora la gestione delle tabelle con adjustbox
+    # 4. Migliora la gestione delle tabelle con adjustbox
     cleaned_latex = re.sub(
         r'\\adjustbox\{max width=\\textwidth\}',
         r'\\resizebox{\\textwidth}{!}',
         cleaned_latex
     )
     
-    # 4. Aggiungi \pagebreak se necessario prima di sezioni grandi
-    def add_pagebreak(match):
-        title = match.group(1)
-        if title.strip():
-            return f'\\pagebreak\n\\subsection*{{{title}}}'
-        else:
-            return f'\\subsection*{{{title}}}'
-    
-    cleaned_latex = re.sub(r'\\subsection\*\{([^}]+)\}', add_pagebreak, cleaned_latex)
-    
     if removed_count > 0:
-        logger.info(f"✅ Totale elementi problematici rimossi: {removed_count}")
+        logger.info(f"✅ Totale elementi processati: {removed_count}")
     
     logger.info(f"Dimensione codice LaTeX pulito: {len(cleaned_latex)} caratteri")
 
@@ -1496,13 +1508,16 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
 
             logger.info(f"Return code: {result.returncode}")
             
-            # Controlla se il PDF è stato generato
+            # Controlla se il PDF è stato generato anche con warnings MiKTeX
             if os.path.exists(pdf_path):
                 pdf_size = os.path.getsize(pdf_path)
                 if pdf_size > 1000:  # PDF valido
                     logger.info(f"✓ PDF compilato con successo - Dimensione: {pdf_size} bytes")
                     if result.returncode != 0:
-                        logger.warning(f"⚠️ Warnings presenti ma PDF generato (return code: {result.returncode})")
+                        logger.warning(f"⚠️ Warnings MiKTeX ignorati - PDF generato comunque (return code: {result.returncode})")
+                        # Log dei warnings ma non bloccante
+                        stderr_lines = result.stderr.split('\n')[-3:] if result.stderr else []
+                        logger.warning(f"⚠️ Warnings MiKTeX: {stderr_lines}")
                     return open(pdf_path, "rb").read(), None
                 else:
                     logger.error(f"✗ PDF generato ma troppo piccolo: {pdf_size} bytes")
