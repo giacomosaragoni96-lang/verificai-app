@@ -4862,7 +4862,9 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             n_pages  = len(imgs)
             _pg = max(0, min(st.session_state.get("preview_page", 0), n_pages - 1))
 
-            st.image(imgs[_pg], use_container_width=True)
+            # Forza refresh dell'immagine con timestamp dinamico
+            img_key = f"preview_img_{st.session_state.get('last_preview_ts', 0)}"
+            st.image(imgs[_pg], use_container_width=True, key=img_key)
 
             if n_pages > 1:
                 st.markdown("<div style='height:.2rem'></div>", unsafe_allow_html=True)
@@ -5982,7 +5984,9 @@ def _render_stage_final():
                 cols_prev = st.columns(min(3, len(imgs)))
                 for pi, img_b in enumerate(imgs[:3]):
                     with cols_prev[pi]:
-                        st.image(img_b, use_container_width=True, caption=f"Pagina {pi+1}")
+                        # Forza refresh delle immagini con timestamp dinamico
+                        img_key = f"final_preview_{pi}_{st.session_state.get('last_preview_ts', 0)}"
+                        st.image(img_b, use_container_width=True, caption=f"Pagina {pi+1}", key=img_key)
                 if len(imgs) > 3:
                     st.caption(f"…e altre {len(imgs)-3} pagine nel file PDF scaricato.")
             elif vA.get("pdf"):
