@@ -5063,6 +5063,8 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         _imgs_rw, _ = pdf_to_images_bytes(_pdf_rw)
                         st.session_state.preview_images = _imgs_rw or []
                         st.session_state.preview_page   = 0
+                        # Forza reset del timestamp preview per garantire aggiornamento
+                        st.session_state.last_preview_ts = 0
 
                     _rw_st.update(label="Modifica applicata!", state="complete", expanded=False)
                     time.sleep(0.4); st.rerun()
