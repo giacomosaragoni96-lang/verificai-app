@@ -1462,11 +1462,14 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     )
     
     # 4. Aggiungi \pagebreak se necessario prima di sezioni grandi
-    cleaned_latex = re.sub(
-        r'\\subsection\*\{([^}]+)\}',
-        lambda m: f'\\pagebreak\n\\subsection*{{{m.group(1)}}}' if m.group(1).strip() else f'\\subsection*{{{m.group(1)}}',
-        cleaned_latex
-    )
+    def add_pagebreak(match):
+        title = match.group(1)
+        if title.strip():
+            return f'\\pagebreak\n\\subsection*{{{title}}}'
+        else:
+            return f'\\subsection*{{{title}}}'
+    
+    cleaned_latex = re.sub(r'\\subsection\*\{([^}]+)\}', add_pagebreak, cleaned_latex)
     
     if removed_count > 0:
         logger.info(f"✅ Totale elementi problematici rimossi: {removed_count}")
