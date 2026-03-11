@@ -4721,6 +4721,9 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                             _undo_imgs, _ = pdf_to_images_bytes(_undo_pdf)
                             st.session_state.preview_images = _undo_imgs or []
                             st.session_state.preview_page   = 0
+                            # Forza aggiornamento preview dopo annullamento
+                            st.session_state.last_preview_ts = 0
+                            logger.info(f"Preview aggiornato dopo annullamento - {len(_undo_imgs) if _undo_imgs else 0} pagine")
                         st.toast("↩️ Modifica annullata — versione precedente ripristinata!", icon="↩️")
                         time.sleep(0.2); st.rerun()
                 with _undo_col2:
@@ -4947,6 +4950,9 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     _qr_imgs, _ = pdf_to_images_bytes(_qr_pdf)
                     st.session_state.preview_images = _qr_imgs or []
                     st.session_state.preview_page   = 0
+                    # Forza aggiornamento preview dopo rigenerazione
+                    st.session_state.last_preview_ts = 0
+                    logger.info(f"Preview aggiornato dopo rigenerazione - {len(_qr_imgs) if _qr_imgs else 0} pagine")
                 _qr_st.update(label="Variante pronta!", state="complete", expanded=False)
                 st.toast(f"Variante esercizio {idx+1} generata!", icon="✅")
                 time.sleep(0.3); st.rerun()
@@ -5073,8 +5079,13 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         _imgs_rw, _ = pdf_to_images_bytes(_pdf_rw)
                         st.session_state.preview_images = _imgs_rw or []
                         st.session_state.preview_page   = 0
-                        # Forza reset del timestamp preview per garantire aggiornamento
+                        # Forza aggiornamento immediato del preview
                         st.session_state.last_preview_ts = 0
+                        # Aggiorna direttamente le immagini preview per evitare ritardi
+                        if _imgs_rw:
+                            logger.info(f"Preview aggiornato immediatamente dopo modifica - {len(_imgs_rw)} pagine")
+                        else:
+                            logger.warning("Preview vuoto dopo modifica")
 
                     _rw_st.update(label="Modifica applicata!", state="complete", expanded=False)
                     time.sleep(0.4); st.rerun()
@@ -5167,12 +5178,15 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 st.session_state.verifiche["A"]["latex_originale"] = _ct_latex
                 _ct_pdf, _ = compila_pdf(_ct_latex)
                 if _ct_pdf:
-                    st.session_state.verifiche["A"]["pdf"]    = _ct_pdf
-                    st.session_state.verifiche["A"]["pdf_ts"] = time.time()
+                    st.session_state.verifiche["A"]["pdf"]     = _ct_pdf
+                    st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
                     st.session_state.verifiche["A"]["preview"] = True
                     _ct_imgs, _ = pdf_to_images_bytes(_ct_pdf)
                     st.session_state.preview_images = _ct_imgs or []
                     st.session_state.preview_page   = 0
+                    # Forza aggiornamento preview dopo cambio esercizio
+                    st.session_state.last_preview_ts = 0
+                    logger.info(f"Preview aggiornato dopo cambio esercizio - {len(_ct_imgs) if _ct_imgs else 0} pagine")
                 _ct_st.update(label="Esercizio cambiato!", state="complete", expanded=False)
                 st.toast(f"Esercizio {idx+1} cambiato!", icon="✅")
                 time.sleep(0.3); st.rerun()
