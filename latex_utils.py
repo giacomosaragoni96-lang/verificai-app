@@ -1501,7 +1501,8 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
             logger.info("Avvio compilazione pdflatex...")
             result = subprocess.run(
                 ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, 
-                 "-shell-escape", "-disable-installer", tex_path],
+                 "-shell-escape", "-disable-installer", "-interaction=batchmode", 
+                 "-halt-on-error", "-file-line-error", tex_path],
                 capture_output=True,
                 text=True,
                 timeout=30
@@ -1514,11 +1515,25 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                 pdf_size = os.path.getsize(pdf_path)
                 if pdf_size > 1000:  # PDF valido
                     logger.info(f"✓ PDF compilato con successo - Dimensione: {pdf_size} bytes")
+                    
+                    # Ignora COMPLETAMENTE i warning di MiKTeX se il PDF esiste
                     if result.returncode != 0:
-                        logger.warning(f"⚠️ Warnings MiKTeX ignorati - PDF generato comunque (return code: {result.returncode})")
-                        # Log dei warnings ma non bloccante
-                        stderr_lines = result.stderr.split('\n')[-3:] if result.stderr else []
-                        logger.warning(f"⚠️ Warnings MiKTeX: {stderr_lines}")
+                        miktex_warnings = [
+                            "security risk: running with elevated privileges",
+                            "major issue: So far, you have not checked for updates",
+                            "So far, you have not checked for updates as a MiKTeX user"
+                        ]
+                        stderr_text = result.stderr.lower() if result.stderr else ""
+                        
+                        if any(warning.lower() in stderr_text for warning in miktex_warnings):
+                            logger.info("✅ Warnings MiKTeX rilevati ma ignorati - PDF generato correttamente")
+                            return open(pdf_path, "rb").read(), None
+                        else:
+                            logger.warning(f"⚠️ Altri warnings presenti (return code: {result.returncode})")
+                            # Log dei warnings ma non bloccante
+                            stderr_lines = result.stderr.split('\n')[-3:] if result.stderr else []
+                            logger.warning(f"⚠️ Warnings: {stderr_lines}")
+                    
                     return open(pdf_path, "rb").read(), None
                 else:
                     logger.error(f"✗ PDF generato ma troppo piccolo: {pdf_size} bytes")
