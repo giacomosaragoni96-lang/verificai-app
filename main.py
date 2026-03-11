@@ -5188,9 +5188,9 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     """, unsafe_allow_html=True)
                     
                     time.sleep(0.8); st.rerun()
-                except Exception as e:
-                    # Messaggio di errore elegante
-                    _loading_ph.markdown(f"""
+            except Exception as e:
+                # Messaggio di errore elegante
+                _loading_ph.markdown(f"""
                     <div style="
                         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
                         border-radius: 12px;
