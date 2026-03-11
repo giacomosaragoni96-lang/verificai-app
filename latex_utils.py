@@ -598,8 +598,8 @@ def build_griglia_latex(esercizi: list, punti_totali: int) -> str:
 
     # Nuova riga per punteggio effettivo dello studente
     row_voto = "\\textbf{Voto}" + "".join(
-        f" & \\hspace{{1.2cm}}" for ex in esercizi for _, _ in ex['items']
-    ) + " & \\hspace{{1.2cm}} \\\\ \\hline"
+        f" & \\makebox[1.2cm]{{\\hrulefill}}" for ex in esercizi for _, _ in ex['items']
+    ) + " & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline"
 
     return (
         "% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n"
