@@ -1640,6 +1640,18 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
             import traceback
             logger.error(f"Traceback: {traceback.format_exc()}")
             return None, f"Errore durante la compilazione: {str(e)}"
+
+
+def pdf_to_images_bytes(pdf_bytes: bytes) -> tuple[list[bytes] | None, str | None]:
+    """
+    Converte PDF bytes in una lista di immagini PNG bytes.
+    Restituisce (list_of_images, error_message).
+    """
+    logger = logging.getLogger(__name__)
+    
+    if not pdf_bytes:
+        return None, "PDF bytes vuoti"
+    
     # Tentativo 1: pdf2image
     try:
         from pdf2image import convert_from_bytes as cfb
@@ -1649,10 +1661,11 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
             buf = io.BytesIO()
             p.save(buf, "PNG")
             out.append(buf.getvalue())
+        logger.info(f"✅ PDF convertito in {len(out)} immagini con pdf2image")
         return out, None
-    except Exception:
-        pass
-
+    except Exception as e:
+        logger.warning(f"pdf2image fallito: {e}")
+    
     # Tentativo 2: pdftoppm (CLI)
     try:
         with tempfile.TemporaryDirectory() as d:
@@ -1667,9 +1680,13 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                 fn for fn in os.listdir(d)
                 if fn.startswith("p") and fn.endswith(".png")
             )
-            if imgs:
-                return [open(os.path.join(d, fn), "rb").read() for fn in imgs], None
+            out = []
+            for img in imgs:
+                with open(os.path.join(d, img), "rb") as f:
+                    out.append(f.read())
+            logger.info(f"✅ PDF convertito in {len(out)} immagini con pdftoppm")
+            return out, None
     except Exception as e:
-        return None, str(e)
-
-    return None, "pdf2image non installato e pdftoppm non trovato."
+        logger.warning(f"pdftoppm fallito: {e}")
+    
+    return None, "Impossibile convertire PDF in immagini"
