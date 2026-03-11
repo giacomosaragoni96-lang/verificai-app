@@ -1397,9 +1397,19 @@ def fix_table_width(latex: str) -> str:
 # ── COMPILAZIONE PDF ───────────────────────────────────────────────────────────
 
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
-    logger.info("=== INIZIO COMPILAZIONE PDF ===")
-    logger.info(f"Dimensione codice LaTeX: {len(codice_latex)} caratteri")
+    """
+    Compila codice LaTeX in PDF usando pdflatex.
+    Restituisce (pdf_bytes, error_message).
+    """
+    import tempfile
+    import subprocess
+    import os
+    import logging
+    import time
     
+    logger = logging.getLogger(__name__)
+    
+    # Verifica che pdflatex sia disponibile
     try:
         result = subprocess.run(["pdflatex", "--version"], capture_output=True, text=True, timeout=5)
         if result.returncode != 0:
@@ -1412,183 +1422,54 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     logger.info(f"=== INIZIO COMPILAZIONE PDF (MODALITÀ GRAFICI SICURI) ===")
     logger.info(f"Dimensione codice LaTeX: {len(codice_latex)} caratteri")
     
-    # SOSTITUZIONE INTELLIGENTE DEI TIKZ - MANTIENIAMO I GRAFICI!
-    logger.info("🔄 Analisi e sostituzione intelligente dei grafici TikZ...")
+    # PULIZIA AGGRESSIVA DEI PROBLEMI
+    logger.info("🔄 Pulizia completa dei problemi LaTeX...")
     
-    def create_simple_graph(tikz_content: str) -> str:
-        """Crea un grafico LaTeX semplice e compilabile da un TikZ complesso"""
-        
-        # Rileva il tipo di grafico dal contenuto
-        if "axis" in tikz_content.lower() or "plot" in tikz_content.lower():
-            # Grafico di funzione
-            return create_function_graph(tikz_content)
-        elif "histogram" in tikz_content.lower() or "bar" in tikz_content.lower():
-            # Istogramma
-            return create_histogram(tikz_content)
-        elif "circle" in tikz_content.lower() or "draw" in tikz_content.lower():
-            # Geometria
-            return create_geometry(tikz_content)
-        else:
-            # Grafico generico
-            return create_generic_graph(tikz_content)
-    
-    def create_function_graph(content: str) -> str:
-        """Crea un grafico di funzione semplice usando picture environment"""
-        return r"""
-\begin{center}
-\fbox{
-\begin{picture}(200,150)
-% Assi
-\put(10,75){\vector(1,0){180}}
-\put(100,10){\vector(0,1){130}}
-% Etichette
-\put(190,70){$x$}
-\put(110,140){$y$}
-% Origine
-\put(95,65){$O$}
-% Griglia semplice
-\multiput(20,20)(20,0){8}{\line(0,1){1}}
-\multiput(20,20)(0,20){6}{\line(1,0){1}}
-% Funzione quadratica (esempio)
-\put(20,120){\circle*{2}}
-\put(40,100){\circle*{2}}
-\put(60,85){\circle*{2}}
-\put(80,75){\circle*{2}}
-\put(100,70){\circle*{2}}
-\put(120,75){\circle*{2}}
-\put(140,85){\circle*{2}}
-\put(160,100){\circle*{2}}
-\put(180,120){\circle*{2}}
-% Linea che collega i punti
-\put(20,120){\line(1,-1){160}}
-\end{picture}
-}
-\end{center}
-"""
-    
-    def create_histogram(content: str) -> str:
-        """Crea un istogramma semplice usando picture environment"""
-        return r"""
-\begin{center}
-\fbox{
-\begin{picture}(200,120)
-% Assi
-\put(10,20){\vector(1,0){180}}
-\put(20,10){\vector(0,1){100}}
-% Etichette
-\put(190,15){$x$}
-\put(25,110){$frequenza$}
-% Barre dell'istogramma
-\put(30,20){\framebox(20,60){}}
-\put(60,20){\framebox(20,80){}}
-\put(90,20){\framebox(20,45){}}
-\put(120,20){\framebox(20,70){}}
-\put(150,20){\framebox(20,55){}}
-% Etichette categorie
-\put(35,10){\tiny A}
-\put(65,10){\tiny B}
-\put(95,10){\tiny C}
-\put(125,10){\tiny D}
-\put(155,10){\tiny E}
-\end{picture}
-}
-\end{center}
-"""
-    
-    def create_geometry(content: str) -> str:
-        """Crea figure geometriche semplici"""
-        return r"""
-\begin{center}
-\fbox{
-\begin{picture}(150,150)
-% Triangolo
-\put(30,30){\line(1,0){90}}
-\put(30,30){\line(1,2){45}}
-\put(120,30){\line(-1,2){45}}
-% Punti
-\put(30,30){\circle*{2}}
-\put(120,30){\circle*{2}}
-\put(75,120){\circle*{2}}
-% Etichette
-\put(25,25){$A$}
-\put(125,25){$B$}
-\put(75,125){$C$}
-\end{picture}
-}
-\end{center}
-"""
-    
-    def create_generic_graph(content: str) -> str:
-        """Crea un grafico generico"""
-        return r"""
-\begin{center}
-\fbox{
-\begin{picture}(180,120)
-% Assi
-\put(20,20){\vector(1,0){140}}
-\put(20,20){\vector(0,1){80}}
-% Griglia
-\multiput(40,30)(20,0){6}{\line(0,1){1}}
-\multiput(40,30)(0,20){4}{\line(1,0){1}}
-% Punti dati
-\put(40,60){\circle*{2}}
-\put(60,45){\circle*{2}}
-\put(80,70){\circle*{2}}
-\put(100,50){\circle*{2}}
-\put(120,65){\circle*{2}}
-\put(140,55){\circle*{2}}
-% Linea di tendenza
-\put(40,60){\line(2,-1){100}}
-% Etichette
-\put(160,20){$x$}
-\put(15,100){$y$}
-\end{picture}
-}
-\end{center}
-"""
-    
-    # Processa i blocchi TikZ e sostituiscili con grafici compilabili
+    # 1. Rimuovi parametri TikZ problematici
     cleaned_latex = codice_latex
-    tikz_blocks = re.findall(r'\\begin\{tikzpicture\}(.*?)\\end\{tikzpicture\}', cleaned_latex, re.DOTALL)
-    axis_blocks = re.findall(r'\\begin\{axis\}(.*?)\\end\{axis\}', cleaned_latex, re.DOTALL)
-    
-    total_replaced = 0
-    
-    # Sostituisci i blocchi tikzpicture
-    for i, block in enumerate(tikz_blocks):
-        simple_graph = create_simple_graph(block)
-        cleaned_latex = cleaned_latex.replace(
-            f'\\begin{{tikzpicture}}{block}\\end{{tikzpicture}}',
-            simple_graph,
-            1  # Sostituisci solo la prima occorrenza
-        )
-        total_replaced += 1
-        logger.info(f"📊 Sostituito TikZ picture {i+1} con grafico compilabile")
-    
-    # Sostituisci i blocchi axis
-    for i, block in enumerate(axis_blocks):
-        simple_graph = create_simple_graph(block)
-        cleaned_latex = cleaned_latex.replace(
-            f'\\begin{{axis}}{block}\\end{{axis}}',
-            simple_graph,
-            1  # Sostituisci solo la prima occorrenza
-        )
-        total_replaced += 1
-        logger.info(f"📊 Sostituito Axis {i+1} con grafico compilabile")
-    
-    if total_replaced > 0:
-        logger.info(f"✅ Totale grafici sostituiti: {total_replaced} - Grafici mantenuti ma resi compilabili")
-    
-    # Rimuovi solo i package TikZ problematici, mantieni il resto
-    tikz_package_patterns = [
+    problematic_patterns = [
+        r'compat=.*?[,}]',  # Rimuovi compat=1.18 e simili
+        r'tikz.*?{.*?}',    # Rimuovi opzioni tikz complesse
         r'\\usepackage\{tikz\}',
         r'\\usepackage\{pgfplots\}',
         r'\\usetikzlibrary\{[^}]*\}',
+        r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
+        r'\\begin\{axis\}.*?\\end\{axis\}',
+        r'\\begin\{pgfpicture\}.*?\\end\{pgfpicture\}',
     ]
     
-    for pattern in tikz_package_patterns:
-        cleaned_latex = re.sub(pattern, '', cleaned_latex, flags=re.IGNORECASE)
-        logger.info(f"🗑️ Rimosso package problematico: {pattern}")
+    removed_count = 0
+    for pattern in problematic_patterns:
+        matches = re.findall(pattern, cleaned_latex, re.DOTALL | re.IGNORECASE)
+        if matches:
+            logger.info(f"🗑️ Rimossi {len(matches)} elementi con pattern: {pattern[:50]}...")
+            cleaned_latex = re.sub(pattern, '', cleaned_latex, flags=re.DOTALL | re.IGNORECASE)
+            removed_count += len(matches)
+    
+    # 2. Migliora le tabelle per evitare tagli
+    # Aggiungi \clearpage prima delle tabelle grandi
+    cleaned_latex = re.sub(
+        r'(\\begin\{center\}\s*\\textbf\{Tabella Punteggi\})',
+        r'\\clearpage\n\1',
+        cleaned_latex
+    )
+    
+    # 3. Migliora la gestione delle tabelle con adjustbox
+    cleaned_latex = re.sub(
+        r'\\adjustbox\{max width=\\textwidth\}',
+        r'\\resizebox{\\textwidth}{!}',
+        cleaned_latex
+    )
+    
+    # 4. Aggiungi \pagebreak se necessario prima di sezioni grandi
+    cleaned_latex = re.sub(
+        r'\\subsection\*\{([^}]+)\}',
+        lambda m: f'\\pagebreak\n\\subsection*{{{m.group(1)}}}' if m.group(1).strip() else f'\\subsection*{{{m.group(1)}}',
+        cleaned_latex
+    )
+    
+    if removed_count > 0:
+        logger.info(f"✅ Totale elementi problematici rimossi: {removed_count}")
     
     logger.info(f"Dimensione codice LaTeX pulito: {len(cleaned_latex)} caratteri")
 
@@ -1637,9 +1518,6 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
         except Exception as e:
             logger.error(f"✗ Errore imprevisto: {e}")
             return None, f"Errore imprevisto durante la compilazione: {e}"
-            import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
-            return None, f"Errore durante la compilazione: {str(e)}"
 
 
 def pdf_to_images_bytes(pdf_bytes: bytes) -> tuple[list[bytes] | None, str | None]:
