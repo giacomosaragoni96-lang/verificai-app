@@ -1155,7 +1155,9 @@ def get_css(T: dict) -> str:
   /* Approccio: marker hidden div → sibling button */
   .btn-outline-accent-marker + div button,
   .element-container:has(.btn-outline-accent-marker) + .element-container button,
-  [data-testid="stVerticalBlock"] > div:has(.btn-outline-accent-marker) + div button {{
+  [data-testid="stVerticalBlock"] > div:has(.btn-outline-accent-marker) + div button,
+  [data-testid="stVerticalBlock"] > div:has(.btn-outline-accent-marker) + div .stButton > button,
+  .element-container:has(.btn-outline-accent-marker) + .element-container .stButton > button {{
     background: transparent !important;
     background-color: transparent !important;
     color: {_acc} !important;
@@ -1167,10 +1169,13 @@ def get_css(T: dict) -> str:
     min-height: 48px !important;
     box-shadow: none !important;
     transition: background .15s ease, box-shadow .15s ease !important;
+    font-family: 'DM Sans', sans-serif !important;
   }}
   .btn-outline-accent-marker + div button:hover,
   .element-container:has(.btn-outline-accent-marker) + .element-container button:hover,
-  [data-testid="stVerticalBlock"] > div:has(.btn-outline-accent-marker) + div button:hover {{
+  [data-testid="stVerticalBlock"] > div:has(.btn-outline-accent-marker) + div button:hover,
+  [data-testid="stVerticalBlock"] > div:has(.btn-outline-accent-marker) + div .stButton > button:hover,
+  .element-container:has(.btn-outline-accent-marker) + .element-container .stButton > button:hover {{
     background: {_acc_soft} !important;
     background-color: {_acc_soft} !important;
     box-shadow: 0 2px 12px {_acc_soft} !important;
@@ -2820,7 +2825,10 @@ def get_css(T: dict) -> str:
      ════════════════════════════════════════════════════════════════════════ */
   .element-container:has(.btn-undo-wrap) + .element-container button,
   div:has(> .btn-undo-wrap) + div button,
-  div:has(.btn-undo-wrap) + div .stButton > button {{
+  div:has(.btn-undo-wrap) + div .stButton > button,
+  .element-container:has(.undo-btn-marker) + .element-container button,
+  div:has(> .undo-btn-marker) + div button,
+  div:has(.undo-btn-marker) + div .stButton > button {{
     background: transparent !important;
     background-color: transparent !important;
     color: {T['accent']} !important;
@@ -2834,7 +2842,9 @@ def get_css(T: dict) -> str:
     color-scheme: {_color_scheme} !important;
   }}
   .element-container:has(.btn-undo-wrap) + .element-container button:hover,
-  div:has(.btn-undo-wrap) + div .stButton > button:hover {{
+  div:has(.btn-undo-wrap) + div .stButton > button:hover,
+  .element-container:has(.undo-btn-marker) + .element-container button:hover,
+  div:has(.undo-btn-marker) + div .stButton > button:hover {{
     background: {T['accent_light']} !important;
     background-color: {T['accent_light']} !important;
     color: {T['accent2']} !important;
