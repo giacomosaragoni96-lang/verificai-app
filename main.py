@@ -4821,17 +4821,41 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
         current_pdf_ts = vA.get("pdf_ts")
         last_preview_ts = st.session_state.get("last_preview_ts", 0)
         
-        # Se il timestamp del PDF è più recente dell'ultima preview, rigenera le immagini
-        if current_pdf_ts and current_pdf_ts > last_preview_ts:
+        # LOGICA AGGRESSIVA: forza sempre l'aggiornamento se c'è un PDF recente
+        force_update = False
+        
+        # Condizione 0: force refresh esplicito
+        if st.session_state.get("force_preview_refresh", False):
+            force_update = True
+            logger.info("FORCE REFRESH: flag force_preview_refresh rilevato")
+            # Resetta il flag dopo l'uso
+            st.session_state.force_preview_refresh = False
+        
+        # Condizione 1: timestamp più recente
+        elif current_pdf_ts and current_pdf_ts > last_preview_ts:
+            force_update = True
+            
+        # Condizione 2: se il timestamp del PDF è molto recente (ultimi 5 secondi)
+        elif current_pdf_ts and (time.time() - current_pdf_ts) < 5:
+            force_update = True
+            
+        # Condizione 3: se non ci sono immagini preview ma c'è un PDF
+        elif current_pdf_ts and not st.session_state.get("preview_images"):
+            force_update = True
+        
+        if force_update:
             vA_pdf = vA.get("pdf")
             if vA_pdf:
                 try:
+                    logger.info(f"FORZATURA AGGIORNAMENTO PREVIEW - PDF ts: {current_pdf_ts}, Last preview: {last_preview_ts}")
                     new_imgs, _ = pdf_to_images_bytes(vA_pdf)
                     st.session_state.preview_images = new_imgs or []
                     st.session_state.last_preview_ts = current_pdf_ts
-                    logger.info(f"Preview images aggiornate - timestamp PDF: {current_pdf_ts}")
+                    logger.info(f"Preview images aggiornate FORZATAMENTE - {len(new_imgs) if new_imgs else 0} pagine")
                 except Exception as e:
-                    logger.error(f"Errore aggiornamento preview: {e}")
+                    logger.error(f"Errore aggiornamento preview forzato: {e}")
+            else:
+                logger.warning("PDF ts presente ma nessun PDF disponibile per preview")
         
         imgs = st.session_state.preview_images
         if imgs:
@@ -5086,6 +5110,9 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                             logger.info(f"Preview aggiornato immediatamente dopo modifica - {len(_imgs_rw)} pagine")
                         else:
                             logger.warning("Preview vuoto dopo modifica")
+                        
+                        # FORZA REFRESH ESPPLICITO del preview
+                        st.session_state.force_preview_refresh = True
 
                     _rw_st.update(label="Modifica applicata!", state="complete", expanded=False)
                     time.sleep(0.4); st.rerun()
