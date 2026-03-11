@@ -974,6 +974,16 @@ def attempt_tikz_fix(latex: str) -> str:
     fixed_latex = re.sub(r'bar\s+width\s*=\s*\d+cm\s*$', 'bar width=1cm', fixed_latex)
     fixed_latex = re.sub(r'symbolic\s+x\s+coords\s*=\s*\{[^}]*\s*$', r'\\end{axis}', fixed_latex)
     
+    # Fix 3d: Correggi \addplot senza coordinates
+    fixed_latex = re.sub(r'(\\addplot\s*\[[^\]]*\])\s*$', r'\1 coordinates {};', fixed_latex)
+    
+    # Fix 3e: Correggi coordinates vuoti o incompleti
+    fixed_latex = re.sub(r'coordinates\s*\{\s*\}', 'coordinates {(0,0)}', fixed_latex)
+    fixed_latex = re.sub(r'coordinates\s*\{([^}]*)\s*$', r'coordinates {\1}', fixed_latex)
+    
+    # Fix 3f: Correggi bar width senza unità
+    fixed_latex = re.sub(r'bar\s+width\s*=\s*(\d+\.\d+)\s*$', r'bar width=\1cm', fixed_latex)
+    
     # Fix 4: Correggi \node senza coordinate complete
     # Aggiungi coordinate di default se mancanti
     fixed_latex = re.sub(r'(\\node\s*\[.*?\]\s*at\s*\([^)]*)(?=\n|$)', r'\1)', fixed_latex)
@@ -1033,11 +1043,30 @@ def validate_tikz_code(latex: str) -> tuple[bool, str]:
         if brace_count != 0:
             return False, f"Errore nel blocco TikZ {i+1}: parentesi graffe non bilanciate"
         
+        # Controlla comandi \addplot incompleti
+        addplot_count = len(re.findall(r'\\addplot', block))
+        coordinates_count = len(re.findall(r'coordinates\s*\{', block))
+        if addplot_count > 0 and coordinates_count == 0:
+            return False, f"Errore nel blocco TikZ {i+1}: \\addplot senza coordinates"
+        
+        # Controlla comandi \addplot con coordinates non chiuse
+        addplot_coords = re.findall(r'coordinates\s*\{([^}]*)', block, re.DOTALL)
+        for coords in addplot_coords:
+            if not coords.strip():
+                return False, f"Errore nel blocco TikZ {i+1}: \\addplot coordinates vuoto"
+        
+        # Controlla ambienti axis non chiusi
+        axis_begin = len(re.findall(r'\\begin\{axis\}', block))
+        axis_end = len(re.findall(r'\\end\{axis\}', block))
+        if axis_begin != axis_end:
+            return False, f"Errore nel blocco TikZ {i+1}: ambienti axis non bilanciati ({axis_begin} vs {axis_end})"
+        
         # Controlla comandi incompleti o sospetti
         suspicious_patterns = [
             r'\\node\s*\[.*?\]\s*at\s*\([^)]*$',  # \node senza coordinate complete
             r'\\draw\s*\([^)]*$',  # \draw incompleto
             r'\\begin\{axis\}[^}]*$',  # \begin{axis} senza chiusura
+            r'bar\s+width\s*=\s*\d+\.\d*$',  # bar width senza unità
         ]
         
         for pattern in suspicious_patterns:
