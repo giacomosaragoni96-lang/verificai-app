@@ -1422,71 +1422,14 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     logger.info(f"=== INIZIO COMPILAZIONE PDF ===")
     logger.info(f"Dimensione codice LaTeX: {len(codice_latex)} caratteri")
     
-    # PULIZIA MIRATA - solo i problemi veri
-    logger.info("🔄 Pulizia mirata dei problemi LaTeX...")
-    
-    # 1. Rimuovi SOLO i parametri TikZ problematici, non i blocchi interi
-    cleaned_latex = codice_latex
-    
-    # Rimuovi solo parametri compat e opzioni problematiche
-    problematic_patterns = [
-        r'compat=.*?[,}]',           # Rimuovi compat=1.18
-        r'tikz.*?{.*?}',            # Rimuovi opzioni tikz complesse
-        r'\\usepackage\{tikz\}',    # Rimuovi package tikz
-        r'\\usepackage\{pgfplots\}', # Rimuovi package pgfplots
-        r'\\usetikzlibrary\{[^}]*\}', # Rimuovi librerie tikz
-    ]
-    
-    removed_count = 0
-    for pattern in problematic_patterns:
-        matches = re.findall(pattern, cleaned_latex, re.DOTALL | re.IGNORECASE)
-        if matches:
-            logger.info(f"🗑️ Rimossi {len(matches)} elementi con pattern: {pattern[:50]}...")
-            cleaned_latex = re.sub(pattern, '', cleaned_latex, flags=re.DOTALL | re.IGNORECASE)
-            removed_count += len(matches)
-    
-    # 2. Sostituisci i blocchi TikZ con placeholder semplici (non rimuovere tutto)
-    tikz_blocks = re.findall(r'\\begin\{tikzpicture\}(.*?)\\end\{tikzpicture\}', cleaned_latex, re.DOTALL)
-    axis_blocks = re.findall(r'\\begin\{axis\}(.*?)\\end\{axis\}', cleaned_latex, re.DOTALL)
-    
-    # Sostituisci con placeholder semplici invece di rimuovere completamente
-    for block in tikz_blocks:
-        cleaned_latex = cleaned_latex.replace(
-            f'\\begin{{tikzpicture}}{block}\\end{{tikzpicture}}',
-            '\\textbf{[Grafico]}',
-            1
-        )
-        removed_count += 1
-        logger.info("📊 Sostituito TikZ picture con placeholder")
-    
-    for block in axis_blocks:
-        cleaned_latex = cleaned_latex.replace(
-            f'\\begin{{axis}}{block}\\end{{axis}}',
-            '\\textbf{[Grafico]}',
-            1
-        )
-        removed_count += 1
-        logger.info("📊 Sostituito Axis con placeholder")
-    
-    # 3. Migliora le tabelle per evitare tagli
-    # Aggiungi \clearpage prima delle tabelle grandi
-    cleaned_latex = re.sub(
-        r'(\\begin\{center\}\s*\\textbf\{Tabella Punteggi\})',
-        r'\\clearpage\n\1',
-        cleaned_latex
-    )
-    
-    # 4. Migliora la gestione delle tabelle con adjustbox
-    cleaned_latex = re.sub(
-        r'\\adjustbox\{max width=\\textwidth\}',
-        r'\\resizebox{\\textwidth}{!}',
-        cleaned_latex
-    )
-    
-    if removed_count > 0:
-        logger.info(f"✅ Totale elementi processati: {removed_count}")
-    
-    logger.info(f"Dimensione codice LaTeX pulito: {len(cleaned_latex)} caratteri")
+    # Applica fix pre-compilazione: rimuovi spoiler TikZ, poi fix label math
+    logger.info("Applicazione fix pre-compilazione...")
+    codice_latex = clean_tikz_spoilers(codice_latex)
+    logger.info("✓ clean_tikz_spoilers applicato")
+    codice_latex = fix_tikz_labels(codice_latex)
+    logger.info("✓ fix_tikz_labels applicato")
+    codice_latex = fix_table_width(codice_latex)
+    logger.info("✓ fix_table_width applicato")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tex_path = os.path.join(tmpdir, "v.tex")
@@ -1495,102 +1438,75 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
         try:
             logger.info(f"Scrittura file LaTeX in: {tex_path}")
             with open(tex_path, "w", encoding="utf-8") as f:
-                f.write(cleaned_latex)
+                f.write(codice_latex)
             logger.info("✓ File LaTeX scritto")
 
             logger.info("Avvio compilazione pdflatex...")
             result = subprocess.run(
-                ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, 
-                 "-shell-escape", "-disable-installer", "-interaction=batchmode", 
-                 "-halt-on-error", "-file-line-error", tex_path],
+                ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, "-shell-escape", "-disable-installer", tex_path],
                 capture_output=True,
                 text=True,
-                timeout=30,
-                env={**os.environ, "MIKTEX_NO_UPDATES": "1", "MIKTEX_NO_CHECK_UPDATES": "1"}
+                timeout=30
             )
 
             logger.info(f"Return code: {result.returncode}")
             
-            # Se il primo tentativo fallisce per warning MiKTeX, prova senza shell-escape
-            if result.returncode != 0 and not os.path.exists(pdf_path):
-                logger.warning("⚠️ Primo tentativo fallito, riprovo senza shell-escape...")
-                result2 = subprocess.run(
-                    ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, 
-                     "-interaction=batchmode", "-halt-on-error", "-file-line-error", tex_path],
-                    capture_output=True,
-                    text=True,
-                    timeout=30,
-                    env={**os.environ, "MIKTEX_NO_UPDATES": "1", "MIKTEX_NO_CHECK_UPDATES": "1"}
-                )
-                logger.info(f"Secondo tentativo - Return code: {result2.returncode}")
-                result = result2  # Usa il secondo risultato
-            
-            # Controlla se il PDF è stato generato anche con warnings MiKTeX
+            # Controlla se esiste il file log
+            log_path = os.path.join(tmpdir, "v.log")
+            if os.path.exists(log_path):
+                with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+                    log_content = f.read()
+                    logger.info(f"Contenuto log LaTeX (ultimi 1000 char): {log_content[-1000:]}")
+
+            # Controlla se il PDF è stato generato anche con warnings
             if os.path.exists(pdf_path):
                 pdf_size = os.path.getsize(pdf_path)
-                if pdf_size > 1000:  # PDF valido
+                if pdf_size > 1000:  # PDF valido (almeno 1KB)
                     logger.info(f"✓ PDF compilato con successo - Dimensione: {pdf_size} bytes")
+                    
+                    # Se c'è return code != 0 ma il PDF esiste, sono solo warning
+                    if result.returncode != 0:
+                        logger.warning(f"⚠️ Warnings MiKTeX ignorati - PDF generato comunque (return code: {result.returncode})")
+                        # Log dei warnings ma non bloccante
+                        stdout_lines = result.stdout.split('\n')[-5:]
+                        stderr_lines = result.stderr.split('\n')[-3:]
+                        logger.warning(f"⚠️ Warnings: {stdout_lines}")
+                        logger.warning(f"⚠️ Warnings: {stderr_lines}")
+                    
                     return open(pdf_path, "rb").read(), None
                 else:
                     logger.error(f"✗ PDF generato ma troppo piccolo: {pdf_size} bytes")
-                    return None, "Errore: PDF generato ma vuoto o danneggiato"
-            else:
-                # Se return code è 1 e contiene solo warning MiKTeX, ignora l'errore
-                if result.returncode == 1:
-                    miktex_warnings = [
-                        "security risk: running with elevated privileges",
-                        "major issue: So far, you have not checked for updates",
-                        "So far, you have not checked for updates as a MiKTeX user"
-                    ]
-                    
-                    stderr_text = (result.stderr or "").lower()
-                    stdout_text = (result.stdout or "").lower()
-                    combined_text = stderr_text + stdout_text
-                    
-                    # Se sono solo warning MiKTeX, crea un PDF vuoto per permettere all'app di continuare
-                    if any(warning.lower() in combined_text for warning in miktex_warnings):
-                        logger.warning("⚠️ Solo warning MiKTeX rilevati - creo PDF di fallback")
-                        
-                        # Crea un PDF minimo con solo il testo base
-                        simple_latex = f"""
-\\documentclass[11pt]{{article}}
-\\usepackage[utf8]{{inputenc}}
-\\usepackage[italian]{{babel}}
-\\begin{{document}}
-\\section*{{Verifica Generata}}
-ATTENZIONE: La verifica contiene elementi che richiedono una configurazione LaTeX più avanzata.
-Il PDF originale non è stato generato a causa di warning di sicurezza di MiKTeX.
-
-Contenuto della verifica:
-\\vspace{{1cm}}
-
-{cleaned_latex[:2000]}  # Primi 2000 caratteri del contenuto
-
-\\end{{document}}
-"""
-                        
-                        # Scrivi il LaTeX semplificato
-                        with open(tex_path, "w", encoding="utf-8") as f:
-                            f.write(simple_latex)
-                        
-                        # Prova a compilare il PDF semplificato
-                        result3 = subprocess.run(
-                            ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
-                            capture_output=True,
-                            text=True,
-                            timeout=30
-                        )
-                        
-                        if os.path.exists(pdf_path):
-                            pdf_size = os.path.getsize(pdf_path)
-                            if pdf_size > 1000:
-                                logger.info(f"✓ PDF di fallback generato - Dimensione: {pdf_size} bytes")
-                                return open(pdf_path, "rb").read(), None
+            
+            # Se arriviamo qui, il PDF non esiste o è troppo piccolo
+            if result.returncode != 0:
+                logger.error(f"✗ Errore pdflatex (codice {result.returncode}): {result.stderr}")
+                # Log dettagliato dell'output per debugging
+                stdout_lines = result.stdout.split('\n')[-10:]  # Ultime 10 linee
+                stderr_lines = result.stderr.split('\n')[-5:]   # Ultime 5 linee
+                logger.error(f"✗ Ultime linee stdout: {stdout_lines}")
+                logger.error(f"✗ Ultime linee stderr: {stderr_lines}")
                 
-                # Se arriviamo qui, c'è un errore reale
-                logger.error(f"✗ File PDF non generato")
-                logger.error(f"✗ Errore compilazione (codice {result.returncode}): {result.stderr}")
+                # Analisi dell'errore per capire il tipo di problema
+                error_output = result.stderr + result.stdout
+                if "Undefined control sequence" in error_output:
+                    logger.error("✗ Errore: comando LaTeX non definito")
+                elif "Missing $ inserted" in error_output:
+                    logger.error("✗ Errore: matematica LaTeX non bilanciata")
+                elif "Package tikz Error" in error_output:
+                    logger.error("✗ Errore specifico TikZ")
+                elif "Emergency stop" in error_output:
+                    logger.error("✗ Errore grave: Emergency stop")
+                
                 return None, f"Errore durante la compilazione LaTeX: {result.stderr}"
+            else:
+                logger.error("✗ File PDF non generato senza errori evidenti")
+                return None, "File PDF non generato dopo la compilazione"
+                # Controlla se ci sono file di log per capire l'errore
+                if os.path.exists(log_path):
+                    with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+                        log_content = f.read()
+                        logger.error(f"✗ Contenuto log file (ultime 20 linee): {log_content.split('\\n')[-20:]}")
+                return None, "File PDF non generato durante la compilazione"
 
         except subprocess.TimeoutExpired:
             logger.error("✗ Timeout compilazione LaTeX (30 secondi)")
