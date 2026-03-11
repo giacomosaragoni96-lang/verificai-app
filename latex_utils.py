@@ -223,6 +223,61 @@ def parse_items_from_block(body: str, title: str = "") -> list:
     if not labeled:
         logger.info(f"No labeled items found with any pattern")
     
+    # Controlla se è un esercizio a scelta multipla
+    # Pattern: sequenza di item con lettere A), B), C), D) ecc. senza punteggi individuali
+    multiple_choice_pattern = r'\\item\s+([A-Z])\)\s*([^(]*?)(?=\\item\s+[A-Z]\)|\\item\s*\(|\\end|\Z)'
+    multiple_choice_matches = list(re.finditer(multiple_choice_pattern, body, re.DOTALL))
+    
+    if multiple_choice_matches and len(multiple_choice_matches) >= 2:
+        logger.info(f"Multiple choice question detected: {len(multiple_choice_matches)} options")
+        
+        # Combina tutte le opzioni in un unico item
+        combined_text = ""
+        total_points = 0
+        question_text = ""
+        
+        for i, m in enumerate(multiple_choice_matches):
+            option_letter = m.group(1)
+            option_text = m.group(2).strip()
+            
+            if i == 0:
+                # Prima opzione: cerca il punteggio totale nella domanda
+                pts_patterns = [
+                    r'\((\d+(?:[.,]\d+)?)\s*pt\)',      # (5 pt)
+                    r'\[(\d+(?:[.,]\d+)?)\s*pt\]',      # [5 pt]
+                    r'(\d+(?:[.,]\d+)?)\s*pt',           # 5 pt
+                    r'\((\d+(?:[.,]\d+)?)\s*punti?\)',   # (5 punti)
+                    r'(\d+(?:[.,]\d+)?)\s*punti?',       # 5 punti
+                ]
+                
+                for pattern in pts_patterns:
+                    pts_m = re.search(pattern, option_text)
+                    if pts_m:
+                        total_points = int(float(pts_m.group(1).replace(',', '.')))
+                        logger.info(f"Multiple choice total points: {total_points}")
+                        # Rimuovi il punteggio dal testo
+                        option_text = re.sub(pattern, '', option_text).strip()
+                        break
+                
+                # Estrai la parte della domanda prima delle opzioni
+                question_match = re.search(r'^(.*?)(?=\\item\s+[A-Z]\))', body, re.DOTALL)
+                if question_match:
+                    question_text = question_match.group(1).strip()
+                    # Rimuovi il punteggio dalla domanda
+                    for pattern in pts_patterns:
+                        question_text = re.sub(pattern, '', question_text).strip()
+            
+            combined_text += f"{option_letter}) {option_text} "
+        
+        # Crea un unico item per la domanda a scelta multipla
+        full_text = f"{question_text}\n{combined_text.strip()}"
+        short_text = (full_text[:80] + '\u2026') if len(full_text) > 80 else full_text
+        
+        logger.info(f"Multiple choice combined item: '{short_text}'")
+        items.append(("MCQ", short_text, total_points))
+        logger.info(f"Returning 1 multiple choice item")
+        return items
+    
     if labeled:
         for i, m in enumerate(labeled):
             label = m.group(1).strip()
@@ -283,6 +338,56 @@ def parse_items_from_block(body: str, title: str = "") -> list:
     
     if not auto_items:
         logger.info(f"No auto items found with any pattern")
+    
+    # Controlla anche qui se è un esercizio a scelta multipla (per auto items)
+    if auto_items and len(auto_items) >= 2:
+        # Verifica se gli item iniziano con lettere maiuscole seguite da )
+        first_texts = [m.group(1).strip() for m in auto_items[:3]]  # Controlla primi 3
+        is_multiple_choice = all(re.match(r'^[A-Z]\)\s+', text) for text in first_texts)
+        
+        if is_multiple_choice:
+            logger.info(f"Multiple choice question detected in auto items: {len(auto_items)} options")
+            
+            # Combina tutte le opzioni in un unico item
+            combined_text = ""
+            total_points = 0
+            question_text = ""
+            
+            # Estrai il testo prima della prima opzione
+            body_parts = body.split('\\item')
+            if len(body_parts) > 1:
+                question_text = body_parts[0].strip()
+                # Cerca il punteggio totale nella domanda
+                pts_patterns = [
+                    r'\((\d+(?:[.,]\d+)?)\s*pt\)',      # (5 pt)
+                    r'\[(\d+(?:[.,]\d+)?)\s*pt\]',      # [5 pt]
+                    r'(\d+(?:[.,]\d+)?)\s*pt',           # 5 pt
+                    r'\((\d+(?:[.,]\d+)?)\s*punti?\)',   # (5 punti)
+                    r'(\d+(?:[.,]\d+)?)\s*punti?',       # 5 punti
+                ]
+                
+                for pattern in pts_patterns:
+                    pts_m = re.search(pattern, question_text)
+                    if pts_m:
+                        total_points = int(float(pts_m.group(1).replace(',', '.')))
+                        logger.info(f"Multiple choice total points (auto): {total_points}")
+                        # Rimuovi il punteggio dalla domanda
+                        question_text = re.sub(pattern, '', question_text).strip()
+                        break
+            
+            # Combina tutte le opzioni
+            for i, m in enumerate(auto_items):
+                text = m.group(1).strip()
+                combined_text += f"{text} "
+            
+            # Crea un unico item per la domanda a scelta multipla
+            full_text = f"{question_text}\n{combined_text.strip()}"
+            short_text = (full_text[:80] + '\u2026') if len(full_text) > 80 else full_text
+            
+            logger.info(f"Multiple choice combined item (auto): '{short_text}'")
+            items.append(("MCQ", short_text, total_points))
+            logger.info(f"Returning 1 multiple choice item (auto)")
+            return items
     
     if auto_items:
         auto_idx = 0
