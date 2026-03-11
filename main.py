@@ -5056,8 +5056,43 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             )
             st.session_state[f"_undo_block_{idx}"] = dict(st.session_state.review_blocks[idx])
             _loading_ph.empty()
-            with _loading_ph.status(f"Modifica esercizio {idx+1} in corso…", expanded=True) as _rw_st:
-                try:
+            
+            # Container elegante per la barra di stato
+            with _loading_ph.container():
+                # Header animato
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border-radius: 12px;
+                    padding: 1rem;
+                    margin-bottom: 1rem;
+                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+                    animation: pulse 2s infinite;
+                ">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="
+                            width: 24px; height: 24px;
+                            border: 3px solid rgba(255,255,255,0.3);
+                            border-top: 3px solid white;
+                            border-radius: 50%;
+                            animation: spin 1s linear infinite;
+                        "></div>
+                        <div style="color: white; font-family: 'DM Sans', sans-serif; font-weight: 600;">
+                            🎨 Modifica esercizio {idx+1} in corso...
+                        </div>
+                    </div>
+                    <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-top: 0.5rem; font-family: 'DM Sans', sans-serif;">
+                        L'AI sta analizzando la richiesta e rigenerando l'esercizio...
+                    </div>
+                </div>
+                
+                <style>
+                @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
+                @keyframes pulse {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.8; }} 100% {{ opacity: 1; }} }}
+                </style>
+                """, unsafe_allow_html=True)
+            
+            try:
                     model_rw_obj = genai.GenerativeModel(modello_rw)
                     resp  = model_rw_obj.generate_content(_prompt_rw)
                     nuovo = resp.text.replace("```latex","").replace("```","").strip()
@@ -5118,10 +5153,84 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         # FORZA REFRESH ESPPLICITO del preview
                         st.session_state.force_preview_refresh = True
 
-                    _rw_st.update(label="Modifica applicata!", state="complete", expanded=False)
-                    time.sleep(0.4); st.rerun()
+                    # Messaggio di successo elegante
+                    _loading_ph.markdown(f"""
+                    <div style="
+                        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                        border-radius: 12px;
+                        padding: 1rem;
+                        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+                        animation: slideIn 0.5s ease-out;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="
+                                width: 24px; height: 24px;
+                                background: white;
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 14px;
+                            ">✓</div>
+                            <div style="color: white; font-family: 'DM Sans', sans-serif; font-weight: 600;">
+                                🎉 Modifica applicata con successo!
+                            </div>
+                        </div>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-top: 0.5rem; font-family: 'DM Sans', sans-serif;">
+                            L'esercizio {idx+1} è stato aggiornato e il PDF è stato rigenerato.
+                        </div>
+                    </div>
+                    
+                    <style>
+                    @keyframes slideIn {{ 
+                        0% {{ transform: translateY(-20px); opacity: 0; }} 
+                        100% {{ transform: translateY(0); opacity: 1; }} 
+                    }}
+                    </style>
+                    """, unsafe_allow_html=True)
+                    
+                    time.sleep(0.8); st.rerun()
                 except Exception as e:
-                    st.error(f"Errore: {e}")
+                    # Messaggio di errore elegante
+                    _loading_ph.markdown(f"""
+                    <div style="
+                        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                        border-radius: 12px;
+                        padding: 1rem;
+                        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+                        animation: shake 0.5s ease-in-out;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="
+                                width: 24px; height: 24px;
+                                background: white;
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 14px;
+                                color: #ef4444;
+                            ">!</div>
+                            <div style="color: white; font-family: 'DM Sans', sans-serif; font-weight: 600;">
+                                ⚠️ Errore durante la modifica
+                            </div>
+                        </div>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-top: 0.5rem; font-family: 'DM Sans', sans-serif;">
+                            Si è verificato un problema: {str(e)}
+                        </div>
+                        <div style="color: rgba(255,255,255,0.8); font-size: 0.85rem; margin-top: 0.5rem; font-family: 'DM Sans', sans-serif;">
+                            💡 Prova a riformulare la richiesta o ricarica la pagina.
+                        </div>
+                    </div>
+                    
+                    <style>
+                    @keyframes shake {{ 
+                        0%, 100% {{ transform: translateX(0); }} 
+                        25% {{ transform: translateX(-5px); }} 
+                        75% {{ transform: translateX(5px); }} 
+                    }}
+                    </style>
+                    """, unsafe_allow_html=True)
 
     # ── Logica "Cambia totalmente" — struttura diversa, argomento uguale ─────
     if cambia_tutto:
