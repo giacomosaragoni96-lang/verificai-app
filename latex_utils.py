@@ -1500,7 +1500,8 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
 
             logger.info("Avvio compilazione pdflatex...")
             result = subprocess.run(
-                ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
+                ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, 
+                 "-shell-escape", "-disable-installer", tex_path],
                 capture_output=True,
                 text=True,
                 timeout=30
