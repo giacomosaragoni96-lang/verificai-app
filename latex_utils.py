@@ -964,6 +964,16 @@ def attempt_tikz_fix(latex: str) -> str:
     # Aggiungi ; finale se mancante
     fixed_latex = re.sub(r'(\\draw[^;]*?)(?=\n|$)', r'\1;', fixed_latex)
     
+    # Fix 3b: Correggi "nodes n..." incompleto in axis
+    fixed_latex = re.sub(r'nodes\s+n\.\.\.', 'nodes near coords', fixed_latex)
+    fixed_latex = re.sub(r'nodes\s+near\s+coords\s*\.\.\.', 'nodes near coords', fixed_latex)
+    fixed_latex = re.sub(r'nodes\s+near\s*$', 'nodes near coords', fixed_latex)
+    fixed_latex = re.sub(r'nodes\s+n$', 'nodes near coords', fixed_latex)
+    
+    # Fix 3c: Correggi altri comandi axis incompleti comuni
+    fixed_latex = re.sub(r'bar\s+width\s*=\s*\d+cm\s*$', 'bar width=1cm', fixed_latex)
+    fixed_latex = re.sub(r'symbolic\s+x\s+coords\s*=\s*\{[^}]*\s*$', r'\\end{axis}', fixed_latex)
+    
     # Fix 4: Correggi \node senza coordinate complete
     # Aggiungi coordinate di default se mancanti
     fixed_latex = re.sub(r'(\\node\s*\[.*?\]\s*at\s*\([^)]*)(?=\n|$)', r'\1)', fixed_latex)
