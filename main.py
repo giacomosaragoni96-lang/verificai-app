@@ -3101,14 +3101,24 @@ def _render_percorso_b_form():
             # ── LABEL ARGOMENTO ─────────────────────────────────────────────────────
             st.markdown('<div class="opt-label">Argomento ✱</div>', unsafe_allow_html=True)
             
-            argomento_raw = st.text_area(
-                "argomento",
-                value=_arg_default,
-                placeholder="es. Teorema di Pitagora (escludi dimostrazioni)\nes. Frazioni (semplificazione solo)\nes. Energia cinetica (no formule complesse)",
-                height=105,
-                label_visibility="collapsed",
-                key="argomento_area_b",
-            )
+            # Controlla se c'è già un valore in session state per evitare il warning
+            if "argomento_area_b" not in st.session_state:
+                argomento_raw = st.text_area(
+                    "argomento",
+                    value=_arg_default,
+                    placeholder="es. Teorema di Pitagora (escludi dimostrazioni)\nes. Frazioni (semplificazione solo)\nes. Energia cinetica (no formule complesse)",
+                    height=105,
+                    label_visibility="collapsed",
+                    key="argomento_area_b",
+                )
+            else:
+                argomento_raw = st.text_area(
+                    "argomento",
+                    placeholder="es. Teorema di Pitagora (escludi dimostrazioni)\nes. Frazioni (semplificazione solo)\nes. Energia cinetica (no formule complesse)",
+                    height=105,
+                    label_visibility="collapsed",
+                    key="argomento_area_b",
+                )
 
             # ── Traccia modifica manuale argomento ────────────────────────────────
             _auto_arg_ref = _info_cons.get("contenuto_argomento", "")
