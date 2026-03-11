@@ -1523,16 +1523,25 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                             "major issue: So far, you have not checked for updates",
                             "So far, you have not checked for updates as a MiKTeX user"
                         ]
-                        stderr_text = result.stderr.lower() if result.stderr else ""
                         
-                        if any(warning.lower() in stderr_text for warning in miktex_warnings):
+                        # Controlla sia stderr che stdout
+                        stderr_text = (result.stderr or "").lower()
+                        stdout_text = (result.stdout or "").lower()
+                        combined_text = stderr_text + stdout_text
+                        
+                        logger.info(f"Debug - stderr: {stderr_text[:200]}")
+                        logger.info(f"Debug - stdout: {stdout_text[:200]}")
+                        
+                        if any(warning.lower() in combined_text for warning in miktex_warnings):
                             logger.info("✅ Warnings MiKTeX rilevati ma ignorati - PDF generato correttamente")
                             return open(pdf_path, "rb").read(), None
                         else:
                             logger.warning(f"⚠️ Altri warnings presenti (return code: {result.returncode})")
                             # Log dei warnings ma non bloccante
                             stderr_lines = result.stderr.split('\n')[-3:] if result.stderr else []
-                            logger.warning(f"⚠️ Warnings: {stderr_lines}")
+                            stdout_lines = result.stdout.split('\n')[-3:] if result.stdout else []
+                            logger.warning(f"⚠️ Stderr: {stderr_lines}")
+                            logger.warning(f"⚠️ Stdout: {stdout_lines}")
                     
                     return open(pdf_path, "rb").read(), None
                 else:
