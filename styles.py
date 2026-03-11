@@ -1966,23 +1966,83 @@ def get_css(T: dict) -> str:
     min-height: 22px !important;
     height: 22px !important;
     padding: 0 8px !important;
-    font-size: 0.7rem !important;
+    font-size: 0.75rem !important;
     font-weight: 600 !important;
-    color: {T['muted']} !important;
+    border: 1px solid {T['error']}40 !important;
     background: transparent !important;
-    border: 1px solid {T['border2']} !important;
-    border-radius: 20px !important;
-    line-height: 1 !important;
+    color: {T['error']} !important;
+    -webkit-text-fill-color: {T['error']} !important;
+    border-radius: 4px !important;
     transition: color 0.15s, border-color 0.15s !important;
     box-shadow: none !important;
   }}
   .fpc-delete-row button:hover {{
     color: {T['error']} !important;
+    -webkit-text-fill-color: {T['error']} !important;
     border-color: {T['error']}40 !important;
     background: {T['error']}08 !important;
   }}
 
-  /* ── Tag pills ──────────────────────────────────────────────────────── */
+/* ── General delete buttons (🗑 Rimuovi) ──────────────────────────────── */
+  button[data-testid*="rm_b"] {{
+    background: transparent !important;
+    color: {T['error']} !important;
+    -webkit-text-fill-color: {T['error']} !important;
+    border: 1px solid {T['error']}40 !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    min-height: 32px !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+  }}
+  button[data-testid*="rm_b"]:hover {{
+    background: {T['error']}08 !important;
+    color: {T['error']} !important;
+    -webkit-text-fill-color: {T['error']} !important;
+    border-color: {T['error']}60 !important;
+  }}
+
+/* ── Back buttons (← Indietro) ──────────────────────────────────────────── */
+  button[data-testid*="back"] {{
+    background: transparent !important;
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
+    border: 1px solid {T['border']} !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    min-height: 32px !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+  }}
+  button[data-testid*="back"]:hover {{
+    background: {T['bg2']} !important;
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
+    border-color: {T['border2']} !important;
+  }}
+
+/* ── Tag pills ──────────────────────────────────────────────────────── */
+.doc-tags {{
+display: flex;
+flex-wrap: wrap;
+gap: 0.2rem;
+margin-bottom: 0.2rem;
+}}
+.doc-tag {{
+display: inline-flex;
+align-items: center;
+gap: 0.1rem;
+font-size: 0.65rem;
+font-weight: 600;
+padding: 1px 5px;
+border-radius: 4px;
+white-space: nowrap;
+font-family: 'DM Sans', sans-serif;
+}}
+.doc-tag-tipo    {{ background:{_acc_soft}; color:{_acc};    border:1px solid {_acc_ring}; }}
+.doc-tag-content {{ background:{T['border2']}44; color:{T['text2']}; border:1px solid {T['border2']}; }}
+.doc-tag-formula {{ background:{_acc}12; color:{_acc}; border:1px solid {_acc}28; }}
+.doc-tag-grafico {{ background:{T['warn']}12; color:{T['warn']}; border:1px solid {T['warn']}28; }}
   .doc-tags {{
     display: flex;
     flex-wrap: wrap;
