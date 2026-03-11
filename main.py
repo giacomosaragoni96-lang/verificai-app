@@ -5093,65 +5093,63 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 """, unsafe_allow_html=True)
             
             try:
-                    model_rw_obj = genai.GenerativeModel(modello_rw)
-                    resp  = model_rw_obj.generate_content(_prompt_rw)
-                    nuovo = resp.text.replace("```latex","").replace("```","").strip()
-                    m_rw  = re.match(r"\\subsection\*\{([^}]*)\}(.*)", nuovo, re.DOTALL)
-                    if m_rw:
-                        new_title = m_rw.group(1)
-                        new_body  = m_rw.group(2).strip()
-                    else:
-                        new_title = title
-                        new_body  = nuovo
+                model_rw_obj = genai.GenerativeModel(modello_rw)
+                resp  = model_rw_obj.generate_content(_prompt_rw)
+                nuovo = resp.text.replace("```latex","").replace("```","").strip()
+                m_rw  = re.match(r"\\subsection\*\{([^}]*)\}(.*)", nuovo, re.DOTALL)
+                if m_rw:
+                    new_title = m_rw.group(1)
+                    new_body  = m_rw.group(2).strip()
+                else:
+                    new_title = title
+                    new_body  = nuovo
 
                     # Rimuovi eventuale (N pt) che l'AI ha messo nel titolo
-                    new_title = re.sub(r'\s*\(\d+\s*pt\)', '', new_title).strip()
+                new_title = re.sub(r'\s*\(\d+\s*pt\)', '', new_title).strip()
 
-                    # Correzione deterministica dei punti: porta la somma esatta
-                    # al valore che aveva l'esercizio prima della modifica AI.
-                    if mostra_punteggi and _exercise_target_pts > 0:
-                        new_body = riscala_single_block(new_title, new_body, _exercise_target_pts)
+                # Correzione deterministica dei punti: porta la somma esatta
+                # al valore che aveva l'esercizio prima della modifica AI.
+                if mostra_punteggi and _exercise_target_pts > 0:
+                    new_body = riscala_single_block(new_title, new_body, _exercise_target_pts)
 
-                    st.session_state.review_blocks[idx]["title"] = new_title
-                    st.session_state.review_blocks[idx]["body"]  = new_body
+                st.session_state.review_blocks[idx]["title"] = new_title
+                st.session_state.review_blocks[idx]["body"]  = new_body
 
-                    # Reset pannello ricalibra: rilegge i punteggi aggiornati
-                    if "recalibra_pts" in st.session_state:
-                        del st.session_state["recalibra_pts"]
+                # Reset pannello ricalibra: rilegge i punteggi aggiornati
+                if "recalibra_pts" in st.session_state:
+                    del st.session_state["recalibra_pts"]
 
-                    # Fix: ricompila il PDF e aggiorna la preview dopo la modifica
-                    _latex_rw = reconstruct_latex(
-                        st.session_state.review_preamble,
-                        st.session_state.review_blocks
-                    )
-                    _latex_rw = fix_items_environment(_latex_rw)
-                    _latex_rw = rimuovi_vspace_corpo(_latex_rw)
-                    _latex_rw = rimuovi_punti_subsection(_latex_rw)
-                    if con_griglia:
-                        _latex_rw = inietta_griglia(_latex_rw, punti_totali)
-                    st.session_state.verifiche["A"]["latex"]           = _latex_rw
-                    st.session_state.verifiche["A"]["latex_originale"] = _latex_rw
-                    _pdf_rw, _err_rw = compila_pdf(_latex_rw)
-                    logger.info(f"COMPILAZIONE PDF POST-MODIFICA - Success: {_pdf_rw is not None}, Error: {_err_rw}")
-                    if _pdf_rw:
-                        logger.info(f"PDF generato con successo - Size: {len(_pdf_rw)} bytes")
-                        st.session_state.verifiche["A"]["pdf"]    = _pdf_rw
-                        st.session_state.verifiche["A"]["pdf_ts"] = time.time()
-                        st.session_state.verifiche["A"]["preview"] = True
-                        _imgs_rw, _ = pdf_to_images_bytes(_pdf_rw)
-                        logger.info(f"IMMAGINI PREVIEW GENERATE - Count: {len(_imgs_rw) if _imgs_rw else 0}")
-                        st.session_state.preview_images = _imgs_rw or []
-                        st.session_state.preview_page   = 0
-                        # Forza aggiornamento immediato del preview
-                        st.session_state.last_preview_ts = 0
-                        # Aggiorna direttamente le immagini preview per evitare ritardi
-                        if _imgs_rw:
-                            logger.info(f"Preview aggiornato immediatamente dopo modifica - {len(_imgs_rw)} pagine")
-                        else:
-                            logger.warning("Preview vuoto dopo modifica")
-                        
-                        # FORZA REFRESH ESPPLICITO del preview
-                        st.session_state.force_preview_refresh = True
+                # Fix: ricompila il PDF e aggiorna la preview dopo la modifica
+                _latex_rw = reconstruct_latex(
+                    st.session_state.review_preamble,
+                    st.session_state.review_blocks
+                )
+                _latex_rw = fix_items_environment(_latex_rw)
+                _latex_rw = rimuovi_vspace_corpo(_latex_rw)
+                _latex_rw = rimuovi_punti_subsection(_latex_rw)
+                if con_griglia:
+                    _latex_rw = inietta_griglia(_latex_rw, punti_totali)
+                st.session_state.verifiche["A"]["latex"]           = _latex_rw
+                st.session_state.verifiche["A"]["latex_originale"] = _latex_rw
+                _pdf_rw, _err_rw = compila_pdf(_latex_rw)
+                logger.info(f"COMPILAZIONE PDF POST-MODIFICA - Success: {_pdf_rw is not None}, Error: {_err_rw}")
+                if _pdf_rw:
+                    logger.info(f"PDF generato con successo - Size: {len(_pdf_rw)} bytes")
+                    st.session_state.verifiche["A"]["pdf"]    = _pdf_rw
+                    st.session_state.verifiche["A"]["pdf_ts"] = time.time()
+                    st.session_state.verifiche["A"]["preview"] = True
+                    _imgs_rw, _ = pdf_to_images_bytes(_pdf_rw)
+                    logger.info(f"IMMAGINI PREVIEW GENERATE - Count: {len(_imgs_rw) if _imgs_rw else 0}")
+                    st.session_state.preview_images = _imgs_rw or []
+                    st.session_state.preview_page   = 0
+                    st.session_state.last_preview_ts = 0
+                    if _imgs_rw:
+                        logger.info(f"Preview aggiornato immediatamente dopo modifica - {len(_imgs_rw)} pagine")
+                    else:
+                        logger.warning("Preview vuoto dopo modifica")
+                    
+                    # FORZA REFRESH ESPPLICITO del preview
+                    st.session_state.force_preview_refresh = True
 
                     # Messaggio di successo elegante
                     _loading_ph.markdown(f"""
