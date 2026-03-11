@@ -5096,11 +5096,14 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     st.session_state.verifiche["A"]["latex"]           = _latex_rw
                     st.session_state.verifiche["A"]["latex_originale"] = _latex_rw
                     _pdf_rw, _err_rw = compila_pdf(_latex_rw)
+                    logger.info(f"COMPILAZIONE PDF POST-MODIFICA - Success: {_pdf_rw is not None}, Error: {_err_rw}")
                     if _pdf_rw:
+                        logger.info(f"PDF generato con successo - Size: {len(_pdf_rw)} bytes")
                         st.session_state.verifiche["A"]["pdf"]    = _pdf_rw
                         st.session_state.verifiche["A"]["pdf_ts"] = time.time()
                         st.session_state.verifiche["A"]["preview"] = True
                         _imgs_rw, _ = pdf_to_images_bytes(_pdf_rw)
+                        logger.info(f"IMMAGINI PREVIEW GENERATE - Count: {len(_imgs_rw) if _imgs_rw else 0}")
                         st.session_state.preview_images = _imgs_rw or []
                         st.session_state.preview_page   = 0
                         # Forza aggiornamento immediato del preview
