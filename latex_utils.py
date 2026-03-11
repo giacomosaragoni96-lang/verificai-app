@@ -1254,9 +1254,9 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
             logger.info("✓ File LaTeX scritto")
 
             logger.info("Avvio compilazione pdflatex...")
-            logger.info(f"Comando: pdflatex -interaction=nonstopmode -output-directory {tmpdir} {tex_path}")
+            logger.info(f"Comando: pdflatex -interaction=nonstopmode -output-directory {tmpdir} -shell-escape -disable-installer {tex_path}")
             result = subprocess.run(
-                ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
+                ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, "-shell-escape", "-disable-installer", tex_path],
                 capture_output=True,
                 text=True,
                 timeout=30  # Timeout di 30 secondi
