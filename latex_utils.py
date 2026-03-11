@@ -1505,10 +1505,25 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                  "-halt-on-error", "-file-line-error", tex_path],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
+                env={**os.environ, "MIKTEX_NO_UPDATES": "1", "MIKTEX_NO_CHECK_UPDATES": "1"}
             )
 
             logger.info(f"Return code: {result.returncode}")
+            
+            # Se il primo tentativo fallisce per warning MiKTeX, prova senza shell-escape
+            if result.returncode != 0 and not os.path.exists(pdf_path):
+                logger.warning("⚠️ Primo tentativo fallito, riprovo senza shell-escape...")
+                result2 = subprocess.run(
+                    ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, 
+                     "-interaction=batchmode", "-halt-on-error", "-file-line-error", tex_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    env={**os.environ, "MIKTEX_NO_UPDATES": "1", "MIKTEX_NO_CHECK_UPDATES": "1"}
+                )
+                logger.info(f"Secondo tentativo - Return code: {result2.returncode}")
+                result = result2  # Usa il secondo risultato
             
             # Controlla se il PDF è stato generato anche con warnings MiKTeX
             if os.path.exists(pdf_path):
