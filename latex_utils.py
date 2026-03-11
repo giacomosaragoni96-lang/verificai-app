@@ -1370,6 +1370,26 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                     log_content = f.read()
                     logger.info(f"Contenuto log LaTeX (ultimi 1000 char): {log_content[-1000:]}")
 
+            # Controlla se il PDF è stato generato anche con warnings
+            if os.path.exists(pdf_path):
+                pdf_size = os.path.getsize(pdf_path)
+                if pdf_size > 1000:  # PDF valido (almeno 1KB)
+                    logger.info(f"✓ PDF compilato con successo - Dimensione: {pdf_size} bytes")
+                    
+                    # Se c'è return code != 0 ma il PDF esiste, sono solo warning
+                    if result.returncode != 0:
+                        logger.warning(f"⚠️ Warnings MiKTeX ignorati - PDF generato comunque (return code: {result.returncode})")
+                        # Log dei warnings ma non bloccante
+                        stdout_lines = result.stdout.split('\n')[-5:]
+                        stderr_lines = result.stderr.split('\n')[-3:]
+                        logger.warning(f"⚠️ Warnings: {stdout_lines}")
+                        logger.warning(f"⚠️ Warnings: {stderr_lines}")
+                    
+                    return open(pdf_path, "rb").read(), None
+                else:
+                    logger.error(f"✗ PDF generato ma troppo piccolo: {pdf_size} bytes")
+            
+            # Se arriviamo qui, il PDF non esiste o è troppo piccolo
             if result.returncode != 0:
                 logger.error(f"✗ Errore pdflatex (codice {result.returncode}): {result.stderr}")
                 # Log dettagliato dell'output per debugging
@@ -1390,13 +1410,9 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                     logger.error("✗ Errore grave: Emergency stop")
                 
                 return None, f"Errore durante la compilazione LaTeX: {result.stderr}"
-            
-            if os.path.exists(pdf_path):
-                pdf_size = os.path.getsize(pdf_path)
-                logger.info(f"✓ PDF compilato con successo - Dimensione: {pdf_size} bytes")
-                return open(pdf_path, "rb").read(), None
             else:
-                logger.error("✗ File PDF non generato")
+                logger.error("✗ File PDF non generato senza errori evidenti")
+                return None, "Errore: PDF non generato durante la compilazione"
                 # Controlla se ci sono file di log per capire l'errore
                 log_path = os.path.join(tmpdir, "v.log")
                 if os.path.exists(log_path):
