@@ -1084,6 +1084,42 @@ def fix_tikz_labels(latex: str) -> str:
     return latex
 
 
+def fix_table_width(latex: str) -> str:
+    """
+    Sistema le tabelle che escono dai margini aggiungendo adjustbox.
+    """
+    logger.info("Applicando fix per larghezza tabelle...")
+    
+    # Pattern per trovare ambienti tabular senza adjustbox
+    tabular_pattern = r'\\begin\{tabular\}([^}]*)\}(.*?)\\end\{tabular\}'
+    
+    def wrap_tabular(match):
+        col_spec = match.group(1)
+        content = match.group(2)
+        # Avvolgi la tabella con adjustbox per limitare la larghezza
+        return f'\\adjustbox{{max width={{\\textwidth}}}}{{\\begin{{tabular}}{col_spec}}}{content}\\end{{tabular}}}}'
+    
+    # Applica il wrapping solo se non c'è già adjustbox
+    def fix_latex_tables(text):
+        # Prima controlla se c'è già adjustbox
+        if '\\adjustbox' in text:
+            return text
+            
+        # Trova e avvolgi le tabelle
+        fixed_text = re.sub(tabular_pattern, wrap_tabular, text, flags=re.DOTALL)
+        return fixed_text
+    
+    # Applica il fix
+    latex_fixed = fix_latex_tables(latex)
+    
+    if latex_fixed != latex:
+        logger.info("✓ Tabelle sistemate con adjustbox")
+    else:
+        logger.info("✓ Nessuna tabella da sistemare")
+    
+    return latex_fixed
+
+
 # ── COMPILAZIONE PDF ───────────────────────────────────────────────────────────
 
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
@@ -1099,6 +1135,8 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     logger.info("✓ clean_tikz_spoilers applicato")
     codice_latex = fix_tikz_labels(codice_latex)
     logger.info("✓ fix_tikz_labels applicato")
+    codice_latex = fix_table_width(codice_latex)
+    logger.info("✓ fix_table_width applicato")
     
     # Validazione codice TikZ per catturare errori comuni
     logger.info("Validazione codice TikZ...")
