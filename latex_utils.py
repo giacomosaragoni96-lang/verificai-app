@@ -1086,9 +1086,38 @@ def fix_tikz_labels(latex: str) -> str:
 
 def fix_table_width(latex: str) -> str:
     """
-    Sistema le tabelle che escono dai margini aggiungendo adjustbox.
+    Sistema le tabelle che escono dai margini aggiungendo adjustbox e righe vuote.
     """
     logger.info("Applicando fix per larghezza tabelle...")
+    
+    # Prima di tutto: assicura che ci sia una riga vuota prima di ogni \begin{tabular}
+    def add_line_breaks_before_tables(text):
+        # Pattern per trovare \begin{tabular} non preceduti da riga vuota
+        # Controlla se non c'è già \n\n prima del \begin{tabular}
+        tabular_pattern = r'(?:[^\n])?\n\\begin\{tabular\}'
+        
+        def replace_with_linebreak(match):
+            # Aggiungi \n\n prima del \begin{tabular}
+            return '\n\n\\begin{tabular}'
+        
+        # Applica più volte per catturare tutti i casi
+        fixed_text = re.sub(tabular_pattern, replace_with_linebreak, text)
+        
+        # Secondo passaggio: gestisce \begin{tabular} a inizio riga senza \n\n prima
+        tabular_start_pattern = r'^\s*\\begin\{tabular\}'
+        lines = fixed_text.split('\n')
+        for i, line in enumerate(lines):
+            if re.match(tabular_start_pattern, line):
+                # Controlla se la riga precedente è vuota
+                if i > 0 and lines[i-1].strip() != '':
+                    # Inserisci riga vuota prima
+                    lines.insert(i, '')
+                    i += 1  # Salta la riga appena inserita
+        
+        return '\n'.join(lines)
+    
+    # Applica il fix delle righe vuote
+    latex_with_breaks = add_line_breaks_before_tables(latex)
     
     # Pattern più robusto per trovare ambienti tabular
     # Gestisce anche casi con \centering o altri elementi
@@ -1124,7 +1153,7 @@ def fix_table_width(latex: str) -> str:
         return fixed_text
     
     # Applica il fix
-    latex_fixed = fix_latex_tables(latex)
+    latex_fixed = fix_latex_tables(latex_with_breaks)
     
     # Secondo passaggio: gestisce tabelle dentro \centering o \begin{center}
     center_pattern = r'\\begin\{center\}(.*?)\\end\{center\}'
@@ -1158,7 +1187,7 @@ def fix_table_width(latex: str) -> str:
     latex_fixed = fix_centering_tables(latex_fixed)
     
     if latex_fixed != latex:
-        logger.info("✓ Tabelle sistemate con adjustbox")
+        logger.info("✓ Tabelle sistemate con adjustbox e righe vuote")
     else:
         logger.info("✓ Nessuna tabella da sistemare")
     
