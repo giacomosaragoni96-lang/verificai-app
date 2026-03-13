@@ -878,7 +878,7 @@ def assicura_punti_visibili(corpo: str, punti_totali: int) -> str:
 def limita_altezza_grafici(latex: str) -> str:
     """
     Aggiunge limiti di altezza ai grafici TikZ per evitare che occupino tropo spazio.
-    Limita anche l'asse Y ai valori utili e aggiunge spaziatura prima dei grafici.
+    Adatta dinamicamente i limiti per includere sempre punti importanti.
     """
     def _add_height_limit(tikz_block):
         # Aggiungi spaziatura prima del grafico se non presente
@@ -899,29 +899,56 @@ def limita_altezza_grafici(latex: str) -> str:
                 '\\begin{tikzpicture}[height=5cm, width=9cm]'
             )
         
-        # Limita gli assi per i grafici pgfplots - più aggressivo
+        # Limita gli assi per i grafici pgfplots - adattivo
         if '\\begin{axis}' in tikz_with_spacing:
-            # Rimuovi TUTTI i limiti esistenti (xmin, xmax, ymin, ymax, etc.)
-            tikz_with_spacing = re.sub(r',?\s*[xy]min=\{[^}]*\}', '', tikz_with_spacing)
-            tikz_with_spacing = re.sub(r',?\s*[xy]max=\{[^}]*\}', '', tikz_with_spacing)
-            # Rimuovi domain esistenti
-            tikz_with_spacing = re.sub(r',?\s*domain=\{[^}]*\}', '', tikz_with_spacing)
-            tikz_with_spacing = re.sub(r',?\s*domain=[^,]*', '', tikz_with_spacing)
-            tikz_with_spacing = re.sub(r',?\s*samples=\{[^}]*\}', '', tikz_with_spacing)
-            
-            # Rimuovi etichette e titoli inutili
-            tikz_with_spacing = re.sub(r',?\s*xlabel=\{[^}]*\}', '', tikz_with_spacing)
-            tikz_with_spacing = re.sub(r',?\s*ylabel=\{[^}]*\}', '', tikz_with_spacing)
-            tikz_with_spacing = re.sub(r',?\s*title=\{[^}]*\}', '', tikz_with_spacing)
-            tikz_with_spacing = re.sub(r',?\s*legend[^}]*\}', '', tikz_with_spacing)
-            
-            # Rimuovi opzioni vuote rimanenti
-            tikz_with_spacing = re.sub(r',\s*,', ',', tikz_with_spacing)
-            tikz_with_spacing = re.sub(r'\[\s*,', '[', tikz_with_spacing)
-            tikz_with_spacing = re.sub(r',\s*\]', ']', tikz_with_spacing)
-            
-            # Aggiungi limiti corretti e opzioni pulite
-            axis_options = 'xmin=-4, xmax=4, ymin=-4, ymax=4, axis lines=middle, xlabel=$x$, ylabel=$y$, xtick={-4,-2,0,2,4}, ytick={-4,-2,0,2,4}, grid=major, width=9cm, height=5cm, domain=-4:4, samples=100'
+            # Analizza la funzione per determinare i limiti appropriati
+            func_match = re.search(r'\\addplot.*?\{([^}]+)\}', tikz_with_spacing)
+            if func_match:
+                func_expr = func_match.group(1)
+                
+                # Calcola limiti dinamici basati sulla funzione
+                dynamic_limits = _calculate_dynamic_limits(func_expr)
+                
+                # Rimuovi tutti i limiti esistenti
+                tikz_with_spacing = re.sub(r',?\s*[xy]min=\{[^}]*\}', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*[xy]max=\{[^}]*\}', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*domain=\{[^}]*\}', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*domain=[^,]*', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*samples=\{[^}]*\}', '', tikz_with_spacing)
+                
+                # Rimuovi etichette e titoli inutili
+                tikz_with_spacing = re.sub(r',?\s*xlabel=\{[^}]*\}', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*ylabel=\{[^}]*\}', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*title=\{[^}]*\}', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*legend[^}]*\}', '', tikz_with_spacing)
+                
+                # Rimuovi opzioni vuote rimanenti
+                tikz_with_spacing = re.sub(r',\s*,', ',', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r'\[\s*,', '[', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',\s*\]', ']', tikz_with_spacing)
+                
+                # Aggiungi limiti dinamici
+                axis_options = f'xmin={dynamic_limits["xmin"]}, xmax={dynamic_limits["xmax"]}, ymin={dynamic_limits["ymin"]}, ymax={dynamic_limits["ymax"]}, axis lines=middle, xlabel=$x$, ylabel=$y$, grid=major, width=9cm, height=5cm, domain={dynamic_limits["xmin"]}:{dynamic_limits["xmax"]}, samples=100'
+            else:
+                # Fallback: limiti standard
+                tikz_with_spacing = re.sub(r',?\s*[xy]min=\{[^}]*\}', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*[xy]max=\{[^}]*\}', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*domain=\{[^}]*\}', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*domain=[^,]*', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*samples=\{[^}]*\}', '', tikz_with_spacing)
+                
+                # Rimuovi etichette e titoli inutili
+                tikz_with_spacing = re.sub(r',?\s*xlabel=\{[^}]*\}', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*ylabel=\{[^}]*\}', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*title=\{[^}]*\}', '', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',?\s*legend[^}]*\}', '', tikz_with_spacing)
+                
+                # Rimuovi opzioni vuote rimanenti
+                tikz_with_spacing = re.sub(r',\s*,', ',', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r'\[\s*,', '[', tikz_with_spacing)
+                tikz_with_spacing = re.sub(r',\s*\]', ']', tikz_with_spacing)
+                
+                axis_options = 'xmin=-6, xmax=6, ymin=-6, ymax=6, axis lines=middle, xlabel=$x$, ylabel=$y$, grid=major, width=9cm, height=5cm, domain=-6:6, samples=100'
             
             axis_pattern = r'\\begin\{axis\}\[([^\]]*)\]'
             if re.search(axis_pattern, tikz_with_spacing):
@@ -938,7 +965,7 @@ def limita_altezza_grafici(latex: str) -> str:
                 )
             
             # Assicura che i limiti siano presenti (doppia verifica)
-            if 'xmin=-4' not in tikz_with_spacing:
+            if 'xmin=' not in tikz_with_spacing:
                 tikz_with_spacing = re.sub(
                     r'\\begin\{axis\}',
                     f'\\begin{{axis}}[{axis_options}]',
@@ -956,6 +983,86 @@ def limita_altezza_grafici(latex: str) -> str:
     )
     
     return latex
+
+
+def _calculate_dynamic_limits(func_expr: str) -> dict:
+    """
+    Calcola limiti dinamici basati sull'espressione della funzione.
+    Analizza funzioni comuni per determinare i punti importanti.
+    """
+    # Default limits
+    limits = {"xmin": -6, "xmax": 6, "ymin": -6, "ymax": 6}
+    
+    try:
+        # Pattern per funzioni quadratiche ax^2 + bx + c
+        quad_match = re.search(r'([+-]?\d*\.?\d*)\*x\^2\s*([+-]\s*\d*\.?\d*)\*x\s*([+-]\s*\d+\.?\d*)', func_expr)
+        if quad_match:
+            a = float(quad_match.group(1).replace('+', '') or '1')
+            b = float(quad_match.group(2).replace('+', '') or '0')
+            c = float(quad_match.group(3).replace('+', '') or '0')
+            
+            if a != 0:
+                # Calcolo vertice
+                x_vertex = -b / (2 * a)
+                y_vertex = a * x_vertex**2 + b * x_vertex + c
+                
+                # Calcolo intersezioni con asse x
+                discriminant = b**2 - 4*a*c
+                if discriminant >= 0:
+                    sqrt_disc = discriminant**0.5
+                    x1 = (-b - sqrt_disc) / (2*a)
+                    x2 = (-b + sqrt_disc) / (2*a)
+                
+                # Determina range basato su punti importanti
+                x_points = [x_vertex]
+                if discriminant >= 0:
+                    x_points.extend([x1, x2])
+                
+                x_min = min(x_points) - 2
+                x_max = max(x_points) + 2
+                
+                # Calcola valori y estremi nel range x
+                y_test_points = [x_min, x_max, x_vertex]
+                if discriminant >= 0:
+                    y_test_points.extend([x1, x2])
+                
+                y_values = [a*x**2 + b*x + c for x in y_test_points]
+                y_min = min(y_values) - 2
+                y_max = max(y_values) + 2
+                
+                # Limiti ragionevoli
+                limits = {
+                    "xmin": max(-8, min(x_min, -4)),
+                    "xmax": min(8, max(x_max, 4)),
+                    "ymin": max(-8, min(y_min, -4)),
+                    "ymax": min(8, max(y_max, 4))
+                }
+        
+        # Pattern per funzioni lineari mx + q
+        linear_match = re.search(r'([+-]?\d*\.?\d*)\*x\s*([+-]\s*\d+\.?\d*)', func_expr)
+        if linear_match:
+            m = float(linear_match.group(1).replace('+', '') or '1')
+            q = float(linear_match.group(2).replace('+', '') or '0')
+            
+            # Calcola valori agli estremi
+            y_minus4 = m * -4 + q
+            y_plus4 = m * 4 + q
+            
+            y_min = min(y_minus4, y_plus4, 0) - 2
+            y_max = max(y_minus4, y_plus4, 0) + 2
+            
+            limits = {
+                "xmin": -6, "xmax": 6,
+                "ymin": max(-8, y_min),
+                "ymax": min(8, y_max)
+            }
+    
+    except Exception as e:
+        logger.warning(f"Errore nel calcolo limiti dinamici: {e}")
+        # Fallback a limiti standard più ampi
+        limits = {"xmin": -8, "xmax": 8, "ymin": -8, "ymax": 8}
+    
+    return limits
 
 
 def aggiungi_spaziatura_grafici_tabelle(latex: str) -> str:
