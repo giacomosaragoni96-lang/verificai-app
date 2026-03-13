@@ -8,6 +8,9 @@
 
 import re
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 from prompts import (
     prompt_titolo,
