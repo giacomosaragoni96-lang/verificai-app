@@ -3646,6 +3646,11 @@ def _lancia_generazione(
             on_progress=_avanza,
         )
 
+        # Capture validation score for quality tracking
+        if "_validation_score" in ris:
+            st.session_state.last_validation_score = ris["_validation_score"]
+            logger.info(f"Validation score salvato: {ris['_validation_score']}")
+
         def _agg(fid, d):
             v = st.session_state.verifiche[fid]
             if d.get("latex"): v["latex"] = v["latex_originale"] = d["latex"]
@@ -5597,6 +5602,48 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 #  STAGE_FINAL
 # ═══════════════════════════════════════════════════════════════════════════════
 
+def _salva_feedback(rating: str, gen_params: dict):
+    """
+    Salva il feedback di qualità e lo invia al database per analisi.
+    """
+    try:
+        # Salva nel session state per statistiche immediate
+        if not hasattr(st.session_state, 'quality_stats'):
+            st.session_state.quality_stats = {'excellent': 0, 'good': 0, 'sufficient': 0, 'poor': 0}
+        
+        st.session_state.quality_stats[rating] = st.session_state.quality_stats.get(rating, 0) + 1
+        
+        # Prepara i dati per il database
+        feedback_data = {
+            'rating': rating,
+            'materia': gen_params.get('materia', ''),
+            'argomento': gen_params.get('argomento', ''),
+            'difficolta': gen_params.get('difficolta', ''),
+            'num_esercizi': gen_params.get('num_esercizi', 0),
+            'punti_totali': gen_params.get('punti_totali', 0),
+            'modello_id': gen_params.get('modello_id', ''),
+            'ha_griglia': gen_params.get('con_griglia', False),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'user_id': st.session_state.get('user_id', 'anonymous'),
+            'validation_score': getattr(st.session_state, 'last_validation_score', None),
+            'compilation_success': st.session_state.verifiche.get("A", {}).get("pdf") is not None
+        }
+        
+        # Invia al database (se disponibile)
+        if 'supabase' in st.session_state and st.session_state.supabase:
+            try:
+                st.session_state.supabase.table('quality_feedback').insert(feedback_data).execute()
+                logger.info(f"Feedback salvato: {rating} per {gen_params.get('materia', 'sconosciuta')}")
+            except Exception as e:
+                logger.warning(f"Impossibile salvare feedback al database: {e}")
+        
+        # Log locale per debugging
+        logger.info(f"FEEDBACK QUALITÀ: {rating} | {gen_params.get('materia', '')} | {gen_params.get('argomento', '')}")
+        
+    except Exception as e:
+        logger.error(f"Errore nel salvataggio feedback: {e}")
+
+
 def _render_stage_final():
     gp   = st.session_state.gen_params
     vA   = st.session_state.verifiche["A"]
@@ -5675,6 +5722,55 @@ def _render_stage_final():
             help="Scarica il PDF della verifica Fila A, già formattato e pronto per la stampa.",
         )
         st.markdown('</div>', unsafe_allow_html=True)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    #  FEEDBACK QUALITÀ
+    # ═══════════════════════════════════════════════════════════════════════════
+    st.markdown(
+        '<div class="variant-section-label">VALUTA LA QUALITÀ DELLA VERIFICA GENERATA</div>',
+        unsafe_allow_html=True
+    )
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if st.button("👍 Ottima", key="fb_excellent", use_container_width=True):
+            _salva_feedback("excellent", gp)
+            st.success("Grazie per il feedback! 🎉")
+            st.balloons()
+    
+    with col2:
+        if st.button("👍 Buona", key="fb_good", use_container_width=True):
+            _salva_feedback("good", gp)
+            st.success("Grazie per il feedback! 👍")
+    
+    with col3:
+        if st.button("😐 Sufficiente", key="fb_ok", use_container_width=True):
+            _salva_feedback("sufficient", gp)
+            st.info("Grazie per il feedback, cercheremo di migliorare! 📈")
+    
+    with col4:
+        if st.button("👎 Insufficiente", key="fb_poor", use_container_width=True):
+            _salva_feedback("poor", gp)
+            st.warning("Grazie per il feedback, ci stiamo già lavorando per migliorare! 🔧")
+    
+    # Mostra statistiche di qualità (se disponibili)
+    if hasattr(st.session_state, 'quality_stats'):
+        stats = st.session_state.quality_stats
+        st.markdown("---")
+        st.markdown("### 📊 Statistiche Qualità Generale")
+        
+        total = sum(stats.values())
+        if total > 0:
+            cols = st.columns(4)
+            with cols[0]:
+                st.metric("👍 Ottima", f"{stats.get('excellent', 0)}", f"{stats.get('excellent', 0)/total*100:.0f}%")
+            with cols[1]:
+                st.metric("👍 Buona", f"{stats.get('good', 0)}", f"{stats.get('good', 0)/total*100:.0f}%")
+            with cols[2]:
+                st.metric("😐 Sufficiente", f"{stats.get('sufficient', 0)}", f"{stats.get('sufficient', 0)/total*100:.0f}%")
+            with cols[3]:
+                st.metric("👎 Insufficiente", f"{stats.get('poor', 0)}", f"{stats.get('poor', 0)/total*100:.0f}%")
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  VARIANTI — 4 card in colonna

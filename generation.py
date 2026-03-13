@@ -68,25 +68,122 @@ from latex_utils import (
 
 # ── HELPER INTERNO ────────────────────────────────────────────────────────────────
 
-def _safe_generate(model, prompt_or_parts, step_name: str = "API", retries: int = 2):
+def _validate_content_quality(corpo: str, materia: str, num_esercizi: int, punti_totali: int) -> float:
     """
-    Esegue model.generate_content con retry esponenziale.
-    - retries: numero di tentativi extra dopo il primo fallimento.
-    - Rilancia RuntimeError con contesto se tutti i tentativi falliscono.
+    Valuta la qualità del contenuto generato con score 0-1.
+    Controlla: coerenza, completezza, formato LaTeX, punteggi.
+    """
+    score = 0.0
+    max_score = 5.0
+    
+    # 1. Controllo numero esercizi
+    esercizi_trovati = len(re.findall(r"\\subsection\*", corpo))
+    if esercizi_trovati == num_esercizi:
+        score += 1.0
+    elif 0.5 * num_esercizi <= esercizi_trovati <= 1.5 * num_esercizi:
+        score += 0.5
+    
+    # 2. Controllo struttura LaTeX
+    if "\\begin{enumerate}" in corpo and "\\item" in corpo:
+        score += 1.0
+    elif "\\item" in corpo:
+        score += 0.5
+    
+    # 3. Controllo punteggi (se richiesti)
+    if punti_totali > 0:
+        punti_matches = re.findall(r"\(\s*(\d+(?:[.,]\d+)?)\s*pt\s*\)", corpo)
+        if punti_matches:
+            somma_punti = sum(float(p.replace(',', '.')) for p in punti_matches)
+            if abs(somma_punti - punti_totali) <= 1:
+                score += 1.0
+            elif abs(somma_punti - punti_totali) <= 3:
+                score += 0.5
+    
+    # 4. Controllo coerenza minima
+    if len(corpo.strip()) > 200:  # Lunghezza minima
+        score += 1.0
+    elif len(corpo.strip()) > 100:
+        score += 0.5
+    
+    # 5. Controllo errori LaTeX gravi
+    errori_gravi = ["\\begin{document}", "\\end{document}", "\\documentclass"]
+    if not any(err in corpo for err in errori_gravi):
+        score += 1.0
+    
+    return score / max_score
+
+
+def _prompt_controllo_qualita_migliorato(
+    materia: str, difficolta: str, corpo: str, mostra_punteggi: bool, punti_totali: int
+) -> str:
+    """
+    Prompt di controllo qualità migliorato con focus su correzioni specifiche.
+    """
+    return (
+        f"Sei un docente esperto di {materia}. Analizza e correggi questa verifica.\n\n"
+        f"MATERIA: {materia}\n"
+        f"DIFFICOLTÀ: {difficolta}\n"
+        f"PUNTI TOTALI: {punti_totali}\n"
+        f"PUNTEGGI VISIBILI: {'Sì' if mostra_punteggi else 'No'}\n\n"
+        f"VERIFICA DA CORREGGERE:\n{corpo}\n\n"
+        f"PRIORITÀ DI CORREZIONE:\n"
+        f"1. Verifica che ogni esercizio abbia senso e sia completo\n"
+        f"2. Correggi errori di grammatica e sintassi\n"
+        f"3. Assicura che i punteggi siano corretti e sommino a {punti_totali}\n"
+        f"4. Verifica che la struttura LaTeX sia corretta\n"
+        f"5. Elimina esercizi ripetitivi o troppo simili\n\n"
+        f"RESTITUISCI SOLO il LaTeX corretto, senza commenti o spiegazioni.\n"
+    )
+
+
+def _safe_generate_improved(model, prompt_or_parts, step_name: str = "API", retries: int = 3, 
+                           incremental: bool = False) -> any:
+    """
+    Versione migliorata di _safe_generate con retry incrementale e errori specifici.
     """
     last_exc: Exception | None = None
     for attempt in range(1 + retries):
         try:
+            if attempt > 1 and incremental:
+                # Aggiungi istruzioni di correzione basate sull'errore precedente
+                if isinstance(prompt_or_parts, list):
+                    prompt_or_parts[0] += f"\n\nATTENZIONE: Tentativo {attempt}/{retries+1}. "
+                    if "timeout" in str(last_exc).lower():
+                        prompt_or_parts[0] += "Sii più conciso e vai dritto al punto."
+                    elif "quota" in str(last_exc).lower():
+                        prompt_or_parts[0] += "Riduci la complessità della risposta."
+                    elif "content" in str(last_exc).lower():
+                        prompt_or_parts[0] += "Evita contenuti sensibili o inappropriati."
+            
             return model.generate_content(prompt_or_parts)
         except Exception as e:
             last_exc = e
             if attempt < retries:
-                time.sleep(2 ** attempt)   # 1s, 2s
-    raise RuntimeError(f"{step_name}: {last_exc}") from last_exc
+                wait_time = 2 ** attempt  # 2s, 4s, 8s
+                logger.warning(f"{step_name} tentativo {attempt} fallito: {e}. Retry in {wait_time}s...")
+                time.sleep(wait_time)
+    
+    # Messaggio di errore specifico
+    error_msg = f"{step_name}: {last_exc}"
+    if "timeout" in str(last_exc).lower():
+        error_msg += " (Suggerimento: ridurre la complessità della richiesta)"
+    elif "quota" in str(last_exc).lower():
+        error_msg += " (Suggerimento: provare un modello più leggero)"
+    elif "content" in str(last_exc).lower():
+        error_msg += " (Suggerimento: riformulare la richiesta)"
+    
+    raise RuntimeError(error_msg) from last_exc
 
 
 def _pulisci_risposta(testo: str) -> str:
     return testo.replace("```latex", "").replace("```", "").strip()
+
+
+def _safe_generate(model, prompt_or_parts, step_name: str = "API", retries: int = 2):
+    """
+    Wrapper che mantiene compatibilità ma usa la versione migliorata.
+    """
+    return _safe_generate_improved(model, prompt_or_parts, step_name, retries, incremental=True)
 
 
 def _testo_to_latex_body(testo: str) -> str:
@@ -183,13 +280,93 @@ def _assembla_e_compila(
         latex = _rimuovi_tutti_punteggi(latex)
 
     latex_final = inietta_griglia(latex, punti_totali) if (con_griglia and mostra_punteggi) else latex
-    pdf, _ = compila_pdf(latex_final)
-
-    if pdf is None and con_griglia and mostra_punteggi:
-        # fallback senza griglia
-        pdf, _ = compila_pdf(latex)
+    
+    # Tentativo di compilazione con diagnostica migliorata
+    pdf, error_msg = compila_pdf(latex_final)
+    
+    if pdf is None:
+        logger.error(f"Compilazione PDF fallita: {error_msg}")
+        
+        # Analisi dell'errore per fornire diagnostica specifica
+        if "tikz" in str(error_msg).lower():
+            logger.warning("Errore TikZ rilevato, provo a rimuovere elementi grafici complessi")
+            latex_simplified = clean_tikz_spoilers(latex_final, aggressive=True)
+            pdf, _ = compila_pdf(latex_simplified)
+            if pdf:
+                logger.info("PDF generato con TikZ semplificato")
+                return latex_simplified, pdf
+        
+        if "table" in str(error_msg).lower() or "tabular" in str(error_msg).lower():
+            logger.warning("Errore tabella rilevato, provo a semplificare le tabelle")
+            latex_no_tables = re.sub(r'\\begin\{tabular\}.*?\\end\{tabular\}', '[Tabella]', latex_final, flags=re.DOTALL)
+            pdf, _ = compila_pdf(latex_no_tables)
+            if pdf:
+                logger.info("PDF generato con tabelle semplificate")
+                return latex_no_tables, pdf
+        
+        # Fallback senza griglia
+        if con_griglia and mostra_punteggi:
+            logger.warning("Tento fallback senza griglia di punteggi")
+            pdf, _ = compila_pdf(latex)
+            if pdf:
+                logger.info("PDF generato senza griglia")
+                return latex, pdf
+        
+        # Ultimo fallback: versione minimale
+        logger.warning("Tento versione minimale del LaTeX")
+        latex_minimal = _crea_versione_minimale(latex_final, error_msg)
+        pdf, _ = compila_pdf(latex_minimal)
+        if pdf:
+            logger.info("PDF generato con versione minimale")
+            return latex_minimal, pdf
+        
+        logger.error("Tutti i tentativi di compilazione falliti")
+        return latex_final, None
 
     return latex_final, pdf
+
+
+def _crea_versione_minimale(latex: str, errore: str) -> str:
+    """
+    Crea una versione minimale del LaTeX quando la compilazione fallisce.
+    """
+    try:
+        # Estrai il corpo principale
+        corpo_match = re.search(r'\\begin\{document\}(.*?)\\end\{document\}', latex, re.DOTALL)
+        if corpo_match:
+            corpo = corpo_match.group(1)
+        else:
+            corpo = latex
+        
+        # Rimuovi elementi problematici
+        corpo_semplificato = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '[Grafico]', corpo, flags=re.DOTALL)
+        corpo_semplificato = re.sub(r'\\begin\{tabular\}.*?\\end\{tabular\}', '[Tabella]', corpo_semplificato, flags=re.DOTALL)
+        corpo_semplificato = re.sub(r'\\begin\{table\}.*?\\end\{table\}', '', corpo_semplificato, flags=re.DOTALL)
+        
+        # Ricostruisci il LaTeX minimale
+        preambolo_minimale = (
+            "\\documentclass[12pt,a4paper]{article}\n"
+            "\\usepackage[utf8]{inputenc}\n"
+            "\\usepackage[italian]{babel}\n"
+            "\\usepackage{amsmath,amsfonts,amssymb}\n"
+            "\\geometry{margin=2cm}\n"
+            "\\pagestyle{empty}\n"
+            "\\begin{document}\n"
+        )
+        
+        return preambolo_minimale + corpo_semplificato + "\n\\end{document}"
+        
+    except Exception as e:
+        logger.error(f"Errore nella creazione versione minimale: {e}")
+        return (
+            "\\documentclass[12pt,a4paper]{article}\n"
+            "\\usepackage[utf8]{inputenc}\n"
+            "\\usepackage[italian]{babel}\n"
+            "\\begin{document}\n"
+            f"\\textbf{{Errore di compilazione}}\\newline\\newline"
+            f"La verifica non è stata compilata a causa di: {errore[:200]}...\n"
+            "\\end{document}"
+        )
 
 
 def _tronca_al_numero_giusto(corpo: str, num_esercizi: int) -> str:
@@ -427,14 +604,41 @@ def genera_verifica(
     ra = _safe_generate(model, inp, "Generazione esercizi")
     corpo_a = pulisci_corpo_latex(_pulisci_risposta(ra.text))
 
-    # ── 4. CONTROLLO QUALITÀ ──────────────────────────────────────────────────
-    _avanza("🔎  Controllo qualità e correzione errori…")
-    rc = _safe_generate(
-        model,
-        prompt_controllo_qualita(materia, difficolta, corpo_a, mostra_punteggi, punti_totali),
-        "Controllo qualità",
-    )
-    corpo_corretto = pulisci_corpo_latex(_pulisci_risposta(rc.text))
+    # ── 4. CONTROLLO QUALITÀ MIGLIORATO ────────────────────────────────────────────
+    _avanza("🔎  Controllo qualità e validazione contenuto…")
+    
+    # Validazione semantica del contenuto generato
+    validation_score = _validate_content_quality(corpo_a, materia, num_esercizi, punti_totali)
+    logger.info(f"Score validazione contenuto: {validation_score}")
+    
+    # Salva il validation score nel risultato per tracking
+    risultato["_validation_score"] = validation_score
+    
+    # Se il punteggio è basso, genera un nuovo contenuto
+    if validation_score < 0.6:
+        logger.warning("Qualità contenuto insufficiente, rigenerazione con prompt semplificato...")
+        rc = _safe_generate(
+            model,
+            _prompt_controllo_qualita_migliorato(materia, difficolta, corpo_a, mostra_punteggi, punti_totali),
+            "Controllo qualità migliorato",
+        )
+        corpo_corretto = pulisci_corpo_latex(_pulisci_risposta(rc.text))
+        
+        # Validazione del contenuto corretto
+        new_score = _validate_content_quality(corpo_corretto, materia, num_esercizi, punti_totali)
+        if new_score > validation_score:
+            logger.info(f"Qualità migliorata: {validation_score} → {new_score}")
+            corpo_a = corpo_corretto
+        else:
+            logger.warning("Il controllo qualità non ha migliorato il contenuto, mantengo l'originale")
+    else:
+        logger.info("Qualità contenuto accettabile, procedo con il controllo standard")
+        rc = _safe_generate(
+            model,
+            prompt_controllo_qualita(materia, difficolta, corpo_a, mostra_punteggi, punti_totali),
+            "Controllo qualità",
+        )
+        corpo_corretto = pulisci_corpo_latex(_pulisci_risposta(rc.text))
 
     n_orig = len(re.findall(r"\\subsection\*", corpo_a))
     n_corr = len(re.findall(r"\\subsection\*", corpo_corretto))

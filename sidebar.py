@@ -347,12 +347,61 @@ def render_sidebar(
             cancella_sessione_cookie()
             supabase_client.auth.sign_out()
             st.session_state.utente          = None
-            st.session_state.stage           = "INPUT"
-            st.session_state.pop("_sb_access_token",  None)
-            st.session_state.pop("_sb_refresh_token", None)
-            st.session_state._token_check_done = False
+            st.session_state.supabase       = None
+            st.session_state.stage          = "INPUT"
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
+
+        # ── PERFORMANCE MONITORING (Admin only) ─────────────────────────────
+        if is_admin and hasattr(st.session_state, 'quality_stats'):
+            st.markdown("---")
+            st.markdown("### 📊 Qualità Generazione")
+            
+            stats = st.session_state.quality_stats
+            total = sum(stats.values())
+            
+            if total > 0:
+                # Quality metrics
+                excellent_rate = stats.get('excellent', 0) / total * 100
+                good_rate = stats.get('good', 0) / total * 100
+                poor_rate = stats.get('poor', 0) / total * 100
+                
+                st.metric("📈 Tasso Successo", f"{excellent_rate + good_rate:.1f}%", 
+                         f"+{excellent_rate:.1f}% eccellente")
+                
+                # Visual quality bar
+                quality_data = [
+                    ("👍 Ottima", stats.get('excellent', 0), "#059669"),
+                    ("👍 Buona", stats.get('good', 0), "#22c55e"), 
+                    ("😐 Sufficiente", stats.get('sufficient', 0), "#f59e0b"),
+                    ("👎 Insufficiente", stats.get('poor', 0), "#ef4444")
+                ]
+                
+                for label, count, color in quality_data:
+                    if count > 0:
+                        percentage = count / total * 100
+                        st.markdown(f"""
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.2rem 0;">
+                            <span style="font-size: 0.8rem;">{label}</span>
+                            <span style="font-size: 0.8rem; font-weight: 600;">{count} ({percentage:.0f}%)</span>
+                        </div>
+                        <div style="background: #e5e7eb; border-radius: 4px; height: 6px; margin: 2px 0;">
+                            <div style="background: {color}; width: {percentage}%; height: 100%; border-radius: 4px;"></div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
+                # Validation score tracking
+                if hasattr(st.session_state, 'last_validation_score'):
+                    last_score = st.session_state.last_validation_score
+                    st.metric("🎯 Ultimo Score", f"{last_score:.2f}", 
+                             "Buono" if last_score > 0.7 else "Da migliorare")
+                
+                # Reset stats button
+                if st.button("🔄 Reset Statistiche", key="reset_stats", use_container_width=True):
+                    st.session_state.quality_stats = {'excellent': 0, 'good': 0, 'sufficient': 0, 'poor': 0}
+                    st.rerun()
+            else:
+                st.info("Nessun feedback raccolto ancora")
 
     return {
         "modello_id":    modello_id,

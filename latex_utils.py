@@ -1182,7 +1182,7 @@ def validate_tikz_code(latex: str) -> tuple[bool, str]:
 
 # ── CLEAN TIKZ SPOILERS ────────────────────────────────────────────────────────
 
-def clean_tikz_spoilers(latex: str) -> str:
+def clean_tikz_spoilers(latex: str, aggressive: bool = False) -> str:
     """
     Rimuove due classi di artefatti dall'output AI che spollerebbero le risposte:
 
@@ -1195,6 +1195,8 @@ def clean_tikz_spoilers(latex: str) -> str:
        - coordinate del vertice  (es. \node at (0,2) {$V(0,2)$})
        - equazione dell'asse di simmetria (es. \node {asse x=0})
        - etichette di punti con coordinate esplicite usate come risposta
+    
+    3. Se aggressive=True, rimuove completamente i blocchi TikZ problematici
     """
     # ── 1. Testo tecnico nel corpo ────────────────────────────────────────────
     # Pattern: "ottenuto/generato/prodotto con TikZ/pgfplots/PGF" (varie forme)
@@ -1244,11 +1246,40 @@ def clean_tikz_spoilers(latex: str) -> str:
         return block
 
     latex = re.sub(
-        r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
+        r'\\begin\{tikzpicture\}(.*?)\\end\{tikzpicture\}',
         _clean_tikz_block,
         latex,
         flags=re.DOTALL,
     )
+    
+    # ── 3. Pulizia aggressiva (se richiesta) ───────────────────────────────────
+    if aggressive:
+        logger.warning("Applicando pulizia TikZ aggressiva...")
+        # Rimuovi completamente i blocchi TikZ complessi
+        complex_tikz_patterns = [
+            r'\\begin\{tikzpicture\}.*?\\begin\{axis\}.*?\\end\{axis\}.*?\\end\{tikzpicture\}',
+            r'\\begin\{tikzpicture\}.*?\\addplot.*?\\end\{tikzpicture\}',
+            r'\\begin\{tikzpicture\}.*?\\draw.*?plot.*?\\end\{tikzpicture\}',
+        ]
+        
+        for pattern in complex_tikz_patterns:
+            matches = re.findall(pattern, latex, re.DOTALL | re.IGNORECASE)
+            if matches:
+                logger.info(f"Rimossi {len(matches)} blocchi TikZ complessi")
+                latex = re.sub(pattern, '[Grafico complesso rimosso]', latex, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Rimuovi pacchetti TikZ problematici
+        tikz_packages = [
+            r'\\usepackage\{tikz\}',
+            r'\\usepackage\{pgfplots\}',
+            r'\\usetikzlibrary\{[^}]*\}',
+            r'\\pgfplotsset\{[^}]*\}',
+        ]
+        
+        for package in tikz_packages:
+            latex = re.sub(package, '', latex, flags=re.IGNORECASE)
+            logger.info(f"Rimosso package TikZ: {package}")
+    
     return latex
 
 
