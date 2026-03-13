@@ -451,6 +451,9 @@ def _render_step_progress(T: dict) -> None:
     margin-bottom: 1.5rem;
     width: 100%;
     align-items: center;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
   }}
   .sp-pill {{
     display: flex; align-items: center; gap: 0;
@@ -461,6 +464,7 @@ def _render_step_progress(T: dict) -> None:
     width: 100%;
     max-width: 320px;
     margin: 0 auto;
+    justify-content: center;
   }}
   .sp-node {{
     display: flex; flex-direction: column;
