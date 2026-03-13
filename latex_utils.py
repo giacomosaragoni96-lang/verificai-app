@@ -889,14 +889,14 @@ def limita_altezza_grafici(latex: str) -> str:
             # Se ci sono già opzioni di scala, aggiungi limite altezza
             tikz_with_spacing = re.sub(
                 r'\\begin\{tikzpicture\}\[([^\]]*)\]',
-                lambda m: f'\\begin{{tikzpicture}}[{m.group(1)}, height=2.5cm, width=7cm]',
+                lambda m: f'\\begin{{tikzpicture}}[{m.group(1)}, height=5cm, width=9cm]',
                 tikz_with_spacing
             )
         else:
             # Aggiungi altezza di default più compatta
             tikz_with_spacing = tikz_with_spacing.replace(
                 '\\begin{tikzpicture}',
-                '\\begin{tikzpicture}[height=2.5cm, width=7cm]'
+                '\\begin{tikzpicture}[height=5cm, width=9cm]'
             )
         
         # Limita gli assi per i grafici pgfplots - più aggressivo
@@ -919,7 +919,7 @@ def limita_altezza_grafici(latex: str) -> str:
             tikz_with_spacing = re.sub(r',\s*\]', ']', tikz_with_spacing)
             
             # Aggiungi limiti corretti e opzioni pulite
-            axis_options = 'xmin=-4, xmax=4, ymin=-4, ymax=4, axis lines=middle, xlabel=$x$, ylabel=$y$, xtick={-4,-2,0,2,4}, ytick={-4,-2,0,2,4}, grid=major, width=7cm, height=2.5cm'
+            axis_options = 'xmin=-4, xmax=4, ymin=-4, ymax=4, axis lines=middle, xlabel=$x$, ylabel=$y$, xtick={-4,-2,0,2,4}, ytick={-4,-2,0,2,4}, grid=major, width=9cm, height=5cm'
             
             axis_pattern = r'\\begin\{axis\}\[([^\]]*)\]'
             if re.search(axis_pattern, tikz_with_spacing):
