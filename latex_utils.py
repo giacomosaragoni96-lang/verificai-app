@@ -156,13 +156,24 @@ def parse_pts_from_block_body(body: str) -> int:
     ]
     
     total = 0
+    found_patterns = []
+    
     for pattern in pt_patterns:
         matches = re.findall(pattern, body, re.IGNORECASE)
         if matches:
             points = sum(int(float(p.replace(',', '.'))) for p in matches)
             total += points
+            found_patterns.append((pattern, len(matches), points))
             logger.info(f"Trovati {len(matches)} punti con pattern '{pattern}': {points}")
             break  # Usa solo il primo pattern che trova match
+    
+    # Se non trova punti, cerca nell'header del blocco
+    if total == 0:
+        header_pt_pattern = r'\\subsection\*\{[^}]*\}\s*\((\d+(?:[.,]\d+)?)\s*pt\)'
+        header_match = re.search(header_pt_pattern, body, re.IGNORECASE)
+        if header_match:
+            total = int(float(header_match.group(1).replace(',', '.')))
+            logger.info(f"Trovati punti nell'header: {total}")
     
     logger.info(f"Punti totali nel blocco: {total}")
     return total
@@ -828,13 +839,38 @@ def assicura_punti_visibili(corpo: str, punti_totali: int) -> str:
         if i == num_esercizi - 1:  # Ultimo esercizio
             punti_esercizio += punti_restanti
         
-        # Aggiungi punti alla fine del corpo dell'esercizio
-        if body.strip() and not body.strip().endswith(')'):
-            body = body.rstrip() + f" ({punti_esercizio} pt)"
-        elif not body.strip():
-            body = f" ({punti_esercizio} pt)"
+        # Controlla se ci sono item nell'esercizio
+        items = re.findall(r'\\item\[[^\]]+\]', body)
         
-        nuovo_corpo += header + body + "\n\n"
+        if items:
+            # Distribuisci i punti tra gli item
+            punti_per_item = max(1, punti_esercizio // len(items))
+            punti_restanti_item = punti_esercizio - (punti_per_item * len(items))
+            
+            new_body = body
+            for j, item in enumerate(items):
+                item_points = punti_per_item
+                if j == len(items) - 1:  # Ultimo item
+                    item_points += punti_restanti_item
+                
+                # Aggiungi punti dopo l'item
+                item_pattern = re.escape(item) + r'\s*([^\n]*?)(?=\n|$)'
+                new_body = re.sub(
+                    item_pattern,
+                    lambda m: item + m.group(1).strip() + f" ({item_points} pt)",
+                    new_body,
+                    count=1
+                )
+            
+            nuovo_corpo += header + new_body + "\n\n"
+        else:
+            # Aggiungi punti alla fine del corpo dell'esercizio
+            if body.strip() and not body.strip().endswith(')'):
+                body = body.rstrip() + f" ({punti_esercizio} pt)"
+            elif not body.strip():
+                body = f" ({punti_esercizio} pt)"
+            
+            nuovo_corpo += header + body + "\n\n"
     
     return nuovo_corpo.strip()
 
@@ -935,6 +971,12 @@ def migliora_spaziatura_sottopunti(latex: str) -> str:
     
     # Assicura spaziatura dopo enumerate environments
     latex = re.sub(r'(\\end\{enumerate\})(?!\s*\n)', r'\1\n\n', latex)
+    
+    # Migliora spaziatura per item senza label esplicito
+    latex = re.sub(r'(\\item\s+[^\\]*?)\n(?=\\item)', r'\1\n\n', latex)
+    
+    # Assicura che ogni \item sia su una riga propria
+    latex = re.sub(r'(\s+)\\item\[', r'\n\\item\[', latex)
     
     # Rimuovi spaziatura eccessiva (più di 2 linee vuote)
     latex = re.sub(r'\n{3,}', '\n\n', latex)
