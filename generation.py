@@ -12,6 +12,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Training system imports (try/except per evitare errori se non disponibili)
+try:
+    from prompt_enhancer import enhance_prompt_with_training, should_use_training_enhancement
+    TRAINING_AVAILABLE = True
+except ImportError:
+    TRAINING_AVAILABLE = False
+    logger.warning("Training system non disponibile")
+
 from prompts import (
     prompt_titolo,
     prompt_corpo_verifica,
@@ -591,15 +599,29 @@ def genera_verifica(
     # ── 3. CORPO ESERCIZI (FILA A) ────────────────────────────────────────────
     _avanza("🧠  Generazione esercizi in corso…")
 
-    inp = [
-        prompt_corpo_verifica(
-            materia, argomento, calibrazione, durata,
-            num_esercizi, punti_totali, mostra_punteggi,
-            con_griglia, note_generali, istruzioni_esercizi,
-            e_mat, titolo_header_a, preambolo_a,
-            mathpix_context=mathpix_context,
-        )
-    ]
+    # Genera prompt base
+    base_prompt = prompt_corpo_verifica(
+        materia, argomento, calibrazione, durata,
+        num_esercizi, punti_totali, mostra_punteggi,
+        con_griglia, note_generali, istruzioni_esercizi,
+        e_mat, titolo_header_a, preambolo_a,
+        mathpix_context=mathpix_context,
+    )
+    
+    # Applica training enhancement se disponibile
+    if TRAINING_AVAILABLE:
+        try:
+            # Passa supabase_admin se disponibile (altrimenti usa enhancement base)
+            enhanced_prompt = enhance_prompt_with_training(
+                base_prompt, materia, difficolta, None  # supabase_admin=None per ora
+            )
+        except Exception as e:
+            logger.warning(f"Training enhancement fallito: {e}")
+            enhanced_prompt = base_prompt
+    else:
+        enhanced_prompt = base_prompt
+
+    inp = [enhanced_prompt]
     if file_ispirazione:
         inp.append({"mime_type": file_ispirazione.type, "data": file_ispirazione.getvalue()})
         inp[0] += "\nPrendi spunto dal file allegato per stile e livello."

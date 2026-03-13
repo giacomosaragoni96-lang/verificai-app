@@ -5,6 +5,13 @@
 import streamlit as st
 from datetime import datetime, timezone
 
+# Training dashboard import (try/except per evitare errori)
+try:
+    from training_dashboard import render_training_dashboard, render_training_controls
+    TRAINING_DASHBOARD_AVAILABLE = True
+except ImportError:
+    TRAINING_DASHBOARD_AVAILABLE = False
+
 
 def _tempo_fa(iso_str: str) -> str:
     """Converte un timestamp ISO in formato umano relativo (es. '2 ore fa', 'ieri')."""
@@ -402,6 +409,13 @@ def render_sidebar(
                     st.rerun()
             else:
                 st.info("Nessun feedback raccolto ancora")
+        
+        # Training Dashboard (solo admin)
+        if is_admin and supabase_admin and TRAINING_DASHBOARD_AVAILABLE:
+            st.markdown("---")
+            st.markdown("### 🤖 Training AI")
+            render_training_dashboard(supabase_admin)
+            render_training_controls(supabase_admin)
 
     return {
         "modello_id":    modello_id,
