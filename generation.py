@@ -62,7 +62,7 @@ from latex_utils import (
     parse_pts_from_block_body, valida_totale, riscala_single_block,
     parse_items_from_block, apply_item_pts_to_body,
     prepara_esercizi_aperti, conta_punti_latex,
-    migliora_spaziatura_sottopunti, clean_tikz_spoilers, normalizza_labels_numerici, semplifica_item_singoli, limita_altezza_grafici, assicura_punti_visibili,
+    migliora_spaziatura_sottopunti, clean_tikz_spoilers, normalizza_labels_numerici, semplifica_item_singoli, limita_altezza_grafici, assicura_punti_visibili, aggiungi_spaziatura_grafici_tabelle,
 )
 
 
@@ -267,6 +267,7 @@ def _assembla_e_compila(
     latex = normalizza_labels_numerici(latex)   # 1) 2) 3) → a) b) c)
     latex = semplifica_item_singoli(latex)       # enumerate 1 solo item → testo diretto
     latex = migliora_spaziatura_sottopunti(latex) # migliora spaziatura tra sottopunti
+    latex = aggiungi_spaziatura_grafici_tabelle(latex) # aggiunge spaziatura prima di grafici/tabelle
     latex = limita_altezza_grafici(latex)       # limita altezza dei grafici
     latex = rimuovi_vspace_corpo(latex)
     if mostra_punteggi:

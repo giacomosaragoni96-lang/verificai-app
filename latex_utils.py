@@ -842,31 +842,49 @@ def assicura_punti_visibili(corpo: str, punti_totali: int) -> str:
 def limita_altezza_grafici(latex: str) -> str:
     """
     Aggiunge limiti di altezza ai grafici TikZ per evitare che occupino tropo spazio.
+    Limita anche l'asse Y ai valori utili e aggiunge spaziatura prima dei grafici.
     """
     def _add_height_limit(tikz_block):
+        # Aggiungi spaziatura prima del grafico se non presente
+        tikz_with_spacing = "\n\n" + tikz_block if not tikz_block.startswith("\n") else tikz_block
+        
         # Aggiungi opzioni di altezza se non presenti
-        if '[scale=' in tikz_block or '[height=' in tikz_block:
+        if '[scale=' in tikz_with_spacing or '[height=' in tikz_with_spacing:
             # Se ci sono già opzioni di scala, aggiungi limite altezza
-            tikz_block = re.sub(
+            tikz_with_spacing = re.sub(
                 r'\\begin\{tikzpicture\}\[([^\]]*)\]',
-                lambda m: f'\\begin{{tikzpicture}}[{m.group(1)}, height=3cm]',
-                tikz_block
+                lambda m: f'\\begin{{tikzpicture}}[{m.group(1)}, height=2.5cm, width=7cm]',
+                tikz_with_spacing
             )
         else:
-            # Aggiungi altezza di default
-            tikz_block = tikz_block.replace(
+            # Aggiungi altezza di default più compatta
+            tikz_with_spacing = tikz_with_spacing.replace(
                 '\\begin{tikzpicture}',
-                '\\begin{tikzpicture}[height=3cm]'
+                '\\begin{tikzpicture}[height=2.5cm, width=7cm]'
             )
         
-        # Limita anche la larghezza per proporzioni corrette
-        if '[width=' not in tikz_block and '[scale=' not in tikz_block:
-            tikz_block = tikz_block.replace(
-                '\\begin{tikzpicture}',
-                '\\begin{tikzpicture}[width=8cm, height=3cm]'
-            )
+        # Limita l'asse Y per i grafici pgfplots
+        if '\\begin{axis}' in tikz_with_spacing:
+            # Rimuovi ylim espliciti che potrebbero includere valori negativi inutili
+            tikz_with_spacing = re.sub(r',?\s*ylim=\{[^}]*\}', '', tikz_with_spacing)
+            
+            # Aggiungi ymin=0 o limita l'asse Y solo se necessario
+            if 'ymin=' not in tikz_with_spacing:
+                # Aggiungi ymin=0 per grafici che non hanno bisogno di valori negativi
+                tikz_with_spacing = re.sub(
+                    r'\\begin\{axis\}\[([^\]]*)\]',
+                    lambda m: f'\\begin{{axis}}[{m.group(1)}, ymin=0, ymax=10]',
+                    tikz_with_spacing
+                )
+            else:
+                # Se ymin esiste, limita ymax a un valore ragionevole
+                tikz_with_spacing = re.sub(
+                    r'(ymax=\{[^}]*\})',
+                    'ymax=8',
+                    tikz_with_spacing
+                )
         
-        return tikz_block
+        return tikz_with_spacing
     
     # Applica i limiti a tutti i blocchi tikzpicture
     latex = re.sub(
@@ -874,6 +892,34 @@ def limita_altezza_grafici(latex: str) -> str:
         lambda m: _add_height_limit(m.group(0)),
         latex,
         flags=re.DOTALL
+    )
+    
+    return latex
+
+
+def aggiungi_spaziatura_grafici_tabelle(latex: str) -> str:
+    """
+    Aggiunge spaziatura prima dei grafici e delle tabelle.
+    """
+    # Aggiungi spaziatura prima dei grafici TikZ
+    latex = re.sub(
+        r'(?<!\n\n)\\begin\{tikzpicture\}',
+        r'\n\n\\begin{tikzpicture}',
+        latex
+    )
+    
+    # Aggiungi spaziatura prima delle tabelle
+    latex = re.sub(
+        r'(?<!\n\n)\\begin\{tabular\}',
+        r'\n\n\\begin{tabular}',
+        latex
+    )
+    
+    # Aggiungi spaziatura prima degli ambienti table
+    latex = re.sub(
+        r'(?<!\n\n)\\begin\{table\}',
+        r'\n\n\\begin{table}',
+        latex
     )
     
     return latex
