@@ -12,7 +12,7 @@ import tempfile
 
 logger = logging.getLogger("verificai.latex_utils")
 
-# Pattern canonico per (N pt) — robusto a spazi extra dell'AI
+# Pattern canonico per (N pt) — robusto a spazi extra dell'AI e formati alternativi
 _PT_PATTERN = re.compile(r'\(\s*(\d+(?:[.,]\d+)?)\s*pt\s*\)', re.IGNORECASE)
 
 
@@ -143,11 +143,28 @@ def extract_preambolo(latex: str) -> str:
 # ── SCORE PARSING PER BLOCCO (UI Ricalibra Punteggi) ───────────────────────────
 
 def parse_pts_from_block_body(body: str) -> int:
-    """Somma tutti i (N pt) nel corpo del blocco."""
-    # Pattern più completo per catturare anche decimali e virgole
-    pt_pattern = re.compile(r'\((\d+(?:[.,]\d+)?)\s*pt\)', re.IGNORECASE)
-    points = pt_pattern.findall(body)
-    total = sum(int(float(p.replace(',', '.'))) for p in points)
+    """Somma tutti i (N pt) nel corpo del blocco con pattern migliorati."""
+    # Pattern più completo per catturare anche decimali, virgole e formati alternativi
+    pt_patterns = [
+        r'\((\d+(?:[.,]\d+)?)\s*pt\)',      # (5 pt)
+        r'\[(\d+(?:[.,]\d+)?)\s*pt\]',      # [5 pt]
+        r'(\d+(?:[.,]\d+)?)\s*pt',           # 5 pt
+        r'\((\d+(?:[.,]\d+)?)\s*punti?\)',   # (5 punti)
+        r'(\d+(?:[.,]\d+)?)\s*punti?',       # 5 punti
+        r'punti:\s*(\d+(?:[.,]\d+)?)',       # punti: 5
+        r'valore:\s*(\d+(?:[.,]\d+)?)',      # valore: 5
+    ]
+    
+    total = 0
+    for pattern in pt_patterns:
+        matches = re.findall(pattern, body, re.IGNORECASE)
+        if matches:
+            points = sum(int(float(p.replace(',', '.'))) for p in matches)
+            total += points
+            logger.info(f"Trovati {len(matches)} punti con pattern '{pattern}': {points}")
+            break  # Usa solo il primo pattern che trova match
+    
+    logger.info(f"Punti totali nel blocco: {total}")
     return total
 
 
@@ -781,6 +798,45 @@ def normalizza_labels_numerici(latex):
         lettera = _map.get(m.group(1))
         return '\\item[' + lettera + ')]' if lettera else m.group(0)
     return re.sub(r'\\item\[(\d+)\)\]', _sub, latex)
+
+
+def assicura_punti_visibili(corpo: str, punti_totali: int) -> str:
+    """
+    Assicura che i punti siano visibili nel corpo dell'esercizio.
+    Se non trova punti, aggiunge un punteggio di default.
+    """
+    # Controlla se ci sono già punti nel corpo
+    if _PT_PATTERN.search(corpo):
+        return corpo
+    
+    # Se non ci sono punti, aggiungi un punteggio di default
+    logger.warning("Nessun punto trovato nel corpo, aggiungo punteggio di default")
+    
+    # Cerca gli esercizi nel corpo
+    esercizi = re.findall(r'(\\subsection\*\{[^}]*\})(.*?)(?=\\subsection\*|$)', corpo, re.DOTALL)
+    
+    if not esercizi:
+        return corpo
+    
+    num_esercizi = len(esercizi)
+    punti_per_esercizio = max(1, punti_totali // num_esercizi)
+    punti_restanti = punti_totali - (punti_per_esercizio * num_esercizi)
+    
+    nuovo_corpo = ""
+    for i, (header, body) in enumerate(esercizi):
+        punti_esercizio = punti_per_esercizio
+        if i == num_esercizi - 1:  # Ultimo esercizio
+            punti_esercizio += punti_restanti
+        
+        # Aggiungi punti alla fine del corpo dell'esercizio
+        if body.strip() and not body.strip().endswith(')'):
+            body = body.rstrip() + f" ({punti_esercizio} pt)"
+        elif not body.strip():
+            body = f" ({punti_esercizio} pt)"
+        
+        nuovo_corpo += header + body + "\n\n"
+    
+    return nuovo_corpo.strip()
 
 
 def limita_altezza_grafici(latex: str) -> str:
