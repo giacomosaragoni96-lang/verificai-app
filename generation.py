@@ -55,17 +55,14 @@ except ImportError:
             f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
         )
 from latex_utils import (
-    compila_pdf,
-    clean_tikz_spoilers,
-    inietta_griglia,
-    riscala_punti,
-    fix_items_environment,
-    normalizza_labels_numerici,
-    semplifica_item_singoli,
-    rimuovi_vspace_corpo,
-    pulisci_corpo_latex,
-    rimuovi_punti_subsection,
-    prepara_esercizi_aperti,
+    compila_pdf, inietta_griglia, riscala_punti, riscala_punti_custom,
+    fix_items_environment, rimuovi_vspace_corpo, pulisci_corpo_latex,
+    rimuovi_punti_subsection, pdf_to_images_bytes,
+    extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
+    parse_pts_from_block_body, valida_totale, riscala_single_block,
+    parse_items_from_block, apply_item_pts_to_body,
+    prepara_esercizi_aperti, conta_punti_latex,
+    migliora_spaziatura_sottopunti,
 )
 
 
@@ -269,6 +266,7 @@ def _assembla_e_compila(
     latex = fix_items_environment(latex)
     latex = normalizza_labels_numerici(latex)   # 1) 2) 3) → a) b) c)
     latex = semplifica_item_singoli(latex)       # enumerate 1 solo item → testo diretto
+    latex = migliora_spaziatura_sottopunti(latex) # migliora spaziatura tra sottopunti
     latex = rimuovi_vspace_corpo(latex)
     if mostra_punteggi:
         latex = rimuovi_punti_subsection(latex)

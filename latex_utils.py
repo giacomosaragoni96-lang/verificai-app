@@ -722,6 +722,7 @@ def fix_items_environment(latex: str) -> str:
     """
     Assicura che ogni \\item[...] nudo (fuori da un ambiente enumerate/itemize)
     venga avvolto in \\begin{enumerate}[a)] ... \\end{enumerate}.
+    Aggiunge anche spaziatura appropriata tra gli item.
     """
     lines = latex.split('\n')
     result = []
@@ -739,6 +740,7 @@ def fix_items_environment(latex: str) -> str:
             in_bare_block = True
         elif not is_bare_item and in_bare_block:
             result.append(r'\end{enumerate}')
+            result.append('')  # Linea vuota per spaziatura
             in_bare_block = False
 
         result.append(line)
@@ -746,6 +748,7 @@ def fix_items_environment(latex: str) -> str:
 
     if in_bare_block:
         result.append(r'\end{enumerate}')
+        result.append('')  # Linea vuota per spaziatura
 
     return '\n'.join(result)
 
@@ -780,6 +783,23 @@ def normalizza_labels_numerici(latex):
     return re.sub(r'\\item\[(\d+)\)\]', _sub, latex)
 
 
+def migliora_spaziatura_sottopunti(latex: str) -> str:
+    """
+    Migliora la spaziatura tra i sottopunti degli esercizi.
+    Assicura che ci sia spaziatura appropriata tra gli item.
+    """
+    # Aggiungi spaziatura dopo ogni \item (tranne l'ultimo)
+    latex = re.sub(r'(\\item\[[^\]]+\][^\n]*?)\n(?=\\item)', r'\1\n\n', latex)
+    
+    # Assicura spaziatura dopo enumerate environments
+    latex = re.sub(r'(\\end\{enumerate\})(?!\s*\n)', r'\1\n\n', latex)
+    
+    # Rimuovi spaziatura eccessiva (più di 2 linee vuote)
+    latex = re.sub(r'\n{3,}', '\n\n', latex)
+    
+    return latex
+
+
 def semplifica_item_singoli(latex):
     """
     Se un \\begin{enumerate} contiene esattamente un solo \\item,
@@ -790,7 +810,8 @@ def semplifica_item_singoli(latex):
         if len(re.findall(r'\\item\[', inner)) != 1:
             return m.group(0)
         item_text = re.sub(r'^\s*\\item\[[^\]]*\]\s*', '', inner.strip())
-        return '\n' + item_text + '\n'
+        # Aggiungi spaziatura appropriata dopo l'item
+        return '\n' + item_text + '\n\n'
     return re.sub(
         r'\\begin\{enumerate\}(?:\[[^\]]*\])?\n(.*?)\\end\{enumerate\}',
         _collapse, latex, flags=re.DOTALL

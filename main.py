@@ -33,6 +33,7 @@ from latex_utils import (
     parse_pts_from_block_body, valida_totale, riscala_single_block,
     parse_items_from_block, apply_item_pts_to_body,
     prepara_esercizi_aperti, conta_punti_latex,
+    migliora_spaziatura_sottopunti,
 )
 from config import (
     APP_NAME, APP_ICON, APP_TAGLINE, SHARE_URL, FEEDBACK_FORM_URL,
@@ -355,6 +356,7 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
 
     def _post(corpo: str) -> str:
         corpo = fix_items_environment(corpo)
+        corpo = migliora_spaziatura_sottopunti(corpo)
         corpo = rimuovi_vspace_corpo(corpo)
         if mostra_punteggi:
             corpo = rimuovi_punti_subsection(corpo)
@@ -4709,6 +4711,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                             st.session_state.review_blocks
                         )
                         _undo_latex = fix_items_environment(_undo_latex)
+                        _undo_latex = migliora_spaziatura_sottopunti(_undo_latex)
                         _undo_latex = rimuovi_vspace_corpo(_undo_latex)
                         if mostra_punteggi:
                             _undo_latex = rimuovi_punti_subsection(_undo_latex)
@@ -4966,6 +4969,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     st.session_state.review_blocks
                 )
                 _qr_latex = fix_items_environment(_qr_latex)
+                _qr_latex = migliora_spaziatura_sottopunti(_qr_latex)
                 _qr_latex = rimuovi_vspace_corpo(_qr_latex)
                 _qr_latex = rimuovi_punti_subsection(_qr_latex)
                 if con_griglia:
@@ -5313,6 +5317,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     st.session_state.review_blocks
                 )
                 _ct_latex = fix_items_environment(_ct_latex)
+                _ct_latex = migliora_spaziatura_sottopunti(_ct_latex)
                 _ct_latex = rimuovi_vspace_corpo(_ct_latex)
                 _ct_latex = rimuovi_punti_subsection(_ct_latex)
                 if con_griglia:
@@ -5486,6 +5491,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     st.session_state.review_blocks
                 )
                 _latex_rc = fix_items_environment(_latex_rc)
+                _latex_rc = migliora_spaziatura_sottopunti(_latex_rc)
                 _latex_rc = rimuovi_vspace_corpo(_latex_rc)
                 _latex_rc = rimuovi_punti_subsection(_latex_rc)
                 # NON chiamare riscala_punti_custom: i pt sono già esatti per item
@@ -5550,6 +5556,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 st.session_state.review_blocks
             )
             latex_final = fix_items_environment(latex_final)
+            latex_final = migliora_spaziatura_sottopunti(latex_final)
             latex_final = rimuovi_vspace_corpo(latex_final)
             if mostra_punteggi:
                 latex_final = rimuovi_punti_subsection(latex_final)
