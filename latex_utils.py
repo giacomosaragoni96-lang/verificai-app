@@ -783,6 +783,46 @@ def normalizza_labels_numerici(latex):
     return re.sub(r'\\item\[(\d+)\)\]', _sub, latex)
 
 
+def limita_altezza_grafici(latex: str) -> str:
+    """
+    Aggiunge limiti di altezza ai grafici TikZ per evitare che occupino tropo spazio.
+    """
+    def _add_height_limit(tikz_block):
+        # Aggiungi opzioni di altezza se non presenti
+        if '[scale=' in tikz_block or '[height=' in tikz_block:
+            # Se ci sono già opzioni di scala, aggiungi limite altezza
+            tikz_block = re.sub(
+                r'\\begin\{tikzpicture\}\[([^\]]*)\]',
+                lambda m: f'\\begin{{tikzpicture}}[{m.group(1)}, height=3cm]',
+                tikz_block
+            )
+        else:
+            # Aggiungi altezza di default
+            tikz_block = tikz_block.replace(
+                '\\begin{tikzpicture}',
+                '\\begin{tikzpicture}[height=3cm]'
+            )
+        
+        # Limita anche la larghezza per proporzioni corrette
+        if '[width=' not in tikz_block and '[scale=' not in tikz_block:
+            tikz_block = tikz_block.replace(
+                '\\begin{tikzpicture}',
+                '\\begin{tikzpicture}[width=8cm, height=3cm]'
+            )
+        
+        return tikz_block
+    
+    # Applica i limiti a tutti i blocchi tikzpicture
+    latex = re.sub(
+        r'\\begin\{tikzpicture\}(.*?)\\end\{tikzpicture\}',
+        lambda m: _add_height_limit(m.group(0)),
+        latex,
+        flags=re.DOTALL
+    )
+    
+    return latex
+
+
 def migliora_spaziatura_sottopunti(latex: str) -> str:
     """
     Migliora la spaziatura tra i sottopunti degli esercizi.
