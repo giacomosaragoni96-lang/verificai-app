@@ -62,7 +62,7 @@ from latex_utils import (
     parse_pts_from_block_body, valida_totale, riscala_single_block,
     parse_items_from_block, apply_item_pts_to_body,
     prepara_esercizi_aperti, conta_punti_latex,
-    migliora_spaziatura_sottopunti, clean_tikz_spoilers, normalizza_labels_numerici,
+    migliora_spaziatura_sottopunti, clean_tikz_spoilers, normalizza_labels_numerici, semplifica_item_singoli,
 )
 
 
