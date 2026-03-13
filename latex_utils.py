@@ -907,31 +907,39 @@ def limita_altezza_grafici(latex: str) -> str:
             tikz_with_spacing = re.sub(r',?\s*domain=\{[^}]*\}', '', tikz_with_spacing)
             tikz_with_spacing = re.sub(r',?\s*samples=\{[^}]*\}', '', tikz_with_spacing)
             
+            # Rimuovi etichette e titoli inutili
+            tikz_with_spacing = re.sub(r',?\s*xlabel=\{[^}]*\}', '', tikz_with_spacing)
+            tikz_with_spacing = re.sub(r',?\s*ylabel=\{[^}]*\}', '', tikz_with_spacing)
+            tikz_with_spacing = re.sub(r',?\s*title=\{[^}]*\}', '', tikz_with_spacing)
+            tikz_with_spacing = re.sub(r',?\s*legend[^}]*\}', '', tikz_with_spacing)
+            
             # Rimuovi opzioni vuote rimanenti
             tikz_with_spacing = re.sub(r',\s*,', ',', tikz_with_spacing)
             tikz_with_spacing = re.sub(r'\[\s*,', '[', tikz_with_spacing)
             tikz_with_spacing = re.sub(r',\s*\]', ']', tikz_with_spacing)
             
-            # Aggiungi limiti stretti in modo più aggressivo
+            # Aggiungi limiti corretti e opzioni pulite
+            axis_options = 'xmin=-4, xmax=4, ymin=-4, ymax=4, axis lines=middle, xlabel=$x$, ylabel=$y$, xtick={-4,-2,0,2,4}, ytick={-4,-2,0,2,4}, grid=major, width=7cm, height=2.5cm'
+            
             axis_pattern = r'\\begin\{axis\}\[([^\]]*)\]'
             if re.search(axis_pattern, tikz_with_spacing):
                 tikz_with_spacing = re.sub(
                     axis_pattern,
-                    r'\\begin{axis}[\1, xmin=-4, xmax=4, ymin=-4, ymax=4]',
+                    f'\\\\begin{{axis}}[\\1, {axis_options}]',
                     tikz_with_spacing
                 )
             else:
                 # Se non trova opzioni, aggiungile direttamente
                 tikz_with_spacing = tikz_with_spacing.replace(
                     '\\begin{axis}',
-                    '\\begin{axis}[xmin=-4, xmax=4, ymin=-4, ymax=4]'
+                    f'\\begin{{axis}}[{axis_options}]'
                 )
             
             # Assicura che i limiti siano presenti (doppia verifica)
             if 'xmin=-4' not in tikz_with_spacing:
                 tikz_with_spacing = re.sub(
                     r'\\begin\{axis\}',
-                    '\\begin{axis}[xmin=-4, xmax=4, ymin=-4, ymax=4]',
+                    f'\\begin{{axis}}[{axis_options}]',
                     tikz_with_spacing
                 )
         
