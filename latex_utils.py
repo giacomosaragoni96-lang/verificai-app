@@ -899,25 +899,24 @@ def limita_altezza_grafici(latex: str) -> str:
                 '\\begin{tikzpicture}[height=2.5cm, width=7cm]'
             )
         
-        # Limita l'asse Y per i grafici pgfplots
+        # Limita gli assi per i grafici pgfplots
         if '\\begin{axis}' in tikz_with_spacing:
-            # Rimuovi ylim espliciti che potrebbero includere valori negativi inutili
-            tikz_with_spacing = re.sub(r',?\s*ylim=\{[^}]*\}', '', tikz_with_spacing)
+            # Rimuovi ylim/xlim espliciti che potrebbero includere valori inutili
+            tikz_with_spacing = re.sub(r',?\s*(?:y|x)min=\{[^}]*\}', '', tikz_with_spacing)
+            tikz_with_spacing = re.sub(r',?\s*(?:y|x)max=\{[^}]*\}', '', tikz_with_spacing)
             
-            # Aggiungi ymin=0 o limita l'asse Y solo se necessario
-            if 'ymin=' not in tikz_with_spacing:
-                # Aggiungi ymin=0 per grafici che non hanno bisogno di valori negativi
-                tikz_with_spacing = re.sub(
-                    r'\\begin\{axis\}\[([^\]]*)\]',
-                    lambda m: f'\\begin{{axis}}[{m.group(1)}, ymin=0, ymax=10]',
-                    tikz_with_spacing
-                )
-            else:
-                # Se ymin esiste, limita ymax a un valore ragionevole
-                tikz_with_spacing = re.sub(
-                    r'(ymax=\{[^}]*\})',
-                    'ymax=8',
-                    tikz_with_spacing
+            # Aggiungi limiti stretti per entrambi gli assi
+            tikz_with_spacing = re.sub(
+                r'\\begin\{axis\}\[([^\]]*)\]',
+                lambda m: f'\\begin{{axis}}[{m.group(1)}, xmin=-4, xmax=4, ymin=-4, ymax=4]',
+                tikz_with_spacing
+            )
+            
+            # Assicura che i limiti siano presenti anche se non c'erano opzioni
+            if 'xmin=' not in tikz_with_spacing:
+                tikz_with_spacing = tikz_with_spacing.replace(
+                    '\\begin{axis}',
+                    '\\begin{axis}[xmin=-4, xmax=4, ymin=-4, ymax=4]'
                 )
         
         return tikz_with_spacing
