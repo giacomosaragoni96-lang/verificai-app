@@ -1217,7 +1217,8 @@ def clean_tikz_spoilers(latex: str, aggressive: bool = False) -> str:
        - equazione dell'asse di simmetria (es. \node {asse x=0})
        - etichette di punti con coordinate esplicite usate come risposta
     
-    3. Se aggressive=True, rimuove completamente i blocchi TikZ problematici
+    3. Se aggressive=True, rimuovi completamente i blocchi TikZ problematici
+       (ma preserva i grafici matematici semplici)
     """
     # ── 1. Testo tecnico nel corpo ────────────────────────────────────────────
     # Pattern: "ottenuto/generato/prodotto con TikZ/pgfplots/PGF" (varie forme)
@@ -1276,30 +1277,48 @@ def clean_tikz_spoilers(latex: str, aggressive: bool = False) -> str:
     # ── 3. Pulizia aggressiva (se richiesta) ───────────────────────────────────
     if aggressive:
         logger.warning("Applicando pulizia TikZ aggressiva...")
-        # Rimuovi completamente i blocchi TikZ complessi
+        # Rimuovi SOLO i blocchi TikZ complessi problematici, ma preserva i grafici semplici
         complex_tikz_patterns = [
-            r'\\begin\{tikzpicture\}.*?\\begin\{axis\}.*?\\end\{axis\}.*?\\end\{tikzpicture\}',
-            r'\\begin\{tikzpicture\}.*?\\addplot.*?\\end\{tikzpicture\}',
-            r'\\begin\{tikzpicture\}.*?\\draw.*?plot.*?\\end\{tikzpicture\}',
+            r'\\begin\{tikzpicture\}.*?\\begin\{axis\}.*?\\end\{axis\}.*?\\end\{tikzpicture\}',  # pgfplots complessi
+            r'\\begin\{tikzpicture\}.*?\\addplot.*?\\end\{tikzpicture\}',  # addplot complessi
+            r'\\begin\{tikzpicture\}.*?\\draw.*?plot.*?\\end\{tikzpicture\}',  # plot complessi
+            r'\\begin\{tikzpicture\}.*?\\node.*?at.*?\$.*?\$.*?\\end\{tikzpicture\}',  # nodi con coordinate matematiche
         ]
         
-        for pattern in complex_tikz_patterns:
-            matches = re.findall(pattern, latex, re.DOTALL | re.IGNORECASE)
-            if matches:
-                logger.info(f"Rimossi {len(matches)} blocchi TikZ complessi")
-                latex = re.sub(pattern, '[Grafico complesso rimosso]', latex, flags=re.DOTALL | re.IGNORECASE)
+        # Prima controlla se ci sono grafici matematici semplici da preservare
+        simple_graph_pattern = r'\\begin\{tikzpicture\}\[.*?\].*?\\draw.*?domain.*?\\end\{tikzpicture\}'
+        simple_graphs = re.findall(simple_graph_pattern, latex, re.DOTALL | re.IGNORECASE)
         
-        # Rimuovi pacchetti TikZ problematici
-        tikz_packages = [
-            r'\\usepackage\{tikz\}',
-            r'\\usepackage\{pgfplots\}',
-            r'\\usetikzlibrary\{[^}]*\}',
-            r'\\pgfplotsset\{[^}]*\}',
-        ]
+        if simple_graphs:
+            logger.info(f"Trovati {len(simple_graphs)} grafici matematici semplici da preservare")
+            # Preserva i grafici semplici, rimuovi solo quelli complessi
+            for pattern in complex_tikz_patterns:
+                matches = re.findall(pattern, latex, re.DOTALL | re.IGNORECASE)
+                if matches:
+                    logger.info(f"Rimossi {len(matches)} blocchi TikZ complessi")
+                    latex = re.sub(pattern, '[Grafico complesso rimosso]', latex, flags=re.DOTALL | re.IGNORECASE)
+        else:
+            # Se non ci sono grafici semplici, procedi con la rimozione aggressiva
+            for pattern in complex_tikz_patterns:
+                matches = re.findall(pattern, latex, re.DOTALL | re.IGNORECASE)
+                if matches:
+                    logger.info(f"Rimossi {len(matches)} blocchi TikZ complessi")
+                    latex = re.sub(pattern, '[Grafico complesso rimosso]', latex, flags=re.DOTALL | re.IGNORECASE)
         
-        for package in tikz_packages:
-            latex = re.sub(package, '', latex, flags=re.IGNORECASE)
-            logger.info(f"Rimosso package TikZ: {package}")
+        # Rimuovi pacchetti TikZ problematici solo se non ci sono grafici semplici
+        if not simple_graphs:
+            tikz_packages = [
+                r'\\usepackage\{tikz\}',
+                r'\\usepackage\{pgfplots\}',
+                r'\\usetikzlibrary\{[^}]*\}',
+                r'\\pgfplotsset\{[^}]*\}',
+            ]
+            
+            for package in tikz_packages:
+                latex = re.sub(package, '', latex, flags=re.IGNORECASE)
+                logger.info(f"Rimosso package TikZ: {package}")
+        else:
+            logger.info("Preservati pacchetti TikZ per i grafici matematici")
     
     return latex
 
