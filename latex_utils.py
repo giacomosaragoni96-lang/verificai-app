@@ -901,10 +901,12 @@ def limita_altezza_grafici(latex: str) -> str:
         
         # Limita gli assi per i grafici pgfplots - più aggressivo
         if '\\begin{axis}' in tikz_with_spacing:
-            # Rimuovi TUTTI i limiti esistenti (xmin, xmax, ymin, ymax, domain, etc.)
+            # Rimuovi TUTTI i limiti esistenti (xmin, xmax, ymin, ymax, etc.)
             tikz_with_spacing = re.sub(r',?\s*[xy]min=\{[^}]*\}', '', tikz_with_spacing)
             tikz_with_spacing = re.sub(r',?\s*[xy]max=\{[^}]*\}', '', tikz_with_spacing)
+            # Rimuovi domain esistenti
             tikz_with_spacing = re.sub(r',?\s*domain=\{[^}]*\}', '', tikz_with_spacing)
+            tikz_with_spacing = re.sub(r',?\s*domain=[^,]*', '', tikz_with_spacing)
             tikz_with_spacing = re.sub(r',?\s*samples=\{[^}]*\}', '', tikz_with_spacing)
             
             # Rimuovi etichette e titoli inutili
@@ -919,7 +921,7 @@ def limita_altezza_grafici(latex: str) -> str:
             tikz_with_spacing = re.sub(r',\s*\]', ']', tikz_with_spacing)
             
             # Aggiungi limiti corretti e opzioni pulite
-            axis_options = 'xmin=-4, xmax=4, ymin=-4, ymax=4, axis lines=middle, xlabel=$x$, ylabel=$y$, xtick={-4,-2,0,2,4}, ytick={-4,-2,0,2,4}, grid=major, width=9cm, height=5cm'
+            axis_options = 'xmin=-4, xmax=4, ymin=-4, ymax=4, axis lines=middle, xlabel=$x$, ylabel=$y$, xtick={-4,-2,0,2,4}, ytick={-4,-2,0,2,4}, grid=major, width=9cm, height=5cm, domain=-4:4, samples=100'
             
             axis_pattern = r'\\begin\{axis\}\[([^\]]*)\]'
             if re.search(axis_pattern, tikz_with_spacing):
