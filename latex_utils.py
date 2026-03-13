@@ -899,24 +899,40 @@ def limita_altezza_grafici(latex: str) -> str:
                 '\\begin{tikzpicture}[height=2.5cm, width=7cm]'
             )
         
-        # Limita gli assi per i grafici pgfplots
+        # Limita gli assi per i grafici pgfplots - più aggressivo
         if '\\begin{axis}' in tikz_with_spacing:
-            # Rimuovi ylim/xlim espliciti che potrebbero includere valori inutili
-            tikz_with_spacing = re.sub(r',?\s*(?:y|x)min=\{[^}]*\}', '', tikz_with_spacing)
-            tikz_with_spacing = re.sub(r',?\s*(?:y|x)max=\{[^}]*\}', '', tikz_with_spacing)
+            # Rimuovi TUTTI i limiti esistenti (xmin, xmax, ymin, ymax, domain, etc.)
+            tikz_with_spacing = re.sub(r',?\s*[xy]min=\{[^}]*\}', '', tikz_with_spacing)
+            tikz_with_spacing = re.sub(r',?\s*[xy]max=\{[^}]*\}', '', tikz_with_spacing)
+            tikz_with_spacing = re.sub(r',?\s*domain=\{[^}]*\}', '', tikz_with_spacing)
+            tikz_with_spacing = re.sub(r',?\s*samples=\{[^}]*\}', '', tikz_with_spacing)
             
-            # Aggiungi limiti stretti per entrambi gli assi
-            tikz_with_spacing = re.sub(
-                r'\\begin\{axis\}\[([^\]]*)\]',
-                lambda m: f'\\begin{{axis}}[{m.group(1)}, xmin=-4, xmax=4, ymin=-4, ymax=4]',
-                tikz_with_spacing
-            )
+            # Rimuovi opzioni vuote rimanenti
+            tikz_with_spacing = re.sub(r',\s*,', ',', tikz_with_spacing)
+            tikz_with_spacing = re.sub(r'\[\s*,', '[', tikz_with_spacing)
+            tikz_with_spacing = re.sub(r',\s*\]', ']', tikz_with_spacing)
             
-            # Assicura che i limiti siano presenti anche se non c'erano opzioni
-            if 'xmin=' not in tikz_with_spacing:
+            # Aggiungi limiti stretti in modo più aggressivo
+            axis_pattern = r'\\begin\{axis\}\[([^\]]*)\]'
+            if re.search(axis_pattern, tikz_with_spacing):
+                tikz_with_spacing = re.sub(
+                    axis_pattern,
+                    r'\\begin{axis}[\1, xmin=-4, xmax=4, ymin=-4, ymax=4]',
+                    tikz_with_spacing
+                )
+            else:
+                # Se non trova opzioni, aggiungile direttamente
                 tikz_with_spacing = tikz_with_spacing.replace(
                     '\\begin{axis}',
                     '\\begin{axis}[xmin=-4, xmax=4, ymin=-4, ymax=4]'
+                )
+            
+            # Assicura che i limiti siano presenti (doppia verifica)
+            if 'xmin=-4' not in tikz_with_spacing:
+                tikz_with_spacing = re.sub(
+                    r'\\begin\{axis\}',
+                    '\\begin{axis}[xmin=-4, xmax=4, ymin=-4, ymax=4]',
+                    tikz_with_spacing
                 )
         
         return tikz_with_spacing
