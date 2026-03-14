@@ -1,0 +1,445 @@
+{
+  "timestamp": "2026-03-14T16:36:41.621791",
+  "totali": 5,
+  "media_voto": 18.0,
+  "success_rate": 0.0,
+  "param_accuracy": 0.0,
+  "pdf_rate": 100.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Chimica",
+        "livello": "Liceo Classico",
+        "argomento": "Struttura atomica",
+        "num_esercizi": 8,
+        "punti_totali": 120,
+        "durata": "1 ora",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Struttura Atomica",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Struttura Atomica} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Componenti dell'Atomo}\nQuali sono le tre particelle subatomiche fondamentali che costituiscono un atomo? Descrivi brevemente la carica elettrica e la posizione nel modello atomico semplificato di ciascuna di esse. (15 pt)\n\\subsection*{Esercizio 2: Numero Atomico e di Massa}\nUn atomo di ossigeno presenta 8 protoni e 8 neutroni nel suo nucleo.\n\\begin{enumerate}\n    \\item Qual è il suo numero atomico? (5 pt)\n    \\item Qual è il suo numero di massa? (5 pt)\n    \\item Quanti elettroni possiede un atomo neutro di questo elemento? (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Isotopi}\nDue isotopi del carbonio sono il Carbonio-12 e il Carbonio-14.\n\\begin{enumerate}\n    \\item Quanti protoni ha ciascun isotopo? (5 pt)\n    \\item Quanti neutroni ha il Carbonio-12? (5 pt)\n    \\item Quanti neutroni ha il Carbonio-14? (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Modello Atomico di Bohr}\nConsidera un atomo di idrogeno nel suo stato fondamentale.\n\\begin{enumerate}\n    \\item In quale orbita si trova l'elettrone? (5 pt)\n    \\item Se l'elettrone assorbe energia e salta nell'orbita con numero quantico principale $n=2$, si trova in uno stato eccitato? (5 pt)\n    \\item L'atomo assorbe o emette energia quando l'elettrone salta da $n=2$ a $n=1$? (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 5: Configurazioni Elettroniche}\nVerifica se le seguenti affermazioni sulla configurazione elettronica sono Vere (V) o False (F).\n    $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} Il fluoro (Z=9) ha configurazione elettronica $1s^2 2s^2 2p^5$. (5 pt)\n    $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} L'ossigeno (Z=8) possiede 6 elettroni nel suo orbitale più esterno. (5 pt)\n    $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} Il neon (Z=10) è un gas nobile perché ha il suo guscio elettronico più esterno completo. (5 pt)\n\n\\subsection*{Esercizio 6: Numeri Quantici}\nPer un elettrone nell'orbitale $2p$, quali sono i possibili valori dei numeri quantici $n$, $l$, $m_l$, e $m_s$? (15 pt)\n\\subsection*{Esercizio 7: Principio di Indeterminazione di Heisenberg}\nSpiega il significato del Principio di Indeterminazione di Heisenberg in termini di precisione nella misurazione della posizione e della quantità di moto di una particella subatomica. (15 pt)\n\\subsection*{Esercizio 8: Proprietà degli Elementi Chimici}\nConsidera gli elementi Sodio (Na, Z=11) e Cloro (Cl, Z=17).\n\\begin{enumerate}\n    \\item Fornisci la loro configurazione elettronica. (5 pt)\n    \\item Quale dei due elementi tenderà più facilmente a perdere un elettrone per raggiungere una configurazione stabile? Giustifica la risposta. (5 pt)\n    \\item Quale dei due elementi tenderà più facilmente ad acquistare un elettrone? Giustifica la risposta. (5 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{3}{c||}{\\textbf{2}} & \\multicolumn{3}{c||}{\\textbf{3}} & \\multicolumn{3}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\multicolumn{1}{c||}{\\textbf{7}} & \\multicolumn{3}{c||}{\\textbf{8}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & a) & b) & c) & a) & b) & c) & a) & b) & c) & — & — & — & a) & b) & c) & \\\\ \\hline\n\\textbf{Max} & 15 & 5 & 5 & 5 & 5 & 5 & 5 & 5 & 5 & 5 & 5 & 15 & 15 & 5 & 5 & 5 & 110 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:103445>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 8,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 120,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163541.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163541.pdf",
+        "pdf_size": 15952,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Struttura atomica}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:35:42.686380",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Struttura atomica}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 2,
+      "scenario": {
+        "materia": "Matematica",
+        "livello": "Istituto Tecnico",
+        "argomento": "Geometria piana",
+        "num_esercizi": 3,
+        "punti_totali": 150,
+        "durata": "1 ora",
+        "mostra_punteggi": true,
+        "con_griglia": false
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Geometria piana",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Geometria piana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Perimetro e Area di un Rettangolo}\nDato un rettangolo il cui perimetro misura $28$ cm e la cui diagonale è lunga $10$ cm, si determinino le lunghezze dei lati. Successivamente, si calcoli l'area del rettangolo. (50 pt)\n\\subsection*{Esercizio 2: Studio di una Funzione Lineare}\n\nSi consideri la retta $r$ di equazione $y = -2x + 3$.\n\\begin{enumerate}[a)]\n    \\item Si calcolino le coordinate dei punti di intersezione della retta $r$ con gli assi cartesiani. (15 pt)\n    \\item Si determini l'equazione della retta $s$ perpendicolare alla retta $r$ e passante per il punto $P(1, 5)$. (20 pt)\n    \\item Si verifichi se il punto $Q(-2, 7)$ appartiene alla retta $s$. (15 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Area di un Settore Circolare}\nUn settore circolare di un cerchio ha un'area di $25\\pi$ cm$^2$. L'angolo al centro corrispondente a questo settore misura $\\frac{\\pi}{3}$ radianti. Si determinino il raggio del cerchio e il perimetro del settore circolare. (50 pt)\n\n\\end{document}",
+            "pdf": "<BYTES:97133>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 3,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 150,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 5
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163550.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163550.pdf",
+        "pdf_size": 16809,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Geometria piana}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 20,
+      "timestamp": "2026-03-14T16:35:51.138243",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Geometria piana}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 3,
+      "scenario": {
+        "materia": "Fisica",
+        "livello": "Liceo Scientifico",
+        "argomento": "Termodinamica",
+        "num_esercizi": 2,
+        "punti_totali": 120,
+        "durata": "2 ore",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Termodinamica",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Termodinamica} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Cicli Termodinamici e Lavoro}\nUn gas ideale monoatomico è sottoposto a un ciclo termodinamico composto da tre trasformazioni:\na) Trasformazione isobara da $(V_1, P_1)$ a $(V_2, P_1)$, dove $V_2 = 2V_1$.\nb) Trasformazione isocora da $(V_2, P_1)$ a $(V_2, P_2)$, dove $P_2 = 2P_1$.\nc) Trasformazione adiabatica che riporta il sistema allo stato iniziale $(V_1, P_1)$.\nAssumere $V_1 = 1.0 \\, \\text{m}^3$, $P_1 = 1.0 \\times 10^5 \\, \\text{Pa}$ e $c_p = \\frac{5}{2}R$.\n\n\\begin{enumerate}[a)]\n    \\item Calcolare il lavoro compiuto dal gas in ciascuna trasformazione e il lavoro totale compiuto dal gas nel ciclo. (20 pt)\n    \\item Calcolare il calore scambiato dal gas in ciascuna trasformazione. (20 pt)\n    \\item Calcolare l'efficienza termica del ciclo, assumendo che esso operi come una macchina termica. (20 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Trasformazioni di un Gas Reale e Primo Principio}\nUna mole di un gas non ideale si trova inizialmente nello stato A con pressione $P_A = 2.0 \\times 10^5 \\, \\text{Pa}$ e volume $V_A = 10.0 \\, \\text{L}$. Il gas viene portato nello stato B attraverso due diverse trasformazioni reversibili:\n1. Trasformazione isobara fino a raggiungere un volume $V_B = 2V_A$.\n2. Trasformazione isocora fino a raggiungere una pressione $P_C = 2P_A$.\n\nSi consideri che il gas sia descritto dall'equazione di Van der Waals: $(P + \\frac{an^2}{V^2})(V-nb) = nRT$, dove per questo gas $a = 0.1 \\, \\text{Pa m}^6/\\text{mol}^2$ e $b = 1.0 \\times 10^{-5} \\, \\text{m}^3/\\text{mol}$. Per semplicità, si assuma $n=1$ mole. Il calore specifico molare a volume costante è $c_V = \\frac{3}{2}R$.\n\n\\begin{enumerate}[a)]\n    \\item Calcolare la temperatura $T_A$ nello stato iniziale, utilizzando l'equazione di Van der Waals per determinare la pressione. Si utilizzi il valore approssimato $R \\approx 8.31 \\, \\text{J}/(\\text{mol} \\cdot \\text{K})$. (15 pt)\n    \\item Determinare le coordinate $(P_B, V_B)$ e $(P_C, V_C)$ degli stati B e C. (15 pt)\n    \\item Calcolare il lavoro compiuto dal gas e il calore assorbito dal gas durante la trasformazione isobara da A a B. (15 pt)\n    \\item Calcolare il lavoro compiuto dal gas e il calore assorbito dal gas durante la trasformazione isocora da A a C. (15 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{3}{c||}{\\textbf{1}} & \\multicolumn{4}{c||}{\\textbf{2}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & a) & b) & c) & d) & \\\\ \\hline\n\\textbf{Max} & 20 & 20 & 20 & 15 & 15 & 15 & 15 & 120 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:120445>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 2,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 120,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163559.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163559.pdf",
+        "pdf_size": 16171,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Termodinamica}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:35:59.984641",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Termodinamica}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 4,
+      "scenario": {
+        "materia": "Storia",
+        "livello": "Istituto Tecnico",
+        "argomento": "Storia romana",
+        "num_esercizi": 5,
+        "punti_totali": 120,
+        "durata": "1 ora",
+        "mostra_punteggi": false,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Storia Romana",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Storia Romana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e \n\nData:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\n\\subsection*{Esercizio 1: Le Repubbliche Marinare}\nIndica, tra le seguenti, quali furono le quattro Repubbliche Marinare italiane storicamente riconosciute.\n\\begin{enumerate}[a)]\n    \\item Venezia, Genova, Pisa, Amalfi\n    \\item Napoli, Bari, Ancona, Gaeta\n    \\item Roma, Firenze, Milano, Torino\n    \\item Bologna, Ferrara, Mantova, Modena\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: La Caduta dell'Impero Romano d'Occidente}\nIndica se le seguenti affermazioni riguardanti la caduta dell'Impero Romano d'Occidente sono vere o false.\n\\begin{enumerate}[a)]\n    \\item Le invasioni barbariche furono l'unica causa della crisi. $\\quad \\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n    \\item La data convenzionale della caduta è il 476 d.C. $\\quad \\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n    \\item L'imperatore Teodosio fu l'ultimo imperatore a regnare su tutto l'Impero. $\\quad \\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n    \\item La Peste di Giustiniano indebolì ulteriormente l'Occidente. $\\quad \\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Le Guerre Puniche}\nDescrivi brevemente il significato storico delle Guerre Puniche per la storia di Roma e del Mediterraneo.\n\n\\subsection*{Esercizio 4: La Riforma Agraria dei Gracchi}\nSpiega le motivazioni principali che spinsero Tiberio e Gaio Gracco a proporre le loro riforme agrarie e quali furono le conseguenze politiche immediate delle loro iniziative.\n\n\\subsection*{Esercizio 5: L'Età di Cesare}\nConsiderando il periodo della tarda Repubblica Romana, individua due riforme o iniziative politiche significative attribuite a Gaio Giulio Cesare e discuti brevemente il loro impatto.\n\\end{document}",
+            "pdf": "<BYTES:80587>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 5,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 120,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 10
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163609.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163609.pdf",
+        "pdf_size": 15080,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 25,
+      "timestamp": "2026-03-14T16:36:10.096095",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 5,
+      "scenario": {
+        "materia": "Storia",
+        "livello": "Scuola Media",
+        "argomento": "Guerra mondiale",
+        "num_esercizi": 3,
+        "punti_totali": 100,
+        "durata": "1 ora e 30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Le Guerre Mondiali",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Le Guerre Mondiali} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Le Cause Profonde della Grande Guerra}\nIndividua e descrivi brevemente almeno tre delle principali cause che condussero allo scoppio della Prima Guerra Mondiale.\n\\begin{enumerate}[a)]\n    \\item Nazionalismi esasperati e irredentismi. (8 pt)\n    \\item Le alleanze militari contrapposte. (8 pt)\n    \\item La corsa agli armamenti. (8 pt)\n    \\item Le crisi marocchine e balcaniche. (Opzionale)\n\\end{enumerate}\nScegli tra le seguenti affermazioni quella che meglio descrive il concetto di \"imperialismo\" nel contesto dell'Europa prebellica:\n    \\begin{enumerate}[a)]\n        \\item La tendenza dei governi europei a promuovere l'industrializzazione interna e l'autosufficienza economica.\n        \\item La competizione tra le potenze europee per l'acquisizione di colonie e sfere d'influenza economica e politica in Africa e Asia. (7 pt)\n        \\item La politica di disarmo concordata tra le principali nazioni per evitare conflitti.\n        \\item Lo sviluppo di reti ferroviarie transnazionali per favorire il commercio pacifico.\n    \\end{enumerate}\n\n\\subsection*{Esercizio 2: Le Fasi e le Caratteristiche della Guerra}\nDescrivi le principali caratteristiche della guerra di trincea e le sue implicazioni per i soldati.\n\\begin{itemize}\n    \\item La natura statica del fronte occidentale. (8 pt)\n    \\item Le condizioni igieniche e sanitarie disumane. (8 pt)\n    \\item Le offensive e le controffensive a caro prezzo in vite umane. (8 pt)\n    \\item L'impatto psicologico e fisico sui combattenti. (Opzionale)\n\\end{itemize}\nQuale delle seguenti innovazioni tecnologiche ebbe un impatto determinante sull'andamento della guerra di trincea?\n    \\begin{enumerate}[a)]\n        \\item Il sommergibile.\n        \\item L'aeroplano da ricognizione.\n        \\item La mitragliatrice. (7 pt)\n        \\item La radio a onde corte.\n    \\end{enumerate}\n\n\\subsection*{Esercizio 3: Le Conseguenze del Conflitto}\nAnalizza le principali conseguenze territoriali e politiche della Prima Guerra Mondiale in Europa. Fornisci almeno due esempi specifici di cambiamenti territoriali significativi.\n\\begin{enumerate}[a)]\n    \\item La dissoluzione degli imperi multinazionali (es. Austro-Ungarico, Ottomano, Russo). (8 pt)\n    \\item La nascita di nuovi stati-nazione (es. Polonia, Cecoslovacchia, Jugoslavia). (8 pt)\n    \\item L'attribuzione di mandati alla Società delle Nazioni. (8 pt)\n    \\item Le riparazioni di guerra imposte alla Germania. (Opzionale)\n\\end{enumerate}\nIl Trattato di Versailles, firmato nel 1919, impose condizioni particolarmente punitive alla Germania. Vero o Falso?\n$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (7 pt)\nIl sistema delle alleanze, sebbene volto a garantire la pace, contribuì paradossalmente ad aggravare il conflitto una volta iniziato, trasformando una crisi locale in una guerra su vasta scala. Vero o Falso?\n$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (7 pt)\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{4}{c||}{\\textbf{1}} & \\multicolumn{4}{c||}{\\textbf{2}} & \\multicolumn{4}{c||}{\\textbf{3}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & f) & a) & b) & c) & g) & a) & b) & c) & d) & \\\\ \\hline\n\\textbf{Max} & 8 & 8 & 8 & 7 & 8 & 8 & 8 & 7 & 8 & 8 & 8 & 7 & 93 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:74580>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 3,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 100,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163621.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163621.pdf",
+        "pdf_size": 18539,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Guerra mondiale}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:36:22.453303",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Guerra mondiale}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    }
+  ]
+}

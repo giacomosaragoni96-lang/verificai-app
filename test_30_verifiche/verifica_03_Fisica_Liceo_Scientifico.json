@@ -1,0 +1,87 @@
+{
+  "id": 3,
+  "scenario": {
+    "materia": "Fisica",
+    "livello": "Liceo Scientifico",
+    "argomento": "Termodinamica",
+    "num_esercizi": 2,
+    "punti_totali": 120,
+    "durata": "2 ore",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Termodinamica",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Termodinamica} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Cicli Termodinamici e Lavoro}\nUn gas ideale monoatomico è sottoposto a un ciclo termodinamico composto da tre trasformazioni:\na) Trasformazione isobara da $(V_1, P_1)$ a $(V_2, P_1)$, dove $V_2 = 2V_1$.\nb) Trasformazione isocora da $(V_2, P_1)$ a $(V_2, P_2)$, dove $P_2 = 2P_1$.\nc) Trasformazione adiabatica che riporta il sistema allo stato iniziale $(V_1, P_1)$.\nAssumere $V_1 = 1.0 \\, \\text{m}^3$, $P_1 = 1.0 \\times 10^5 \\, \\text{Pa}$ e $c_p = \\frac{5}{2}R$.\n\n\\begin{enumerate}[a)]\n    \\item Calcolare il lavoro compiuto dal gas in ciascuna trasformazione e il lavoro totale compiuto dal gas nel ciclo. (20 pt)\n    \\item Calcolare il calore scambiato dal gas in ciascuna trasformazione. (20 pt)\n    \\item Calcolare l'efficienza termica del ciclo, assumendo che esso operi come una macchina termica. (20 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Trasformazioni di un Gas Reale e Primo Principio}\nUna mole di un gas non ideale si trova inizialmente nello stato A con pressione $P_A = 2.0 \\times 10^5 \\, \\text{Pa}$ e volume $V_A = 10.0 \\, \\text{L}$. Il gas viene portato nello stato B attraverso due diverse trasformazioni reversibili:\n1. Trasformazione isobara fino a raggiungere un volume $V_B = 2V_A$.\n2. Trasformazione isocora fino a raggiungere una pressione $P_C = 2P_A$.\n\nSi consideri che il gas sia descritto dall'equazione di Van der Waals: $(P + \\frac{an^2}{V^2})(V-nb) = nRT$, dove per questo gas $a = 0.1 \\, \\text{Pa m}^6/\\text{mol}^2$ e $b = 1.0 \\times 10^{-5} \\, \\text{m}^3/\\text{mol}$. Per semplicità, si assuma $n=1$ mole. Il calore specifico molare a volume costante è $c_V = \\frac{3}{2}R$.\n\n\\begin{enumerate}[a)]\n    \\item Calcolare la temperatura $T_A$ nello stato iniziale, utilizzando l'equazione di Van der Waals per determinare la pressione. Si utilizzi il valore approssimato $R \\approx 8.31 \\, \\text{J}/(\\text{mol} \\cdot \\text{K})$. (15 pt)\n    \\item Determinare le coordinate $(P_B, V_B)$ e $(P_C, V_C)$ degli stati B e C. (15 pt)\n    \\item Calcolare il lavoro compiuto dal gas e il calore assorbito dal gas durante la trasformazione isobara da A a B. (15 pt)\n    \\item Calcolare il lavoro compiuto dal gas e il calore assorbito dal gas durante la trasformazione isocora da A a C. (15 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{3}{c||}{\\textbf{1}} & \\multicolumn{4}{c||}{\\textbf{2}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & a) & b) & c) & d) & \\\\ \\hline\n\\textbf{Max} & 20 & 20 & 20 & 15 & 15 & 15 & 15 & 120 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:120445>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.8
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 2,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 120,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163559.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163559.pdf",
+    "pdf_size": 16171,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Termodinamica}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:35:59.984649",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Termodinamica}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

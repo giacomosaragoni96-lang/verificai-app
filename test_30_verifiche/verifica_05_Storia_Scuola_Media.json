@@ -1,0 +1,87 @@
+{
+  "id": 5,
+  "scenario": {
+    "materia": "Storia",
+    "livello": "Scuola Media",
+    "argomento": "Guerra mondiale",
+    "num_esercizi": 3,
+    "punti_totali": 100,
+    "durata": "1 ora e 30 minuti",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Le Guerre Mondiali",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Le Guerre Mondiali} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Le Cause Profonde della Grande Guerra}\nIndividua e descrivi brevemente almeno tre delle principali cause che condussero allo scoppio della Prima Guerra Mondiale.\n\\begin{enumerate}[a)]\n    \\item Nazionalismi esasperati e irredentismi. (8 pt)\n    \\item Le alleanze militari contrapposte. (8 pt)\n    \\item La corsa agli armamenti. (8 pt)\n    \\item Le crisi marocchine e balcaniche. (Opzionale)\n\\end{enumerate}\nScegli tra le seguenti affermazioni quella che meglio descrive il concetto di \"imperialismo\" nel contesto dell'Europa prebellica:\n    \\begin{enumerate}[a)]\n        \\item La tendenza dei governi europei a promuovere l'industrializzazione interna e l'autosufficienza economica.\n        \\item La competizione tra le potenze europee per l'acquisizione di colonie e sfere d'influenza economica e politica in Africa e Asia. (7 pt)\n        \\item La politica di disarmo concordata tra le principali nazioni per evitare conflitti.\n        \\item Lo sviluppo di reti ferroviarie transnazionali per favorire il commercio pacifico.\n    \\end{enumerate}\n\n\\subsection*{Esercizio 2: Le Fasi e le Caratteristiche della Guerra}\nDescrivi le principali caratteristiche della guerra di trincea e le sue implicazioni per i soldati.\n\\begin{itemize}\n    \\item La natura statica del fronte occidentale. (8 pt)\n    \\item Le condizioni igieniche e sanitarie disumane. (8 pt)\n    \\item Le offensive e le controffensive a caro prezzo in vite umane. (8 pt)\n    \\item L'impatto psicologico e fisico sui combattenti. (Opzionale)\n\\end{itemize}\nQuale delle seguenti innovazioni tecnologiche ebbe un impatto determinante sull'andamento della guerra di trincea?\n    \\begin{enumerate}[a)]\n        \\item Il sommergibile.\n        \\item L'aeroplano da ricognizione.\n        \\item La mitragliatrice. (7 pt)\n        \\item La radio a onde corte.\n    \\end{enumerate}\n\n\\subsection*{Esercizio 3: Le Conseguenze del Conflitto}\nAnalizza le principali conseguenze territoriali e politiche della Prima Guerra Mondiale in Europa. Fornisci almeno due esempi specifici di cambiamenti territoriali significativi.\n\\begin{enumerate}[a)]\n    \\item La dissoluzione degli imperi multinazionali (es. Austro-Ungarico, Ottomano, Russo). (8 pt)\n    \\item La nascita di nuovi stati-nazione (es. Polonia, Cecoslovacchia, Jugoslavia). (8 pt)\n    \\item L'attribuzione di mandati alla Società delle Nazioni. (8 pt)\n    \\item Le riparazioni di guerra imposte alla Germania. (Opzionale)\n\\end{enumerate}\nIl Trattato di Versailles, firmato nel 1919, impose condizioni particolarmente punitive alla Germania. Vero o Falso?\n$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (7 pt)\nIl sistema delle alleanze, sebbene volto a garantire la pace, contribuì paradossalmente ad aggravare il conflitto una volta iniziato, trasformando una crisi locale in una guerra su vasta scala. Vero o Falso?\n$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (7 pt)\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{4}{c||}{\\textbf{1}} & \\multicolumn{4}{c||}{\\textbf{2}} & \\multicolumn{4}{c||}{\\textbf{3}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & f) & a) & b) & c) & g) & a) & b) & c) & d) & \\\\ \\hline\n\\textbf{Max} & 8 & 8 & 8 & 7 & 8 & 8 & 8 & 7 & 8 & 8 & 8 & 7 & 93 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:74580>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.8
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 3,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 100,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163621.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163621.pdf",
+    "pdf_size": 18539,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Guerra mondiale}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:36:22.453311",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Guerra mondiale}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

@@ -1,0 +1,87 @@
+{
+  "id": 4,
+  "scenario": {
+    "materia": "Storia",
+    "livello": "Istituto Tecnico",
+    "argomento": "Storia romana",
+    "num_esercizi": 5,
+    "punti_totali": 120,
+    "durata": "1 ora",
+    "mostra_punteggi": false,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Storia Romana",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Storia Romana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e \n\nData:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\n\\subsection*{Esercizio 1: Le Repubbliche Marinare}\nIndica, tra le seguenti, quali furono le quattro Repubbliche Marinare italiane storicamente riconosciute.\n\\begin{enumerate}[a)]\n    \\item Venezia, Genova, Pisa, Amalfi\n    \\item Napoli, Bari, Ancona, Gaeta\n    \\item Roma, Firenze, Milano, Torino\n    \\item Bologna, Ferrara, Mantova, Modena\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: La Caduta dell'Impero Romano d'Occidente}\nIndica se le seguenti affermazioni riguardanti la caduta dell'Impero Romano d'Occidente sono vere o false.\n\\begin{enumerate}[a)]\n    \\item Le invasioni barbariche furono l'unica causa della crisi. $\\quad \\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n    \\item La data convenzionale della caduta è il 476 d.C. $\\quad \\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n    \\item L'imperatore Teodosio fu l'ultimo imperatore a regnare su tutto l'Impero. $\\quad \\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n    \\item La Peste di Giustiniano indebolì ulteriormente l'Occidente. $\\quad \\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Le Guerre Puniche}\nDescrivi brevemente il significato storico delle Guerre Puniche per la storia di Roma e del Mediterraneo.\n\n\\subsection*{Esercizio 4: La Riforma Agraria dei Gracchi}\nSpiega le motivazioni principali che spinsero Tiberio e Gaio Gracco a proporre le loro riforme agrarie e quali furono le conseguenze politiche immediate delle loro iniziative.\n\n\\subsection*{Esercizio 5: L'Età di Cesare}\nConsiderando il periodo della tarda Repubblica Romana, individua due riforme o iniziative politiche significative attribuite a Gaio Giulio Cesare e discuti brevemente il loro impatto.\n\\end{document}",
+        "pdf": "<BYTES:80587>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.6
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 5,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 120,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": false,
+      "presente": false,
+      "punteggio": 10
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163609.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163609.pdf",
+    "pdf_size": 15080,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 25,
+  "timestamp": "2026-03-14T16:36:10.096104",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}
