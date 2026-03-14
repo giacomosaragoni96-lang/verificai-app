@@ -3,20 +3,20 @@
   "scenario": {
     "materia": "Matematica",
     "livello": "Istituto Tecnico",
-    "argomento": "Equazioni di secondo grado",
-    "num_esercizi": 2,
-    "punti_totali": 150,
+    "argomento": "Trigonometria",
+    "num_esercizi": 7,
+    "punti_totali": 80,
     "durata": "2 ore",
     "mostra_punteggi": true,
-    "con_griglia": true
+    "con_griglia": false
   },
   "generazione": {
     "success": true,
     "output": {
-      "titolo": "Equazioni di secondo grado",
+      "titolo": "Trigonometria",
       "A": {
-        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Equazioni di secondo grado} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Risoluzione di Equazioni di Secondo Grado}\n\nSi considerino le seguenti equazioni di secondo grado:\n\\begin{enumerate}[a)]\n    \\item Determinare le radici reali dell'equazione $2x^2 - 5x + 2 = 0$. (25 pt)\n    \\item Risolvere l'equazione $x^2 + 4x + 4 = 0$. (25 pt)\n    \\item \n\nTrovare le soluzioni reali dell'equazione $3x^2 - x - 1 = 0$. (25 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Studio di un Parametro in un'Equazione di Secondo Grado}\n\nSi consideri l'equazione parametrica: $x^2 - (k+1)x + k = 0$, dove $k$ è un parametro reale.\n\\begin{enumerate}[a)]\n    \\item Determinare i valori del parametro $k$ per cui l'equazione ammette soluzioni reali coincidenti. (20 pt)\n    \\item Determinare i valori del parametro $k$ per cui l'equazione ammette soluzioni reali distinte. (20 pt)\n    \\item \n\nTrovare i valori del parametro $k$ per cui l'equazione è priva di soluzioni reali. (20 pt)\n    \\item Per $k=2$, trovare le radici dell'equazione. (15 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{3}{c||}{\\textbf{1}} & \\multicolumn{4}{c||}{\\textbf{2}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & a) & b) & c) & d) & \\\\ \\hline\n\\textbf{Max} & 25 & 25 & 25 & 20 & 20 & 20 & 15 & 150 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
-        "pdf": "<BYTES:83984>"
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Trigonometria} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Identità Fondamentali}\n\\begin{enumerate}[a)]\n\\item Definire le tre funzioni trigonometriche fondamentali (seno, coseno, tangente) in termini di un triangolo rettangolo. (4 pt)\n\\item Utilizzando la definizione, calcolare $\\sin(\\frac{\\pi}{6})$, $\\cos(\\frac{\\pi}{3})$ e $\\tan(\\frac{\\pi}{4})$. (7 pt)\n\\item Indicare il valore di $\\sin(\\pi)$. (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Risoluzione di Equazioni Trigonometriche}\nRisolvere l'equazione trigonometrica:\n$$2\\sin(x) - 1 = 0$$\nnel dominio $[0, 2\\pi)$. (13 pt)\n\\subsection*{Esercizio 3: Analisi di una Funzione Trigonometrica}\n\nSi consideri la funzione $f(x) = 3\\cos(2x - \\frac{\\pi}{2})$.\nDeterminare:\n\\begin{enumerate}[a)]\n\\item Ampiezza. (3 pt)\n\\item Periodo. (5 pt)\n\\item Eventuale sfasamento orizzontale. (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Identità Trigonometriche}\nDimostrare la seguente identità trigonometrica:\n$$ \\frac{\\sin(x)}{1 + \\cos(x)} + \\frac{1 + \\cos(x)}{\\sin(x)} = \\frac{2}{\\sin(x)} $$ (13 pt)\n\\subsection*{Esercizio 5: Problema di Trigonometria nel Triangolo}\nIn un triangolo $ABC$, si ha $a=7$, $b=5$ e l'angolo $\\gamma = 60^\\circ$. Calcolare la lunghezza del lato $c$ utilizzando il Teorema del Coseno. (13 pt)\n\\subsection*{Esercizio 6: Verità o Falsità}\n\nStabilire se le seguenti affermazioni sono vere o false. Giustificare sinteticamente ogni risposta.\n\\begin{enumerate}[a)]\n\\item Per ogni angolo $x$, vale $\\sin^2(x) - \\cos^2(x) = 1$. $\\square$ V $\\quad \\square$ F (3 pt)\n\\item La funzione $y = \\tan(x)$ ha un periodo di $\\pi$. $\\square$ V $\\quad \\square$ F (5 pt)\n\\item Se $\\cos(x) = \\frac{1}{2}$, allora $x = \\frac{\\pi}{3} + 2k\\pi$ o $x = -\\frac{\\pi}{3} + 2k\\pi$ per $k \\in \\mathbb{Z}$. $\\square$ V $\\quad \\square$ F (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 7: Applicazione con Scelta Multipla}\nUn osservatore, posto a 100 metri da una torre, guarda la cima con un angolo di elevazione di $30^\\circ$. Qual è l'altezza della torre?\n\\begin{enumerate}[a)]\n\\item $100 \\tan(30^\\circ)$ metri.\n\\item $100 \\sin(30^\\circ)$ metri.\n\\item $100 \\cos(30^\\circ)$ metri.\n\\item $100 / \\tan(30^\\circ)$ metri.\n\\end{enumerate}\n\\end{document}",
+        "pdf": "<BYTES:126400>"
       },
       "B": {
         "latex": "",
@@ -35,7 +35,7 @@
         "pdf": null,
         "testo": ""
       },
-      "_validation_score": 0.8
+      "_validation_score": 0.6
     },
     "prompt_used": "Sistema completo VerificAI",
     "tokens": 7
@@ -43,13 +43,13 @@
   "analisi": {
     "esercizi": {
       "trovati": 0,
-      "attesi": 2,
+      "attesi": 7,
       "corretti": false,
       "punteggio": 0
     },
     "punteggi": {
       "trovati": 0,
-      "attesi": 150,
+      "attesi": 80,
       "corretti": false,
       "punteggio": 0
     },
@@ -65,9 +65,9 @@
       "punteggio": 0
     },
     "griglia": {
-      "richiesta": true,
+      "richiesta": false,
       "presente": false,
-      "punteggio": 0
+      "punteggio": 5
     },
     "latex": {
       "brackets_bilanciati": true,
@@ -76,12 +76,12 @@
   },
   "pdf": {
     "success": true,
-    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164153.tex",
-    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164153.pdf",
-    "pdf_size": 18439,
-    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Equazioni di secondo grado}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_173154.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_173154.pdf",
+    "pdf_size": 16458,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Trigonometria}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
   },
-  "punteggio_finale": 15,
-  "timestamp": "2026-03-14T16:41:54.616945",
-  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Equazioni di secondo grado}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  "punteggio_finale": 20,
+  "timestamp": "2026-03-14T17:31:55.221331",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Trigonometria}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
 }

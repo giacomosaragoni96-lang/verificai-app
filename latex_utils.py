@@ -137,6 +137,12 @@ def extract_corpo(latex: str) -> str:
         print(f"🔍 DEBUG extract_corpo: estratti {len(corpo)} caratteri")
         if corpo:
             print(f"📄 Contenuto estratto (primi 200): {corpo[:200]}")
+            # 🔥 RIMUOVI EVENTUALI \begin{document} residui dal corpo
+            corpo = re.sub(r"\\begin\{document\}", "", corpo)
+            corpo = re.sub(r"\\documentclass\[.*?\]\{.*?\}", "", corpo)
+            corpo = re.sub(r"\\usepackage\[.*?\]\{.*?\}", "", corpo)
+            corpo = corpo.strip()
+            print(f"🧹 Corpo pulito: {len(corpo)} caratteri")
         else:
             print(f"❌ CORPO VUOTO estratto!")
         return corpo
