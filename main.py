@@ -23,13 +23,13 @@ def render_admin_page():
     
     st.set_page_config(page_title="Test Suite - VerificAI", layout="wide")
     
-    # Importa e renderizza pagina PromptFoo semplice
+    # Importa e renderizza pagina test 30 verifiche
     try:
-        from promptfoo_simple import render_promptfoo_page
-        render_promptfoo_page()
+        from test_completo_30 import render_test_30_page
+        render_test_30_page()
     except ImportError:
-        st.error("⚠️ Modulo PromptFoo non trovato")
-        st.info("💡 Assicurati che promptfoo_simple.py sia disponibile")
+        st.error("⚠️ Modulo Test 30 non trovato")
+        st.info("💡 Assicurati che test_completo_30.py sia disponibile")
     
     # Pulsante per tornare all'app principale
     if st.button("← Torna a VerificAI", type="secondary"):
