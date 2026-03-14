@@ -1,0 +1,87 @@
+{
+  "id": 3,
+  "scenario": {
+    "materia": "Chimica",
+    "livello": "Scuola Media",
+    "argomento": "Chimica organica",
+    "num_esercizi": 3,
+    "punti_totali": 150,
+    "durata": "1 ora",
+    "mostra_punteggi": true,
+    "con_griglia": false
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Introduzione alla Chimica Organica",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Introduzione alla Chimica Organica} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Nomenclatura e Struttura}\nConsidera i seguenti composti organici:\n\\begin{enumerate}\n    \\item Disegna la struttura di Lewis dell'etanolo. (15 pt)\n    \\item Indica il nome IUPAC del composto con formula bruta $C_4H_{10}O$ e struttura\n   $CH_3-CH(OH)-CH_2-CH_3$. (15 pt)\n    \\item Identifica la classe di appartenenza e il gruppo funzionale principale del 2-butanone. (20 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Reazioni di Alcheni}\n\nSi consideri il 2-butene.\n\\begin{enumerate}\n    \\item Scrivi l'equazione bilanciata della reazione di idrogenazione catalitica del 2-butene. (15 pt)\n    \\item Indica il prodotto principale della reazione di idratazione acido-catalizzata del 2-butene. Giustifica brevemente la tua risposta applicando la regola di Markovnikov. (20 pt)\n    \\item Il 2-butene reagisce con il bromo ($Br_2$) in soluzione acquosa. Quale prodotto si forma principalmente e quale regola chimica si applica? (15 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Stereoisomeria e Gruppi Funzionali}\nConsidera la molecola dell'acido 2-cloropropanoico.\n\\begin{enumerate}\n    \\item Disegna le strutture di tutti gli stereoisomeri possibili per questa molecola, indicando le configurazioni assolute (R/S). (25 pt)\n    \\item Quale tipo di isomeria presenta la coppia di composti:\n   $CH_3-CH(OH)-COOH$ e $CH_3-CO-CH_2OH$? Motiva la tua risposta. (25 pt)\n\\end{enumerate}\n\\end{document}",
+        "pdf": "<BYTES:91309>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.4
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 3,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 150,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": false,
+      "presente": false,
+      "punteggio": 5
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163936.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163936.pdf",
+    "pdf_size": 15925,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Chimica organica}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 20,
+  "timestamp": "2026-03-14T16:39:37.433644",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Chimica organica}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

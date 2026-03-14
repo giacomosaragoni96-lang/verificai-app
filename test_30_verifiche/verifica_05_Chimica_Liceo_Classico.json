@@ -1,0 +1,87 @@
+{
+  "id": 5,
+  "scenario": {
+    "materia": "Chimica",
+    "livello": "Liceo Classico",
+    "argomento": "Soluzioni",
+    "num_esercizi": 2,
+    "punti_totali": 150,
+    "durata": "2 ore",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Le soluzioni chimiche",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Le soluzioni chimiche} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Concentrazione di una soluzione}\nSi prepara una soluzione sciogliendo $50.0 \\text{ g}$ di idrossido di sodio (NaOH) in acqua distillata fino a ottenere un volume finale di $250.0 \\text{ mL}$.\n\n\\begin{enumerate}[a)]\n\n\\item[a)] Calcolare la massa molare dell'idrossido di sodio (Na: $22.99 \\text{ g/mol}$, O: $16.00 \\text{ g/mol}$, H: $1.01 \\text{ g/mol}$). (20 pt)\n\n\\item[b)] Determinare il numero di moli di NaOH disciolte. (20 pt)\n\n\\item[c)] Calcolare la molarità della soluzione in $\\text{mol/L}$. (20 pt)\n\n\\item[d)] Se si prelevano $50.0 \\text{ mL}$ di questa soluzione e si aggiunge acqua fino a raggiungere un volume totale di $200.0 \\text{ mL}$, quale sarà la nuova molarità? (15 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Analisi di una curva di solubilità}\nLa solubilità del nitrato di potassio ($\\text{KNO}_3$) in acqua a diverse temperature è riportata nella seguente tabella:\n\n\\begin{tabular}{|c|c|}\n\\hline\nTemperatura ($^\\circ$C) & Solubilità (g $\\text{KNO}_3$/100 g $\\text{H}_2\\text{O}$) \\\\\n\\hline\n10 & 20.9 \\\\\n20 & 31.6 \\\\\n30 & 45.8 \\\\\n40 & 63.9 \\\\\n50 & 85.5 \\\\\n60 & 110.0 \\\\\n\\hline\n\\end{tabular}\n\n\\begin{enumerate}[a)]\n\n\\item[a)] Rappresentare graficamente i dati riportati in tabella, ponendo la temperatura sull'asse delle ascisse e la solubilità sull'asse delle ordinate. (20 pt)\n\n\\item[b)] Determinare la solubilità del $\\text{KNO}_3$ a $35 ^\\circ$C, interpolando graficamente o analiticamente i dati. (20 pt)\n\n\\item[c)] Calcolare la quantità di $\\text{KNO}_3$ necessaria per preparare $200 \\text{ g}$ di una soluzione satura a $50 ^\\circ$C. (20 pt)\n\n\\item[d)] Se si mescolano $150 \\text{ g}$ di $\\text{KNO}_3$ con $300 \\text{ g}$ di acqua a $60 ^\\circ$C, la soluzione risulterà satura, insatura o sovrasatura? Giustificare la risposta. (15 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{4}{c||}{\\textbf{1}} & \\multicolumn{4}{c||}{\\textbf{2}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & d) & a) & b) & c) & d) & \\\\ \\hline\n\\textbf{Max} & 20 & 20 & 20 & 15 & 20 & 20 & 20 & 15 & 150 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:87265>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.6
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 2,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 150,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163959.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163959.pdf",
+    "pdf_size": 16374,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Soluzioni}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:40:00.764723",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Soluzioni}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

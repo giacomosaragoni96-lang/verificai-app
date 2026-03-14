@@ -5,9 +5,9 @@
     "livello": "Scuola Media",
     "argomento": "Soluzioni",
     "num_esercizi": 5,
-    "punti_totali": 50,
-    "durata": "45 minuti",
-    "mostra_punteggi": false,
+    "punti_totali": 60,
+    "durata": "30 minuti",
+    "mostra_punteggi": true,
     "con_griglia": true
   },
   "generazione": {
@@ -15,8 +15,8 @@
     "output": {
       "titolo": "Soluzioni chimiche",
       "A": {
-        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Soluzioni chimiche} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e \n\nData:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\n\\subsection*{Esercizio 1: Concentrazione Molare}\nUna soluzione acquosa di cloruro di sodio (NaCl) ha una concentrazione di $0.5 \\, \\text{mol/L}$. Qual è la molarità di questa soluzione se il volume totale è di $250 \\, \\text{mL}$?\n\n\\subsection*{Esercizio 2: Percentuale in Massa}\nPer preparare una soluzione, vengono disciolti $20 \\, \\text{g}$ di soluto in $180 \\, \\text{g}$ di solvente. Qual è la percentuale in massa del soluto nella soluzione?\n\\begin{enumerate}[a)]\n    \\item $10\\%$\n    \\item $11.1\\%$\n    \\item $20\\%$\n    \\item $25\\%$\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Preparazione di Soluzioni}\n\nData una soluzione madre di acido solforico ($H_2SO_4$) con concentrazione $2.0 \\, \\text{M}$, si desidera preparare $500 \\, \\text{mL}$ di una soluzione figlia con concentrazione $0.25 \\, \\text{M}$.\n\\begin{enumerate}[a)]\n    \\item Calcolare il volume della soluzione madre necessario.\n    \\item Descrivere brevemente il procedimento di preparazione.\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Densità e Concentrazione}\nUna soluzione di etanolo in acqua ha una densità di $0.96 \\, \\text{g/mL}$ e una concentrazione molare di $8.0 \\, \\text{mol/L}$. L'etanolo ha formula $C_2H_5OH$.\n\\begin{enumerate}[a)]\n    \\item Vero o Falso: La soluzione contiene più etanolo che acqua in termini di massa.\n    \\item Calcolare la percentuale in massa di etanolo nella soluzione.\n\\end{enumerate}\n($\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F})\n\n\\subsection*{Esercizio 5: Diluizione di Soluzioni}\nSi hanno $100 \\, \\text{mL}$ di una soluzione di idrossido di sodio (NaOH) $0.1 \\, \\text{M}$. Se questa soluzione viene diluita aggiungendo $400 \\, \\text{mL}$ di acqua, quale sarà la concentrazione molare della soluzione finale?\n\\end{document}",
-        "pdf": "<BYTES:98916>"
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Soluzioni chimiche} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Concentrazione Molare}\nUna soluzione acquosa di cloruro di sodio (NaCl) ha una concentrazione di 0.5 M. Quanti grammi di NaCl sono disciolti in 2.5 litri di soluzione?\n(Massa molare del NaCl = 58.44 g/mol) (15 pt)\n\\subsection*{Esercizio 2: Percentuale in Massa}\nSi preparano 500 g di una soluzione acquosa di glucosio (C$_6$H$_{12}$O$_6$) al 15% in massa. Quanti grammi di glucosio e quanti grammi di acqua sono presenti nella soluzione? (15 pt)\n\\subsection*{Esercizio 3: Molalità}\nUna soluzione contiene 20 g di idrossido di potassio (KOH) disciolti in 200 g di acqua. Calcolare la molalità della soluzione.\n(Massa molare del KOH = 56.11 g/mol) (15 pt)\n\\subsection*{Esercizio 4: Determinazione del Solvente}\nUna soluzione di acido solforico (H$_2$SO$_4$) ha una concentrazione del 20% in massa. Se sono presenti 98 g di acido solforico, determinare la massa di acqua presente nella soluzione. (15 pt)\n\\subsection*{Esercizio 5: Scelta Multipla - Molarità}\nQuale delle seguenti affermazioni è VERA riguardo a una soluzione con molarità 1.0 M?\n\\begin{enumerate}[a)]\n    \\item Contiene 1 mole di soluto per litro di acqua.\n    \\item Contiene 1 mole di soluto per 1000 grammi di soluzione.\n    \\item Contiene 1 mole di soluto per litro di soluzione.\n    \\item Ha una densità di 1 g/mL.\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 15 & 15 & 15 & 15 & — & 60 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:70879>"
       },
       "B": {
         "latex": "",
@@ -35,7 +35,7 @@
         "pdf": null,
         "testo": ""
       },
-      "_validation_score": 0.6
+      "_validation_score": 0.8
     },
     "prompt_used": "Sistema completo VerificAI",
     "tokens": 7
@@ -49,7 +49,7 @@
     },
     "punteggi": {
       "trovati": 0,
-      "attesi": 50,
+      "attesi": 60,
       "corretti": false,
       "punteggio": 0
     },
@@ -60,9 +60,9 @@
       "punteggio": 10
     },
     "tabella": {
-      "richiesta": false,
+      "richiesta": true,
       "presente": false,
-      "punteggio": 10
+      "punteggio": 0
     },
     "griglia": {
       "richiesta": true,
@@ -76,12 +76,12 @@
   },
   "pdf": {
     "success": true,
-    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_160653.tex",
-    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_160653.pdf",
-    "pdf_size": 17660,
-    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Soluzioni}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163920.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163920.pdf",
+    "pdf_size": 17693,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Soluzioni}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
   },
-  "punteggio_finale": 25,
-  "timestamp": "2026-03-14T16:06:54.237157",
-  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Soluzioni}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:39:21.417208",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Soluzioni}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
 }

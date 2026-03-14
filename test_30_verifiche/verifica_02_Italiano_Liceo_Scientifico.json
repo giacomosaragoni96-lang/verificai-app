@@ -3,20 +3,20 @@
   "scenario": {
     "materia": "Italiano",
     "livello": "Liceo Scientifico",
-    "argomento": "Testo argomentativo",
-    "num_esercizi": 2,
-    "punti_totali": 50,
-    "durata": "1 ora",
+    "argomento": "Grammatica",
+    "num_esercizi": 3,
+    "punti_totali": 150,
+    "durata": "30 minuti",
     "mostra_punteggi": true,
-    "con_griglia": false
+    "con_griglia": true
   },
   "generazione": {
     "success": true,
     "output": {
-      "titolo": "Il testo argomentativo",
+      "titolo": "Grammatica italiana",
       "A": {
-        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Italiano: Il testo argomentativo} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Studio di Funzione Razionale Fratta}\n\nSi consideri la funzione $f(x) = \\frac{x^2 - 4x + 3}{x^2 - 1}$.\n\\begin{enumerate}[a)]\n    \\item Determinare il dominio della funzione e le eventuali intersezioni con gli assi cartesiani. (8 pt)\n    \\item Calcolare i limiti della funzione agli estremi del dominio e determinare le equazioni degli eventuali asintoti. (8 pt)\n    \\item Studiare il segno della funzione e calcolare la derivata prima per individuare gli intervalli di monotonia e gli eventuali massimi e minimi relativi. (9 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Problema di Ottimizzazione}\nUn'azienda produce scatole a forma di parallelepipedo rettangolo con base quadrata. Il materiale per la base e la copertura superiore costa 2 euro al dm$^2$, mentre il materiale per le facce laterali costa 1 euro al dm$^2$.\n\\begin{enumerate}[a)]\n    \\item Esprimere il costo totale dei materiali in funzione della lunghezza del lato della base ($x$) e dell'altezza ($h$) della scatola. (8 pt)\n    \\item Sapendo che il volume della scatola deve essere pari a 100 dm$^3$, esprimere il costo totale dei materiali in funzione della sola variabile $x$. (8 pt)\n    \\item Determinare le dimensioni della scatola che minimizzano il costo totale dei materiali. (9 pt)\n\\end{enumerate}\n\\end{document}",
-        "pdf": "<BYTES:102572>"
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Italiano: Grammatica italiana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Risoluzione di Equazioni Lineari}\nRisolvere la seguente equazione lineare nell'incognita $x$:\n$$ \\frac{3x - 1}{2} - \\frac{2x + 5}{3} = \\frac{x}{6} + 1 $$ (50 pt)\n\\subsection*{Esercizio 2: Studio di Funzione Lineare}\n\nSi consideri la funzione lineare $f(x) = -2x + 4$.\n\\begin{enumerate}[a)]\n\\item Determinare il coefficiente angolare e l'intercetta sull'asse $y$. (20 pt)\n\\item \n\nTrovare le coordinate del punto in cui la retta interseca l'asse $x$. (20 pt)\n\\item Calcolare il valore di $f(-3)$. (10 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Problema di Primo Grado Contestualizzato}\nUn padre ha 45 anni e suo figlio ne ha 15. Determinare quanti anni fa l'età del padre era il triplo dell'età del figlio. (50 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{3}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & a) & b) & c) & — & \\\\ \\hline\n\\textbf{Max} & 50 & 20 & 20 & 10 & 50 & 150 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:78709>"
       },
       "B": {
         "latex": "",
@@ -43,13 +43,13 @@
   "analisi": {
     "esercizi": {
       "trovati": 0,
-      "attesi": 2,
+      "attesi": 3,
       "corretti": false,
       "punteggio": 0
     },
     "punteggi": {
       "trovati": 0,
-      "attesi": 50,
+      "attesi": 150,
       "corretti": false,
       "punteggio": 0
     },
@@ -65,9 +65,9 @@
       "punteggio": 0
     },
     "griglia": {
-      "richiesta": false,
+      "richiesta": true,
       "presente": false,
-      "punteggio": 5
+      "punteggio": 0
     },
     "latex": {
       "brackets_bilanciati": true,
@@ -76,12 +76,12 @@
   },
   "pdf": {
     "success": true,
-    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163254.tex",
-    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163254.pdf",
-    "pdf_size": 17032,
-    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Testo argomentativo}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163927.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163927.pdf",
+    "pdf_size": 16325,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Grammatica}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
   },
-  "punteggio_finale": 20,
-  "timestamp": "2026-03-14T16:32:55.138131",
-  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Testo argomentativo}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:39:27.884325",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Grammatica}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
 }
