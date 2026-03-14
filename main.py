@@ -1778,6 +1778,8 @@ def _render_le_tue_verifiche():
                         <div style="font-size: 1.2rem; font-weight: 700; color: #374151; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             👁️ Anteprima
                         </div>
+                    </div>
+                </div>
             ''', unsafe_allow_html=True)
             
             # Pulsante anteprima
@@ -2250,6 +2252,7 @@ def _render_le_tue_verifiche():
                         <div style="font-size: 1.1rem; font-weight: 600; color: #374151; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             📄 Download
                         </div>
+                    </div>
             ''', unsafe_allow_html=True)
             
             # Pulsante download
