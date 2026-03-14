@@ -262,7 +262,16 @@ def _assembla_e_compila(
     Assembla preambolo + corpo, applica le trasformazioni post-processing,
     compila in PDF. Restituisce (latex_finale, pdf_bytes_o_None).
     """
+    # 🔥 DEBUG: Stampa il corpo ricevuto
+    print(f"🔥 DEBUG _assembla_e_compila: corpo ricevuto ({len(corpo)} caratteri)")
+    if corpo:
+        print(f"📄 Prime 200 del corpo: {corpo[:200]}")
+    else:
+        print(f"❌ CORPO VUOTO ricevuto!")
+    
     latex = preambolo + clean_tikz_spoilers(corpo)
+    print(f"🔥 DEBUG dopo clean_tikz_spoilers: {len(latex)} caratteri")
+    
     latex = fix_items_environment(latex)
     latex = normalizza_labels_numerici(latex)   # 1) 2) 3) → a) b) c)
     latex = semplifica_item_singoli(latex)       # enumerate 1 solo item → testo diretto
@@ -270,10 +279,16 @@ def _assembla_e_compila(
     latex = aggiungi_spaziatura_grafici_tabelle(latex) # aggiunge spaziatura prima di grafici/tabelle
     latex = limita_altezza_grafici(latex)       # limita altezza dei grafici
     latex = rimuovi_vspace_corpo(latex)
+    
+    print(f"🔥 DEBUG prima di extract_corpo: {len(latex)} caratteri")
+    
     if mostra_punteggi:
         corpo_pulito = extract_corpo(latex)
+        print(f"🔥 DEBUG dopo extract_corpo: corpo_pulito ({len(corpo_pulito)} caratteri)")
         corpo_con_punti = assicura_punti_visibili(corpo_pulito, punti_totali)
+        print(f"🔥 DEBUG dopo assicura_punti_visibili: {len(corpo_con_punti)} caratteri")
         latex = preambolo + corpo_con_punti
+        print(f"🔥 DEBUG dopo ricostruzione latex: {len(latex)} caratteri")
         latex = rimuovi_punti_subsection(latex)
         # ── CRITICO: prima di riscala_punti, inietta placeholder pts
         # negli esercizi senza \item (domande aperte, esercizi singoli).
@@ -281,6 +296,7 @@ def _assembla_e_compila(
         # li ignora → griglia mostra '—' e il totale è sbagliato.
         latex = prepara_esercizi_aperti(latex, punti_totali)
         latex = riscala_punti(latex, punti_totali)
+        print(f"🔥 DEBUG finale dopo riscala_punti: {len(latex)} caratteri")
     else:
         # Guardia deterministica: rimuove punteggi residui anche se l'AI li ha inseriti
         latex = _rimuovi_tutti_punteggi(latex)
