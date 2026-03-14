@@ -101,7 +101,7 @@ def run_test_completo_30_verifiche():
         mostra_risultati_finali(risultati)
 
 def genera_scenari_random(n):
-    """Genera n scenari random"""
+    """Genera n scenari random realistici per VerificAI"""
     
     materie = ["Matematica", "Italiano", "Fisica", "Storia", "Inglese", "Chimica"]
     livelli = ["Scuola Media", "Liceo Scientifico", "Istituto Tecnico", "Liceo Classico"]
@@ -115,6 +115,8 @@ def genera_scenari_random(n):
         "Chimica": ["Chimica organica", "Reazioni chimiche", "Struttura atomica", "Soluzioni", "pH", "Leggi dei gas"]
     }
     
+    durate_realistiche = ["30 minuti", "45 minuti", "1 ora", "1 ora e 30 minuti", "2 ore"]
+    
     scenari = []
     
     for i in range(n):
@@ -126,11 +128,11 @@ def genera_scenari_random(n):
             "materia": materia,
             "livello": livello,
             "argomento": argomento,
-            "num_esercizi": random.randint(3, 6),
-            "punti_totali": random.choice([60, 80, 100]),
-            "durata": random.choice(["45 minuti", "60 minuti", "90 minuti"]),
-            "mostra_punteggi": True,
-            "con_griglia": random.choice([True, False])
+            "num_esercizi": random.randint(2, 8),  # Range realistico
+            "punti_totali": random.choice([30, 40, 50, 60, 80, 100, 120, 150]),  # Multipli di 10 realistici
+            "durata": random.choice(durate_realistiche),
+            "mostra_punteggi": random.random() < 0.9,  # 90% come nell'app
+            "con_griglia": random.random() < 0.7   # 70% come nell'app
         }
         
         scenari.append(scenario)
@@ -188,19 +190,20 @@ def genera_verifica_reale(scenario):
         }
 
 def analizza_con_promptfoo(output, scenario):
-    """Analizza output con stile PromptFoo"""
+    """Analisi output con stile PromptFoo focalizzato su VerificAI"""
     
     import re
     
     analisi = {
         "esercizi": {},
         "punteggi": {},
-        "qualita": {},
-        "latex": {},
-        "contenuto": {}
+        "struttura": {},
+        "tabella": {},
+        "griglia": {},
+        "latex": {}
     }
     
-    # 1. Analisi esercizi
+    # 1. Analisi esercizi (30 punti)
     subsections = len(re.findall(r'\\subsection\*', output))
     esercizi_trovati = subsections
     esercizi_attesi = scenario['num_esercizi']
@@ -208,10 +211,10 @@ def analizza_con_promptfoo(output, scenario):
         "trovati": esercizi_trovati,
         "attesi": esercizi_attesi,
         "corretti": esercizi_trovati == esercizi_attesi,
-        "punteggio": 25 if esercizi_trovati == esercizi_attesi else 0
+        "punteggio": 30 if esercizi_trovati == esercizi_attesi else 0
     }
     
-    # 2. Analisi punteggi
+    # 2. Analisi punteggi (30 punti)
     points = re.findall(r'\((\d+)\s*pt\)', output)
     total_points = sum(int(p) for p in points)
     punti_attesi = scenario['punti_totali']
@@ -219,25 +222,58 @@ def analizza_con_promptfoo(output, scenario):
         "trovati": total_points,
         "attesi": punti_attesi,
         "corretti": total_points == punti_attesi,
-        "punteggio": 25 if total_points == punti_attesi else 0
+        "punteggio": 30 if total_points == punti_attesi else 0
     }
     
-    # 3. Qualità formule matematiche
-    if scenario['materia'] in ["Matematica", "Fisica", "Chimica"]:
-        math_formulas = len(re.findall(r'\$[^$]*\$', output))
-        analisi['qualita']['formule'] = {
-            "conteggio": math_formulas,
-            "adeguato": math_formulas >= 2,
-            "punteggio": 15 if math_formulas >= 2 else 5
+    # 3. Analisi struttura gerarchica (20 punti)
+    struttura_elements = [
+        r'\\subsection\*',     # Esercizi
+        r'\\begin{enumerate}',  # Liste numerate
+        r'\\item',             # Item delle liste
+        r'\\begin{center}',    # Elementi centrati
+        r'\\textbf{',          # Testo grassetto
+        r'\\vspace{'           # Spaziatura verticale
+    ]
+    
+    struttura_count = sum(1 for pattern in struttura_elements if re.search(pattern, output))
+    analisi['struttura'] = {
+        "elementi_trovati": struttura_count,
+        "elementi_attesi": 4,  # Minimo 4 elementi per struttura decente
+        "adeguata": struttura_count >= 4,
+        "punteggio": 20 if struttura_count >= 4 else 10
+    }
+    
+    # 4. Analisi tabella punteggi (10 punti) - solo se richiesto
+    if scenario['mostra_punteggi']:
+        tabella_punteggi = bool(re.search(r'\\begin{tabular}.*punti.*\\end{tabular}', output, re.I))
+        analisi['tabella'] = {
+            "richiesta": True,
+            "presente": tabella_punteggi,
+            "punteggio": 10 if tabella_punteggi else 0
         }
     else:
-        analisi['qualita']['formule'] = {
-            "conteggio": 0,
-            "adeguato": True,
-            "punteggio": 15
+        analisi['tabella'] = {
+            "richiesta": False,
+            "presente": False,
+            "punteggio": 10  # Punti pieni se non richiesta
         }
     
-    # 4. Qualità LaTeX
+    # 5. Analisi griglia (5 punti) - solo se richiesta
+    if scenario['con_griglia']:
+        griglia_presente = bool(re.search(r'\\begin{tikzpicture}.*\\end{tikzpicture}', output, re.DOTALL))
+        analisi['griglia'] = {
+            "richiesta": True,
+            "presente": griglia_presente,
+            "punteggio": 5 if griglia_presente else 0
+        }
+    else:
+        analisi['griglia'] = {
+            "richiesta": False,
+            "presente": False,
+            "punteggio": 5  # Punti pieni se non richiesta
+        }
+    
+    # 6. Validità LaTeX (5 punti)
     clean = output.replace(r'\{', '').replace(r'\}', '')
     depth = 0
     brackets_ok = True
@@ -251,15 +287,7 @@ def analizza_con_promptfoo(output, scenario):
     
     analisi['latex'] = {
         "brackets_bilanciati": brackets_ok,
-        "punteggio": 15 if brackets_ok else 0
-    }
-    
-    # 5. Qualità contenuto
-    lunghezza = len(output)
-    analisi['contenuto'] = {
-        "caratteri": lunghezza,
-        "adeguato": 500 <= lunghezza <= 5000,
-        "punteggio": 20 if 500 <= lunghezza <= 5000 else 10
+        "punteggio": 5 if brackets_ok else 0
     }
     
     return analisi
@@ -341,22 +369,21 @@ def crea_latex_completo(output, scenario):
     return latex_header + output + latex_footer
 
 def calcola_punteggio_finale(analisi, pdf_result):
-    """Calcola punteggio finale da 0 a 100"""
+    """Calcola punteggio finale VerificAI-realista da 0 a 100"""
     
     punteggio = 0
     
-    # Punteggi analisi (max 75)
-    punteggio += analisi['esercizi']['punteggio']  # 25
-    punteggio += analisi['punteggi']['punteggio']    # 25
-    punteggio += analisi['qualita']['formule']['punteggio']  # 15
-    punteggio += analisi['latex']['punteggio']       # 15
-    punteggio += analisi['contenuto']['punteggio']    # 20
+    # Punteggi analisi (max 100 punti)
+    punteggio += analisi['esercizi']['punteggio']    # 30 punti
+    punteggio += analisi['punteggi']['punteggio']      # 30 punti
+    punteggio += analisi['struttura']['punteggio']    # 20 punti
+    punteggio += analisi['tabella']['punteggio']      # 10 punti
+    punteggio += analisi['griglia']['punteggio']      # 5 punti
+    punteggio += analisi['latex']['punteggio']        # 5 punti
     
-    # Punteggio PDF (max 25)
-    if pdf_result['success']:
-        punteggio += 25
-    else:
-        punteggio += 5  # Piccolo bonus anche se PDF fallisce
+    # PDF è bonus, non parte del voto
+    # if pdf_result['success']:
+    #     punteggio += 0  # Non influisce sul voto
     
     return min(punteggio, 100)
 
@@ -370,21 +397,30 @@ def mostra_risultati_finali(risultati):
         st.error("❌ Nessuna verifica generata con successo")
         return
     
-    # Metriche generali
+    # Metriche generali VerificAI-focused
     totali = len(risultati)
     punteggi = [r['punteggio_finale'] for r in risultati]
     media = sum(punteggi) / len(punteggi)
-    success_rate = len([r for r in risultati if r['pdf']['success']]) / totali * 100
+    pdf_rate = len([r for r in risultati if r['pdf']['success']]) / totali * 100
+    success_rate = len([r for r in risultati if r['punteggio_finale'] >= 70]) / totali * 100
+    
+    # Parametri accuracy
+    esercizi_corretti = len([r for r in risultati if r['analisi']['esercizi']['corretti']])
+    punti_corretti = len([r for r in risultati if r['analisi']['punteggi']['corretti']])
+    param_accuracy = ((esercizi_corretti + punti_corretti) / (totali * 2)) * 100
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("📝 Verifiche Totali", totali)
     with col2:
-        st.metric("📈 Punteggio Medio", f"{media:.1f}/100")
+        st.metric("📈 Voto Medio", f"{media:.1f}/100")
     with col3:
-        st.metric("📄 PDF Generati", f"{success_rate:.1f}%")
+        st.metric("🎯 Success Rate", f"{success_rate:.1f}%")
     with col4:
-        st.metric("⭐ Success Rate", f"{len([r for r in risultati if r['punteggio_finale'] >= 70])}/{totali}")
+        st.metric("⚙️ Param Accuracy", f"{param_accuracy:.1f}%")
+    
+    # PDF Rate separato
+    st.metric("📄 PDF Generati", f"{pdf_rate:.1f}%")
     
     # Grafico distribuzione punteggi
     import plotly.express as px
@@ -411,12 +447,13 @@ def mostra_risultati_finali(risultati):
                 st.write(f"- Durata: {risultato['scenario']['durata']}")
             
             with col2:
-                st.markdown("**🔍 Analisi PromptFoo:**")
+                st.markdown("**🔍 Analisi VerificAI:**")
                 st.write(f"- Esercizi: {risultato['analisi']['esercizi']['trovati']}/{risultato['analisi']['esercizi']['attesi']} {'✅' if risultato['analisi']['esercizi']['corretti'] else '❌'}")
                 st.write(f"- Punteggi: {risultato['analisi']['punteggi']['trovati']}/{risultato['analisi']['punteggi']['attesi']} {'✅' if risultato['analisi']['punteggi']['corretti'] else '❌'}")
-                st.write(f"- Formule: {risultato['analisi']['qualita']['formule']['conteggio']} {'✅' if risultato['analisi']['qualita']['formule']['adeguato'] else '❌'}")
+                st.write(f"- Struttura: {risultato['analisi']['struttura']['elementi_trovati']} elementi {'✅' if risultato['analisi']['struttura']['adeguata'] else '❌'}")
+                st.write(f"- Tabella: {'Richiesta' if risultato['analisi']['tabella']['richiesta'] else 'Non richiesta'} - {'✅' if risultato['analisi']['tabella']['presente'] else '❌' if risultato['analisi']['tabella']['richiesta'] else '✅'}")
+                st.write(f"- Griglia: {'Richiesta' if risultato['analisi']['griglia']['richiesta'] else 'Non richiesta'} - {'✅' if risultato['analisi']['griglia']['presente'] else '❌' if risultato['analisi']['griglia']['richiesta'] else '✅'}")
                 st.write(f"- LaTeX: {'✅' if risultato['analisi']['latex']['brackets_bilanciati'] else '❌'}")
-                st.write(f"- Contenuto: {risultato['analisi']['contenuto']['caratteri']} caratteri {'✅' if risultato['analisi']['contenuto']['adeguato'] else '❌'}")
             
             # Punteggio finale
             voto = risultato['punteggio_finale']
@@ -449,7 +486,7 @@ def mostra_risultati_finali(risultati):
             with st.expander(f"📄 Preview Output LaTeX"):
                 st.code(risultato['generazione']['output'][:500] + "..." if len(risultato['generazione']['output']) > 500 else risultato['generazione']['output'], language='latex')
     
-    # Salva risultati completi
+    # Salva risultati completi VerificAI-focused
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     risultati_file = f"test_30_verifiche/risultati_completi_{timestamp}.json"
     
@@ -457,12 +494,14 @@ def mostra_risultati_finali(risultati):
         json.dump({
             "timestamp": datetime.now().isoformat(),
             "totali": totali,
-            "media_punteggio": media,
-            "success_rate_pdf": success_rate,
+            "media_voto": media,
+            "success_rate": success_rate,
+            "param_accuracy": param_accuracy,
+            "pdf_rate": pdf_rate,
             "risultati": risultati
         }, f, indent=2, ensure_ascii=False)
     
-    st.info(f"💾 Risultati completi salvati in: {risultati_file}")
+    st.info(f"💾 Risultati VerificAI salvati in: {risultati_file}")
 
 # Funzione principale per integrare in main.py
 def render_test_30_page():
