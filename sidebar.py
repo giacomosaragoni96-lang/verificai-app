@@ -226,11 +226,11 @@ def render_sidebar(
             </span>
           </div>
           <div class="mobile-progress-bar" style="
-            background: rgba(255,255,255,0) !important;
-            border: none !important;
+            background: {_SB_BORDER} !important;
+            border: 1px solid {_SB_BORDER} !important;
             border-radius: 10px;
             overflow: hidden;
-            height: 4px;
+            height: 6px;
             width: 100%;
             position: relative;
           ">
@@ -238,11 +238,12 @@ def render_sidebar(
               width: {_perc_uso}%;
               background: {_color_bar};
               height: 100%;
-              border-radius: 10px;
+              border-radius: 8px;
               transition: width .6s ease;
               position: absolute;
               top: 0;
               left: 0;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             "></div>
           </div>
           <div class="mobile-progress-text" style="text-align: right; font-size: 0.75rem; font-weight:500; color: {_sb_muted}; margin-top: 6px; font-family: 'DM Sans', sans-serif;">
@@ -264,7 +265,15 @@ def render_sidebar(
                 _msg = f"Ti restano <b>{_rimaste} {'verifica' if _rimaste==1 else 'verifiche'}</b>."
                 _sub = "Con Pro avresti accesso illimitato."
             st.markdown(f"""
-            <div class="sb-pro-card">
+            <div class="sb-pro-card" style="
+                background: linear-gradient(135deg, {_SB_ACCENT}08, {_SB_ACCENT}04) !important;
+                border: 2px solid {_SB_ACCENT}40 !important;
+                border-radius: 12px !important;
+                padding: 1rem !important;
+                margin: .6rem 0 .4rem 0 !important;
+                box-shadow: 0 4px 12px {_SB_ACCENT}15 !important;
+                transition: all .2s ease !important;
+            ">
               <div class="sb-pro-card-header">✦ VerificAI Pro</div>
               <div class="sb-pro-card-body">{_msg} {_sub}</div>
               <div class="sb-pro-card-footer">Verifiche illimitate · Fila B anti-copia · BES/DSA · Soluzioni docente</div>
