@@ -361,7 +361,7 @@ def genera_verifica_reale(scenario):
         
         # Salviamo le funzioni originali
         original_safe_generate = generation._safe_generate
-        original_generate_content = genai.GenerativeModel.generate_content
+        original_assembla_e_compila = generation._assembla_e_compila
         
         # Debug completo del prompt e risposta
         def debug_safe_generate(model, prompt, description):
@@ -398,8 +398,29 @@ def genera_verifica_reale(scenario):
             
             return result
         
+        # Debug dell'assemblaggio
+        def debug_assembla_e_compila(preambolo, corpo, mostra_punteggi, punti_totali, con_griglia):
+            print(f"\n🔧 === DEBUG ASSEMBLAGGIO ===")
+            print(f"Preambolo lunghezza: {len(preambolo)} caratteri")
+            print(f"Corpo lunghezza: {len(corpo)} caratteri")
+            print(f"--- CONTENUTO CORPO PRIMA DELL'ASSEMBLAGGIO ---")
+            print(corpo)
+            print(f"--- FINE CORPO ---")
+            
+            # Chiama la funzione originale
+            latex_finale, pdf = original_assembla_e_compila(preambolo, corpo, mostra_punteggi, punti_totali, con_griglia)
+            
+            print(f"\n🔧 === DEBUG RISULTATO ASSEMBLAGGIO ===")
+            print(f"LaTeX finale lunghezza: {len(latex_finale)} caratteri")
+            print(f"--- CONTENUTO LaTeX FINALE ---")
+            print(latex_finale[:1000] + "..." if len(latex_finale) > 1000 else latex_finale)
+            print(f"--- FINE LaTeX FINALE ---")
+            
+            return latex_finale, pdf
+        
         # Patch delle funzioni
         generation._safe_generate = debug_safe_generate
+        generation._assembla_e_compila = debug_assembla_e_compila
         
         try:
             result = genera_verifica(
@@ -425,8 +446,9 @@ def genera_verifica_reale(scenario):
                 mathpix_context=None,
             )
         finally:
-            # Ripristina funzione originale
+            # Ripristina funzioni originali
             generation._safe_generate = original_safe_generate
+            generation._assembla_e_compila = original_assembla_e_compila
         
         print(f"📊 genera_verifica() completata - Tipo risultato: {type(result)}")
         
