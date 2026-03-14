@@ -20,7 +20,7 @@ if PROJECT_ROOT not in sys.path:
 sys.path.insert(0, os.path.dirname(__file__))
 
 def render_test_completo_30():
-    """Test completo con 30 verifiche random"""
+    """Test completo con 30 verifiche"""
     
     st.markdown("""
     <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
@@ -30,9 +30,25 @@ def render_test_completo_30():
     </div>
     """, unsafe_allow_html=True)
     
-    # Pulsante principale
-    if st.button("🚀 LANCIA TEST COMPLETO - 30 VERIFICHE", type="primary", use_container_width=True):
-        run_test_completo_30_verifiche()
+    # Pulsanti principali
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("🚀 LANCIA TEST COMPLETO - 30 VERIFICHE", type="primary", use_container_width=True):
+            run_test_completo_30_verifiche()
+    
+    with col2:
+        if st.button("🗄️ GESTISCI DATABASE VERIFICHE", type="secondary", use_container_width=True):
+            st.session_state.show_database = True
+    
+    # Mostra database se richiesto
+    if st.session_state.get('show_database', False):
+        from verifiche_database import render_database_manager
+        render_database_manager()
+        
+        if st.button("← Torna al Test", type="secondary"):
+            st.session_state.show_database = False
+            st.rerun()
 
 def run_test_completo_30_verifiche():
     """Esegue il test completo con 30 verifiche"""
@@ -99,6 +115,12 @@ def run_test_completo_30_verifiche():
         
         # Mostra risultati finali
         mostra_risultati_finali(risultati)
+        
+        # Integra nel database
+        with st.spinner("🔄 Salvataggio nel database..."):
+            from verifiche_database import integra_database_in_test
+            aggiunte = integra_database_in_test(risultati)
+            st.success(f"✅ {aggiunte} verifiche aggiunte al database!")
 
 def genera_scenari_random(n):
     """Genera n scenari random realistici per VerificAI"""
