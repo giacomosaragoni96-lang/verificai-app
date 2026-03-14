@@ -177,8 +177,9 @@ Test Configuration:
                         st.markdown(f"### 📊 Score Finale: {score:.1f}%")
                         st.progress(score / 100)
                         
-                        # Salva test (opzionale)
-                        if st.button("💾 Salva Test", key="save_test"):
+                        # Salva test (fuori dal form)
+                        st.markdown("---")
+                        if st.button("💾 Salva Test", key="save_test", use_container_width=True):
                             import json
                             from datetime import datetime
                             
@@ -221,7 +222,138 @@ Test Configuration:
     
     elif page == "📊 Storico Test":
         st.markdown("## 📊 Storico Test")
-        st.info("📂 Nessun test trovato. Genera nuovi test dalla sezione '🧪 Nuovo Test'.")
+        
+        # Carica test salvati
+        import os
+        import json
+        from datetime import datetime
+        
+        test_files = []
+        
+        # Cerca test nella directory admin_tests
+        if os.path.exists("admin_tests"):
+            for file in os.listdir("admin_tests"):
+                if file.endswith(".json"):
+                    test_files.append(f"admin_tests/{file}")
+        
+        # Cerca anche i test reali che avevamo generato
+        if os.path.exists("real_verifications"):
+            for file in os.listdir("real_verifications"):
+                if file.endswith(".json"):
+                    test_files.append(f"real_verifications/{file}")
+        
+        if test_files:
+            st.info(f"📂 Trovati {len(test_files)} test salvati")
+            
+            for test_file in sorted(test_files, reverse=True):
+                try:
+                    with open(test_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    
+                    # Estrai info
+                    if "scenario" in data:
+                        scenario = data["scenario"]
+                        name = scenario.get("name", f"Test {scenario.get('materia', 'Unknown')}")
+                        materia = scenario.get("materia", "N/A")
+                        livello = scenario.get("livello", "N/A")
+                        esercizi = scenario.get("num_esercizi", "N/A")
+                        punti = scenario.get("punti_totali", "N/A")
+                    else:
+                        name = test_file.split("/")[-1].replace(".json", "")
+                        materia = data.get("materia", "N/A")
+                        livello = data.get("livello", "N/A")
+                        esercizi = data.get("num_esercizi", "N/A")
+                        punti = data.get("punti_totali", "N/A")
+                    
+                    # Score se disponibile
+                    score = "N/A"
+                    if "evaluation" in data:
+                        score = f"{data['evaluation'].get('score', 0):.1f}%"
+                    elif "score" in data:
+                        score = f"{data['score']:.1f}%"
+                    
+                    # Timestamp
+                    timestamp = data.get("timestamp", "")
+                    if timestamp:
+                        try:
+                            dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                            time_str = dt.strftime("%d/%m/%Y %H:%M")
+                        except:
+                            time_str = timestamp[:19]
+                    else:
+                        time_str = "Sconosciuto"
+                    
+                    with st.expander(f"📝 {name} - {materia} - {score}"):
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.write(f"**Materia:** {materia}")
+                            st.write(f"**Livello:** {livello}")
+                            st.write(f"**Esercizi:** {esercizi}")
+                            st.write(f"**Punti:** {punti}")
+                        
+                        with col2:
+                            st.write(f"**Score:** {score}")
+                            st.write(f"**Data:** {time_str}")
+                            st.write(f"**File:** {test_file}")
+                        
+                        # Output preview
+                        if "output" in data:
+                            output = data["output"]
+                            st.markdown("**📄 Preview Output:**")
+                            st.code(output[:500] + "..." if len(output) > 500 else output, language='latex')
+                        
+                        # Valutazione dettagliata
+                        if "evaluation" in data:
+                            eval_data = data["evaluation"]
+                            st.markdown("**🔍 Valutazione Dettagliata:**")
+                            
+                            col1, col2, col3, col4 = st.columns(4)
+                            with col1:
+                                st.metric("Esercizi", f"{'✅' if eval_data.get('esercizi_ok') else '❌'}")
+                            with col2:
+                                st.metric("Punti", f"{'✅' if eval_data.get('punti_ok') else '❌'}")
+                            with col3:
+                                st.metric("Formule", f"{'✅' if eval_data.get('math_ok') else '❌'}")
+                            with col4:
+                                st.metric("LaTeX", f"{'✅' if eval_data.get('brackets_ok') else '❌'}")
+                        
+                        # Pulsanti azione
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            if st.button(f"🔍 Analizza", key=f"analyze_{test_file}"):
+                                st.write("📊 Analisi dettagliata in sviluppo...")
+                        with col2:
+                            if st.button(f"📊 Valuta", key=f"evaluate_{test_file}"):
+                                st.write("🔍 Valutazione automatica...")
+                        with col3:
+                            if st.button(f"🗑️ Elimina", key=f"delete_{test_file}"):
+                                os.remove(test_file)
+                                st.success("✅ Test eliminato")
+                                st.rerun()
+                
+                except Exception as e:
+                    st.error(f"Errore caricamento {test_file}: {e}")
+        else:
+            st.info("📂 Nessun test trovato. Genera nuovi test dalla sezione '🧪 Nuovo Test'.")
+            
+            # Pulsante per generare test batch
+            if st.button("🚀 Genera Test Batch (24 test)", type="secondary"):
+                with st.spinner("🔄 Generazione 24 test in corso..."):
+                    try:
+                        # Usa il sistema che avevamo creato prima
+                        from promptfoo.real_verification_test_system import RealVerificationTestSystem
+                        
+                        system = RealVerificationTestSystem()
+                        results = system.run_complete_system()
+                        
+                        st.success(f"✅ Generati {results['generated']} test!")
+                        st.info("📂 Test salvati in real_verifications/")
+                        st.rerun()
+                        
+                    except Exception as e:
+                        st.error(f"❌ Errore generazione batch: {e}")
+                        st.info("💡 Assicurati che il file real_verification_test_system.py sia disponibile")
     
     # Pulsante per tornare all'app principale
     if st.button("← Torna a VerificAI", type="secondary"):
