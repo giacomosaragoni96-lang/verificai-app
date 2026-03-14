@@ -53,3 +53,4 @@ try {
 }
 
 Write-Host "🏁 Test completato!" -ForegroundColor Green
+.\node_modules\.bin\promptfoo.cmd eval -c production_promptfooconfig.yaml --filter-description "Titolo" -j 1
