@@ -2558,6 +2558,9 @@ def _render_le_tue_verifiche():
             </div>
         </div>
         ''', unsafe_allow_html=True)
+    
+    # Pulsante per creare nuova verifica
+    st.markdown('<div style="margin: 2rem 0;"></div>', unsafe_allow_html=True)
     col_center = st.columns([1, 2, 1])
     with col_center[1]:
         if st.button("🆕 Crea Nuova Verifica", type="primary", use_container_width=True):
