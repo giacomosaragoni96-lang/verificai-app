@@ -1,0 +1,19 @@
+{
+  "id": 1,
+  "scenario": {
+    "materia": "Chimica",
+    "livello": "Liceo Scientifico",
+    "argomento": "Struttura atomica",
+    "num_esercizi": 2,
+    "punti_totali": 100,
+    "durata": "30 minuti",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Struttura Atomica",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Struttura Atomica} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Modello Atomico e Numeri Quantici}\nUn atomo neutro di un elemento $X$ presenta la seguente configurazione elettronica nello stato fondamentale: $1s^2 2s^2 2p^6 3s^2 3p^4$.\n\\begin{enumerate}[a)]\n    \\item Determinare il numero atomico $Z$ dell'elemento $X$. (5 pt)\n    \\item Indicare il numero di elettroni nell'ultimo livello energetico e il periodo a cui appartiene l'elemento. (10 pt)\n    \\item Quanti elettroni sono presenti nell'orbitale $2p$? Indicare i possibili valori dei numeri quantici $n$, $l$, $m_l$ e $m_s$ per un elettrone in un orbitale $2p$. (15 pt)\n    \\item Determinare il numero di elettroni spaiati nell'atomo di $X$ nello stato fondamentale. (10 pt)\n    \\item Se un atomo di $X$ acquistasse due elettroni, quale sarebbe il suo numero di massa se il suo isotopo più comune ha 16 neutroni? (10 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Isotopi e Massa Atomica}\nL'elemento nichel (Ni) esiste in natura come una miscela di isotopi. Due degli isotopi principali sono il $^{58}$Ni e il $^{60}$Ni. Il nichel naturale ha una massa atomica media di 58,69 u.m.a.\n\\begin{enumerate}[a)]\n    \\item Definire il concetto di isotopi e spiegare la differenza tra numero atomico e numero di massa. (10 pt)\n    \\item Sapendo che la massa atomica approssimata di $^{58}$Ni è 58,00 u.m.a. e quella di $^{60}$Ni è 60,00 u.m.a., determinare la percentuale di abbondanza naturale di ciascun isotopo. (25 pt)\n    \\item Se un campione contenesse solo atomi di $^{58}$Ni, quale sarebbe la sua massa atomica? (15 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{5}{c||}{\\textbf{1}} & \\multicolumn{3}{c||}{\\textbf{2}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & d) & e) & a) & b) & c) & \\\\ \\hline\n\\textbf{Max} & 5 & 10 & 2 & 10 & 10 & 10 & 25 & 15 & 87 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": 

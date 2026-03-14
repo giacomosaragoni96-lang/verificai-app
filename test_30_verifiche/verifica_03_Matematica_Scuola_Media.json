@@ -1,0 +1,19 @@
+{
+  "id": 3,
+  "scenario": {
+    "materia": "Matematica",
+    "livello": "Scuola Media",
+    "argomento": "Funzioni",
+    "num_esercizi": 6,
+    "punti_totali": 50,
+    "durata": "2 ore",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Funzioni matematiche",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Funzioni matematiche} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Dominio e Codominio}\nDeterminare il dominio e il codominio della seguente funzione reale:\n$f(x) = \\sqrt{9 - x^2}$ (8 pt)\n\\subsection*{Esercizio 2: Continuità}\nStudiare la continuità della seguente funzione nel suo dominio:\n$$\nf(x) = \\begin{cases}\nx^2 + 1 & \\text{se } x \\le 0 \\\\\n2x & \\text{se } x > 0\n\\end{cases}\n$$ (8 pt)\n\\subsection*{Esercizio 3: Limiti di Funzione}\nCalcolare i seguenti limiti:\n\\begin{enumerate}[a)]\n\n\\item[a)] $\\lim_{x \\to 2} \\frac{x^2 - 4}{x - 2}$ (4 pt)\n\n\\item[b)] $\\lim_{x \\to +\\infty} \\frac{3x^3 + 2x - 1}{x^3 - x^2 + 5}$ (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Derivate}\nCalcolare la derivata prima della funzione:\n$f(x) = e^{2x} \\sin(x)$ (8 pt)\n\\subsection*{Esercizio 5: Studio di Funzione (Parte 1)}\nDeterminare l'equazione della retta tangente al grafico della funzione $f(x) = x^3 - 2x + 1$ nel punto di ascissa $x=1$. (8 pt)\n\\subsection*{Esercizio 6: Grafici di Funzioni}\n\nSi osservi il seguente grafico di una funzione $y=f(x)$:\n\n\\begin{tikzpicture}\n  \\begin{axis}[\n    axis lines = middle,\n    xlabel = {$x$},\n    ylabel = {$f(x)$},\n    xmin=-3, xmax=3,\n    ymin=-3, ymax=3,\n    xtick={-2,-1,1,2},\n    ytick={-2,-1,1,2},\n    grid=major,\n    legend pos=outer north east,\n    samples=100,\n    domain=-2.5:2.5,\n    smooth\n  ]\n  \\addplot[blue] {-x^2+1};\n  \\end{axis}\n\\end{tikzpicture}\n\\begin{enumerate}[a)]\n\n\\item[a)] Indicare gli intervalli di monotonia della funzione. (3 pt)\n\n\\item[b)] Determinare i punti di massimo e minimo locale, se esistono. (3 pt)\n\n\\item[c)] Determinare gli intervalli di concavità e convessità della funzione. (4 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{2}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{3}{c||}{\\textbf{6}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & a) & b) & — & — & a) & b) & c) & \\\\ \\hline\n\\textbf{Max} & 8 & 8 & 4 & 4 & 8 & 8 & 3 & 3 & 4 & 50 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": 

@@ -1,0 +1,19 @@
+{
+  "id": 4,
+  "scenario": {
+    "materia": "Italiano",
+    "livello": "Scuola Media",
+    "argomento": "Poesia",
+    "num_esercizi": 2,
+    "punti_totali": 100,
+    "durata": "1 ora",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "La Poesia nel Novecento",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Italiano: La Poesia nel Novecento} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Analisi di una funzione razionale}\n\nSi consideri la funzione $f(x) = \\frac{x^2 - 1}{x^2 - 4}$.\n\\begin{enumerate}[a)]\n    \\item Determinare il dominio della funzione. (10 pt)\n    \\item Calcolare i limiti della funzione per $x \\to \\infty$, $x \\to -\\infty$, $x \\to 2^+$ e $x \\to -2^-$. (15 pt)\n    \\item Determinare gli zeri della funzione e le intersezioni con l'asse y. (10 pt)\n    \\item Calcolare la derivata prima della funzione e studiarne il segno per determinare gli intervalli di monotonia. (15 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Studio di una funzione trigonometrica}\n\nSi consideri la funzione $f(x) = 2 \\sin(x) - \\sin(2x)$ nell'intervallo $[0, 2\\pi]$.\n\\begin{enumerate}[a)]\n    \\item Determinare le intersezioni della funzione con l'asse x nell'intervallo dato. (15 pt)\n    \\item Calcolare la derivata prima della funzione e trovare i punti stazionari. (15 pt)\n    \\item Determinare i valori massimi e minimi assoluti della funzione nell'intervallo $[0, 2\\pi]$. (10 pt)\n    \\item Verificare se la funzione è pari o dispari. (10 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{4}{c||}{\\textbf{1}} & \\multicolumn{4}{c||}{\\textbf{2}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & d) & a) & b) & c) & d) & \\\\ \\hline\n\\textbf{Max} & 10 & 15 & 10 & 15 & 15 & 15 & 10 & 10 & 100 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": 
