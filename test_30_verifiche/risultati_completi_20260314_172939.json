@@ -1,0 +1,97 @@
+{
+  "timestamp": "2026-03-14T17:29:39.623585",
+  "totali": 1,
+  "media_voto": 15.0,
+  "success_rate": 0.0,
+  "param_accuracy": 0.0,
+  "pdf_rate": 100.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Inglese",
+        "livello": "Liceo Scientifico",
+        "argomento": "British vs American",
+        "num_esercizi": 6,
+        "punti_totali": 100,
+        "durata": "1 ora e 30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "British vs American English",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: British vs American English} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Lessico Essenziale}\nCompletare le seguenti frasi con il termine inglese corretto tra parentesi, scegliendo tra la variante britannica e quella americana.\n\n\\begin{enumerate}[a)]\n    \\item In American English, the ground floor is called the \\underline{} (ground floor / first floor). (5 pt)\n    \\item British people often have a \\underline{} for a quick meal (sandwich / burger). (5 pt)\n    \\item When you go on holiday, you might pack a \\underline{} (suitcase / trunk). (5 pt)\n    \\item In American English, the main street in a town is often called a \\underline{} (high street / main street). (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Grammatica Comparativa}\nScegliere l'opzione corretta tra le due proposte per completare le frasi.\n\n\\begin{enumerate}[a)]\n    \\item I need to buy some new \\underline{} for school. (trousers / pants) (4 pt)\n    \\item Let's go to the \\underline{} to watch a film. (cinema / movie theatre) (4 pt)\n    \\item Could you pass me the \\underline{}, please? I want to write a letter. (envelope / mailer) (4 pt)\n    \\item They are planning to renovate their \\underline{}. (apartment / flat) (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Analisi del Testo}\nLeggere attentamente il seguente breve testo e rispondere alle domande.\n\n\"The young man was waiting at the bus stop, checking his watch impatiently. He was supposed to meet his friends for lunch at a pub downtown. The weather was a bit dreary, typical for November. He hoped the bus wouldn't be late; he didn't want to miss out on the fish and chips.\"\n\n\\begin{enumerate}[a)]\n    \\item In which country is this scenario most likely taking place, based on the vocabulary used? Justify your answer. (8 pt)\n    \\item Identify two words or phrases in the text that are more commonly used in British English. (8 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Vero o Falso}\nDeterminare se le seguenti affermazioni sono vere o false, tenendo conto delle differenze tra British e American English.\n\n\\begin{enumerate}[a)]\n    \\item The American English word \"cookie\" is equivalent to the British English word \"biscuit.\" \\quad $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (4 pt)\n    \\item In British English, \"faucet\" is the common term for the device that controls the flow of water. \\quad $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (4 pt)\n    \\item \"Sidewalk\" is the American English term for the path along the side of a street. \\quad $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (4 pt)\n    \\item Americans typically use \"lorry\" to refer to a large vehicle for transporting goods. \\quad $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 5: Scelta Multipla}\nScegliere l'opzione che meglio completa ogni frase.\n\n\\begin{enumerate}[a)]\n    \\item To express the idea of going to the toilet, an American might say \"I need to use the restroom,\" while a British person might say: (4 pt)\n    \\begin{enumerate}[a)]\n        \\item bathroom\n        \\item toilet\n        \\item WC\n        \\item loo\n    \\end{enumerate}\n    \\item If you are looking for a piece of clothing to wear on your feet, you would search for \\underline{}. (4 pt)\n    \\begin{enumerate}[a)]\n        \\item sneakers (American) / trainers (British)\n        \\item boots (both)\n        \\item socks (both)\n        \\item shoes (both)\n    \\end{enumerate}\n    \\item What is the American English equivalent of the British \"boot\" of a car? (4 pt)\n    \\begin{enumerate}[a)]\n        \\item trunk\n        \\item storage\n        \\item luggage compartment\n        \\item back seat\n    \\end{enumerate}\n    \\item A British person might describe a noisy party as \"loud,\" while an American might use the term: (4 pt)\n    \\begin{enumerate}[a)]\n        \\item raucous\n        \\item boisterous\n        \\item rowdy\n        \\item wild\n    \\end{enumerate}\n\\end{enumerate}\n\n\\subsection*{Esercizio 6: Applicazione Pratica}\nImmagina di dover scrivere una breve email a un amico che vive a Londra e a un amico che vive a New York, chiedendo loro di incontrarti per un caffè.\n\n\\begin{enumerate}[a)]\n    \\item Scrivi la frase che useresti per invitare l'amico britannico, tenendo conto di un possibile vocabolario specifico. (8 pt)\n    \\item Scrivi la frase che useresti per invitare l'amico americano, tenendo conto di un possibile vocabolario specifico. (8 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{4}{c||}{\\textbf{1}} & \\multicolumn{4}{c||}{\\textbf{2}} & \\multicolumn{2}{c||}{\\textbf{3}} & \\multicolumn{4}{c||}{\\textbf{4}} & \\multicolumn{4}{c||}{\\textbf{5}} & \\multicolumn{2}{c||}{\\textbf{6}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & d) & a) & b) & c) & d) & a) & b) & a) & b) & c) & d) & a) & f) & k) & p) & a) & b) & \\\\ \\hline\n\\textbf{Max} & 5 & 5 & 5 & 5 & 4 & 4 & 4 & 4 & 8 & 8 & 4 & 4 & 4 & 4 & 4 & 4 & 4 & 4 & 8 & 8 & 100 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:76870>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 6,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 100,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_172933.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_172933.pdf",
+        "pdf_size": 19328,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - British vs American}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T17:29:34.762088",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - British vs American}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    }
+  ]
+}

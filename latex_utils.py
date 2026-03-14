@@ -131,7 +131,18 @@ def reconstruct_latex(preamble: str, blocks: list) -> str:
 def extract_corpo(latex: str) -> str:
     """Estrae solo il corpo esercizi (dopo \\end{center}) dal LaTeX completo."""
     m = re.search(r"\\end\{center\}(.*?)(?=\\end\{document\})", latex, re.DOTALL)
-    return m.group(1).strip() if m else ""
+    if m:
+        corpo = m.group(1).strip()
+        # DEBUG: Stampa cosa viene estratto
+        print(f"🔍 DEBUG extract_corpo: estratti {len(corpo)} caratteri")
+        if corpo:
+            print(f"📄 Contenuto estratto (primi 200): {corpo[:200]}")
+        else:
+            print(f"❌ CORPO VUOTO estratto!")
+        return corpo
+    else:
+        print(f"❌ Nessun match trovato in extract_corpo!")
+        return ""
 
 
 def extract_preambolo(latex: str) -> str:
