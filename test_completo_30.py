@@ -141,8 +141,7 @@ def render_test_completo_30():
                 aggiunte = integra_database_in_test(risultati)
                 st.success(f"✅ {aggiunte} verifiche aggiunte al database!")
             
-            # Ricarica per mostrare risultati
-            st.rerun()
+            # NON fare rerun - lascia che Streamlit mostri i risultati naturalmente
     
     # Mostra database se richiesto
     if st.session_state.get('show_database', False):
