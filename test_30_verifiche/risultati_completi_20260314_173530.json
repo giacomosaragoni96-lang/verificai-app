@@ -1,0 +1,97 @@
+{
+  "timestamp": "2026-03-14T17:35:30.445588",
+  "totali": 1,
+  "media_voto": 20.0,
+  "success_rate": 0.0,
+  "param_accuracy": 0.0,
+  "pdf_rate": 100.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Matematica",
+        "livello": "Liceo Classico",
+        "argomento": "Trigonometria",
+        "num_esercizi": 8,
+        "punti_totali": 80,
+        "durata": "2 ore",
+        "mostra_punteggi": true,
+        "con_griglia": false
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Verifica di Trigonometria",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Verifica di Trigonometria} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Valori Fondamentali di Seno e Coseno}\nSenza l'uso della calcolatrice, determinare i valori esatti di $\\sin(\\alpha)$ e $\\cos(\\alpha)$ per gli angoli $\\alpha$ seguenti, espressi in radianti:\n\\begin{enumerate}[a)]\n    \\item $\\alpha = \\frac{\\pi}{3}$ (3 pt)\n    \\item $\\alpha = \\frac{3\\pi}{4}$ (3 pt)\n    \\item $\\alpha = \\frac{5\\pi}{6}$ (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Risoluzione di un Triangolo Rettangolo}\nIn un triangolo rettangolo, l'ipotenusa $c$ misura $15$ cm e un cateto $a$ misura $9$ cm. Determinare le misure dell'altro cateto $b$ e degli angoli acuti $\\alpha$ e $\\beta$. (10 pt)\n\\subsection*{Esercizio 3: Identità Trigonometriche}\nDimostrare la seguente identità trigonometrica per ogni angolo $\\theta$ per cui è definita:\n$$ \\frac{1 - \\cos(\\theta)}{\\sin(\\theta)} = \\frac{\\sin(\\theta)}{1 + \\cos(\\theta)} $$ (10 pt)\n\\subsection*{Esercizio 4: Equazioni Trigonometriche Fondamentali}\nRisolvere l'equazione trigonometrica:\n$$ 2\\sin(x) - \\sqrt{2} = 0 $$\ntrovando tutte le soluzioni nell'intervallo $[0, 2\\pi)$. (10 pt)\n\\subsection*{Esercizio 5: Funzioni Trigonometriche e Grafici}\n\nSi consideri la funzione $f(x) = 3\\cos(x - \\frac{\\pi}{2})$.\n\nStabilire:\n\\begin{enumerate}[a)]\n    \\item Il periodo della funzione. (3 pt)\n    \\item L'ampiezza della funzione. (3 pt)\n    \\item Un valore di massimo e un valore di minimo della funzione. (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 6: Problema di Trigonometria nel Piano}\nUn osservatore, distante $50$ metri da un edificio, punta il suo teodolite verso la cima dell'edificio. L'angolo di elevazione misurato è di $30^\\circ$. Successivamente, l'osservatore si avvicina all'edificio fino a una distanza di $20$ metri e misura nuovamente l'angolo di elevazione, trovando $45^\\circ$. Calcolare l'altezza dell'edificio. (10 pt)\n\\subsection*{Esercizio 7: Vero o Falso}\n\nStabilire se le seguenti affermazioni sono vere o false. Giustificare brevemente la risposta.\n\\begin{enumerate}[a)]\n    \\item Per ogni angolo $\\theta$, si ha $\\sin^2(\\theta) + \\cos^2(\\theta) = 1$. $\\square$ V $\\quad\\square$ F (3 pt)\n    \\item La funzione tangente è periodica con periodo $\\pi$. $\\square$ V $\\quad\\square$ F (3 pt)\n    \\item Se $\\cos(\\theta) = \\cos(\\phi)$, allora $\\theta = \\phi + 2k\\pi$ per qualche intero $k$. $\\square$ V $\\quad\\square$ F (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 8: Applicazione del Teorema del Coseno}\nIn un triangolo $ABC$, i lati $a=7$ cm e $b=10$ cm, e l'angolo compreso $\\gamma = 60^\\circ$. Determinare la lunghezza del terzo lato $c$. (10 pt)\n\n\\end{document}",
+            "pdf": "<BYTES:123803>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 8,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 80,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 5
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_173523.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_173523.pdf",
+        "pdf_size": 16393,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Trigonometria}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 20,
+      "timestamp": "2026-03-14T17:35:24.184988",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Trigonometria}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    }
+  ]
+}

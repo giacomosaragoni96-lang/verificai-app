@@ -266,6 +266,10 @@ def _assembla_e_compila(
     print(f"🔥 DEBUG _assembla_e_compila: corpo ricevuto ({len(corpo)} caratteri)")
     if corpo:
         print(f"📄 Prime 200 del corpo: {corpo[:200]}")
+        print(f"📄 Ultimi 200 del corpo: {corpo[-200:]}")
+        print(f"🔍 Contiene \\begin{{document}}: {'\\begin{document}' in corpo}")
+        print(f"🔍 Contiene \\documentclass: {'\\documentclass' in corpo}")
+        print(f"🔍 Contiene \\end{{document}}: {'\\end{document}' in corpo}")
     else:
         print(f"❌ CORPO VUOTO ricevuto!")
     
