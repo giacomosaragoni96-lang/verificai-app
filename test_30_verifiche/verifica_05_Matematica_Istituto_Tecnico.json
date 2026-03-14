@@ -1,0 +1,87 @@
+{
+  "id": 5,
+  "scenario": {
+    "materia": "Matematica",
+    "livello": "Istituto Tecnico",
+    "argomento": "Geometria piana",
+    "num_esercizi": 6,
+    "punti_totali": 80,
+    "durata": "30 minuti",
+    "mostra_punteggi": false,
+    "con_griglia": false
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Geometria piana",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Geometria piana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e \n\nData:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\n\\subsection*{Esercizio 1: Definizione di Retta}\nQuale delle seguenti affermazioni descrive correttamente una retta nel piano cartesiano?\n\na) L'insieme di tutti i punti equidistanti da un punto fisso.\nb) L'insieme di tutti i punti tali che la somma delle distanze da due punti fissi è costante.\nc) L'insieme di tutti i punti che giacciono su un unico piano e sono equidistanti da due punti fissi detti fuochi.\nd) L'insieme di tutti i punti che giacciono su un unico piano e la cui distanza da un punto fisso (fuoco) è uguale alla distanza da una retta fissa (direttrice).\ne) L'insieme di tutti i punti tali che la differenza delle distanze da due punti fissi è costante.\nf) L'insieme di tutti i punti equidistanti da una retta fissata.\n\n\\subsection*{Esercizio 2: Calcolo Area Triangolo}\nUn triangolo ha vertici nei punti $A(2, 1)$, $B(5, 1)$ e $C(3, 4)$.\nCalcolare l'area del triangolo.\n\n\\subsection*{Esercizio 3: Equazione della Circonferenza}\nDeterminare l'equazione della circonferenza passante per i punti $P(1, 3)$, $Q(7, 3)$ e $R(4, 6)$.\n\n\\subsection*{Esercizio 4: Proprietà delle Figure Geometriche}\nIl seguente enunciato è Vero o Falso?\n\"Ogni parallelogramma è anche un rombo.\"\n\n$\\square$ Vero $\\quad\\square$ Falso\n\n\\subsection*{Esercizio 5: Analisi di un Segmento}\nConsiderare il segmento $AB$ con estremi $A(-2, 3)$ e $B(4, -1)$.\na) Determinare le coordinate del punto medio $M$ del segmento $AB$.\nb) Calcolare la lunghezza del segmento $AB$.\n\n\\subsection*{Esercizio 6: Rette Perpendicolari}\n\nData la retta $r$ di equazione $y = \\frac{1}{2}x - 3$, determinare l'equazione della retta $s$ perpendicolare ad $r$ e passante per il punto $P(4, 1)$.\n\\end{document}",
+        "pdf": "<BYTES:109719>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.4
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 6,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 80,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": false,
+      "presente": false,
+      "punteggio": 10
+    },
+    "griglia": {
+      "richiesta": false,
+      "presente": false,
+      "punteggio": 5
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161511.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161511.pdf",
+    "pdf_size": 16977,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Geometria piana}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 30,
+  "timestamp": "2026-03-14T16:15:12.461302",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Geometria piana}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

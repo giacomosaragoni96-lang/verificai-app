@@ -1,0 +1,445 @@
+{
+  "timestamp": "2026-03-14T16:15:17.680409",
+  "totali": 5,
+  "media_voto": 19.0,
+  "success_rate": 0.0,
+  "param_accuracy": 0.0,
+  "pdf_rate": 100.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Storia",
+        "livello": "Liceo Classico",
+        "argomento": "Storia romana",
+        "num_esercizi": 2,
+        "punti_totali": 50,
+        "durata": "1 ora",
+        "mostra_punteggi": true,
+        "con_griglia": false
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Storia Romana",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Storia Romana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: L'espansione romana: cause e conseguenze}\nSi analizzi il processo di espansione di Roma nel Mediterraneo tra il III e il II secolo a.C., concentrandosi sui seguenti aspetti:\n\\begin{enumerate}[a)]\n    \\item individuare le principali motivazioni (politiche, economiche, sociali) che spinsero Roma a intraprendere questa politica espansionistica; (9 pt)\n    \\item descrivere le modalità e le caratteristiche principali della conquista del bacino del Mediterraneo, menzionando almeno due guerre significative; (9 pt)\n    \\item illustrare le conseguenze dell'espansione sul piano politico e sociale, con particolare riferimento alla crisi della Repubblica. (7 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Il Principato di Augusto: riforme e trasformazioni}\nAugusto pose fine alle guerre civili e inaugurò un nuovo periodo nella storia romana. Si discuta il suo operato esaminando:\n\\begin{enumerate}[a)]\n    \\item le principali riforme amministrative, militari e sociali attuate da Augusto per consolidare il suo potere e garantire stabilità allo Stato; (9 pt)\n    \\item il significato e la portata delle sue politiche culturali e artistiche, nonché la sua propaganda; (8 pt)\n    \\item le caratteristiche del nuovo regime politico da lui istituito, noto come Principato, e le sue implicazioni per la successiva evoluzione di Roma. (8 pt)\n\\end{enumerate}\n\\end{document}",
+            "pdf": "<BYTES:60628>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 2,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 50,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 5
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161429.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161429.pdf",
+        "pdf_size": 14655,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 20,
+      "timestamp": "2026-03-14T16:14:29.945201",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 2,
+      "scenario": {
+        "materia": "Inglese",
+        "livello": "Liceo Classico",
+        "argomento": "Reading comprehension",
+        "num_esercizi": 5,
+        "punti_totali": 50,
+        "durata": "30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Reading Comprehension Skills",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Reading Comprehension Skills} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Richiamo di concetti base}\nIdentificare la natura delle seguenti affermazioni come vere o false, giustificando brevemente ogni scelta.\n\\begin{enumerate}[a)]\n    \\item Un numero primo è divisibile solo per sé stesso e per uno. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n    \\item La somma degli angoli interni di un triangolo è sempre 180 gradi. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n    \\item La radice quadrata di un numero negativo è sempre un numero reale. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Risoluzione di equazione}\nRisolvere la seguente equazione lineare nell'incognita $x$:\n$$ \\frac{2x-1}{3} - \\frac{x+2}{4} = \\frac{1}{2} $$ (25 pt)\n\\subsection*{Esercizio 3: Analisi testuale}\nLeggere attentamente il seguente brano e rispondere alle domande.\n\n\"The Industrial Revolution, which began in Great Britain in the late 18th century, marked a period of profound technological, socioeconomic, and cultural change. Innovations such as the steam engine and the power loom mechanized production, leading to the growth of factories and a significant shift from agrarian to industrial societies. This transformation, however, also brought about new social challenges, including urban overcrowding and poor working conditions.\"\n\n\\begin{enumerate}[a)]\n    \\item In quale secolo e in quale paese è iniziata la Rivoluzione Industriale?\n    \\item Quali sono due delle innovazioni tecnologiche menzionate nel testo?\n    \\item Quali sfide sociali sono associate alla Rivoluzione Industriale secondo il brano?\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Problema di geometria}\nUn rettangolo ha un perimetro di 40 cm. La lunghezza è il doppio della larghezza. Determinare le dimensioni del rettangolo. (25 pt)\n\\subsection*{Esercizio 5: Scelta multipla}\nQuale delle seguenti è un esempio di numero irrazionale?\n\\begin{enumerate}[a)]\n    \\item $\\sqrt{4}$\n    \\item $\\frac{22}{7}$\n    \\item $\\pi$\n    \\item $3.14$\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & — & 25 & — & 25 & — & 50 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:100233>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 5,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 50,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161438.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161438.pdf",
+        "pdf_size": 18932,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Reading comprehension}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:14:39.853261",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Reading comprehension}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 3,
+      "scenario": {
+        "materia": "Inglese",
+        "livello": "Liceo Scientifico",
+        "argomento": "Grammar",
+        "num_esercizi": 6,
+        "punti_totali": 50,
+        "durata": "1 ora e 30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Grammar Essentials",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Grammar Essentials} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Retta passante per due punti}\nSi consideri la retta $r$ passante per i punti $A(2, 3)$ e $B(-1, 9)$. Determinare l'equazione della retta $r$ in forma esplicita $y = mx + q$. (8 pt)\n\\subsection*{Esercizio 2: Studio di una Parabola}\nDeterminare il vertice e l'asse di simmetria della parabola di equazione $y = -2x^2 + 4x - 1$. (8 pt)\n\\subsection*{Esercizio 3: Funzioni Razionali}\nData la funzione $f(x) = \\frac{x-1}{x+2}$, determinare il dominio di $f$ e le eventuali intersezioni della sua rappresentazione grafica con l'asse delle ascisse. (8 pt)\n\\subsection*{Esercizio 4: Verifica di Proprietà di Equazioni Polinomiali}\nSi consideri l'equazione $2x^3 - 5x^2 + x + 2 = 0$.\n\nStabilire se $x=2$ è una radice dell'equazione. (8 pt)\n\\subsection*{Esercizio 5: Calcolo di un Limite}\nCalcolare il seguente limite:\n$$ \\lim_{x \\to +\\infty} \\frac{3x^2 - 2x + 1}{x^2 + 5} $$ (9 pt)\n\\subsection*{Esercizio 6: Equazione di una Circonferenza}\nDeterminare l'equazione della circonferenza avente centro $C(1, -2)$ e raggio $r = 3$. (9 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 8 & 8 & 8 & 8 & 9 & 9 & 50 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:107416>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.5
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 6,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 50,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161448.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161448.pdf",
+        "pdf_size": 17158,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Grammar}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:14:49.846585",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Grammar}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 4,
+      "scenario": {
+        "materia": "Storia",
+        "livello": "Liceo Scientifico",
+        "argomento": "Storia contemporanea",
+        "num_esercizi": 3,
+        "punti_totali": 30,
+        "durata": "1 ora",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "La Storia Contemporanea: sfide e trasformazioni",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: La Storia Contemporanea: sfide e trasformazioni} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: La Belle Époque e le sue tensioni}\n\nSi considerino i seguenti eventi storici e si colleghi ciascuno alla sua corretta interpretazione o collocazione temporale.\n\n\\begin{enumerate}[a)]\n    \\item La Seconda Rivoluzione Industriale. (2 pt)\n    \\item Il Congresso di Vienna. (2 pt)\n    \\item La nascita del movimento operaio organizzato. (2 pt)\n    \\item La Dichiarazione dei Diritti dell'Uomo e del Cittadino. (2 pt)\n\\end{enumerate}\n\nScegliere tra le seguenti opzioni, una sola corretta per ciascun punto:\n\\begin{enumerate}[a)]\n    \\item Rappresenta il culmine dell'espansione coloniale europea.\n    \\item Fondamentale per la restaurazione dell'ordine in Europa dopo le guerre napoleoniche.\n    \\item Principale fattore di sviluppo delle ideologie socialiste e comuniste.\n    \\item Simbolo dell'illuminismo e della lotta contro l'Ancien Régime.\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: La Prima Guerra Mondiale e i suoi fronti}\nSi analizzi la seguente affermazione: \"La Prima Guerra Mondiale fu un conflitto di logoramento combattuto principalmente su due fronti principali.\"\n\n\\begin{enumerate}[a)]\n    \\item Individuare e descrivere brevemente le caratteristiche dei due fronti menzionati. (6 pt)\n    \\item Indicare almeno due caratteristiche tecnologiche innovative che caratterizzarono il conflitto. (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Il Secondo Dopoguerra e la Guerra Fredda}\nSi valutino le seguenti affermazioni sulla Guerra Fredda come vero o falso.\n\n\\begin{enumerate}[a)]\n    \\item La Guerra Fredda fu un conflitto militare diretto tra Stati Uniti e Unione Sovietica. (3 pt)\n    \\item Il Piano Marshall fu un'iniziativa sovietica volta a ricostruire l'Europa orientale. (3 pt)\n    \\item La dottrina Truman mirava a contenere l'espansione del comunismo. (3 pt)\n    \\item Il Patto di Varsavia fu creato in risposta alla NATO. (3 pt)\n\\end{enumerate}\n\nUtilizzare la seguente notazione: $\\square$ \\textbf{V} per Vero, $\\square$ \\textbf{F} per Falso.\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{4}{c||}{\\textbf{1}} & \\multicolumn{2}{c||}{\\textbf{2}} & \\multicolumn{4}{c||}{\\textbf{3}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & d) & a) & b) & a) & b) & c) & d) & \\\\ \\hline\n\\textbf{Max} & 2 & 2 & 2 & 2 & 6 & 4 & 3 & 3 & 3 & 3 & 30 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:72131>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 3,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 30,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161500.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161500.pdf",
+        "pdf_size": 16235,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia contemporanea}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:15:01.786662",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia contemporanea}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 5,
+      "scenario": {
+        "materia": "Matematica",
+        "livello": "Istituto Tecnico",
+        "argomento": "Geometria piana",
+        "num_esercizi": 6,
+        "punti_totali": 80,
+        "durata": "30 minuti",
+        "mostra_punteggi": false,
+        "con_griglia": false
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Geometria piana",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Geometria piana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e \n\nData:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\n\\subsection*{Esercizio 1: Definizione di Retta}\nQuale delle seguenti affermazioni descrive correttamente una retta nel piano cartesiano?\n\na) L'insieme di tutti i punti equidistanti da un punto fisso.\nb) L'insieme di tutti i punti tali che la somma delle distanze da due punti fissi è costante.\nc) L'insieme di tutti i punti che giacciono su un unico piano e sono equidistanti da due punti fissi detti fuochi.\nd) L'insieme di tutti i punti che giacciono su un unico piano e la cui distanza da un punto fisso (fuoco) è uguale alla distanza da una retta fissa (direttrice).\ne) L'insieme di tutti i punti tali che la differenza delle distanze da due punti fissi è costante.\nf) L'insieme di tutti i punti equidistanti da una retta fissata.\n\n\\subsection*{Esercizio 2: Calcolo Area Triangolo}\nUn triangolo ha vertici nei punti $A(2, 1)$, $B(5, 1)$ e $C(3, 4)$.\nCalcolare l'area del triangolo.\n\n\\subsection*{Esercizio 3: Equazione della Circonferenza}\nDeterminare l'equazione della circonferenza passante per i punti $P(1, 3)$, $Q(7, 3)$ e $R(4, 6)$.\n\n\\subsection*{Esercizio 4: Proprietà delle Figure Geometriche}\nIl seguente enunciato è Vero o Falso?\n\"Ogni parallelogramma è anche un rombo.\"\n\n$\\square$ Vero $\\quad\\square$ Falso\n\n\\subsection*{Esercizio 5: Analisi di un Segmento}\nConsiderare il segmento $AB$ con estremi $A(-2, 3)$ e $B(4, -1)$.\na) Determinare le coordinate del punto medio $M$ del segmento $AB$.\nb) Calcolare la lunghezza del segmento $AB$.\n\n\\subsection*{Esercizio 6: Rette Perpendicolari}\n\nData la retta $r$ di equazione $y = \\frac{1}{2}x - 3$, determinare l'equazione della retta $s$ perpendicolare ad $r$ e passante per il punto $P(4, 1)$.\n\\end{document}",
+            "pdf": "<BYTES:109719>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.4
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 6,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 80,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 10
+        },
+        "griglia": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 5
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161511.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161511.pdf",
+        "pdf_size": 16977,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Geometria piana}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 30,
+      "timestamp": "2026-03-14T16:15:12.461294",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Geometria piana}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    }
+  ]
+}

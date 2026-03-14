@@ -1,0 +1,87 @@
+{
+  "id": 2,
+  "scenario": {
+    "materia": "Inglese",
+    "livello": "Liceo Classico",
+    "argomento": "Reading comprehension",
+    "num_esercizi": 5,
+    "punti_totali": 50,
+    "durata": "30 minuti",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Reading Comprehension Skills",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Reading Comprehension Skills} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Richiamo di concetti base}\nIdentificare la natura delle seguenti affermazioni come vere o false, giustificando brevemente ogni scelta.\n\\begin{enumerate}[a)]\n    \\item Un numero primo è divisibile solo per sé stesso e per uno. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n    \\item La somma degli angoli interni di un triangolo è sempre 180 gradi. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n    \\item La radice quadrata di un numero negativo è sempre un numero reale. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Risoluzione di equazione}\nRisolvere la seguente equazione lineare nell'incognita $x$:\n$$ \\frac{2x-1}{3} - \\frac{x+2}{4} = \\frac{1}{2} $$ (25 pt)\n\\subsection*{Esercizio 3: Analisi testuale}\nLeggere attentamente il seguente brano e rispondere alle domande.\n\n\"The Industrial Revolution, which began in Great Britain in the late 18th century, marked a period of profound technological, socioeconomic, and cultural change. Innovations such as the steam engine and the power loom mechanized production, leading to the growth of factories and a significant shift from agrarian to industrial societies. This transformation, however, also brought about new social challenges, including urban overcrowding and poor working conditions.\"\n\n\\begin{enumerate}[a)]\n    \\item In quale secolo e in quale paese è iniziata la Rivoluzione Industriale?\n    \\item Quali sono due delle innovazioni tecnologiche menzionate nel testo?\n    \\item Quali sfide sociali sono associate alla Rivoluzione Industriale secondo il brano?\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Problema di geometria}\nUn rettangolo ha un perimetro di 40 cm. La lunghezza è il doppio della larghezza. Determinare le dimensioni del rettangolo. (25 pt)\n\\subsection*{Esercizio 5: Scelta multipla}\nQuale delle seguenti è un esempio di numero irrazionale?\n\\begin{enumerate}[a)]\n    \\item $\\sqrt{4}$\n    \\item $\\frac{22}{7}$\n    \\item $\\pi$\n    \\item $3.14$\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & — & 25 & — & 25 & — & 50 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:100233>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.8
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 5,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 50,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161438.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161438.pdf",
+    "pdf_size": 18932,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Reading comprehension}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:14:39.853270",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Reading comprehension}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

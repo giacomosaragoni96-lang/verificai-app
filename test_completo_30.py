@@ -20,13 +20,14 @@ if PROJECT_ROOT not in sys.path:
 sys.path.insert(0, os.path.dirname(__file__))
 
 def render_test_completo_30():
-    """Test completo con 30 verifiche"""
+    """Renderizza pagina test completo 30 verifiche"""
+    
+    print("🚀 INIZIO render_test_completo_30()")
     
     st.markdown("""
-    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                padding: 2rem; border-radius: 10px; margin-bottom: 2rem;'>
-        <h1 style='color: white; margin: 0;'>🧪 Test Completo - 30 Verifiche</h1>
-        <p style='color: white; margin: 0.5rem 0 0 0;'>Generazione, analisi e valutazione completa di 30 verifiche random</p>
+    <div style="text-align: center; padding: 2rem 0;">
+        <h1>🧪 TEST COMPLETO VERIFICAI</h1>
+        <p>Test automatico del sistema di generazione verifiche con analisi completa</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -36,12 +37,16 @@ def render_test_completo_30():
     if 'test_30_running' not in st.session_state:
         st.session_state.test_30_running = False
     
+    print(f"📊 Stato test: results={st.session_state.test_30_results is not None}, running={st.session_state.test_30_running}")
+    
     # Se ci sono già risultati, li mostra
     if st.session_state.test_30_results:
+        print("📋 Mostra risultati esistenti")
         mostra_risultati_finali(st.session_state.test_30_results)
         
         # Pulsante per nuovo test
         if st.button("🔄 LANCIA NUOVO TEST - 5 VERIFICHE", type="secondary", use_container_width=True, key="new_test_5"):
+            print("🔄 Pulsante nuovo test cliccato")
             st.session_state.test_30_results = None
             st.session_state.test_30_running = True
             st.rerun()
@@ -54,6 +59,7 @@ def render_test_completo_30():
     
     # Se il test è in esecuzione, mostra progress
     if st.session_state.test_30_running:
+        print("🔄 Test in esecuzione - avvia generazione")
         with st.spinner("🔄 Inizializzazione test completo..."):
             # Crea directory
             os.makedirs("test_30_verifiche", exist_ok=True)
@@ -171,6 +177,7 @@ def render_test_completo_30():
     
     with col1:
         if st.button("🚀 LANCIA TEST COMPLETO - 5 VERIFICHE", type="primary", use_container_width=True, key="start_test_5"):
+            print("🚀 PULSANTE START TEST CLICCATO!")
             st.session_state.test_30_running = True
             st.rerun()
     

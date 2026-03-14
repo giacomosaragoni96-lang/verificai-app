@@ -2,19 +2,19 @@
   "verifiche": [
     {
       "id": "V0001",
-      "timestamp": "2026-03-14T16:12:29.361423",
+      "timestamp": "2026-03-14T16:15:12.464259",
       "scenario": {
         "materia": "Storia",
-        "livello": "Liceo Scientifico",
-        "argomento": "Guerra mondiale",
-        "num_esercizi": 4,
-        "punti_totali": 100,
-        "durata": "45 minuti",
+        "livello": "Liceo Classico",
+        "argomento": "Storia romana",
+        "num_esercizi": 2,
+        "punti_totali": 50,
+        "durata": "1 ora",
         "mostra_punteggi": true,
         "con_griglia": false
       },
       "output": {
-        "titolo": "Le guerre mondiali",
+        "titolo": "Storia Romana",
         "A": {
-          "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Le guerre mondiali} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Le Cause della Grande Guerra}\nIndividuare e descrivere brevemente tre fattori scatenanti principali che condussero allo scoppio della Prima Guerra Mondiale nel 1914. (33 pt)\n\\subsection*{Esercizio 2: La Guerra di Trincea}\nSi consideri una linea di trincea con lunghezze $L_1 = 1500$ metri e $L_2 = 1200$ metri, separate da una zona neutrale di $d = 100$ metri. Un proiettile sparato da un punto $P_1$ sulla trincea 1 raggiunge un bersaglio sulla trincea 2 se la sua traiettoria interseca la zona neutrale. Assumendo che la traiettoria sia un segmento rettilineo e che la probabilità di colpire un punto specifico sulla trincea 2 sia uniforme rispetto alla sua lunghezza, determinare la probabilità che un proiettile sparato a caso da un punto qualsiasi della trincea 1 colpisca un punto qualsiasi della trincea 2. (33 pt)\n\\subsection*{Esercizio 3: Le Principali Battaglie del Fronte Occidentale}\nPer ciascuna delle seguenti battaglie, indicare l'anno in cui ebbe luogo e una caratteristica saliente:\n\\begin{enumerate}[a)]\n    \\item Battaglia della Somme\n    \\item Battaglia di Verdun\n    \\item Battaglia di Passchendaele\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Le Conseguenze del Conflitto}\nIl Trattato di Versailles impose alla Germania pesanti riparazioni di guerra. Se la somma totale delle riparazioni fosse stata $S = 200$ miliardi di marchi oro, e la Germania avesse pagato inizialmente il $15\\%$ di tale somma, calcolare la cifra pagata e la percentuale della somma restante da saldare. (34 pt)\n\n\\end{document}",
+          "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Storia Romana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: L'espansione romana: cause e conseguenze}\nSi analizzi il processo di espansione di Roma nel Mediterraneo tra il III e il II secolo a.C., concentrandosi sui seguenti aspetti:\n\\begin{enumerate}[a)]\n    \\item individuare le principali motivazioni (politiche, economiche, sociali) che spinsero Roma a intraprendere questa politica espansionistica; (9 pt)\n    \\item descrivere le modalità e le caratteristiche principali della conquista del bacino del Mediterraneo, menzionando almeno due guerre significative; (9 pt)\n    \\item illustrare le conseguenze dell'espansione sul piano politico e sociale, con particolare riferimento alla crisi della Repubblica. (7 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Il Principato di Augusto: riforme e trasformazioni}\nAugusto pose fine alle guerre civili e inaugurò un nuovo periodo nella storia romana. Si discuta il suo operato esaminando:\n\\begin{enumerate}[a)]\n    \\item le principali riforme amministrative, militari e sociali attuate da Augusto per consolidare il suo potere e garantire stabilità allo Stato; (9 pt)\n    \\item il significato e la portata delle sue politiche culturali e artistiche, nonché la sua propaganda; (8 pt)\n    \\item le caratteristiche del nuovo regime politico da lui istituito, noto come Principato, e le sue implicazioni per la successiva evoluzione di Roma. (8 pt)\n\\end{enumerate}\n\\end{document}",
           "pdf": 

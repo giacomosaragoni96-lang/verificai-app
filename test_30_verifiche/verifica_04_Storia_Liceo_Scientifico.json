@@ -1,0 +1,87 @@
+{
+  "id": 4,
+  "scenario": {
+    "materia": "Storia",
+    "livello": "Liceo Scientifico",
+    "argomento": "Storia contemporanea",
+    "num_esercizi": 3,
+    "punti_totali": 30,
+    "durata": "1 ora",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "La Storia Contemporanea: sfide e trasformazioni",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: La Storia Contemporanea: sfide e trasformazioni} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: La Belle Époque e le sue tensioni}\n\nSi considerino i seguenti eventi storici e si colleghi ciascuno alla sua corretta interpretazione o collocazione temporale.\n\n\\begin{enumerate}[a)]\n    \\item La Seconda Rivoluzione Industriale. (2 pt)\n    \\item Il Congresso di Vienna. (2 pt)\n    \\item La nascita del movimento operaio organizzato. (2 pt)\n    \\item La Dichiarazione dei Diritti dell'Uomo e del Cittadino. (2 pt)\n\\end{enumerate}\n\nScegliere tra le seguenti opzioni, una sola corretta per ciascun punto:\n\\begin{enumerate}[a)]\n    \\item Rappresenta il culmine dell'espansione coloniale europea.\n    \\item Fondamentale per la restaurazione dell'ordine in Europa dopo le guerre napoleoniche.\n    \\item Principale fattore di sviluppo delle ideologie socialiste e comuniste.\n    \\item Simbolo dell'illuminismo e della lotta contro l'Ancien Régime.\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: La Prima Guerra Mondiale e i suoi fronti}\nSi analizzi la seguente affermazione: \"La Prima Guerra Mondiale fu un conflitto di logoramento combattuto principalmente su due fronti principali.\"\n\n\\begin{enumerate}[a)]\n    \\item Individuare e descrivere brevemente le caratteristiche dei due fronti menzionati. (6 pt)\n    \\item Indicare almeno due caratteristiche tecnologiche innovative che caratterizzarono il conflitto. (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Il Secondo Dopoguerra e la Guerra Fredda}\nSi valutino le seguenti affermazioni sulla Guerra Fredda come vero o falso.\n\n\\begin{enumerate}[a)]\n    \\item La Guerra Fredda fu un conflitto militare diretto tra Stati Uniti e Unione Sovietica. (3 pt)\n    \\item Il Piano Marshall fu un'iniziativa sovietica volta a ricostruire l'Europa orientale. (3 pt)\n    \\item La dottrina Truman mirava a contenere l'espansione del comunismo. (3 pt)\n    \\item Il Patto di Varsavia fu creato in risposta alla NATO. (3 pt)\n\\end{enumerate}\n\nUtilizzare la seguente notazione: $\\square$ \\textbf{V} per Vero, $\\square$ \\textbf{F} per Falso.\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{4}{c||}{\\textbf{1}} & \\multicolumn{2}{c||}{\\textbf{2}} & \\multicolumn{4}{c||}{\\textbf{3}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & d) & a) & b) & a) & b) & c) & d) & \\\\ \\hline\n\\textbf{Max} & 2 & 2 & 2 & 2 & 6 & 4 & 3 & 3 & 3 & 3 & 30 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:72131>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.8
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 3,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 30,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161500.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161500.pdf",
+    "pdf_size": 16235,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia contemporanea}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:15:01.786670",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia contemporanea}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}
