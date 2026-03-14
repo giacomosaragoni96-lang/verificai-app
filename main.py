@@ -25,11 +25,34 @@ def render_admin_page():
     
     # Importa e renderizza pagina test 30 verifiche
     try:
+        # Prova diversi path per trovare il file
+        import sys
+        import os
+        
+        # Aggiungi directory corrente al path
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        if current_dir not in sys.path:
+            sys.path.insert(0, current_dir)
+        
         from test_completo_30 import render_test_30_page
         render_test_30_page()
-    except ImportError:
-        st.error("⚠️ Modulo Test 30 non trovato")
+        
+    except ImportError as e:
+        st.error(f"⚠️ Modulo Test 30 non trovato: {e}")
         st.info("💡 Assicurati che test_completo_30.py sia disponibile")
+        
+        # Debug info
+        st.markdown("### 🔍 Debug Info")
+        st.write(f"**Current directory:** {os.getcwd()}")
+        st.write(f"**Script directory:** {os.path.dirname(os.path.abspath(__file__))}")
+        st.write(f"**Python path:** {sys.path[:3]}")
+        
+        # Controlla se il file esiste
+        file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_completo_30.py")
+        if os.path.exists(file_path):
+            st.success(f"✅ File trovato: {file_path}")
+        else:
+            st.error(f"❌ File non trovato: {file_path}")
     
     # Pulsante per tornare all'app principale
     if st.button("← Torna a VerificAI", type="secondary"):
