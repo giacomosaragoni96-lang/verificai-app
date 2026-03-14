@@ -93,8 +93,21 @@ def render_test_completo_30():
                         print("✅ Generazione riuscita, procedo con analisi...")
                         
                         # 2. Analizza con PromptFoo
+                        # 🔥 DEBUG: Controlla cosa contiene result
+                        print(f"🔥 DEBUG result type: {type(result)}")
+                        print(f"🔥 DEBUG result keys: {result.keys() if isinstance(result, dict) else 'Not a dict'}")
+                        if isinstance(result, dict) and 'output' in result:
+                            print(f"🔥 DEBUG result['output'] type: {type(result['output'])}")
+                            if isinstance(result['output'], dict):
+                                print(f"🔥 DEBUG result['output'] keys: {result['output'].keys()}")
+                        
                         # Estrai il contenuto LaTeX dal dizionario
                         latex_content = result['output'].get('latex', '') if isinstance(result['output'], dict) else str(result['output'])
+                        
+                        # 🔥 DEBUG: Controlla latex_content
+                        print(f"🔥 DEBUG latex_content estratto: {len(latex_content)} caratteri")
+                        print(f"🔍 Contiene \\subsection*: {latex_content.count('\\subsection*')} volte")
+                        
                         analisi = analizza_con_promptfoo(latex_content, scenario)
                         
                         # 3. Genera PDF

@@ -1,0 +1,96 @@
+{
+  "timestamp": "2026-03-14T18:04:14.664913",
+  "totali": 1,
+  "media_voto": 15.0,
+  "success_rate": 0.0,
+  "param_accuracy": 0.0,
+  "pdf_rate": 0.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Matematica",
+        "livello": "Liceo Classico",
+        "argomento": "Statistica",
+        "num_esercizi": 6,
+        "punti_totali": 30,
+        "durata": "30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Statistica e Probabilità",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Statistica e Probabilità} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Termini Fondamentali della Statistica}\nDefinire brevemente i seguenti concetti, fornendo un esempio per ciascuno:\n\\begin{enumerate}[a)]\n    \\item Popolazione e Campione (2 pt)\n    \\item Variabile Qualitativa e Variabile Quantitativa (2 pt)\n    \\item Frequenza Assoluta (1 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Misure di Tendenza Centrale}\n\nSi consideri la seguente distribuzione di frequenza relativa alle altezze (in cm) di 10 studenti:\n165, 170, 172, 168, 175, 165, 170, 178, 172, 170.\nCalcolare:\n\\begin{enumerate}[a)]\n    \\item La media aritmetica delle altezze. (2 pt)\n    \\item La mediana delle altezze. (3 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Misure di Dispersione}\n\nData la serie di numeri: 5, 8, 12, 15, 20.\nCalcolare:\n\\begin{enumerate}[a)]\n    \\item La deviazione standard. (3 pt)\n    \\item Interpretare brevemente il significato della deviazione standard calcolata nel contesto di questa serie di dati. (2 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Probabilità di Base}\nIn un sacchetto ci sono 5 palline rosse, 3 palline blu e 2 palline verdi. Si estrae una pallina a caso.\nDeterminare la probabilità che la pallina estratta sia:\n\\begin{enumerate}[a)]\n    \\item Rossa. (2 pt)\n    \\item Blu o Verde. (3 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 5: Analisi di un Grafico a Barre}\n\nSi osservi il seguente grafico a barre che rappresenta la distribuzione delle materie preferite da un gruppo di 100 studenti:\n\n\\begin{tikzpicture}\n    \\begin{axis}[\n        ybar,\n        bar width=10pt,\n        xtick=data,\n        symbolic x coords={Matematica, Scienze, Italiano, Storia, Arte},\n        xticklabel style={rotate=45,anchor=east},\n        ylabel={Numero di studenti},\n        title={Materie Preferite},\n        ymin=0, ymax=50,\n        nodes near coords,\n        every node near coord/.append style={font=\\tiny}\n    ]\n    \\addplot coordinates {\n        (Matematica, 30)\n        (Scienze, 25)\n        (Italiano, 20)\n        (Storia, 15)\n        (Arte, 10)\n    };\n    \\end{axis}\n\\end{tikzpicture}\nRispondere alle seguenti domande basandosi sul grafico:\n\\begin{enumerate}[a)]\n    \\item Qual è la materia preferita dal maggior numero di studenti? Quanti studenti l'hanno scelta? (2 pt)\n    \\item Qual è la materia preferita dal minor numero di studenti? Quanti studenti l'hanno scelta? (1 pt)\n    \\item Quanti studenti hanno scelto Italiano o Storia come materia preferita? (2 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 6: Statistica e Vera o Falsa}\nIndicare se le seguenti affermazioni sono Vere (V) o False (F).\n\\begin{enumerate}[a)]\n    \\item La moda è la media dei valori osservati. $\\quad \\square$ V $\\quad \\square$ F (1 pt)\n    \\item In una distribuzione simmetrica, media, mediana e moda coincidono. $\\quad \\square$ V $\\quad \\square$ F (1 pt)\n    \\item Il campo di variazione è la differenza tra il valore massimo e il valore minimo di un insieme di dati. $\\quad \\square$ V $\\quad \\square$ F (1 pt)\n    \\item La probabilità di un evento certo è 1. $\\quad \\square$ V $\\quad \\square$ F (1 pt)\n    \\item Un campione è sempre più rappresentativo della popolazione se è più piccolo. $\\quad \\square$ V $\\quad \\square$ F (1 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{3}{c||}{\\textbf{1}} & \\multicolumn{2}{c||}{\\textbf{2}} & \\multicolumn{2}{c||}{\\textbf{3}} & \\multicolumn{2}{c||}{\\textbf{4}} & \\multicolumn{3}{c||}{\\textbf{5}} & \\multicolumn{5}{c||}{\\textbf{6}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & a) & b) & a) & b) & a) & b) & a) & b) & c) & a) & b) & c) & d) & e) & \\\\ \\hline\n\\textbf{Max} & 2 & 2 & 1 & 2 & 3 & 3 & 2 & 2 & 3 & 2 & 1 & 2 & 1 & 1 & 1 & 1 & 1 & 30 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:84486>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 6,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 30,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": false,
+        "error": "Compilazione LaTeX fallita",
+        "latex_error": "pdflatex: security risk: running with elevated privileges\npdflatex: major issue: So far, you have not checked for updates as a MiKTeX user.\n",
+        "latex_content": ""
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T18:03:54.867884",
+      "latex_completo": ""
+    }
+  ]
+}
