@@ -1,0 +1,19 @@
+{
+  "id": 5,
+  "scenario": {
+    "materia": "Fisica",
+    "livello": "Liceo Scientifico",
+    "argomento": "Termodinamica",
+    "num_esercizi": 6,
+    "punti_totali": 80,
+    "durata": "2 ore",
+    "mostra_punteggi": true,
+    "con_griglia": false
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Termodinamica",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Termodinamica} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Primo Principio della Termodinamica}\nUn sistema termodinamico assorbe 500 J di calore e compie un lavoro di 150 J sull'ambiente.\nDeterminare la variazione di energia interna del sistema. (13 pt)\n\\subsection*{Esercizio 2: Trasformazioni Termodinamiche}\nConsidera un gas ideale monoatomico che subisce una trasformazione isobara dalla temperatura $T_1$ alla temperatura $T_2 = 2T_1$.\nQual è il rapporto tra il calore scambiato e il lavoro compiuto dal gas durante questa trasformazione? (13 pt)\n\\subsection*{Esercizio 3: Macchine Termiche}\nUna macchina termica opera tra una sorgente a temperatura $T_C = 600$ K e una sorgente a temperatura $T_F = 300$ K.\nQual è l'efficienza massima teorica di questa macchina termica? (13 pt)\n\\subsection*{Esercizio 4: Entropia}\nUna tazza di caffè caldo a 80$^\\circ$C viene lasciata raffreddare in una stanza a 20$^\\circ$C.\na) Il processo di raffreddamento del caffè è spontaneo? Giustificare la risposta.\nb) La variazione di entropia dell'universo durante questo processo è positiva, negativa o nulla? (13 pt)\n\\subsection*{Esercizio 5: Calore Specifico e Latente}\nPer scaldare 2 kg di acqua da 20$^\\circ$C a 50$^\\circ$C sono necessari 252 kJ di energia. Il calore specifico dell'acqua è 4186 J/(kg$\\cdot$K).\nCalcolare il calore latente di fusione del ghiaccio, sapendo che per fondere 1 kg di ghiaccio a 0$^\\circ$C sono necessari 334 kJ di energia. (14 pt)\n\\subsection*{Esercizio 6: Analisi di una Trasformazione su un Grafico P-V}\nSi consideri una trasformazione ciclica di un gas ideale descritta da un grafico P-V.\n\n[Grafico]\na) Descrivere la natura delle tre trasformazioni che compongono il ciclo.\nb) Calcolare il lavoro totale compiuto dal gas durante un ciclo completo. (14 pt)\n\n\\end{document}",
+        "pdf": 

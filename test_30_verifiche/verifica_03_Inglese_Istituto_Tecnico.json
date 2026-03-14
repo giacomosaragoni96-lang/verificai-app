@@ -1,0 +1,19 @@
+{
+  "id": 3,
+  "scenario": {
+    "materia": "Inglese",
+    "livello": "Istituto Tecnico",
+    "argomento": "Writing",
+    "num_esercizi": 8,
+    "punti_totali": 120,
+    "durata": "2 ore",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "English Writing Skills",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: English Writing Skills} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Richiamo di algebra elementare}\nRisolvere la seguente equazione lineare:\n$3(2x - 1) + 5 = 2(x + 3)$ (17 pt)\n\\subsection*{Esercizio 2: Comprensione di concetti algebrici}\nDefinire il concetto di \"radice\" di un polinomio e fornire un esempio di un polinomio di terzo grado con tre radici reali distinte. (17 pt)\n\\subsection*{Esercizio 3: Analisi di una funzione quadratica}\nDeterminare le coordinate del vertice e l'equazione dell'asse di simmetria della parabola con equazione $y = -2x^2 + 4x - 1$. (17 pt)\n\\subsection*{Esercizio 4: Domanda a scelta multipla}\nQuale delle seguenti equazioni rappresenta una retta parallela all'asse $x$?\n\\begin{enumerate}[a)]\n    \\item $y = 3x - 2$\n    \\item $x = 5$\n    \\item $y = -2$\n    \\item $y = x + 1$\n\\end{enumerate}\n\n\\subsection*{Esercizio 5: Vero/Falso}\nData la funzione $f(x) = x^2 - 4$, affermare se è vera o falsa la seguente proposizione: \"La funzione $f(x)$ ha un valore minimo di -4.\"\n$\\square$ Vero $\\quad\\square$ Falso (17 pt)\n\\subsection*{Esercizio 6: Applicazione di formule geometriche}\nCalcolare l'area di un triangolo rettangolo i cui cateti misurano $6$ cm e $8$ cm. (17 pt)\n\\subsection*{Esercizio 7: Completamento}\nL'insieme delle soluzioni dell'equazione $\\sin(x) = 0$ è dato da $x = k\\pi$, dove $k$ è un numero intero. Questo significa che le soluzioni si ripetono ogni \\underline{} radianti. (17 pt)\n\\subsection*{Esercizio 8: Problema aperto di analisi}\nSi consideri la funzione $f(x) = x^3 - 6x^2 + 9x$. Determinare gli intervalli in cui la funzione è crescente e decrescente. (18 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\multicolumn{1}{c||}{\\textbf{7}} & \\multicolumn{1}{c||}{\\textbf{8}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 17 & 17 & 17 & — & 17 & 17 & 17 & 18 & 120 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": 

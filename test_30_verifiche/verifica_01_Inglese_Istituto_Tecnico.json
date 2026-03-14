@@ -1,0 +1,19 @@
+{
+  "id": 1,
+  "scenario": {
+    "materia": "Inglese",
+    "livello": "Istituto Tecnico",
+    "argomento": "Listening skills",
+    "num_esercizi": 4,
+    "punti_totali": 60,
+    "durata": "1 ora e 30 minuti",
+    "mostra_punteggi": true,
+    "con_griglia": false
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Listening Comprehension",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Listening Comprehension} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Funzione Lineare}\nDeterminare l'equazione della retta passante per i punti $A(2, 5)$ e $B(4, 9)$. (15 pt)\n\\subsection*{Esercizio 2: Sistema Lineare}\nRisolvere il seguente sistema di equazioni lineari:\n$$\n\\begin{cases}\n2x + y = 7 \\\\\nx - 3y = 0\n\\end{cases}\n$$ (15 pt)\n\\subsection*{Esercizio 3: Geometria Piana}\nUn rettangolo ha perimetro $28$ cm e l'altezza è $1$ cm in meno del doppio della base. Calcolare le dimensioni del rettangolo. (15 pt)\n\\subsection*{Esercizio 4: Probabilità Semplice}\nIn un sacchetto ci sono 5 palline rosse, 3 palline blu e 2 palline verdi. Se si estrae una pallina a caso, qual è la probabilità che sia blu? (15 pt)\n\n\\end{document}",
+        "pdf": 
