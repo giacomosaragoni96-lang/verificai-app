@@ -1,0 +1,87 @@
+{
+  "id": 3,
+  "scenario": {
+    "materia": "Chimica",
+    "livello": "Liceo Scientifico",
+    "argomento": "Chimica organica",
+    "num_esercizi": 7,
+    "punti_totali": 60,
+    "durata": "30 minuti",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Introduzione alla Chimica Organica",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Introduzione alla Chimica Organica} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Nomenclatura e Struttura}\nScrivere il nome IUPAC corretto per i seguenti composti organici:\n\\begin{enumerate}[a)]\n\n\\item[a)] $\\text{CH}_3\\text{CH(OH)CH}_2\\text{CH}_3$ (4 pt)\n\n\\item[b)] $\\text{CH}_3\\text{COCH}_2\\text{CH}_3$ (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Reazioni di Sostituzione Nucleofila}\nDescrivere il meccanismo della reazione $\\text{SN2}$ tra lo ioduro di metile ($\\text{CH}_3\\text{I}$) e lo ione idrossido ($\\text{OH}^-$) in un solvente protico polare. Indicare quale specie funge da nucleofilo e quale da gruppo uscente. (8 pt)\n\\subsection*{Esercizio 3: Isomeria Strutturale}\nQuanti isomeri strutturali di formula molecolare $\\text{C}_4\\text{H}_{10}\\text{O}$ (alcoli) esistono? Disegnare le loro strutture. (8 pt)\n\\subsection*{Esercizio 4: Elettrofilo e Nucleofilo}\nIdentificare l'elettrofilo e il nucleofilo nella seguente reazione di addizione elettrofila all'alchene:\n$\\text{CH}_2=\\text{CH}_2 + \\text{HBr} \\rightarrow \\text{CH}_3\\text{CH}_2\\text{Br}$ (8 pt)\n\\subsection*{Esercizio 5: Acidità dei Composti Organici}\nConfrontare l'acidità tra un acido carbossilico (es. acido acetico) e un fenolo (es. fenolo). Spiegare la differenza in termini di stabilità dell'anione coniugato. (9 pt)\n\\subsection*{Esercizio 6: Reazioni di Eliminazione}\nConsiderare la deidratazione acido-catalizzata dell'etanolo a temperatura elevata.\n\\begin{enumerate}[a)]\n\n\\item[a)] Scrivere la reazione bilanciata. (5 pt)\n\n\\item[b)] Indicare il tipo di reazione (es. addizione, eliminazione, sostituzione). (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 7: Composti Aromatici}\nIl benzene ($\\text{C}_6\\text{H}_6$) è un composto aromatico. Descrivere brevemente la teoria di risonanza che spiega la sua stabilità. (9 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{2}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{2}{c||}{\\textbf{6}} & \\multicolumn{1}{c||}{\\textbf{7}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & — & — & — & — & a) & b) & — & \\\\ \\hline\n\\textbf{Max} & 4 & 4 & 8 & 8 & 8 & 9 & 5 & 5 & 9 & 60 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:90735>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.6
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 7,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 60,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_162104.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_162104.pdf",
+    "pdf_size": 16329,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Chimica organica}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:21:05.543611",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Chimica organica}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

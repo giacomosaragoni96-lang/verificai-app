@@ -245,6 +245,17 @@ def genera_verifica_reale(scenario):
         
         # Genera con il sistema completo dell'app
         print("🚀 Chiamata genera_verifica()...")
+        
+        # DEBUG: Stampa parametri prima della chiamata
+        print(f"📋 Parametri genera_verifica:")
+        print(f"  - materia: {scenario['materia']}")
+        print(f"  - argomento: {scenario['argomento']}")
+        print(f"  - num_esercizi: {scenario['num_esercizi']}")
+        print(f"  - punti_totali: {scenario['punti_totali']}")
+        print(f"  - mostra_punteggi: {scenario['mostra_punteggi']}")
+        print(f"  - con_griglia: {scenario['con_griglia']}")
+        print(f"  - durata: {scenario['durata']}")
+        
         result = genera_verifica(
             model=model,
             materia=scenario['materia'],
@@ -267,6 +278,8 @@ def genera_verifica_reale(scenario):
             mathpix_context=None,
             immagini_esercizi=[]  # Parametro mancante!
         )
+        
+        print(f"📊 genera_verifica() completata - Tipo risultato: {type(result)}")
         
         # DEBUG: Stampa l'output completo per diagnosi
         print(f" DEBUG - Output completo:")

@@ -1,0 +1,87 @@
+{
+  "id": 1,
+  "scenario": {
+    "materia": "Fisica",
+    "livello": "Scuola Media",
+    "argomento": "Ottica",
+    "num_esercizi": 6,
+    "punti_totali": 80,
+    "durata": "2 ore",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Ottica: leggi e applicazioni",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Ottica: leggi e applicazioni} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Definizione di Fenomeno Ottico}\nSpiegare con parole proprie cosa si intende per fenomeno ottico e fornire almeno due esempi concreti, descrivendo brevemente come si manifestano in ciascun caso. (20 pt)\n\\subsection*{Esercizio 2: Legge di Snell}\nUn raggio di luce monocromatica passa dall'aria (indice di rifrazione $n_1 = 1.00$) all'acqua (indice di rifrazione $n_2 = 1.33$). Se il raggio incide sulla superficie di separazione acqua-aria con un angolo di incidenza di $30^\\circ$, determinare l'angolo di rifrazione. (20 pt)\n\\subsection*{Esercizio 3: Specchio Sferico}\nPer uno specchio sferico concavo, la relazione tra la distanza dell'oggetto ($o$) e la distanza dell'immagine ($i$) e la lunghezza focale ($f$) è data dall'equazione degli specchi: $\\frac{1}{o} + \\frac{1}{i} = \\frac{1}{f}$. Uno specchio concavo ha una lunghezza focale di $20$ cm. Un oggetto viene posto a $60$ cm dallo specchio. Determinare la posizione e la natura dell'immagine formata. (20 pt)\n\\subsection*{Esercizio 4: Lenti Sottili}\nUna lente sottile convergente ha una lunghezza focale di $15$ cm. Se un oggetto viene posto a una distanza di $10$ cm dalla lente, quale sarà la posizione dell'immagine? L'immagine sarà reale o virtuale, dritta o capovolta, ingrandita o rimpicciolita? (20 pt)\n\\subsection*{Esercizio 5: Interferenza e Diffrazione}\n\nSi considerino i fenomeni di interferenza e diffrazione della luce.\n\\begin{enumerate}[a)]\n    \\item Spiegare la differenza fondamentale tra interferenza e diffrazione.\n    \\item Indicare un esperimento o un fenomeno osservabile che dimostri chiaramente l'interferenza della luce.\n\\end{enumerate}\n\n\\subsection*{Esercizio 6: Polarizzazione della Luce}\nAsserire se le seguenti affermazioni sulla polarizzazione della luce sono vere o false.\n\\begin{enumerate}[a)]\n    \\item La luce naturale è sempre polarizzata. $\\quad \\square$ V $\\quad \\square$ F\n    \\item Un polarizzatore lineare permette il passaggio solo della componente della luce polarizzata parallelamente al suo asse di trasmissione. $\\quad \\square$ V $\\quad \\square$ F\n    \\item Un filtro polarizzatore circolare può essere usato per ridurre il riverbero superficiale. $\\quad \\square$ V $\\quad \\square$ F\n    \\item La polarizzazione per scattering è responsabile del colore blu del cielo. $\\quad \\square$ V $\\quad \\square$ F\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 20 & 20 & 20 & 20 & — & — & 80 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:109083>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.8
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 6,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 80,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_162047.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_162047.pdf",
+    "pdf_size": 14878,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Ottica}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:20:48.194619",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Ottica}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

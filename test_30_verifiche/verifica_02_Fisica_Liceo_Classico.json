@@ -1,0 +1,87 @@
+{
+  "id": 2,
+  "scenario": {
+    "materia": "Fisica",
+    "livello": "Liceo Classico",
+    "argomento": "Leggi di Newton",
+    "num_esercizi": 4,
+    "punti_totali": 150,
+    "durata": "2 ore",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Le leggi di Newton",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Le leggi di Newton} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Forza e Accelerazione}\nUn blocco di massa $m = 5.0 \\, \\text{kg}$ è inizialmente a riposo su una superficie orizzontale liscia. Viene applicata una forza costante $F = 20.0 \\, \\text{N}$ orizzontale al blocco.\n\\begin{enumerate}[a)]\n    \\item Calcola l'accelerazione del blocco. (10 pt)\n    \\item Calcola la velocità del blocco dopo $t = 4.0 \\, \\text{s}$ dall'applicazione della forza. (15 pt)\n    \\item Calcola la distanza percorsa dal blocco in questo intervallo di tempo. (10 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Interazione e Azione-Reazione}\nDue carretti, A e B, di masse $m_A = 2.0 \\, \\text{kg}$ e $m_B = 3.0 \\, \\text{kg}$, sono inizialmente fermi su un piano orizzontale privo di attrito e sono uno di fronte all'altro. Il carretto A spinge il carretto B con una forza $F_{AB}$.\n\nSi consideri il sistema composto dai due carretti.\n\\begin{enumerate}[a)]\n    \\item Descrivi la terza legge di Newton nel contesto di questa interazione. (10 pt)\n    \\item Se la forza che A esercita su B è $F_{AB} = 6.0 \\, \\text{N}$, qual è la forza che B esercita su A? (10 pt)\n    \\item Calcola l'accelerazione del carretto A e del carretto B. (20 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Attrito Dinamico}\nUna cassa di massa $m = 10.0 \\, \\text{kg}$ viene spinta su un pavimento orizzontale con una forza costante $F_{spinta} = 50.0 \\, \\text{N}$. Il coefficiente di attrito dinamico tra la cassa e il pavimento è $\\mu_d = 0.3$.\n\\begin{enumerate}[a)]\n    \\item Calcola la forza di attrito dinamico che agisce sulla cassa. (10 pt)\n    \\item Calcola l'accelerazione della cassa. (15 pt)\n    \\item Quanto tempo impiega la cassa a percorrere $d = 20.0 \\, \\text{m}$ a partire dal momento in cui viene applicata la forza iniziale? (10 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Principio di Conservazione della Quantità di Moto}\nUn proiettile di massa $m_p = 0.02 \\, \\text{kg}$ viaggia orizzontalmente con una velocità $v_p = 400 \\, \\text{m/s}$ e colpisce un blocco di legno di massa $m_b = 5.0 \\, \\text{kg}$ inizialmente fermo su un piano orizzontale. Il proiettile si conficca nel blocco.\n\\begin{enumerate}[a)]\n    \\item Qual è la quantità di moto totale del sistema proiettile-blocco immediatamente prima dell'urto? (10 pt)\n    \\item Qual è la quantità di moto totale del sistema proiettile-blocco immediatamente dopo l'urto? (10 pt)\n    \\item Calcola la velocità del blocco con il proiettile conficcato subito dopo l'urto. (10 pt)\n    \\item Il sistema conserva la quantità di moto durante l'urto? Giustifica la risposta. (10 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{3}{c||}{\\textbf{1}} & \\multicolumn{3}{c||}{\\textbf{2}} & \\multicolumn{3}{c||}{\\textbf{3}} & \\multicolumn{4}{c||}{\\textbf{4}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & a) & b) & c) & a) & b) & c) & a) & b) & c) & d) & \\\\ \\hline\n\\textbf{Max} & 10 & 15 & 10 & 10 & 10 & 20 & 10 & 15 & 10 & 10 & 10 & 10 & 10 & 150 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:87715>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.8
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 4,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 150,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_162056.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_162056.pdf",
+    "pdf_size": 17309,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Leggi di Newton}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:20:57.309812",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Leggi di Newton}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}
