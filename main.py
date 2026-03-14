@@ -21,24 +21,15 @@ import google.generativeai as genai
 def render_admin_page():
     """Pagina dedicata solo per test PromptFoo"""
     
-    st.set_page_config(page_title="PromptFoo Tests - VerificAI", layout="wide")
+    st.set_page_config(page_title="Test Suite - VerificAI", layout="wide")
     
-    # Header
-    st.markdown("""
-    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                padding: 2rem; border-radius: 10px; margin-bottom: 2rem;'>
-        <h1 style='color: white; margin: 0;'>🧪 Test Suite PromptFoo</h1>
-        <p style='color: white; margin: 0.5rem 0 0 0;'>Lancia e analizza test PromptFoo con output chiari e ben organizzati</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Importa e renderizza pagina PromptFoo
+    # Importa e renderizza pagina PromptFoo semplice
     try:
-        from promptfoo_runner import render_promptfoo_page
+        from promptfoo_simple import render_promptfoo_page
         render_promptfoo_page()
     except ImportError:
         st.error("⚠️ Modulo PromptFoo non trovato")
-        st.info("💡 Assicurati che promptfoo_runner.py sia disponibile")
+        st.info("💡 Assicurati che promptfoo_simple.py sia disponibile")
     
     # Pulsante per tornare all'app principale
     if st.button("← Torna a VerificAI", type="secondary"):
