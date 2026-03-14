@@ -85,11 +85,13 @@ def render_test_completo_30():
                         print("✅ Generazione riuscita, procedo con analisi...")
                         
                         # 2. Analizza con PromptFoo
-                        analisi = analizza_con_promptfoo(result['output'], scenario)
+                        # Estrai il contenuto LaTeX dal dizionario
+                        latex_content = result['output'].get('latex', '') if isinstance(result['output'], dict) else str(result['output'])
+                        analisi = analizza_con_promptfoo(latex_content, scenario)
                         
                         # 3. Genera PDF
                         print("📄 Generazione PDF...")
-                        pdf_result = genera_pdf_verifica(result['output'], scenario)
+                        pdf_result = genera_pdf_verifica(latex_content, scenario)
                         
                         # 4. Calcola punteggio finale
                         punteggio_finale = calcola_punteggio_finale(analisi, pdf_result)
