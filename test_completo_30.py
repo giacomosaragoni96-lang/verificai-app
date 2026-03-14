@@ -4,11 +4,12 @@ Test Completo: 30 verifiche random + analisi PromptFoo + PDF finale
 """
 
 import streamlit as st
-import random
-import sys
-import os
-from datetime import datetime
 import json
+import os
+import sys
+from datetime import datetime
+import re  # 🔧 FIX: Import mancante!
+from pathlib import Path
 import subprocess
 from pathlib import Path
 
