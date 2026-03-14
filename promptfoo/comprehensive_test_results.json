@@ -1,0 +1,329 @@
+{
+  "total_tests": 23,
+  "passed": 5,
+  "failed": 18,
+  "categories": {
+    "Matematica Liceo": {
+      "passed": 0,
+      "total": 1
+    },
+    "Matematica Tecnico": {
+      "passed": 1,
+      "total": 1
+    },
+    "Matematica Professionale": {
+      "passed": 0,
+      "total": 1
+    },
+    "Matematica Medie": {
+      "passed": 0,
+      "total": 1
+    },
+    "Matematica Primaria": {
+      "passed": 0,
+      "total": 1
+    },
+    "Italiano Liceo": {
+      "passed": 0,
+      "total": 1
+    },
+    "Italiano Medie": {
+      "passed": 0,
+      "total": 1
+    },
+    "Italiano Primaria": {
+      "passed": 0,
+      "total": 1
+    },
+    "Fisica Liceo": {
+      "passed": 0,
+      "total": 1
+    },
+    "Fisica Tecnico": {
+      "passed": 0,
+      "total": 1
+    },
+    "Storia Liceo": {
+      "passed": 0,
+      "total": 1
+    },
+    "Storia Medie": {
+      "passed": 0,
+      "total": 1
+    },
+    "Inglese Liceo": {
+      "passed": 1,
+      "total": 1
+    },
+    "Inglese Medie": {
+      "passed": 0,
+      "total": 1
+    },
+    "Chimica Liceo": {
+      "passed": 0,
+      "total": 1
+    },
+    "Informatica Liceo": {
+      "passed": 0,
+      "total": 1
+    },
+    "Scenari Speciali": {
+      "passed": 0,
+      "total": 3
+    },
+    "Titoli": {
+      "passed": 3,
+      "total": 3
+    },
+    "QA e Correzione": {
+      "passed": 0,
+      "total": 1
+    }
+  },
+  "priority_results": {
+    "High": {
+      "passed": 2,
+      "total": 6
+    },
+    "Medium": {
+      "passed": 0,
+      "total": 11
+    },
+    "Low": {
+      "passed": 3,
+      "total": 6
+    }
+  },
+  "detailed_results": [
+    {
+      "test_name": "[Matematica] Liceo Scientifico - Derivate",
+      "category": "Matematica Liceo",
+      "priority": "High",
+      "status": "FAIL",
+      "assertions_passed": 2,
+      "assertions_total": 4,
+      "tokens": 3187,
+      "output_length": 909
+    },
+    {
+      "test_name": "[Matematica] Istituto Tecnico - Equazioni",
+      "category": "Matematica Tecnico",
+      "priority": "High",
+      "status": "PASS",
+      "assertions_passed": 4,
+      "assertions_total": 4,
+      "tokens": 3408,
+      "output_length": 1702
+    },
+    {
+      "test_name": "[Matematica] Istituto Professionale - Percentuali",
+      "category": "Matematica Professionale",
+      "priority": "Medium",
+      "status": "FAIL",
+      "assertions_passed": 3,
+      "assertions_total": 4,
+      "tokens": 2420,
+      "output_length": 1040
+    },
+    {
+      "test_name": "[Matematica] Scuola Media - Geometria",
+      "category": "Matematica Medie",
+      "priority": "Medium",
+      "status": "FAIL",
+      "assertions_passed": 2,
+      "assertions_total": 4,
+      "tokens": 2493,
+      "output_length": 1082
+    },
+    {
+      "test_name": "[Matematica] Scuola Primaria - Numeri",
+      "category": "Matematica Primaria",
+      "priority": "Low",
+      "status": "FAIL",
+      "assertions_passed": 3,
+      "assertions_total": 4,
+      "tokens": 2388,
+      "output_length": 722
+    },
+    {
+      "test_name": "[Italiano] Liceo - Analisi del testo",
+      "category": "Italiano Liceo",
+      "priority": "High",
+      "status": "FAIL",
+      "assertions_passed": 2,
+      "assertions_total": 4,
+      "tokens": 2705,
+      "output_length": 1705
+    },
+    {
+      "test_name": "[Italiano] Medie - Grammatica",
+      "category": "Italiano Medie",
+      "priority": "Medium",
+      "status": "FAIL",
+      "assertions_passed": 2,
+      "assertions_total": 4,
+      "tokens": 2699,
+      "output_length": 2073
+    },
+    {
+      "test_name": "[Italiano] Primaria - Lettura",
+      "category": "Italiano Primaria",
+      "priority": "Low",
+      "status": "FAIL",
+      "assertions_passed": 3,
+      "assertions_total": 4,
+      "tokens": 2389,
+      "output_length": 863
+    },
+    {
+      "test_name": "[Fisica] Liceo - Meccanica",
+      "category": "Fisica Liceo",
+      "priority": "High",
+      "status": "FAIL",
+      "assertions_passed": 3,
+      "assertions_total": 4,
+      "tokens": 3169,
+      "output_length": 1030
+    },
+    {
+      "test_name": "[Fisica] Istituto Tecnico - Elettromagnetismo",
+      "category": "Fisica Tecnico",
+      "priority": "Medium",
+      "status": "FAIL",
+      "assertions_passed": 3,
+      "assertions_total": 4,
+      "tokens": 4102,
+      "output_length": 3195
+    },
+    {
+      "test_name": "[Storia] Liceo - Storia Contemporanea",
+      "category": "Storia Liceo",
+      "priority": "High",
+      "status": "FAIL",
+      "assertions_passed": 2,
+      "assertions_total": 4,
+      "tokens": 2737,
+      "output_length": 2014
+    },
+    {
+      "test_name": "[Storia] Medie - Storia Antica",
+      "category": "Storia Medie",
+      "priority": "Medium",
+      "status": "FAIL",
+      "assertions_passed": 2,
+      "assertions_total": 4,
+      "tokens": 2741,
+      "output_length": 2210
+    },
+    {
+      "test_name": "[Inglese] Liceo - Grammar",
+      "category": "Inglese Liceo",
+      "priority": "High",
+      "status": "PASS",
+      "assertions_passed": 4,
+      "assertions_total": 4,
+      "tokens": 2952,
+      "output_length": 2767
+    },
+    {
+      "test_name": "[Inglese] Medie - Reading",
+      "category": "Inglese Medie",
+      "priority": "Medium",
+      "status": "FAIL",
+      "assertions_passed": 2,
+      "assertions_total": 4,
+      "tokens": 2420,
+      "output_length": 862
+    },
+    {
+      "test_name": "[Chimica] Liceo - Reazioni Chimiche",
+      "category": "Chimica Liceo",
+      "priority": "Medium",
+      "status": "FAIL",
+      "assertions_passed": 3,
+      "assertions_total": 4,
+      "tokens": 3443,
+      "output_length": 1667
+    },
+    {
+      "test_name": "[Informatica] Algoritmi e Strutture Dati",
+      "category": "Informatica Liceo",
+      "priority": "Medium",
+      "status": "FAIL",
+      "assertions_passed": 2,
+      "assertions_total": 4,
+      "tokens": 3585,
+      "output_length": 2231
+    },
+    {
+      "test_name": "[Speciale] Senza Punteggi",
+      "category": "Scenari Speciali",
+      "priority": "Medium",
+      "status": "FAIL",
+      "assertions_passed": 2,
+      "assertions_total": 3,
+      "tokens": 2848,
+      "output_length": 971
+    },
+    {
+      "test_name": "[Speciale] Numero Elevato Esercizi",
+      "category": "Scenari Speciali",
+      "priority": "Medium",
+      "status": "FAIL",
+      "assertions_passed": 1,
+      "assertions_total": 3,
+      "tokens": 2721,
+      "output_length": 1480
+    },
+    {
+      "test_name": "[Speciale] Durata Breve",
+      "category": "Scenari Speciali",
+      "priority": "Low",
+      "status": "FAIL",
+      "assertions_passed": 2,
+      "assertions_total": 3,
+      "tokens": 2197,
+      "output_length": 583
+    },
+    {
+      "test_name": "[Titolo] Matematica Complesso",
+      "category": "Titoli",
+      "priority": "Low",
+      "status": "PASS",
+      "assertions_passed": 3,
+      "assertions_total": 3,
+      "tokens": 102,
+      "output_length": 36
+    },
+    {
+      "test_name": "[Titolo] Storia Correzione",
+      "category": "Titoli",
+      "priority": "Low",
+      "status": "PASS",
+      "assertions_passed": 2,
+      "assertions_total": 2,
+      "tokens": 98,
+      "output_length": 26
+    },
+    {
+      "test_name": "[Titolo] Inglese Conciso",
+      "category": "Titoli",
+      "priority": "Low",
+      "status": "PASS",
+      "assertions_passed": 2,
+      "assertions_total": 2,
+      "tokens": 102,
+      "output_length": 32
+    },
+    {
+      "test_name": "[QA] Correzione Matematica",
+      "category": "QA e Correzione",
+      "priority": "Medium",
+      "status": "FAIL",
+      "assertions_passed": 0,
+      "assertions_total": 2,
+      "tokens": 1023,
+      "output_length": 320
+    }
+  ]
+}
