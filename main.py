@@ -1426,11 +1426,15 @@ def _load_user_verifiche():
         res = supabase_admin.table("verifiche_storico")\
             .select("*")\
             .eq("user_id", st.session_state.utente.id)\
+            .is_("deleted_at", "null")\
             .order("created_at", desc=True)\
             .execute()
         
-        return res.data if res.data else []
+        verifiche = res.data if res.data else []
+        print(f"DEBUG: Caricate {len(verifiche)} verifiche per utente {st.session_state.utente.id}")
+        return verifiche
     except Exception as e:
+        print(f"DEBUG: Errore caricamento verifiche: {e}")
         st.error(f"⚠️ Errore nel caricamento delle verifiche: {e}")
         return []
 

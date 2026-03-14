@@ -290,6 +290,7 @@ def render_sidebar(
         
         # Stats cards semplici
         try:
+            # Metodo più affidabile: conta prima i record
             storico_count = (
                 supabase_admin.table("verifiche_storico")
                 .select("id", count="exact")
@@ -297,7 +298,9 @@ def render_sidebar(
                 .is_("deleted_at", "null")
                 .execute()
             )
-            total_verifiche = storico_count.count if storico_count else 0
+            total_verifiche = storico_count.count if hasattr(storico_count, 'count') and storico_count.count else len(storico_count.data) if storico_count.data else 0
+            
+            print(f"DEBUG: Sidebar conteggio verifiche - count: {getattr(storico_count, 'count', 'N/A')}, data_len: {len(storico_count.data) if storico_count.data else 0}, total: {total_verifiche}")
             
             # Ottieni l'ultima verifica generata
             ultima_verifica = (
@@ -310,7 +313,8 @@ def render_sidebar(
                 .execute()
             )
             ultima_verifica = ultima_verifica.data[0] if ultima_verifica.data else None
-        except:
+        except Exception as e:
+            print(f"DEBUG: Errore sidebar stats: {e}")
             total_verifiche = 0
             ultima_verifica = None
         
