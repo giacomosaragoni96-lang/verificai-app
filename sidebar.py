@@ -415,7 +415,10 @@ def render_sidebar(
         st.markdown('<div class="logout-btn-wrap">', unsafe_allow_html=True)
         
         # Menu Admin - aggiunto prima del logout
-        if is_admin:
+        # Controlla sia is_admin classico che session_state
+        admin_status = is_admin or st.session_state.get('is_admin', False)
+        
+        if admin_status:
             st.markdown("---")
             st.markdown("### 🔧 Amministrazione")
             
@@ -438,6 +441,7 @@ def render_sidebar(
                 if st.button("🔐 Login Admin", key="admin_login_btn"):
                     if password == "admin123":  # In produzione usa sistema più sicuro
                         st.session_state.is_admin = True
+                        st.session_state.current_page = 'admin'
                         st.success("✅ Accesso admin abilitato!")
                         st.rerun()
                     elif password:

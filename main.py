@@ -6280,7 +6280,10 @@ if not _share_view_active:
     
     # ── ADMIN PAGE ROUTING ───────────────────────────────────────────────────────
     if st.session_state.get('current_page') == 'admin':
-        if st.session_state.get('is_admin', False):
+        # Controlla sia is_admin classico che session_state
+        admin_status = (st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False) or st.session_state.get('is_admin', False)
+        
+        if admin_status:
             render_admin_page()
         else:
             st.error("⛔ Accesso negato. Privilegi admin richiesti.")
