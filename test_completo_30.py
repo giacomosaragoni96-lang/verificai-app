@@ -191,47 +191,48 @@ def genera_scenari_random(n):
     return scenari
 
 def genera_verifica_reale(scenario):
-    """Genera verifica reale usando il sistema dell'app"""
+    """Genera verifica reale usando il sistema completo dell'app"""
     
     try:
-        from prompts import prompt_corpo_verifica
+        # Importa il sistema completo dell'app
+        from generation import genera_verifica
         from config import CALIBRAZIONE_SCUOLA
         import google.generativeai as genai
         
         # Calibrazione
         calibrazione = CALIBRAZIONE_SCUOLA.get(scenario['livello'], "")
         
-        # Parametri prompt
-        prompt_params = {
-            "materia": scenario['materia'],
-            "argomento": scenario['argomento'],
-            "calibrazione": calibrazione,
-            "durata": scenario['durata'],
-            "num_esercizi": scenario['num_esercizi'],
-            "punti_totali": scenario['punti_totali'],
-            "mostra_punteggi": scenario['mostra_punteggi'],
-            "con_griglia": scenario['con_griglia'],
-            "note_generali": "",
-            "istruzioni_esercizi": "",
-            "e_mat": scenario['materia'] in ["Matematica", "Fisica", "Chimica"],
-            "titolo_header": "",
-            "preambolo_fisso": "",
-            "mathpix_context": None
-        }
-        
-        # Genera prompt
-        prompt = prompt_corpo_verifica(**prompt_params)
-        
-        # Chiama API
+        # Usa lo stesso modello dell'app
         model = genai.GenerativeModel('gemini-2.5-flash-lite')
-        response = model.generate_content(prompt)
-        output = response.text
+        
+        # Genera con il sistema completo dell'app
+        result = genera_verifica(
+            model=model,
+            materia=scenario['materia'],
+            argomento=scenario['argomento'],
+            difficolta="media",  # Default
+            calibrazione=calibrazione,
+            durata=scenario['durata'],
+            num_esercizi=scenario['num_esercizi'],
+            punti_totali=scenario['punti_totali'],
+            mostra_punteggi=scenario['mostra_punteggi'],
+            con_griglia=scenario['con_griglia'],
+            doppia_fila=False,
+            bes_dsa=False,
+            perc_ridotta=25,
+            bes_dsa_b=False,
+            genera_soluzioni=False,
+            note_generali="",
+            istruzioni_esercizi="",
+            file_ispirazione=None,
+            mathpix_context=None
+        )
         
         return {
             "success": True,
-            "prompt": prompt,
-            "output": output,
-            "tokens": len(prompt) + len(output)
+            "output": result,
+            "prompt_used": "Sistema completo VerificAI",
+            "tokens": len(result)
         }
         
     except Exception as e:
