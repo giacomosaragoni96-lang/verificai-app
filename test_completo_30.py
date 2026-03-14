@@ -422,12 +422,43 @@ def mostra_risultati_finali(risultati):
     # PDF Rate separato
     st.metric("📄 PDF Generati", f"{pdf_rate:.1f}%")
     
-    # Grafico distribuzione punteggi
-    import plotly.express as px
+    # Grafico distribuzione punteggi (senza plotly)
+    st.markdown("### 📊 Distribuzione Punteggi")
     
-    df_punteggi = [{"Verifica": f"V{r['id']}", "Punteggio": r['punteggio_finale']} for r in risultati]
-    fig = px.histogram(df_punteggi, x="Punteggio", nbins=10, title="Distribuzione Punteggi")
-    st.plotly_chart(fig, use_container_width=True)
+    # Crea dati per istogramma
+    punteggi = [r['punteggio_finale'] for r in risultati]
+    
+    # Crea intervalli
+    intervalli = [(0, 50), (50, 60), (60, 70), (70, 80), (80, 90), (90, 100)]
+    conteggi = []
+    etichette = []
+    
+    for min_val, max_val in intervalli:
+        conteggio = len([p for p in punteggi if min_val <= p < max_val])
+        conteggi.append(conteggio)
+        if max_val == 100:
+            etichette.append(f"{min_val}-100")
+        else:
+            etichette.append(f"{min_val}-{max_val-1}")
+    
+    # Mostra istogramma con bar chart di Streamlit
+    import pandas as pd
+    df = pd.DataFrame({
+        'Intervallo': etichette,
+        'Numero Verifiche': conteggi
+    })
+    
+    st.bar_chart(df.set_index('Intervallo')['Numero Verifiche'])
+    
+    # Statistiche aggiuntive
+    st.markdown("### 📈 Statistiche Aggiuntive")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Voto Minimo", min(punteggi))
+    with col2:
+        st.metric("Voto Massimo", max(punteggi))
+    with col3:
+        st.metric("Mediana", sorted(punteggi)[len(punteggi)//2])
     
     # Tabella dettagliata
     st.markdown("### 📋 Tabella Dettagliata Verifiche")
