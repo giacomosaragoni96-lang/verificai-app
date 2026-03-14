@@ -352,44 +352,7 @@ def render_sidebar(
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # ── PERFORMANCE MONITORING (Admin only) ─────────────────────────────
-        if is_admin and hasattr(st.session_state, 'quality_stats'):
-            st.markdown("---")
-            st.markdown("### 📊 Qualità Generazione")
-            
-            stats = st.session_state.quality_stats
-            total = sum(stats.values())
-            
-            if total > 0:
-                # Quality metrics
-                excellent_rate = stats.get('excellent', 0) / total * 100
-                good_rate = stats.get('good', 0) / total * 100
-                poor_rate = stats.get('poor', 0) / total * 100
-                
-                st.metric("📈 Tasso Successo", f"{excellent_rate + good_rate:.1f}%", 
-                         f"+{excellent_rate:.1f}% eccellente")
-                
-                # Visual quality bar
-                quality_data = [
-                    ("👍 Ottima", stats.get('excellent', 0), "#059669"),
-                    ("👍 Buona", stats.get('good', 0), "#22c55e"), 
-                    ("😐 Sufficiente", stats.get('sufficient', 0), "#f59e0b"),
-                    ("👎 Insufficiente", stats.get('poor', 0), "#ef4444")
-                ]
-                
-
-st.markdown('<div class="logout-btn-wrap">', unsafe_allow_html=True)
-if st.button("↩ Esci dall'account", key="logout_btn"):
-    from auth import cancella_sessione_cookie
-    cancella_sessione_cookie()
-    supabase_client.auth.sign_out()
-    st.session_state.utente          = None
-    st.session_state.supabase       = None
-    st.session_state.stage          = "INPUT"
-    st.rerun()
-st.markdown("</div>", unsafe_allow_html=True)
-
-return {
-    "modello_id":    modello_id,
-    "theme_changed": theme_changed,
-}
+    return {
+        "modello_id":    modello_id,
+        "theme_changed": theme_changed,
+    }
