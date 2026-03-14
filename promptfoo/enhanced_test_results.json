@@ -1,0 +1,92 @@
+{
+  "total_tests": 8,
+  "passed": 2,
+  "failed": 6,
+  "categories": {
+    "Titoli": {
+      "passed": 1,
+      "total": 1
+    },
+    "Corpo + Impaginazione": {
+      "passed": 0,
+      "total": 1
+    },
+    "Corpo + Leggibilità": {
+      "passed": 0,
+      "total": 1
+    },
+    "Corpo + Formattazione": {
+      "passed": 0,
+      "total": 1
+    },
+    "Regole Avanzate": {
+      "passed": 1,
+      "total": 3
+    }
+  },
+  "detailed_results": [
+    {
+      "test_name": "[Titolo] Matematica derivate",
+      "category": "Titoli",
+      "status": "PASS",
+      "assertions_passed": 3,
+      "assertions_total": 3,
+      "tokens": 93,
+      "output_length": 8
+    },
+    {
+      "test_name": "[Corpo] Matematica Derivate — Struttura Completa",
+      "category": "Corpo + Impaginazione",
+      "status": "FAIL",
+      "assertions_passed": 4,
+      "assertions_total": 6,
+      "tokens": 3386,
+      "output_length": 1655
+    },
+    {
+      "test_name": "[Corpo] Italiano Medie — Leggibilità Ottimizzata",
+      "category": "Corpo + Leggibilità",
+      "status": "FAIL",
+      "assertions_passed": 2,
+      "assertions_total": 5,
+      "tokens": 2382,
+      "output_length": 1040
+    },
+    {
+      "test_name": "[Corpo] Fisica — Formattazione Scientifica",
+      "category": "Corpo + Formattazione",
+      "status": "FAIL",
+      "assertions_passed": 3,
+      "assertions_total": 4,
+      "tokens": 3008,
+      "output_length": 1617
+    },
+    {
+      "test_name": "[Regola] Anti-spoiler grafici avanzato",
+      "category": "Regole Avanzate",
+      "status": "FAIL",
+      "assertions_passed": 1,
+      "assertions_total": 2,
+      "tokens": 2492,
+      "output_length": 1149
+    },
+    {
+      "test_name": "[Regola] Qualità tipografica LaTeX",
+      "category": "Regole Avanzate",
+      "status": "PASS",
+      "assertions_passed": 3,
+      "assertions_total": 3,
+      "tokens": 2454,
+      "output_length": 1089
+    },
+    {
+      "test_name": "[Regola] Varietà tipologie avanzata",
+      "category": "Regole Avanzate",
+      "status": "FAIL",
+      "assertions_passed": 0,
+      "assertions_total": 1,
+      "tokens": 2937,
+      "output_length": 2764
+    }
+  ]
+}
