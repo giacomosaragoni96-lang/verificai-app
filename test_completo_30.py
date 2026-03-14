@@ -578,8 +578,13 @@ def genera_pdf_verifica(output, scenario):
     """Genera PDF della verifica con LaTeX completo"""
     
     try:
-        # Crea LaTeX completo con header e footer
-        latex_completo = crea_latex_completo(output, scenario)
+        # 🔥 USA IL LaTeX GENERATO DA VERIFICAI, NON CREARNE UNO NUOVO!
+        latex_completo = output  # Usa direttamente l'output di VerificAI!
+        
+        # 🔥 DEBUG: Stampa cosa viene usato per la compilazione
+        print(f"🔥 DEBUG genera_pdf_verifica: LaTeX da compilare ({len(latex_completo)} caratteri)")
+        print(f"📄 Prime 200 del LaTeX: {latex_completo[:200]}")
+        print(f"🔍 Contiene \\subsection*: {latex_completo.count('\\subsection*')} volte")
         
         # Salva file LaTeX completo
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
