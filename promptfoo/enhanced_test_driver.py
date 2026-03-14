@@ -6,6 +6,7 @@ Enhanced VerificAI Test Driver - Content + Layout + Readability
 import os
 import sys
 import json
+import re
 from datetime import datetime
 
 # Setup
@@ -175,7 +176,6 @@ def run_enhanced_test_suite():
             end_count = output.count(r'\end{enumerate}')
             return begin_count == end_count
         elif assertion_type == "spaziatura_operatori":
-            import re
             good_spacing = bool(re.search(r'\s*[+\-*/=]\s*', output))
             bad_spacing = bool(re.search(r'[a-z][+\-*/][a-z]|[0-9][+\-*/][a-z]', output, re.I))
             return good_spacing and not bad_spacing
@@ -212,7 +212,6 @@ def run_enhanced_test_suite():
             return text_words >= 50 and 20 <= math_complexity <= 200
         elif assertion_type == "punteggi_esatti":
             # Controllo esatto dei punteggi basato sulle variabili del test
-            import re
             # Estrae tutti i punteggi nel formato (X pt)
             matches = re.findall(r'\((\d+)\s*pt\)', output)
             total_points = sum(int(m) for m in matches)
@@ -221,12 +220,10 @@ def run_enhanced_test_suite():
             return total_points == target_points
         elif assertion_type == "punteggi_esatti_zero":
             # Controllo che non ci siano punteggi (per test senza punteggi)
-            import re
             matches = re.findall(r'\((\d+)\s*pt\)', output)
             return len(matches) == 0
         elif assertion_type == "num_esercizi_esatto":
             # Controllo esatto del numero di esercizi basato sulle variabili del test
-            import re
             # Estrae tutti i \subsection* che rappresentano esercizi
             matches = re.findall(r'\\subsection\*', output)
             num_exercises = len(matches)

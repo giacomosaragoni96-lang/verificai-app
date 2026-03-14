@@ -22,6 +22,10 @@
     "Regole Avanzate": {
       "passed": 1,
       "total": 3
+    },
+    "Format Professionale": {
+      "passed": 0,
+      "total": 1
     }
   },
   "detailed_results": [
@@ -38,10 +42,10 @@
       "test_name": "[Corpo] Matematica Derivate — Struttura Completa",
       "category": "Corpo + Impaginazione",
       "status": "FAIL",
-      "assertions_passed": 4,
+      "assertions_passed": 5,
       "assertions_total": 6,
-      "tokens": 3386,
-      "output_length": 1655
+      "tokens": 3324,
+      "output_length": 1248
     },
     {
       "test_name": "[Corpo] Italiano Medie — Leggibilità Ottimizzata",
@@ -49,8 +53,8 @@
       "status": "FAIL",
       "assertions_passed": 2,
       "assertions_total": 5,
-      "tokens": 2382,
-      "output_length": 1040
+      "tokens": 2565,
+      "output_length": 1868
     },
     {
       "test_name": "[Corpo] Fisica — Formattazione Scientifica",
@@ -58,8 +62,8 @@
       "status": "FAIL",
       "assertions_passed": 3,
       "assertions_total": 4,
-      "tokens": 3008,
-      "output_length": 1617
+      "tokens": 2910,
+      "output_length": 1234
     },
     {
       "test_name": "[Regola] Anti-spoiler grafici avanzato",
@@ -67,8 +71,8 @@
       "status": "FAIL",
       "assertions_passed": 1,
       "assertions_total": 2,
-      "tokens": 2492,
-      "output_length": 1149
+      "tokens": 2502,
+      "output_length": 1007
     },
     {
       "test_name": "[Regola] Qualità tipografica LaTeX",
@@ -76,8 +80,8 @@
       "status": "PASS",
       "assertions_passed": 3,
       "assertions_total": 3,
-      "tokens": 2454,
-      "output_length": 1089
+      "tokens": 2516,
+      "output_length": 1286
     },
     {
       "test_name": "[Regola] Varietà tipologie avanzata",
@@ -85,8 +89,17 @@
       "status": "FAIL",
       "assertions_passed": 0,
       "assertions_total": 1,
-      "tokens": 2937,
-      "output_length": 2764
+      "tokens": 2580,
+      "output_length": 1674
+    },
+    {
+      "test_name": "[Format] Impaginazione professionale completa",
+      "category": "Format Professionale",
+      "status": "FAIL",
+      "assertions_passed": 2,
+      "assertions_total": 5,
+      "tokens": 3193,
+      "output_length": 1052
     }
   ]
 }

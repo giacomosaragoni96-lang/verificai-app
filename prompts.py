@@ -69,16 +69,17 @@ def prompt_corpo_verifica(
     if mostra_punteggi:
         punti_rule = (
             f"- PUNTEGGI — REGOLA ASSOLUTA E INVIOLABILE:\n"
-            f"  * Ogni \\item DEVE avere \"(X pt)\" sulla stessa riga, subito dopo il testo.\n"
-            f"  * Formato ESATTO e UNICO: (X pt) — es: \\item[a)] Risolvi l'equazione. (5 pt)\n"
-            f"  * NON usare: [X pt], X punti, X p., pt X, (Xpt), o qualsiasi altro formato.\n"
-            f"  * SOMMA TOTALE TASSATIVA: la somma di TUTTI i (X pt) di TUTTI gli esercizi deve essere\n"
+            f"  * Ogni esercizio (\\subsection*) deve avere UN SOLO punteggio totale.\n"
+            f"  * NON aggiungere punti a ogni sottopunto - solo un totale per esercizio.\n"
+            f"  * Formato CORRETTO: \\subsection*{{Esercizio 1: Titolo}} (20 pt) seguito da \\item[a)... \\item[b)...\n"
+            f"  * ERRORE DA EVITARE: \\item[a)] (10 pt) \\item[b)] (10 pt) -> questo crea doppio conteggio!\n"
+            f"  * SOMMA TOTALE TASSATIVA: la somma di TUTTI i punteggi degli esercizi deve essere\n"
             f"    ESATTAMENTE {punti_totali} pt. NON {punti_totali-1}, NON {punti_totali+1}. ESATTAMENTE {punti_totali}.\n"
-            f"  * PRIMA DI TERMINARE: somma mentalmente tutti i (X pt) che hai scritto. Se non fa {punti_totali}, correggi.\n"
-            f"  * Distribuisci i punti in modo proporzionale alla difficoltà.\n"
-            f"  * NON inserire punti nel titolo \\subsection*, SOLO nei \\item.\n"
-            f"  * REGOLA CRITICA: se un esercizio ha un solo sottopunto, usa comunque \\item[a)] con il suo punteggio.\n"
-            f"    NON lasciare MAI un esercizio senza \\item con punteggio — la tabella punteggi sarà inutilizzabile."
+            f"  * CALCOLO MATEMATICO: con {num_esercizi} esercizi e {punti_totali} pt totali,\n"
+            f"    ogni esercizio deve avere circa {punti_totali // num_esercizi} pt (distribuisci equamente).\n"
+            f"  * PRIMA DI TERMINARE: conta i punteggi degli esercizi (non dei \\item). Se non fa {punti_totali}, correggi.\n"
+            f"  * NON inserire punti nei \\item, SOLO nel titolo \\subsection*.\n"
+            f"  * REGOLA CRITICA: ESATTAMENTE {num_esercizi} punteggi totali, uno per esercizio, somma = {punti_totali} pt.\n"
         )
     else:
         punti_rule = "- NON inserire punti (X pt) in nessun esercizio né sottopunto."
