@@ -190,34 +190,126 @@ def render_test_reali(show_details, save_results):
     if st.button("🚀 Genera e Testa Verifiche Reali", type="primary"):
         with st.spinner("🔄 Generazione verifiche reali in corso..."):
             try:
-                # Lancia sistema test reali
-                result = subprocess.run([
-                    sys.executable, "promptfoo/real_verification_test_system.py"
-                ], capture_output=True, text=True, cwd=".")
+                # Genera direttamente le verifiche reali senza usare il sistema esterno
+                from prompts import prompt_corpo_verifica
+                from config import CALIBRAZIONE_SCUOLA
+                import google.generativeai as genai
+                import json
+                from datetime import datetime
+                import os
                 
-                # Mostra output
-                st.markdown("### 📄 Output Sistema Reale")
-                st.code(result.stdout, language="text")
+                # Scenari di test reali
+                real_scenarios = [
+                    {
+                        "name": "Matematica_Tecnico_Equazioni",
+                        "materia": "Matematica",
+                        "livello": "Istituto Tecnico Tecnologico/Industriale",
+                        "argomento": "Equazioni di secondo grado",
+                        "durata": "50 minuti",
+                        "num_esercizi": 4,
+                        "punti_totali": 80,
+                        "mostra_punteggi": True,
+                        "con_griglia": True,
+                        "e_mat": True
+                    },
+                    {
+                        "name": "Italiano_Liceo_AnalisiTesto",
+                        "materia": "Italiano",
+                        "livello": "Liceo Scientifico",
+                        "argomento": "Analisi del testo poetico",
+                        "durata": "90 minuti",
+                        "num_esercizi": 4,
+                        "punti_totali": 100,
+                        "mostra_punteggi": True,
+                        "con_griglia": True,
+                        "e_mat": False
+                    },
+                    {
+                        "name": "Fisica_Liceo_Meccanica",
+                        "materia": "Fisica",
+                        "livello": "Liceo Scientifico",
+                        "argomento": "Leggi di Newton",
+                        "durata": "60 minuti",
+                        "num_esercizi": 3,
+                        "punti_totali": 100,
+                        "mostra_punteggi": True,
+                        "con_griglia": True,
+                        "e_mat": True
+                    }
+                ]
                 
-                if result.stderr:
-                    st.markdown("### ⚠️ Errori/Warnings")
-                    st.code(result.stderr, language="text")
+                # Crea directory se non esiste
+                os.makedirs("real_verifications", exist_ok=True)
                 
-                # Status
-                if result.returncode == 0:
-                    st.success("✅ Sistema verifiche reali completato!")
-                    
-                    # Mostra verifiche generate
-                    show_real_verifications()
-                else:
-                    st.error(f"❌ Sistema fallito (exit code: {result.returncode})")
+                generated_count = 0
+                
+                for scenario in real_scenarios:
+                    try:
+                        # Calibrazione
+                        calibrazione = CALIBRAZIONE_SCUOLA.get(scenario['livello'], "")
+                        
+                        # Parametri prompt
+                        prompt_params = {
+                            "materia": scenario['materia'],
+                            "argomento": scenario['argomento'],
+                            "calibrazione": calibrazione,
+                            "durata": scenario['durata'],
+                            "num_esercizi": scenario['num_esercizi'],
+                            "punti_totali": scenario['punti_totali'],
+                            "mostra_punteggi": scenario['mostra_punteggi'],
+                            "con_griglia": scenario.get('con_griglia', False),
+                            "note_generali": "",
+                            "istruzioni_esercizi": "",
+                            "e_mat": scenario.get('e_mat', False),
+                            "titolo_header": "",
+                            "preambolo_fisso": "",
+                            "mathpix_context": None
+                        }
+                        
+                        # Genera prompt
+                        prompt = prompt_corpo_verifica(**prompt_params)
+                        
+                        # Chiama API
+                        model = genai.GenerativeModel('gemini-2.5-flash-lite')
+                        response = model.generate_content(prompt)
+                        output = response.text
+                        
+                        # Salva test
+                        test_data = {
+                            "scenario": scenario,
+                            "prompt_used": prompt,
+                            "output": output,
+                            "timestamp": datetime.now().isoformat(),
+                            "tokens": {
+                                "prompt": len(prompt),
+                                "completion": len(output),
+                                "total": len(prompt) + len(output)
+                            }
+                        }
+                        
+                        filename = f"real_verifications/{scenario['name']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                        with open(filename, 'w', encoding='utf-8') as f:
+                            json.dump(test_data, f, indent=2, ensure_ascii=False)
+                        
+                        generated_count += 1
+                        
+                    except Exception as e:
+                        st.warning(f"⚠️ Errore generazione {scenario['name']}: {e}")
+                        continue
+                
+                st.success(f"✅ Generati {generated_count} verifiche reali su {len(real_scenarios)}!")
+                st.info("📂 Verifiche salvate in real_verifications/")
+                
+                # Mostra verifiche generate
+                show_real_verifications()
                 
                 # Salva risultati
                 if save_results:
-                    save_test_result("test_reali", result.stdout, result.stderr, result.returncode)
+                    save_test_result("test_reali", f"Generate {generated_count} verifiche", "", 0)
                 
             except Exception as e:
-                st.error(f"❌ Errore esecuzione: {e}")
+                st.error(f"❌ Errore generazione verifiche reali: {e}")
+                st.info("💡 Verifica che le API siano configurate correttamente")
 
 def analyze_comprehensive_results(output, show_details):
     """Analizza risultati del test completo"""
