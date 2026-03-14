@@ -21,6 +21,8 @@ import google.generativeai as genai
 def render_admin_page():
     """Pannello admin integrato direttamente in main.py"""
     
+    st.set_page_config(page_title="Admin - VerificAI", layout="wide")
+    
     # Header
     st.markdown("""
     <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
@@ -35,7 +37,7 @@ def render_admin_page():
         st.markdown("### 📋 Navigazione")
         page = st.selectbox(
             "Seleziona sezione:",
-            ["🎯 Dashboard", "🧪 Nuovo Test", "📊 Storico Test"]
+            ["🎯 Dashboard", "🧪 Nuovo Test", "📊 Storico Test", "🚀 PromptFoo Tests"]
         )
     
     if page == "🎯 Dashboard":
@@ -55,420 +57,53 @@ def render_admin_page():
         st.info("🚀 Sistema test pronto. Usa la sidebar per navigare.")
         
     elif page == "🧪 Nuovo Test":
-        st.markdown("## 🧪 Genera Nuovo Test")
-        
-        with st.form("new_test_form"):
-            st.markdown("### 📋 Configurazione Test")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                materia = st.selectbox("Materia", ["Matematica", "Italiano", "Fisica"])
-                livello = st.selectbox("Livello", ["Liceo Scientifico", "Istituto Tecnico"])
-                argomento = st.text_input("Argomento", "Equazioni di secondo grado")
-            
-            with col2:
-                num_esercizi = st.number_input("Numero Esercizi", 1, 10, 4)
-                punti_totali = st.number_input("Punti Totali", 10, 200, 80, 10)
-                durata = st.text_input("Durata", "50 minuti")
-            
-            submitted = st.form_submit_button("🚀 Genera Test", type="primary")
-            
-            if submitted:
-                with st.spinner("🔄 Generazione test in corso..."):
-                    try:
-                        # Genera test reale usando il sistema esistente
-                        from prompts import prompt_corpo_verifica
-                        from config import CALIBRAZIONE_SCUOLA
-                        
-                        # Calibrazione
-                        calibrazione = CALIBRAZIONE_SCUOLA.get(livello, "")
-                        
-                        # Parametri prompt
-                        prompt_params = {
-                            "materia": materia,
-                            "argomento": argomento,
-                            "calibrazione": calibrazione,
-                            "durata": durata,
-                            "num_esercizi": num_esercizi,
-                            "punti_totali": punti_totali,
-                            "mostra_punteggi": True,
-                            "con_griglia": True,
-                            "note_generali": "",
-                            "istruzioni_esercizi": "",
-                            "e_mat": materia in ["Matematica", "Fisica"],
-                            "titolo_header": "",
-                            "preambolo_fisso": "",
-                            "mathpix_context": None
-                        }
-                        
-                        # Genera prompt
-                        prompt = prompt_corpo_verifica(**prompt_params)
-                        
-                        # Chiama API Gemini
-                        import google.generativeai as genai
-                        model = genai.GenerativeModel('gemini-2.5-flash-lite')
-                        response = model.generate_content(prompt)
-                        output = response.text
-                        
-                        # Mostra risultati
-                        st.success("✅ Test generato con successo!")
-                        
-                        # Configurazione test
-                        st.code(f"""
-Test Configuration:
-- Materia: {materia}
-- Livello: {livello}
-- Argomento: {argomento}
-- Esercizi: {num_esercizi}
-- Punti: {punti_totali}
-- Durata: {durata}
-                        """)
-                        
-                        # Output generato
-                        st.markdown("### 📄 Output LaTeX Generato")
-                        st.code(output, language='latex')
-                        
-                        # Valutazione automatica
-                        st.markdown("### 🔍 Valutazione Automatica")
-                        
-                        import re
-                        
-                        # 1. Numero esercizi
-                        subsections = len(re.findall(r'\\subsection\*', output))
-                        esercizi_ok = subsections == num_esercizi
-                        
-                        # 2. Punteggi esatti
-                        points = re.findall(r'\((\d+)\s*pt\)', output)
-                        total_points = sum(int(p) for p in points)
-                        punti_ok = total_points == punti_totali
-                        
-                        # 3. Qualità matematica
-                        math_formulas = len(re.findall(r'\$[^$]*\$', output))
-                        math_ok = math_formulas >= 2 if materia in ["Matematica", "Fisica"] else True
-                        
-                        # 4. Brackets bilanciati
-                        clean = output.replace(r'\{', '').replace(r'\}', '')
-                        depth = 0
-                        brackets_ok = True
-                        for char in clean:
-                            if char == '{': depth += 1
-                            elif char == '}': depth -= 1
-                            if depth < 0: 
-                                brackets_ok = False
-                                break
-                        if depth != 0: brackets_ok = False
-                        
-                        # Mostra risultati valutazione
-                        col1, col2, col3, col4 = st.columns(4)
-                        with col1:
-                            st.metric("Esercizi", f"{'✅' if esercizi_ok else '❌'} {subsections}/{num_esercizi}")
-                        with col2:
-                            st.metric("Punti", f"{'✅' if punti_ok else '❌'} {total_points}/{punti_totali}")
-                        with col3:
-                            st.metric("Formule", f"{'✅' if math_ok else '❌'} {math_formulas}")
-                        with col4:
-                            st.metric("LaTeX", f"{'✅' if brackets_ok else '❌'} Bilanciati")
-                        
-                        # Score finale
-                        passed = sum([esercizi_ok, punti_ok, math_ok, brackets_ok])
-                        score = (passed / 4) * 100
-                        
-                        st.markdown(f"### 📊 Score Finale: {score:.1f}%")
-                        st.progress(score / 100)
-                        
-                        # Salva test (fuori dal form)
-                        st.markdown("---")
-                        if st.button("💾 Salva Test", key="save_test", use_container_width=True):
-                            import json
-                            from datetime import datetime
-                            
-                            test_data = {
-                                "scenario": {
-                                    "materia": materia,
-                                    "livello": livello,
-                                    "argomento": argomento,
-                                    "num_esercizi": num_esercizi,
-                                    "punti_totali": punti_totali,
-                                    "durata": durata
-                                },
-                                "output": output,
-                                "evaluation": {
-                                    "score": score,
-                                    "passed": passed,
-                                    "total": 4,
-                                    "esercizi_ok": esercizi_ok,
-                                    "punti_ok": punti_ok,
-                                    "math_ok": math_ok,
-                                    "brackets_ok": brackets_ok
-                                },
-                                "timestamp": datetime.now().isoformat()
-                            }
-                            
-                            # Crea directory se non esiste
-                            import os
-                            os.makedirs("admin_tests", exist_ok=True)
-                            
-                            # Salva file
-                            filename = f"admin_tests/test_{materia}_{livello}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-                            with open(filename, 'w', encoding='utf-8') as f:
-                                json.dump(test_data, f, indent=2, ensure_ascii=False)
-                            
-                            st.success(f"✅ Test salvato in {filename}")
-                        
-                    except Exception as e:
-                        st.error(f"❌ Errore generazione: {e}")
-                        st.info("📝 Sistema di generazione test in fase di sviluppo")
-    
+        render_new_test_section()
     elif page == "📊 Storico Test":
-        st.markdown("## 📊 Storico Test")
-        
-        # Carica test salvati
-        import os
-        import json
-        from datetime import datetime
-        
-        test_files = []
-        
-        # Cerca test nella directory admin_tests
-        if os.path.exists("admin_tests"):
-            for file in os.listdir("admin_tests"):
-                if file.endswith(".json"):
-                    test_files.append(f"admin_tests/{file}")
-        
-        # Cerca anche i test reali che avevamo generato
-        if os.path.exists("real_verifications"):
-            for file in os.listdir("real_verifications"):
-                if file.endswith(".json"):
-                    test_files.append(f"real_verifications/{file}")
-        
-        if test_files:
-            st.info(f"📂 Trovati {len(test_files)} test salvati")
-            
-            for test_file in sorted(test_files, reverse=True):
-                try:
-                    with open(test_file, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                    
-                    # Estrai info
-                    if "scenario" in data:
-                        scenario = data["scenario"]
-                        name = scenario.get("name", f"Test {scenario.get('materia', 'Unknown')}")
-                        materia = scenario.get("materia", "N/A")
-                        livello = scenario.get("livello", "N/A")
-                        esercizi = scenario.get("num_esercizi", "N/A")
-                        punti = scenario.get("punti_totali", "N/A")
-                    else:
-                        name = test_file.split("/")[-1].replace(".json", "")
-                        materia = data.get("materia", "N/A")
-                        livello = data.get("livello", "N/A")
-                        esercizi = data.get("num_esercizi", "N/A")
-                        punti = data.get("punti_totali", "N/A")
-                    
-                    # Score se disponibile
-                    score = "N/A"
-                    if "evaluation" in data:
-                        score = f"{data['evaluation'].get('score', 0):.1f}%"
-                    elif "score" in data:
-                        score = f"{data['score']:.1f}%"
-                    
-                    # Timestamp
-                    timestamp = data.get("timestamp", "")
-                    if timestamp:
-                        try:
-                            dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
-                            time_str = dt.strftime("%d/%m/%Y %H:%M")
-                        except:
-                            time_str = timestamp[:19]
-                    else:
-                        time_str = "Sconosciuto"
-                    
-                    with st.expander(f"📝 {name} - {materia} - {score}"):
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            st.write(f"**Materia:** {materia}")
-                            st.write(f"**Livello:** {livello}")
-                            st.write(f"**Esercizi:** {esercizi}")
-                            st.write(f"**Punti:** {punti}")
-                        
-                        with col2:
-                            st.write(f"**Score:** {score}")
-                            st.write(f"**Data:** {time_str}")
-                            st.write(f"**File:** {test_file}")
-                        
-                        # Output preview
-                        if "output" in data:
-                            output = data["output"]
-                            st.markdown("**📄 Preview Output:**")
-                            st.code(output[:500] + "..." if len(output) > 500 else output, language='latex')
-                        
-                        # Valutazione dettagliata
-                        if "evaluation" in data:
-                            eval_data = data["evaluation"]
-                            st.markdown("**🔍 Valutazione Dettagliata:**")
-                            
-                            col1, col2, col3, col4 = st.columns(4)
-                            with col1:
-                                st.metric("Esercizi", f"{'✅' if eval_data.get('esercizi_ok') else '❌'}")
-                            with col2:
-                                st.metric("Punti", f"{'✅' if eval_data.get('punti_ok') else '❌'}")
-                            with col3:
-                                st.metric("Formule", f"{'✅' if eval_data.get('math_ok') else '❌'}")
-                            with col4:
-                                st.metric("LaTeX", f"{'✅' if eval_data.get('brackets_ok') else '❌'}")
-                        
-                        # Pulsanti azione
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            if st.button(f"🔍 Analizza", key=f"analyze_{test_file}"):
-                                st.write("📊 Analisi dettagliata in sviluppo...")
-                        with col2:
-                            if st.button(f"📊 Valuta", key=f"evaluate_{test_file}"):
-                                st.write("🔍 Valutazione automatica...")
-                        with col3:
-                            if st.button(f"🗑️ Elimina", key=f"delete_{test_file}"):
-                                os.remove(test_file)
-                                st.success("✅ Test eliminato")
-                                st.rerun()
-                
-                except Exception as e:
-                    st.error(f"Errore caricamento {test_file}: {e}")
-        else:
-            st.info("📂 Nessun test trovato. Genera nuovi test dalla sezione '🧪 Nuovo Test'.")
-            
-            # Pulsante per generare test batch
-            if st.button("🚀 Genera Test Batch (24 test)", type="secondary"):
-                with st.spinner("🔄 Generazione test batch in corso..."):
-                    try:
-                        # Genera direttamente i test reali senza usare il sistema esterno
-                        from prompts import prompt_corpo_verifica
-                        from config import CALIBRAZIONE_SCUOLA
-                        import google.generativeai as genai
-                        import json
-                        from datetime import datetime
-                        
-                        # Scenari di test reali
-                        real_scenarios = [
-                            {
-                                "name": "Matematica_Tecnico_Equazioni",
-                                "materia": "Matematica",
-                                "livello": "Istituto Tecnico Tecnologico/Industriale",
-                                "argomento": "Equazioni di secondo grado",
-                                "durata": "50 minuti",
-                                "num_esercizi": 4,
-                                "punti_totali": 80,
-                                "mostra_punteggi": True,
-                                "con_griglia": True,
-                                "e_mat": True
-                            },
-                            {
-                                "name": "Italiano_Liceo_AnalisiTesto",
-                                "materia": "Italiano",
-                                "livello": "Liceo Scientifico",
-                                "argomento": "Analisi del testo poetico",
-                                "durata": "90 minuti",
-                                "num_esercizi": 4,
-                                "punti_totali": 100,
-                                "mostra_punteggi": True,
-                                "con_griglia": True,
-                                "e_mat": False
-                            },
-                            {
-                                "name": "Fisica_Liceo_Meccanica",
-                                "materia": "Fisica",
-                                "livello": "Liceo Scientifico",
-                                "argomento": "Leggi di Newton",
-                                "durata": "60 minuti",
-                                "num_esercizi": 3,
-                                "punti_totali": 100,
-                                "mostra_punteggi": True,
-                                "con_griglia": True,
-                                "e_mat": True
-                            }
-                        ]
-                        
-                        # Crea directory se non esiste
-                        os.makedirs("real_verifications", exist_ok=True)
-                        
-                        generated_count = 0
-                        
-                        for scenario in real_scenarios:
-                            try:
-                                # Calibrazione
-                                calibrazione = CALIBRAZIONE_SCUOLA.get(scenario['livello'], "")
-                                
-                                # Parametri prompt
-                                prompt_params = {
-                                    "materia": scenario['materia'],
-                                    "argomento": scenario['argomento'],
-                                    "calibrazione": calibrazione,
-                                    "durata": scenario['durata'],
-                                    "num_esercizi": scenario['num_esercizi'],
-                                    "punti_totali": scenario['punti_totali'],
-                                    "mostra_punteggi": scenario['mostra_punteggi'],
-                                    "con_griglia": scenario.get('con_griglia', False),
-                                    "note_generali": "",
-                                    "istruzioni_esercizi": "",
-                                    "e_mat": scenario.get('e_mat', False),
-                                    "titolo_header": "",
-                                    "preambolo_fisso": "",
-                                    "mathpix_context": None
-                                }
-                                
-                                # Genera prompt
-                                prompt = prompt_corpo_verifica(**prompt_params)
-                                
-                                # Chiama API
-                                model = genai.GenerativeModel('gemini-2.5-flash-lite')
-                                response = model.generate_content(prompt)
-                                output = response.text
-                                
-                                # Salva test
-                                test_data = {
-                                    "scenario": scenario,
-                                    "prompt_used": prompt,
-                                    "output": output,
-                                    "timestamp": datetime.now().isoformat(),
-                                    "tokens": {
-                                        "prompt": len(prompt),
-                                        "completion": len(output),
-                                        "total": len(prompt) + len(output)
-                                    }
-                                }
-                                
-                                filename = f"real_verifications/{scenario['name']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-                                with open(filename, 'w', encoding='utf-8') as f:
-                                    json.dump(test_data, f, indent=2, ensure_ascii=False)
-                                
-                                generated_count += 1
-                                
-                            except Exception as e:
-                                st.warning(f"⚠️ Errore generazione {scenario['name']}: {e}")
-                                continue
-                        
-                        st.success(f"✅ Generati {generated_count} test su {len(real_scenarios)}!")
-                        st.info("📂 Test salvati in real_verifications/")
-                        st.rerun()
-                        
-                    except Exception as e:
-                        st.error(f"❌ Errore generazione batch: {e}")
-                        st.info("💡 Verifica che le API siano configurate correttamente")
+        render_storico_test_section()
+    elif page == "🚀 PromptFoo Tests":
+        # Importa e renderizza pagina PromptFoo
+        try:
+            from promptfoo_runner import render_promptfoo_page
+            render_promptfoo_page()
+        except ImportError:
+            st.error("⚠️ Modulo PromptFoo non trovato")
+            st.info("💡 Assicurati che promptfoo_runner.py sia disponibile")
     
     # Pulsante per tornare all'app principale
     if st.button("← Torna a VerificAI", type="secondary"):
         st.session_state.current_page = 'home'
         st.session_state.stage = 'INPUT'
         st.rerun()
+
+def render_new_test_section():
+    """Sezione nuovo test"""
+    st.markdown("## 🧪 Genera Nuovo Test")
     
-    # Debug info
-    st.markdown("---")
-    st.markdown("### 🔍 Debug Info")
-    st.write(f"**Session State is_admin:** {st.session_state.get('is_admin', False)}")
-    st.write(f"**Current Page:** {st.session_state.get('current_page', 'home')}")
-    st.write(f"**Stage:** {st.session_state.get('stage', 'INPUT')}")
-    st.write(f"**User Email:** {st.session_state.utente.email if st.session_state.utente else 'None'}")
-    st.write(f"**In ADMIN_EMAILS:** {st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False}")
+    with st.form("new_test_form"):
+        st.markdown("### 📋 Configurazione Test")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            materia = st.selectbox("Materia", ["Matematica", "Italiano", "Fisica"])
+            livello = st.selectbox("Livello", ["Liceo Scientifico", "Istituto Tecnico"])
+            argomento = st.text_input("Argomento", "Equazioni di secondo grado")
+        
+        with col2:
+            num_esercizi = st.number_input("Numero Esercizi", 1, 10, 4)
+            punti_totali = st.number_input("Punti Totali", 10, 200, 80, 10)
+            durata = st.text_input("Durata", "50 minuti")
+        
+        submitted = st.form_submit_button("🚀 Genera Test", type="primary")
+        
+        if submitted:
+            st.success("✅ Test configurato!")
+            st.info("📝 Usa la sezione '🚀 PromptFoo Tests' per generare test reali")
+
+def render_storico_test_section():
+    """Sezione storico test"""
+    st.markdown("## 📊 Storico Test")
+    st.info("📂 Usa la sezione '🚀 PromptFoo Tests' per vedere i risultati dei test")
 from sidebar import render_sidebar
 from generation import genera_verifica, analizza_documento_caricato, compila_contesto_generazione
 from prompts import (
