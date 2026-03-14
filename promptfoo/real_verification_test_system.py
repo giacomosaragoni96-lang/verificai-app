@@ -77,7 +77,26 @@ class RealVerificationTestSystem:
                 
                 # Usa le stesse funzioni dell'app
                 calibrazione = self._get_calibrazione(scenario['livello'])
-                prompt = prompt_corpo_verifica(**scenario, calibrazione=calibrazione)
+                
+                # Parametri completi per prompt_corpo_verifica
+                prompt_params = {
+                    "materia": scenario['materia'],
+                    "argomento": scenario['argomento'],
+                    "calibrazione": calibrazione,
+                    "durata": scenario['durata'],
+                    "num_esercizi": scenario['num_esercizi'],
+                    "punti_totali": scenario['punti_totali'],
+                    "mostra_punteggi": scenario['mostra_punteggi'],
+                    "con_griglia": scenario.get('con_griglia', False),
+                    "note_generali": "",
+                    "istruzioni_esercizi": "",
+                    "e_mat": scenario.get('e_mat', False),
+                    "titolo_header": "",
+                    "preambolo_fisso": "",
+                    "mathpix_context": None
+                }
+                
+                prompt = prompt_corpo_verifica(**prompt_params)
                 
                 # Chiama Gemini come l'app
                 options = {"config": {"model_id": "gemini-2.5-flash-lite", "temperature": 0.7}}
