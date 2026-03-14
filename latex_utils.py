@@ -1151,17 +1151,24 @@ def migliora_spaziatura_sottopunti(latex: str) -> str:
     Migliora la spaziatura tra i sottopunti degli esercizi.
     Assicura che ci sia spaziatura appropriata tra gli item.
     """
-    # Aggiungi spaziatura dopo ogni \item (tranne l'ultimo)
-    latex = re.sub(r'(\\item\[[^\]]+\][^\n]*?)\n(?=\\item)', r'\1\n\n', latex)
+    # Sostituisci direttamente pattern comuni di item attaccati
+    latex = latex.replace('\\item[a)]', '\n\\item[a)]')
+    latex = latex.replace('\\item[b)]', '\n\\item[b)]')
+    latex = latex.replace('\\item[c)]', '\n\\item[c)]')
+    latex = latex.replace('\\item[d)]', '\n\\item[d)]')
+    latex = latex.replace('\\item[e)]', '\n\\item[e)]')
+    latex = latex.replace('\\item[f)]', '\n\\item[f)]')
+    latex = latex.replace('\\item[g)]', '\n\\item[g)]')
+    latex = latex.replace('\\item[h)]', '\n\\item[h)]')
     
-    # Assicura spaziatura dopo enumerate environments
+    # Aggiungi spaziatura dopo ogni \item con label (caso critico)
+    latex = re.sub(r'(\\item\[[^\]]+\][^\n]*?)(?=\\item)', r'\1\n\n', latex)
+    
+    # Aggiungi spaziatura dopo ogni \item senza label
+    latex = re.sub(r'(\\item\s+[^\n]*?)(?=\\item)', r'\1\n\n', latex)
+    
+    # Aggiungi spaziatura dopo enumerate environments
     latex = re.sub(r'(\\end\{enumerate\})(?!\s*\n)', r'\1\n\n', latex)
-    
-    # Migliora spaziatura per item senza label esplicito
-    latex = re.sub(r'(\\item\s+[^\\]*?)\n(?=\\item)', r'\1\n\n', latex)
-    
-    # Assicura che ogni \item sia su una riga propria
-    latex = re.sub(r'(\s+)\\item\[', r'\n\\item\[', latex)
     
     # Aggiungi spaziatura prima di ogni \subsection*
     latex = re.sub(r'(?<!\n\n)\\subsection\*', r'\n\n\\subsection*', latex)
