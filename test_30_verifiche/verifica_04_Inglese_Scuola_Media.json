@@ -3,17 +3,85 @@
   "scenario": {
     "materia": "Inglese",
     "livello": "Scuola Media",
-    "argomento": "Writing",
-    "num_esercizi": 6,
+    "argomento": "Grammar",
+    "num_esercizi": 5,
     "punti_totali": 60,
     "durata": "1 ora",
-    "mostra_punteggi": false,
+    "mostra_punteggi": true,
     "con_griglia": true
   },
   "generazione": {
     "success": true,
     "output": {
-      "titolo": "Writing Skills Assessment",
+      "titolo": "Grammar Check",
       "A": {
-        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Writing Skills Assessment} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e \n\nData:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\n\\subsection*{Esercizio 1: Richiamo di Funzioni Lineari}\n\nData la funzione lineare $f(x) = 3x - 2$, calcolare il valore di $f(5)$.\n\n\\subsection*{Esercizio 2: Analisi di un'Equazione Quadratica}\n\nSi consideri l'equazione quadratica $x^2 - 5x + 6 = 0$.\n\\begin{enumerate}[a)]\n\\item Determinare le radici dell'equazione.\n\\item Calcolare la somma e il prodotto delle radici.\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Comprensione Concettuale dei Limiti}\nDefinire il concetto di limite di una funzione per $x$ che tende a un valore finito.\n\n\\subsection*{Esercizio 4: Vero o Falso}\nAffermare se la seguente proposizione è vera o falsa, giustificando brevemente la risposta.\n\"La derivata di una costante è sempre zero.\"\n$\\square$ Vero $\\quad\\square$ Falso\n\n\\subsection*{Esercizio 5: Applicazione delle Derivate}\n\nTrovare l'equazione della retta tangente alla funzione $f(x) = x^3 - 2x$ nel punto di ascissa $x=1$.\n\n\\subsection*{Esercizio 6: Scelta Multipla - Integrali Indefiniti}\nQuale delle seguenti funzioni è una primitiva della funzione $f(x) = 2x + \\cos(x)$?\n\\begin{enumerate}[a)]\n\\item $x^2 - \\sin(x) + C$\n\\item $x^2 + \\sin(x) + C$\n\\item $2x + \\sin(x) + C$\n\\item $x^2 + \\cos(x) + C$\n\\end{enumerate}\n\\end{document}",
-        "pdf": 
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Grammar Check} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Richiamo Concetti Base}\n\nSi consideri la seguente equazione: $2x - 5 = 7$.\n\\begin{enumerate}[a)]\n    \\item Determinare il valore di $x$ che soddisfa l'equazione. (6 pt)\n    \\item Spiegare in termini semplici cosa rappresenta il valore di $x$ trovato. (6 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Analisi Funzionale}\n\nData la funzione $f(x) = x^2 - 4x + 3$.\n\\begin{enumerate}[a)]\n    \\item Determinare le coordinate del vertice della parabola associata alla funzione. (6 pt)\n    \\item Calcolare le intersezioni della parabola con l'asse delle ascisse. (6 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Geometria Analitica}\n\nSi considerino i punti $A(1, 3)$ e $B(4, 7)$.\n\\begin{enumerate}[a)]\n    \\item Calcolare la distanza tra i punti $A$ e $B$. (6 pt)\n    \\item Determinare le coordinate del punto medio del segmento $AB$. (6 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Probabilità e Combinatoria}\nIn un sacchetto ci sono 5 palline rosse e 3 palline blu. Si estraggono due palline senza reimmissione.\n\\begin{enumerate}[a)]\n    \\item Calcolare la probabilità che entrambe le palline estratte siano rosse. (6 pt)\n    \\item Calcolare la probabilità che le due palline estratte abbiano colori diversi. (6 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 5: Applicazione di Teoremi}\n\nSi consideri la seguente equazione differenziale ordinaria: $\\frac{dy}{dx} = 2y$.\n\\begin{enumerate}[a)]\n    \\item Verificare che la funzione $y(x) = Ce^{2x}$, dove $C$ è una costante arbitraria, sia una soluzione generale. (6 pt)\n    \\item Determinare il valore della costante $C$ sapendo che la soluzione passa per il punto $(0, 5)$. (6 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{2}{c||}{\\textbf{1}} & \\multicolumn{2}{c||}{\\textbf{2}} & \\multicolumn{2}{c||}{\\textbf{3}} & \\multicolumn{2}{c||}{\\textbf{4}} & \\multicolumn{2}{c||}{\\textbf{5}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & a) & b) & a) & b) & a) & b) & a) & b) & \\\\ \\hline\n\\textbf{Max} & 6 & 6 & 6 & 6 & 6 & 6 & 6 & 6 & 6 & 6 & 60 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:99022>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.8
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 5,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 60,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_162345.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_162345.pdf",
+    "pdf_size": 15852,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Grammar}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:23:46.748668",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Grammar}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

@@ -256,6 +256,29 @@ def genera_verifica_reale(scenario):
         print(f"  - con_griglia: {scenario['con_griglia']}")
         print(f"  - durata: {scenario['durata']}")
         
+        # 🛠️ FIX: Genera istruzioni esercizi come fa l'app!
+        print("🔧 Generazione istruzioni esercizi...")
+        try:
+            # Importa la funzione dall'app principale
+            import sys
+            sys.path.insert(0, PROJECT_ROOT)
+            from main import _build_prompt_esercizi
+            
+            istruzioni_esercizi, immagini_esercizi = _build_prompt_esercizi(
+                esercizi_custom=[],  # Nessun esercizio custom per test
+                num_totale=scenario['num_esercizi'],
+                punti_totali=scenario['punti_totali'],
+                mostra_punteggi=scenario['mostra_punteggi']
+            )
+            print(f"✅ Istruzioni generate: {len(istruzioni_esercizi)} caratteri")
+            print(f"📄 Preview istruzioni: {istruzioni_esercizi[:200]}...")
+            
+        except Exception as e:
+            print(f"⚠️ Errore generazione istruzioni: {e}")
+            # Fallback: istruzioni minime
+            istruzioni_esercizi = f"Genera ESATTAMENTE {scenario['num_esercizi']} esercizi. Ogni esercizio è \\subsection*{{Esercizio N: Titolo}}."
+            immagini_esercizi = []
+        
         result = genera_verifica(
             model=model,
             materia=scenario['materia'],
@@ -272,11 +295,11 @@ def genera_verifica_reale(scenario):
             perc_ridotta=25,
             bes_dsa_b=False,
             genera_soluzioni=False,
-            note_generali="",
-            istruzioni_esercizi="",
+            note_generali="",  # Vuoto per test
+            istruzioni_esercizi=istruzioni_esercizi,  # 🛠️ FIX: Istruzioni proper!
+            immagini_esercizi=immagini_esercizi,
             file_ispirazione=None,
             mathpix_context=None,
-            immagini_esercizi=[]  # Parametro mancante!
         )
         
         print(f"📊 genera_verifica() completata - Tipo risultato: {type(result)}")
@@ -295,11 +318,36 @@ def genera_verifica_reale(scenario):
             elif 'A' in result and isinstance(result['A'], dict) and 'latex' in result['A']:
                 latex_output = result['A']['latex']
                 print(f" Trovato latex in A['latex']")
+                
+                # DEBUG APPROFONDITO - Analisi del contenuto
+                print(f"🔍 ANALISI DETTAGLIATA CONTENUTO:")
+                print(f"  - Lunghezza totale: {len(latex_output)} caratteri")
+                print(f"  - Contiene \\begin{{document}}: {'\\begin{document}' in latex_output}")
+                print(f"  - Contiene \\end{{document}}: {'\\end{document}' in latex_output}")
+                print(f"  - Contiene esercizi (\\subsection): {'\\subsection' in latex_output}")
+                print(f"  - Numero di \\subsection: {len(re.findall(r'\\\\subsection', latex_output))}")
+                
+                # Controlla se c'è solo l'header
+                if '\\begin{document}' in latex_output and '\\end{document}' in latex_output:
+                    # Estrai il corpo tra begin e end
+                    begin_idx = latex_output.find('\\begin{document}')
+                    end_idx = latex_output.find('\\end{document}')
+                    corpo = latex_output[begin_idx:end_idx]
+                    print(f"  - Corpo documento: {len(corpo)} caratteri")
+                    print(f"  - Corpo vuoto o solo spazi: {corpo.strip() == ''}")
+                    
+                    # Stampa il corpo per debug
+                    if corpo.strip():
+                        print(f"  - Contenuto corpo (primi 200 char):")
+                        print(f"    {corpo[:200]}")
+                    else:
+                        print(f"  - ❌ CORPO VUOTO! Solo header presente")
+                        
             elif 'B' in result and isinstance(result['B'], dict) and 'latex' in result['B']:
                 latex_output = result['B']['latex']
                 print(f" Trovato latex in B['latex']")
             else:
-                print(f" Nessun latex trovato!")
+                print(f"❌ Nessun latex trovato!")
                 # Stampa contenuto di A e B per debug
                 if 'A' in result:
                     print(f"Contenuto A: {type(result['A'])} - {list(result['A'].keys()) if isinstance(result['A'], dict) else 'Not dict'}")
@@ -307,11 +355,8 @@ def genera_verifica_reale(scenario):
                     print(f"Contenuto B: {type(result['B'])} - {list(result['B'].keys()) if isinstance(result['B'], dict) else 'Not dict'}")
             
             if latex_output:
-                print(f"LaTeX length: {len(latex_output)} caratteri")
                 print(f"LaTeX preview (primi 500 char):")
                 print(latex_output[:500])
-                print(f"LaTeX contiene esercizi: {'\\\\subsection' in latex_output}")
-                print(f"LaTeX contiene \\end{{document}}: {'\\\\end{document}' in latex_output}")
         else:
             print(f"Output raw: {str(result)[:500]}")
         
