@@ -25,8 +25,9 @@ if (Test-Path $localPromptfoo) {
     Write-Host "PromptFoo locale trovato" -ForegroundColor Green
     $promptfooCmd = $localPromptfoo
 } else {
-    Write-Host "PromptFoo non trovato, uso npx..." -ForegroundColor Yellow
-    $promptfooCmd = "C:\Program Files\nodejs\npx.cmd"
+    Write-Host "PromptFoo non trovato, installo localmente..." -ForegroundColor Yellow
+    npm install promptfoo --save
+    $promptfooCmd = $localPromptfoo
 }
 
 # Costruisci il comando
