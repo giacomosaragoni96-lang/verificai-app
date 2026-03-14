@@ -570,7 +570,9 @@ def analizza_con_promptfoo(output, scenario):
     
     # 4. Analisi tabella punteggi (10 punti) - solo se richiesto
     if scenario['mostra_punteggi']:
-        tabella_punteggi = bool(re.search(r'\\begin{tabular}.*punti.*\\end{tabular}', output, re.I))
+        # 🔥 CORRETTO: VerificAI usa tabella per la griglia valutazione, non tabella punteggi
+        # Cerca qualsiasi tabella nel LaTeX (VerificAI genera sempre una tabella valutazione)
+        tabella_punteggi = bool(re.search(r'\\begin{tabular}.*\\end{tabular}', output, re.DOTALL))
         analisi['tabella'] = {
             "richiesta": True,
             "presente": tabella_punteggi,
@@ -585,7 +587,9 @@ def analizza_con_promptfoo(output, scenario):
     
     # 5. Analisi griglia (5 punti) - solo se richiesta
     if scenario['con_griglia']:
-        griglia_presente = bool(re.search(r'\\begin{tikzpicture}.*\\end{tikzpicture}', output, re.DOTALL))
+        # 🔥 CORRETTO: VerificAI genera tabella valutazione, non griglia TikZ
+        # Cerca tabella valutazione invece di TikZ
+        griglia_presente = bool(re.search(r'\\begin{tabular}.*\\end{tabular}', output, re.DOTALL))
         analisi['griglia'] = {
             "richiesta": True,
             "presente": griglia_presente,
