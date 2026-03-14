@@ -5787,15 +5787,30 @@ def _render_stage_final():
         unsafe_allow_html=True
     )
     
-    # Pulsante avvia valutazione
-    if st.button("🎯 Avvia Valutazione Esercizi", key="btn_valutazione", 
-                 use_container_width=True, type="primary"):
-        st.session_state["valutazione_mode"] = True
-        st.rerun()
+    # Pulsante avvia valutazione (solo per admin)
+    admin_status = (st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False) or st.session_state.get('is_admin', False)
+    
+    if admin_status:
+        if st.button("🎯 Avvia Valutazione Esercizi", key="btn_valutazione", 
+                     use_container_width=True, type="primary"):
+            st.session_state["valutazione_mode"] = True
+            st.rerun()
+    else:
+        # Mostra info per non-admin
+        st.info("🔒 La valutazione degli esercizi è disponibile solo per gli amministratori.")
+        st.caption("Contatta l'amministratore di sistema per abilitare questa funzionalità.")
     
     # Modalità valutazione
     if st.session_state.get("valutazione_mode", False):
-        render_valutazione_esercizi_modal(gp, vA)
+        # Solo admin può valutare esercizi
+        admin_status = (st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False) or st.session_state.get('is_admin', False)
+        
+        if admin_status:
+            render_valutazione_esercizi_modal(gp, vA)
+        else:
+            st.error("⛔ Solo gli amministratori possono accedere alla valutazione degli esercizi.")
+            st.session_state["valutazione_mode"] = False
+            st.rerun()
     
     # ── IDEA #5 — CONDIVIDI CON IL DIPARTIMENTO ────────────────────────────────
     st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
@@ -6227,64 +6242,8 @@ if not _share_view_active:
 })();
 </script>""", height=0)
 
-# ── SCROLL TO TOP on stage change ─────────────────────────────────────────────
-_current_stage = st.session_state.stage
-_prev_stage = st.session_state.get("_prev_stage", None)
-if _prev_stage != _current_stage:
-    st.session_state["_prev_stage"] = _current_stage
-    components.html(
-        "<script>"
-        "(function(){"
-        "var tries=0,max=12;"
-        "function scrollTop(){"
-        "  var d=window.parent.document;"
-        "  var targets=["
-        "    d.querySelector('.main'),"
-        "    d.querySelector('.main .block-container'),"
-        "    d.querySelector('[data-testid=\"stAppViewContainer\"]'),"
-        "    d.querySelector('[data-testid=\"stMainBlockContainer\"]'),"
-        "    d.documentElement,"
-        "    d.body"
-        "  ];"
-        "  targets.forEach(function(t){if(t){t.scrollTop=0;}});"
-        "  window.parent.scrollTo({top:0,left:0,behavior:'instant'});"
-        "  if(tries++<max)setTimeout(scrollTop,120);"
-        "}"
-        "scrollTop();"
-        "var bc=window.parent.document.querySelector('.main .block-container');"
-        "if(bc){bc.classList.remove('stage-enter');void bc.offsetWidth;"
-        "bc.classList.add('stage-enter');"
-        "setTimeout(function(){bc.classList.remove('stage-enter');},500);}"
-        "})();"
-        "</script>",
-        height=0
-    )
-
-if not _share_view_active:
-    _current = st.session_state.stage
-    
-    # ── ADMIN PAGE ROUTING ───────────────────────────────────────────────────────
-    if st.session_state.get('current_page') == 'admin':
-        # Controlla sia is_admin classico che session_state
-        admin_status = (st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False) or st.session_state.get('is_admin', False)
-        
-        if admin_status:
-            render_admin_page()
-        else:
-            st.error("⛔ Accesso negato. Privilegi admin richiesti.")
-            st.session_state.current_page = 'home'
-            st.session_state.stage = STAGE_INPUT
-            st.rerun()
-    # ── NORMAL STAGE ROUTING ───────────────────────────────────────────────────────
-    elif   _current == STAGE_INPUT:   _render_stage_input()
-    elif _current == STAGE_PREVIEW: _render_stage_preview()
-    elif _current == STAGE_REVIEW:  _render_stage_review()
-    elif _current == STAGE_FINAL:   _render_stage_final()
-    elif _current == STAGE_MIE_VERIFICHE: _render_le_tue_verifiche()
-
-
 # ═══════════════════════════════════════════════════════════════════════════
-#  FUNZIONI VALUTAZIONE ESERCIZI
+#  FUNZIONI VALUTAZIONE ESERCIZI (definite prima del routing)
 # ═══════════════════════════════════════════════════════════════════════════
 
 def render_valutazione_esercizi_modal(gp, vA):
@@ -6984,6 +6943,62 @@ def carica_esempi_qualita(materia, argomento, livello, limit=5):
         return []
 
 # ═══════════════════════════════════════════════════════════════════════════
+
+# ── SCROLL TO TOP on stage change ─────────────────────────────────────────────
+_current_stage = st.session_state.stage
+_prev_stage = st.session_state.get("_prev_stage", None)
+if _prev_stage != _current_stage:
+    st.session_state["_prev_stage"] = _current_stage
+    components.html(
+        "<script>"
+        "(function(){"
+        "var tries=0,max=12;"
+        "function scrollTop(){"
+        "  var d=window.parent.document;"
+        "  var targets=["
+        "    d.querySelector('.main'),"
+        "    d.querySelector('.main .block-container'),"
+        "    d.querySelector('[data-testid=\"stAppViewContainer\"]'),"
+        "    d.querySelector('[data-testid=\"stMainBlockContainer\"]'),"
+        "    d.documentElement,"
+        "    d.body"
+        "  ];"
+        "  targets.forEach(function(t){if(t){t.scrollTop=0;}});"
+        "  window.parent.scrollTo({top:0,left:0,behavior:'instant'});"
+        "  if(tries++<max)setTimeout(scrollTop,120);"
+        "}"
+        "scrollTop();"
+        "var bc=window.parent.document.querySelector('.main .block-container');"
+        "if(bc){bc.classList.remove('stage-enter');void bc.offsetWidth;"
+        "bc.classList.add('stage-enter');"
+        "setTimeout(function(){bc.classList.remove('stage-enter');},500);}"
+        "})();"
+        "</script>",
+        height=0
+    )
+
+if not _share_view_active:
+    _current = st.session_state.stage
+    
+    # ── ADMIN PAGE ROUTING ───────────────────────────────────────────────────────
+    if st.session_state.get('current_page') == 'admin':
+        # Controlla sia is_admin classico che session_state
+        admin_status = (st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False) or st.session_state.get('is_admin', False)
+        
+        if admin_status:
+            render_admin_page()
+        else:
+            st.error("⛔ Accesso negato. Privilegi admin richiesti.")
+            st.session_state.current_page = 'home'
+            st.session_state.stage = STAGE_INPUT
+            st.rerun()
+    # ── NORMAL STAGE ROUTING ───────────────────────────────────────────────────────
+    elif   _current == STAGE_INPUT:   _render_stage_input()
+    elif _current == STAGE_PREVIEW: _render_stage_preview()
+    elif _current == STAGE_REVIEW:  _render_stage_review()
+    elif _current == STAGE_FINAL:   _render_stage_final()
+    elif _current == STAGE_MIE_VERIFICHE: _render_le_tue_verifiche()
+
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
 st.markdown(
