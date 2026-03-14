@@ -343,13 +343,13 @@ def analizza_con_promptfoo(output, scenario):
     return analisi
 
 def genera_pdf_verifica(output, scenario):
-    """Genera PDF della verifica"""
+    """Genera PDF della verifica con LaTeX completo"""
     
     try:
-        # Crea LaTeX completo
+        # Crea LaTeX completo con header e footer
         latex_completo = crea_latex_completo(output, scenario)
         
-        # Salva file LaTeX
+        # Salva file LaTeX completo
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         latex_file = f"test_30_verifiche/pdfs/verifica_{timestamp}.tex"
         
@@ -368,55 +368,77 @@ def genera_pdf_verifica(output, scenario):
                     "success": True,
                     "latex_file": latex_file,
                     "pdf_file": pdf_file,
-                    "pdf_size": os.path.getsize(pdf_file) if os.path.exists(pdf_file) else 0
+                    "pdf_size": os.path.getsize(pdf_file) if os.path.exists(pdf_file) else 0,
+                    "latex_content": latex_completo  # Salviamo anche il contenuto completo
                 }
             else:
                 return {
                     "success": False,
                     "error": "Compilazione LaTeX fallita",
-                    "latex_error": result.stderr
+                    "latex_error": result.stderr,
+                    "latex_content": latex_completo  # Per debug
                 }
         
         except subprocess.TimeoutExpired:
             return {
                 "success": False,
-                "error": "Timeout compilazione PDF"
+                "error": "Timeout compilazione PDF",
+                "latex_content": latex_completo
             }
         
     except Exception as e:
         return {
             "success": False,
-            "error": str(e)
+            "error": str(e),
+            "latex_content": latex_completo if 'latex_completo' in locals() else output
         }
 
 def crea_latex_completo(output, scenario):
-    """Crea documento LaTeX completo"""
+    """Crea documento LaTeX completo e valido"""
     
+    # Header completo con tutti i package necessari
     latex_header = r"""\documentclass[12pt,a4paper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[italian]{babel}
-\usepackage{amsmath,amssymb}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
 \usepackage{geometry}
-\geometry{a4paper, margin=2cm}
+\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}
 \usepackage{graphicx}
 \usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multicol}
+\usepackage{enumitem}
+\usepackage{xcolor}
 
+\pagestyle{empty}
 \begin{document}
 
-\begin{center}
+"""
+    
+    # Titolo e intestazione (senza f-string per evitare problemi)
+    titolo = r"""\begin{center}
 {\Large \textbf{""" + scenario['materia'] + r""" - """ + scenario['argomento'] + r"""}}\\[0.5cm]
-{\normalsize """ + scenario['livello'] + r""" - """ + scenario['durata'] + r"""}
+{\normalsize """ + scenario['livello'] + r""" - """ + scenario['durata'] + r"""}\\[0.5cm]
+{\small Verifica di valutazione}
 \end{center}
 
 \vspace{1cm}
 
 """
     
+    # Footer
     latex_footer = r"""
 
 \end{document}"""
     
-    return latex_header + output + latex_footer
+    # Combina tutto
+    latex_completo = latex_header + titolo + output + latex_footer
+    
+    return latex_completo
 
 def calcola_punteggio_finale(analisi, pdf_result):
     """Calcola punteggio finale VerificAI-realista da 0 a 100"""
