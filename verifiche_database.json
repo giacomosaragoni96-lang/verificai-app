@@ -2,19 +2,19 @@
   "verifiche": [
     {
       "id": "V0001",
-      "timestamp": "2026-03-14T16:03:45.092108",
+      "timestamp": "2026-03-14T16:07:27.666172",
       "scenario": {
-        "materia": "Inglese",
-        "livello": "Liceo Scientifico",
-        "argomento": "Grammar",
-        "num_esercizi": 2,
-        "punti_totali": 40,
-        "durata": "1 ora",
+        "materia": "Chimica",
+        "livello": "Scuola Media",
+        "argomento": "Soluzioni",
+        "num_esercizi": 5,
+        "punti_totali": 50,
+        "durata": "45 minuti",
         "mostra_punteggi": false,
         "con_griglia": true
       },
       "output": {
-        "titolo": "English Grammar",
+        "titolo": "Soluzioni chimiche",
         "A": {
-          "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: English Grammar} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e \n\nData:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\n\\subsection*{Esercizio 1: Studio di Funzione Lineare}\nConsidera la funzione $f(x) = 2x - 3$.\na) Determinare il dominio e il codominio di $f(x)$.\nb) Calcolare le coordinate del punto di intersezione del grafico di $f(x)$ con l'asse $y$.\nc) Verificare se il punto $P(4, 5)$ appartiene al grafico di $f(x)$.\n\n\\subsection*{Esercizio 2: Risoluzione di un Sistema Lineare}\nDeterminare i valori di $x$ e $y$ che soddisfano il seguente sistema di equazioni lineari:\n$$\n\\begin{cases}\n3x + y = 7 \\\\\nx - 2y = 0\n\\end{cases}\n$$\n\\end{document}",
+          "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Soluzioni chimiche} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e \n\nData:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\n\\subsection*{Esercizio 1: Concentrazione Molare}\nUna soluzione acquosa di cloruro di sodio (NaCl) ha una concentrazione di $0.5 \\, \\text{mol/L}$. Qual è la molarità di questa soluzione se il volume totale è di $250 \\, \\text{mL}$?\n\n\\subsection*{Esercizio 2: Percentuale in Massa}\nPer preparare una soluzione, vengono disciolti $20 \\, \\text{g}$ di soluto in $180 \\, \\text{g}$ di solvente. Qual è la percentuale in massa del soluto nella soluzione?\n\\begin{enumerate}[a)]\n    \\item $10\\%$\n    \\item $11.1\\%$\n    \\item $20\\%$\n    \\item $25\\%$\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Preparazione di Soluzioni}\n\nData una soluzione madre di acido solforico ($H_2SO_4$) con concentrazione $2.0 \\, \\text{M}$, si desidera preparare $500 \\, \\text{mL}$ di una soluzione figlia con concentrazione $0.25 \\, \\text{M}$.\n\\begin{enumerate}[a)]\n    \\item Calcolare il volume della soluzione madre necessario.\n    \\item Descrivere brevemente il procedimento di preparazione.\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Densità e Concentrazione}\nUna soluzione di etanolo in acqua ha una densità di $0.96 \\, \\text{g/mL}$ e una concentrazione molare di $8.0 \\, \\text{mol/L}$. L'etanolo ha formula $C_2H_5OH$.\n\\begin{enumerate}[a)]\n    \\item Vero o Falso: La soluzione contiene più etanolo che acqua in termini di massa.\n    \\item Calcolare la percentuale in massa di etanolo nella soluzione.\n\\end{enumerate}\n($\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F})\n\n\\subsection*{Esercizio 5: Diluizione di Soluzioni}\nSi hanno $100 \\, \\text{mL}$ di una soluzione di idrossido di sodio (NaOH) $0.1 \\, \\text{M}$. Se questa soluzione viene diluita aggiungendo $400 \\, \\text{mL}$ di acqua, quale sarà la concentrazione molare della soluzione finale?\n\\end{document}",
           "pdf": 

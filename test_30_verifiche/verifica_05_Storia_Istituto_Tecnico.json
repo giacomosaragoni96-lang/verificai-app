@@ -1,0 +1,87 @@
+{
+  "id": 5,
+  "scenario": {
+    "materia": "Storia",
+    "livello": "Istituto Tecnico",
+    "argomento": "Medioevo",
+    "num_esercizi": 3,
+    "punti_totali": 30,
+    "durata": "1 ora",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Medioevo: dalle origini alla crisi",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Medioevo: dalle origini alla crisi} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Le Crociate}\nIndica se le seguenti affermazioni riguardanti le Crociate sono Vere (V) o False (F).\n\\begin{enumerate}[a)]\n\\item La Prima Crociata fu indetta da Papa Urbano II nel 1095.\n\\begin{enumerate}[label=\\textbullet]\n\\item $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n\\end{enumerate}\n\\item Lo scopo principale delle Crociate era la liberazione del Santo Sepolcro dai Turchi Selgiuchidi.\n\\begin{enumerate}[label=\\textbullet]\n\\item $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n\\end{enumerate}\n\\item La Quarta Crociata portò alla conquista di Costantinopoli.\n\\begin{enumerate}[label=\\textbullet]\n\\item $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n\\end{enumerate}\n\\item La Reconquista in Spagna è considerata un fenomeno distinto e non collegato alle Crociate.\n\\begin{enumerate}[label=\\textbullet]\n\\item $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n\\end{enumerate}\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: La Società Feudale}\nAnalizza i seguenti elementi caratteristici della società feudale e indica la corretta definizione associata.\n\\begin{enumerate}[a)]\n\\item Vasallo:\n\\begin{enumerate}[label=\\roman*.]\n\\item Colui che riceve un beneficio (feudo) da un signore.\n\\item Colui che dona un beneficio (feudo) a un vassallo.\n\\item Un ecclesiastico che amministra un territorio.\n\\item Un artigiano specializzato in un determinato mestiere.\n\\end{enumerate}\n\\item Feudo:\n\\begin{enumerate}[label=\\roman*.]\n\\item Un giuramento di fedeltà prestato da un guerriero.\n\\item Un servizio militare dovuto da un contadino.\n\\item Un bene, solitamente terra, concesso da un signore a un vassallo.\n\\item Un documento che sancisce la pace tra due regni.\n\\end{enumerate}\n\\item Investitura:\n\\begin{enumerate}[label=\\roman*.]\n\\item La cerimonia con cui si cedeva il feudo.\n\\item L'atto di consacrazione di un vescovo.\n\\item La formalizzazione del legame feudale, con la concessione del feudo.\n\\item Il processo di coltivazione della terra.\n\\end{enumerate}\n\\item Signoria Fondiaria:\n\\begin{enumerate}[label=\\roman*.]\n\\item Il potere esercitato da un re sui suoi sudditi.\n\\item Il potere economico e giuridico del proprietario terriero sui suoi contadini.\n\\item L'insieme delle leggi di un regno.\n\\item La confederazione di città mercantili.\n\\end{enumerate}\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: L'Impero Carolingio}\nCompleta le seguenti frasi relative all'Impero Carolingio inserendo il termine corretto negli spazi vuoti.\nL'incoronazione di Carlo Magno a Imperatore, avvenuta nella notte di Natale dell'anno \\underline{}, segnò un momento cruciale per l'Europa medievale. Questo evento fu promosso da \\underline{}, che vide in Carlo Magno il difensore della fede cristiana. L'Impero Carolingio era strutturato su base \\underline{}, con la concessione di terre in cambio di servizi. La capitale dell'Impero era \\underline{}. Dopo la morte di Ludovico il Pio, l'Impero fu diviso tra i suoi figli con il \\underline{} del trattato di Verdun (843 d.C.). (30 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & \\\\ \\hline\n\\textbf{Max} & — & — & 30 & 30 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:73191>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.8
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 3,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 30,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_160726.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_160726.pdf",
+    "pdf_size": 16110,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Medioevo}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:07:27.662688",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Medioevo}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

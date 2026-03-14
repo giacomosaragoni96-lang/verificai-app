@@ -522,6 +522,8 @@ def calcola_punteggio_finale(analisi, pdf_result):
 def mostra_risultati_finali(risultati):
     """Mostra risultati finali del test completo"""
     
+    import os
+    
     st.markdown("---")
     st.markdown("## 📊 RISULTATI FINALI - 30 VERIFICHE")
     
