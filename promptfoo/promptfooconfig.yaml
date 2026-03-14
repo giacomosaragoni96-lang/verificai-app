@@ -41,6 +41,9 @@ providers:
 prompts:
   - file://prompts/verificai.txt
 
+prompts:
+  - file://prompts/verificai.txt
+
 defaultTest:
   options:
     timeout: 120000
