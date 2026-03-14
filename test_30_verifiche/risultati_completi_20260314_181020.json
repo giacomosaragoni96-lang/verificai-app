@@ -1,0 +1,97 @@
+{
+  "timestamp": "2026-03-14T18:10:20.544540",
+  "totali": 1,
+  "media_voto": 85.0,
+  "success_rate": 100.0,
+  "param_accuracy": 100.0,
+  "pdf_rate": 100.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Fisica",
+        "livello": "Liceo Classico",
+        "argomento": "Termodinamica",
+        "num_esercizi": 7,
+        "punti_totali": 60,
+        "durata": "2 ore",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Termodinamica",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Termodinamica} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Concetti Fondamentali di Termodinamica}\n\\begin{enumerate}[a)]\n    \\item Qual è la definizione di sistema termodinamico? (3 pt)\n    \\item Spiega la differenza tra grandezze estensive ed intensive, fornendo un esempio per ciascuna. (4 pt)\n    \\item Descrivi brevemente il primo principio della termodinamica in termini di energia interna, calore e lavoro. (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Trasformazioni Termodinamiche}\nConsidera un gas ideale monoatomico che subisce una trasformazione isobara. Qual è la relazione tra il calore scambiato ($Q$) e la variazione di temperatura ($\\Delta T$) in questa trasformazione? Esprimi il risultato in funzione del numero di moli ($n$) e della costante dei gas ideali ($R$). (10 pt)\n\\subsection*{Esercizio 3: Cicli Termodinamici}\nUn motore termico opera tra due sorgenti a temperature $T_1 = 600\\text{ K}$ e $T_2 = 300\\text{ K}$. Qual è l'efficienza massima teorica (efficienza di Carnot) che questo motore può raggiungere? (10 pt)\n\\subsection*{Esercizio 4: Entropia}\n\\begin{enumerate}[a)]\n    \\item Definisci il concetto di entropia in termodinamica. (4 pt)\n    \\item È vero o falso che l'entropia dell'universo è in costante diminuzione? Giustifica brevemente la risposta. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 5: Lavoro in Trasformazioni Termodinamiche}\nUn gas monoatomico compie una trasformazione isoterma a $T = 300\\text{ K}$, passando da un volume $V_1 = 10\\text{ L}$ a un volume $V_2 = 20\\text{ L}$. Calcola il lavoro compiuto dal gas durante questa trasformazione, sapendo che $n = 2\\text{ mol}$. Utilizza $R \\approx 8.314\\text{ J/(mol}\\cdot\\text{K)}$. (10 pt)\n\\subsection*{Esercizio 6: Calore Specifico}\nUna massa di $m = 0.5\\text{ kg}$ di un metallo assorbe una quantità di calore $Q = 5400\\text{ J}$ e la sua temperatura aumenta di $\\Delta T = 10^\\circ\\text{C}$. Determina il calore specifico del metallo. (10 pt)\n\\subsection*{Esercizio 7: Scelta Multipla - Processi Adiabatici}\nQuale delle seguenti affermazioni descrive meglio un processo adiabatico?\n\\begin{enumerate}[a)]\n    \\item Avviene a pressione costante.\n    \\item Avviene a temperatura costante.\n    \\item Avviene senza scambio di calore con l'ambiente esterno.\n    \\item Avviene a volume costante.\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{3}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{2}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\multicolumn{1}{c||}{\\textbf{7}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & — & — & a) & b) & — & — & — & \\\\ \\hline\n\\textbf{Max} & 3 & 4 & 5 & 10 & 10 & 4 & 4 & 10 & 10 & — & 60 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:110433>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 7,
+          "attesi": 7,
+          "corretti": true,
+          "punteggio": 30
+        },
+        "punteggi": {
+          "trovati": 60,
+          "attesi": 60,
+          "corretti": true,
+          "punteggio": 30
+        },
+        "struttura": {
+          "elementi_trovati": 6,
+          "elementi_attesi": 4,
+          "adeguata": true,
+          "punteggio": 20
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_180721.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_180721.pdf",
+        "pdf_size": 110433,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Termodinamica} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Concetti Fondamentali di Termodinamica}\n\\begin{enumerate}[a)]\n    \\item Qual è la definizione di sistema termodinamico? (3 pt)\n    \\item Spiega la differenza tra grandezze estensive ed intensive, fornendo un esempio per ciascuna. (4 pt)\n    \\item Descrivi brevemente il primo principio della termodinamica in termini di energia interna, calore e lavoro. (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Trasformazioni Termodinamiche}\nConsidera un gas ideale monoatomico che subisce una trasformazione isobara. Qual è la relazione tra il calore scambiato ($Q$) e la variazione di temperatura ($\\Delta T$) in questa trasformazione? Esprimi il risultato in funzione del numero di moli ($n$) e della costante dei gas ideali ($R$). (10 pt)\n\\subsection*{Esercizio 3: Cicli Termodinamici}\nUn motore termico opera tra due sorgenti a temperature $T_1 = 600\\text{ K}$ e $T_2 = 300\\text{ K}$. Qual è l'efficienza massima teorica (efficienza di Carnot) che questo motore può raggiungere? (10 pt)\n\\subsection*{Esercizio 4: Entropia}\n\\begin{enumerate}[a)]\n    \\item Definisci il concetto di entropia in termodinamica. (4 pt)\n    \\item È vero o falso che l'entropia dell'universo è in costante diminuzione? Giustifica brevemente la risposta. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 5: Lavoro in Trasformazioni Termodinamiche}\nUn gas monoatomico compie una trasformazione isoterma a $T = 300\\text{ K}$, passando da un volume $V_1 = 10\\text{ L}$ a un volume $V_2 = 20\\text{ L}$. Calcola il lavoro compiuto dal gas durante questa trasformazione, sapendo che $n = 2\\text{ mol}$. Utilizza $R \\approx 8.314\\text{ J/(mol}\\cdot\\text{K)}$. (10 pt)\n\\subsection*{Esercizio 6: Calore Specifico}\nUna massa di $m = 0.5\\text{ kg}$ di un metallo assorbe una quantità di calore $Q = 5400\\text{ J}$ e la sua temperatura aumenta di $\\Delta T = 10^\\circ\\text{C}$. Determina il calore specifico del metallo. (10 pt)\n\\subsection*{Esercizio 7: Scelta Multipla - Processi Adiabatici}\nQuale delle seguenti affermazioni descrive meglio un processo adiabatico?\n\\begin{enumerate}[a)]\n    \\item Avviene a pressione costante.\n    \\item Avviene a temperatura costante.\n    \\item Avviene senza scambio di calore con l'ambiente esterno.\n    \\item Avviene a volume costante.\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{3}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{2}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\multicolumn{1}{c||}{\\textbf{7}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & — & — & a) & b) & — & — & — & \\\\ \\hline\n\\textbf{Max} & 3 & 4 & 5 & 10 & 10 & 4 & 4 & 10 & 10 & — & 60 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}"
+      },
+      "punteggio_finale": 85,
+      "timestamp": "2026-03-14T18:07:23.180411",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Termodinamica} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Concetti Fondamentali di Termodinamica}\n\\begin{enumerate}[a)]\n    \\item Qual è la definizione di sistema termodinamico? (3 pt)\n    \\item Spiega la differenza tra grandezze estensive ed intensive, fornendo un esempio per ciascuna. (4 pt)\n    \\item Descrivi brevemente il primo principio della termodinamica in termini di energia interna, calore e lavoro. (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Trasformazioni Termodinamiche}\nConsidera un gas ideale monoatomico che subisce una trasformazione isobara. Qual è la relazione tra il calore scambiato ($Q$) e la variazione di temperatura ($\\Delta T$) in questa trasformazione? Esprimi il risultato in funzione del numero di moli ($n$) e della costante dei gas ideali ($R$). (10 pt)\n\\subsection*{Esercizio 3: Cicli Termodinamici}\nUn motore termico opera tra due sorgenti a temperature $T_1 = 600\\text{ K}$ e $T_2 = 300\\text{ K}$. Qual è l'efficienza massima teorica (efficienza di Carnot) che questo motore può raggiungere? (10 pt)\n\\subsection*{Esercizio 4: Entropia}\n\\begin{enumerate}[a)]\n    \\item Definisci il concetto di entropia in termodinamica. (4 pt)\n    \\item È vero o falso che l'entropia dell'universo è in costante diminuzione? Giustifica brevemente la risposta. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 5: Lavoro in Trasformazioni Termodinamiche}\nUn gas monoatomico compie una trasformazione isoterma a $T = 300\\text{ K}$, passando da un volume $V_1 = 10\\text{ L}$ a un volume $V_2 = 20\\text{ L}$. Calcola il lavoro compiuto dal gas durante questa trasformazione, sapendo che $n = 2\\text{ mol}$. Utilizza $R \\approx 8.314\\text{ J/(mol}\\cdot\\text{K)}$. (10 pt)\n\\subsection*{Esercizio 6: Calore Specifico}\nUna massa di $m = 0.5\\text{ kg}$ di un metallo assorbe una quantità di calore $Q = 5400\\text{ J}$ e la sua temperatura aumenta di $\\Delta T = 10^\\circ\\text{C}$. Determina il calore specifico del metallo. (10 pt)\n\\subsection*{Esercizio 7: Scelta Multipla - Processi Adiabatici}\nQuale delle seguenti affermazioni descrive meglio un processo adiabatico?\n\\begin{enumerate}[a)]\n    \\item Avviene a pressione costante.\n    \\item Avviene a temperatura costante.\n    \\item Avviene senza scambio di calore con l'ambiente esterno.\n    \\item Avviene a volume costante.\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{3}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{2}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\multicolumn{1}{c||}{\\textbf{7}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & — & — & a) & b) & — & — & — & \\\\ \\hline\n\\textbf{Max} & 3 & 4 & 5 & 10 & 10 & 4 & 4 & 10 & 10 & — & 60 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}"
+    }
+  ]
+}
