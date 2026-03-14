@@ -53,74 +53,102 @@ def render_test_completo_30():
 def run_test_completo_30_verifiche():
     """Esegue il test completo con 30 verifiche"""
     
-    with st.spinner("🔄 Inizializzazione test completo..."):
-        # Crea directory
-        os.makedirs("test_30_verifiche", exist_ok=True)
-        os.makedirs("test_30_verifiche/pdfs", exist_ok=True)
+    # Inizializza stato del test
+    if 'test_30_results' not in st.session_state:
+        st.session_state.test_30_results = None
+    if 'test_30_running' not in st.session_state:
+        st.session_state.test_30_running = False
+    
+    # Se ci sono già risultati, li mostra
+    if st.session_state.test_30_results:
+        mostra_risultati_finali(st.session_state.test_30_results)
         
-        # Configurazione scenari random
-        scenari_random = genera_scenari_random(30)
-        
-        # Progress tracking
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        
-        risultati = []
-        
-        for i, scenario in enumerate(scenari_random):
-            # Aggiorna progress
-            progress = (i + 1) / 30
-            progress_bar.progress(progress)
-            status_text.text(f"🔄 Generazione verifica {i+1}/30: {scenario['materia']} - {scenario['argomento']}")
+        # Pulsante per nuovo test
+        if st.button("🔄 LANCIA NUOVO TEST - 30 VERIFICHE", type="secondary", use_container_width=True):
+            st.session_state.test_30_results = None
+            st.session_state.test_30_running = True
+            st.rerun()
+        return
+    
+    # Se il test è in esecuzione, mostra progress
+    if st.session_state.test_30_running:
+        with st.spinner("🔄 Inizializzazione test completo..."):
+            # Crea directory
+            os.makedirs("test_30_verifiche", exist_ok=True)
+            os.makedirs("test_30_verifiche/pdfs", exist_ok=True)
             
-            try:
-                # 1. Genera verifica con l'app
-                result = genera_verifica_reale(scenario)
+            # Configurazione scenari random
+            scenari_random = genera_scenari_random(30)
+            
+            # Progress tracking
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            risultati = []
+            
+            for i, scenario in enumerate(scenari_random):
+                # Aggiorna progress
+                progress = (i + 1) / 30
+                progress_bar.progress(progress)
+                status_text.text(f"🔄 Generazione verifica {i+1}/30: {scenario['materia']} - {scenario['argomento']}")
                 
-                if result['success']:
-                    # 2. Analizza con PromptFoo
-                    analisi = analizza_con_promptfoo(result['output'], scenario)
+                try:
+                    # 1. Genera verifica con l'app
+                    result = genera_verifica_reale(scenario)
                     
-                    # 3. Genera PDF
-                    pdf_result = genera_pdf_verifica(result['output'], scenario)
-                    
-                    # 4. Calcola punteggio finale
-                    punteggio_finale = calcola_punteggio_finale(analisi, pdf_result)
-                    
-                    # Salva risultato
-                    risultato_completo = {
-                        "id": i + 1,
-                        "scenario": scenario,
-                        "generazione": result,
-                        "analisi": analisi,
-                        "pdf": pdf_result,
-                        "punteggio_finale": punteggio_finale,
-                        "timestamp": datetime.now().isoformat()
-                    }
-                    
-                    risultati.append(risultato_completo)
-                    
-                    # Salva singola verifica
-                    filename = f"test_30_verifiche/verifica_{i+1:02d}_{scenario['materia']}_{scenario['livello'].replace(' ', '_')}.json"
-                    with open(filename, 'w', encoding='utf-8') as f:
-                        json.dump(risultato_completo, f, indent=2, ensure_ascii=False)
+                    if result['success']:
+                        # 2. Analizza con PromptFoo
+                        analisi = analizza_con_promptfoo(result['output'], scenario)
+                        
+                        # 3. Genera PDF
+                        pdf_result = genera_pdf_verifica(result['output'], scenario)
+                        
+                        # 4. Calcola punteggio finale
+                        punteggio_finale = calcola_punteggio_finale(analisi, pdf_result)
+                        
+                        # Salva risultato
+                        risultato_completo = {
+                            "id": i + 1,
+                            "scenario": scenario,
+                            "generazione": result,
+                            "analisi": analisi,
+                            "pdf": pdf_result,
+                            "punteggio_finale": punteggio_finale,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        
+                        risultati.append(risultato_completo)
+                        
+                        # Salva singola verifica
+                        filename = f"test_30_verifiche/verifica_{i+1:02d}_{scenario['materia']}_{scenario['livello'].replace(' ', '_')}.json"
+                        with open(filename, 'w', encoding='utf-8') as f:
+                            json.dump(risultato_completo, f, indent=2, ensure_ascii=False)
                 
-            except Exception as e:
-                st.warning(f"⚠️ Errore verifica {i+1}: {e}")
-                continue
-        
-        # Completa progress
-        progress_bar.progress(1.0)
-        status_text.text("✅ Test completato!")
-        
-        # Mostra risultati finali
-        mostra_risultati_finali(risultati)
-        
-        # Integra nel database
-        with st.spinner("🔄 Salvataggio nel database..."):
-            from verifiche_database import integra_database_in_test
-            aggiunte = integra_database_in_test(risultati)
-            st.success(f"✅ {aggiunte} verifiche aggiunte al database!")
+                except Exception as e:
+                    st.warning(f"⚠️ Errore verifica {i+1}: {e}")
+                    continue
+            
+            # Completa progress
+            progress_bar.progress(1.0)
+            status_text.text("✅ Test completato!")
+            
+            # Salva risultati in session state
+            st.session_state.test_30_results = risultati
+            st.session_state.test_30_running = False
+            
+            # Integra nel database
+            with st.spinner("🔄 Salvataggio nel database..."):
+                from verifiche_database import integra_database_in_test
+                aggiunte = integra_database_in_test(risultati)
+                st.success(f"✅ {aggiunte} verifiche aggiunte al database!")
+            
+            # Ricarica per mostrare risultati
+            st.rerun()
+    
+    # Inizia il test
+    if st.button("🚀 LANCIA TEST COMPLETO - 30 VERIFICHE", type="primary", use_container_width=True):
+        st.session_state.test_30_running = True
+        st.rerun()
 
 def genera_scenari_random(n):
     """Genera n scenari random realistici per VerificAI"""
