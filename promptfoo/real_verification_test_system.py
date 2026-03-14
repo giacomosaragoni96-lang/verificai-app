@@ -39,6 +39,7 @@ class RealVerificationTestSystem:
                 "materia": "Matematica",
                 "livello": "Istituto Tecnico Tecnologico/Industriale",
                 "argomento": "Equazioni di secondo grado",
+                "durata": "50 minuti",
                 "num_esercizi": 4,
                 "punti_totali": 80,
                 "mostra_punteggi": True,
@@ -50,19 +51,23 @@ class RealVerificationTestSystem:
                 "materia": "Italiano", 
                 "livello": "Liceo Scientifico",
                 "argomento": "Analisi del testo poetico",
+                "durata": "90 minuti",
                 "num_esercizi": 4,
                 "punti_totali": 100,
                 "mostra_punteggi": True,
-                "con_griglia": True
+                "con_griglia": True,
+                "e_mat": False
             },
             {
                 "name": "Fisica_Liceo_Meccanica",
                 "materia": "Fisica",
                 "livello": "Liceo Scientifico", 
                 "argomento": "Leggi di Newton",
+                "durata": "60 minuti",
                 "num_esercizi": 3,
                 "punti_totali": 100,
                 "mostra_punteggi": True,
+                "con_griglia": True,
                 "e_mat": True
             }
         ]
