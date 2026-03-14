@@ -247,7 +247,8 @@ def genera_verifica_reale(scenario):
             note_generali="",
             istruzioni_esercizi="",
             file_ispirazione=None,
-            mathpix_context=None
+            mathpix_context=None,
+            immagini_esercizi=[]  # Parametro mancante!
         )
         
         print(f"✅ Generazione completata. Lunghezza output: {len(result)}")
