@@ -41,7 +41,7 @@ def render_test_completo_30():
         mostra_risultati_finali(st.session_state.test_30_results)
         
         # Pulsante per nuovo test
-        if st.button("🔄 LANCIA NUOVO TEST - 30 VERIFICHE", type="secondary", use_container_width=True, key="new_test_30"):
+        if st.button("🔄 LANCIA NUOVO TEST - 5 VERIFICHE", type="secondary", use_container_width=True, key="new_test_5"):
             st.session_state.test_30_results = None
             st.session_state.test_30_running = True
             st.rerun()
@@ -60,7 +60,7 @@ def render_test_completo_30():
             os.makedirs("test_30_verifiche/pdfs", exist_ok=True)
             
             # Configurazione scenari random
-            scenari_random = genera_scenari_random(30)
+            scenari_random = genera_scenari_random(5)  # RIDOTTO DA 30 A 5 PER TEST VELOCI
             
             # Progress tracking
             progress_bar = st.progress(0)
@@ -70,13 +70,13 @@ def render_test_completo_30():
             
             for i, scenario in enumerate(scenari_random):
                 # Aggiorna progress
-                progress = (i + 1) / 30
+                progress = (i + 1) / 5  # AGGIORNATO A 5 VERIFICHE
                 progress_bar.progress(progress)
-                status_text.text(f"🔄 Generazione verifica {i+1}/30: {scenario['materia']} - {scenario['argomento']}")
+                status_text.text(f"🔄 Generazione verifica {i+1}/5: {scenario['materia']} - {scenario['argomento']}")
                 
                 try:
                     # 1. Genera verifica con l'app
-                    print(f"🔄 Inizio generazione verifica {i+1}/30")
+                    print(f"🔄 Inizio generazione verifica {i+1}/5")
                     result = genera_verifica_reale(scenario)
                     
                     print(f"📊 Risultato generazione: {result['success']}")
@@ -157,7 +157,7 @@ def render_test_completo_30():
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("🚀 LANCIA TEST COMPLETO - 30 VERIFICHE", type="primary", use_container_width=True, key="start_test_30"):
+        if st.button("🚀 LANCIA TEST COMPLETO - 5 VERIFICHE", type="primary", use_container_width=True, key="start_test_5"):
             st.session_state.test_30_running = True
             st.rerun()
     
