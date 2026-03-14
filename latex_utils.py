@@ -1785,33 +1785,20 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     
     logger = logging.getLogger(__name__)
     
+    # 🔥 DEBUG: Stampa il LaTeX completo che viene compilato
+    print(f"🔥 DEBUG compila_pdf: LaTeX da compilare ({len(codice_latex)} caratteri)")
+    print(f"📄 Prime 300 caratteri del LaTeX: {codice_latex[:300]}")
+    print(f"📄 Ultimi 300 caratteri del LaTeX: {codice_latex[-300:]}")
+    print(f"🔍 Contiene \\begin{{document}}: {codice_latex.count('\\begin{document}')} volte")
+    print(f"🔍 Contiene \\end{{document}}: {codice_latex.count('\\end{document}')} volte")
+    print(f"🔍 Contiene \\documentclass: {codice_latex.count('\\documentclass')} volte")
+    
     # Verifica che pdflatex sia disponibile
     try:
-        result = subprocess.run(["pdflatex", "--version"], capture_output=True, text=True, timeout=5)
-        if result.returncode != 0:
-            logger.error("✗ pdflatex non disponibile")
-            return None, "⚠️ LaTeX non è disponibile in questo ambiente."
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        logger.error("✗ pdflatex non trovato")
-        return None, "⚠️ LaTeX non è installato in questo ambiente."
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tex_path = os.path.join(tmpdir, "v.tex")
+            pdf_path = os.path.join(tmpdir, "v.pdf")
 
-    logger.info(f"=== INIZIO COMPILAZIONE PDF ===")
-    logger.info(f"Dimensione codice LaTeX: {len(codice_latex)} caratteri")
-    
-    # Applica fix pre-compilazione: rimuovi spoiler TikZ, poi fix label math
-    logger.info("Applicazione fix pre-compilazione...")
-    codice_latex = clean_tikz_spoilers(codice_latex)
-    logger.info("✓ clean_tikz_spoilers applicato")
-    codice_latex = fix_tikz_labels(codice_latex)
-    logger.info("✓ fix_tikz_labels applicato")
-    codice_latex = fix_table_width(codice_latex)
-    logger.info("✓ fix_table_width applicato")
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tex_path = os.path.join(tmpdir, "v.tex")
-        pdf_path = os.path.join(tmpdir, "v.pdf")
-
-        try:
             logger.info(f"Scrittura file LaTeX in: {tex_path}")
             with open(tex_path, "w", encoding="utf-8") as f:
                 f.write(codice_latex)
@@ -1862,34 +1849,22 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                 logger.error(f"✗ Ultime linee stdout: {stdout_lines}")
                 logger.error(f"✗ Ultime linee stderr: {stderr_lines}")
                 
-                # Analisi dell'errore per capire il tipo di problema
-                error_output = result.stderr + result.stdout
-                if "Undefined control sequence" in error_output:
-                    logger.error("✗ Errore: comando LaTeX non definito")
-                elif "Missing $ inserted" in error_output:
-                    logger.error("✗ Errore: matematica LaTeX non bilanciata")
-                elif "Package tikz Error" in error_output:
-                    logger.error("✗ Errore specifico TikZ")
-                elif "Emergency stop" in error_output:
+                # Controlla errori comuni
+                if "Emergency stop" in result.stdout:
                     logger.error("✗ Errore grave: Emergency stop")
+                elif "Fatal error" in result.stdout:
+                    logger.error("✗ Errore fatale LaTeX")
                 
                 return None, f"Errore durante la compilazione LaTeX: {result.stderr}"
             else:
-                logger.error("✗ File PDF non generato senza errori evidenti")
-                return None, "File PDF non generato dopo la compilazione"
-                # Controlla se ci sono file di log per capire l'errore
-                if os.path.exists(log_path):
-                    with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
-                        log_content = f.read()
-                        logger.error(f"✗ Contenuto log file (ultime 20 linee): {log_content.split('\\n')[-20:]}")
-                return None, "File PDF non generato durante la compilazione"
+                return None, "PDF non generato per motivi sconosciuti"
 
-        except subprocess.TimeoutExpired:
-            logger.error("✗ Timeout compilazione LaTeX (30 secondi)")
-            return None, "Timeout durante la compilazione LaTeX. Prova a semplificare la verifica."
-        except Exception as e:
-            logger.error(f"✗ Errore imprevisto: {e}")
-            return None, f"Errore imprevisto durante la compilazione: {e}"
+    except subprocess.TimeoutExpired:
+        return None, "Timeout durante la compilazione LaTeX"
+    except FileNotFoundError:
+        return None, "pdflatex non trovato. Assicurati che MiKTeX sia installato"
+    except Exception as e:
+        return None, f"Errore imprevisto durante la compilazione: {str(e)}"
 
 
 def pdf_to_images_bytes(pdf_bytes: bytes) -> tuple[list[bytes] | None, str | None]:

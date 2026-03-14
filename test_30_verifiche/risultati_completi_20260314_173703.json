@@ -1,0 +1,97 @@
+{
+  "timestamp": "2026-03-14T17:37:03.583787",
+  "totali": 1,
+  "media_voto": 15.0,
+  "success_rate": 0.0,
+  "param_accuracy": 0.0,
+  "pdf_rate": 100.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Italiano",
+        "livello": "Istituto Tecnico",
+        "argomento": "Testo argomentativo",
+        "num_esercizi": 4,
+        "punti_totali": 150,
+        "durata": "1 ora",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Testo argomentativo",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Italiano: Testo argomentativo} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Definizione di Testo Argomentativo}\na) Descrivere brevemente lo scopo principale di un testo argomentativo. (13 pt)\n\nb) Elencare almeno tre elementi fondamentali che caratterizzano un testo argomentativo. (13 pt)\n\nc) Spiegare la differenza tra una tesi e un'antitesi in un testo argomentativo. (13 pt)\n\n\\subsection*{Esercizio 2: Analisi Strutturale}\n\nSi consideri il seguente brano:\n\"L'uso eccessivo dei social media da parte degli adolescenti è un tema sempre più dibattuto. Da un lato, essi offrono opportunità di connessione sociale e accesso a informazioni. Dall'altro, possono portare a isolamento, dipendenza e problemi di autostima a causa del confronto costante. È fondamentale trovare un equilibrio sano.\"\na) Identificare la tesi principale sostenuta nel brano. (12 pt)\n\nb) Individuare gli argomenti a favore (prove o esempi che supportano la tesi o una sua parte). (13 pt)\n\nc) Individuare l'antitesi o gli argomenti contrari presentati nel brano. (12 pt)\n\n\\subsection*{Esercizio 3: Costruzione di un Argomento}\nDi fronte all'affermazione: \"Lo studio delle materie umanistiche è meno importante dello studio delle materie scientifiche nella formazione dei giovani.\", sviluppare un breve paragrafo argomentativo che esprima una chiara posizione contraria a tale affermazione, supportandola con almeno due argomenti pertinenti. (37 pt)\n\\subsection*{Esercizio 4: Valutazione dell'Efficacia Argomentativa}\nSi valuti la seguente argomentazione:\n\"È necessario ridurre drasticamente il consumo di plastica monouso perché inquina il mare e danneggia la fauna marina. I cittadini dovrebbero usare borse riutilizzabili e contenitori biodegradabili. Molti paesi hanno già vietato certi prodotti, dimostrando che è possibile.\"\na) Indicare quale tipo di argomento viene utilizzato prevalentemente per sostenere la tesi. (12 pt)\n\nb) Spiegare perché l'argomento individuato è (o non è) efficace per convincere il lettore. (13 pt)\n\nc) Proporre un'ulteriore tipologia di argomento che si potrebbe aggiungere per rafforzare ulteriormente la tesi. (12 pt)\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 13 & 12 & 37 & 12 & 74 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:61413>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.4
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 4,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 150,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_173657.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_173657.pdf",
+        "pdf_size": 17113,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Testo argomentativo}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T17:36:58.822316",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Testo argomentativo}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    }
+  ]
+}
