@@ -1740,7 +1740,6 @@ def _render_le_tue_verifiche():
             " onmouseover="this.style.boxShadow='0 12px 35px rgba(0, 0, 0, 0.12)'; this.style.borderColor='#d1d5db'; this.style.transform='translateY(-2px)';" 
                onmouseout="this.style.boxShadow='0 8px 25px rgba(0, 0, 0, 0.08)'; this.style.borderColor='#e5e7eb'; this.style.transform='translateY(0)';">
                 
-                <!-- Header della verifica -->
                 <div style="
                     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
                     border-bottom: 2px solid #e5e7eb;
@@ -1770,10 +1769,8 @@ def _render_le_tue_verifiche():
                     </div>
                 </div>
                 
-                <!-- Body con azioni organizzate -->
                 <div style="padding: 2rem;">
                     
-                    <!-- Sezione Anteprima -->
                     <div style="margin-bottom: 2rem;">
                         <div style="font-size: 1.2rem; font-weight: 700; color: #374151; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             👁️ Anteprima
@@ -1826,7 +1823,6 @@ def _render_le_tue_verifiche():
             st.markdown(f'''
                     </div>
                     
-                    <!-- Sezione Download -->
                     <div style="margin-bottom: 2rem;">
                         <div style="font-size: 1.2rem; font-weight: 700; color: #374151; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             📄 Download
@@ -1865,8 +1861,7 @@ def _render_le_tue_verifiche():
             st.markdown(f'''
                     </div>
                     
-                    <!-- Sezione Azioni -->
-                    <div style="margin-bottom: 1rem;">
+                                        <div style="margin-bottom: 1rem;">
                         <div style="font-size: 1.2rem; font-weight: 700; color: #374151; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             ⚙️ Azioni Rapide
                         </div>
@@ -2018,8 +2013,7 @@ def _render_le_tue_verifiche():
                     </div>
                 </div>
                 
-                <!-- Footer -->
-                <div style="
+                                <div style="
                     background: #f8fafc;
                     border-top: 2px solid #e5e7eb;
                     padding: 1.5rem 2rem;
@@ -2166,8 +2160,7 @@ def _render_le_tue_verifiche():
             " onmouseover="this.style.boxShadow='0 8px 24px rgba(0, 0, 0, 0.12)'; this.style.borderColor='#d1d5db';" 
                onmouseout="this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.08)'; this.style.borderColor='#e5e7eb';">
                 
-                <!-- Header della verifica -->
-                <div style="
+                                <div style="
                     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
                     border-bottom: 1px solid #e5e7eb;
                     padding: 1.5rem;
@@ -2195,8 +2188,7 @@ def _render_le_tue_verifiche():
                     </div>
                 </div>
                 
-                <!-- Body con azioni -->
-                <div style="padding: 1.5rem;">
+                                <div style="padding: 1.5rem;">
             ''', unsafe_allow_html=True)
             
             # Pulsante anteprima
@@ -2245,8 +2237,7 @@ def _render_le_tue_verifiche():
             st.markdown(f'''
                     </div>
                     
-                    <!-- Sezione Download -->
-                    <div style="margin-bottom: 1.5rem;">
+                                        <div style="margin-bottom: 1.5rem;">
                         <div style="font-size: 1.1rem; font-weight: 600; color: #374151; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             📄 Download
                         </div>
@@ -2284,8 +2275,7 @@ def _render_le_tue_verifiche():
             st.markdown(f'''
                     </div>
                     
-                    <!-- Sezione Azioni -->
-                    <div style="margin-bottom: 1rem;">
+                                        <div style="margin-bottom: 1rem;">
                         <div style="font-size: 1.2rem; font-weight: 700; color: #374151; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             ⚙️ Azioni Rapide
                         </div>
@@ -2437,8 +2427,7 @@ def _render_le_tue_verifiche():
                     </div>
                 </div>
                 
-                <!-- Footer -->
-                <div style="
+                                <div style="
                     background: #f8fafc;
                     border-top: 2px solid #e5e7eb;
                     padding: 1.5rem 2rem;
