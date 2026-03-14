@@ -21,8 +21,6 @@ import google.generativeai as genai
 def render_admin_page():
     """Pannello admin integrato direttamente in main.py"""
     
-    st.set_page_config(page_title="Admin - VerificAI", layout="wide")
-    
     # Header
     st.markdown("""
     <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
@@ -100,10 +98,6 @@ Test Configuration:
         st.rerun()
 from sidebar import render_sidebar
 from generation import genera_verifica, analizza_documento_caricato, compila_contesto_generazione
-# Import per pannello admin
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
     prompt_modifica, prompt_qa_verifica,
