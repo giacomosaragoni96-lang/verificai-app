@@ -451,7 +451,17 @@ def genera_verifica_reale(scenario):
                 print(f"  - Contiene \\begin{{document}}: {'\\begin{document}' in latex_output}")
                 print(f"  - Contiene \\end{{document}}: {'\\end{document}' in latex_output}")
                 print(f"  - Contiene esercizi (\\subsection): {'\\subsection' in latex_output}")
-                print(f"  - Numero di \\subsection: {len(re.findall(r'\\\\subsection', latex_output))}")
+                print(f"  - Numero di \\subsection: {len(re.findall(r'\\\\subsection\\*', latex_output))}")
+                print(f"  - Numero di \\subsection* (alternativo): {len(re.findall(r'\\\\subsection\\*', latex_output))}")
+                
+                # Stampa tutti i \subsection* trovati per debug
+                subsection_matches = re.findall(r'\\\\subsection\\*{[^}]*}', latex_output)
+                if subsection_matches:
+                    print(f"  - 📋 Esercizi trovati: {len(subsection_matches)}")
+                    for i, match in enumerate(subsection_matches, 1):
+                        print(f"    {i}. {match}")
+                else:
+                    print(f"  - ❌ NESSUN \\subsection* TROVATO!")
                 
                 # Controlla se c'è solo l'header
                 if '\\begin{document}' in latex_output and '\\end{document}' in latex_output:
