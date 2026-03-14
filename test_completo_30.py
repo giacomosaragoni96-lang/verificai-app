@@ -109,13 +109,30 @@ def render_test_completo_30():
                                     print(f"🔍 DEBUG chiave '{key}': {len(value)} caratteri, contiene \\subsection*: {value.count('\\subsection*')} volte")
                                     if value.count('\\subsection*') > 0:
                                         print(f"📄 Prime 200 della chiave '{key}': {value[:200]}")
+                                elif isinstance(value, dict):
+                                    print(f"🔍 DEBUG chiave '{key}' è un dict con sottochiavi: {list(value.keys()) if hasattr(value, 'keys') else 'No keys'}")
+                                    # Controlla le sottochiavi del dict
+                                    for subkey, subvalue in value.items():
+                                        if isinstance(subvalue, str) and len(subvalue) > 100:
+                                            print(f"🔍 DEBUG sottochiave '{key}.{subkey}': {len(subvalue)} caratteri, contiene \\subsection*: {subvalue.count('\\subsection*')} volte")
+                                            if subvalue.count('\\subsection*') > 0:
+                                                print(f"📄 Prime 200 della sottochiave '{key}.{subkey}': {subvalue[:200]}")
                         
                         latex_content = result['output'].get('latex', '') if isinstance(result['output'], dict) else str(result['output'])
                         
                         # 🔥 Se latex è vuoto, prova la chiave 'A'
                         if not latex_content and isinstance(result['output'], dict) and 'A' in result['output']:
-                            latex_content = result['output']['A']
-                            print(f"🔥 DEBUG: Usato result['output']['A'] come LaTeX")
+                            A_value = result['output']['A']
+                            if isinstance(A_value, dict):
+                                # Cerca nelle sottochiavi di 'A'
+                                for subkey, subvalue in A_value.items():
+                                    if isinstance(subvalue, str) and subvalue.count('\\subsection*') > 0:
+                                        latex_content = subvalue
+                                        print(f"🔥 DEBUG: Usato result['output']['A']['{subkey}'] come LaTeX")
+                                        break
+                            else:
+                                latex_content = A_value
+                                print(f"🔥 DEBUG: Usato result['output']['A'] come LaTeX")
                         
                         # 🔥 DEBUG: Controlla latex_content
                         print(f"🔥 DEBUG latex_content estratto: {len(latex_content)} caratteri")
