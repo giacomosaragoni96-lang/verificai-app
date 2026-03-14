@@ -385,9 +385,15 @@ def genera_verifica_reale(scenario):
         latex_completo = result['A']['latex']
         print(f"📄 LaTeX completo estratto: {len(latex_completo)} caratteri")
         
+        # 🛠️ DEBUG: Vediamo la struttura completa del LaTeX
+        print(f"\n🔍 === STRUTTURA COMPLETA LaTeX ===")
+        lines = latex_completo.split('\n')
+        for i, line in enumerate(lines[:20], 1):  # Prime 20 righe
+            print(f"{i:2d}: {line}")
+        
         # Conteggio diretto dei \subsection*
         subsection_trovati = re.findall(r'\\subsection\*', latex_completo)
-        print(f"✅ \subsection* trovati: {len(subsection_trovati)}")
+        print(f"\n✅ \subsection* trovati: {len(subsection_trovati)}")
         
         if subsection_trovati:
             print(f"📋 ELENCO ESERCIZI TROVATI:")
@@ -402,13 +408,32 @@ def genera_verifica_reale(scenario):
             print(f"❌ NESSUN ESERCIZIO TROVATO!")
             print(f"📄 Prime 500 caratteri del LaTeX:")
             print(latex_completo[:500])
+            
+            # Cerchiamo dove dovrebbero essere gli esercizi
+            if '\\begin{center}' in latex_completo and '\\end{center}' in latex_completo:
+                begin_center = latex_completo.find('\\begin{center}')
+                end_center = latex_completo.find('\\end{center}')
+                end_doc = latex_completo.find('\\end{document}')
+                
+                print(f"\n🔍 === ANALISI SEZIONE ESERCIZI ===")
+                print(f"Inizio \\begin{{center}}: {begin_center}")
+                print(f"Fine \\end{{center}}: {end_center}")
+                print(f"Fine \\end{{document}}: {end_doc}")
+                
+                # Estraiamo cosa c'è tra \end{center} e \end{document}
+                corpo_esercizi = latex_completo[end_center + len('\\end{center}'):end_doc]
+                print(f"\n📄 CONTENUTO TRA \\end{{center}} E \\end{{document}}:")
+                print(f"--- INIZIO ---")
+                print(corpo_esercizi)
+                print(f"--- FINE ---")
         
         # Verifica finale
         if len(subsection_trovati) > 0:
-            print(f"🎉 SUCCESSO! La verifica contiene {len(subsection_trovati)} esercizi!")
+            print(f"\n🎉 SUCCESSO! La verifica contiene {len(subsection_trovati)} esercizi!")
             print(f"✅ Il problema era solo nel nostro conteggio, non nella generazione!")
         else:
-            print(f"❌ PROBLEMA REALE: La verifica è davvero vuota!")
+            print(f"\n❌ PROBLEMA REALE: La verifica è davvero vuota!")
+            print(f"🔍 Gli esercizi vengono persi durante l'assemblaggio LaTeX!")
         
         print(f" Generazione completata. Lunghezza output: {len(result)}")
         
