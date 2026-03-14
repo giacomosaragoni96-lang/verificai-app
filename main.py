@@ -96,6 +96,15 @@ Test Configuration:
         st.session_state.current_page = 'home'
         st.session_state.stage = 'INPUT'
         st.rerun()
+    
+    # Debug info
+    st.markdown("---")
+    st.markdown("### 🔍 Debug Info")
+    st.write(f"**Session State is_admin:** {st.session_state.get('is_admin', False)}")
+    st.write(f"**Current Page:** {st.session_state.get('current_page', 'home')}")
+    st.write(f"**Stage:** {st.session_state.get('stage', 'INPUT')}")
+    st.write(f"**User Email:** {st.session_state.utente.email if st.session_state.utente else 'None'}")
+    st.write(f"**In ADMIN_EMAILS:** {st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False}")
 from sidebar import render_sidebar
 from generation import genera_verifica, analizza_documento_caricato, compila_contesto_generazione
 from prompts import (
@@ -672,7 +681,8 @@ _MATHPIX_OK = (
 
 # ── CONTATORI ─────────────────────────────────────────────────────────────────
 _verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
-_is_admin       = st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False
+# Usa sia ADMIN_EMAILS che session_state.is_admin per flessibilità
+_is_admin = (st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False) or st.session_state.get('is_admin', False)
 _limite         = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
 
 # ── CSS + FEEDBACK ────────────────────────────────────────────
