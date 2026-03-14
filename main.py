@@ -19,91 +19,32 @@ import google.generativeai as genai
 
 # Import per pannello admin - versione integrata
 def render_admin_page():
-    """Pannello admin integrato direttamente in main.py"""
+    """Pagina dedicata solo per test PromptFoo"""
     
-    st.set_page_config(page_title="Admin - VerificAI", layout="wide")
+    st.set_page_config(page_title="PromptFoo Tests - VerificAI", layout="wide")
     
     # Header
     st.markdown("""
     <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                 padding: 2rem; border-radius: 10px; margin-bottom: 2rem;'>
-        <h1 style='color: white; margin: 0;'>🔧 Pannello Admin VerificAI</h1>
-        <p style='color: white; margin: 0.5rem 0 0 0;'>Test Suite Management</p>
+        <h1 style='color: white; margin: 0;'>🧪 Test Suite PromptFoo</h1>
+        <p style='color: white; margin: 0.5rem 0 0 0;'>Lancia e analizza test PromptFoo con output chiari e ben organizzati</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Navigazione
-    with st.sidebar:
-        st.markdown("### 📋 Navigazione")
-        page = st.selectbox(
-            "Seleziona sezione:",
-            ["🎯 Dashboard", "🧪 Nuovo Test", "📊 Storico Test", "🚀 PromptFoo Tests"]
-        )
-    
-    if page == "🎯 Dashboard":
-        st.markdown("## 🎯 Dashboard Test Suite")
-        
-        # Metriche
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("📝 Test Totali", "0")
-        with col2:
-            st.metric("📊 Risultati", "0")
-        with col3:
-            st.metric("📈 Success Rate", "N/A")
-        with col4:
-            st.metric("⏰ Ultimo Test", "Nessuno")
-        
-        st.info("🚀 Sistema test pronto. Usa la sidebar per navigare.")
-        
-    elif page == "🧪 Nuovo Test":
-        render_new_test_section()
-    elif page == "📊 Storico Test":
-        render_storico_test_section()
-    elif page == "🚀 PromptFoo Tests":
-        # Importa e renderizza pagina PromptFoo
-        try:
-            from promptfoo_runner import render_promptfoo_page
-            render_promptfoo_page()
-        except ImportError:
-            st.error("⚠️ Modulo PromptFoo non trovato")
-            st.info("💡 Assicurati che promptfoo_runner.py sia disponibile")
+    # Importa e renderizza pagina PromptFoo
+    try:
+        from promptfoo_runner import render_promptfoo_page
+        render_promptfoo_page()
+    except ImportError:
+        st.error("⚠️ Modulo PromptFoo non trovato")
+        st.info("💡 Assicurati che promptfoo_runner.py sia disponibile")
     
     # Pulsante per tornare all'app principale
     if st.button("← Torna a VerificAI", type="secondary"):
         st.session_state.current_page = 'home'
         st.session_state.stage = 'INPUT'
         st.rerun()
-
-def render_new_test_section():
-    """Sezione nuovo test"""
-    st.markdown("## 🧪 Genera Nuovo Test")
-    
-    with st.form("new_test_form"):
-        st.markdown("### 📋 Configurazione Test")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            materia = st.selectbox("Materia", ["Matematica", "Italiano", "Fisica"])
-            livello = st.selectbox("Livello", ["Liceo Scientifico", "Istituto Tecnico"])
-            argomento = st.text_input("Argomento", "Equazioni di secondo grado")
-        
-        with col2:
-            num_esercizi = st.number_input("Numero Esercizi", 1, 10, 4)
-            punti_totali = st.number_input("Punti Totali", 10, 200, 80, 10)
-            durata = st.text_input("Durata", "50 minuti")
-        
-        submitted = st.form_submit_button("🚀 Genera Test", type="primary")
-        
-        if submitted:
-            st.success("✅ Test configurato!")
-            st.info("📝 Usa la sezione '🚀 PromptFoo Tests' per generare test reali")
-
-def render_storico_test_section():
-    """Sezione storico test"""
-    st.markdown("## 📊 Storico Test")
-    st.info("📂 Usa la sezione '🚀 PromptFoo Tests' per vedere i risultati dei test")
 from sidebar import render_sidebar
 from generation import genera_verifica, analizza_documento_caricato, compila_contesto_generazione
 from prompts import (
