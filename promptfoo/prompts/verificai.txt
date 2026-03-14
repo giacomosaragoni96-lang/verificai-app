@@ -1,0 +1,1 @@
+Genera: {{prompt_type}} | Materia: {{materia}} | Argomento: {{argomento | default("N/A")}}

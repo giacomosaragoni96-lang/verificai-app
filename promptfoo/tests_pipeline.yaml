@@ -1,0 +1,326 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  VerificAI — Test Suite ESTESA (Pipeline Completa)
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Esegui con:  promptfoo eval -c tests_pipeline.yaml -j 1
+#
+#  Testa: Versione B, Ridotta BES/DSA, Soluzioni, Rigenerazione blocco,
+#         Variante rapida, e casi edge.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+description: "VerificAI — Pipeline Completa v1.0"
+
+providers:
+  - id: file://providers/verificai_provider.py
+    label: "VerificAI (Gemini Flash Lite)"
+    config:
+      model_id: "gemini-2.5-flash-lite"
+      temperature: 0.7
+
+prompts:
+  - file://prompts/verificai.txt
+
+defaultTest:
+  options:
+    timeout: 120000
+
+# ── Corpo di verifica usato come INPUT per i test di pipeline ────────────────
+# (questo simula l'output dello Step 1 che viene passato agli step successivi)
+
+tests:
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  #  VERSIONE B
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  - description: "[Versione B] Cambia dati mantenendo struttura"
+    vars:
+      prompt_type: versione_b
+      corpo_latex: |
+        \subsection*{Esercizio 1: Equazioni di secondo grado}
+        \begin{enumerate}[a)]
+        \item[a)] Risolvi l'equazione $x^2 - 5x + 6 = 0$. (15 pt)
+        \item[b)] Determina per quali valori di $k$ l'equazione $x^2 + kx + 4 = 0$ ha due soluzioni reali distinte. (20 pt)
+        \end{enumerate}
+        \subsection*{Esercizio 2: Disequazioni}
+        \begin{enumerate}[a)]
+        \item[a)] Risolvi la disequazione $x^2 - 9 > 0$. (15 pt)
+        \end{enumerate}
+        \end{document}
+    assert:
+      # Deve mantenere la stessa struttura
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 2"
+        metric: stessa_struttura
+      # Deve contenere "Fila B" o "Versione B"
+      - type: javascript
+        value: "output.includes('Fila B') || output.includes('Versione B') || output.includes('fila B')"
+        metric: label_fila_b
+      # I numeri devono essere DIVERSI dall'originale
+      - type: javascript
+        value: "!output.includes('5x + 6') && !output.includes('x^2 - 9')"
+        metric: dati_cambiati
+      # Stessi punteggi
+      - type: javascript
+        value: |
+          const pts = (output.match(/\((\d+) pt\)/g) || []).map(m => parseInt(m.match(/\d+/)[0]));
+          return pts.includes(15) && pts.includes(20);
+        metric: punteggi_mantenuti
+      - type: contains
+        value: "\\end{document}"
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  #  VERSIONE RIDOTTA BES/DSA
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  - description: "[Ridotta] BES/DSA — meno sottopunti, no etichetta BES"
+    vars:
+      prompt_type: ridotta
+      materia: Matematica
+      perc_ridotta: 30
+      mostra_punteggi: true
+      punti_totali: 100
+      versione_label: "Versione A"
+      corpo_latex: |
+        \subsection*{Esercizio 1: Equazioni}
+        \begin{enumerate}[a)]
+        \item[a)] Risolvi $3x + 7 = 22$. (10 pt)
+        \item[b)] Risolvi $x^2 - 4x + 3 = 0$. (15 pt)
+        \item[c)] Risolvi il sistema $\begin{cases} x + y = 5 \\ 2x - y = 1 \end{cases}$. (20 pt)
+        \end{enumerate}
+        \subsection*{Esercizio 2: Geometria}
+        \begin{enumerate}[a)]
+        \item[a)] Calcola l'area di un triangolo con base 8 cm e altezza 5 cm. (10 pt)
+        \item[b)] Calcola il perimetro di un rettangolo con lati 6 cm e 4 cm. (10 pt)
+        \item[c)] Calcola la diagonale di un quadrato con lato 7 cm. (15 pt)
+        \item[d)] Calcola il volume di un cubo con spigolo 3 cm. (20 pt)
+        \end{enumerate}
+        \end{document}
+    assert:
+      # Deve avere MENO sottopunti dell'originale (7 item → ~5)
+      - type: javascript
+        value: |
+          const items = (output.match(/\\item/g) || []).length;
+          return items >= 3 && items <= 6;
+        metric: items_ridotti
+      # NON deve menzionare BES, DSA, ridotta, sostegno
+      - type: not-icontains
+        value: "BES"
+      - type: not-icontains
+        value: "DSA"
+      - type: not-icontains
+        value: "ridotta"
+      - type: not-icontains
+        value: "sostegno"
+      # Punteggi devono sommare a ~100
+      - type: javascript
+        value: |
+          const m = output.match(/\((\d+) pt\)/g) || [];
+          const s = m.reduce((a, x) => a + parseInt(x.match(/\d+/)[0]), 0);
+          return s >= 85 && s <= 115;
+        metric: somma_punti_ridotta
+      - type: contains
+        value: "\\end{document}"
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  #  SOLUZIONI
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  - description: "[Soluzioni] Risposte sintetiche e corrette"
+    vars:
+      prompt_type: soluzioni
+      materia: Matematica
+      versione_label: "Versione A"
+      corpo_latex: |
+        \subsection*{Esercizio 1: Equazioni}
+        \begin{enumerate}[a)]
+        \item[a)] Risolvi $3x + 7 = 22$. (10 pt)
+        \item[b)] Risolvi $x^2 - 4x + 3 = 0$. (15 pt)
+        \end{enumerate}
+        \subsection*{Esercizio 2: Vero o Falso}
+        \begin{enumerate}[a)]
+        \item[a)] $\sqrt{4} = \pm 2$ \quad $\square$ \textbf{V} $\quad\square$ \textbf{F} (5 pt)
+        \item[b)] Il quadrato di un numero negativo è sempre positivo. $\square$ \textbf{V} $\quad\square$ \textbf{F} (5 pt)
+        \end{enumerate}
+        \end{document}
+    assert:
+      # Deve contenere riferimento a tutti gli esercizi
+      - type: icontains
+        value: "Esercizio 1"
+      - type: icontains
+        value: "Esercizio 2"
+      # Deve fornire le risposte corrette
+      - type: icontains
+        value: "x = 5"    # 3x+7=22 → x=5
+      # Vero/Falso: √4 = ±2 è FALSO (√4 = 2, non ±2)
+      - type: llm-rubric
+        value: |
+          Le soluzioni devono indicare che √4 = ±2 è FALSO (la radice quadrata
+          principale è solo +2). PASS se la risposta è corretta. FAIL se dice V.
+      # NON deve contenere preambolo LaTeX
+      - type: not-contains
+        value: "\\documentclass"
+      - type: not-contains
+        value: "\\begin{document}"
+      # Deve essere sintetico (< 2000 chars per 2 esercizi)
+      - type: javascript
+        value: "output.length < 3000"
+        metric: lunghezza_soluzioni
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  #  RIGENERAZIONE BLOCCO
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  - description: "[Rigenera] Trasforma esercizio su richiesta docente"
+    vars:
+      prompt_type: rigenera_blocco
+      materia: Matematica
+      mostra_punteggi: true
+      istruzione: "Rendilo a scelta multipla con 4 opzioni invece che esercizio aperto"
+      blocco_latex: |
+        \subsection*{Esercizio 3: Derivate}
+        \begin{enumerate}[a)]
+        \item[a)] Calcola la derivata di $f(x) = 3x^2 + 2x - 1$. (10 pt)
+        \item[b)] Determina i punti stazionari di $f(x)$. (15 pt)
+        \end{enumerate}
+    assert:
+      # Deve essere UN SOLO blocco subsection
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 1"
+        metric: singolo_blocco
+      # Deve contenere scelta multipla (4 opzioni)
+      - type: llm-rubric
+        value: |
+          Il docente ha chiesto di trasformare in scelta multipla con 4 opzioni.
+          PASS se l'output contiene almeno un esercizio a scelta multipla
+          con esattamente 4 opzioni. FAIL se resta aperto o ha ≠4 opzioni.
+      # Deve mantenere (X pt)
+      - type: javascript
+        value: "(output.match(/\\(\\d+ pt\\)/g) || []).length >= 1"
+      # NON deve contenere \end{document}
+      - type: not-contains
+        value: "\\end{document}"
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  #  VARIANTE RAPIDA (Fila B one-click)
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  - description: "[Variante] Fila B rapida — dati diversi, struttura uguale"
+    vars:
+      prompt_type: variante_rapida
+      materia: Fisica
+      corpo_latex: |
+        \subsection*{Esercizio 1: Cinematica}
+        \begin{enumerate}[a)]
+        \item[a)] Un'auto parte da ferma e accelera a $3 \, \text{m/s}^2$ per $10 \, \text{s}$.
+        Calcola la velocità finale. (15 pt)
+        \item[b)] Calcola lo spazio percorso nello stesso intervallo. (15 pt)
+        \end{enumerate}
+        \subsection*{Esercizio 2: Dinamica}
+        \begin{enumerate}[a)]
+        \item[a)] Un corpo di massa $5 \, \text{kg}$ è soggetto a una forza di $20 \, \text{N}$.
+        Calcola l'accelerazione. (10 pt)
+        \end{enumerate}
+        \end{document}
+    assert:
+      # Stessa struttura
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 2"
+      # Dati numerici DIVERSI
+      - type: javascript
+        value: |
+          const same = output.includes('3 \\, \\text{m/s}') &&
+                       output.includes('10 \\, \\text{s}') &&
+                       output.includes('5 \\, \\text{kg}');
+          return !same;  // almeno qualcosa deve cambiare
+        metric: dati_variati
+      # Fila B presente
+      - type: javascript
+        value: "output.includes('Fila B') || output.includes('Versione B') || output.includes('fila B')"
+      - type: contains
+        value: "\\end{document}"
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  #  EDGE CASES
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  - description: "[Edge] Un solo esercizio — no enumerate"
+    vars:
+      prompt_type: corpo
+      materia: Filosofia
+      argomento: "Il pensiero di Kant"
+      livello: Liceo Classico
+      durata: "60 minuti"
+      num_esercizi: 1
+      punti_totali: 30
+      mostra_punteggi: true
+      con_griglia: false
+      e_mat: false
+    assert:
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 1"
+      - type: contains
+        value: "\\end{document}"
+
+  - description: "[Edge] 10 esercizi — deve generarli tutti"
+    vars:
+      prompt_type: corpo
+      materia: Inglese
+      argomento: "Past Simple vs Present Perfect"
+      livello: Liceo Linguistico
+      durata: "50 minuti"
+      num_esercizi: 10
+      punti_totali: 100
+      mostra_punteggi: true
+      con_griglia: true
+      e_mat: false
+    assert:
+      - type: javascript
+        value: |
+          const n = (output.match(/\\subsection\*/g) || []).length;
+          return n >= 9 && n <= 11;  // tolleranza ±1
+        metric: dieci_esercizi
+      - type: contains
+        value: "\\end{document}"
+
+  - description: "[Edge] Note docente prioritarie"
+    vars:
+      prompt_type: corpo
+      materia: Matematica
+      argomento: "Limiti"
+      livello: Liceo Scientifico
+      durata: "60 minuti"
+      num_esercizi: 4
+      punti_totali: 100
+      mostra_punteggi: true
+      con_griglia: false
+      e_mat: true
+      note_generali: "OBBLIGATORIO: inserisci almeno un esercizio sul limite notevole di sen(x)/x"
+    assert:
+      - type: llm-rubric
+        value: |
+          Il docente ha richiesto obbligatoriamente un esercizio su sen(x)/x.
+          PASS se almeno un esercizio riguarda il limite sen(x)/x.
+          FAIL se il limite notevole sen(x)/x non compare.
+
+  - description: "[Edge] Materia non-STEM senza grafici"
+    vars:
+      prompt_type: corpo
+      materia: Diritto
+      argomento: "La Costituzione italiana"
+      livello: "Istituto Tecnico Economico"
+      durata: "45 minuti"
+      num_esercizi: 5
+      punti_totali: 100
+      mostra_punteggi: true
+      con_griglia: true
+      e_mat: false
+    assert:
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 5"
+      # Non deve contenere TikZ per materie non-STEM
+      - type: not-contains
+        value: "\\begin{tikzpicture}"
+      - type: not-contains
+        value: "\\begin{axis}"
+      - type: contains
+        value: "\\end{document}"

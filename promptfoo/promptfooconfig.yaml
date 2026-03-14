@@ -1,0 +1,305 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  VerificAI — PromptFoo Test Suite v1.0
+# ═══════════════════════════════════════════════════════════════════════════════
+#  SETUP:
+#    pip install promptfoo google-generativeai
+#    export GEMINI_API_KEY=la_tua_chiave
+#    export VERIFICAI_ROOT=/percorso/al/progetto   (dove sta prompts.py)
+#
+#  USO:
+#    cd promptfoo/
+#    promptfoo eval                                → tutti i test
+#    promptfoo eval -j 1                           → sequenziale (meno API calls)
+#    promptfoo eval --filter-description "Titolo"  → solo test titolo
+#    promptfoo view                                → apri risultati nel browser
+# ═══════════════════════════════════════════════════════════════════════════════
+
+description: "VerificAI — Test Suite Prompt AI v1.0"
+
+defaultTest:
+  options:
+    provider: file://providers/verificai_provider.py
+    timeout: 120000
+
+
+evaluateOptions:
+  maxConcurrency: 1
+
+defaultTest:
+  options:
+    timeout: 120000
+    rubricProvider: openai:chat:gpt-4o-mini
+
+    
+providers:
+  - id: file://providers/verificai_provider.py
+    label: "VerificAI (Gemini Flash Lite)"
+    config:
+      model_id: "gemini-2.5-flash-lite"
+      temperature: 0.7
+
+prompts:
+  - file://prompts/verificai.txt
+
+defaultTest:
+  options:
+    timeout: 120000
+
+tests:
+  # ── TITOLI ────────────────────────────────────────────────────────────────
+  - description: "[Titolo] Matematica derivate"
+    vars: { prompt_type: titolo, materia: Matematica, argomento: "le derivate" }
+    assert:
+      - type: not-icontains
+        value: "Verifica di"
+      - type: not-contains
+        value: '"'
+      - type: javascript
+        value: "output.trim().length < 80 && output.trim().length > 3"
+      - type: javascript
+        value: "!output.trim().endsWith('.')"
+
+  - description: "[Titolo] Corregge errore ortografico"
+    vars: { prompt_type: titolo, materia: Storia, argomento: "la rivoluzzione francese" }
+    assert:
+      - type: not-icontains
+        value: "rivoluzzione"
+      - type: icontains
+        value: "Rivoluzione"
+
+  - description: "[Titolo] Inglese conciso"
+    vars: { prompt_type: titolo, materia: Inglese, argomento: "present perfect e past simple" }
+    assert:
+      - type: javascript
+        value: "output.trim().length < 80 && output.trim().length > 5"
+
+  # ── CORPO: STRUTTURA LATEX ────────────────────────────────────────────────
+  - description: "[Corpo] Mat Derivate LS — struttura+punteggi"
+    vars:
+      prompt_type: corpo
+      materia: Matematica
+      argomento: Derivate
+      livello: Liceo Scientifico
+      durata: "60 minuti"
+      num_esercizi: 5
+      punti_totali: 100
+      mostra_punteggi: true
+      con_griglia: true
+      e_mat: true
+    assert:
+      - type: contains
+        value: "\\subsection*"
+      - type: contains
+        value: "\\end{document}"
+      - type: not-contains
+        value: "\\documentclass"
+      - type: not-contains
+        value: "\\begin{document}"
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 5"
+        metric: esercizi_count
+      - type: javascript
+        value: "(output.match(/\\(\\d+ pt\\)/g) || []).length >= 5"
+        metric: punteggi_count
+      - type: javascript
+        value: |
+          const m = output.match(/\((\d+) pt\)/g) || [];
+          const s = m.reduce((a, x) => a + parseInt(x.match(/\d+/)[0]), 0);
+          s >= 90 && s <= 110;
+        metric: somma_punti
+      - type: not-icontains
+        value: "\\includegraphics{placeholder}"
+      - type: not-icontains
+        value: "% qui andrebbe"
+      - type: not-icontains
+        value: "la risposta è"
+      - type: not-icontains
+        value: "generato con TikZ"
+      # Validazione strutturale LaTeX (brackets, ambienti)
+      - type: python
+        value: file://validators/latex_validator.py
+      - type: llm-rubric
+        value: |
+          Verifica Matematica Derivate Liceo Scientifico, 5 esercizi.
+          PASS se corretti, livello OK, varietà tipologie, italiano OK.
+          FAIL se errori matematici, livello sbagliato, tutti uguali.
+
+  - description: "[Corpo] Italiano Medie — livello adeguato"
+    vars:
+      prompt_type: corpo
+      materia: Italiano
+      argomento: "Analisi del periodo"
+      livello: "Scuola Secondaria I grado (Medie)"
+      durata: "45 minuti"
+      num_esercizi: 4
+      punti_totali: 80
+      mostra_punteggi: true
+      con_griglia: false
+      e_mat: false
+    assert:
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 4"
+      - type: javascript
+        value: "(output.match(/\\(\\d+ pt\\)/g) || []).length >= 4"
+      - type: llm-rubric
+        value: |
+          Italiano scuole medie (11-14 anni).
+          PASS se linguaggio accessibile e livello appropriato.
+          FAIL se troppo avanzato per le medie.
+
+  - description: "[Corpo] Fisica SENZA punteggi"
+    vars:
+      prompt_type: corpo
+      materia: Fisica
+      argomento: "Leggi di Newton"
+      livello: Liceo Scientifico
+      durata: "50 minuti"
+      num_esercizi: 3
+      punti_totali: 0
+      mostra_punteggi: false
+      con_griglia: false
+      e_mat: true
+    assert:
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 3"
+      - type: javascript
+        value: "(output.match(/\\(\\d+ pt\\)/g) || []).length === 0"
+        metric: zero_punteggi
+
+  # ── REGOLE SPECIFICHE ─────────────────────────────────────────────────────
+  - description: "[Regola] Anti-spoiler grafici"
+    vars:
+      prompt_type: corpo
+      materia: Matematica
+      argomento: "Studio di funzione con rappresentazione grafica"
+      livello: Liceo Scientifico
+      durata: "90 minuti"
+      num_esercizi: 3
+      punti_totali: 100
+      mostra_punteggi: true
+      con_griglia: true
+      e_mat: true
+    assert:
+      - type: llm-rubric
+        value: |
+          Anti-spoiler: se l'esercizio chiede di "disegnare" o "rappresentare
+          graficamente", NON deve contenere tikzpicture/pgfplots.
+          PASS se rispettata. FAIL se TikZ mostra la risposta da disegnare.
+
+  - description: "[Regola] LaTeX brackets bilanciati"
+    vars:
+      prompt_type: corpo
+      materia: Matematica
+      argomento: "Equazioni e sistemi"
+      livello: "Istituto Tecnico Tecnologico/Industriale"
+      durata: "50 minuti"
+      num_esercizi: 4
+      punti_totali: 80
+      mostra_punteggi: true
+      con_griglia: false
+      e_mat: true
+    assert:
+      - type: javascript
+        value: |
+          const c = output.replace(/\\[{}]/g, '');
+          let d = 0;
+          for (const ch of c) { if (ch==='{') d++; if (ch==='}') d--; if (d<0) return false; }
+          return d === 0;
+        metric: brackets_ok
+      - type: javascript
+        value: |
+          const o = (output.match(/\\begin\{enumerate\}/g)||[]).length;
+          const c = (output.match(/\\end\{enumerate\}/g)||[]).length;
+          return o === c;
+        metric: enumerate_ok
+
+  - description: "[Regola] Varietà tipologie 6 esercizi"
+    vars:
+      prompt_type: corpo
+      materia: Storia
+      argomento: "La Prima Guerra Mondiale"
+      livello: Liceo Scientifico
+      durata: "50 minuti"
+      num_esercizi: 6
+      punti_totali: 100
+      mostra_punteggi: true
+      con_griglia: true
+      e_mat: false
+    assert:
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 6"
+      - type: llm-rubric
+        value: |
+          Servono almeno 2 tipologie diverse (aperte, scelta multipla,
+          vero/falso, completamento). PASS ≥2 tipologie. FAIL se tutte uguali.
+
+  # ── CALIBRAZIONE LIVELLI ──────────────────────────────────────────────────
+  - description: "[Calibrazione] Professionale semplice"
+    vars:
+      prompt_type: corpo
+      materia: Matematica
+      argomento: "Equazioni di primo grado"
+      livello: Istituto Professionale
+      durata: "45 minuti"
+      num_esercizi: 4
+      punti_totali: 80
+      mostra_punteggi: true
+      con_griglia: false
+      e_mat: true
+    assert:
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 4"
+      - type: llm-rubric
+        value: |
+          Istituto Professionale: PASS se semplice, concreto, accessibile.
+          FAIL se accademico o troppo difficile.
+
+  - description: "[Calibrazione] Primaria 6-11 anni"
+    vars:
+      prompt_type: corpo
+      materia: Matematica
+      argomento: "Le frazioni"
+      livello: "Scuola Primaria (Elementari)"
+      durata: "30 minuti"
+      num_esercizi: 3
+      punti_totali: 60
+      mostra_punteggi: true
+      con_griglia: false
+      e_mat: false
+    assert:
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 3"
+      - type: llm-rubric
+        value: |
+          Primaria (6-11 anni): PASS se frasi brevi, concreto, quotidiano.
+          FAIL se usa notazione formale o linguaggio troppo adulto.
+
+  # ── CONTROLLO QUALITÀ ─────────────────────────────────────────────────────
+  - description: "[QA] Corregge errore matematico"
+    vars:
+      prompt_type: qa
+      materia: Matematica
+      livello: Liceo Scientifico
+      mostra_punteggi: true
+      punti_totali: 100
+      corpo_latex: |
+        \subsection*{Esercizio 1: Equazioni}
+        \begin{enumerate}[a)]
+        \item[a)] Risolvi $x^2 + 1 = 0$ in $\mathbb{R}$. (10 pt)
+        \item[b)] Trova le soluzioni di $2x - 6 = 0$. (10 pt)
+        \end{enumerate}
+        \subsection*{Esercizio 2: Disequazioni}
+        \begin{enumerate}[a)]
+        \item[a)] Risolvi $x^2 - 4 > 0$. (15 pt)
+        \end{enumerate}
+        \end{document}
+    assert:
+      - type: contains
+        value: "\\subsection*"
+      - type: contains
+        value: "\\end{document}"
+      - type: llm-rubric
+        value: |
+          Input conteneva: x²+1=0 in R (impossibile) e punteggi che
+          sommano 35 invece di 100. PASS se corregge almeno un problema.
+          FAIL se restituisce tutto identico.
