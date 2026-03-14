@@ -290,14 +290,29 @@ def render_sidebar(
         
         # Stats cards semplici
         try:
-            # Metodo più affidabile: conta prima i record
+            print(f"DEBUG: Utente ID: {utente.id}")
+            
+            # Prima verifica se ci sono record senza filtro deleted_at
+            all_count = (
+                supabase_admin.table("verifiche_storico")
+                .select("id", count="exact")
+                .eq("user_id", utente.id)
+                .execute()
+            )
+            print(f"DEBUG: Tutte le verifiche (senza filtro deleted_at): {len(all_count.data) if all_count.data else 0}")
+            
+            # Temporaneamente senza filtro deleted_at per test
             storico_count = (
                 supabase_admin.table("verifiche_storico")
                 .select("id", count="exact")
                 .eq("user_id", utente.id)
-                .is_("deleted_at", "null")
                 .execute()
             )
+            
+            print(f"DEBUG: Risposta senza filtro deleted_at: {storico_count}")
+            print(f"DEBUG: Dati: {storico_count.data}")
+            print(f"DEBUG: Count attribute: {getattr(storico_count, 'count', 'NESSUNO')}")
+            
             total_verifiche = storico_count.count if hasattr(storico_count, 'count') and storico_count.count else len(storico_count.data) if storico_count.data else 0
             
             print(f"DEBUG: Sidebar conteggio verifiche - count: {getattr(storico_count, 'count', 'N/A')}, data_len: {len(storico_count.data) if storico_count.data else 0}, total: {total_verifiche}")
@@ -307,7 +322,6 @@ def render_sidebar(
                 supabase_admin.table("verifiche_storico")
                 .select("id, titolo, created_at")
                 .eq("user_id", utente.id)
-                .is_("deleted_at", "null")
                 .order("created_at", desc=True)
                 .limit(1)
                 .execute()
