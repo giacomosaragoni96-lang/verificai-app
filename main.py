@@ -1575,7 +1575,7 @@ def _render_le_tue_verifiche():
     verifiche = _load_user_verifiche()
     
     # Stats in alto con design moderno
-    col1, col2, col3, col4 = st.columns(4, gap="1rem")
+    col1, col2, col3, col4 = st.columns(4, gap="small")
     
     with col1:
         st.markdown(
@@ -1677,7 +1677,7 @@ def _render_le_tue_verifiche():
         unsafe_allow_html=True,
     )
     
-    col_search, col_materia, col_ordine = st.columns([3, 2, 2], gap="1rem")
+    col_search, col_materia, col_ordine = st.columns([3, 2, 2], gap="small")
     
     with col_search:
         search_query = st.text_input("🔍 Cerca verifica...", placeholder="Cerca per materia, argomento...", 
