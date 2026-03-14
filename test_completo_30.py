@@ -194,6 +194,9 @@ def genera_verifica_reale(scenario):
     """Genera verifica reale usando il sistema completo dell'app"""
     
     try:
+        # Debug info
+        print(f"🔄 Generazione verifica: {scenario['materia']} - {scenario['argomento']}")
+        
         # Importa il sistema completo dell'app
         from generation import genera_verifica
         from config import CALIBRAZIONE_SCUOLA
@@ -201,11 +204,14 @@ def genera_verifica_reale(scenario):
         
         # Calibrazione
         calibrazione = CALIBRAZIONE_SCUOLA.get(scenario['livello'], "")
+        print(f"📋 Calibrazione: {calibrazione[:100]}...")
         
         # Usa lo stesso modello dell'app
         model = genai.GenerativeModel('gemini-2.5-flash-lite')
+        print("🤖 Modello creato")
         
         # Genera con il sistema completo dell'app
+        print("🚀 Chiamata genera_verifica()...")
         result = genera_verifica(
             model=model,
             materia=scenario['materia'],
@@ -228,6 +234,8 @@ def genera_verifica_reale(scenario):
             mathpix_context=None
         )
         
+        print(f"✅ Generazione completata. Lunghezza output: {len(result)}")
+        
         return {
             "success": True,
             "output": result,
@@ -236,9 +244,14 @@ def genera_verifica_reale(scenario):
         }
         
     except Exception as e:
+        print(f"❌ Errore generazione: {e}")
+        import traceback
+        print(f"🔍 Traceback: {traceback.format_exc()}")
+        
         return {
             "success": False,
-            "error": str(e)
+            "error": str(e),
+            "traceback": traceback.format_exc()
         }
 
 def analizza_con_promptfoo(output, scenario):
