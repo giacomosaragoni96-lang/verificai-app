@@ -5,9 +5,10 @@ Test Completo: 30 verifiche random + analisi PromptFoo + PDF finale
 
 import streamlit as st
 import random
+import sys
+import os
 from datetime import datetime
 import json
-import os
 import subprocess
 from pathlib import Path
 
