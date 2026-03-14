@@ -227,8 +227,8 @@ def render_sidebar(
             </span>
           </div>
           <div class="mobile-progress-bar" style="
-            background: #E2E8F0 !important;
-            border: 2px solid #CBD5E1 !important;
+            background: #E0E0E0 !important;
+            border: 2px solid #C0C0C0 !important;
             border-radius: 10px;
             overflow: hidden;
             height: 8px;
@@ -237,15 +237,15 @@ def render_sidebar(
           ">
             <div style="
               width: {_perc_uso}%;
-              background: {_color_bar} !important;
+              background: #3B82F6 !important;
               height: 100%;
               border-radius: 6px;
               transition: width .6s ease;
               position: absolute;
               top: 0;
               left: 0;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-              border: 1px solid rgba(255,255,255,0.3);
+              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+              border: 1px solid rgba(255,255,255,0.5);
             "></div>
           </div>
           <div class="mobile-progress-text" style="text-align: right; font-size: 0.75rem; font-weight:500; color: {_sb_muted}; margin-top: 6px; font-family: 'DM Sans', sans-serif;">
@@ -268,12 +268,12 @@ def render_sidebar(
                 _sub = "Con Pro avresti accesso illimitato."
             st.markdown(f"""
             <div class="sb-pro-card" style="
-                background: linear-gradient(135deg, {_acc}25, {_acc}15) !important;
-                border: 2px solid {_acc}60 !important;
+                background: linear-gradient(135deg, #DBEAFE, #BFDBFE) !important;
+                border: 2px solid #3B82F6 !important;
                 border-radius: 12px !important;
                 padding: 1rem !important;
                 margin: .6rem 0 .4rem 0 !important;
-                box-shadow: 0 6px 16px {_acc}30 !important;
+                box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3) !important;
                 transition: all .2s ease !important;
             ">
               <div class="sb-pro-card-header">✦ VerificAI Pro</div>
