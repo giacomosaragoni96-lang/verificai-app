@@ -1,0 +1,96 @@
+{
+  "timestamp": "2026-03-14T18:05:46.949386",
+  "totali": 1,
+  "media_voto": 20.0,
+  "success_rate": 0.0,
+  "param_accuracy": 0.0,
+  "pdf_rate": 0.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Italiano",
+        "livello": "Scuola Media",
+        "argomento": "Testo argomentativo",
+        "num_esercizi": 3,
+        "punti_totali": 80,
+        "durata": "2 ore",
+        "mostra_punteggi": true,
+        "con_griglia": false
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Il Testo Argomentativo",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Italiano: Il Testo Argomentativo} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Elementi Fondamentali del Testo Argomentativo}\nDefinisci i seguenti concetti chiave relativi al testo argomentativo:\n\\begin{enumerate}[a)]\n\\item Tesi: (10 pt)\n\\item Argomento: (10 pt)\n\\item Antitesi: (10 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Analisi Critica di un Breve Testo Argomentativo}\nLeggi attentamente il seguente brano e rispondi alle domande:\n\"L'uso eccessivo degli smartphone da parte dei giovani desta preoccupazione. Se da un lato questi dispositivi offrono un accesso immediato all'informazione e facilitano la comunicazione, dall'altro possono portare a dipendenza, isolamento sociale e problemi di concentrazione. È fondamentale che genitori ed educatori guidino i ragazzi verso un utilizzo equilibrato e consapevole di tali strumenti.\"\n\n\\begin{enumerate}[a)]\n\\item Identifica la tesi principale sostenuta nel brano. (10 pt)\n\\item Individua almeno due argomenti a supporto della tesi. (10 pt)\n\\item Esplicita un'ipotetica antitesi che potrebbe essere contrapposta alla tesi principale. (5 pt)\n\\item Suggerisci una possibile soluzione o proposta che derivi dall'analisi presentata. (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Strutturare un Testo Argomentativo}\nConsidera il tema: \"L'importanza dell'educazione civica nelle scuole\".\n\\begin{enumerate}[a)]\n\\item Formula una tesi chiara e concisa riguardo all'importanza dell'educazione civica. (10 pt)\n\\item Sviluppa almeno due argomenti validi a sostegno della tua tesi, fornendo brevi giustificazioni per ciascuno. (10 pt)\n\\end{enumerate}\n\\end{document}",
+            "pdf": "<BYTES:61431>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 3,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 80,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 5
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": false,
+        "error": "Compilazione LaTeX fallita",
+        "latex_error": "pdflatex: security risk: running with elevated privileges\npdflatex: major issue: So far, you have not checked for updates as a MiKTeX user.\n",
+        "latex_content": ""
+      },
+      "punteggio_finale": 20,
+      "timestamp": "2026-03-14T18:05:19.451116",
+      "latex_completo": ""
+    }
+  ]
+}

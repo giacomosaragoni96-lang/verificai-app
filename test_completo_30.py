@@ -102,7 +102,20 @@ def render_test_completo_30():
                                 print(f"🔥 DEBUG result['output'] keys: {result['output'].keys()}")
                         
                         # Estrai il contenuto LaTeX dal dizionario
+                        if isinstance(result['output'], dict):
+                            # 🔥 DEBUG: Controlla tutte le chiavi per trovare il LaTeX
+                            for key, value in result['output'].items():
+                                if isinstance(value, str) and len(value) > 100:  # Probabile LaTeX
+                                    print(f"🔍 DEBUG chiave '{key}': {len(value)} caratteri, contiene \\subsection*: {value.count('\\subsection*')} volte")
+                                    if value.count('\\subsection*') > 0:
+                                        print(f"📄 Prime 200 della chiave '{key}': {value[:200]}")
+                        
                         latex_content = result['output'].get('latex', '') if isinstance(result['output'], dict) else str(result['output'])
+                        
+                        # 🔥 Se latex è vuoto, prova la chiave 'A'
+                        if not latex_content and isinstance(result['output'], dict) and 'A' in result['output']:
+                            latex_content = result['output']['A']
+                            print(f"🔥 DEBUG: Usato result['output']['A'] come LaTeX")
                         
                         # 🔥 DEBUG: Controlla latex_content
                         print(f"🔥 DEBUG latex_content estratto: {len(latex_content)} caratteri")
