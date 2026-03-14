@@ -1780,7 +1780,8 @@ def _render_le_tue_verifiche():
                         </div>
                     </div>
                 </div>
-            ''', unsafe_allow_html=True)
+                </div>
+''', unsafe_allow_html=True)
             
             # Pulsante anteprima
             col_preview = st.columns([1])[0]
@@ -1874,7 +1875,8 @@ def _render_le_tue_verifiche():
                         </div>
                         
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-            ''', unsafe_allow_html=True)
+                </div>
+''', unsafe_allow_html=True)
             
             # Bottoni azioni in grid
             col_actions = st.columns([1, 1, 1, 1])
@@ -2199,7 +2201,9 @@ def _render_le_tue_verifiche():
                 
                 
                 <div style="padding: 1.5rem;">
-            ''', unsafe_allow_html=True)
+                </div>
+                </div>
+''', unsafe_allow_html=True)
             
             # Pulsante anteprima
             col_preview = st.columns([1])[0]
@@ -2294,7 +2298,8 @@ def _render_le_tue_verifiche():
                         </div>
                         
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-            ''', unsafe_allow_html=True)
+                </div>
+''', unsafe_allow_html=True)
             
             # Bottoni azioni in grid
             col_actions = st.columns([1, 1, 1, 1])
