@@ -260,13 +260,64 @@ def genera_verifica_reale(scenario):
         
         # 🛠️ FIX: Genera istruzioni esercizi come fa l'app!
         print("🔧 Generazione istruzioni esercizi...")
+        
+        # 🛠️ COPIA LOCALE DELLA FUNZIONE per evitare import Streamlit
+        def build_prompt_esercizi_local(esercizi_custom, num_totale, punti_totali, mostra_punteggi):
+            n_liberi = max(0, num_totale - len(esercizi_custom))
+            righe = [
+                f"STRUTTURA ESERCIZI — REGOLA ASSOLUTA:",
+                f"Genera ESATTAMENTE {num_totale} esercizi.",
+                f"Ogni esercizio è \\subsection*{{Esercizio N: Titolo}}.",
+            ]
+            immagini = []
+            if mostra_punteggi and num_totale > 0:
+                pts_b = punti_totali // num_totale
+                resto = punti_totali - pts_b * num_totale
+                pts   = [pts_b] * num_totale
+                if resto: pts[0] += resto
+                righe.append(
+                    f"DISTRIBUZIONE PUNTI — VINCOLO TASSATIVO:\n"
+                    f"Il punteggio totale della verifica DEVE essere ESATTAMENTE {punti_totali} pt.\n"
+                    f"REGOLA FONDAMENTALE: NON scrivere MAI il punteggio totale nell'intestazione\n"
+                    f"dell'esercizio (es. NO '(20pt)' dopo 'Esercizio 1: ...').\n"
+                    f"Assegna i punti SOLO ai singoli \\item o sottopunti (a), b), c) ecc.) in modo che\n"
+                    f"la somma sia ESATTAMENTE {punti_totali} pt. Non aggiungere, non togliere nemmeno 1 pt.\n"
+                    f"Indicazione di partenza (adattala liberamente ma rispetta il totale):"
+                )
+                for i in range(num_totale):
+                    righe.append(f"  - Esercizio {i+1}: circa {pts[i]} pt")
+                righe.append(
+                    f"VERIFICA OBBLIGATORIA PRIMA DI RISPONDERE: somma tutti i (X pt) scritti "
+                    f"nel tuo output. Se la somma ≠ {punti_totali} pt, correggi i punti."
+                )
+
+            if not esercizi_custom:
+                righe.append(
+                    f"PRIMO ESERCIZIO: 'Saperi Essenziali' — concetti base, NO simbolo (*)."
+                    f" Gli esercizi 2–{num_totale} approfondiscono."
+                )
+            righe.append(f"DETTAGLIO ({num_totale} totali):")
+            for i, ex in enumerate(esercizi_custom, 1):
+                tipo, desc = ex.get("tipo","Aperto"), ex.get("descrizione","").strip()
+                riga = f"- Esercizio {i} [{tipo}]" + (f": {desc}" if desc else "")
+                if ex.get("immagine"):
+                    riga += f" — usa immagine allegata"
+                    immagini.append({"idx": i, "data": ex["immagine"].getvalue(),
+                                     "mime_type": ex["immagine"].type})
+                if tipo == "Scelta multipla":
+                    riga += " — \\begin{enumerate}[a)] \\item ... \\end{enumerate}"
+                elif tipo == "Vero/Falso":
+                    riga += " — $\\square$ V $\\quad\\square$ F per ogni affermazione"
+                elif tipo == "Completamento":
+                    riga += " — \\underline{\\hspace{3cm}} per gli spazi"
+                righe.append(riga)
+            if n_liberi > 0:
+                s = len(esercizi_custom) + 1
+                righe.append(f"- Esercizi {s}–{num_totale}: genera tu {n_liberi} esercizi coerenti.")
+            return "\n".join(righe), immagini
+        
         try:
-            # Importa la funzione dall'app principale
-            import sys
-            sys.path.insert(0, PROJECT_ROOT)
-            from main import _build_prompt_esercizi
-            
-            istruzioni_esercizi, immagini_esercizi = _build_prompt_esercizi(
+            istruzioni_esercizi, immagini_esercizi = build_prompt_esercizi_local(
                 esercizi_custom=[],  # Nessun esercizio custom per test
                 num_totale=scenario['num_esercizi'],
                 punti_totali=scenario['punti_totali'],

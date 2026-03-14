@@ -1,0 +1,87 @@
+{
+  "id": 4,
+  "scenario": {
+    "materia": "Inglese",
+    "livello": "Liceo Classico",
+    "argomento": "Listening skills",
+    "num_esercizi": 4,
+    "punti_totali": 80,
+    "durata": "45 minuti",
+    "mostra_punteggi": true,
+    "con_griglia": false
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Listening Comprehension",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Listening Comprehension} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Listening Comprehension - General Information}\nSi ascolti il seguente brano audio (durata: 1 minuto circa).\nSi risponda alle seguenti domande scegliendo la risposta corretta tra le opzioni fornite.\n\na) Qual è l'argomento principale discusso nel brano?\n\\begin{enumerate}[a)]\n    \\item L'impatto della tecnologia sulla società.\n    \\item I benefici dell'attività fisica per la salute mentale.\n    \\item Le sfide della sostenibilità ambientale.\n    \\item L'evoluzione delle comunicazioni interpersonali.\n\\end{enumerate}\n\nb) Quale punto viene evidenziato come particolarmente importante dall'oratore?\n\\begin{enumerate}[a)]\n    \\item La necessità di investire in nuove infrastrutture.\n    \\item L'importanza di un approccio equilibrato e consapevole.\n    \\item La difficoltà di implementare cambiamenti su larga scala.\n    \\item La irrilevanza di alcune pratiche nel contesto attuale.\n\\end{enumerate}\n\nc) Qual è il tono generale dell'oratore?\n\\begin{enumerate}[a)]\n    \\item Critico e pessimista.\n    \\item Informativo e neutrale.\n    \\item Incoraggiante e propositivo.\n    \\item Preoccupato ma speranzoso.\n\\end{enumerate}\n\nd) Quale termine viene usato per descrivere la relazione tra le diverse componenti discusse?\n\\begin{enumerate}[a)]\n    \\item Interdipendenza.\n    \\item Indifferenza.\n    \\item Isolamento.\n    \\item Competizione.\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Listening Comprehension - Specific Details}\nSi riascolti il brano audio dell'Esercizio 1.\nSi indichi se le seguenti affermazioni sono Vere (V) o False (F).\n\n\\begin{itemize}\n    \\item [$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}] L'oratore menziona esplicitamente la necessità di un uso limitato dei dispositivi elettronici.\n    \\item [$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}] Viene suggerito che un aumento dell'attività fisica sia correlato a un miglioramento del benessere generale.\n    \\item [$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}] La sostenibilità ambientale è presentata come una questione secondaria rispetto ad altri temi.\n    \\item [$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}] L'oratore fa riferimento a studi scientifici specifici a supporto delle sue tesi.\n\\end{itemize}\n\n\\subsection*{Esercizio 3: Listening Comprehension - Inference}\nSi ascolti un nuovo brano audio (durata: 1 minuto e 30 secondi circa) che descrive un dibattito tra due persone su un tema specifico. Si inferisca e si risponda alle seguenti domande.\n\na) Qual è l'argomento principale del dibattito?\nSi scriva una frase che riassuma il tema centrale del dibattito.\n\\underline{}\n\nb) Qual è la posizione generale della Persona A?\nSi scriva una breve descrizione (massimo 2 righe) della posizione della Persona A.\n\\underline{}\n\nc) Qual è la posizione generale della Persona B?\nSi scriva una breve descrizione (massimo 2 righe) della posizione della Persona B.\n\\underline{}\n\nd) Quale potenziale punto di accordo tra le due persone si può dedurre, se presente?\nSi scriva una frase che indichi un possibile punto di convergenza.\n\\underline{} (80 pt)\n\\subsection*{Esercizio 4: Listening Comprehension - Vocabulary and Application}\nSi riascolti il brano audio dell'Esercizio 3.\nSi risponda alle seguenti domande.\n\na) \n\nTrovare nel brano tre parole o espressioni che indichino disaccordo o contrasto tra le opinioni. Si scriva ogni parola/espressione seguita da una breve definizione basata sul contesto.\n\\begin{enumerate}[a)]\n    \\item \\underline{}: \\underline{}\n    \\item \\underline{}: \\underline{}\n    \\item \\underline{}: \\underline{}\n\\end{enumerate}\n\nb) In quale situazione pratica si potrebbe applicare quanto discusso nel dibattito? Si fornisca un esempio concreto.\n\\underline{}\n\\end{document}",
+        "pdf": "<BYTES:74515>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.8
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 4,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 80,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": false,
+      "presente": false,
+      "punteggio": 5
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164223.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164223.pdf",
+    "pdf_size": 16458,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Listening skills}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 20,
+  "timestamp": "2026-03-14T16:42:24.704036",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Listening skills}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

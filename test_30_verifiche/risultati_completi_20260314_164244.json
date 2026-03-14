@@ -1,0 +1,445 @@
+{
+  "timestamp": "2026-03-14T16:42:44.583534",
+  "totali": 5,
+  "media_voto": 16.0,
+  "success_rate": 0.0,
+  "param_accuracy": 0.0,
+  "pdf_rate": 100.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Matematica",
+        "livello": "Istituto Tecnico",
+        "argomento": "Equazioni di secondo grado",
+        "num_esercizi": 2,
+        "punti_totali": 150,
+        "durata": "2 ore",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Equazioni di secondo grado",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Equazioni di secondo grado} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Risoluzione di Equazioni di Secondo Grado}\n\nSi considerino le seguenti equazioni di secondo grado:\n\\begin{enumerate}[a)]\n    \\item Determinare le radici reali dell'equazione $2x^2 - 5x + 2 = 0$. (25 pt)\n    \\item Risolvere l'equazione $x^2 + 4x + 4 = 0$. (25 pt)\n    \\item \n\nTrovare le soluzioni reali dell'equazione $3x^2 - x - 1 = 0$. (25 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Studio di un Parametro in un'Equazione di Secondo Grado}\n\nSi consideri l'equazione parametrica: $x^2 - (k+1)x + k = 0$, dove $k$ è un parametro reale.\n\\begin{enumerate}[a)]\n    \\item Determinare i valori del parametro $k$ per cui l'equazione ammette soluzioni reali coincidenti. (20 pt)\n    \\item Determinare i valori del parametro $k$ per cui l'equazione ammette soluzioni reali distinte. (20 pt)\n    \\item \n\nTrovare i valori del parametro $k$ per cui l'equazione è priva di soluzioni reali. (20 pt)\n    \\item Per $k=2$, trovare le radici dell'equazione. (15 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{3}{c||}{\\textbf{1}} & \\multicolumn{4}{c||}{\\textbf{2}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & a) & b) & c) & d) & \\\\ \\hline\n\\textbf{Max} & 25 & 25 & 25 & 20 & 20 & 20 & 15 & 150 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:83984>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 2,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 150,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164153.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164153.pdf",
+        "pdf_size": 18439,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Equazioni di secondo grado}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:41:54.616936",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Equazioni di secondo grado}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 2,
+      "scenario": {
+        "materia": "Chimica",
+        "livello": "Scuola Media",
+        "argomento": "Reazioni chimiche",
+        "num_esercizi": 4,
+        "punti_totali": 80,
+        "durata": "1 ora",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Le reazioni chimiche",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Le reazioni chimiche} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Bilanciamento e Legge di Conservazione}\nConsidera la seguente reazione chimica non bilanciata:\n$\\text{Fe}_2\\text{O}_3\\text{(s)} + \\text{CO(g)} \\rightarrow \\text{Fe(s)} + \\text{CO}_2\\text{(g)}$\na) Bilancia la reazione chimica. (10 pt)\nb) Spiega brevemente la legge di conservazione della massa e come si applica a questa reazione. (10 pt)\n\n\\subsection*{Esercizio 2: Classificazione delle Reazioni}\nPer ciascuna delle seguenti reazioni chimiche, indica se si tratta di una reazione di sintesi, decomposizione, spostamento semplice, spostamento doppio o combustione.\na) $2\\text{Al(s)} + 3\\text{O}_2\\text{(g)} \\rightarrow \\text{Al}_2\\text{O}_3\\text{(s)}$\nb) $\\text{CH}_4\\text{(g)} + 2\\text{O}_2\\text{(g)} \\rightarrow \\text{CO}_2\\text{(g)} + 2\\text{H}_2\\text{O(g)}$\nc) $\\text{AgNO}_3\\text{(aq)} + \\text{NaCl(aq)} \\rightarrow \\text{AgCl(s)} + \\text{NaNO}_3\\text{(aq)}$\nd) $\\text{Zn(s)} + \\text{CuSO}_4\\text{(aq)} \\rightarrow \\text{ZnSO}_4\\text{(aq)} + \\text{Cu(s)}$ (20 pt)\n\\subsection*{Esercizio 3: Calcolo Stechiometrico}\nLa reazione tra idrogeno e ossigeno per formare acqua è la seguente:\n$2\\text{H}_2\\text{(g)} + \\text{O}_2\\text{(g)} \\rightarrow 2\\text{H}_2\\text{O(l)}$\nSe partiamo da 4.0 grammi di idrogeno e 32.0 grammi di ossigeno, quale sarà la massa di acqua prodotta?\n(Masse atomiche approssimate: H = 1.0 g/mol, O = 16.0 g/mol) (20 pt)\n\\subsection*{Esercizio 4: Reagente Limitante}\nConsidera la reazione tra il sodio metallico (Na) e il cloro gassoso ($\\text{Cl}_2$) per formare cloruro di sodio (NaCl):\n$2\\text{Na(s)} + \\text{Cl}_2\\text{(g)} \\rightarrow 2\\text{NaCl(s)}$\nSe si fanno reagire 11.5 grammi di sodio con 71.0 grammi di cloro, determina quale dei due reagenti è il reagente limitante e calcola la massa massima di cloruro di sodio che si può ottenere.\n(Masse atomiche approssimate: Na = 23.0 g/mol, Cl = 35.5 g/mol) (20 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 10 & 20 & 20 & 20 & 70 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:79323>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.4
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 4,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 80,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164203.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164203.pdf",
+        "pdf_size": 16413,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Reazioni chimiche}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:42:04.649154",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Reazioni chimiche}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 3,
+      "scenario": {
+        "materia": "Inglese",
+        "livello": "Istituto Tecnico",
+        "argomento": "Grammar",
+        "num_esercizi": 3,
+        "punti_totali": 150,
+        "durata": "1 ora e 30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "English Grammar Test",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: English Grammar Test} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Risoluzione di un'equazione esponenziale}\nRisolvere la seguente equazione esponenziale:\n$$3^{2x-1} = 9^{x-2}$$ (47 pt)\n\\subsection*{Esercizio 2: Analisi di una funzione razionale}\n\nSi consideri la funzione $f(x) = \\frac{x^2 - 4}{x^2 - 1}$.\n\\begin{enumerate}[a)]\n    \\item Determinare il dominio della funzione. (14 pt)\n    \\item \n\nTrovare gli eventuali asintoti orizzontali e verticali. (23 pt)\n    \\item Calcolare le intersezioni della funzione con l'asse x. (9 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Probabilità con estrazione da urna}\nUn'urna contiene 5 palline rosse, 3 palline blu e 2 palline verdi. Si estraggono successivamente due palline senza reimmissione.\n\\begin{enumerate}[a)]\n    \\item Qual è la probabilità che la prima pallina estratta sia rossa? (19 pt)\n    \\item Qual è la probabilità che entrambe le palline estratte siano blu? (19 pt)\n    \\item Qual è la probabilità che la seconda pallina estratta sia verde, sapendo che la prima era rossa? (19 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{3}{c||}{\\textbf{2}} & \\multicolumn{3}{c||}{\\textbf{3}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & a) & b) & c) & a) & b) & c) & \\\\ \\hline\n\\textbf{Max} & 47 & 14 & 23 & 9 & 19 & 19 & 19 & 150 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:103876>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 3,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 150,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164211.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164211.pdf",
+        "pdf_size": 16956,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Grammar}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:42:12.827143",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Grammar}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 4,
+      "scenario": {
+        "materia": "Inglese",
+        "livello": "Liceo Classico",
+        "argomento": "Listening skills",
+        "num_esercizi": 4,
+        "punti_totali": 80,
+        "durata": "45 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": false
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Listening Comprehension",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Listening Comprehension} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Listening Comprehension - General Information}\nSi ascolti il seguente brano audio (durata: 1 minuto circa).\nSi risponda alle seguenti domande scegliendo la risposta corretta tra le opzioni fornite.\n\na) Qual è l'argomento principale discusso nel brano?\n\\begin{enumerate}[a)]\n    \\item L'impatto della tecnologia sulla società.\n    \\item I benefici dell'attività fisica per la salute mentale.\n    \\item Le sfide della sostenibilità ambientale.\n    \\item L'evoluzione delle comunicazioni interpersonali.\n\\end{enumerate}\n\nb) Quale punto viene evidenziato come particolarmente importante dall'oratore?\n\\begin{enumerate}[a)]\n    \\item La necessità di investire in nuove infrastrutture.\n    \\item L'importanza di un approccio equilibrato e consapevole.\n    \\item La difficoltà di implementare cambiamenti su larga scala.\n    \\item La irrilevanza di alcune pratiche nel contesto attuale.\n\\end{enumerate}\n\nc) Qual è il tono generale dell'oratore?\n\\begin{enumerate}[a)]\n    \\item Critico e pessimista.\n    \\item Informativo e neutrale.\n    \\item Incoraggiante e propositivo.\n    \\item Preoccupato ma speranzoso.\n\\end{enumerate}\n\nd) Quale termine viene usato per descrivere la relazione tra le diverse componenti discusse?\n\\begin{enumerate}[a)]\n    \\item Interdipendenza.\n    \\item Indifferenza.\n    \\item Isolamento.\n    \\item Competizione.\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Listening Comprehension - Specific Details}\nSi riascolti il brano audio dell'Esercizio 1.\nSi indichi se le seguenti affermazioni sono Vere (V) o False (F).\n\n\\begin{itemize}\n    \\item [$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}] L'oratore menziona esplicitamente la necessità di un uso limitato dei dispositivi elettronici.\n    \\item [$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}] Viene suggerito che un aumento dell'attività fisica sia correlato a un miglioramento del benessere generale.\n    \\item [$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}] La sostenibilità ambientale è presentata come una questione secondaria rispetto ad altri temi.\n    \\item [$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}] L'oratore fa riferimento a studi scientifici specifici a supporto delle sue tesi.\n\\end{itemize}\n\n\\subsection*{Esercizio 3: Listening Comprehension - Inference}\nSi ascolti un nuovo brano audio (durata: 1 minuto e 30 secondi circa) che descrive un dibattito tra due persone su un tema specifico. Si inferisca e si risponda alle seguenti domande.\n\na) Qual è l'argomento principale del dibattito?\nSi scriva una frase che riassuma il tema centrale del dibattito.\n\\underline{}\n\nb) Qual è la posizione generale della Persona A?\nSi scriva una breve descrizione (massimo 2 righe) della posizione della Persona A.\n\\underline{}\n\nc) Qual è la posizione generale della Persona B?\nSi scriva una breve descrizione (massimo 2 righe) della posizione della Persona B.\n\\underline{}\n\nd) Quale potenziale punto di accordo tra le due persone si può dedurre, se presente?\nSi scriva una frase che indichi un possibile punto di convergenza.\n\\underline{} (80 pt)\n\\subsection*{Esercizio 4: Listening Comprehension - Vocabulary and Application}\nSi riascolti il brano audio dell'Esercizio 3.\nSi risponda alle seguenti domande.\n\na) \n\nTrovare nel brano tre parole o espressioni che indichino disaccordo o contrasto tra le opinioni. Si scriva ogni parola/espressione seguita da una breve definizione basata sul contesto.\n\\begin{enumerate}[a)]\n    \\item \\underline{}: \\underline{}\n    \\item \\underline{}: \\underline{}\n    \\item \\underline{}: \\underline{}\n\\end{enumerate}\n\nb) In quale situazione pratica si potrebbe applicare quanto discusso nel dibattito? Si fornisca un esempio concreto.\n\\underline{}\n\\end{document}",
+            "pdf": "<BYTES:74515>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 4,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 80,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 5
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164223.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164223.pdf",
+        "pdf_size": 16458,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Listening skills}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 20,
+      "timestamp": "2026-03-14T16:42:24.704022",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Listening skills}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 5,
+      "scenario": {
+        "materia": "Matematica",
+        "livello": "Liceo Scientifico",
+        "argomento": "Geometria piana",
+        "num_esercizi": 3,
+        "punti_totali": 50,
+        "durata": "1 ora e 30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Geometria piana",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Geometria piana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Rette e Punti nel Piano}\nDati i punti $A(2, -1)$ e $B(5, 3)$ e la retta $r$ di equazione $2x - y + 1 = 0$.\nSi determini:\n\\begin{enumerate}[a)]\n    \\item Il coefficiente angolare della retta passante per $A$ e $B$. (5 pt)\n    \\item L'equazione della retta passante per $A$ e $B$. (6 pt)\n    \\item La posizione reciproca della retta passante per $A$ e $B$ rispetto alla retta $r$. (6 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Figure Geometriche e Aree}\nConsiderare un triangolo $ABC$ con vertici $A(1, 1)$, $B(4, 2)$ e $C(2, 5)$.\n\\begin{enumerate}[a)]\n    \\item Calcolare la lunghezza dei lati del triangolo. (6 pt)\n    \\item Determinare il perimetro del triangolo. (5 pt)\n    \\item Calcolare l'area del triangolo utilizzando la formula basata sulle coordinate dei vertici. (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Circonferenza e Retta}\n\nSi consideri la circonferenza di equazione $x^2 + y^2 - 6x - 2y + 6 = 0$.\n\\begin{enumerate}[a)]\n    \\item Determinare il centro e il raggio della circonferenza. (6 pt)\n    \\item Verificare se il punto $P(1, 1)$ appartiene alla circonferenza. (5 pt)\n    \\item Determinare l'equazione della retta tangente alla circonferenza nel punto $P(1, 1)$. (6 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{3}{c||}{\\textbf{1}} & \\multicolumn{3}{c||}{\\textbf{2}} & \\multicolumn{3}{c||}{\\textbf{3}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & a) & b) & c) & a) & b) & c) & \\\\ \\hline\n\\textbf{Max} & 5 & 6 & 6 & 6 & 5 & 5 & 6 & 5 & 6 & 50 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:88917>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 3,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 50,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164232.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164232.pdf",
+        "pdf_size": 18069,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Geometria piana}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:42:33.024990",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Geometria piana}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    }
+  ]
+}
