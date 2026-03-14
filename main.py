@@ -17,8 +17,13 @@ from datetime import datetime, timezone
 
 import google.generativeai as genai
 
+from promptfoo.admin_test_panel import render_admin_page
 from sidebar import render_sidebar
 from generation import genera_verifica, analizza_documento_caricato, compila_contesto_generazione
+# Import per pannello admin
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
     prompt_modifica, prompt_qa_verifica,
@@ -6187,8 +6192,19 @@ if _prev_stage != _current_stage:
     )
 
 if not _share_view_active:
-    _current = _current_stage
-    if   _current == STAGE_INPUT:   _render_stage_input()
+    _current = st.session_state.stage
+    
+    # ── ADMIN PAGE ROUTING ───────────────────────────────────────────────────────
+    if st.session_state.get('current_page') == 'admin':
+        if st.session_state.get('is_admin', False):
+            render_admin_page()
+        else:
+            st.error("⛔ Accesso negato. Privilegi admin richiesti.")
+            st.session_state.current_page = 'home'
+            st.session_state.stage = STAGE_INPUT
+            st.rerun()
+    # ── NORMAL STAGE ROUTING ───────────────────────────────────────────────────────
+    elif   _current == STAGE_INPUT:   _render_stage_input()
     elif _current == STAGE_PREVIEW: _render_stage_preview()
     elif _current == STAGE_REVIEW:  _render_stage_review()
     elif _current == STAGE_FINAL:   _render_stage_final()

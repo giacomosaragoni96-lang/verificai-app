@@ -413,6 +413,38 @@ def render_sidebar(
         """, unsafe_allow_html=True)
 
         st.markdown('<div class="logout-btn-wrap">', unsafe_allow_html=True)
+        
+        # Menu Admin - aggiunto prima del logout
+        if is_admin:
+            st.markdown("---")
+            st.markdown("### 🔧 Amministrazione")
+            
+            if st.button("🔧 Pannello Admin Test Suite", key="admin_panel_btn", use_container_width=True):
+                st.session_state.current_page = 'admin'
+                st.rerun()
+            
+            if st.button("🚪 Logout Admin", key="admin_logout_btn", use_container_width=True):
+                st.session_state.is_admin = False
+                st.session_state.current_page = 'home'
+                st.success("✅ Logout admin effettuato")
+                st.rerun()
+        else:
+            st.markdown("---")
+            st.markdown("### 🔐 Accesso Admin")
+            
+            with st.expander("Login Admin", expanded=False):
+                password = st.text_input("Password:", type="password", key="admin_password")
+                
+                if st.button("🔐 Login Admin", key="admin_login_btn"):
+                    if password == "admin123":  # In produzione usa sistema più sicuro
+                        st.session_state.is_admin = True
+                        st.success("✅ Accesso admin abilitato!")
+                        st.rerun()
+                    elif password:
+                        st.error("❌ Password errata!")
+                
+                st.caption("Password di test: admin123")
+        
         if st.button("↩ Esci dall'account", key="logout_btn"):
             from auth import cancella_sessione_cookie
             cancella_sessione_cookie()
