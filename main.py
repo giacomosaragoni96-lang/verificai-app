@@ -339,21 +339,121 @@ Test Configuration:
             
             # Pulsante per generare test batch
             if st.button("🚀 Genera Test Batch (24 test)", type="secondary"):
-                with st.spinner("🔄 Generazione 24 test in corso..."):
+                with st.spinner("🔄 Generazione test batch in corso..."):
                     try:
-                        # Usa il sistema che avevamo creato prima
-                        from promptfoo.real_verification_test_system import RealVerificationTestSystem
+                        # Genera direttamente i test reali senza usare il sistema esterno
+                        from prompts import prompt_corpo_verifica
+                        from config import CALIBRAZIONE_SCUOLA
+                        import google.generativeai as genai
+                        import json
+                        from datetime import datetime
                         
-                        system = RealVerificationTestSystem()
-                        results = system.run_complete_system()
+                        # Scenari di test reali
+                        real_scenarios = [
+                            {
+                                "name": "Matematica_Tecnico_Equazioni",
+                                "materia": "Matematica",
+                                "livello": "Istituto Tecnico Tecnologico/Industriale",
+                                "argomento": "Equazioni di secondo grado",
+                                "durata": "50 minuti",
+                                "num_esercizi": 4,
+                                "punti_totali": 80,
+                                "mostra_punteggi": True,
+                                "con_griglia": True,
+                                "e_mat": True
+                            },
+                            {
+                                "name": "Italiano_Liceo_AnalisiTesto",
+                                "materia": "Italiano",
+                                "livello": "Liceo Scientifico",
+                                "argomento": "Analisi del testo poetico",
+                                "durata": "90 minuti",
+                                "num_esercizi": 4,
+                                "punti_totali": 100,
+                                "mostra_punteggi": True,
+                                "con_griglia": True,
+                                "e_mat": False
+                            },
+                            {
+                                "name": "Fisica_Liceo_Meccanica",
+                                "materia": "Fisica",
+                                "livello": "Liceo Scientifico",
+                                "argomento": "Leggi di Newton",
+                                "durata": "60 minuti",
+                                "num_esercizi": 3,
+                                "punti_totali": 100,
+                                "mostra_punteggi": True,
+                                "con_griglia": True,
+                                "e_mat": True
+                            }
+                        ]
                         
-                        st.success(f"✅ Generati {results['generated']} test!")
+                        # Crea directory se non esiste
+                        os.makedirs("real_verifications", exist_ok=True)
+                        
+                        generated_count = 0
+                        
+                        for scenario in real_scenarios:
+                            try:
+                                # Calibrazione
+                                calibrazione = CALIBRAZIONE_SCUOLA.get(scenario['livello'], "")
+                                
+                                # Parametri prompt
+                                prompt_params = {
+                                    "materia": scenario['materia'],
+                                    "argomento": scenario['argomento'],
+                                    "calibrazione": calibrazione,
+                                    "durata": scenario['durata'],
+                                    "num_esercizi": scenario['num_esercizi'],
+                                    "punti_totali": scenario['punti_totali'],
+                                    "mostra_punteggi": scenario['mostra_punteggi'],
+                                    "con_griglia": scenario.get('con_griglia', False),
+                                    "note_generali": "",
+                                    "istruzioni_esercizi": "",
+                                    "e_mat": scenario.get('e_mat', False),
+                                    "titolo_header": "",
+                                    "preambolo_fisso": "",
+                                    "mathpix_context": None
+                                }
+                                
+                                # Genera prompt
+                                prompt = prompt_corpo_verifica(**prompt_params)
+                                
+                                # Chiama API
+                                model = genai.GenerativeModel('gemini-2.5-flash-lite')
+                                response = model.generate_content(prompt)
+                                output = response.text
+                                
+                                # Salva test
+                                test_data = {
+                                    "scenario": scenario,
+                                    "prompt_used": prompt,
+                                    "output": output,
+                                    "timestamp": datetime.now().isoformat(),
+                                    "tokens": {
+                                        "prompt": len(prompt),
+                                        "completion": len(output),
+                                        "total": len(prompt) + len(output)
+                                    }
+                                }
+                                
+                                filename = f"real_verifications/{scenario['name']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                                with open(filename, 'w', encoding='utf-8') as f:
+                                    json.dump(test_data, f, indent=2, ensure_ascii=False)
+                                
+                                generated_count += 1
+                                
+                            except Exception as e:
+                                st.warning(f"⚠️ Errore generazione {scenario['name']}: {e}")
+                                continue
+                        
+                        st.success(f"✅ Generati {generated_count} test su {len(real_scenarios)}!")
                         st.info("📂 Test salvati in real_verifications/")
                         st.rerun()
                         
                     except Exception as e:
                         st.error(f"❌ Errore generazione batch: {e}")
-                        st.info("💡 Assicurati che il file real_verification_test_system.py sia disponibile")
+                        st.info("💡 Verifica che le API siano configurate correttamente")
     
     # Pulsante per tornare all'app principale
     if st.button("← Torna a VerificAI", type="secondary"):
