@@ -1,0 +1,87 @@
+{
+  "id": 2,
+  "scenario": {
+    "materia": "Inglese",
+    "livello": "Scuola Media",
+    "argomento": "Writing",
+    "num_esercizi": 7,
+    "punti_totali": 30,
+    "durata": "45 minuti",
+    "mostra_punteggi": true,
+    "con_griglia": false
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Writing Skills Assessment",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Writing Skills Assessment} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Richiamo di Algebra}\nRisolvere la seguente equazione lineare:\n$$ 3x - 7 = 5x + 1 $$ (4 pt)\n\\subsection*{Esercizio 2: Comprensione Concettuale}\nDefinire il concetto di \"funzione iniettiva\" e fornire un esempio concreto. (4 pt)\n\\subsection*{Esercizio 3: Analisi di un'Equazione}\nDeterminare il valore del parametro $k$ per cui l'equazione quadratica $x^2 - kx + 4 = 0$ ammette soluzioni reali e coincidenti. (4 pt)\n\\subsection*{Esercizio 4: Geometria Analitica}\nTrovare l'equazione del piano passante per il punto $P(1, 2, -1)$ e perpendicolare al vettore $\\vec{v} = (2, -3, 1)$. (4 pt)\n\\subsection*{Esercizio 5: Probabilità}\nIn un sacchetto ci sono 5 palline rosse e 3 palline blu. Qual è la probabilità di estrarre una pallina blu senza reimmissione se si estraggono due palline? (4 pt)\n\\subsection*{Esercizio 6: Problema di Applicazione Semplice}\nUn treno parte dalla stazione A alla velocità costante di $120 \\text{ km/h}$. Un secondo treno parte dalla stazione B, distante $450 \\text{ km}$ da A, un'ora dopo il primo treno e viaggia verso A alla velocità costante di $105 \\text{ km/h}$. Determinare dopo quanto tempo dalla partenza del primo treno le due stazioni si incontreranno. (5 pt)\n\\subsection*{Esercizio 7: Dimostrazione Base}\nDimostrare che la somma di due numeri pari è sempre un numero pari. (5 pt)\n\n\\end{document}",
+        "pdf": "<BYTES:90833>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.6
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 7,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 30,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": false,
+      "presente": false,
+      "punteggio": 5
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_160918.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_160918.pdf",
+    "pdf_size": 16809,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Writing}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 20,
+  "timestamp": "2026-03-14T16:09:19.465277",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Writing}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

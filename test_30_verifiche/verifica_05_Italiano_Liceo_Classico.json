@@ -1,0 +1,87 @@
+{
+  "id": 5,
+  "scenario": {
+    "materia": "Italiano",
+    "livello": "Liceo Classico",
+    "argomento": "Testo argomentativo",
+    "num_esercizi": 6,
+    "punti_totali": 30,
+    "durata": "1 ora",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Il testo argomentativo",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Italiano: Il testo argomentativo} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Identificazione della Tipologia Testuale}\nLeggi attentamente il seguente brano e indica a quale tipologia testuale appartiene, motivando brevemente la tua scelta.\n\n\"L'intelligenza artificiale rappresenta una delle frontiere tecnologiche più affascinanti e potenzialmente rivoluzionarie del nostro tempo. Le sue applicazioni spaziano dalla medicina alla finanza, dall'automazione industriale alla creazione artistica, promettendo di trasformare radicalmente molti aspetti della vita umana. Tuttavia, l'avanzamento di queste tecnologie solleva anche interrogativi etici e sociali di non poco conto, legati alla privacy, alla sicurezza del lavoro e al rischio di un uso improprio.\" (5 pt)\n\\subsection*{Esercizio 2: Comprensione e Parafrasi}\nSpiega con parole tue il significato della frase \"L'intelligenza artificiale rappresenta una delle frontiere tecnologiche più affascinanti e potenzialmente rivoluzionarie del nostro tempo.\" contenuta nel brano dell'Esercizio 1. (5 pt)\n\\subsection*{Esercizio 3: Elementi del Testo Argomentativo}\nIndica quali sono gli elementi fondamentali che costituiscono un testo argomentativo e descrivi brevemente la funzione di ciascuno di essi. (5 pt)\n\\subsection*{Esercizio 4: Analisi di un'Opinione}\nConsidera la seguente affermazione: \"L'introduzione generalizzata delle auto a guida autonoma risolverà definitivamente il problema degli incidenti stradali.\"\nIndica se si tratta di una tesi, di un'antitesi o di una sintesi e giustifica la tua risposta. (5 pt)\n\\subsection*{Esercizio 5: Struttura Argomentativa}\nDefinisci il concetto di \"prove\" o \"esempi\" nel contesto di un testo argomentativo e spiega perché sono essenziali per la persuasione. (5 pt)\n\\subsection*{Esercizio 6: Riconoscimento della Confutazione}\nAnalizza il seguente estratto e determina se contiene un'argomentazione a favore di una tesi, un'antitesi o una confutazione di un'antitesi.\n\n\"Sebbene sia vero che la digitalizzazione possa portare a una maggiore efficienza in alcuni settori, è errato pensare che ciò si traduca automaticamente in una diminuzione della disoccupazione. Al contrario, molti studi dimostrano come l'automazione tenda a creare nuove figure professionali, ma anche a rendere obsolete altre, richiedendo un profondo ripensamento delle competenze richieste dal mercato del lavoro.\" (5 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 5 & 5 & 5 & 5 & 5 & 5 & 30 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:63071>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.6
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 6,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 30,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_160949.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_160949.pdf",
+    "pdf_size": 16688,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Testo argomentativo}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:09:50.251500",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Testo argomentativo}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

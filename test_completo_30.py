@@ -263,6 +263,21 @@ def genera_verifica_reale(scenario):
             immagini_esercizi=[]  # Parametro mancante!
         )
         
+        # DEBUG: Stampa l'output completo per diagnosi
+        print(f"📋 DEBUG - Output completo:")
+        print(f"Tipo: {type(result)}")
+        if isinstance(result, dict):
+            print(f"Chiavi: {list(result.keys())}")
+            if 'latex' in result:
+                latex_output = result['latex']
+                print(f"LaTeX length: {len(latex_output)} caratteri")
+                print(f"LaTeX preview (primi 500 char):")
+                print(latex_output[:500])
+                print(f"LaTeX contiene esercizi: {'\\\\subsection' in latex_output}")
+                print(f"LaTeX contiene \\end{document}: {'\\\\end{document}' in latex_output}")
+        else:
+            print(f"Output raw: {str(result)[:500]}")
+        
         print(f"✅ Generazione completata. Lunghezza output: {len(result)}")
         
         return {
