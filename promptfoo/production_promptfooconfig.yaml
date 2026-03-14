@@ -1,0 +1,456 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  VerificAI — Enhanced PromptFoo Test Suite v2.0
+#  ═══════════════════════════════════════════════════════════════════════════════
+#  Focus completo: Contenuto + Impaginazione + Leggibilità + Formattazione
+# ═══════════════════════════════════════════════════════════════════════════════
+
+description: "VerificAI — Enhanced Test Suite v2.0 (Content + Layout + Readability)"
+
+defaultTest:
+  options:
+    provider: file://providers/verificai_provider.py
+    timeout: 120000
+
+evaluateOptions:
+  maxConcurrency: 1
+
+providers:
+  - id: file://providers/verificai_provider.py
+    label: "VerificAI (Gemini Flash Lite)"
+    config:
+      model_id: "gemini-2.5-flash-lite"
+      temperature: 0.7
+
+prompts:
+  - file://prompts/verificai.txt
+
+tests:
+  # ── TITOLI ────────────────────────────────────────────────────────────────
+  - description: "[Titolo] Matematica derivate"
+    vars: { prompt_type: titolo, materia: Matematica, argomento: "le derivate" }
+    assert:
+      - type: not-icontains
+        value: "Verifica di"
+      - type: not-contains
+        value: '"'
+      - type: javascript
+        value: "output.trim().length < 80 && output.trim().length > 3"
+      - type: javascript
+        value: "!output.trim().endsWith('.')"
+
+  - description: "[Titolo] Corregge errore ortografico"
+    vars: { prompt_type: titolo, materia: Storia, argomento: "la rivoluzzione francese" }
+    assert:
+      - type: not-icontains
+        value: "rivoluzzione"
+      - type: icontains
+        value: "Rivoluzione"
+
+  - description: "[Titolo] Inglese conciso"
+    vars: { prompt_type: titolo, materia: Inglese, argomento: "present perfect e past simple" }
+    assert:
+      - type: javascript
+        value: "output.trim().length < 80 && output.trim().length > 5"
+
+  # ── CORPO: STRUTTURA LATEX + IMPAGINAZIONE ───────────────────────────────────
+  - description: "[Corpo] Matematica Derivate — Struttura Completa"
+    vars:
+      prompt_type: corpo
+      materia: Matematica
+      argomento: Derivate
+      livello: Liceo Scientifico
+      durata: "60 minuti"
+      num_esercizi: 5
+      punti_totali: 100
+      mostra_punteggi: true
+      con_griglia: true
+      e_mat: true
+    assert:
+      # Struttura base
+      - type: contains
+        value: "\\subsection*"
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 5"
+        metric: esercizi_count
+      - type: javascript
+        value: "(output.match(/\\(\\d+ pt\\)/g) || []).length >= 5"
+        metric: punteggi_count
+      
+      # Impaginazione professionale
+      - type: javascript
+        value: |
+          // Verifica struttura enumerate/itemize
+          const hasEnumerate = /\\begin\{enumerate\}/.test(output);
+          const hasItems = /\\item/.test(output);
+          const subpoints = (output.match(/\\item\s+\[?[a-z]\)?/g) || []).length;
+          return hasEnumerate && hasItems && subpoints >= 3;
+        metric: struttura_sottopunti
+      
+      # Leggibilità e formattazione
+      - type: javascript
+        value: |
+          // Paragrafi ben bilanciati
+          const paragraphs = output.split('\n\n').filter(p => p.trim().length > 0);
+          const longParagraphs = paragraphs.filter(p => p.length > 300);
+          return paragraphs.length >= 3 && longParagraphs.length === 0;
+        metric: leggibilita_paragrafi
+      
+      # Qualità matematica
+      - type: javascript
+        value: |
+          // Uso corretto math mode
+          const inlineMath = (output.match(/\$[^$]+\$/g) || []).length;
+          const displayMath = (output.match(/\$\$[^$]+\$\$/g) || []).length;
+          return inlineMath >= 2 || displayMath >= 1;
+        metric: qualita_matematica
+      
+      # Spaziatura e a capo
+      - type: javascript
+        value: |
+          // Verifica spaziatura appropriata
+          const lines = output.split('\n');
+          const emptyLines = lines.filter(line => line.trim() === '').length;
+          return emptyLines >= 2 && emptyLines <= 8;
+        metric: spaziatura_appropriata
+
+  - description: "[Corpo] Italiano Medie — Leggibilità Ottimizzata"
+    vars:
+      prompt_type: corpo
+      materia: Italiano
+      argomento: "Analisi del periodo"
+      livello: "Scuola Secondaria I grado (Medie)"
+      durata: "45 minuti"
+      num_esercizi: 4
+      punti_totali: 80
+      mostra_punteggi: true
+      con_griglia: false
+      e_mat: false
+    assert:
+      # Struttura base
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 4"
+      - type: javascript
+        value: "(output.match(/\\(\\d+ pt\\)/g) || []).length >= 4"
+      
+      # Livello linguistico ottimizzato
+      - type: javascript
+        value: |
+          // Linguaggio medie più flessibile
+          const words = output.toLowerCase().split(/\s+/);
+          const complexWords = words.filter(w => w.length > 10 || /mente|zione|sione/.test(w));
+          const sentences = output.split(/[.!?]+/).filter(s => s.trim().length > 0);
+          const avgSentenceLength = sentences.reduce((sum, s) => sum + s.split(/\s+/).length, 0) / sentences.length;
+          return complexWords.length <= 8 && avgSentenceLength <= 18;
+        metric: livello_medie_ottimizzato
+      
+      # Sottopunti chiari per medie
+      - type: javascript
+        value: |
+          // Sottopunti numerati semplici
+          const simpleSubpoints = (output.match(/\\item\s+[a-z]\)|\d+\./g) || []).length;
+          const hasClearStructure = /\\begin\{enumerate\}|\\begin\{itemize\}/.test(output);
+          return simpleSubpoints >= 2 && hasClearStructure;
+        metric: sottopunti_chiar
+      
+      # Leggibilità per ragazzi
+      - type: javascript
+        value: |
+          // Frasi brevi e chiare
+          const sentences = output.split(/[.!?]+/).filter(s => s.trim().length > 0);
+          const longSentences = sentences.filter(s => s.split(/\s+/).length > 20);
+          const veryLongParagraphs = output.split('\n\n').filter(p => p.length > 250);
+          return longSentences.length <= 1 && veryLongParagraphs.length === 0;
+        metric: leggibilita_ragazzi
+
+  - description: "[Corpo] Fisica — Formattazione Scientifica"
+    vars:
+      prompt_type: corpo
+      materia: Fisica
+      argomento: "Leggi di Newton"
+      livello: Liceo Scientifico
+      durata: "50 minuti"
+      num_esercizi: 3
+      punti_totali: 0
+      mostra_punteggi: false
+      con_griglia: false
+      e_mat: true
+    assert:
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 3"
+      - type: javascript
+        value: "(output.match(/\\(\\d+ pt\\)/g) || []).length === 0"
+      
+      # Notazione scientifica corretta
+      - type: javascript
+        value: |
+          // Formule fisiche ben formattate
+          const formulas = (output.match(/\$[^$]+\$/g) || []).length;
+          const vectors = (output.match(/\\vec\{|\\mathbf\{/g) || []).length;
+          const units = (output.match(/\\text\{.*?\}|\\mathrm\{.*?\}/g) || []).length;
+          return formulas >= 2 || vectors >= 1 || units >= 1;
+        metric: notazione_fisica
+      
+      # Diagrammi e spiegazioni
+      - type: javascript
+        value: |
+          // Equilibrio tra testo e formule
+          const textLines = output.split('\n').filter(line => !/\$|\\/.test(line) && line.trim().length > 0);
+          const formulaLines = output.split('\n').filter(line => /\$|\\/.test(line));
+          return textLines.length >= 5 && formulaLines.length >= 2;
+        metric: equilibrio_testo_formule
+
+  # ── REGOLE AVANZATE ────────────────────────────────────────────────────────
+  - description: "[Regola] Anti-spoiler grafici avanzato"
+    vars:
+      prompt_type: corpo
+      materia: Matematica
+      argomento: "Studio di funzione con rappresentazione grafica"
+      livello: Liceo Scientifico
+      durata: "90 minuti"
+      num_esercizi: 3
+      punti_totali: 100
+      mostra_punteggi: true
+      con_griglia: true
+      e_mat: true
+    assert:
+      # Anti-spoiler base
+      - type: javascript
+        value: |
+          const hasDrawingPrompt = /disegnare|rappresentare.*grafic|tracciare.*grafic|disegna.*funzione/i.test(output);
+          const hasTikZ = /tikzpicture|pgfplots|\\begin\{tikz/ig.test(output);
+          return !hasDrawingPrompt || !hasTikZ;
+        metric: anti_spoiler_grafici
+      
+      # Spazio per disegno manuale
+      - type: javascript
+        value: |
+          // Spaziatura per disegno studente
+          const hasDrawingSpace = /spazio.*disegn|area.*grafic|fornire.*disegn/i.test(output);
+          const hasBlankArea = /\\vspace\{.*\}|\\\\\[.*\\\]/.test(output);
+          return hasDrawingPrompt && (hasDrawingSpace || hasBlankArea);
+        metric: spazio_disegno
+
+  - description: "[Regola] Qualità tipografica LaTeX"
+    vars:
+      prompt_type: corpo
+      materia: Matematica
+      argomento: "Equazioni e sistemi"
+      livello: "Istituto Tecnico Tecnologico/Industriale"
+      durata: "50 minuti"
+      num_esercizi: 4
+      punti_totali: 80
+      mostra_punteggi: true
+      con_griglia: false
+      e_mat: true
+    assert:
+      # Bracket bilanciati
+      - type: javascript
+        value: |
+          const c = output.replace(/\\[{}]/g, '');
+          let d = 0;
+          for (const ch of c) { if (ch==='{') d++; if (ch==='}') d--; if (d<0) return false; }
+          return d === 0;
+        metric: brackets_bilanciati
+      
+      # Ambienti bilanciati
+      - type: javascript
+        value: |
+          const o = (output.match(/\\begin\{enumerate\}/g)||[]).length;
+          const c = (output.match(/\\end\{enumerate\}/g)||[]).length;
+          return o === c;
+        metric: enumerate_bilanciati
+      
+      # Spaziatura matematica
+      - type: javascript
+        value: |
+          // Spaziatura corretta operatori
+          const goodSpacing = /\s*[+\-*/=]\s*/.test(output);
+          const badSpacing = /[a-z]\+[a-z]|[0-9][+\-*/][a-z]/i.test(output);
+          return goodSpacing && !badSpacing;
+        metric: spaziatura_operatori
+
+  - description: "[Regola] Varietà tipologie avanzata"
+    vars:
+      prompt_type: corpo
+      materia: Storia
+      argomento: "La Prima Guerra Mondiale"
+      livello: Liceo Scientifico
+      durata: "50 minuti"
+      num_esercizi: 6
+      punti_totali: 100
+      mostra_punteggi: true
+      con_griglia: true
+      e_mat: false
+    assert:
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 6"
+      
+      # Varietà arricchita
+      - type: javascript
+        value: |
+          // Tipologie多样化
+          const hasOpen = /\?[^\?]*$/m.test(output) || /spiega|descrivi|motiva|analizza|commenta/i.test(output);
+          const hasMultiple = /\([^)]*\)[^)]*\([^)]*\)/.test(output) || /a\)|b\)|c\)|d\)/i.test(output);
+          const hasTrueFalse = /vero|falso|V|F\s*\)/i.test(output) || /\\(V|F\)/i.test(output);
+          const hasCompletion = /___|\.{3,}|completa|riempi/i.test(output);
+          const hasMatching = /abbina|associa|collega/i.test(output);
+          const hasTimeline = /cronologia|timeline|ordina/i.test(output);
+          
+          const types = [hasOpen, hasMultiple, hasTrueFalse, hasCompletion, hasMatching, hasTimeline].filter(Boolean).length;
+          return types >= 3; // Richiesto almeno 3 tipologie diverse
+        metric: varieta_tipologie_avanzata
+
+  # ── CALIBRAZIONE PROFESSIONALE ──────────────────────────────────────────────
+  - description: "[Calibrazione] Professionale — Layout pratico"
+    vars:
+      prompt_type: corpo
+      materia: Matematica
+      argomento: "Equazioni di primo grado"
+      livello: Istituto Professionale
+      durata: "45 minuti"
+      num_esercizi: 4
+      punti_totali: 80
+      mostra_punteggi: true
+      con_griglia: false
+      e_mat: true
+    assert:
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 4"
+      
+      # Layout pratico
+      - type: javascript
+        value: |
+          // Layout concreto e pratico
+          const sentences = output.split(/[.!?]+/).filter(s => s.trim().length > 0);
+          const avgSentenceLength = sentences.reduce((sum, s) => sum + s.split(/\s+/).length, 0) / sentences.length;
+          const complexWords = output.toLowerCase().match(/\b[a-z]{10,}\b/g) || [];
+          const abstractConcepts = /(teorema|postulato|assioma|ipotesi|dimostrazione)/i.test(output);
+          const practicalExamples = /esempio|pratica|applicazione|vita.*quotidiana/i.test(output);
+          
+          return avgSentenceLength <= 18 && complexWords.length <= 3 && !abstractConcepts && practicalExamples;
+        metric: layout_pratico
+
+  - description: "[Calibrazione] Primaria — Visual e semplice"
+    vars:
+      prompt_type: corpo
+      materia: Matematica
+      argomento: "Le frazioni"
+      livello: "Scuola Primaria (Elementari)"
+      durata: "30 minuti"
+      num_esercizi: 3
+      punti_totali: 60
+      mostra_punteggi: true
+      con_griglia: false
+      e_mat: false
+    assert:
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 3"
+      
+      # Layout child-friendly
+      - type: javascript
+        value: |
+          // Layout adatto ai bambini
+          const sentences = output.split(/[.!?]+/).filter(s => s.trim().length > 0);
+          const avgSentenceLength = sentences.reduce((sum, s) => sum + s.split(/\s+/).length, 0) / sentences.length;
+          const simpleWords = /(mela|gatto|scuola|casa|gioco|numero|conta|aggiungi|togli|disegna|colora)/i.test(output);
+          const complexTerms = /(derivata|integrale|teorema|algoritmo|funzione)/i.test(output);
+          const visualElements = /disegna|colora|disegna|figura|immagine/i.test(output);
+          const funExamples = /gioco|divertente|amichevole|facile/i.test(output);
+          
+          return avgSentenceLength <= 12 && simpleWords && !complexTerms && (visualElements || funExamples);
+        metric: layout_child_friendly
+
+  # ── CONTROLLO QUALITÀ AVANZATO ─────────────────────────────────────────────────
+  - description: "[QA] Correzione avanzata errori"
+    vars:
+      prompt_type: qa
+      materia: Matematica
+      livello: Liceo Scientifico
+      mostra_punteggi: true
+      punti_totali: 100
+      corpo_latex: |
+        \subsection*{Esercizio 1: Equazioni}
+        \begin{enumerate}[a)]
+        \item[a)] Risolvi $x^2 + 1 = 0$ in $\mathbb{R}$. (10 pt)
+        \item[b)] Trova le soluzioni di $2x - 6 = 0$. (10 pt)
+        \end{enumerate}
+        \subsection*{Esercizio 2: Disequazioni}
+        \begin{enumerate}[a)]
+        \item[a)] Risolvi $x^2 - 4 > 0$. (15 pt)
+        \end{enumerate}
+        \end{document}
+    assert:
+      - type: contains
+        value: "\\subsection*"
+      - type: contains
+        value: "\\end{document}"
+      
+      # Correzione intelligente
+      - type: javascript
+        value: |
+          // Rileva correzioni multiple
+          const hasImpossibleCorrection = /impossibile|nessuna soluzione|non.*soluzione|vuoto|non.*esiste/i.test(output);
+          const hasScoreCorrection = /punteggi|somma|totale.*100|35.*100|sbagliato.*punteggio/i.test(output);
+          const hasMathCorrection = /errore|sbagliato|corretto|corregge/i.test(output);
+          const hasStructureFix = /struttura|organizza|migliora/i.test(output);
+          
+          return hasImpossibleCorrection || hasScoreCorrection || (hasMathCorrection && hasStructureFix);
+        metric: correzione_intelligente
+
+  # ── NUOVI TEST: IMPAGINAZIONE PROFESSIONALE ───────────────────────────────────
+  - description: "[Format] Impaginazione professionale completa"
+    vars:
+      prompt_type: corpo
+      materia: "Informatica"
+      argomento: "Algoritmi e strutture dati"
+      livello: Liceo Scientifico
+      durata: "60 minuti"
+      num_esercizi: 4
+      punti_totali: 100
+      mostra_punteggi: true
+      con_griglia: true
+      e_mat: true
+    assert:
+      # Struttura completa
+      - type: javascript
+        value: "(output.match(/\\\\subsection\\*/g) || []).length === 4"
+      - type: javascript
+        value: "(output.match(/\\(\\d+ pt\\)/g) || []).length >= 4"
+      
+      # Impaginazione professionale avanzata
+      - type: javascript
+        value: |
+          // Struttura gerarchica completa
+          const hasSections = /\\subsection\*/.test(output);
+          const hasEnumerates = /\\begin\{enumerate\}/.test(output);
+          const hasItems = /\\item/.test(output);
+          const hasSubitems = (output.match(/\\item\s+\[?[a-z]\)?/g) || []).length >= 2;
+          const hasSpacing = /\\\\|\\vspace/.test(output);
+          
+          return hasSections && hasEnumerates && hasItems && hasSubitems && hasSpacing;
+        metric: struttura_gerarchica
+      
+      # Qualità tipografica professionale
+      - type: javascript
+        value: |
+          // Spaziatura e formattazione professionali
+          const lines = output.split('\n');
+          const emptyLines = lines.filter(line => line.trim() === '').length;
+          const hasProperSpacing = emptyLines >= 2 && emptyLines <= 6;
+          const hasNoOrphans = !lines.some(line => line.trim().length > 0 && line.trim().length < 10);
+          const hasMathMode = /\$[^$]+\$/.test(output);
+          
+          return hasProperSpacing && hasNoOrphans && hasMathMode;
+        metric: qualita_tipografica_professionale
+      
+      # Leggibilità ottimale
+      - type: javascript
+        value: |
+          // Balance testo/matematica
+          const textContent = output.replace(/\$[^$]*\$/g, '').replace(/\\[a-zA-Z]+\{[^}]*\}/g, '');
+          const mathContent = (output.match(/\$[^$]*\$/g) || []).join('');
+          const textWords = textContent.split(/\s+/).filter(w => w.length > 3).length;
+          const mathComplexity = mathContent.length;
+          
+          return textWords >= 50 && mathComplexity >= 20 && mathComplexity <= 200;
+        metric: leggibilita_ottimale
