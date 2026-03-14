@@ -5,13 +5,6 @@
 import streamlit as st
 from datetime import datetime, timezone
 
-# Training dashboard import (try/except per evitare errori)
-try:
-    from training_dashboard import render_training_dashboard, render_training_controls
-    TRAINING_DASHBOARD_AVAILABLE = True
-except ImportError:
-    TRAINING_DASHBOARD_AVAILABLE = False
-
 
 def _tempo_fa(iso_str: str) -> str:
     """Converte un timestamp ISO in formato umano relativo (es. '2 ore fa', 'ieri')."""
@@ -384,40 +377,19 @@ def render_sidebar(
                     ("👎 Insufficiente", stats.get('poor', 0), "#ef4444")
                 ]
                 
-                for label, count, color in quality_data:
-                    if count > 0:
-                        percentage = count / total * 100
-                        st.markdown(f"""
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.2rem 0;">
-                            <span style="font-size: 0.8rem;">{label}</span>
-                            <span style="font-size: 0.8rem; font-weight: 600;">{count} ({percentage:.0f}%)</span>
-                        </div>
-                        <div style="background: #e5e7eb; border-radius: 4px; height: 6px; margin: 2px 0;">
-                            <div style="background: {color}; width: {percentage}%; height: 100%; border-radius: 4px;"></div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                
-                # Validation score tracking
-                if hasattr(st.session_state, 'last_validation_score'):
-                    last_score = st.session_state.last_validation_score
-                    st.metric("🎯 Ultimo Score", f"{last_score:.2f}", 
-                             "Buono" if last_score > 0.7 else "Da migliorare")
-                
-                # Reset stats button
-                if st.button("🔄 Reset Statistiche", key="reset_stats", use_container_width=True):
-                    st.session_state.quality_stats = {'excellent': 0, 'good': 0, 'sufficient': 0, 'poor': 0}
-                    st.rerun()
-            else:
-                st.info("Nessun feedback raccolto ancora")
-        
-        # Training Dashboard (solo admin)
-        if is_admin and supabase_admin and TRAINING_DASHBOARD_AVAILABLE:
-            st.markdown("---")
-            st.markdown("### 🤖 Training AI")
-            render_training_dashboard(supabase_admin)
-            render_training_controls(supabase_admin)
 
-    return {
-        "modello_id":    modello_id,
-        "theme_changed": theme_changed,
-    }
+st.markdown('<div class="logout-btn-wrap">', unsafe_allow_html=True)
+if st.button("↩ Esci dall'account", key="logout_btn"):
+    from auth import cancella_sessione_cookie
+    cancella_sessione_cookie()
+    supabase_client.auth.sign_out()
+    st.session_state.utente          = None
+    st.session_state.supabase       = None
+    st.session_state.stage          = "INPUT"
+    st.rerun()
+st.markdown("</div>", unsafe_allow_html=True)
+
+return {
+    "modello_id":    modello_id,
+    "theme_changed": theme_changed,
+}

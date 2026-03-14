@@ -54,12 +54,6 @@ from ui_helpers import (
     _render_back_button, _make_katex_html, _render_sticky_header,
     _render_step_progress, _split_download_button, _render_breadcrumb,
 )
-# Training system imports
-from training_data import analyze_exercise_features, save_feedback, update_training_patterns
-from rating_system import render_feedback_buttons, render_feedback_prompt, get_feedback_summary
-from prompt_enhancer import enhance_prompt_with_training, should_use_training_enhancement
-from background_training import initialize_background_training, get_background_processor, get_training_dashboard_data
-from training_dashboard import render_training_dashboard, render_training_controls
 
 logger = logging.getLogger("verificai.main")
 try:
@@ -113,14 +107,6 @@ SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
 supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-
-# ── BACKGROUND TRAINING ───────────────────────────────────────────────────────
-# Inizializza il sistema di training silenzioso
-try:
-    initialize_background_training(supabase_admin)
-    logger.info("Background training system inizializzato")
-except Exception as e:
-    logger.warning(f"Impossibile inizializzare background training: {e}")
 
 # ── TEMA — inizializzazione ───────────────────────────────────────────────────
 # Tema default: carta (light). Fallback robusto per sessioni vecchie (aurora/luce/ecc.)
@@ -5635,70 +5621,6 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 #  STAGE_FINAL
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _salva_feedback(rating: str, gen_params: dict):
-    """
-    Salva il feedback di qualità e lo invia al database per analisi.
-    """
-    try:
-        # Salva nel session state per statistiche immediate
-        if not hasattr(st.session_state, 'quality_stats'):
-            st.session_state.quality_stats = {'excellent': 0, 'good': 0, 'sufficient': 0, 'poor': 0}
-        
-        st.session_state.quality_stats[rating] = st.session_state.quality_stats.get(rating, 0) + 1
-        
-        # Prepara i dati per il database
-        feedback_data = {
-            'rating': rating,
-            'materia': gen_params.get('materia', ''),
-            'argomento': gen_params.get('argomento', ''),
-            'difficolta': gen_params.get('difficolta', ''),
-            'num_esercizi': gen_params.get('num_esercizi', 0),
-            'punti_totali': gen_params.get('punti_totali', 0),
-            'modello_id': gen_params.get('modello_id', ''),
-            'ha_griglia': gen_params.get('con_griglia', False),
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'user_id': st.session_state.get('user_id', 'anonymous'),
-            'validation_score': getattr(st.session_state, 'last_validation_score', None),
-            'compilation_success': st.session_state.verifiche.get("A", {}).get("pdf") is not None
-        }
-        
-        # Invia al database (se disponibile)
-        if 'supabase' in st.session_state and st.session_state.supabase:
-            try:
-                st.session_state.supabase.table('quality_feedback').insert(feedback_data).execute()
-                logger.info(f"Feedback salvato: {rating} per {gen_params.get('materia', 'sconosciuta')}")
-            except Exception as e:
-                logger.warning(f"Impossibile salvare feedback al database: {e}")
-        
-        # Log locale per debugging
-        logger.info(f"FEEDBACK QUALITÀ: {rating} | {gen_params.get('materia', '')} | {gen_params.get('argomento', '')}")
-        
-    except Exception as e:
-        logger.error(f"Errore nel salvataggio feedback: {e}")
-
-    # ── FEEDBACK SILENZIOSO ─────────────────────────────────────────────────────
-    # Aggiungi pulsanti di feedback solo se l'utente ha effettuato il login
-    if st.session_state.get('utente') and st.session_state.get('supabase_admin'):
-        try:
-            # Recupera contenuto completo della verifica per feedback
-            verifica_content = reconstruct_latex(
-                st.session_state.review_preamble,
-                st.session_state.review_blocks
-            )
-            
-            # Mostra pulsanti feedback silenziosi
-            render_feedback_buttons(
-                supabase_admin=st.session_state.supabase_admin,
-                user_id=st.session_state.utente.id,
-                verifica_content=verifica_content,
-                materia=gp.get('materia', ''),
-                livello=gp.get('difficolta', ''),
-                key_prefix="review"
-            )
-        except Exception as e:
-            logger.warning(f"Errore rendering feedback buttons: {e}")
-
-
 def _render_stage_final():
     gp   = st.session_state.gen_params
     vA   = st.session_state.verifiche["A"]
@@ -5777,55 +5699,6 @@ def _render_stage_final():
             help="Scarica il PDF della verifica Fila A, già formattato e pronto per la stampa.",
         )
         st.markdown('</div>', unsafe_allow_html=True)
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    #  FEEDBACK QUALITÀ
-    # ═══════════════════════════════════════════════════════════════════════════
-    st.markdown(
-        '<div class="variant-section-label">VALUTA LA QUALITÀ DELLA VERIFICA GENERATA</div>',
-        unsafe_allow_html=True
-    )
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        if st.button("👍 Ottima", key="fb_excellent", use_container_width=True):
-            _salva_feedback("excellent", gp)
-            st.success("Grazie per il feedback! 🎉")
-            st.balloons()
-    
-    with col2:
-        if st.button("👍 Buona", key="fb_good", use_container_width=True):
-            _salva_feedback("good", gp)
-            st.success("Grazie per il feedback! 👍")
-    
-    with col3:
-        if st.button("😐 Sufficiente", key="fb_ok", use_container_width=True):
-            _salva_feedback("sufficient", gp)
-            st.info("Grazie per il feedback, cercheremo di migliorare! 📈")
-    
-    with col4:
-        if st.button("👎 Insufficiente", key="fb_poor", use_container_width=True):
-            _salva_feedback("poor", gp)
-            st.warning("Grazie per il feedback, ci stiamo già lavorando per migliorare! 🔧")
-    
-    # Mostra statistiche di qualità (se disponibili)
-    if hasattr(st.session_state, 'quality_stats'):
-        stats = st.session_state.quality_stats
-        st.markdown("---")
-        st.markdown("### 📊 Statistiche Qualità Generale")
-        
-        total = sum(stats.values())
-        if total > 0:
-            cols = st.columns(4)
-            with cols[0]:
-                st.metric("👍 Ottima", f"{stats.get('excellent', 0)}", f"{stats.get('excellent', 0)/total*100:.0f}%")
-            with cols[1]:
-                st.metric("👍 Buona", f"{stats.get('good', 0)}", f"{stats.get('good', 0)/total*100:.0f}%")
-            with cols[2]:
-                st.metric("😐 Sufficiente", f"{stats.get('sufficient', 0)}", f"{stats.get('sufficient', 0)/total*100:.0f}%")
-            with cols[3]:
-                st.metric("👎 Insufficiente", f"{stats.get('poor', 0)}", f"{stats.get('poor', 0)/total*100:.0f}%")
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  VARIANTI — 4 card in colonna
@@ -6312,26 +6185,6 @@ def _render_stage_final():
         '</div>',
         unsafe_allow_html=True
     )
-
-    # ── FEEDBACK SILENZIOSO ─────────────────────────────────────────────────────
-    # Aggiungi pulsanti di feedback solo se l'utente ha effettuato il login
-    if st.session_state.get('utente') and st.session_state.get('supabase_admin'):
-        try:
-            # Recupera contenuto completo della verifica per feedback
-            verifica_content = vA.get("latex", "")
-            
-            if verifica_content:
-                # Mostra pulsanti feedback silenziosi
-                render_feedback_buttons(
-                    supabase_admin=st.session_state.supabase_admin,
-                    user_id=st.session_state.utente.id,
-                    verifica_content=verifica_content,
-                    materia=gp.get('materia', ''),
-                    livello=gp.get('difficolta', ''),
-                    key_prefix="final"
-                )
-        except Exception as e:
-            logger.warning(f"Errore rendering feedback buttons in final: {e}")
 
     # ── Navigazione finale — in fondo alla pagina ─────────────────────────────
     st.markdown("<div style='height:1.4rem'></div>", unsafe_allow_html=True)
