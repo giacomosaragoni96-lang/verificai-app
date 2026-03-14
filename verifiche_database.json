@@ -2,19 +2,19 @@
   "verifiche": [
     {
       "id": "V0001",
-      "timestamp": "2026-03-14T16:02:12.933520",
+      "timestamp": "2026-03-14T16:03:45.092108",
       "scenario": {
-        "materia": "Chimica",
-        "livello": "Istituto Tecnico",
-        "argomento": "Reazioni chimiche",
-        "num_esercizi": 5,
+        "materia": "Inglese",
+        "livello": "Liceo Scientifico",
+        "argomento": "Grammar",
+        "num_esercizi": 2,
         "punti_totali": 40,
-        "durata": "1 ora e 30 minuti",
-        "mostra_punteggi": true,
-        "con_griglia": false
+        "durata": "1 ora",
+        "mostra_punteggi": false,
+        "con_griglia": true
       },
       "output": {
-        "titolo": "Reazioni chimiche e bilanciamento",
+        "titolo": "English Grammar",
         "A": {
-          "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Reazioni chimiche e bilanciamento} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Equilibrio Chimico}\nConsidera la seguente reazione di equilibrio:\n$\\text{N}_2\\text{(g)} + 3\\text{H}_2\\text{(g)} \\rightleftharpoons 2\\text{NH}_3\\text{(g)}$\nSe la concentrazione iniziale di $\\text{N}_2$ è $0.5 \\text{ M}$ e quella di $\\text{H}_2$ è $0.75 \\text{ M}$, e all'equilibrio si sono consumati $0.2 \\text{ M}$ di $\\text{NH}_3$ non sono stati formati $0.2 \\text{ M}$ di $\\text{NH}_3$, calcola le concentrazioni all'equilibrio di $\\text{N}_2$ e $\\text{H}_2$. (8 pt)\n\\subsection*{Esercizio 2: Stechiometria}\nCalcola la massa di ossigeno ($\\text{O}_2$) prodotta dalla decomposizione completa di $100 \\text{ g}$ di clorato di potassio ($\\text{KClO}_3$).\nLa reazione bilanciata è: $2\\text{KClO}_3\\text{(s)} \\rightarrow 2\\text{KCl(s)} + 3\\text{O}_2\\text{(g)}$.\nMassa molare $\\text{KClO}_3 = 122.55 \\text{ g/mol}$, massa molare $\\text{O}_2 = 32.00 \\text{ g/mol}$. (8 pt)\n\\subsection*{Esercizio 3: Tipi di Reazioni}\nClassifica le seguenti reazioni come sintesi, decomposizione, combustione, spostamento singolo o doppio spostamento:\n\\begin{itemize}\n    \n\\item[a)] $2\\text{Na} + \\text{Cl}_2 \\rightarrow 2\\text{NaCl}$ (2 pt)\n    \n\\item[b)] $\\text{CH}_4 + 2\\text{O}_2 \\rightarrow \\text{CO}_2 + 2\\text{H}_2\\text{O}$ (2 pt)\n    \n\\item[c)] $\\text{Zn} + \\text{CuSO}_4 \\rightarrow \\text{ZnSO}_4 + \\text{Cu}$ (2 pt)\n    \n\\item[d)] $2\\text{H}_2\\text{O}_2 \\rightarrow 2\\text{H}_2\\text{O} + \\text{O}_2$ (2 pt)\n\\end{itemize}\n\n\\subsection*{Esercizio 4: Bilanciamento e Tipi di Reagenti}\nBilancia la seguente equazione chimica e indica la classe di reazione:\n$\\text{Fe}_2\\text{(SO}_4)_3\\text{(aq)} + \\text{KOH(aq)} \\rightarrow \\text{Fe(OH)}_3\\text{(s)} + \\text{K}_2\\text{SO}_4\\text{(aq)}$ (4 pt)\nInoltre, identifica quali sono i reagenti e quali sono i prodotti. (4 pt)\n\n\\subsection*{Esercizio 5: Reazione Acido-Base}\n\nSi consideri la reazione tra acido cloridrico ($\\text{HCl}$) e idrossido di sodio ($\\text{NaOH}$).\n\\begin{itemize}\n    \n\\item[a)] Scrivi l'equazione chimica bilanciata della reazione. (2 pt)\n    \n\\item[b)] Si neutralizzano completamente $25.0 \\text{ mL}$ di una soluzione di $\\text{NaOH}$ con $30.0 \\text{ mL}$ di una soluzione di $\\text{HCl}$ $0.100 \\text{ M}$. Qual è la molarità della soluzione di $\\text{NaOH}$? (6 pt)\n\\end{itemize}\n\\end{document}",
+          "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: English Grammar} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e \n\nData:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\n\\subsection*{Esercizio 1: Studio di Funzione Lineare}\nConsidera la funzione $f(x) = 2x - 3$.\na) Determinare il dominio e il codominio di $f(x)$.\nb) Calcolare le coordinate del punto di intersezione del grafico di $f(x)$ con l'asse $y$.\nc) Verificare se il punto $P(4, 5)$ appartiene al grafico di $f(x)$.\n\n\\subsection*{Esercizio 2: Risoluzione di un Sistema Lineare}\nDeterminare i valori di $x$ e $y$ che soddisfano il seguente sistema di equazioni lineari:\n$$\n\\begin{cases}\n3x + y = 7 \\\\\nx - 2y = 0\n\\end{cases}\n$$\n\\end{document}",
           "pdf": 

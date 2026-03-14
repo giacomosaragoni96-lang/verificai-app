@@ -680,9 +680,37 @@ def mostra_risultati_finali(risultati):
                 except Exception as e:
                     st.warning(f"⚠️ Preview non disponibile: {e}")
                 
-                # Mostra info PDF
+                # Mostra info PDF con pulsante apertura
                 if risultato.get('pdf', {}).get('success'):
-                    st.success(f"📄 PDF generato: {os.path.basename(risultato['pdf']['pdf_file'])} ({risultato['pdf']['pdf_size']} bytes)")
+                    pdf_file = risultato['pdf']['pdf_file']
+                    pdf_size = risultato['pdf']['pdf_size']
+                    
+                    st.success(f"📄 PDF generato: {os.path.basename(pdf_file)} ({pdf_size} bytes)")
+                    
+                    # Pulsanti per PDF
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button(f"👁️ Apri PDF {risultato['id']}", key=f"open_pdf_{risultato['id']}"):
+                            try:
+                                import webbrowser
+                                import os
+                                webbrowser.open(f'file://{os.path.abspath(pdf_file)}')
+                                st.success(f"📂 PDF aperto nel browser")
+                            except Exception as e:
+                                st.error(f"❌ Errore apertura PDF: {e}")
+                    
+                    with col2:
+                        if st.button(f"💾 Scarica PDF {risultato['id']}", key=f"download_pdf_{risultato['id']}"):
+                            try:
+                                with open(pdf_file, 'rb') as f:
+                                    st.download_button(
+                                        label=f"⬇️ Download {os.path.basename(pdf_file)}",
+                                        data=f.read(),
+                                        file_name=os.path.basename(pdf_file),
+                                        mime="application/pdf"
+                                    )
+                            except Exception as e:
+                                st.error(f"❌ Errore download PDF: {e}")
                 else:
                     st.error(f"❌ PDF fallito: {risultato['pdf'].get('error', 'Errore sconosciuto')}")
                     
@@ -696,7 +724,7 @@ def mostra_risultati_finali(risultati):
     risultati_file = f"test_30_verifiche/risultati_completi_{timestamp}.json"
     
     with open(risultati_file, 'w', encoding='utf-8') as f:
-        json.dump({
+        json.dump(make_json_safe({
             "timestamp": datetime.now().isoformat(),
             "totali": totali,
             "media_voto": media,
@@ -704,7 +732,7 @@ def mostra_risultati_finali(risultati):
             "param_accuracy": param_accuracy,
             "pdf_rate": pdf_rate,
             "risultati": risultati
-        }, f, indent=2, ensure_ascii=False)
+        }), f, indent=2, ensure_ascii=False)
     
     st.info(f"💾 Risultati VerificAI salvati in: {risultati_file}")
 

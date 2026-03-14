@@ -1,0 +1,87 @@
+{
+  "id": 1,
+  "scenario": {
+    "materia": "Inglese",
+    "livello": "Liceo Scientifico",
+    "argomento": "Grammar",
+    "num_esercizi": 2,
+    "punti_totali": 40,
+    "durata": "1 ora",
+    "mostra_punteggi": false,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "English Grammar",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: English Grammar} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e \n\nData:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\n\\subsection*{Esercizio 1: Studio di Funzione Lineare}\nConsidera la funzione $f(x) = 2x - 3$.\na) Determinare il dominio e il codominio di $f(x)$.\nb) Calcolare le coordinate del punto di intersezione del grafico di $f(x)$ con l'asse $y$.\nc) Verificare se il punto $P(4, 5)$ appartiene al grafico di $f(x)$.\n\n\\subsection*{Esercizio 2: Risoluzione di un Sistema Lineare}\nDeterminare i valori di $x$ e $y$ che soddisfano il seguente sistema di equazioni lineari:\n$$\n\\begin{cases}\n3x + y = 7 \\\\\nx - 2y = 0\n\\end{cases}\n$$\n\\end{document}",
+        "pdf": "<BYTES:93805>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.4
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 2,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 40,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": false,
+      "presente": false,
+      "punteggio": 10
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_160312.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_160312.pdf",
+    "pdf_size": 15815,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Grammar}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 25,
+  "timestamp": "2026-03-14T16:03:13.893759",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Grammar}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-03-14T16:04:21.572673",
+  "totali": 5,
+  "media_voto": 17.0,
+  "success_rate": 0.0,
+  "param_accuracy": 0.0,
+  "pdf_rate": 100.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Inglese",
+        "livello": "Liceo Scientifico",
+        "argomento": "Grammar",
+        "num_esercizi": 2,
+        "punti_totali": 40,
+        "durata": "1 ora",
+        "mostra_punteggi": false,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "English Grammar",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: English Grammar} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e \n\nData:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\n\\subsection*{Esercizio 1: Studio di Funzione Lineare}\nConsidera la funzione $f(x) = 2x - 3$.\na) Determinare il dominio e il codominio di $f(x)$.\nb) Calcolare le coordinate del punto di intersezione del grafico di $f(x)$ con l'asse $y$.\nc) Verificare se il punto $P(4, 5)$ appartiene al grafico di $f(x)$.\n\n\\subsection*{Esercizio 2: Risoluzione di un Sistema Lineare}\nDeterminare i valori di $x$ e $y$ che soddisfano il seguente sistema di equazioni lineari:\n$$\n\\begin{cases}\n3x + y = 7 \\\\\nx - 2y = 0\n\\end{cases}\n$$\n\\end{document}",
+            "pdf": 
