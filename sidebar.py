@@ -257,6 +257,9 @@ def render_sidebar(
         if limite_raggiunto:
             st.warning(f"Limite mensile raggiunto ({LIMITE_MENSILE} verifiche). {_reset_str}.")
 
+        # Linea separatoria visibile
+        st.markdown(f'<div class="sb-divider"></div>', unsafe_allow_html=True)
+
         # ── CTA UPGRADE PRO ───────────────────────────────────────────────────
         if limite_raggiunto or _perc_uso >= 60:
             _rimaste = max(0, LIMITE_MENSILE - verifiche_mese_count)

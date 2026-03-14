@@ -9,15 +9,15 @@ def get_css(T: dict) -> str:
     • Effetti di caricamento professionali
     • Linguaggio non tecnico (hint, label)
     """
-    _SB_ACCENT = T.get("sidebar_accent", "#60A5FA")  # Blu azzurro più vibrante
-    _SB_BG_CSS = T.get("sidebar_bg", "linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)")  # Grigio molto chiaro
-    _SB_BORDER = T.get("sidebar_border", "#E2E8F0")  # Grigio chiaro per bordi
+    _SB_ACCENT = T.get("sidebar_accent",="#2563EB")  # Blu più scuro e contrastato
+    _SB_BG_CSS = T.get("sidebar_bg", "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)")  # Bianco puro a grigio molto chiaro
+    _SB_BORDER = T.get("sidebar_border", "#CBD5E1")  # Grigio medio per bordi più visibili
     _SB_INPUT_BG   = T.get("sidebar_input_bg", "#FFFFFF")  # Bianco puro per input
-    _SB_INPUT_TEXT = T.get("sidebar_input_text", "#1E293B")  # Grigio scuro per testo
+    _SB_INPUT_TEXT = T.get("sidebar_input_text", "#0F172A")  # Grigio molto scuro per massimo contrasto
     # La sidebar ha sempre sfondo chiaro → i colori testo DEVONO essere scuri
     # indipendentemente dal tema principale (chiaro/scuro).
     _SB_TEXT   = _SB_INPUT_TEXT
-    _SB_MUTED  = "#64748B"   # Grigio medio per label
+    _SB_MUTED  = "#475569"   # Grigio scuro per label più visibili
 
     _is_light = _is_light_color(T["bg"])
 
@@ -558,14 +558,13 @@ def get_css(T: dict) -> str:
     flex-shrink: 0 !important;
   }}
 
-  /* ── Sidebar: sezione divider sottile ── */
+  /* ── Sidebar: sezione divider visibile ── */
   .sb-divider {{
-    display: none !important;
-    height: 0 !important;
-    background: transparent !important;
+    height: 1px !important;
+    background: {_SB_BORDER} !important;
     border: none !important;
-    margin: 0 !important;
-    opacity: 0 !important;
+    margin: 1.5rem 0 !important;
+    opacity: 0.6 !important;
   }}
 
   /* ── Sidebar: monthly usage bar ── */
