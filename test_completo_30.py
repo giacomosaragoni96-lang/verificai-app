@@ -34,11 +34,11 @@ def render_test_completo_30():
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("🚀 LANCIA TEST COMPLETO - 30 VERIFICHE", type="primary", use_container_width=True):
+        if st.button("🚀 LANCIA TEST COMPLETO - 30 VERIFICHE", type="primary", use_container_width=True, key="start_test_30"):
             run_test_completo_30_verifiche()
     
     with col2:
-        if st.button("🗄️ GESTISCI DATABASE VERIFICHE", type="secondary", use_container_width=True):
+        if st.button("🗄️ GESTISCI DATABASE VERIFICHE", type="secondary", use_container_width=True, key="manage_db"):
             st.session_state.show_database = True
     
     # Mostra database se richiesto
@@ -46,7 +46,7 @@ def render_test_completo_30():
         from verifiche_database import render_database_manager
         render_database_manager()
         
-        if st.button("← Torna al Test", type="secondary"):
+        if st.button("← Torna al Test", type="secondary", key="back_to_test"):
             st.session_state.show_database = False
             st.rerun()
 
@@ -64,7 +64,7 @@ def run_test_completo_30_verifiche():
         mostra_risultati_finali(st.session_state.test_30_results)
         
         # Pulsante per nuovo test
-        if st.button("🔄 LANCIA NUOVO TEST - 30 VERIFICHE", type="secondary", use_container_width=True):
+        if st.button("🔄 LANCIA NUOVO TEST - 30 VERIFICHE", type="secondary", use_container_width=True, key="new_test_30"):
             st.session_state.test_30_results = None
             st.session_state.test_30_running = True
             st.rerun()
@@ -146,7 +146,7 @@ def run_test_completo_30_verifiche():
             st.rerun()
     
     # Inizia il test
-    if st.button("🚀 LANCIA TEST COMPLETO - 30 VERIFICHE", type="primary", use_container_width=True):
+    if st.button("🚀 LANCIA TEST COMPLETO - 30 VERIFICHE", type="primary", use_container_width=True, key="start_test_30"):
         st.session_state.test_30_running = True
         st.rerun()
 
