@@ -1,0 +1,19 @@
+{
+  "id": 2,
+  "scenario": {
+    "materia": "Fisica",
+    "livello": "Liceo Scientifico",
+    "argomento": "Ottica",
+    "num_esercizi": 2,
+    "punti_totali": 100,
+    "durata": "1 ora e 30 minuti",
+    "mostra_punteggi": true,
+    "con_griglia": false
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Ottica fondamentale",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Ottica fondamentale} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Lenti Sottili e Immagini}\nUn oggetto reale di altezza $h_o = 5.0$ cm è posto a una distanza $d_o = 20.0$ cm da una lente convergente con lunghezza focale $f = 10.0$ cm.\n\\begin{enumerate}[a)]\n    \\item Calcolare la distanza dell'immagine dalla lente ($d_i$) e l'ingrandimento trasversale ($M$). (25 pt)\n    \\item Determinare l'altezza dell'immagine ($h_i$) e descrivere se l'immagine è reale o virtuale, dritta o invertita. (25 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Interferenza e Diffrazione}\nIn un esperimento di diffrazione da singola fenditura, la luce monocromatica di lunghezza d'onda $\\lambda = 630$ nm incide su una fenditura larga $a = 0.050$ mm.\n\\begin{enumerate}[a)]\n    \\item Calcolare l'angolo di diffrazione ($\\theta$) corrispondente al primo minimo di intensità su uno schermo posto a grande distanza. (20 pt)\n    \\item Determinare la distanza tra il massimo centrale e il primo minimo sullo schermo, sapendo che la distanza schermo-fenditura è $L = 1.5$ m. (20 pt)\n    \\item Spiegare brevemente come cambierebbe la figura di diffrazione se si utilizzasse luce con lunghezza d'onda maggiore e se si aumentasse la larghezza della fenditura. (10 pt)\n\\end{enumerate}\n\\end{document}",
+        "pdf": 

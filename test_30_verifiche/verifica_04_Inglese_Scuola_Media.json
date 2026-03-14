@@ -1,0 +1,19 @@
+{
+  "id": 4,
+  "scenario": {
+    "materia": "Inglese",
+    "livello": "Scuola Media",
+    "argomento": "Writing",
+    "num_esercizi": 6,
+    "punti_totali": 60,
+    "durata": "1 ora",
+    "mostra_punteggi": false,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Writing Skills Assessment",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Writing Skills Assessment} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e \n\nData:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\n\\subsection*{Esercizio 1: Richiamo di Funzioni Lineari}\n\nData la funzione lineare $f(x) = 3x - 2$, calcolare il valore di $f(5)$.\n\n\\subsection*{Esercizio 2: Analisi di un'Equazione Quadratica}\n\nSi consideri l'equazione quadratica $x^2 - 5x + 6 = 0$.\n\\begin{enumerate}[a)]\n\\item Determinare le radici dell'equazione.\n\\item Calcolare la somma e il prodotto delle radici.\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Comprensione Concettuale dei Limiti}\nDefinire il concetto di limite di una funzione per $x$ che tende a un valore finito.\n\n\\subsection*{Esercizio 4: Vero o Falso}\nAffermare se la seguente proposizione è vera o falsa, giustificando brevemente la risposta.\n\"La derivata di una costante è sempre zero.\"\n$\\square$ Vero $\\quad\\square$ Falso\n\n\\subsection*{Esercizio 5: Applicazione delle Derivate}\n\nTrovare l'equazione della retta tangente alla funzione $f(x) = x^3 - 2x$ nel punto di ascissa $x=1$.\n\n\\subsection*{Esercizio 6: Scelta Multipla - Integrali Indefiniti}\nQuale delle seguenti funzioni è una primitiva della funzione $f(x) = 2x + \\cos(x)$?\n\\begin{enumerate}[a)]\n\\item $x^2 - \\sin(x) + C$\n\\item $x^2 + \\sin(x) + C$\n\\item $2x + \\sin(x) + C$\n\\item $x^2 + \\cos(x) + C$\n\\end{enumerate}\n\\end{document}",
+        "pdf": 

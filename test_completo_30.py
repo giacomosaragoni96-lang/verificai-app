@@ -111,22 +111,16 @@ def render_test_completo_30():
                         risultati.append(risultato_completo)
                         
                         # Salva singola verifica (versione JSON-safe)
-                        risultato_json_safe = {
+                        risultato_json_safe = make_json_safe({
                             "id": i + 1,
                             "scenario": scenario,
                             "generazione": result,
                             "analisi": analisi,
-                            "pdf": {
-                                "success": pdf_result.get("success", False),
-                                "filename": pdf_result.get("filename", ""),
-                                "error": pdf_result.get("error", ""),
-                                "latex_content": pdf_result.get("latex_content", "")
-                                # Escludiamo dati binari come "pdf_bytes"
-                            },
+                            "pdf": pdf_result,
                             "punteggio_finale": punteggio_finale,
                             "timestamp": datetime.now().isoformat(),
                             "latex_completo": pdf_result.get("latex_content", latex_content)
-                        }
+                        })
                         
                         filename = f"test_30_verifiche/verifica_{i+1:02d}_{scenario['materia']}_{scenario['livello'].replace(' ', '_')}.json"
                         with open(filename, 'w', encoding='utf-8') as f:
@@ -288,6 +282,22 @@ def genera_verifica_reale(scenario):
             "error": str(e),
             "traceback": traceback.format_exc()
         }
+
+def make_json_safe(obj):
+    """Rimuove dati non JSON-serializzabili da un dizionario"""
+    import json
+    from datetime import datetime
+    
+    if isinstance(obj, dict):
+        return {k: make_json_safe(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [make_json_safe(item) for item in obj]
+    elif isinstance(obj, (bytes, bytearray)):
+        return f"<BYTES:{len(obj)}>"
+    elif isinstance(obj, datetime):
+        return obj.isoformat()
+    else:
+        return obj
 
 def analizza_con_promptfoo(output, scenario):
     """Analisi output con stile PromptFoo focalizzato su VerificAI"""
