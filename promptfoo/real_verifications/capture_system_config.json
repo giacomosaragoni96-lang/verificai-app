@@ -1,0 +1,29 @@
+{
+  "monitoring": {
+    "output_directory": "real_verifications",
+    "auto_capture": true,
+    "timestamp_format": "%Y%m%d_%H%M%S",
+    "backup_enabled": true
+  },
+  "validation_rules": {
+    "required_sections": [
+      "\\subsection*",
+      "\\begin{enumerate}",
+      "\\item"
+    ],
+    "required_elements": [
+      "pt",
+      "punti",
+      "esercizi"
+    ],
+    "quality_checks": [
+      "brackets_bilanciati",
+      "spaziatura_operatori"
+    ]
+  },
+  "integration_points": [
+    "main.py -> dopo generazione",
+    "docx_export.py -> prima export",
+    "generation.py -> dopo prompt"
+  ]
+}
