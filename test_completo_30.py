@@ -9,6 +9,7 @@ import os
 import sys
 from datetime import datetime
 import re  # 🔧 FIX: Import mancante!
+import random  # 🔧 FIX: Import mancante per scenari!
 from pathlib import Path
 import subprocess
 from pathlib import Path
