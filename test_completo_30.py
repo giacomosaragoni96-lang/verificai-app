@@ -96,7 +96,8 @@ def render_test_completo_30():
                             "analisi": analisi,
                             "pdf": pdf_result,
                             "punteggio_finale": punteggio_finale,
-                            "timestamp": datetime.now().isoformat()
+                            "timestamp": datetime.now().isoformat(),
+                            "latex_completo": pdf_result.get("latex_content", result["output"])  # Salva LaTeX completo
                         }
                         
                         risultati.append(risultato_completo)
@@ -588,43 +589,48 @@ def mostra_risultati_finali(risultati):
             # Preview output
             with st.expander(f"📄 Preview Output Completo - {risultato['id']}"):
                 # Mostra codice LaTeX completo
-                st.markdown("**📝 Codice LaTeX Completo:**")
-                st.code(risultato['generazione']['output'], language='latex')
+                latex_completo = risultato.get('latex_completo', risultato['generazione']['output'])
                 
-                # Mostra preview renderizzata se disponibile
-                if risultato.get('pdf', {}).get('success'):
-                    st.markdown("**📄 Preview Renderizzata:**")
-                    try:
-                        # Prova a mostrare una preview testuale del LaTeX
-                        latex_content = risultato['generazione']['output']
-                        
-                        # Estrai titolo ed esercizi principali
-                        import re
-                        
-                        # Cerca esercizi
-                        esercizi = re.findall(r'\\subsection\*\{([^}]+)\}', latex_content)
-                        punti = re.findall(r'\((\d+)\s*pt\)', latex_content)
-                        
-                        st.markdown(f"**📋 Struttura Verifica:**")
-                        st.write(f"- **Materia:** {risultato['scenario']['materia']}")
-                        st.write(f"- **Esercizi trovati:** {len(esercizi)}")
-                        st.write(f"- **Punti totali:** {sum(int(p) for p in punti)}")
-                        
-                        if esercizi:
-                            st.markdown("**📝 Esercizi:**")
-                            for i, esercizio in enumerate(esercizi[:5], 1):  # Primi 5
-                                st.write(f"{i}. {esercizio}")
-                            if len(esercizi) > 5:
-                                st.write(f"... e altri {len(esercizi) - 5} esercizi")
-                        
-                    except Exception as e:
-                        st.warning(f"⚠️ Preview non disponibile: {e}")
+                st.markdown("**📝 Codice LaTeX Completo:**")
+                st.code(latex_completo, language='latex')
+                
+                # Mostra preview renderizzata
+                st.markdown("**📄 Preview Renderizzata:**")
+                try:
+                    # Estrai titolo ed esercizi principali
+                    import re
+                    
+                    # Cerca esercizi
+                    esercizi = re.findall(r'\\subsection\*\{([^}]+)\}', latex_completo)
+                    punti = re.findall(r'\((\d+)\s*pt\)', latex_completo)
+                    
+                    st.markdown(f"**📋 Struttura Verifica:**")
+                    st.write(f"- **Materia:** {risultato['scenario']['materia']}")
+                    st.write(f"- **Esercizi trovati:** {len(esercizi)}")
+                    st.write(f"- **Punti totali:** {sum(int(p) for p in punti)}")
+                    st.write(f"- **Lunghezza LaTeX:** {len(latex_completo)} caratteri")
+                    st.write(f"- **Contiene \\end{{document}}:** {'✅' if '\\end{document}' in latex_completo else '❌'}")
+                    
+                    if esercizi:
+                        st.markdown("**📝 Esercizi:**")
+                        for i, esercizio in enumerate(esercizi[:5], 1):  # Primi 5
+                            st.write(f"{i}. {esercizio}")
+                        if len(esercizi) > 5:
+                            st.write(f"... e altri {len(esercizi) - 5} esercizi")
+                    
+                except Exception as e:
+                    st.warning(f"⚠️ Preview non disponibile: {e}")
                 
                 # Mostra info PDF
                 if risultato.get('pdf', {}).get('success'):
                     st.success(f"📄 PDF generato: {os.path.basename(risultato['pdf']['pdf_file'])} ({risultato['pdf']['pdf_size']} bytes)")
                 else:
                     st.error(f"❌ PDF fallito: {risultato['pdf'].get('error', 'Errore sconosciuto')}")
+                    
+                    # Mostra errore LaTeX se disponibile
+                    if 'latex_error' in risultato['pdf']:
+                        st.markdown("**🔍 Errore LaTeX:**")
+                        st.code(risultato['pdf']['latex_error'][:500], language='text')
     
     # Salva risultati completi VerificAI-focused
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
