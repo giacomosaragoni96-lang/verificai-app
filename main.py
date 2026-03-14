@@ -75,9 +75,47 @@ def render_admin_page():
             submitted = st.form_submit_button("🚀 Genera Test", type="primary")
             
             if submitted:
-                st.success("✅ Test configurato!")
-                st.info("📝 Sistema di generazione test in fase di sviluppo")
-                st.code(f"""
+                with st.spinner("🔄 Generazione test in corso..."):
+                    try:
+                        # Genera test reale usando il sistema esistente
+                        from prompts import prompt_corpo_verifica
+                        from config import CALIBRAZIONE_SCUOLA
+                        
+                        # Calibrazione
+                        calibrazione = CALIBRAZIONE_SCUOLA.get(livello, "")
+                        
+                        # Parametri prompt
+                        prompt_params = {
+                            "materia": materia,
+                            "argomento": argomento,
+                            "calibrazione": calibrazione,
+                            "durata": durata,
+                            "num_esercizi": num_esercizi,
+                            "punti_totali": punti_totali,
+                            "mostra_punteggi": True,
+                            "con_griglia": True,
+                            "note_generali": "",
+                            "istruzioni_esercizi": "",
+                            "e_mat": materia in ["Matematica", "Fisica"],
+                            "titolo_header": "",
+                            "preambolo_fisso": "",
+                            "mathpix_context": None
+                        }
+                        
+                        # Genera prompt
+                        prompt = prompt_corpo_verifica(**prompt_params)
+                        
+                        # Chiama API Gemini
+                        import google.generativeai as genai
+                        model = genai.GenerativeModel('gemini-2.5-flash-lite')
+                        response = model.generate_content(prompt)
+                        output = response.text
+                        
+                        # Mostra risultati
+                        st.success("✅ Test generato con successo!")
+                        
+                        # Configurazione test
+                        st.code(f"""
 Test Configuration:
 - Materia: {materia}
 - Livello: {livello}
@@ -85,7 +123,101 @@ Test Configuration:
 - Esercizi: {num_esercizi}
 - Punti: {punti_totali}
 - Durata: {durata}
-                """)
+                        """)
+                        
+                        # Output generato
+                        st.markdown("### 📄 Output LaTeX Generato")
+                        st.code(output, language='latex')
+                        
+                        # Valutazione automatica
+                        st.markdown("### 🔍 Valutazione Automatica")
+                        
+                        import re
+                        
+                        # 1. Numero esercizi
+                        subsections = len(re.findall(r'\\subsection\*', output))
+                        esercizi_ok = subsections == num_esercizi
+                        
+                        # 2. Punteggi esatti
+                        points = re.findall(r'\((\d+)\s*pt\)', output)
+                        total_points = sum(int(p) for p in points)
+                        punti_ok = total_points == punti_totali
+                        
+                        # 3. Qualità matematica
+                        math_formulas = len(re.findall(r'\$[^$]*\$', output))
+                        math_ok = math_formulas >= 2 if materia in ["Matematica", "Fisica"] else True
+                        
+                        # 4. Brackets bilanciati
+                        clean = output.replace(r'\{', '').replace(r'\}', '')
+                        depth = 0
+                        brackets_ok = True
+                        for char in clean:
+                            if char == '{': depth += 1
+                            elif char == '}': depth -= 1
+                            if depth < 0: 
+                                brackets_ok = False
+                                break
+                        if depth != 0: brackets_ok = False
+                        
+                        # Mostra risultati valutazione
+                        col1, col2, col3, col4 = st.columns(4)
+                        with col1:
+                            st.metric("Esercizi", f"{'✅' if esercizi_ok else '❌'} {subsections}/{num_esercizi}")
+                        with col2:
+                            st.metric("Punti", f"{'✅' if punti_ok else '❌'} {total_points}/{punti_totali}")
+                        with col3:
+                            st.metric("Formule", f"{'✅' if math_ok else '❌'} {math_formulas}")
+                        with col4:
+                            st.metric("LaTeX", f"{'✅' if brackets_ok else '❌'} Bilanciati")
+                        
+                        # Score finale
+                        passed = sum([esercizi_ok, punti_ok, math_ok, brackets_ok])
+                        score = (passed / 4) * 100
+                        
+                        st.markdown(f"### 📊 Score Finale: {score:.1f}%")
+                        st.progress(score / 100)
+                        
+                        # Salva test (opzionale)
+                        if st.button("💾 Salva Test", key="save_test"):
+                            import json
+                            from datetime import datetime
+                            
+                            test_data = {
+                                "scenario": {
+                                    "materia": materia,
+                                    "livello": livello,
+                                    "argomento": argomento,
+                                    "num_esercizi": num_esercizi,
+                                    "punti_totali": punti_totali,
+                                    "durata": durata
+                                },
+                                "output": output,
+                                "evaluation": {
+                                    "score": score,
+                                    "passed": passed,
+                                    "total": 4,
+                                    "esercizi_ok": esercizi_ok,
+                                    "punti_ok": punti_ok,
+                                    "math_ok": math_ok,
+                                    "brackets_ok": brackets_ok
+                                },
+                                "timestamp": datetime.now().isoformat()
+                            }
+                            
+                            # Crea directory se non esiste
+                            import os
+                            os.makedirs("admin_tests", exist_ok=True)
+                            
+                            # Salva file
+                            filename = f"admin_tests/test_{materia}_{livello}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                            with open(filename, 'w', encoding='utf-8') as f:
+                                json.dump(test_data, f, indent=2, ensure_ascii=False)
+                            
+                            st.success(f"✅ Test salvato in {filename}")
+                        
+                    except Exception as e:
+                        st.error(f"❌ Errore generazione: {e}")
+                        st.info("📝 Sistema di generazione test in fase di sviluppo")
     
     elif page == "📊 Storico Test":
         st.markdown("## 📊 Storico Test")
