@@ -1,0 +1,445 @@
+{
+  "timestamp": "2026-03-14T16:12:37.130232",
+  "totali": 5,
+  "media_voto": 18.0,
+  "success_rate": 0.0,
+  "param_accuracy": 0.0,
+  "pdf_rate": 100.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Storia",
+        "livello": "Liceo Scientifico",
+        "argomento": "Guerra mondiale",
+        "num_esercizi": 4,
+        "punti_totali": 100,
+        "durata": "45 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": false
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Le guerre mondiali",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Le guerre mondiali} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Le Cause della Grande Guerra}\nIndividuare e descrivere brevemente tre fattori scatenanti principali che condussero allo scoppio della Prima Guerra Mondiale nel 1914. (33 pt)\n\\subsection*{Esercizio 2: La Guerra di Trincea}\nSi consideri una linea di trincea con lunghezze $L_1 = 1500$ metri e $L_2 = 1200$ metri, separate da una zona neutrale di $d = 100$ metri. Un proiettile sparato da un punto $P_1$ sulla trincea 1 raggiunge un bersaglio sulla trincea 2 se la sua traiettoria interseca la zona neutrale. Assumendo che la traiettoria sia un segmento rettilineo e che la probabilità di colpire un punto specifico sulla trincea 2 sia uniforme rispetto alla sua lunghezza, determinare la probabilità che un proiettile sparato a caso da un punto qualsiasi della trincea 1 colpisca un punto qualsiasi della trincea 2. (33 pt)\n\\subsection*{Esercizio 3: Le Principali Battaglie del Fronte Occidentale}\nPer ciascuna delle seguenti battaglie, indicare l'anno in cui ebbe luogo e una caratteristica saliente:\n\\begin{enumerate}[a)]\n    \\item Battaglia della Somme\n    \\item Battaglia di Verdun\n    \\item Battaglia di Passchendaele\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Le Conseguenze del Conflitto}\nIl Trattato di Versailles impose alla Germania pesanti riparazioni di guerra. Se la somma totale delle riparazioni fosse stata $S = 200$ miliardi di marchi oro, e la Germania avesse pagato inizialmente il $15\\%$ di tale somma, calcolare la cifra pagata e la percentuale della somma restante da saldare. (34 pt)\n\n\\end{document}",
+            "pdf": "<BYTES:81410>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 4,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 100,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 5
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161150.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161150.pdf",
+        "pdf_size": 17307,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Guerra mondiale}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 20,
+      "timestamp": "2026-03-14T16:11:51.045414",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Guerra mondiale}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 2,
+      "scenario": {
+        "materia": "Matematica",
+        "livello": "Scuola Media",
+        "argomento": "Trigonometria",
+        "num_esercizi": 4,
+        "punti_totali": 50,
+        "durata": "1 ora e 30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": false
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Verifica di Trigonometria",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Verifica di Trigonometria} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Identità e Valori Fondamentali}\nSemplificare la seguente espressione utilizzando le identità trigonometriche fondamentali:\n$$ \\frac{\\sin(x) \\cos(x)}{1 - \\cos^2(x)} $$\nDeterminare il valore esatto di $\\cos(\\frac{\\pi}{3})$ e $\\sin(\\frac{\\pi}{6})$. (12 pt)\n\\subsection*{Esercizio 2: Risoluzione di Equazioni Trigonometriche}\nTrovare tutte le soluzioni reali dell'equazione:\n$$ 2 \\sin^2(x) - \\sin(x) = 0 $$\nnell'intervallo $[0, 2\\pi)$. (13 pt)\n\\subsection*{Esercizio 3: Applicazione nel Triangolo}\nIn un triangolo $ABC$, si conoscono i lati $a=5$, $b=7$ e l'angolo $\\gamma = 60^\\circ$.\n\\begin{enumerate}[a)]\n    \\item Calcolare la lunghezza del lato $c$. (7 pt)\n    \\item Calcolare il valore del coseno degli angoli $\\alpha$ e $\\beta$. (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Studio di Funzione Trigonometrica}\n\nSi consideri la funzione $f(x) = 3 \\cos(2x)$.\n\\begin{enumerate}[a)]\n    \\item Determinare il periodo e l'ampiezza della funzione. (4 pt)\n    \\item \n\nTrovare i valori di $x$ nell'intervallo $[0, 2\\pi)$ per cui $f(x) = 0$. (5 pt)\n    \\item Dire se l'affermazione è Vera o Falsa: La funzione $f(x)$ è pari. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (4 pt)\n\\end{enumerate}\n\\end{document}",
+            "pdf": "<BYTES:118219>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 4,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 50,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 5
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161157.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161157.pdf",
+        "pdf_size": 18249,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Trigonometria}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 20,
+      "timestamp": "2026-03-14T16:11:58.739372",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Trigonometria}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 3,
+      "scenario": {
+        "materia": "Matematica",
+        "livello": "Liceo Classico",
+        "argomento": "Statistica",
+        "num_esercizi": 6,
+        "punti_totali": 40,
+        "durata": "1 ora",
+        "mostra_punteggi": true,
+        "con_griglia": false
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Statistica",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Statistica} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Concetti di Base}\nIndica se le seguenti affermazioni sono Vere (V) o False (F).\n\\begin{enumerate}[a)]\n    \\item La media aritmetica di un insieme di dati è sempre maggiore o uguale al valore minimo dei dati. $\\square$ V $\\quad\\square$ F\n    \\item La mediana di un insieme di dati è il valore che compare con maggiore frequenza. $\\square$ V $\\quad\\square$ F\n    \\item La deviazione standard misura la dispersione dei dati attorno alla media. $\\square$ V $\\quad\\square$ F\n    \\item In un'analisi statistica, la popolazione è un sottoinsieme del campione. $\\square$ V $\\quad\\square$ F\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Calcolo della Media e della Mediana}\nDato il seguente insieme di voti ottenuti da uno studente in 7 materie: $7, 8, 6, 9, 7, 8, 5$.\nCalcola la media aritmetica e la mediana di questi voti. (8 pt)\n\\subsection*{Esercizio 3: Calcolo della Varianza}\nConsidera il seguente campione di 5 misurazioni di una grandezza fisica: $10.2, 10.5, 10.1, 10.3, 10.4$.\nCalcola la varianza campionaria di queste misurazioni. (8 pt)\n\\subsection*{Esercizio 4: Interpretazione di un Grafico}\nSi osservi il seguente grafico che rappresenta la distribuzione delle età di un gruppo di persone.\n\n[Grafico]\nQual è la classe di età con la frequenza maggiore? Qual è la moda della distribuzione? (8 pt)\n\\subsection*{Esercizio 5: Probabilità Condizionata}\nIn una scatola ci sono 5 palline rosse e 3 palline blu. Si estraggono due palline senza reinserimento.\nQual è la probabilità che la seconda pallina estratta sia blu, sapendo che la prima pallina estratta era rossa? (8 pt)\n\\subsection*{Esercizio 6: Analisi di una Distribuzione}\nSi consideri la seguente serie di dati relativi ai tempi di reazione (in secondi) di 10 soggetti: $0.8, 1.1, 0.9, 1.0, 0.7, 1.2, 0.9, 1.1, 0.8, 1.0$.\nCalcola la deviazione standard della popolazione per questi tempi di reazione. (8 pt)\n\n\\end{document}",
+            "pdf": "<BYTES:80870>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 6,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 40,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 5
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161209.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161209.pdf",
+        "pdf_size": 15353,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Statistica}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 20,
+      "timestamp": "2026-03-14T16:12:10.636266",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Statistica}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 4,
+      "scenario": {
+        "materia": "Italiano",
+        "livello": "Istituto Tecnico",
+        "argomento": "Analisi del testo poetico",
+        "num_esercizi": 4,
+        "punti_totali": 30,
+        "durata": "2 ore",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Analisi del testo poetico",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Italiano: Analisi del testo poetico} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Figure Piane}\nSi consideri un rettangolo con base $b$ e altezza $h$. Il perimetro del rettangolo è $24$ cm e l'area è $32$ cm$^2$. Determinare le lunghezze della base e dell'altezza. (7 pt)\n\\subsection*{Esercizio 2: Geometria Solida}\nUn cono circolare retto ha raggio di base $r = 3$ cm e altezza $h = 4$ cm. Calcolare la misura della superficie laterale e del volume del cono. (7 pt)\n\\subsection*{Esercizio 3: Equazioni e Disuguaglianze}\nRisolvere la seguente disequazione e indicare l'intervallo soluzione:\n$2(x-3)^2 - (x+1)(x-1) < 5x^2 - 2x + 10$ (8 pt)\n\\subsection*{Esercizio 4: Probabilità}\nIn un'urna sono presenti 5 palline rosse, 7 palline blu e 3 palline verdi. Se si estraggono due palline senza reimmissione, qual è la probabilità che entrambe siano blu? (8 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 7 & 7 & 8 & 8 & 30 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:86677>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 4,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 30,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161218.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161218.pdf",
+        "pdf_size": 16649,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Analisi del testo poetico}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:12:19.215574",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Analisi del testo poetico}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 5,
+      "scenario": {
+        "materia": "Chimica",
+        "livello": "Scuola Media",
+        "argomento": "Soluzioni",
+        "num_esercizi": 7,
+        "punti_totali": 80,
+        "durata": "1 ora",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Le soluzioni chimiche",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Le soluzioni chimiche} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Concentrazione Molare}\nCalcolare la concentrazione molare di una soluzione acquosa di cloruro di sodio (NaCl) preparata sciogliendo 11.7 g di NaCl in acqua fino a ottenere un volume finale di 500 mL.\nDato: Massa molare di NaCl = 58.44 g/mol. (13 pt)\n\\subsection*{Esercizio 2: Percentuale in Massa}\nUna soluzione è preparata sciogliendo 20 g di soluto in 180 g di solvente. Determinare la percentuale in massa del soluto nella soluzione. (13 pt)\n\\subsection*{Esercizio 3: Diluizione}\nSi desidera preparare 250 mL di una soluzione di acido solforico (H$_2$SO$_4$) a 0.5 M partendo da una soluzione stock di H$_2$SO$_4$ 18 M. Calcolare il volume di soluzione stock necessario. (13 pt)\n\\subsection*{Esercizio 4: Molarità e Densità}\nUna soluzione acquosa di acido nitrico (HNO$_3$) ha una concentrazione del 30% in massa e una densità di 1.18 g/mL. Calcolare la molarità di questa soluzione.\nDato: Massa molare di HNO$_3$ = 63.01 g/mol. (13 pt)\n\\subsection*{Esercizio 5: Solubilità}\nLa solubilità del solfato di rame(II) (CuSO$_4$) in acqua a 25°C è di circa 30 g per 100 g di acqua. Determinare la massa massima di CuSO$_4$ che può essere sciolta in 250 g di acqua a questa temperatura. (14 pt)\n\\subsection*{Esercizio 6: Percentuale in Volume}\nUna soluzione di etanolo in acqua ha un volume totale di 200 mL. Se contiene 40 mL di etanolo puro, qual è la sua percentuale in volume?\nSelezionare la risposta corretta:\n\\begin{enumerate}\n    \\item 10%\n    \\item 20%\n    \\item 25%\n    \\item 40%\n\\end{enumerate}\n\n\\subsection*{Esercizio 7: Proprietà Collative - Pressione Osmotica}\nSpiegare brevemente perché l'aggiunta di un soluto non volatile a un solvente puro abbassa la sua pressione di vapore. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (14 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\multicolumn{1}{c||}{\\textbf{7}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 13 & 13 & 13 & 13 & 14 & — & 14 & 80 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:82282>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 7,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 80,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161228.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161228.pdf",
+        "pdf_size": 16626,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Soluzioni}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:12:29.358031",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Soluzioni}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    }
+  ]
+}

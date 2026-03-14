@@ -2,19 +2,19 @@
   "verifiche": [
     {
       "id": "V0001",
-      "timestamp": "2026-03-14T16:09:50.254486",
+      "timestamp": "2026-03-14T16:12:29.361423",
       "scenario": {
-        "materia": "Inglese",
-        "livello": "Istituto Tecnico",
-        "argomento": "Writing",
-        "num_esercizi": 6,
-        "punti_totali": 80,
-        "durata": "1 ora e 30 minuti",
+        "materia": "Storia",
+        "livello": "Liceo Scientifico",
+        "argomento": "Guerra mondiale",
+        "num_esercizi": 4,
+        "punti_totali": 100,
+        "durata": "45 minuti",
         "mostra_punteggi": true,
         "con_griglia": false
       },
       "output": {
-        "titolo": "Skill Writing",
+        "titolo": "Le guerre mondiali",
         "A": {
-          "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Skill Writing} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Risoluzione di un sistema lineare}\nRisolvere il seguente sistema di equazioni lineari:\n$$\n\\begin{cases}\n2x + y - z = 5 \\\\\nx - y + 2z = -3 \\\\\n3x + 2y + z = 4\n\\end{cases}\n$$ (16 pt)\n\\subsection*{Esercizio 2: Studio di una funzione razionale}\nConsiderata la funzione $f(x) = \\frac{x^2 - 4}{x - 1}$, determinare:\n\\begin{enumerate}[a)]\n    \\item Il dominio di $f(x)$.\n    \\item Gli asintoti verticali e orizzontali, se esistono.\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Determinare l'equazione di una retta}\nScrivere l'equazione della retta passante per il punto $P(-2, 5)$ e parallela alla retta di equazione $y = 3x - 1$. (16 pt)\n\\subsection*{Esercizio 4: Calcolo di probabilità}\nIn un sacchetto ci sono 5 palline rosse e 3 palline blu. Si estraggono due palline senza reimmissione. Qual è la probabilità che entrambe le palline estratte siano rosse? (16 pt)\n\\subsection*{Esercizio 5: Geometria analitica - Circonferenza}\nDeterminare il centro e il raggio della circonferenza di equazione $x^2 + y^2 - 6x + 2y - 6 = 0$. (16 pt)\n\\subsection*{Esercizio 6: Analisi di un'affermazione}\nSi consideri l'affermazione: \"La derivata di una funzione in un punto rappresenta la pendenza della retta tangente al grafico della funzione in quel punto.\"\n\nStabilire se l'affermazione è Vera o Falsa.\n$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (16 pt)\n\n\\end{document}",
+          "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Le guerre mondiali} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Le Cause della Grande Guerra}\nIndividuare e descrivere brevemente tre fattori scatenanti principali che condussero allo scoppio della Prima Guerra Mondiale nel 1914. (33 pt)\n\\subsection*{Esercizio 2: La Guerra di Trincea}\nSi consideri una linea di trincea con lunghezze $L_1 = 1500$ metri e $L_2 = 1200$ metri, separate da una zona neutrale di $d = 100$ metri. Un proiettile sparato da un punto $P_1$ sulla trincea 1 raggiunge un bersaglio sulla trincea 2 se la sua traiettoria interseca la zona neutrale. Assumendo che la traiettoria sia un segmento rettilineo e che la probabilità di colpire un punto specifico sulla trincea 2 sia uniforme rispetto alla sua lunghezza, determinare la probabilità che un proiettile sparato a caso da un punto qualsiasi della trincea 1 colpisca un punto qualsiasi della trincea 2. (33 pt)\n\\subsection*{Esercizio 3: Le Principali Battaglie del Fronte Occidentale}\nPer ciascuna delle seguenti battaglie, indicare l'anno in cui ebbe luogo e una caratteristica saliente:\n\\begin{enumerate}[a)]\n    \\item Battaglia della Somme\n    \\item Battaglia di Verdun\n    \\item Battaglia di Passchendaele\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Le Conseguenze del Conflitto}\nIl Trattato di Versailles impose alla Germania pesanti riparazioni di guerra. Se la somma totale delle riparazioni fosse stata $S = 200$ miliardi di marchi oro, e la Germania avesse pagato inizialmente il $15\\%$ di tale somma, calcolare la cifra pagata e la percentuale della somma restante da saldare. (34 pt)\n\n\\end{document}",
           "pdf": 

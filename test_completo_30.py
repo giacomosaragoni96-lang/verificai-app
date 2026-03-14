@@ -219,13 +219,11 @@ def genera_scenari_random(n):
     return scenari
 
 def genera_verifica_reale(scenario):
-    """Genera verifica reale usando il sistema completo dell'app"""
+    """Genera una verifica reale usando il sistema completo dell'app"""
+    
+    print(f"🔄 INIZIO GENERA_VERIFICA_REALE - Scenario: {scenario['materia']} - {scenario['argomento']}")
     
     try:
-        # Debug info
-        print(f"🔄 Generazione verifica: {scenario['materia']} - {scenario['argomento']}")
-        
-        # Importa il sistema completo dell'app
         from generation import genera_verifica
         from config import CALIBRAZIONE_SCUOLA
         import google.generativeai as genai
