@@ -9,7 +9,7 @@ def get_css(T: dict) -> str:
     • Effetti di caricamento professionali
     • Linguaggio non tecnico (hint, label)
     """
-    _SB_ACCENT = T.get("sidebar_accent",="#2563EB")  # Blu più scuro e contrastato
+    _SB_ACCENT = T.get("sidebar_accent", "#2563EB")  # Blu più scuro e contrastato
     _SB_BG_CSS = T.get("sidebar_bg", "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)")  # Bianco puro a grigio molto chiaro
     _SB_BORDER = T.get("sidebar_border", "#CBD5E1")  # Grigio medio per bordi più visibili
     _SB_INPUT_BG   = T.get("sidebar_input_bg", "#FFFFFF")  # Bianco puro per input
