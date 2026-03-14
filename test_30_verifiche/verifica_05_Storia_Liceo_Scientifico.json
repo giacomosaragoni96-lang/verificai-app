@@ -1,0 +1,87 @@
+{
+  "id": 5,
+  "scenario": {
+    "materia": "Storia",
+    "livello": "Liceo Scientifico",
+    "argomento": "Storia romana",
+    "num_esercizi": 3,
+    "punti_totali": 60,
+    "durata": "1 ora",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Storia Romana",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Storia Romana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Cronologia e Istituzioni}\nIl seguente evento storico è collocato nell'ambito delle Guerre Puniche. Identifica l'evento e il suo esito principale.\n\na) L'evento si colloca durante la Seconda Guerra Punica.\nb) L'episodio centrale è l'invasione dell'Italia da parte di Annibale.\nc) L'esito principale in Italia per Annibale fu la vittoria di Canne, ma non la conquista totale della penisola.\nd) L'esito principale per Roma fu la strategia di Quinto Fabio Massimo \"il Temporeggiatore\" e la successiva ripresa delle ostilità in Africa.\n\nVero o Falso?\n\nL'istituzione del \\underline{} fu centrale nel garantire la continuità del potere repubblicano e la gestione delle emergenze militari a Roma.\n$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n(Risposta corretta: Dittatura)\n\nQuale delle seguenti magistrature romane aveva il compito principale di garantire l'ordine pubblico e la sicurezza della città?\n\\begin{enumerate}[a)]\n    \\item Consolato\n    \\item Pretura\n    \\item Questura\n    \\item Edilità\n\\end{enumerate}\n(Risposta corretta: Edilità)\n\n\\subsection*{Esercizio 2: Organizzazione Sociale e Giuridica}\nConsideriamo il sistema giuridico romano durante il periodo repubblicano.\n\na) Descrivi brevemente il ruolo e la composizione delle \\textbf{gentes} nell'antica società romana. (6 pt)\nb) Spiega la differenza fondamentale tra \\textbf{patricii} e \\textbf{plebei}. (6 pt)\nc) Il \\textit{ius civile} si applicava indifferentemente a tutti i residenti di Roma in ogni periodo. Vero o Falso? $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (6 pt)\n(Risposta corretta: Falso)\n\nSi considerino le seguenti affermazioni riguardanti la \\textbf{Lex Duodecim Tabularum}:\n\\begin{enumerate}[a)]\n    \\item Rappresentò il primo codice scritto di leggi romane. (6 pt)\n    \\item Stabilì parità di diritti tra patrizi e plebei.\n    \\item Fu promulgata durante il periodo monarchico.\n    \\item Prevedeva pene corporali per tutti i reati.\n\\end{enumerate}\nScegli l'affermazione corretta. (Risposta corretta: a))\n\n\\subsection*{Esercizio 3: Espansione e Strutture Politiche}\nAnalizza il seguente scenario relativo alle conquiste romane e alle relative implicazioni amministrative.\n\na) Descrivi il significato strategico e politico del possesso della \\textbf{Magna Graecia} per Roma dopo le guerre contro Pirro. (12 pt)\nb) Quali erano le principali differenze tra il concetto di \\textbf{provincia} e quello di \\textbf{civitas foederata} nel contesto dell'espansione romana? (12 pt)\n\nL'istituzione del \\textbf{Triumvirato} nel 509 a.C. servì a stabilizzare il potere e a prevenire l'instaurazione di una nuova monarchia. Vero o Falso? $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (0 pt - Rimosso in quanto dato errato e non quantificabile)\n\nConsidera la seguente classificazione delle conquiste territoriali romane. Quale categoria descrive meglio i territori conquistati e governati direttamente da magistrati romani, con l'imposizione di tasse e l'esercizio della sovranità?\n\\begin{enumerate}[a)]\n    \\item Socii Italici\n    \\item Coloniae Latinae\n    \\item Provinciae (12 pt)\n    \\item Foederati\n\\end{enumerate}\nScegli l'affermazione corretta. (Risposta corretta: c))\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & a) & c) & \\\\ \\hline\n\\textbf{Max} & — & 6 & 12 & 18 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:83723>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.8
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 3,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 60,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161843.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161843.pdf",
+    "pdf_size": 14997,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:18:44.067731",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

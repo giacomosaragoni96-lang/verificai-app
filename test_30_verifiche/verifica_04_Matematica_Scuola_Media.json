@@ -1,0 +1,87 @@
+{
+  "id": 4,
+  "scenario": {
+    "materia": "Matematica",
+    "livello": "Scuola Media",
+    "argomento": "Geometria piana",
+    "num_esercizi": 7,
+    "punti_totali": 120,
+    "durata": "2 ore",
+    "mostra_punteggi": true,
+    "con_griglia": true
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Geometria piana",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Geometria piana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Perimetro di un Rettangolo}\nUn rettangolo ha perimetro $P = 48$ cm. La base $b$ è il doppio dell'altezza $h$. Calcolare le lunghezze della base e dell'altezza del rettangolo. (17 pt)\n\\subsection*{Esercizio 2: Area di un Triangolo}\nUn triangolo isoscele ha la base lunga $b = 12$ cm e l'altezza relativa alla base $h_b = 8$ cm.\na) Calcolare l'area del triangolo.\nb) Calcolare la lunghezza dei lati obliqui. (17 pt)\n\\subsection*{Esercizio 3: Retta Passante per Due Punti}\nDeterminare l'equazione della retta passante per i punti $A(3, 5)$ e $B(-1, 7)$. (17 pt)\n\\subsection*{Esercizio 4: Cerchio e Tangenti}\nConsidera un cerchio di centro $O(0,0)$ e raggio $r=5$.\na) Scrivi l'equazione del cerchio.\nb) Determina le coordinate dei punti di intersezione del cerchio con la retta $y=3$. (17 pt)\n\\subsection*{Esercizio 5: Angle del Triangolo}\nIn un triangolo $ABC$, l'angolo $\\alpha$ misura $60^\\circ$ e l'angolo $\\beta$ misura $45^\\circ$.\na) Qual è la misura dell'angolo $\\gamma$?\nb) Il triangolo è rettangolo? $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\nc) Il triangolo è acutangolo? $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (17 pt)\n\\subsection*{Esercizio 6: Verità Matematica}\nStabilire se le seguenti affermazioni sono vere o false, giustificando brevemente la risposta.\na) In un parallelogramma, le diagonali si bisecano scambievolmente. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\nb) Tutti i triangoli equilateri sono anche isosceli. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\nc) Il luogo geometrico dei punti equidistanti da due punti fissi è una circonferenza. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F} (17 pt)\n\\subsection*{Esercizio 7: Analisi di una Funzione}\nSi consideri la funzione $f(x) = -x^2 + 4$.\nDetermina le coordinate del vertice e gli eventuali punti di intersezione con gli assi cartesiani. (18 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\multicolumn{1}{c||}{\\textbf{7}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 17 & 17 & 17 & 17 & 17 & 17 & 18 & 120 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:118918>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.6
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 7,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 120,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161826.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161826.pdf",
+    "pdf_size": 16891,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Geometria piana}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:18:27.147426",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Geometria piana}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

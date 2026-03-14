@@ -269,21 +269,40 @@ def genera_verifica_reale(scenario):
         )
         
         # DEBUG: Stampa l'output completo per diagnosi
-        print(f"📋 DEBUG - Output completo:")
+        print(f" DEBUG - Output completo:")
         print(f"Tipo: {type(result)}")
         if isinstance(result, dict):
             print(f"Chiavi: {list(result.keys())}")
+            
+            # Cerca il LaTeX in diverse posizioni possibili
+            latex_output = ""
             if 'latex' in result:
                 latex_output = result['latex']
+                print(f" Trovato latex in root")
+            elif 'A' in result and isinstance(result['A'], dict) and 'latex' in result['A']:
+                latex_output = result['A']['latex']
+                print(f" Trovato latex in A['latex']")
+            elif 'B' in result and isinstance(result['B'], dict) and 'latex' in result['B']:
+                latex_output = result['B']['latex']
+                print(f" Trovato latex in B['latex']")
+            else:
+                print(f" Nessun latex trovato!")
+                # Stampa contenuto di A e B per debug
+                if 'A' in result:
+                    print(f"Contenuto A: {type(result['A'])} - {list(result['A'].keys()) if isinstance(result['A'], dict) else 'Not dict'}")
+                if 'B' in result:
+                    print(f"Contenuto B: {type(result['B'])} - {list(result['B'].keys()) if isinstance(result['B'], dict) else 'Not dict'}")
+            
+            if latex_output:
                 print(f"LaTeX length: {len(latex_output)} caratteri")
                 print(f"LaTeX preview (primi 500 char):")
                 print(latex_output[:500])
                 print(f"LaTeX contiene esercizi: {'\\\\subsection' in latex_output}")
-                print(f"LaTeX contiene \\end{document}: {'\\\\end{document}' in latex_output}")
+                print(f"LaTeX contiene \\end{{document}}: {'\\\\end{document}' in latex_output}")
         else:
             print(f"Output raw: {str(result)[:500]}")
         
-        print(f"✅ Generazione completata. Lunghezza output: {len(result)}")
+        print(f" Generazione completata. Lunghezza output: {len(result)}")
         
         return {
             "success": True,
