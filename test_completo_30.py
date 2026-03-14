@@ -352,171 +352,63 @@ def genera_verifica_reale(scenario):
         print(f"{istruzioni_esercizi}")
         print(f"📄 FINE ISTRUZIONI")
         
-        # 🛠️ DEBUG: Test con parametri minimali come l'app
-        print(f"🚀 Chiamata genera_verifica con parametri test...")
+        # 🎯 SOLUZIONE SEMPLICE: Usa il LaTeX direttamente dall'output!
+        print(f"🚀 Analisi diretta del LaTeX dall'output...")
         
-        # 🛠️ DEBUG: Intercettiamo TUTTO il processo di generazione
-        import generation
-        import google.generativeai as genai
-        
-        # Salviamo le funzioni originali
-        original_safe_generate = generation._safe_generate
-        original_assembla_e_compila = generation._assembla_e_compila
-        
-        # Debug completo del prompt e risposta
-        def debug_safe_generate(model, prompt, description):
-            print(f"\n🔍 === DEBUG PROMPT - {description} ===")
-            print(f"Tipo prompt: {type(prompt)}")
-            print(f"Lunghezza prompt: {len(str(prompt))} caratteri")
-            
-            if isinstance(prompt, list):
-                print(f"Prompt è una lista di {len(prompt)} elementi")
-                print(f"--- PRIMO ELEMENTO (MAIN PROMPT) ---")
-                main_prompt = prompt[0]
-                print(f"Lunghezza: {len(main_prompt)} caratteri")
-                print(f"Contenuto completo:\n{main_prompt}")
-                print(f"--- FINE MAIN PROMPT ---")
-                if len(prompt) > 1:
-                    print(f"Altri {len(prompt)-1} elementi (file/immagini)")
-            else:
-                print(f"--- PROMPT SINGOLO ---")
-                print(f"Contenuto completo:\n{prompt}")
-                print(f"--- FINE PROMPT ---")
-            
-            # Chiama la funzione originale
-            result = original_safe_generate(model, prompt, description)
-            
-            print(f"\n🔍 === DEBUG RISPOSTA - {description} ===")
-            print(f"Tipo risposta: {type(result)}")
-            if hasattr(result, 'text'):
-                print(f"Lunghezza testo: {len(result.text)} caratteri")
-                print(f"--- RISPOSTA COMPLETA ---")
-                print(result.text)
-                print(f"--- FINE RISPOSTA ---")
-            else:
-                print(f"Risposta senza attributo 'text': {result}")
-            
-            return result
-        
-        # Debug dell'assemblaggio
-        def debug_assembla_e_compila(preambolo, corpo, mostra_punteggi, punti_totali, con_griglia):
-            print(f"\n🔧 === DEBUG ASSEMBLAGGIO ===")
-            print(f"Preambolo lunghezza: {len(preambolo)} caratteri")
-            print(f"Corpo lunghezza: {len(corpo)} caratteri")
-            print(f"--- CONTENUTO CORPO PRIMA DELL'ASSEMBLAGGIO ---")
-            print(corpo)
-            print(f"--- FINE CORPO ---")
-            
-            # Chiama la funzione originale
-            latex_finale, pdf = original_assembla_e_compila(preambolo, corpo, mostra_punteggi, punti_totali, con_griglia)
-            
-            print(f"\n🔧 === DEBUG RISULTATO ASSEMBLAGGIO ===")
-            print(f"LaTeX finale lunghezza: {len(latex_finale)} caratteri")
-            print(f"--- CONTENUTO LaTeX FINALE ---")
-            print(latex_finale[:1000] + "..." if len(latex_finale) > 1000 else latex_finale)
-            print(f"--- FINE LaTeX FINALE ---")
-            
-            return latex_finale, pdf
-        
-        # Patch delle funzioni
-        generation._safe_generate = debug_safe_generate
-        generation._assembla_e_compila = debug_assembla_e_compila
-        
-        try:
-            result = genera_verifica(
-                model=model,
-                materia=scenario['materia'],
-                argomento=scenario['argomento'],
-                difficolta="media",  # Default
-                calibrazione=calibrazione,
-                durata=scenario['durata'],
-                num_esercizi=scenario['num_esercizi'],
-                punti_totali=scenario['punti_totali'],
-                mostra_punteggi=scenario['mostra_punteggi'],
-                con_griglia=scenario['con_griglia'],
-                doppia_fila=False,
-                bes_dsa=False,
-                perc_ridotta=25,
-                bes_dsa_b=False,
-                genera_soluzioni=False,
-                note_generali="",  # Vuoto per test
-                istruzioni_esercizi=istruzioni_esercizi,  # 🛠️ FIX: Istruzioni proper!
-                immagini_esercizi=immagini_esercizi,
-                file_ispirazione=None,
-                mathpix_context=None,
-            )
-        finally:
-            # Ripristina funzioni originali
-            generation._safe_generate = original_safe_generate
-            generation._assembla_e_compila = original_assembla_e_compila
+        # Prima genera la verifica
+        result = genera_verifica(
+            model=model,
+            materia=scenario['materia'],
+            argomento=scenario['argomento'],
+            difficolta="media",  # Default
+            calibrazione=calibrazione,
+            durata=scenario['durata'],
+            num_esercizi=scenario['num_esercizi'],
+            punti_totali=scenario['punti_totali'],
+            mostra_punteggi=scenario['mostra_punteggi'],
+            con_griglia=scenario['con_griglia'],
+            doppia_fila=False,
+            bes_dsa=False,
+            perc_ridotta=25,
+            bes_dsa_b=False,
+            genera_soluzioni=False,
+            note_generali="",  # Vuoto per test
+            istruzioni_esercizi=istruzioni_esercizi,  # 🛠️ FIX: Istruzioni proper!
+            immagini_esercizi=immagini_esercizi,
+            file_ispirazione=None,
+            mathpix_context=None,
+        )
         
         print(f"📊 genera_verifica() completata - Tipo risultato: {type(result)}")
         
-        # DEBUG: Stampa l'output completo per diagnosi
-        print(f" DEBUG - Output completo:")
-        print(f"Tipo: {type(result)}")
-        if isinstance(result, dict):
-            print(f"Chiavi: {list(result.keys())}")
-            
-            # Cerca il LaTeX in diverse posizioni possibili
-            latex_output = ""
-            if 'latex' in result:
-                latex_output = result['latex']
-                print(f" Trovato latex in root")
-            elif 'A' in result and isinstance(result['A'], dict) and 'latex' in result['A']:
-                latex_output = result['A']['latex']
-                print(f" Trovato latex in A['latex']")
-                
-                # DEBUG APPROFONDITO - Analisi del contenuto
-                print(f"🔍 ANALISI DETTAGLIATA CONTENUTO:")
-                print(f"  - Lunghezza totale: {len(latex_output)} caratteri")
-                print(f"  - Contiene \\begin{{document}}: {'\\begin{document}' in latex_output}")
-                print(f"  - Contiene \\end{{document}}: {'\\end{document}' in latex_output}")
-                print(f"  - Contiene esercizi (\\subsection): {'\\subsection' in latex_output}")
-                print(f"  - Numero di \\subsection: {len(re.findall(r'\\\\subsection\\*', latex_output))}")
-                print(f"  - Numero di \\subsection* (alternativo): {len(re.findall(r'\\\\subsection\\*', latex_output))}")
-                
-                # Stampa tutti i \subsection* trovati per debug
-                subsection_matches = re.findall(r'\\\\subsection\\*{[^}]*}', latex_output)
-                if subsection_matches:
-                    print(f"  - 📋 Esercizi trovati: {len(subsection_matches)}")
-                    for i, match in enumerate(subsection_matches, 1):
-                        print(f"    {i}. {match}")
+        # Estraiamo il LaTeX completo dal risultato
+        latex_completo = result['A']['latex']
+        print(f"📄 LaTeX completo estratto: {len(latex_completo)} caratteri")
+        
+        # Conteggio diretto dei \subsection*
+        subsection_trovati = re.findall(r'\\subsection\*', latex_completo)
+        print(f"✅ \subsection* trovati: {len(subsection_trovati)}")
+        
+        if subsection_trovati:
+            print(f"📋 ELENCO ESERCIZI TROVATI:")
+            for i, subsection in enumerate(subsection_trovati, 1):
+                # Estrai il titolo completo
+                match = re.search(r'\\subsection\*\{([^}]+)\}', subsection)
+                if match:
+                    print(f"  {i}. {match.group(1)}")
                 else:
-                    print(f"  - ❌ NESSUN \\subsection* TROVATO!")
-                
-                # Controlla se c'è solo l'header
-                if '\\begin{document}' in latex_output and '\\end{document}' in latex_output:
-                    # Estrai il corpo tra begin e end
-                    begin_idx = latex_output.find('\\begin{document}')
-                    end_idx = latex_output.find('\\end{document}')
-                    corpo = latex_output[begin_idx:end_idx]
-                    print(f"  - Corpo documento: {len(corpo)} caratteri")
-                    print(f"  - Corpo vuoto o solo spazi: {corpo.strip() == ''}")
-                    
-                    # Stampa il corpo per debug
-                    if corpo.strip():
-                        print(f"  - Contenuto corpo (primi 200 char):")
-                        print(f"    {corpo[:200]}")
-                    else:
-                        print(f"  - ❌ CORPO VUOTO! Solo header presente")
-                        
-            elif 'B' in result and isinstance(result['B'], dict) and 'latex' in result['B']:
-                latex_output = result['B']['latex']
-                print(f" Trovato latex in B['latex']")
-            else:
-                print(f"❌ Nessun latex trovato!")
-                # Stampa contenuto di A e B per debug
-                if 'A' in result:
-                    print(f"Contenuto A: {type(result['A'])} - {list(result['A'].keys()) if isinstance(result['A'], dict) else 'Not dict'}")
-                if 'B' in result:
-                    print(f"Contenuto B: {type(result['B'])} - {list(result['B'].keys()) if isinstance(result['B'], dict) else 'Not dict'}")
-            
-            if latex_output:
-                print(f"LaTeX preview (primi 500 char):")
-                print(latex_output[:500])
+                    print(f"  {i}. {subsection}")
         else:
-            print(f"Output raw: {str(result)[:500]}")
+            print(f"❌ NESSUN ESERCIZIO TROVATO!")
+            print(f"📄 Prime 500 caratteri del LaTeX:")
+            print(latex_completo[:500])
+        
+        # Verifica finale
+        if len(subsection_trovati) > 0:
+            print(f"🎉 SUCCESSO! La verifica contiene {len(subsection_trovati)} esercizi!")
+            print(f"✅ Il problema era solo nel nostro conteggio, non nella generazione!")
+        else:
+            print(f"❌ PROBLEMA REALE: La verifica è davvero vuota!")
         
         print(f" Generazione completata. Lunghezza output: {len(result)}")
         
