@@ -9,15 +9,15 @@ def get_css(T: dict) -> str:
     • Effetti di caricamento professionali
     • Linguaggio non tecnico (hint, label)
     """
-    _SB_ACCENT = T.get("sidebar_accent", "#3B82F6")  # Blu più vivido
-    _SB_BG_CSS = T.get("sidebar_bg", "linear-gradient(180deg, #1E293B 0%, #0F172A 100%)")  # Grigio scuro più contrasto
-    _SB_BORDER = T.get("sidebar_border", "#475569")  # Grigio medio per bordi più visibili
-    _SB_INPUT_BG   = T.get("sidebar_input_bg", "#334155")  # Input più scuri per contrasto
-    _SB_INPUT_TEXT = T.get("sidebar_input_text", "#F8FAFC")  # Bianco quasi puro
-    # La sidebar ha sempre sfondo scuro → i colori testo DEVONO essere chiari
+    _SB_ACCENT = T.get("sidebar_accent", "#60A5FA")  # Blu azzurro più vibrante
+    _SB_BG_CSS = T.get("sidebar_bg", "linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)")  # Grigio molto chiaro
+    _SB_BORDER = T.get("sidebar_border", "#E2E8F0")  # Grigio chiaro per bordi
+    _SB_INPUT_BG   = T.get("sidebar_input_bg", "#FFFFFF")  # Bianco puro per input
+    _SB_INPUT_TEXT = T.get("sidebar_input_text", "#1E293B")  # Grigio scuro per testo
+    # La sidebar ha sempre sfondo chiaro → i colori testo DEVONO essere scuri
     # indipendentemente dal tema principale (chiaro/scuro).
     _SB_TEXT   = _SB_INPUT_TEXT
-    _SB_MUTED  = "#CBD5E1"   # Grigio chiaro per label (più visibile)
+    _SB_MUTED  = "#64748B"   # Grigio medio per label
 
     _is_light = _is_light_color(T["bg"])
 
@@ -411,6 +411,7 @@ def get_css(T: dict) -> str:
     gap: 7px;
   }}
   [data-testid="stSidebar"] .block-container {{
+    background: {_SB_BG_CSS} !important;
     padding: 1.4rem 1.1rem !important;
     max-width: 100% !important;
   }}
@@ -476,14 +477,17 @@ def get_css(T: dict) -> str:
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    transition: border-color .2s ease, background .2s ease !important;
+    transition: all .2s ease !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
   }}
   [data-testid="stSidebar"] .stButton button:hover {{
     border-color: {_SB_ACCENT} !important;
     color: {_SB_INPUT_TEXT} !important;
     -webkit-text-fill-color: {_SB_INPUT_TEXT} !important;
-    background: {_SB_BORDER} !important;
-    background-color: {_SB_BORDER} !important;
+    background: #F8FAFC !important;
+    background-color: #F8FAFC !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+    transform: translateY(-1px) !important;
   }}
   [data-testid="stSidebar"] .stSelectSlider [data-testid="stMarkdownContainer"] p {{
     color: {_SB_TEXT} !important;
@@ -613,15 +617,20 @@ def get_css(T: dict) -> str:
     border-radius: 0 !important;
   }}
 
-  /* ── Sidebar: Pro CTA card con gradient border ── */
+  /* ── Sidebar: Pro CTA card con design moderno ── */
   .sb-pro-card {{
-    background: linear-gradient(135deg, {_SB_INPUT_BG}ee, {_SB_INPUT_BG}cc) padding-box,
-                linear-gradient(135deg, {_SB_ACCENT}99, {_acc2}55) border-box;
-    border: 1.5px solid transparent;
-    border-radius: 12px;
-    padding: .8rem 1rem;
-    margin: .6rem 0 .4rem 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    background: linear-gradient(135deg, {_SB_ACCENT}08, {_SB_ACCENT}04) !important;
+    border: 1.5px solid {_SB_ACCENT}30 !important;
+    border-radius: 12px !important;
+    padding: .8rem 1rem !important;
+    margin: .6rem 0 .4rem 0 !important;
+    box-shadow: 0 4px 12px {_SB_ACCENT}15 !important;
+    transition: all .2s ease !important;
+  }}
+  .sb-pro-card:hover {{
+    border-color: {_SB_ACCENT}50 !important;
+    box-shadow: 0 6px 16px {_SB_ACCENT}25 !important;
+    transform: translateY(-1px) !important;
   }}
   .sb-pro-card-header {{
     font-size: .76rem;
@@ -647,15 +656,15 @@ def get_css(T: dict) -> str:
     opacity: .9;
   }}
 
-  /* ── Sidebar: user pill ── */
+  /* ── Sidebar: user pill design moderno ── */
   .user-pill {{
     display: flex;
     align-items: center;
     gap: .7rem;
     padding: .8rem .3rem .5rem .3rem;
-    border-top: 1px solid {_SB_BORDER}44;
+    border-top: 1px solid {_SB_BORDER} !important;
     margin-top: 1.2rem;
-    background: {_SB_INPUT_BG}22;
+    background: transparent !important;
     border-radius: 8px;
   }}
   .user-avatar {{
@@ -668,10 +677,11 @@ def get_css(T: dict) -> str:
     justify-content: center;
     font-size: .9rem;
     font-weight: 800;
-    color: {_SB_INPUT_BG};
+    color: #FFFFFF !important;
     flex-shrink: 0;
     font-family: 'DM Sans', sans-serif;
-    box-shadow: 0 2px 6px rgba(0,0,0,.2);
+    box-shadow: 0 2px 8px {_SB_ACCENT}40 !important;
+    border: 2px solid #FFFFFF !important;
   }}
   .user-info {{
     overflow: hidden;
@@ -693,28 +703,29 @@ def get_css(T: dict) -> str:
     font-weight: 500;
   }}
 
-  /* ── Sidebar: logout button ── */
+  /* ── Sidebar: logout button moderno ── */
   .logout-btn-wrap .stButton > button {{
-    background: {_SB_INPUT_BG}33 !important;
-    background-color: {_SB_INPUT_BG}33 !important;
-    border: 1px solid {_SB_BORDER}66 !important;
+    background: transparent !important;
+    background-color: transparent !important;
     color: {_SB_MUTED} !important;
     -webkit-text-fill-color: {_SB_MUTED} !important;
-    font-size: .82rem !important;
-    font-weight: 600 !important;
-    min-height: 36px !important;
-    width: 100% !important;
-    margin-top: .6rem !important;
+    border: 1px solid {_SB_BORDER} !important;
     border-radius: 8px !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    min-height: 34px !important;
+    padding: .3rem .6rem !important;
     transition: all .2s ease !important;
+    box-shadow: none !important;
   }}
   .logout-btn-wrap .stButton > button:hover {{
-    border-color: {T.get('error','#DC2626')}88 !important;
-    color: {T.get('error','#DC2626')} !important;
-    -webkit-text-fill-color: {T.get('error','#DC2626')} !important;
-    background: {T.get('error','#DC2626')}15 !important;
-    background-color: {T.get('error','#DC2626')}15 !important;
-    transform: translateY(-1px);
+    background: {_SB_ACCENT} !important;
+    background-color: {_SB_ACCENT} !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    border-color: {_SB_ACCENT} !important;
+    box-shadow: 0 2px 6px {_SB_ACCENT}40 !important;
+    transform: translateY(-1px) !important;
   }}
 
   /* ── Sidebar: logo sub-title ── */

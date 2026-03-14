@@ -92,12 +92,12 @@ THEMES = {
         "radius_md":  "12px",
         "radius_lg":  "16px",
 
-        # Sidebar — grigio scuro professionale
-        "sidebar_bg":      "linear-gradient(180deg, #1E293B 0%, #0F172A 100%)",
-        "sidebar_border":  "#475569",
-        "sidebar_accent":  "#3B82F6",
-        "sidebar_input_bg":  "#334155",
-        "sidebar_input_text": "#F8FAFC",
+        # Sidebar — grigio chiaro moderno
+        "sidebar_bg":      "linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)",
+        "sidebar_border":  "#E2E8F0",
+        "sidebar_accent":  "#60A5FA",
+        "sidebar_input_bg":  "#FFFFFF",
+        "sidebar_input_text": "#1E293B",
 
         # Hint boxes
         "hint_bg":      "#EFF6FF",
@@ -202,12 +202,12 @@ THEMES = {
         "radius_md":  "8px",
         "radius_lg":  "12px",
 
-        # Sidebar — blu scuro minimal
-        "sidebar_bg":      "linear-gradient(180deg, #1E293B 0%, #334155 100%)",
-        "sidebar_border":  "#475569",
-        "sidebar_accent":  "#818CF8",
-        "sidebar_input_bg":  "#1E293B",
-        "sidebar_input_text": "#F8FAFC",
+        # Sidebar — chiaro coerente col tema
+        "sidebar_bg":      "linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)",
+        "sidebar_border":  "#E2E8F0",
+        "sidebar_accent":  "#3B82F6",
+        "sidebar_input_bg":  "#FFFFFF",
+        "sidebar_input_text": "#1E40AF",
 
         # Hint boxes
         "hint_bg":      "#EFF6FF",
