@@ -6450,13 +6450,22 @@ def render_valutazione_esercizi_modal(gp, vA):
         # Processa salvataggio
         if submitted:
             salvati = 0
+            esercizi_buoni = 0
+            
             for val in valutazioni_salvate:
                 if salva_valutazione_db(val):
                     salvati += 1
+                    
+                    # Controlla se è un esercizio "buono"
+                    if è_esercizio_buono(val):
+                        if salva_esercizio_qualità(val, gp):
+                            esercizi_buoni += 1
             
             if salvati > 0:
                 st.success(f"✅ Salvate {salvati} valutazioni con successo!")
-                st.balloons()
+                if esercizi_buoni > 0:
+                    st.info(f"🌟 {esercizi_buoni} esercizi di qualità aggiunti alla banca dati per training AI!")
+                    st.balloons()
             else:
                 st.error("❌ Errore nel salvataggio delle valutazioni")
 
@@ -6563,6 +6572,40 @@ def init_database_valutazioni():
         )
     ''')
     
+    # Tabella esercizi qualità (NUOVA)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS esercizi_qualita (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            materia TEXT,
+            argomento TEXT,
+            livello TEXT,
+            titolo_esercizio TEXT,
+            contenuto_esercizio TEXT,
+            punteggio_massimo REAL,
+            qualita_score REAL,
+            feedback TEXT,
+            data_valutazione TEXT,
+            valutatore TEXT,
+            numero_usi INTEGER DEFAULT 0,
+            ultima_usa TEXT,
+            UNIQUE(materia, argomento, titolo_esercizio, contenuto_esercizio)
+        )
+    ''')
+    
+    # Tabella statistiche qualità
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS statistiche_qualita (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            materia TEXT,
+            argomento TEXT,
+            livello TEXT,
+            totale_esercizi INTEGER,
+            qualita_media REAL,
+            ultimo_aggiornamento TEXT,
+            UNIQUE(materia, argomento, livello)
+        )
+    ''')
+    
     conn.commit()
     conn.close()
 
@@ -6638,12 +6681,307 @@ def render_statistiche_valutazioni():
     """Mostra statistiche complete delle valutazioni"""
     st.markdown("### 📊 Statistiche Complete Valutazioni")
     
-    # Placeholder per statistiche complete
-    st.info("🔧 Funzione statistiche complete in sviluppo...")
+    # Tab per diverse visualizzazioni
+    tab1, tab2, tab3 = st.tabs(["📈 Statistiche Generali", "🌟 Banca Esercizi Qualità", "🤖 Training AI"])
+    
+    with tab1:
+        render_statistiche_generali()
+    
+    with tab2:
+        render_banca_esercizi_qualita()
+    
+    with tab3:
+        render_training_ai_info()
     
     if st.button("🔙 Torna alla Valutazione", key="btn_back_to_valutazione"):
         st.session_state["stats_mode"] = False
         st.rerun()
+
+def render_statistiche_generali():
+    """Statistiche generali delle valutazioni"""
+    st.subheader("📈 Statistiche Valutazioni Generali")
+    
+    # Placeholder per statistiche generali
+    st.info("🔧 Statistiche generali in sviluppo...")
+    
+    # Calcola statistiche base
+    import sqlite3
+    DB_PATH = "valutazioni_esercizi.db"
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # Statistiche generali
+        cursor.execute("SELECT COUNT(*) FROM esercizi_valutati")
+        tot_valutazioni = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(DISTINCT materia) FROM esercizi_valutati")
+        materie = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(DISTINCT argomento) FROM esercizi_valutati")
+        argomenti = cursor.fetchone()[0]
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Valutazioni Totali", tot_valutazioni)
+        with col2:
+            st.metric("Materie", materie)
+        with col3:
+            st.metric("Argomenti", argomenti)
+        
+        conn.close()
+    except Exception as e:
+        st.error(f"Errore caricando statistiche: {e}")
+
+def render_banca_esercizi_qualita():
+    """Visualizza banca dati esercizi qualità"""
+    st.subheader("🌟 Banca Esercizi Qualità")
+    
+    import sqlite3
+    DB_PATH = "valutazioni_esercizi.db"
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # Statistiche esercizi qualità
+        cursor.execute("""
+            SELECT materia, argomento, COUNT(*) as totale, AVG(qualita_score) as media
+            FROM esercizi_qualita 
+            GROUP BY materia, argomento
+            ORDER BY media DESC, totale DESC
+        """)
+        
+        risultati = cursor.fetchall()
+        
+        if not risultati:
+            st.info("📝 Nessun esercizio di qualità ancora. Valuta alcuni esercizi per popolare la banca dati!")
+            return
+        
+        st.success(f"🌟 Trovati {sum(r[2] for r in risultati)} esercizi di alta qualità!")
+        
+        # Tabella risultati
+        for materia, argomento, totale, media in risultati:
+            with st.expander(f"📚 {materia} - {argomento}", expanded=False):
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Esercizi", totale)
+                with col2:
+                    st.metric("Qualità Media", f"{media:.3f}")
+                with col3:
+                    if media >= 0.85:
+                        st.success("🟢 Eccellente")
+                    elif media >= 0.75:
+                        st.warning("🟡 Buono")
+                    else:
+                        st.error("🔴 Da migliorare")
+        
+        conn.close()
+        
+    except Exception as e:
+        st.error(f"Errore caricando banca esercizi: {e}")
+
+def render_training_ai_info():
+    """Informazioni su training AI"""
+    st.subheader("🤖 Training AI con Esercizi Qualità")
+    
+    st.markdown("""
+    ### 🎯 Come Funziona il Training
+    
+    1. **Raccolta**: I docenti valutano esercizi generati
+    2. **Filtro**: Solo esercizi "buoni" (score ≥ 0.7) vengono salvati
+    3. **Training**: L'AI usa questi esempi per generare esercizi migliori
+    4. **Miglioramento**: La qualità aumenta nel tempo
+    
+    ### 📊 Criteri Esercizi "Buoni"
+    - **Feedback**: Eccellente (1.0) o Buono (0.8)
+    - **Punteggio**: ≥ 80% del punteggio massimo
+    - **Commenti**: Sentiment positivo
+    - **Difficoltà**: Appropriata per livello
+    
+    ### 🔄 Learning Loop
+    Più esercizi valutate → Più esempi qualità → Migliore generazione AI → Studenti più soddisfatti
+    """)
+    
+    # Mostra esempi per materia-argomento
+    st.markdown("### 📋 Esempi Disponibili per Training")
+    
+    import sqlite3
+    DB_PATH = "valutazioni_esercizi.db"
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # Top esempi per training
+        cursor.execute("""
+            SELECT materia, argomento, titolo_esercizio, qualita_score
+            FROM esercizi_qualita 
+            ORDER BY qualita_score DESC 
+            LIMIT 10
+        """)
+        
+        top_esempi = cursor.fetchall()
+        
+        if top_esempi:
+            for i, (materia, argomento, titolo, score) in enumerate(top_esempi, 1):
+                st.write(f"**{i}. {materia} - {argomento}**: {titolo} (Score: {score:.3f})")
+        
+        conn.close()
+        
+    except Exception as e:
+        st.error(f"Errore caricando esempi: {e}")
+
+def è_esercizio_buono(valutazione):
+    """Determina se l'esercizio è di alta qualità"""
+    # Punteggio feedback
+    score_feedback = {
+        "Eccellente": 1.0,
+        "Buono": 0.8,
+        "Sufficiente": 0.6,
+        "Insufficiente": 0.4,
+        "Da migliorare": 0.2
+    }.get(valutazione['feedback'], 0.5)
+    
+    # Punteggio assegnato
+    score_punteggio = valutazione['punteggio_assegnato'] / valutazione['punteggio_massimo']
+    
+    # Analisi sentiment commenti (semplice)
+    commenti = valutazione.get('commenti', '').lower()
+    parole_positive = ['ottimo', 'eccellente', 'perfetto', 'ben fatto', 'ottimo lavoro', 'corretto', 'preciso']
+    parole_negative = ['sbagliato', 'errato', 'incompleto', 'confuso', 'da migliorare', 'insufficiente']
+    
+    score_commenti = 0.5  # Neutral
+    for parola in parole_positive:
+        if parola in commenti:
+            score_commenti += 0.1
+    for parola in parole_negative:
+        if parola in commenti:
+            score_commenti -= 0.1
+    
+    score_commenti = max(0, min(1, score_commenti))
+    
+    # Calcolo score finale
+    qualità_score = (score_feedback * 0.4 + score_punteggio * 0.3 + score_commenti * 0.3)
+    
+    return qualità_score >= 0.7, qualità_score
+
+def salva_esercizio_qualità(valutazione, gp):
+    """Salva esercizio nella banca dati qualità"""
+    import sqlite3
+    
+    DB_PATH = "valutazioni_esercizi.db"
+    
+    # Calcola score qualità
+    is_buono, qualità_score = è_esercizio_buono(valutazione)
+    
+    if not is_buono:
+        return False
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # Estrai livello dai parametri generazione
+        livello = gp.get('difficolta', 'Media')
+        
+        cursor.execute('''
+            INSERT OR REPLACE INTO esercizi_qualita 
+            (materia, argomento, livello, titolo_esercizio, contenuto_esercizio, 
+             punteggio_massimo, qualita_score, feedback, data_valutazione, valutatore)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            valutazione['materia'],
+            valutazione['argomento'],
+            livello,
+            valutazione['titolo_esercizio'],
+            valutazione['contenuto_esercizio'],
+            valutazione['punteggio_massimo'],
+            qualità_score,
+            valutazione['feedback'],
+            valutazione['data_valutazione'],
+            valutazione['valutatore']
+        ))
+        
+        # Aggiorna statistiche
+        aggiorna_statistiche_qualita(valutazione['materia'], valutazione['argomento'], livello)
+        
+        conn.commit()
+        return True
+    except Exception as e:
+        st.error(f"Errore salvando esercizio qualità: {e}")
+        return False
+    finally:
+        conn.close()
+
+def aggiorna_statistiche_qualita(materia, argomento, livello):
+    """Aggiorna statistiche qualità per materia-argomento-livello"""
+    import sqlite3
+    
+    DB_PATH = "valutazioni_esercizi.db"
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # Calcola statistiche attuali
+        cursor.execute('''
+            SELECT COUNT(*), AVG(qualita_score) 
+            FROM esercizi_qualita 
+            WHERE materia = ? AND argomento = ? AND livello = ?
+        ''', (materia, argomento, livello))
+        
+        totale, media = cursor.fetchone()
+        
+        if totale and media:
+            cursor.execute('''
+                INSERT OR REPLACE INTO statistiche_qualita 
+                (materia, argomento, livello, totale_esercizi, qualita_media, ultimo_aggiornamento)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (materia, argomento, livello, totale, media, datetime.now().isoformat()))
+        
+        conn.commit()
+    except Exception as e:
+        print(f"Errore aggiornando statistiche: {e}")
+    finally:
+        conn.close()
+
+def carica_esempi_qualita(materia, argomento, livello, limit=5):
+    """Carica i migliori esercizi per training AI"""
+    import sqlite3
+    
+    DB_PATH = "valutazioni_esercizi.db"
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT titolo_esercizio, contenuto_esercizio, qualita_score
+            FROM esercizi_qualita 
+            WHERE materia = ? AND argomento = ? AND livello = ?
+            ORDER BY qualita_score DESC, numero_usi ASC, RANDOM()
+            LIMIT ?
+        ''', (materia, argomento, livello, limit))
+        
+        risultati = cursor.fetchall()
+        
+        # Aggiorna contatore usi
+        for risultato in risultati:
+            cursor.execute('''
+                UPDATE esercizi_qualita 
+                SET numero_usi = numero_usi + 1, ultima_usa = ?
+                WHERE titolo_esercizio = ? AND contenuto_esercizio = ?
+            ''', (datetime.now().isoformat(), risultato[0], risultato[1]))
+        
+        conn.commit()
+        conn.close()
+        
+        return risultati
+    except Exception as e:
+        print(f"Errore caricando esempi qualità: {e}")
+        return []
 
 # ═══════════════════════════════════════════════════════════════════════════
 
