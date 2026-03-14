@@ -17,7 +17,87 @@ from datetime import datetime, timezone
 
 import google.generativeai as genai
 
-from promptfoo.admin_test_panel import render_admin_page
+# Import per pannello admin - versione integrata
+def render_admin_page():
+    """Pannello admin integrato direttamente in main.py"""
+    
+    st.set_page_config(page_title="Admin - VerificAI", layout="wide")
+    
+    # Header
+    st.markdown("""
+    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                padding: 2rem; border-radius: 10px; margin-bottom: 2rem;'>
+        <h1 style='color: white; margin: 0;'>🔧 Pannello Admin VerificAI</h1>
+        <p style='color: white; margin: 0.5rem 0 0 0;'>Test Suite Management</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Navigazione
+    with st.sidebar:
+        st.markdown("### 📋 Navigazione")
+        page = st.selectbox(
+            "Seleziona sezione:",
+            ["🎯 Dashboard", "🧪 Nuovo Test", "📊 Storico Test"]
+        )
+    
+    if page == "🎯 Dashboard":
+        st.markdown("## 🎯 Dashboard Test Suite")
+        
+        # Metriche
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("📝 Test Totali", "0")
+        with col2:
+            st.metric("📊 Risultati", "0")
+        with col3:
+            st.metric("📈 Success Rate", "N/A")
+        with col4:
+            st.metric("⏰ Ultimo Test", "Nessuno")
+        
+        st.info("🚀 Sistema test pronto. Usa la sidebar per navigare.")
+        
+    elif page == "🧪 Nuovo Test":
+        st.markdown("## 🧪 Genera Nuovo Test")
+        
+        with st.form("new_test_form"):
+            st.markdown("### 📋 Configurazione Test")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                materia = st.selectbox("Materia", ["Matematica", "Italiano", "Fisica"])
+                livello = st.selectbox("Livello", ["Liceo Scientifico", "Istituto Tecnico"])
+                argomento = st.text_input("Argomento", "Equazioni di secondo grado")
+            
+            with col2:
+                num_esercizi = st.number_input("Numero Esercizi", 1, 10, 4)
+                punti_totali = st.number_input("Punti Totali", 10, 200, 80, 10)
+                durata = st.text_input("Durata", "50 minuti")
+            
+            submitted = st.form_submit_button("🚀 Genera Test", type="primary")
+            
+            if submitted:
+                st.success("✅ Test configurato!")
+                st.info("📝 Sistema di generazione test in fase di sviluppo")
+                st.code(f"""
+Test Configuration:
+- Materia: {materia}
+- Livello: {livello}
+- Argomento: {argomento}
+- Esercizi: {num_esercizi}
+- Punti: {punti_totali}
+- Durata: {durata}
+                """)
+    
+    elif page == "📊 Storico Test":
+        st.markdown("## 📊 Storico Test")
+        st.info("📂 Nessun test trovato. Genera nuovi test dalla sezione '🧪 Nuovo Test'.")
+    
+    # Pulsante per tornare all'app principale
+    if st.button("← Torna a VerificAI", type="secondary"):
+        st.session_state.current_page = 'home'
+        st.session_state.stage = 'INPUT'
+        st.rerun()
 from sidebar import render_sidebar
 from generation import genera_verifica, analizza_documento_caricato, compila_contesto_generazione
 # Import per pannello admin
