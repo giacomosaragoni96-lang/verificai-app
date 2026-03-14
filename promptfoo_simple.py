@@ -97,27 +97,148 @@ def run_test_rapido():
             st.error(f"❌ Errore: {e}")
 
 def run_test_completo():
-    """Esegue test completo"""
+    """Esegue test completo senza dipendenze problematiche"""
     with st.spinner("🔄 Esecuzione test completo..."):
         try:
-            result = subprocess.run([
-                sys.executable, "promptfoo/comprehensive_test_suite.py"
-            ], capture_output=True, text=True, cwd=".")
+            # Eseguiamo un test completo diretto senza usare comprehensive_test_suite.py
+            from prompts import prompt_corpo_verifica
+            from config import CALIBRAZIONE_SCUOLA
+            import google.generativeai as genai
+            import json
+            from datetime import datetime
             
-            st.markdown("### 📊 Risultati Test Completo")
+            st.markdown("### 📊 Test Completo - Tutte le Materie")
             
-            if result.returncode == 0:
-                st.success("✅ Test completato!")
-                st.code(result.stdout, language="text")
+            # Scenari completi per tutte le materie
+            scenarios = [
+                {
+                    "name": "Matematica_Equazioni",
+                    "materia": "Matematica",
+                    "livello": "Istituto Tecnico",
+                    "argomento": "Equazioni di secondo grado",
+                    "num_esercizi": 4,
+                    "punti_totali": 80
+                },
+                {
+                    "name": "Italiano_Analisi",
+                    "materia": "Italiano",
+                    "livello": "Liceo Scientifico", 
+                    "argomento": "Analisi testo poetico",
+                    "num_esercizi": 4,
+                    "punti_totali": 100
+                },
+                {
+                    "name": "Fisica_Meccanica",
+                    "materia": "Fisica",
+                    "livello": "Liceo Scientifico",
+                    "argomento": "Leggi di Newton",
+                    "num_esercizi": 3,
+                    "punti_totali": 100
+                }
+            ]
+            
+            results = []
+            passed = 0
+            
+            for scenario in scenarios:
+                try:
+                    with st.spinner(f"🔄 Test {scenario['name']}..."):
+                        # Genera prompt
+                        calibrazione = CALIBRAZIONE_SCUOLA.get(scenario['livello'], "")
+                        
+                        prompt_params = {
+                            "materia": scenario['materia'],
+                            "argomento": scenario['argomento'],
+                            "calibrazione": calibrazione,
+                            "durata": "60 minuti",
+                            "num_esercizi": scenario['num_esercizi'],
+                            "punti_totali": scenario['punti_totali'],
+                            "mostra_punteggi": True,
+                            "con_griglia": True,
+                            "note_generali": "",
+                            "istruzioni_esercizi": "",
+                            "e_mat": scenario['materia'] in ["Matematica", "Fisica"],
+                            "titolo_header": "",
+                            "preambolo_fisso": "",
+                            "mathpix_context": None
+                        }
+                        
+                        prompt = prompt_corpo_verifica(**prompt_params)
+                        
+                        # Chiama API
+                        model = genai.GenerativeModel('gemini-2.5-flash-lite')
+                        response = model.generate_content(prompt)
+                        output = response.text
+                        
+                        # Valutazione
+                        import re
+                        subsections = len(re.findall(r'\\subsection\*', output))
+                        points = re.findall(r'\((\d+)\s*pt\)', output)
+                        total_points = sum(int(p) for p in points)
+                        
+                        # Check pass/fail
+                        esercizi_ok = subsections == scenario['num_esercizi']
+                        punti_ok = total_points == scenario['punti_totali']
+                        test_passed = esercizi_ok and punti_ok
+                        
+                        if test_passed:
+                            passed += 1
+                        
+                        results.append({
+                            "name": scenario['name'],
+                            "materia": scenario['materia'],
+                            "passed": test_passed,
+                            "esercizi": f"{subsections}/{scenario['num_esercizi']}",
+                            "punti": f"{total_points}/{scenario['punti_totali']}"
+                        })
+                        
+                        # Mostra risultato
+                        status = "✅" if test_passed else "❌"
+                        st.write(f"{status} **{scenario['name']}** - {scenario['materia']}")
+                        
+                        with st.expander(f"Dettagli {scenario['name']}"):
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.write(f"**Esercizi:** {subsections}/{scenario['num_esercizi']} {'✅' if esercizi_ok else '❌'}")
+                                st.write(f"**Punti:** {total_points}/{scenario['punti_totali']} {'✅' if punti_ok else '❌'}")
+                            with col2:
+                                st.write(f"**Status:** {'PASSATO' if test_passed else 'FALLITO'}")
+                                st.write(f"**Materia:** {scenario['materia']}")
+                            
+                            # Preview output
+                            st.code(output[:300] + "..." if len(output) > 300 else output, language='latex')
                 
-                # Mostra metriche se disponibili
-                show_comprehensive_metrics()
-            else:
-                st.error("❌ Test fallito")
-                st.code(result.stderr, language="text")
-                
+                except Exception as e:
+                    st.warning(f"⚠️ Errore {scenario['name']}: {e}")
+                    results.append({
+                        "name": scenario['name'],
+                        "materia": scenario['materia'],
+                        "passed": False,
+                        "error": str(e)
+                    })
+            
+            # Mostra metriche finali
+            st.markdown("### 📊 Risultati Finali")
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Test Totali", len(results))
+            with col2:
+                st.metric("Passati", passed)
+            with col3:
+                success_rate = (passed / len(results)) * 100 if results else 0
+                st.metric("Success Rate", f"{success_rate:.1f}%")
+            
+            # Tabella risultati
+            st.markdown("#### 📋 Tabella Risultati")
+            for result in results:
+                if result.get('passed'):
+                    st.success(f"✅ {result['name']} - {result['materia']} - {result.get('esercizi', 'N/A')} - {result.get('punti', 'N/A')}")
+                else:
+                    st.error(f"❌ {result['name']} - {result['materia']} - {result.get('error', 'Fallito')}")
+            
         except Exception as e:
-            st.error(f"❌ Errore: {e}")
+            st.error(f"❌ Errore test completo: {e}")
 
 def run_test_reali():
     """Esegue test su verifiche reali"""
