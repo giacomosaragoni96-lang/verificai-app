@@ -5765,8 +5765,39 @@ def _render_stage_final():
                 _rph.empty(); st.error(f'Errore: {_er}')
 
     # ═══════════════════════════════════════════════════════════════════════════
-    #  IDEA #5 — CONDIVIDI CON IL DIPARTIMENTO
+    #  VALUTAZIONE ESERCIZI — Nuova funzionalità
     # ═══════════════════════════════════════════════════════════════════════════
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+    
+    # Sezione valutazione esercizi
+    st.markdown(
+        f'<div class="variant-section-label">VALUTAZIONE DETTAGLIATA ESERCIZI</div>',
+        unsafe_allow_html=True
+    )
+    
+    # Card valutazione
+    st.markdown(
+        f'<div class="variant-card variant-card-purple">'
+        f'  <div class="variant-card-header">'
+        f'    <span class="variant-card-icon">📝</span>'
+        f'    <span class="variant-card-title">Valuta Esercizi</span>'
+        f'  </div>'
+        f'  <div class="variant-card-desc">Valuta singolarmente ogni esercizio e salva le valutazioni nel database con tagging materia-argomento.</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+    
+    # Pulsante avvia valutazione
+    if st.button("🎯 Avvia Valutazione Esercizi", key="btn_valutazione", 
+                 use_container_width=True, type="primary"):
+        st.session_state["valutazione_mode"] = True
+        st.rerun()
+    
+    # Modalità valutazione
+    if st.session_state.get("valutazione_mode", False):
+        render_valutazione_esercizi_modal(gp, vA)
+    
+    # ── IDEA #5 — CONDIVIDI CON IL DIPARTIMENTO ────────────────────────────────
     st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
 
     _share_code = st.session_state._share_code
@@ -6251,6 +6282,370 @@ if not _share_view_active:
     elif _current == STAGE_FINAL:   _render_stage_final()
     elif _current == STAGE_MIE_VERIFICHE: _render_le_tue_verifiche()
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  FUNZIONI VALUTAZIONE ESERCIZI
+# ═══════════════════════════════════════════════════════════════════════════
+
+def render_valutazione_esercizi_modal(gp, vA):
+    """Interfaccia modale per valutazione esercizi"""
+    
+    # Header valutazione
+    st.markdown(
+        f'<div style="background:linear-gradient(135deg,{T["accent"]}22 0%,{T["card"]} 100%);'
+        f'border:1.5px solid {T["accent"]}55;border-radius:16px;padding:1.5rem;margin-bottom:1rem;">'
+        f'<div style="display:flex;align-items:center;gap:1rem;">'
+        f'<div style="font-size:2rem;">📝</div>'
+        f'<div>'
+        f'<div style="font-size:1.3rem;font-weight:700;color:{T["text"]};">Valutazione Dettagliata Esercizi</div>'
+        f'<div style="font-size:0.9rem;color:{T["text2"]};">Valuta singolarmente ogni esercizio e salva nel database</div>'
+        f'</div>'
+        f'</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+    
+    # Pulsanti chiusura
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("❌ Chiudi Valutazione", key="btn_close_valutazione"):
+            st.session_state["valutazione_mode"] = False
+            st.rerun()
+    with col2:
+        if st.button("📊 Visualizza Statistiche", key="btn_stats_valutazione"):
+            st.session_state["stats_mode"] = True
+            st.rerun()
+    
+    if st.session_state.get("stats_mode", False):
+        render_statistiche_valutazioni()
+        return
+    
+    # Estrai esercizi dal LaTeX
+    latex_content = vA.get("latex", "")
+    if not latex_content:
+        st.error("❌ Nessun LaTeX disponibile per la valutazione")
+        return
+    
+    esercizi = estrai_esercizi_da_latex(latex_content)
+    
+    if not esercizi:
+        st.warning("⚠️ Nessun esercizio trovato nel LaTeX")
+        return
+    
+    # Info verifica
+    materia = gp.get("materia", "Sconosciuta")
+    argomento = gp.get("argomento", "Sconosciuto")
+    
+    st.info(f"📚 **Materia:** {materia} | 📖 **Argomento:** {argomento} | 📝 **Esercizi trovati:** {len(esercizi)}")
+    
+    # Form valutazione
+    with st.form("form_valutazione_main"):
+        st.subheader("🎯 Compila Valutazione Esercizi")
+        
+        # ID verifica e valutatore
+        col1, col2 = st.columns(2)
+        with col1:
+            id_verifica = st.text_input(
+                "ID Verifica:",
+                value=f"verifica_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            )
+        with col2:
+            valutatore = st.text_input("Valutatore:", value="Docente")
+        
+        valutazioni_salvate = []
+        
+        # Valutazione per ogni esercizio
+        for i, esercizio in enumerate(esercizi):
+            st.markdown(f"---")
+            st.markdown(f"#### Esercizio {esercizio['numero']}: {esercizio['titolo']}")
+            
+            # Mostra contenuto sintetico
+            with st.expander("📄 Mostra contenuto completo", expanded=False):
+                st.code(esercizio['contenuto'][:500] + "..." if len(esercizio['contenuto']) > 500 else esercizio['contenuto'], language='latex')
+            
+            # Griglia valutazione
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                punteggio_assegnato = st.number_input(
+                    f"Punteggio (max {esercizio['punteggio_massimo']} pt):",
+                    min_value=0.0,
+                    max_value=float(esercizio['punteggio_massimo']),
+                    value=float(esercizio['punteggio_massimo']),
+                    step=0.5,
+                    key=f"punteggio_val_{i}"
+                )
+                
+                difficolta = st.selectbox(
+                    "Difficoltà:",
+                    ["Molto facile", "Facile", "Media", "Difficile", "Molto difficile"],
+                    key=f"difficolta_val_{i}"
+                )
+            
+            with col2:
+                feedback = st.selectbox(
+                    "Feedback:",
+                    ["Eccellente", "Buono", "Sufficiente", "Insufficiente", "Da migliorare"],
+                    key=f"feedback_val_{i}"
+                )
+                
+                competenze = st.multiselect(
+                    "Competenze:",
+                    ["Comprensione", "Applicazione", "Analisi", "Sintesi", "Valutazione", "Creatività"],
+                    key=f"competenze_val_{i}"
+                )
+            
+            with col3:
+                # Punteggio percentuale
+                percentuale = (punteggio_assegnato / esercizio['punteggio_massimo']) * 100
+                st.metric("Percentuale", f"{percentuale:.1f}%")
+                
+                # Colore basato su percentuale
+                if percentuale >= 80:
+                    st.success("🟢 Ottimo")
+                elif percentuale >= 60:
+                    st.warning("🟡 Sufficiente")
+                else:
+                    st.error("🔴 Da migliorare")
+            
+            commenti = st.text_area(
+                "Commenti specifici:",
+                key=f"commenti_val_{i}",
+                placeholder="Note dettagliate su questo esercizio...",
+                height=80
+            )
+            
+            # Salva valutazione
+            valutazioni_salvate.append({
+                'id_verifica': id_verifica,
+                'materia': materia,
+                'argomento': argomento,
+                'numero_esercizio': esercizio['numero'],
+                'titolo_esercizio': esercizio['titolo'],
+                'contenuto_esercizio': esercizio['contenuto'],
+                'punteggio_assegnato': punteggio_assegnato,
+                'punteggio_massimo': esercizio['punteggio_massimo'],
+                'feedback': feedback,
+                'commenti': commenti,
+                'tag_difficolta': difficolta,
+                'tag_competenze': ', '.join(competenze),
+                'data_valutazione': datetime.now().isoformat(),
+                'valutatore': valutatore
+            })
+        
+        # Pulsanti azione
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            submitted = st.form_submit_button("💾 Salva Valutazioni", type="primary")
+        
+        with col2:
+            if st.form_submit_button("📊 Anteprima Statistiche"):
+                mostra_anteprima_statistiche(valutazioni_salvate)
+        
+        with col3:
+            if st.form_submit_button("📥 Esporta JSON"):
+                esporta_valutazioni_json(valutazioni_salvate)
+        
+        # Processa salvataggio
+        if submitted:
+            salvati = 0
+            for val in valutazioni_salvate:
+                if salva_valutazione_db(val):
+                    salvati += 1
+            
+            if salvati > 0:
+                st.success(f"✅ Salvate {salvati} valutazioni con successo!")
+                st.balloons()
+            else:
+                st.error("❌ Errore nel salvataggio delle valutazioni")
+
+def estrai_esercizi_da_latex(latex_content: str):
+    """Estrae gli esercizi dal LaTeX"""
+    import re
+    
+    esercizi = []
+    
+    # Trova tutti i \subsection*
+    pattern = r'\\subsection\*\{([^}]+)\}(.*?)(?=\\subsection\*|\\end\{document\}|$)'
+    matches = re.findall(pattern, latex_content, re.DOTALL)
+    
+    for i, (titolo, contenuto) in enumerate(matches, 1):
+        # Estrae punteggio dal titolo se presente
+        punteggio_match = re.search(r'\((\d+)\s*pt\)', titolo)
+        punteggio_massimo = int(punteggio_match.group(1)) if punteggio_match else 10
+        
+        # Pulisce il titolo
+        titolo_pulito = re.sub(r'\s*\(\d+\s*pt\)\s*$', '', titolo).strip()
+        
+        esercizi.append({
+            'numero': i,
+            'titolo': titolo_pulito,
+            'contenuto': contenuto.strip(),
+            'punteggio_massimo': punteggio_massimo
+        })
+    
+    return esercizi
+
+def salva_valutazione_db(valutazione):
+    """Salva una valutazione nel database SQLite"""
+    import sqlite3
+    import os
+    
+    DB_PATH = "valutazioni_esercizi.db"
+    
+    # Inizializza database se non esiste
+    if not os.path.exists(DB_PATH):
+        init_database_valutazioni()
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT OR REPLACE INTO esercizi_valutati 
+            (id_verifica, materia, argomento, numero_esercizio, titolo_esercizio, 
+             contenuto_esercizio, punteggio_assegnato, punteggio_massimo, feedback, 
+             commenti, tag_difficolta, tag_competenze, data_valutazione, valutatore)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            valutazione['id_verifica'],
+            valutazione['materia'],
+            valutazione['argomento'],
+            valutazione['numero_esercizio'],
+            valutazione['titolo_esercizio'],
+            valutazione['contenuto_esercizio'],
+            valutazione['punteggio_assegnato'],
+            valutazione['punteggio_massimo'],
+            valutazione['feedback'],
+            valutazione['commenti'],
+            valutazione['tag_difficolta'],
+            valutazione['tag_competenze'],
+            valutazione['data_valutazione'],
+            valutazione['valutatore']
+        ))
+        
+        conn.commit()
+        return True
+    except Exception as e:
+        st.error(f"Errore salvando valutazione: {e}")
+        return False
+    finally:
+        conn.close()
+
+def init_database_valutazioni():
+    """Inizializza il database per le valutazioni"""
+    import sqlite3
+    
+    DB_PATH = "valutazioni_esercizi.db"
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    # Tabella esercizi valutati
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS esercizi_valutati (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_verifica TEXT,
+            materia TEXT,
+            argomento TEXT,
+            numero_esercizio INTEGER,
+            titolo_esercizio TEXT,
+            contenuto_esercizio TEXT,
+            punteggio_assegnato REAL,
+            punteggio_massimo REAL,
+            feedback TEXT,
+            commenti TEXT,
+            tag_difficolta TEXT,
+            tag_competenze TEXT,
+            data_valutazione TEXT,
+            valutatore TEXT,
+            UNIQUE(id_verifica, numero_esercizio)
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+
+def mostra_anteprima_statistiche(valutazioni):
+    """Mostra anteprima statistiche delle valutazioni"""
+    st.markdown("### 📊 Anteprima Statistiche")
+    
+    if not valutazioni:
+        st.warning("Nessuna valutazione da analizzare")
+        return
+    
+    # Calcola statistiche
+    totale_esercizi = len(valutazioni)
+    totale_punteggio_assegnato = sum(v['punteggio_assegnato'] for v in valutazioni)
+    totale_punteggio_massimo = sum(v['punteggio_massimo'] for v in valutazioni)
+    media_percentuale = (totale_punteggio_assegnato / totale_punteggio_massimo) * 100
+    
+    # Metriche principali
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Esercizi valutati", totale_esercizi)
+    
+    with col2:
+        st.metric("Media punteggio", f"{totale_punteggio_assegnato/totale_esercizi:.1f}")
+    
+    with col3:
+        st.metric("Media percentuale", f"{media_percentuale:.1f}%")
+    
+    with col4:
+        st.metric("Punteggio totale", f"{totale_punteggio_assegnato}/{totale_punteggio_massimo}")
+    
+    # Distribuzione feedback
+    feedback_counts = {}
+    for val in valutazioni:
+        feedback = val['feedback']
+        feedback_counts[feedback] = feedback_counts.get(feedback, 0) + 1
+    
+    st.markdown("#### 📈 Distribuzione Feedback")
+    for feedback, count in feedback_counts.items():
+        percentage = (count / totale_esercizi) * 100
+        st.write(f"**{feedback}:** {count} esercizi ({percentage:.1f}%)")
+
+def esporta_valutazioni_json(valutazioni):
+    """Esporta valutazioni in formato JSON"""
+    if not valutazioni:
+        st.warning("Nessuna valutazione da esportare")
+        return
+    
+    # Prepara dati per export
+    export_data = {
+        'info_export': {
+            'data_export': datetime.now().isoformat(),
+            'totale_esercizi': len(valutazioni),
+            'materia': valutazioni[0]['materia'] if valutazioni else 'N/A',
+            'argomento': valutazioni[0]['argomento'] if valutazioni else 'N/A'
+        },
+        'valutazioni': valutazioni
+    }
+    
+    # Converti in JSON
+    json_data = json.dumps(export_data, indent=2, ensure_ascii=False)
+    
+    # Pulsante download
+    st.download_button(
+        label="📥 Scarica Valutazioni (JSON)",
+        data=json_data,
+        file_name=f"valutazioni_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+        mime="application/json"
+    )
+
+def render_statistiche_valutazioni():
+    """Mostra statistiche complete delle valutazioni"""
+    st.markdown("### 📊 Statistiche Complete Valutazioni")
+    
+    # Placeholder per statistiche complete
+    st.info("🔧 Funzione statistiche complete in sviluppo...")
+    
+    if st.button("🔙 Torna alla Valutazione", key="btn_back_to_valutazione"):
+        st.session_state["stats_mode"] = False
+        st.rerun()
+
+# ═══════════════════════════════════════════════════════════════════════════
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
 st.markdown(
