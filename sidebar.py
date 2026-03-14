@@ -267,12 +267,12 @@ def render_sidebar(
                 _sub = "Con Pro avresti accesso illimitato."
             st.markdown(f"""
             <div class="sb-pro-card" style="
-                background: linear-gradient(135deg, {_SB_ACCENT}08, {_SB_ACCENT}04) !important;
-                border: 2px solid {_SB_ACCENT}40 !important;
+                background: linear-gradient(135deg, {_acc}15, {_acc}08) !important;
+                border: 2px solid {_acc}50 !important;
                 border-radius: 12px !important;
                 padding: 1rem !important;
                 margin: .6rem 0 .4rem 0 !important;
-                box-shadow: 0 4px 12px {_SB_ACCENT}15 !important;
+                box-shadow: 0 4px 12px {_acc}25 !important;
                 transition: all .2s ease !important;
             ">
               <div class="sb-pro-card-header">✦ VerificAI Pro</div>
