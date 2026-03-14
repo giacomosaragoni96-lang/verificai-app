@@ -298,8 +298,21 @@ def render_sidebar(
                 .execute()
             )
             total_verifiche = storico_count.count if storico_count else 0
+            
+            # Ottieni l'ultima verifica generata
+            ultima_verifica = (
+                supabase_admin.table("verifiche_storico")
+                .select("id, titolo, created_at")
+                .eq("user_id", utente.id)
+                .is_("deleted_at", "null")
+                .order("created_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            ultima_verifica = ultima_verifica.data[0] if ultima_verifica.data else None
         except:
             total_verifiche = 0
+            ultima_verifica = None
         
         # Card con stats e link
         st.markdown(f'''
@@ -325,6 +338,32 @@ def render_sidebar(
             </div>
         </div>
         ''', unsafe_allow_html=True)
+        
+        # Link veloce all'ultima verifica
+        if ultima_verifica:
+            titolo_breve = ultima_verifica.get("titolo", "Senza titolo")[:30] + "..." if len(ultima_verifica.get("titolo", "")) > 30 else ultima_verifica.get("titolo", "Senza titolo")
+            st.markdown(f'''
+            <div style="
+                background: {_SB_INPUT_BG};
+                border: 1px solid {_SB_BORDER};
+                padding: 0.8rem;
+                border-radius: 8px;
+                margin-bottom: 1rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            " onclick="window.location.href='#?stage=MIE_VERIFICHE&verifica_id={ultima_verifica["id"]}'">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
+                    <span style="font-size: 0.9rem; font-weight: 600; color: {_sb_text};">⚡ Ultima verifica</span>
+                    <span style="background: {_acc}; color: white; padding: 1px 6px; border-radius: 8px; font-size: 0.7rem; font-weight: 600;">NUOVO</span>
+                </div>
+                <div style="font-size: 0.85rem; color: {_sb_text}; font-weight: 500;">
+                    {titolo_breve}
+                </div>
+                <div style="font-size: 0.75rem; color: {_sb_muted}; margin-top: 0.2rem;">
+                    {_tempo_fa(ultima_verifica["created_at"])}
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
         
         # Link diretto
         if st.button("📄 Apri Storico Completo", key="open_storico", use_container_width=True, type="secondary"):
