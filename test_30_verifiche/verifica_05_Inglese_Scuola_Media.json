@@ -3,20 +3,20 @@
   "scenario": {
     "materia": "Inglese",
     "livello": "Scuola Media",
-    "argomento": "Listening skills",
-    "num_esercizi": 3,
-    "punti_totali": 50,
-    "durata": "45 minuti",
+    "argomento": "Reading comprehension",
+    "num_esercizi": 4,
+    "punti_totali": 30,
+    "durata": "30 minuti",
     "mostra_punteggi": true,
     "con_griglia": true
   },
   "generazione": {
     "success": true,
     "output": {
-      "titolo": "Listening Comprehension",
+      "titolo": "Reading Comprehension Skills",
       "A": {
-        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Listening Comprehension} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Calcolo Numerico Diretto}\n\nSi consideri la seguente sequenza di operazioni:\n\\begin{enumerate}[a)]\n    \\item Si calcoli il risultato dell'espressione: $\\sqrt{16} + \\frac{3}{4} \\times (10 - 2)^2$. (8 pt)\n    \\item Si determini il valore di $x$ nell'equazione: $5x - 3(x+2) = 8$. (9 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Geometria Euclidea}\nUn rettangolo ha perimetro di 30 cm. La lunghezza è il doppio della larghezza.\n\\begin{enumerate}[a)]\n    \\item Si calcolino le dimensioni del rettangolo. (8 pt)\n    \\item Si determini l'area del rettangolo. (8 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Algebra Lineare - Sistemi di Equazioni}\n\nSi consideri il seguente sistema di equazioni lineari:\n$$\n\\begin{cases}\n2x + y = 7 \\\\\nx - 3y = 0\n\\end{cases}\n$$\n\\begin{enumerate}[a)]\n    \\item Si risolva il sistema per trovare i valori di $x$ e $y$. (9 pt)\n    \\item Si verifichi che la soluzione trovata soddisfi entrambe le equazioni. (8 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{2}{c||}{\\textbf{1}} & \\multicolumn{2}{c||}{\\textbf{2}} & \\multicolumn{2}{c||}{\\textbf{3}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & a) & b) & a) & b) & \\\\ \\hline\n\\textbf{Max} & 8 & 9 & 8 & 8 & 9 & 8 & 50 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
-        "pdf": "<BYTES:96076>"
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Reading Comprehension Skills} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Reading Comprehension - General Concepts}\n\\begin{enumerate}[a)]\n\\item Read the following short text and answer the question below. (3 pt)\n\"The Amazon rainforest is the largest tropical rainforest in the world, covering an immense area across nine countries in South America. It is renowned for its unparalleled biodiversity, hosting millions of species of plants, insects, birds, and mammals. This vast ecosystem plays a crucial role in regulating the Earth's climate by absorbing massive amounts of carbon dioxide and producing oxygen. Deforestation, driven by agriculture, logging, and mining, poses a significant threat to its survival and the global environment.\"\n\\item What is the primary function of the Amazon rainforest regarding the Earth's climate? (3 pt)\n\\item What are the main threats to the Amazon rainforest mentioned in the text? (3 pt)\n\\item Summarize the main characteristic of the Amazon rainforest as described in the first sentence. (3 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Reading Comprehension - Detailed Understanding}\nRead the following passage and answer the questions that follow.\n\"The invention of the printing press by Johannes Gutenberg in the 15th century marked a pivotal moment in human history. Before this innovation, books were painstakingly copied by hand, making them rare, expensive, and accessible only to a privileged few. Gutenberg's press, utilizing movable type, dramatically increased the speed and reduced the cost of book production. This led to a widespread dissemination of knowledge, fostering literacy, the Renaissance, and the Reformation. The impact of the printing press was profound, fundamentally altering the way information was shared and consumed across Europe and eventually the world.\"\n\n\\begin{enumerate}[a)]\n\\item Before Gutenberg's printing press, what was the main characteristic of book production, and who had access to books? (3 pt)\n\\item Explain the direct consequences of the printing press on the spread of knowledge and major historical movements. (3 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Reading Comprehension - Inferential Skills}\nRead the following excerpt and answer the questions.\n\"The migration patterns of monarch butterflies are one of nature's most awe-inspiring phenomena. Each year, millions of these delicate insects embark on an epic journey spanning thousands of miles, from Canada and the United States to overwintering grounds in Mexico and coastal California. This multi-generational migration is a complex feat of instinct and navigation. Scientists are still unraveling the exact mechanisms that allow these butterflies to find their way, but research suggests a combination of factors, including the Earth's magnetic field, the sun's position, and possibly an internal biological clock. Climate change and habitat loss are increasingly threatening these ancient migratory routes.\"\n\n\\begin{enumerate}[a)]\n\\item What makes the monarch butterfly migration \"one of nature's most awe-inspiring phenomena\"? (3 pt)\n\\item Based on the text, what are some of the potential factors that aid the monarch butterflies in their navigation? (3 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Reading Comprehension - Critical Analysis}\nRead the provided text and evaluate the statement that follows.\n\"Artificial intelligence (AI) is rapidly transforming various industries, from healthcare and finance to entertainment and transportation. AI systems, capable of learning from data and making decisions, offer potential benefits such as increased efficiency, improved accuracy, and personalized experiences. However, the widespread adoption of AI also raises significant ethical concerns. Issues surrounding data privacy, algorithmic bias, job displacement, and the potential for misuse of AI technology require careful consideration and robust regulatory frameworks. Balancing innovation with responsible development is crucial for harnessing the full potential of AI while mitigating its risks.\"\n\nEvaluate the following statement: \"The text presents a purely optimistic view of Artificial Intelligence.\"\nJustify your answer by referring to specific points made in the text. (6 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{4}{c||}{\\textbf{1}} & \\multicolumn{2}{c||}{\\textbf{2}} & \\multicolumn{2}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & d) & a) & b) & a) & b) & — & \\\\ \\hline\n\\textbf{Max} & 3 & 3 & 3 & 3 & 3 & 3 & 3 & 3 & 6 & 30 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:68793>"
       },
       "B": {
         "latex": "",
@@ -35,7 +35,7 @@
         "pdf": null,
         "testo": ""
       },
-      "_validation_score": 0.8
+      "_validation_score": 0.6
     },
     "prompt_used": "Sistema completo VerificAI",
     "tokens": 7
@@ -43,13 +43,13 @@
   "analisi": {
     "esercizi": {
       "trovati": 0,
-      "attesi": 3,
+      "attesi": 4,
       "corretti": false,
       "punteggio": 0
     },
     "punteggi": {
       "trovati": 0,
-      "attesi": 50,
+      "attesi": 30,
       "corretti": false,
       "punteggio": 0
     },
@@ -76,12 +76,12 @@
   },
   "pdf": {
     "success": true,
-    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_162350.tex",
-    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_162350.pdf",
-    "pdf_size": 16542,
-    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Listening skills}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164450.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164450.pdf",
+    "pdf_size": 19016,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Reading comprehension}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
   },
   "punteggio_finale": 15,
-  "timestamp": "2026-03-14T16:23:51.716683",
-  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Listening skills}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  "timestamp": "2026-03-14T16:44:51.660841",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Reading comprehension}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
 }

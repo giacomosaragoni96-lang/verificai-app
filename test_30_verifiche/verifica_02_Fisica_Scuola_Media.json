@@ -1,0 +1,87 @@
+{
+  "id": 2,
+  "scenario": {
+    "materia": "Fisica",
+    "livello": "Scuola Media",
+    "argomento": "Elettromagnetismo",
+    "num_esercizi": 4,
+    "punti_totali": 40,
+    "durata": "2 ore",
+    "mostra_punteggi": true,
+    "con_griglia": false
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Fondamenti di Elettromagnetismo",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Fondamenti di Elettromagnetismo} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Concetti Base dell'Elettromagnetismo}\nConsidera un conduttore filiforme rettilineo infinito percorso da una corrente stazionaria $I$.\n\\begin{enumerate}[a)]\n\n\\item[a)] Descrivi la direzione e il verso del campo magnetico generato dal conduttore in un punto P nello spazio circostante. (3 pt)\n\n\\item[b)] Enuncia la legge di Ampère nella sua forma integrale e spiega il significato di ogni termine. (4 pt)\n\n\\item[c)] Quale fenomeno fisico è alla base del funzionamento di un elettromagnete? (3 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Campo Elettrico di una Carica Puntiforme}\nUna carica puntiforme $q = -5.0 \\times 10^{-8}$ C è posta nel vuoto.\n\\begin{enumerate}[a)]\n\n\\item[a)] Calcola il modulo, la direzione e il verso del campo elettrico generato dalla carica in un punto P distante $r = 0.20$ m dalla carica. (5 pt)\n\n\\item[b)] Determina il lavoro compiuto dal campo elettrico per spostare una seconda carica $q' = +2.0 \\times 10^{-9}$ C dal punto P a un punto Q distante $r' = 0.40$ m dalla carica $q$. (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Circuiti in Serie e Parallelo}\nUn circuito è alimentato da un generatore di tensione continua $V = 12$ V. Al circuito sono collegati due resistori, $R_1 = 3.0 \\, \\Omega$ e $R_2 = 6.0 \\, \\Omega$.\n\\begin{enumerate}[a)]\n\n\\item[a)] Calcola la resistenza equivalente se i due resistori sono collegati in serie. (3 pt)\n\n\\item[b)] Calcola la resistenza equivalente se i due resistori sono collegati in parallelo. (3 pt)\n\n\\item[c)] Per la configurazione in parallelo, calcola l'intensità di corrente che attraversa ciascun resistore e la corrente totale erogata dal generatore. (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Induzione Elettromagnetica}\nUna spira quadrata di lato $L = 0.10$ m è immersa in un campo magnetico uniforme di modulo $B = 0.50$ T. Il piano della spira è perpendicolare alle linee di campo magnetico.\n\\begin{enumerate}[a)]\n\n\\item[a)] Calcola il flusso del campo magnetico attraverso la spira. (3 pt)\n\n\\item[b)] Se il campo magnetico varia nel tempo secondo la legge $B(t) = (0.50 - 0.10t)$ T, dove $t$ è in secondi, calcola la forza elettromotrice indotta nella spira nell'intervallo di tempo $0 \\le t \\le 5$ s. (4 pt)\n\n\\item[c)] Descrivi la legge fisica che lega la variazione del flusso magnetico all'induzione di una forza elettromotrice. (3 pt)\n\\end{enumerate}\n\\end{document}",
+        "pdf": "<BYTES:102044>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.6
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 4,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 40,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": false,
+      "presente": false,
+      "punteggio": 5
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164417.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164417.pdf",
+    "pdf_size": 17294,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Elettromagnetismo}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 20,
+  "timestamp": "2026-03-14T16:44:18.870397",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Elettromagnetismo}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

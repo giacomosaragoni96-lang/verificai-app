@@ -353,30 +353,80 @@ def genera_verifica_reale(scenario):
         print(f"📄 FINE ISTRUZIONI")
         
         # 🛠️ DEBUG: Test con parametri minimali come l'app
-        print(f"� Chiamata genera_verifica con parametri test...")
+        print(f"🚀 Chiamata genera_verifica con parametri test...")
         
-        result = genera_verifica(
-            model=model,
-            materia=scenario['materia'],
-            argomento=scenario['argomento'],
-            difficolta="media",  # Default
-            calibrazione=calibrazione,
-            durata=scenario['durata'],
-            num_esercizi=scenario['num_esercizi'],
-            punti_totali=scenario['punti_totali'],
-            mostra_punteggi=scenario['mostra_punteggi'],
-            con_griglia=scenario['con_griglia'],
-            doppia_fila=False,
-            bes_dsa=False,
-            perc_ridotta=25,
-            bes_dsa_b=False,
-            genera_soluzioni=False,
-            note_generali="",  # Vuoto per test
-            istruzioni_esercizi=istruzioni_esercizi,  # 🛠️ FIX: Istruzioni proper!
-            immagini_esercizi=immagini_esercizi,
-            file_ispirazione=None,
-            mathpix_context=None,
-        )
+        # 🛠️ DEBUG: Intercettiamo TUTTO il processo di generazione
+        import generation
+        import google.generativeai as genai
+        
+        # Salviamo le funzioni originali
+        original_safe_generate = generation._safe_generate
+        original_generate_content = genai.GenerativeModel.generate_content
+        
+        # Debug completo del prompt e risposta
+        def debug_safe_generate(model, prompt, description):
+            print(f"\n🔍 === DEBUG PROMPT - {description} ===")
+            print(f"Tipo prompt: {type(prompt)}")
+            print(f"Lunghezza prompt: {len(str(prompt))} caratteri")
+            
+            if isinstance(prompt, list):
+                print(f"Prompt è una lista di {len(prompt)} elementi")
+                print(f"--- PRIMO ELEMENTO (MAIN PROMPT) ---")
+                main_prompt = prompt[0]
+                print(f"Lunghezza: {len(main_prompt)} caratteri")
+                print(f"Contenuto completo:\n{main_prompt}")
+                print(f"--- FINE MAIN PROMPT ---")
+                if len(prompt) > 1:
+                    print(f"Altri {len(prompt)-1} elementi (file/immagini)")
+            else:
+                print(f"--- PROMPT SINGOLO ---")
+                print(f"Contenuto completo:\n{prompt}")
+                print(f"--- FINE PROMPT ---")
+            
+            # Chiama la funzione originale
+            result = original_safe_generate(model, prompt, description)
+            
+            print(f"\n🔍 === DEBUG RISPOSTA - {description} ===")
+            print(f"Tipo risposta: {type(result)}")
+            if hasattr(result, 'text'):
+                print(f"Lunghezza testo: {len(result.text)} caratteri")
+                print(f"--- RISPOSTA COMPLETA ---")
+                print(result.text)
+                print(f"--- FINE RISPOSTA ---")
+            else:
+                print(f"Risposta senza attributo 'text': {result}")
+            
+            return result
+        
+        # Patch delle funzioni
+        generation._safe_generate = debug_safe_generate
+        
+        try:
+            result = genera_verifica(
+                model=model,
+                materia=scenario['materia'],
+                argomento=scenario['argomento'],
+                difficolta="media",  # Default
+                calibrazione=calibrazione,
+                durata=scenario['durata'],
+                num_esercizi=scenario['num_esercizi'],
+                punti_totali=scenario['punti_totali'],
+                mostra_punteggi=scenario['mostra_punteggi'],
+                con_griglia=scenario['con_griglia'],
+                doppia_fila=False,
+                bes_dsa=False,
+                perc_ridotta=25,
+                bes_dsa_b=False,
+                genera_soluzioni=False,
+                note_generali="",  # Vuoto per test
+                istruzioni_esercizi=istruzioni_esercizi,  # 🛠️ FIX: Istruzioni proper!
+                immagini_esercizi=immagini_esercizi,
+                file_ispirazione=None,
+                mathpix_context=None,
+            )
+        finally:
+            # Ripristina funzione originale
+            generation._safe_generate = original_safe_generate
         
         print(f"📊 genera_verifica() completata - Tipo risultato: {type(result)}")
         

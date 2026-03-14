@@ -3,20 +3,20 @@
   "scenario": {
     "materia": "Storia",
     "livello": "Liceo Scientifico",
-    "argomento": "Guerra mondiale",
-    "num_esercizi": 4,
-    "punti_totali": 100,
-    "durata": "45 minuti",
+    "argomento": "Storia romana",
+    "num_esercizi": 8,
+    "punti_totali": 40,
+    "durata": "1 ora e 30 minuti",
     "mostra_punteggi": true,
-    "con_griglia": false
+    "con_griglia": true
   },
   "generazione": {
     "success": true,
     "output": {
-      "titolo": "Le guerre mondiali",
+      "titolo": "Storia Romana",
       "A": {
-        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Le guerre mondiali} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Le Cause della Grande Guerra}\nIndividuare e descrivere brevemente tre fattori scatenanti principali che condussero allo scoppio della Prima Guerra Mondiale nel 1914. (33 pt)\n\\subsection*{Esercizio 2: La Guerra di Trincea}\nSi consideri una linea di trincea con lunghezze $L_1 = 1500$ metri e $L_2 = 1200$ metri, separate da una zona neutrale di $d = 100$ metri. Un proiettile sparato da un punto $P_1$ sulla trincea 1 raggiunge un bersaglio sulla trincea 2 se la sua traiettoria interseca la zona neutrale. Assumendo che la traiettoria sia un segmento rettilineo e che la probabilità di colpire un punto specifico sulla trincea 2 sia uniforme rispetto alla sua lunghezza, determinare la probabilità che un proiettile sparato a caso da un punto qualsiasi della trincea 1 colpisca un punto qualsiasi della trincea 2. (33 pt)\n\\subsection*{Esercizio 3: Le Principali Battaglie del Fronte Occidentale}\nPer ciascuna delle seguenti battaglie, indicare l'anno in cui ebbe luogo e una caratteristica saliente:\n\\begin{enumerate}[a)]\n    \\item Battaglia della Somme\n    \\item Battaglia di Verdun\n    \\item Battaglia di Passchendaele\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Le Conseguenze del Conflitto}\nIl Trattato di Versailles impose alla Germania pesanti riparazioni di guerra. Se la somma totale delle riparazioni fosse stata $S = 200$ miliardi di marchi oro, e la Germania avesse pagato inizialmente il $15\\%$ di tale somma, calcolare la cifra pagata e la percentuale della somma restante da saldare. (34 pt)\n\n\\end{document}",
-        "pdf": "<BYTES:81410>"
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Storia Romana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Periodizzazione della Storia Romana}\nIndividua correttamente il periodo storico a cui appartengono i seguenti eventi e istituzioni, inserendo il nome del periodo nell'apposito spazio.\n\\begin{enumerate}[a)]\n    \\item Fondazione di Roma: \\underline{Età Monarchica}\n    \\item Guerre Puniche: \\underline{Età Repubblicana}\n    \\item Primo Triumvirato: \\underline{Tarda Repubblica}\n    \\item Editto di Milano: \\underline{Tarda Antichità/Impero}\n    \\item Caduta dell'Impero Romano d'Occidente: \\underline{Tarda Antichità}\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: La Monarchia Romana}\nDescrivi brevemente le caratteristiche principali della fase monarchica della storia di Roma, toccando i seguenti aspetti:\n\\begin{enumerate}[a)]\n    \\item La figura del Re e i suoi poteri.\n    \\item Le tre classi sociali principali e la loro composizione.\n    \\item L'importanza della religione nella vita pubblica.\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: La Repubblica Romana - Le Istituzioni}\nLa Repubblica Romana fu caratterizzata da un complesso sistema di istituzioni. Indica la funzione principale di ognuna delle seguenti magistrature:\n\\begin{enumerate}[a)]\n    \\item Consolato: \\underline{Massima magistratura con potere esecutivo e militare}\n    \\item Pretura: \\underline{Amministrazione della giustizia}\n    \\item Censura: \\underline{Censimento, controllo della moralità pubblica e composizione del Senato}\n    \\item Tribuni della plebe: \\underline{Difesa dei diritti dei plebei e potere di veto}\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: L'espansione di Roma}\nIl periodo repubblicano vide una straordinaria espansione territoriale di Roma. Quale fu la conseguenza più significativa di tale espansione per la struttura sociale ed economica della Repubblica?\n\\begin{itemize}\n    \\item A) Il rafforzamento della piccola proprietà terriera.\n    \\item B) La diffusione della cultura greca in tutto il Mediterraneo.\n    \\item C) L'affermarsi del latifondo e l'accentuazione delle disuguaglianze sociali.\n    \\item D) La progressiva diminuzione del numero degli schiavi.\n\\end{itemize}\n\n\\subsection*{Esercizio 5: Le Guerre Puniche}\nLe Guerre Puniche furono un conflitto epocale che segnò il dominio romano sul Mediterraneo. Rispondi alle seguenti domande a riguardo:\n\\begin{enumerate}[a)]\n    \\item Quale potenza marittima e commerciale si contrappose a Roma?\n    \\item Indica un fatto militare saliente della Seconda Guerra Punica.\n\\end{enumerate}\n\n\\subsection*{Esercizio 6: Il passaggio dalla Repubblica all'Impero}\nIl passaggio dalla Repubblica all'Impero fu un processo complesso e tormentato. VERO o FALSO?\n\\begin{itemize}\n    \\item La figura di Giulio Cesare ebbe un ruolo marginale nel crollo delle istituzioni repubblicane. $\\square$ V $\\quad\\square$ F\n    \\item Ottaviano Augusto è considerato il primo imperatore romano. $\\square$ V $\\quad\\square$ F\n    \\item La crisi del III secolo d.C. fu caratterizzata da stabilità politica ed economica. $\\square$ V $\\quad\\square$ F\n\\end{itemize}\n\n\\subsection*{Esercizio 7: L'Impero Romano - Organizzazione e Società}\nConsiderata la vasta estensione dell'Impero Romano, la sua organizzazione richiedeva un sistema efficiente.\nScegli l'opzione corretta tra quelle proposte per descrivere il fenomeno dell'assimilazione culturale tra Roma e le popolazioni conquistate:\n\\begin{itemize}\n    \\item A) L'assimilazione fu un processo unidirezionale, con le popolazioni conquistate che adottarono integralmente la cultura romana senza alcuna influenza reciproca.\n    \\item B) L'assimilazione fu un processo di reciproco scambio culturale, dove elementi romani si fusero con le tradizioni locali, dando vita a nuove forme culturali.\n    \\item C) L'Impero Romano impose sempre e solo la propria lingua e le proprie usanze, proibendo ogni espressione culturale locale.\n    \\item D) L'assimilazione culturale avvenne solo nelle aree urbane, mentre nelle campagne le tradizioni locali rimasero immutate.\n\\end{itemize}\n\n\\subsection*{Esercizio 8: La Tarda Antichità e il Cristianesimo}\nLa diffusione del Cristianesimo rappresentò un mutamento epocale nella storia romana. Spiega brevemente il significato dell'Editto di Milano (313 d.C.).\n\\underline{L'Editto di Milano concesse la libertà di culto ai cristiani, ponendo fine alle persecuzioni e riconoscendo il Cristianesimo come religione lecita all'interno dell'Impero Romano.} (40 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\multicolumn{1}{c||}{\\textbf{7}} & \\multicolumn{1}{c||}{\\textbf{8}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & — & — & — & — & — & — & — & 40 & 40 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:76903>"
       },
       "B": {
         "latex": "",
@@ -43,13 +43,13 @@
   "analisi": {
     "esercizi": {
       "trovati": 0,
-      "attesi": 4,
+      "attesi": 8,
       "corretti": false,
       "punteggio": 0
     },
     "punteggi": {
       "trovati": 0,
-      "attesi": 100,
+      "attesi": 40,
       "corretti": false,
       "punteggio": 0
     },
@@ -65,9 +65,9 @@
       "punteggio": 0
     },
     "griglia": {
-      "richiesta": false,
+      "richiesta": true,
       "presente": false,
-      "punteggio": 5
+      "punteggio": 0
     },
     "latex": {
       "brackets_bilanciati": true,
@@ -76,12 +76,12 @@
   },
   "pdf": {
     "success": true,
-    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_161150.tex",
-    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_161150.pdf",
-    "pdf_size": 17307,
-    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Guerra mondiale}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164408.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164408.pdf",
+    "pdf_size": 16341,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
   },
-  "punteggio_finale": 20,
-  "timestamp": "2026-03-14T16:11:51.045423",
-  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Guerra mondiale}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:44:09.601955",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
 }

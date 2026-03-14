@@ -1,0 +1,445 @@
+{
+  "timestamp": "2026-03-14T16:44:57.460534",
+  "totali": 5,
+  "media_voto": 16.0,
+  "success_rate": 0.0,
+  "param_accuracy": 0.0,
+  "pdf_rate": 100.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Storia",
+        "livello": "Liceo Scientifico",
+        "argomento": "Storia romana",
+        "num_esercizi": 8,
+        "punti_totali": 40,
+        "durata": "1 ora e 30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Storia Romana",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Storia Romana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Periodizzazione della Storia Romana}\nIndividua correttamente il periodo storico a cui appartengono i seguenti eventi e istituzioni, inserendo il nome del periodo nell'apposito spazio.\n\\begin{enumerate}[a)]\n    \\item Fondazione di Roma: \\underline{Età Monarchica}\n    \\item Guerre Puniche: \\underline{Età Repubblicana}\n    \\item Primo Triumvirato: \\underline{Tarda Repubblica}\n    \\item Editto di Milano: \\underline{Tarda Antichità/Impero}\n    \\item Caduta dell'Impero Romano d'Occidente: \\underline{Tarda Antichità}\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: La Monarchia Romana}\nDescrivi brevemente le caratteristiche principali della fase monarchica della storia di Roma, toccando i seguenti aspetti:\n\\begin{enumerate}[a)]\n    \\item La figura del Re e i suoi poteri.\n    \\item Le tre classi sociali principali e la loro composizione.\n    \\item L'importanza della religione nella vita pubblica.\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: La Repubblica Romana - Le Istituzioni}\nLa Repubblica Romana fu caratterizzata da un complesso sistema di istituzioni. Indica la funzione principale di ognuna delle seguenti magistrature:\n\\begin{enumerate}[a)]\n    \\item Consolato: \\underline{Massima magistratura con potere esecutivo e militare}\n    \\item Pretura: \\underline{Amministrazione della giustizia}\n    \\item Censura: \\underline{Censimento, controllo della moralità pubblica e composizione del Senato}\n    \\item Tribuni della plebe: \\underline{Difesa dei diritti dei plebei e potere di veto}\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: L'espansione di Roma}\nIl periodo repubblicano vide una straordinaria espansione territoriale di Roma. Quale fu la conseguenza più significativa di tale espansione per la struttura sociale ed economica della Repubblica?\n\\begin{itemize}\n    \\item A) Il rafforzamento della piccola proprietà terriera.\n    \\item B) La diffusione della cultura greca in tutto il Mediterraneo.\n    \\item C) L'affermarsi del latifondo e l'accentuazione delle disuguaglianze sociali.\n    \\item D) La progressiva diminuzione del numero degli schiavi.\n\\end{itemize}\n\n\\subsection*{Esercizio 5: Le Guerre Puniche}\nLe Guerre Puniche furono un conflitto epocale che segnò il dominio romano sul Mediterraneo. Rispondi alle seguenti domande a riguardo:\n\\begin{enumerate}[a)]\n    \\item Quale potenza marittima e commerciale si contrappose a Roma?\n    \\item Indica un fatto militare saliente della Seconda Guerra Punica.\n\\end{enumerate}\n\n\\subsection*{Esercizio 6: Il passaggio dalla Repubblica all'Impero}\nIl passaggio dalla Repubblica all'Impero fu un processo complesso e tormentato. VERO o FALSO?\n\\begin{itemize}\n    \\item La figura di Giulio Cesare ebbe un ruolo marginale nel crollo delle istituzioni repubblicane. $\\square$ V $\\quad\\square$ F\n    \\item Ottaviano Augusto è considerato il primo imperatore romano. $\\square$ V $\\quad\\square$ F\n    \\item La crisi del III secolo d.C. fu caratterizzata da stabilità politica ed economica. $\\square$ V $\\quad\\square$ F\n\\end{itemize}\n\n\\subsection*{Esercizio 7: L'Impero Romano - Organizzazione e Società}\nConsiderata la vasta estensione dell'Impero Romano, la sua organizzazione richiedeva un sistema efficiente.\nScegli l'opzione corretta tra quelle proposte per descrivere il fenomeno dell'assimilazione culturale tra Roma e le popolazioni conquistate:\n\\begin{itemize}\n    \\item A) L'assimilazione fu un processo unidirezionale, con le popolazioni conquistate che adottarono integralmente la cultura romana senza alcuna influenza reciproca.\n    \\item B) L'assimilazione fu un processo di reciproco scambio culturale, dove elementi romani si fusero con le tradizioni locali, dando vita a nuove forme culturali.\n    \\item C) L'Impero Romano impose sempre e solo la propria lingua e le proprie usanze, proibendo ogni espressione culturale locale.\n    \\item D) L'assimilazione culturale avvenne solo nelle aree urbane, mentre nelle campagne le tradizioni locali rimasero immutate.\n\\end{itemize}\n\n\\subsection*{Esercizio 8: La Tarda Antichità e il Cristianesimo}\nLa diffusione del Cristianesimo rappresentò un mutamento epocale nella storia romana. Spiega brevemente il significato dell'Editto di Milano (313 d.C.).\n\\underline{L'Editto di Milano concesse la libertà di culto ai cristiani, ponendo fine alle persecuzioni e riconoscendo il Cristianesimo come religione lecita all'interno dell'Impero Romano.} (40 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\multicolumn{1}{c||}{\\textbf{7}} & \\multicolumn{1}{c||}{\\textbf{8}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & — & — & — & — & — & — & — & 40 & 40 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:76903>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 8,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 40,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164408.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164408.pdf",
+        "pdf_size": 16341,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:44:09.601946",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 2,
+      "scenario": {
+        "materia": "Fisica",
+        "livello": "Scuola Media",
+        "argomento": "Elettromagnetismo",
+        "num_esercizi": 4,
+        "punti_totali": 40,
+        "durata": "2 ore",
+        "mostra_punteggi": true,
+        "con_griglia": false
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Fondamenti di Elettromagnetismo",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Fondamenti di Elettromagnetismo} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Concetti Base dell'Elettromagnetismo}\nConsidera un conduttore filiforme rettilineo infinito percorso da una corrente stazionaria $I$.\n\\begin{enumerate}[a)]\n\n\\item[a)] Descrivi la direzione e il verso del campo magnetico generato dal conduttore in un punto P nello spazio circostante. (3 pt)\n\n\\item[b)] Enuncia la legge di Ampère nella sua forma integrale e spiega il significato di ogni termine. (4 pt)\n\n\\item[c)] Quale fenomeno fisico è alla base del funzionamento di un elettromagnete? (3 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Campo Elettrico di una Carica Puntiforme}\nUna carica puntiforme $q = -5.0 \\times 10^{-8}$ C è posta nel vuoto.\n\\begin{enumerate}[a)]\n\n\\item[a)] Calcola il modulo, la direzione e il verso del campo elettrico generato dalla carica in un punto P distante $r = 0.20$ m dalla carica. (5 pt)\n\n\\item[b)] Determina il lavoro compiuto dal campo elettrico per spostare una seconda carica $q' = +2.0 \\times 10^{-9}$ C dal punto P a un punto Q distante $r' = 0.40$ m dalla carica $q$. (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Circuiti in Serie e Parallelo}\nUn circuito è alimentato da un generatore di tensione continua $V = 12$ V. Al circuito sono collegati due resistori, $R_1 = 3.0 \\, \\Omega$ e $R_2 = 6.0 \\, \\Omega$.\n\\begin{enumerate}[a)]\n\n\\item[a)] Calcola la resistenza equivalente se i due resistori sono collegati in serie. (3 pt)\n\n\\item[b)] Calcola la resistenza equivalente se i due resistori sono collegati in parallelo. (3 pt)\n\n\\item[c)] Per la configurazione in parallelo, calcola l'intensità di corrente che attraversa ciascun resistore e la corrente totale erogata dal generatore. (4 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Induzione Elettromagnetica}\nUna spira quadrata di lato $L = 0.10$ m è immersa in un campo magnetico uniforme di modulo $B = 0.50$ T. Il piano della spira è perpendicolare alle linee di campo magnetico.\n\\begin{enumerate}[a)]\n\n\\item[a)] Calcola il flusso del campo magnetico attraverso la spira. (3 pt)\n\n\\item[b)] Se il campo magnetico varia nel tempo secondo la legge $B(t) = (0.50 - 0.10t)$ T, dove $t$ è in secondi, calcola la forza elettromotrice indotta nella spira nell'intervallo di tempo $0 \\le t \\le 5$ s. (4 pt)\n\n\\item[c)] Descrivi la legge fisica che lega la variazione del flusso magnetico all'induzione di una forza elettromotrice. (3 pt)\n\\end{enumerate}\n\\end{document}",
+            "pdf": "<BYTES:102044>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 4,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 40,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 5
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164417.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164417.pdf",
+        "pdf_size": 17294,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Elettromagnetismo}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 20,
+      "timestamp": "2026-03-14T16:44:18.870386",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Elettromagnetismo}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 3,
+      "scenario": {
+        "materia": "Chimica",
+        "livello": "Liceo Scientifico",
+        "argomento": "Chimica organica",
+        "num_esercizi": 3,
+        "punti_totali": 120,
+        "durata": "45 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Chimica Organica",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Chimica Organica} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Nomenclatura e Strutture di Composti Organici}\n\\begin{enumerate}[a)]\n\\item Assegna il nome IUPAC corretto ai seguenti composti organici: (7 pt)\n\\begin{enumerate}[i)]\n\\item CH$_3$CH$_2$CH$_2$CH$_2$OH (1 pt)\n\\item (CH$_3$)$_2$CHCOCH$_3$ (2 pt)\n\\item CH$_2$=CH-CH=CH$_2$ (1 pt)\n\\item C$_6$H$_5$NO$_2$ (2 pt)\n\\end{enumerate}\n\\item Disegna la struttura di Lewis per il metanolo (CH$_3$OH) e per l'anidride carbonica (CO$_2$). Evidenzia gli elettroni di valenza. (7 pt)\n\\item Classifica i seguenti composti come alcani, alcheni, alchini, alcoli o aldeidi: (7 pt)\n\\begin{enumerate}[i)]\n\\item Etano (1 pt)\n\\item Protene (2 pt)\n\\item Acetilene (2 pt)\n\\item Metanale (2 pt)\n\\item 2-Butanolo (2 pt)\n\\end{enumerate}\n\\item Indica il tipo di ibridazione degli atomi di carbonio nelle seguenti molecole: (8 pt)\n\\begin{enumerate}[i)]\n\\item Etano (CH$_3$CH$_3$) (2 pt)\n\\item Etene (CH$_2$=CH$_2$) (2 pt)\n\\item Etino (CH$\\equiv$CH) (3 pt)\n\\end{enumerate}\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Reazioni di Composti Organici}\n\\begin{enumerate}[a)]\n\\item Scrivi le reazioni di ossidazione del propan-1-olo e del propan-2-olo con un ossidante blando (es. PCC). Indica i prodotti formati. (11 pt)\n\\item Bilancia la seguente reazione di combustione completa dell'etano (C$_2$H$_6$): (8 pt)\nC$_2$H$_6$ + O$_2$ $\\rightarrow$ CO$_2$ + H$_2$O\n\\item Descrivi brevemente il meccanismo di addizione elettrofila dell'idrogeno bromuro (HBr) all'etilene (CH$_2$=CH$_2$). Indica il prodotto principale formato, giustificando la regioselettività secondo la regola di Markovnikov. (11 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Isomeria e Proprietà Fisiche}\n\\begin{enumerate}[a)]\n\\item Identifica tutti gli isomeri strutturali (scheletrici e di posizione) dell'esano (C$_6$H$_{14}$). Assegna il nome IUPAC a ciascun isomero. (15 pt)\n\\item Confronta i punti di ebollizione dei seguenti composti e giustifica la differenza: (8 pt)\n\\begin{itemize}\n    \\item n-pentano (4 pt)\n    \\item isopentano (2-metilbutano) (4 pt)\n\\end{itemize}\n\\item Spiega la differenza tra isomeri cis e trans nel contesto degli alcheni, fornendo un esempio specifico (es. 2-butene). (8 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{16}{c||}{\\textbf{1}} & \\multicolumn{3}{c||}{\\textbf{2}} & \\multicolumn{5}{c||}{\\textbf{3}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & d) & e) & f) & g) & h) & i) & j) & k) & l) & m) & n) & o) & p) & a) & b) & c) & a) & b) & c) & d) & e) & \\\\ \\hline\n\\textbf{Max} & 7 & 1 & 2 & 1 & 2 & 7 & 7 & 1 & 2 & 2 & 2 & 2 & 8 & 2 & 2 & 3 & 11 & 8 & 11 & 15 & 8 & 4 & 4 & 8 & 120 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:84351>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 3,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 120,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164427.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164427.pdf",
+        "pdf_size": 16296,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Chimica organica}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:44:28.273600",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Chimica organica}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 45 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 4,
+      "scenario": {
+        "materia": "Inglese",
+        "livello": "Istituto Tecnico",
+        "argomento": "Grammar",
+        "num_esercizi": 7,
+        "punti_totali": 40,
+        "durata": "30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "English Grammar Fundamentals",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: English Grammar Fundamentals} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Vocabulary - Collocations}\nComplete the sentences with the most appropriate word to form a correct collocation.\n\\begin{enumerate}[a)]\n    \\item She always felt a great sense of \\underline{} when she visited her grandparents. (belonging / possession / ownership) (1 pt)\n    \\item The company decided to \\underline{} its operations to a new location. (relocate / move / transfer) (1 pt)\n    \\item It's important to \\underline{} a healthy lifestyle with regular exercise. (maintain / keep / hold) (1 pt)\n    \\item The news was so shocking that he \\underline{} his words. (swallowed / ate / bit) (1 pt)\n    \\item After the long hike, they were \\underline{} exhausted. (completely / totally / absolutely) (1 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Verb Tenses - Present Perfect vs Past Simple}\nChoose the correct verb tense to complete each sentence.\n\\begin{enumerate}[a)]\n    \\item I \\underline{} (see/saw) that movie last week. (1 pt)\n    \\item She \\underline{} (live/has lived) in London for five years. (1 pt)\n    \\item They \\underline{} (not finish/haven't finished) their project yet. (1 pt)\n    \\item When \\underline{} you \\underline{} (did you buy/have you bought) that car? (1 pt)\n    \\item He \\underline{} (visit/has visited) Paris twice in his life. (1 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Articles - Definite, Indefinite, Zero}\nFill in the blanks with a/an, the, or leave the space blank (Ø) if no article is needed.\n\\begin{enumerate}[a)]\n    \\item She is \\underline{} excellent doctor. (1 pt)\n    \\item \\underline{} sun is very bright today. (1 pt)\n    \\item I usually have \\underline{} breakfast at 7 AM. (1 pt)\n    \\item \\underline{} Eiffel Tower is in Paris. (1 pt)\n    \\item They are going on \\underline{} holiday next month. (1 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Prepositions of Time and Place}\nComplete the sentences with the correct prepositions (in, on, at, for, since).\n\\begin{enumerate}[a)]\n    \\item The meeting is \\underline{} Monday. (1 pt)\n    \\item He was born \\underline{} 1990. (1 pt)\n    \\item She has been waiting \\underline{} two hours. (1 pt)\n    \\item They live \\underline{} London. (1 pt)\n    \\item I'll see you \\underline{} 5 PM. (1 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 5: Conditionals - Type 1 and Type 2}\nChoose the correct form of the verb to complete the conditional sentences.\n\\begin{enumerate}[a)]\n    \\item If it \\underline{} (rain/rains) tomorrow, we will stay inside. (1 pt)\n    \\item If I \\underline{} (have/had) more time, I would learn to play the guitar. (1 pt)\n    \\item She will call you if she \\underline{} (needs/need) help. (1 pt)\n    \\item If they \\underline{} (win/won) the lottery, they would buy a new house. (1 pt)\n    \\item If you study hard, you \\underline{} (will pass/would pass) the exam. (1 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 6: Sentence Transformation - Active to Passive}\nRewrite the following sentences in the passive voice.\n\\begin{enumerate}[a)]\n    \\item The chef prepared the meal. (1 pt)\n    \\item Someone stole my bicycle. (1 pt)\n    \\item The students are writing an essay. (1 pt)\n    \\item The company will launch a new product next year. (1 pt)\n    \\item They have built a new bridge. (1 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 7: Multiple Choice - Grammar Focus}\nChoose the correct option to complete each sentence.\n\\begin{enumerate}[a)]\n    \\item Which sentence uses the correct pronoun case?\n    \\begin{enumerate}[i)]\n        \\item Give the book to John and I.\n        \\item Give the book to John and me. (2 pt)\n        \\item Give the book to I and John.\n        \\item Give the book to me and John.\n    \\end{enumerate}\n    \\item Choose the correct comparative adjective.\n    \\begin{enumerate}[i)]\n        \\item This car is more fast than mine.\n        \\item This car is faster than mine. (2 pt)\n        \\item This car is most fast than mine.\n        \\item This car is fastly than mine.\n    \\end{enumerate}\n    \\item Which sentence is grammatically correct?\n    \\begin{enumerate}[i)]\n        \\item He don't like coffee.\n        \\item He doesn't like coffee. (2 pt)\n        \\item He no likes coffee.\n        \\item He not likes coffee.\n    \\end{enumerate}\n    \\item Choose the correct interrogative pronoun.\n    \\begin{enumerate}[i)]\n        \\item Who's book is this?\n        \\item Whose book is this? (2 pt)\n        \\item Who is book is this?\n        \\item Whom's book is this?\n    \\end{enumerate}\n    \\item Choose the correct conjunction.\n    \\begin{enumerate}[i)]\n        \\item I want to go to the party, but I am tired. (2 pt)\n        \\item I want to go to the party, so I am tired.\n        \\item I want to go to the party, or I am tired.\n        \\item I want to go to the party, yet I am tired.\n    \\end{enumerate}\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{5}{c||}{\\textbf{1}} & \\multicolumn{5}{c||}{\\textbf{2}} & \\multicolumn{5}{c||}{\\textbf{3}} & \\multicolumn{5}{c||}{\\textbf{4}} & \\multicolumn{5}{c||}{\\textbf{5}} & \\multicolumn{5}{c||}{\\textbf{6}} & \\multicolumn{5}{c||}{\\textbf{7}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & d) & e) & a) & b) & c) & d) & e) & a) & b) & c) & d) & e) & a) & b) & c) & d) & e) & a) & b) & c) & d) & e) & a) & b) & c) & d) & e) & c) & h) & m) & r) & v) & \\\\ \\hline\n\\textbf{Max} & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 5 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 2 & 2 & 2 & 2 & 2 & 44 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:69157>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 7,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 40,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164441.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164441.pdf",
+        "pdf_size": 16063,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Grammar}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:44:42.740777",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Grammar}}\\\\[0.5cm]\n{\\normalsize Istituto Tecnico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 5,
+      "scenario": {
+        "materia": "Inglese",
+        "livello": "Scuola Media",
+        "argomento": "Reading comprehension",
+        "num_esercizi": 4,
+        "punti_totali": 30,
+        "durata": "30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Reading Comprehension Skills",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Inglese: Reading Comprehension Skills} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Reading Comprehension - General Concepts}\n\\begin{enumerate}[a)]\n\\item Read the following short text and answer the question below. (3 pt)\n\"The Amazon rainforest is the largest tropical rainforest in the world, covering an immense area across nine countries in South America. It is renowned for its unparalleled biodiversity, hosting millions of species of plants, insects, birds, and mammals. This vast ecosystem plays a crucial role in regulating the Earth's climate by absorbing massive amounts of carbon dioxide and producing oxygen. Deforestation, driven by agriculture, logging, and mining, poses a significant threat to its survival and the global environment.\"\n\\item What is the primary function of the Amazon rainforest regarding the Earth's climate? (3 pt)\n\\item What are the main threats to the Amazon rainforest mentioned in the text? (3 pt)\n\\item Summarize the main characteristic of the Amazon rainforest as described in the first sentence. (3 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Reading Comprehension - Detailed Understanding}\nRead the following passage and answer the questions that follow.\n\"The invention of the printing press by Johannes Gutenberg in the 15th century marked a pivotal moment in human history. Before this innovation, books were painstakingly copied by hand, making them rare, expensive, and accessible only to a privileged few. Gutenberg's press, utilizing movable type, dramatically increased the speed and reduced the cost of book production. This led to a widespread dissemination of knowledge, fostering literacy, the Renaissance, and the Reformation. The impact of the printing press was profound, fundamentally altering the way information was shared and consumed across Europe and eventually the world.\"\n\n\\begin{enumerate}[a)]\n\\item Before Gutenberg's printing press, what was the main characteristic of book production, and who had access to books? (3 pt)\n\\item Explain the direct consequences of the printing press on the spread of knowledge and major historical movements. (3 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Reading Comprehension - Inferential Skills}\nRead the following excerpt and answer the questions.\n\"The migration patterns of monarch butterflies are one of nature's most awe-inspiring phenomena. Each year, millions of these delicate insects embark on an epic journey spanning thousands of miles, from Canada and the United States to overwintering grounds in Mexico and coastal California. This multi-generational migration is a complex feat of instinct and navigation. Scientists are still unraveling the exact mechanisms that allow these butterflies to find their way, but research suggests a combination of factors, including the Earth's magnetic field, the sun's position, and possibly an internal biological clock. Climate change and habitat loss are increasingly threatening these ancient migratory routes.\"\n\n\\begin{enumerate}[a)]\n\\item What makes the monarch butterfly migration \"one of nature's most awe-inspiring phenomena\"? (3 pt)\n\\item Based on the text, what are some of the potential factors that aid the monarch butterflies in their navigation? (3 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Reading Comprehension - Critical Analysis}\nRead the provided text and evaluate the statement that follows.\n\"Artificial intelligence (AI) is rapidly transforming various industries, from healthcare and finance to entertainment and transportation. AI systems, capable of learning from data and making decisions, offer potential benefits such as increased efficiency, improved accuracy, and personalized experiences. However, the widespread adoption of AI also raises significant ethical concerns. Issues surrounding data privacy, algorithmic bias, job displacement, and the potential for misuse of AI technology require careful consideration and robust regulatory frameworks. Balancing innovation with responsible development is crucial for harnessing the full potential of AI while mitigating its risks.\"\n\nEvaluate the following statement: \"The text presents a purely optimistic view of Artificial Intelligence.\"\nJustify your answer by referring to specific points made in the text. (6 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{4}{c||}{\\textbf{1}} & \\multicolumn{2}{c||}{\\textbf{2}} & \\multicolumn{2}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & d) & a) & b) & a) & b) & — & \\\\ \\hline\n\\textbf{Max} & 3 & 3 & 3 & 3 & 3 & 3 & 3 & 3 & 6 & 30 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:68793>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 4,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 30,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_164450.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_164450.pdf",
+        "pdf_size": 19016,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Reading comprehension}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:44:51.660834",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Inglese - Reading comprehension}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    }
+  ]
+}
