@@ -76,6 +76,7 @@ def render_sidebar(
         # indipendentemente dal tema principale (chiaro/scuro).
         _sb_text  = T.get("sidebar_input_text", "#E6EDF3")
         _sb_muted = T.get("sidebar_input_text", "#E6EDF3") + "99"
+        _sb_border = T.get("sidebar_border", "#E2E8F0")
         
         # Linea separatoria elegante
         st.markdown(
@@ -226,8 +227,8 @@ def render_sidebar(
             </span>
           </div>
           <div class="mobile-progress-bar" style="
-            background: {_SB_BORDER} !important;
-            border: 1px solid {_SB_BORDER} !important;
+            background: {_sb_border} !important;
+            border: 1px solid {_sb_border} !important;
             border-radius: 10px;
             overflow: hidden;
             height: 6px;
