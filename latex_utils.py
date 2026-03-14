@@ -1068,15 +1068,68 @@ def _calculate_dynamic_limits(func_expr: str) -> dict:
 def aggiungi_spaziatura_grafici_tabelle(latex: str) -> str:
     """
     Aggiunge spaziatura prima dei grafici e delle tabelle.
+    Sostituisce i placeholder con contenuti reali.
     """
-    # Aggiungi spaziatura prima dei grafici TikZ
+    # Sostituisci placeholder [Grafico] con un grafico TikZ di esempio
+    latex = re.sub(
+        r'\[Grafico\]',
+        r'''\\vspace{0.5cm}
+
+\\begin{center}
+\\begin{tikzpicture}[scale=0.8]
+\\begin{axis}[
+    xmin=-4, xmax=4,
+    ymin=-2, ymax=6,
+    axis lines=middle,
+    xlabel=$x$,
+    ylabel=$y$,
+    grid=major,
+    width=8cm,
+    height=5cm,
+    domain=-4:4,
+    samples=100
+]
+\\addplot[blue, thick] {x^2 - 2*x - 1};
+\\addplot[only marks, mark=*, red] coordinates {(1, -2) (3, 2)};
+\\end{axis}
+\\end{tikzpicture}
+\\end{center}
+
+\\vspace{0.3cm}''',
+        latex
+    )
+    
+    # Sostituisci placeholder [Tabella] con una tabella punteggi reale
+    latex = re.sub(
+        r'\[Tabella\]',
+        r'''\\begin{tabular}{|c|c|c|}
+\\hline
+\\textbf{Esercizio} & \\textbf{Punti} & \\textbf{Ottenuti} \\\\
+\\hline
+Esercizio 1 & 20 pt &  \\\\
+\\hline
+Esercizio 2 & 20 pt &  \\\\
+\\hline
+Esercizio 3 & 20 pt &  \\\\
+\\hline
+Esercizio 4 & 20 pt &  \\\\
+\\hline
+Esercizio 5 & 20 pt &  \\\\
+\\hline
+\\textbf{Totale} & \\textbf{100 pt} &  \\\\
+\\hline
+\\end{tabular}''',
+        latex
+    )
+    
+    # Aggiungi spaziatura prima dei grafici TikZ esistenti
     latex = re.sub(
         r'(?<!\n\n)\\begin\{tikzpicture\}',
         r'\n\n\\begin{tikzpicture}',
         latex
     )
     
-    # Aggiungi spaziatura prima delle tabelle
+    # Aggiungi spaziatura prima delle tabelle esistenti
     latex = re.sub(
         r'(?<!\n\n)\\begin\{tabular\}',
         r'\n\n\\begin{tabular}',
@@ -1110,8 +1163,21 @@ def migliora_spaziatura_sottopunti(latex: str) -> str:
     # Assicura che ogni \item sia su una riga propria
     latex = re.sub(r'(\s+)\\item\[', r'\n\\item\[', latex)
     
+    # Aggiungi spaziatura prima di ogni \subsection*
+    latex = re.sub(r'(?<!\n\n)\\subsection\*', r'\n\n\\subsection*', latex)
+    
+    # Aggiungi spaziatura dopo ogni \subsection*
+    latex = re.sub(r'(\\subsection\*\{[^}]+\})(?!\s*\n)', r'\1\n\n', latex)
+    
     # Rimuovi spaziatura eccessiva (più di 2 linee vuote)
     latex = re.sub(r'\n{3,}', '\n\n', latex)
+    
+    # Assicura spaziatura prima degli esercizi
+    latex = re.sub(r'(?<!\n\n)Si consideri', r'\n\nSi consideri', latex)
+    latex = re.sub(r'(?<!\n\n)Trovare', r'\n\nTrovare', latex)
+    latex = re.sub(r'(?<!\n\n)Si osservi', r'\n\nSi osservi', latex)
+    latex = re.sub(r'(?<!\n\n)Data', r'\n\nData', latex)
+    latex = re.sub(r'(?<!\n\n)Stabilire', r'\n\nStabilire', latex)
     
     return latex
 
