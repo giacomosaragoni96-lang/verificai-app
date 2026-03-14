@@ -1,0 +1,445 @@
+{
+  "timestamp": "2026-03-14T16:33:37.651185",
+  "totali": 5,
+  "media_voto": 18.0,
+  "success_rate": 0.0,
+  "param_accuracy": 0.0,
+  "pdf_rate": 100.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Matematica",
+        "livello": "Liceo Scientifico",
+        "argomento": "Equazioni di secondo grado",
+        "num_esercizi": 4,
+        "punti_totali": 60,
+        "durata": "30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": false
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Equazioni di secondo grado",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Equazioni di secondo grado} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Risoluzione di un'equazione completa}\nRisolvere la seguente equazione di secondo grado:\n$$ 3x^2 - 5x - 2 = 0 $$ (30 pt)\n\\subsection*{Esercizio 2: Studio delle radici}\nDeterminare per quali valori del parametro reale $k$ l'equazione $x^2 - (k+1)x + k = 0$ ammette:\n\\begin{enumerate}[a)]\n    \\item due radici reali distinte;\n    \\item una radice reale doppia;\n    \\item nessuna radice reale.\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Problema applicato}\nUn campo rettangolare ha un'area di 120 metri quadrati. La lunghezza supera la larghezza di 7 metri. Determinare le dimensioni del campo. (30 pt)\n\\subsection*{Esercizio 4: Natura delle radici}\nSenza risolvere esplicitamente le equazioni, determinare la natura delle radici (reali e distinte, reali e coincidenti, o non reali) delle seguenti equazioni:\n\\begin{enumerate}[a)]\n    \\item $2x^2 + 4x + 2 = 0$\n    \\item $x^2 - 6x + 10 = 0$\n    \\item $-x^2 + 5x - 3 = 0$\n\\end{enumerate}\n\\end{document}",
+            "pdf": "<BYTES:86472>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 4,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 60,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 5
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163243.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163243.pdf",
+        "pdf_size": 19028,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Equazioni di secondo grado}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 20,
+      "timestamp": "2026-03-14T16:32:44.166464",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Equazioni di secondo grado}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 2,
+      "scenario": {
+        "materia": "Italiano",
+        "livello": "Liceo Scientifico",
+        "argomento": "Testo argomentativo",
+        "num_esercizi": 2,
+        "punti_totali": 50,
+        "durata": "1 ora",
+        "mostra_punteggi": true,
+        "con_griglia": false
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Il testo argomentativo",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Italiano: Il testo argomentativo} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Studio di Funzione Razionale Fratta}\n\nSi consideri la funzione $f(x) = \\frac{x^2 - 4x + 3}{x^2 - 1}$.\n\\begin{enumerate}[a)]\n    \\item Determinare il dominio della funzione e le eventuali intersezioni con gli assi cartesiani. (8 pt)\n    \\item Calcolare i limiti della funzione agli estremi del dominio e determinare le equazioni degli eventuali asintoti. (8 pt)\n    \\item Studiare il segno della funzione e calcolare la derivata prima per individuare gli intervalli di monotonia e gli eventuali massimi e minimi relativi. (9 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Problema di Ottimizzazione}\nUn'azienda produce scatole a forma di parallelepipedo rettangolo con base quadrata. Il materiale per la base e la copertura superiore costa 2 euro al dm$^2$, mentre il materiale per le facce laterali costa 1 euro al dm$^2$.\n\\begin{enumerate}[a)]\n    \\item Esprimere il costo totale dei materiali in funzione della lunghezza del lato della base ($x$) e dell'altezza ($h$) della scatola. (8 pt)\n    \\item Sapendo che il volume della scatola deve essere pari a 100 dm$^3$, esprimere il costo totale dei materiali in funzione della sola variabile $x$. (8 pt)\n    \\item Determinare le dimensioni della scatola che minimizzano il costo totale dei materiali. (9 pt)\n\\end{enumerate}\n\\end{document}",
+            "pdf": "<BYTES:102572>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 2,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 50,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 5
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163254.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163254.pdf",
+        "pdf_size": 17032,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Testo argomentativo}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 20,
+      "timestamp": "2026-03-14T16:32:55.138123",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Testo argomentativo}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 3,
+      "scenario": {
+        "materia": "Chimica",
+        "livello": "Liceo Classico",
+        "argomento": "Leggi dei gas",
+        "num_esercizi": 5,
+        "punti_totali": 30,
+        "durata": "1 ora e 30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Leggi dei gas",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Leggi dei gas} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Unità di Misura e Costanti}\nIndica a quale grandezza fisica corrisponde ciascuna delle seguenti unità di misura nel contesto delle leggi dei gas e scrivi il valore della costante universale dei gas $R$ in tre diverse unità di misura, specificando ogni volta l'unità.\n\\begin{enumerate}\n    \n\\item[a)] J/(mol$\\cdot$K) (3 pt)\n    \n\\item[b)] Pa$\\cdot$m$^3$/mol (3 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Legge di Boyle-Mariotte}\nUn gas ideale si trova inizialmente a una pressione di $2.5$ atm e occupa un volume di $10.0$ litri. Mantenendo la temperatura costante, la pressione del gas viene aumentata a $5.0$ atm. Qual è il nuovo volume occupato dal gas? (6 pt)\n\\subsection*{Esercizio 3: Legge di Gay-Lussac}\nUna certa quantità di gas, a volume costante, esercita una pressione di $3.0$ bar a $27^{\\circ}$C. Se la temperatura viene aumentata a $227^{\\circ}$C, quale sarà la nuova pressione esercitata dal gas? (6 pt)\n\\subsection*{Esercizio 4: Legge di Avogadro}\nConfronta il numero di moli di ossigeno (O$_2$) e di idrogeno (H$_2$) presenti in due contenitori separati, ciascuno a temperatura e pressione costanti, ma contenente ciascuno $10.0$ litri di gas. (6 pt)\n\\subsection*{Esercizio 5: Equazione di Stato dei Gas Ideali}\nUn recipiente di $5.0$ litri contiene $0.50$ moli di un gas ideale alla temperatura di $27^{\\circ}$C. Determina la pressione del gas in atmosfere. (6 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{2}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 3 & 3 & 6 & 6 & 6 & 6 & 30 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:97478>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.6
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 5,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 30,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163306.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163306.pdf",
+        "pdf_size": 17940,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Leggi dei gas}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:33:07.330288",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Leggi dei gas}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 4,
+      "scenario": {
+        "materia": "Matematica",
+        "livello": "Liceo Scientifico",
+        "argomento": "Equazioni di secondo grado",
+        "num_esercizi": 2,
+        "punti_totali": 30,
+        "durata": "1 ora e 30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": false
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Equazioni di secondo grado",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Matematica: Equazioni di secondo grado} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Risoluzione di Equazioni e Studio del Segno}\n\nSi consideri l'equazione $2x^2 - 5x - 3 = 0$.\n\\begin{enumerate}[a)]\n    \\item Determinare le radici reali dell'equazione data. (5 pt)\n    \\item Studiare il segno del trinomio $2x^2 - 5x - 3$. (5 pt)\n    \\item Determinare gli intervalli di $x \\in \\mathbb{R}$ per cui vale la disuguaglianza $2x^2 - 5x - 3 \\ge 0$. (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Problema di Geometria Analitica con Equazioni di Secondo Grado}\nIn un sistema di riferimento cartesiano ortogonale $Oxy$, sia data la retta $r$ di equazione $y = 2x - 1$ e la parabola $\\mathcal{P}$ di equazione $y = x^2 - 2x + 3$.\n\\begin{enumerate}[a)]\n    \\item Determinare le coordinate dei punti di intersezione tra la retta $r$ e la parabola $\\mathcal{P}$. (5 pt)\n    \\item Calcolare la distanza tra i punti di intersezione trovati nel punto a). (5 pt)\n    \\item Determinare l'equazione della retta parallela a $r$ che sia tangente alla parabola $\\mathcal{P}$. (5 pt)\n\\end{enumerate}\n\\end{document}",
+            "pdf": "<BYTES:91156>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 2,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 30,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": false,
+          "presente": false,
+          "punteggio": 5
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163315.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163315.pdf",
+        "pdf_size": 19935,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Equazioni di secondo grado}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 20,
+      "timestamp": "2026-03-14T16:33:15.890484",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Matematica - Equazioni di secondo grado}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    },
+    {
+      "id": 5,
+      "scenario": {
+        "materia": "Fisica",
+        "livello": "Liceo Classico",
+        "argomento": "Elettromagnetismo",
+        "num_esercizi": 6,
+        "punti_totali": 50,
+        "durata": "1 ora e 30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Fondamenti di Elettromagnetismo",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Fondamenti di Elettromagnetismo} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Campo Elettrico da una Carica Puntiforme}\nUna carica puntiforme $q = +5.0 \\times 10^{-7}$ C è posta nell'origine di un sistema di coordinate cartesiane. Determinare l'intensità del campo elettrico prodotto da questa carica nel punto di coordinate $(x,y) = (0.30 \\text{ m}, 0.40 \\text{ m})$. Si utilizzi la costante dielettrica del vuoto $k_e = 8.99 \\times 10^9 \\text{ Nm}^2/\\text{C}^2$. (10 pt)\n\\subsection*{Esercizio 2: Potenziale Elettrico}\nConsiderare due cariche puntiformi, $q_1 = +2.0 \\times 10^{-6}$ C posta in $(0,0)$ e $q_2 = -3.0 \\times 10^{-6}$ C posta in $(0.50 \\text{ m}, 0)$. Calcolare il potenziale elettrico nel punto $(0.25 \\text{ m}, 0)$. Si assuma $k_e = 8.99 \\times 10^9 \\text{ Nm}^2/\\text{C}^2$. (10 pt)\n\\subsection*{Esercizio 3: Forza Elettrica tra Conduttori}\nDue sfere conduttrici identiche, inizialmente scariche, sono poste a distanza $d = 0.50$ m una dall'altra. Viene trasferita una carica totale $Q = -4.0 \\times 10^{-6}$ C dalle due sfere, distribuendola uniformemente tra loro. Determinare l'intensità della forza elettrica che agisce tra le due sfere. Si utilizzi $k_e = 8.99 \\times 10^9 \\text{ Nm}^2/\\text{C}^2$. (10 pt)\n\\subsection*{Esercizio 4: Flusso del Campo Elettrico}\nUn campo elettrico uniforme $\\vec{E} = (3.0 \\times 10^3 \\text{ N/C})\\hat{i}$ attraversa una superficie piana di area $A = 0.20 \\text{ m}^2$. Qual è il flusso del campo elettrico attraverso la superficie se il vettore normale alla superficie forma un angolo di $30^\\circ$ con la direzione del campo elettrico? (10 pt)\n\\subsection*{Esercizio 5: Condensatori in Serie e Parallelo}\nDue condensatori, $C_1 = 1.0 \\mu\\text{F}$ e $C_2 = 2.0 \\mu\\text{F}$, sono collegati in serie a una batteria che fornisce una differenza di potenziale di $12.0$ V.\n\\begin{enumerate}[a)]\n    \\item Calcolare la capacità equivalente del sistema.\n    \\item Calcolare la carica accumulata su ciascun condensatore.\n    \\item Calcolare la differenza di potenziale ai capi di ciascun condensatore.\n\\end{enumerate}\n\n\\subsection*{Esercizio 6: Legge di Faraday e Induzione Elettromagnetica}\nUna spira circolare di raggio $r = 0.10$ m è immersa in un campo magnetico uniforme che varia nel tempo secondo la relazione $B(t) = (0.50 \\text{ T}) \\sin(2\\pi f t)$, dove $f = 60$ Hz. Calcolare la forza elettromotrice indotta nella spira quando l'angolo tra la normale alla spira e il campo magnetico è di $0^\\circ$ e il campo magnetico sta crescendo. (10 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 10 & 10 & 10 & 10 & — & 10 & 50 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:113942>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 6,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 50,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163327.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163327.pdf",
+        "pdf_size": 18677,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Elettromagnetismo}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T16:33:28.023280",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Elettromagnetismo}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    }
+  ]
+}

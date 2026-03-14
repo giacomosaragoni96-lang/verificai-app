@@ -3,20 +3,20 @@
   "scenario": {
     "materia": "Chimica",
     "livello": "Liceo Classico",
-    "argomento": "Soluzioni",
+    "argomento": "Leggi dei gas",
     "num_esercizi": 5,
-    "punti_totali": 60,
-    "durata": "2 ore",
+    "punti_totali": 30,
+    "durata": "1 ora e 30 minuti",
     "mostra_punteggi": true,
     "con_griglia": true
   },
   "generazione": {
     "success": true,
     "output": {
-      "titolo": "La chimica delle soluzioni",
+      "titolo": "Leggi dei gas",
       "A": {
-        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: La chimica delle soluzioni} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Definizione di Soluzione Molare}\nIndicare la corretta definizione di soluzione molare (molarità).\nUna soluzione si dice molare quando:\n\\begin{enumerate}[a)]\n    \\item il soluto disciolto è un sale.\n    \\item la concentrazione è di 1 mole per litro di soluzione.\n    \\item il solvente è l'acqua.\n    \\item la massa del soluto è uguale alla massa del solvente.\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Calcolo della Massa Molare}\nDeterminare la massa molare dell'acido solforico ($H_2SO_4$), utilizzando le seguenti masse atomiche: $H = 1.008 \\, g/mol$, $S = 32.06 \\, g/mol$, $O = 15.999 \\, g/mol$. (15 pt)\n\\subsection*{Esercizio 3: Calcolo della Molalità}\nSi preparano $250 \\, g$ di una soluzione acquosa di cloruro di sodio ($NaCl$) con una concentrazione molale di $0.5 \\, m$. Calcolare la massa di $NaCl$ disciolta e la massa di acqua utilizzata. (15 pt)\n\\subsection*{Esercizio 4: Percentuale in Massa}\nUna soluzione contiene $20 \\, g$ di zucchero in $180 \\, g$ di acqua. Calcolare la percentuale in massa dello zucchero nella soluzione. (15 pt)\n\\subsection*{Esercizio 5: Calcolo della Molarità da Massa e Volume}\nSi scioglie $1.46 \\, g$ di cloruro di sodio ($NaCl$) in acqua distillata fino ad ottenere un volume totale di soluzione pari a $50.0 \\, mL$. Calcolare la molarità della soluzione ottenuta. (Massa molare di $NaCl = 58.44 \\, g/mol$). (15 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & — & 15 & 15 & 15 & 15 & 60 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
-        "pdf": "<BYTES:81175>"
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Chimica: Leggi dei gas} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Unità di Misura e Costanti}\nIndica a quale grandezza fisica corrisponde ciascuna delle seguenti unità di misura nel contesto delle leggi dei gas e scrivi il valore della costante universale dei gas $R$ in tre diverse unità di misura, specificando ogni volta l'unità.\n\\begin{enumerate}\n    \n\\item[a)] J/(mol$\\cdot$K) (3 pt)\n    \n\\item[b)] Pa$\\cdot$m$^3$/mol (3 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Legge di Boyle-Mariotte}\nUn gas ideale si trova inizialmente a una pressione di $2.5$ atm e occupa un volume di $10.0$ litri. Mantenendo la temperatura costante, la pressione del gas viene aumentata a $5.0$ atm. Qual è il nuovo volume occupato dal gas? (6 pt)\n\\subsection*{Esercizio 3: Legge di Gay-Lussac}\nUna certa quantità di gas, a volume costante, esercita una pressione di $3.0$ bar a $27^{\\circ}$C. Se la temperatura viene aumentata a $227^{\\circ}$C, quale sarà la nuova pressione esercitata dal gas? (6 pt)\n\\subsection*{Esercizio 4: Legge di Avogadro}\nConfronta il numero di moli di ossigeno (O$_2$) e di idrogeno (H$_2$) presenti in due contenitori separati, ciascuno a temperatura e pressione costanti, ma contenente ciascuno $10.0$ litri di gas. (6 pt)\n\\subsection*{Esercizio 5: Equazione di Stato dei Gas Ideali}\nUn recipiente di $5.0$ litri contiene $0.50$ moli di un gas ideale alla temperatura di $27^{\\circ}$C. Determina la pressione del gas in atmosfere. (6 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{2}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 3 & 3 & 6 & 6 & 6 & 6 & 30 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:97478>"
       },
       "B": {
         "latex": "",
@@ -35,7 +35,7 @@
         "pdf": null,
         "testo": ""
       },
-      "_validation_score": 0.8
+      "_validation_score": 0.6
     },
     "prompt_used": "Sistema completo VerificAI",
     "tokens": 7
@@ -49,7 +49,7 @@
     },
     "punteggi": {
       "trovati": 0,
-      "attesi": 60,
+      "attesi": 30,
       "corretti": false,
       "punteggio": 0
     },
@@ -76,12 +76,12 @@
   },
   "pdf": {
     "success": true,
-    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_162338.tex",
-    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_162338.pdf",
-    "pdf_size": 16374,
-    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Soluzioni}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163306.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163306.pdf",
+    "pdf_size": 17940,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Leggi dei gas}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
   },
   "punteggio_finale": 15,
-  "timestamp": "2026-03-14T16:23:39.651413",
-  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Soluzioni}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 2 ore}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  "timestamp": "2026-03-14T16:33:07.330296",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Chimica - Leggi dei gas}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
 }

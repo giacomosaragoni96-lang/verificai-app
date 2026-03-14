@@ -281,6 +281,24 @@ def genera_verifica_reale(scenario):
             istruzioni_esercizi = f"Genera ESATTAMENTE {scenario['num_esercizi']} esercizi. Ogni esercizio è \\subsection*{{Esercizio N: Titolo}}."
             immagini_esercizi = []
         
+        # 🛠️ DEBUG: Verifica parametri critici
+        print(f"🔍 CONTROLLO PARAMETRI CRITICI:")
+        print(f"  - materia: '{scenario['materia']}' (type: {type(scenario['materia'])})")
+        print(f"  - argomento: '{scenario['argomento']}' (type: {type(scenario['argomento'])})")
+        print(f"  - difficolta: 'media' (type: {type('media')})")
+        print(f"  - calibrazione: '{calibrazione[:100]}...' (type: {type(calibrazione)})")
+        print(f"  - durata: '{scenario['durata']}' (type: {type(scenario['durata'])})")
+        print(f"  - num_esercizi: {scenario['num_esercizi']} (type: {type(scenario['num_esercizi'])})")
+        print(f"  - punti_totali: {scenario['punti_totali']} (type: {type(scenario['punti_totali'])})")
+        print(f"  - mostra_punteggi: {scenario['mostra_punteggi']} (type: {type(scenario['mostra_punteggi'])})")
+        print(f"  - con_griglia: {scenario['con_griglia']} (type: {type(scenario['con_griglia'])})")
+        print(f"  - note_generali: '' (type: {type('')})")
+        print(f"  - istruzioni_esercizi: {len(istruzioni_esercizi)} caratteri (type: {type(istruzioni_esercizi)})")
+        print(f"  - immagini_esercizi: {len(immagini_esercizi)} elementi")
+        
+        # 🛠️ DEBUG: Test con parametri minimali come l'app
+        print(f"🚀 Chiamata genera_verifica con parametri test...")
+        
         result = genera_verifica(
             model=model,
             materia=scenario['materia'],

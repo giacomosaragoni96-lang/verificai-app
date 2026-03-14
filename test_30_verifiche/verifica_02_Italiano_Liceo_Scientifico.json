@@ -1,0 +1,87 @@
+{
+  "id": 2,
+  "scenario": {
+    "materia": "Italiano",
+    "livello": "Liceo Scientifico",
+    "argomento": "Testo argomentativo",
+    "num_esercizi": 2,
+    "punti_totali": 50,
+    "durata": "1 ora",
+    "mostra_punteggi": true,
+    "con_griglia": false
+  },
+  "generazione": {
+    "success": true,
+    "output": {
+      "titolo": "Il testo argomentativo",
+      "A": {
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Italiano: Il testo argomentativo} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Studio di Funzione Razionale Fratta}\n\nSi consideri la funzione $f(x) = \\frac{x^2 - 4x + 3}{x^2 - 1}$.\n\\begin{enumerate}[a)]\n    \\item Determinare il dominio della funzione e le eventuali intersezioni con gli assi cartesiani. (8 pt)\n    \\item Calcolare i limiti della funzione agli estremi del dominio e determinare le equazioni degli eventuali asintoti. (8 pt)\n    \\item Studiare il segno della funzione e calcolare la derivata prima per individuare gli intervalli di monotonia e gli eventuali massimi e minimi relativi. (9 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Problema di Ottimizzazione}\nUn'azienda produce scatole a forma di parallelepipedo rettangolo con base quadrata. Il materiale per la base e la copertura superiore costa 2 euro al dm$^2$, mentre il materiale per le facce laterali costa 1 euro al dm$^2$.\n\\begin{enumerate}[a)]\n    \\item Esprimere il costo totale dei materiali in funzione della lunghezza del lato della base ($x$) e dell'altezza ($h$) della scatola. (8 pt)\n    \\item Sapendo che il volume della scatola deve essere pari a 100 dm$^3$, esprimere il costo totale dei materiali in funzione della sola variabile $x$. (8 pt)\n    \\item Determinare le dimensioni della scatola che minimizzano il costo totale dei materiali. (9 pt)\n\\end{enumerate}\n\\end{document}",
+        "pdf": "<BYTES:102572>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.8
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 2,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 50,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": false,
+      "presente": false,
+      "punteggio": 5
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163254.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163254.pdf",
+    "pdf_size": 17032,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Testo argomentativo}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 20,
+  "timestamp": "2026-03-14T16:32:55.138131",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Italiano - Testo argomentativo}}\\\\[0.5cm]\n{\\normalsize Liceo Scientifico - 1 ora}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}

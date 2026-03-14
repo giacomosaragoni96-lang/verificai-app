@@ -3,17 +3,85 @@
   "scenario": {
     "materia": "Fisica",
     "livello": "Liceo Classico",
-    "argomento": "Ottica",
-    "num_esercizi": 7,
+    "argomento": "Elettromagnetismo",
+    "num_esercizi": 6,
     "punti_totali": 50,
-    "durata": "2 ore",
-    "mostra_punteggi": false,
+    "durata": "1 ora e 30 minuti",
+    "mostra_punteggi": true,
     "con_griglia": true
   },
   "generazione": {
     "success": true,
     "output": {
-      "titolo": "Ottica geometrica e ondulatoria",
+      "titolo": "Fondamenti di Elettromagnetismo",
       "A": {
-        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Ottica geometrica e ondulatoria} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e \n\nData:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\n\\subsection*{Esercizio 1: Riflessione della luce}\nUna sorgente luminosa puntiforme si trova a 2 metri di distanza da uno specchio piano. Qual è la distanza tra la sorgente reale e la sua immagine virtuale?\n\n\\subsection*{Esercizio 2: Lenti sottili}\nUna lente convergente ha una lunghezza focale $f = 15$ cm. Un oggetto alto 3 cm viene posto a una distanza di 20 cm dalla lente.\n\\begin{enumerate}[a)]\n    \\item Determinare la posizione dell'immagine.\n    \\item Calcolare l'ingrandimento della lente.\n    \\item Determinare l'altezza dell'immagine.\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Diffrazione}\nLa diffrazione di Fraunhofer della luce da una singola fenditura si verifica quando la luce passa attraverso una fenditura stretta e incide su uno schermo posto a grande distanza. La posizione dei minimi di intensità sulla figura di diffrazione è data da $a \\sin\\theta = m\\lambda$, dove $a$ è la larghezza della fenditura, $\\theta$ è l'angolo di diffrazione, $m$ è un numero intero ($m = \\pm 1, \\pm 2, \\ldots$) e $\\lambda$ è la lunghezza d'onda della luce.\n\nSe la larghezza di una fenditura è $a = 0.2$ mm e la luce incidente ha una lunghezza d'onda $\\lambda = 500$ nm, calcolare l'angolo corrispondente al primo minimo di intensità.\n\n\\subsection*{Esercizio 4: Interferenza da due fenditure}\nIl principio di Huygens afferma che ogni punto su un fronte d'onda può essere considerato come una sorgente puntiforme di onde secondarie sferiche. Quando due onde luminose coerenti interferiscono, si possono osservare frange luminose e scure. La condizione per i massimi di interferenza in un esperimento a due fenditure (come quello di Young) è $d \\sin\\theta = m\\lambda$, dove $d$ è la distanza tra le fenditure, $\\theta$ è l'angolo di interferenza, $m$ è un numero intero ($m = 0, \\pm 1, \\pm 2, \\ldots$) e $\\lambda$ è la lunghezza d'onda della luce.\n\nIn un esperimento di Young, la distanza tra le fenditure è $d = 0.5$ mm e la lunghezza d'onda della luce è $\\lambda = 632$ nm. Si osservano frange luminose sullo schermo. Determinare l'angolo corrispondente alla terza frangia luminosa ($m=3$).\n\n\\subsection*{Esercizio 5: Spettri luminosi}\nLa luce bianca, quando fatta passare attraverso un prisma, viene scomposta nei suoi colori costituenti (l'arcobaleno). Questo fenomeno è dovuto al fatto che l'indice di rifrazione di un materiale trasparente dipende dalla lunghezza d'onda della luce.\n\nQuale fenomeno fisico è responsabile della separazione della luce bianca nei suoi colori quando attraversa un prisma?\n\n\\subsection*{Esercizio 6: Lenti di ingrandimento}\nUna lente di ingrandimento può essere utilizzata per produrre un'immagine virtuale e raddrizzata di un oggetto, più grande dell'oggetto stesso. Questo avviene quando l'oggetto è posto entro la distanza focale della lente.\n\nVero o Falso: Una lente convergente può funzionare come lente di ingrandimento se l'oggetto si trova a una distanza maggiore della sua lunghezza focale.\n$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n\n\\subsection*{Esercizio 7: Indice di rifrazione}\nL'indice di rifrazione ($n$) di un mezzo è definito come il rapporto tra la velocità della luce nel vuoto ($c$) e la velocità della luce nel mezzo ($v$): $n = c/v$.\n\nLa velocità della luce nel vuoto è circa $c = 3.00 \\times 10^8$ m/s. L'indice di rifrazione del diamante è $n = 2.42$. Calcolare la velocità della luce nel diamante.\n\\end{document}",
-        "pdf": 
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Fisica: Fondamenti di Elettromagnetismo} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Campo Elettrico da una Carica Puntiforme}\nUna carica puntiforme $q = +5.0 \\times 10^{-7}$ C è posta nell'origine di un sistema di coordinate cartesiane. Determinare l'intensità del campo elettrico prodotto da questa carica nel punto di coordinate $(x,y) = (0.30 \\text{ m}, 0.40 \\text{ m})$. Si utilizzi la costante dielettrica del vuoto $k_e = 8.99 \\times 10^9 \\text{ Nm}^2/\\text{C}^2$. (10 pt)\n\\subsection*{Esercizio 2: Potenziale Elettrico}\nConsiderare due cariche puntiformi, $q_1 = +2.0 \\times 10^{-6}$ C posta in $(0,0)$ e $q_2 = -3.0 \\times 10^{-6}$ C posta in $(0.50 \\text{ m}, 0)$. Calcolare il potenziale elettrico nel punto $(0.25 \\text{ m}, 0)$. Si assuma $k_e = 8.99 \\times 10^9 \\text{ Nm}^2/\\text{C}^2$. (10 pt)\n\\subsection*{Esercizio 3: Forza Elettrica tra Conduttori}\nDue sfere conduttrici identiche, inizialmente scariche, sono poste a distanza $d = 0.50$ m una dall'altra. Viene trasferita una carica totale $Q = -4.0 \\times 10^{-6}$ C dalle due sfere, distribuendola uniformemente tra loro. Determinare l'intensità della forza elettrica che agisce tra le due sfere. Si utilizzi $k_e = 8.99 \\times 10^9 \\text{ Nm}^2/\\text{C}^2$. (10 pt)\n\\subsection*{Esercizio 4: Flusso del Campo Elettrico}\nUn campo elettrico uniforme $\\vec{E} = (3.0 \\times 10^3 \\text{ N/C})\\hat{i}$ attraversa una superficie piana di area $A = 0.20 \\text{ m}^2$. Qual è il flusso del campo elettrico attraverso la superficie se il vettore normale alla superficie forma un angolo di $30^\\circ$ con la direzione del campo elettrico? (10 pt)\n\\subsection*{Esercizio 5: Condensatori in Serie e Parallelo}\nDue condensatori, $C_1 = 1.0 \\mu\\text{F}$ e $C_2 = 2.0 \\mu\\text{F}$, sono collegati in serie a una batteria che fornisce una differenza di potenziale di $12.0$ V.\n\\begin{enumerate}[a)]\n    \\item Calcolare la capacità equivalente del sistema.\n    \\item Calcolare la carica accumulata su ciascun condensatore.\n    \\item Calcolare la differenza di potenziale ai capi di ciascun condensatore.\n\\end{enumerate}\n\n\\subsection*{Esercizio 6: Legge di Faraday e Induzione Elettromagnetica}\nUna spira circolare di raggio $r = 0.10$ m è immersa in un campo magnetico uniforme che varia nel tempo secondo la relazione $B(t) = (0.50 \\text{ T}) \\sin(2\\pi f t)$, dove $f = 60$ Hz. Calcolare la forza elettromotrice indotta nella spira quando l'angolo tra la normale alla spira e il campo magnetico è di $0^\\circ$ e il campo magnetico sta crescendo. (10 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{1}{c||}{\\textbf{5}} & \\multicolumn{1}{c||}{\\textbf{6}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & 10 & 10 & 10 & 10 & — & 10 & 50 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:113942>"
+      },
+      "B": {
+        "latex": "",
+        "pdf": null
+      },
+      "R": {
+        "latex": "",
+        "pdf": null
+      },
+      "RB": {
+        "latex": "",
+        "pdf": null
+      },
+      "S": {
+        "latex": "",
+        "pdf": null,
+        "testo": ""
+      },
+      "_validation_score": 0.8
+    },
+    "prompt_used": "Sistema completo VerificAI",
+    "tokens": 7
+  },
+  "analisi": {
+    "esercizi": {
+      "trovati": 0,
+      "attesi": 6,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "punteggi": {
+      "trovati": 0,
+      "attesi": 50,
+      "corretti": false,
+      "punteggio": 0
+    },
+    "struttura": {
+      "elementi_trovati": 0,
+      "elementi_attesi": 4,
+      "adeguata": false,
+      "punteggio": 10
+    },
+    "tabella": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "griglia": {
+      "richiesta": true,
+      "presente": false,
+      "punteggio": 0
+    },
+    "latex": {
+      "brackets_bilanciati": true,
+      "punteggio": 5
+    }
+  },
+  "pdf": {
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260314_163327.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_163327.pdf",
+    "pdf_size": 18677,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Elettromagnetismo}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+  },
+  "punteggio_finale": 15,
+  "timestamp": "2026-03-14T16:33:28.023288",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Fisica - Elettromagnetismo}}\\\\[0.5cm]\n{\\normalsize Liceo Classico - 1 ora e 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+}
