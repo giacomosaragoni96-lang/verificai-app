@@ -75,40 +75,50 @@ def render_test_completo_30():
                 status_text.text(f"🔄 Generazione verifica {i+1}/30: {scenario['materia']} - {scenario['argomento']}")
                 
                 try:
-                    # 1. Genera verifica con l'app
-                    result = genera_verifica_reale(scenario)
-                    
-                    if result['success']:
-                        # 2. Analizza con PromptFoo
-                        analisi = analizza_con_promptfoo(result['output'], scenario)
-                        
-                        # 3. Genera PDF
-                        pdf_result = genera_pdf_verifica(result['output'], scenario)
-                        
-                        # 4. Calcola punteggio finale
-                        punteggio_finale = calcola_punteggio_finale(analisi, pdf_result)
-                        
-                        # Salva risultato
-                        risultato_completo = {
-                            "id": i + 1,
-                            "scenario": scenario,
-                            "generazione": result,
-                            "analisi": analisi,
-                            "pdf": pdf_result,
-                            "punteggio_finale": punteggio_finale,
-                            "timestamp": datetime.now().isoformat(),
-                            "latex_completo": pdf_result.get("latex_content", result["output"])  # Salva LaTeX completo
-                        }
-                        
-                        risultati.append(risultato_completo)
-                        
-                        # Salva singola verifica
-                        filename = f"test_30_verifiche/verifica_{i+1:02d}_{scenario['materia']}_{scenario['livello'].replace(' ', '_')}.json"
-                        with open(filename, 'w', encoding='utf-8') as f:
-                            json.dump(risultato_completo, f, indent=2, ensure_ascii=False)
+                # 1. Genera verifica con l'app
+                print(f"🔄 Inizio generazione verifica {i+1}/30")
+                result = genera_verifica_reale(scenario)
                 
-                except Exception as e:
-                    st.warning(f"⚠️ Errore verifica {i+1}: {e}")
+                print(f"📊 Risultato generazione: {result['success']}")
+                
+                if result['success']:
+                    print("✅ Generazione riuscita, procedo con analisi...")
+                    
+                    # 2. Analizza con PromptFoo
+                    analisi = analizza_con_promptfoo(result['output'], scenario)
+                    
+                    # 3. Genera PDF
+                    print("📄 Generazione PDF...")
+                    pdf_result = genera_pdf_verifica(result['output'], scenario)
+                    
+                    # 4. Calcola punteggio finale
+                    punteggio_finale = calcola_punteggio_finale(analisi, pdf_result)
+                    
+                    # Salva risultato
+                    risultato_completo = {
+                        "id": i + 1,
+                        "scenario": scenario,
+                        "generazione": result,
+                        "analisi": analisi,
+                        "pdf": pdf_result,
+                        "punteggio_finale": punteggio_finale,
+                        "timestamp": datetime.now().isoformat(),
+                        "latex_completo": pdf_result.get("latex_content", result["output"])
+                    }
+                    
+                    risultati.append(risultato_completo)
+                    
+                    # Salva singola verifica
+                    filename = f"test_30_verifiche/verifica_{i+1:02d}_{scenario['materia']}_{scenario['livello'].replace(' ', '_')}.json"
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        json.dump(risultato_completo, f, indent=2, ensure_ascii=False)
+                    
+                    print(f"💾 Verifica {i+1} salvata in {filename}")
+                
+                else:
+                    print(f"❌ Errore generazione verifica {i+1}: {result.get('error', 'Errore sconosciuto')}")
+                    if 'traceback' in result:
+                        print(f"🔍 Traceback: {result['traceback']}")
                     continue
             
             # Completa progress
