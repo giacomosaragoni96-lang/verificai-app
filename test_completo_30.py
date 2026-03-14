@@ -68,7 +68,7 @@ def render_test_completo_30():
             os.makedirs("test_30_verifiche/pdfs", exist_ok=True)
             
             # Configurazione scenari random
-            scenari_random = genera_scenari_random(5)  # RIDOTTO DA 30 A 5 PER TEST VELOCI
+            scenari_random = genera_scenari_random(1)  # 🎯 SOLO 1 VERIFICA PER DEBUG VELOCE
             
             # Progress tracking
             progress_bar = st.progress(0)
@@ -78,13 +78,13 @@ def render_test_completo_30():
             
             for i, scenario in enumerate(scenari_random):
                 # Aggiorna progress
-                progress = (i + 1) / 5  # AGGIORNATO A 5 VERIFICHE
+                progress = (i + 1) / 1  # 🎯 AGGIORNATO A 1 VERIFICA
                 progress_bar.progress(progress)
-                status_text.text(f"🔄 Generazione verifica {i+1}/5: {scenario['materia']} - {scenario['argomento']}")
+                status_text.text(f"🔄 Generazione verifica {i+1}/1: {scenario['materia']} - {scenario['argomento']}")
                 
                 try:
                     # 1. Genera verifica con l'app
-                    print(f"🔄 Inizio generazione verifica {i+1}/5")
+                    print(f"🔄 Inizio generazione verifica {i+1}/1")
                     result = genera_verifica_reale(scenario)
                     
                     print(f"📊 Risultato generazione: {result['success']}")
@@ -178,7 +178,7 @@ def render_test_completo_30():
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("🚀 LANCIA TEST COMPLETO - 5 VERIFICHE", type="primary", use_container_width=True, key="start_test_5"):
+        if st.button("🚀 LANCIA TEST SINGOLO - 1 VERIFICA", type="primary", use_container_width=True, key="start_test_1"):
             print("🚀 PULSANTE START TEST CLICCATO!")
             st.session_state.test_30_running = True
             st.rerun()
