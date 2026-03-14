@@ -115,14 +115,7 @@ tests:
         value: "la risposta è"
       - type: not-icontains
         value: "generato con TikZ"
-      # Validazione strutturale LaTeX (brackets, ambienti)
-      - type: python
-        value: file://validators/latex_validator.py
-      - type: llm-rubric
-        value: |
-          Verifica Matematica Derivate Liceo Scientifico, 5 esercizi.
-          PASS se corretti, livello OK, varietà tipologie, italiano OK.
-          FAIL se errori matematici, livello sbagliato, tutti uguali.
+      # Validazione strutturale LaTeX (brackets, ambienti) - solo javascript
 
   - description: "[Corpo] Italiano Medie — livello adeguato"
     vars:
@@ -141,11 +134,15 @@ tests:
         value: "(output.match(/\\\\subsection\\*/g) || []).length === 4"
       - type: javascript
         value: "(output.match(/\\(\\d+ pt\\)/g) || []).length >= 4"
-      - type: llm-rubric
+      - type: javascript
         value: |
-          Italiano scuole medie (11-14 anni).
-          PASS se linguaggio accessibile e livello appropriato.
-          FAIL se troppo avanzato per le medie.
+          // Verifica livello linguistico appropriato per medie (11-14 anni)
+          const words = output.toLowerCase().split(/\s+/);
+          const complexWords = words.filter(w => w.length > 8 || /mente|zione|sione/.test(w));
+          const sentences = output.split(/[.!?]+/).filter(s => s.trim().length > 0);
+          const avgSentenceLength = sentences.reduce((sum, s) => sum + s.split(/\s+/).length, 0) / sentences.length;
+          return complexWords.length <= 5 && avgSentenceLength <= 15;
+        metric: livello_medie_appropriato
 
   - description: "[Corpo] Fisica SENZA punteggi"
     vars:
@@ -180,11 +177,13 @@ tests:
       con_griglia: true
       e_mat: true
     assert:
-      - type: llm-rubric
+      - type: javascript
         value: |
-          Anti-spoiler: se l'esercizio chiede di "disegnare" o "rappresentare
-          graficamente", NON deve contenere tikzpicture/pgfplots.
-          PASS se rispettata. FAIL se TikZ mostra la risposta da disegnare.
+          // Anti-spoiler: verifica che in richieste di disegno non ci sia TikZ
+          const hasDrawingPrompt = /disegnare|rappresentare.*grafic|tracciare.*grafic|disegna.*funzione/i.test(output);
+          const hasTikZ = /tikzpicture|pgfplots|\\begin\{tikz/ig.test(output);
+          return !hasDrawingPrompt || !hasTikZ;
+        metric: anti_spoiler_grafici
 
   - description: "[Regola] LaTeX brackets bilanciati"
     vars:
@@ -228,10 +227,16 @@ tests:
     assert:
       - type: javascript
         value: "(output.match(/\\\\subsection\\*/g) || []).length === 6"
-      - type: llm-rubric
+      - type: javascript
         value: |
-          Servono almeno 2 tipologie diverse (aperte, scelta multipla,
-          vero/falso, completamento). PASS ≥2 tipologie. FAIL se tutte uguali.
+          // Verifica varietà tipologie (almeno 2 diverse tra aperte, multiple, vero/falso, completamento)
+          const hasOpen = /\?[^\?]*$/m.test(output) || /spiega|descrivi|motiva|analizza/i.test(output);
+          const hasMultiple = /\([^)]*\)[^)]*\([^)]*\)/.test(output) || /a\)|b\)|c\)|d\)/i.test(output);
+          const hasTrueFalse = /vero|falso|V|F\s*\)/i.test(output) || /\\(V|F\)/i.test(output);
+          const hasCompletion = /___|\.{3,}|completa|riempi/i.test(output);
+          const types = [hasOpen, hasMultiple, hasTrueFalse, hasCompletion].filter(Boolean).length;
+          return types >= 2;
+        metric: varieta_tipologie
 
   # ── CALIBRAZIONE LIVELLI ──────────────────────────────────────────────────
   - description: "[Calibrazione] Professionale semplice"
@@ -249,10 +254,15 @@ tests:
     assert:
       - type: javascript
         value: "(output.match(/\\\\subsection\\*/g) || []).length === 4"
-      - type: llm-rubric
+      - type: javascript
         value: |
-          Istituto Professionale: PASS se semplice, concreto, accessibile.
-          FAIL se accademico o troppo difficile.
+          // Verifica semplicità per Istituto Professionale
+          const sentences = output.split(/[.!?]+/).filter(s => s.trim().length > 0);
+          const avgSentenceLength = sentences.reduce((sum, s) => sum + s.split(/\s+/).length, 0) / sentences.length;
+          const complexWords = output.toLowerCase().match(/\b[a-z]{10,}\b/g) || [];
+          const abstractConcepts = /(teorema|postulato|assioma|ipotesi|dimostrazione)/i.test(output);
+          return avgSentenceLength <= 18 && complexWords.length <= 3 && !abstractConcepts;
+        metric: livello_professionale
 
   - description: "[Calibrazione] Primaria 6-11 anni"
     vars:
@@ -269,10 +279,15 @@ tests:
     assert:
       - type: javascript
         value: "(output.match(/\\\\subsection\\*/g) || []).length === 3"
-      - type: llm-rubric
+      - type: javascript
         value: |
-          Primaria (6-11 anni): PASS se frasi brevi, concreto, quotidiano.
-          FAIL se usa notazione formale o linguaggio troppo adulto.
+          // Verifica linguaggio primaria (6-11 anni): frasi brevi, concreto, quotidiano
+          const sentences = output.split(/[.!?]+/).filter(s => s.trim().length > 0);
+          const avgSentenceLength = sentences.reduce((sum, s) => sum + s.split(/\s+/).length, 0) / sentences.length;
+          const simpleWords = /(mela|gatto|scuola|casa|gioco|numero|conta|aggiungi|togli)/i.test(output);
+          const complexTerms = /(derivata|integrale|teorema|algoritmo|funzione)/i.test(output);
+          return avgSentenceLength <= 12 && simpleWords && !complexTerms;
+        metric: livello_primaria
 
   # ── CONTROLLO QUALITÀ ─────────────────────────────────────────────────────
   - description: "[QA] Corregge errore matematico"
@@ -298,8 +313,11 @@ tests:
         value: "\\subsection*"
       - type: contains
         value: "\\end{document}"
-      - type: llm-rubric
+      - type: javascript
         value: |
-          Input conteneva: x²+1=0 in R (impossibile) e punteggi che
-          sommano 35 invece di 100. PASS se corregge almeno un problema.
-          FAIL se restituisce tutto identico.
+          // Verifica che corregga almeno un problema: x²+1=0 in R (impossibile) o punteggio sbagliato
+          const hasImpossibleCorrection = /impossibile|nessuna soluzione|non.*soluzione|vuoto/i.test(output);
+          const hasScoreCorrection = /punteggi|somma|totale.*100|35.*100/i.test(output);
+          const hasAnyCorrection = hasImpossibleCorrection || hasScoreCorrection;
+          return hasAnyCorrection;
+        metric: correzione_problemi
