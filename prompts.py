@@ -239,9 +239,9 @@ def prompt_corpo_verifica(
         f"{grafici_rule}\n"
         f"{s_note}"
         f"\nFORMATO OUTPUT: restituisci SOLO i blocchi \\subsection*{{...}} con relativi esercizi.\n"
-        f"TERMINA con \\end{{document}}.\n"
-        f"NIENTE preambolo, NIENTE \\documentclass, NIENTE \\begin{{document}}.\n"
-        f"SOLO CODICE LATEX del corpo."
+        f"NON TERMINARE con \\end{{document}}.\n"
+        f"NIENTE preambolo, NIENTE \\documentclass, NIENTE \\begin{{document}}, NIENTE \\end{{document}}.\n"
+        f"SOLO CODICE LATEX del corpo degli esercizi."
     )
 
 

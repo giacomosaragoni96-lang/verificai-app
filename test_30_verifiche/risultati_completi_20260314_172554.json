@@ -1,0 +1,97 @@
+{
+  "timestamp": "2026-03-14T17:25:54.507582",
+  "totali": 1,
+  "media_voto": 15.0,
+  "success_rate": 0.0,
+  "param_accuracy": 0.0,
+  "pdf_rate": 100.0,
+  "risultati": [
+    {
+      "id": 1,
+      "scenario": {
+        "materia": "Storia",
+        "livello": "Scuola Media",
+        "argomento": "Storia romana",
+        "num_esercizi": 4,
+        "punti_totali": 40,
+        "durata": "30 minuti",
+        "mostra_punteggi": true,
+        "con_griglia": true
+      },
+      "generazione": {
+        "success": true,
+        "output": {
+          "titolo": "Storia Romana",
+          "A": {
+            "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Storia: Storia Romana} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Cronologia Romana}\nIndividua la corretta sequenza cronologica degli eventi elencati, inserendo le lettere nell'ordine appropriato nella seguente serie:\nA. Fondazione di Roma\nB. Guerre Puniche\nC. Conquista della Gallia da parte di Cesare\nD. Battaglia di Azio\nE. Caduta dell'Impero Romano d'Occidente\n\n\\begin{enumerate}[1.]\n    \\item \\underline{}\n    \\item \\underline{}\n    \\item \\underline{}\n    \\item \\underline{}\n    \\item \\underline{}\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Istituzioni Repubblicane}\nPer ciascuna delle seguenti affermazioni, indica se è Vera (V) o Falsa (F).\n\n\\begin{enumerate}[a)]\n    \\item Il Senato deteneva il potere legislativo e militare supremo durante la Repubblica. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n    \\item I consoli erano eletti annualmente e avevano potere di comando sull'esercito. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n    \\item I tribuni della plebe avevano il potere di veto sulle decisioni dei magistrati patrizi. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n    \\item I censori avevano il compito di registrare i cittadini e controllare la moralità pubblica. $\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Espansione e Crisi}\nIndica quale delle seguenti opzioni rappresenta la causa principale delle guerre civili della tarda Repubblica romana.\n\n\\begin{enumerate}[a)]\n    \\item Le continue invasioni barbariche lungo i confini dell'impero.\n    \\item La crescente disuguaglianza sociale ed economica tra patrizi e plebei.\n    \\item La competizione per il potere e le risorse tra le grandi famiglie aristocratiche.\n    \\item Il declino della schiavitù come forza lavoro principale.\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Dal Principato al Dominato}\nDescrivi sinteticamente le principali differenze tra il Principato augusteo e il Dominato di Diocleziano, focalizzandoti sull'organizzazione del potere imperiale. (40 pt)\n\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{1}{c||}{\\textbf{1}} & \\multicolumn{1}{c||}{\\textbf{2}} & \\multicolumn{1}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & — & — & — & — & \\\\ \\hline\n\\textbf{Max} & — & — & — & 40 & 40 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+            "pdf": "<BYTES:71061>"
+          },
+          "B": {
+            "latex": "",
+            "pdf": null
+          },
+          "R": {
+            "latex": "",
+            "pdf": null
+          },
+          "RB": {
+            "latex": "",
+            "pdf": null
+          },
+          "S": {
+            "latex": "",
+            "pdf": null,
+            "testo": ""
+          },
+          "_validation_score": 0.8
+        },
+        "prompt_used": "Sistema completo VerificAI",
+        "tokens": 7
+      },
+      "analisi": {
+        "esercizi": {
+          "trovati": 0,
+          "attesi": 4,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "punteggi": {
+          "trovati": 0,
+          "attesi": 40,
+          "corretti": false,
+          "punteggio": 0
+        },
+        "struttura": {
+          "elementi_trovati": 0,
+          "elementi_attesi": 4,
+          "adeguata": false,
+          "punteggio": 10
+        },
+        "tabella": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "griglia": {
+          "richiesta": true,
+          "presente": false,
+          "punteggio": 0
+        },
+        "latex": {
+          "brackets_bilanciati": true,
+          "punteggio": 5
+        }
+      },
+      "pdf": {
+        "success": true,
+        "latex_file": "test_30_verifiche/pdfs/verifica_20260314_172436.tex",
+        "pdf_file": "test_30_verifiche/pdfs/verifica_20260314_172436.pdf",
+        "pdf_size": 16100,
+        "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+      },
+      "punteggio_finale": 15,
+      "timestamp": "2026-03-14T17:24:37.543840",
+      "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage[T1]{fontenc}\n\\usepackage{amsmath,amssymb,amsthm}\n\\usepackage{geometry}\n\\geometry{a4paper, margin=2cm, top=2.5cm, bottom=2.5cm}\n\\usepackage{graphicx}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes,arrows,positioning}\n\\usepackage{array}\n\\usepackage{booktabs}\n\\usepackage{longtable}\n\\usepackage{multicol}\n\\usepackage{enumitem}\n\\usepackage{xcolor}\n\n\\pagestyle{empty}\n\\begin{document}\n\n\\begin{center}\n{\\Large \\textbf{Storia - Storia romana}}\\\\[0.5cm]\n{\\normalsize Scuola Media - 30 minuti}\\\\[0.5cm]\n{\\small Verifica di valutazione}\n\\end{center}\n\n\\vspace{1cm}\n\n\n\n\\end{document}"
+    }
+  ]
+}
