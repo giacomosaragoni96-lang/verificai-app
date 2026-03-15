@@ -6952,15 +6952,76 @@ def init_simulate_functions():
     return True
 
 def simulate_test_execution(params):
-    """Esegue test VERITIERO usando genera_verifica reale con SOLO parametri obbligatori"""
+    """Esegue test VERITIERO con debug approfondito"""
     try:
         # Importa la funzione reale di generazione
-        from generation import genera_verifica
+        from generation import genera_verifica, _safe_generate
         import google.generativeai as genai
+        
+        # Debug: verifica API key
+        try:
+            import os
+            api_key = os.getenv("GOOGLE_API_KEY")
+            if not api_key:
+                return {
+                    'test_id': params['test_id'],
+                    'materia': params['materia'],
+                    'argomento': params['argomento'],
+                    'livello': params['difficolta'],
+                    'esito': 'FAIL',
+                    'punteggio': 1.0,
+                    'dettagli': "ERRORE: GOOGLE_API_KEY non trovata",
+                    'latex_verifica': None,
+                    'titolo': None,
+                    'esercizi_generati': 0
+                }
+        except Exception as e:
+            return {
+                'test_id': params['test_id'],
+                'materia': params['materia'],
+                'argomento': params['argomento'],
+                'livello': params['difficolta'],
+                'esito': 'FAIL',
+                'punteggio': 1.0,
+                'dettagli': f"ERRORE API key: {str(e)}",
+                'latex_verifica': None,
+                'titolo': None,
+                'esercizi_generati': 0
+            }
         
         # Usa il modello reale di VerificAI
         MODEL_ID = "gemini-1.5-flash"
         model = genai.GenerativeModel(MODEL_ID)
+        
+        # Debug: test semplice API
+        try:
+            test_response = model.generate_content("Test")
+            if not test_response.text:
+                return {
+                    'test_id': params['test_id'],
+                    'materia': params['materia'],
+                    'argomento': params['argomento'],
+                    'livello': params['difficolta'],
+                    'esito': 'FAIL',
+                    'punteggio': 1.0,
+                    'dettagli': "ERRORE: API test vuoto",
+                    'latex_verifica': None,
+                    'titolo': None,
+                    'esercizi_generati': 0
+                }
+        except Exception as e:
+            return {
+                'test_id': params['test_id'],
+                'materia': params['materia'],
+                'argomento': params['argomento'],
+                'livello': params['difficolta'],
+                'esito': 'FAIL',
+                'punteggio': 1.0,
+                'dettagli': f"ERRORE API test: {str(e)}",
+                'latex_verifica': None,
+                'titolo': None,
+                'esercizi_generati': 0
+            }
         
         # SOLO parametri obbligatori + defaults automatici
         result = genera_verifica(
@@ -6988,50 +7049,26 @@ def simulate_test_execution(params):
             on_progress=lambda text: None  # Disabilitato per test batch
         )
         
-        # Valuta la qualità della verifica generata
-        if result and result.get('A', {}).get('latex'):
-            # Usa la versione A della verifica
-            latex_content = result['A']['latex']
-            
-            # Conta esercizi generati
-            esercizi_generati = latex_content.count('\\item[')
-            esercizi_richiesti = params.get('num_esercizi', 3)
-            
-            # Punteggio basato su completezza e qualità
-            if esercizi_generati >= esercizi_richiesti:
-                base_score = random.uniform(7.0, 9.5)  # Buono
-                esito = "PASS"
-            elif esercizi_generati >= esercizi_richiesti * 0.7:
-                base_score = random.uniform(5.5, 7.4)  # Sufficiente
-                esito = "PARTIAL"
-            else:
-                base_score = random.uniform(3.0, 5.4)  # Insufficiente
-                esito = "FAIL"
-            
-            # Aggiusta per livello
-            level_multiplier = {
-                "Scuola Media": 0.95,
-                "Liceo": 1.0,
-                "Istituto Tecnico": 1.05
-            }
-            
-            final_score = base_score * level_multiplier.get(params['difficolta'], 1.0)
-            final_score = min(10.0, final_score)
-            
+        # Debug: ispeziona risultato
+        if not result:
             return {
                 'test_id': params['test_id'],
                 'materia': params['materia'],
                 'argomento': params['argomento'],
                 'livello': params['difficolta'],
-                'esito': esito,
-                'punteggio': final_score,
-                'dettagli': f"Verifica REALE generata con {esercizi_generati} esercizi. Score: {final_score:.1f}/10",
-                'latex_verifica': latex_content,  # Contenuto REALE
-                'titolo': result.get('titolo', f"Verifica di {params['materia']}"),
-                'esercizi_generati': esercizi_generati
+                'esito': 'FAIL',
+                'punteggio': 1.0,
+                'dettagli': "ERRORE: genera_verifica ritornato None",
+                'latex_verifica': None,
+                'titolo': None,
+                'esercizi_generati': 0
             }
-        else:
-            # Fallimento generazione
+        
+        # Debug: stampa struttura risultato
+        debug_keys = list(result.keys())
+        latex_A = result.get('A', {}).get('latex', '')
+        
+        if not latex_A:
             return {
                 'test_id': params['test_id'],
                 'materia': params['materia'],
@@ -7039,11 +7076,67 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 2.0,
-                'dettagli': "Fallimento generazione verifica REALE - nessun LaTeX",
+                'dettagli': f"ERRORE: LaTeX A vuoto. Keys: {debug_keys}",
                 'latex_verifica': None,
-                'titolo': None,
+                'titolo': result.get('titolo', 'N/A'),
                 'esercizi_generati': 0
             }
+        
+        # Valuta la qualità della verifica generata
+        latex_content = result['A']['latex']
+        
+        # Conta esercizi generati
+        esercizi_generati = latex_content.count('\\item[')
+        esercizi_richiesti = params.get('num_esercizi', 3)
+        
+        # Debug: verifica contenuto
+        if len(latex_content.strip()) < 50:
+            return {
+                'test_id': params['test_id'],
+                'materia': params['materia'],
+                'argomento': params['argomento'],
+                'livello': params['difficolta'],
+                'esito': 'FAIL',
+                'punteggio': 2.0,
+                'dettagli': f"ERRORE: LaTeX troppo corto ({len(latex_content)} chars)",
+                'latex_verifica': latex_content,
+                'titolo': result.get('titolo', 'N/A'),
+                'esercizi_generati': esercizi_generati
+            }
+        
+        # Punteggio basato su completezza e qualità
+        if esercizi_generati >= esercizi_richiesti:
+            base_score = random.uniform(7.0, 9.5)  # Buono
+            esito = "PASS"
+        elif esercizi_generati >= esercizi_richiesti * 0.7:
+            base_score = random.uniform(5.5, 7.4)  # Sufficiente
+            esito = "PARTIAL"
+        else:
+            base_score = random.uniform(3.0, 5.4)  # Insufficiente
+            esito = "FAIL"
+        
+        # Aggiusta per livello
+        level_multiplier = {
+            "Scuola Media": 0.95,
+            "Liceo": 1.0,
+            "Istituto Tecnico": 1.05
+        }
+        
+        final_score = base_score * level_multiplier.get(params['difficolta'], 1.0)
+        final_score = min(10.0, final_score)
+        
+        return {
+            'test_id': params['test_id'],
+            'materia': params['materia'],
+            'argomento': params['argomento'],
+            'livello': params['difficolta'],
+            'esito': esito,
+            'punteggio': final_score,
+            'dettagli': f"Verifica REALE generata con {esercizi_generati} esercizi. Score: {final_score:.1f}/10",
+            'latex_verifica': latex_content,  # Contenuto REALE
+            'titolo': result.get('titolo', f"Verifica di {params['materia']}"),
+            'esercizi_generati': esercizi_generati
+        }
             
     except Exception as e:
         # Errore durante generazione - log dettagliato
@@ -7054,7 +7147,7 @@ def simulate_test_execution(params):
             'livello': params['difficolta'],
             'esito': 'FAIL',
             'punteggio': 1.0,
-            'dettagli': f"Errore generazione: {str(e)}",
+            'dettagli': f"ERRORE CRITICO: {str(e)}",
             'latex_verifica': None,
             'titolo': None,
             'esercizi_generati': 0
