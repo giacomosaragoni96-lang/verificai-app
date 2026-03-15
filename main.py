@@ -7235,24 +7235,24 @@ def render_admin_test_system_complete():
         render_risultati_e_valutazione()
 
 def render_genera_30_verifiche():
-    """Pagina semplificata: solo pulsante per generare 30 verifiche"""
-    st.title("🚀 Genera 30 Verifiche Random")
+    """Pagina semplificata: solo pulsante per generare 1 verifica per debug"""
+    st.title("🚀 Genera 1 Verifica Random (DEBUG)")
     
     st.markdown("""### 📋 Cosa succederà:
-    1. **Generazione automatica** di 30 verifiche random
-    2. **Materie random**: Matematica, Fisica, Chimica, Italiano, Storia, Inglese, Informatica
-    3. **Argomenti random**: Trigonometria, Algebra, Geometria, Letteratura, etc.
-    4. **Livelli random**: Scuola Media, Liceo, Istituto Tecnico
+    1. **Generazione automatica** di 1 verifica random
+    2. **Materia random**: Matematica, Fisica, Chimica, Italiano, Storia, Inglese, Informatica
+    3. **Argomento random**: Trigonometria, Algebra, Geometria, Letteratura, etc.
+    4. **Livello random**: Scuola Media, Liceo, Istituto Tecnico
     5. **Esecuzione immediata** con risultati
-    6. **Valutazione rapida** di ogni verifica
+    6. **Valutazione rapida** della verifica
     """)
     
-    # Pulsante unico per generare 30 verifiche
-    if st.button("🚀 Genera 30 Verifiche Random", type="primary", use_container_width=True):
+    # Pulsante per generare 1 sola verifica
+    if st.button("🚀 Genera 1 Verifica Random (DEBUG)", type="primary", use_container_width=True):
         genera_30_verifiche_random()
 
 def genera_30_verifiche_random():
-    """Genera 30 verifiche con parametri completamente random"""
+    """Genera 1 verifica per debug (invece di 30)"""
     import random
     
     materie = ["Matematica", "Fisica", "Chimica", "Italiano", "Storia", "Inglese", "Informatica"]
@@ -7275,29 +7275,28 @@ def genera_30_verifiche_random():
         "Informatica": argomenti_informatica
     }
     
-    # Genera 30 parametri random
+    # Genera SOLO 1 parametro per debug
     test_params = []
-    for i in range(30):
-        materia = random.choice(materie)
-        argomento = random.choice(argomenti_map[materia])
-        livello = random.choice(livelli)
-        num_esercizi = random.randint(2, 5)
-        punti_totali = random.choice([10, 15, 20, 25, 30])
-        
-        params = {
-            'materia': materia,
-            'argomento': argomento,
-            'difficolta': livello,
-            'num_esercizi': num_esercizi,
-            'punti_totali': punti_totali,
-            'test_id': f"test_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i+1:02d}"
-        }
-        test_params.append(params)
+    materia = random.choice(materie)
+    argomento = random.choice(argomenti_map[materia])
+    livello = random.choice(livelli)
+    num_esercizi = random.randint(2, 5)
+    punti_totali = random.choice([10, 15, 20, 25, 30])
+    
+    params = {
+        'materia': materia,
+        'argomento': argomento,
+        'difficolta': livello,
+        'num_esercizi': num_esercizi,
+        'punti_totali': punti_totali,
+        'test_id': f"test_{datetime.now().strftime('%Y%m%d_%H%M%S')}_01"
+    }
+    test_params.append(params)
     
     st.session_state.admin_test_params = test_params
     st.session_state.admin_test_session_id = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     
-    # Esegui subito i test
+    # Esegui subito il test
     execute_30_test_random()
 
 def execute_30_test_random():
@@ -7395,7 +7394,7 @@ def render_risultati_e_valutazione():
     results = st.session_state.admin_test_results
     num_tests = len(results)
     
-    st.title("📊 Risultati 30 Verifiche")
+    st.title("📊 Risultati 1 Verifica (DEBUG)")
     
     # Pulsante per nuovo test (in alto)
     col1, col2 = st.columns([1, 4])
@@ -7425,15 +7424,15 @@ def render_risultati_e_valutazione():
     with col3:
         st.metric("⚠️ PARTIAL", partial_count)
     with col4:
-        st.metric("📈 Score Medio", f"{avg_score:.2f}")
+        st.metric("📈 Score", f"{avg_score:.2f}")
     
     st.markdown("---")
-    st.subheader("📋 Valutazione Rapida Verifiche")
+    st.subheader("📋 Valutazione Rapida Verifica")
     
     # Valutazione una per una
     if 'admin_verify_to_evaluate' not in st.session_state:
         # Mostra elenco verifiche da valutare
-        st.info("🎯 Clicca su una verifica per valutarla subito")
+        st.info("🎯 Clicca sulla verifica per valutarla subito")
         
         for i, result in enumerate(results):
             color = "#d4edda" if result['esito'] == 'PASS' else "#f8d7da" if result['esito'] == 'FAIL' else "#fff3cd"
