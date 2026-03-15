@@ -7026,9 +7026,14 @@ def genera_30_verifiche_random():
 def execute_30_test_random():
     """Esegue 30 test random"""
     try:
-        from admin_test_system import simulate_test_execution, save_test_session
+        # Inizializza database se necessario
+        from admin_test_system import init_databases, simulate_test_execution, save_test_session
+        init_databases()
     except ImportError:
         st.error("⚠️ Modulo admin_test_system non trovato")
+        return
+    except Exception as e:
+        st.error(f"⚠️ Errore inizializzando database: {e}")
         return
     
     test_params = st.session_state.admin_test_params
