@@ -6952,7 +6952,7 @@ def init_simulate_functions():
     return True
 
 def simulate_test_execution(params):
-    """Esegue test VERITIERO usando genera_verifica reale"""
+    """Esegue test VERITIERO usando genera_verifica reale con SOLO parametri obbligatori"""
     try:
         # Importa la funzione reale di generazione
         from generation import genera_verifica
@@ -6962,26 +6962,40 @@ def simulate_test_execution(params):
         MODEL_ID = "gemini-1.5-flash"
         model = genai.GenerativeModel(MODEL_ID)
         
-        # Genera verifica REALE con i parametri
-        with st.spinner(f"Generando verifica reale: {params['materia']} - {params['argomento']}"):
-            result = genera_verifica(
-                model=model,
-                materia=params['materia'],
-                argomento=params['argomento'],
-                livello=params['difficolta'],
-                num_esercizi=params['num_esercizi'],
-                punti_totali=params['punti_totali'],
-                on_progress=lambda text: None  # Disabilitato per test batch
-            )
+        # SOLO parametri obbligatori + defaults automatici
+        result = genera_verifica(
+            model=model,
+            materia=params['materia'],           # ✅ Obbligatorio
+            argomento=params['argomento'],       # ✅ Obbligatorio
+            difficolta=params['difficolta'],     # ✅ Obbligatorio (scuola)
+            # Tutti gli altri hanno defaults automatici
+            calibrazione="Standard",
+            durata="60 minuti",
+            num_esercizi=params.get('num_esercizi', 3),
+            punti_totali=params.get('punti_totali', 30),
+            mostra_punteggi=True,
+            con_griglia=False,
+            doppia_fila=False,
+            bes_dsa=False,
+            perc_ridotta=None,
+            bes_dsa_b=False,
+            genera_soluzioni=False,
+            note_generali="",
+            istruzioni_esercizi="",
+            immagini_esercizi=[],
+            file_ispirazione=None,
+            mathpix_context=None,
+            on_progress=lambda text: None  # Disabilitato per test batch
+        )
         
         # Valuta la qualità della verifica generata
-        if result and result.get('latex_corpo'):
-            # Calcola punteggio basato sulla qualità e completezza
-            latex_content = result['latex_corpo']
+        if result and result.get('A', {}).get('latex'):
+            # Usa la versione A della verifica
+            latex_content = result['A']['latex']
             
             # Conta esercizi generati
             esercizi_generati = latex_content.count('\\item[')
-            esercizi_richiesti = params['num_esercizi']
+            esercizi_richiesti = params.get('num_esercizi', 3)
             
             # Punteggio basato su completezza e qualità
             if esercizi_generati >= esercizi_richiesti:
@@ -7025,14 +7039,14 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 2.0,
-                'dettagli': "Fallimento generazione verifica REALE",
+                'dettagli': "Fallimento generazione verifica REALE - nessun LaTeX",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
             }
             
     except Exception as e:
-        # Errore durante generazione
+        # Errore durante generazione - log dettagliato
         return {
             'test_id': params['test_id'],
             'materia': params['materia'],
@@ -7194,7 +7208,7 @@ def genera_30_verifiche_random():
     execute_30_test_random()
 
 def execute_30_test_random():
-    """Esegue 30 test random"""
+    """Esegue 30 test random con debug dettagliato"""
     try:
         # Inizializza database
         init_simulate_functions()
@@ -7206,7 +7220,11 @@ def execute_30_test_random():
     session_id = st.session_state.admin_test_session_id
     num_tests = len(test_params)
     
-    with st.spinner(f"Esecuzione {num_tests} verifiche random in corso..."):
+    # Area di debug
+    debug_area = st.empty()
+    debug_results = []
+    
+    with st.spinner(f"Esecuzione {num_tests} verifiche REALI in corso..."):
         results = []
         pass_count = 0
         fail_count = 0
@@ -7214,20 +7232,51 @@ def execute_30_test_random():
         total_score = 0
         
         for i, params in enumerate(test_params):
-            result = simulate_test_execution(params)
-            results.append(result)
-            
-            if result['esito'] == 'PASS':
-                pass_count += 1
-            elif result['esito'] == 'FAIL':
+            try:
+                result = simulate_test_execution(params)
+                results.append(result)
+                
+                # Debug info
+                debug_info = f"Test {i+1}: {params['materia']} - {params['argomento']} -> {result['esito']} ({result['dettagli']})"
+                debug_results.append(debug_info)
+                
+                if result['esito'] == 'PASS':
+                    pass_count += 1
+                elif result['esito'] == 'FAIL':
+                    fail_count += 1
+                else:
+                    partial_count += 1
+                
+                total_score += result['punteggio']
+                
+                progress = (i + 1) / len(test_params)
+                st.progress(progress, f"Verifica {i+1}/{len(test_params)} - {result['esito']} (Score: {result['punteggio']:.1f})")
+                
+            except Exception as e:
+                # Errore critico durante il test
+                error_result = {
+                    'test_id': params['test_id'],
+                    'materia': params['materia'],
+                    'argomento': params['argomento'],
+                    'livello': params['difficolta'],
+                    'esito': 'FAIL',
+                    'punteggio': 0.0,
+                    'dettagli': f"ERRORE CRITICO: {str(e)}",
+                    'latex_verifica': None,
+                    'titolo': None,
+                    'esercizi_generati': 0
+                }
+                results.append(error_result)
                 fail_count += 1
-            else:
-                partial_count += 1
-            
-            total_score += result['punteggio']
-            
-            progress = (i + 1) / len(test_params)
-            st.progress(progress, f"Verifica {i+1}/{len(test_params)} - {result['esito']} (Score: {result['punteggio']:.1f})")
+                
+                debug_info = f"Test {i+1}: ERRORE CRITICO - {str(e)}"
+                debug_results.append(debug_info)
+        
+        # Mostra debug results
+        with debug_area.container():
+            st.markdown("### 🔍 Debug Dettagliato")
+            for debug in debug_results:
+                st.text(debug)
         
         try:
             save_test_session(session_id, results, pass_count, fail_count, partial_count, total_score/len(results))
@@ -7236,7 +7285,16 @@ def execute_30_test_random():
         
         st.session_state.admin_test_results = results
         
+        # Statistiche finali
         st.success(f"✅ Completate {len(results)} verifiche! PASS: {pass_count}, FAIL: {fail_count}, PARTIAL: {partial_count}")
+        
+        # Mostra riassunto errori
+        if fail_count > 0:
+            failed_tests = [r for r in results if r['esito'] == 'FAIL']
+            st.markdown("### ❌ Analisi Fallimenti")
+            for ft in failed_tests[:5]:  # Mostra solo primi 5
+                st.text(f"{ft['test_id']}: {ft['dettagli']}")
+        
         st.rerun()
 
 def render_risultati_e_valutazione():
