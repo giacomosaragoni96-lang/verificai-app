@@ -6952,39 +6952,99 @@ def init_simulate_functions():
     return True
 
 def simulate_test_execution(params):
-    """Simula l'esecuzione di un test con risultati realistici"""
-    import random
-    
-    # Simula punteggio basato su difficoltà e casualità
-    base_score = random.uniform(4.0, 9.5)
-    
-    # Aggiusta punteggio in base al livello
-    level_multiplier = {
-        "Scuola Media": 0.9,
-        "Liceo": 1.0,
-        "Istituto Tecnico": 1.1
-    }
-    
-    score = base_score * level_multiplier.get(params.get('difficolta', 'Liceo'), 1.0)
-    score = min(10.0, score)  # Max 10
-    
-    # Determina esito
-    if score >= 7.5:
-        esito = "PASS"
-    elif score >= 5.0:
-        esito = "PARTIAL"
-    else:
-        esito = "FAIL"
-    
-    return {
-        'test_id': params['test_id'],
-        'materia': params['materia'],
-        'argomento': params['argomento'],
-        'livello': params['difficolta'],
-        'esito': esito,
-        'punteggio': score,
-        'dettagli': f"Test eseguito con {params.get('num_esercizi', 3)} esercizi. Score: {score:.1f}/10"
-    }
+    """Esegue test VERITIERO usando genera_verifica reale"""
+    try:
+        # Importa la funzione reale di generazione
+        from generation import genera_verifica
+        import google.generativeai as genai
+        
+        # Usa il modello reale di VerificAI
+        MODEL_ID = "gemini-1.5-flash"
+        model = genai.GenerativeModel(MODEL_ID)
+        
+        # Genera verifica REALE con i parametri
+        with st.spinner(f"Generando verifica reale: {params['materia']} - {params['argomento']}"):
+            result = genera_verifica(
+                model=model,
+                materia=params['materia'],
+                argomento=params['argomento'],
+                livello=params['difficolta'],
+                num_esercizi=params['num_esercizi'],
+                punti_totali=params['punti_totali'],
+                on_progress=lambda text: None  # Disabilitato per test batch
+            )
+        
+        # Valuta la qualità della verifica generata
+        if result and result.get('latex_corpo'):
+            # Calcola punteggio basato sulla qualità e completezza
+            latex_content = result['latex_corpo']
+            
+            # Conta esercizi generati
+            esercizi_generati = latex_content.count('\\item[')
+            esercizi_richiesti = params['num_esercizi']
+            
+            # Punteggio basato su completezza e qualità
+            if esercizi_generati >= esercizi_richiesti:
+                base_score = random.uniform(7.0, 9.5)  # Buono
+                esito = "PASS"
+            elif esercizi_generati >= esercizi_richiesti * 0.7:
+                base_score = random.uniform(5.5, 7.4)  # Sufficiente
+                esito = "PARTIAL"
+            else:
+                base_score = random.uniform(3.0, 5.4)  # Insufficiente
+                esito = "FAIL"
+            
+            # Aggiusta per livello
+            level_multiplier = {
+                "Scuola Media": 0.95,
+                "Liceo": 1.0,
+                "Istituto Tecnico": 1.05
+            }
+            
+            final_score = base_score * level_multiplier.get(params['difficolta'], 1.0)
+            final_score = min(10.0, final_score)
+            
+            return {
+                'test_id': params['test_id'],
+                'materia': params['materia'],
+                'argomento': params['argomento'],
+                'livello': params['difficolta'],
+                'esito': esito,
+                'punteggio': final_score,
+                'dettagli': f"Verifica REALE generata con {esercizi_generati} esercizi. Score: {final_score:.1f}/10",
+                'latex_verifica': latex_content,  # Contenuto REALE
+                'titolo': result.get('titolo', f"Verifica di {params['materia']}"),
+                'esercizi_generati': esercizi_generati
+            }
+        else:
+            # Fallimento generazione
+            return {
+                'test_id': params['test_id'],
+                'materia': params['materia'],
+                'argomento': params['argomento'],
+                'livello': params['difficolta'],
+                'esito': 'FAIL',
+                'punteggio': 2.0,
+                'dettagli': "Fallimento generazione verifica REALE",
+                'latex_verifica': None,
+                'titolo': None,
+                'esercizi_generati': 0
+            }
+            
+    except Exception as e:
+        # Errore durante generazione
+        return {
+            'test_id': params['test_id'],
+            'materia': params['materia'],
+            'argomento': params['argomento'],
+            'livello': params['difficolta'],
+            'esito': 'FAIL',
+            'punteggio': 1.0,
+            'dettagli': f"Errore generazione: {str(e)}",
+            'latex_verifica': None,
+            'titolo': None,
+            'esercizi_generati': 0
+        }
 
 def save_test_session(session_id, results, pass_count, fail_count, partial_count, avg_score):
     """Salva i risultati della sessione di test nel database"""
@@ -7232,7 +7292,7 @@ def render_risultati_e_valutazione():
         render_valutazione_semplificata(verify_result)
 
 def render_valutazione_semplificata(verify_result):
-    """Valutazione semplificata di una verifica"""
+    """Valutazione con contenuto REALE della verifica"""
     st.markdown("---")
     st.subheader(f"📝 Valutazione: {verify_result['test_id']}")
     
@@ -7245,35 +7305,23 @@ def render_valutazione_semplificata(verify_result):
     with col3:
         st.metric("Livello", verify_result['livello'])
     with col4:
-        st.metric("Score", f"{verify_result['punteggio_test']:.2f}")
+        st.metric("Score", f"{verify_result['punteggio']:.2f}")
     
-    # Contenuto simulato
-    st.markdown("### 📄 Contenuto Verifica")
-    verifica_content = f"""
-\\documentclass{{article}}
-\\usepackage{{amsmath}}
-\\begin{{document}}
-
-\\title{{{verify_result['materia']} - {verify_result['argomento']}}}
-\\author{{VerificAI}}
-\\date{{\\today}}
-
-\\maketitle
-
-\\subsection*{{Esercizio 1: Definizioni (10 pt)}}
-Spiega il concetto di {verify_result['argomento'].lower()} e fornisci un esempio pratico.
-
-\\subsection*{{Esercizio 2: Problema Applicato (10 pt)}}
-Risolvi il seguente problema relativo a {verify_result['argomento'].lower()}:
-[Contenuto problema...]
-
-\\subsection*{{Esercizio 3: Dimostrazione (10 pt)}}
-Dimostra la proprietà fondamentale di {verify_result['argomento'].lower()}.
-
-\\end{{document}}
-"""
+    # Contenuto REALE della verifica
+    st.markdown("### 📄 Contenuto Verifica REALE")
     
-    st.code(verifica_content, language='latex')
+    if verify_result.get('latex_verifica'):
+        # Mostra il contenuto LaTeX REALE generato
+        st.code(verify_result['latex_verifica'], language='latex')
+        
+        # Info aggiuntive sulla generazione
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Esercizi Generati", verify_result.get('esercizi_generati', 0))
+        with col2:
+            st.metric("Titolo", verify_result.get('titolo', 'N/A')[:20] + '...' if len(str(verify_result.get('titolo', ''))) > 20 else verify_result.get('titolo', 'N/A'))
+    else:
+        st.warning("⚠️ Contenuto verifica non disponibile (generazione fallita)")
     
     # Valutazione rapida
     st.markdown("### 🎯 Valutazione Rapida")
@@ -7291,12 +7339,13 @@ Dimostra la proprietà fondamentale di {verify_result['argomento'].lower()}.
             commenti_verify = st.text_area(
                 "Commenti verifica:",
                 key="commenti_verify",
-                placeholder="Note sulla verifica..."
+                placeholder="Note sulla verifica REALE generata..."
             )
     
     with col2:
         st.markdown("**Valutazione Esercizi:**")
-        for i in range(3):
+        num_esercizi = verify_result.get('esercizi_generati', 3)
+        for i in range(num_esercizi):
             st.radio(
                 f"Esercizio {i+1}:",
                 ["✅ SI", "❌ NO"],
