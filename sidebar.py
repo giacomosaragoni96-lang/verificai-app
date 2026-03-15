@@ -420,11 +420,14 @@ def render_sidebar(
         
         if admin_status:
             st.markdown("---")
-            st.markdown("### 🔧 Amministrazione")
+            st.markdown("### 🔧 Admin Tools")
             
-            if st.button("🔧 Pannello Admin Test Suite", key="admin_panel_btn", use_container_width=True):
-                st.session_state.current_page = 'admin'
+            # Solo il nuovo sistema unificato
+            if st.button("🧪 Test & Valutazione System", key="admin_test_unified", use_container_width=True, type="primary"):
+                st.session_state.admin_test_mode = True
                 st.rerun()
+            
+            st.caption("📋 Sistema completo per test verifiche e valutazione esercizi")
             
             if st.button("🚪 Logout Admin", key="admin_logout_btn", use_container_width=True):
                 st.session_state.is_admin = False
@@ -441,7 +444,6 @@ def render_sidebar(
                 if st.button("🔐 Login Admin", key="admin_login_btn"):
                     if password == "admin123":  # In produzione usa sistema più sicuro
                         st.session_state.is_admin = True
-                        st.session_state.current_page = 'admin'
                         st.success("✅ Accesso admin abilitato!")
                         st.rerun()
                     elif password:

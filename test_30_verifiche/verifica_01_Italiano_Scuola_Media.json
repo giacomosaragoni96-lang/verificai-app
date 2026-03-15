@@ -3,20 +3,20 @@
   "scenario": {
     "materia": "Italiano",
     "livello": "Scuola Media",
-    "argomento": "Testo argomentativo",
-    "num_esercizi": 3,
+    "argomento": "Analisi del testo poetico",
+    "num_esercizi": 5,
     "punti_totali": 80,
-    "durata": "2 ore",
+    "durata": "45 minuti",
     "mostra_punteggi": true,
-    "con_griglia": false
+    "con_griglia": true
   },
   "generazione": {
     "success": true,
     "output": {
-      "titolo": "Il Testo Argomentativo",
+      "titolo": "Analisi del testo poetico",
       "A": {
-        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb}\n\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\begin{document}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Italiano: Il Testo Argomentativo} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Elementi Fondamentali del Testo Argomentativo}\nDefinisci i seguenti concetti chiave relativi al testo argomentativo:\n\\begin{enumerate}[a)]\n\\item Tesi: (10 pt)\n\\item Argomento: (10 pt)\n\\item Antitesi: (10 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Analisi Critica di un Breve Testo Argomentativo}\nLeggi attentamente il seguente brano e rispondi alle domande:\n\"L'uso eccessivo degli smartphone da parte dei giovani desta preoccupazione. Se da un lato questi dispositivi offrono un accesso immediato all'informazione e facilitano la comunicazione, dall'altro possono portare a dipendenza, isolamento sociale e problemi di concentrazione. È fondamentale che genitori ed educatori guidino i ragazzi verso un utilizzo equilibrato e consapevole di tali strumenti.\"\n\n\\begin{enumerate}[a)]\n\\item Identifica la tesi principale sostenuta nel brano. (10 pt)\n\\item Individua almeno due argomenti a supporto della tesi. (10 pt)\n\\item Esplicita un'ipotetica antitesi che potrebbe essere contrapposta alla tesi principale. (5 pt)\n\\item Suggerisci una possibile soluzione o proposta che derivi dall'analisi presentata. (5 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Strutturare un Testo Argomentativo}\nConsidera il tema: \"L'importanza dell'educazione civica nelle scuole\".\n\\begin{enumerate}[a)]\n\\item Formula una tesi chiara e concisa riguardo all'importanza dell'educazione civica. (10 pt)\n\\item Sviluppa almeno due argomenti validi a sostegno della tua tesi, fornendo brevi giustificazioni per ciascuno. (10 pt)\n\\end{enumerate}\n\\end{document}",
-        "pdf": "<BYTES:61431>"
+        "latex": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Italiano: Analisi del testo poetico} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Terminologia Poetica}\n\\begin{enumerate}[a)]\n\\item Definire il concetto di \"metro\" in metrica italiana, indicando almeno due esempi di metro sillabico. (6 pt)\n\\item Spiegare la differenza tra \"rima baciata\" e \"rima alternata\", fornendo un breve esempio per ciascuna. (6 pt)\n\\item Indicare cosa si intende per \"enjambement\" e quale effetto può produrre nel lettore. (6 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Analisi Stilistica}\n\nSi considerino i seguenti versi:\n\"Nel mezzo del cammin di nostra vita\nmi ritrovai per una selva oscura,\nché la diritta via era smarrita.\"\n\\begin{enumerate}[a)]\n\\item Identificare la figura retorica prevalente nella prima strofa fornita e spiegarne il significato e la funzione nel contesto. (9 pt)\n\\item Analizzare la scelta lessicale (\"selva oscura\", \"diritta via smarrita\") e il suo valore simbolico. (10 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Interpretazione Tematica}\nLeggere attentamente la seguente poesia:\n\"GELIDA, DORMIA LA NOTTE NEL PAESE\nDELL'OMBRA. E IL VENTO FREDDO,\nSULLE CIME DEGLI ALBERI,\nCANTAVA LA SOLITUDINE.\nUN LUME DEBOLE, LONTANO,\n ILLUMINAVA UNA FINESTRA.\nIL CUORE, STAVA LASCIANDO ANDARE\nLA VITA, COME FOGLIE SECCHE.\"\n\\begin{enumerate}[a)]\n\\item Quali sono i temi principali che emergono dalla poesia? (9 pt)\n\\item Come vengono utilizzate le immagini naturali (notte, vento, alberi, foglie) per esprimere lo stato d'animo del poeta? (10 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Comprensione Critica}\nQuale delle seguenti affermazioni descrive meglio la funzione della punteggiatura in un testo poetico?\n\\begin{enumerate}[a)]\n\\item La punteggiatura in poesia ha solo una funzione grammaticale e va rispettata rigidamente come nella prosa.\n\\item La punteggiatura in poesia può essere utilizzata in modo creativo per influenzare il ritmo, le pause e l'interpretazione del testo.\n\\item La punteggiatura in poesia è facoltativa e la sua assenza indica una maggiore libertà espressiva dell'autore.\n\\item La punteggiatura in poesia serve unicamente a dividere le strofe e i versi.\n\\end{enumerate}\n\n\\subsection*{Esercizio 5: Analisi Metrica e Figure Retoriche}\n\nSi consideri il seguente componimento:\n\"O primavera, gioventù dell'anno,\nche torni in questo ciel seren sereno,\ned io nell'alma mia non sento affanno,\nma gaudio, e gioia, e un viver più ameno.\"\n\\begin{enumerate}[a)]\n\\item Indicare il metro di questo componimento (numero di sillabe per verso) e il tipo di strofa. (7 pt)\n\\item Identificare almeno due figure retoriche presenti nei versi e spiegarne la loro funzione specifica. (17 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{3}{c||}{\\textbf{1}} & \\multicolumn{2}{c||}{\\textbf{2}} & \\multicolumn{2}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{2}{c||}{\\textbf{5}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & a) & b) & a) & b) & — & a) & b) & \\\\ \\hline\n\\textbf{Max} & 6 & 6 & 6 & 9 & 10 & 9 & 10 & — & 7 & 17 & 80 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}",
+        "pdf": "<BYTES:66088>"
       },
       "B": {
         "latex": "",
@@ -42,31 +42,31 @@
   },
   "analisi": {
     "esercizi": {
-      "trovati": 0,
-      "attesi": 3,
-      "corretti": false,
-      "punteggio": 0
+      "trovati": 5,
+      "attesi": 5,
+      "corretti": true,
+      "punteggio": 30
     },
     "punteggi": {
-      "trovati": 0,
+      "trovati": 80,
       "attesi": 80,
-      "corretti": false,
-      "punteggio": 0
+      "corretti": true,
+      "punteggio": 30
     },
     "struttura": {
-      "elementi_trovati": 0,
+      "elementi_trovati": 6,
       "elementi_attesi": 4,
-      "adeguata": false,
-      "punteggio": 10
+      "adeguata": true,
+      "punteggio": 20
     },
     "tabella": {
       "richiesta": true,
-      "presente": false,
-      "punteggio": 0
+      "presente": true,
+      "punteggio": 10
     },
     "griglia": {
-      "richiesta": false,
-      "presente": false,
+      "richiesta": true,
+      "presente": true,
       "punteggio": 5
     },
     "latex": {
@@ -75,12 +75,13 @@
     }
   },
   "pdf": {
-    "success": false,
-    "error": "Compilazione LaTeX fallita",
-    "latex_error": "pdflatex: security risk: running with elevated privileges\npdflatex: major issue: So far, you have not checked for updates as a MiKTeX user.\n",
-    "latex_content": ""
+    "success": true,
+    "latex_file": "test_30_verifiche/pdfs/verifica_20260315_084936.tex",
+    "pdf_file": "test_30_verifiche/pdfs/verifica_20260315_084936.pdf",
+    "pdf_size": 66088,
+    "latex_content": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Italiano: Analisi del testo poetico} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Terminologia Poetica}\n\\begin{enumerate}[a)]\n\\item Definire il concetto di \"metro\" in metrica italiana, indicando almeno due esempi di metro sillabico. (6 pt)\n\\item Spiegare la differenza tra \"rima baciata\" e \"rima alternata\", fornendo un breve esempio per ciascuna. (6 pt)\n\\item Indicare cosa si intende per \"enjambement\" e quale effetto può produrre nel lettore. (6 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Analisi Stilistica}\n\nSi considerino i seguenti versi:\n\"Nel mezzo del cammin di nostra vita\nmi ritrovai per una selva oscura,\nché la diritta via era smarrita.\"\n\\begin{enumerate}[a)]\n\\item Identificare la figura retorica prevalente nella prima strofa fornita e spiegarne il significato e la funzione nel contesto. (9 pt)\n\\item Analizzare la scelta lessicale (\"selva oscura\", \"diritta via smarrita\") e il suo valore simbolico. (10 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Interpretazione Tematica}\nLeggere attentamente la seguente poesia:\n\"GELIDA, DORMIA LA NOTTE NEL PAESE\nDELL'OMBRA. E IL VENTO FREDDO,\nSULLE CIME DEGLI ALBERI,\nCANTAVA LA SOLITUDINE.\nUN LUME DEBOLE, LONTANO,\n ILLUMINAVA UNA FINESTRA.\nIL CUORE, STAVA LASCIANDO ANDARE\nLA VITA, COME FOGLIE SECCHE.\"\n\\begin{enumerate}[a)]\n\\item Quali sono i temi principali che emergono dalla poesia? (9 pt)\n\\item Come vengono utilizzate le immagini naturali (notte, vento, alberi, foglie) per esprimere lo stato d'animo del poeta? (10 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Comprensione Critica}\nQuale delle seguenti affermazioni descrive meglio la funzione della punteggiatura in un testo poetico?\n\\begin{enumerate}[a)]\n\\item La punteggiatura in poesia ha solo una funzione grammaticale e va rispettata rigidamente come nella prosa.\n\\item La punteggiatura in poesia può essere utilizzata in modo creativo per influenzare il ritmo, le pause e l'interpretazione del testo.\n\\item La punteggiatura in poesia è facoltativa e la sua assenza indica una maggiore libertà espressiva dell'autore.\n\\item La punteggiatura in poesia serve unicamente a dividere le strofe e i versi.\n\\end{enumerate}\n\n\\subsection*{Esercizio 5: Analisi Metrica e Figure Retoriche}\n\nSi consideri il seguente componimento:\n\"O primavera, gioventù dell'anno,\nche torni in questo ciel seren sereno,\ned io nell'alma mia non sento affanno,\nma gaudio, e gioia, e un viver più ameno.\"\n\\begin{enumerate}[a)]\n\\item Indicare il metro di questo componimento (numero di sillabe per verso) e il tipo di strofa. (7 pt)\n\\item Identificare almeno due figure retoriche presenti nei versi e spiegarne la loro funzione specifica. (17 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{3}{c||}{\\textbf{1}} & \\multicolumn{2}{c||}{\\textbf{2}} & \\multicolumn{2}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{2}{c||}{\\textbf{5}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & a) & b) & a) & b) & — & a) & b) & \\\\ \\hline\n\\textbf{Max} & 6 & 6 & 6 & 9 & 10 & 9 & 10 & — & 7 & 17 & 80 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}"
   },
-  "punteggio_finale": 20,
-  "timestamp": "2026-03-14T18:05:19.451127",
-  "latex_completo": ""
+  "punteggio_finale": 100,
+  "timestamp": "2026-03-15T08:49:37.577075",
+  "latex_completo": "\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[italian]{babel}\n\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n\n\\geometry{margin=1.5cm}\n\\setlength{\\parskip}{3pt plus1pt minus1pt}\n\\pagestyle{empty}\n\\begin{document}\n\\begin{center}\n  \\textbf{\\large Verifica di Italiano: Analisi del testo poetico} \\\\\n  \\vspace{0.3cm}\n  \\small \\textbf{Nome:} \\underline{\\hspace{6cm}} \\quad \\textbf{Classe e Data:} \\underline{\\hspace{4cm}} \\\\\n  \\vspace{0.3cm}\n  \\textit{\\small Svolgere tutti gli esercizi mostrando i passaggi.}\n\\end{center}\n\\subsection*{Esercizio 1: Terminologia Poetica}\n\\begin{enumerate}[a)]\n\\item Definire il concetto di \"metro\" in metrica italiana, indicando almeno due esempi di metro sillabico. (6 pt)\n\\item Spiegare la differenza tra \"rima baciata\" e \"rima alternata\", fornendo un breve esempio per ciascuna. (6 pt)\n\\item Indicare cosa si intende per \"enjambement\" e quale effetto può produrre nel lettore. (6 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 2: Analisi Stilistica}\n\nSi considerino i seguenti versi:\n\"Nel mezzo del cammin di nostra vita\nmi ritrovai per una selva oscura,\nché la diritta via era smarrita.\"\n\\begin{enumerate}[a)]\n\\item Identificare la figura retorica prevalente nella prima strofa fornita e spiegarne il significato e la funzione nel contesto. (9 pt)\n\\item Analizzare la scelta lessicale (\"selva oscura\", \"diritta via smarrita\") e il suo valore simbolico. (10 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 3: Interpretazione Tematica}\nLeggere attentamente la seguente poesia:\n\"GELIDA, DORMIA LA NOTTE NEL PAESE\nDELL'OMBRA. E IL VENTO FREDDO,\nSULLE CIME DEGLI ALBERI,\nCANTAVA LA SOLITUDINE.\nUN LUME DEBOLE, LONTANO,\n ILLUMINAVA UNA FINESTRA.\nIL CUORE, STAVA LASCIANDO ANDARE\nLA VITA, COME FOGLIE SECCHE.\"\n\\begin{enumerate}[a)]\n\\item Quali sono i temi principali che emergono dalla poesia? (9 pt)\n\\item Come vengono utilizzate le immagini naturali (notte, vento, alberi, foglie) per esprimere lo stato d'animo del poeta? (10 pt)\n\\end{enumerate}\n\n\\subsection*{Esercizio 4: Comprensione Critica}\nQuale delle seguenti affermazioni descrive meglio la funzione della punteggiatura in un testo poetico?\n\\begin{enumerate}[a)]\n\\item La punteggiatura in poesia ha solo una funzione grammaticale e va rispettata rigidamente come nella prosa.\n\\item La punteggiatura in poesia può essere utilizzata in modo creativo per influenzare il ritmo, le pause e l'interpretazione del testo.\n\\item La punteggiatura in poesia è facoltativa e la sua assenza indica una maggiore libertà espressiva dell'autore.\n\\item La punteggiatura in poesia serve unicamente a dividere le strofe e i versi.\n\\end{enumerate}\n\n\\subsection*{Esercizio 5: Analisi Metrica e Figure Retoriche}\n\nSi consideri il seguente componimento:\n\"O primavera, gioventù dell'anno,\nche torni in questo ciel seren sereno,\ned io nell'alma mia non sento affanno,\nma gaudio, e gioia, e un viver più ameno.\"\n\\begin{enumerate}[a)]\n\\item Indicare il metro di questo componimento (numero di sillabe per verso) e il tipo di strofa. (7 pt)\n\\item Identificare almeno due figure retoriche presenti nei versi e spiegarne la loro funzione specifica. (17 pt)\n\\end{enumerate}\n\\vfill\n% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n{\\renewcommand{\\arraystretch}{1.8}\n\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|}\n\\hline\n\\textbf{Es.} & \\multicolumn{3}{c||}{\\textbf{1}} & \\multicolumn{2}{c||}{\\textbf{2}} & \\multicolumn{2}{c||}{\\textbf{3}} & \\multicolumn{1}{c||}{\\textbf{4}} & \\multicolumn{2}{c||}{\\textbf{5}} & \\textbf{Tot} \\\\ \\hline\n\\textbf{Sotto.} & a) & b) & c) & a) & b) & a) & b) & — & a) & b) & \\\\ \\hline\n\\textbf{Max} & 6 & 6 & 6 & 9 & 10 & 9 & 10 & — & 7 & 17 & 80 \\\\ \\hline\n\\textbf{Voto} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{\\hrulefill} & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline\n\\end{tabular}\n}}\n\\end{center}\n\\end{document}"
 }

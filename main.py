@@ -17,48 +17,11 @@ from datetime import datetime, timezone
 
 import google.generativeai as genai
 
-# Import per pannello admin - versione integrata
-def render_admin_page():
-    """Pagina dedicata solo per test PromptFoo"""
-    
-    st.set_page_config(page_title="Test Suite - VerificAI", layout="wide")
-    
-    # Importa e renderizza pagina test 30 verifiche
-    try:
-        # Prova diversi path per trovare il file
-        import sys
-        import os
-        
-        # Aggiungi directory corrente al path
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        if current_dir not in sys.path:
-            sys.path.insert(0, current_dir)
-        
-        from test_completo_30 import render_test_30_page
-        render_test_30_page()
-        
-    except ImportError as e:
-        st.error(f"⚠️ Modulo Test 30 non trovato: {e}")
-        st.info("💡 Assicurati che test_completo_30.py sia disponibile")
-        
-        # Debug info
-        st.markdown("### 🔍 Debug Info")
-        st.write(f"**Current directory:** {os.getcwd()}")
-        st.write(f"**Script directory:** {os.path.dirname(os.path.abspath(__file__))}")
-        st.write(f"**Python path:** {sys.path[:3]}")
-        
-        # Controlla se il file esiste
-        file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_completo_30.py")
-        if os.path.exists(file_path):
-            st.success(f"✅ File trovato: {file_path}")
-        else:
-            st.error(f"❌ File non trovato: {file_path}")
-    
-    # Pulsante per tornare all'app principale
-    if st.button("← Torna a VerificAI", type="secondary"):
-        st.session_state.current_page = 'home'
-        st.session_state.stage = 'INPUT'
-        st.rerun()
+# Import per pannello admin - RIMOSSO VECCHIO SISTEMA
+# def render_admin_page():
+#     """Pagina dedicata solo per test PromptFoo"""
+#     st.set_page_config(page_title="Test Suite - VerificAI", layout="wide")
+#     # ... vecchio codice rimosso
 from sidebar import render_sidebar
 from generation import genera_verifica, analizza_documento_caricato, compila_contesto_generazione
 from prompts import (
@@ -6980,18 +6943,11 @@ if _prev_stage != _current_stage:
 if not _share_view_active:
     _current = st.session_state.stage
     
-    # ── ADMIN PAGE ROUTING ───────────────────────────────────────────────────────
-    if st.session_state.get('current_page') == 'admin':
-        # Controlla sia is_admin classico che session_state
-        admin_status = (st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False) or st.session_state.get('is_admin', False)
-        
-        if admin_status:
-            render_admin_page()
-        else:
-            st.error("⛔ Accesso negato. Privilegi admin richiesti.")
-            st.session_state.current_page = 'home'
-            st.session_state.stage = STAGE_INPUT
-            st.rerun()
+    # ── ADMIN TEST MODE COMPLETO ─────────────────────────────────────────────
+    # Modalità test unificata e completa
+    if st.session_state.get("admin_test_mode", False):
+        render_admin_test_system_complete()
+    
     # ── NORMAL STAGE ROUTING ───────────────────────────────────────────────────────
     elif   _current == STAGE_INPUT:   _render_stage_input()
     elif _current == STAGE_PREVIEW: _render_stage_preview()
