@@ -7183,59 +7183,60 @@ def execute_admin_test_integrated():
     num_tests = len(test_params)
     test_word = "test" if num_tests == 1 else "test"
     
-    with st.spinner(f"Esecuzione {num_tests} {test_word} in corso..."):
-        results = []
-        pass_count = 0
-        fail_count = 0
-        partial_count = 0
-        total_score = 0
-        
-        for i, params in enumerate(test_params):
-            # Simula esecuzione test
-            result = simulate_test_execution(params)
-            results.append(result)
+    try:
+        with st.spinner(f"Esecuzione {num_tests} {test_word} in corso..."):
+            results = []
+            pass_count = 0
+            fail_count = 0
+            partial_count = 0
+            total_score = 0
             
-            # Aggiorna contatori
-            if result['esito'] == 'PASS':
-                pass_count += 1
-            elif result['esito'] == 'FAIL':
-                fail_count += 1
+            for i, params in enumerate(test_params):
+                # Simula esecuzione test
+                result = simulate_test_execution(params)
+                results.append(result)
+                
+                # Aggiorna contatori
+                if result['esito'] == 'PASS':
+                    pass_count += 1
+                elif result['esito'] == 'FAIL':
+                    fail_count += 1
+                else:
+                    partial_count += 1
+                
+                total_score += result['punteggio']
+                
+                # Progress bar
+                progress = (i + 1) / len(test_params)
+                st.progress(progress, f"Test {i+1}/{len(test_params)} - {result['esito']} (Score: {result['punteggio']:.1f})")
+            
+            # Salva risultati nel database
+            try:
+                save_test_session(session_id, results, pass_count, fail_count, partial_count, total_score/len(results))
+            except Exception as e:
+                st.warning(f"⚠️ Salvataggio database fallito: {e}")
+            
+            st.session_state.admin_test_results = results
+            
+            # Messaggio di successo
+            if num_tests == 1:
+                st.success(f"✅ Test completato! Esito: {results[0]['esito']} - Score: {results[0]['punteggio']:.2f}")
             else:
-                partial_count += 1
+                st.success(f"✅ Completati {len(results)} test! PASS: {pass_count}, FAIL: {fail_count}, PARTIAL: {partial_count}")
             
-            total_score += result['punteggio']
-            
-            # Progress bar
-            progress = (i + 1) / len(test_params)
-            st.progress(progress, f"Test {i+1}/{len(test_params)} - {result['esito']} (Score: {result['punteggio']:.1f})")
-        
-        # Salva risultati nel database
-        try:
-            save_test_session(session_id, results, pass_count, fail_count, partial_count, total_score/len(results))
-        except Exception as e:
-            st.warning(f"⚠️ Salvataggio database fallito: {e}")
-        
-        st.session_state.admin_test_results = results
-        
-        # Messaggio di successo
-        if num_tests == 1:
-            st.success(f"✅ Test completato! Esito: {results[0]['esito']} - Score: {results[0]['punteggio']:.2f}")
-        else:
-            st.success(f"✅ Completati {len(results)} test! PASS: {pass_count}, FAIL: {fail_count}, PARTIAL: {partial_count}")
-        
-        # Mostra dettagli per debug
-        if num_tests == 1:
-            st.markdown("### 🔍 Dettagli Test (Modalità Debug)")
-            result = results[0]
-            st.json({
-                'test_id': result['test_id'],
-                'materia': result['materia'],
-                'argomento': result['argomento'],
-                'livello': result['livello'],
-                'esito': result['esito'],
-                'punteggio': result['punteggio'],
-                'dettagli': result['dettagli']
-            })
+            # Mostra dettagli per debug
+            if num_tests == 1:
+                st.markdown("### 🔍 Dettagli Test (Modalità Debug)")
+                result = results[0]
+                st.json({
+                    'test_id': result['test_id'],
+                    'materia': result['materia'],
+                    'argomento': result['argomento'],
+                    'livello': result['livello'],
+                    'esito': result['esito'],
+                    'punteggio': result['punteggio'],
+                    'dettagli': result['dettagli']
+                })
     
     except Exception as e:
         st.error(f"❌ Errore durante esecuzione test: {e}")
