@@ -6907,86 +6907,6 @@ def carica_esempi_qualita(materia, argomento, livello, limit=5):
 
 # ═══════════════════════════════════════════════════════════════════════════
 
-# ── SCROLL TO TOP on stage change ─────────────────────────────────────────────
-_current_stage = st.session_state.stage
-_prev_stage = st.session_state.get("_prev_stage", None)
-if _prev_stage != _current_stage:
-    st.session_state["_prev_stage"] = _current_stage
-    components.html(
-        "<script>"
-        "(function(){"
-        "var tries=0,max=12;"
-        "function scrollTop(){"
-        "  var d=window.parent.document;"
-        "  var targets=["
-        "    d.querySelector('.main'),"
-        "    d.querySelector('.main .block-container'),"
-        "    d.querySelector('[data-testid=\"stAppViewContainer\"]'),"
-        "    d.querySelector('[data-testid=\"stMainBlockContainer\"]'),"
-        "    d.documentElement,"
-        "    d.body"
-        "  ];"
-        "  targets.forEach(function(t){if(t){t.scrollTop=0;}});"
-        "  window.parent.scrollTo({top:0,left:0,behavior:'instant'});"
-        "  if(tries++<max)setTimeout(scrollTop,120);"
-        "}"
-        "scrollTop();"
-        "var bc=window.parent.document.querySelector('.main .block-container');"
-        "if(bc){bc.classList.remove('stage-enter');void bc.offsetWidth;"
-        "bc.classList.add('stage-enter');"
-        "setTimeout(function(){bc.classList.remove('stage-enter');},500);}"
-        "})();"
-        "</script>",
-        height=0
-    )
-
-if not _share_view_active:
-    _current = st.session_state.stage
-    
-    # ── ADMIN TEST MODE COMPLETO ─────────────────────────────────────────────
-    # Modalità test unificata e completa
-    if st.session_state.get("admin_test_mode", False):
-        render_admin_test_system_complete()
-    
-    # ── NORMAL STAGE ROUTING ───────────────────────────────────────────────────────
-    elif   _current == STAGE_INPUT:   _render_stage_input()
-    elif _current == STAGE_PREVIEW: _render_stage_preview()
-    elif _current == STAGE_REVIEW:  _render_stage_review()
-    elif _current == STAGE_FINAL:   _render_stage_final()
-    elif _current == STAGE_MIE_VERIFICHE: _render_le_tue_verifiche()
-
-# ── MAIN ROUTING ───────────────────────────────────────────────────────────────
-st.markdown(
-    '<div class="app-footer">'
-    '⚠️ Le verifiche generate dall\'AI sono suggerimenti didattici — '
-    'rivedi sempre il contenuto prima di distribuirlo.<br>'
-    '<span style="opacity:.5;">VerificAI · Versione Beta</span>'
-    '</div>',
-    unsafe_allow_html=True
-)
-
-components.html(
-    "<style>body{margin:0;padding:0;background:transparent}"
-    "#sb{background:none;border:none;cursor:pointer;color:" + T["accent"] + ";"
-    "font-weight:600;font-size:.72rem;font-family:DM Sans,sans-serif;"
-    "padding:0;display:block;margin:0 auto;text-align:center;width:100%}"
-    "#sb:hover{text-decoration:underline}</style>"
-    "<button id='sb' onclick='copyL()'>🔗 Condividi con i colleghi</button>"
-    "<script>"
-    "function copyL(){"
-    "var u='" + SHARE_URL + "';"
-    "var b=document.getElementById('sb');"
-    "var t=document.createElement('textarea');"
-    "t.value=u;t.style.cssText='position:fixed;top:0;left:0;opacity:0';"
-    "document.body.appendChild(t);t.focus();t.select();"
-    "var ok=false;try{ok=document.execCommand('copy')}catch(e){}"
-    "document.body.removeChild(t);"
-    "if(ok){b.innerText='✅ Link copiato!';setTimeout(function(){b.innerText='🔗 Condividi con i colleghi'},2000)}"
-    "else{b.innerText=u}}"
-    "</script>",
-    height=30
-)
-
 # ── ADMIN TEST SYSTEM FUNCTIONS ─────────────────────────────────────────────
 # Definizioni funzioni PRIMA del routing per evitare NameError
 
@@ -7298,6 +7218,86 @@ Dimostra la proprietà fondamentale di {verify_result['argomento'].lower()}.
             del st.session_state.admin_test_results
             del st.session_state.admin_verify_to_evaluate
             st.rerun()
+
+# ── SCROLL TO TOP on stage change ─────────────────────────────────────────────
+_current_stage = st.session_state.stage
+_prev_stage = st.session_state.get("_prev_stage", None)
+if _prev_stage != _current_stage:
+    st.session_state["_prev_stage"] = _current_stage
+    components.html(
+        "<script>"
+        "(function(){"
+        "var tries=0,max=12;"
+        "function scrollTop(){"
+        "  var d=window.parent.document;"
+        "  var targets=["
+        "    d.querySelector('.main'),"
+        "    d.querySelector('.main .block-container'),"
+        "    d.querySelector('[data-testid=\"stAppViewContainer\"]'),"
+        "    d.querySelector('[data-testid=\"stMainBlockContainer\"]'),"
+        "    d.documentElement,"
+        "    d.body"
+        "  ];"
+        "  targets.forEach(function(t){if(t){t.scrollTop=0;}});"
+        "  window.parent.scrollTo({top:0,left:0,behavior:'instant'});"
+        "  if(tries++<max)setTimeout(scrollTop,120);"
+        "}"
+        "scrollTop();"
+        "var bc=window.parent.document.querySelector('.main .block-container');"
+        "if(bc){bc.classList.remove('stage-enter');void bc.offsetWidth;"
+        "bc.classList.add('stage-enter');"
+        "setTimeout(function(){bc.classList.remove('stage-enter');},500);}"
+        "})();"
+        "</script>",
+        height=0
+    )
+
+if not _share_view_active:
+    _current = st.session_state.stage
+    
+    # ── ADMIN TEST MODE COMPLETO ─────────────────────────────────────────────
+    # Modalità test unificata e completa
+    if st.session_state.get("admin_test_mode", False):
+        render_admin_test_system_complete()
+    
+    # ── NORMAL STAGE ROUTING ───────────────────────────────────────────────────────
+    elif   _current == STAGE_INPUT:   _render_stage_input()
+    elif _current == STAGE_PREVIEW: _render_stage_preview()
+    elif _current == STAGE_REVIEW:  _render_stage_review()
+    elif _current == STAGE_FINAL:   _render_stage_final()
+    elif _current == STAGE_MIE_VERIFICHE: _render_le_tue_verifiche()
+
+# ── MAIN ROUTING ───────────────────────────────────────────────────────────────
+st.markdown(
+    '<div class="app-footer">'
+    '⚠️ Le verifiche generate dall\'AI sono suggerimenti didattici — '
+    'rivedi sempre il contenuto prima di distribuirlo.<br>'
+    '<span style="opacity:.5;">VerificAI · Versione Beta</span>'
+    '</div>',
+    unsafe_allow_html=True
+)
+
+components.html(
+    "<style>body{margin:0;padding:0;background:transparent}"
+    "#sb{background:none;border:none;cursor:pointer;color:" + T["accent"] + ";"
+    "font-weight:600;font-size:.72rem;font-family:DM Sans,sans-serif;"
+    "padding:0;display:block;margin:0 auto;text-align:center;width:100%}"
+    "#sb:hover{text-decoration:underline}</style>"
+    "<button id='sb' onclick='copyL()'>🔗 Condividi con i colleghi</button>"
+    "<script>"
+    "function copyL(){"
+    "var u='" + SHARE_URL + "';"
+    "var b=document.getElementById('sb');"
+    "var t=document.createElement('textarea');"
+    "t.value=u;t.style.cssText='position:fixed;top:0;left:0;opacity:0';"
+    "document.body.appendChild(t);t.focus();t.select();"
+    "var ok=false;try{ok=document.execCommand('copy')}catch(e){}"
+    "document.body.removeChild(t);"
+    "if(ok){b.innerText='✅ Link copiato!';setTimeout(function(){b.innerText='🔗 Condividi con i colleghi'},2000)}"
+    "else{b.innerText=u}}"
+    "</script>",
+    height=30
+)
 
 # ── MAIN ROUTING ────────────────────────────────────────────────────────────────
 
