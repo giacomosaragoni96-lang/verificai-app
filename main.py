@@ -7000,6 +7000,23 @@ if not _share_view_active:
     elif _current == STAGE_MIE_VERIFICHE: _render_le_tue_verifiche()
 
 
+# ── ADMIN TEST SYSTEM INTEGRATION ─────────────────────────────────────────────
+
+# Aggiungi link al sistema admin test nella sidebar
+if st.session_state.get('utente') and st.session_state.utente.email in ADMIN_EMAILS:
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 🔧 Admin Tools")
+    if st.sidebar.button("🧪 Test & Valutazione System", use_container_width=True):
+        st.info("🔧 Apri in una nuova scheda:")
+        st.code("streamlit run admin_test_system.py")
+        st.sidebar.markdown(
+            '<a href="http://localhost:8502" target="_blank">'
+            '<button style="width: 100%; padding: 0.5rem; background: #667eea; color: white; border: none; border-radius: 0.5rem; cursor: pointer;">'
+            '🚀 Apri Admin System'
+            '</button></a>',
+            unsafe_allow_html=True
+        )
+
 # ── FOOTER ────────────────────────────────────────────────────────────────────
 st.markdown(
     '<div class="app-footer">'
