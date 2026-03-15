@@ -6956,25 +6956,8 @@ if not _share_view_active:
     elif _current == STAGE_MIE_VERIFICHE: _render_le_tue_verifiche()
 
 
-# ── ADMIN TEST SYSTEM INTEGRATION ─────────────────────────────────────────────
-
-# Solo per admin: sistema completo di test e valutazione
-if st.session_state.get('utente') and st.session_state.utente.email in ADMIN_EMAILS:
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### 🔧 Admin Tools")
-    
-    # UNICA opzione: sistema completo integrato
-    if st.sidebar.button("🧪 Test & Valutazione System", use_container_width=True, type="primary"):
-        st.session_state["admin_test_mode"] = True
-        st.rerun()
-    
-    st.sidebar.caption("📋 Sistema completo per test verifiche e valutazione esercizi")
-
-# ── ADMIN TEST MODE COMPLETO ─────────────────────────────────────────────
-
-# Modalità test unificata e completa
-if st.session_state.get("admin_test_mode", False):
-    render_admin_test_system_complete()
+# ── ADMIN TEST SYSTEM FUNCTIONS ─────────────────────────────────────────────
+# Definizioni funzioni PRIMA del routing per evitare NameError
 
 def render_admin_test_system_complete():
     """Sistema admin completo e unificato"""
@@ -7557,7 +7540,21 @@ def get_count_test_totali():
 def get_quality_rate():
     return 0.0
 
-# ── FOOTER ────────────────────────────────────────────────────────────────────
+# ── ADMIN TEST SYSTEM INTEGRATION ─────────────────────────────────────────────
+
+# Solo per admin: sistema completo di test e valutazione
+if st.session_state.get('utente') and st.session_state.utente.email in ADMIN_EMAILS:
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 🔧 Admin Tools")
+    
+    # UNICA opzione: sistema completo integrato
+    if st.sidebar.button("🧪 Test & Valutazione System", use_container_width=True, type="primary"):
+        st.session_state["admin_test_mode"] = True
+        st.rerun()
+    
+    st.sidebar.caption("📋 Sistema completo per test verifiche e valutazione esercizi")
+
+# ── MAIN ROUTING ───────────────────────────────────────────────────────────────
 st.markdown(
     '<div class="app-footer">'
     '⚠️ Le verifiche generate dall\'AI sono suggerimenti didattici — '
