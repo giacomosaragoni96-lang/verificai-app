@@ -7546,7 +7546,7 @@ def get_quality_rate():
 if st.session_state.get('utente') and st.session_state.utente.email in ADMIN_EMAILS:
     st.sidebar.markdown("---")
     st.sidebar.markdown("### 🔧 Admin Tools")
-    
+    st.sidebar.button("🧪 Test & Valutazione System", use_container_width=True, type="primary")
     # UNICA opzione: sistema completo integrato
     if st.sidebar.button("🧪 Test & Valutazione System", use_container_width=True, type="primary"):
         st.session_state["admin_test_mode"] = True
