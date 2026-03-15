@@ -7397,6 +7397,20 @@ def render_risultati_e_valutazione():
     
     st.title("📊 Risultati 30 Verifiche")
     
+    # Pulsante per nuovo test (in alto)
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        if st.button("🔄 Nuovo Test", type="secondary"):
+            # Pulisce session state
+            keys_to_clear = ['admin_test_results', 'admin_test_params', 'admin_test_session_id', 'admin_verify_to_evaluate']
+            for key in keys_to_clear:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.rerun()
+    
+    with col2:
+        st.write("")  # Spazio vuoto per allineamento
+    
     # Statistiche generali
     pass_count = sum(1 for r in results if r['esito'] == 'PASS')
     fail_count = sum(1 for r in results if r['esito'] == 'FAIL')
@@ -7434,9 +7448,13 @@ def render_risultati_e_valutazione():
                 unsafe_allow_html=True
             )
             
-            if st.button(f"✅ Valuta Questa Verifica", key=f"valuta_{i}"):
-                st.session_state.admin_verify_to_evaluate = result
-                st.rerun()
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                if st.button(f"✅ Valuta", key=f"valuta_{i}"):
+                    st.session_state.admin_verify_to_evaluate = result
+                    st.rerun()
+            with col2:
+                st.write("")  # Spazio per allineamento
     else:
         # Valutazione singola verifica
         verify_result = st.session_state.admin_verify_to_evaluate
@@ -7445,7 +7463,25 @@ def render_risultati_e_valutazione():
 def render_valutazione_semplificata(verify_result):
     """Valutazione con contenuto REALE della verifica"""
     st.markdown("---")
-    st.subheader(f"📝 Valutazione: {verify_result['test_id']}")
+    
+    # Pulsanti navigazione in alto
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col1:
+        if st.button("⬅️ Torna Risultati", type="secondary"):
+            del st.session_state.admin_verify_to_evaluate
+            st.rerun()
+    
+    with col2:
+        st.subheader(f"📝 Valutazione: {verify_result['test_id']}")
+    
+    with col3:
+        if st.button("🔄 Nuovo Test", type="secondary"):
+            # Pulisce tutto e torna a generazione
+            keys_to_clear = ['admin_test_results', 'admin_test_params', 'admin_test_session_id', 'admin_verify_to_evaluate']
+            for key in keys_to_clear:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.rerun()
     
     # Info verifica
     col1, col2, col3, col4 = st.columns(4)
