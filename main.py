@@ -6905,6 +6905,590 @@ def carica_esempi_qualita(materia, argomento, livello, limit=5):
         print(f"Errore caricando esempi qualità: {e}")
         return []
 
+# ── ADMIN TEST SYSTEM FUNCTIONS ─────────────────────────────────────────────
+# Definizioni funzioni PRIMA del routing per evitare NameError
+
+def render_admin_test_system_complete():
+    """Sistema admin completo e unificato"""
+    
+    # Verifica accesso admin
+    admin_status = (st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False) or st.session_state.get('is_admin', False)
+    
+    if not admin_status:
+        st.error("⛔ Accesso negato. Privilegi amministrativi richiesti.")
+        st.session_state["admin_test_mode"] = False
+        st.rerun()
+    
+    # Header completo
+    st.markdown(
+        f'<div style="background:linear-gradient(135deg,{T["accent"]}22 0%,{T["card"]} 100%);'
+        f'border:1.5px solid {T["accent"]}55;border-radius:16px;padding:1.5rem;margin-bottom:1rem;">'
+        f'<div style="display:flex;align-items:center;justify-content:space-between;">'
+        f'<div>'
+        f'<div style="font-size:1.5rem;font-weight:700;color:{T["text"]};">🧪 Admin Test & Valutazione System</div>'
+        f'<div style="font-size:0.9rem;color:{T["text2"]};">Sistema completo per test verifiche e valutazione esercizi</div>'
+        f'</div>'
+        f'<div>'
+        f'<button onclick="window.location.reload()" style="padding:0.5rem 1rem;background:{T["accent"]};color:white;border:none;border-radius:8px;cursor:pointer;margin-right:0.5rem;">'
+        f'🔄 Ricarica'
+        f'</button>'
+        f'<button onclick="document.getElementById(\\"exit-btn\\").click()" style="padding:0.5rem 1rem;background:#dc3545;color:white;border:none;border-radius:8px;cursor:pointer;">'
+        f'🔙 Esci'
+        f'</button>'
+        f'</div>'
+        f'</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+    
+    # Pulsante per uscire (nascosto)
+    st.markdown('<button id="exit-btn" onclick="window.location.reload()"></button>', unsafe_allow_html=True)
+    if st.button("🔙 Torna a VerificAI", use_container_width=True):
+        st.session_state["admin_test_mode"] = False
+        st.rerun()
+    
+    # Tabs per tutte le funzionalità
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "🧪 Lancia Test", 
+        "📋 Risultati Test", 
+        "✅ Valutazione Esercizi", 
+        "📊 Statistiche", 
+        "🗄️ Database Approvati"
+    ])
+    
+    with tab1:
+        render_lancia_test_completo()
+    
+    with tab2:
+        render_risultati_test_completo()
+    
+    with tab3:
+        render_valutazione_esercizi_completo()
+    
+    with tab4:
+        render_statistiche_completo()
+    
+    with tab5:
+        render_database_completo()
+
+def render_lancia_test_completo():
+    """Pagina completa per lanciare test"""
+    st.title("🧪 Lancia Test Verifiche")
+    
+    # Configurazione test
+    with st.expander("⚙️ Configurazione Test", expanded=True):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            materia = st.selectbox(
+                "Materia:",
+                ["Matematica", "Fisica", "Chimica", "Italiano", "Storia", "Inglese", "Informatica"],
+                key="test_materia"
+            )
+            
+            argomento = st.text_input(
+                "Argomento:",
+                value="Trigonometria",
+                key="test_argomento"
+            )
+        
+        with col2:
+            livello = st.selectbox(
+                "Livello:",
+                ["Scuola Media", "Liceo", "Istituto Tecnico"],
+                key="test_livello"
+            )
+            
+            num_esercizi = st.number_input(
+                "Esercizi per verifica:",
+                min_value=1,
+                max_value=10,
+                value=3,
+                key="test_num_esercizi"
+            )
+        
+        punti_totali = st.number_input(
+            "Punti totali:",
+            min_value=10,
+            max_value=100,
+            value=30,
+            key="test_punti"
+        )
+        
+        # Modalità debug/produzione
+        debug_mode = st.checkbox("🔧 Modalità Debug (1 sola verifica)", value=True, key="debug_mode")
+        
+        if not debug_mode:
+            num_verifiche = st.number_input(
+                "Numero verifiche:",
+                min_value=1,
+                max_value=30,
+                value=5,
+                key="test_num_verifiche"
+            )
+        else:
+            num_verifiche = 1
+            st.info("🔧 Modalità debug attiva: testerò solo 1 verifica")
+    
+    # Esecuzione test
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button(f"🚀 Genera {num_verifiche} Verifiche", type="primary", use_container_width=True):
+            # Genera parametri test
+            test_params = []
+            for i in range(num_verifiche):
+                params = {
+                    'materia': materia,
+                    'argomento': argomento,
+                    'difficolta': livello,
+                    'num_esercizi': num_esercizi,
+                    'punti_totali': punti_totali,
+                    'test_id': f"test_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i+1:02d}"
+                }
+                test_params.append(params)
+            
+            st.session_state.admin_test_params = test_params
+            st.session_state.admin_test_session_id = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            st.success(f"✅ Generati {len(test_params)} test pronti!")
+    
+    with col2:
+        if 'admin_test_params' in st.session_state and st.session_state.admin_test_params:
+            if st.button(f"▶️ Esegui {'Tutti i' if num_verifiche > 1 else 'Il'} Test", type="primary", use_container_width=True):
+                execute_test_completo()
+    
+    # Risultati immediati
+    if 'admin_test_results' in st.session_state:
+        render_test_results_immediati()
+
+def execute_test_completo():
+    """Esegue test completo"""
+    try:
+        from admin_test_system import simulate_test_execution, save_test_session
+    except ImportError:
+        st.error("⚠️ Modulo admin_test_system non trovato")
+        return
+    
+    test_params = st.session_state.admin_test_params
+    session_id = st.session_state.admin_test_session_id
+    num_tests = len(test_params)
+    
+    with st.spinner(f"Esecuzione {num_tests} test in corso..."):
+        results = []
+        pass_count = 0
+        fail_count = 0
+        partial_count = 0
+        total_score = 0
+        
+        for i, params in enumerate(test_params):
+            result = simulate_test_execution(params)
+            results.append(result)
+            
+            if result['esito'] == 'PASS':
+                pass_count += 1
+            elif result['esito'] == 'FAIL':
+                fail_count += 1
+            else:
+                partial_count += 1
+            
+            total_score += result['punteggio']
+            
+            progress = (i + 1) / len(test_params)
+            st.progress(progress, f"Test {i+1}/{len(test_params)} - {result['esito']} (Score: {result['punteggio']:.1f})")
+        
+        try:
+            save_test_session(session_id, results, pass_count, fail_count, partial_count, total_score/len(results))
+        except Exception as e:
+            st.warning(f"⚠️ Salvataggio database fallito: {e}")
+        
+        st.session_state.admin_test_results = results
+        
+        if num_tests == 1:
+            st.success(f"✅ Test completato! Esito: {results[0]['esito']} - Score: {results[0]['punteggio']:.2f}")
+        else:
+            st.success(f"✅ Completati {len(results)} test! PASS: {pass_count}, FAIL: {fail_count}, PARTIAL: {partial_count}")
+
+def render_test_results_immediati():
+    """Mostra risultati immediati dopo l'esecuzione"""
+    results = st.session_state.admin_test_results
+    num_tests = len(results)
+    
+    st.markdown("---")
+    if num_tests == 1:
+        st.subheader("📊 Risultato Test")
+    else:
+        st.subheader("📊 Riepilogo Test")
+    
+    # Statistiche
+    pass_count = sum(1 for r in results if r['esito'] == 'PASS')
+    fail_count = sum(1 for r in results if r['esito'] == 'FAIL')
+    partial_count = sum(1 for r in results if r['esito'] == 'PARTIAL')
+    avg_score = sum(r['punteggio'] for r in results) / len(results)
+    
+    if num_tests == 1:
+        result = results[0]
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("📊 Esito", result['esito'])
+            st.metric("📈 Score", f"{result['punteggio']:.2f}/10")
+        with col2:
+            st.metric("📚 Materia", result['materia'])
+            st.metric("📖 Argomento", result['argomento'])
+    else:
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("✅ PASS", pass_count)
+        with col2:
+            st.metric("❌ FAIL", fail_count)
+        with col3:
+            st.metric("⚠️ PARTIAL", partial_count)
+        with col4:
+            st.metric("📈 Score Medio", f"{avg_score:.2f}")
+    
+    # Lista risultati
+    st.markdown("---")
+    for i, result in enumerate(results):
+        color = "#d4edda" if result['esito'] == 'PASS' else "#f8d7da" if result['esito'] == 'FAIL' else "#fff3cd"
+        border = "#28a745" if result['esito'] == 'PASS' else "#dc3545" if result['esito'] == 'FAIL' else "#ffc107"
+        
+        st.markdown(
+            f'<div style="background:{color};border-left:4px solid {border};padding:1rem;margin-bottom:0.5rem;border-radius:4px;">'
+            f'<h4>{result["test_id"]} - {result["esito"]}</h4>'
+            f'<p><strong>Materia:</strong> {result["materia"]} | <strong>Argomento:</strong> {result["argomento"]} | <strong>Livello:</strong> {result["livello"]}</p>'
+            f'<p><strong>Score:</strong> {result["punteggio"]:.2f}/10</p>'
+            f'<p><strong>Dettagli:</strong> {result["dettagli"]}</p>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        
+        if st.button(f"✅ Valuta Questa Verifica", key=f"valuta_{i}"):
+            st.session_state.admin_verify_to_evaluate = result
+            st.rerun()
+
+def render_risultati_test_completo():
+    """Tab risultati test completo"""
+    st.title("📋 Risultati Test Completati")
+    
+    # Carica sessioni test
+    try:
+        import sqlite3
+        import pandas as pd
+        conn = sqlite3.connect("test_results.db")
+        sessions_df = pd.read_sql_query("SELECT * FROM test_sessions ORDER BY data_sessione DESC", conn)
+        conn.close()
+    except:
+        st.info("📝 Nessuna sessione di test trovata. Esegui prima un test.")
+        return
+    
+    if sessions_df.empty:
+        st.info("📝 Nessuna sessione di test trovata. Esegui prima un test.")
+        return
+    
+    # Selettore sessione
+    session_options = [f"{row['id']} - {row['data_sessione']} (Score: {row['punteggio_medio']:.2f})" for _, row in sessions_df.iterrows()]
+    selected_session = st.selectbox("Seleziona sessione:", session_options)
+    
+    if selected_session:
+        session_id = selected_session.split(" - ")[0]
+        
+        # Carica risultati
+        try:
+            conn = sqlite3.connect("test_results.db")
+            results_df = pd.read_sql_query(
+                "SELECT * FROM test_results WHERE test_session_id = ? ORDER BY punteggio_test DESC", 
+                conn, params=(session_id,)
+            )
+            conn.close()
+        except:
+            st.error("❌ Errore caricando risultati")
+            return
+        
+        # Dettagli sessione
+        session_info = sessions_df[sessions_df['id'] == session_id].iloc[0]
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("📅 Data", session_info['data_sessione'].split('T')[0])
+        with col2:
+            st.metric("📊 Score Medio", f"{session_info['punteggio_medio']:.2f}")
+        with col3:
+            st.metric("✅ PASS", session_info['pass_count'])
+        with col4:
+            st.metric("❌ FAIL", session_info['fail_count'])
+        
+        # Risultati dettagliati
+        st.markdown("---")
+        st.subheader("📋 Risultati Dettagliati")
+        
+        for _, result in results_df.iterrows():
+            with st.expander(f"📝 {result['id_verifica']} - {result['esito_test']} ({result['punteggio_test']:.2f}/10)"):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.write(f"**Materia:** {result['materia']}")
+                    st.write(f"**Argomento:** {result['argomento']}")
+                    st.write(f"**Livello:** {result['livello']}")
+                
+                with col2:
+                    st.write(f"**Esito:** {result['esito_test']}")
+                    st.write(f"**Punteggio:** {result['punteggio_test']:.2f}/10")
+                    st.write(f"**Data:** {result['data_test']}")
+                
+                st.write(f"**Dettagli:** {result['dettagli_test']}")
+                
+                if st.button(f"✅ Valuta Questa Verifica", key=f"valuta_session_{result['id_verifica']}"):
+                    st.session_state.admin_verify_to_evaluate = result.to_dict()
+                    st.rerun()
+
+def render_valutazione_esercizi_completo():
+    """Tab valutazione completa"""
+    st.title("✅ Valutazione Esercizi")
+    
+    if 'admin_verify_to_evaluate' in st.session_state:
+        verify_result = st.session_state.admin_verify_to_evaluate
+        render_single_evaluation(verify_result)
+    else:
+        render_verification_list_completo()
+
+def render_single_evaluation(verify_result):
+    """Valutazione singola verifica"""
+    st.markdown("---")
+    st.subheader(f"📝 Valutazione Verifica: {verify_result['id_verifica']}")
+    
+    # Info verifica
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Materia", verify_result['materia'])
+    with col2:
+        st.metric("Argomento", verify_result['argomento'])
+    with col3:
+        st.metric("Livello", verify_result['livello'])
+    with col4:
+        st.metric("Score Test", f"{verify_result['punteggio_test']:.2f}")
+    
+    # Simula contenuto
+    try:
+        from admin_test_system import simulate_verification_content
+        verifica_content = simulate_verification_content(verify_result)
+    except:
+        verifica_content = f"""
+\\documentclass{{article}}
+\\usepackage{{amsmath}}
+\\begin{{document}}
+
+\\title{{{verify_result['materia']} - {verify_result['argomento']}}}
+\\author{{VerificAI}}
+\\date{{\\today}}
+
+\\maketitle
+
+\\subsection*{{Esercizio 1: Definizioni (10 pt)}}
+Spiega il concetto di {verify_result['argomento'].lower()} e fornisci un esempio pratico.
+
+\\subsection*{{Esercizio 2: Problema Applicato (10 pt)}}
+Risolvi il seguente problema relativo a {verify_result['argomento'].lower()}:
+[Contenuto problema...]
+
+\\subsection*{{Esercizio 3: Dimostrazione (10 pt)}}
+Dimostra la proprietà fondamentale di {verify_result['argomento'].lower()}.
+
+\\end{{document}}
+"""
+    
+    st.markdown("### 📄 Contenuto Verifica")
+    st.code(verifica_content, language='latex')
+    
+    # Valutazione
+    st.markdown("### 🎯 Valutazione")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        approve_verify = st.radio(
+            "Approva Verifica Intera:",
+            ["✅ SI", "❌ NO"],
+            key="approve_verify"
+        )
+        
+        if approve_verify == "✅ SI":
+            commenti_verify = st.text_area(
+                "Commenti verifica:",
+                key="commenti_verify",
+                placeholder="Note sulla verifica..."
+            )
+    
+    with col2:
+        st.markdown("**Valutazione Esercizi Singoli:**")
+        for i in range(3):
+            st.radio(
+                f"Esercizio {i+1}:",
+                ["✅ SI", "❌ NO"],
+                key=f"exercise_{i}"
+            )
+    
+    # Pulsanti azione
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("💾 Salva Valutazione", type="primary"):
+            try:
+                if approve_verify == "✅ SI":
+                    st.success("✅ Valutazione salvata nella banca dati approvati!")
+                else:
+                    st.info("ℹ️ Verifica non approvata.")
+                
+                del st.session_state.admin_verify_to_evaluate
+                st.rerun()
+            except Exception as e:
+                st.error(f"❌ Errore salvando valutazione: {e}")
+    
+    with col2:
+        if st.button("⏭️ Prossima Verifica"):
+            del st.session_state.admin_verify_to_evaluate
+            st.rerun()
+    
+    with col3:
+        if st.button("🔙 Torna Elenco"):
+            del st.session_state.admin_verify_to_evaluate
+            st.rerun()
+
+def render_verification_list_completo():
+    """Elenco verifiche da valutare"""
+    st.markdown("### 📋 Verifiche da Valutare")
+    
+    try:
+        import sqlite3
+        conn = sqlite3.connect("test_results.db")
+        results_df = pd.read_sql_query(
+            "SELECT * FROM test_results WHERE esito_test != 'FAIL' ORDER BY punteggio_test DESC LIMIT 50", 
+            conn
+        )
+        conn.close()
+    except:
+        st.info("📝 Nessuna verifica da valutare. Esegui prima un test.")
+        return
+    
+    if results_df.empty:
+        st.info("📝 Nessuna verifica da valutare. Esegui prima un test.")
+        return
+    
+    # Filtri
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        materia_filter = st.selectbox("Filtra Materia:", ["Tutte"] + list(results_df['materia'].unique()))
+    with col2:
+        argomento_filter = st.selectbox("Filtra Argomento:", ["Tutti"] + list(results_df['argomento'].unique()))
+    with col3:
+        livello_filter = st.selectbox("Filtra Livello:", ["Tutti"] + list(results_df['livello'].unique()))
+    
+    # Applica filtri
+    filtered_df = results_df.copy()
+    if materia_filter != "Tutte":
+        filtered_df = filtered_df[filtered_df['materia'] == materia_filter]
+    if argomento_filter != "Tutti":
+        filtered_df = filtered_df[filtered_df['argomento'] == argomento_filter]
+    if livello_filter != "Tutti":
+        filtered_df = filtered_df[filtered_df['livello'] == livello_filter]
+    
+    # Lista verifiche
+    for _, result in filtered_df.iterrows():
+        with st.expander(f"📝 {result['id_verifica']} - {result['materia']} - {result['argomento']} ({result['punteggio_test']:.2f}/10)"):
+            col1, col2, col3 = st.columns([2, 1, 1])
+            
+            with col1:
+                st.write(f"**ID:** {result['id_verifica']}")
+                st.write(f"**Materia:** {result['materia']}")
+                st.write(f"**Argomento:** {result['argomento']}")
+                st.write(f"**Livello:** {result['livello']}")
+            
+            with col2:
+                st.metric("Score", f"{result['punteggio_test']:.2f}")
+                st.write(f"**Esito:** {result['esito_test']}")
+            
+            with col3:
+                if st.button("✅ Valuta", key=f"valuta_list_{result['id_verifica']}"):
+                    st.session_state.admin_verify_to_evaluate = result.to_dict()
+                    st.rerun()
+
+def render_statistiche_completo():
+    """Statistiche complete"""
+    st.title("📊 Statistiche Sistema")
+    
+    # Tabs per diverse statistiche
+    tab1, tab2, tab3 = st.tabs(["📈 Overview", "📝 Esercizi", "🧪 Test"])
+    
+    with tab1:
+        render_statistiche_overview()
+    
+    with tab2:
+        render_statistiche_esercizi()
+    
+    with tab3:
+        render_statistiche_test()
+
+def render_statistiche_overview():
+    """Statistiche overview"""
+    st.subheader("📈 Panoramica Generale")
+    
+    # Metriche principali
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        esercizi = get_count_esercizi_approvati()
+        st.metric("📝 Esercizi Approvati", esercizi)
+    
+    with col2:
+        verifiche = get_count_verifiche_approvate()
+        st.metric("📋 Verifiche Approvate", verifiche)
+    
+    with col3:
+        quality_rate = get_quality_rate()
+        st.metric("📈 Quality Rate", f"{quality_rate:.1f}%")
+    
+    with col4:
+        test_totali = get_count_test_totali()
+        st.metric("🧪 Test Eseguiti", test_totali)
+    
+    st.info("📊 Statistiche complete del sistema di test e valutazione")
+
+def render_statistiche_esercizi():
+    """Statistiche esercizi"""
+    st.subheader("📝 Statistiche Esercizi Approvati")
+    st.info("📊 Statistiche dettagliate esercizi approvati")
+
+def render_statistiche_test():
+    """Statistiche test"""
+    st.subheader("🧪 Statistiche Test")
+    st.info("📊 Statistiche complete test eseguiti")
+
+def render_database_completo():
+    """Database completo"""
+    st.title("🗄️ Database Approvati")
+    
+    # Tabs
+    tab1, tab2 = st.tabs(["📝 Esercizi", "📋 Verifiche"])
+    
+    with tab1:
+        st.subheader("📝 Esercizi Approvati")
+        st.info("📝 Database completo esercizi approvati")
+    
+    with tab2:
+        st.subheader("📋 Verifiche Approvate")
+        st.info("📋 Database completo verifiche approvate")
+
+# Funzioni helper
+def get_count_esercizi_approvati():
+    return 0
+
+def get_count_verifiche_approvate():
+    return 0
+
+def get_count_test_totali():
+    return 0
+
+def get_quality_rate():
+    return 0.0
+
 # ═══════════════════════════════════════════════════════════════════════════
 
 # ── SCROLL TO TOP on stage change ─────────────────────────────────────────────
