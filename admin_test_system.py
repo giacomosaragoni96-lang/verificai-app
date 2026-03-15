@@ -255,8 +255,10 @@ def render_dashboard_overview():
             st.rerun()
 
 def render_lancia_test():
-    """Pagina per lanciare test su 30 verifiche"""
-    st.title("🧪 Lancia Test su 30 Verifiche")
+    """Pagina per lanciare test su verifiche (modalità debug: 1 verifica)"""
+    st.title("🧪 Lancia Test su Verifiche")
+    
+    st.info("🔧 **Modalità Debug**: Test su 1 verifica per facilitare debug")
     
     # Configurazione test
     with st.expander("⚙️ Configurazione Test", expanded=True):
@@ -297,13 +299,28 @@ def render_lancia_test():
             value=30,
             key="test_punti"
         )
+        
+        # Opzione debug per numero verifiche
+        debug_mode = st.checkbox("🔧 Modalità Debug (1 sola verifica)", value=True, key="debug_mode")
+        
+        if not debug_mode:
+            num_verifiche = st.number_input(
+                "Numero verifiche:",
+                min_value=1,
+                max_value=50,
+                value=30,
+                key="test_num_verifiche"
+            )
+        else:
+            num_verifiche = 1
+            st.info("🔧 Modalità debug attiva: testerò solo 1 verifica")
     
     # Generazione parametri
-    if st.button("🚀 Genera 30 Verifiche di Test", type="primary", use_container_width=True):
-        with st.spinner("Generazione 30 verifiche in corso..."):
-            # Genera 30 set di parametri casuali
+    if st.button(f"🚀 Genera {num_verifiche} Verifiche di Test", type="primary", use_container_width=True):
+        with st.spinner(f"Generazione {num_verifiche} verifiche in corso..."):
+            # Genera set di parametri
             test_params = []
-            for i in range(30):
+            for i in range(num_verifiche):
                 params = {
                     'materia': materia,
                     'argomento': argomento,
@@ -323,7 +340,7 @@ def render_lancia_test():
         st.markdown("---")
         st.subheader("🎯 Esecuzione Test")
         
-        if st.button("▶️ Esegui Tutti i Test", type="primary", use_container_width=True):
+        if st.button(f"▶️ Esegui {'Tutti i' if num_verifiche > 1 else 'Il'} Test", type="primary", use_container_width=True):
             execute_all_tests()
     
     # Risultati test
@@ -335,7 +352,10 @@ def execute_all_tests():
     test_params = st.session_state.test_params
     session_id = st.session_state.test_session_id
     
-    with st.spinner("Esecuzione test in corso..."):
+    num_tests = len(test_params)
+    test_word = "test" if num_tests == 1 else "test"
+    
+    with st.spinner(f"Esecuzione {num_tests} {test_word} in corso..."):
         results = []
         pass_count = 0
         fail_count = 0
@@ -359,13 +379,32 @@ def execute_all_tests():
             
             # Progress bar
             progress = (i + 1) / len(test_params)
-            st.progress(progress, f"Test {i+1}/{len(test_params)} - {result['esito']}")
+            st.progress(progress, f"Test {i+1}/{len(test_params)} - {result['esito']} (Score: {result['punteggio']:.1f})")
         
         # Salva risultati nel database
         save_test_session(session_id, results, pass_count, fail_count, partial_count, total_score/len(results))
         
         st.session_state.test_results = results
-        st.success(f"✅ Completati {len(results)} test! PASS: {pass_count}, FAIL: {fail_count}, PARTIAL: {partial_count}")
+        
+        # Messaggio di successo dettagliato
+        if num_tests == 1:
+            st.success(f"✅ Test completato! Esito: {results[0]['esito']} - Score: {results[0]['punteggio']:.2f}")
+        else:
+            st.success(f"✅ Completati {len(results)} test! PASS: {pass_count}, FAIL: {fail_count}, PARTIAL: {partial_count}")
+        
+        # Mostra dettagli immediati per debug
+        if num_tests == 1:
+            st.markdown("### 🔍 Dettagli Test (Modalità Debug)")
+            result = results[0]
+            st.json({
+                'test_id': result['test_id'],
+                'materia': result['materia'],
+                'argomento': result['argomento'],
+                'livello': result['livello'],
+                'esito': result['esito'],
+                'punteggio': result['punteggio'],
+                'dettagli': result['dettagli']
+            })
 
 def simulate_test_execution(params):
     """Simula l'esecuzione di un test (sostituire con logica reale)"""
@@ -440,9 +479,14 @@ def save_test_session(session_id, results, pass_count, fail_count, partial_count
 def render_test_results_summary():
     """Riepilogo risultati test"""
     results = st.session_state.test_results
+    num_tests = len(results)
     
     st.markdown("---")
-    st.subheader("📊 Riepilogo Risultati Test")
+    
+    if num_tests == 1:
+        st.subheader("📊 Risultato Test (Modalità Debug)")
+    else:
+        st.subheader("📊 Riepilogo Risultati Test")
     
     # Statistiche
     pass_count = sum(1 for r in results if r['esito'] == 'PASS')
@@ -450,27 +494,42 @@ def render_test_results_summary():
     partial_count = sum(1 for r in results if r['esito'] == 'PARTIAL')
     avg_score = sum(r['punteggio'] for r in results) / len(results)
     
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("✅ PASS", pass_count, delta=f"{pass_count/len(results)*100:.1f}%")
-    with col2:
-        st.metric("❌ FAIL", fail_count, delta=f"{fail_count/len(results)*100:.1f}%")
-    with col3:
-        st.metric("⚠️ PARTIAL", partial_count, delta=f"{partial_count/len(results)*100:.1f}%")
-    with col4:
-        st.metric("📈 Score Medio", f"{avg_score:.2f}")
-    
-    # Grafico distribuzione
-    fig = px.pie(
-        values=[pass_count, fail_count, partial_count],
-        names=['PASS', 'FAIL', 'PARTIAL'],
-        title='Distribuzione Risultati Test'
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    if num_tests == 1:
+        # Per singolo test, mostra metriche semplificate
+        result = results[0]
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("📊 Esito", result['esito'])
+            st.metric("📈 Score", f"{result['punteggio']:.2f}/10")
+        with col2:
+            st.metric("📚 Materia", result['materia'])
+            st.metric("📖 Argomento", result['argomento'])
+    else:
+        # Per multipli test, mostra statistiche complete
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("✅ PASS", pass_count, delta=f"{pass_count/len(results)*100:.1f}%")
+        with col2:
+            st.metric("❌ FAIL", fail_count, delta=f"{fail_count/len(results)*100:.1f}%")
+        with col3:
+            st.metric("⚠️ PARTIAL", partial_count, delta=f"{partial_count/len(results)*100:.1f}%")
+        with col4:
+            st.metric("📈 Score Medio", f"{avg_score:.2f}")
+        
+        # Grafico distribuzione
+        fig = px.pie(
+            values=[pass_count, fail_count, partial_count],
+            names=['PASS', 'FAIL', 'PARTIAL'],
+            title='Distribuzione Risultati Test'
+        )
+        st.plotly_chart(fig, use_container_width=True)
     
     # Lista risultati dettagliati
     st.markdown("---")
-    st.subheader("📋 Risultati Dettagliati")
+    if num_tests == 1:
+        st.subheader("📋 Dettagli Test")
+    else:
+        st.subheader("📋 Risultati Dettagliati")
     
     for result in results:
         card_class = "test-card pass" if result['esito'] == 'PASS' else "test-card fail" if result['esito'] == 'FAIL' else "test-card"
@@ -515,6 +574,7 @@ def render_risultati_test():
         
         # Dettagli sessione
         session_info = sessions_df[sessions_df['id'] == session_id].iloc[0]
+        num_tests = session_info['totale_verifiche']
         
         col1, col2, col3, col4 = st.columns(4)
         with col1:
@@ -528,7 +588,10 @@ def render_risultati_test():
         
         # Risultati dettagliati
         st.markdown("---")
-        st.subheader("📋 Risultati Dettagliati")
+        if num_tests == 1:
+            st.subheader("📋 Dettaglio Test (Modalità Debug)")
+        else:
+            st.subheader("📋 Risultati Dettagliati")
         
         for _, result in results_df.iterrows():
             with st.expander(f"📝 {result['id_verifica']} - {result['esito_test']} ({result['punteggio_test']:.2f}/10)"):
@@ -548,9 +611,29 @@ def render_risultati_test():
                 
                 # Pulsante per valutare
                 if st.button(f"✅ Valuta Questa Verifica", key=f"valuta_{result['id_verifica']}"):
-                    st.session_state.verify_to_evaluate = result
+                    st.session_state.verify_to_evaluate = result.to_dict()
                     st.session_state.current_page = "✅ Valutazione Esercizi"
                     st.rerun()
+        
+        # Opzione debug per singolo test
+        if num_tests == 1:
+            st.markdown("---")
+            st.subheader("🔍 Debug Info (Modalità Singolo Test)")
+            
+            result = results_df.iloc[0]
+            st.json({
+                'session_id': session_id,
+                'test_params': {
+                    'materia': result['materia'],
+                    'argomento': result['argomento'],
+                    'livello': result['livello']
+                },
+                'test_result': {
+                    'esito': result['esito_test'],
+                    'punteggio': result['punteggio_test'],
+                    'dettagli': result['dettagli_test']
+                }
+            })
 
 def render_valutazione_esercizi():
     """Pagina valutazione esercizi"""
