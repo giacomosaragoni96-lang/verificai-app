@@ -1793,6 +1793,18 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     print(f"🔍 Contiene \\end{{document}}: {codice_latex.count('\\end{document}')} volte")
     print(f"🔍 Contiene \\documentclass: {codice_latex.count('\\documentclass')} volte")
     
+    # 🔥 DEBUG AGGIUNTIVO: Controlla struttura minima
+    has_begin_doc = '\\\\begin{document}' in codice_latex  # Corretto: doppio backslash
+    has_end_doc = '\\\\end{document}' in codice_latex      # Corretto: doppio backslash
+    has_docclass = '\\\\documentclass' in codice_latex    # Corretto: doppio backslash
+    
+    print(f"🔍 DEBUG: Struttura LaTeX - Begin: {has_begin_doc}, End: {has_end_doc}, Class: {has_docclass}")
+    
+    if not (has_begin_doc and has_end_doc and has_docclass):
+        print("❌ ERRORE: LaTeX non ha struttura completa!")
+        print(f"📄 Contenuto LaTeX ricevuto: {repr(codice_latex[:200])}")
+        return None, "LaTeX incompleto: mancano begin/document/end/documentclass"
+    
     # Verifica che pdflatex sia disponibile
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
