@@ -6958,6 +6958,7 @@ def simulate_test_execution(params):
         from generation import genera_verifica
         import google.generativeai as genai
         import os
+        import random  # 🔥 Aggiunto import mancante
         
         # Setup API come nell'app normale
         api_key = os.getenv("GOOGLE_API_KEY")
