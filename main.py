@@ -7481,7 +7481,15 @@ def render_valutazione_semplificata(verify_result):
         with col2:
             st.metric("Titolo", verify_result.get('titolo', 'N/A')[:20] + '...' if len(str(verify_result.get('titolo', ''))) > 20 else verify_result.get('titolo', 'N/A'))
     else:
-        st.warning("⚠️ Contenuto verifica non disponibile (generazione fallita)")
+        # Mostra il motivo esatto del fallimento
+        st.error("⚠️ Contenuto verifica non disponibile (generazione fallita)")
+        st.markdown("**🔍 Dettagli Errore:**")
+        st.code(verify_result.get('dettagli', 'Nessun dettaglio disponibile'))
+        
+        # Mostra anche latex_verifica se presente (anche se vuoto)
+        if verify_result.get('latex_verifica') is not None:
+            st.markdown("**📋 Output Parziale:**")
+            st.code(verify_result['latex_verifica'] or "(Vuoto)", language='latex')
     
     # Valutazione rapida
     st.markdown("### 🎯 Valutazione Rapida")
