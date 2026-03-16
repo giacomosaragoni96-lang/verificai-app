@@ -7075,9 +7075,23 @@ def simulate_test_execution(params):
         # 🎉 APPLICA LA STESSA PULIZIA DELL'APP NORMALE
         if latex_content:
             from latex_utils import pulisci_corpo_latex
-            latex_content = pulisci_corpo_latex(latex_content)
+            corpo_pulito = pulisci_corpo_latex(latex_content)
+            
+            # 🎉 COSTRUISCI IL DOCUMENTO COMPLETO COME L'APP
+            from latex_utils import _costruisci_preambolo
+            preambolo, _ = _costruisci_preambolo(
+                params['materia'], 
+                titolo, 
+                "Versione A", 
+                []  # materiali vuoti per test
+            )
+            
+            # Assembla documento completo
+            latex_verifica = preambolo + "\n" + corpo_pulito
+        else:
+            latex_verifica = ""
 
-        if not latex_content or len(latex_content.strip()) < 50:
+        if not latex_verifica or len(latex_verifica.strip()) < 50:
             return {
                 'test_id': params['test_id'],
                 'materia': params['materia'],
@@ -7085,17 +7099,17 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 2.0,
-                'dettagli': f"❌ ERRORE: LaTeX vuoto o troppo corto ({len(latex_content)} chars)",
-                'latex_verifica': latex_content,
+                'dettagli': f"❌ ERRORE: LaTeX vuoto o troppo corto ({len(latex_verifica)} chars)",
+                'latex_verifica': latex_verifica,
                 'titolo': titolo,
                 'esercizi_generati': 0
             }
         
-        # USA IL LaTeX ESATTAMENTE COME GENERATO DALL'APP (senza modifiche)
-        latex_verifica = latex_content  # Esattamente come l'app
+        # 🎉 USA IL LaTeX COMPLETO COME GENERATO DALL'APP
+        # Il documento è già completo con preambolo + corpo
         
-        # Conta esercizi come fa l'app
-        esercizi_generati = latex_content.count('\\item[')
+        # Conta esercizi come fa l'app (usa il corpo pulito)
+        esercizi_generati = corpo_pulito.count('\\item[') if corpo_pulito else 0
         esercizi_richiesti = params.get('num_esercizi', 3)
         
         # Punteggio basato su completezza
