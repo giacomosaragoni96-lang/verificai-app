@@ -7647,17 +7647,6 @@ components.html(
 
 # ── MAIN ROUTING ────────────────────────────────────────────────────────────────
 
-# Solo per admin: sistema completo di test e valutazione
-if st.session_state.get('utente') and st.session_state.utente.email in ADMIN_EMAILS:
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### 🔧 Admin Tools")
-    # UNICA opzione: sistema completo integrato
-    if st.sidebar.button("🧪 Test & Valutazione System", use_container_width=True, type="primary"):
-        st.session_state["admin_test_mode"] = True
-        st.rerun()
-    
-    st.sidebar.caption("📋 Sistema completo per test verifiche e valutazione esercizi")
-
 # ── MAIN ROUTING ───────────────────────────────────────────────────────────────
 st.markdown(
     '<div class="app-footer">'
