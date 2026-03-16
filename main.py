@@ -7074,20 +7074,58 @@ def simulate_test_execution(params):
         
         # 🎉 APPLICA LA STESSA PULIZIA DELL'APP NORMALE
         if latex_content:
-            from latex_utils import pulisci_corpo_latex
+            from latex_utils import pulisci_corpo_latex, _costruisci_preambolo
             corpo_pulito = pulisci_corpo_latex(latex_content)
             
             # 🎉 COSTRUISCI IL DOCUMENTO COMPLETO COME L'APP
-            from latex_utils import _costruisci_preambolo
-            preambolo, _ = _costruisci_preambolo(
-                params['materia'], 
-                titolo, 
-                "Versione A", 
-                []  # materiali vuoti per test
-            )
-            
-            # Assembla documento completo
-            latex_verifica = preambolo + "\n" + corpo_pulito
+            try:
+                preambolo, _ = _costruisci_preambolo(
+                    params['materia'], 
+                    titolo, 
+                    "Versione A", 
+                    []  # materiali vuoti per test
+                )
+                
+                # Debug: controlla se preambolo è valido
+                if not preambolo:
+                    raise ValueError("Preambolo vuoto")
+                
+                # Assembla documento completo
+                latex_verifica = preambolo + "\n" + corpo_pulito
+                
+                # Debug finale
+                print(f"🔥 DEBUG: Preambolo lunghezza: {len(preambolo)}")
+                print(f"🔥 DEBUG: Corpo pulito lunghezza: {len(corpo_pulito)}")
+                print(f"🔥 DEBUG: Documento completo lunghezza: {len(latex_verifica)}")
+                
+            except Exception as e:
+                # Fallback: preambolo manuale se _costruisci_preambolo fallisce
+                print(f"⚠️ Errore _costruisci_preambolo: {e}")
+                preambolo = f"""\\documentclass[12pt,a4paper]{{article}}
+\\usepackage[utf8]{{inputenc}}
+\\usepackage[italian]{{babel}}
+\\usepackage{{amsmath,amsfonts,amssymb}}
+\\usepackage{{geometry}}
+\\geometry{{margin=2cm}}
+\\usepackage{{array}}
+\\usepackage{{multicol}}
+\\usepackage{{enumerate}}
+\\usepackage{{adjustbox}}
+\\usepackage{{wasysym}}
+\\usepackage{{pgfplots}}
+\\pgfplotsset{{compat=1.18}}
+\\usepackage{{tikz}}
+\\usepackage{{enumitem}}
+
+\\begin{{document}}
+
+\\title{{{titolo}}}
+\\author{{Docente}}
+\\date{{\\today}}
+\\maketitle
+
+"""
+                latex_verifica = preambolo + corpo_pulito
         else:
             latex_verifica = ""
 

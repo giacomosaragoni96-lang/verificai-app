@@ -788,6 +788,43 @@ def _parse_latex_to_data(codice_latex: str) -> dict:
                 })
 
         if not sottopunti:
+            # Try to find sub-points in format a) b) c) without \item
+            simple_pattern = re.compile(
+                r'([a-z])\)\s*([^a-z]*?)(?=\s*[a-z]\)|$)',
+                re.DOTALL
+            )
+            simple_matches = simple_pattern.findall(body)
+            if simple_matches:
+                logger.info(f"Found {len(simple_matches)} simple sub-points in a) b) c) format")
+                for letter, text in simple_matches:
+                    testo_clean = _clean_latex_line(text.strip())
+                    punti = _estrai_punti(letter + ') ' + testo_clean)
+                    sottopunti.append({
+                        'label': letter + ')',
+                        'testo': testo_clean,
+                        'opzioni': [],
+                        'punti': punti,
+                    })
+            else:
+                # Try another pattern for different formats
+                alt_pattern = re.compile(
+                    r'([a-z])\)\s*([^)]+?)(?=\s*[a-z]\)|\s*$)',
+                    re.DOTALL
+                )
+                alt_matches = alt_pattern.findall(body)
+                if alt_matches:
+                    logger.info(f"Found {len(alt_matches)} alt format sub-points")
+                    for letter, text in alt_matches:
+                        testo_clean = _clean_latex_line(text.strip())
+                        punti = _estrai_punti(letter + ') ' + testo_clean)
+                        sottopunti.append({
+                            'label': letter + ')',
+                            'testo': testo_clean,
+                            'opzioni': [],
+                            'punti': punti,
+                        })
+            
+        if not sottopunti:
             free_items = re.compile(
                 r'\\item(?:\[([^\]]*)\])?\s*(.*?)(?=\\item(?:\[|\s)|\\end\{|$)',
                 re.DOTALL
@@ -810,7 +847,32 @@ def _parse_latex_to_data(codice_latex: str) -> dict:
                     'punti':   _estrai_punti(label + ' ' + testo_clean),
                 })
 
+        # Last resort: if still no sub-points found, try manual split
+        if not sottopunti:
+            # Look for patterns like "a) something" followed by "b) something"
+            split_pattern = re.compile(r'([a-z]\)[^a-z]*?)(?=[a-z]\)|$)', re.DOTALL)
+            manual_matches = split_pattern.findall(body)
+            if manual_matches and len(manual_matches) > 1:
+                logger.info(f"Manual split found {len(manual_matches)} sub-points")
+                for match in manual_matches:
+                    # Extract letter and text
+                    letter_match = re.match(r'([a-z]\))(.*)', match.strip(), re.DOTALL)
+                    if letter_match:
+                        letter = letter_match.group(1)
+                        text = letter_match.group(2).strip()
+                        testo_clean = _clean_latex_line(text)
+                        punti = _estrai_punti(letter + ' ' + testo_clean)
+                        sottopunti.append({
+                            'label': letter,
+                            'testo': testo_clean,
+                            'opzioni': [],
+                            'punti': punti,
+                        })
+
         if titolo_ex or sottopunti:
+            logger.info(f"Found exercise: '{titolo_ex}' with {len(sottopunti)} sub-points")
+            for i, sp in enumerate(sottopunti):
+                logger.info(f"  Sub-point {i+1}: label='{sp.get('label')}', testo='{sp.get('testo', '')[:50]}...'")
             data['esercizi'].append({
                 'titolo':      titolo_ex,
                 'testo_intro': testo_intro,
@@ -1030,6 +1092,9 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
                 testo    = sp.get('testo', '').strip()
                 opzioni  = sp.get('opzioni', [])
                 punti_sp = sp.get('punti', '')
+                
+                # DEBUG: Log what we're processing
+                logger.info(f"Processing sub-point: label='{label}', testo='{testo[:50]}...', punti='{punti_sp}'")
 
                 # Check if this sub-point text contains a graph placeholder
                 if testo and _GRAPH_RE.search(testo):
