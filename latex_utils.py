@@ -1835,6 +1835,9 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                         stderr_lines = result.stderr.split('\n')[-3:]
                         logger.warning(f"⚠️ Warnings: {stdout_lines}")
                         logger.warning(f"⚠️ Warnings: {stderr_lines}")
+                        
+                        # 🔥 FIX: Ritorna il PDF anche con warning MiKTeX
+                        return open(pdf_path, "rb").read(), f"Warning MiKTeX: {result.stderr}"
                     
                     return open(pdf_path, "rb").read(), None
                 else:

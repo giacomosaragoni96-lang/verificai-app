@@ -7517,6 +7517,7 @@ def render_valutazione_semplificata(verify_result):
             st.write(f"DEBUG: PDF bytes: {type(pdf_bytes)}, length: {len(pdf_bytes) if pdf_bytes else 'None'}")
             st.write(f"DEBUG: PDF error: {pdf_error}")
             
+            # Controlla se il PDF è valido anche con warning MiKTeX
             if pdf_bytes and len(pdf_bytes) > 1000:  # PDF valido
                 st.success("✅ PDF compilato con successo!")
                 st.download_button(
@@ -7532,13 +7533,24 @@ def render_valutazione_semplificata(verify_result):
                 elif pdf_error:
                     st.warning("⚠️ Warning compilazione:")
                     st.code(pdf_error)
+            elif pdf_bytes and len(pdf_bytes) > 0:  # PDF piccolo ma esiste
+                st.warning("⚠️ PDF generato ma piccolo (potrebbero mancare elementi)")
+                st.download_button(
+                    label="📥 Scarica PDF (sperimentale)",
+                    data=pdf_bytes,
+                    file_name=f"verifica_{verify_result['test_id']}.pdf",
+                    mime="application/pdf"
+                )
+                if pdf_error:
+                    st.code(pdf_error)
             else:
-                st.error("❌ PDF non compilato o troppo piccolo")
+                st.error("❌ PDF non compilato")
                 if pdf_error:
                     st.error("Dettagli errore:")
                     st.code(pdf_error)
-                else:
-                    st.error("Nessun dettaglio errore disponibile")
+                    # Suggerimento per warning MiKTeX
+                    if "security risk" in pdf_error:
+                        st.info("💡 Suggerimento: Questo è un warning MiKTeX normale su Windows. Il PDF potrebbe essere stato generato ma bloccato dai warning.")
         except Exception as pdf_error:
             st.error(f"❌ Errore compilazione PDF: {str(pdf_error)}")
     else:
