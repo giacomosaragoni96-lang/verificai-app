@@ -7690,6 +7690,11 @@ def execute_30_test_random():
                 
             except Exception as e:
                 # Errore critico durante il test
+                print(f"🔥 DEBUG: Errore critico nel test {i+1}: {str(e)}")
+                print(f"🔥 DEBUG: Tipo errore: {type(e).__name__}")
+                import traceback
+                print(f"🔥 DEBUG: Traceback: {traceback.format_exc()}")
+                
                 error_result = {
                     'test_id': params['test_id'],
                     'materia': params['materia'],
