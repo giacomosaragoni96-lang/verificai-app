@@ -7122,6 +7122,41 @@ def simulate_test_execution(params):
             'titolo': titolo,
             'esercizi_generati': esercizi_generati
         }
+        
+        # 🎉 NUOVO: Salva esercizi nel database di valutazione
+        if esito in ["PASS", "PARTIAL"] and latex_content:
+            try:
+                from valutazione_esercizi import estrai_esercizi_da_latex, salva_valutazione_esercizi
+                from datetime import datetime
+                
+                # Estrai esercizi dal LaTeX
+                esercizi = estrai_esercizi_da_latex(latex_content)
+                
+                # Salva ogni esercizio nel database
+                for i, esercizio in enumerate(esercizi, 1):
+                    # Calcola punteggio basato su esito e numero esercizi
+                    punteggio_assegnato = (final_score / 10.0) * (params.get('punti_totali', 30) / esercizi_generati)
+                    punteggio_massimo = params.get('punti_totali', 30) / esercizi_generati
+                    
+                    salva_valutazione_esercizi(
+                        id_verifica=params['test_id'],
+                        materia=params['materia'],
+                        argomento=params['argomento'],
+                        numero_esercizio=i,
+                        titolo_esercizio=esercizio.get('titolo', f'Esercizio {i}'),
+                        contenuto_esercizio=esercizio.get('contenuto', ''),
+                        punteggio_assegnato=punteggio_assegnato,
+                        punteggio_massimo=punteggio_massimo,
+                        feedback=f"Valutazione automatica - Score: {final_score:.1f}/10",
+                        commenti=f"Test system - {esito}",
+                        tag_difficolta=params['difficolta'],
+                        tag_competenze=f"Test_{params['materia']}",
+                        valutatore="Test_System_Auto"
+                    )
+                    
+            except Exception as save_error:
+                # Non bloccare il test se il salvataggio fallisce
+                print(f"⚠️ Errore salvataggio esercizi: {save_error}")
             
     except Exception as e:
         return {
@@ -7230,36 +7265,287 @@ def render_genera_30_verifiche():
     5. **Esecuzione immediata** con risultati
     6. **Valutazione rapida** della verifica
     """)
-    
-    # Pulsante per generare 1 sola verifica
-    if st.button("🚀 Genera 1 Verifica Random (DEBUG)", key="generate_single_test", type="primary", use_container_width=True):
-        genera_30_verifiche_random()
-
-def genera_30_verifiche_random():
     """Genera 1 verifica per debug (invece di 30)"""
     import random
     
-    materie = ["Matematica", "Fisica", "Chimica", "Italiano", "Storia", "Inglese", "Informatica"]
-    argomenti_matematica = ["Algebra", "Geometria", "Trigonometria", "Analisi", "Statistica", "Logica"]
-    argomenti_fisica = ["Meccanica", "Termodinamica", "Elettromagnetismo", "Ottica", "Onde", "Relatività"]
-    argomenti_chimica = ["Chimica Organica", "Chimica Inorganica", "Stechiometria", "Soluzioni", "Reazioni"]
-    argomenti_italiano = ["Grammatica", "Letteratura", "Analisi del Testo", "Poetica", "Narrativa"]
-    argomenti_storia = ["Storia Antica", "Storia Medievale", "Storia Moderna", "Storia Contemporanea"]
-    argomenti_inglese = ["Grammar", "Literature", "Vocabulary", "Reading Comprehension", "Writing"]
-    argomenti_informatica = ["Algoritmi", "Programmazione", "Database", "Reti", "Sicurezza"]
-    livelli = ["Scuola Media", "Liceo", "Istituto Tecnico"]
+    # AUMENTATE SCELTE RANDOM
+    materie = [
+        "Matematica", "Fisica", "Chimica", "Italiano", "Storia", "Inglese", 
+        "Informatica", "Economia", "Diritto", "Filosofia", "Latino", "Greco",
+        "Arte", "Musica", "Educazione Fisica", "Scienze della Terra", "Biologia",
+        "Geografia", "Tecnologia", "Religione"
+    ]
     
     argomenti_map = {
-        "Matematica": argomenti_matematica,
-        "Fisica": argomenti_fisica,
-        "Chimica": argomenti_chimica,
-        "Italiano": argomenti_italiano,
-        "Storia": argomenti_storia,
-        "Inglese": argomenti_inglese,
-        "Informatica": argomenti_informatica
+        "Matematica": [
+            # Algebra
+            "Equazioni di primo grado", "Equazioni di secondo grado", "Sistemi di equazioni", 
+            "Equazioni fratte", "Equazioni logaritmiche", "Equazioni esponenziali",
+            "Disuguaglianze", "Sistemi di disuguaglianze", "Problemi con equazioni",
+            # Geometria
+            "Teorema di Pitagora", "Teoremi di Euclide", "Teorema di Talete",
+            "Triangoli e quadrilateri", "Cerchi e circonferenze", "Aree e perimetri",
+            "Geometria analitica piano", "Geometria spaziale", "Volumi e superfici",
+            # Analisi
+            "Funzioni lineari", "Funzioni quadratiche", "Funzioni esponenziali",
+            "Funzioni logaritmiche", "Limiti", "Derivate", "Integrali",
+            "Studio di funzione", "Problemi di massimo e minimo",
+            # Statistica e Probabilità
+            "Statistica descrittiva", "Media mediana moda", "istogrammi",
+            "Probabilità elementare", "Probabilità condizionata", "Variabili casuali",
+            "Distribuzioni", "Test di ipotesi", "Correlazione e regressione"
+        ],
+        "Fisica": [
+            # Meccanica
+            "Cinematica", "Dinamica", "Lavoro ed energia", "Quantità di moto",
+            "Leggi di Newton", "Moto circolare", "Moto armonico", "Gravitazione",
+            "Onde meccaniche", "Suono", "Fluidostatica", "Fluidodinamica",
+            # Termodinamica
+            "Temperatura e calore", "Leggi dei gas", "Principio della termodinamica",
+            "Macchine termiche", "Cambiamenti di stato", "Trasmissione del calore",
+            # Elettricità e Magnetismo
+            "Cariche elettriche", "Campo elettrico", "Potenziale elettrico",
+            "Corrente elettrica", "Leggi di Ohm", "Circuiti elettrici",
+            "Campo magnetico", "Induzione elettromagnetica", "Onde elettromagnetiche",
+            # Ottica
+            "Riflessione e rifrazione", "Lenti e specchi", "Strumenti ottici",
+            "Natura della luce", "Onde luminose", "Spettro elettromagnetico"
+        ],
+        "Chimica": [
+            # Struttura della materia
+            "Modello atomico", "Configurazione elettronica", "Tavola periodica",
+            "Legame chimico", "Molecole e forze intermolecolari", "Stati della materia",
+            # Reazioni chimiche
+            "Bilanciamento reazioni", "Reazioni redox", "Acidi e basi",
+            "pH e scale di acidità", "Reazioni di precipitazione", "Reazioni di neutralizzazione",
+            # Chimica organica
+            "Idrocarburi", "Funzioni organiche", "Isomeria", "Polimeri",
+            "Biomolecole", "Reazioni organiche", "Chimica dei composti del carbonio",
+            # Stechiometria e soluzioni
+            "Concentrazione delle soluzioni", "Calcoli stechiometrici",
+            "Gas perfetti", "Soluzioni acquose", "Titolazioni", "Equilibri chimici"
+        ],
+        "Italiano": [
+            # Grammatica e sintassi
+            "Analisi logica del periodo", "Analisi grammaticale", "Fonetica e ortografia",
+            "Morfologia", "Sintassi della proposizione", "Sintassi del periodo",
+            "Connettivi logici", "Strutture subordinate", "Punteggiatura",
+            # Letteratura
+            "Letteratura medievale", "Umanesimo e Rinascimento", "Secolo d'oro",
+            "Neoclassicismo e Romanticismo", "Verismo", "Letteratura contemporanea",
+            "Poetica", "Generi letterari", "Metrica italiana", "Retorica",
+            # Analisi del testo
+            "Analisi della poesia", "Analisi della prosa", "Figure retoriche",
+            "Stile e linguaggio", "Intertestualità", "Critica letteraria"
+        ],
+        "Storia": [
+            # Storia antica
+            "Civiltà mesopotamiche", "Antico Egitto", "Mondo greco", "Mondo romano",
+            "Crisi del III secolo", "Tardoantico", "Invasioni barbariche",
+            # Storia medievale
+            "Alto Medioevo", "Impero Carolingio", "Feudalesimo", "Chiesa medievale",
+            "Crociate", "Comuni italiani", "Rinascimento urbano", "Bassa età comunale",
+            # Storia moderna
+            "Scoperte geografiche", "Riforma protestante", "Controriforma",
+            "Imperi coloniali", "Assolutismo", "Illuminismo", "Rivoluzione industriale",
+            # Storia contemporanea
+            "Rivoluzione francese", "Età napoleonica", "Restaurazione",
+            "Risorgimento italiano", "Unità d'Italia", "Prima guerra mondiale",
+            "Fascismo", "Seconda guerra mondiale", "Repubblica italiana", "Europa unita"
+        ],
+        "Inglese": [
+            # Grammar
+            "Present simple", "Present continuous", "Past simple", "Past continuous",
+            "Present perfect", "Past perfect", "Future tenses", "Conditionals",
+            "Passive voice", "Reported speech", "Modal verbs", "Question tags",
+            # Vocabulary
+            "Phrasal verbs", "Idioms and expressions", "Collocations", "Word formation",
+            "Synonyms and antonyms", "Academic vocabulary", "Business English",
+            # Reading comprehension
+            "Multiple choice", "True/false", "Matching exercises", "Gap filling",
+            "Reading strategies", "Skimming and scanning", "Inference skills",
+            # Writing skills
+            "Essay structure", "Paragraph writing", "Email writing", "Report writing",
+            "Creative writing", "Formal vs informal", "Cohesion and coherence"
+        ],
+        "Informatica": [
+            # Fondamenti
+            "Architettura del computer", "Sistemi operativi", "Reti di calcolatori",
+            "Algoritmi e complessità", "Strutture dati", "Basi di dati",
+            # Programmazione
+            "Programmazione procedurale", "Programmazione orientata oggetti",
+            "Programmazione funzionale", "Design patterns", "Testing e debugging",
+            "Version control", "Sviluppo web", "Sviluppo mobile",
+            # Argomenti avanzati
+            "Intelligenza artificiale", "Machine learning", "Cybersecurity",
+            "Cloud computing", "Big data", "Internet of Things", "Blockchain"
+        ],
+        "Economia": [
+            # Microeconomia
+            "Domanda e offerta", "Elasticità", "Mercati perfetti", "Monopolio",
+            "Oligopolio", "Teoria del consumatore", "Teoria del produttore",
+            "Fallimenti del mercato", "Economia del benessere",
+            # Macroeconomia
+            "PIL e contabilità nazionale", "Inflazione e disoccupazione",
+            "Politica monetaria", "Politica fiscale", "Crescita economica",
+            "Cicli economici", "Commercio internazionale", "Sistema finanziario",
+            # Economia applicata
+            "Economia aziendale", "Finanza pubblica", "Economia del lavoro",
+            "Economia ambientale", "Economia digitale", "Mercati finanziari"
+        ],
+        "Diritto": [
+            # Diritto privato
+            "Diritto delle obbligazioni", "Contratti", "Responsabilità civile",
+            "Diritto di famiglia", "Successioni", "Diritto delle persone",
+            "Proprietà e possesso", "Imprese e società",
+            # Diritto pubblico
+            "Diritto costituzionale", "Ordinamento statale", "Diritti fondamentali",
+            "Fonti del diritto", "Pubblica amministrazione", "Giustizia amministrativa",
+            # Diritto penale
+            "Reato e responsabilità", "Delitti contro il patrimonio", "Delitti contro la persona",
+            "Processo penale", "Pene e misure di sicurezza", "Diritto penale minorile"
+        ],
+        "Filosofia": [
+            # Filosofia antica
+            "Socrate e il socratico", "Teoria delle idee di Platone", "Metafisica di Aristotele",
+            "Stoicismo ed epicureismo", "Scetticismo", "Neoplatonismo",
+            # Filosofia medievale
+            "Patristica", "Scolastica", "Tommaso d'Aquino", "Problema degli universali",
+            "Filosofia araba", "Filosofia ebraica",
+            # Filosofia moderna e contemporanea
+            "Razionalismo", "Empirismo", "Idealismo tedesco", "Esistenzialismo",
+            "Fenomenologia", "Strutturalismo", "Postmodernismo", "Filosofia analitica"
+        ],
+        "Latino": [
+            # Grammatica
+            "Flessione nominale", "Flessione verbale", "Sintassi del periodo",
+            "Costruzioni perifrastiche", "Uso dei casi", "Concordance",
+            # Letteratura
+            "Commedia", "Orazio lirico", "Virgilio epico", "Cicerone oratore",
+            "Livio storico", "Ovidio mitologico", "Prosa latina",
+            # Civiltà
+            "Repubblica romana", "Impero romano", "Religione romana",
+            "Diritto romano", "Vita quotidiana", "Arte romana"
+        ],
+        "Greco": [
+            # Grammatica
+            "Alfabeto e fonetica", "Flessione nominale", "Flessione verbale",
+            "Sintassi greca", "Dialetti greci", "Metrica",
+            # Letteratura
+            "Omero e l'epica", "Teatro attico", "Lirica corale",
+            "Storiografia greca", "Filosofia greca", "Oratoria greca",
+            # Civiltà
+            "Polis greche", "Democrazia ateniese", "Guerre persiane",
+            "Guerre peloponnesiache", "Religione greca", "Arte greca"
+        ],
+        "Arte": [
+            # Tecniche artistiche
+            "Disegno e schizzo", "Tecniche pittoriche", "Scultura e materiali",
+            "Architettura", "Fotografia", "Arti visive digitali",
+            # Storia dell'arte
+            "Arte preistorica", "Arte classica", "Arte medievale",
+            "Rinascimento", "Barocco", "Neoclassicismo", "Romanticismo",
+            "Arte contemporanea", "Arte moderna", "Design",
+            # Analisi e critica
+            "Analisi dell'opera", "Storia e critica", "Estetica",
+            "Comunicazione visiva", "Iconografia", "Mercato dell'arte"
+        ],
+        "Musica": [
+            # Teoria e armonia
+            "Elementi musicali", "Ritmo e metro", "Melodia", "Armonia",
+            "Contrappunto", "Analisi musicale", "Forme musicali",
+            # Storia della musica
+            "Musica medievale", "Musica rinascimentale", "Musica barocca",
+            "Musica classica", "Musica romantica", "Musica contemporanea",
+            "Musica pop", "Jazz", "Musica etnica",
+            # Pratica musicale
+            "Tecnica vocale", "Tecnica strumentale", "Composizione",
+            "Arrangiamento", "Direzione d'orchestra", "Tecnologia musicale"
+        ],
+        "Educazione Fisica": [
+            # Attività motorie
+            "Allenamento aerobico", "Allenamento anaerobico", "Forza e resistenza",
+            "Flessibilità e mobilità", "Coordinazione motoria", "Equilibrio",
+            # Sport di squadra
+            "Calcio", "Basket", "Volley", "Rugby", "Pallavolo",
+            "Handball", "Pallacanestro", "Baseball", "Sportivi di squadra",
+            # Sport individuali
+            "Atletica leggera", "Nuoto", "Ginnastica", "Arti marziali",
+            "Tennis", "Atletica", "Ciclismo", "Sport individuali",
+            # Aspetti teorici
+            "Anatomia e fisiologia", "Biomeccanica", "Psicologia dello sport",
+            "Nutrizione sportiva", "Prevenzione infortuni", "Didattica sportiva"
+        ],
+        "Scienze della Terra": [
+            # Geologia
+            "Minerali e rocce", "Processi geologici", "Vulcanismo", "Sismologia",
+            "Geologia strutturale", "Geologia storica", "Cartografia geologica",
+            # Meteorologia
+            "Atmosfera terrestre", "Fenomeni meteorologici", "Climatologia",
+            "Previsioni del tempo", "Cambiamenti climatici", "Cicli atmosferici",
+            # Oceanografia e idrologia
+            "Oceani e mari", "Correnti marine", "Ciclo dell'acqua",
+            "Acque sotterranee", "Fiumi e laghi", "Glaciologia",
+            # Scienze ambientali
+            "Ecosistemi", "Biodiversità", "Inquinamento", "Risorse naturali",
+            "Sostenibilità ambientale", "Gestione ambientale"
+        ],
+        "Biologia": [
+            # Biologia cellulare
+            "Struttura cellulare", "Membrane cellulari", "Metabolismo cellulare",
+            "Divisione cellulare", "Genetica molecolare", "Proteine e enzimi",
+            # Biologia degli organismi
+            "Anatomia umana", "Fisiologia umana", "Botanica", "Zoologia",
+            "Microbiologia", "Virologia", "Immunologia", "Genetica",
+            # Ecologia ed evoluzione
+            "Ecosistemi", "Catene alimentari", "Popolazioni", "Comunità",
+            "Evoluzione", "Selezione naturale", "Speciazione", "Filogenesi",
+            # Biologia applicata
+            "Biotecnologie", "Ingegneria genetica", "Medicina", "Farmacologia",
+            "Biologia marina", "Biologia conservazione"
+        ],
+        "Geografia": [
+            # Geografia fisica
+            "Relief e paesaggi", "Climatologia", "Idrografia", "Biogeografia",
+            "Geografia costiera", "Geografia montana", "Geografia polare",
+            # Geografia umana
+            "Geografia della popolazione", "Urbanistica", "Geografia economica",
+            "Geografia politica", "Geografia rurale", "Geografia culturale",
+            # Tecniche geografiche
+            "Cartografia", "GIS", "Telerilevamento", "Fotogrammetria",
+            "Statistica geografica", "Analisi territoriale", "Sistemi informativi geografici"
+        ],
+        "Tecnologia": [
+            # Tecnologie industriali
+            "Lavorazione dei metalli", "Tecnologie meccaniche", "Elettrotecnica",
+            "Automazione industriale", "Robotica", "Sistemi di controllo",
+            # Tecnologie dell'informazione
+            "Elettronica", "Telecomunicazioni", "Informatica", "Reti",
+            "Sicurezza informatica", "Intelligenza artificiale", "Big data",
+            # Tecnologie ambientali
+            "Energie rinnovabili", "Tecnologie ambientali", "Trattamento acque",
+            "Gestione rifiuti", "Monitoraggio ambientale", "Tecnologie verdi"
+        ],
+        "Religione": [
+            # Cristianesimo
+            "Antico Testamento", "Nuovo Testamento", "Storia della Chiesa",
+            "Teologia cristiana", "Liturgia", "Pastorale", "Ecumenismo",
+            # Altre religioni
+            "Ebraismo", "Islam", "Induismo", "Buddismo", "Religioni orientali",
+            "Religioni primitive", "Nuovi movimenti religiosi", "Sociologia della religione",
+            # Aspetti filosofici e culturali
+            "Filosofia della religione", "Storia delle religioni", "Religione e società",
+            "Dialogo interreligioso", "Etica religiosa", "Spiritualità contemporanea"
+        ]
     }
     
-    # Genera SOLO 1 parametro per debug
+    livelli = [
+        "Scuola Secondaria I grado (Medie)",
+        "Liceo Scientifico", "Liceo Classico", "Liceo Linguistico", "Liceo Artistico",
+        "Istituto Tecnico Tecnologico", "Istituto Tecnico Industriale", "Istituto Tecnico Commerciale",
+        "Istituto Professionale Servizi", "Istituto Professionale Produzione",
+        "Università - Ingegneria", "Università - Scienze", "Università - Umanistiche"
+    ]
     test_params = []
     materia = random.choice(materie)
     argomento = random.choice(argomenti_map[materia])
@@ -7496,6 +7782,7 @@ def render_valutazione_semplificata(verify_result):
         st.markdown("### 📋 Preview PDF")
         try:
             from latex_utils import compila_pdf
+            import base64  # 🔥 Aggiunto import
             pdf_bytes, pdf_error = compila_pdf(verify_result['latex_verifica'])
             
             # DEBUG: mostra dettagli
@@ -7506,9 +7793,14 @@ def render_valutazione_semplificata(verify_result):
             if pdf_bytes and len(pdf_bytes) > 1000:  # PDF valido
                 st.success("✅ PDF compilato con successo!")
                 
-                # 🎉 NUOVO: Preview PDF inline
+                # 🎉 NUOVO: Preview PDF inline con iframe base64 (come nell'app)
                 st.markdown("#### 📖 Preview PDF (inline)")
-                st.pdf_viewer(pdf_bytes, height=600)
+                b64 = base64.b64encode(pdf_bytes).decode()
+                st.markdown(
+                    '<iframe src="data:application/pdf;base64,' + b64 + '#toolbar=1&navpanes=1&scrollbar=1" '
+                    'style="width:100%;height:600px;border:none;border-radius:8px;"></iframe>',
+                    unsafe_allow_html=True
+                )
                 
                 # Download button (opzionale)
                 st.download_button(
@@ -7530,7 +7822,12 @@ def render_valutazione_semplificata(verify_result):
                 
                 # Preview anche se piccolo
                 st.markdown("#### 📖 Preview PDF (sperimentale)")
-                st.pdf_viewer(pdf_bytes, height=400)
+                b64 = base64.b64encode(pdf_bytes).decode()
+                st.markdown(
+                    '<iframe src="data:application/pdf;base64,' + b64 + '#toolbar=1&navpanes=1&scrollbar=1" '
+                    'style="width:100%;height:400px;border:none;border-radius:8px;"></iframe>',
+                    unsafe_allow_html=True
+                )
                 
                 st.download_button(
                     label="📥 Scarica PDF (sperimentale)",
