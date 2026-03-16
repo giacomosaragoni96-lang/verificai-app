@@ -7495,9 +7495,17 @@ def render_valutazione_semplificata(verify_result):
                     file_name=f"verifica_{verify_result['test_id']}.pdf",
                     mime="application/pdf"
                 )
+                # Mostra warning MiKTeX se presenti
+                if pdf_error and ("security risk" in pdf_error or "checked for updates" in pdf_error):
+                    st.info("ℹ️ Warning MiKTeX (normale su Windows):")
+                    st.code(pdf_error)
+                elif pdf_error:
+                    st.warning("⚠️ Warning compilazione:")
+                    st.code(pdf_error)
             else:
-                st.warning("⚠️ PDF non compilato")
+                st.error("❌ PDF non compilato")
                 if pdf_error:
+                    st.error("Dettagli errore:")
                     st.code(pdf_error)
         except Exception as pdf_error:
             st.error(f"❌ Errore compilazione PDF: {str(pdf_error)}")
