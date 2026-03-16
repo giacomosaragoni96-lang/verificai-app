@@ -6975,9 +6975,8 @@ def simulate_test_execution(params):
                 'esercizi_generati': 0
             }
         
-        # Usa il modello corretto da config.py
-        from config import MODEL_FAST_ID
-        MODEL_ID = MODEL_FAST_ID  # "gemini-2.5-flash-lite"
+        # Usa lo stesso modello del sistema normale
+        MODEL_ID = "gemini-2.5-flash-lite"  # Stesso modello usato in tutto l'app
         model = genai.GenerativeModel(MODEL_ID)
         
         # Debug: test semplice API
