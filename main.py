@@ -7486,7 +7486,7 @@ def render_valutazione_semplificata(verify_result):
         st.markdown("### 📋 Preview PDF")
         try:
             from latex_utils import compila_pdf
-            pdf_bytes = compila_pdf(verify_result['latex_verifica'])
+            pdf_bytes, pdf_error = compila_pdf(verify_result['latex_verifica'])
             if pdf_bytes:
                 st.success("✅ PDF compilato con successo!")
                 st.download_button(
@@ -7496,7 +7496,9 @@ def render_valutazione_semplificata(verify_result):
                     mime="application/pdf"
                 )
             else:
-                st.warning("⚠️ PDF non compilato (errore LaTeX)")
+                st.warning("⚠️ PDF non compilato")
+                if pdf_error:
+                    st.code(pdf_error)
         except Exception as pdf_error:
             st.error(f"❌ Errore compilazione PDF: {str(pdf_error)}")
     else:
