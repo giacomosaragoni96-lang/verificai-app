@@ -7667,7 +7667,9 @@ def execute_30_test_random():
         
         for i, params in enumerate(test_params):
             try:
+                print(f"🔥 DEBUG: Inizio esecuzione test {i+1}/{len(test_params)}")
                 result = simulate_test_execution(params)
+                print(f"🔥 DEBUG: Test {i+1} completato, esito: {result.get('esito', 'N/A')}")
                 results.append(result)
                 
                 # Debug info
