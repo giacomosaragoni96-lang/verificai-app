@@ -7113,6 +7113,9 @@ def simulate_test_execution(params):
         # Debug per conferma
         print(f"🔥 DOUBLE CHECK: latex_verifica è lo stesso di result['A']['latex']? {latex_verifica == latex_content}")
         print(f"🔥 DOUBLE CHECK: Lunghezza latex_verifica: {len(latex_verifica) if latex_verifica else 'None'}")
+        print(f"🔥 DEBUG CRITICO: latex_verifica dopo assegnazione: {type(latex_verifica)}")
+        print(f"🔥 DEBUG CRITICO: latex_verifica è None? {latex_verifica is None}")
+        print(f"🔥 DEBUG CRITICO: latex_verifica valore: {latex_verifica[:100] if latex_verifica else 'None'}")
 
         if not latex_verifica or len(latex_verifica.strip()) < 50:
             return {
