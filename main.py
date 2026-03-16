@@ -7101,6 +7101,11 @@ def simulate_test_execution(params):
         latex_content = result['A'].get('latex', '')
         titolo = result.get('titolo', f"Verifica di {params['materia']}")
         
+        # Debug completo del contenuto
+        print(f"🔥 DEBUG: latex_content type: {type(latex_content)}")
+        print(f"🔥 DEBUG: latex_content length: {len(latex_content) if latex_content else 'None'}")
+        print(f"🔥 DEBUG: latex_content primo chunk: {latex_content[:200] if latex_content else 'None'}")
+        
         # 🔥 DOUBLE CHECK: L'utente riceve ESATTAMENTE result['A']['latex'] senza modifiche!
         # Quindi il test system deve usare lo stesso identico output
         latex_verifica = latex_content  # ESATTAMENTE come l'app
