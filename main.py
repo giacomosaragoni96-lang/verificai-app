@@ -6955,7 +6955,7 @@ def simulate_test_execution(params):
     """Esegue test VERITIERO usando esattamente lo stesso flusso dell'utente normale"""
     try:
         # Importa le funzioni reali
-        from generation import genera_verifica
+        from generation import genera_verifica, _safe_generate
         import google.generativeai as genai
         import os
         
@@ -7009,30 +7009,45 @@ def simulate_test_execution(params):
                 'esercizi_generati': 0
             }
         
-        # CHIAMATA IDENTICA A QUELLA DELL'UTENTE NORMALE
-        result = genera_verifica(
-            model=model,
-            materia=params['materia'],           # ✅ Obbligatorio
-            argomento=params['argomento'],       # ✅ Obbligatorio
-            difficolta=params['difficolta'],     # ✅ Obbligatorio (scuola)
-            calibrazione="Standard",             # Default come nell'app
-            durata="60 minuti",                  # Default come nell'app
-            num_esercizi=params.get('num_esercizi', 3),
-            punti_totali=params.get('punti_totali', 30),
-            mostra_punteggi=True,                # Default come nell'app
-            con_griglia=False,                   # Default come nell'app
-            doppia_fila=False,                   # Default come nell'app
-            bes_dsa=False,                       # Default come nell'app
-            perc_ridotta=None,                   # Default come nell'app
-            bes_dsa_b=False,                     # Default come nell'app
-            genera_soluzioni=False,               # Default come nell'app
-            note_generali="",                    # Default come nell'app
-            istruzioni_esercizi="",              # Default come nell'app
-            immagini_esercizi=[],                # Default come nell'app
-            file_ispirazione=None,                # Default come nell'app
-            mathpix_context=None,                # Default come nell'app
-            on_progress=lambda text: None        # Disabilitato per test batch
-        )
+        # CHIAMATA IDENTICA A QUELLA DELL'UTENTE NORMALE con try/catch dettagliato
+        try:
+            result = genera_verifica(
+                model=model,
+                materia=params['materia'],           # ✅ Obbligatorio
+                argomento=params['argomento'],       # ✅ Obbligatorio
+                difficolta=params['difficolta'],     # ✅ Obbligatorio (scuola)
+                calibrazione="Standard",             # Default come nell'app
+                durata="60 minuti",                  # Default come nell'app
+                num_esercizi=params.get('num_esercizi', 3),
+                punti_totali=params.get('punti_totali', 30),
+                mostra_punteggi=True,                # Default come nell'app
+                con_griglia=False,                   # Default come nell'app
+                doppia_fila=False,                   # Default come nell'app
+                bes_dsa=False,                       # Default come nell'app
+                perc_ridotta=None,                   # Default come nell'app
+                bes_dsa_b=False,                     # Default come nell'app
+                genera_soluzioni=False,               # Default come nell'app
+                note_generali="",                    # Default come nell'app
+                istruzioni_esercizi="",              # Default come nell'app
+                immagini_esercizi=[],                # Default come nell'app
+                file_ispirazione=None,                # Default come nell'app
+                mathpix_context=None,                # Default come nell'app
+                on_progress=lambda text: None        # Disabilitato per test batch
+            )
+        except Exception as generation_error:
+            # Errore durante la generazione - log dettagliato
+            return {
+                'test_id': params['test_id'],
+                'materia': params['materia'],
+                'argomento': params['argomento'],
+                'livello': params['difficolta'],
+                'esito': 'FAIL',
+                'punteggio': 1.0,
+                'dettagli': f"ERRORE GENERA_VERIFICA: {str(generation_error)}",
+                'latex_verifica': None,
+                'titolo': None,
+                'esercizi_generati': 0
+            }
         
         # Debug e validazione risultato
         if not result:
@@ -7059,7 +7074,7 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 2.0,
-                'dettagli': f"ERRORE: LaTeX A vuoto. Keys: {list(result.keys())}",
+                'dettagli': f"ERRORE: LaTeX A vuoto. Keys: {list(result.keys())}, Result: {str(result)[:200]}",
                 'latex_verifica': None,
                 'titolo': result.get('titolo', 'N/A'),
                 'esercizi_generati': 0
@@ -7077,7 +7092,7 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 2.0,
-                'dettagli': f"ERRORE: LaTeX troppo corto ({len(latex_content)} chars)",
+                'dettagli': f"ERRORE: LaTeX troppo corto ({len(latex_content)} chars). Content: {latex_content[:100]}",
                 'latex_verifica': latex_content,
                 'titolo': result.get('titolo', 'N/A'),
                 'esercizi_generati': esercizi_generati
@@ -7125,7 +7140,7 @@ def simulate_test_execution(params):
             'livello': params['difficolta'],
             'esito': 'FAIL',
             'punteggio': 1.0,
-            'dettagli': f"ERRORE CRITICO: {str(e)}",
+            'dettagli': f"ERRORE CRITICO ESTERNO: {str(e)}",
             'latex_verifica': None,
             'titolo': None,
             'esercizi_generati': 0
