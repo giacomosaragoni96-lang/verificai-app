@@ -7014,6 +7014,7 @@ def simulate_test_execution(params):
         
         # 🎉 USA ESATTAMENTE LA FUNZIONE DELL'APP NORMALE
         try:
+            # Parametri esattamente come nell'app normale
             result = genera_verifica(
                 model=model,
                 materia=params['materia'],           # ✅ Input random
@@ -7067,10 +7068,10 @@ def simulate_test_execution(params):
                 'esercizi_generati': 0
             }
         
-        # Estrai contenuto come fa l'app normale
+        # USA ESATTAMENTE IL RISULTATO DELL'APP NORMALE
         latex_content = result['A'].get('latex', '')
         titolo = result.get('titolo', f"Verifica di {params['materia']}")
-        
+
         if not latex_content or len(latex_content.strip()) < 50:
             return {
                 'test_id': params['test_id'],
@@ -7084,6 +7085,9 @@ def simulate_test_execution(params):
                 'titolo': titolo,
                 'esercizi_generati': 0
             }
+        
+        # USA IL LaTeX ESATTAMENTE COME GENERATO DALL'APP (senza modifiche)
+        latex_verifica = latex_content  # Esattamente come l'app
         
         # Conta esercizi come fa l'app
         esercizi_generati = latex_content.count('\\item[')
@@ -7118,19 +7122,19 @@ def simulate_test_execution(params):
             'esito': esito,
             'punteggio': final_score,
             'dettagli': f"✅ Verifica REALE generata: {esercizi_generati} esercizi. Score: {final_score:.1f}/10",
-            'latex_verifica': latex_content,
+            'latex_verifica': latex_verifica,  # 🔥 Usa il documento completo
             'titolo': titolo,
             'esercizi_generati': esercizi_generati
         }
         
         # 🎉 NUOVO: Salva esercizi nel database di valutazione
-        if esito in ["PASS", "PARTIAL"] and latex_content:
+        if esito in ["PASS", "PARTIAL"] and latex_verifica:  # 🔥 Usa latex_verifica
             try:
                 from valutazione_esercizi import estrai_esercizi_da_latex, salva_valutazione_esercizi
                 from datetime import datetime
                 
-                # Estrai esercizi dal LaTeX
-                esercizi = estrai_esercizi_da_latex(latex_content)
+                # Estrai esercizi dal LaTeX completo
+                esercizi = estrai_esercizi_da_latex(latex_verifica)  # 🔥 Usa latex_verifica
                 
                 # Salva ogni esercizio nel database
                 for i, esercizio in enumerate(esercizi, 1):
