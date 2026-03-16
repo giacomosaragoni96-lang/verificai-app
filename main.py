@@ -6952,10 +6952,10 @@ def init_simulate_functions():
     return True
 
 def simulate_test_execution(params):
-    """Esegue test VERITIERO con debug approfondito e modello corretto"""
+    """Esegue test VERITIERO usando esattamente lo stesso flusso dell'utente normale"""
     try:
-        # Importa la funzione reale di generazione
-        from generation import genera_verifica, _safe_generate
+        # Importa le funzioni reali
+        from generation import genera_verifica
         import google.generativeai as genai
         import os
         
@@ -6976,10 +6976,10 @@ def simulate_test_execution(params):
             }
         
         # Usa lo stesso modello del sistema normale
-        MODEL_ID = "gemini-2.5-flash-lite"  # Stesso modello usato in tutto l'app
+        MODEL_ID = "gemini-2.5-flash-lite"
         model = genai.GenerativeModel(MODEL_ID)
         
-        # Debug: test semplice API
+        # Test API
         try:
             test_response = model.generate_content("Test")
             if not test_response.text:
@@ -6990,7 +6990,7 @@ def simulate_test_execution(params):
                     'livello': params['difficolta'],
                     'esito': 'FAIL',
                     'punteggio': 1.0,
-                    'dettagli': f"ERRORE: API test vuoto con modello {MODEL_ID}",
+                    'dettagli': f"ERRORE: API test vuoto con {MODEL_ID}",
                     'latex_verifica': None,
                     'titolo': None,
                     'esercizi_generati': 0
@@ -7003,39 +7003,38 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 1.0,
-                'dettagli': f"ERRORE API test con {MODEL_ID}: {str(e)}",
+                'dettagli': f"ERRORE API test: {str(e)}",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
             }
         
-        # SOLO parametri obbligatori + defaults automatici
+        # CHIAMATA IDENTICA A QUELLA DELL'UTENTE NORMALE
         result = genera_verifica(
             model=model,
             materia=params['materia'],           # ✅ Obbligatorio
             argomento=params['argomento'],       # ✅ Obbligatorio
             difficolta=params['difficolta'],     # ✅ Obbligatorio (scuola)
-            # Tutti gli altri hanno defaults automatici
-            calibrazione="Standard",
-            durata="60 minuti",
+            calibrazione="Standard",             # Default come nell'app
+            durata="60 minuti",                  # Default come nell'app
             num_esercizi=params.get('num_esercizi', 3),
             punti_totali=params.get('punti_totali', 30),
-            mostra_punteggi=True,
-            con_griglia=False,
-            doppia_fila=False,
-            bes_dsa=False,
-            perc_ridotta=None,
-            bes_dsa_b=False,
-            genera_soluzioni=False,
-            note_generali="",
-            istruzioni_esercizi="",
-            immagini_esercizi=[],
-            file_ispirazione=None,
-            mathpix_context=None,
-            on_progress=lambda text: None  # Disabilitato per test batch
+            mostra_punteggi=True,                # Default come nell'app
+            con_griglia=False,                   # Default come nell'app
+            doppia_fila=False,                   # Default come nell'app
+            bes_dsa=False,                       # Default come nell'app
+            perc_ridotta=None,                   # Default come nell'app
+            bes_dsa_b=False,                     # Default come nell'app
+            genera_soluzioni=False,               # Default come nell'app
+            note_generali="",                    # Default come nell'app
+            istruzioni_esercizi="",              # Default come nell'app
+            immagini_esercizi=[],                # Default come nell'app
+            file_ispirazione=None,                # Default come nell'app
+            mathpix_context=None,                # Default come nell'app
+            on_progress=lambda text: None        # Disabilitato per test batch
         )
         
-        # Debug: ispeziona risultato
+        # Debug e validazione risultato
         if not result:
             return {
                 'test_id': params['test_id'],
@@ -7044,17 +7043,15 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 1.0,
-                'dettagli': f"ERRORE: genera_verifica ritornato None con modello {MODEL_ID}",
+                'dettagli': f"ERRORE: genera_verifica ritornato None",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
             }
         
-        # Debug: stampa struttura risultato
-        debug_keys = list(result.keys())
-        latex_A = result.get('A', {}).get('latex', '')
-        
-        if not latex_A:
+        # Estrai contenuto LaTeX come fa l'app normale
+        latex_content = result.get('A', {}).get('latex', '')
+        if not latex_content:
             return {
                 'test_id': params['test_id'],
                 'materia': params['materia'],
@@ -7062,20 +7059,16 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 2.0,
-                'dettagli': f"ERRORE: LaTeX A vuoto con {MODEL_ID}. Keys: {debug_keys}",
+                'dettagli': f"ERRORE: LaTeX A vuoto. Keys: {list(result.keys())}",
                 'latex_verifica': None,
                 'titolo': result.get('titolo', 'N/A'),
                 'esercizi_generati': 0
             }
         
-        # Valuta la qualità della verifica generata
-        latex_content = result['A']['latex']
-        
-        # Conta esercizi generati
+        # Conta esercizi e valuta qualità
         esercizi_generati = latex_content.count('\\item[')
         esercizi_richiesti = params.get('num_esercizi', 3)
         
-        # Debug: verifica contenuto
         if len(latex_content.strip()) < 50:
             return {
                 'test_id': params['test_id'],
@@ -7084,21 +7077,21 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 2.0,
-                'dettagli': f"ERRORE: LaTeX troppo corto ({len(latex_content)} chars) con {MODEL_ID}",
+                'dettagli': f"ERRORE: LaTeX troppo corto ({len(latex_content)} chars)",
                 'latex_verifica': latex_content,
                 'titolo': result.get('titolo', 'N/A'),
                 'esercizi_generati': esercizi_generati
             }
         
-        # Punteggio basato su completezza e qualità
+        # Punteggio basato su completezza
         if esercizi_generati >= esercizi_richiesti:
-            base_score = random.uniform(7.0, 9.5)  # Buono
+            base_score = random.uniform(7.0, 9.5)
             esito = "PASS"
         elif esercizi_generati >= esercizi_richiesti * 0.7:
-            base_score = random.uniform(5.5, 7.4)  # Sufficiente
+            base_score = random.uniform(5.5, 7.4)
             esito = "PARTIAL"
         else:
-            base_score = random.uniform(3.0, 5.4)  # Insufficiente
+            base_score = random.uniform(3.0, 5.4)
             esito = "FAIL"
         
         # Aggiusta per livello
@@ -7119,13 +7112,12 @@ def simulate_test_execution(params):
             'esito': esito,
             'punteggio': final_score,
             'dettagli': f"Verifica REALE generata con {MODEL_ID}: {esercizi_generati} esercizi. Score: {final_score:.1f}/10",
-            'latex_verifica': latex_content,  # Contenuto REALE
+            'latex_verifica': latex_content,
             'titolo': result.get('titolo', f"Verifica di {params['materia']}"),
             'esercizi_generati': esercizi_generati
         }
             
     except Exception as e:
-        # Errore durante generazione - log dettagliato
         return {
             'test_id': params['test_id'],
             'materia': params['materia'],
