@@ -7765,12 +7765,9 @@ def render_valutazione_semplificata(verify_result):
         st.metric("Score", f"{verify_result['punteggio']:.2f}")
     
     # Contenuto REALE della verifica
-    st.markdown("### 📄 Contenuto Verifica REALE")
+    st.markdown("### 📄 Verifica Generata")
     
     if verify_result.get('latex_verifica'):
-        # Mostra il contenuto LaTeX REALE generato
-        st.code(verify_result['latex_verifica'], language='latex')
-        
         # Info aggiuntive sulla generazione
         col1, col2 = st.columns(2)
         with col1:
@@ -7778,11 +7775,11 @@ def render_valutazione_semplificata(verify_result):
         with col2:
             st.metric("Titolo", verify_result.get('titolo', 'N/A')[:20] + '...' if len(str(verify_result.get('titolo', ''))) > 20 else verify_result.get('titolo', 'N/A'))
         
-        # 🎉 NUOVO: Preview PDF
-        st.markdown("### 📋 Preview PDF")
+        # 🎉 Preview PDF FINALE
+        st.markdown("### 📋 Preview PDF Finale")
         try:
             from latex_utils import compila_pdf
-            import base64  # 🔥 Aggiunto import
+            import base64
             pdf_bytes, pdf_error = compila_pdf(verify_result['latex_verifica'])
             
             # DEBUG: mostra dettagli
@@ -7793,8 +7790,8 @@ def render_valutazione_semplificata(verify_result):
             if pdf_bytes and len(pdf_bytes) > 1000:  # PDF valido
                 st.success("✅ PDF compilato con successo!")
                 
-                # 🎉 NUOVO: Preview PDF inline con iframe base64 (come nell'app)
-                st.markdown("#### 📖 Preview PDF (inline)")
+                # Preview PDF inline con iframe base64 (come nell'app)
+                st.markdown("#### 📖 Preview PDF Completa")
                 b64 = base64.b64encode(pdf_bytes).decode()
                 st.markdown(
                     '<iframe src="data:application/pdf;base64,' + b64 + '#toolbar=1&navpanes=1&scrollbar=1" '
@@ -7802,7 +7799,7 @@ def render_valutazione_semplificata(verify_result):
                     unsafe_allow_html=True
                 )
                 
-                # Download button (opzionale)
+                # Download button
                 st.download_button(
                     label="📥 Scarica PDF",
                     data=pdf_bytes,
