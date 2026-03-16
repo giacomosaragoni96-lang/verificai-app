@@ -391,6 +391,7 @@ def _build_griglia_xml(doc, row_es, row_sotto, row_max, PAGE_W_DXA=9638):
 
     n_cols    = len(row_es)
     row_punti = ["Punti"] + [""] * (n_cols - 1)
+    row_voto  = ["Voto"] + ["\\hrulefill"] * (n_cols - 1)  # Add Voto row with fill lines
 
     first_col = 1400
     last_col  = 900
@@ -443,6 +444,11 @@ def _build_griglia_xml(doc, row_es, row_sotto, row_max, PAGE_W_DXA=9638):
             run.font.size = Pt(font_pt)
             if bold:
                 run.bold = True
+            # Special handling for Voto row - add underline
+            if text == "\\hrulefill":
+                run.underline = True
+                # Clear the text and just keep the underline
+                run.text = "           "  # Space for manual writing
         if w is not None:
             tc = cell._tc
             tcPr = tc.get_or_add_tcPr()
@@ -458,7 +464,7 @@ def _build_griglia_xml(doc, row_es, row_sotto, row_max, PAGE_W_DXA=9638):
     tbl.style = 'Table Grid'
     _setup_tbl(tbl, PAGE_W_DXA, col_widths)
 
-    for r_idx, riga in enumerate([row_sotto, row_max, row_punti], start=1):
+    for r_idx, riga in enumerate([row_sotto, row_max, row_punti, row_voto], start=1):
         for c_idx in range(n_cols):
             val = riga[c_idx] if c_idx < len(riga) else ''
             _fill_cell(
@@ -1038,14 +1044,14 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
                         rl.font.size = Pt(11)
                     _add_content_with_graphs(
                         doc, testo, _graphs,
-                        left_indent_cm=0.5, space_before_pt=2, space_after_pt=2,
+                        left_indent_cm=0.5, space_before_pt=2, space_after_pt=8,  # Increased spacing
                         base_size_pt=11,
                     )
                 else:
                     ps = doc.add_paragraph()
                     ps.paragraph_format.left_indent  = Cm(0.5)
                     ps.paragraph_format.space_before = Pt(3)
-                    ps.paragraph_format.space_after  = Pt(2)
+                    ps.paragraph_format.space_after  = Pt(8)  # Increased spacing for better separation
                     if label:
                         rl = ps.add_run(label + "  ")
                         rl.bold = True
@@ -1081,7 +1087,8 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
             rg.bold = True
             rg.font.size = Pt(12)
             pg.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            pg.paragraph_format.space_before = Pt(12)
+            pg.paragraph_format.space_before = Pt(18)  # Increased spacing before table
+            pg.paragraph_format.space_after = Pt(6)   # Add spacing after title
 
             n_sotto_totali = sum(len(ex['items']) for ex in esercizi_parsed)
 
