@@ -7024,7 +7024,7 @@ def simulate_test_execution(params):
                 istruzioni_esercizi="",
                 e_mat=params['materia'].lower() in ["matem", "fis", "chim", "inform"],
                 titolo_header="Verifica",
-                preambolo="",
+                preambolo_fisso="",  # ✅ Corretto: preambolo_fisso non preambolo
                 mathpix_context=None
             )
             
