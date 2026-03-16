@@ -7071,6 +7071,11 @@ def simulate_test_execution(params):
         # USA ESATTAMENTE IL RISULTATO DELL'APP NORMALE
         latex_content = result['A'].get('latex', '')
         titolo = result.get('titolo', f"Verifica di {params['materia']}")
+        
+        # 🎉 APPLICA LA STESSA PULIZIA DELL'APP NORMALE
+        if latex_content:
+            from latex_utils import pulisci_corpo_latex
+            latex_content = pulisci_corpo_latex(latex_content)
 
         if not latex_content or len(latex_content.strip()) < 50:
             return {
