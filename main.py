@@ -6953,6 +6953,9 @@ def init_simulate_functions():
 
 def simulate_test_execution(params):
     """Test usando ESATTAMENTE lo stesso flusso dell'app normale con input random"""
+    print(f"🔥 DEBUG: simulate_test_execution chiamato con params: {list(params.keys())}")
+    print(f"🔥 DEBUG: test_id: {params.get('test_id')}")
+    
     try:
         # Importa le funzioni reali dell'app
         from generation import genera_verifica
@@ -7629,7 +7632,6 @@ def render_genera_30_verifiche():
     test_params.append(params)
     
     st.session_state.admin_test_params = test_params
-    st.session_state.admin_test_session_id = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     
     # Esegui subito il test
     execute_30_test_random()
