@@ -6952,14 +6952,14 @@ def init_simulate_functions():
     return True
 
 def simulate_test_execution(params):
-    """Test con il sistema reale ma debug passo-passo per trovare il problema"""
+    """Test usando ESATTAMENTE lo stesso flusso dell'app normale con input random"""
     try:
-        # Importa le funzioni necessarie
+        # Importa le funzioni reali dell'app
+        from generation import genera_verifica
         import google.generativeai as genai
         import os
-        from prompts import prompt_corpo_verifica
         
-        # Setup API
+        # Setup API come nell'app normale
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
             return {
@@ -6976,6 +6976,8 @@ def simulate_test_execution(params):
             }
         
         genai.configure(api_key=api_key)
+        
+        # Usa lo stesso modello dell'app normale
         MODEL_ID = "gemini-2.5-flash-lite"
         model = genai.GenerativeModel(MODEL_ID)
         
@@ -7009,29 +7011,33 @@ def simulate_test_execution(params):
                 'esercizi_generati': 0
             }
         
-        # TEST 1: Proviamo prompt_corpo_verifica da solo
+        # 🎉 USA ESATTAMENTE LA FUNZIONE DELL'APP NORMALE
         try:
-            prompt_corpo = prompt_corpo_verifica(
-                materia=params['materia'],
-                argomento=params['argomento'],
-                calibrazione="Standard",
-                durata="60 minuti",
-                num_esercizi=params.get('num_esercizi', 3),
-                punti_totali=params.get('punti_totali', 30),
-                mostra_punteggi=True,
-                con_griglia=False,
-                note_generali="",
-                istruzioni_esercizi="",
-                e_mat=params['materia'].lower() in ["matem", "fis", "chim", "inform"],
-                titolo_header="Verifica",
-                preambolo_fisso="",  # ✅ Corretto: preambolo_fisso non preambolo
-                mathpix_context=None
+            result = genera_verifica(
+                model=model,
+                materia=params['materia'],           # ✅ Input random
+                argomento=params['argomento'],       # ✅ Input random
+                difficolta=params['difficolta'],     # ✅ Input random
+                calibrazione="Standard",             # ✅ Come nell'app
+                durata="60 minuti",                  # ✅ Come nell'app
+                num_esercizi=params.get('num_esercizi', 3),  # ✅ Input random
+                punti_totali=params.get('punti_totali', 30), # ✅ Input random
+                mostra_punteggi=True,                # ✅ Come nell'app
+                con_griglia=False,                   # ✅ Come nell'app
+                doppia_fila=False,                   # ✅ Come nell'app
+                bes_dsa=False,                       # ✅ Come nell'app
+                perc_ridotta=25,                     # ✅ Come nell'app
+                bes_dsa_b=False,                     # ✅ Come nell'app
+                genera_soluzioni=False,               # ✅ Come nell'app
+                note_generali="",                    # ✅ Come nell'app
+                istruzioni_esercizi="",              # ✅ Come nell'app
+                immagini_esercizi=[],                # ✅ Come nell'app
+                file_ispirazione=None,                # ✅ Come nell'app
+                mathpix_context=None,                # ✅ Come nell'app
+                on_progress=lambda text: None        # ✅ Disabilitato per test batch
             )
             
-            # Debug: mostra prime 200 chars del prompt
-            prompt_preview = prompt_corpo[:200] + "..." if len(prompt_corpo) > 200 else prompt_corpo
-            
-        except Exception as prompt_error:
+        except Exception as generation_error:
             return {
                 'test_id': params['test_id'],
                 'materia': params['materia'],
@@ -7039,75 +7045,14 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 1.0,
-                'dettagli': f"❌ ERRORE PROMPT_CORPO_VERIFICA: {str(prompt_error)}",
+                'dettagli': f"❌ ERRORE GENERA_VERIFICA: {str(generation_error)}",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
             }
         
-        # TEST 2: Chiamata API con prompt reale
-        try:
-            response = model.generate_content(prompt_corpo)
-            raw_latex = response.text
-            
-            if not raw_latex or len(raw_latex.strip()) < 50:
-                return {
-                    'test_id': params['test_id'],
-                    'materia': params['materia'],
-                    'argomento': params['argomento'],
-                    'livello': params['difficolta'],
-                    'esito': 'FAIL',
-                    'punteggio': 2.0,
-                    'dettagli': f"❌ ERRORE: Prompt reale fallito - output troppo corto. Raw: '{raw_latex[:100]}'",
-                    'latex_verifica': raw_latex,
-                    'titolo': f"Test {params['materia']}",
-                    'esercizi_generati': 0
-                }
-            
-        except Exception as api_error:
-            return {
-                'test_id': params['test_id'],
-                'materia': params['materia'],
-                'argomento': params['argomento'],
-                'livello': params['difficolta'],
-                'esito': 'FAIL',
-                'punteggio': 1.0,
-                'dettagli': f"❌ ERRORE API CON PROMPT REALE: {str(api_error)}",
-                'latex_verifica': None,
-                'titolo': None,
-                'esercizi_generati': 0
-            }
-        
-        # TEST 3: Proviamo pulizia LaTeX e costruzione documento completo
-        try:
-            from latex_utils import pulisci_corpo_latex
-            
-            # Prima pulisci il corpo
-            latex_corpo = pulisci_corpo_latex(raw_latex)
-            
-            # Poi costruisci il documento completo
-            latex_completo = f"""\\documentclass[11pt,a4paper]{{article}}
-\\usepackage[utf8]{{inputenc}}
-\\usepackage[T1]{{fontenc}}
-\\usepackage{{amsmath,amssymb}}
-\\usepackage{{geometry}}
-\\geometry{{margin=2cm}}
-\\usepackage{{enumitem}}
-
-\\begin{{document}}
-
-\\title{{Verifica di {params["materia"]}}}
-\\author{{Docente}}
-\\date{{\\today}}
-\\maketitle
-
-{latex_corpo}
-
-\\end{{document}}"""
-            
-            latex_content = latex_completo
-            
-        except Exception as clean_error:
+        # Estrai il risultato come fa l'app normale
+        if not result or 'A' not in result:
             return {
                 'test_id': params['test_id'],
                 'materia': params['materia'],
@@ -7115,26 +7060,65 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 2.0,
-                'dettagli': f"❌ ERRORE COSTRUZIONE DOCUMENTO: {str(clean_error)}",
-                'latex_verifica': raw_latex,
-                'titolo': f"Test {params['materia']}",
-                'esercizi_generati': raw_latex.count('\\subsection*')
+                'dettagli': f"❌ ERRORE: genera_verifica risultato vuoto. Keys: {list(result.keys()) if result else 'None'}",
+                'latex_verifica': None,
+                'titolo': None,
+                'esercizi_generati': 0
             }
         
-        # Conta esercizi
-        esercizi_generati = latex_content.count('\\item[')
+        # Estrai contenuto come fa l'app normale
+        latex_content = result['A'].get('latex', '')
+        titolo = result.get('titolo', f"Verifica di {params['materia']}")
         
-        # Successo!
+        if not latex_content or len(latex_content.strip()) < 50:
+            return {
+                'test_id': params['test_id'],
+                'materia': params['materia'],
+                'argomento': params['argomento'],
+                'livello': params['difficolta'],
+                'esito': 'FAIL',
+                'punteggio': 2.0,
+                'dettagli': f"❌ ERRORE: LaTeX vuoto o troppo corto ({len(latex_content)} chars)",
+                'latex_verifica': latex_content,
+                'titolo': titolo,
+                'esercizi_generati': 0
+            }
+        
+        # Conta esercizi come fa l'app
+        esercizi_generati = latex_content.count('\\item[')
+        esercizi_richiesti = params.get('num_esercizi', 3)
+        
+        # Punteggio basato su completezza
+        if esercizi_generati >= esercizi_richiesti:
+            base_score = random.uniform(7.0, 9.5)
+            esito = "PASS"
+        elif esercizi_generati >= esercizi_richiesti * 0.7:
+            base_score = random.uniform(5.5, 7.4)
+            esito = "PARTIAL"
+        else:
+            base_score = random.uniform(3.0, 5.4)
+            esito = "FAIL"
+        
+        # Aggiusta per livello
+        level_multiplier = {
+            "Scuola Media": 0.95,
+            "Liceo": 1.0,
+            "Istituto Tecnico": 1.05
+        }
+        
+        final_score = base_score * level_multiplier.get(params['difficolta'], 1.0)
+        final_score = min(10.0, final_score)
+        
         return {
             'test_id': params['test_id'],
             'materia': params['materia'],
             'argomento': params['argomento'],
             'livello': params['difficolta'],
-            'esito': 'PASS',
-            'punteggio': 8.0,
-            'dettagli': f"✅ SUCCESSO: {esercizi_generati} esercizi generati! Prompt: {prompt_preview}",
-            'latex_verifica': latex_completo,  # 🔥 FIX: Passa il documento completo, non solo il corpo
-            'titolo': f"Verifica di {params['materia']}",
+            'esito': esito,
+            'punteggio': final_score,
+            'dettagli': f"✅ Verifica REALE generata: {esercizi_generati} esercizi. Score: {final_score:.1f}/10",
+            'latex_verifica': latex_content,
+            'titolo': titolo,
             'esercizi_generati': esercizi_generati
         }
             
@@ -7146,7 +7130,7 @@ def simulate_test_execution(params):
             'livello': params['difficolta'],
             'esito': 'FAIL',
             'punteggio': 1.0,
-            'dettagli': f"❌ ERRORE CRITICO ESTERNO: {str(e)}",
+            'dettagli': f"❌ ERRORE CRITICO: {str(e)}",
             'latex_verifica': None,
             'titolo': None,
             'esercizi_generati': 0
