@@ -7505,12 +7505,19 @@ def render_valutazione_semplificata(verify_result):
             # Controlla se il PDF è valido anche con warning MiKTeX
             if pdf_bytes and len(pdf_bytes) > 1000:  # PDF valido
                 st.success("✅ PDF compilato con successo!")
+                
+                # 🎉 NUOVO: Preview PDF inline
+                st.markdown("#### 📖 Preview PDF (inline)")
+                st.pdf_viewer(pdf_bytes, height=600)
+                
+                # Download button (opzionale)
                 st.download_button(
                     label="📥 Scarica PDF",
                     data=pdf_bytes,
                     file_name=f"verifica_{verify_result['test_id']}.pdf",
                     mime="application/pdf"
                 )
+                
                 # Mostra warning MiKTeX se presenti
                 if pdf_error and ("security risk" in pdf_error or "checked for updates" in pdf_error):
                     st.info("ℹ️ Warning MiKTeX (normale su Windows):")
@@ -7520,6 +7527,11 @@ def render_valutazione_semplificata(verify_result):
                     st.code(pdf_error)
             elif pdf_bytes and len(pdf_bytes) > 0:  # PDF piccolo ma esiste
                 st.warning("⚠️ PDF generato ma piccolo (potrebbero mancare elementi)")
+                
+                # Preview anche se piccolo
+                st.markdown("#### 📖 Preview PDF (sperimentale)")
+                st.pdf_viewer(pdf_bytes, height=400)
+                
                 st.download_button(
                     label="📥 Scarica PDF (sperimentale)",
                     data=pdf_bytes,
