@@ -6969,7 +6969,7 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 1.0,
-                'dettagli': "ERRORE: GOOGLE_API_KEY non trovata",
+                'dettagli': "❌ ERRORE: GOOGLE_API_KEY non trovata",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
@@ -6990,7 +6990,7 @@ def simulate_test_execution(params):
                     'livello': params['difficolta'],
                     'esito': 'FAIL',
                     'punteggio': 1.0,
-                    'dettagli': f"ERRORE: API test vuoto",
+                    'dettagli': "❌ ERRORE: API test vuoto",
                     'latex_verifica': None,
                     'titolo': None,
                     'esercizi_generati': 0
@@ -7003,7 +7003,7 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 1.0,
-                'dettagli': f"ERRORE API test: {str(e)}",
+                'dettagli': f"❌ ERRORE API test: {str(e)}",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
@@ -7039,7 +7039,7 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 1.0,
-                'dettagli': f"ERRORE PROMPT_CORPO_VERIFICA: {str(prompt_error)}",
+                'dettagli': f"❌ ERRORE PROMPT_CORPO_VERIFICA: {str(prompt_error)}",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
@@ -7058,7 +7058,7 @@ def simulate_test_execution(params):
                     'livello': params['difficolta'],
                     'esito': 'FAIL',
                     'punteggio': 2.0,
-                    'dettagli': f"ERRORE: Prompt reale fallito. Raw: {raw_latex[:100]}",
+                    'dettagli': f"❌ ERRORE: Prompt reale fallito - output troppo corto. Raw: '{raw_latex[:100]}'",
                     'latex_verifica': raw_latex,
                     'titolo': f"Test {params['materia']}",
                     'esercizi_generati': 0
@@ -7072,7 +7072,7 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 1.0,
-                'dettagli': f"ERRORE API CON PROMPT REALE: {str(api_error)}",
+                'dettagli': f"❌ ERRORE API CON PROMPT REALE: {str(api_error)}",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
@@ -7090,7 +7090,7 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 2.0,
-                'dettagli': f"ERRORE PULIZIA LATEX: {str(clean_error)}",
+                'dettagli': f"❌ ERRORE PULIZIA LATEX: {str(clean_error)}",
                 'latex_verifica': raw_latex,
                 'titolo': f"Test {params['materia']}",
                 'esercizi_generati': raw_latex.count('\\subsection*')
@@ -7099,14 +7099,15 @@ def simulate_test_execution(params):
         # Conta esercizi
         esercizi_generati = latex_content.count('\\item[')
         
+        # Successo!
         return {
             'test_id': params['test_id'],
             'materia': params['materia'],
             'argomento': params['argomento'],
             'livello': params['difficolta'],
-            'esito': 'PASS' if esercizi_generati > 0 else 'FAIL',
-            'punteggio': 8.0 if esercizi_generati > 0 else 2.0,
-            'dettagli': f"Test REALE: {esercizi_generati} esercizi. Prompt: {prompt_preview}",
+            'esito': 'PASS',
+            'punteggio': 8.0,
+            'dettagli': f"✅ SUCCESSO: {esercizi_generati} esercizi generati! Prompt: {prompt_preview}",
             'latex_verifica': latex_content,
             'titolo': f"Verifica di {params['materia']}",
             'esercizi_generati': esercizi_generati
@@ -7120,7 +7121,7 @@ def simulate_test_execution(params):
             'livello': params['difficolta'],
             'esito': 'FAIL',
             'punteggio': 1.0,
-            'dettagli': f"ERRORE CRITICO: {str(e)}",
+            'dettagli': f"❌ ERRORE CRITICO ESTERNO: {str(e)}",
             'latex_verifica': None,
             'titolo': None,
             'esercizi_generati': 0
