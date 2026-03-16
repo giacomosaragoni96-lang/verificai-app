@@ -6952,13 +6952,14 @@ def init_simulate_functions():
     return True
 
 def simulate_test_execution(params):
-    """Test MINIMO per vedere se l'API funziona"""
+    """Test con il sistema reale ma debug passo-passo per trovare il problema"""
     try:
-        # Importa solo il minimo necessario
+        # Importa le funzioni necessarie
         import google.generativeai as genai
         import os
+        from prompts import prompt_corpo_verifica
         
-        # Debug: verifica API key
+        # Setup API
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
             return {
@@ -6974,10 +6975,7 @@ def simulate_test_execution(params):
                 'esercizi_generati': 0
             }
         
-        # Configura API
         genai.configure(api_key=api_key)
-        
-        # Usa il modello
         MODEL_ID = "gemini-2.5-flash-lite"
         model = genai.GenerativeModel(MODEL_ID)
         
@@ -6992,7 +6990,7 @@ def simulate_test_execution(params):
                     'livello': params['difficolta'],
                     'esito': 'FAIL',
                     'punteggio': 1.0,
-                    'dettagli': f"ERRORE: API test vuoto con {MODEL_ID}",
+                    'dettagli': f"ERRORE: API test vuoto",
                     'latex_verifica': None,
                     'titolo': None,
                     'esercizi_generati': 0
@@ -7011,40 +7009,29 @@ def simulate_test_execution(params):
                 'esercizi_generati': 0
             }
         
-        # TEST MINIMO: prompt hardcoded semplice
+        # TEST 1: Proviamo prompt_corpo_verifica da solo
         try:
-            simple_prompt = f"""Crea 3 esercizi di {params['materia']} sull'argomento {params['argomento']} per livello {params['difficolta']}.
+            prompt_corpo = prompt_corpo_verifica(
+                materia=params['materia'],
+                argomento=params['argomento'],
+                calibrazione="Standard",
+                durata="60 minuti",
+                num_esercizi=params.get('num_esercizi', 3),
+                punti_totali=params.get('punti_totali', 30),
+                mostra_punteggi=True,
+                con_griglia=False,
+                note_generali="",
+                istruzioni_esercizi="",
+                e_mat=params['materia'].lower() in ["matem", "fis", "chim", "inform"],
+                titolo_header="Verifica",
+                preambolo="",
+                mathpix_context=None
+            )
             
-Formato LaTeX:
-\\subsection*{{Esercizio 1}}
-\\begin{{enumerate}}
-\\item[a)] (10 pt) Primo esercizio...
-\\item[b)] (10 pt) Secondo esercizio...
-\\end{{enumerate}}
-
-\\subsection*{{Esercizio 2}}
-\\begin{{enumerate}}
-\\item[a)] (10 pt) Terzo esercizio...
-\\end{{enumerate}}"""
+            # Debug: mostra prime 200 chars del prompt
+            prompt_preview = prompt_corpo[:200] + "..." if len(prompt_corpo) > 200 else prompt_corpo
             
-            response = model.generate_content(simple_prompt)
-            latex_content = response.text
-            
-            if not latex_content or len(latex_content.strip()) < 50:
-                return {
-                    'test_id': params['test_id'],
-                    'materia': params['materia'],
-                    'argomento': params['argomento'],
-                    'livello': params['difficolta'],
-                    'esito': 'FAIL',
-                    'punteggio': 2.0,
-                    'dettagli': f"ERRORE: Prompt semplice fallito. Output: {latex_content[:100]}",
-                    'latex_verifica': latex_content,
-                    'titolo': f"Test {params['materia']}",
-                    'esercizi_generati': 0
-                }
-            
-        except Exception as simple_error:
+        except Exception as prompt_error:
             return {
                 'test_id': params['test_id'],
                 'materia': params['materia'],
@@ -7052,14 +7039,65 @@ Formato LaTeX:
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 1.0,
-                'dettagli': f"ERRORE PROMPT SEMPLICE: {str(simple_error)}",
+                'dettagli': f"ERRORE PROMPT_CORPO_VERIFICA: {str(prompt_error)}",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
             }
         
+        # TEST 2: Chiamata API con prompt reale
+        try:
+            response = model.generate_content(prompt_corpo)
+            raw_latex = response.text
+            
+            if not raw_latex or len(raw_latex.strip()) < 50:
+                return {
+                    'test_id': params['test_id'],
+                    'materia': params['materia'],
+                    'argomento': params['argomento'],
+                    'livello': params['difficolta'],
+                    'esito': 'FAIL',
+                    'punteggio': 2.0,
+                    'dettagli': f"ERRORE: Prompt reale fallito. Raw: {raw_latex[:100]}",
+                    'latex_verifica': raw_latex,
+                    'titolo': f"Test {params['materia']}",
+                    'esercizi_generati': 0
+                }
+            
+        except Exception as api_error:
+            return {
+                'test_id': params['test_id'],
+                'materia': params['materia'],
+                'argomento': params['argomento'],
+                'livello': params['difficolta'],
+                'esito': 'FAIL',
+                'punteggio': 1.0,
+                'dettagli': f"ERRORE API CON PROMPT REALE: {str(api_error)}",
+                'latex_verifica': None,
+                'titolo': None,
+                'esercizi_generati': 0
+            }
+        
+        # TEST 3: Proviamo pulizia LaTeX
+        try:
+            from latex_utils import pulisci_corpo_latex
+            latex_content = pulisci_corpo_latex(raw_latex)
+        except Exception as clean_error:
+            return {
+                'test_id': params['test_id'],
+                'materia': params['materia'],
+                'argomento': params['argomento'],
+                'livello': params['difficolta'],
+                'esito': 'FAIL',
+                'punteggio': 2.0,
+                'dettagli': f"ERRORE PULIZIA LATEX: {str(clean_error)}",
+                'latex_verifica': raw_latex,
+                'titolo': f"Test {params['materia']}",
+                'esercizi_generati': raw_latex.count('\\subsection*')
+            }
+        
         # Conta esercizi
-        esercizi_generati = latex_content.count('\\subsection*')
+        esercizi_generati = latex_content.count('\\item[')
         
         return {
             'test_id': params['test_id'],
@@ -7068,9 +7106,9 @@ Formato LaTeX:
             'livello': params['difficolta'],
             'esito': 'PASS' if esercizi_generati > 0 else 'FAIL',
             'punteggio': 8.0 if esercizi_generati > 0 else 2.0,
-            'dettagli': f"Test MINIMO: {esercizi_generati} esercizi generati con prompt hardcoded",
+            'dettagli': f"Test REALE: {esercizi_generati} esercizi. Prompt: {prompt_preview}",
             'latex_verifica': latex_content,
-            'titolo': f"Test {params['materia']}",
+            'titolo': f"Verifica di {params['materia']}",
             'esercizi_generati': esercizi_generati
         }
             
