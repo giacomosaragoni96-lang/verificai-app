@@ -7077,6 +7077,10 @@ def simulate_test_execution(params):
             from latex_utils import pulisci_corpo_latex, _costruisci_preambolo
             corpo_pulito = pulisci_corpo_latex(latex_content)
             
+            # Debug: controlla corpo pulito
+            print(f"🔥 DEBUG: latex_content originale lunghezza: {len(latex_content) if latex_content else 'None'}")
+            print(f"🔥 DEBUG: corpo_pulito lunghezza: {len(corpo_pulito) if corpo_pulito else 'None'}")
+            
             # 🎉 COSTRUISCI IL DOCUMENTO COMPLETO COME L'APP
             try:
                 preambolo, _ = _costruisci_preambolo(
@@ -7097,6 +7101,7 @@ def simulate_test_execution(params):
                 print(f"🔥 DEBUG: Preambolo lunghezza: {len(preambolo)}")
                 print(f"🔥 DEBUG: Corpo pulito lunghezza: {len(corpo_pulito)}")
                 print(f"🔥 DEBUG: Documento completo lunghezza: {len(latex_verifica)}")
+                print(f"🔥 DEBUG: latex_verifica type: {type(latex_verifica)}")
                 
             except Exception as e:
                 # Fallback: preambolo manuale se _costruisci_preambolo fallisce
@@ -7126,8 +7131,10 @@ def simulate_test_execution(params):
 
 """
                 latex_verifica = preambolo + corpo_pulito
+                print(f"🔥 DEBUG: Fallback - latex_verifica lunghezza: {len(latex_verifica)}")
         else:
             latex_verifica = ""
+            print("🔥 DEBUG: latex_content vuoto, latex_verifica impostato a stringa vuota")
 
         if not latex_verifica or len(latex_verifica.strip()) < 50:
             return {
@@ -7826,7 +7833,18 @@ def render_valutazione_semplificata(verify_result):
     try:
         from latex_utils import compila_pdf
         import base64
-        pdf_bytes, pdf_error = compila_pdf(verify_result['latex_verifica'])
+        
+        # Debug extra
+        latex_da_compilare = verify_result.get('latex_verifica')
+        print(f"🔥 DEBUG PRE-COMPILAZIONE: latex_da_compilare type: {type(latex_da_compilare)}")
+        print(f"🔥 DEBUG PRE-COMPILAZIONE: latex_da_compilare è None? {latex_da_compilare is None}")
+        
+        if latex_da_compilare is None:
+            st.error("❌ ERRORE: latex_verifica è None!")
+            st.code(f"verify_result keys: {list(verify_result.keys())}")
+            return
+        
+        pdf_bytes, pdf_error = compila_pdf(latex_da_compilare)
         
         # DEBUG: mostra dettagli
         st.write(f"DEBUG: PDF bytes: {type(pdf_bytes)}, length: {len(pdf_bytes) if pdf_bytes else 'None'}")
