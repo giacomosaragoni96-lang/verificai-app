@@ -1067,15 +1067,15 @@ def migliora_spaziatura_sottopunti(latex: str) -> str:
     Migliora la spaziatura tra i sottopunti degli esercizi.
     Assicura che ci sia spaziatura appropriata tra gli item.
     """
-    # Sostituisci direttamente pattern comuni di item attaccati
-    latex = latex.replace('\\item[a)]', '\n\\item[a)]')
-    latex = latex.replace('\\item[b)]', '\n\\item[b)]')
-    latex = latex.replace('\\item[c)]', '\n\\item[c)]')
-    latex = latex.replace('\\item[d)]', '\n\\item[d)]')
-    latex = latex.replace('\\item[e)]', '\n\\item[e)]')
-    latex = latex.replace('\\item[f)]', '\n\\item[f)]')
-    latex = latex.replace('\\item[g)]', '\n\\item[g)]')
-    latex = latex.replace('\\item[h)]', '\n\\item[h)]')
+    # Sostituisci direttamente pattern comuni di item attaccati per tutte le lettere
+    for letter in 'abcdefghijklmnopqrstuvwxyz':
+        latex = latex.replace(f'\\item[{letter})]', f'\n\\item[{letter})]')\n\\item[{})]'.format(letter))
+    
+    # Gestisci anche il formato semplice a) b) c) senza \item
+    for letter in 'abcdefghijklmnopqrstuvwxyz':
+        # Pattern: a)testo b)altro testo -> a)\ntesto\n\nb)\naltro testo
+        latex = re.sub(r'{}\) ([^{}\)]*?)(?={}\)|$)'.format(letter, letter, letter), 
+                     r'{)}\n\1\n\n'.format(letter), latex)
     
     # Aggiungi spaziatura dopo ogni \item con label (caso critico)
     latex = re.sub(r'(\\item\[[^\]]+\][^\n]*?)(?=\\item)', r'\1\n\n', latex)
