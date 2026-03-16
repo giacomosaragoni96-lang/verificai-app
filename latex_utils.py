@@ -1821,11 +1821,11 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                     log_content = f.read()
                     logger.info(f"Contenuto log LaTeX (ultimi 1000 char): {log_content[-1000:]}")
 
-            # Controlla se il PDF è stato generato anche con warnings
+            # 🔥 FIX PRIMA: Controlla subito se il PDF esiste, prima di controllare return code
             if os.path.exists(pdf_path):
                 pdf_size = os.path.getsize(pdf_path)
                 if pdf_size > 1000:  # PDF valido (almeno 1KB)
-                    logger.info(f"✓ PDF compilato con successo - Dimensione: {pdf_size} bytes")
+                    logger.info(f"✓ PDF generato con successo - Dimensione: {pdf_size} bytes")
                     
                     # Se c'è return code != 0 ma il PDF esiste, sono solo warning
                     if result.returncode != 0:
