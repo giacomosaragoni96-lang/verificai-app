@@ -1794,9 +1794,9 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     print(f"🔍 Contiene \\documentclass: {codice_latex.count('\\documentclass')} volte")
     
     # 🔥 DEBUG AGGIUNTIVO: Controlla struttura minima
-    has_begin_doc = '\\\\begin{document}' in codice_latex  # Corretto: doppio backslash
-    has_end_doc = '\\\\end{document}' in codice_latex      # Corretto: doppio backslash
-    has_docclass = '\\\\documentclass' in codice_latex    # Corretto: doppio backslash
+    has_begin_doc = '\\begin{document}' in codice_latex      # Corretto: backslash singolo
+    has_end_doc = '\\end{document}' in codice_latex        # Corretto: backslash singolo
+    has_docclass = '\\documentclass' in codice_latex      # Corretto: backslash singolo
     
     print(f"🔍 DEBUG: Struttura LaTeX - Begin: {has_begin_doc}, End: {has_end_doc}, Class: {has_docclass}")
     
