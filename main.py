@@ -7487,7 +7487,12 @@ def render_valutazione_semplificata(verify_result):
         try:
             from latex_utils import compila_pdf
             pdf_bytes, pdf_error = compila_pdf(verify_result['latex_verifica'])
-            if pdf_bytes:
+            
+            # DEBUG: mostra dettagli
+            st.write(f"DEBUG: PDF bytes: {type(pdf_bytes)}, length: {len(pdf_bytes) if pdf_bytes else 'None'}")
+            st.write(f"DEBUG: PDF error: {pdf_error}")
+            
+            if pdf_bytes and len(pdf_bytes) > 1000:  # PDF valido
                 st.success("✅ PDF compilato con successo!")
                 st.download_button(
                     label="📥 Scarica PDF",
@@ -7503,10 +7508,12 @@ def render_valutazione_semplificata(verify_result):
                     st.warning("⚠️ Warning compilazione:")
                     st.code(pdf_error)
             else:
-                st.error("❌ PDF non compilato")
+                st.error("❌ PDF non compilato o troppo piccolo")
                 if pdf_error:
                     st.error("Dettagli errore:")
                     st.code(pdf_error)
+                else:
+                    st.error("Nessun dettaglio errore disponibile")
         except Exception as pdf_error:
             st.error(f"❌ Errore compilazione PDF: {str(pdf_error)}")
     else:
