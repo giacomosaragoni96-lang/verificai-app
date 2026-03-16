@@ -7014,13 +7014,18 @@ def simulate_test_execution(params):
         
         # 🎉 USA ESATTAMENTE LA FUNZIONE DELL'APP NORMALE
         try:
+            # Importa le costanti dell'app
+            from config import CALIBRAZIONE_SCUOLA
+            
             # Parametri esattamente come nell'app normale
+            calibrazione = CALIBRAZIONE_SCUOLA.get(params['difficolta'], "")
+            
             result = genera_verifica(
                 model=model,
                 materia=params['materia'],           # ✅ Input random
                 argomento=params['argomento'],       # ✅ Input random
                 difficolta=params['difficolta'],     # ✅ Input random
-                calibrazione="Standard",             # ✅ Come nell'app
+                calibrazione=calibrazione,           # ✅ Come nell'app
                 durata="60 minuti",                  # ✅ Come nell'app
                 num_esercizi=params.get('num_esercizi', 3),  # ✅ Input random
                 punti_totali=params.get('punti_totali', 30), # ✅ Input random
@@ -7035,7 +7040,7 @@ def simulate_test_execution(params):
                 istruzioni_esercizi="",              # ✅ Come nell'app
                 immagini_esercizi=[],                # ✅ Come nell'app
                 file_ispirazione=None,                # ✅ Come nell'app
-                mathpix_context=None,                # ✅ Come nell'app
+                mathpix_context=None,                # ✅ Come nell'app (importante!)
                 on_progress=lambda text: None        # ✅ Disabilitato per test batch
             )
             
@@ -7096,69 +7101,13 @@ def simulate_test_execution(params):
         latex_content = result['A'].get('latex', '')
         titolo = result.get('titolo', f"Verifica di {params['materia']}")
         
-        # 🎉 APPLICA LA STESSA PULIZIA DELL'APP NORMALE
-        if latex_content:
-            from latex_utils import pulisci_corpo_latex, _costruisci_preambolo
-            corpo_pulito = pulisci_corpo_latex(latex_content)
-            
-            # Debug: controlla corpo pulito
-            print(f"🔥 DEBUG: latex_content originale lunghezza: {len(latex_content) if latex_content else 'None'}")
-            print(f"🔥 DEBUG: corpo_pulito lunghezza: {len(corpo_pulito) if corpo_pulito else 'None'}")
-            
-            # 🎉 COSTRUISCI IL DOCUMENTO COMPLETO COME L'APP
-            try:
-                preambolo, _ = _costruisci_preambolo(
-                    params['materia'], 
-                    titolo, 
-                    "Versione A", 
-                    []  # materiali vuoti per test
-                )
-                
-                # Debug: controlla se preambolo è valido
-                if not preambolo:
-                    raise ValueError("Preambolo vuoto")
-                
-                # Assembla documento completo
-                latex_verifica = preambolo + "\n" + corpo_pulito
-                
-                # Debug finale
-                print(f"🔥 DEBUG: Preambolo lunghezza: {len(preambolo)}")
-                print(f"🔥 DEBUG: Corpo pulito lunghezza: {len(corpo_pulito)}")
-                print(f"🔥 DEBUG: Documento completo lunghezza: {len(latex_verifica)}")
-                print(f"🔥 DEBUG: latex_verifica type: {type(latex_verifica)}")
-                
-            except Exception as e:
-                # Fallback: preambolo manuale se _costruisci_preambolo fallisce
-                print(f"⚠️ Errore _costruisci_preambolo: {e}")
-                preambolo = f"""\\documentclass[12pt,a4paper]{{article}}
-\\usepackage[utf8]{{inputenc}}
-\\usepackage[italian]{{babel}}
-\\usepackage{{amsmath,amsfonts,amssymb}}
-\\usepackage{{geometry}}
-\\geometry{{margin=2cm}}
-\\usepackage{{array}}
-\\usepackage{{multicol}}
-\\usepackage{{enumerate}}
-\\usepackage{{adjustbox}}
-\\usepackage{{wasysym}}
-\\usepackage{{pgfplots}}
-\\pgfplotsset{{compat=1.18}}
-\\usepackage{{tikz}}
-\\usepackage{{enumitem}}
-
-\\begin{{document}}
-
-\\title{{{titolo}}}
-\\author{{Docente}}
-\\date{{\\today}}
-\\maketitle
-
-"""
-                latex_verifica = preambolo + corpo_pulito
-                print(f"🔥 DEBUG: Fallback - latex_verifica lunghezza: {len(latex_verifica)}")
-        else:
-            latex_verifica = ""
-            print("🔥 DEBUG: latex_content vuoto, latex_verifica impostato a stringa vuota")
+        # 🔥 DOUBLE CHECK: L'utente riceve ESATTAMENTE result['A']['latex'] senza modifiche!
+        # Quindi il test system deve usare lo stesso identico output
+        latex_verifica = latex_content  # ESATTAMENTE come l'app
+        
+        # Debug per conferma
+        print(f"🔥 DOUBLE CHECK: latex_verifica è lo stesso di result['A']['latex']? {latex_verifica == latex_content}")
+        print(f"🔥 DOUBLE CHECK: Lunghezza latex_verifica: {len(latex_verifica) if latex_verifica else 'None'}")
 
         if not latex_verifica or len(latex_verifica.strip()) < 50:
             return {
@@ -7175,11 +7124,11 @@ def simulate_test_execution(params):
             }
         
         # 🎉 USA IL LaTeX COMPLETO COME GENERATO DALL'APP
-        # Il documento è già completo con preambolo + corpo
+        # Il documento è già quello che l'utente riceve
         
-        # Conta esercizi come fa l'app (usa il corpo pulito)
+        # Conta esercizi come fa l'app (usa il LaTeX originale)
         try:
-            esercizi_generati = corpo_pulito.count('\\item[') if corpo_pulito else 0
+            esercizi_generati = latex_verifica.count('\\item[') if latex_verifica else 0
             print(f"🔥 DEBUG: esercizi_generati calcolati: {esercizi_generati}")
         except Exception as e:
             print(f"🔥 DEBUG ERRORE conteggio esercizi: {e}")
