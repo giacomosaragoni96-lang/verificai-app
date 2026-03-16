@@ -7645,6 +7645,11 @@ def execute_30_test_random():
         st.error(f"⚠️ Errore inizializzando database: {e}")
         return
     
+    # Inizializza session_id se non esiste
+    if 'admin_test_session_id' not in st.session_state:
+        import uuid
+        st.session_state.admin_test_session_id = str(uuid.uuid4())
+    
     test_params = st.session_state.admin_test_params
     session_id = st.session_state.admin_test_session_id
     num_tests = len(test_params)
