@@ -1069,7 +1069,7 @@ def migliora_spaziatura_sottopunti(latex: str) -> str:
     """
     # Sostituisci direttamente pattern comuni di item attaccati per tutte le lettere
     for letter in 'abcdefghijklmnopqrstuvwxyz':
-        latex = latex.replace(f'\\item[{letter})]', f'\n\\item[{letter})]')\n\\item[{})]'.format(letter))
+        latex = latex.replace(f'\\item[{letter})]', f'\n\\item[{letter})]')
     
     # Gestisci anche il formato semplice a) b) c) senza \item
     for letter in 'abcdefghijklmnopqrstuvwxyz':
