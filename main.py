@@ -7096,7 +7096,7 @@ def simulate_test_execution(params):
 
 \\begin{{document}}
 
-\\title{{{verify_result.get('titolo', f'Verifica di {params["materia"]}')}}}
+\\title{{Verifica di {params["materia"]}}}
 \\author{{Docente}}
 \\date{{\\today}}
 \\maketitle
