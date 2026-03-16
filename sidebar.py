@@ -78,6 +78,7 @@ def render_sidebar(
         _sb_muted = T.get("sidebar_input_text", "#E6EDF3") + "99"
         _sb_border = T.get("sidebar_border", "#E2E8F0")
         _SB_INPUT_BG = T.get("sidebar_input_bg", "#1C2128")  # Aggiunto colore di sfondo input
+        _SB_BORDER = _sb_border  # Aggiunto alias per coerenza
         
         # Linea separatoria elegante
         st.markdown(
