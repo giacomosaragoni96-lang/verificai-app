@@ -320,7 +320,7 @@ def render_sidebar(
             # Ottieni l'ultima verifica generata
             ultima_verifica = (
                 supabase_admin.table("verifiche_storico")
-                .select("id, titolo, created_at")
+                .select("id, created_at")
                 .eq("user_id", utente.id)
                 .order("created_at", desc=True)
                 .limit(1)
@@ -359,25 +359,21 @@ def render_sidebar(
         
         # Link veloce all'ultima verifica
         if ultima_verifica:
-            titolo_breve = ultima_verifica.get("titolo", "Senza titolo")[:30] + "..." if len(ultima_verifica.get("titolo", "")) > 30 else ultima_verifica.get("titolo", "Senza titolo")
+            titolo_breve = f"Verifica del {_tempo_fa(ultima_verifica['created_at'])}"
             st.markdown(f'''
             <div style="
                 background: {_SB_INPUT_BG};
                 border: 1px solid {_SB_BORDER};
-                padding: 0.8rem;
                 border-radius: 8px;
-                margin-bottom: 1rem;
-                cursor: pointer;
-                transition: all 0.2s ease;
-            " onclick="window.location.href='#?stage=MIE_VERIFICHE&verifica_id={ultima_verifica["id"]}'">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
-                    <span style="font-size: 0.9rem; font-weight: 600; color: {_sb_text};">⚡ Ultima verifica</span>
+                padding: 10px;
+                margin-bottom: 12px;
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                     <span style="background: {_acc}; color: white; padding: 1px 6px; border-radius: 8px; font-size: 0.7rem; font-weight: 600;">NUOVO</span>
                 </div>
                 <div style="font-size: 0.85rem; color: {_sb_text}; font-weight: 500;">
                     {titolo_breve}
                 </div>
-                <div style="font-size: 0.75rem; color: {_sb_muted}; margin-top: 0.2rem;">
                     {_tempo_fa(ultima_verifica["created_at"])}
                 </div>
             </div>
