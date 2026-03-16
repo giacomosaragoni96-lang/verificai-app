@@ -7435,6 +7435,7 @@ def render_risultati_e_valutazione():
 
 def render_valutazione_semplificata(verify_result):
     """Valutazione con contenuto REALE della verifica"""
+    import re  # Aggiunto per le regex
     st.markdown("---")
     
     # Pulsanti navigazione in alto
@@ -7480,6 +7481,24 @@ def render_valutazione_semplificata(verify_result):
             st.metric("Esercizi Generati", verify_result.get('esercizi_generati', 0))
         with col2:
             st.metric("Titolo", verify_result.get('titolo', 'N/A')[:20] + '...' if len(str(verify_result.get('titolo', ''))) > 20 else verify_result.get('titolo', 'N/A'))
+        
+        # 🎉 NUOVO: Preview PDF
+        st.markdown("### 📋 Preview PDF")
+        try:
+            from latex_utils import compila_pdf
+            pdf_bytes = compila_pdf(verify_result['latex_verifica'])
+            if pdf_bytes:
+                st.success("✅ PDF compilato con successo!")
+                st.download_button(
+                    label="📥 Scarica PDF",
+                    data=pdf_bytes,
+                    file_name=f"verifica_{verify_result['test_id']}.pdf",
+                    mime="application/pdf"
+                )
+            else:
+                st.warning("⚠️ PDF non compilato (errore LaTeX)")
+        except Exception as pdf_error:
+            st.error(f"❌ Errore compilazione PDF: {str(pdf_error)}")
     else:
         # Mostra il motivo esatto del fallimento
         st.error("⚠️ Contenuto verifica non disponibile (generazione fallita)")
@@ -7493,6 +7512,45 @@ def render_valutazione_semplificata(verify_result):
     
     # Valutazione rapida
     st.markdown("### 🎯 Valutazione Rapida")
+    
+    # 🔍 NUOVO: Analisi automatica degli esercizi
+    if verify_result.get('latex_verifica'):
+        st.markdown("#### 🔍 Analisi Automatica Esercizi")
+        
+        latex_content = verify_result['latex_verifica']
+        
+        # Controlli automatici
+        checks = {
+            'subsection': latex_content.count('\\subsection*'),
+            'enumerate': latex_content.count('\\begin{enumerate}'),
+            'item': latex_content.count('\\item['),
+            'punti': len(re.findall(r'\(\s*\d+(?:[.,]\d+)?\s*pt\s*\)', latex_content)),
+            'graffe': latex_content.count('{') - latex_content.count('}'),
+            'salti_linea': latex_content.count('\n\n'),
+            'dollari': latex_content.count('$'),
+            'begin_end': latex_content.count('\\begin') - latex_content.count('\\end')
+        }
+        
+        # Mostra risultati analisi
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Esercizi", checks['subsection'])
+        with col2:
+            st.metric("Item[a)]", checks['item'])
+        with col3:
+            st.metric("Punti", checks['punti'])
+        with col4:
+            st.metric("Graffe", checks['graffe'])
+        
+        # Alert per problemi
+        if checks['graffe'] != 0:
+            st.error(f"❌ Errore graffe: {checks['graffe']} graffe non bilanciate")
+        if checks['begin_end'] != 0:
+            st.error(f"❌ Errore begin/end: {checks['begin_end']} environment non chiusi")
+        if checks['subsection'] != checks['item']:
+            st.warning(f"⚠️ Attenzione: {checks['subsection']} esercizi ma {checks['item']} item[a)]")
+        if checks['punti'] == 0 and verify_result.get('punti_totali', 0) > 0:
+            st.warning("⚠️ Attenzione: Nessun punto trovato ma punteggio richiesto")
     
     col1, col2 = st.columns(2)
     
