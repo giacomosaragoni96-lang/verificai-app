@@ -7758,109 +7758,116 @@ def render_valutazione_semplificata(verify_result):
             st.rerun()
     
     # Info verifica
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2 = st.columns(2)
     with col1:
         st.metric("Materia", verify_result['materia'])
     with col2:
-        st.metric("Argomento", verify_result['argomento'])
-    with col3:
-        st.metric("Livello", verify_result['livello'])
-    with col4:
         st.metric("Score", f"{verify_result['punteggio']:.2f}")
     
-    # Contenuto REALE della verifica
-    st.markdown("### 📄 Verifica Generata")
-    
-    if verify_result.get('latex_verifica'):
-        # Info aggiuntive sulla generazione
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Esercizi Generati", verify_result.get('esercizi_generati', 0))
-        with col2:
-            st.metric("Titolo", verify_result.get('titolo', 'N/A')[:20] + '...' if len(str(verify_result.get('titolo', ''))) > 20 else verify_result.get('titolo', 'N/A'))
+    # 🎉 Preview PDF FINALE
+    st.markdown("### 📋 Preview PDF Finale")
+    try:
+        from latex_utils import compila_pdf
+        import base64
+        pdf_bytes, pdf_error = compila_pdf(verify_result['latex_verifica'])
         
-        # 🎉 Preview PDF FINALE
-        st.markdown("### 📋 Preview PDF Finale")
-        try:
-            from latex_utils import compila_pdf
-            import base64
-            pdf_bytes, pdf_error = compila_pdf(verify_result['latex_verifica'])
+        # DEBUG: mostra dettagli
+        st.write(f"DEBUG: PDF bytes: {type(pdf_bytes)}, length: {len(pdf_bytes) if pdf_bytes else 'None'}")
+        st.write(f"DEBUG: PDF error: {pdf_error}")
+        
+        # Controlla se il PDF è valido anche con warning MiKTeX
+        if pdf_bytes and len(pdf_bytes) > 1000:  # PDF valido
+            st.success("✅ PDF compilato con successo!")
             
-            # DEBUG: mostra dettagli
-            st.write(f"DEBUG: PDF bytes: {type(pdf_bytes)}, length: {len(pdf_bytes) if pdf_bytes else 'None'}")
-            st.write(f"DEBUG: PDF error: {pdf_error}")
+            # Preview PDF inline con iframe base64 (come nell'app)
+            st.markdown("#### 📖 Preview PDF Completa")
+            b64 = base64.b64encode(pdf_bytes).decode()
+            st.markdown(
+                '<iframe src="data:application/pdf;base64,' + b64 + '#toolbar=1&navpanes=1&scrollbar=1" '
+                'style="width:100%;height:600px;border:none;border-radius:8px;"></iframe>',
+                unsafe_allow_html=True
+            )
             
-            # Controlla se il PDF è valido anche con warning MiKTeX
-            if pdf_bytes and len(pdf_bytes) > 1000:  # PDF valido
-                st.success("✅ PDF compilato con successo!")
+            # Download button
+            st.download_button(
+                label="📥 Scarica PDF",
+                data=pdf_bytes,
+                file_name=f"verifica_{verify_result['test_id']}.pdf",
+                mime="application/pdf"
+            )
+            
+            # 🎯 Valutazione SÌ/NO per ogni esercizio
+            st.markdown("### 🎯 Valutazione Esercizi")
+            st.markdown("Valuta ogni esercizio:")
+            
+            # Estrai esercizi dal LaTeX
+            try:
+                from valutazione_esercizi import estrai_esercizi_da_latex
+                esercizi = estrai_esercizi_da_latex(verify_result['latex_verifica'])
                 
-                # Preview PDF inline con iframe base64 (come nell'app)
-                st.markdown("#### 📖 Preview PDF Completa")
-                b64 = base64.b64encode(pdf_bytes).decode()
-                st.markdown(
-                    '<iframe src="data:application/pdf;base64,' + b64 + '#toolbar=1&navpanes=1&scrollbar=1" '
-                    'style="width:100%;height:600px;border:none;border-radius:8px;"></iframe>',
-                    unsafe_allow_html=True
-                )
-                
-                # Download button
-                st.download_button(
-                    label="📥 Scarica PDF",
-                    data=pdf_bytes,
-                    file_name=f"verifica_{verify_result['test_id']}.pdf",
-                    mime="application/pdf"
-                )
-                
-                # Mostra warning MiKTeX se presenti
-                if pdf_error and ("security risk" in pdf_error or "checked for updates" in pdf_error):
-                    st.info("ℹ️ Warning MiKTeX (normale su Windows):")
-                    st.code(pdf_error)
-                elif pdf_error:
-                    st.warning("⚠️ Warning compilazione:")
-                    st.code(pdf_error)
-            elif pdf_bytes and len(pdf_bytes) > 0:  # PDF piccolo ma esiste
-                st.warning("⚠️ PDF generato ma piccolo (potrebbero mancare elementi)")
-                
-                # Preview anche se piccolo
-                st.markdown("#### 📖 Preview PDF (sperimentale)")
-                b64 = base64.b64encode(pdf_bytes).decode()
-                st.markdown(
-                    '<iframe src="data:application/pdf;base64,' + b64 + '#toolbar=1&navpanes=1&scrollbar=1" '
-                    'style="width:100%;height:400px;border:none;border-radius:8px;"></iframe>',
-                    unsafe_allow_html=True
-                )
-                
-                st.download_button(
-                    label="📥 Scarica PDF (sperimentale)",
-                    data=pdf_bytes,
-                    file_name=f"verifica_{verify_result['test_id']}.pdf",
-                    mime="application/pdf"
-                )
-                if pdf_error:
-                    st.code(pdf_error)
-            else:
-                st.error("❌ PDF non compilato")
-                if pdf_error:
-                    st.error("Dettagli errore:")
-                    st.code(pdf_error)
-                    # Suggerimento per warning MiKTeX
-                    if "security risk" in pdf_error:
-                        st.info("💡 Suggerimento: Questo è un warning MiKTeX normale su Windows. Il PDF potrebbe essere stato generato ma bloccato dai warning.")
-        except Exception as pdf_error:
-            st.error(f"❌ Errore compilazione PDF: {str(pdf_error)}")
+                if esercizi:
+                    for i, esercizio in enumerate(esercizi, 1):
+                        col1, col2 = st.columns([3, 1])
+                        with col1:
+                            st.markdown(f"**Esercizio {i}:** {esercizio.get('titolo', f'Esercizio {i}')}")
+                        with col2:
+                            # Pulsanti SÌ/NO
+                            col_s, col_n = st.columns(2)
+                            with col_s:
+                                if st.button(f"✅ SÌ", key=f"val_si_{verify_result['test_id']}_{i}"):
+                                    st.success(f"✅ Esercizio {i} APPROVATO")
+                            with col_n:
+                                if st.button(f"❌ NO", key=f"val_no_{verify_result['test_id']}_{i}"):
+                                    st.error(f"❌ Esercizio {i} RIFIUTATO")
+                        st.markdown("---")
+                else:
+                    st.info("ℹ️ Nessun esercizio rilevato nel LaTeX")
+                    
+            except Exception as e:
+                st.warning(f"⚠️ Errore nell'analisi degli esercizi: {e}")
+            
+            # Mostra warning MiKTeX se presenti
+            if pdf_error and ("security risk" in pdf_error or "checked for updates" in pdf_error):
+                st.info("ℹ️ Warning MiKTeX (normale su Windows):")
+                st.code(pdf_error)
+            elif pdf_error:
+                st.warning("⚠️ Warning compilazione:")
+                st.code(pdf_error)
+        elif pdf_bytes and len(pdf_bytes) > 0:  # PDF piccolo ma esiste
+            st.warning("⚠️ PDF generato ma piccolo (potrebbero mancare elementi)")
+            
+            # Preview anche se piccolo
+            st.markdown("#### 📖 Preview PDF (sperimentale)")
+            b64 = base64.b64encode(pdf_bytes).decode()
+            st.markdown(
+                '<iframe src="data:application/pdf;base64,' + b64 + '#toolbar=1&navpanes=1&scrollbar=1" '
+                'style="width:100%;height:400px;border:none;border-radius:8px;"></iframe>',
+                unsafe_allow_html=True
+            )
+            
+            st.download_button(
+                label="📥 Scarica PDF (sperimentale)",
+                data=pdf_bytes,
+                file_name=f"verifica_{verify_result['test_id']}.pdf",
+                mime="application/pdf"
+            )
+            if pdf_error:
+                st.code(pdf_error)
+        else:
+            st.error("❌ PDF non compilato")
+            if pdf_error:
+                st.error("Dettagli errore:")
+                st.code(pdf_error)
+                # Suggerimento per warning MiKTeX
+                if "security risk" in pdf_error:
+                    st.info("💡 Suggerimento: Questo è un warning MiKTeX normale su Windows. Il PDF potrebbe essere stato generato ma bloccato dai warning.")
+    except Exception as pdf_error:
+        st.error(f"❌ Errore compilazione PDF: {str(pdf_error)}")
     else:
         # Mostra il motivo esatto del fallimento
         st.error("⚠️ Contenuto verifica non disponibile (generazione fallita)")
         st.markdown("**🔍 Dettagli Errore:**")
         st.code(verify_result.get('dettagli', 'Nessun dettaglio disponibile'))
-        
-        # Mostra anche latex_verifica se presente (anche se vuoto)
-        if verify_result.get('latex_verifica') is not None:
-            st.markdown("**📋 Output Parziale:**")
-            st.code(verify_result['latex_verifica'] or "(Vuoto)", language='latex')
-    
-    # Valutazione rapida
-    st.markdown("### 🎯 Valutazione Rapida")
     
     # 🔍 NUOVO: Analisi automatica degli esercizi
     if verify_result.get('latex_verifica'):
