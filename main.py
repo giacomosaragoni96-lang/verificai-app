@@ -6952,30 +6952,16 @@ def init_simulate_functions():
     return True
 
 def simulate_test_execution(params):
-    """Esegue test VERITIERO con debug approfondito"""
+    """Esegue test VERITIERO con debug approfondito e modello corretto"""
     try:
         # Importa la funzione reale di generazione
         from generation import genera_verifica, _safe_generate
         import google.generativeai as genai
+        import os
         
         # Debug: verifica API key
-        try:
-            import os
-            api_key = os.getenv("GOOGLE_API_KEY")
-            if not api_key:
-                return {
-                    'test_id': params['test_id'],
-                    'materia': params['materia'],
-                    'argomento': params['argomento'],
-                    'livello': params['difficolta'],
-                    'esito': 'FAIL',
-                    'punteggio': 1.0,
-                    'dettagli': "ERRORE: GOOGLE_API_KEY non trovata",
-                    'latex_verifica': None,
-                    'titolo': None,
-                    'esercizi_generati': 0
-                }
-        except Exception as e:
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
             return {
                 'test_id': params['test_id'],
                 'materia': params['materia'],
@@ -6983,14 +6969,15 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 1.0,
-                'dettagli': f"ERRORE API key: {str(e)}",
+                'dettagli': "ERRORE: GOOGLE_API_KEY non trovata",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
             }
         
-        # Usa il modello reale di VerificAI
-        MODEL_ID = "gemini-1.5-flash"
+        # Usa il modello corretto da config.py
+        from config import MODEL_FAST_ID
+        MODEL_ID = MODEL_FAST_ID  # "gemini-2.5-flash-lite"
         model = genai.GenerativeModel(MODEL_ID)
         
         # Debug: test semplice API
@@ -7004,7 +6991,7 @@ def simulate_test_execution(params):
                     'livello': params['difficolta'],
                     'esito': 'FAIL',
                     'punteggio': 1.0,
-                    'dettagli': "ERRORE: API test vuoto",
+                    'dettagli': f"ERRORE: API test vuoto con modello {MODEL_ID}",
                     'latex_verifica': None,
                     'titolo': None,
                     'esercizi_generati': 0
@@ -7017,7 +7004,7 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 1.0,
-                'dettagli': f"ERRORE API test: {str(e)}",
+                'dettagli': f"ERRORE API test con {MODEL_ID}: {str(e)}",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
@@ -7058,7 +7045,7 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 1.0,
-                'dettagli': "ERRORE: genera_verifica ritornato None",
+                'dettagli': f"ERRORE: genera_verifica ritornato None con modello {MODEL_ID}",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
@@ -7076,7 +7063,7 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 2.0,
-                'dettagli': f"ERRORE: LaTeX A vuoto. Keys: {debug_keys}",
+                'dettagli': f"ERRORE: LaTeX A vuoto con {MODEL_ID}. Keys: {debug_keys}",
                 'latex_verifica': None,
                 'titolo': result.get('titolo', 'N/A'),
                 'esercizi_generati': 0
@@ -7098,7 +7085,7 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 2.0,
-                'dettagli': f"ERRORE: LaTeX troppo corto ({len(latex_content)} chars)",
+                'dettagli': f"ERRORE: LaTeX troppo corto ({len(latex_content)} chars) con {MODEL_ID}",
                 'latex_verifica': latex_content,
                 'titolo': result.get('titolo', 'N/A'),
                 'esercizi_generati': esercizi_generati
@@ -7132,7 +7119,7 @@ def simulate_test_execution(params):
             'livello': params['difficolta'],
             'esito': esito,
             'punteggio': final_score,
-            'dettagli': f"Verifica REALE generata con {esercizi_generati} esercizi. Score: {final_score:.1f}/10",
+            'dettagli': f"Verifica REALE generata con {MODEL_ID}: {esercizi_generati} esercizi. Score: {final_score:.1f}/10",
             'latex_verifica': latex_content,  # Contenuto REALE
             'titolo': result.get('titolo', f"Verifica di {params['materia']}"),
             'esercizi_generati': esercizi_generati
@@ -7248,7 +7235,7 @@ def render_genera_30_verifiche():
     """)
     
     # Pulsante per generare 1 sola verifica
-    if st.button("🚀 Genera 1 Verifica Random (DEBUG)", type="primary", use_container_width=True):
+    if st.button("🚀 Genera 1 Verifica Random (DEBUG)", key="generate_single_test", type="primary", use_container_width=True):
         genera_30_verifiche_random()
 
 def genera_30_verifiche_random():
@@ -7399,7 +7386,7 @@ def render_risultati_e_valutazione():
     # Pulsante per nuovo test (in alto)
     col1, col2 = st.columns([1, 4])
     with col1:
-        if st.button("🔄 Nuovo Test", type="secondary"):
+        if st.button("🔄 Nuovo Test", key="new_test_from_results", type="secondary"):
             # Pulisce session state
             keys_to_clear = ['admin_test_results', 'admin_test_params', 'admin_test_session_id', 'admin_verify_to_evaluate']
             for key in keys_to_clear:
@@ -7466,7 +7453,7 @@ def render_valutazione_semplificata(verify_result):
     # Pulsanti navigazione in alto
     col1, col2, col3 = st.columns([1, 2, 1])
     with col1:
-        if st.button("⬅️ Torna Risultati", type="secondary"):
+        if st.button("⬅️ Torna Risultati", key="back_to_results", type="secondary"):
             del st.session_state.admin_verify_to_evaluate
             st.rerun()
     
@@ -7474,7 +7461,7 @@ def render_valutazione_semplificata(verify_result):
         st.subheader(f"📝 Valutazione: {verify_result['test_id']}")
     
     with col3:
-        if st.button("🔄 Nuovo Test", type="secondary"):
+        if st.button("🔄 Nuovo Test", key="new_test_from_eval", type="secondary"):
             # Pulisce tutto e torna a generazione
             keys_to_clear = ['admin_test_results', 'admin_test_params', 'admin_test_session_id', 'admin_verify_to_evaluate']
             for key in keys_to_clear:
@@ -7542,7 +7529,7 @@ def render_valutazione_semplificata(verify_result):
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button("💾 Salva Valutazione", type="primary"):
+        if st.button("💾 Salva Valutazione", key="save_evaluation", type="primary"):
             try:
                 if approve_verify == "✅ SI":
                     st.success("✅ Valutazione salvata nella banca dati approvati!")
@@ -7555,12 +7542,12 @@ def render_valutazione_semplificata(verify_result):
                 st.error(f"❌ Errore salvando valutazione: {e}")
     
     with col2:
-        if st.button("⏭️ Prossima Verifica"):
+        if st.button("⏭️ Prossima Verifica", key="next_verification"):
             del st.session_state.admin_verify_to_evaluate
             st.rerun()
     
     with col3:
-        if st.button("🔄 Nuovo Test 30 Verifiche"):
+        if st.button("🔄 Nuovo Test 30 Verifiche", key="new_test_from_bottom"):
             del st.session_state.admin_test_results
             del st.session_state.admin_verify_to_evaluate
             st.rerun()
