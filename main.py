@@ -6954,10 +6954,16 @@ def init_simulate_functions():
 def simulate_test_execution(params):
     """Esegue test VERITIERO usando esattamente lo stesso flusso dell'utente normale"""
     try:
-        # Importa le funzioni reali
+        # Importa TUTTE le funzioni reali come nell'app normale
         from generation import genera_verifica, _safe_generate
+        from prompts import prompt_titolo, prompt_corpo_verifica, prompt_controllo_qualita
+        from latex_utils import compila_pdf, pulisci_corpo_latex
         import google.generativeai as genai
         import os
+        import logging
+        
+        # Setup logging come nell'app
+        logging.basicConfig(level=logging.INFO)
         
         # Debug: verifica API key
         api_key = os.getenv("GOOGLE_API_KEY")
@@ -6974,6 +6980,9 @@ def simulate_test_execution(params):
                 'titolo': None,
                 'esercizi_generati': 0
             }
+        
+        # Configura API come nell'app normale
+        genai.configure(api_key=api_key)
         
         # Usa lo stesso modello del sistema normale
         MODEL_ID = "gemini-2.5-flash-lite"
@@ -7009,7 +7018,7 @@ def simulate_test_execution(params):
                 'esercizi_generati': 0
             }
         
-        # CHIAMATA IDENTICA A QUELLA DELL'UTENTE NORMALE con try/catch dettagliato
+        # CHIAMATA IDENTICA A QUELLA DELL'APP NORMALE
         try:
             result = genera_verifica(
                 model=model,
@@ -7024,7 +7033,7 @@ def simulate_test_execution(params):
                 con_griglia=False,                   # Default come nell'app
                 doppia_fila=False,                   # Default come nell'app
                 bes_dsa=False,                       # Default come nell'app
-                perc_ridotta=None,                   # Default come nell'app
+                perc_ridotta=25,                     # ✅ Come nell'app normale!
                 bes_dsa_b=False,                     # Default come nell'app
                 genera_soluzioni=False,               # Default come nell'app
                 note_generali="",                    # Default come nell'app
@@ -7034,8 +7043,8 @@ def simulate_test_execution(params):
                 mathpix_context=None,                # Default come nell'app
                 on_progress=lambda text: None        # Disabilitato per test batch
             )
+            
         except Exception as generation_error:
-            # Errore durante la generazione - log dettagliato
             return {
                 'test_id': params['test_id'],
                 'materia': params['materia'],
