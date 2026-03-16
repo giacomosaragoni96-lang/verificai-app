@@ -7054,7 +7054,11 @@ def simulate_test_execution(params):
             }
         
         # Estrai il risultato come fa l'app normale
+        print(f"🔥 DEBUG: result type: {type(result)}")
+        print(f"🔥 DEBUG: result keys: {list(result.keys()) if result else 'None'}")
+        
         if not result or 'A' not in result:
+            print(f"🔥 DEBUG: result vuoto o manca 'A'!")
             return {
                 'test_id': params['test_id'],
                 'materia': params['materia'],
@@ -7063,6 +7067,26 @@ def simulate_test_execution(params):
                 'esito': 'FAIL',
                 'punteggio': 2.0,
                 'dettagli': f"❌ ERRORE: genera_verifica risultato vuoto. Keys: {list(result.keys()) if result else 'None'}",
+                'latex_verifica': None,
+                'titolo': None,
+                'esercizi_generati': 0
+            }
+        
+        # Debug del contenuto di 'A'
+        result_A = result['A']
+        print(f"🔥 DEBUG: result['A'] type: {type(result_A)}")
+        print(f"🔥 DEBUG: result['A'] keys: {list(result_A.keys()) if isinstance(result_A, dict) else 'Not a dict'}")
+        
+        if not isinstance(result_A, dict):
+            print(f"🔥 DEBUG: result['A'] non è un dict! È: {result_A}")
+            return {
+                'test_id': params['test_id'],
+                'materia': params['materia'],
+                'argomento': params['argomento'],
+                'livello': params['difficolta'],
+                'esito': 'FAIL',
+                'punteggio': 2.0,
+                'dettagli': f"❌ ERRORE: result['A'] non è un dict! Tipo: {type(result_A)}",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
