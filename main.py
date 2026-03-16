@@ -7157,8 +7157,12 @@ def simulate_test_execution(params):
         final_score = min(10.0, final_score)
         
         # Controllo finale di sicurezza
+        print(f"🔥 DEBUG PRE-CONTROLLO: latex_verifica type: {type(latex_verifica)}")
+        print(f"🔥 DEBUG PRE-CONTROLLO: latex_verifica value: {latex_verifica[:100] if latex_verifica else 'None'}")
+        
         if latex_verifica is None:
             print("🔥 DEBUG CRITICO: latex_verifica è None prima del return!")
+            print(f"🔥 DEBUG: latex_content era: {latex_content[:100] if latex_content else 'None'}")
             latex_verifica = f"% ERRORE: latex_verifica era None\n% Titolo: {titolo}\n% Materia: {params['materia']}"
         
         print(f"🔥 DEBUG FINALE: latex_verifica type: {type(latex_verifica)}, lunghezza: {len(latex_verifica) if latex_verifica else 'None'}")
