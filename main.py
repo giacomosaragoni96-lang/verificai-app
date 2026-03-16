@@ -7133,7 +7133,7 @@ def simulate_test_execution(params):
             'esito': 'PASS',
             'punteggio': 8.0,
             'dettagli': f"✅ SUCCESSO: {esercizi_generati} esercizi generati! Prompt: {prompt_preview}",
-            'latex_verifica': latex_content,
+            'latex_verifica': latex_completo,  # 🔥 FIX: Passa il documento completo, non solo il corpo
             'titolo': f"Verifica di {params['materia']}",
             'esercizi_generati': esercizi_generati
         }
