@@ -7154,7 +7154,12 @@ def simulate_test_execution(params):
         # Il documento è già completo con preambolo + corpo
         
         # Conta esercizi come fa l'app (usa il corpo pulito)
-        esercizi_generati = corpo_pulito.count('\\item[') if corpo_pulito else 0
+        try:
+            esercizi_generati = corpo_pulito.count('\\item[') if corpo_pulito else 0
+            print(f"🔥 DEBUG: esercizi_generati calcolati: {esercizi_generati}")
+        except Exception as e:
+            print(f"🔥 DEBUG ERRORE conteggio esercizi: {e}")
+            esercizi_generati = 0
         esercizi_richiesti = params.get('num_esercizi', 3)
         
         # Punteggio basato su completezza
@@ -7177,6 +7182,13 @@ def simulate_test_execution(params):
         
         final_score = base_score * level_multiplier.get(params['difficolta'], 1.0)
         final_score = min(10.0, final_score)
+        
+        # Controllo finale di sicurezza
+        if latex_verifica is None:
+            print("🔥 DEBUG CRITICO: latex_verifica è None prima del return!")
+            latex_verifica = f"% ERRORE: latex_verifica era None\n% Titolo: {titolo}\n% Materia: {params['materia']}"
+        
+        print(f"🔥 DEBUG FINALE: latex_verifica type: {type(latex_verifica)}, lunghezza: {len(latex_verifica) if latex_verifica else 'None'}")
         
         return {
             'test_id': params['test_id'],
