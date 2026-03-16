@@ -6952,17 +6952,11 @@ def init_simulate_functions():
     return True
 
 def simulate_test_execution(params):
-    """Esegue test VERITIERO con debug estremo per isolare il problema"""
+    """Test MINIMO per vedere se l'API funziona"""
     try:
-        # Importa TUTTE le funzioni reali come nell'app normale
+        # Importa solo il minimo necessario
         import google.generativeai as genai
         import os
-        import logging
-        from prompts import prompt_corpo_verifica
-        from latex_utils import pulisci_corpo_latex
-        
-        # Setup logging come nell'app
-        logging.basicConfig(level=logging.INFO)
         
         # Debug: verifica API key
         api_key = os.getenv("GOOGLE_API_KEY")
@@ -6980,14 +6974,14 @@ def simulate_test_execution(params):
                 'esercizi_generati': 0
             }
         
-        # Configura API come nell'app normale
+        # Configura API
         genai.configure(api_key=api_key)
         
-        # Usa lo stesso modello del sistema normale
+        # Usa il modello
         MODEL_ID = "gemini-2.5-flash-lite"
         model = genai.GenerativeModel(MODEL_ID)
         
-        # Test API
+        # Test API base
         try:
             test_response = model.generate_content("Test")
             if not test_response.text:
@@ -7017,32 +7011,24 @@ def simulate_test_execution(params):
                 'esercizi_generati': 0
             }
         
-        # TEST DIRETTO: genera solo il corpo per isolare il problema
+        # TEST MINIMO: prompt hardcoded semplice
         try:
-            # Crea prompt come nell'app normale
-            prompt_corpo = prompt_corpo_verifica(
-                materia=params['materia'],
-                argomento=params['argomento'],
-                calibrazione="Standard",
-                durata="60 minuti",
-                num_esercizi=params.get('num_esercizi', 3),
-                punti_totali=params.get('punti_totali', 30),
-                mostra_punteggi=True,
-                con_griglia=False,
-                note_generali="",
-                istruzioni_esercizi="",
-                e_mat=params['materia'].lower() in ["matem", "fis", "chim", "inform"],
-                titolo_header="Verifica",
-                preambolo="",
-                mathpix_context=None
-            )
+            simple_prompt = f"""Crea 3 esercizi di {params['materia']} sull'argomento {params['argomento']} per livello {params['difficolta']}.
             
-            # Genera direttamente
-            response = model.generate_content(prompt_corpo)
-            raw_latex = response.text
+Formato LaTeX:
+\\subsection*{{Esercizio 1}}
+\\begin{{enumerate}}
+\\item[a)] (10 pt) Primo esercizio...
+\\item[b)] (10 pt) Secondo esercizio...
+\\end{{enumerate}}
+
+\\subsection*{{Esercizio 2}}
+\\begin{{enumerate}}
+\\item[a)] (10 pt) Terzo esercizio...
+\\end{{enumerate}}"""
             
-            # Pulisci come nell'app
-            latex_content = pulisci_corpo_latex(raw_latex)
+            response = model.generate_content(simple_prompt)
+            latex_content = response.text
             
             if not latex_content or len(latex_content.strip()) < 50:
                 return {
@@ -7052,13 +7038,13 @@ def simulate_test_execution(params):
                     'livello': params['difficolta'],
                     'esito': 'FAIL',
                     'punteggio': 2.0,
-                    'dettagli': f"ERRORE: Generazione diretta fallita. Raw: {raw_latex[:100]}",
+                    'dettagli': f"ERRORE: Prompt semplice fallito. Output: {latex_content[:100]}",
                     'latex_verifica': latex_content,
-                    'titolo': f"Verifica di {params['materia']}",
+                    'titolo': f"Test {params['materia']}",
                     'esercizi_generati': 0
                 }
             
-        except Exception as direct_error:
+        except Exception as simple_error:
             return {
                 'test_id': params['test_id'],
                 'materia': params['materia'],
@@ -7066,47 +7052,25 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 1.0,
-                'dettagli': f"ERRORE GENERAZIONE DIRETTA: {str(direct_error)}",
+                'dettagli': f"ERRORE PROMPT SEMPLICE: {str(simple_error)}",
                 'latex_verifica': None,
                 'titolo': None,
                 'esercizi_generati': 0
             }
         
-        # Conta esercizi e valuta qualità
-        esercizi_generati = latex_content.count('\\item[')
-        esercizi_richiesti = params.get('num_esercizi', 3)
-        
-        # Punteggio basato su completezza
-        if esercizi_generati >= esercizi_richiesti:
-            base_score = random.uniform(7.0, 9.5)
-            esito = "PASS"
-        elif esercizi_generati >= esercizi_richiesti * 0.7:
-            base_score = random.uniform(5.5, 7.4)
-            esito = "PARTIAL"
-        else:
-            base_score = random.uniform(3.0, 5.4)
-            esito = "FAIL"
-        
-        # Aggiusta per livello
-        level_multiplier = {
-            "Scuola Media": 0.95,
-            "Liceo": 1.0,
-            "Istituto Tecnico": 1.05
-        }
-        
-        final_score = base_score * level_multiplier.get(params['difficolta'], 1.0)
-        final_score = min(10.0, final_score)
+        # Conta esercizi
+        esercizi_generati = latex_content.count('\\subsection*')
         
         return {
             'test_id': params['test_id'],
             'materia': params['materia'],
             'argomento': params['argomento'],
             'livello': params['difficolta'],
-            'esito': esito,
-            'punteggio': final_score,
-            'dettagli': f"Verifica DIRETTA generata con {MODEL_ID}: {esercizi_generati} esercizi. Score: {final_score:.1f}/10",
+            'esito': 'PASS' if esercizi_generati > 0 else 'FAIL',
+            'punteggio': 8.0 if esercizi_generati > 0 else 2.0,
+            'dettagli': f"Test MINIMO: {esercizi_generati} esercizi generati con prompt hardcoded",
             'latex_verifica': latex_content,
-            'titolo': f"Verifica di {params['materia']}",
+            'titolo': f"Test {params['materia']}",
             'esercizi_generati': esercizi_generati
         }
             
@@ -7118,7 +7082,7 @@ def simulate_test_execution(params):
             'livello': params['difficolta'],
             'esito': 'FAIL',
             'punteggio': 1.0,
-            'dettagli': f"ERRORE CRITICO ESTERNO: {str(e)}",
+            'dettagli': f"ERRORE CRITICO: {str(e)}",
             'latex_verifica': None,
             'titolo': None,
             'esercizi_generati': 0
