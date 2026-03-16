@@ -7078,10 +7078,35 @@ def simulate_test_execution(params):
                 'esercizi_generati': 0
             }
         
-        # TEST 3: Proviamo pulizia LaTeX
+        # TEST 3: Proviamo pulizia LaTeX e costruzione documento completo
         try:
             from latex_utils import pulisci_corpo_latex
-            latex_content = pulisci_corpo_latex(raw_latex)
+            
+            # Prima pulisci il corpo
+            latex_corpo = pulisci_corpo_latex(raw_latex)
+            
+            # Poi costruisci il documento completo
+            latex_completo = f"""\\documentclass[11pt,a4paper]{{article}}
+\\usepackage[utf8]{{inputenc}}
+\\usepackage[T1]{{fontenc}}
+\\usepackage{{amsmath,amssymb}}
+\\usepackage{{geometry}}
+\\geometry{{margin=2cm}}
+\\usepackage{{enumitem}}
+
+\\begin{{document}}
+
+\\title{{{verify_result.get('titolo', f'Verifica di {params["materia"]}')}}}
+\\author{{Docente}}
+\\date{{\\today}}
+\\maketitle
+
+{latex_corpo}
+
+\\end{{document}}"""
+            
+            latex_content = latex_completo
+            
         except Exception as clean_error:
             return {
                 'test_id': params['test_id'],
@@ -7090,7 +7115,7 @@ def simulate_test_execution(params):
                 'livello': params['difficolta'],
                 'esito': 'FAIL',
                 'punteggio': 2.0,
-                'dettagli': f"❌ ERRORE PULIZIA LATEX: {str(clean_error)}",
+                'dettagli': f"❌ ERRORE COSTRUZIONE DOCUMENTO: {str(clean_error)}",
                 'latex_verifica': raw_latex,
                 'titolo': f"Test {params['materia']}",
                 'esercizi_generati': raw_latex.count('\\subsection*')
