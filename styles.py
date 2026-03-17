@@ -50,6 +50,12 @@ def get_css(T: dict) -> str:
     # Se l'accent è chiaro (es. light yellow) usare testo scuro.
     _btn_text = "#ffffff" if not _is_light_color(_acc) else T["text"]
 
+    # ── Safe button text color ─────────────────────────────────────────────────
+    # Usato nel broad selector: sempre leggibile indipendentemente dal background.
+    # Tema chiaro → testo scuro, tema scuro → testo bianco.
+    # Evita "bianco su bianco" quando Streamlit sovrascrive il background.
+    _btn_text_safe = T["text"] if _is_light else "#ffffff"
+
     # ── Placeholder e color-scheme ─────────────────────────────────────────────
     _placeholder_color = T.get("muted", "#6E7681")
     _color_scheme = "light" if _is_light else "dark"
@@ -1746,7 +1752,7 @@ def get_css(T: dict) -> str:
   div[data-testid="stVerticalBlock"] button {{
     background: linear-gradient(135deg, {_acc}, {_acc2}) !important;
     border: none !important;
-    color: {_btn_text} !important;
+    color: {_btn_text_safe} !important;
     font-weight: 600 !important;
     min-height: 48px !important;
     transition: all 0.3s ease !important;
@@ -1765,8 +1771,8 @@ def get_css(T: dict) -> str:
   button[data-testid="baseButton-primary"] *,
   .element-container button *,
   div[data-testid="stVerticalBlock"] button * {{
-    color: {_btn_text} !important;
-    -webkit-text-fill-color: {_btn_text} !important;
+    color: {_btn_text_safe} !important;
+    -webkit-text-fill-color: {_btn_text_safe} !important;
   }}
 
   /* Nuovo: hint testuale leggero sopra il pulsante Genera */
