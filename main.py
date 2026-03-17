@@ -6557,66 +6557,36 @@ def salva_valutazione_db(valutazione):
         conn.close()
 
 def init_database_valutazioni():
-    """Inizializza il database per le valutazioni"""
+    """Inizializza il database per le valutazioni (versione minimalista)"""
     import sqlite3
     
     DB_PATH = "valutazioni_esercizi.db"
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
     
-    # Tabella esercizi valutati
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS esercizi_valutati (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_verifica TEXT,
-            materia TEXT,
-            argomento TEXT,
-            numero_esercizio INTEGER,
-            titolo_esercizio TEXT,
-            contenuto_esercizio TEXT,
-            punteggio_assegnato REAL,
-            punteggio_massimo REAL,
-            feedback TEXT,
-            commenti TEXT,
-            tag_difficolta TEXT,
-            tag_competenze TEXT,
-            data_valutazione TEXT,
-            valutatore TEXT,
-            UNIQUE(id_verifica, numero_esercizio)
-        )
-    ''')
-    
-    # Tabella esercizi qualità (NUOVA)
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS esercizi_qualita (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            materia TEXT,
-            argomento TEXT,
-            livello TEXT,
-            titolo_esercizio TEXT,
-            contenuto_esercizio TEXT,
-            punteggio_massimo REAL,
-            qualita_score REAL,
-            feedback TEXT,
-            data_valutazione TEXT,
-            valutatore TEXT,
-            numero_usi INTEGER DEFAULT 0,
-            ultima_usa TEXT,
-            UNIQUE(materia, argomento, titolo_esercizio, contenuto_esercizio)
-        )
-    ''')
-    
-    # Tabella statistiche qualità
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS statistiche_qualita (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            materia TEXT,
-            argomento TEXT,
-            livello TEXT,
-            totale_esercizi INTEGER,
-            qualita_media REAL,
-            ultimo_aggiornamento TEXT,
-            UNIQUE(materia, argomento, livello)
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # Tabella esercizi catalogati (minimalista)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS esercizi_catalogati (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                materia TEXT,
+                argomento TEXT,
+                numero_esercizio INTEGER,
+                titolo_esercizio TEXT,
+                voto TEXT,
+                note_futuro TEXT,
+                data_valutazione TEXT
+            )
+        ''')
+        
+        conn.commit()
+        return True
+    except Exception as e:
+        st.error(f"Errore inizializzando database: {e}")
+        return False
+    finally:
+        conn.close()
         )
     ''')
     
