@@ -1071,11 +1071,10 @@ def migliora_spaziatura_sottopunti(latex: str) -> str:
     for letter in 'abcdefghijklmnopqrstuvwxyz':
         latex = latex.replace(f'\\item[{letter})]', f'\n\\item[{letter})]')
     
-    # Gestisci anche il formato semplice a) b) c) senza \item
+    # Gestisci anche il formato semplice a) b) c) senza \item (versione sicura)
+    # Aggiungi semplicemente newline dopo ogni lettera)
     for letter in 'abcdefghijklmnopqrstuvwxyz':
-        # Pattern: a)testo b)altro testo -> a)\ntesto\n\nb)\naltro testo
-        latex = re.sub(r'{}\) ([^{}\)]*?)(?={}\)|$)'.format(letter, letter, letter), 
-                     r'{)}\n\1\n\n'.format(letter), latex)
+        latex = latex.replace(f'{letter}) ', f'{letter})\\n')
     
     # Aggiungi spaziatura dopo ogni \item con label (caso critico)
     latex = re.sub(r'(\\item\[[^\]]+\][^\n]*?)(?=\\item)', r'\1\n\n', latex)

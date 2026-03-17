@@ -24,6 +24,14 @@ import google.generativeai as genai
 #     # ... vecchio codice rimosso
 from sidebar import render_sidebar
 from generation import genera_verifica, analizza_documento_caricato, compila_contesto_generazione
+# Import PromptFoo unificato
+try:
+    from promptfoo_unified import render_promptfoo_page
+    PROMPTFOO_AVAILABLE = True
+except ImportError:
+    PROMPTFOO_AVAILABLE = False
+    def render_promptfoo_page():
+        st.error("⚠️ PromptFoo non disponibile - installa promptfoo_unified.py")
 from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
     prompt_modifica, prompt_qa_verifica,
@@ -1299,10 +1307,59 @@ def _render_bivio():
           <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
             📊 Griglia Valutazione
           </span>
+          <span class="tally-feat-pill" style="background: #f8fafc; color: #475569; padding: 8px 16px; font-weight: 600; border: 1px solid #e2e8f0;">
+            🧪 Test Prompt
+          </span>
         </div>
         ''',
         unsafe_allow_html=True,
     )
+
+    # ── Pulsanti secondari ─────────────────────────────────────────────
+    st.markdown('<div style="margin: 2rem 0;"></div>', unsafe_allow_html=True)
+    _sec1, _sec2, _sec3, _sec4 = st.columns([1, 1, 1, 1])
+    
+    with _sec1:
+        if st.button(
+            "📁 Carica da PDF",
+            key="btn_upload_pdf",
+            use_container_width=True,
+            help="Carica una verifica esistente e genera la versione B",
+        ):
+            st.session_state.input_percorso = "A"
+            st.rerun()
+    
+    with _sec2:
+        if st.button(
+            "📋 Le Tue Verifiche",
+            key="btn_mie_verifiche",
+            use_container_width=True,
+            help="Vedi le verifiche create in precedenza",
+        ):
+            st.session_state.stage = STAGE_MIE_VERIFICHE
+            st.rerun()
+    
+    with _sec3:
+        if st.button(
+            "🔍 Analizza Verifica",
+            key="btn_qa_mode",
+            use_container_width=True,
+            help="Carica una verifica per analizzare e migliorare",
+        ):
+            st.session_state.qa_mode = True
+            st.session_state.input_percorso = "QA"
+            st.rerun()
+    
+    with _sec4:
+        if st.button(
+            "🧪 Test Prompt",
+            key="btn_promptfoo",
+            use_container_width=True,
+            help="Test automatici per la qualità delle verifiche",
+            disabled=not PROMPTFOO_AVAILABLE
+        ):
+            st.session_state.input_percorso = "PROMPTFOO"
+            st.rerun()
 
     # ── Feature cards ─────────────────────────────────────
 
@@ -3765,6 +3822,17 @@ def _render_stage_input():
     # ── QA MODE ───────────────────────────────────────────────────────────────
     if percorso == "QA" or st.session_state.get("qa_mode", False):
         _render_qa_section()
+        return
+
+    # ── PROMPTFOO MODE ───────────────────────────────────────────────────────────
+    if percorso == "PROMPTFOO":
+        if PROMPTFOO_AVAILABLE:
+            render_promptfoo_page()
+        else:
+            st.error("⚠️ PromptFoo non disponibile - controlla l'installazione")
+            if st.button("← Torna al menu"):
+                st.session_state.input_percorso = None
+                st.rerun()
         return
 
     # ── BIVIO ─────────────────────────────────────────────────────────────────
