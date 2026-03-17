@@ -6928,15 +6928,12 @@ def init_simulate_functions():
 
 def simulate_test_execution(params):
     """Test usando ESATTAMENTE lo stesso flusso dell'app normale con input random"""
-    print(f"🔥 DEBUG: simulate_test_execution chiamato con params: {list(params.keys())}")
-    print(f"🔥 DEBUG: test_id: {params.get('test_id')}")
-    
     try:
         # Importa le funzioni reali dell'app
         from generation import genera_verifica
         import google.generativeai as genai
         import os
-        import random  # 🔥 Aggiunto import mancante
+        import random
         
         # Setup API come nell'app normale
         api_key = os.getenv("GOOGLE_API_KEY")
@@ -7037,11 +7034,7 @@ def simulate_test_execution(params):
             }
         
         # Estrai il risultato come fa l'app normale
-        print(f"🔥 DEBUG: result type: {type(result)}")
-        print(f"🔥 DEBUG: result keys: {list(result.keys()) if result else 'None'}")
-        
         if not result or 'A' not in result:
-            print(f"🔥 DEBUG: result vuoto o manca 'A'!")
             return {
                 'test_id': params['test_id'],
                 'materia': params['materia'],
@@ -7055,13 +7048,8 @@ def simulate_test_execution(params):
                 'esercizi_generati': 0
             }
         
-        # Debug del contenuto di 'A'
         result_A = result['A']
-        print(f"🔥 DEBUG: result['A'] type: {type(result_A)}")
-        print(f"🔥 DEBUG: result['A'] keys: {list(result_A.keys()) if isinstance(result_A, dict) else 'Not a dict'}")
-        
         if not isinstance(result_A, dict):
-            print(f"🔥 DEBUG: result['A'] non è un dict! È: {result_A}")
             return {
                 'test_id': params['test_id'],
                 'materia': params['materia'],
@@ -7078,22 +7066,7 @@ def simulate_test_execution(params):
         # USA ESATTAMENTE IL RISULTATO DELL'APP NORMALE
         latex_content = result['A'].get('latex', '')
         titolo = result.get('titolo', f"Verifica di {params['materia']}")
-        
-        # Debug completo del contenuto
-        print(f"🔥 DEBUG: latex_content type: {type(latex_content)}")
-        print(f"🔥 DEBUG: latex_content length: {len(latex_content) if latex_content else 'None'}")
-        print(f"🔥 DEBUG: latex_content primo chunk: {latex_content[:200] if latex_content else 'None'}")
-        
-        # 🔥 DOUBLE CHECK: L'utente riceve ESATTAMENTE result['A']['latex'] senza modifiche!
-        # Quindi il test system deve usare lo stesso identico output
         latex_verifica = latex_content  # ESATTAMENTE come l'app
-        
-        # Debug per conferma
-        print(f"🔥 DOUBLE CHECK: latex_verifica è lo stesso di result['A']['latex']? {latex_verifica == latex_content}")
-        print(f"🔥 DOUBLE CHECK: Lunghezza latex_verifica: {len(latex_verifica) if latex_verifica else 'None'}")
-        print(f"🔥 DEBUG CRITICO: latex_verifica dopo assegnazione: {type(latex_verifica)}")
-        print(f"🔥 DEBUG CRITICO: latex_verifica è None? {latex_verifica is None}")
-        print(f"🔥 DEBUG CRITICO: latex_verifica valore: {latex_verifica[:100] if latex_verifica else 'None'}")
 
         if not latex_verifica or len(latex_verifica.strip()) < 50:
             return {
@@ -7115,9 +7088,7 @@ def simulate_test_execution(params):
         # Conta esercizi come fa l'app (usa il LaTeX originale)
         try:
             esercizi_generati = latex_verifica.count('\\item[') if latex_verifica else 0
-            print(f"🔥 DEBUG: esercizi_generati calcolati: {esercizi_generati}")
-        except Exception as e:
-            print(f"🔥 DEBUG ERRORE conteggio esercizi: {e}")
+        except Exception:
             esercizi_generati = 0
         esercizi_richiesti = params.get('num_esercizi', 3)
         
@@ -7142,17 +7113,9 @@ def simulate_test_execution(params):
         final_score = base_score * level_multiplier.get(params['difficolta'], 1.0)
         final_score = min(10.0, final_score)
         
-        # Controllo finale di sicurezza
-        print(f"🔥 DEBUG PRE-CONTROLLO: latex_verifica type: {type(latex_verifica)}")
-        print(f"🔥 DEBUG PRE-CONTROLLO: latex_verifica value: {latex_verifica[:100] if latex_verifica else 'None'}")
-        
         if latex_verifica is None:
-            print("🔥 DEBUG CRITICO: latex_verifica è None prima del return!")
-            print(f"🔥 DEBUG: latex_content era: {latex_content[:100] if latex_content else 'None'}")
             latex_verifica = f"% ERRORE: latex_verifica era None\n% Titolo: {titolo}\n% Materia: {params['materia']}"
-        
-        print(f"🔥 DEBUG FINALE: latex_verifica type: {type(latex_verifica)}, lunghezza: {len(latex_verifica) if latex_verifica else 'None'}")
-        
+
         return {
             'test_id': params['test_id'],
             'materia': params['materia'],
@@ -7160,47 +7123,12 @@ def simulate_test_execution(params):
             'livello': params['difficolta'],
             'esito': esito,
             'punteggio': final_score,
-            'dettagli': f"✅ Verifica REALE generata: {esercizi_generati} esercizi. Score: {final_score:.1f}/10",
-            'latex_verifica': latex_verifica,  # 🔥 Usa il documento completo
+            'dettagli': f"Verifica generata: {esercizi_generati} esercizi. Score: {final_score:.1f}/10",
+            'latex_verifica': latex_verifica,
             'titolo': titolo,
             'esercizi_generati': esercizi_generati
         }
-        
-        # 🎉 NUOVO: Salva esercizi nel database di valutazione
-        if esito in ["PASS", "PARTIAL"] and latex_verifica:  # 🔥 Usa latex_verifica
-            try:
-                from valutazione_esercizi import estrai_esercizi_da_latex, salva_valutazione_esercizi
-                from datetime import datetime
-                
-                # Estrai esercizi dal LaTeX completo
-                esercizi = estrai_esercizi_da_latex(latex_verifica)  # 🔥 Usa latex_verifica
-                
-                # Salva ogni esercizio nel database
-                for i, esercizio in enumerate(esercizi, 1):
-                    # Calcola punteggio basato su esito e numero esercizi
-                    punteggio_assegnato = (final_score / 10.0) * (params.get('punti_totali', 30) / esercizi_generati)
-                    punteggio_massimo = params.get('punti_totali', 30) / esercizi_generati
-                    
-                    salva_valutazione_esercizi(
-                        id_verifica=params['test_id'],
-                        materia=params['materia'],
-                        argomento=params['argomento'],
-                        numero_esercizio=i,
-                        titolo_esercizio=esercizio.get('titolo', f'Esercizio {i}'),
-                        contenuto_esercizio=esercizio.get('contenuto', ''),
-                        punteggio_assegnato=punteggio_assegnato,
-                        punteggio_massimo=punteggio_massimo,
-                        feedback=f"Valutazione automatica - Score: {final_score:.1f}/10",
-                        commenti=f"Test system - {esito}",
-                        tag_difficolta=params['difficolta'],
-                        tag_competenze=f"Test_{params['materia']}",
-                        valutatore="Test_System_Auto"
-                    )
-                    
-            except Exception as save_error:
-                # Non bloccare il test se il salvataggio fallisce
-                print(f"⚠️ Errore salvataggio esercizi: {save_error}")
-            
+
     except Exception as e:
         return {
             'test_id': params['test_id'],
@@ -7642,9 +7570,7 @@ def execute_30_test_random():
         
         for i, params in enumerate(test_params):
             try:
-                print(f"🔥 DEBUG: Inizio esecuzione test {i+1}/{len(test_params)}")
                 result = simulate_test_execution(params)
-                print(f"🔥 DEBUG: Test {i+1} completato, esito: {result.get('esito', 'N/A')}")
                 results.append(result)
                 
                 # Debug info

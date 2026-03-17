@@ -17,7 +17,7 @@ def get_css(T: dict) -> str:
     # La sidebar ha sempre sfondo chiaro → i colori testo DEVONO essere scuri
     # indipendentemente dal tema principale (chiaro/scuro).
     _SB_TEXT   = _SB_INPUT_TEXT
-    _SB_MUTED  = "#475569"   # Grigio scuro per label più visibili
+    _SB_MUTED  = _SB_INPUT_TEXT + "99"  # 60% opacity del testo sidebar (adattivo chiaro/scuro)
 
     _is_light = _is_light_color(T["bg"])
 
@@ -1392,20 +1392,20 @@ def get_css(T: dict) -> str:
     font-size: .95rem;
     font-weight: 600;
     font-family: 'DM Sans', sans-serif;
-    color: #0369a1;
+    color: {_acc};
     white-space: nowrap;
     padding: 8px 16px;
     border-radius: 20px;
-    background: #f0f9ff;
-    border: 1px solid #bae6fd;
+    background: {_acc_soft};
+    border: 1px solid {_acc_med};
     transition: all .15s ease;
     display: inline-flex;
     align-items: center;
     gap: 6px;
   }}
   .tally-feat-pill:hover {{
-    background: #e0f2fe;
-    border-color: #7dd3fc;
+    background: {_acc}20;
+    border-color: {_acc}60;
     transform: translateY(-1px);
   }}
   .pill-emoji {{
@@ -1719,17 +1719,19 @@ def get_css(T: dict) -> str:
     font-size: 1.3rem !important;
     font-weight: 900 !important;
     border-radius: {_radius_lg} !important;
-    background: linear-gradient(135deg, #10b981, #f59e0b) !important;
-    border: 2px solid #10b981 !important;
-    box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4) !important;
+    background: linear-gradient(135deg, {_acc}, {_acc2}) !important;
+    border: 2px solid {_acc} !important;
+    color: {_btn_text} !important;
+    -webkit-text-fill-color: {_btn_text} !important;
+    box-shadow: 0 8px 25px -5px {_acc_glow} !important;
     transition: all .3s ease !important;
     text-transform: none !important;
     letter-spacing: .02em !important;
   }}
   .cta-genera-wrap button:hover {{
     transform: translateY(-2px) !important;
-    box-shadow: 0 12px 35px -5px rgba(16, 185, 129, 0.5) !important;
-    background: linear-gradient(135deg, #059669, #d97706) !important;
+    box-shadow: 0 12px 35px -5px {_acc}50 !important;
+    background: linear-gradient(135deg, {_acc2}, {_acc}) !important;
   }}
   .cta-genera-wrap button:active {{
     transform: translateY(0) !important;
@@ -1742,30 +1744,29 @@ def get_css(T: dict) -> str:
   button[data-testid="baseButton-primary"],
   .element-container button,
   div[data-testid="stVerticalBlock"] button {{
-    background: linear-gradient(135deg, #EA580C, #FB923C) !important;
+    background: linear-gradient(135deg, {_acc}, {_acc2}) !important;
     border: none !important;
-    color: black !important;
+    color: {_btn_text} !important;
     font-weight: 600 !important;
     min-height: 48px !important;
     transition: all 0.3s ease !important;
   }}
-  
+
   button[data-testid="baseButton-secondary"]:hover,
   button[data-testid="baseButton-primary"]:hover,
   .element-container button:hover,
   div[data-testid="stVerticalBlock"] button:hover {{
-    background: linear-gradient(135deg, #C2410C, #FCD34D) !important;
+    background: linear-gradient(135deg, {_acc2}, {_acc}) !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px -2px rgba(234, 88, 12, 0.3) !important;
+    box-shadow: 0 4px 12px -2px {_acc}50 !important;
   }}
 
-  /* Forza testo nero su tutti i pulsanti */
   button[data-testid="baseButton-secondary"] *,
   button[data-testid="baseButton-primary"] *,
   .element-container button *,
   div[data-testid="stVerticalBlock"] button * {{
-    color: black !important;
-    -webkit-text-fill-color: black !important;
+    color: {_btn_text} !important;
+    -webkit-text-fill-color: {_btn_text} !important;
   }}
 
   /* Nuovo: hint testuale leggero sopra il pulsante Genera */

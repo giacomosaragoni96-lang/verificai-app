@@ -229,8 +229,8 @@ def render_sidebar(
             </span>
           </div>
           <div class="mobile-progress-bar" style="
-            background: #E0E0E0 !important;
-            border: 2px solid #C0C0C0 !important;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.18);
             border-radius: 10px;
             overflow: hidden;
             height: 8px;
@@ -239,7 +239,7 @@ def render_sidebar(
           ">
             <div style="
               width: {_perc_uso}%;
-              background: #3B82F6 !important;
+              background: {_color_bar};
               height: 100%;
               border-radius: 6px;
               transition: width .6s ease;
