@@ -6505,11 +6505,6 @@ def init_database_valutazioni():
         return False
     finally:
         conn.close()
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
 
 def mostra_anteprima_statistiche(valutazioni):
     """Mostra anteprima statistiche delle valutazioni"""
