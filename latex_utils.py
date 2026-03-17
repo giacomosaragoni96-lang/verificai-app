@@ -133,21 +133,14 @@ def extract_corpo(latex: str) -> str:
     m = re.search(r"\\end\{center\}(.*?)(?=\\end\{document\})", latex, re.DOTALL)
     if m:
         corpo = m.group(1).strip()
-        # DEBUG: Stampa cosa viene estratto
-        print(f"🔍 DEBUG extract_corpo: estratti {len(corpo)} caratteri")
         if corpo:
-            print(f"📄 Contenuto estratto (primi 200): {corpo[:200]}")
-            # 🔥 RIMUOVI EVENTUALI \begin{document} residui dal corpo
+            # Rimuovi eventuali \begin{document} residui dal corpo
             corpo = re.sub(r"\\begin\{document\}", "", corpo)
             corpo = re.sub(r"\\documentclass\[.*?\]\{.*?\}", "", corpo)
             corpo = re.sub(r"\\usepackage\[.*?\]\{.*?\}", "", corpo)
             corpo = corpo.strip()
-            print(f"🧹 Corpo pulito: {len(corpo)} caratteri")
-        else:
-            print(f"❌ CORPO VUOTO estratto!")
         return corpo
     else:
-        print(f"❌ Nessun match trovato in extract_corpo!")
         return ""
 
 
@@ -1788,11 +1781,7 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     has_end_doc = '\\end{document}' in codice_latex        # Corretto: backslash singolo
     has_docclass = '\\documentclass' in codice_latex      # Corretto: backslash singolo
     
-    print(f"🔍 DEBUG: Struttura LaTeX - Begin: {has_begin_doc}, End: {has_end_doc}, Class: {has_docclass}")
-    
     if not (has_begin_doc and has_end_doc and has_docclass):
-        print("❌ ERRORE: LaTeX non ha struttura completa!")
-        print(f"📄 Contenuto LaTeX ricevuto: {repr(codice_latex[:200])}")
         return None, "LaTeX incompleto: mancano begin/document/end/documentclass"
     
     # Verifica che pdflatex sia disponibile

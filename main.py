@@ -6877,7 +6877,7 @@ def carica_esempi_qualita(materia, argomento, livello, limit=5):
         
         return risultati
     except Exception as e:
-        print(f"Errore caricando esempi qualità: {e}")
+        print(f"Errore caricando esempi qualita: {e}")
         return []
 
 # ═══════════════════════════════════════════════════════════════════════════
