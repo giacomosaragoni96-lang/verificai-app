@@ -36,11 +36,12 @@ def render_promptfoo_unified():
     """, unsafe_allow_html=True)
     
     # Tabs per organizzare le funzionalità
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "🎯 Test Rapidi", 
         "📊 Test Completi", 
         "🚀 Test Reali", 
-        "📈 Analisi"
+        "📈 Analisi",
+        "📋 Dashboard"
     ])
     
     with tab1:
@@ -54,6 +55,37 @@ def render_promptfoo_unified():
     
     with tab4:
         render_analisi_risultati()
+    
+    with tab5:
+        render_dashboard_integration()
+
+def render_dashboard_integration():
+    """Integrazione dashboard PromptFoo"""
+    try:
+        from promptfoo_dashboard import render_dashboard_page
+        render_dashboard_page()
+    except ImportError:
+        st.error("❌ Dashboard non disponibile - installa promptfoo_dashboard.py")
+        st.info("💡 La dashboard fornisce analisi avanzate e monitoraggio nel tempo")
+        
+        # Fallback semplice
+        st.markdown("### 📊 Metriche Base")
+        
+        results = load_historical_results()
+        if results:
+            total = len(results)
+            passed = sum(1 for r in results if r.get('passed', False))
+            success_rate = (passed / total * 100) if total > 0 else 0
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Test Totali", total)
+            with col2:
+                st.metric("Passati", passed)
+            with col3:
+                st.metric("Success Rate", f"{success_rate:.1f}%")
+        else:
+            st.info("📂 Esegui alcuni test per vedere le metriche")
 
 def render_test_rapidi():
     """Test rapidi per verifiche immediate"""

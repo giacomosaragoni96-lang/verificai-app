@@ -6328,19 +6328,10 @@ def render_valutazione_esercizi_modal(gp, vA):
     
     st.info(f"📚 **Materia:** {materia} | 📖 **Argomento:** {argomento} | 📝 **Esercizi trovati:** {len(esercizi)}")
     
-    # Form valutazione
-    with st.form("form_valutazione_main"):
-        st.subheader("🎯 Compila Valutazione Esercizi")
-        
-        # ID verifica e valutatore
-        col1, col2 = st.columns(2)
-        with col1:
-            id_verifica = st.text_input(
-                "ID Verifica:",
-                value=f"verifica_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            )
-        with col2:
-            valutatore = st.text_input("Valutatore:", value="Docente")
+    # Form valutazione MINIMALISTA
+    with st.form("form_valutazione_minimalista"):
+        st.subheader("🎯 Cataloga Esercizi Buoni")
+        st.caption("✅ Vota SÌ per salvare esercizi validi da cui prendere spunto futuro")
         
         valutazioni_salvate = []
         
@@ -6350,32 +6341,71 @@ def render_valutazione_esercizi_modal(gp, vA):
             st.markdown(f"#### Esercizio {esercizio['numero']}: {esercizio['titolo']}")
             
             # Mostra contenuto sintetico
-            with st.expander("📄 Mostra contenuto completo", expanded=False):
-                st.code(esercizio['contenuto'][:500] + "..." if len(esercizio['contenuto']) > 500 else esercizio['contenuto'], language='latex')
+            with st.expander("📄 Mostra contenuto", expanded=False):
+                st.code(esercizio['contenuto'][:300] + "..." if len(esercizio['contenuto']) > 300 else esercizio['contenuto'], language='latex')
             
-            # Griglia valutazione
-            col1, col2, col3 = st.columns(3)
+            # Valutazione MINIMALISTA
+            col1, col2 = st.columns([1, 3])
             
             with col1:
-                punteggio_assegnato = st.number_input(
-                    f"Punteggio (max {esercizio['punteggio_massimo']} pt):",
-                    min_value=0.0,
-                    max_value=float(esercizio['punteggio_massimo']),
-                    value=float(esercizio['punteggio_massimo']),
-                    step=0.5,
-                    key=f"punteggio_val_{i}"
-                )
-                
-                difficolta = st.selectbox(
-                    "Difficoltà:",
-                    ["Molto facile", "Facile", "Media", "Difficile", "Molto difficile"],
-                    key=f"difficolta_val_{i}"
+                voto = st.radio(
+                    "📊 Valutazione:",
+                    ["✅ SÌ", "❌ NO"],
+                    key=f"voto_{i}",
+                    horizontal=True
                 )
             
             with col2:
-                feedback = st.selectbox(
-                    "Feedback:",
-                    ["Eccellente", "Buono", "Sufficiente", "Insufficiente", "Da migliorare"],
+                note_futuro = st.text_area(
+                    "📝 Note per futuro (opzionale):",
+                    placeholder="Aspetti importanti da ricordare per esercizi simili...",
+                    key=f"note_futuro_{i}",
+                    height=80
+                )
+            
+            # Salva valutazione corrente
+            valutazioni_salvate.append({
+                'esercizio_numero': esercizio['numero'],
+                'titolo': esercizio['titolo'],
+                'voto': voto,
+                'note_futuro': note_futuro if note_futuro.strip() else None,
+                'materia': materia,
+                'argomento': argomento
+            })
+        
+        # Pulsante salvataggio
+        st.markdown("---")
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            submit = st.form_submit_button(
+                "💾 Salva Valutazioni",
+                type="primary",
+                use_container_width=True
+            )
+        
+        with col2:
+            if st.form_submit_button("❌ Annulla", use_container_width=True):
+                st.session_state["valutazione_mode"] = False
+                st.rerun()
+        
+        if submit:
+            # Salva tutte le valutazioni
+            success_count = 0
+            for valutazione in valutazioni_salvate:
+                if valutazione['voto'] == "✅ SÌ":
+                    # Salva solo esercizi votati SÌ
+                    if salva_valutazione_db(valutazione):
+                        success_count += 1
+            
+            if success_count > 0:
+                st.success(f"✅ Salvati {success_count} esercizi validi nel catalogo!")
+                st.balloons()
+            else:
+                st.info("ℹ️ Nessun esercizio votato SÌ da salvare")
+            
+            st.session_state["valutazione_mode"] = False
+            st.rerun()
                     key=f"feedback_val_{i}"
                 )
                 
@@ -6487,9 +6517,10 @@ def estrai_esercizi_da_latex(latex_content: str):
     return esercizi
 
 def salva_valutazione_db(valutazione):
-    """Salva una valutazione nel database SQLite"""
+    """Salva una valutazione nel database SQLite (versione minimalista)"""
     import sqlite3
     import os
+    from datetime import datetime
     
     DB_PATH = "valutazioni_esercizi.db"
     
@@ -6501,27 +6532,20 @@ def salva_valutazione_db(valutazione):
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         
+        # Versione minimalista - solo campi essenziali
         cursor.execute('''
-            INSERT OR REPLACE INTO esercizi_valutati 
-            (id_verifica, materia, argomento, numero_esercizio, titolo_esercizio, 
-             contenuto_esercizio, punteggio_assegnato, punteggio_massimo, feedback, 
-             commenti, tag_difficolta, tag_competenze, data_valutazione, valutatore)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO esercizi_catalogati 
+            (materia, argomento, numero_esercizio, titolo_esercizio, 
+             voto, note_futuro, data_valutazione)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (
-            valutazione['id_verifica'],
             valutazione['materia'],
             valutazione['argomento'],
-            valutazione['numero_esercizio'],
-            valutazione['titolo_esercizio'],
-            valutazione['contenuto_esercizio'],
-            valutazione['punteggio_assegnato'],
-            valutazione['punteggio_massimo'],
-            valutazione['feedback'],
-            valutazione['commenti'],
-            valutazione['tag_difficolta'],
-            valutazione['tag_competenze'],
-            valutazione['data_valutazione'],
-            valutazione['valutatore']
+            valutazione['esercizio_numero'],
+            valutazione['titolo'],
+            valutazione['voto'],
+            valutazione['note_futuro'],
+            datetime.now().isoformat()
         ))
         
         conn.commit()
