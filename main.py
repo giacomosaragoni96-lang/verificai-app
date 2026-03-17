@@ -7590,11 +7590,6 @@ def execute_30_test_random():
                 st.progress(progress, f"Verifica {i+1}/{len(test_params)} - {result['esito']} (Score: {result['punteggio']:.1f})")
                 
             except Exception as e:
-                # Errore critico durante il test
-                print(f"🔥 DEBUG: Errore critico nel test {i+1}: {str(e)}")
-                print(f"🔥 DEBUG: Tipo errore: {type(e).__name__}")
-                import traceback
-                print(f"🔥 DEBUG: Traceback: {traceback.format_exc()}")
                 
                 error_result = {
                     'test_id': params['test_id'],
@@ -7746,11 +7741,8 @@ def render_valutazione_semplificata(verify_result):
         from latex_utils import compila_pdf
         import base64
         
-        # Debug extra
         latex_da_compilare = verify_result.get('latex_verifica')
-        print(f"🔥 DEBUG PRE-COMPILAZIONE: latex_da_compilare type: {type(latex_da_compilare)}")
-        print(f"🔥 DEBUG PRE-COMPILAZIONE: latex_da_compilare è None? {latex_da_compilare is None}")
-        
+
         if latex_da_compilare is None:
             st.error("❌ ERRORE: latex_verifica è None!")
             st.code(f"verify_result keys: {list(verify_result.keys())}")

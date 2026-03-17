@@ -1784,16 +1784,7 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     
     logger = logging.getLogger(__name__)
     
-    # 🔥 DEBUG: Stampa il LaTeX completo che viene compilato
-    print(f"🔥 DEBUG compila_pdf: LaTeX da compilare ({len(codice_latex)} caratteri)")
-    print(f"📄 Prime 300 caratteri del LaTeX: {codice_latex[:300]}")
-    print(f"📄 Ultimi 300 caratteri del LaTeX: {codice_latex[-300:]}")
-    print(f"🔍 Contiene \\begin{{document}}: {codice_latex.count('\\begin{document}')} volte")
-    print(f"🔍 Contiene \\end{{document}}: {codice_latex.count('\\end{document}')} volte")
-    print(f"🔍 Contiene \\documentclass: {codice_latex.count('\\documentclass')} volte")
-    
-    # 🔥 DEBUG AGGIUNTIVO: Controlla struttura minima
-    has_begin_doc = '\\begin{document}' in codice_latex      # Corretto: backslash singolo
+    has_begin_doc = '\\begin{document}' in codice_latex
     has_end_doc = '\\end{document}' in codice_latex        # Corretto: backslash singolo
     has_docclass = '\\documentclass' in codice_latex      # Corretto: backslash singolo
     
