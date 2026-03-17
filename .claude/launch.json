@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "VerificAI (main app)",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "streamlit", "run", "main.py", "--server.enableCORS", "false", "--server.enableXsrfProtection", "false"],
+      "port": 8501
+    }
+  ]
+}
