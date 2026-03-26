@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /c/Users/gobli/Desktop/verificai/.claude/worktrees/ecstatic-lehmann/*.py)",
+      "Bash(grep -E '\\\\.py$')",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(where streamlit:*)",
+      "Bash(python -m streamlit --version)",
+      "Bash(python3 -m streamlit --version)",
+      "Bash(gh pr:*)",
+      "Bash(where gh:*)",
+      "Bash(winget list:*)"
+    ]
+  }
+}
