@@ -165,7 +165,7 @@ def parse_pts_from_block_body(body: str) -> int:
             total += points
             found_patterns.append((pattern, len(matches), points))
             logger.info(f"Trovati {len(matches)} punti con pattern '{pattern}': {points}")
-            break  # Usa solo il primo pattern che trova match
+            # Non fare break - somma TUTTI i punti trovati con TUTTI i pattern
     
     # Se non trova punti, cerca nell'header del blocco
     if total == 0:

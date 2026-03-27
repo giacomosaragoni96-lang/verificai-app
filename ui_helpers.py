@@ -130,10 +130,10 @@ def _make_katex_html(title: str, body: str, T: dict) -> str:
     t = re.sub(r"\\(?:small|large|Large|huge|Huge|normalsize|centering)\b", "", t)
     t = re.sub(r"\\[a-zA-Z]+\*?\{([^}$]{0,80})\}", r"\1", t)
 
-    # 9. Paragrafi
-    t = re.sub(r"\n\n+", "</p><p>", t)
-    t = t.replace("\n", " ")
-    t = re.sub(r"\s{3,}", " ", t)
+    # 9. Paragrafi - mantieni la separazione tra paragrafi
+    t = re.sub(r"\n\n+", "</p><p>", t)  # Converti doppi newline in separatori paragrafo
+    t = re.sub(r"\n", "<br>", t)        # Converti singoli newline in break
+    t = re.sub(r"\s{3,}", " ", t)       # Rimuovi spazi multipli
 
     safe_title = html_lib.escape(title)
     bg    = T["bg2"]
