@@ -146,22 +146,14 @@ genai.configure(api_key=API_KEY)
 if "utente" not in st.session_state:
     st.session_state.utente = None
 
-# TEMPORANEO: Skip login per testare l'app
+# Ripristina sessione esistente
 if st.session_state.utente is None:
-    # Crea utente fittizio per test
-    class MockUser:
-        def __init__(self):
-            self.email = "test@example.com"
-            self.id = "test-user-id"
-    
-    st.session_state.utente = MockUser()
-    st.info("🧪 Modalità test - Login saltato temporaneamente")
-else:
-    # Codice normale di autenticazione
     ripristina_sessione(supabase)
-    if st.session_state.utente is None:
-        mostra_auth(supabase)
-        st.stop()
+
+# Mostra auth se non loggato
+if st.session_state.utente is None:
+    mostra_auth(supabase)
+    st.stop()
 
 # ── VERIFICA DISPONIBILITÀ LATEX (dopo autenticazione) ─────────────────────────────
 try:
