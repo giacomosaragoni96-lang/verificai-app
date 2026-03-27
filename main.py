@@ -110,7 +110,6 @@ try:
     SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
     supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
     SUPABASE_ENABLED = True
-    st.success("✅ Supabase configurato correttamente")
 except Exception as e:
     # Fallback per test senza database
     supabase = None
