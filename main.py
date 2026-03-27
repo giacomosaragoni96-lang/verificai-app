@@ -52,20 +52,10 @@ from auth import mostra_auth, ripristina_sessione, cancella_sessione_cookie
 from styles import get_css, _is_light_color
 from ui_helpers import (
     _render_back_button, _make_katex_html, _render_sticky_header,
-    _render_step_progress, _split_download_button, _render_breadcrumb,
+    _render_step_progress, _split_download_button,
 )
 
 logger = logging.getLogger("verificai.main")
-try:
-    from styles import _is_light_color
-except ImportError:
-    def _is_light_color(hex_color: str) -> bool:
-        try:
-            h = hex_color.lstrip("#")
-            r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
-            return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.5
-        except Exception:
-            return False
 
 # ── MATHPIX OCR (opzionale — degradazione graceful se non configurato) ────────
 try:

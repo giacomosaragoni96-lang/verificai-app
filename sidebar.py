@@ -63,19 +63,13 @@ def render_sidebar(
 
     theme_changed = False
 
-    # Guard anti-doppio-rendering: Streamlit in alcuni casi può richiamare
-    # il codice sidebar più volte nello stesso run (es. import circolare).
-    # Questo lock garantisce una sola istanza per rerun.
-    _sb_run_id = id(st.session_state)
-    _sb_guard_key = f"_sb_rendered_{_sb_run_id}"
-
     with st.sidebar:
         _acc = T.get("sidebar_accent", "#79C0FF")
         _acc2 = T.get("accent2", _acc)
         # La sidebar ha sempre sfondo scuro → i colori testo devono essere CHIARI
         # indipendentemente dal tema principale (chiaro/scuro).
         _sb_text  = T.get("sidebar_input_text", "#E6EDF3")
-        _sb_muted = T.get("sidebar_input_text", "#E6EDF3") + "99"
+        _sb_muted = T.get("sidebar_muted", "#94A3B8")
         
         # Linea separatoria elegante
         st.markdown(
@@ -290,32 +284,29 @@ def render_sidebar(
         except:
             total_verifiche = 0
         
-        # Card con stats e link
+        # Card info-only (nessun onclick — la navigazione è gestita dal pulsante sotto)
         st.markdown(f'''
         <div class="sb-pro-card" style="
             background: linear-gradient({_acc}15, transparent);
             border: 1px solid {_acc}44;
             padding: 1rem;
             border-radius: 12px;
-            margin-bottom: 1rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        " onclick="window.location.href='#?stage=MIE_VERIFICHE'">
+            margin-bottom: 0.5rem;
+        ">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                <div style="font-size: 1.1rem; font-weight: 600; color: {_sb_text};">
-                    📚 Gestisci Verifiche
+                <div style="font-size: 1rem; font-weight: 600; color: {_sb_text};">
+                    📚 Le mie verifiche
                 </div>
-                <div style="background: {_acc}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                <div style="background: {_acc}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 700;">
                     {total_verifiche}
                 </div>
             </div>
-            <div style="font-size: 0.85rem; color: {_sb_muted};">
+            <div style="font-size: 0.82rem; color: {_sb_muted};">
                 Visualizza, modifica e scarica tutte le tue verifiche
             </div>
         </div>
         ''', unsafe_allow_html=True)
-        
-        # Link diretto
+
         if st.button("📄 Apri Storico Completo", key="open_storico", use_container_width=True, type="secondary"):
             st.session_state.stage = "MIE_VERIFICHE"
             st.rerun()

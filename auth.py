@@ -96,14 +96,14 @@ def mostra_auth(supabase):
     # ── CSS Moderno Login Page ──────────────────────────────────────
     st.markdown(f"""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
 
     /* ═══ Base Modern Design System - Tema Chiaro ═══ */
     html, body,
     [data-testid="stAppViewContainer"],
     .stApp {{
         background: {_BG} !important;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
         overflow-x: hidden;
         color-scheme: light !important;
         font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
@@ -189,7 +189,7 @@ def mostra_auth(supabase):
         -webkit-text-fill-color: {_TEXT} !important;
         -webkit-appearance: none !important;
         appearance: none !important;
-        font-family: 'Inter', sans-serif !important;
+        font-family: 'DM Sans', sans-serif !important;
         font-size: 1rem !important;
         font-weight: 500 !important;
         padding: 16px 20px !important;
@@ -252,7 +252,7 @@ def mostra_auth(supabase):
         font-size: .875rem !important;
         font-weight: 600 !important;
         letter-spacing: .01em !important;
-        font-family: 'Inter', sans-serif !important;
+        font-family: 'DM Sans', sans-serif !important;
         margin-bottom: 0.5rem !important;
         -webkit-text-fill-color: {_TEXT2} !important;
     }}
@@ -283,7 +283,7 @@ def mostra_auth(supabase):
         font-weight: 600 !important;
         color: {_TEXT2} !important;
         -webkit-text-fill-color: {_TEXT2} !important;
-        font-family: 'Inter', sans-serif !important;
+        font-family: 'DM Sans', sans-serif !important;
         padding: .75rem 1.25rem !important;
         transition: all .2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         position: relative !important;
@@ -309,7 +309,7 @@ def mostra_auth(supabase):
         -webkit-text-fill-color: white !important;
         border: none !important;
         border-radius: 16px !important;
-        font-family: 'Inter', sans-serif !important;
+        font-family: 'DM Sans', sans-serif !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
         min-height: 56px !important;
@@ -346,7 +346,7 @@ def mostra_auth(supabase):
         border: 1px solid rgba({_BORDER.replace('#', '')},.3) !important;
         border-radius: 16px !important;
         color: {_TEXT} !important;
-        font-family: 'Inter', sans-serif !important;
+        font-family: 'DM Sans', sans-serif !important;
         padding: 1.25rem 1.5rem !important;
         box-shadow: 0 4px 16px rgba(0,0,0,.1) !important;
         backdrop-filter: blur(10px);
@@ -402,7 +402,7 @@ def mostra_auth(supabase):
 
     /* ═══ Modern Typography ─══ */
     .auth-heading {{
-        font-family: 'Inter', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: clamp(2rem, 5vw, 2.8rem);
         font-weight: 800;
         letter-spacing: -0.02em;
@@ -412,7 +412,7 @@ def mostra_auth(supabase):
         text-align: center;
     }}
     .auth-subheading {{
-        font-family: 'Inter', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1rem;
         font-weight: 500;
         color: {_TEXT2};
@@ -431,7 +431,7 @@ def mostra_auth(supabase):
     .auth-trust-item {{
         display: flex; align-items: center; gap: 0.5rem;
         font-size: 0.8rem; color: {_MUTED};
-        font-family: 'Inter', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-weight: 500;
         letter-spacing: 0.01em;
     }}
@@ -528,7 +528,7 @@ def mostra_auth(supabase):
                             padding: 1rem 1.5rem !important;
                             border-radius: 12px !important;
                             margin: 1rem 0 !important;
-                            font-family: 'Inter', sans-serif !important;
+                            font-family: 'DM Sans', sans-serif !important;
                             font-weight: 500 !important;
                             border: 1px solid {_WARNING} !important;
                             box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
@@ -544,7 +544,7 @@ def mostra_auth(supabase):
                             padding: 1rem 1.5rem !important;
                             border-radius: 12px !important;
                             margin: 1rem 0 !important;
-                            font-family: 'Inter', sans-serif !important;
+                            font-family: 'DM Sans', sans-serif !important;
                             font-weight: 500 !important;
                             border: 1px solid {_WARNING} !important;
                             box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
@@ -560,7 +560,7 @@ def mostra_auth(supabase):
                             padding: 1rem 1.5rem !important;
                             border-radius: 12px !important;
                             margin: 1rem 0 !important;
-                            font-family: 'Inter', sans-serif !important;
+                            font-family: 'DM Sans', sans-serif !important;
                             font-weight: 500 !important;
                             border: 1px solid {_WARNING} !important;
                             box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
@@ -576,7 +576,7 @@ def mostra_auth(supabase):
                             padding: 1rem 1.5rem !important;
                             border-radius: 12px !important;
                             margin: 1rem 0 !important;
-                            font-family: 'Inter', sans-serif !important;
+                            font-family: 'DM Sans', sans-serif !important;
                             font-weight: 500 !important;
                             border: 1px solid {_WARNING} !important;
                             box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
@@ -602,7 +602,7 @@ def mostra_auth(supabase):
                     padding: 1rem 1.5rem !important;
                     border-radius: 12px !important;
                     margin: 1rem 0 !important;
-                    font-family: 'Inter', sans-serif !important;
+                    font-family: 'DM Sans', sans-serif !important;
                     font-weight: 500 !important;
                     border: 1px solid {_WARNING} !important;
                     box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
@@ -618,7 +618,7 @@ def mostra_auth(supabase):
                     padding: 1rem 1.5rem !important;
                     border-radius: 12px !important;
                     margin: 1rem 0 !important;
-                    font-family: 'Inter', sans-serif !important;
+                    font-family: 'DM Sans', sans-serif !important;
                     font-weight: 500 !important;
                     border: 1px solid {_WARNING} !important;
                     box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
@@ -641,7 +641,7 @@ def mostra_auth(supabase):
                         padding: 1rem 1.5rem !important;
                         border-radius: 12px !important;
                         margin: 1rem 0 !important;
-                        font-family: 'Inter', sans-serif !important;
+                        font-family: 'DM Sans', sans-serif !important;
                         font-weight: 500 !important;
                         border: 1px solid {_SUCCESS} !important;
                         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
@@ -661,7 +661,7 @@ def mostra_auth(supabase):
                             padding: 1rem 1.5rem !important;
                             border-radius: 12px !important;
                             margin: 1rem 0 !important;
-                            font-family: 'Inter', sans-serif !important;
+                            font-family: 'DM Sans', sans-serif !important;
                             font-weight: 500 !important;
                             border: 1px solid {_ERROR} !important;
                             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
@@ -677,7 +677,7 @@ def mostra_auth(supabase):
                             padding: 1rem 1.5rem !important;
                             border-radius: 12px !important;
                             margin: 1rem 0 !important;
-                            font-family: 'Inter', sans-serif !important;
+                            font-family: 'DM Sans', sans-serif !important;
                             font-weight: 500 !important;
                             border: 1px solid {_ERROR} !important;
                             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
@@ -704,7 +704,7 @@ def mostra_auth(supabase):
                     padding: 1rem 1.5rem !important;
                     border-radius: 12px !important;
                     margin: 1rem 0 !important;
-                    font-family: 'Inter', sans-serif !important;
+                    font-family: 'DM Sans', sans-serif !important;
                     font-weight: 500 !important;
                     border: 1px solid {_WARNING} !important;
                     box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
@@ -722,7 +722,7 @@ def mostra_auth(supabase):
                         padding: 1rem 1.5rem !important;
                         border-radius: 12px !important;
                         margin: 1rem 0 !important;
-                        font-family: 'Inter', sans-serif !important;
+                        font-family: 'DM Sans', sans-serif !important;
                         font-weight: 500 !important;
                         border: 1px solid {_SUCCESS} !important;
                         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
@@ -738,7 +738,7 @@ def mostra_auth(supabase):
                         padding: 1rem 1.5rem !important;
                         border-radius: 12px !important;
                         margin: 1rem 0 !important;
-                        font-family: 'Inter', sans-serif !important;
+                        font-family: 'DM Sans', sans-serif !important;
                         font-weight: 500 !important;
                         border: 1px solid {_ERROR} !important;
                         box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
@@ -754,7 +754,7 @@ def mostra_auth(supabase):
       <div class="auth-trust-item">🇮🇹&ensp;Per docenti italiani</div>
       <div class="auth-trust-item">⚡&ensp;Gratis per iniziare</div>
     </div>
-    <div style="text-align:center; padding:1rem 0 0.5rem; font-family:'Inter',sans-serif;">
+    <div style="text-align:center; padding:1rem 0 0.5rem; font-family:'DM Sans',sans-serif;">
       <p style="font-size:0.8rem; color:{_MUTED}; margin:0; font-weight:500;">
         Accedendo accetti i&nbsp;<a href="#"
           style="color:{_TEXT2}; font-weight:600; text-decoration:none; transition:color .2s;"

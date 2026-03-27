@@ -98,7 +98,7 @@ def get_css(T: dict) -> str:
     border: none !important;
     box-shadow: none !important;
     outline: none !important;
-  }},
+  }}
   section[data-testid="stSidebar"] {{
     z-index: 1100 !important;
   }}

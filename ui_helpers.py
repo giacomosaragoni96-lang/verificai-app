@@ -42,30 +42,12 @@ def _render_back_button(
     with _col:
         st.markdown('<div class="btn-back-discrete">', unsafe_allow_html=True)
         clicked = st.button(
-            label, 
-            key=key, 
-            use_container_width=True, 
+            label,
+            key=key,
+            use_container_width=True,
             help=help,
             type="secondary"
         )
-        # Force inline styles
-        st.markdown("""
-        <style>
-        div[data-testid="stVerticalBlock"] > div:has([data-testid*="%s"]) button,
-        button[data-testid*="%s"],
-        div[data-testid="stVerticalBlock"] button[data-testid*="%s"],
-        .stButton > button[data-testid*="%s"] {
-            background: transparent !important;
-            color: #374151 !important;
-            -webkit-text-fill-color: #374151 !important;
-            font-size: 0.85rem !important;
-            padding: 6px 12px !important;
-            min-height: 32px !important;
-            border-radius: 6px !important;
-            border: 1px solid #d1d5db !important;
-        }
-        </style>
-        """ % (key, key, key, key), unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     return clicked
 
@@ -74,7 +56,7 @@ def _render_back_button(
 #  KATEX HTML RENDERER
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _make_katex_html(title: str, body: str, T: dict, height_hint: int = 400) -> str:
+def _make_katex_html(title: str, body: str, T: dict) -> str:
     t = body
 
     # 0. Rimuovi commenti LaTeX (% ... fino a fine riga)
@@ -619,59 +601,3 @@ def _split_download_button(
         )
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  BREADCRUMB
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def _render_breadcrumb(T: dict) -> None:
-    stage = st.session_state.stage
-    steps = [
-        ("01", "Impostazioni", STAGE_INPUT),
-        ("02", "Revisione",    STAGE_REVIEW),
-        ("03", "Scarica",      STAGE_FINAL),
-    ]
-    _visual_stage = STAGE_REVIEW if stage == STAGE_PREVIEW else stage
-    completed = {
-        STAGE_INPUT:  _visual_stage in (STAGE_REVIEW, STAGE_FINAL),
-        STAGE_REVIEW: _visual_stage == STAGE_FINAL,
-        STAGE_FINAL:  False,
-    }
-
-    html = (
-        '<div class="breadcrumb-wrap">'
-        '<div class="breadcrumb-pill" style="display:inline-flex;align-items:center;gap:10px;'
-        'padding:.7rem 1.6rem;'
-        'background:' + T["card"] + ';border:1.5px solid ' + T["border"] + ';'
-        'border-radius:100px;box-shadow:' + T.get("shadow_md", "0 4px 20px rgba(0,0,0,.08)") + ';">'
-    )
-    for i, (num, label, s) in enumerate(steps):
-        is_active = s == _visual_stage
-        is_done   = completed.get(s, False)
-        if is_active:
-            cb, cc, lc, lw = T["accent"], "#fff", T["accent"], "800"
-            icon = num
-        elif is_done:
-            cb, cc, lc, lw = T["success"], "#fff", T["success"], "700"
-            icon = "✓"
-        else:
-            cb, cc, lc, lw = T["border2"], T["muted"], T["muted"], "500"
-            icon = num
-        _op = "1" if (is_active or is_done) else ".4"
-        html += (
-            '<div style="display:flex;align-items:center;gap:7px;opacity:' + _op + ';">'
-            '<div style="background:' + cb + ';border-radius:50%;'
-            'width:28px;height:28px;display:flex;align-items:center;'
-            'justify-content:center;font-size:.72rem;font-weight:800;'
-            'color:' + cc + ';flex-shrink:0;box-shadow:0 2px 8px ' + cb + '44;">' + icon + '</div>'
-            '<span style="font-size:.88rem;font-weight:' + lw + ';color:' + lc + ';'
-            'font-family:DM Sans,sans-serif;white-space:nowrap;letter-spacing:-.01em;">' + label + '</span>'
-            '</div>'
-        )
-        if i < len(steps) - 1:
-            _sep_c = T["success"] if is_done else T["border2"]
-            html += (
-                '<div style="width:28px;height:1.5px;background:' + _sep_c + ';'
-                'opacity:.4;flex-shrink:0;border-radius:2px;"></div>'
-            )
-    html += "</div></div>"
-    st.markdown(html, unsafe_allow_html=True)
