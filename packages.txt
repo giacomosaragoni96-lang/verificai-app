@@ -1,0 +1,7 @@
+texlive-latex-extra
+texlive-fonts-recommended
+texlive-lang-italian
+poppler-utils
+pandoc
+
+

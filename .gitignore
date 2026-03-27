@@ -1,0 +1,38 @@
+# ── Segreti e credenziali ─────────────────────────────────────────────────────
+.streamlit/secrets.toml
+.env
+.env.local
+.env.*.local
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# ── Ambienti virtuali ─────────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── File generati dall'app ────────────────────────────────────────────────────
+*.pdf
+*.docx
+*.tex
+tmp_tikz*/
+
+# ── Build e distribuzione ─────────────────────────────────────────────────────
+dist/
+build/
+*.egg-info/
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

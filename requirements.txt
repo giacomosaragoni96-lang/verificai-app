@@ -1,0 +1,14 @@
+streamlit
+google-generativeai
+python-dotenv
+pdf2image
+pymupdf
+python-docx
+mammoth>=1.6.0
+supabase>=2.7.0
+extra-streamlit-components
+poppler-utils
+streamlit-cookies-controller
+requests>=2.31.0
+st-styled>=0.3.0
+
