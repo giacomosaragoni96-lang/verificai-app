@@ -102,11 +102,20 @@ st.set_page_config(
 )
 
 # ── SUPABASE ──────────────────────────────────────────────────────────────────
-SUPABASE_URL = st.secrets["SUPABASE_URL"]
-SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
-supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+# Temporaneamente disabilitato per test - creare il file .streamlit/secrets.toml per abilitare
+try:
+    SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
+    supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    SUPABASE_ENABLED = True
+except Exception:
+    # Fallback per test senza database
+    supabase = None
+    supabase_admin = None
+    SUPABASE_ENABLED = False
+    st.warning("⚠️ Database Supabase non configurato - alcune funzionalità saranno limitate")
 
 # ── TEMA — inizializzazione ───────────────────────────────────────────────────
 # Tema default: carta (light). Fallback robusto per sessioni vecchie (aurora/luce/ecc.)
@@ -124,8 +133,9 @@ T = THEMES[_theme_key]
 load_dotenv()
 API_KEY = os.getenv("GOOGLE_API_KEY")
 if not API_KEY:
-    st.error("⚠️ Chiave API mancante! Crea un file .env con GOOGLE_API_KEY=...")
-    st.stop()
+    # Temporaneamente usa una API key fittizia per testare l'interfaccia
+    API_KEY = "test_api_key_temporanea"
+    st.warning("⚠️ API Google temporaneamente non configurata - la generazione non funzionerà ma puoi testare l'interfaccia")
 genai.configure(api_key=API_KEY)
 
 # ── VERIFICA DISPONIBILITÀ LATEX ─────────────────────────────────────────────────
