@@ -419,8 +419,9 @@ def _render_step_progress(T: dict) -> None:
         if i < len(steps) - 1:
             is_filled = cur > i
             line_bg   = f"linear-gradient(90deg, {ok}, {acc})" if is_filled else bdr2
+            line_op   = "1" if is_filled else "0.4"
             nodes_html += (
-                f'<div class="sp-line" style="background:{line_bg};"></div>'
+                f'<div class="sp-line" style="background:{line_bg};opacity:{line_op};"></div>'
             )
 
     html = f"""
@@ -474,8 +475,8 @@ def _render_step_progress(T: dict) -> None:
     height: 1px; width: 60px;
     flex-shrink: 0; border-radius: 1px;
     margin-bottom: 30px;
-    opacity: 0.4;
     background: currentColor;
+    transition: opacity .3s ease;
   }}
 </style>
 <div class="sp-track">

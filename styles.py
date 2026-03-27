@@ -1181,20 +1181,6 @@ def get_css(T: dict) -> str:
     box-shadow: 0 2px 12px {_acc_soft} !important;
   }}
 
-  /* ════════════════════════════════════════════════════════════════════════
-     PROGRESS BAR (Breadcrumb)
-     ════════════════════════════════════════════════════════════════════════ */
-  .breadcrumb-wrap {{
-    display: flex; justify-content: center; margin-bottom: 1.6rem;
-  }}
-  .breadcrumb-pill {{
-    display: inline-flex; align-items: center; gap: 12px;
-    padding: .65rem 1.8rem;
-    background: {T['card']};
-    border: 1px solid {T['border2']};
-    border-radius: 100px;
-    box-shadow: {_shadow_md};
-  }}
 
   /* ════════════════════════════════════════════════════════════════════════
      HOME LANDING
@@ -1725,38 +1711,6 @@ def get_css(T: dict) -> str:
     transform: translateY(0) !important;
   }}
 
-  /* ════════════════════════════════════════════════════════════════════════
-     SECONDARY BUTTONS — Orange Edition (no border)
-     ════════════════════════════════════════════════════════════════════════ */
-  button[data-testid="baseButton-secondary"],
-  button[data-testid="baseButton-primary"],
-  .element-container button,
-  div[data-testid="stVerticalBlock"] button {{
-    background: linear-gradient(135deg, #EA580C, #FB923C) !important;
-    border: none !important;
-    color: black !important;
-    font-weight: 600 !important;
-    min-height: 48px !important;
-    transition: all 0.3s ease !important;
-  }}
-  
-  button[data-testid="baseButton-secondary"]:hover,
-  button[data-testid="baseButton-primary"]:hover,
-  .element-container button:hover,
-  div[data-testid="stVerticalBlock"] button:hover {{
-    background: linear-gradient(135deg, #C2410C, #FCD34D) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px -2px rgba(234, 88, 12, 0.3) !important;
-  }}
-
-  /* Forza testo nero su tutti i pulsanti */
-  button[data-testid="baseButton-secondary"] *,
-  button[data-testid="baseButton-primary"] *,
-  .element-container button *,
-  div[data-testid="stVerticalBlock"] button * {{
-    color: black !important;
-    -webkit-text-fill-color: black !important;
-  }}
 
   /* Nuovo: hint testuale leggero sopra il pulsante Genera */
   .cta-hint-text {{

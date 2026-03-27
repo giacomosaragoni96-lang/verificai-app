@@ -246,7 +246,16 @@ def render_sidebar(
         """, unsafe_allow_html=True)
 
         if limite_raggiunto:
-            st.warning(f"Limite mensile raggiunto ({LIMITE_MENSILE} verifiche). {_reset_str}.")
+            _err_c = T.get("error", "#EF4444")
+            st.markdown(
+                f'<div style="background:{_err_c}18;border:1px solid {_err_c}44;'
+                f'border-radius:10px;padding:.6rem .9rem;margin:.4rem 0;'
+                f'font-size:.78rem;color:{_sb_text};font-family:DM Sans,sans-serif;'
+                f'font-weight:600;line-height:1.5;">'
+                f'⚠️ Limite mensile raggiunto ({LIMITE_MENSILE} verifiche). {_reset_str}.'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
 
         # ── CTA UPGRADE PRO ───────────────────────────────────────────────────
         if limite_raggiunto or _perc_uso >= 60:

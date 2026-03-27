@@ -668,7 +668,7 @@ components.html(
     f'}}'
     f'}}'
     f'try{{new MutationObserver(fx).observe(d.body,{{subtree:true,attributes:true,childList:true}});}}catch(err){{}}'
-    f'fx();setInterval(fx,300);'
+    f'fx();'
     f'}})();'
     f'</script>',
     height=0,
@@ -5747,53 +5747,32 @@ def _render_stage_final():
         st.markdown('</div>', unsafe_allow_html=True)
 
     # ═══════════════════════════════════════════════════════════════════════════
-    #  FEEDBACK QUALITÀ
+    #  FEEDBACK QUALITÀ — compatto, thumbs up/down
     # ═══════════════════════════════════════════════════════════════════════════
     st.markdown(
-        '<div class="variant-section-label">VALUTA LA QUALITÀ DELLA VERIFICA GENERATA</div>',
-        unsafe_allow_html=True
+        f'<div style="text-align:center;font-size:.82rem;color:{T["text2"]};'
+        f'font-family:DM Sans,sans-serif;font-weight:600;margin:1.2rem 0 .5rem;">'
+        f'Com\'era questa verifica?</div>',
+        unsafe_allow_html=True,
     )
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
+
+    _fb_c1, _fb_c2, _fb_c3, _fb_c4 = st.columns(4)
+    with _fb_c1:
         if st.button("👍 Ottima", key="fb_excellent", use_container_width=True):
             _salva_feedback("excellent", gp)
-            st.success("Grazie per il feedback! 🎉")
-            st.balloons()
-    
-    with col2:
+            st.toast("Grazie per il feedback!", icon="🎉")
+    with _fb_c2:
         if st.button("👍 Buona", key="fb_good", use_container_width=True):
             _salva_feedback("good", gp)
-            st.success("Grazie per il feedback! 👍")
-    
-    with col3:
+            st.toast("Grazie per il feedback!", icon="👍")
+    with _fb_c3:
         if st.button("😐 Sufficiente", key="fb_ok", use_container_width=True):
             _salva_feedback("sufficient", gp)
-            st.info("Grazie per il feedback, cercheremo di migliorare! 📈")
-    
-    with col4:
+            st.toast("Grazie, cercheremo di migliorare!", icon="📈")
+    with _fb_c4:
         if st.button("👎 Insufficiente", key="fb_poor", use_container_width=True):
             _salva_feedback("poor", gp)
-            st.warning("Grazie per il feedback, ci stiamo già lavorando per migliorare! 🔧")
-    
-    # Mostra statistiche di qualità (se disponibili)
-    if hasattr(st.session_state, 'quality_stats'):
-        stats = st.session_state.quality_stats
-        st.markdown("---")
-        st.markdown("### 📊 Statistiche Qualità Generale")
-        
-        total = sum(stats.values())
-        if total > 0:
-            cols = st.columns(4)
-            with cols[0]:
-                st.metric("👍 Ottima", f"{stats.get('excellent', 0)}", f"{stats.get('excellent', 0)/total*100:.0f}%")
-            with cols[1]:
-                st.metric("👍 Buona", f"{stats.get('good', 0)}", f"{stats.get('good', 0)/total*100:.0f}%")
-            with cols[2]:
-                st.metric("😐 Sufficiente", f"{stats.get('sufficient', 0)}", f"{stats.get('sufficient', 0)/total*100:.0f}%")
-            with cols[3]:
-                st.metric("👎 Insufficiente", f"{stats.get('poor', 0)}", f"{stats.get('poor', 0)/total*100:.0f}%")
+            st.toast("Grazie, ci stiamo lavorando!", icon="🔧")
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  VARIANTI — 4 card in colonna
@@ -6101,13 +6080,13 @@ def _render_stage_final():
                     f".cb.ok{{background:{T['success']};color:#fff}}</style>"
                     f"<button class='cb' id='cpb' onclick='doCopy()'>📋 Copia link</button>"
                     "<script>function doCopy(){"
-                    f"var t=document.createElement('textarea');t.value='{_share_full_url}';"
-                    "t.style.cssText='position:fixed;opacity:0';document.body.appendChild(t);"
-                    "t.select();var ok=false;try{ok=document.execCommand('copy')}catch(e){}"
-                    "document.body.removeChild(t);var b=document.getElementById('cpb');"
-                    "if(ok){b.className='cb ok';b.innerText='✅ Copiato!';"
-                    "setTimeout(function(){b.className='cb';b.innerText='📋 Copia link'},2500)}"
-                    "}</script>",
+                    f"var u='{_share_full_url}';var b=document.getElementById('cpb');"
+                    "if(navigator.clipboard&&navigator.clipboard.writeText){"
+                    "navigator.clipboard.writeText(u).then(function(){"
+                    "b.className='cb ok';b.innerText='✅ Copiato!';"
+                    "setTimeout(function(){b.className='cb';b.innerText='📋 Copia link'},2500)"
+                    "}).catch(function(){b.innerText=u})"
+                    "}else{b.innerText=u}}</script>",
                     height=42,
                 )
             with _sh_c2:
@@ -6547,13 +6526,11 @@ components.html(
     "function copyL(){"
     "var u='" + SHARE_URL + "';"
     "var b=document.getElementById('sb');"
-    "var t=document.createElement('textarea');"
-    "t.value=u;t.style.cssText='position:fixed;top:0;left:0;opacity:0';"
-    "document.body.appendChild(t);t.focus();t.select();"
-    "var ok=false;try{ok=document.execCommand('copy')}catch(e){}"
-    "document.body.removeChild(t);"
-    "if(ok){b.innerText='✅ Link copiato!';setTimeout(function(){b.innerText='🔗 Condividi con i colleghi'},2000)}"
-    "else{b.innerText=u}}"
+    "if(navigator.clipboard&&navigator.clipboard.writeText){"
+    "navigator.clipboard.writeText(u).then(function(){"
+    "b.innerText='✅ Link copiato!';setTimeout(function(){b.innerText='🔗 Condividi con i colleghi'},2000)"
+    "}).catch(function(){b.innerText=u})"
+    "}else{b.innerText=u}}"
     "</script>",
     height=30
 )
