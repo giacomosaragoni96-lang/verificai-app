@@ -276,14 +276,17 @@ def render_sidebar(
         
         # Stats cards semplici
         try:
-            storico_count = (
-                supabase_admin.table("verifiche_storico")
-                .select("id", count="exact")
-                .eq("user_id", utente.id)
-                .is_("deleted_at", "null")
-                .execute()
-            )
-            total_verifiche = storico_count.count if storico_count else 0
+            if utente is not None and supabase_admin is not None:
+                storico_count = (
+                    supabase_admin.table("verifiche_storico")
+                    .select("id", count="exact")
+                    .eq("user_id", utente.id)
+                    .is_("deleted_at", "null")
+                    .execute()
+                )
+                total_verifiche = storico_count.count if storico_count else 0
+            else:
+                total_verifiche = 0
         except:
             total_verifiche = 0
         
@@ -318,8 +321,12 @@ def render_sidebar(
             st.rerun()
 
         # ── USER + LOGOUT ─────────────────────────────────────────────────────
-        email_utente = utente.email or ""
-        iniziale     = email_utente[0].upper() if email_utente else "?"
+        if utente is not None:
+            email_utente = utente.email or ""
+            iniziale     = email_utente[0].upper() if email_utente else "?"
+        else:
+            email_utente = ""
+            iniziale     = "?"
 
         _piano_label = {
             "admin": "Admin",
