@@ -110,12 +110,13 @@ try:
     SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
     supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
     SUPABASE_ENABLED = True
-except Exception:
+    st.success("✅ Supabase configurato correttamente")
+except Exception as e:
     # Fallback per test senza database
     supabase = None
     supabase_admin = None
     SUPABASE_ENABLED = False
-    st.warning("⚠️ Database Supabase non configurato - alcune funzionalità saranno limitate")
+    st.warning(f"⚠️ Database Supabase non configurato: {e}")
 
 # ── TEMA — inizializzazione ───────────────────────────────────────────────────
 # Tema default: carta (light). Fallback robusto per sessioni vecchie (aurora/luce/ecc.)
