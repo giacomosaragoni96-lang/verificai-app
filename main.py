@@ -5756,23 +5756,7 @@ def _render_stage_final():
         unsafe_allow_html=True,
     )
 
-    _fb_c1, _fb_c2, _fb_c3, _fb_c4 = st.columns(4)
-    with _fb_c1:
-        if st.button("👍 Ottima", key="fb_excellent", use_container_width=True):
-            _salva_feedback("excellent", gp)
-            st.toast("Grazie per il feedback!", icon="🎉")
-    with _fb_c2:
-        if st.button("👍 Buona", key="fb_good", use_container_width=True):
-            _salva_feedback("good", gp)
-            st.toast("Grazie per il feedback!", icon="👍")
-    with _fb_c3:
-        if st.button("😐 Sufficiente", key="fb_ok", use_container_width=True):
-            _salva_feedback("sufficient", gp)
-            st.toast("Grazie, cercheremo di migliorare!", icon="📈")
-    with _fb_c4:
-        if st.button("👎 Insufficiente", key="fb_poor", use_container_width=True):
-            _salva_feedback("poor", gp)
-            st.toast("Grazie, ci stiamo lavorando!", icon="🔧")
+    # ── Feedback buttons rimossi su richiesta utente ───────────────────────────
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  VARIANTI — 4 card in colonna
