@@ -257,6 +257,9 @@ def render_sidebar(
                 unsafe_allow_html=True,
             )
 
+        # Debug: mostra stato limite e uso
+        st.write(f"DEBUG: Limite raggiunto: {limite_raggiunto}, Uso: {_perc_uso}%")
+
         # ── CTA UPGRADE PRO ───────────────────────────────────────────────────
         if limite_raggiunto or _perc_uso >= 60:
             _rimaste = max(0, LIMITE_MENSILE - verifiche_mese_count)
@@ -272,7 +275,13 @@ def render_sidebar(
                 from payments import create_checkout_session, get_stripe_publishable_key, is_stripe_enabled
                 from subscription_management import get_subscription_manager
                 
-                if is_stripe_enabled():
+                # Debug: mostra stato Stripe
+                stripe_enabled = is_stripe_enabled()
+                if not stripe_enabled:
+                    st.warning("⚠️ **Pagamenti non disponibili** - Stripe non configurato")
+                    st.info("Per abilitare i pagamenti, configura le chiavi Stripe in secrets Streamlit.")
+                
+                if stripe_enabled:
                     # Crea sessione checkout
                     if st.button("🚀 Passa a Pro - €4.90/mese", 
                                use_container_width=True,
@@ -288,7 +297,7 @@ def render_sidebar(
                             success_url = f"{base_url}?payment=success&plan=pro"
                             cancel_url = f"{base_url}?payment=cancelled"
                             
-                            # Crea sessione checkout
+                            # Crea checkout session
                             checkout_result = create_checkout_session(
                                 user_id=user_id,
                                 plan_id="pro",

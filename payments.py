@@ -20,6 +20,9 @@ try:
     STRIPE_PUBLISHABLE_KEY = st.secrets.get("STRIPE_PUBLISHABLE_KEY", os.getenv("STRIPE_PUBLISHABLE_KEY"))
     STRIPE_WEBHOOK_SECRET = st.secrets.get("STRIPE_WEBHOOK_SECRET", os.getenv("STRIPE_WEBHOOK_SECRET"))
     
+    # Debug: mostra stato chiavi (solo in development)
+    logger.info(f"Stripe keys check - Secret: {'✓' if STRIPE_SECRET_KEY else '✗'}, Publishable: {'✓' if STRIPE_PUBLISHABLE_KEY else '✗'}")
+    
     if STRIPE_SECRET_KEY:
         stripe.api_key = STRIPE_SECRET_KEY
         STRIPE_ENABLED = True
