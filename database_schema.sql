@@ -131,22 +131,33 @@ INSERT INTO plans (plan_id, name, amount, currency, interval, features) VALUES
  '["Tutte le funzionalità Pro", "Modello Pro 2.5 per materie STEM", "Priorità supporto", "Export avanzati"]')
 ON CONFLICT (plan_id) DO NOTHING;
 
--- Colonna aggiuntiva per gli utenti (se non esiste già)
--- Aggiunge campo per stripe_customer_id nella tabella auth.users
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'users' 
-        AND column_name = 'stripe_customer_id'
-    ) THEN
-        ALTER TABLE auth.users 
-        ADD COLUMN stripe_customer_id VARCHAR(255);
-    END IF;
-END $$;
+-- Tabella profili utente con dati Stripe (alternativa ad auth.users)
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+    stripe_customer_id VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
--- Indice per stripe_customer_id
-CREATE INDEX IF NOT EXISTS idx_users_stripe_customer_id ON auth.users(stripe_customer_id);
+-- Indici per performance
+CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_stripe_customer_id ON user_profiles(stripe_customer_id);
+
+-- RLS per user_profiles
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Policy: utenti possono vedere solo il proprio profilo
+CREATE POLICY "Users can view own profile" ON user_profiles
+    FOR SELECT USING (auth.uid() = user_id);
+
+-- Policy: utenti possono inserire solo il proprio profilo
+CREATE POLICY "Users can insert own profile" ON user_profiles
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Policy: utenti possono aggiornare solo il proprio profilo
+CREATE POLICY "Users can update own profile" ON user_profiles
+    FOR UPDATE USING (auth.uid() = user_id);
 
 -- Commenti per documentazione
 COMMENT ON TABLE subscriptions IS 'Abbonamenti utente con integrazione Stripe';

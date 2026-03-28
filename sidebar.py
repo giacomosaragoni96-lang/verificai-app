@@ -288,12 +288,13 @@ def render_sidebar(
                             success_url = f"{base_url}?payment=success&plan=pro"
                             cancel_url = f"{base_url}?payment=cancelled"
                             
-                            # Crea checkout session
+                            # Crea sessione checkout
                             checkout_result = create_checkout_session(
                                 user_id=user_id,
                                 plan_id="pro",
                                 success_url=success_url,
-                                cancel_url=cancel_url
+                                cancel_url=cancel_url,
+                                user_email=utente.email if utente else None
                             )
                             
                             if checkout_result:

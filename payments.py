@@ -33,7 +33,7 @@ except Exception as e:
     logger.error(f"Errore inizializzazione Stripe: {e}")
 
 
-def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel_url: str) -> Optional[Dict[str, Any]]:
+def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel_url: str, user_email: str = None) -> Optional[Dict[str, Any]]:
     """
     Crea una sessione di checkout Stripe per l'upgrade del piano.
     
@@ -42,6 +42,7 @@ def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel
         plan_id: ID del piano ('pro' o 'premium')
         success_url: URL di redirect dopo pagamento successo
         cancel_url: URL di redirect se utente cancella
+        user_email: Email utente (opzionale)
         
     Returns:
         Dict con session_id e checkout_url, o None se errore
@@ -57,30 +58,52 @@ def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel
     try:
         plan_config = STRIPE_PLANS[plan_id]
         
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
+        # Crea o recupera cliente Stripe
+        from subscription_management import get_subscription_manager
+        import os
+        supabase_url = os.getenv("SUPABASE_URL")
+        supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
+        
+        if supabase_url and supabase_key:
+            from supabase import create_client
+            supabase = create_client(supabase_url, supabase_key)
+            subscription_manager = get_subscription_manager(supabase)
+            customer_id = subscription_manager.get_or_create_stripe_customer(user_id, user_email or "")
+        else:
+            customer_id = None
+        
+        checkout_session_data = {
+            'payment_method_types': ['card'],
+            'line_items': [{
                 'price': plan_config['price_id'],
                 'quantity': 1,
             }],
-            mode='subscription',
-            success_url=success_url,
-            cancel_url=cancel_url,
-            client_reference_id=user_id,
-            customer_email=None,  # Verrà recuperato dal database utente
-            metadata={
+            'mode': 'subscription',
+            'success_url': success_url,
+            'cancel_url': cancel_url,
+            'client_reference_id': user_id,
+            'metadata': {
                 'plan_id': plan_id,
                 'user_id': user_id,
                 'app': 'verificai'
             },
-            subscription_data={
+            'subscription_data': {
                 'metadata': {
                     'plan_id': plan_id,
                     'user_id': user_id,
                     'app': 'verificai'
                 }
             }
-        )
+        }
+        
+        # Aggiungi customer_id se disponibile
+        if customer_id:
+            checkout_session_data['customer'] = customer_id
+            checkout_session_data['customer_email'] = None  # Non necessario se customer specificato
+        elif user_email:
+            checkout_session_data['customer_email'] = user_email
+        
+        checkout_session = stripe.checkout.Session.create(**checkout_session_data)
         
         logger.info(f"Checkout session creata: {checkout_session.id} per utente {user_id}, piano {plan_id}")
         

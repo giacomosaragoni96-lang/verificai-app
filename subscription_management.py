@@ -127,6 +127,55 @@ class SubscriptionManager:
             logger.error(f"Errore creazione abbonamento utente {user_id}: {e}")
             return False
     
+    def get_or_create_stripe_customer(self, user_id: str, email: str) -> Optional[str]:
+        """
+        Recupera o crea un cliente Stripe per l'utente.
+        
+        Args:
+            user_id: ID utente Supabase
+            email: Email utente
+            
+        Returns:
+            Stripe customer ID o None se errore
+        """
+        try:
+            # Prima cerca nel database
+            response = self.supabase.table('user_profiles') \
+                .select('stripe_customer_id') \
+                .eq('user_id', user_id) \
+                .limit(1) \
+                .execute()
+            
+            if response.data and response.data[0].get('stripe_customer_id'):
+                return response.data[0]['stripe_customer_id']
+            
+            # Se non esiste, crea nuovo cliente Stripe
+            import stripe
+            if not stripe.api_key:
+                logger.error("Stripe non configurato")
+                return None
+                
+            customer = stripe.Customer.create(
+                email=email,
+                metadata={
+                    'user_id': user_id,
+                    'app': 'verificai'
+                }
+            )
+            
+            # Salva nel database
+            self.supabase.table('user_profiles').insert({
+                'user_id': user_id,
+                'stripe_customer_id': customer.id
+            }).execute()
+            
+            logger.info(f"Cliente Stripe creato: {customer.id} per utente {user_id}")
+            return customer.id
+            
+        except Exception as e:
+            logger.error(f"Errore creazione cliente Stripe utente {user_id}: {e}")
+            return None
+    
     def update_subscription_status(self, stripe_subscription_id: str, 
                                 status: str) -> bool:
         """

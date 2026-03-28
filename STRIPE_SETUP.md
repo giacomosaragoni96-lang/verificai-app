@@ -22,7 +22,10 @@ Questo creerà:
 - `subscriptions` - Abbonamenti utente
 - `payments` - Storico pagamenti  
 - `plans` - Piani disponibili
+- `user_profiles` - Profili utente con dati Stripe (NON modifica auth.users)
 - Indici e RLS policies per sicurezza
+
+**Nota importante**: Lo schema usa `user_profiles` invece di modificare direttamente `auth.users` per evitare problemi di permessi in Supabase.
 
 ## 🔑 Configurazione Chiavi Stripe
 
