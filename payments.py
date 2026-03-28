@@ -22,6 +22,8 @@ try:
     
     # Debug: mostra stato chiavi (solo in development)
     logger.info(f"Stripe keys check - Secret: {'✓' if STRIPE_SECRET_KEY else '✗'}, Publishable: {'✓' if STRIPE_PUBLISHABLE_KEY else '✗'}")
+    logger.info(f"Secret key preview: {STRIPE_SECRET_KEY[:10]}..." if STRIPE_SECRET_KEY else "No secret key")
+    logger.info(f"Publishable key preview: {STRIPE_PUBLISHABLE_KEY[:10]}..." if STRIPE_PUBLISHABLE_KEY else "No publishable key")
     
     if STRIPE_SECRET_KEY:
         stripe.api_key = STRIPE_SECRET_KEY
