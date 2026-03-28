@@ -1,3 +1,4 @@
+
 # 🚀 Setup Stripe per VerificAI
 
 Guida completa per configurare l'integrazione Stripe in VerificAI.
