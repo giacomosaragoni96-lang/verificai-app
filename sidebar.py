@@ -266,13 +266,69 @@ def render_sidebar(
             else:
                 _msg = f"Ti restano <b>{_rimaste} {'verifica' if _rimaste==1 else 'verifiche'}</b>."
                 _sub = "Con Pro avresti accesso illimitato."
-            st.markdown(f"""
-            <div class="sb-pro-card">
-              <div class="sb-pro-card-header">✦ VerificAI Pro</div>
-              <div class="sb-pro-card-body">{_msg} {_sub}</div>
-              <div class="sb-pro-card-footer">Verifiche illimitate · Fila B anti-copia · BES/DSA · Soluzioni docente</div>
-            </div>
-            """, unsafe_allow_html=True)
+            
+            # Importa funzioni Stripe
+            try:
+                from payments import create_checkout_session, get_stripe_publishable_key, is_stripe_enabled
+                from subscription_management import get_subscription_manager
+                
+                if is_stripe_enabled():
+                    # Crea sessione checkout
+                    if st.button("🚀 Passa a Pro - €9.99/mese", 
+                               use_container_width=True,
+                               key="upgrade_pro_btn",
+                               help="Abbonati a VerificAI Pro per verifiche illimitate"):
+                        
+                        subscription_manager = get_subscription_manager(supabase_admin)
+                        user_id = utente.id if utente else None
+                        
+                        if user_id:
+                            # URL per redirect
+                            base_url = st.secrets.get("BASE_URL", "https://verificai.streamlit.app")
+                            success_url = f"{base_url}?payment=success&plan=pro"
+                            cancel_url = f"{base_url}?payment=cancelled"
+                            
+                            # Crea checkout session
+                            checkout_result = create_checkout_session(
+                                user_id=user_id,
+                                plan_id="pro",
+                                success_url=success_url,
+                                cancel_url=cancel_url
+                            )
+                            
+                            if checkout_result:
+                                # Redirect a Stripe Checkout
+                                st.markdown(f"""
+                                <script>
+                                window.location.href = "{checkout_result['checkout_url']}";
+                                </script>
+                                """, unsafe_allow_html=True)
+                            else:
+                                st.error("❌ Errore durante l'avvio del checkout. Riprova più tardi.")
+                        else:
+                            st.error("⚠️ Effettua il login per proseguire")
+                else:
+                    # Stripe non configurato - mostra messaggio fallback
+                    st.markdown(f"""
+                    <div class="sb-pro-card">
+                      <div class="sb-pro-card-header">✦ VerificAI Pro</div>
+                      <div class="sb-pro-card-body">{_msg} {_sub}</div>
+                      <div class="sb-pro-card-footer">Verifiche illimitate · Fila B anti-copia · BES/DSA · Soluzioni docente</div>
+                      <div style="margin-top: 0.5rem; padding: 0.4rem; background: #fef3c7; border-radius: 6px; font-size: 0.7rem; color: #92400e;">
+                        ⚠️ Pagamenti temporaneamente non disponibili
+                      </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+            except ImportError:
+                # Modulo pagamenti non disponibile - fallback UI
+                st.markdown(f"""
+                <div class="sb-pro-card">
+                  <div class="sb-pro-card-header">✦ VerificAI Pro</div>
+                  <div class="sb-pro-card-body">{_msg} {_sub}</div>
+                  <div class="sb-pro-card-footer">Verifiche illimitate · Fila B anti-copia · BES/DSA · Soluzioni docente</div>
+                </div>
+                """, unsafe_allow_html=True)
 
         # ── LINK STORICO VERIFICHE ─────────────────────────────────────────────
         st.markdown('<div class="sidebar-label" style="margin-top:.3rem;">Le mie verifiche</div>', unsafe_allow_html=True)

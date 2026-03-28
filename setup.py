@@ -15,6 +15,7 @@ setup(
         "python-docx>=0.8.11",
         "mammoth>=1.8.0",
         "supabase>=2.6.0",
+        "stripe>=7.0.0",
         "extra-streamlit-components>=0.1.0",
         "streamlit-cookies-controller>=0.1.0",
         "requests>=2.31.0",

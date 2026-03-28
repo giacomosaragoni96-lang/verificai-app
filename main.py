@@ -139,6 +139,23 @@ if "utente" not in st.session_state:
 if st.session_state.utente is None:
     ripristina_sessione(supabase)
 
+# ── GESTIONE PARAMETRI URL (pagamenti Stripe) ─────────────────────────────
+query_params = st.query_params
+payment_status = query_params.get("payment", [None])[0]
+payment_plan = query_params.get("plan", [None])[0]
+
+if payment_status and payment_plan:
+    if payment_status == "success":
+        st.success(f"🎉 Pagamento completato! Sei ora abbonato a VerificAI {payment_plan.title()}.")
+        # Pulisci parametri URL
+        query_params.clear()
+        st.rerun()
+    elif payment_status == "cancelled":
+        st.info("💳 Pagamento annullato. Puoi provare di nuovo in qualsiasi momento.")
+        # Pulisci parametri URL
+        query_params.clear()
+        st.rerun()
+
 # Mostra auth se non loggato
 if st.session_state.utente is None:
     mostra_auth(supabase)
@@ -595,10 +612,37 @@ _MATHPIX_OK = (
     _mpx.is_configured(st.secrets)
 )
 
-# ── CONTATORI ─────────────────────────────────────────────────────────────────
+# ── CONTATORI E GESTIONE ABBONAMENTI ────────────────────────────────────────
 _verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
 _is_admin       = st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False
-_limite         = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
+
+# Carica informazioni abbonamento utente
+try:
+    from subscription_management import get_subscription_manager
+    subscription_manager = get_subscription_manager(supabase_admin)
+    user_subscription = subscription_manager.get_user_subscription(st.session_state.utente.id)
+    
+    # Salva in session_state per uso in altre parti dell'app
+    st.session_state.piano_utente = user_subscription['plan_id']
+    st.session_state.abbonamento_attivo = user_subscription
+    
+    # Verifica limiti basandosi sul piano
+    limits_check = subscription_manager.can_generate_verification(
+        st.session_state.utente.id, 
+        _verifiche_mese
+    )
+    _limite = not _is_admin and not limits_check['can_generate']
+    
+except ImportError:
+    # Fallback sistema vecchio se modulo non disponibile
+    _limite = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
+    st.session_state.piano_utente = "free"
+    st.session_state.abbonamento_attivo = None
+except Exception as e:
+    logger.error(f"Errore caricamento abbonamento: {e}")
+    _limite = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
+    st.session_state.piano_utente = "free"
+    st.session_state.abbonamento_attivo = None
 
 # ── CSS + FEEDBACK ────────────────────────────────────────────
 st.markdown(get_css(T), unsafe_allow_html=True)
@@ -6518,3 +6562,35 @@ components.html(
     "</script>",
     height=30
 )
+
+
+# ── WEBHOOK STRIPE ─────────────────────────────────────────────────────────────
+# Endpoint per webhook Stripe - da configurare in Dashboard Stripe
+if st.experimental_get_query_params().get("webhook") == ["stripe"]:
+    try:
+        from webhooks import handle_stripe_webhook, validate_webhook_request
+        
+        # Valida richiesta
+        if not validate_webhook_request(st.request):
+            st.error("Webhook non valido", status_code=400)
+            st.stop()
+        
+        # Processa webhook
+        request_data = {
+            'body': st.request.body.decode('utf-8'),
+            'headers': dict(st.request.headers)
+        }
+        
+        result = handle_stripe_webhook(request_data, supabase_admin)
+        
+        if result['success']:
+            st.success("Webhook processato con successo")
+        else:
+            st.error(f"Errore webhook: {result.get('error')}")
+            st.status_code = result.get('status_code', 500)
+            
+    except Exception as e:
+        logger.error(f"Errore critico webhook: {e}")
+        st.error("Errore interno server", status_code=500)
+    
+    st.stop()

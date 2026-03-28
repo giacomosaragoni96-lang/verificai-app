@@ -13,6 +13,44 @@ FEEDBACK_FORM_URL = "https://forms.gle/KNu8v8iDVUiGkQUL8"
 LIMITE_MENSILE = 5
 ADMIN_EMAILS   = {"giacomosaragoni96@gmail.com"}
 
+# ── STRIPE E PAGAMENTI ────────────────────────────────────────────────────────
+# Piani abbonamento e prezzi (in centesimi)
+STRIPE_PLANS = {
+    "pro": {
+        "name": "VerificAI Pro",
+        "price_id": None,  # Da impostare in Stripe Dashboard
+        "amount": 999,  # €9.99
+        "currency": "eur",
+        "interval": "month",
+        "features": [
+            "Verifiche illimitate",
+            "Modello Flash 2.5",
+            "Fila B anti-copia", 
+            "BES/DSA",
+            "Soluzioni docente"
+        ]
+    },
+    "premium": {
+        "name": "VerificAI Premium", 
+        "price_id": None,  # Da impostare in Stripe Dashboard
+        "amount": 1999,  # €19.99
+        "currency": "eur", 
+        "interval": "month",
+        "features": [
+            "Tutte le funzionalità Pro",
+            "Modello Pro 2.5 per materie STEM",
+            "Priorità supporto",
+            "Export avanzati"
+        ]
+    }
+}
+
+# Limiti per piano free
+FREE_PLAN_LIMITS = {
+    "verifiche_mensili": 5,
+    "modello_ai": "gemini-2.5-flash-lite"
+}
+
 # ── MODELLI AI ─────────────────────────────────────────────────────────────────
 MODELLI_DISPONIBILI = {
     "⚡ Flash 2.5 Lite (veloce · Free)": {

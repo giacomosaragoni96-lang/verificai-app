@@ -7,7 +7,15 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(wc:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(grep -rn \"piano_utente\\\\|user_plan\\\\|is_admin\\\\|admin\" /c/Users/gobli/Desktop/verificai/*.py --include=\"*.py\")",
+      "Bash(grep -rn \"piano_utente\\\\|set.*piano\\\\|piano.*free\\\\|piano.*pro\\\\|piano.*gold\" /c/Users/gobli/Desktop/verificai/*.py)",
+      "Bash(grep -rn \"\\\\.table\\(\" /c/Users/gobli/Desktop/verificai/*.py)",
+      "Bash(grep -rn \"profiles\\\\|user.*plan\\\\|subscription\\\\|stripe\\\\|payment\\\\|abbonamento\\\\|upgrade\" /c/Users/gobli/Desktop/verificai/*.py)",
+      "Bash(grep -rn \"Pro\\\\|Gold\\\\|upgrade\\\\|pro\\\\|gold\" /c/Users/gobli/Desktop/verificai/*.py)",
+      "Bash(grep -rn \"href\\\\|upgrade\\\\|pro\\\\|pricing\\\\|payment\\\\|stripe\" /c/Users/gobli/Desktop/verificai/*.py)",
+      "Bash(grep -rn \"TODO\\\\|FIXME\\\\|NOTE\\\\|XXX\\\\|FUTURE\\\\|payment\\\\|stripe\\\\|upgrade\" /c/Users/gobli/Desktop/verificai/*.py)",
+      "Bash(grep -rn \"profiles\\\\|users\\\\|user_plan\\\\|subscription\" /c/Users/gobli/Desktop/verificai/*.py)"
     ]
   }
 }
