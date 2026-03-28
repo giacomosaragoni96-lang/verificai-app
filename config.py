@@ -18,8 +18,8 @@ ADMIN_EMAILS   = {"giacomosaragoni96@gmail.com"}
 STRIPE_PLANS = {
     "pro": {
         "name": "VerificAI Pro",
-        "price_id": "price_1PqX7z2eZvKYlo2C0vZKqB5J",  # Price ID di test di esempio
-        "amount": 490,  # €4.90
+        "price_id": "price_1TG5dKKaqU5QV1h9trhwV6tH",  # Price ID da Stripe Dashboard
+        "amount": 450,  # €4.50
         "currency": "eur",
         "interval": "month",
         "features": [
@@ -32,7 +32,7 @@ STRIPE_PLANS = {
     },
     "premium": {
         "name": "VerificAI Premium", 
-        "price_id": "price_1PqX8J2eZvKYlo2C0vZKqB5J",  # Price ID di test di esempio
+        "price_id": "price_1TG5dMKaqU5QV1h9YZYbxv78",  # Da creare per Premium
         "amount": 999,  # €9.99
         "currency": "eur", 
         "interval": "month",
