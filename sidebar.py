@@ -335,6 +335,9 @@ def render_sidebar(
             last_score = st.session_state.last_validation_score
             st.metric("🎯 Ultimo Score", f"{last_score:.2f}", 
                      "Buono" if last_score > 0.7 else "Da migliorare")
+        
+        # Stats cards semplici
+        try:
             if utente is not None and supabase_admin is not None:
                 storico_count = (
                     supabase_admin.table("verifiche_storico")
