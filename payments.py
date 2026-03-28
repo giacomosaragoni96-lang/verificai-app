@@ -59,6 +59,8 @@ def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel
         return None
         
     try:
+        logger.info(f"Creazione checkout session per user_id: {user_id}, plan: {plan_id}")
+        
         plan_config = STRIPE_PLANS[plan_id]
         
         # Crea o recupera cliente Stripe
@@ -75,10 +77,22 @@ def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel
         else:
             customer_id = None
         
+        logger.info(f"Cliente Stripe: {customer_id}")
+        
+        # Verifica che il price_id sia configurato
+        price_id = plan_config.get("price_id")
+        
+        if not price_id:
+            logger.error(f"Price_id non configurato per il piano {plan_id}")
+            return None
+        
+        logger.info(f"Price ID: {price_id}")
+        
+        # Crea sessione checkout
         checkout_session_data = {
             'payment_method_types': ['card'],
             'line_items': [{
-                'price': plan_config['price_id'],
+                'price': price_id,
                 'quantity': 1,
             }],
             'mode': 'subscription',
@@ -98,6 +112,8 @@ def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel
                 }
             }
         }
+        
+        logger.info(f"Parametri sessione: {checkout_session_data}")
         
         # Aggiungi customer_id se disponibile
         if customer_id:

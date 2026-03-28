@@ -300,6 +300,7 @@ def render_sidebar(
                             cancel_url = f"{base_url}?payment=cancelled"
                             
                             # Crea checkout session
+                            st.write("DEBUG: Creo sessione checkout...")
                             checkout_result = create_checkout_session(
                                 user_id=user_id,
                                 plan_id="pro",
@@ -307,6 +308,7 @@ def render_sidebar(
                                 cancel_url=cancel_url,
                                 user_email=utente.email if utente else None
                             )
+                            st.write(f"DEBUG: Checkout result: {checkout_result}")
                             
                             if checkout_result:
                                 # Redirect a Stripe Checkout
@@ -317,6 +319,7 @@ def render_sidebar(
                                 """, unsafe_allow_html=True)
                             else:
                                 st.error("❌ Errore durante l'avvio del checkout. Riprova più tardi.")
+                                st.write("DEBUG: Checkout result è None o vuoto")
                         else:
                             st.error("⚠️ Effettua il login per proseguire")
                 else:
