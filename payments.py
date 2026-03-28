@@ -40,32 +40,33 @@ except Exception as e:
 
 def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel_url: str, user_email: str = None) -> Optional[Dict[str, Any]]:
     """
-    Crea una sessione di checkout Stripe per l'upgrade del piano.
+    Crea una sessione di checkout Stripe per un utente e piano specifici.
     
     Args:
-        user_id: ID utente Supabase
-        plan_id: ID del piano ('pro' o 'premium')
+        user_id: ID dell'utente in Supabase
+        plan_id: ID del piano (pro, premium)
         success_url: URL di redirect dopo pagamento successo
-        cancel_url: URL di redirect se utente cancella
-        user_email: Email utente (opzionale)
-        
+        cancel_url: URL di redirect dopo cancellazione
+        user_email: Email dell'utente (opzionale)
+    
     Returns:
-        Dict con session_id e checkout_url, o None se errore
+        Dict con checkout_url o None se errore
     """
+    logger.info(f"=== INIZIO create_checkout_session ===")
+    logger.info(f"Parametri: user_id={user_id}, plan_id={plan_id}, success_url={success_url}")
+    
     if not STRIPE_ENABLED:
-        logger.error("Stripe non abilitato - impossibile creare checkout session")
+        logger.error("Stripe non è configurato")
         return None
-        
+    
     if plan_id not in STRIPE_PLANS:
-        logger.error(f"Piano non valido: {plan_id}")
+        logger.error(f"Piano {plan_id} non valido")
         return None
-        
+    
     try:
         logger.info(f"Creazione checkout session per user_id: {user_id}, plan: {plan_id}")
         
-        plan_config = STRIPE_PLANS[plan_id]
-        
-        # Crea o recupera cliente Stripe
+        # Ottieni o crea cliente Stripe
         from subscription_management import get_subscription_manager
         import os
         supabase_url = os.getenv("SUPABASE_URL")
@@ -75,13 +76,14 @@ def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel
             from supabase import create_client
             supabase = create_client(supabase_url, supabase_key)
             subscription_manager = get_subscription_manager(supabase)
-            customer_id = subscription_manager.get_or_create_stripe_customer(user_id, user_email or "")
+            stripe_customer_id = subscription_manager.get_or_create_stripe_customer(user_id, user_email or "")
         else:
-            customer_id = None
+            stripe_customer_id = None
         
-        logger.info(f"Cliente Stripe: {customer_id}")
+        logger.info(f"Cliente Stripe: {stripe_customer_id}")
         
         # Verifica che il price_id sia configurato
+        plan_config = STRIPE_PLANS[plan_id]
         price_id = plan_config.get("price_id")
         
         if not price_id:
@@ -118,8 +120,8 @@ def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel
         logger.info(f"Parametri sessione: {checkout_session_data}")
         
         # Aggiungi customer_id se disponibile
-        if customer_id:
-            checkout_session_data['customer'] = customer_id
+        if stripe_customer_id:
+            checkout_session_data['customer'] = stripe_customer_id
             checkout_session_data['customer_email'] = None  # Non necessario se customer specificato
         elif user_email:
             checkout_session_data['customer_email'] = user_email
