@@ -276,15 +276,14 @@ def render_sidebar(
                 st.write("DEBUG: Provo import modulo payments")
                 from payments import create_checkout_session, get_stripe_publishable_key, is_stripe_enabled
                 from subscription_management import get_subscription_manager
+                st.write("DEBUG: Import modulo payments riuscito")
                 
                 # Debug: mostra stato Stripe
                 stripe_enabled = is_stripe_enabled()
                 st.write(f"DEBUG: Stripe enabled: {stripe_enabled}")
-                if not stripe_enabled:
-                    st.warning("⚠️ **Pagamenti non disponibili** - Stripe non configurato")
-                    st.info("Per abilitare i pagamenti, configura le chiavi Stripe in secrets Streamlit.")
                 
                 if stripe_enabled:
+                    st.write("DEBUG: Creo pulsante upgrade")
                     # Crea sessione checkout
                     if st.button("🚀 Passa a Pro - €4.90/mese", 
                                use_container_width=True,
@@ -321,33 +320,21 @@ def render_sidebar(
                         else:
                             st.error("⚠️ Effettua il login per proseguire")
                 else:
-                    # Stripe non configurato - mostra messaggio fallback
-                    st.markdown(f"""
-                    <div class="sb-pro-card">
-                      <div class="sb-pro-card-header">✦ VerificAI Pro</div>
-                      <div class="sb-pro-card-body">{_msg} {_sub}</div>
-                      <div class="sb-pro-card-footer">Verifiche illimitate · Fila B anti-copia · BES/DSA · Soluzioni docente</div>
-                      <div style="margin-top: 0.5rem; padding: 0.4rem; background: #fef3c7; border-radius: 6px; font-size: 0.7rem; color: #92400e;">
-                        ⚠️ Pagamenti temporaneamente non disponibili
-                      </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    st.warning("⚠️ **Pagamenti non disponibili** - Stripe non configurato")
+                    st.info("Per abilitare i pagamenti, configura le chiavi Stripe in secrets Streamlit.")
                     
-            except ImportError:
-                # Modulo pagamenti non disponibile - fallback UI
-                st.markdown(f"""
-                <div class="sb-pro-card">
-                  <div class="sb-pro-card-header">✦ VerificAI Pro</div>
-                  <div class="sb-pro-card-body">{_msg} {_sub}</div>
-                  <div class="sb-pro-card-footer">Verifiche illimitate · Fila B anti-copia · BES/DSA · Soluzioni docente</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-        # ── LINK STORICO VERIFICHE ─────────────────────────────────────────────
-        st.markdown('<div class="sidebar-label" style="margin-top:.3rem;">Le mie verifiche</div>', unsafe_allow_html=True)
+            except ImportError as e:
+                st.error(f"❌ Errore import moduli pagamenti: {e}")
+                st.write("DEBUG: ImportError catturato")
+            except Exception as e:
+                st.error(f"❌ Errore generico: {e}")
+                st.write("DEBUG: Exception generica catturata")
         
-        # Stats cards semplici
-        try:
+        # Validation score tracking
+        if hasattr(st.session_state, 'last_validation_score'):
+            last_score = st.session_state.last_validation_score
+            st.metric("🎯 Ultimo Score", f"{last_score:.2f}", 
+                     "Buono" if last_score > 0.7 else "Da migliorare")
             if utente is not None and supabase_admin is not None:
                 storico_count = (
                     supabase_admin.table("verifiche_storico")
