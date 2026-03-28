@@ -131,17 +131,6 @@ genai.configure(api_key=API_KEY)
 # ── VERIFICA DISPONIBILITÀ LATEX ─────────────────────────────────────────────────
 # Sarà fatto dopo l'autenticazione per essere visibile all'utente
 
-# ── DEBUG STRIPE IMPORT ─────────────────────────────────────────────────────
-try:
-    import stripe
-    logger.info(f"✅ Stripe importato - versione: {stripe.__version__}")
-except ImportError as e:
-    logger.error(f"❌ Stripe non disponibile: {e}")
-    stripe = None
-except Exception as e:
-    logger.error(f"❌ Errore import Stripe: {e}")
-    stripe = None
-
 # ── AUTENTICAZIONE ────────────────────────────────────────────────────────────
 if "utente" not in st.session_state:
     st.session_state.utente = None
