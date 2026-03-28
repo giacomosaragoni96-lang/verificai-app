@@ -262,6 +262,7 @@ def render_sidebar(
 
         # ── CTA UPGRADE PRO ───────────────────────────────────────────────────
         if limite_raggiunto or _perc_uso >= 60:
+            st.write("DEBUG: Entro nel blocco CTA")
             _rimaste = max(0, LIMITE_MENSILE - verifiche_mese_count)
             if limite_raggiunto:
                 _msg = "Limite mensile raggiunto."
@@ -272,11 +273,13 @@ def render_sidebar(
             
             # Importa funzioni Stripe
             try:
+                st.write("DEBUG: Provo import modulo payments")
                 from payments import create_checkout_session, get_stripe_publishable_key, is_stripe_enabled
                 from subscription_management import get_subscription_manager
                 
                 # Debug: mostra stato Stripe
                 stripe_enabled = is_stripe_enabled()
+                st.write(f"DEBUG: Stripe enabled: {stripe_enabled}")
                 if not stripe_enabled:
                     st.warning("⚠️ **Pagamenti non disponibili** - Stripe non configurato")
                     st.info("Per abilitare i pagamenti, configura le chiavi Stripe in secrets Streamlit.")
