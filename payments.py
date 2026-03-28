@@ -83,14 +83,24 @@ def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel
         logger.info(f"Cliente Stripe: {stripe_customer_id}")
         
         # Verifica che il price_id sia configurato
-        plan_config = STRIPE_PLANS[plan_id]
-        price_id = plan_config.get("price_id")
+        plan = STRIPE_PLANS[plan_id]
+        price_id = plan.get("price_id")
         
         if not price_id:
             logger.error(f"Price_id non configurato per il piano {plan_id}")
             return None
         
         logger.info(f"Price ID: {price_id}")
+        logger.info(f"Price ID type: {type(price_id)}")
+        logger.info(f"Price ID length: {len(price_id)}")
+        
+        # Verifica che il price ID esista in Stripe prima di creare la sessione
+        try:
+            price = stripe.Price.retrieve(price_id)
+            logger.info(f"✅ Price ID trovato in Stripe: {price.id} - {price.unit_amount/100}€")
+        except stripe.error.StripeError as e:
+            logger.error(f"❌ Price ID non trovato in Stripe: {e}")
+            return None
         
         # Crea sessione checkout
         checkout_session_data = {
