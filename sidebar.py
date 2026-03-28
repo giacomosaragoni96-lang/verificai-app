@@ -274,7 +274,7 @@ def render_sidebar(
                 
                 if is_stripe_enabled():
                     # Crea sessione checkout
-                    if st.button("🚀 Passa a Pro - €9.99/mese", 
+                    if st.button("🚀 Passa a Pro - €4.90/mese", 
                                use_container_width=True,
                                key="upgrade_pro_btn",
                                help="Abbonati a VerificAI Pro per verifiche illimitate"):

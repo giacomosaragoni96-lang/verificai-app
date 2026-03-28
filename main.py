@@ -141,8 +141,8 @@ if st.session_state.utente is None:
 
 # ── GESTIONE PARAMETRI URL (pagamenti Stripe) ─────────────────────────────
 query_params = st.query_params
-payment_status = query_params.get("payment", [None])[0]
-payment_plan = query_params.get("plan", [None])[0]
+payment_status = query_params.get("payment", None)
+payment_plan = query_params.get("plan", None)
 
 if payment_status and payment_plan:
     if payment_status == "success":
@@ -6566,7 +6566,7 @@ components.html(
 
 # ── WEBHOOK STRIPE ─────────────────────────────────────────────────────────────
 # Endpoint per webhook Stripe - da configurare in Dashboard Stripe
-if st.experimental_get_query_params().get("webhook") == ["stripe"]:
+if st.query_params.get("webhook") == "stripe":
     try:
         from webhooks import handle_stripe_webhook, validate_webhook_request
         
