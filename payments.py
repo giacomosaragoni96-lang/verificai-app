@@ -40,6 +40,33 @@ except Exception as e:
     logger.error(f"Errore inizializzazione Stripe: {e}")
 
 
+def create_test_product_if_not_exists():
+    """Crea un prodotto test se non esiste"""
+    try:
+        # Prova a creare un prodotto test
+        product = stripe.Product.create(
+            name="VerificAI Pro Test",
+            description="Abbonamento mensile VerificAI Pro",
+            type="service"
+        )
+        
+        # Crea il prezzo
+        price = stripe.Price.create(
+            product=product.id,
+            unit_amount=450,  # €4.50
+            currency="eur",
+            recurring={"interval": "month"}
+        )
+        
+        logger.info(f"✅ Prodotto test creato: {product.id}")
+        logger.info(f"✅ Prezzo test creato: {price.id}")
+        return price.id
+        
+    except Exception as e:
+        logger.error(f"❌ Errore creazione prodotto test: {e}")
+        return None
+
+
 def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel_url: str, user_email: str = None) -> Optional[Dict[str, Any]]:
     """
     Crea una sessione di checkout Stripe per un utente e piano specifici.
@@ -102,7 +129,18 @@ def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel
             logger.info(f"✅ Price ID trovato in Stripe: {price.id} - {price.unit_amount/100}€")
         except stripe.error.StripeError as e:
             logger.error(f"❌ Price ID non trovato in Stripe: {e}")
-            return None
+            logger.info("🔧 Provo a creare prodotto test automaticamente...")
+            
+            # Crea prodotto test automaticamente
+            new_price_id = create_test_product_if_not_exists()
+            if new_price_id:
+                logger.info(f"✅ Nuovo price ID creato: {new_price_id}")
+                # Aggiorna il config con il nuovo price ID
+                STRIPE_PLANS[plan_id]["price_id"] = new_price_id
+                price_id = new_price_id
+            else:
+                logger.error("❌ Impossibile creare prodotto test")
+                return None
         
         # Crea sessione checkout
         checkout_session_data = {
