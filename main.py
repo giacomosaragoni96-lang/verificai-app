@@ -742,13 +742,7 @@ if _STYLED_AVAILABLE:
 settings   = render_sidebar(
     supabase_admin=supabase_admin, utente=st.session_state.utente,
     verifiche_mese_count=_verifiche_mese, is_admin=_is_admin,
-    limite_raggiunto=_limite, T=T, SCUOLE=SCUOLE,
-    MODELLI_DISPONIBILI=MODELLI_DISPONIBILI, LIMITE_MENSILE=LIMITE_MENSILE,
-    giorni_al_reset_func=_giorni_al_reset, compila_pdf_func=compila_pdf,
-    supabase_client=supabase, current_stage=st.session_state.stage,
-    THEMES=THEMES, THEME_LABELS=THEME_LABELS,
-    extract_blocks_func=extract_blocks,
-    pdf_to_images_func=pdf_to_images_bytes,
+    limite_raggiunto=_limite
 )
 modello_id = settings.get("modello_id", "gemini-2.5-flash-lite")
 
