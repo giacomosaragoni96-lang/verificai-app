@@ -564,3 +564,7 @@ if is_admin and hasattr(st.session_state, 'quality_stats'):
         "modello_id":    modello_id,
         "theme_changed": theme_changed,
     }
+}
+
+
+def render_sidebar(supabase_admin, utente, verifiche_mese_count):
