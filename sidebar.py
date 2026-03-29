@@ -273,74 +273,16 @@ def render_sidebar(
             
             # Importa funzioni Stripe
             try:
-                st.write("DEBUG: Provo import modulo payments")
-                from payments import create_checkout_session, get_stripe_publishable_key, is_stripe_enabled
-                from subscription_management import get_subscription_manager
-                st.write("DEBUG: Import modulo payments riuscito")
+                from stripe_checkout import render_stripe_checkout
+                st.write("DEBUG: Import stripe_checkout riuscito")
                 
-                # Debug: mostra stato Stripe
-                stripe_enabled = is_stripe_enabled()
-                st.write(f"DEBUG: Stripe enabled: {stripe_enabled}")
-                
-                if stripe_enabled:
-                    st.write("DEBUG: Creo pulsante upgrade")
-                    # Crea sessione checkout
-                    if st.button("🚀 Passa a Pro - €4.90/mese", 
-                               use_container_width=True,
-                               key="upgrade_pro_btn",
-                               help="Abbonati a VerificAI Pro per verifiche illimitate"):
-                        
-                        subscription_manager = get_subscription_manager(supabase_admin)
-                        user_id = utente.id if utente else None
-                        
-                        if user_id:
-                            # URL per redirect
-                            base_url = st.secrets.get("BASE_URL", "http://localhost:8501")
-                            success_url = f"{base_url}?payment=success"
-                            cancel_url = f"{base_url}?payment=cancelled"
-                            st.write(f"DEBUG: BASE_URL: {base_url}")
-                            st.write(f"DEBUG: SUCCESS_URL: {success_url}")
-                            st.write(f"DEBUG: CANCEL_URL: {cancel_url}")
-                            
-                            # Crea checkout session
-                            st.write("DEBUG: Creo sessione checkout...")
-                            checkout_result = create_checkout_session(
-                                user_id=user_id,
-                                plan_id="pro",
-                                success_url=success_url,
-                                cancel_url=cancel_url,
-                                user_email=utente.email if utente else None
-                            )
-                            st.write(f"DEBUG: Checkout result: {checkout_result}")
-                            
-                            if checkout_result:
-                                # Link diretto al checkout Stripe
-                                checkout_url = checkout_result['checkout_url']
-                                st.markdown(f"""
-                                <div style="text-align: center; margin: 1rem 0;">
-                                    <a href="{checkout_url}" 
-                                       target="_blank" 
-                                       style="background-color: #6366f1; color: white; padding: 0.75rem 1.5rem; 
-                                              text-decoration: none; border-radius: 0.5rem; font-weight: 600;
-                                              display: inline-block; transition: all 0.3s ease;">
-                                        🚀 Vai a Stripe Checkout
-                                    </a>
-                                </div>
-                                <p style="text-align: center; font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
-                                    ⚡ Si aprirà in una nuova scheda
-                                </p>
-                                """, unsafe_allow_html=True)
-                            else:
-                                st.error("❌ Errore durante l'avvio del checkout. Riprova più tardi.")
-                                st.write("DEBUG: Checkout result è None o vuoto")
-                        else:
-                            st.error("⚠️ Effettua il login per proseguire")
-                else:
-                    st.warning("⚠️ **Pagamenti non disponibili** - Stripe non configurato")
-                    st.info("Per abilitare i pagamenti, configura le chiavi Stripe in secrets Streamlit.")
+                # Usa il componente Stripe professionale
+                if render_stripe_checkout("pro", user_email=utente.email if utente else None):
+                    st.success("🎉 Checkout completato! Abbonamento attivato.")
+                    # Qui potresti aggiornare il database o ricaricare la pagina
                     
             except ImportError as e:
-                st.error(f"❌ Errore import moduli pagamenti: {e}")
+                st.error(f"❌ Errore import stripe_checkout: {e}")
                 st.write("DEBUG: ImportError catturato")
             except Exception as e:
                 st.error(f"❌ Errore generico: {e}")
