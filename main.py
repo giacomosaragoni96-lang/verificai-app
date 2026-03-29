@@ -617,6 +617,7 @@ _verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_
 _is_admin       = st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False
 
 # Carica informazioni abbonamento utente
+# Verifica limiti basandosi sul piano
 try:
     from subscription_management import get_subscription_manager
     subscription_manager = get_subscription_manager(supabase_admin)
