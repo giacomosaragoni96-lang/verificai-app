@@ -742,7 +742,7 @@ if _STYLED_AVAILABLE:
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 settings   = render_sidebar(
     supabase_admin=supabase_admin, utente=st.session_state.utente,
-    verifiche_mese_count=_verifiche_mese, is_admin=_is_admin,
+    verifiche_mese_count=_verifiche_mese,
     limite_raggiunto=_limite
 )
 modello_id = settings.get("modello_id", "gemini-2.5-flash-lite")
