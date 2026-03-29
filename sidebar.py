@@ -311,10 +311,15 @@ def render_sidebar(
                             st.write(f"DEBUG: Checkout result: {checkout_result}")
                             
                             if checkout_result:
+                                # Debug: mostra URL checkout
+                                checkout_url = checkout_result['checkout_url']
+                                st.write(f"DEBUG: Checkout URL: {checkout_url}")
+                                
                                 # Redirect a Stripe Checkout
                                 st.markdown(f"""
                                 <script>
-                                window.location.href = "{checkout_result['checkout_url']}";
+                                console.log('Redirecting to:', '{checkout_url}');
+                                window.location.href = '{checkout_url}';
                                 </script>
                                 """, unsafe_allow_html=True)
                             else:
