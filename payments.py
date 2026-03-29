@@ -143,6 +143,10 @@ def create_checkout_session(user_id: str, plan_id: str, success_url: str, cancel
                 return None
         
         # Crea sessione checkout
+        logger.info(f"SUCCESS_URL: {success_url}")
+        logger.info(f"CANCEL_URL: {cancel_url}")
+        logger.info(f"CUSTOMER_ID: {stripe_customer_id}")
+        
         checkout_session_data = {
             'payment_method_types': ['card'],
             'line_items': [{

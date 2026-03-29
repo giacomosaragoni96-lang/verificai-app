@@ -295,9 +295,12 @@ def render_sidebar(
                         
                         if user_id:
                             # URL per redirect
-                            base_url = st.secrets.get("BASE_URL", "https://verificai.streamlit.app")
-                            success_url = f"{base_url}?payment=success&plan=pro"
+                            base_url = st.secrets.get("BASE_URL", "http://localhost:8501")
+                            success_url = f"{base_url}?payment=success"
                             cancel_url = f"{base_url}?payment=cancelled"
+                            st.write(f"DEBUG: BASE_URL: {base_url}")
+                            st.write(f"DEBUG: SUCCESS_URL: {success_url}")
+                            st.write(f"DEBUG: CANCEL_URL: {cancel_url}")
                             
                             # Crea checkout session
                             st.write("DEBUG: Creo sessione checkout...")
