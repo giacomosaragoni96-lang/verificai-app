@@ -617,7 +617,6 @@ _verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_
 _is_admin       = st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False
 
 # Carica informazioni abbonamento utente
-# Verifica limiti basandosi sul piano
 try:
     from subscription_management import get_subscription_manager
     subscription_manager = get_subscription_manager(supabase_admin)
@@ -742,7 +741,8 @@ if _STYLED_AVAILABLE:
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 settings   = render_sidebar(
     supabase_admin=supabase_admin, utente=st.session_state.utente,
-    verifiche_mese_count=_verifiche_mese
+    verifiche_mese_count=_verifiche_mese, is_admin=_is_admin,
+    limite_raggiunto=_limite
 )
 modello_id = settings.get("modello_id", "gemini-2.5-flash-lite")
 
