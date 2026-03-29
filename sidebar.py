@@ -18,7 +18,7 @@ def render_sidebar(supabase_admin, utente, verifiche_mese_count):
     
     _piano_label = {
         "admin": "Admin",
-        "gold": "Piano Gold", 
+        "gold": "Piano Gold",
         "pro":   "Piano Pro",
     }.get(utente.piano if utente else "free", "Piano gratuito")
     
