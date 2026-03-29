@@ -273,8 +273,8 @@ def render_sidebar(
             
             # Importa funzioni Stripe
             try:
-                from stripe_checkout import render_stripe_checkout
-                st.write("DEBUG: Import stripe_checkout riuscito")
+                from stripe_checkout_component import render_stripe_checkout
+                st.write("DEBUG: Import stripe_checkout_component riuscito")
                 
                 # Usa il componente Stripe professionale
                 if render_stripe_checkout("pro", user_email=utente.email if utente else None):
@@ -282,7 +282,7 @@ def render_sidebar(
                     # Qui potresti aggiornare il database o ricaricare la pagina
                     
             except ImportError as e:
-                st.error(f"❌ Errore import stripe_checkout: {e}")
+                st.error(f"❌ Errore import stripe_checkout_component: {e}")
                 st.write("DEBUG: ImportError catturato")
             except Exception as e:
                 st.error(f"❌ Errore generico: {e}")
