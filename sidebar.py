@@ -314,16 +314,21 @@ def render_sidebar(
                             st.write(f"DEBUG: Checkout result: {checkout_result}")
                             
                             if checkout_result:
-                                # Debug: mostra URL checkout
+                                # Link diretto al checkout Stripe
                                 checkout_url = checkout_result['checkout_url']
-                                st.write(f"DEBUG: Checkout URL: {checkout_url}")
-                                
-                                # Redirect a Stripe Checkout
                                 st.markdown(f"""
-                                <script>
-                                console.log('Redirecting to:', '{checkout_url}');
-                                window.location.href = '{checkout_url}';
-                                </script>
+                                <div style="text-align: center; margin: 1rem 0;">
+                                    <a href="{checkout_url}" 
+                                       target="_blank" 
+                                       style="background-color: #6366f1; color: white; padding: 0.75rem 1.5rem; 
+                                              text-decoration: none; border-radius: 0.5rem; font-weight: 600;
+                                              display: inline-block; transition: all 0.3s ease;">
+                                        🚀 Vai a Stripe Checkout
+                                    </a>
+                                </div>
+                                <p style="text-align: center; font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
+                                    ⚡ Si aprirà in una nuova scheda
+                                </p>
                                 """, unsafe_allow_html=True)
                             else:
                                 st.error("❌ Errore durante l'avvio del checkout. Riprova più tardi.")
