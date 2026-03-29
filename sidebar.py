@@ -272,21 +272,154 @@ def render_sidebar(
                 _sub = "Con Pro avresti accesso illimitato."
             
             # Importa funzioni Stripe
+            import sys
+            import os
+            
+            # Aggiungi il path corrente
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            if current_dir not in sys.path:
+                sys.path.insert(0, current_dir)
+                st.write(f"DEBUG: Aggiunto path {current_dir} a sys.path")
+            
             try:
                 from stripe_checkout_component import render_stripe_checkout
                 st.write("DEBUG: Import stripe_checkout_component riuscito")
                 
                 # Usa il componente Stripe professionale
                 if render_stripe_checkout("pro", user_email=utente.email if utente else None):
-                    st.success("🎉 Checkout completato! Abbonamento attivato.")
+                    st.success("Checkout completato! Abbonamento attivato.")
                     # Qui potresti aggiornare il database o ricaricare la pagina
                     
             except ImportError as e:
                 st.error(f"❌ Errore import stripe_checkout_component: {e}")
                 st.write("DEBUG: ImportError catturato")
-            except Exception as e:
-                st.error(f"❌ Errore generico: {e}")
-                st.write("DEBUG: Exception generica catturata")
+                return
+    
+# Validation score tracking
+if hasattr(st.session_state, 'last_validation_score'):
+    last_score = st.session_state.last_validation_score
+    st.metric("Ultimo Score", f"{last_score:.2f}", 
+             "Buono" if last_score > 0.7 else "Da migliorare")
+    
+# Stats cards semplici
+try:
+    if utente is not None and supabase_admin is not None:
+        storico_count = (
+            supabase_admin.table("verifiche_storico")
+            .select("id", count="exact")
+            .eq("user_id", utente.id)
+            .is_("deleted_at", "null")
+            .execute()
+        )
+        total_verifiche = storico_count.count if storico_count else 0
+    else:
+        total_verifiche = 0
+except:
+    total_verifiche = 0
+    
+# Card info-only (nessun onclick — la navigazione è gestita dal pulsante sotto)
+st.markdown(f'''
+<div class="sb-pro-card" style="
+    background: linear-gradient({_acc}15, transparent);
+    border: 1px solid {_acc}44;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <div style="font-size: 1rem; font-weight: 600; color: {_sb_text};">
+            📚 Le mie verifiche
+        </div>
+        <div style="background: {_acc}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 700;">
+            {total_verifiche}
+        </div>
+    </div>
+    <div style="font-size: 0.82rem; color: {_sb_muted};">
+        Visualizza, modifica e scarica tutte le tue verifiche
+    </div>
+</div>
+''', unsafe_allow_html=True)
+
+if st.button("📄 Apri Storico Completo", key="open_storico", use_container_width=True, type="secondary"):
+    st.session_state.stage = "MIE_VERIFICHE"
+    st.rerun()
+
+# ── USER + LOGOUT ─────────────────────────────────────────────────────
+if utente is not None:
+    email_utente = utente.email or ""
+    iniziale     = email_utente[0].upper() if email_utente else "?"
+else:
+    email_utente = ""
+    iniziale     = "?"
+
+_piano_label = {
+    "admin": "Admin",
+    "gold":  "Piano Gold",
+    "pro":   "Piano Pro",
+}.get(_piano, "Piano gratuito")
+_piano_icon = {
+    "admin": "⚙️",
+    "gold":  "🌟",
+    "pro":   "⚡",
+}.get(_piano, "🎓")
+st.markdown(f"""
+<div class="user-pill">
+  <div class="user-avatar">{iniziale}</div>
+  <div class="user-info">
+    <div class="user-email">{email_utente}</div>
+    <div class="user-role">{_piano_icon} {_piano_label}</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="logout-btn-wrap">', unsafe_allow_html=True)
+if st.button("↩ Esci dall'account", key="logout_btn"):
+    from auth import cancella_sessione_cookie
+    cancella_sessione_cookie()
+    supabase_client.auth.sign_out()
+    st.session_state.utente          = None
+    st.session_state.supabase       = None
+    st.session_state.stage          = "INPUT"
+    st.rerun()
+st.markdown("</div>", unsafe_allow_html=True)
+
+# ── PERFORMANCE MONITORING (Admin only) ─────────────────────────────
+if is_admin and hasattr(st.session_state, 'quality_stats'):
+    st.markdown("---")
+    st.markdown("### 📊 Qualità Generazione")
+    
+    stats = st.session_state.quality_stats
+    total = sum(stats.values())
+    
+    if total > 0:
+        # Quality metrics
+        excellent_rate = stats.get('excellent', 0) / total * 100
+        good_rate = stats.get('good', 0) / total * 100
+        poor_rate = stats.get('poor', 0) / total * 100
+        
+        st.metric("📈 Tasso Successo", f"{excellent_rate + good_rate:.1f}%", 
+                 f"+{excellent_rate:.1f}% eccellente")
+        
+        # Visual quality bar
+        quality_data = [
+            ("👍 Ottima", stats.get('excellent', 0), "#059669"),
+            ("👍 Buona", stats.get('good', 0), "#22c55e"), 
+            ("😐 Sufficiente", stats.get('sufficient', 0), "#f59e0b"),
+            ("👎 Insufficiente", stats.get('poor', 0), "#ef4444")
+        ]
+        
+        for label, count, color in quality_data:
+            if count > 0:
+                percentage = count / total * 100
+                st.markdown(f"""
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.2rem 0;">
+                    <span style="font-size: 0.8rem;">{label}</span>
+                    <span style="font-size: 0.8rem; font-weight: 600;">{count} ({percentage:.0f}%)</span>
+                </div>
+                <div style="background: #e5e7eb; border-radius: 4px; height: 6px; margin: 2px 0;">
+                    <div style="background: {color}; width: {percentage}%; height: 100%; border-radius: 4px;"></div>
+                </div>
+                """, unsafe_allow_html=True)
         
         # Validation score tracking
         if hasattr(st.session_state, 'last_validation_score'):
