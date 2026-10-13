@@ -50,6 +50,7 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 from auth import mostra_auth, ripristina_sessione
 from styles import get_css, _is_light_color
+from ui_banca import render_banca
 from ui_helpers import (
     render_privacy,
     _make_katex_html, _render_sticky_header,
@@ -74,6 +75,7 @@ except ImportError:
 
 # ── COSTANTI STAGE ────────────────────────────────────────────────────────────
 STAGE_MIE_VERIFICHE = "MIE_VERIFICHE"  # pagina "Le tue verifiche"
+STAGE_BANCA = "BANCA"                   # pagina "Banca esercizi" (solo admin)
 
 # ── PAGE CONFIG ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -4399,6 +4401,7 @@ if not _share_view_active:
     _show_bc = not (
         st.session_state.stage == STAGE_INPUT
         or st.session_state.stage == STAGE_MIE_VERIFICHE
+        or st.session_state.stage == STAGE_BANCA
     )
     if _show_bc:
         _render_sticky_header(T)
@@ -4458,6 +4461,15 @@ if not _share_view_active:
     elif _current == STAGE_REVIEW:  _render_stage_review()
     elif _current == STAGE_FINAL:   _render_stage_final()
     elif _current == STAGE_MIE_VERIFICHE: _render_le_tue_verifiche()
+    elif _current == STAGE_BANCA:
+        if _is_admin:
+            def _esci_dalla_banca():
+                st.session_state.stage = STAGE_INPUT
+                st.rerun()
+            render_banca(supabase_admin, _esci_dalla_banca)
+        else:                                   # la banca è riservata all'admin
+            st.session_state.stage = STAGE_INPUT
+            st.rerun()
 
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────

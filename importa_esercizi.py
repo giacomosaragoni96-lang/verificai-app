@@ -1,27 +1,25 @@
 """
 importa_esercizi.py — legge schede, verifiche e appunti (PDF o LaTeX) e ne ricava gli esercizi catalogati.
 
-Non tocca il sito né il database: per ogni file produce un JSON e una pagina HTML da rivedere.
+Per ogni file produce un JSON e una pagina HTML da rivedere; con --salva li mette anche nella banca
+su Supabase come «in attesa di revisione» (li approvi dalla pagina Banca dell'app).
 
     python importa_esercizi.py materiale/scheda.pdf
     python importa_esercizi.py materiale/verifica.tex
-    python importa_esercizi.py materiale                  # tutti i .tex e .pdf della cartella
-    python importa_esercizi.py materiale --senza-ai       # solo lettura del codice, niente AI
+    python importa_esercizi.py materiale                      # tutti i .tex e .pdf della cartella
+    python importa_esercizi.py materiale --senza-ai           # solo lettura del codice, niente AI
+    python importa_esercizi.py materiale --salva --materia Matematica --scuola "Istituto Professionale"
 
-Come legge i file:
-  • .tex di VERIFICA o SCHEDA: il codice è letto da un programma (testo, formule, punti e facoltativi
-    esatti); l'AI serve solo a etichettare (argomento, tecniche, difficoltà).
-  • .tex di APPUNTI e .pdf: li legge l'AI (a blocchi).
-I file restano sul tuo computer (la cartella materiale/ è ignorata da git). Usa GOOGLE_API_KEY del .env.
+La logica sta in banca_import.py (la usa anche la pagina Banca). I file restano sul tuo computer
+(la cartella materiale/ è ignorata da git). Usa GOOGLE_API_KEY del .env; per --salva servono anche
+SUPABASE_URL e SUPABASE_SERVICE_KEY nel .env.
 """
 import argparse
 import glob
 import html
 import json
 import os
-import re
 import sys
-import time
 
 from dotenv import load_dotenv
 
@@ -34,195 +32,9 @@ for _flusso in (sys.stdout, sys.stderr):          # la console di Windows non st
         pass
 
 import ai_client                                  # noqa: E402
-from config import MODEL_FLASH_ID, livello_normalizzato  # noqa: E402
-from estrai_tex import corpo_documento, leggi_tex, togli_commenti  # noqa: E402
-from prompts import prompt_etichetta_esercizi, prompt_importa_esercizi, prompt_tipo_livelli  # noqa: E402
-
-
-# ── chiamate all'AI ───────────────────────────────────────────────────────────
-
-def leggi_json(testo: str) -> dict:
-    testo = re.sub(r"^```(?:json)?|```$", "", (testo or "").strip(), flags=re.MULTILINE).strip()
-    try:
-        return json.loads(testo)
-    except json.JSONDecodeError:
-        m = re.search(r"\{.*\}", testo, re.DOTALL)
-        return json.loads(m.group(0)) if m else {}
-
-
-def chiedi_json(modello, contenuto: list, tentativi: int = 2):
-    ultimo = None
-    for t in range(tentativi):
-        try:
-            r = modello.generate_content(contenuto, generation_config={"json": True, "temperature": 0.1})
-            return leggi_json(r.text)
-        except Exception as e:                    # noqa: BLE001
-            ultimo = e
-            if ai_client.errore_definitivo(e):
-                break
-            time.sleep(2 * (t + 1))
-    print(f"   ⚠️  chiamata AI non riuscita: {str(ultimo)[:200]}")
-    return None
-
-
-# ── PDF: a blocchi di pagine ──────────────────────────────────────────────────
-
-def blocchi_di_pagine(percorso: str, per_blocco: int):
-    import fitz                                   # PyMuPDF, già nelle dipendenze
-    doc = fitz.open(percorso)
-    for inizio in range(0, len(doc), per_blocco):
-        fine = min(inizio + per_blocco, len(doc)) - 1
-        parte = fitz.open()
-        parte.insert_pdf(doc, from_page=inizio, to_page=fine)
-        yield inizio + 1, parte.tobytes()
-
-
-def esercizi_da_pdf(modello, materia: str, percorso: str, pagine: int) -> list:
-    tutti = []
-    for prima, dati in blocchi_di_pagine(percorso, pagine):
-        print(f"   pagine da {prima}…")
-        r = chiedi_json(modello, [prompt_importa_esercizi(materia), {"mime_type": "application/pdf", "data": dati}])
-        for e in (r or {}).get("esercizi", []):
-            e["pagina"] = prima + int(e.get("pagina_nel_blocco") or 1) - 1
-            tutti.append(e)
-    return tutti
-
-
-# ── LaTeX: appunti letti dall'AI sul sorgente ─────────────────────────────────
-
-def blocchi_di_sorgente(tex: str, massimo: int = 12000) -> list:
-    """Spezza il corpo del documento su \\section/\\subsection in blocchi di dimensione ragionevole."""
-    corpo = corpo_documento(togli_commenti(tex))
-    pezzi = [p for p in re.split(r"(?=\\section)", corpo) if p.strip()]
-    blocchi, corrente = [], ""
-    for p in pezzi:
-        sotto = re.split(r"(?=\\subsection)", p) if len(p) > massimo else [p]
-        for q in sotto:
-            while len(q) > massimo:                       # ultima risorsa: taglio a righe vuote
-                taglio = q.rfind("\n\n", 0, massimo) or massimo
-                blocchi.append(q[:taglio]); q = q[taglio:]
-            if len(corrente) + len(q) > massimo and corrente:
-                blocchi.append(corrente); corrente = ""
-            corrente += q
-    if corrente.strip():
-        blocchi.append(corrente)
-    return blocchi
-
-
-def esercizi_da_appunti(modello, materia: str, tex: str) -> list:
-    tutti = []
-    for i, blocco in enumerate(blocchi_di_sorgente(tex), 1):
-        print(f"   blocco {i}…")
-        r = chiedi_json(modello, [prompt_importa_esercizi(materia, da_latex=True) + "\n\nCODICE LATEX:\n" + blocco])
-        for e in (r or {}).get("esercizi", []):
-            e["pagina"] = i
-            tutti.append(e)
-    return tutti
-
-
-# ── LaTeX: verifiche e schede lette dal codice ────────────────────────────────
-
-def esercizi_da_verifica(d: dict):
-    esercizi, sezioni_mod = [], []
-    for si, s in enumerate(d["sezioni"], 1):
-        punti = [q.get("punti") for q in s["quesiti"]]
-        sezioni_mod.append({
-            "nome": s["nome"], "tipo": s["tipo"], "consegna": s["consegna"], "n_quesiti": len(s["quesiti"]),
-            "punti": punti, "facoltativi": [q["etichetta"] for q in s["quesiti"] if q["facoltativo"]],
-            "etichette": [q["etichetta"] for q in s["quesiti"]],
-            "opzioni_per_quesito": max([len(q["opzioni"]) for q in s["quesiti"]] or [0]),
-        })
-        for q in s["quesiti"]:
-            esercizi.append({
-                "numero": f"{si}.{q['etichetta']}", "pagina": None, "ruolo": "esercizio",
-                "testo_latex": q["testo_latex"], "opzioni": q["opzioni"], "soluzione_latex": None,
-                "punti": q.get("punti"), "facoltativo": q["facoltativo"], "sezione": s["nome"],
-                "consegna_sezione": s["consegna"], "posizione": si,
-                "tipo": "scelta_multipla" if q["opzioni"] else None,
-            })
-    modello = {
-        "titolo": d["titolo"], "argomento": d["argomento_titolo"], "istruzioni": d["istruzioni"],
-        "sezioni": sezioni_mod, "punti_base": d["punti_base"], "punti_extra": d["punti_extra"],
-        "totale": d["totale"], "base_pdp_dsa": d["base_pdp_dsa"], "stile": d["stile"],
-        "punti_letti": d["punti_letti"],
-    }
-    return esercizi, modello
-
-
-def esercizi_da_scheda(d: dict) -> list:
-    return [{**e, "pagina": None, "ruolo": "esercizio", "opzioni": [], "soluzione_latex": None}
-            for e in d["esercizi"]]
-
-
-def etichetta_con_ai(modello, materia: str, titolo: str, esercizi: list):
-    """Argomento, tecniche, difficoltà e tipo per esercizi già estratti dal codice (a gruppi di 40)."""
-    # posizione di ogni esercizio nella sua sezione (indizio sulla difficoltà)
-    conteggi = {}
-    for e in esercizi:
-        conteggi.setdefault(e.get("sezione") or e.get("titolo_sezione") or "", []).append(e)
-    for gruppo_sez in conteggi.values():
-        for k, e in enumerate(gruppo_sez, 1):
-            e["_pos"], e["_su"] = k, len(gruppo_sez)
-
-    for inizio in range(0, len(esercizi), 40):
-        gruppo = esercizi[inizio:inizio + 40]
-        elenco = [{"id": i,
-                   "testo": (e["testo_latex"] + (" | opzioni: " + " ; ".join(e["opzioni"]) if e.get("opzioni") else ""))[:600],
-                   "sezione": e.get("sezione") or e.get("titolo_sezione") or "",
-                   "posizione": e["_pos"], "su": e["_su"]}
-                  for i, e in enumerate(gruppo)]
-        r = chiedi_json(modello, [prompt_etichetta_esercizi(materia, titolo, json.dumps(elenco, ensure_ascii=False))])
-        for et in (r or {}).get("etichette", []):
-            try:
-                e = gruppo[int(et["id"])]
-            except (KeyError, ValueError, IndexError, TypeError):
-                continue
-            for k in ("argomento", "tecniche", "difficolta_stimata", "ha_figura"):
-                if k in et:
-                    e[k] = et[k]
-            if not e.get("tipo") and et.get("tipo"):
-                e["tipo"] = et["tipo"]
-    for e in esercizi:
-        e.pop("_pos", None)
-        e.pop("_su", None)
-
-
-_PAROLE_DIFFICOLTA = re.compile(r"sfida|facil|difficil|\bbase\b|avanzat|potenziament|approfondiment", re.IGNORECASE)
-
-
-def interpreta_livelli(modello, esercizi: list, modo: str):
-    """Le sezioni «Livello N» sono difficoltà o argomenti diversi? Restituisce (modo, motivo)."""
-    if modo in ("difficolta", "argomenti"):
-        return modo, "scelto con --livelli"
-    titoli = []
-    for e in esercizi:
-        t = e.get("titolo_sezione", "")
-        if t and t not in [x["titolo"] for x in titoli]:
-            titoli.append({"titolo": t, "esempi": [x["testo_latex"] for x in esercizi if x.get("titolo_sezione") == t][:2]})
-    if modello is not None:
-        r = chiedi_json(modello, [prompt_tipo_livelli(json.dumps(titoli, ensure_ascii=False))])
-        if r and r.get("livelli") in ("difficolta", "argomenti"):
-            return r["livelli"], r.get("motivo", "deciso dall'AI")
-    hit = sum(1 for x in titoli if _PAROLE_DIFFICOLTA.search(x["titolo"]))
-    return ("difficolta" if hit else "argomenti"), "dai titoli delle sezioni (senza AI)"
-
-
-# ── normalizzazione e pagina di controllo ─────────────────────────────────────
-
-def normalizza(esercizi: list) -> list:
-    """Porta tutte le difficoltà su 1-3 (★) mantenendo il livello originale."""
-    for e in esercizi:
-        L = e.get("livelli_totali")
-        if isinstance(e.get("livello_numero"), int) and isinstance(L, int) and L > 0:
-            e["difficolta"] = livello_normalizzato(e["livello_numero"], L)
-            e["difficolta_origine"] = f"livello {e['livello_numero']} di {L}"
-        elif e.get("difficolta_stimata"):
-            e["difficolta"] = max(1, min(3, int(e["difficolta_stimata"])))
-            e["difficolta_origine"] = "stimata dall'AI"
-        else:
-            e["difficolta"] = 2
-            e["difficolta_origine"] = "non stimata"
-    return esercizi
+import banca                                      # noqa: E402
+import banca_import                               # noqa: E402
+from config import MODEL_FLASH_ID                 # noqa: E402
 
 
 def _h(x) -> str:
@@ -281,74 +93,51 @@ def pagina_html(titolo: str, esercizi: list, modello: dict | None, nota: str = "
     )
 
 
-# ── un file ───────────────────────────────────────────────────────────────────
-
-def elabora_file(percorso: str, a, modello):
-    nome = os.path.splitext(os.path.basename(percorso))[0]
-    ext = os.path.splitext(percorso)[1].lower()
-    print(f"\n▶ {os.path.basename(percorso)}")
-    modello_verifica, tipo = None, ext.strip(".")
-    esercizi, titolo, nota_livelli = [], nome, ""
-
-    if ext == ".tex":
-        tex = open(percorso, encoding="utf-8", errors="replace").read()
-        d = leggi_tex(tex)
-        tipo = d["tipo_file"]
-        titolo = d.get("titolo") or nome
-        if tipo == "verifica":
-            esercizi, modello_verifica = esercizi_da_verifica(d)
-        elif tipo == "scheda":
-            esercizi = esercizi_da_scheda(d)
-        else:                                                   # appunti
-            if modello is None:
-                print("   appunti: servono l'AI e la chiave nel .env (salto)")
-                return None
-            esercizi = esercizi_da_appunti(modello, a.materia, tex)
-        print(f"   tipo: {tipo} | esercizi letti dal codice: {len(esercizi)}")
-        if tipo == "scheda":
-            interpretazione, motivo = interpreta_livelli(None if a.senza_ai else modello, esercizi, a.livelli)
-            nota_livelli = (f"Le sezioni «Livello N» sono state interpretate come "
-                            f"{'LIVELLI DI DIFFICOLTÀ' if interpretazione == 'difficolta' else 'ARGOMENTI DIVERSI'} "
-                            f"({motivo}). Se è sbagliato rilancia con --livelli "
-                            f"{'argomenti' if interpretazione == 'difficolta' else 'difficolta'}.")
-            print("   " + nota_livelli)
-            if interpretazione == "argomenti":
-                # i titoli sono capitoli: la difficoltà non è il numero di sezione ma si stima per esercizio
-                for e in esercizi:
-                    e["capitolo"] = re.sub(r"^Livello\s+\d+\s*[-–—]*\s*", "", e.get("titolo_sezione", ""))
-                    e["livello_numero"], e["livelli_totali"] = None, None
-        if tipo in ("verifica", "scheda") and modello is not None and not a.senza_ai:
-            etichetta_con_ai(modello, a.materia, titolo, esercizi)
-    elif ext == ".pdf":
-        if modello is None:
-            print("   i PDF li legge l'AI: serve la chiave nel .env (salto)")
-            return None
-        esercizi = esercizi_da_pdf(modello, a.materia, percorso, a.pagine)
-    else:
-        print("   formato non supportato (uso .tex e .pdf)")
+def elabora_file(percorso: str, a, modello, sb):
+    nome_file = os.path.basename(percorso)
+    ext = os.path.splitext(percorso)[1].lower().strip(".")
+    print(f"\n▶ {nome_file}")
+    with open(percorso, "rb") as f:
+        contenuto = f.read()
+    ris = banca_import.analizza_file(
+        nome_file, contenuto, materia=a.materia, modello=modello, livelli=a.livelli,
+        senza_ai=a.senza_ai, pagine=a.pagine, on_progress=lambda m: print("   " + m))
+    if ris is None:
+        print("   (saltato)")
         return None
+    for av in ris["avvisi"]:
+        print("   ⚠️ ", av)
+    if ris["nota_livelli"]:
+        print("   " + ris["nota_livelli"] + " Se è sbagliato rilancia con --livelli argomenti|difficolta.")
+    esercizi = ris["esercizi"]
 
-    esercizi = normalizza(esercizi)
     os.makedirs(a.uscita, exist_ok=True)
-    base = os.path.join(a.uscita, f"{nome}.{ext.strip('.')}")   # il PDF e il .tex omonimi non si sovrascrivono
+    base = os.path.join(a.uscita, f"{os.path.splitext(nome_file)[0]}.{ext}")   # PDF e .tex omonimi non si sovrascrivono
     with open(base + ".json", "w", encoding="utf-8") as f:
-        json.dump({"fonte": os.path.basename(percorso), "tipo_file": tipo, "titolo": titolo,
-                   "modello_verifica": modello_verifica, "nota_livelli": nota_livelli, "esercizi": esercizi}, f, ensure_ascii=False, indent=1)
+        json.dump({"fonte": ris["fonte"], "modello_verifica": ris["modello_verifica"],
+                   "nota_livelli": ris["nota_livelli"], "esercizi": esercizi}, f, ensure_ascii=False, indent=1)
     with open(base + ".html", "w", encoding="utf-8") as f:
-        f.write(pagina_html(titolo, esercizi, modello_verifica, nota_livelli))
+        f.write(pagina_html(ris["fonte"]["titolo"], esercizi, ris["modello_verifica"], ris["nota_livelli"]))
     per = {k: sum(1 for e in esercizi if e["difficolta"] == k) for k in (1, 2, 3)}
-    print(f"   → {len(esercizi)} esercizi | ★1: {per[1]}  ★2: {per[2]}  ★3: {per[3]} | {base}.html")
-    return {"file": os.path.basename(percorso), "tipo": tipo, "esercizi": len(esercizi)}
+    print(f"   → {ris['fonte']['tipo']}: {len(esercizi)} esercizi | ★1: {per[1]}  ★2: {per[2]}  ★3: {per[3]} | {base}.html")
+
+    if sb is not None:
+        esito = banca.salva_analisi(sb, ris, a.materia, a.scuola)
+        print("   già in banca, non ricaricato" if esito["gia_presente"]
+              else f"   salvati in banca: {esito['nuovi']} esercizi in attesa di approvazione")
+    return {"file": nome_file, "esercizi": len(esercizi)}
 
 
 def main():
     ap = argparse.ArgumentParser(description="Estrae e cataloga gli esercizi da PDF e LaTeX.")
     ap.add_argument("percorsi", nargs="+", help="file .tex/.pdf oppure cartelle (consiglio: materiale/)")
-    ap.add_argument("--materia", default="", help="materia, se vuoi guidare la lettura")
+    ap.add_argument("--materia", default="", help="materia (consigliato con --salva)")
+    ap.add_argument("--scuola", default="", help="tipo di scuola a cui è destinato il materiale (con --salva)")
     ap.add_argument("--pagine", type=int, default=4, help="pagine per chiamata all'AI per i PDF (default 4)")
     ap.add_argument("--livelli", choices=["auto", "difficolta", "argomenti"], default="auto",
                     help="nelle schede, le sezioni «Livello N» sono difficoltà o argomenti? (auto: lo capisce)")
     ap.add_argument("--senza-ai", action="store_true", help="solo lettura del codice: nessuna etichetta dell'AI")
+    ap.add_argument("--salva", action="store_true", help="salva anche nella banca su Supabase (da approvare)")
     ap.add_argument("--uscita", default=os.path.join("materiale", "estratti"), help="cartella di uscita")
     a = ap.parse_args()
 
@@ -369,7 +158,17 @@ def main():
     elif not a.senza_ai:
         print("⚠️  GOOGLE_API_KEY non trovata nel .env: leggo solo il codice delle verifiche e schede, senza etichette.")
 
-    riepilogo = [r for r in (elabora_file(f, a, modello) for f in file) if r]
+    sb = None
+    if a.salva:
+        url, chiave = os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_KEY")
+        if not (url and chiave):
+            sys.exit("Per --salva servono SUPABASE_URL e SUPABASE_SERVICE_KEY nel file .env.")
+        from supabase import create_client
+        sb = create_client(url, chiave)
+        if not banca.tabelle_pronte(sb):
+            sys.exit("Le tabelle della banca non esistono ancora: esegui banca_esercizi.sql su Supabase.")
+
+    riepilogo = [r for r in (elabora_file(f, a, modello, sb) for f in file) if r]
     uso = ai_client.riepilogo_uso()
     costo = sum(u["costo_usd"] for u in uso)
     print(f"\n{len(riepilogo)} file elaborati | {sum(r['esercizi'] for r in riepilogo)} esercizi | ~${costo:.3f} di AI")

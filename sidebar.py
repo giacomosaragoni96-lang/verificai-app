@@ -60,6 +60,10 @@ def render_sidebar(
                     _nomi_admin,
                     key="sb_modello_admin",
                 )
+                if st.button("Banca esercizi", key="open_banca", use_container_width=True,
+                             icon=":material/library_books:"):
+                    st.session_state.stage = "BANCA"
+                    st.rerun()
                 for _vecchio, _nuovo in modelli_sostituiti().items():
                     st.caption(f"⚠️ {_vecchio} non è più disponibile: uso {_nuovo}")
                 # Consumi reali dall'ultimo riavvio (token e costo stimato per compito e modello)
