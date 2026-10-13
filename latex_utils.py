@@ -879,6 +879,54 @@ def assicura_punti_visibili(corpo: str, punti_totali: int) -> str:
     return nuovo_corpo.strip()
 
 
+def _rimuovi_opzioni_pgf(testo: str, chiavi_regex: str) -> str:
+    """
+    Toglie da `testo` le opzioni pgf/TikZ "chiave=valore" la cui chiave corrisponde a
+    chiavi_regex. Il valore è o un gruppo tra graffe (anche annidate, es.
+    title={$\\frac{1}{2}x$}) oppure il testo fino alla prossima virgola o ']'.
+    Non cancella mai oltre il valore: le vecchie regex "legend[^}]*}" arrivavano
+    alla prima "}" successiva, portandosi via \\addplot e coordinate.
+    """
+    pattern = re.compile(r',?\s*(?:' + chiavi_regex + r')\s*=\s*')
+    out, i, n = [], 0, len(testo)
+    while True:
+        m = pattern.search(testo, i)
+        if not m:
+            out.append(testo[i:])
+            break
+        out.append(testo[i:m.start()])
+        j = m.end()
+        if j < n and testo[j] == '{':
+            profondita = 0
+            while j < n:
+                if testo[j] == '{':
+                    profondita += 1
+                elif testo[j] == '}':
+                    profondita -= 1
+                    if profondita == 0:
+                        j += 1
+                        break
+                j += 1
+        else:
+            while j < n and testo[j] not in ',]\n':
+                j += 1
+        i = j
+    return ''.join(out)
+
+
+def _pulisci_opzioni_asse(testo: str) -> str:
+    """Toglie limiti, dominio, campioni, etichette, titolo e legenda dagli assi pgfplots."""
+    testo = _rimuovi_opzioni_pgf(
+        testo,
+        r'[xy]min|[xy]max|(?:[xy]\s*)?domain|samples|xlabel|ylabel|title|legend[ a-zA-Z]*',
+    )
+    # Virgole doppie o a bordo parentesi lasciate dalle rimozioni
+    testo = re.sub(r',\s*,', ',', testo)
+    testo = re.sub(r'\[\s*,', '[', testo)
+    testo = re.sub(r',\s*\]', ']', testo)
+    return testo
+
+
 def limita_altezza_grafici(latex: str) -> str:
     """
     Aggiunge limiti di altezza ai grafici TikZ per evitare che occupino tropo spazio.
@@ -913,44 +961,13 @@ def limita_altezza_grafici(latex: str) -> str:
                 # Calcola limiti dinamici basati sulla funzione
                 dynamic_limits = _calculate_dynamic_limits(func_expr)
                 
-                # Rimuovi tutti i limiti esistenti
-                tikz_with_spacing = re.sub(r',?\s*[xy]min=\{[^}]*\}', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*[xy]max=\{[^}]*\}', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*domain=\{[^}]*\}', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*domain=[^,]*', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*samples=\{[^}]*\}', '', tikz_with_spacing)
-                
-                # Rimuovi etichette e titoli inutili
-                tikz_with_spacing = re.sub(r',?\s*xlabel=\{[^}]*\}', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*ylabel=\{[^}]*\}', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*title=\{[^}]*\}', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*legend[^}]*\}', '', tikz_with_spacing)
-                
-                # Rimuovi opzioni vuote rimanenti
-                tikz_with_spacing = re.sub(r',\s*,', ',', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r'\[\s*,', '[', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',\s*\]', ']', tikz_with_spacing)
+                tikz_with_spacing = _pulisci_opzioni_asse(tikz_with_spacing)
                 
                 # Aggiungi limiti dinamici
                 axis_options = f'xmin={dynamic_limits["xmin"]}, xmax={dynamic_limits["xmax"]}, ymin={dynamic_limits["ymin"]}, ymax={dynamic_limits["ymax"]}, axis lines=middle, xlabel=$x$, ylabel=$y$, grid=major, width=9cm, height=5cm, domain={dynamic_limits["xmin"]}:{dynamic_limits["xmax"]}, samples=100'
             else:
                 # Fallback: limiti standard
-                tikz_with_spacing = re.sub(r',?\s*[xy]min=\{[^}]*\}', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*[xy]max=\{[^}]*\}', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*domain=\{[^}]*\}', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*domain=[^,]*', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*samples=\{[^}]*\}', '', tikz_with_spacing)
-                
-                # Rimuovi etichette e titoli inutili
-                tikz_with_spacing = re.sub(r',?\s*xlabel=\{[^}]*\}', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*ylabel=\{[^}]*\}', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*title=\{[^}]*\}', '', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',?\s*legend[^}]*\}', '', tikz_with_spacing)
-                
-                # Rimuovi opzioni vuote rimanenti
-                tikz_with_spacing = re.sub(r',\s*,', ',', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r'\[\s*,', '[', tikz_with_spacing)
-                tikz_with_spacing = re.sub(r',\s*\]', ']', tikz_with_spacing)
+                tikz_with_spacing = _pulisci_opzioni_asse(tikz_with_spacing)
                 
                 axis_options = 'xmin=-6, xmax=6, ymin=-6, ymax=6, axis lines=middle, xlabel=$x$, ylabel=$y$, grid=major, width=9cm, height=5cm, domain=-6:6, samples=100'
             
