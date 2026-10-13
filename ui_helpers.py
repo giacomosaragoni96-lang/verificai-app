@@ -7,6 +7,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import html as html_lib
+import logging
 import re
 
 # ── Optional st_yled (sticky_header + split_button) ──────────────────────────
@@ -22,6 +23,84 @@ STAGE_INPUT   = "INPUT"
 STAGE_PREVIEW = "PREVIEW"
 STAGE_REVIEW  = "REVIEW"
 STAGE_FINAL   = "FINAL"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  ERRORI — messaggi in italiano comprensibile, dettagli tecnici solo nei log
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_logger = logging.getLogger("verificai.ui")
+
+
+def _messaggio_errore(exc) -> str:
+    """Traduce un'eccezione (o un testo di errore) in una frase per il docente."""
+    t = str(exc).lower() if exc is not None else ""
+    if any(k in t for k in ("429", "quota", "resource_exhausted", "resource exhausted",
+                            "rate limit", "overloaded", "503", "unavailable")):
+        return "L'assistente è molto richiesto in questo momento. Riprova tra un minuto."
+    if any(k in t for k in ("timeout", "timed out", "deadline", "connection", "network")):
+        return "La connessione è lenta o si è interrotta. Riprova."
+    if any(k in t for k in ("api key", "api_key", "permission", "unauthenticated", "401", "403")):
+        return "C'è un problema con il servizio. Riprova più tardi; se continua, scrivici."
+    if any(k in t for k in ("latex", "pdflatex", "tikz", "compil")):
+        return "Non sono riuscito a impaginare il PDF. Riprova: di solito basta un secondo tentativo."
+    if any(k in t for k in ("safety", "blocked", "finish_reason", "candidate")):
+        return "L'assistente non ha prodotto una risposta valida. Riprova, magari cambiando leggermente la richiesta."
+    return "Qualcosa non ha funzionato. Riprova."
+
+
+def _mostra_errore(
+    azione: str,
+    exc=None,
+    riprova_flag: str | None = None,
+    riprova_key: str | None = None,
+    consiglio: str | None = None,
+) -> None:
+    """
+    Mostra un errore comprensibile e scrive i dettagli tecnici nel log.
+
+    azione        : cosa si stava facendo, in italiano ("Non sono riuscito a creare la verifica")
+    exc           : eccezione o testo grezzo (non viene mai mostrato all'utente)
+    riprova_flag  : chiave di session_state che l'handler dell'azione legge per rilanciarsi;
+                    se presente compare il pulsante "Riprova" (serve anche riprova_key)
+    consiglio     : testo che sostituisce quello ricavato dall'eccezione
+    """
+    _logger.error(
+        f"{azione}: {exc}",
+        exc_info=exc if isinstance(exc, BaseException) else False,
+    )
+    st.error(f"{azione}. {consiglio or _messaggio_errore(exc)}", icon="⚠️")
+    if riprova_flag and riprova_key:
+        if st.button("🔁 Riprova", key=riprova_key):
+            st.session_state[riprova_flag] = True
+            st.rerun()
+
+
+def _mostra_errore_pdf(err, dove: str = "la verifica") -> None:
+    """
+    Errore di compilazione PDF: una sola frase comprensibile (niente LaTeX, niente log).
+    Il log completo di pdflatex va solo nel logger.
+    """
+    testo = str(err) if err else ""
+    _logger.error(f"Compilazione PDF fallita ({dove}): {testo[:4000]}")
+    if "ERRORE_TIKZ_IRRECUPERABILE" in testo:
+        st.error(
+            f"Un grafico di {dove} non si riesce a disegnare. "
+            "Usa «Cambia esercizio» sull'esercizio con il grafico, "
+            "oppure ricrea la verifica scrivendo «senza grafici» nell'argomento.",
+            icon="⚠️",
+        )
+    elif "TikZ" in testo:
+        st.error(
+            "Un grafico non è venuto bene. Prova «Cambia esercizio» sull'esercizio con il grafico.",
+            icon="⚠️",
+        )
+    else:
+        st.error(
+            f"Non sono riuscito a creare il PDF di {dove}. "
+            "Riprova: di solito basta un secondo tentativo.",
+            icon="⚠️",
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

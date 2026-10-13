@@ -47,7 +47,7 @@ from ui_helpers import (
     _render_back_button, _make_katex_html, _render_sticky_header,
     _render_step_progress,
     STAGE_INPUT, STAGE_PREVIEW, STAGE_REVIEW, STAGE_FINAL,
-    _reset_label, _render_limite_raggiunto,
+    _reset_label, _render_limite_raggiunto, _mostra_errore, _mostra_errore_pdf,
 )
 
 logger = logging.getLogger("verificai.main")
@@ -88,7 +88,8 @@ except Exception as e:
     supabase = None
     supabase_admin = None
     SUPABASE_ENABLED = False
-    st.warning(f"⚠️ Database Supabase non configurato: {e}")
+    logger.error(f"Database Supabase non configurato: {e}")
+    st.warning("⚠️ Il database non è raggiungibile: lo storico e il salvataggio non funzioneranno.")
 
 # ── TEMA — inizializzazione ───────────────────────────────────────────────────
 # Temi disponibili: carta (default) e notte. Una chiave non più presente (sessioni vecchie) → carta.
@@ -1009,7 +1010,8 @@ def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str)
 
         st.rerun()
     except Exception as e:
-        st.warning(f"⚠️ Analisi non riuscita: {e}. Compila i campi manualmente.", icon="🔬")
+        logger.error(f"Analisi documento non riuscita: {e}", exc_info=True)
+        st.warning("Non sono riuscito a leggere il file. Compila i campi a mano oppure prova con un altro file.", icon="🔬")
 
 
 def _compute_file_tags(analisi: dict) -> list:
@@ -1269,7 +1271,7 @@ def _load_user_verifiche():
         
         return res.data if res.data else []
     except Exception as e:
-        st.error(f"⚠️ Errore nel caricamento delle verifiche: {e}")
+        _mostra_errore("Non sono riuscito a caricare le tue verifiche", e)
         return []
 
 def _rinomina_verifica(verifica_id: int, nuovo_nome: str):
@@ -1284,7 +1286,7 @@ def _rinomina_verifica(verifica_id: int, nuovo_nome: str):
         
         return res.data if res.data else None
     except Exception as e:
-        st.error(f"⚠️ Errore rinomina: {e}")
+        _mostra_errore("Non sono riuscito a rinominare la verifica", e)
         return None
 
 def _genera_link_condivisione(verifica_id: int):
@@ -1320,7 +1322,7 @@ def _genera_link_condivisione(verifica_id: int):
         return f"{SHARE_URL}?share={code}"
         
     except Exception as e:
-        st.error(f"⚠️ Errore generazione link: {e}")
+        _mostra_errore("Non sono riuscito a creare il link di condivisione", e)
         return None
 
 def _get_verifiche_stats():
@@ -1581,32 +1583,11 @@ def _render_le_tue_verifiche():
                                             for j, img in enumerate(images[:3]):  # Max 3 pagine
                                                 st.image(img, caption=f"Pagina {j+1}", use_container_width=True)
                                     else:
-                                        st.error("⚠️ Impossibile generare anteprima immagini")
+                                        st.error("Non sono riuscito a creare l'anteprima. Riprova.", icon="⚠️")
                                 else:
-                                    st.error(f"⚠️ Errore compilazione PDF: {error}")
-                                    # Fallback: mostra codice LaTeX con opzione di copia
-                                    st.info("📝 Mostro il codice LaTeX come alternativa:")
-                                    
-                                    with st.expander("📄 Codice LaTeX (clicca per espandere)", expanded=False):
-                                        latex_code = verifica["latex_a"]
-                                        st.code(latex_code, language="latex", line_numbers=False)
-                                        
-                                        # Pulsanti per copiare e scaricare
-                                        col1, col2 = st.columns(2)
-                                        with col1:
-                                            if st.button("📋 Copia LaTeX", key=f"copy_latex_{verifica.get('id')}_{i}"):
-                                                st.write("Codice LaTeX copiato negli appunti!")
-                                                st.code(latex_code)
-                                        with col2:
-                                            st.download_button(
-                                                "💾 Scarica .tex",
-                                                data=latex_code,
-                                                file_name=f"verifica_{verifica.get('argomento', 'verifica')}.tex",
-                                                mime="text/plain",
-                                                key=f"download_tex_{verifica.get('id')}_{i}"
-                                            )
+                                    _mostra_errore_pdf(error, "questa verifica")
                             except Exception as e:
-                                st.error(f"⚠️ Errore anteprima: {e}")
+                                _mostra_errore("Non sono riuscito a creare l'anteprima", e)
                         else:
                             st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
                 
@@ -1631,20 +1612,9 @@ def _render_le_tue_verifiche():
                                         key=f"final_dl_{verifica.get('id')}_{i}"
                                     )
                                 else:
-                                    st.error(f"⚠️ Errore compilazione PDF: {error}")
-                                    # Fallback: offri download LaTeX
-                                    st.info("💡 In alternativa, puoi scaricare il codice LaTeX:")
-                                    latex_code = verifica["latex_a"]
-                                    st.download_button(
-                                        "💾 Scarica file .tex",
-                                        data=latex_code,
-                                        file_name=f"verifica_{verifica.get('argomento', 'verifica')}.tex",
-                                        mime="text/plain",
-                                        use_container_width=True,
-                                        key=f"tex_fallback_{verifica.get('id')}_{i}"
-                                    )
+                                    _mostra_errore_pdf(error, "questa verifica")
                             except Exception as e:
-                                st.error(f"⚠️ Errore download: {e}")
+                                _mostra_errore("Non sono riuscito a preparare il PDF", e)
                         else:
                             st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
                 
@@ -1693,7 +1663,7 @@ def _render_le_tue_verifiche():
                                 st.rerun()
                                 
                             except Exception as e:
-                                st.error(f"⚠️ Errore generazione facsimile: {e}")
+                                _mostra_errore("Non sono riuscito ad aprire questa verifica", e)
                         else:
                             st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
                 
@@ -1721,9 +1691,9 @@ def _render_le_tue_verifiche():
                                     del st.session_state[f"confirm_delete_{verifica.get('id')}"]
                                     st.rerun()
                                 else:
-                                    st.error("⚠️ Errore durante l'eliminazione")
+                                    st.error("Non sono riuscito a eliminare la verifica. Riprova.", icon="⚠️")
                             except Exception as e:
-                                st.error(f"⚠️ Errore eliminazione: {e}")
+                                _mostra_errore("Non sono riuscito a eliminare la verifica", e)
                             finally:
                                 # Reset stato di conferma
                                 if f"confirm_delete_{verifica.get('id')}" in st.session_state:
@@ -2629,7 +2599,8 @@ def _lancia_generazione(
             st.session_state._storico_refresh += 1
             st.toast("✅ Bozza salvata!", icon="💾")
         except Exception as _e:
-            st.warning(f"⚠️ Salvataggio storico non riuscito: {_e}")
+            logger.warning(f"Salvataggio storico non riuscito: {_e}")
+            st.warning("⚠️ La bozza è pronta, ma non sono riuscito a salvarla nello storico.")
 
         # ── IDEA #1: Salva preferenze silenti dopo generazione riuscita ────
         _save_user_defaults_silent(
@@ -2645,7 +2616,10 @@ def _lancia_generazione(
 
     except Exception as _e:
         _prog.empty()
-        st.error(f"❌ Errore durante la generazione: {_e}")
+        _mostra_errore(
+            "Non sono riuscito a creare la verifica", _e,
+            riprova_flag="_riprova_genera", riprova_key="riprova_genera",
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2670,7 +2644,8 @@ def _render_stage_input():
             _prog_ph_b,
         ) = _render_percorso_b_form()
 
-        if not genera_btn or _limite:
+        _riprova = st.session_state.pop("_riprova_genera", False)
+        if not (genera_btn or _riprova) or _limite:
             return
 
         if not argomento:
@@ -3608,7 +3583,13 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 st.session_state.verifiche["A"]["latex"]           = _qr_latex
                 st.session_state.verifiche["A"]["latex_originale"] = _qr_latex
                 _qr_pdf, _ = compila_pdf(_qr_latex)
-                if _qr_pdf:
+                if not _qr_pdf:
+                    _qr_st.update(label="PDF non aggiornato", state="error", expanded=False)
+                    _mostra_errore(
+                        "Ho cambiato i numeri ma non sono riuscito a rifare il PDF", "compilazione PDF",
+                        consiglio="Premi «Annulla modifica» per tornare indietro, poi riprova.",
+                    )
+                else:
                     st.session_state.verifiche["A"]["pdf"]    = _qr_pdf
                     st.session_state.verifiche["A"]["pdf_ts"] = time.time()
                     st.session_state.verifiche["A"]["preview"] = True
@@ -3618,11 +3599,12 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     # Forza aggiornamento preview dopo rigenerazione
                     st.session_state.last_preview_ts = 0
                     logger.info(f"Preview aggiornato dopo rigenerazione - {len(_qr_imgs) if _qr_imgs else 0} pagine")
-                _qr_st.update(label="Variante pronta!", state="complete", expanded=False)
-                st.toast(f"Variante esercizio {idx+1} generata!", icon="✅")
-                time.sleep(0.3); st.rerun()
+                    _qr_st.update(label="Variante pronta!", state="complete", expanded=False)
+                    st.toast(f"Variante esercizio {idx+1} generata!", icon="✅")
+                    time.sleep(0.3); st.rerun()
             except Exception as _qr_e:
-                st.error(f"Errore: {_qr_e}")
+                _qr_st.update(label="Variante non riuscita", state="error", expanded=False)
+                _mostra_errore("Non sono riuscito a cambiare i numeri di questo esercizio", _qr_e)
 
     # ── Logica modifica AI ────────────────────────────────────────────────────
     if rigenera and istruzione.strip():
@@ -3828,47 +3810,18 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     """, unsafe_allow_html=True)
                     
                     time.sleep(0.8); st.rerun()
+                else:
+                    _loading_ph.empty()
+                    _mostra_errore(
+                        "Ho modificato l'esercizio ma non sono riuscito a rifare il PDF", _err_rw,
+                        consiglio="Premi «Annulla modifica» per tornare indietro, poi riprova.",
+                    )
             except Exception as e:
-                # Messaggio di errore elegante
-                _loading_ph.markdown(f"""
-                    <div style="
-                        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-                        border-radius: 12px;
-                        padding: 1rem;
-                        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
-                        animation: shake 0.5s ease-in-out;
-                    ">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="
-                                width: 24px; height: 24px;
-                                background: white;
-                                border-radius: 50%;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-size: 14px;
-                                color: #ef4444;
-                            ">!</div>
-                            <div style="color: white; font-family: 'DM Sans', sans-serif; font-weight: 600;">
-                                ⚠️ Errore durante la modifica
-                            </div>
-                        </div>
-                        <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-top: 0.5rem; font-family: 'DM Sans', sans-serif;">
-                            Si è verificato un problema: {str(e)}
-                        </div>
-                        <div style="color: rgba(255,255,255,0.8); font-size: 0.85rem; margin-top: 0.5rem; font-family: 'DM Sans', sans-serif;">
-                            💡 Prova a riformulare la richiesta o ricarica la pagina.
-                        </div>
-                    </div>
-                    
-                    <style>
-                    @keyframes shake {{ 
-                        0%, 100% {{ transform: translateX(0); }} 
-                        25% {{ transform: translateX(-5px); }} 
-                        75% {{ transform: translateX(5px); }} 
-                    }}
-                    </style>
-                    """, unsafe_allow_html=True)
+                _loading_ph.empty()
+                _mostra_errore(
+                    "Non sono riuscito ad applicare la modifica", e,
+                    consiglio="Prova a riformulare la richiesta con parole diverse.",
+                )
 
     # ── Logica "Cambia totalmente" — struttura diversa, argomento uguale ─────
     if cambia_tutto:
@@ -3958,7 +3911,13 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 st.session_state.verifiche["A"]["latex"]           = _ct_latex
                 st.session_state.verifiche["A"]["latex_originale"] = _ct_latex
                 _ct_pdf, _ = compila_pdf(_ct_latex)
-                if _ct_pdf:
+                if not _ct_pdf:
+                    _ct_st.update(label="PDF non aggiornato", state="error", expanded=False)
+                    _mostra_errore(
+                        "Ho cambiato l'esercizio ma non sono riuscito a rifare il PDF", "compilazione PDF",
+                        consiglio="Premi «Annulla modifica» per tornare indietro, poi riprova.",
+                    )
+                else:
                     st.session_state.verifiche["A"]["pdf"]     = _ct_pdf
                     st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
                     st.session_state.verifiche["A"]["preview"] = True
@@ -3968,11 +3927,12 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     # Forza aggiornamento preview dopo cambio esercizio
                     st.session_state.last_preview_ts = 0
                     logger.info(f"Preview aggiornato dopo cambio esercizio - {len(_ct_imgs) if _ct_imgs else 0} pagine")
-                _ct_st.update(label="Esercizio cambiato!", state="complete", expanded=False)
-                st.toast(f"Esercizio {idx+1} cambiato!", icon="✅")
-                time.sleep(0.3); st.rerun()
+                    _ct_st.update(label="Esercizio cambiato!", state="complete", expanded=False)
+                    st.toast(f"Esercizio {idx+1} cambiato!", icon="✅")
+                    time.sleep(0.3); st.rerun()
             except Exception as _ct_e:
-                st.error(f"Errore: {_ct_e}")
+                _ct_st.update(label="Cambio non riuscito", state="error", expanded=False)
+                _mostra_errore("Non sono riuscito a cambiare questo esercizio", _ct_e)
 
 
     # ── Ricalibra Punteggi — sopra il pulsante Conferma ──────────────────
@@ -4151,20 +4111,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     st.toast("✅ Punteggi applicati — PDF aggiornato!", icon="⚖️")
                     st.rerun()
                 else:
-                    if "ERRORE_TIKZ_IRRECUPERABILE" in _err_rc:
-                        st.error("❌ Errore grave nel grafico TikZ. L'esercizio contiene elementi grafici non compilabili.")
-                        st.warning("⚠️ Questo esercizio non può essere utilizzato così com'è.")
-                        st.info("💡 **Soluzioni consigliate:**")
-                        st.info("   • Usa **'Cambia esercizio'** per generare un esercizio completamente diverso")
-                        st.info("   • Usa **'Genera variante'** per ottenere una versione senza grafici complessi")
-                        st.info("   • Se possibile, specifica nell'argomento 'senza grafici' per evitare questo problema")
-                    elif "TikZ" in _err_rc:
-                        st.error("❌ Errore nel grafico TikZ. L'AI ha generato un grafico complesso non valido.")
-                        st.info("💡 Suggerimento: prova a rigenerare l'esercizio o usa 'Cambia esercizio' per ottenere una versione senza grafici complessi.")
-                    else:
-                        st.error("❌ Errore di compilazione LaTeX.")
-                    with st.expander("Log errore"):
-                        st.text(_err_rc)
+                    _mostra_errore_pdf(_err_rc, "questo esercizio")
 
     # ── Pulsante CONFERMA — oro, piena larghezza ──────────────────────────────
     st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
@@ -4213,19 +4160,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 st.session_state.stage = STAGE_FINAL
                 st.rerun()
             else:
-                if err and "ERRORE_TIKZ_IRRECUPERABILE" in err:
-                    st.error("❌ Errore grave nel grafico TikZ. La verifica contiene elementi grafici non compilabili.")
-                    st.warning("⚠️ Questa verifica non può essere generata così com'è.")
-                    st.info("💡 **Soluzioni consigliate:**")
-                    st.info("   • Usa **'Cambia esercizio'** per modificare gli esercizi problematici")
-                    st.info("   • Torna alla pagina impostazioni e specifica 'senza grafici' nell'argomento")
-                    st.info("   • Rigenera la verifica con parametri diversi")
-                elif err and "TikZ" in err:
-                    st.error("❌ Errore nel grafico TikZ. L'AI ha generato un grafico complesso non valido.")
-                    st.info("💡 Suggerimento: prova a rigenerare la verifica o usa 'Cambia esercizio' per rimuovere grafici problematici.")
-                else:
-                    st.error("❌ Errore di compilazione PDF.")
-                with st.expander("Log errore"): st.text(err)
+                _mostra_errore_pdf(err, "questa verifica")
 
     # ── Pulsante RICONFIGURA — piccolo, discreto, sotto ───────────────────────
     st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
@@ -4389,9 +4324,16 @@ def _render_stage_final():
                 _pdf_b_new, _ = compila_pdf(_latex_b_new)
                 st.session_state.verifiche["B"]["latex"] = _latex_b_new
                 if _pdf_b_new: st.session_state.verifiche["B"]["pdf"] = _pdf_b_new
-                _ph_b.empty(); st.toast("✅ Fila B pronta!", icon="⚡"); st.rerun()
+                _ph_b.empty()
+                if _pdf_b_new:
+                    st.toast("✅ Fila B pronta!", icon="⚡")
+                else:
+                    st.toast("Fila B creata, ma il PDF non è ancora pronto: premi «Crea PDF Fila B».", icon="⚠️")
+                st.rerun()
             except Exception as _e:
-                _ph_b.empty(); st.error(f"Errore: {_e}")
+                _ph_b.empty()
+                _mostra_errore("Non sono riuscito a creare la Fila B", _e,
+                               riprova_flag="_gen_fila_b", riprova_key="riprova_fila_b")
 
     # ── BES/DSA ───────────────────────────────────────────────────────────────
     with _vc2:
@@ -4436,7 +4378,9 @@ def _render_stage_final():
                 st.session_state.verifiche["R"] = {**vR, **res_r}
                 _ph_r.empty(); st.toast("✅ BES/DSA pronta!", icon="🌟"); st.rerun()
             except Exception as _e:
-                _ph_r.empty(); st.error(f"Errore: {_e}")
+                _ph_r.empty()
+                _mostra_errore("Non sono riuscito a creare la versione BES/DSA", _e,
+                               riprova_flag="_gen_bes", riprova_key="riprova_bes")
 
     # ── SOLUZIONI ─────────────────────────────────────────────────────────────
     with _vc3:
@@ -4481,7 +4425,9 @@ def _render_stage_final():
                 st.session_state.verifiche["S"] = {**vS, **res_s}
                 _ph_s.empty(); st.toast("✅ Soluzioni pronte!", icon="✅"); st.rerun()
             except Exception as _e:
-                _ph_s.empty(); st.error(f"Errore: {_e}")
+                _ph_s.empty()
+                _mostra_errore("Non sono riuscito a creare le soluzioni", _e,
+                               riprova_flag="_gen_sol", riprova_key="riprova_sol")
 
     # ── GENERA DOCX — 5a card ──────────────────────────────────────────────
     with _vc5:
@@ -4520,7 +4466,9 @@ def _render_stage_final():
                 if _db:
                     st.session_state.verifiche["A"]["docx"] = _db; st.rerun()
                 else:
-                    st.error(f"Errore Word: {_emsg or 'nessun dettaglio'}")
+                    _mostra_errore("Non sono riuscito a creare il file Word", _emsg,
+                                   riprova_flag=_docx_key, riprova_key="riprova_word",
+                                   consiglio="Riprova: la conversione a volte richiede un secondo tentativo.")
         else:
             st.caption("PDF non ancora disponibile")
 
@@ -4585,7 +4533,9 @@ def _render_stage_final():
                 st.session_state.rubrica_testo = _rr.text.strip()
                 _rph.empty(); st.toast('Griglia pronta!', icon='📊'); st.rerun()
             except Exception as _er:
-                _rph.empty(); st.error(f'Errore: {_er}')
+                _rph.empty()
+                _mostra_errore("Non sono riuscito a creare la griglia di valutazione", _er,
+                               riprova_flag="_rubrica_gen", riprova_key="riprova_griglia")
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  IDEA #5 — CONDIVIDI CON IL DIPARTIMENTO
@@ -4777,7 +4727,9 @@ def _render_stage_final():
                         if db:
                             st.session_state.verifiche[fid]["docx"] = db; st.rerun()
                         else:
-                            st.error(f"Conversione Word non riuscita: {error_msg or 'nessun dettaglio disponibile'}")
+                            _mostra_errore("Non sono riuscito a creare il file Word", error_msg,
+                                           riprova_flag=_docx_key, riprova_key="riprova_word_"+fid,
+                                           consiglio="Riprova: la conversione a volte richiede un secondo tentativo.")
                 st.download_button(
                     f"⬇ LaTeX sorgente (.tex)",
                     data=v["latex"].encode("utf-8"), file_name=fname+".tex",
