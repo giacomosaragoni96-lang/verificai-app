@@ -57,14 +57,6 @@ from ui_helpers import (
 
 logger = logging.getLogger("verificai.main")
 
-# ── MATHPIX OCR (opzionale — degradazione graceful se non configurato) ────────
-try:
-    import mathpix_utils as _mpx
-    _MATHPIX_AVAILABLE = True
-except ImportError:
-    _mpx = None
-    _MATHPIX_AVAILABLE = False
-
 # ── ST_YLED (opzionale — sticky_header + split_button) ───────────────────────
 # pip install st-styled | https://github.com/EvobyteDigitalBiology/st-styled
 # Se non installato: fallback nativo (CSS injection + st.popover)
@@ -531,8 +523,6 @@ if "_rubrica_gen"      not in st.session_state: st.session_state._rubrica_gen = 
 if "_rubrica_pdf"      not in st.session_state: st.session_state["_rubrica_pdf"] = None
 if "_rubrica_docx"     not in st.session_state: st.session_state["_rubrica_docx"] = None
 if "file_ispirazione"  not in st.session_state: st.session_state.file_ispirazione = None
-if "mathpix_context"   not in st.session_state: st.session_state.mathpix_context = None
-if "mathpix_file_hash" not in st.session_state: st.session_state.mathpix_file_hash = None
 # Analisi documento caricato
 if "analisi_doc"          not in st.session_state: st.session_state.analisi_doc = None
 # Lista di analisi accumulate da più file: [{"file_name","file_hash","analisi","file_mode","confirmed"}, ...]
@@ -571,13 +561,6 @@ if "_pb_argomento_manual_val" not in st.session_state: st.session_state["_pb_arg
 # Wizard state (Percorso A)
 if "wizard_step"           not in st.session_state: st.session_state["wizard_step"] = "upload"
 if "wizard_intent_pending" not in st.session_state: st.session_state["wizard_intent_pending"] = None
-
-# ── Flag Mathpix (configurato solo se entrambe le chiavi sono in secrets) ─────
-_MATHPIX_OK = (
-    _MATHPIX_AVAILABLE and
-    _mpx is not None and
-    _mpx.is_configured(st.secrets)
-)
 
 # ── CONTATORI E GESTIONE ABBONAMENTI ────────────────────────────────────────
 _verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
@@ -1064,8 +1047,6 @@ def _reset_percorso():
     st.session_state.info_consolidate      = {}
     st.session_state.istruzioni_per_file   = {}
     st.session_state.file_ispirazione      = None
-    st.session_state.mathpix_context       = None
-    st.session_state.mathpix_file_hash     = None
     # Wizard state
     st.session_state["wizard_step"]         = "upload"
     st.session_state["wizard_intent_pending"] = None
@@ -1074,27 +1055,12 @@ def _reset_percorso():
 def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str):
     """
     Lancia analisi AI sul file e popola st.session_state.analisi_doc.
-    Gestisce OCR Mathpix se disponibile.
     Chiama st.rerun() alla fine per aggiornare il dialogo.
     """
     file_hash = hash(file_bytes)
     ad = st.session_state.analisi_doc or {}
     if ad.get("file_hash") == file_hash:
         return  # già analizzato — evita ri-analisi su rerun
-
-    # Mathpix OCR (non bloccante)
-    mathpix_ctx = None
-    if _MATHPIX_OK and file_hash != st.session_state.mathpix_file_hash:
-        try:
-            mathpix_ctx = _mpx.ocr_file(
-                file_bytes=file_bytes, mime_type=mime_type, secrets=st.secrets
-            )
-            st.session_state.mathpix_context   = mathpix_ctx
-            st.session_state.mathpix_file_hash = file_hash
-        except Exception:
-            mathpix_ctx = st.session_state.get("mathpix_context")
-    else:
-        mathpix_ctx = st.session_state.get("mathpix_context")
 
     # Analisi AI metadati — usa sempre Flash Lite (task leggero ed economico)
     try:
@@ -1103,7 +1069,6 @@ def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str)
             model=_model_fast,
             file_bytes=file_bytes,
             mime_type=mime_type,
-            mathpix_context=mathpix_ctx,
             materie_valide=MATERIE,
         )
         result["file_hash"] = file_hash
@@ -2870,7 +2835,6 @@ def _render_percorso_a_wizard():
                 s_es=s_es,
                 imgs_es=imgs_es,
                 file_ispirazione=_file_isp,
-                mathpix_context=st.session_state.get("mathpix_context"),
             )
 
         # Back to loop
@@ -2991,7 +2955,6 @@ def _render_percorso_b_form():
                 s_es=_s_es_fac,
                 imgs_es=_imgs_es_fac,
                 file_ispirazione=st.session_state.get("file_ispirazione"),
-                mathpix_context=st.session_state.get("mathpix_context"),
                 prog_placeholder=_prog_fac,
             )
             return
@@ -3534,8 +3497,7 @@ def _lancia_generazione(
     s_es: str,
     imgs_es: list,
     file_ispirazione=None,
-    mathpix_context: str | None = None,
-    prog_placeholder=None,          # st.empty() creato nel form, vicino al pulsante
+    prog_placeholder=None,         # st.empty() creato nel form, vicino al pulsante
 ):
     """
     Funzione condivisa dai due percorsi: lancia genera_verifica,
@@ -3609,7 +3571,6 @@ def _lancia_generazione(
             bes_dsa_b=False, genera_soluzioni=False,
             note_generali=note_generali, istruzioni_esercizi=s_es,
             immagini_esercizi=imgs_es, file_ispirazione=file_ispirazione,
-            mathpix_context=mathpix_context,
             on_progress=_avanza,
         )
 
@@ -3935,7 +3896,6 @@ def _render_facsimile_dedicato():
                 s_es=s_es_fac,
                 imgs_es=imgs_es_fac,
                 file_ispirazione=st.session_state.get("file_ispirazione"),
-                mathpix_context=st.session_state.get("mathpix_context"),
             )
             return
 
@@ -4055,7 +4015,6 @@ def _render_stage_input():
             s_es=s_es,
             imgs_es=imgs_es_finale,
             file_ispirazione=None,
-            mathpix_context=None,
             prog_placeholder=_prog_ph_b,
         )
         return
