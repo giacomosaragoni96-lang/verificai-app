@@ -2760,6 +2760,9 @@ def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali
     punti_custom: punti per esercizio scelti dal docente.
     Ritorna (pdf_bytes | None, errore).
     """
+    # Difesa: un \end{document} dentro un esercizio taglierebbe tutti i successivi.
+    for _b in st.session_state.review_blocks:
+        _b["body"] = re.sub(r"\s*\\end\{document\}.*$", "", _b["body"], flags=re.DOTALL)
     latex = reconstruct_latex(
         st.session_state.review_preamble, st.session_state.review_blocks,
     )
@@ -2816,10 +2819,18 @@ def _rigenera_esercizio_guidato(idx, istruzione, etichetta, materia, argomento, 
                 genai.GenerativeModel(modello), materia,
                 f"\\subsection*{{{title}}}\n{body}", istruzione, mostra_punteggi,
             )
+            # rigenera_singolo_blocco ripulisce la risposta con pulisci_corpo_latex, che in
+            # coda aggiunge \end{document}: va tolto, altrimenti la verifica finirebbe
+            # a questo esercizio e quelli successivi sparirebbero dal PDF.
+            nuovo = re.sub(r"\\end\{document\}.*$", "", nuovo, flags=re.DOTALL).strip()
             m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", nuovo, re.DOTALL)
             new_title = m.group(1) if m else title
             new_body  = m.group(2).strip() if m else nuovo.strip()
             new_title = re.sub(r"\s*\(\d+\s*pt\)", "", new_title).strip() or title
+            # Se il titolo originale era numerato ("Esercizio 3: …") e la risposta no, lo ripristina
+            _pref = re.match(r"^(Esercizio\s*\d+\s*[:.\-]\s*)", title, flags=re.IGNORECASE)
+            if _pref and not re.match(r"^Esercizio\s*\d+", new_title, flags=re.IGNORECASE):
+                new_title = _pref.group(1) + new_title
             if mostra_punteggi and target > 0:
                 new_body = riscala_single_block(new_title, new_body, target)
             blocchi[idx]["title"] = new_title
