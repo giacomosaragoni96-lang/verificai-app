@@ -49,7 +49,10 @@ def _tab_carica(sb):
             "Nelle schede, le sezioni «Livello N» sono…", ["auto", "difficolta", "argomenti"], horizontal=True,
             format_func={"auto": "lo capisce l'AI", "difficolta": "livelli di difficoltà",
                          "argomenti": "argomenti diversi"}.get, key="bk_livelli")
-        senza_ai = st.checkbox("Leggi solo il codice LaTeX, senza AI (nessuna etichetta, nessun costo)", key="bk_senza_ai")
+        senza_ai = st.checkbox(
+            "Salta le etichette dell'AI (gratis, ma senza argomento, tecniche e difficoltà stimata)", key="bk_senza_ai",
+            help="Il codice LaTeX di verifiche e schede viene sempre letto dal programma (testo, punti e struttura esatti). "
+                 "L'AI aggiunge solo le etichette. Appunti e PDF richiedono sempre l'AI.")
 
     if st.session_state.get(_MSG):
         for tipo, testo in st.session_state.pop(_MSG):
