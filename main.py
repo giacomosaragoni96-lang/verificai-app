@@ -29,7 +29,7 @@ from prompts import (
 )
 from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
 from latex_utils import (
-    compila_pdf, inietta_griglia, riscala_punti, riscala_punti_custom,
+    compila_pdf, compila_pdf_sicuro, inietta_griglia, riscala_punti, riscala_punti_custom,
     fix_items_environment, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
@@ -390,7 +390,7 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
             latex += "\n\\end{document}"
         if con_griglia:
             latex = inietta_griglia(latex, punti_totali)
-        pdf, _ = compila_pdf(latex)
+        pdf, _, latex = compila_pdf_sicuro(latex)
         return latex, pdf
 
     if tipo == "B":
@@ -2780,9 +2780,15 @@ def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali
     )
 
     va = st.session_state.verifiche["A"]
+    # Compila prima: se un grafico esce rotto (errori TikZ) viene sostituito da un segnaposto
+    # e il LaTeX effettivo cambia.
+    latex_inviato = latex
+    pdf, err, latex = compila_pdf_sicuro(latex)
     va["latex"] = va["latex_originale"] = latex
-    # Se la rete di sicurezza ha dovuto ridistribuire i punti, i blocchi vanno riletti
-    # dal LaTeX finale (altrimenti l'editor mostrerebbe i punti vecchi).
+    # Se i punti sono stati ridistribuiti o un grafico è stato sostituito, i blocchi vanno
+    # riletti dal LaTeX finale (altrimenti l'editor mostrerebbe i valori vecchi).
+    if latex != latex_inviato:
+        rileggi_blocchi = True
     if mostra_punteggi and not (riscala_totale or rileggi_blocchi):
         rileggi_blocchi = sum(parse_pts_from_block_body(b["body"])
                               for b in st.session_state.review_blocks) != punti_totali
@@ -2792,7 +2798,6 @@ def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali
             st.session_state.review_preamble = _pre
             st.session_state.review_blocks   = _blocchi
 
-    pdf, err = compila_pdf(latex)
     if pdf:
         va["pdf"]     = pdf
         va["pdf_ts"]  = time.time()
@@ -4635,7 +4640,13 @@ def _render_stage_final():
                 if vS.get("latex"): _show_extra_formats("S", vS, "Soluzioni")
 
 
-        # Link feedback
+    # Solo admin: sorgente LaTeX della Fila A, da copiare per diagnosticare grafici o impaginazione
+    if _is_admin and vA.get("latex"):
+        with st.expander("🔧 Strumenti admin — LaTeX sorgente (Fila A)", expanded=False):
+            st.caption("Copia da qui il LaTeX se un grafico o l'impaginazione non vanno.")
+            st.code(vA["latex"], language="latex")
+
+    # Link feedback
     st.markdown(
         '<div style="margin-top:14px;text-align:center;font-size:.78rem;'
         'font-family:DM Sans,sans-serif;color:' + T["muted"] + ';">'

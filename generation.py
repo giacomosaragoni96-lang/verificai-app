@@ -55,7 +55,7 @@ except ImportError:
             f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
         )
 from latex_utils import (
-    compila_pdf, inietta_griglia, riscala_punti, riscala_punti_custom,
+    compila_pdf, compila_pdf_sicuro, inietta_griglia, riscala_punti, riscala_punti_custom,
     fix_items_environment, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
@@ -291,7 +291,7 @@ def _assembla_e_compila(
     latex_final = inietta_griglia(latex, punti_totali) if (con_griglia and mostra_punteggi) else latex
     
     # Tentativo di compilazione con diagnostica migliorata
-    pdf, error_msg = compila_pdf(latex_final)
+    pdf, error_msg, latex_final = compila_pdf_sicuro(latex_final)
     
     if pdf is None:
         logger.error(f"Compilazione PDF fallita: {error_msg}")

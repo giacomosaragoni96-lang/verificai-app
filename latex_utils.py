@@ -7,6 +7,7 @@ import logging
 import os
 import re
 import io
+import threading
 import subprocess
 import tempfile
 
@@ -1021,21 +1022,9 @@ def limita_altezza_grafici(latex: str) -> str:
         # Aggiungi spaziatura prima del grafico se non presente
         tikz_with_spacing = "\n\n" + tikz_block if not tikz_block.startswith("\n") else tikz_block
         
-        # Aggiungi opzioni di altezza se non presenti
-        if '[scale=' in tikz_with_spacing or '[height=' in tikz_with_spacing:
-            # Se ci sono già opzioni di scala, aggiungi limite altezza
-            tikz_with_spacing = re.sub(
-                r'\\begin\{tikzpicture\}\[([^\]]*)\]',
-                lambda m: f'\\begin{{tikzpicture}}[{m.group(1)}, height=5cm, width=9cm]',
-                tikz_with_spacing
-            )
-        else:
-            # Aggiungi altezza di default più compatta
-            tikz_with_spacing = tikz_with_spacing.replace(
-                '\\begin{tikzpicture}',
-                '\\begin{tikzpicture}[height=5cm, width=9cm]'
-            )
-        
+        # Niente "height/width" sul tikzpicture: sono chiavi di pgfplots (vanno sull'asse, dove
+        # vengono impostate più sotto); su un tikzpicture TikZ non le conosce e dà errore.
+
         # Limita gli assi per i grafici pgfplots - adattivo
         if '\\begin{axis}' in tikz_with_spacing:
             # Analizza la funzione per determinare i limiti appropriati
@@ -2082,6 +2071,41 @@ def _estrai_errori_log(log: str, n: int = 10) -> list[str]:
     return [riga.rstrip() for riga in (log or "").splitlines() if riga.startswith("!")][:n]
 
 
+# Errori che pdflatex supera senza conseguenze sul disegno (es. opzione sconosciuta ignorata).
+_ERRORI_INNOCUI = ("I do not know the key",)
+_SEGNAPOSTO_GRAFICO = r'\par\noindent\textit{[Grafico non disponibile]}\par'
+
+
+def _errori_gravi(errori: list) -> list:
+    return [e for e in errori if not any(i in e for i in _ERRORI_INNOCUI)]
+
+
+def compila_pdf_sicuro(latex: str) -> tuple:
+    """
+    Come compila_pdf, ma non si fida di un PDF uscito "con errori".
+    pdflatex in nonstopmode supera gli errori di TikZ (unità sbagliate, numeri mancanti…) e
+    produce comunque un PDF con grafici rotti e testo sporco ("-2.52.5pt"). Se succede e il
+    documento ha grafici, provo la versione con i grafici sostituiti da un segnaposto e la uso
+    se ha meno errori gravi: meglio un avviso "grafico non disponibile" di un grafico sbagliato.
+    Ritorna (pdf, errore, latex_usato).
+    """
+    pdf, err = compila_pdf(latex)
+    gravi = _errori_gravi(list(getattr(_stato_compilazione, "errori_log", []) or []))
+    if pdf and gravi and "\\begin{tikzpicture}" in latex:
+        logger.warning("PDF con %d errori LaTeX e grafici: provo con il segnaposto. Errori: %s",
+                       len(gravi), gravi[:4])
+        senza = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
+                       lambda _m: _SEGNAPOSTO_GRAFICO, latex, flags=re.DOTALL)
+        pdf2, err2 = compila_pdf(senza)
+        gravi2 = _errori_gravi(list(getattr(_stato_compilazione, "errori_log", []) or []))
+        if pdf2 and len(gravi2) < len(gravi):
+            return pdf2, err2, senza
+    return pdf, err, latex
+
+
+_stato_compilazione = threading.local()   # errori "!" dell'ultima compilazione, per thread
+
+
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     """
     Compila codice LaTeX in PDF usando pdflatex.
@@ -2092,9 +2116,10 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     import os
     import logging
     import time
-    
+
     logger = logging.getLogger(__name__)
-    
+    _stato_compilazione.errori_log = []
+
     # Verifica che pdflatex sia disponibile e se è MiKTeX (TeX Live non conosce -disable-installer)
     try:
         result = subprocess.run(["pdflatex", "--version"], capture_output=True, text=True, timeout=5)
@@ -2159,6 +2184,11 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                     
                     # Se c'è return code != 0 ma il PDF esiste, sono solo warning
                     if result.returncode != 0:
+                        # pdflatex ha superato degli errori (nonstopmode): li conservo, il
+                        # chiamante può decidere se il PDF è affidabile (compila_pdf_sicuro)
+                        _stato_compilazione.errori_log = (
+                            _estrai_errori_log(log_content, 60) or _estrai_errori_log(result.stdout, 60)
+                        )
                         logger.warning(f"⚠️ Warnings MiKTeX ignorati - PDF generato comunque (return code: {result.returncode})")
                         # Log dei warnings ma non bloccante
                         stdout_lines = result.stdout.split('\n')[-5:]
