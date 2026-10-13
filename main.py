@@ -37,13 +37,8 @@ from config import (
     APP_NAME, APP_ICON, SHARE_URL, FEEDBACK_FORM_URL,
     LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, NOTE_PLACEHOLDER, TIPI_ESERCIZIO,
-    MODEL_FAST_ID, get_model_id_per_piano,
+    MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS,
 )
-# THEME_LABELS è definito nel nuovo config.py — fallback per compatibilità
-try:
-    from config import THEME_LABELS
-except ImportError:
-    THEME_LABELS = {k: k.replace("_", " ").title() for k in THEMES}
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from auth import mostra_auth, ripristina_sessione
@@ -95,7 +90,7 @@ except Exception as e:
     st.warning(f"⚠️ Database Supabase non configurato: {e}")
 
 # ── TEMA — inizializzazione ───────────────────────────────────────────────────
-# Tema default: carta (light). Fallback robusto per sessioni vecchie (aurora/luce/ecc.)
+# Temi disponibili: carta (default) e notte. Una chiave non più presente (sessioni vecchie) → carta.
 if "theme" not in st.session_state:
     st.session_state.theme = "carta"
 
