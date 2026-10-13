@@ -2,39 +2,11 @@
 # Sidebar: Modello AI, Tema, Contatore mensile, Storico, Logout.
 # ─────────────────────────────────────────────────────────────────────────────
 
+import logging
+
 import streamlit as st
-from datetime import datetime, timezone
 
-
-def _tempo_fa(iso_str: str) -> str:
-    """Converte un timestamp ISO in formato umano relativo (es. '2 ore fa', 'ieri')."""
-    try:
-        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
-        now = datetime.now(timezone.utc)
-        diff = now - dt
-        seconds = int(diff.total_seconds())
-        if seconds < 60:
-            return "ora"
-        minutes = seconds // 60
-        if minutes < 60:
-            return f"{minutes} min fa"
-        hours = minutes // 60
-        if hours < 24:
-            return f"{hours} {'ora' if hours == 1 else 'ore'} fa"
-        days = hours // 24
-        if days == 1:
-            return "ieri"
-        if days < 7:
-            return f"{days} giorni fa"
-        weeks = days // 7
-        if weeks < 4:
-            return f"{weeks} sett. fa"
-        months = days // 30
-        if months < 12:
-            return f"{months} {'mese' if months == 1 else 'mesi'} fa"
-        return dt.strftime("%d/%m/%Y")
-    except Exception:
-        return iso_str[:10] if iso_str else ""
+logger = logging.getLogger("verificai.sidebar")
 
 
 def render_sidebar(
@@ -44,17 +16,12 @@ def render_sidebar(
     is_admin,
     limite_raggiunto,
     T,
-    SCUOLE,
     MODELLI_DISPONIBILI,
     LIMITE_MENSILE,
     giorni_al_reset_func,
-    compila_pdf_func,
     supabase_client,
-    current_stage: str = "INPUT",
     THEMES: dict = None,
     THEME_LABELS: dict = None,
-    extract_blocks_func=None,
-    pdf_to_images_func=None,
 ) -> dict:
 
     theme_changed = False
@@ -72,74 +39,27 @@ def render_sidebar(
             f'border-radius:2px;margin:1.5rem 0 2rem 0;"></div>',
             unsafe_allow_html=True
         )
-        # ── MODELLO AI — routing per piano ───────────────────────────────────
-        # Admin  → sceglie manualmente qualsiasi modello
-        # Free   → Flash Lite fisso (automatico)
-        # Pro    → Flash, con upgrade a Pro se materia STEM (gold necessario)
-        # Il model_id effettivo viene poi eventualmente aggiornato in main.py
-        # tramite get_model_id_per_piano(piano, materia) al momento della generazione.
-        st.markdown('<div class="sidebar-label">Qualità generazione</div>', unsafe_allow_html=True)
-
-        # Determina piano corrente (admin sovrascrive tutto)
+        # ── MODELLO AI — scelto dal piano, non dall'utente ───────────────────
+        # Free → Flash Lite · Pro → Flash 2.5 · Gold → Pro 2.5.
+        # Solo l'admin può scegliere a mano (expander chiuso).
+        # Il model_id effettivo viene poi validato in main.py con
+        # get_model_id_per_piano(piano, materia) al momento della generazione.
         _piano = "admin" if is_admin else st.session_state.get("piano_utente", "free")
 
         if is_admin:
-            # Admin: selezione manuale completa
-            _nomi_admin = list(MODELLI_DISPONIBILI.keys())
-            _sel_modello = st.selectbox(
-                "modello",
-                _nomi_admin,
-                label_visibility="collapsed",
-                key="sb_modello_admin",
-            )
+            with st.expander("🔧 Strumenti admin", expanded=False):
+                _nomi_admin = list(MODELLI_DISPONIBILI.keys())
+                _sel_modello = st.selectbox(
+                    "Modello",
+                    _nomi_admin,
+                    key="sb_modello_admin",
+                )
             modello_id = MODELLI_DISPONIBILI[_sel_modello]["id"]
-            st.markdown(
-                f'<div style="font-size:0.72rem;color:{_sb_muted};padding:3px 0 0 2px;">'
-                f'🔧 Admin: selezione manuale abilitata.</div>',
-                unsafe_allow_html=True
-            )
-        elif _piano == "pro":
-            # Pro: Flash come default, possibilità di scegliere tra Lite e Flash
-            _nomi_pro = [
-                k for k, v in MODELLI_DISPONIBILI.items()
-                if v["piano"] in ("free", "pro")
-            ]
-            _sel_pro = st.selectbox(
-                "modello", _nomi_pro, index=1,   # default Flash
-                label_visibility="collapsed",
-                key="sb_modello_pro",
-            )
-            modello_id = MODELLI_DISPONIBILI[_sel_pro]["id"]
-            st.markdown(
-                f'<div style="font-size:0.72rem;color:{_sb_muted};padding:3px 0 0 2px;">'
-                f'⚡ Piano Pro attivo.</div>',
-                unsafe_allow_html=True
-            )
-        elif _piano == "gold":
-            # Gold: accesso completo incluso Pro 2.5
-            _nomi_gold = list(MODELLI_DISPONIBILI.keys())
-            _sel_gold = st.selectbox(
-                "modello", _nomi_gold, index=2,  # default Pro 2.5
-                label_visibility="collapsed",
-                key="sb_modello_gold",
-            )
-            modello_id = MODELLI_DISPONIBILI[_sel_gold]["id"]
-            st.markdown(
-                f'<div style="font-size:0.72rem;color:{_sb_muted};padding:3px 0 0 2px;">'
-                f'🌟 Piano Gold attivo · Gemini 2.5 Pro disponibile.</div>',
-                unsafe_allow_html=True
-            )
         else:
-            # Free: Flash Lite fisso, non selezionabile
-            _nome_lite = "⚡ Flash 2.5 Lite (veloce · Free)"
-            modello_id = MODELLI_DISPONIBILI[_nome_lite]["id"]
-            st.markdown(
-                f'<div style="background:{T["hint_bg"]};border:1px solid {T["hint_border"]}; '
-                f'border-radius:8px;padding:6px 10px;font-size:0.74rem;color:{T["hint_text"]}; '
-                f'margin:4px 0;font-family:DM Sans,sans-serif;">'
-                f'⚡ <b>Flash 2.5 Lite</b> — Piano Free<br/>'
-                f'<span style="opacity:.8;">Piano Free: {LIMITE_MENSILE} verifiche al mese.</span></div>',
-                unsafe_allow_html=True
+            _piano_modello = _piano if _piano in ("pro", "gold") else "free"
+            modello_id = next(
+                v["id"] for v in MODELLI_DISPONIBILI.values()
+                if v["piano"] == _piano_modello
             )
 
         # ── TEMA ──────────────────────────────────────────────────────────────
@@ -249,13 +169,8 @@ def render_sidebar(
                 unsafe_allow_html=True,
             )
 
-        # Validation score tracking
-        if hasattr(st.session_state, 'last_validation_score'):
-            last_score = st.session_state.last_validation_score
-            st.metric("🎯 Ultimo Score", f"{last_score:.2f}", 
-                     "Buono" if last_score > 0.7 else "Da migliorare")
-        
-        # Stats cards semplici
+        # ── LE MIE VERIFICHE — un solo pulsante con il conteggio ──────────────
+        total_verifiche = None
         try:
             if utente is not None and supabase_admin is not None:
                 storico_count = (
@@ -266,35 +181,15 @@ def render_sidebar(
                     .execute()
                 )
                 total_verifiche = storico_count.count if storico_count else 0
-            else:
-                total_verifiche = 0
-        except:
-            total_verifiche = 0
-        
-        # Card info-only (nessun onclick — la navigazione è gestita dal pulsante sotto)
-        st.markdown(f'''
-        <div class="sb-pro-card" style="
-            background: linear-gradient({_acc}15, transparent);
-            border: 1px solid {_acc}44;
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 0.5rem;
-        ">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                <div style="font-size: 1rem; font-weight: 600; color: {_sb_text};">
-                    📚 Le mie verifiche
-                </div>
-                <div style="background: {_acc}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 700;">
-                    {total_verifiche}
-                </div>
-            </div>
-            <div style="font-size: 0.82rem; color: {_sb_muted};">
-                Visualizza, modifica e scarica tutte le tue verifiche
-            </div>
-        </div>
-        ''', unsafe_allow_html=True)
+        except Exception as _e:
+            logger.warning(f"Conteggio storico non disponibile: {_e}")
 
-        if st.button("📄 Apri Storico Completo", key="open_storico", use_container_width=True, type="secondary"):
+        _lbl_storico = (
+            f"📚 Le mie verifiche ({total_verifiche})"
+            if total_verifiche is not None else "📚 Le mie verifiche"
+        )
+        st.markdown('<div style="height:.9rem"></div>', unsafe_allow_html=True)
+        if st.button(_lbl_storico, key="open_storico", use_container_width=True, type="secondary"):
             st.session_state.stage = "MIE_VERIFICHE"
             st.rerun()
 
@@ -336,56 +231,6 @@ def render_sidebar(
             st.session_state.stage          = "INPUT"
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
-
-        # ── PERFORMANCE MONITORING (Admin only) ─────────────────────────────
-        if is_admin and hasattr(st.session_state, 'quality_stats'):
-            st.markdown("---")
-            st.markdown("### 📊 Qualità Generazione")
-            
-            stats = st.session_state.quality_stats
-            total = sum(stats.values())
-            
-            if total > 0:
-                # Quality metrics
-                excellent_rate = stats.get('excellent', 0) / total * 100
-                good_rate = stats.get('good', 0) / total * 100
-                
-                st.metric("📈 Tasso Successo", f"{excellent_rate + good_rate:.1f}%", 
-                         f"+{excellent_rate:.1f}% eccellente")
-                
-                # Visual quality bar
-                quality_data = [
-                    ("👍 Ottima", stats.get('excellent', 0), "#059669"),
-                    ("👍 Buona", stats.get('good', 0), "#22c55e"), 
-                    ("😐 Sufficiente", stats.get('sufficient', 0), "#f59e0b"),
-                    ("👎 Insufficiente", stats.get('poor', 0), "#ef4444")
-                ]
-                
-                for label, count, color in quality_data:
-                    if count > 0:
-                        percentage = count / total * 100
-                        st.markdown(f"""
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.2rem 0;">
-                            <span style="font-size: 0.8rem;">{label}</span>
-                            <span style="font-size: 0.8rem; font-weight: 600;">{count} ({percentage:.0f}%)</span>
-                        </div>
-                        <div style="background: #e5e7eb; border-radius: 4px; height: 6px; margin: 2px 0;">
-                            <div style="background: {color}; width: {percentage}%; height: 100%; border-radius: 4px;"></div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                
-                # Validation score tracking
-                if hasattr(st.session_state, 'last_validation_score'):
-                    last_score = st.session_state.last_validation_score
-                    st.metric("🎯 Ultimo Score", f"{last_score:.2f}", 
-                             "Buono" if last_score > 0.7 else "Da migliorare")
-                
-                # Reset stats button
-                if st.button("🔄 Reset Statistiche", key="reset_stats", use_container_width=True):
-                    st.session_state.quality_stats = {'excellent': 0, 'good': 0, 'sufficient': 0, 'poor': 0}
-                    st.rerun()
-            else:
-                st.info("Nessun feedback raccolto ancora")
 
     return {
         "modello_id":    modello_id,

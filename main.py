@@ -677,13 +677,10 @@ if _STYLED_AVAILABLE:
 settings   = render_sidebar(
     supabase_admin=supabase_admin, utente=st.session_state.utente,
     verifiche_mese_count=_verifiche_mese, is_admin=_is_admin,
-    limite_raggiunto=_limite, T=T, SCUOLE=SCUOLE,
+    limite_raggiunto=_limite, T=T,
     MODELLI_DISPONIBILI=MODELLI_DISPONIBILI, LIMITE_MENSILE=LIMITE_MENSILE,
-    giorni_al_reset_func=_giorni_al_reset, compila_pdf_func=compila_pdf,
-    supabase_client=supabase, current_stage=st.session_state.stage,
+    giorni_al_reset_func=_giorni_al_reset, supabase_client=supabase,
     THEMES=THEMES, THEME_LABELS=THEME_LABELS,
-    extract_blocks_func=extract_blocks,
-    pdf_to_images_func=pdf_to_images_bytes,
 )
 modello_id = settings.get("modello_id", "gemini-2.5-flash-lite")
 
@@ -2561,10 +2558,8 @@ def _lancia_generazione(
             on_progress=_avanza,
         )
 
-        # Capture validation score for quality tracking
         if "_validation_score" in ris:
-            st.session_state.last_validation_score = ris["_validation_score"]
-            logger.info(f"Validation score salvato: {ris['_validation_score']}")
+            logger.info(f"Validation score: {ris['_validation_score']}")
 
         def _agg(fid, d):
             v = st.session_state.verifiche[fid]
