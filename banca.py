@@ -52,6 +52,8 @@ def salva_analisi(sb, risultato: dict, materia: str = "", scuola: str = "") -> d
     Restituisce {"fonte_id", "nuovi", "gia_presente"}.
     """
     f = risultato["fonte"]
+    if not materia or materia == "auto":
+        materia = risultato.get("materia") or ""
     esistente = sb.table(FONTI).select("id").eq("hash", f["hash"]).limit(1).execute().data
     if esistente:
         return {"fonte_id": esistente[0]["id"], "nuovi": 0, "gia_presente": True}
@@ -73,7 +75,7 @@ def salva_analisi(sb, risultato: dict, materia: str = "", scuola: str = "") -> d
             "fonte_id": fonte_id, "nome": (f.get("titolo") or f["nome"])[:120] + (f" — {m['argomento']}" if m.get("argomento") else ""),
             "materia": materia or None, "scuola": scuola or None, "struttura": m, "approvato": False,
         }).execute()
-    return {"fonte_id": fonte_id, "nuovi": len(righe), "gia_presente": False}
+    return {"fonte_id": fonte_id, "nuovi": len(righe), "gia_presente": False, "materia": materia or None}
 
 
 # ── lettura ───────────────────────────────────────────────────────────────────
@@ -140,6 +142,26 @@ def elimina_esercizi(sb, ids: list):
 def elimina_fonte(sb, fonte_id: str):
     """Elimina il file e (a cascata) i suoi esercizi e modelli."""
     sb.table(FONTI).delete().eq("id", fonte_id).execute()
+
+
+# ── correzione di materia e scuola ────────────────────────────────────────────
+
+def cambia_materia_scuola(sb, fonte_id: str, materia: str | None = None, scuola: str | None = None):
+    """Cambia materia e/o scuola di un file e di tutti i suoi esercizi e modelli."""
+    campi = {}
+    if materia:
+        campi["materia"] = materia
+    if scuola:
+        campi["scuola"] = scuola
+    if campi:
+        for tabella, chiave in ((FONTI, "id"), (ESERCIZI, "fonte_id"), (MODELLI, "fonte_id")):
+            sb.table(tabella).update(campi).eq(chiave, fonte_id).execute()
+
+
+def sposta_materia(sb, da: str, a: str):
+    """Sposta tutto ciò che ha materia «da» sulla materia «a» (per correggere un errore in blocco)."""
+    for tabella in (FONTI, ESERCIZI, MODELLI):
+        sb.table(tabella).update({"materia": a}).eq("materia", da).execute()
 
 
 # ── modelli di verifica ───────────────────────────────────────────────────────

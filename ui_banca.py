@@ -12,6 +12,7 @@ import banca_import
 from config import CATEGORIE_SCUOLA, MATERIE, MODEL_FLASH_ID
 
 _MSG = "_bk_msg"
+AUTO = "Rileva automaticamente"
 
 
 def _istruzioni_tabelle():
@@ -40,7 +41,10 @@ def _modello_ai():
 def _tab_carica(sb):
     st.caption("Carica verifiche, schede, appunti o libri. Gli esercizi vanno in coda: li controlli e li approvi nella scheda «Da approvare».")
     c1, c2 = st.columns(2)
-    materia = c1.selectbox("Materia", MATERIE, key="bk_materia")
+    scelta_materia = c1.selectbox(
+        "Materia", [AUTO] + MATERIE, key="bk_materia",
+        help="«Rileva automaticamente» la ricava dal titolo e dagli esercizi del file; la puoi correggere dopo.")
+    materia = "auto" if scelta_materia == AUTO else scelta_materia
     scuola = c2.selectbox("Scuola a cui è destinato", CATEGORIE_SCUOLA, index=CATEGORIE_SCUOLA.index("Professionale"),
                           key="bk_scuola",
                           help="Serve per scegliere gli esercizi giusti quando un docente genera una verifica.")
@@ -80,7 +84,8 @@ def _tab_carica(sb):
                     else:
                         stato.update(label=f"{f.name}: {esito['nuovi']} esercizi in coda", state="complete")
                         extra = f" {ris['nota_livelli']}" if ris["nota_livelli"] else ""
-                        messaggi.append(("ok", f"{f.name} ({ris['fonte']['tipo']}): {esito['nuovi']} esercizi in attesa di revisione.{extra}"))
+                        mat = esito.get("materia") or "materia non riconosciuta (correggila in «File caricati»)"
+                        messaggi.append(("ok", f"{f.name} ({ris['fonte']['tipo']}, {mat}): {esito['nuovi']} esercizi in attesa di revisione.{extra}"))
                     for av in ris["avvisi"]:
                         messaggi.append(("avviso", f"{f.name}: {av}"))
                 except Exception as e:                    # noqa: BLE001
@@ -201,11 +206,31 @@ def _tab_banca(sb):
             st.rerun()
 
     with st.expander("File caricati"):
-        for f in banca.elenco_fonti(sb):
-            a, b = st.columns([5, 1])
+        fonti = banca.elenco_fonti(sb)
+        presenti = sorted({f.get("materia") for f in fonti if f.get("materia")})
+        if presenti:
+            st.caption("Correggere una materia sbagliata in blocco:")
+            x1, x2, x3 = st.columns([3, 3, 2])
+            da = x1.selectbox("Da", presenti, key="bk_sp_da")
+            a_ = x2.selectbox("A", MATERIE, key="bk_sp_a")
+            if x3.button("Sposta tutto", key="bk_sp_ok", use_container_width=True) and da != a_:
+                banca.sposta_materia(sb, da, a_)
+                st.session_state[_MSG] = [("ok", f"Tutto ciò che era «{da}» ora è «{a_}».")]
+                st.rerun()
+            st.divider()
+        for f in fonti:
+            a, b, c = st.columns([5, 1.4, 1])
             a.markdown(f"**{f['nome']}** · {f['tipo']} · {f.get('materia') or '—'} · {f.get('scuola') or '—'} — "
                        f"{f['approvati']} approvati, {f['in_attesa']} in attesa")
-            if b.button("Elimina", key=f"bk_delf_{f['id']}"):
+            with b.popover("Cambia"):
+                nm = st.selectbox("Materia", MATERIE, key=f"bk_cm_{f['id']}",
+                                  index=MATERIE.index(f["materia"]) if f.get("materia") in MATERIE else 0)
+                ns = st.selectbox("Scuola", CATEGORIE_SCUOLA, key=f"bk_cs_{f['id']}",
+                                  index=CATEGORIE_SCUOLA.index(f["scuola"]) if f.get("scuola") in CATEGORIE_SCUOLA else 0)
+                if st.button("Applica", key=f"bk_ca_{f['id']}"):
+                    banca.cambia_materia_scuola(sb, f["id"], nm, ns)
+                    st.rerun()
+            if c.button("Elimina", key=f"bk_delf_{f['id']}"):
                 banca.elimina_fonte(sb, f["id"])
                 st.rerun()
 

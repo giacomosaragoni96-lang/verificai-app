@@ -832,3 +832,16 @@ def prompt_tipo_livelli(titoli_json: str) -> str:
         "RISPONDI SOLO con JSON valido: {\"livelli\": \"difficolta\" oppure \"argomenti\", "
         "\"motivo\": \"una frase\"}"
     )
+
+
+def prompt_materia(titolo: str, esempi_json: str, elenco_materie: str) -> str:
+    """Prompt per capire a quale materia appartiene un file, dal titolo e da alcuni esercizi."""
+    return (
+        "Sei un docente. Capisci a quale MATERIA scolastica appartiene questo materiale, dal titolo e da "
+        "alcuni esercizi.\n"
+        f"Titolo: {titolo}\n"
+        f"Esercizi di esempio: {esempi_json}\n\n"
+        f"Scegli UNA materia tra queste (scrivila identica): {elenco_materie}\n"
+        "Se nessuna è adatta rispondi con \"Altra materia\".\n"
+        "RISPONDI SOLO con JSON valido: {\"materia\": \"...\"}"
+    )

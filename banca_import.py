@@ -13,10 +13,11 @@ import re
 import time
 
 import ai_client
-from config import livello_normalizzato
+from config import MATERIE, livello_normalizzato
 from estrai_tex import corpo_documento, leggi_tex, togli_commenti
-from prompts import prompt_etichetta_esercizi, prompt_importa_esercizi, prompt_tipo_livelli
+from prompts import prompt_etichetta_esercizi, prompt_importa_esercizi, prompt_materia, prompt_tipo_livelli
 
+MATERIA_AUTO = "auto"
 
 def hash_contenuto(dati: bytes) -> str:
     return hashlib.sha256(dati).hexdigest()
@@ -194,6 +195,21 @@ def interpreta_livelli(modello, esercizi: list, modo: str, avvisi: list | None =
     return ("difficolta" if hit else "argomenti"), "dai titoli delle sezioni (senza AI)"
 
 
+def rileva_materia(modello, nome_file: str, titolo: str, esercizi: list, avvisi: list | None = None):
+    """La materia del file: prima dal titolo/nome («Verifica di Matematica»), poi chiedendo all'AI."""
+    testo = f"{titolo} {nome_file}".lower()
+    for m in MATERIE:
+        if m != "Altra materia" and re.search(r"\b" + re.escape(m.lower()) + r"\b", testo):
+            return m
+    if modello is not None and esercizi:
+        esempi = [e["testo_latex"][:200] for e in esercizi[:8]]
+        r = chiedi_json(modello, [prompt_materia(titolo or nome_file, json.dumps(esempi, ensure_ascii=False),
+                                                 ", ".join(MATERIE))], avvisi)
+        if r and r.get("materia") in MATERIE:
+            return r["materia"]
+    return None
+
+
 def normalizza(esercizi: list) -> list:
     """Porta tutte le difficoltà su 1-3 (★) mantenendo il livello originale."""
     for e in esercizi:
@@ -222,6 +238,7 @@ def analizza_file(nome: str, contenuto: bytes, materia: str = "", modello=None, 
     """
     ext = nome.lower().rsplit(".", 1)[-1] if "." in nome else ""
     avvisi: list = []
+    materia = "" if materia in ("", MATERIA_AUTO) else materia      # vuota = da rilevare
     usa_ai = modello is not None and not senza_ai
     nota_livelli, modello_verifica, esercizi, titolo = "", None, [], nome.rsplit(".", 1)[0]
     tipo = ext
@@ -260,8 +277,10 @@ def analizza_file(nome: str, contenuto: bytes, materia: str = "", modello=None, 
         avvisi.append("formato non supportato: uso file .tex e .pdf")
         return None
 
+    materia_finale = materia or rileva_materia(modello if usa_ai else None, nome, titolo, esercizi, avvisi)
     return {
         "fonte": {"nome": nome, "tipo": tipo, "titolo": titolo, "hash": hash_contenuto(contenuto)},
+        "materia": materia_finale,
         "esercizi": normalizza(esercizi), "modello_verifica": modello_verifica,
         "nota_livelli": nota_livelli, "avvisi": avvisi,
     }
