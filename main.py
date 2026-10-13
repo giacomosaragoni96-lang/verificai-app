@@ -37,7 +37,7 @@ from latex_utils import (
     parse_items_from_block, apply_item_pts_to_body,
     prepara_esercizi_aperti, conta_punti_latex,
     migliora_spaziatura_sottopunti, limita_altezza_grafici, aggiungi_spaziatura_grafici_tabelle,
-    normalizza_sottopunti_inline,
+    normalizza_sottopunti_inline, bilancia_punti,
 )
 from config import (
     APP_NAME, APP_ICON, SHARE_URL, FEEDBACK_FORM_URL,
@@ -352,7 +352,9 @@ def _postprocessa_latex(latex: str, mostra_punteggi: bool, punti_totali: int,
     latex = limita_altezza_grafici(latex)
     latex = rimuovi_vspace_corpo(latex)
     latex = rimuovi_punti_subsection(latex)
-    if mostra_punteggi and riscala_totale:
+    # Il totale deve essere SEMPRE punti_totali: se dopo una modifica non lo è
+    # (es. 90 invece di 100) si ridistribuisce, come fa la generazione iniziale.
+    if mostra_punteggi and (riscala_totale or conta_punti_latex(latex) != punti_totali):
         latex = prepara_esercizi_aperti(latex, punti_totali)
         if punti_custom:
             latex = riscala_punti_custom(latex, punti_custom)
@@ -2751,7 +2753,7 @@ def _render_stage_input():
 
 def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali: int,
                           riscala_totale: bool = False, punti_custom: list | None = None,
-                          rileggi_blocchi: bool = False):
+                          rileggi_blocchi: bool = False, blocco_modificato: int | None = None):
     """
     Ricostruisce il LaTeX della Fila A da review_blocks, applica il post-processing
     deterministico (_postprocessa_latex), compila il PDF e aggiorna session_state
@@ -2761,8 +2763,28 @@ def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali
     il numero di esercizi o si confermano i punteggi); in tal caso review_blocks viene
     riletto dal LaTeX risultante (lo stesso succede con rileggi_blocchi=True).
     punti_custom: punti per esercizio scelti dal docente.
+    blocco_modificato: indice dell'esercizio appena riscritto; se il totale non torna a
+    punti_totali, è lui ad assorbire la differenza (gli altri esercizi non cambiano).
     Ritorna (pdf_bytes | None, errore).
     """
+    if mostra_punteggi and blocco_modificato is not None:
+        _bl = st.session_state.review_blocks
+        if 0 <= blocco_modificato < len(_bl):
+            _altri = sum(parse_pts_from_block_body(b["body"])
+                         for j, b in enumerate(_bl) if j != blocco_modificato)
+            _serve = punti_totali - _altri
+            _mod = _bl[blocco_modificato]
+            _pts_mod = parse_pts_from_block_body(_mod["body"])
+            if _serve > 0 and _pts_mod == 0:
+                # la risposta AI non ha punteggi: li assegno io (divisi in parti uguali)
+                _n_item = len(re.findall(r"\\item\b", _mod["body"]))
+                if _n_item:
+                    _mod["body"] = apply_item_pts_to_body(
+                        _mod["body"], bilancia_punti([1] * _n_item, _serve))
+                else:
+                    _mod["body"] = _mod["body"].rstrip() + f" ({_serve} pt)"
+            elif _serve > 0 and _pts_mod != _serve:
+                _mod["body"] = riscala_single_block(_mod["title"], _mod["body"], _serve)
     # Difesa: un \end{document} dentro un esercizio taglierebbe tutti i successivi.
     for _b in st.session_state.review_blocks:
         _b["body"] = re.sub(r"\s*\\end\{document\}.*$", "", _b["body"], flags=re.DOTALL)
@@ -2776,6 +2798,11 @@ def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali
 
     va = st.session_state.verifiche["A"]
     va["latex"] = va["latex_originale"] = latex
+    # Se la rete di sicurezza ha dovuto ridistribuire i punti, i blocchi vanno riletti
+    # dal LaTeX finale (altrimenti l'editor mostrerebbe i punti vecchi).
+    if mostra_punteggi and not (riscala_totale or rileggi_blocchi):
+        rileggi_blocchi = sum(parse_pts_from_block_body(b["body"])
+                              for b in st.session_state.review_blocks) != punti_totali
     if riscala_totale or rileggi_blocchi:
         _pre, _blocchi = extract_blocks(latex)
         if _blocchi:
@@ -2792,6 +2819,23 @@ def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali
         st.session_state.preview_page    = 0
         st.session_state.last_preview_ts = va["pdf_ts"]   # anteprima già allineata al PDF
     return pdf, err
+
+
+def _applica_punti_a_blocchi(righe: list, punti: list) -> None:
+    """
+    Scrive in review_blocks i punti scelti nella tabella "Cambia i punteggi".
+    righe[k] = (indice esercizio, indice sottopunto); punti[k] = punti di quella riga.
+    Il titolo di ogni esercizio riporta il subtotale.
+    """
+    per_esercizio: dict = {}
+    for (i, j), v in zip(righe, punti):
+        per_esercizio.setdefault(i, {})[j] = v
+    for i, valori in per_esercizio.items():
+        lista = [valori[j] for j in sorted(valori)]
+        blocco = st.session_state.review_blocks[i]
+        blocco["body"] = apply_item_pts_to_body(blocco["body"], lista)
+        titolo = re.sub(r"\s*\(\d+\s*pt\)", "", blocco["title"]).strip()
+        blocco["title"] = f"{titolo} ({sum(lista)} pt)"
 
 
 def _pulisci_stato_revisione():
@@ -2840,7 +2884,7 @@ def _rigenera_esercizio_guidato(idx, istruzione, etichetta, materia, argomento, 
             blocchi[idx]["body"]  = new_body
             st.session_state.pop("recalibra_pts", None)
 
-            pdf, err = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali)
+            pdf, err = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali, blocco_modificato=idx)
             if not pdf:
                 stato.update(label="PDF non aggiornato", state="error", expanded=False)
                 _mostra_errore(
@@ -3610,7 +3654,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 st.session_state.review_blocks[idx]["body"]  = _qr_new_body
                 if "recalibra_pts" in st.session_state:
                     del st.session_state["recalibra_pts"]
-                _qr_pdf, _ = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali)
+                _qr_pdf, _ = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali, blocco_modificato=idx)
                 if not _qr_pdf:
                     _qr_st.update(label="PDF non aggiornato", state="error", expanded=False)
                     _mostra_errore(
@@ -3782,7 +3826,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     del st.session_state["recalibra_pts"]
 
                 # Ricompila il PDF e aggiorna la preview dopo la modifica
-                _pdf_rw, _err_rw = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali)
+                _pdf_rw, _err_rw = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali, blocco_modificato=idx)
                 logger.info(f"COMPILAZIONE PDF POST-MODIFICA - Success: {_pdf_rw is not None}, Error: {_err_rw}")
                 if _pdf_rw:
                     st.session_state.force_preview_refresh = True
@@ -3912,7 +3956,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     "title": _ct_title or title,
                     "body":  _ct_body,
                 }
-                _ct_pdf, _ = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali)
+                _ct_pdf, _ = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali, blocco_modificato=idx)
                 if not _ct_pdf:
                     _ct_st.update(label="PDF non aggiornato", state="error", expanded=False)
                     _mostra_errore(
@@ -3928,159 +3972,94 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 _mostra_errore("Non sono riuscito a cambiare questo esercizio", _ct_e)
 
 
-    # ── Ricalibra Punteggi — sopra il pulsante Conferma ──────────────────
+    # ── Cambia i punteggi — una tabella unica, totale sempre ribilanciato ─────
     if mostra_punteggi and n_blocks > 0:
         with st.expander("⚖️ Cambia i punteggi", expanded=False):
-
-            # ── Intestazione compatta ──────────────────────────────────────
-            st.markdown(
-                f'<div class="rc-header-desc">'
-                f'Imposta i punti per ogni sottopunto. '
-                f'Il pulsante si sblocca quando il totale è esattamente '
-                f'<strong>{punti_totali} pt</strong>.'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-
-            # ── Raccogli tutti i sottopunti di tutti gli esercizi ──────────
-            _all_new_item_pts = {}
-            _grand_total_rc   = 0
-
+            _righe, _dati = [], []          # _righe[k] = (esercizio, sottopunto)
             for _i, _b in enumerate(st.session_state.review_blocks):
                 _items_rc = parse_items_from_block(_b["body"], _b.get("title", ""))
-                _title_rc = re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]).strip()
-                _title_short = (_title_rc[:45] + "…") if len(_title_rc) > 45 else _title_rc
+                _tit = _clean_title(re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]))
+                for _j, (_lbl, _short, _pt) in enumerate(_items_rc):
+                    _testo = (_short or "").strip()
+                    _righe.append((_i, _j))
+                    _dati.append({
+                        "Esercizio": f"{_i+1}. {_tit[:30]}" if _j == 0 else "",
+                        "Richiesta": (f"{_lbl} {_testo[:46]}…" if len(_testo) > 46
+                                      else f"{_lbl} {_testo}").strip(),
+                        "Punti": int(_pt),
+                    })
 
-                if not _items_rc:
-                    _all_new_item_pts[_i] = []
-                    continue
-
-                _ex_new_pts_rc = []
-
-                # ── Exercise header ────────────────────────────────────────
-                st.markdown(
-                    f'<div class="rc-ex-header">'
-                    f'<span class="rc-ex-num">Es. {_i+1}</span>'
-                    f'<span class="rc-ex-title">{_title_short}</span>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-                # ── Items: 2 per row, selectbox compatto ───────────────────
-                _n_items_rc = len(_items_rc)
-                _ex_item_vals = {}  # abs_idx -> int
-                _max_sel = min(punti_totali, 40)
-                for _row_start in range(0, _n_items_rc, 2):
-                    _row_slice = _items_rc[_row_start:_row_start + 2]
-                    _row_cols = st.columns(len(_row_slice), gap="medium")
-                    for _ci, (_rc_col, (_lbl, _short, _cur_pt)) in enumerate(
-                        zip(_row_cols, _row_slice)
-                    ):
-                        _abs_j = _row_start + _ci
-                        _item_key = f"item_pt_{_i}_{_abs_j}"
-                        with _rc_col:
-                            _q_disp = (
-                                (_short[:26] + "…") if len(_short or "") > 26
-                                else (_short or "")
-                            )
-                            st.markdown(
-                                f'<div class="rc-item-chip">'
-                                f'<span class="rc-item-badge">{_lbl}</span>'
-                                + (f'<span class="rc-item-text-sm">{_q_disp}</span>'
-                                   if _q_disp else '')
-                                + '</div>',
-                                unsafe_allow_html=True,
-                            )
-                            st.markdown(
-                                '<div class="rc-sel-wrap">', unsafe_allow_html=True
-                            )
-                            _sel_val = st.selectbox(
-                                f"pt {_lbl}",
-                                options=list(range(0, _max_sel + 1)),
-                                index=min(_cur_pt, _max_sel),
-                                key=_item_key,
-                                label_visibility="collapsed",
-                            )
-                            st.markdown('</div>', unsafe_allow_html=True)
-                            _ex_item_vals[_abs_j] = int(_sel_val)
-                for _j in range(_n_items_rc):
-                    _ex_new_pts_rc.append(_ex_item_vals.get(_j, 0))
-
-                _ex_subtotal = sum(_ex_new_pts_rc)
-                _grand_total_rc += _ex_subtotal
-                _all_new_item_pts[_i] = _ex_new_pts_rc
-
-                # ── Subtotal per exercise ──────────────────────────────────
-                st.markdown(
-                    f'<div class="rc-ex-subtotal">'
-                    f'Subtotale Es. {_i+1}: <strong>{_ex_subtotal} pt</strong>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-            # ── Barra totale ───────────────────────────────────────────────
-            _rc_ok   = (_grand_total_rc == punti_totali)
-            _rc_diff = _grand_total_rc - punti_totali
-
-            st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
-            if _rc_ok:
-                st.markdown(
-                    '<div class="recalibra-sum-ok">'
-                    f'✅ Totale: <strong>{_grand_total_rc} pt</strong> = {punti_totali} pt'
-                    '</div>',
-                    unsafe_allow_html=True
-                )
+            if not _dati:
+                st.caption("Nessun punteggio da modificare in questa verifica.")
             else:
-                _missing = abs(_rc_diff)
-                _direction = "in eccesso" if _rc_diff > 0 else "mancanti"
                 st.markdown(
-                    '<div class="recalibra-sum-err">'
-                    f'⚠️ Totale: <strong>{_grand_total_rc} pt</strong> — '
-                    f'{_missing} pt {_direction} rispetto a {punti_totali} pt'
-                    '</div>',
-                    unsafe_allow_html=True
+                    f'<div style="font-size:.88rem;color:{T["text2"]};margin-bottom:.4rem;'
+                    f'font-family:DM Sans,sans-serif;">Cambia i numeri nella colonna <b>Punti</b>. '
+                    f'Il totale deve fare <b>{punti_totali} pt</b>: se non torna, '
+                    f'lo ribilancio io quando applichi.</div>',
+                    unsafe_allow_html=True,
                 )
+                _firma = abs(hash(tuple((d["Esercizio"], d["Richiesta"], d["Punti"]) for d in _dati)))
+                _tab = st.data_editor(
+                    _dati,
+                    key=f"rc_editor_{_firma}",   # nuova chiave se i punti cambiano da fuori
+                    hide_index=True,
+                    use_container_width=True,
+                    disabled=["Esercizio", "Richiesta"],
+                    column_config={
+                        "Esercizio": st.column_config.TextColumn("Esercizio", width="medium"),
+                        "Richiesta": st.column_config.TextColumn("Richiesta", width="large"),
+                        "Punti": st.column_config.NumberColumn(
+                            "Punti", min_value=0, max_value=punti_totali, step=1,
+                            format="%d", required=True, width="small"),
+                    },
+                )
+                _tab_righe = _tab.to_dict("records") if hasattr(_tab, "to_dict") else list(_tab)
 
-            st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
-            if st.button(
-                "✅ Applica Punteggi e Rigenera PDF" if _rc_ok else
-                f"Totale {_grand_total_rc} pt — aggiusta per sbloccare",
-                key="rc_applica",
-                disabled=not _rc_ok,
-                use_container_width=True,
-                type="primary",
-            ):
-                # Applica item pts direttamente ai blocchi
-                for _i, _b in enumerate(st.session_state.review_blocks):
-                    if _all_new_item_pts.get(_i):
-                        _new_body_rc = apply_item_pts_to_body(
-                            _b["body"], _all_new_item_pts[_i]
-                        )
-                        st.session_state.review_blocks[_i]["body"] = _new_body_rc
-                        # Aggiorna titolo col subtotale
-                        _clean_rc = re.sub(r"\s*\(\d+\s*pt\)", "",
-                                           _b["title"]).strip()
-                        _ex_tot_rc = sum(_all_new_item_pts[_i])
-                        st.session_state.review_blocks[_i]["title"] = (
-                            f"{_clean_rc} ({_ex_tot_rc} pt)"
-                        )
+                def _intero(v):
+                    try:
+                        return max(0, int(v))
+                    except (TypeError, ValueError):
+                        return 0
 
-                with st.spinner("Ricompilazione PDF con i nuovi punteggi…"):
-                    # I punti sono già esatti per sottopunto: nessuna riscalatura del totale.
-                    _pdf_rc, _err_rc = _ricompila_verifica_a(
-                        mostra_punteggi, con_griglia, punti_totali, rileggi_blocchi=True,
-                    )
-                if _pdf_rc:
-                    # Reset item_pt_ keys — si reinizializzeranno dai nuovi dati
-                    for _kk in list(st.session_state.keys()):
-                        if re.match(r"^item_pt_\d+_\d+$", _kk):
-                            del st.session_state[_kk]
-                    if "recalibra_pts" in st.session_state:
-                        del st.session_state["recalibra_pts"]
-                    st.toast("✅ Punteggi applicati — PDF aggiornato!", icon="⚖️")
-                    st.rerun()
+                _nuovi = [_intero(r.get("Punti")) for r in _tab_righe]
+                _totale_rc = sum(_nuovi)
+                _per_es_sub = {}
+                for (_i, _j), _v in zip(_righe, _nuovi):
+                    _per_es_sub[_i] = _per_es_sub.get(_i, 0) + _v
+                _sub_txt = " · ".join(f"Es. {_i+1}: {_p} pt" for _i, _p in sorted(_per_es_sub.items()))
+
+                if _totale_rc == punti_totali:
+                    st.success(f"Totale: {_totale_rc} pt — perfetto.   ({_sub_txt})", icon="✅")
                 else:
-                    _mostra_errore_pdf(_err_rc, "questo esercizio")
+                    st.warning(
+                        f"Totale: {_totale_rc} pt invece di {punti_totali}. "
+                        f"Premendo «Applica» ribilancio tutto a {punti_totali} pt in proporzione.   ({_sub_txt})",
+                        icon="⚖️",
+                    )
+
+                if st.button("✅ Applica punteggi", key="rc_applica",
+                             use_container_width=True, type="primary"):
+                    _finali = _nuovi if _totale_rc == punti_totali else bilancia_punti(_nuovi, punti_totali)
+                    _applica_punti_a_blocchi(_righe, _finali)
+
+                    with st.spinner("Ricompilazione PDF con i nuovi punteggi…"):
+                        _pdf_rc, _err_rc = _ricompila_verifica_a(
+                            mostra_punteggi, con_griglia, punti_totali, rileggi_blocchi=True,
+                        )
+                    if _pdf_rc:
+                        for _kk in list(st.session_state.keys()):
+                            if _kk.startswith("rc_editor_") or re.match(r"^item_pt_\d+_\d+$", _kk):
+                                del st.session_state[_kk]
+                        st.session_state.pop("recalibra_pts", None)
+                        st.toast(
+                            "✅ Punteggi applicati" + ("" if _totale_rc == punti_totali
+                                                       else f" (ribilanciati a {punti_totali} pt)"),
+                            icon="⚖️",
+                        )
+                        st.rerun()
+                    else:
+                        _mostra_errore_pdf(_err_rc, "questa verifica")
 
     # ── Pulsante CONFERMA — oro, piena larghezza ──────────────────────────────
     st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)

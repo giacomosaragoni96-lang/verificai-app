@@ -239,6 +239,10 @@ def parse_items_from_block(body: str, title: str = "") -> list:
     # Prima prova: item con label esplicito [a)], [b)], ecc.
     # Pattern più flessibile per catturare diversi formati
     labeled_patterns = [
+        # Robusto: testo fino al prossimo \item o alla fine dell'elenco, graffe comprese
+        # (x^{2}, \frac{1}{2}). I pattern sotto, che si fermavano alla prima "{", perdevano
+        # l'ultimo sottopunto (seguito da \end{enumerate}) e quelli con formule.
+        r'\\item\[([^\]]+)\](.*?)(?=\\item|\\end\{(?:enumerate|itemize)\}|\Z)',
         r'\\item\[([^\]]+)\]([^{]*?)(?=\\item|\Z)',           # Standard: \item[a)] testo
         r'\\item\[([^\]]+)\]\s*([^\n]*?)(?=\\item|\n\n|\Z)',  # Con newline: \item[a)] testo\n
         r'\\item\[([^\]]+)\](.*?)(?=\\item|\n\n|\Z)',         # Lazy match: \item[a)] testo
@@ -1148,6 +1152,56 @@ def aggiungi_spaziatura_grafici_tabelle(latex: str) -> str:
     return latex
 
 
+def bilancia_punti(punti: list, totale: int) -> list:
+    """
+    Riporta la somma di `punti` a `totale` ridistribuendo in proporzione (metodo dei
+    resti maggiori): il risultato è di numeri interi e somma esattamente `totale`.
+    Chi ha 0 resta a 0; chi ha almeno 1 punto non scende sotto 1 se il totale lo consente.
+    Se tutti sono a 0, il totale viene diviso in parti uguali.
+    """
+    n = len(punti)
+    if n == 0:
+        return []
+    base = []
+    for p in punti:
+        try:
+            base.append(max(0, int(p)))
+        except (TypeError, ValueError):
+            base.append(0)
+    somma = sum(base)
+    if somma == 0:
+        quote = [totale / n] * n
+        positivi = list(range(n))
+    else:
+        quote = [p * totale / somma for p in base]
+        positivi = [i for i, p in enumerate(base) if p > 0]
+
+    risultato = [int(q) for q in quote]
+    # chi era positivo non deve arrivare a 0 (se ci sono abbastanza punti)
+    if totale >= len(positivi):
+        for i in positivi:
+            if risultato[i] == 0:
+                risultato[i] = 1
+    # ridistribuisce la differenza: prima i resti maggiori, poi i valori più alti
+    mancanti = totale - sum(risultato)
+    if mancanti > 0:
+        ordine = sorted(positivi, key=lambda i: quote[i] - int(quote[i]), reverse=True)
+        k = 0
+        while mancanti > 0 and ordine:
+            risultato[ordine[k % len(ordine)]] += 1
+            mancanti -= 1
+            k += 1
+    elif mancanti < 0:
+        while mancanti < 0:
+            candidati = [i for i in positivi if risultato[i] > (1 if totale >= len(positivi) else 0)]
+            if not candidati:
+                break
+            i = max(candidati, key=lambda c: risultato[c])
+            risultato[i] -= 1
+            mancanti += 1
+    return risultato
+
+
 def normalizza_sottopunti_inline(latex: str) -> str:
     """
     Trasforma in un vero elenco i sottopunti scritti in linea nel testo:
@@ -2019,7 +2073,8 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                 if os.path.exists(log_path):
                     with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
                         log_content = f.read()
-                        logger.error(f"✗ Contenuto log file (ultime 20 linee): {log_content.split('\\n')[-20:]}")
+                        _ultime_righe = log_content.split("\n")[-20:]
+                        logger.error(f"✗ Contenuto log file (ultime 20 linee): {_ultime_righe}")
                 return None, "File PDF non generato durante la compilazione"
 
         except subprocess.TimeoutExpired:
