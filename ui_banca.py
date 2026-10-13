@@ -103,6 +103,7 @@ def _df_revisione(righe: list) -> pd.DataFrame:
         "Tieni": True, "N.": r.get("numero") or "", "★": int(r.get("difficolta") or 2),
         "Argomento": r.get("argomento") or "", "Tecniche": ", ".join(r.get("tecniche") or []),
         "Tipo": r.get("tipo") or "", "Punti": r.get("punti"), "Facoltativo": bool(r.get("facoltativo")),
+        "Figura": bool(r.get("ha_figura")),
         "Testo": r.get("testo_latex") or "",
     } for r in righe])
 
@@ -129,6 +130,9 @@ def _tab_approva(sb):
                 options=["", "aperto", "scelta_multipla", "vero_falso", "completamento", "problema"], width="small"),
             "Punti": st.column_config.NumberColumn(min_value=0, step=1, width="small"),
             "Facoltativo": st.column_config.CheckboxColumn(width="small"),
+            "Figura": st.column_config.CheckboxColumn(
+                width="small", help="L'esercizio dipende da un grafico o disegno. Non va tolto: resta in banca "
+                                    "e servirà come ispirazione per il testo, non da copiare."),
             "Testo": st.column_config.TextColumn(disabled=True, width="large"),
         },
     )
@@ -154,10 +158,12 @@ def _tab_approva(sb):
                 "tecniche": [t.strip() for t in str(nuovo["Tecniche"] or "").split(",") if t.strip()],
                 "tipo": str(nuovo["Tipo"] or "") or None, "facoltativo": bool(nuovo["Facoltativo"]),
                 "punti": None if pd.isna(nuovo["Punti"]) else int(nuovo["Punti"]),
+                "ha_figura": bool(nuovo["Figura"]),
             }
             if (campi["difficolta"] != (r.get("difficolta") or 2) or (campi["argomento"] or "") != (r.get("argomento") or "")
                     or campi["tecniche"] != (r.get("tecniche") or []) or (campi["tipo"] or "") != (r.get("tipo") or "")
-                    or campi["facoltativo"] != bool(r.get("facoltativo")) or campi["punti"] != r.get("punti")):
+                    or campi["facoltativo"] != bool(r.get("facoltativo")) or campi["punti"] != r.get("punti")
+                    or campi["ha_figura"] != bool(r.get("ha_figura"))):
                 if campi["difficolta"] != (r.get("difficolta") or 2):
                     campi["difficolta_origine"] = "corretta a mano"
                 banca.aggiorna_esercizio(sb, r["id"], campi)
