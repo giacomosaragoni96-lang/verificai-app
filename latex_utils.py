@@ -1108,7 +1108,7 @@ def migliora_spaziatura_sottopunti(latex: str) -> str:
     latex = re.sub(r'(\\item\s+[^\\]*?)\n(?=\\item)', r'\1\n\n', latex)
     
     # Assicura che ogni \item sia su una riga propria
-    latex = re.sub(r'(\s+)\\item\[', r'\n\\item\[', latex)
+    latex = re.sub(r'(\s+)\\item\[', r'\n\\item[', latex)
     
     # Rimuovi spaziatura eccessiva (più di 2 linee vuote)
     latex = re.sub(r'\n{3,}', '\n\n', latex)
