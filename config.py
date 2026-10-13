@@ -327,6 +327,40 @@ ESEMPIO_RICHIESTA_DEFAULT = (
 )
 
 
+# Durata della verifica: un solo scatto sceglie numero di esercizi e tempo previsto.
+# I punti restano 100 (si cambiano in "Altre opzioni"). Tetto assoluto: 8 esercizi.
+DURATE = {
+    "Breve":    {"num_esercizi": 3, "durata": "30 minuti"},
+    "Standard": {"num_esercizi": 5, "durata": "1 ora"},
+    "Lunga":    {"num_esercizi": 8, "durata": "2 ore"},
+}
+DURATA_DEFAULT = "Standard"
+MAX_ESERCIZI_PRESET = 8
+MAX_ESERCIZI_PRIMARIA = 5   # CALIBRAZIONE_SCUOLA: "massimo 4-5 esercizi brevi"
+
+
+def parametri_durata(nome: str, scuola: str = "") -> dict:
+    """
+    Parametri della durata scelta: {"num_esercizi", "durata", "punti_totali"}.
+    Rispetta il tetto di 8 esercizi e quello della scuola primaria (5).
+    Nome sconosciuto → durata di default.
+    """
+    base = DURATE.get(nome) or DURATE[DURATA_DEFAULT]
+    tetto = MAX_ESERCIZI_PRIMARIA if "Primaria" in (scuola or "") else MAX_ESERCIZI_PRESET
+    return {
+        "num_esercizi": max(1, min(base["num_esercizi"], tetto, MAX_ESERCIZI_PRESET)),
+        "durata": base["durata"],
+        "punti_totali": 100,
+    }
+
+
+def etichetta_durata(nome: str, scuola: str = "") -> str:
+    """Testo del selettore: es. 'Standard · 5 esercizi'."""
+    p = parametri_durata(nome, scuola)
+    n = p["num_esercizi"]
+    return f"{nome} · {n} {'esercizio' if n == 1 else 'esercizi'}"
+
+
 def esempio_richiesta(materia: str) -> str:
     """Esempio in trasparenza per il riquadro della richiesta, scelto in base alla materia."""
     return ESEMPI_RICHIESTA.get(materia, ESEMPIO_RICHIESTA_DEFAULT)
