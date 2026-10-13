@@ -55,6 +55,12 @@ PREZZI_STIMATI_GEN3 = {"lite": (0.30, 2.50), "flash": (0.50, 3.00), "pro": (2.00
 # Per Flash-Lite il ragionamento resta spento (comportamento predefinito).
 RAGIONAMENTO_ALTO = {"gemini-2.5-flash": 2048, "gemini-2.5-pro": 4096}
 
+# Controllo qualità: se il punteggio strutturale della bozza è almeno questo (0-1), la seconda
+# chiamata all'AI (che riscrive tutto il testo e costa quasi quanto la generazione) viene saltata.
+# None = esegui sempre il controllo. Il punteggio misura struttura, numero di esercizi e somma dei
+# punti: NON la correttezza matematica.
+QA_SALTA_SE_PUNTEGGIO_ALMENO = 1.0
+
 # compito → (quale modello, ragionamento)
 #   modello: "piano" = quello del piano dell'utente · "medio" = Flash (Lite se il piano è Free,
 #            mai Pro) · "veloce" = sempre Flash-Lite

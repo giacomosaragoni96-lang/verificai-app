@@ -178,6 +178,12 @@ def _registra(model_id: str, compito: str | None, uso: dict, secondi: float):
     )
 
 
+def azzera_uso():
+    """Svuota il registro dei consumi (utile per misurare una singola prova)."""
+    with _lock:
+        _registro.clear()
+
+
 def riepilogo_uso(ultime: int | None = None) -> list:
     """Totali per (compito, modello) sulle ultime N chiamate registrate (None = tutte)."""
     with _lock:

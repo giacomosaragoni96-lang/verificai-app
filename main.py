@@ -30,7 +30,7 @@ from prompts import (
 from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
 from latex_utils import (
     compila_pdf, compila_pdf_sicuro, inietta_griglia, riscala_punti, riscala_punti_custom,
-    fix_items_environment, rimuovi_vspace_corpo, pulisci_corpo_latex,
+    fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
     parse_pts_from_block_body, riscala_single_block,
@@ -357,6 +357,7 @@ def _postprocessa_latex(latex: str, mostra_punteggi: bool, punti_totali: int,
     """
     latex = normalizza_sottopunti_inline(latex)   # "a) … b) …" nel paragrafo → elenco
     latex = fix_items_environment(latex)
+    latex = rifinisci_scelta_multipla_e_vf(latex)
     latex = migliora_spaziatura_sottopunti(latex)
     latex = aggiungi_spaziatura_grafici_tabelle(latex)
     latex = limita_altezza_grafici(latex)

@@ -12,6 +12,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from config import QA_SALTA_SE_PUNTEGGIO_ALMENO
+
 from prompts import (
     prompt_titolo,
     prompt_corpo_verifica,
@@ -56,7 +58,7 @@ except ImportError:
         )
 from latex_utils import (
     compila_pdf, compila_pdf_sicuro, inietta_griglia, riscala_punti, riscala_punti_custom,
-    fix_items_environment, rimuovi_vspace_corpo, pulisci_corpo_latex,
+    fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
     parse_pts_from_block_body, valida_totale, riscala_single_block,
@@ -106,7 +108,7 @@ def _validate_content_quality(corpo: str, materia: str, num_esercizi: int, punti
         score += 0.5
     
     # 5. Controllo errori LaTeX gravi
-    errori_gravi = ["\\begin{document}", "\\end{document}", "\\documentclass"]
+    errori_gravi = ["\\begin{document}", "\\documentclass"]   # \end{document} lo richiede il prompt
     if not any(err in corpo for err in errori_gravi):
         score += 1.0
     
@@ -299,6 +301,7 @@ def _assembla_e_compila(
     """
     latex = preambolo + clean_tikz_spoilers(corpo)
     latex = fix_items_environment(latex)
+    latex = rifinisci_scelta_multipla_e_vf(latex)   # opzioni A) B) C) D), V/F su una riga
     latex = normalizza_labels_numerici(latex)   # 1) 2) 3) → a) b) c)
     latex = semplifica_item_singoli(latex)       # enumerate 1 solo item → testo diretto
     latex = migliora_spaziatura_sottopunti(latex) # migliora spaziatura tra sottopunti
@@ -684,6 +687,7 @@ def genera_verifica(
     risultato["_validation_score"] = validation_score
     
     # Se il punteggio è basso, genera un nuovo contenuto
+    corpo_corretto = ""
     if validation_score < 0.6:
         logger.warning("Qualità contenuto insufficiente, rigenerazione con prompt semplificato...")
         rc = _safe_generate(
@@ -700,6 +704,10 @@ def genera_verifica(
             corpo_a = corpo_corretto
         else:
             logger.warning("Il controllo qualità non ha migliorato il contenuto, mantengo l'originale")
+            corpo_corretto = ""   # la guardia vale: il blocco sotto non deve riapplicarlo
+    elif QA_SALTA_SE_PUNTEGGIO_ALMENO is not None and validation_score >= QA_SALTA_SE_PUNTEGGIO_ALMENO:
+        # La seconda passata riscrive tutto il testo (quasi metà del costo) e di solito non cambia nulla.
+        logger.info("Struttura ottima (%.2f): salto il controllo qualità", validation_score)
     else:
         logger.info("Qualità contenuto accettabile, procedo con il controllo standard")
         rc = _safe_generate(

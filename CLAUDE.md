@@ -42,6 +42,7 @@ Avvio locale: `streamlit run main.py`. Pacchetti di sistema in `packages.txt`
 
 - UI (usano Streamlit): `main.py`, `sidebar.py`, `ui_helpers.py`, `styles.py`, `auth.py`
 - Logica: `generation.py` (pipeline AI), `latex_utils.py` (parsing/compilazione LaTeX), `docx_export.py`
+- Prova da riga di comando con l'AI vera: `prova_generazione.py` (scenari di esempio, costi, PDF in `prove_output/`).
 - Client AI: `ai_client.py` (adattatore su `google-genai`, senza streamlit): sceglie modello e ragionamento per compito
   (`config.COMPITI_AI`), registra token e costi (`riepilogo_uso`, mostrato nell'expander admin), non riprova sugli errori definitivi.
 - Configurazione e prompt: `config.py`, `prompts.py`
@@ -90,8 +91,6 @@ Non si toccano lo schema né le tabelle dal codice dell'app.
 ## Problemi noti (audit ottobre 2026, da correggere)
 
 - `generation.py`: `_crea_versione_minimale` usa `\geometry` senza il pacchetto.
-- `generation.py`: nel ramo qualità bassa la guardia viene sovrascritta dal blocco successivo.
-- `generation.py`: `_validate_content_quality` penalizza `\end{document}` che il prompt richiede.
 - `generation.py`: `e_mat` cerca "fis" e include Educazione Fisica; usare `MATERIE_STEM`.
 - `generation.py`: testo di prompt fuori da `prompts.py`; `genera_verifica` e
   `genera_verifica_streaming` sono quasi duplicate.

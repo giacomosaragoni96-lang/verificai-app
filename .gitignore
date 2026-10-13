@@ -36,3 +36,5 @@ build/
 *.swo
 .DS_Store
 Thumbs.db
+# Output di prova_generazione.py
+prove_output/

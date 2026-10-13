@@ -19,6 +19,36 @@ _PT_PATTERN = re.compile(r'\(\s*(\d+(?:[.,]\d+)?)\s*pt\s*\)', re.IGNORECASE)
 
 # ── PARSING ESERCIZI ───────────────────────────────────────────────────────────
 
+def _profondita_item_per_riga(lines: list) -> list:
+    """Per ogni riga: profondita' dell'elenco (enumerate/itemize) del suo primo item, None se non c'e'."""
+    token = re.compile(r'\\begin\{(?:enumerate|itemize)\}|\\end\{(?:enumerate|itemize)\}|\\item(?![A-Za-z])')
+    profondita, livello = [], 0
+    for line in lines:
+        trovato = None
+        for m in token.finditer(line):
+            t = m.group(0)
+            if t.startswith('\\begin'):
+                livello += 1
+            elif t.startswith('\\end'):
+                livello = max(0, livello - 1)
+            elif trovato is None:
+                trovato = livello
+        profondita.append(trovato)
+    return profondita
+
+
+def _livello_sottopunti(profondita: list):
+    """Livello degli elenchi che contengono i sottopunti: quello del primo item dell'esercizio.
+    Se a quel livello c'e' un solo item che ne racchiude altri (elenco-contenitore), vale tutto (None)."""
+    livelli = [p for p in profondita if p is not None]
+    if not livelli:
+        return None
+    top = livelli[0]
+    if livelli.count(top) == 1 and len(livelli) > 1:
+        return None
+    return top
+
+
 def parse_esercizi(latex: str) -> list:
     """
     Analizza il LaTeX e restituisce una lista di esercizi con i loro punteggi.
@@ -42,12 +72,18 @@ def parse_esercizi(latex: str) -> list:
         lines = block.split('\n')
         lettere = 'abcdefghijklmnopqrstuvwxyz'
         lettera_idx = 0
+        profondita = _profondita_item_per_riga(lines)
+        livello_top = _livello_sottopunti(profondita)
 
         for li, line in enumerate(lines):
             item_label_match = re.search(r'\\item\[([^\]]+)\]', line)
             item_plain_match = re.search(r'\\item(?!\[)', line)
 
             if not item_label_match and not item_plain_match:
+                continue
+            # Le opzioni di una scelta multipla (elenco dentro un sottopunto) non sono sottopunti:
+            # senza questo filtro contavano nelle lettere e la tabella mostrava "a) f)".
+            if livello_top is not None and profondita[li] is not None and profondita[li] != livello_top:
                 continue
 
             if item_label_match:
@@ -606,6 +642,48 @@ def apply_item_pts_to_body(body: str, new_pts_list: list) -> str:
     if len(new_pts_list) == 1:
         return re.sub(r'\(\d+\s*pt\)', f'({new_pts_list[0]} pt)', body, count=1)
     return body
+
+
+# ── SCELTA MULTIPLA E VERO/FALSO: finiture deterministiche ─────────────────────
+
+_VF_RE = re.compile(r'(?<!\\mbox\{)\$\\square\$\s*\\textbf\{V\}\s*\$\\quad\\square\$\s*\\textbf\{F\}')
+_TOKEN_ENUM = re.compile(
+    r'\\begin\{enumerate\}(\[[^\]]*\])?|\\end\{enumerate\}|\\item\[([a-z])\)\]'
+)
+
+
+def rifinisci_scelta_multipla_e_vf(latex: str) -> str:
+    """
+    1) Le opzioni di una scelta multipla (elenco dentro un sottopunto, senza punteggi) diventano
+       A) B) C) D): dentro un sottopunto gia' chiamato a) o b) le lettere minuscole confondono.
+    2) "[] V [] F" resta sempre sulla stessa riga: la casella e la lettera non vanno a capo da sole.
+    """
+    latex = _VF_RE.sub(lambda m: "\\mbox{" + m.group(0) + "}", latex)
+
+    pila, modifiche = [], []
+    for m in _TOKEN_ENUM.finditer(latex):
+        t = m.group(0)
+        if t.startswith("\\begin"):
+            pila.append({"opt": m.span(1) if m.group(1) else None,
+                         "opt_testo": m.group(1), "inizio": m.end(), "item": []})
+        elif t.startswith("\\end"):
+            if not pila:
+                continue
+            lista = pila.pop()
+            annidata = len(pila) >= 1
+            contenuto = latex[lista["inizio"]:m.start()]
+            ha_punti = re.search(r'\d\s*pt\b', contenuto) is not None
+            if annidata and not ha_punti and lista["opt_testo"] == "[a)]":
+                modifiche.append((lista["opt"][0], lista["opt"][1], "[A)]"))
+                for (a, b, lettera) in lista["item"]:
+                    modifiche.append((a, b, "\\item[" + lettera.upper() + ")]"))
+        elif pila:
+            pila[-1]["item"].append((m.start(), m.end(), m.group(2)))
+
+    for a, b, nuovo in sorted(modifiche, reverse=True):
+        latex = latex[:a] + nuovo + latex[b:]
+    return latex
+
 
 
 def build_griglia_latex(esercizi: list, punti_totali: int) -> str:
