@@ -117,7 +117,7 @@ def render_sidebar(
             modello_id = MODELLI_DISPONIBILI[_sel_pro]["id"]
             st.markdown(
                 f'<div style="font-size:0.72rem;color:{_sb_muted};padding:3px 0 0 2px;">'
-                f'⚡ Piano Pro attivo. Per materie scientifiche (matematica, fisica, chimica) considera il Piano Gold.</div>',
+                f'⚡ Piano Pro attivo.</div>',
                 unsafe_allow_html=True
             )
         elif _piano == "gold":
@@ -143,8 +143,7 @@ def render_sidebar(
                 f'border-radius:8px;padding:6px 10px;font-size:0.74rem;color:{T["hint_text"]}; '
                 f'margin:4px 0;font-family:DM Sans,sans-serif;">'
                 f'⚡ <b>Flash 2.5 Lite</b> — Piano Free<br/>'
-                f'<span style="opacity:.8;">Passa al Piano Pro per Flash 2.5 (umanistiche) '
-                f'o Gold per il motore avanzato (materie scientifiche).</span></div>',
+                f'<span style="opacity:.8;">Piano Free: {LIMITE_MENSILE} verifiche al mese.</span></div>',
                 unsafe_allow_html=True
             )
 
@@ -257,87 +256,6 @@ def render_sidebar(
                 unsafe_allow_html=True,
             )
 
-        # Debug: mostra stato limite e uso
-        st.write(f"DEBUG: Limite raggiunto: {limite_raggiunto}, Uso: {_perc_uso}%")
-
-        # ── CTA UPGRADE PRO ───────────────────────────────────────────────────
-        if limite_raggiunto or _perc_uso >= 60:
-            st.write("DEBUG: Entro nel blocco CTA")
-            _rimaste = max(0, LIMITE_MENSILE - verifiche_mese_count)
-            if limite_raggiunto:
-                _msg = "Limite mensile raggiunto."
-                _sub = "Passa a Pro per verifiche illimitate."
-            else:
-                _msg = f"Ti restano <b>{_rimaste} {'verifica' if _rimaste==1 else 'verifiche'}</b>."
-                _sub = "Con Pro avresti accesso illimitato."
-            
-            # Importa funzioni Stripe
-            try:
-                st.write("DEBUG: Provo import modulo payments")
-                from payments import create_checkout_session, get_stripe_publishable_key, is_stripe_enabled
-                from subscription_management import get_subscription_manager
-                st.write("DEBUG: Import modulo payments riuscito")
-                
-                # Debug: mostra stato Stripe
-                stripe_enabled = is_stripe_enabled()
-                st.write(f"DEBUG: Stripe enabled: {stripe_enabled}")
-                
-                if stripe_enabled:
-                    st.write("DEBUG: Creo pulsante upgrade")
-                    # Crea sessione checkout
-                    if st.button("🚀 Passa a Pro - €4.90/mese", 
-                               use_container_width=True,
-                               key="upgrade_pro_btn",
-                               help="Abbonati a VerificAI Pro per verifiche illimitate"):
-                        
-                        subscription_manager = get_subscription_manager(supabase_admin)
-                        user_id = utente.id if utente else None
-                        
-                        if user_id:
-                            # URL per redirect
-                            base_url = st.secrets.get("BASE_URL", "https://verificai.streamlit.app")
-                            success_url = f"{base_url}?payment=success&plan=pro"
-                            cancel_url = f"{base_url}?payment=cancelled"
-                            
-                            # Crea checkout session
-                            st.write("DEBUG: Creo sessione checkout...")
-                            checkout_result = create_checkout_session(
-                                user_id=user_id,
-                                plan_id="pro",
-                                success_url=success_url,
-                                cancel_url=cancel_url,
-                                user_email=utente.email if utente else None
-                            )
-                            st.write(f"DEBUG: Checkout result: {checkout_result}")
-                            
-                            if checkout_result:
-                                # Debug: mostra URL checkout
-                                checkout_url = checkout_result['checkout_url']
-                                st.write(f"DEBUG: Checkout URL: {checkout_url}")
-                                
-                                # Redirect a Stripe Checkout
-                                st.markdown(f"""
-                                <script>
-                                console.log('Redirecting to:', '{checkout_url}');
-                                window.location.href = '{checkout_url}';
-                                </script>
-                                """, unsafe_allow_html=True)
-                            else:
-                                st.error("❌ Errore durante l'avvio del checkout. Riprova più tardi.")
-                                st.write("DEBUG: Checkout result è None o vuoto")
-                        else:
-                            st.error("⚠️ Effettua il login per proseguire")
-                else:
-                    st.warning("⚠️ **Pagamenti non disponibili** - Stripe non configurato")
-                    st.info("Per abilitare i pagamenti, configura le chiavi Stripe in secrets Streamlit.")
-                    
-            except ImportError as e:
-                st.error(f"❌ Errore import moduli pagamenti: {e}")
-                st.write("DEBUG: ImportError catturato")
-            except Exception as e:
-                st.error(f"❌ Errore generico: {e}")
-                st.write("DEBUG: Exception generica catturata")
-        
         # Validation score tracking
         if hasattr(st.session_state, 'last_validation_score'):
             last_score = st.session_state.last_validation_score

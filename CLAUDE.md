@@ -1,99 +1,102 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guida per Claude Code su questo repository. Rispondi sempre in italiano.
 
-## Project Overview
+## Progetto
 
-**VerificAI** is an Italian Streamlit web app for teachers to generate custom school exam/quiz documents ("verifiche") using Google Gemini AI. It outputs LaTeX-compiled PDFs and Word documents.
+VerificAI: web app Streamlit in italiano con cui i docenti generano verifiche scolastiche
+(Gemini -> LaTeX -> PDF/DOCX). Deploy su Streamlit Cloud dal branch `main`
+(https://verificai.streamlit.app). Dev container Python 3.11, porta 8501.
+Avvio locale: `streamlit run main.py`. Pacchetti di sistema in `packages.txt`
+(texlive-latex-extra, texlive-fonts-recommended, texlive-lang-italian, poppler-utils, pandoc).
 
-## Running the App
+## Regole rigide (non negoziabili)
 
-```bash
-# Install Python dependencies
-pip install -r requirements.txt
+- Non rimuovere né aggirare l'autenticazione Supabase (`auth.py`, sessione via `?rt=TOKEN`).
+- Nessuna logica di generazione AI in `main.py` e `sidebar.py`: solo interfaccia.
+- Nessun `import streamlit` in `generation.py`, `latex_utils.py`, `prompts.py`,
+  `docx_export.py`, `config.py`. Devono restare testabili in isolamento.
+- I prompt vivono SOLO in `prompts.py`, come funzioni pure che restituiscono stringhe.
+- Ogni modifica a `latex_utils.py`, `generation.py` o `prompts.py` deve mantenere il LaTeX
+  compilabile con `pdflatex` standard (amsmath, pgfplots, tikz, enumerate, adjustbox, geometry, babel italian).
+- Non spostare logica tra livelli e non cambiare le responsabilità dei file senza chiedere.
+- Codice compatibile con Streamlit: `st.session_state`, niente storage del browser, attenzione ai rerun.
 
-# Run the Streamlit app (local dev)
-streamlit run main.py
+## Sicurezza
 
-# Deployed at https://verificai.streamlit.app
-# Dev container (Python 3.11) exposes port 8501
-```
+- Non leggere, stampare o loggare `.streamlit/secrets.toml` né chiavi o token di alcun tipo.
+- Il LaTeX prodotto dall'AI è input non fidato: non deve poter leggere file o eseguire comandi
+  (verificare i flag di `pdflatex` in `latex_utils.py` prima di toccarlo).
+- Le tabelle `subscriptions`, `payments`, `user_profiles` si scrivono solo lato server.
 
-System packages required (see `packages.txt`): `texlive-latex-extra`, `texlive-fonts-recommended`, `texlive-lang-italian`, `poppler-utils`, `pandoc` — needed for PDF compilation and document conversion.
+## Modo di lavorare
 
-There are **no tests, no CI/CD, no linter config**. The only validation is `python -c "import py_compile; py_compile.compile('file.py', doraise=True)"`.
+- Mai lavorare su `main`: Streamlit Cloud pubblica quello che c'è lì. Un branch per compito.
+- Un compito alla volta. Mostra il diff, niente commit senza che io lo chieda.
+- Dopo ogni modifica esegui `python -c "import py_compile; py_compile.compile('FILE', doraise=True)"`
+  sui file toccati. Non esistono test né CI.
+- Per cambi a generazione o LaTeX: genera una verifica di prova e controlla che il PDF compili.
+- Non aggiungere dipendenze né modificare `requirements.txt`/`packages.txt` senza dirmelo.
 
-## Architecture
+## Mappa dei file
 
-The app is a **monolithic Streamlit app** with clean module separation. All UI state lives in `st.session_state`. The main flow is a 5-stage state machine in `main.py`:
+- UI (usano Streamlit): `main.py`, `sidebar.py`, `ui_helpers.py`, `styles.py`, `auth.py`
+- Logica: `generation.py` (pipeline AI), `latex_utils.py` (parsing/compilazione LaTeX), `docx_export.py`
+- Configurazione e prompt: `config.py`, `prompts.py`
+- Abbonamenti (solo lettura): `subscription_management.py` (piano utente e limiti), `database_schema.sql`
+- Non usati: `extra-streamlit-components` e `streamlit-cookies-controller`
+  (solo in requirements, `auth.get_cookie_controller()` è uno stub).
+- Mancante: `mathpix_utils.py` è importato da `main.py` ma non esiste, quindi Mathpix è sempre disattivato.
 
-```
-INPUT → PREVIEW → REVIEW → FINAL → Export (PDF / DOCX)
-              ↗
-  MIE_VERIFICHE (standalone page: saved history)
-```
+## Architettura
 
-The INPUT stage itself is a sub-router with multiple paths:
-- **Percorso A** — Upload-driven wizard (file → AI analysis → generation)
-- **Percorso B** — Manual form (subject, topic, exercises → generation)
-- **Percorso FACSIMILE** — Reproduce an existing exam from uploaded file
-- **QA mode** — Ask questions about uploaded documents
+Stati in `main.py`: INPUT -> PREVIEW -> REVIEW -> FINAL -> export (PDF/DOCX), più la pagina
+MIE_VERIFICHE (storico). PREVIEW può andare direttamente a FINAL. Con la modalità
+condivisione (`_share_view_active`) il router degli stati viene saltato.
+L'INPUT (`_render_stage_input`) parte dal bivio (`input_percorso is None`) e ha i percorsi
+A (upload guidato), B (form manuale), FACSIMILE, QA; `LIBERA` reindirizza a B.
+Tutto lo stato UI sta in `st.session_state`.
 
-### Module Boundaries
+Pipeline in `generation.py`: titolo -> corpo esercizi -> controllo qualità -> post-processing
+deterministico (fix_items_environment, riscala_punti, inietta_griglia) -> compilazione PDF
+-> opzionali (Fila B, versione ridotta BES/DSA, soluzioni).
 
-| Layer | Modules | Streamlit dependency |
-|-------|---------|---------------------|
-| **UI** | `main.py`, `sidebar.py`, `ui_helpers.py`, `styles.py`, `auth.py` | Yes |
-| **Business logic** | `generation.py` | **No** — pure functions, testable standalone |
-| **Document pipeline** | `latex_utils.py`, `docx_export.py` | **No** — pure functions |
-| **Configuration** | `config.py`, `prompts.py` | **No** — constants and prompt templates |
+Piani reali: `free`, `pro`, `premium` (da `subscription_management`) e `admin` (email in
+`ADMIN_EMAILS`). `gold` esiste nel codice ma non è raggiungibile; `premium` oggi cade sul ramo free.
+Modello: lo sceglie la sidebar in base al piano; `config.get_model_id_per_piano` è solo un ripiego
+se il modello scelto non è valido per il piano. Free = flash-lite; pro = sempre gemini-2.5-flash
+(nessun upgrade STEM); gemini-2.5-pro solo per gold e per admin con materia in `MATERIE_STEM`;
+admin può scegliere a mano qualsiasi modello.
+Limite mensile: lo decide `subscription_manager.can_generate_verification` (`FREE_PLAN_LIMITS`,
+illimitato per pro/premium; contatore su `verifiche_storico`). `LIMITE_MENSILE` è solo il ripiego
+se il caricamento dell'abbonamento fallisce. Admin escluso.
 
-This separation is intentional: `generation.py`, `latex_utils.py`, and `docx_export.py` must never import Streamlit.
+DOCX: `docx_export.py` converte il LaTeX (oggi passando da Gemini) e costruisce il file con python-docx.
 
-### CSS / Theming
+## Piani e abbonamenti
 
-`styles.py` generates a single large CSS string via `get_css(T: dict)` where `T` is a theme dictionary from `config.py`. There are **7 themes** (carta, notte, oceano, foresta, tramonto, lavanda, cioccolato). The sidebar always has a dark background regardless of theme — sidebar text colors must always be light.
+Il codice Stripe è stato rimosso: l'app non incassa né scrive abbonamenti, legge soltanto la
+tabella `subscriptions` (`subscription_management.get_user_subscription`, status `active`/`trialing`).
+Il piano si assegna a mano dal database Supabase con una riga in `subscriptions`:
+`user_id`, `plan_id` = `pro`, `status` = `active`, `stripe_subscription_id` con un
+valore segnaposto univoco `manual-<uuid>` (la colonna è `NOT NULL UNIQUE` nello schema).
+Assegnare solo `pro`: `premium` non va assegnato finché non viene allineato (oggi la sidebar
+lo tratta come free, mentre `get_user_plan_limits` lo tratta come illimitato).
+Per togliere il piano si porta `status` a `canceled`. Senza riga attiva l'utente è `free`.
+Non si toccano lo schema né le tabelle dal codice dell'app.
 
-Streamlit's internal CSS uses `color-scheme: dark` and CSS custom properties that bleed through. The CSS in `styles.py` fights this with high-specificity selectors and `!important`. The `_is_light_color()` helper determines if a hex color is light/dark for adaptive styling (e.g., expander headers).
+## Problemi noti (audit ottobre 2026, da correggere)
 
-`ui_helpers.py` injects additional HTML/JS via `st.markdown(unsafe_allow_html=True)` and `components.html()` for features Streamlit doesn't natively support (sticky header, KaTeX math rendering, step progress bar).
+- `generation.py`: `_crea_versione_minimale` usa `\geometry` senza il pacchetto.
+- `generation.py`: nel ramo qualità bassa la guardia viene sovrascritta dal blocco successivo.
+- `generation.py`: `_validate_content_quality` penalizza `\end{document}` che il prompt richiede.
+- `generation.py`: `e_mat` cerca "fis" e include Educazione Fisica; usare `MATERIE_STEM`.
+- `generation.py`: testo di prompt fuori da `prompts.py`; `genera_verifica` e
+  `genera_verifica_streaming` sono quasi duplicate.
+- `prompts.py`: nell'esempio tabelle `\\\\begin` produce `\\begin` (LaTeX errato per il modello).
+- `_safe_generate` riprova anche su errori non recuperabili (429 crediti, chiave non valida).
+- `google-generativeai` è deprecata (da migrare a `google-genai`).
 
-### AI Model Routing
+## Lingua
 
-Three subscription tiers control which Gemini model is used (`config.py: get_model_id_per_piano`):
-- **Free** → `gemini-2.5-flash-lite` (fixed)
-- **Pro** → `gemini-2.5-flash` (upgrades to Pro for STEM subjects)
-- **Gold** → `gemini-2.5-pro` (full access)
-
-STEM subjects (`MATERIE_STEM` in config.py) get automatic model upgrades for Pro users.
-
-### Document Pipeline
-
-```
-AI (Gemini) → LaTeX source → pdflatex → PDF
-                           → Gemini conversion → DOCX
-                           → TikZ extraction → PNG rendering
-```
-
-`latex_utils.py` handles: parsing exercises into blocks (`extract_blocks`), point scaling (`riscala_punti`), grid injection, PDF compilation. Points are parsed from `(N pt)` patterns and can be redistributed across exercises.
-
-`docx_export.py` converts LaTeX → DOCX by sending the LaTeX to Gemini for markdown conversion, then building the DOCX via `python-docx`. TikZ/pgfplots diagrams are rendered to PNG via `pdflatex` + `pdf2image`.
-
-## Key Architectural Decisions
-
-- **`generation.py` has no Streamlit imports** — it's the only module that can be called standalone/tested without a Streamlit context.
-- **Auth is token-based** via URL query param `?rt=TOKEN` (not cookies) for Streamlit Cloud compatibility.
-- **Monthly generation limit** (`LIMITE_MENSILE = 5`) enforced via Supabase counter, bypassed for admin emails.
-- **LaTeX is the intermediate format** — the app generates LaTeX, compiles to PDF, and converts to DOCX from LaTeX.
-- **School-type calibration** — `CALIBRAZIONE_SCUOLA` in config.py maps 13 school types to detailed prompt context (cognitive level, vocabulary, complexity).
-- **Optional dependencies degrade gracefully** — Mathpix OCR and `st_yled` are imported with try/except; features disable silently if missing.
-
-## External Services
-
-- **Google Gemini API** (`GOOGLE_API_KEY`) — AI generation engine
-- **Supabase** — auth, session storage, usage tracking (credentials in `.streamlit/secrets.toml`)
-- **Mathpix** — optional OCR for uploaded documents; app degrades gracefully if credentials missing
-
-## Language
-
-The entire codebase, UI strings, comments, and config are **in Italian**. All AI prompts generate Italian-language content.
+Codice, commenti, stringhe UI e prompt sono in italiano.

@@ -13,39 +13,6 @@ FEEDBACK_FORM_URL = "https://forms.gle/KNu8v8iDVUiGkQUL8"
 LIMITE_MENSILE = 5
 ADMIN_EMAILS   = {"giacomosaragoni96@gmail.com"}
 
-# ── STRIPE E PAGAMENTI ────────────────────────────────────────────────────────
-# Piani abbonamento e prezzi (in centesimi)
-STRIPE_PLANS = {
-    "pro": {
-        "name": "VerificAI Pro",
-        "price_id": "price_1TG5p6KaqU5QV1h9mV6sBOeb",  # Price ID da Stripe Dashboard
-        "amount": 450,  # €4.50
-        "currency": "eur",
-        "interval": "month",
-        "features": [
-            "Verifiche illimitate",
-            "Modello Flash 2.5",
-            "Fila B anti-copia", 
-            "BES/DSA",
-            "Soluzioni docente"
-        ]
-    },
-    "premium": {
-        "name": "VerificAI Premium", 
-        "price_id": "price_1TG5p6KaqU5QV1h9mV6sBOeb",  # Da creare per Premium
-        "amount": 999,  # €9.99
-        "currency": "eur", 
-        "interval": "month",
-        "features": [
-            "Tutte le funzionalità Pro",
-            "Modello AI Pro",
-            "Fila B anti-copia", 
-            "BES/DSA",
-            "Soluzioni docente"
-        ]
-    }
-}
-
 # Limiti per piano free
 FREE_PLAN_LIMITS = {
     "verifiche_mensili": 5,
