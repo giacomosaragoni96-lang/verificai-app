@@ -1319,9 +1319,11 @@ def _render_le_tue_verifiche():
     elif ordine_filter == "Materia":
         verifiche_filtrate.sort(key=lambda x: x.get("materia", ""))
     
-    # Mostra verifiche reali
+    # Mostra verifiche reali — a blocchi di 8 ("Mostra altre"): con centinaia di verifiche
+    # il vecchio elenco completo creava migliaia di pulsanti a ogni clic.
+    _n_mostra = max(8, int(st.session_state.get("_storico_mostra", 8)))
     if verifiche_filtrate:
-        for i, verifica in enumerate(verifiche_filtrate):
+        for i, verifica in enumerate(verifiche_filtrate[:_n_mostra]):
             # Formatta data
             data_formattata = "Data non disponibile"
             if verifica.get("created_at"):
@@ -1370,9 +1372,12 @@ def _render_le_tue_verifiche():
                     unsafe_allow_html=True,
                 )
                 
-                # Tutti i bottoni su una sola riga
-                col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 1, 1, 1, 1, 1])
-                
+                # Azioni principali in primo piano; Rinomina ed Elimina nel menu "⋯".
+                # I nomi colN restano quelli del codice sotto; l'ordine a schermo è:
+                # Apri e modifica (col3) · Scarica PDF (col2) · Anteprima (col1) · Condividi (col7) · ⋯ (col4)
+                col3, col2, col1, col7, col4 = st.columns([1.35, 1, 1, 1, 0.5])
+                col4 = col4.popover("⋯", help="Rinomina o elimina questa verifica")
+
                 with col1:
                     if st.button(f"👁️ Anteprima", key=f"preview_{verifica.get('id')}_{i}"):
                         if verifica.get("latex_a"):
@@ -1402,7 +1407,7 @@ def _render_le_tue_verifiche():
                     pdf_disabled = not LATEX_AVAILABLE
                     pdf_help = "Non disponibile: LaTeX non è installato" if pdf_disabled else "Scarica la verifica in formato PDF"
                     
-                    if st.button(f"📄 Scarica PDF", key=f"download_{verifica.get('id')}_{i}", 
+                    if st.button("⬇ Scarica PDF", key=f"download_{verifica.get('id')}_{i}", 
                                  disabled=pdf_disabled, help=pdf_help):
                         if verifica.get("latex_a"):
                             try:
@@ -1426,7 +1431,7 @@ def _render_le_tue_verifiche():
                             st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
                 
                 with col3:
-                    if st.button(f"🎲 Parti da questa", key=f"facsimile_{verifica.get('id')}_{i}"):
+                    if st.button("📂 Apri e modifica", key=f"facsimile_{verifica.get('id')}_{i}", type="primary"):
                         if verifica.get("latex_a"):
                             try:
                                 # Carica la verifica come template per facsimile
@@ -1473,82 +1478,39 @@ def _render_le_tue_verifiche():
                             st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
                 
                 with col4:
-                    if st.button(f"🗑️ Elimina", key=f"delete_{verifica.get('id')}_{i}"):
-                        # Conferma eliminazione
-                        if f"confirm_delete_{verifica.get('id')}" not in st.session_state:
-                            st.session_state[f"confirm_delete_{verifica.get('id')}"] = False
-                        
-                        if not st.session_state[f"confirm_delete_{verifica.get('id')}"]:
-                            st.session_state[f"confirm_delete_{verifica.get('id')}"] = True
-                            st.warning("⚠️ Sei sicuro? Click di nuovo per confermare l'eliminazione.")
+                    _vid = verifica.get("id")
+                    # Rinomina
+                    nuovo_nome = st.text_input(
+                        "Nome della verifica",
+                        value=verifica.get("argomento", ""),
+                        key=f"rename_input_{_vid}_{i}",
+                    )
+                    if st.button("💾 Salva nome", key=f"save_rename_{_vid}_{i}", use_container_width=True):
+                        if nuovo_nome.strip() and _rinomina_verifica(_vid, nuovo_nome.strip()):
                             st.rerun()
-                        else:
-                            # Elimina dal database
+                    st.divider()
+                    # Elimina: conferma esplicita in due passaggi
+                    if not st.session_state.get(f"confirm_delete_{_vid}", False):
+                        if st.button("🗑️ Elimina", key=f"delete_{_vid}_{i}", use_container_width=True):
+                            st.session_state[f"confirm_delete_{_vid}"] = True
+                            st.rerun()
+                    else:
+                        st.warning("Eliminare definitivamente questa verifica?")
+                        _c_si, _c_no = st.columns(2)
+                        if _c_si.button("Sì, elimina", key=f"delete_yes_{_vid}_{i}", type="primary", use_container_width=True):
                             try:
-                                res = supabase_admin.table("verifiche_storico")\
-                                    .delete()\
-                                    .eq("id", verifica.get("id"))\
-                                    .execute()
-                                
+                                res = supabase_admin.table("verifiche_storico").delete().eq("id", _vid).execute()
+                                st.session_state.pop(f"confirm_delete_{_vid}", None)
                                 if res.data:
-                                    st.success("✅ Verifica eliminata con successo!")
-                                    # Rimuovi stato di conferma
-                                    del st.session_state[f"confirm_delete_{verifica.get('id')}"]
                                     st.rerun()
                                 else:
                                     st.error("Non sono riuscito a eliminare la verifica. Riprova.", icon="⚠️")
                             except Exception as e:
                                 _mostra_errore("Non sono riuscito a eliminare la verifica", e)
-                            finally:
-                                # Reset stato di conferma
-                                if f"confirm_delete_{verifica.get('id')}" in st.session_state:
-                                    del st.session_state[f"confirm_delete_{verifica.get('id')}"]
-                
-                with col5:
-                    # Rinomina
-                    if f"rename_{verifica.get('id')}" not in st.session_state:
-                        st.session_state[f"rename_{verifica.get('id')}"] = False
-                    
-                    if not st.session_state[f"rename_{verifica.get('id')}"]:
-                        if st.button(f"✏️ Rinomina", key=f"rename_btn_{verifica.get('id')}_{i}"):
-                            st.session_state[f"rename_{verifica.get('id')}"] = True
+                        if _c_no.button("No", key=f"delete_no_{_vid}_{i}", use_container_width=True):
+                            st.session_state.pop(f"confirm_delete_{_vid}", None)
                             st.rerun()
-                    else:
-                        # Mostra un messaggio per il rinomina invece di rompere il layout
-                        st.info("✏️ Vedi sotto per rinominare")
-                
-                # Se è in modalità rinomina, mostra l'input in una sezione separata
-                if st.session_state.get(f"rename_{verifica.get('id')}", False):
-                    st.markdown('<div style="margin: 0.5rem 0; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">', unsafe_allow_html=True)
-                    
-                    col_input, col_save, col_cancel = st.columns([2, 1, 1])
-                    with col_input:
-                        nuovo_nome = st.text_input(
-                            "Nuovo nome:",
-                            value=verifica.get("argomento", ""),
-                            key=f"rename_input_{verifica.get('id')}_{i}",
-                            label_visibility="collapsed"
-                        )
-                    with col_save:
-                        if st.button("💾 Salva", key=f"save_rename_{verifica.get('id')}_{i}", use_container_width=True):
-                            if nuovo_nome.strip():
-                                result = _rinomina_verifica(verifica.get("id"), nuovo_nome.strip())
-                                if result:
-                                    st.success("✅ Nome aggiornato!")
-                                    del st.session_state[f"rename_{verifica.get('id')}"]
-                                    st.rerun()
-                    with col_cancel:
-                        if st.button("❌ Annulla", key=f"cancel_rename_{verifica.get('id')}_{i}", use_container_width=True):
-                            del st.session_state[f"rename_{verifica.get('id')}"]
-                            st.rerun()
-                    
-                    st.markdown('</div>', unsafe_allow_html=True)
-                
-                with col6:
-                    # Preferiti (temporaneamente disabilitato)
-                    if st.button(f"🤍 Preferiti", key=f"preferito_{verifica.get('id')}_{i}"):
-                        st.info("⚠️ Funzionalità preferiti in arrivo! Presto potrai salvare le tue verifiche preferite.")
-                
+
                 with col7:
                     # Condivisione
                     if st.button(f"🔗 Condividi", key=f"share_{verifica.get('id')}_{i}"):
@@ -1598,8 +1560,12 @@ def _render_le_tue_verifiche():
                             )
                 
                 # Divider tra verifiche (tranne l'ultima)
-                if i < len(verifiche_filtrate) - 1:
+                if i < min(len(verifiche_filtrate), _n_mostra) - 1:
                     st.markdown("---")
+        if len(verifiche_filtrate) > _n_mostra:
+            if st.button(f"Mostra altre ({len(verifiche_filtrate) - _n_mostra})", key="storico_mostra_altre", use_container_width=True):
+                st.session_state["_storico_mostra"] = _n_mostra + 8
+                st.rerun()
     else:
         st.info("📝 Nessuna verifica trovata. Inizia a creare la tua prima verifica!")
     
