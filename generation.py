@@ -352,29 +352,37 @@ def _crea_versione_minimale(latex: str, errore: str) -> str:
     Crea una versione minimale del LaTeX quando la compilazione fallisce.
     """
     try:
-        # Estrai il corpo principale
-        corpo_match = re.search(r'\\begin\{document\}(.*?)\\end\{document\}', latex, re.DOTALL)
+        # Estrai preambolo e corpo principale (tollera un \end{document} mancante)
+        corpo_match = re.search(
+            r'^(.*?)\\begin\{document\}(.*?)(?:\\end\{document\}|\Z)', latex, re.DOTALL
+        )
         if corpo_match:
-            corpo = corpo_match.group(1)
+            preambolo_originale = corpo_match.group(1)
+            corpo = corpo_match.group(2)
         else:
+            preambolo_originale = ""
             corpo = latex
-        
+
         # Rimuovi elementi problematici
         corpo_semplificato = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '[Grafico]', corpo, flags=re.DOTALL)
         corpo_semplificato = re.sub(r'\\begin\{tabular\}.*?\\end\{tabular\}', '[Tabella]', corpo_semplificato, flags=re.DOTALL)
         corpo_semplificato = re.sub(r'\\begin\{table\}.*?\\end\{table\}', '', corpo_semplificato, flags=re.DOTALL)
         
-        # Ricostruisci il LaTeX minimale
-        preambolo_minimale = (
-            "\\documentclass[12pt,a4paper]{article}\n"
-            "\\usepackage[utf8]{inputenc}\n"
-            "\\usepackage[italian]{babel}\n"
-            "\\usepackage{amsmath,amsfonts,amssymb}\n"
-            "\\geometry{margin=2cm}\n"
-            "\\pagestyle{empty}\n"
-            "\\begin{document}\n"
-        )
-        
+        # Ricostruisci il LaTeX minimale: stesso preambolo dell'originale (geometry, enumerate,
+        # array, ... già caricati); se manca, un preambolo di ripiego che carica i pacchetti.
+        if "\\documentclass" in preambolo_originale:
+            preambolo_minimale = preambolo_originale + "\\begin{document}\n"
+        else:
+            preambolo_minimale = (
+                "\\documentclass[12pt,a4paper]{article}\n"
+                "\\usepackage[utf8]{inputenc}\n"
+                "\\usepackage[italian]{babel}\n"
+                "\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n"
+                "\\geometry{margin=1.5cm}\n"
+                "\\pagestyle{empty}\n"
+                "\\begin{document}\n"
+            )
+
         return preambolo_minimale + corpo_semplificato + "\n\\end{document}"
         
     except Exception as e:
