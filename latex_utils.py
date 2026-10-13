@@ -157,16 +157,20 @@ def parse_pts_from_block_body(body: str) -> int:
     
     total = 0
     found_patterns = []
-    
+
+    # Ogni marcatore va contato una sola volta: "(5 pt)" è riconosciuto sia dal pattern
+    # con parentesi sia da quello generico "5 pt". Dopo ogni pattern il testo trovato
+    # viene oscurato, così i pattern successivi non lo contano di nuovo.
+    lavoro = body
     for pattern in pt_patterns:
-        matches = re.findall(pattern, body, re.IGNORECASE)
+        matches = re.findall(pattern, lavoro, re.IGNORECASE)
         if matches:
             points = sum(int(float(p.replace(',', '.'))) for p in matches)
             total += points
             found_patterns.append((pattern, len(matches), points))
             logger.info(f"Trovati {len(matches)} punti con pattern '{pattern}': {points}")
-            # Non fare break - somma TUTTI i punti trovati con TUTTI i pattern
-    
+            lavoro = re.sub(pattern, lambda m: " " * len(m.group(0)), lavoro, flags=re.IGNORECASE)
+
     # Se non trova punti, cerca nell'header del blocco
     if total == 0:
         header_pt_pattern = r'\\subsection\*\{[^}]*\}\s*\((\d+(?:[.,]\d+)?)\s*pt\)'
