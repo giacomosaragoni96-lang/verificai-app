@@ -1,0 +1,4 @@
+# Colore primario dei controlli nativi di Streamlit (radio, interruttori, checkbox, link):
+# lo stesso blu dell'app, al posto del rosso predefinito. Il resto dell'aspetto sta in styles.py.
+[theme]
+primaryColor = "#2563EB"

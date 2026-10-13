@@ -4464,25 +4464,31 @@ font-family: 'DM Sans', sans-serif;
     border: 1.5px dashed {T['border2']} !important;
   }}
 
-  /* Radio: cerchio vuoto se non scelto, anello blu se scelto (prima: tutti neri) */
-  html body .stApp [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child {{
+  /* Radio: cerchio vuoto se non scelto, pieno blu con punto bianco se scelto */
+  html body .stApp [data-testid="stRadio"] label > div:first-child {{
     background: {T['card']} !important;
     border: 2px solid {T['border2']} !important;
     box-shadow: none !important;
   }}
-  html body .stApp [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) > div:first-child {{
-    background: {T['card']} !important;
-    border: 6px solid {_acc} !important;
+  html body .stApp [data-testid="stRadio"] label > div:first-child > div {{
+    background: transparent !important;
+  }}
+  html body .stApp [data-testid="stRadio"] label:has(input:checked) > div:first-child {{
+    background: {_acc} !important;
+    border: 2px solid {_acc} !important;
+  }}
+  html body .stApp [data-testid="stRadio"] label:has(input:checked) > div:first-child > div {{
+    background: #ffffff !important;
   }}
 
   /* Toggle e checkbox: blu del tema invece del rosso predefinito */
-  html body .stApp [data-testid="stToggle"] label > div:first-child {{
+  html body .stApp label[data-baseweb="checkbox"] > div:first-child {{
     background: {T['border2']} !important;
   }}
-  html body .stApp [data-testid="stToggle"] label:has(input:checked) > div:first-child {{
+  html body .stApp label[data-baseweb="checkbox"]:has(input:checked) > div:first-child {{
     background: {_acc} !important;
   }}
-  html body .stApp [data-testid="stCheckbox"] label:has(input:checked) > span:first-child {{
+  html body .stApp label[data-baseweb="checkbox"]:has(input:checked) > span:first-child {{
     background: {_acc} !important;
     border-color: {_acc} !important;
   }}
@@ -4526,28 +4532,28 @@ font-family: 'DM Sans', sans-serif;
   }}
 
   /* Expander del contenuto principale: aspetto unico (aperto e chiuso), nessuna fascia colorata */
-  html body .stApp [data-testid="stMain"] details[data-testid="stExpander"] {{
+  html body .stApp [data-testid="stMain"] [data-testid="stExpander"] details {{
     background: {T['card']} !important;
     border: 1px solid {T['border']} !important;
     border-radius: {_radius_md} !important;
     box-shadow: none !important;
     overflow: hidden !important;
   }}
-  html body .stApp [data-testid="stMain"] details[data-testid="stExpander"] > summary {{
+  html body .stApp [data-testid="stMain"] [data-testid="stExpander"] details > summary {{
     background: transparent !important;
     background-color: transparent !important;
     color: {T['text']} !important;
     -webkit-text-fill-color: {T['text']} !important;
     border: none !important;
   }}
-  html body .stApp [data-testid="stMain"] details[data-testid="stExpander"][open] > summary {{
+  html body .stApp [data-testid="stMain"] [data-testid="stExpander"] details[open] > summary {{
     border-bottom: 1px solid {T['border']} !important;
   }}
-  html body .stApp [data-testid="stMain"] details[data-testid="stExpander"] > summary:hover {{
+  html body .stApp [data-testid="stMain"] [data-testid="stExpander"] details > summary:hover {{
     background: {T['hover']} !important;
   }}
-  html body .stApp [data-testid="stMain"] details[data-testid="stExpander"] > summary p,
-  html body .stApp [data-testid="stMain"] details[data-testid="stExpander"] > summary span {{
+  html body .stApp [data-testid="stMain"] [data-testid="stExpander"] details > summary p,
+  html body .stApp [data-testid="stMain"] [data-testid="stExpander"] details > summary span {{
     color: {T['text']} !important;
     -webkit-text-fill-color: {T['text']} !important;
   }}

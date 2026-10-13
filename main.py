@@ -1606,6 +1606,9 @@ def _render_percorso_b_form():
             # ── Dashboard: sezione form (layout bilanciato) ───────────────────────
             # Section header rimosso per evitare ripetizioni
 
+            # Avanzamento: subito sotto il titolo (in basso, sotto il pulsante, non si vedeva)
+            _prog_placeholder = st.empty()
+
             _mat_list = MATERIE + ["✏️ Altra materia..."]
             _mat_prev = _prev.get("materia") or _udef.get("materia", "Matematica")
             _mat_idx  = _mat_list.index(_mat_prev) if _mat_prev in _mat_list else 0
@@ -1723,13 +1726,9 @@ def _render_percorso_b_form():
 
             # ── DURATA: un solo scatto sceglie numero di esercizi e tempo previsto ──────
             _nomi_dur = list(DURATE)
-            _dur_salvata = _udef.get("durata")
-            if _dur_salvata not in DURATE:
-                _n_salvato = _udef.get("num_esercizi")
-                _dur_salvata = (
-                    min(_nomi_dur, key=lambda n: abs(DURATE[n]["num_esercizi"] - _n_salvato))
-                    if isinstance(_n_salvato, int) else DURATA_DEFAULT
-                )
+            # Si parte sempre da «Standard»: la lunghezza cambia da verifica a verifica,
+            # non ha senso ereditare quella dell'ultima volta.
+            _dur_salvata = DURATA_DEFAULT
             st.markdown('<div class="opt-label">Quanto deve essere lunga?</div>', unsafe_allow_html=True)
             durata_nome = st.radio(
                 "Durata", _nomi_dur, index=_nomi_dur.index(_dur_salvata),
@@ -1809,62 +1808,6 @@ def _render_percorso_b_form():
                         format_func=lambda x: f"{x} pt",
                     )
                     st.session_state["_pers_pt"] = punti_totali
-
-                # Struttura esercizi custom
-                st.markdown('<div class="opt-label" style="margin-top:.5rem;">Struttura esercizi</div>', unsafe_allow_html=True)
-                with st.expander("Definisci tipo e contenuto di ogni esercizio", expanded=False):
-                    n_custom = len(st.session_state.esercizi_custom)
-                    n_liberi = max(0, num_esercizi - n_custom)
-                    if n_custom >= num_esercizi:
-                        st.warning(f"Limite raggiunto ({n_custom}/{num_esercizi}).")
-                    elif n_custom > 0:
-                        st.success(f"✅ {n_custom} definiti + {n_liberi} liberi = {num_esercizi}")
-
-                    _to_remove = None
-                    for _i, _ex in enumerate(st.session_state.esercizi_custom):
-                        st.markdown(f"**Esercizio {_i+1}**")
-                        _tipo_val = _ex.get("tipo", "Aperto")
-                        _tipo_idx = TIPI_ESERCIZIO.index(_tipo_val) if _tipo_val in TIPI_ESERCIZIO else 0
-                        _t = st.selectbox(
-                            "Tipo", TIPI_ESERCIZIO,
-                            index=_tipo_idx,
-                            key=f"tipo_b_{_i}",
-                        )
-                        st.session_state.esercizi_custom[_i]["tipo"] = _t
-                        _d = st.text_area(
-                            "Desc", value=_ex.get("descrizione", ""),
-                            key=f"desc_b_{_i}", height=70,
-                            label_visibility="collapsed",
-                        )
-                        st.session_state.esercizi_custom[_i]["descrizione"] = _d
-                        _c1, _c2 = st.columns([3, 1])
-                        with _c1:
-                            _img = st.file_uploader(
-                                "Immagine", type=["png", "jpg", "jpeg"],
-                                key=f"img_b_{_i}", label_visibility="collapsed",
-                            )
-                            if _img:
-                                st.session_state.esercizi_custom[_i]["immagine"] = _img
-                            if st.session_state.esercizi_custom[_i].get("immagine"):
-                                st.image(st.session_state.esercizi_custom[_i]["immagine"], width=55)
-                        with _c2:
-                            if st.button("🗑 Rimuovi", key=f"rm_b_{_i}", use_container_width=True):
-                                _to_remove = _i
-                        st.divider()
-
-                    if _to_remove is not None:
-                        st.session_state.esercizi_custom.pop(_to_remove)
-                        st.rerun()
-
-                    if st.button(
-                        "＋ Aggiungi esercizio",
-                        disabled=len(st.session_state.esercizi_custom) >= num_esercizi,
-                        key="add_es_b",
-                    ):
-                        st.session_state.esercizi_custom.append(
-                            {"tipo": "Aperto", "descrizione": "", "immagine": None}
-                        )
-                        st.rerun()
 
             # ── Hai già del materiale? Upload + tre scelte (l'AI legge il file solo al clic) ──
             _rifiuto = st.session_state.pop("_analisi_rifiuto", None)
@@ -1951,8 +1894,6 @@ def _render_percorso_b_form():
             )
             st.markdown('</div>', unsafe_allow_html=True)
 
-            # Placeholder progress bar — apparirà subito sotto il pulsante
-            _prog_placeholder = st.empty()
             if _limite:
                 _render_limite_raggiunto(
                     T, LIMITE_MENSILE, _reset_label(*_giorni_al_reset()), FEEDBACK_FORM_URL,
@@ -2215,13 +2156,22 @@ def _render_stage_input():
     if not (genera_btn or _riprova or _dopo_analisi) or _limite:
         return
 
+    # La barra di avanzamento sta in alto: porto la pagina in cima così si vede subito
+    components.html(
+        "<script>(function(){var d=window.parent.document;"
+        "[\"[data-testid='stMain']\",\"section.main\",\"[data-testid='stAppViewContainer']\"]"
+        ".forEach(function(q){var e=d.querySelector(q);if(e&&e.scrollTo)e.scrollTo({top:0,behavior:'smooth'});});"
+        "window.parent.scrollTo({top:0,behavior:'smooth'});})();</script>",
+        height=0,
+    )
+
     # ── Il file viene letto dall'AI solo adesso (1 chiamata, solo se si crea davvero) ──
     _fm    = st.session_state.get("_file_materiale")
     _voce  = next((e for e in st.session_state.analisi_docs_list
                    if _fm and e["file_hash"] == _fm["hash"]), None)
     if _fm and _voce is None:
         st.session_state["_genera_dopo_analisi"] = True
-        with st.spinner("Leggo il tuo file…"):
+        with _prog_ph_b.container(), st.spinner("Leggo il tuo file…"):
             _esegui_analisi_documento(_fm["bytes"], _fm["mime"], _fm["name"])
         # Se arriviamo qui la lettura non è andata a buon fine (nessun rerun): niente di fatto
         st.session_state.pop("_genera_dopo_analisi", None)
