@@ -5,6 +5,7 @@
 import logging
 
 import streamlit as st
+from ai_client import riepilogo_uso
 
 from ui_helpers import _reset_label, _render_limite_raggiunto
 
@@ -59,6 +60,16 @@ def render_sidebar(
                     _nomi_admin,
                     key="sb_modello_admin",
                 )
+                # Consumi reali dall'ultimo riavvio (token e costo stimato per compito e modello)
+                _uso = riepilogo_uso()
+                if _uso:
+                    st.caption(f"Costo stimato dall'ultimo riavvio: ${sum(r['costo_usd'] for r in _uso):.3f}")
+                    for _r in _uso[:8]:
+                        st.caption(
+                            f"{_r['compito']} · {_r['modello'].replace('gemini-', '')} · {_r['chiamate']} chiamate · "
+                            f"in {_r['input']:,} · out {_r['output'] + _r['pensiero']:,} "
+                            f"(di cui ragionamento {_r['pensiero']:,}) · ${_r['costo_usd']:.3f}"
+                        )
             modello_id = MODELLI_DISPONIBILI[_sel_modello]["id"]
         else:
             _piano_modello = _piano if _piano in ("pro", "gold") else "free"

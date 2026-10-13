@@ -15,7 +15,7 @@ import os
 import time
 from datetime import datetime, timezone
 
-import google.generativeai as genai
+from ai_client import crea_modello, configura as configura_ai, riepilogo_uso
 
 from sidebar import render_sidebar
 from generation import (
@@ -119,7 +119,7 @@ if not API_KEY:
     # Temporaneamente usa una API key fittizia per testare l'interfaccia
     API_KEY = "test_api_key_temporanea"
     st.warning("⚠️ API Google temporaneamente non configurata - la generazione non funzionerà ma puoi testare l'interfaccia")
-genai.configure(api_key=API_KEY)
+configura_ai(API_KEY)
 
 # ── VERIFICA DISPONIBILITÀ LATEX ─────────────────────────────────────────────────
 # Sarà fatto dopo l'autenticazione per essere visibile all'utente
@@ -378,7 +378,7 @@ def _postprocessa_latex(latex: str, mostra_punteggi: bool, punti_totali: int,
 # ── On-demand variant generation ───────────────────────────────────────────────
 
 def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
-    model_v = genai.GenerativeModel(model_id)
+    model_v = crea_modello(model_id)
     mostra_punteggi = gp.get("mostra_punteggi", True)
     punti_totali    = gp.get("punti_totali", 100)
     con_griglia     = gp.get("con_griglia", False)
@@ -404,7 +404,7 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
 
     if tipo == "B":
         try:
-            resp   = model_v.generate_content(prompt_versione_b(corpo_a))
+            resp   = model_v.per("variante").generate_content(prompt_versione_b(corpo_a))
         except Exception as e:
             raise RuntimeError(f"Variante B: {e}") from e
         corpo  = pulisci_corpo_latex(resp.text.replace("```latex","").replace("```","").strip())
@@ -418,7 +418,7 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
 
     if tipo == "R":
         try:
-            resp  = model_v.generate_content(
+            resp  = model_v.per("variante").generate_content(
                 prompt_versione_ridotta(corpo_a, materia, perc_ridotta,
                                         mostra_punteggi, punti_totali))
         except Exception as e:
@@ -431,7 +431,7 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
 
     if tipo == "S":
         try:
-            resp     = model_v.generate_content(prompt_soluzioni(corpo_a, materia))
+            resp     = model_v.per("soluzioni").generate_content(prompt_soluzioni(corpo_a, materia))
         except Exception as e:
             raise RuntimeError(f"Soluzioni: {e}") from e
         testo    = resp.text.strip()
@@ -951,7 +951,7 @@ def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str)
 
     # Analisi AI metadati — usa sempre Flash Lite (task leggero ed economico)
     try:
-        _model_fast = genai.GenerativeModel(MODEL_FAST_ID)
+        _model_fast = crea_modello(MODEL_FAST_ID, "analisi_file")
         result = analizza_documento_caricato(
             model=_model_fast,
             file_bytes=file_bytes,
@@ -2031,7 +2031,7 @@ def _lancia_generazione(
         _modello_id_eff = get_model_id_per_piano(_piano_corrente, materia_scelta)
 
     try:
-        model_obj = genai.GenerativeModel(_modello_id_eff)
+        model_obj = crea_modello(_modello_id_eff)
         ris = genera_verifica(
             model=model_obj, materia=materia_scelta, argomento=argomento,
             difficolta=difficolta, calibrazione=calibrazione, durata=durata_scelta,
@@ -2395,7 +2395,7 @@ def _rigenera_esercizio_guidato(idx, istruzione, etichetta, materia, argomento, 
     with status_ph.status(f"{etichetta} l'esercizio {idx+1}…", expanded=True) as stato:
         try:
             nuovo = rigenera_singolo_blocco(
-                genai.GenerativeModel(modello), materia,
+                crea_modello(modello).per("modifica"), materia,
                 f"\\subsection*{{{title}}}\n{body}", istruzione, mostra_punteggi,
             )
             # rigenera_singolo_blocco ripulisce la risposta con pulisci_corpo_latex, che in
@@ -3174,7 +3174,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
         _action_ph.empty()
         with _action_ph.status(f"Generazione variante esercizio {idx+1}…", expanded=True) as _qr_st:
             try:
-                _qr_model = genai.GenerativeModel(modello_rw)
+                _qr_model = crea_modello(modello_rw).per("modifica")
                 _qr_resp = _qr_model.generate_content(_qr_prompt)
                 _qr_nuovo = _qr_resp.text.replace("```latex","").replace("```","").strip()
                 _qr_m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", _qr_nuovo, re.DOTALL)
@@ -3336,7 +3336,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 """, unsafe_allow_html=True)
             
             try:
-                model_rw_obj = genai.GenerativeModel(modello_rw)
+                model_rw_obj = crea_modello(modello_rw).per("modifica")
                 resp  = model_rw_obj.generate_content(_prompt_rw)
                 nuovo = resp.text.replace("```latex","").replace("```","").strip()
                 m_rw  = re.match(r"\\subsection\*\{([^}]*)\}(.*)", nuovo, re.DOTALL)
@@ -3471,10 +3471,10 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
         _action_ph.empty()
         with _action_ph.status(f"Generazione nuovo esercizio {idx+1}…", expanded=True) as _ct_st:
             try:
-                _ct_model = genai.GenerativeModel(MODEL_FAST_ID)
+                _ct_model = crea_modello(MODEL_FAST_ID, "cambio_esercizio")
                 _ct_resp = _ct_model.generate_content(
                     [_prompt_ct],
-                    generation_config=genai.GenerationConfig(temperature=0.95),
+                    generation_config={"temperature": 0.95},
                 ).text.strip()
                 if _ct_resp.startswith("```"):
                     _ct_resp = re.sub(r"^```[a-z]*\n?", "", _ct_resp)
@@ -3828,10 +3828,10 @@ def _render_stage_final():
             _ph_b.markdown(_skeleton_html("⚡", "Generazione Fila B…",
                            "Cambio numeri · Verifica coerenza · Controllo qualità"), unsafe_allow_html=True)
             try:
-                _mod_b = genai.GenerativeModel(mod_id)
+                _mod_b = crea_modello(mod_id).per("variante")
                 _latex_b_new = _mod_b.generate_content(
                     [prompt_variante_rapida(vA.get("latex",""), mat_str)],
-                    generation_config=genai.GenerationConfig(temperature=0.7),
+                    generation_config={"temperature": 0.7},
                 ).text.strip()
                 if _latex_b_new.startswith("```"):
                     _latex_b_new = re.sub(r"^```[a-z]*\n?","",_latex_b_new)
@@ -4042,13 +4042,13 @@ def _render_stage_final():
             _rph = st.empty()
             _rph.info('📊 Generazione griglia in corso…')
             try:
-                _mr = genai.GenerativeModel(mod_id)
+                _mr = crea_modello(mod_id).per("griglia")
                 _pr = prompt_rubrica_valutazione(
                     corpo_latex=vA.get('latex', ''), materia=mat_str,
                     livello=scu_str, punti_totali=gp.get('punti_totali', 100),
                 )
                 _rr = _mr.generate_content(
-                    [_pr], generation_config=genai.GenerationConfig(temperature=0.5))
+                    [_pr], generation_config={"temperature": 0.5})
                 st.session_state.rubrica_testo = _rr.text.strip()
                 _rph.empty(); st.toast('Griglia pronta!', icon='📊'); st.rerun()
             except Exception as _er:

@@ -136,11 +136,43 @@ def _prompt_controllo_qualita_migliorato(
     )
 
 
+try:
+    from ai_client import errore_definitivo as _errore_definitivo
+except Exception:                                   # SDK assente (test in isolamento)
+    def _errore_definitivo(exc: Exception) -> bool:
+        return False
+
+
+# Nome del passo → compito (config.COMPITI_AI): decide modello e ragionamento di ogni chiamata.
+_COMPITO_DA_PASSO = (
+    ("Generazione titolo", "titolo"),
+    ("Generazione esercizi", "corpo"),
+    ("Controllo qualità", "controllo_qualita"),
+    ("Soluzioni", "soluzioni"),
+    ("Verifica ridotta", "variante"),
+    ("Variante", "variante"),
+    ("Fila B", "variante"),
+)
+
+
+def _modello_per_passo(model, step_name: str):
+    """Se il modello sa scegliere per compito (ai_client.ModelloAI), usa quello giusto per il passo."""
+    per = getattr(model, "per", None)
+    if per is None:
+        return model
+    for prefisso, compito in _COMPITO_DA_PASSO:
+        if step_name.startswith(prefisso):
+            return per(compito)
+    return model
+
+
 def _safe_generate_improved(model, prompt_or_parts, step_name: str = "API", retries: int = 3, 
                            incremental: bool = False) -> any:
     """
     Versione migliorata di _safe_generate con retry incrementale e errori specifici.
+    Non riprova sugli errori definitivi (chiave non valida, crediti esauriti, richiesta errata).
     """
+    model = _modello_per_passo(model, step_name)
     last_exc: Exception | None = None
     for attempt in range(1 + retries):
         try:
@@ -158,6 +190,9 @@ def _safe_generate_improved(model, prompt_or_parts, step_name: str = "API", retr
             return model.generate_content(prompt_or_parts)
         except Exception as e:
             last_exc = e
+            if _errore_definitivo(e):
+                logger.error(f"{step_name}: errore non recuperabile, non riprovo: {e}")
+                break
             if attempt < retries:
                 wait_time = 2 ** attempt  # 2s, 4s, 8s
                 logger.warning(f"{step_name} tentativo {attempt} fallito: {e}. Retry in {wait_time}s...")
@@ -496,7 +531,7 @@ def genera_corpo_streaming(
 
     testo_completo = ""
     try:
-        response = model.generate_content(inp, stream=True)
+        response = _modello_per_passo(model, "Generazione esercizi").generate_content(inp, stream=True)
         for chunk in response:
             if chunk.text:
                 testo_completo += chunk.text
@@ -504,7 +539,7 @@ def genera_corpo_streaming(
                     on_token(chunk.text)
     except Exception:
         # Fallback senza streaming
-        response = model.generate_content(inp)
+        response = _modello_per_passo(model, "Generazione esercizi").generate_content(inp)
         testo_completo = response.text
         if on_token:
             on_token(testo_completo)
@@ -886,14 +921,14 @@ def genera_verifica_streaming(
 
     testo_grezzo = ""
     try:
-        response = model.generate_content(inp, stream=True)
+        response = _modello_per_passo(model, "Generazione esercizi").generate_content(inp, stream=True)
         for chunk in response:
             if chunk.text:
                 testo_grezzo += chunk.text
                 if on_token:
                     on_token(chunk.text)
     except Exception:
-        response = model.generate_content(inp)
+        response = _modello_per_passo(model, "Generazione esercizi").generate_content(inp)
         testo_grezzo = response.text
         if on_token:
             on_token(testo_grezzo)

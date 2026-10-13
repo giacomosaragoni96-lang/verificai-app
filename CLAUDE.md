@@ -42,6 +42,8 @@ Avvio locale: `streamlit run main.py`. Pacchetti di sistema in `packages.txt`
 
 - UI (usano Streamlit): `main.py`, `sidebar.py`, `ui_helpers.py`, `styles.py`, `auth.py`
 - Logica: `generation.py` (pipeline AI), `latex_utils.py` (parsing/compilazione LaTeX), `docx_export.py`
+- Client AI: `ai_client.py` (adattatore su `google-genai`, senza streamlit): sceglie modello e ragionamento per compito
+  (`config.COMPITI_AI`), registra token e costi (`riepilogo_uso`, mostrato nell'expander admin), non riprova sugli errori definitivi.
 - Configurazione e prompt: `config.py`, `prompts.py`
 - Abbonamenti (solo lettura): `subscription_management.py` (piano utente e limiti), `database_schema.sql`
 - Non usati: `extra-streamlit-components` e `streamlit-cookies-controller`
@@ -94,8 +96,6 @@ Non si toccano lo schema né le tabelle dal codice dell'app.
 - `generation.py`: testo di prompt fuori da `prompts.py`; `genera_verifica` e
   `genera_verifica_streaming` sono quasi duplicate.
 - `prompts.py`: nell'esempio tabelle `\\\\begin` produce `\\begin` (LaTeX errato per il modello).
-- `_safe_generate` riprova anche su errori non recuperabili (429 crediti, chiave non valida).
-- `google-generativeai` è deprecata (da migrare a `google-genai`).
 - `main.py`: `_get_verifiche_mese` ritorna 0 in caso di errore Supabase, quindi il contatore si azzera e il limite mensile viene aggirato.
 - `main.py`: `_lancia_generazione` non ricontrolla il limite mensile; lo fa solo il `disabled` del pulsante Genera.
 

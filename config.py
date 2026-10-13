@@ -36,6 +36,53 @@ MODELLI_DISPONIBILI = {
 }
 
 MODEL_FAST_ID = "gemini-2.5-flash-lite"
+MODEL_FLASH_ID = "gemini-2.5-flash"
+
+# ── COSTI E ROUTING DEI MODELLI ───────────────────────────────────────────────
+# Prezzi in USD per milione di token (input, output). L'output include i token di
+# "ragionamento" dei modelli 2.5: sono quelli che pesano di più sul costo.
+PREZZI_USD_PER_MILIONE = {
+    "gemini-2.5-flash-lite": (0.10, 0.40),
+    "gemini-2.5-flash":      (0.30, 2.50),
+    "gemini-2.5-pro":        (1.25, 10.00),
+}
+
+# Tetto ai token di ragionamento per i compiti che servono davvero: ragionare senza limite
+# su Flash e Pro costa ~25.000 token a verifica (misurato dal report di fatturazione).
+# Per Flash-Lite il ragionamento resta spento (comportamento predefinito).
+RAGIONAMENTO_ALTO = {"gemini-2.5-flash": 2048, "gemini-2.5-pro": 4096}
+
+# compito → (quale modello, ragionamento)
+#   modello: "piano" = quello del piano dell'utente · "medio" = Flash (Lite se il piano è Free,
+#            mai Pro) · "veloce" = sempre Flash-Lite
+#   ragionamento: "alto" = RAGIONAMENTO_ALTO · numero = tetto in token · 0 = spento · None = predefinito
+COMPITI_AI = {
+    "titolo":            ("veloce", 0),
+    "corpo":             ("piano",  "alto"),
+    "soluzioni":         ("piano",  "alto"),
+    "controllo_qualita": ("medio",  0),
+    "variante":          ("medio",  1024),   # Fila B, BES/DSA, versione ridotta
+    "modifica":          ("medio",  1024),   # più facile/difficile, cambia i numeri, modifica libera
+    "griglia":           ("medio",  0),
+    "cambio_esercizio":  ("veloce", None),
+    "analisi_file":      ("veloce", None),
+}
+
+
+def scegli_modello_per_compito(compito: str, model_id_piano: str):
+    """Restituisce (model_id, tetto_ragionamento) per un compito, dato il modello del piano."""
+    tipo, ragionamento = COMPITI_AI.get(compito, ("piano", None))
+    if tipo == "veloce":
+        model_id = MODEL_FAST_ID
+    elif tipo == "medio":
+        model_id = MODEL_FAST_ID if model_id_piano == MODEL_FAST_ID else MODEL_FLASH_ID
+    else:
+        model_id = model_id_piano
+    if model_id == MODEL_FAST_ID:
+        return model_id, None            # Lite: ragionamento spento di default, non lo tocco
+    if ragionamento == "alto":
+        ragionamento = RAGIONAMENTO_ALTO.get(model_id)
+    return model_id, ragionamento
 
 MATERIE_STEM = {
     "Matematica", "Fisica", "Chimica", "Informatica",
