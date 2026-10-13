@@ -284,7 +284,7 @@ def elabora_file(percorso: str, a, modello):
 
     esercizi = normalizza(esercizi)
     os.makedirs(a.uscita, exist_ok=True)
-    base = os.path.join(a.uscita, nome)
+    base = os.path.join(a.uscita, f"{nome}.{ext.strip('.')}")   # il PDF e il .tex omonimi non si sovrascrivono
     with open(base + ".json", "w", encoding="utf-8") as f:
         json.dump({"fonte": os.path.basename(percorso), "tipo_file": tipo, "titolo": titolo,
                    "modello_verifica": modello_verifica, "esercizi": esercizi}, f, ensure_ascii=False, indent=1)
