@@ -51,7 +51,7 @@ from supabase import create_client, Client
 from auth import mostra_auth, ripristina_sessione
 from styles import get_css, _is_light_color
 from ui_helpers import (
-    _render_back_button, _make_katex_html, _render_sticky_header,
+    _make_katex_html, _render_sticky_header,
     _render_step_progress,
     STAGE_INPUT, STAGE_PREVIEW, STAGE_REVIEW, STAGE_FINAL,
     _reset_label, _render_limite_raggiunto, _mostra_errore, _mostra_errore_pdf,
@@ -731,10 +731,7 @@ if settings.get("theme_changed"):
     st.rerun()
 
 # Flag per sapere se siamo sulla landing (usato da breadcrumb e header)
-_on_landing = (
-    st.session_state.stage == STAGE_INPUT
-    and st.session_state.get("input_percorso") is None
-)
+_on_landing = (st.session_state.stage == STAGE_INPUT)   # la creazione è anche la home
 
 # ── HEADER UNIFICATO — visibile solo sulla landing ────────────────────────────
 if _on_landing:
@@ -1064,182 +1061,6 @@ def _consolida_info():
         merged["scuola"] = st.session_state._analisi_scuola
     st.session_state.info_consolidate = merged
 
-
-def _render_bivio():
-    """
-    Home page: logo + titolo MOLTO GRANDE centrato, un solo CTA.
-    """
-
-    # ── Logo + headline unificati, tutto centrato ─────────────────────────────
-    st.markdown(
-        f'''
-        <div class="landing-hero-unified" style="padding: 1.5rem 1rem 1rem;">
-                    <h2 class="landing-headline-xl" style="margin: 0 0 0.1rem 0 !important;">
-            Crea verifiche professionali<br>
-            <span class="landing-headline-accent-xl">in pochi secondi</span>
-          </h2>
-          <p class="landing-sub-xl" style="margin: 0 auto 1.5rem !important;">
-            Scegli materia, livello e argomento.<br>
-            L'AI costruisce la verifica, tu la revisioni e scarichi.
-          </p>
-        </div>
-        ''',
-        unsafe_allow_html=True,
-    )
-
-    # ── CTA principale — più prominente ─────────────────────────────────────────────
-    st.markdown('<div style="margin: 2rem 0;"></div>', unsafe_allow_html=True)
-    _c1, _c2, _c3 = st.columns([1.5, 2, 1.5])
-    with _c2:
-        if st.button(
-            "🚀 **Crea Verifica Ora**",
-            key="btn_genera_verifica_home",
-            use_container_width=True,
-            type="primary",
-            help="Scegli materia e argomento, crea in 30 secondi",
-        ):
-            st.session_state.input_percorso = "B"
-            st.rerun()
-
-    # ── Feature pills — più leggibili per docenti ───────────────────────────────
-    st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
-    st.markdown(
-        '''
-        <div class="tally-features" style="gap: 12px; flex-wrap: wrap; justify-content: center;">
-          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
-            📄 PDF Stampabile
-          </span>
-          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
-            🎲 Fila A e B
-          </span>
-          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
-            ⭐ Versione BES
-          </span>
-          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
-            ✏️ DOCX Modificabile
-          </span>
-          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
-            📋 Soluzioni
-          </span>
-          <span class="tally-feat-pill" style="background: #f0f9ff; color: #0369a1; padding: 8px 16px; font-weight: 600;">
-            📊 Griglia Valutazione
-          </span>
-        </div>
-        ''',
-        unsafe_allow_html=True,
-    )
-
-    # ── Feature cards ─────────────────────────────────────
-
-    # ── Feature cards — 6 card, 2 righe ─────────────────────────────────────
-    st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
-    
-    # Sezione Dashboard (prima degli esempi)
-    st.markdown("---")
-    st.markdown('<div style="margin: 0.5rem 0;"></div>', unsafe_allow_html=True)
-    
-    st.markdown(
-        """
-        <div style="text-align: center; margin-bottom: 2rem;">
-            <h2 style="font-size: 1.8rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem;">
-                📊 Il Tuo Dashboard
-            </h2>
-            <p style="font-size: 1.1rem; color: #6b7280;">
-                Gestisci e visualizza tutte le tue verifiche create
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    
-    # Stats cards con dati reali (3 colonne)
-    stats = _get_verifiche_stats()
-    col1, col2, col3 = st.columns(3, gap="large")
-    
-    with col1:
-        st.markdown(
-            f"""
-            <div style="
-                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-                border-radius: 16px;
-                padding: 2rem;
-                text-align: center;
-                color: white;
-                box-shadow: 0 8px 25px -5px rgba(59, 130, 246, 0.3);
-                cursor: pointer;
-                transition: transform 0.2s, box-shadow 0.2s;
-            " onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 35px -5px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px -5px rgba(59, 130, 246, 0.3)'">
-                <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">
-                    📄
-                </div>
-                <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
-                    {stats['totali']}
-                </div>
-                <div style="font-size: 1rem; opacity: 0.9;">
-                    Verifiche Generate
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    
-    with col2:
-        st.markdown(
-            f"""
-            <div style="
-                background: linear-gradient(135deg, #10b981, #059669);
-                border-radius: 16px;
-                padding: 2rem;
-                text-align: center;
-                color: white;
-                box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.3);
-            ">
-                <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">
-                    📚
-                </div>
-                <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
-                    {stats['materie']}
-                </div>
-                <div style="font-size: 1rem; opacity: 0.9;">
-                    Materie Coperte
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    
-    with col3:
-        st.markdown(
-            f"""
-            <div style="
-                background: linear-gradient(135deg, #f59e0b, #d97706);
-                border-radius: 16px;
-                padding: 2rem;
-                text-align: center;
-                color: white;
-                box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.3);
-            ">
-                <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">
-                    ✏️
-                </div>
-                <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
-                    {stats['esercizi_totali']}
-                </div>
-                <div style="font-size: 1rem; opacity: 0.9;">
-                    Esercizi Generati
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    
-    # Pulsante per andare alla pagina delle verifiche
-    st.markdown('<div style="text-align: center; margin-top: 2rem;">', unsafe_allow_html=True)
-    if st.button("📄 Gestisci Le Tue Verifiche →", type="primary", use_container_width=True):
-        st.session_state.stage = STAGE_MIE_VERIFICHE
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
 
 def _load_user_verifiche():
     """
@@ -2267,10 +2088,6 @@ def _render_percorso_b_form():
                     f'Potrai generare la verifica ma non scaricare il PDF</div></div>',
                     unsafe_allow_html=True,
                 )
-            # ── Back link ─────────────────────────────────────────────────────────
-            if _render_back_button("← Indietro", key="btn_back_b"):
-                st.session_state.input_percorso = None
-                st.rerun()
 
     # ── Costruisci nota finale con istruzioni per-file ────────────────────────
     _istr_per_file_testi = []
@@ -2496,125 +2313,126 @@ def _lancia_generazione(
 
 
 def _render_stage_input():
-    percorso = st.session_state.get("input_percorso")
+    # La schermata di creazione e' anche la home: titolo breve + form.
+    st.markdown(
+        f'<div style="text-align:center;padding:.4rem 0 1.1rem;">'
+        f'<div style="font-family:DM Sans,sans-serif;font-size:2rem;font-weight:900;'
+        f'letter-spacing:-.025em;color:{T["text"]};line-height:1.15;">Crea la tua verifica</div>'
+        f'<div style="font-size:.98rem;color:{T["text2"]};margin-top:.35rem;'
+        f'font-family:DM Sans,sans-serif;">Scrivi cosa ti serve: al resto pensa l’AI.</div></div>',
+        unsafe_allow_html=True,
+    )
 
-    # ── BIVIO ─────────────────────────────────────────────────────────────────
-    if percorso is None:
-        _render_bivio()
+    (
+        argomento, materia_scelta, difficolta,
+        mostra_punteggi, con_griglia, punti_totali,
+        num_esercizi_totali, note_extra, genera_btn,
+        _prog_ph_b, durata_str, durata_nome,
+    ) = _render_percorso_b_form()
+
+    _riprova      = st.session_state.pop("_riprova_genera", False)
+    _dopo_analisi = st.session_state.pop("_genera_dopo_analisi", False)
+    if not (genera_btn or _riprova or _dopo_analisi) or _limite:
         return
 
-    # ── PERCORSO B (form manuale, unico percorso di creazione) ───────────────
-    if percorso == "B":
-        (
-            argomento, materia_scelta, difficolta,
-            mostra_punteggi, con_griglia, punti_totali,
-            num_esercizi_totali, note_extra, genera_btn,
-            _prog_ph_b, durata_str, durata_nome,
-        ) = _render_percorso_b_form()
+    # ── Il file viene letto dall'AI solo adesso (1 chiamata, solo se si crea davvero) ──
+    _fm    = st.session_state.get("_file_materiale")
+    _voce  = next((e for e in st.session_state.analisi_docs_list
+                   if _fm and e["file_hash"] == _fm["hash"]), None)
+    if _fm and _voce is None:
+        st.session_state["_genera_dopo_analisi"] = True
+        with st.spinner("Leggo il tuo file…"):
+            _esegui_analisi_documento(_fm["bytes"], _fm["mime"], _fm["name"])
+        # Se arriviamo qui la lettura non è andata a buon fine (nessun rerun): niente di fatto
+        st.session_state.pop("_genera_dopo_analisi", None)
+        return
 
-        _riprova      = st.session_state.pop("_riprova_genera", False)
-        _dopo_analisi = st.session_state.pop("_genera_dopo_analisi", False)
-        if not (genera_btn or _riprova or _dopo_analisi) or _limite:
-            return
+    # ── Applica la scelta fatta sul file ──────────────────────────────────────
+    _scelta_mat = None
+    if _voce is not None:
+        _scelta_mat = st.session_state.get("sel_materiale_b", "base_conoscenza")
+        _voce["file_mode"] = _scelta_mat
+        _voce["confirmed"] = True
+        st.session_state.file_mode = _scelta_mat
+        _consolida_info()
+        if _scelta_mat == "copia_fedele":
+            # «Rifai questa verifica»: numero di esercizi e punti vengono dal file
+            st.session_state["_fac_dialog_data"] = {**_voce["analisi"], "file_hash": _voce["file_hash"]}
+            st.session_state["_fac_confirmed"] = True
+            st.rerun()
 
-        # ── Il file viene letto dall'AI solo adesso (1 chiamata, solo se si crea davvero) ──
-        _fm    = st.session_state.get("_file_materiale")
-        _voce  = next((e for e in st.session_state.analisi_docs_list
-                       if _fm and e["file_hash"] == _fm["hash"]), None)
-        if _fm and _voce is None:
-            st.session_state["_genera_dopo_analisi"] = True
-            with st.spinner("Leggo il tuo file…"):
-                _esegui_analisi_documento(_fm["bytes"], _fm["mime"], _fm["name"])
-            # Se arriviamo qui la lettura non è andata a buon fine (nessun rerun): niente di fatto
-            st.session_state.pop("_genera_dopo_analisi", None)
-            return
-
-        # ── Applica la scelta fatta sul file ──────────────────────────────────────
-        _scelta_mat = None
-        if _voce is not None:
-            _scelta_mat = st.session_state.get("sel_materiale_b", "base_conoscenza")
-            _voce["file_mode"] = _scelta_mat
-            _voce["confirmed"] = True
-            st.session_state.file_mode = _scelta_mat
-            _consolida_info()
-            if _scelta_mat == "copia_fedele":
-                # «Rifai questa verifica»: numero di esercizi e punti vengono dal file
-                st.session_state["_fac_dialog_data"] = {**_voce["analisi"], "file_hash": _voce["file_hash"]}
-                st.session_state["_fac_confirmed"] = True
-                st.rerun()
-
-        if not argomento:
-            st.warning(
-                "Non ho capito l'argomento dal file: scrivilo nel riquadro «Cosa vuoi nella verifica?».",
-                icon="✍️",
-            )
-            return
-
-        _note_finale = note_extra
-
-        s_es, imgs_es = _build_prompt_esercizi(
-            st.session_state.esercizi_custom,
-            num_esercizi_totali,
-            punti_totali if mostra_punteggi else 0,
-            mostra_punteggi,
-        )
-
-        # ── Estrai file "includi_esercizio" → vision input ─────────────────────
-        # I file marcati come "esercizio da inserire" vengono passati come immagini
-        # al modello vision affinché l'esercizio compaia OBBLIGATORIAMENTE nell'output.
-        _imgs_esercizio: list = []
-        _note_esercizi_inclusi: list = []
-        for _idx_fe, _fe in enumerate(st.session_state.analisi_docs_list):
-            if _fe.get("file_mode") == "includi_esercizio":
-                _fb = _fe.get("file_bytes")
-                _fm = _fe.get("mime_type", "image/png")
-                if _fb:
-                    _imgs_esercizio.append({
-                        "idx":       _idx_fe + 1,
-                        "data":      _fb,
-                        "mime_type": _fm,
-                    })
-                _istr_fe = st.session_state.istruzioni_per_file.get(str(_fe["file_hash"]), "").strip()
-                _nota_fe = f"File '{_fe['file_name']}' — esercizio da includere obbligatoriamente"
-                if _istr_fe:
-                    _nota_fe += f": {_istr_fe}"
-                _note_esercizi_inclusi.append(_nota_fe)
-
-        # Combina immagini: prima quelle da includi_esercizio, poi quelle da esercizi_custom
-        imgs_es_finale = _imgs_esercizio + imgs_es
-
-        # Aggiungi alle note generali le istruzioni per gli esercizi obbligatori
-        if _note_esercizi_inclusi:
-            _nota_includi = (
-                "\n\n╔═══════════════════════════════════════════════╗\n"
-                "║ ⚠️ ESERCIZI DA INCLUDERE OBBLIGATORIAMENTE     ║\n"
-                "╚═══════════════════════════════════════════════╝\n"
-                + "\n".join(_note_esercizi_inclusi)
-                + "\nL'immagine allegata contiene l'esercizio. Trascrivilo fedelmente in LaTeX "
-                "come Esercizio 1 e genera gli esercizi restanti normalmente."
-            )
-            _note_finale = (_note_finale + _nota_includi).strip() if _note_finale else _nota_includi.strip()
-        else:
-            imgs_es_finale = imgs_es
-
-        _lancia_generazione(
-            materia_scelta=materia_scelta,
-            argomento=argomento,
-            difficolta=difficolta,
-            durata_scelta=durata_str,
-            num_esercizi_totali=num_esercizi_totali,
-            punti_totali=punti_totali,
-            mostra_punteggi=mostra_punteggi,
-            con_griglia=con_griglia,
-            note_generali=_note_finale,
-            s_es=s_es,
-            imgs_es=imgs_es_finale,
-            # «Prendi spunto dai miei appunti»: il file viene davvero allegato alla richiesta
-            file_ispirazione=(_FileInMemoria(_fm["bytes"], _fm["mime"], _fm["name"])
-                              if (_scelta_mat == "base_conoscenza" and _fm) else None),
-            prog_placeholder=_prog_ph_b,
+    if not argomento:
+        st.warning(
+            "Non ho capito l'argomento dal file: scrivilo nel riquadro «Cosa vuoi nella verifica?».",
+            icon="✍️",
         )
         return
+
+    _note_finale = note_extra
+
+    s_es, imgs_es = _build_prompt_esercizi(
+        st.session_state.esercizi_custom,
+        num_esercizi_totali,
+        punti_totali if mostra_punteggi else 0,
+        mostra_punteggi,
+    )
+
+    # ── Estrai file "includi_esercizio" → vision input ─────────────────────
+    # I file marcati come "esercizio da inserire" vengono passati come immagini
+    # al modello vision affinché l'esercizio compaia OBBLIGATORIAMENTE nell'output.
+    _imgs_esercizio: list = []
+    _note_esercizi_inclusi: list = []
+    for _idx_fe, _fe in enumerate(st.session_state.analisi_docs_list):
+        if _fe.get("file_mode") == "includi_esercizio":
+            _fb = _fe.get("file_bytes")
+            _fm = _fe.get("mime_type", "image/png")
+            if _fb:
+                _imgs_esercizio.append({
+                    "idx":       _idx_fe + 1,
+                    "data":      _fb,
+                    "mime_type": _fm,
+                })
+            _istr_fe = st.session_state.istruzioni_per_file.get(str(_fe["file_hash"]), "").strip()
+            _nota_fe = f"File '{_fe['file_name']}' — esercizio da includere obbligatoriamente"
+            if _istr_fe:
+                _nota_fe += f": {_istr_fe}"
+            _note_esercizi_inclusi.append(_nota_fe)
+
+    # Combina immagini: prima quelle da includi_esercizio, poi quelle da esercizi_custom
+    imgs_es_finale = _imgs_esercizio + imgs_es
+
+    # Aggiungi alle note generali le istruzioni per gli esercizi obbligatori
+    if _note_esercizi_inclusi:
+        _nota_includi = (
+            "\n\n╔═══════════════════════════════════════════════╗\n"
+            "║ ⚠️ ESERCIZI DA INCLUDERE OBBLIGATORIAMENTE     ║\n"
+            "╚═══════════════════════════════════════════════╝\n"
+            + "\n".join(_note_esercizi_inclusi)
+            + "\nL'immagine allegata contiene l'esercizio. Trascrivilo fedelmente in LaTeX "
+            "come Esercizio 1 e genera gli esercizi restanti normalmente."
+        )
+        _note_finale = (_note_finale + _nota_includi).strip() if _note_finale else _nota_includi.strip()
+    else:
+        imgs_es_finale = imgs_es
+
+    _lancia_generazione(
+        materia_scelta=materia_scelta,
+        argomento=argomento,
+        difficolta=difficolta,
+        durata_scelta=durata_str,
+        num_esercizi_totali=num_esercizi_totali,
+        punti_totali=punti_totali,
+        mostra_punteggi=mostra_punteggi,
+        con_griglia=con_griglia,
+        note_generali=_note_finale,
+        s_es=s_es,
+        imgs_es=imgs_es_finale,
+        # «Prendi spunto dai miei appunti»: il file viene davvero allegato alla richiesta
+        file_ispirazione=(_FileInMemoria(_fm["bytes"], _fm["mime"], _fm["name"])
+                          if (_scelta_mat == "base_conoscenza" and _fm) else None),
+        prog_placeholder=_prog_ph_b,
+    )
+    return
 
 
 
@@ -4715,8 +4533,7 @@ if _share_param and isinstance(_share_param, str) and len(_share_param) >= 6:
 if not _share_view_active:
     # Mostra sticky header solo quando NON si è sulla landing iniziale E NON sulla pagina "Le tue verifiche"
     _show_bc = not (
-        (st.session_state.stage == STAGE_INPUT
-        and st.session_state.get("input_percorso") is None)
+        st.session_state.stage == STAGE_INPUT
         or st.session_state.stage == STAGE_MIE_VERIFICHE
     )
     if _show_bc:
