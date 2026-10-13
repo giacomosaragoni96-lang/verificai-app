@@ -42,7 +42,7 @@ Avvio locale: `streamlit run main.py`. Pacchetti di sistema in `packages.txt`
 
 - UI (usano Streamlit): `main.py`, `sidebar.py`, `ui_helpers.py`, `styles.py`, `auth.py`
 - Logica: `generation.py` (pipeline AI), `latex_utils.py` (parsing/compilazione LaTeX), `docx_export.py`
-- Banca esercizi (in preparazione): `importa_esercizi.py` legge un PDF e produce JSON + HTML da rivedere in `materiale/estratti/`
+- Banca esercizi (in preparazione): `importa_esercizi.py` legge PDF e `.tex` (verifiche e schede dal codice con `estrai_tex.py`, appunti con l'AI) e produce JSON + HTML da rivedere in `materiale/estratti/`
   (materiale/ è fuori da git); `config.DISTRIBUZIONE_DIFFICOLTA` dice quanti esercizi ★1/★2/★3 per scuola (non ancora usata dalla generazione).
 - Prova da riga di comando con l'AI vera: `prova_generazione.py` (scenari di esempio, costi, PDF in `prove_output/`).
 - Client AI: `ai_client.py` (adattatore su `google-genai`, senza streamlit): sceglie modello e ragionamento per compito

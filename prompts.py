@@ -744,24 +744,27 @@ def prompt_variante_rapida(
     )
 
 
-def prompt_importa_esercizi(materia: str = "") -> str:
+def prompt_importa_esercizi(materia: str = "", da_latex: bool = False) -> str:
     """
-    Prompt per leggere le pagine di una scheda/libro/appunti e restituire gli esercizi
+    Prompt per leggere pagine (PDF) o codice LaTeX di appunti/schede/libri e restituire gli esercizi
     singoli, catalogati, in JSON (usato da importa_esercizi.py).
     """
     hint = f"La materia dovrebbe essere: {materia}.\n" if materia else ""
+    cosa = ("il codice LaTeX che segue (appunti, scheda o verifica)" if da_latex
+            else "le pagine allegate (appunti, scheda o libro di esercizi)")
     return (
-        "Sei un docente esperto. Leggi le pagine allegate (appunti, scheda o libro di esercizi) e "
-        "ESTRAI OGNI ESERCIZIO come elemento separato.\n"
+        f"Sei un docente esperto. Leggi {cosa} e ESTRAI OGNI ESERCIZIO come elemento separato.\n"
         f"{hint}\n"
         "REGOLE:\n"
         "- Trascrivi il testo di ogni esercizio in LaTeX, fedelmente: formule tra $...$, nessuna "
         "riscrittura, nessun commento. Se un esercizio ha più richieste (a, b, c) tienile nello "
         "stesso esercizio, una per riga.\n"
-        "- Non inventare esercizi e non risolverli. Se la soluzione è stampata nella pagina, mettila in "
+        "- Non inventare esercizi e non risolverli. Se la soluzione è stampata nel testo, mettila in "
         "\"soluzione_latex\"; altrimenti null.\n"
+        "- \"ruolo\": \"esercizio\" per gli esercizi da svolgere; \"esempio_svolto\" per gli esempi "
+        "già risolti (in quel caso la risoluzione va in \"soluzione_latex\").\n"
         "- Ignora intestazioni, numeri di pagina, spiegazioni teoriche e consegne generali (ma usa la "
-        "consegna per capire la tecnica richiesta).\n"
+        "consegna e i suggerimenti per capire la tecnica richiesta).\n"
         "- DIFFICOLTÀ: se i testi sono divisi in livelli (\"Livello 3\", \"A/B/C\") o contrassegnati da "
         "stelle (★, ★★, ★★★, 1 stella...) riporta il numero del livello in \"livello_numero\" "
         "(stelle = 1, 2, 3) e il numero totale di livelli della fonte in \"livelli_totali\". Se la "
@@ -775,8 +778,9 @@ def prompt_importa_esercizi(materia: str = "") -> str:
         "\"problema\".\n\n"
         "RISPONDI SOLO con JSON valido, in questa forma:\n"
         "{\"esercizi\": [{\n"
-        "  \"numero\": \"<numero scritto nel libro, es. \\\"12\\\">\",\n"
-        "  \"pagina_nel_blocco\": <1 = prima pagina allegata>,\n"
+        "  \"numero\": \"<numero scritto nel testo, es. 12>\",\n"
+        "  \"pagina_nel_blocco\": <1 = prima pagina o primo blocco>,\n"
+        "  \"ruolo\": \"esercizio\",\n"
         "  \"testo_latex\": \"...\",\n"
         "  \"soluzione_latex\": null,\n"
         "  \"livello_numero\": <intero o null>,\n"
@@ -788,4 +792,22 @@ def prompt_importa_esercizi(materia: str = "") -> str:
         "  \"tipo\": \"aperto\",\n"
         "  \"ha_figura\": false\n"
         "}]}"
+    )
+
+
+def prompt_etichetta_esercizi(materia: str, titolo: str, elenco_json: str) -> str:
+    """Prompt per catalogare esercizi già estratti dal codice (argomento, tecniche, difficoltà)."""
+    return (
+        f"Sei un docente esperto di {materia or 'matematica'}. Ecco gli esercizi di \"{titolo}\" "
+        "(già estratti, in LaTeX). Per ciascuno indica:\n"
+        "- \"argomento\": l'argomento in poche parole (es. \"scomposizione di polinomi\");\n"
+        "- \"tecniche\": elenco breve delle regole o competenze necessarie;\n"
+        "- \"difficolta_stimata\": 1 (base), 2 (medio) o 3 (sfida), rispetto agli altri esercizi dello "
+        "stesso elenco e al livello di una scuola superiore;\n"
+        "- \"tipo\": \"aperto\", \"vero_falso\", \"scelta_multipla\", \"completamento\" o \"problema\";\n"
+        "- \"ha_figura\": true se dipende da un disegno o grafico.\n"
+        "NON modificare i testi e NON risolvere gli esercizi.\n\n"
+        f"ESERCIZI:\n{elenco_json}\n\n"
+        "RISPONDI SOLO con JSON valido: {\"etichette\": [{\"id\": <id>, \"argomento\": \"...\", "
+        "\"tecniche\": [\"...\"], \"difficolta_stimata\": 2, \"tipo\": \"aperto\", \"ha_figura\": false}]}"
     )
