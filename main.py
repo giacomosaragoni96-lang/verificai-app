@@ -51,6 +51,7 @@ from supabase import create_client, Client
 from auth import mostra_auth, ripristina_sessione
 from styles import get_css, _is_light_color
 from ui_helpers import (
+    render_privacy,
     _make_katex_html, _render_sticky_header,
     _render_step_progress,
     STAGE_INPUT, STAGE_PREVIEW, STAGE_REVIEW, STAGE_FINAL,
@@ -122,6 +123,13 @@ genai.configure(api_key=API_KEY)
 
 # ── VERIFICA DISPONIBILITÀ LATEX ─────────────────────────────────────────────────
 # Sarà fatto dopo l'autenticazione per essere visibile all'utente
+
+# ── Pagina pubblica: informativa sulla privacy (richiesta da Google per il login) ──
+# Solo testo statico, visibile senza accedere; non dà accesso a nessuna funzione dell'app.
+if st.query_params.get("pagina") == "privacy":
+    st.markdown(get_css(T), unsafe_allow_html=True)
+    render_privacy(T, FEEDBACK_FORM_URL)
+    st.stop()
 
 # ── AUTENTICAZIONE ────────────────────────────────────────────────────────────
 if "utente" not in st.session_state:
