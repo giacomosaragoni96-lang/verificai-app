@@ -98,12 +98,13 @@ THEMES = {
         "radius_md":  "12px",
         "radius_lg":  "16px",
 
-        # Sidebar — grigio scuro professionale
-        "sidebar_bg":      "linear-gradient(180deg, #1E293B 0%, #0F172A 100%)",
-        "sidebar_border":  "#475569",
-        "sidebar_accent":  "#3B82F6",
-        "sidebar_input_bg":  "#334155",
-        "sidebar_input_text": "#F8FAFC",
+        # Sidebar — chiara, in tono con la pagina
+        "sidebar_bg":      "#F3F4F6",
+        "sidebar_border":  "#E2E5EA",
+        "sidebar_accent":  "#2563EB",
+        "sidebar_input_bg":  "#FFFFFF",
+        "sidebar_input_text": "#0F1117",
+        "sidebar_muted":   "#6B7280",
 
         # Hint boxes
         "hint_bg":      "#EFF6FF",
@@ -159,6 +160,7 @@ THEMES = {
         "sidebar_accent":  "#79C0FF",
         "sidebar_input_bg":  "#0D1117",
         "sidebar_input_text": "#E6EDF3",
+        "sidebar_muted":   "#8B949E",
 
         # Hint boxes
         "hint_bg":      "#0D2340",

@@ -32,8 +32,8 @@ def render_sidebar(
 
     with st.sidebar:
         _acc = T.get("sidebar_accent", "#79C0FF")
-        # La sidebar ha sempre sfondo scuro → i colori testo devono essere CHIARI
-        # indipendentemente dal tema principale (chiaro/scuro).
+        # I colori della sidebar seguono il tema (chiara in Carta, scura in Notte);
+        # il testo usa sidebar_input_text del tema.
         _sb_text  = T.get("sidebar_input_text", "#E6EDF3")
         _sb_muted = T.get("sidebar_muted", "#94A3B8")
         
@@ -104,7 +104,7 @@ def render_sidebar(
             _valore = f"{verifiche_mese_count} di {LIMITE_MENSILE}"
             _sotto  = f"🔄 {_reset_str}"
             _barra  = (
-                '<div style="background:rgba(255,255,255,.12);border-radius:10px;'
+                f'<div style="background:{T.get("sidebar_border", "#475569")};border-radius:10px;'
                 'overflow:hidden;height:4px;width:100%;position:relative;">'
                 f'<div style="width:{_perc_uso}%;background:{_color_bar};height:100%;'
                 'border-radius:10px;transition:width .6s ease;position:absolute;'

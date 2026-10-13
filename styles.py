@@ -14,10 +14,9 @@ def get_css(T: dict) -> str:
     _SB_BORDER = T.get("sidebar_border", "#475569")  # Grigio medio per bordi più visibili
     _SB_INPUT_BG   = T.get("sidebar_input_bg", "#334155")  # Input più scuri per contrasto
     _SB_INPUT_TEXT = T.get("sidebar_input_text", "#F8FAFC")  # Bianco quasi puro
-    # La sidebar ha sempre sfondo scuro → i colori testo DEVONO essere chiari
-    # indipendentemente dal tema principale (chiaro/scuro).
+    # I colori della sidebar seguono il tema: chiara in Carta, scura in Notte.
     _SB_TEXT   = _SB_INPUT_TEXT
-    _SB_MUTED  = "#CBD5E1"   # Grigio chiaro per label (più visibile)
+    _SB_MUTED  = T.get("sidebar_muted", "#CBD5E1")
 
     _is_light = _is_light_color(T["bg"])
 
@@ -4362,8 +4361,8 @@ font-family: 'DM Sans', sans-serif;
 
   /* Expander nella sidebar (sfondo sempre scuro): testo chiaro e leggibile */
   html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] {{
-    background: rgba(255,255,255,.05) !important;
-    background-color: rgba(255,255,255,.05) !important;
+    background: {_SB_INPUT_BG} !important;
+    background-color: {_SB_INPUT_BG} !important;
     border: 1px solid {_SB_BORDER} !important;
     border-radius: 10px !important;
     margin-bottom: .6rem !important;
