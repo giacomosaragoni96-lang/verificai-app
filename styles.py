@@ -4599,43 +4599,58 @@ font-family: 'DM Sans', sans-serif;
   }}
   html body .stApp .dl-cta-wrap {{ margin-bottom: .8rem !important; }}
 
-  /* ── "Altre versioni": card sobrie, una sola tinta, pulsante attaccato alla card ── */
+  /* ── "Altre versioni": una riga per versione (testo a sinistra, azione a destra) ── */
   .variant-card {{
     height: auto !important;
-    min-height: 150px !important;
-    margin-bottom: 0 !important;
-    border-bottom-left-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-    border-bottom: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
     box-shadow: none !important;
     transform: none !important;
+    overflow: visible !important;
+    display: block !important;
   }}
   .variant-card::before {{ display: none !important; }}
   .variant-card:hover {{ transform: none !important; box-shadow: none !important; }}
-  .variant-card-icon {{ font-size: 1.15rem !important; }}
+  .variant-card-header {{ margin-bottom: .2rem !important; }}
+  .variant-card-icon {{ font-size: 1.1rem !important; }}
   .variant-card-title {{ font-size: 1rem !important; }}
-  .variant-card-desc {{ font-size: .88rem !important; line-height: 1.4 !important; }}
-  html body .stApp [data-testid="stColumn"]:has(.variant-card) button,
-  html body .stApp [data-testid="stColumn"]:has(.variant-card) button[data-testid="stBaseButton-primary"],
-  html body .stApp [data-testid="stColumn"]:has(.variant-card) [data-testid="stDownloadButton"] button {{
+  .variant-card-desc {{
+    display: block !important;
+    flex-grow: 0 !important;
+    font-size: .88rem !important;
+    line-height: 1.4 !important;
+    overflow: visible !important;
+    max-height: none !important;
+    -webkit-line-clamp: unset !important;
+    -webkit-box-orient: initial !important;
+  }}
+  html body .stApp [data-testid="stVerticalBlockBorderWrapper"]:has(.variant-card) {{
+    border: 1px solid {T['border']} !important;
+    border-radius: {_radius_lg} !important;
+    background: {T['card']} !important;
+    padding: .35rem .5rem !important;
+  }}
+  html body .stApp [data-testid="stVerticalBlockBorderWrapper"]:has(.variant-card) button,
+  html body .stApp [data-testid="stVerticalBlockBorderWrapper"]:has(.variant-card) button[data-testid="stBaseButton-primary"],
+  html body .stApp [data-testid="stVerticalBlockBorderWrapper"]:has(.variant-card) [data-testid="stDownloadButton"] button {{
     background: {T['card']} !important;
     color: {_acc} !important;
     -webkit-text-fill-color: {_acc} !important;
-    border: 1px solid {T['border']} !important;
-    border-top: 1px solid {T['border']} !important;
-    border-radius: 0 0 {_radius_lg} {_radius_lg} !important;
+    border: 1.5px solid {T['border2']} !important;
+    border-radius: {_radius_md} !important;
     box-shadow: none !important;
     min-height: 44px !important;
     font-size: .92rem !important;
     font-weight: 700 !important;
   }}
-  html body .stApp [data-testid="stColumn"]:has(.variant-card) button:hover {{
+  html body .stApp [data-testid="stVerticalBlockBorderWrapper"]:has(.variant-card) button:hover {{
     background: {T['hover']} !important;
     border-color: {_acc} !important;
     transform: none !important;
-  }}
-  html body .stApp [data-testid="stColumn"]:has(.variant-card) [data-testid="stElementContainer"]:has(button) {{
-    margin-top: -1px !important;
   }}
 
   /* Sidebar: meno vuoto in cima */

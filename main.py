@@ -1752,7 +1752,7 @@ def _render_percorso_b_form():
             con_griglia  = mostra_punteggi
             punti_totali = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
 
-            with st.expander("Altre opzioni (numero esercizi, punteggi, struttura)", expanded=False, icon=":material/tune:"):
+            with st.expander("Altre opzioni (numero esercizi, punteggi)", expanded=False, icon=":material/tune:"):
 
                 st.markdown('<div class="opt-label">Numero esatto di esercizi</div>', unsafe_allow_html=True)
                 num_esercizi = st.selectbox(
@@ -3773,7 +3773,12 @@ def _render_stage_final():
         f'<div class="variant-section-label">ALTRE VERSIONI DELLA VERIFICA</div>',
         unsafe_allow_html=True
     )
-    _vc1, _vc2, _vc3, _vc4, _vc5 = st.columns(5, gap="medium")
+    # Una riga per versione (titolo + descrizione a sinistra, azione a destra), nell'ordine a schermo
+    _rw = []
+    for _ in range(5):
+        with st.container(border=True):
+            _rw.append(st.columns([3.4, 1.6], vertical_alignment="center", gap="medium"))
+    (_vc1, _vb1), (_vc2, _vb2), (_vc3, _vb3), (_vc4, _vb4), (_vc5, _vb5) = _rw   # Fila B, BES, Soluzioni, Griglia, Word
 
     # ── FILA B ────────────────────────────────────────────────────────────────
     with _vc1:
@@ -3786,27 +3791,28 @@ def _render_stage_final():
             f'    <span class="variant-card-icon">📋</span>'
             f'    <span class="variant-card-title">Fila B</span>'
             f'  </div>'
-            f'  <div class="variant-card-desc">Stessa struttura, stessi punteggi — solo i dati cambiano. Pronta in secondi.</div>'
+            f'  <div class="variant-card-desc">Stessa struttura e stessi punteggi, con dati diversi. Pronta in pochi secondi.</div>'
             f'</div>',
             unsafe_allow_html=True
         )
-        if _b_pdf:
-            st.download_button(
-                f"⬇ Scarica Fila B (PDF) · {_stima(_b_pdf)}",
-                data=_b_pdf, file_name=arg_str+"_FilaB.pdf",
-                mime="application/pdf", use_container_width=True, key="dl_pdf_B_v2",
-            )
-        elif _b_lat:
-            if st.button("📄 Crea PDF Fila B", key="compile_B_v2",
-                         use_container_width=True, type="primary"):
-                with st.spinner("Compilazione PDF Fila B in corso…"):
-                    _pdf_bc, _ = compila_pdf(_b_lat)
-                if _pdf_bc:
-                    st.session_state.verifiche["B"]["pdf"] = _pdf_bc; st.rerun()
-        else:
-            if st.button("⚡ Genera Fila B", key="one_click_B_v2",
-                         use_container_width=True, type="primary"):
-                st.session_state["_gen_fila_b"] = True; st.rerun()
+        with _vb1:
+            if _b_pdf:
+                st.download_button(
+                    f"⬇ Scarica Fila B (PDF) · {_stima(_b_pdf)}",
+                    data=_b_pdf, file_name=arg_str+"_FilaB.pdf",
+                    mime="application/pdf", use_container_width=True, key="dl_pdf_B_v2",
+                )
+            elif _b_lat:
+                if st.button("📄 Crea PDF Fila B", key="compile_B_v2",
+                             use_container_width=True, type="primary"):
+                    with st.spinner("Compilazione PDF Fila B in corso…"):
+                        _pdf_bc, _ = compila_pdf(_b_lat)
+                    if _pdf_bc:
+                        st.session_state.verifiche["B"]["pdf"] = _pdf_bc; st.rerun()
+            else:
+                if st.button("⚡ Genera Fila B", key="one_click_B_v2",
+                             use_container_width=True, type="primary"):
+                    st.session_state["_gen_fila_b"] = True; st.rerun()
 
         if st.session_state.get("_gen_fila_b"):
             st.session_state["_gen_fila_b"] = False
@@ -3847,27 +3853,28 @@ def _render_stage_final():
             f'    <span class="variant-card-icon">🌟</span>'
             f'    <span class="variant-card-title">Versione BES/DSA</span>'
             f'  </div>'
-            f'  <div class="variant-card-desc">Per studenti con Bisogni Educativi Speciali o DSA: linguaggio semplificato, struttura alleggerita, stessi obiettivi.</div>'
+            f'  <div class="variant-card-desc">Per studenti con BES o DSA: linguaggio più semplice e struttura alleggerita.</div>'
             f'</div>',
             unsafe_allow_html=True
         )
-        if _r_pdf:
-            st.download_button(
-                f"⬇ Scarica BES/DSA (PDF) · {_stima(_r_pdf)}",
-                data=_r_pdf, file_name=arg_str+"_BES_FilaA.pdf",
-                mime="application/pdf", use_container_width=True, key="dl_pdf_R_v2",
-            )
-        elif _r_lat:
-            if st.button("📄 Crea PDF BES/DSA", key="compile_R_v2",
-                         use_container_width=True, type="primary"):
-                with st.spinner("Compilazione PDF BES/DSA in corso…"):
-                    _pdf_rc, _ = compila_pdf(_r_lat)
-                if _pdf_rc:
-                    st.session_state.verifiche["R"]["pdf"] = _pdf_rc; st.rerun()
-        else:
-            if st.button("🌟 Genera BES/DSA", key="one_click_R_v2",
-                         use_container_width=True, type="primary"):
-                st.session_state["_gen_bes"] = True; st.rerun()
+        with _vb2:
+            if _r_pdf:
+                st.download_button(
+                    f"⬇ Scarica BES/DSA (PDF) · {_stima(_r_pdf)}",
+                    data=_r_pdf, file_name=arg_str+"_BES_FilaA.pdf",
+                    mime="application/pdf", use_container_width=True, key="dl_pdf_R_v2",
+                )
+            elif _r_lat:
+                if st.button("📄 Crea PDF BES/DSA", key="compile_R_v2",
+                             use_container_width=True, type="primary"):
+                    with st.spinner("Compilazione PDF BES/DSA in corso…"):
+                        _pdf_rc, _ = compila_pdf(_r_lat)
+                    if _pdf_rc:
+                        st.session_state.verifiche["R"]["pdf"] = _pdf_rc; st.rerun()
+            else:
+                if st.button("🌟 Genera BES/DSA", key="one_click_R_v2",
+                             use_container_width=True, type="primary"):
+                    st.session_state["_gen_bes"] = True; st.rerun()
 
         if st.session_state.get("_gen_bes"):
             st.session_state["_gen_bes"] = False
@@ -3894,27 +3901,28 @@ def _render_stage_final():
             f'    <span class="variant-card-icon">📝</span>'
             f'    <span class="variant-card-title">Soluzioni</span>'
             f'  </div>'
-            f'  <div class="variant-card-desc">Documento riservato al docente con risposte complete e svolgimenti.</div>'
+            f'  <div class="variant-card-desc">Riservate al docente: risposte complete e svolgimenti.</div>'
             f'</div>',
             unsafe_allow_html=True
         )
-        if _s_pdf:
-            st.download_button(
-                f"⬇ Scarica Soluzioni (PDF) · {_stima(_s_pdf)}",
-                data=_s_pdf, file_name=arg_str+"_Soluzioni.pdf",
-                mime="application/pdf", use_container_width=True, key="dl_pdf_S_v2",
-            )
-        elif _s_lat:
-            if st.button("📄 Crea PDF Soluzioni", key="compile_S_v2",
-                         use_container_width=True, type="primary"):
-                with st.spinner("Compilazione PDF Soluzioni in corso…"):
-                    _pdf_sc, _ = compila_pdf(_s_lat)
-                if _pdf_sc:
-                    st.session_state.verifiche["S"]["pdf"] = _pdf_sc; st.rerun()
-        else:
-            if st.button("✅ Genera Soluzioni", key="one_click_S_v2",
-                         use_container_width=True, type="primary"):
-                st.session_state["_gen_sol"] = True; st.rerun()
+        with _vb3:
+            if _s_pdf:
+                st.download_button(
+                    f"⬇ Scarica Soluzioni (PDF) · {_stima(_s_pdf)}",
+                    data=_s_pdf, file_name=arg_str+"_Soluzioni.pdf",
+                    mime="application/pdf", use_container_width=True, key="dl_pdf_S_v2",
+                )
+            elif _s_lat:
+                if st.button("📄 Crea PDF Soluzioni", key="compile_S_v2",
+                             use_container_width=True, type="primary"):
+                    with st.spinner("Compilazione PDF Soluzioni in corso…"):
+                        _pdf_sc, _ = compila_pdf(_s_lat)
+                    if _pdf_sc:
+                        st.session_state.verifiche["S"]["pdf"] = _pdf_sc; st.rerun()
+            else:
+                if st.button("✅ Genera Soluzioni", key="one_click_S_v2",
+                             use_container_width=True, type="primary"):
+                    st.session_state["_gen_sol"] = True; st.rerun()
 
         if st.session_state.get("_gen_sol"):
             st.session_state["_gen_sol"] = False
@@ -3940,38 +3948,39 @@ def _render_stage_final():
             f'    <span class="variant-card-icon">📝</span>'
             f'    <span class="variant-card-title">Formato Word</span>'
             f'  </div>'
-            f'  <div class="variant-card-desc">Documento .docx modificabile, compatibile con Microsoft Word e Google Docs.</div>'
+            f'  <div class="variant-card-desc">File .docx modificabile con Word o Google Docs.</div>'
             f'</div>',
             unsafe_allow_html=True
         )
-        if _docx_a:
-            st.download_button(
-                f"⬇ Scarica Word (.docx) · {_stima(_docx_a)}",
-                data=_docx_a,
-                file_name=arg_str + "_FilaA.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True,
-                key="dl_docx_A_card",
-            )
-        elif vA.get("latex"):
-            if st.button("📝 Genera Word", key="gen_docx_A_card",
-                         use_container_width=True, type="primary"):
-                st.session_state[_docx_key] = True
-            if st.session_state.get(_docx_key, False):
-                with st.spinner("Conversione in formato Word in corso… (30–60 sec)"):
-                    try:
-                        _db, _emsg = latex_to_docx_via_ai(vA["latex"], con_griglia=con_griglia)
-                    except Exception as _e:
-                        _db, _emsg = None, str(_e)
-                st.session_state[_docx_key] = False
-                if _db:
-                    st.session_state.verifiche["A"]["docx"] = _db; st.rerun()
-                else:
-                    _mostra_errore("Non sono riuscito a creare il file Word", _emsg,
-                                   riprova_flag=_docx_key, riprova_key="riprova_word",
-                                   consiglio="Riprova: la conversione a volte richiede un secondo tentativo.")
-        else:
-            st.caption("PDF non ancora disponibile")
+        with _vb5:
+            if _docx_a:
+                st.download_button(
+                    f"⬇ Scarica Word (.docx) · {_stima(_docx_a)}",
+                    data=_docx_a,
+                    file_name=arg_str + "_FilaA.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True,
+                    key="dl_docx_A_card",
+                )
+            elif vA.get("latex"):
+                if st.button("📝 Genera Word", key="gen_docx_A_card",
+                             use_container_width=True, type="primary"):
+                    st.session_state[_docx_key] = True
+                if st.session_state.get(_docx_key, False):
+                    with st.spinner("Conversione in formato Word in corso… (30–60 sec)"):
+                        try:
+                            _db, _emsg = latex_to_docx_via_ai(vA["latex"], con_griglia=con_griglia)
+                        except Exception as _e:
+                            _db, _emsg = None, str(_e)
+                    st.session_state[_docx_key] = False
+                    if _db:
+                        st.session_state.verifiche["A"]["docx"] = _db; st.rerun()
+                    else:
+                        _mostra_errore("Non sono riuscito a creare il file Word", _emsg,
+                                       riprova_flag=_docx_key, riprova_key="riprova_word",
+                                       consiglio="Riprova: la conversione a volte richiede un secondo tentativo.")
+            else:
+                st.caption("PDF non ancora disponibile")
 
     # ── GRIGLIA DI VALUTAZIONE — 4a card one-click ──────────────────────────
     with _vc4:
@@ -3982,43 +3991,44 @@ def _render_stage_final():
             f'    <span class="variant-card-icon">📊</span>'
             f'    <span class="variant-card-title">Griglia di Valutazione</span>'
             f'  </div>'
-            f'  <div class="variant-card-desc">Griglia voti per competenze con indicatori. Allineata alle Linee Guida MIM.</div>'
+            f'  <div class="variant-card-desc">Griglia di valutazione per competenze (Linee Guida MIM).</div>'
             f'</div>',
             unsafe_allow_html=True
         )
-        if _rub_ready:
-            # Genera DOCX al volo se non ancora cached
-            if not st.session_state.get('_rubrica_docx'):
-                _docx_bytes = _rubrica_to_docx(
-                    st.session_state.rubrica_testo,
-                    materia=mat_str,
-                    livello=scu_str,
-                    argomento=arg_str,
-                )
-                if _docx_bytes:
-                    st.session_state['_rubrica_docx'] = _docx_bytes
-            _rub_docx = st.session_state.get('_rubrica_docx')
-            if _rub_docx:
-                st.download_button(
-                    '⬇ Scarica Griglia (.docx)',
-                    data=_rub_docx,
-                    file_name=arg_str + '_GrigliaValutazione.docx',
-                    mime='application/vnd.openxmlformats-officedocument'
-                         '.wordprocessingml.document',
-                    key='dl_rubrica_docx_v2', use_container_width=True,
-                )
+        with _vb4:
+            if _rub_ready:
+                # Genera DOCX al volo se non ancora cached
+                if not st.session_state.get('_rubrica_docx'):
+                    _docx_bytes = _rubrica_to_docx(
+                        st.session_state.rubrica_testo,
+                        materia=mat_str,
+                        livello=scu_str,
+                        argomento=arg_str,
+                    )
+                    if _docx_bytes:
+                        st.session_state['_rubrica_docx'] = _docx_bytes
+                _rub_docx = st.session_state.get('_rubrica_docx')
+                if _rub_docx:
+                    st.download_button(
+                        '⬇ Scarica Griglia (.docx)',
+                        data=_rub_docx,
+                        file_name=arg_str + '_GrigliaValutazione.docx',
+                        mime='application/vnd.openxmlformats-officedocument'
+                             '.wordprocessingml.document',
+                        key='dl_rubrica_docx_v2', use_container_width=True,
+                    )
+                else:
+                    st.download_button(
+                        '⬇ Scarica griglia (.txt)',
+                        data=st.session_state.rubrica_testo.encode('utf-8'),
+                        file_name=arg_str + '_Griglia.txt',
+                        mime='text/plain', key='dl_rubrica_v2', use_container_width=True,
+                    )
             else:
-                st.download_button(
-                    '⬇ Scarica griglia (.txt)',
-                    data=st.session_state.rubrica_testo.encode('utf-8'),
-                    file_name=arg_str + '_Griglia.txt',
-                    mime='text/plain', key='dl_rubrica_v2', use_container_width=True,
-                )
-        else:
-            if st.button('📊 Genera Griglia', key='btn_gen_griglia_v2',
-                         use_container_width=True, type='primary'):
-                st.session_state._rubrica_gen = True
-                st.rerun()
+                if st.button('📊 Genera Griglia', key='btn_gen_griglia_v2',
+                             use_container_width=True, type='primary'):
+                    st.session_state._rubrica_gen = True
+                    st.rerun()
         if st.session_state.get('_rubrica_gen') and not _rub_ready:
             st.session_state['_rubrica_gen'] = False
             _rph = st.empty()
@@ -4047,20 +4057,22 @@ def _render_stage_final():
     _latex_a_share = vA.get("latex", "")
 
     if _latex_a_share:
-        st.markdown(
-            f'<div class="share-dept-card">'
-            f'  <div class="share-dept-header">'
-            f'    <span class="share-dept-icon">📤</span>'
-            f'    <div class="share-dept-title-wrap">'
-            f'      <div class="share-dept-title">Condividi con il Dipartimento</div>'
-            f'      <div class="share-dept-subtitle">'
-            f'I colleghi potranno visualizzare la tua verifica e generare la propria variante con un click.'
-            f'      </div>'
-            f'    </div>'
-            f'  </div>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
+        if _share_code:
+            st.markdown(
+                f'<div class="share-dept-card">'
+                f'  <div class="share-dept-header">'
+                f'    <span class="share-dept-icon">📤</span>'
+                f'    <div class="share-dept-title-wrap">'
+                f'      <div class="share-dept-title">Condividi con il Dipartimento</div>'
+                f'      <div class="share-dept-subtitle">'
+                f'I colleghi potranno visualizzare la tua verifica e generare la propria variante con un click.'
+                f'      </div>'
+                f'    </div>'
+                f'  </div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+
 
         if _share_code:
             # Link già generato — mostra con copy
@@ -4110,11 +4122,22 @@ def _render_stage_final():
                 unsafe_allow_html=True
             )
         else:
-            # Genera link
-            if st.button("📤 Genera link di condivisione", key="btn_share_gen",
-                         use_container_width=True):
-                st.session_state._share_generating = True
-                st.rerun()
+            # Genera link: una riga come le altre versioni
+            with st.container(border=True):
+                _sd1, _sd2 = st.columns([3.4, 1.6], vertical_alignment="center", gap="medium")
+                _sd1.markdown(
+                    '<div class="variant-card">'
+                    '<div class="variant-card-header">'
+                    '<span class="variant-card-icon">📤</span>'
+                    '<span class="variant-card-title">Condividi con i colleghi</span></div>'
+                    '<div class="variant-card-desc">Un link: chi lo apre vede l’anteprima e può generare la propria variante.</div>'
+                    '</div>',
+                    unsafe_allow_html=True,
+                )
+                with _sd2:
+                    if st.button("Genera link", key="btn_share_gen", use_container_width=True):
+                        st.session_state._share_generating = True
+                        st.rerun()
 
             if st.session_state.get("_share_generating"):
                 st.session_state._share_generating = False
