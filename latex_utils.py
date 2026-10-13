@@ -1796,9 +1796,10 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     
     logger = logging.getLogger(__name__)
     
-    # Verifica che pdflatex sia disponibile
+    # Verifica che pdflatex sia disponibile e se è MiKTeX (TeX Live non conosce -disable-installer)
     try:
         result = subprocess.run(["pdflatex", "--version"], capture_output=True, text=True, timeout=5)
+        is_miktex = "miktex" in (result.stdout or "").lower()
         if result.returncode != 0:
             logger.error("✗ pdflatex non disponibile")
             return None, "⚠️ LaTeX non è disponibile in questo ambiente."
@@ -1829,8 +1830,13 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
             logger.info("✓ File LaTeX scritto")
 
             logger.info("Avvio compilazione pdflatex...")
+            # Il LaTeX generato dall'AI è input non fidato: niente shell-escape.
+            cmd = ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, "-no-shell-escape"]
+            if is_miktex:
+                cmd.append("-disable-installer")
+            cmd.append(tex_path)
             result = subprocess.run(
-                ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, "-shell-escape", "-disable-installer", tex_path],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=30
