@@ -274,6 +274,9 @@ def _assembla_e_compila(
         corpo_pulito = extract_corpo(latex)
         corpo_con_punti = assicura_punti_visibili(corpo_pulito, punti_totali)
         latex = preambolo + corpo_con_punti
+        # extract_corpo esclude \end{document}: senza griglia (inietta_griglia lo rimetteva) mancherebbe
+        if "\\end{document}" not in latex:
+            latex += "\n\\end{document}"
         latex = rimuovi_punti_subsection(latex)
         # ── CRITICO: prima di riscala_punti, inietta placeholder pts
         # negli esercizi senza \item (domande aperte, esercizi singoli).
