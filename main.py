@@ -43,6 +43,7 @@ from config import (
     APP_NAME, APP_ICON, SHARE_URL, FEEDBACK_FORM_URL,
     LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
+    DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS,
 )
 from dotenv import load_dotenv
@@ -832,7 +833,7 @@ def _load_user_defaults() -> dict:
 
 def _save_user_defaults_silent(materia: str, scuola: str,
                                 num_esercizi: int, mostra_punteggi: bool,
-                                punti_totali: int) -> None:
+                                punti_totali: int, durata: str | None = None) -> None:
     """
     Salva silenziosamente i defaults del form.
     Chiamata dopo ogni generazione o quando i campi cambiano.
@@ -848,6 +849,8 @@ def _save_user_defaults_silent(materia: str, scuola: str,
         "mostra_punteggi": mostra_punteggi,
         "punti_totali": punti_totali,
     }
+    if durata in DURATE:
+        defaults["durata"] = durata      # Breve / Standard / Lunga (stesso campo jsonb)
     # Evita write se nulla è cambiato
     cached = st.session_state._user_defaults or {}
     if cached == defaults:
@@ -1947,7 +1950,9 @@ def _render_percorso_b_form():
                 file_ispirazione=st.session_state.get("file_ispirazione"),
                 prog_placeholder=_prog_fac,
             )
-            return
+            # La generazione fallita non fa rerun: restituisce valori neutri (nessun avvio)
+            return ("", "Matematica", SCUOLE[0], True, True, 100, _n_fac, "", False,
+                    _prog_fac, "1 ora", DURATA_DEFAULT)
 
     # ── Toast post-analisi file (mostrato una volta sola dopo il rerun) ──────────
     _toast_msg = st.session_state.pop("_toast_analisi", None)
@@ -1966,7 +1971,6 @@ def _render_percorso_b_form():
             # ── Dashboard: sezione form (layout bilanciato) ───────────────────────
             # Section header rimosso per evitare ripetizioni
 
-            _col_m, _col_s = st.columns(2, gap="small")
             _mat_list = MATERIE + ["✏️ Altra materia..."]
             _mat_prev = _prev.get("materia") or _udef.get("materia", "Matematica")
             _mat_idx  = _mat_list.index(_mat_prev) if _mat_prev in _mat_list else 0
@@ -1979,6 +1983,17 @@ def _render_percorso_b_form():
                 _mat_idx = _mat_list.index(_info_cons["materia"])
             if _info_cons.get("scuola") and _info_cons["scuola"] in SCUOLE:
                 _scu_idx = SCUOLE.index(_info_cons["scuola"])
+
+            # Materia e scuola già note (ultima verifica): una riga compatta con "cambia";
+            # alla prima visita restano visibili entrambi i menu.
+            _mat_ora = st.session_state.get("sel_materia_b", _mat_list[_mat_idx])
+            _scu_ora = st.session_state.get("sel_scuola_b", SCUOLE[_scu_idx])
+            if _udef.get("materia") and _udef.get("scuola"):
+                _box_ms = st.expander(f"📚 {_mat_ora} · {_scu_ora}  —  cambia", expanded=False)
+            else:
+                _box_ms = st.container()
+            with _box_ms:
+                _col_m, _col_s = st.columns(2, gap="small")
 
             with _col_m:
                 st.markdown('<div class="opt-label">Materia ✱</div>', unsafe_allow_html=True)
@@ -2072,25 +2087,33 @@ def _render_percorso_b_form():
                 _prefs = _carica_docente_preferenze(st.session_state.utente.id, materia_scelta)
                 st.session_state._docente_prefs[materia_scelta] = _prefs
 
-            # Calcola default num_esercizi (serve dentro l'expander)
-            _n_default = _udef.get("num_esercizi", 4)
+            # ── DURATA: un solo scatto sceglie numero di esercizi e tempo previsto ──────
+            _nomi_dur = list(DURATE)
+            _dur_salvata = _udef.get("durata")
+            if _dur_salvata not in DURATE:
+                _n_salvato = _udef.get("num_esercizi")
+                _dur_salvata = (
+                    min(_nomi_dur, key=lambda n: abs(DURATE[n]["num_esercizi"] - _n_salvato))
+                    if isinstance(_n_salvato, int) else DURATA_DEFAULT
+                )
+            st.markdown('<div class="opt-label">Quanto deve essere lunga?</div>', unsafe_allow_html=True)
+            durata_nome = st.radio(
+                "Durata", _nomi_dur, index=_nomi_dur.index(_dur_salvata),
+                format_func=lambda n: etichetta_durata(n, difficolta),
+                horizontal=True, key="sel_durata_b", label_visibility="collapsed",
+            )
+            _par_dur   = parametri_durata(durata_nome, difficolta)
+            durata_str = _par_dur["durata"]
+
+            # Numero di esercizi di partenza: dal file (verifica da rifare) o dalla durata scelta
+            _n_default = _par_dur["num_esercizi"]
             if _info_cons.get("num_esercizi_rilevati"):
                 try:
                     _n_default = max(1, min(int(_info_cons["num_esercizi_rilevati"]), 15))
                 except (ValueError, TypeError):
                     pass
-
-            # Section header rimosso per evitare ripetizioni
             _n_opts = list(range(1, 16))
             _n_idx  = (_n_opts.index(_n_default) if _n_default in _n_opts else 3)
-            num_esercizi = st.selectbox(
-                "Numero esercizi",
-                options=_n_opts,
-                index=_n_idx,
-                label_visibility="collapsed",
-                key="sel_num_es_b",
-                format_func=lambda x: f"{x} esercizi",
-            )
 
             # ── Divisore sottile prima di Personalizzazione ──────────────────────
             st.markdown('<div class="divider-minimal"></div>', unsafe_allow_html=True)
@@ -2100,7 +2123,17 @@ def _render_percorso_b_form():
             con_griglia  = mostra_punteggi
             punti_totali = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
 
-            with st.expander("⚙️ Altre opzioni (punteggi e struttura)", expanded=False):
+            with st.expander("⚙️ Altre opzioni (numero esercizi, punteggi, struttura)", expanded=False):
+
+                st.markdown('<div class="opt-label">Numero esatto di esercizi</div>', unsafe_allow_html=True)
+                num_esercizi = st.selectbox(
+                    "Numero esercizi",
+                    options=_n_opts,
+                    index=_n_idx,
+                    label_visibility="collapsed",
+                    key=f"sel_num_es_b_{durata_nome}",   # cambia con la durata: riparte dal preset
+                    format_func=lambda x: f"{x} esercizi",
+                )
 
                 if _prefs.get("stile_desc"):
                     st.markdown(
@@ -2450,6 +2483,8 @@ def _render_percorso_b_form():
         note_extra_finale,
         genera_btn,
         _prog_placeholder,
+        durata_str,
+        durata_nome,
     )
 
 
@@ -2621,6 +2656,7 @@ def _lancia_generazione(
             num_esercizi=num_esercizi_totali,
             mostra_punteggi=mostra_punteggi,
             punti_totali=punti_totali,
+            durata=next((n for n, v in DURATE.items() if v["durata"] == durata_scelta), None),
         )
 
         # ── Vai alla schermata del risultato (anteprima + download + modifica)
@@ -2654,7 +2690,7 @@ def _render_stage_input():
             argomento, materia_scelta, difficolta,
             mostra_punteggi, con_griglia, punti_totali,
             num_esercizi_totali, note_extra, genera_btn,
-            _prog_ph_b,
+            _prog_ph_b, durata_str, durata_nome,
         ) = _render_percorso_b_form()
 
         _riprova = st.session_state.pop("_riprova_genera", False)
@@ -2715,7 +2751,7 @@ def _render_stage_input():
             materia_scelta=materia_scelta,
             argomento=argomento,
             difficolta=difficolta,
-            durata_scelta="1 ora",
+            durata_scelta=durata_str,
             num_esercizi_totali=num_esercizi_totali,
             punti_totali=punti_totali,
             mostra_punteggi=mostra_punteggi,
