@@ -315,10 +315,12 @@ def _assembla_e_compila(
         # Fallback senza griglia
         if con_griglia and mostra_punteggi:
             logger.warning("Tento fallback senza griglia di punteggi")
-            pdf, _ = compila_pdf(latex)
+            # Senza griglia il corpo non ha più \end{document} (lo rimetteva inietta_griglia)
+            latex_no_griglia = latex if "\\end{document}" in latex else latex + "\n\\end{document}"
+            pdf, _ = compila_pdf(latex_no_griglia)
             if pdf:
                 logger.info("PDF generato senza griglia")
-                return latex, pdf
+                return latex_no_griglia, pdf
         
         # Grafici TikZ sostituiti da un segnaposto, stesso preambolo
         if "\\begin{tikzpicture}" in latex_final:
