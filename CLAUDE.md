@@ -96,6 +96,8 @@ Non si toccano lo schema né le tabelle dal codice dell'app.
 - `prompts.py`: nell'esempio tabelle `\\\\begin` produce `\\begin` (LaTeX errato per il modello).
 - `_safe_generate` riprova anche su errori non recuperabili (429 crediti, chiave non valida).
 - `google-generativeai` è deprecata (da migrare a `google-genai`).
+- `main.py`: `_get_verifiche_mese` ritorna 0 in caso di errore Supabase, quindi il contatore si azzera e il limite mensile viene aggirato.
+- `main.py`: `_lancia_generazione` non ricontrolla il limite mensile; lo fa solo il `disabled` del pulsante Genera.
 
 ## Lingua
 
