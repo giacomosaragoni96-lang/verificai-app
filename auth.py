@@ -1,6 +1,12 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import base64
+import hashlib
+import html
+import os
+import secrets as _secrets
 import time
+from urllib.parse import urlencode
 
 # ── NIENTE PIÙ COOKIE — usiamo i query params dell'URL ───────────────────────
 # Dopo il login l'URL diventa: https://tuaapp.streamlit.app/?rt=TOKEN
@@ -51,6 +57,11 @@ def ripristina_sessione(supabase):
     if st.session_state.get("utente") is not None:
         return
 
+    # Ritorno da Google (?code=...): scambia il codice e crea la sessione
+    gestisci_ritorno_google(supabase)
+    if st.session_state.get("utente") is not None:
+        return
+
     rt = st.query_params.get("rt", None)
     if not rt:
         return
@@ -75,6 +86,111 @@ def salva_sessione_cookie(res):
 def cancella_sessione_cookie():
     """Rimuove il token dall'URL al logout."""
     st.query_params.pop("rt", None)
+
+
+# ── LOGIN CON GOOGLE — Supabase OAuth con PKCE ───────────────────────────────
+# Il browser va su Google passando da Supabase e torna all'app con ?code=...
+# Dopo il ritorno la sessione Streamlit è nuova, quindi il "code_verifier" PKCE
+# resta in memoria sul server (cache condivisa, scade in 10 minuti) e si ritrova
+# con l'id in ?goauth=. Poi il flusso è quello di sempre: sessione in ?rt=TOKEN.
+_PKCE_SCADENZA = 600
+
+
+@st.cache_resource
+def _pkce_pendenti() -> dict:
+    return {}
+
+
+def _b64url(dati: bytes) -> str:
+    return base64.urlsafe_b64encode(dati).rstrip(b"=").decode()
+
+
+def _url_app() -> str:
+    try:
+        url = st.secrets.get("APP_URL")
+    except Exception:
+        url = None
+    if not url:
+        try:
+            from config import SHARE_URL as url
+        except Exception:
+            url = "https://verificai.streamlit.app"
+    return str(url).rstrip("/")
+
+
+def url_login_google():
+    """Indirizzo a cui mandare il browser per il login con Google (None se non configurato)."""
+    try:
+        base = str(st.secrets["SUPABASE_URL"]).rstrip("/")
+    except Exception:
+        return None
+
+    ora = time.time()
+    in_cache = st.session_state.get("_google_login")
+    if in_cache and ora - in_cache["t"] < _PKCE_SCADENZA * 0.8:
+        return in_cache["url"]
+
+    pendenti = _pkce_pendenti()
+    for k in [k for k, (_, t) in pendenti.items() if ora - t > _PKCE_SCADENZA]:
+        pendenti.pop(k, None)
+    while len(pendenti) >= 200:
+        pendenti.pop(next(iter(pendenti)), None)
+
+    verifier  = _b64url(os.urandom(48))
+    challenge = _b64url(hashlib.sha256(verifier.encode()).digest())
+    sid       = _secrets.token_urlsafe(12)
+    pendenti[sid] = (verifier, ora)
+
+    redirect_to = f"{_url_app()}/?" + urlencode({"goauth": sid})
+    url = f"{base}/auth/v1/authorize?" + urlencode({
+        "provider": "google",
+        "redirect_to": redirect_to,
+        "code_challenge": challenge,
+        "code_challenge_method": "s256",
+    })
+    st.session_state["_google_login"] = {"url": url, "t": ora}
+    return url
+
+
+def gestisci_ritorno_google(supabase):
+    """Se l'URL contiene ?code=... (ritorno da Google), crea la sessione dell'utente."""
+    qp = st.query_params
+    code    = qp.get("code")
+    errore  = qp.get("error_description") or qp.get("error")
+    if not code and not errore:
+        return
+
+    sid = qp.get("goauth")
+    for chiave in ("code", "goauth", "error", "error_code", "error_description"):
+        qp.pop(chiave, None)
+
+    if not code:
+        st.session_state["_google_errore"] = "Accesso con Google annullato o non riuscito. Riprova."
+        return
+
+    pendenti = _pkce_pendenti()
+    if sid and sid in pendenti:
+        candidati = [pendenti.pop(sid)[0]]
+    else:
+        # Se Supabase ha tolto il parametro dal ritorno, provo gli ultimi accessi avviati
+        recenti = sorted(pendenti.items(), key=lambda kv: -kv[1][1])[:5]
+        candidati = [v for _, (v, _t) in recenti]
+
+    for verifier in candidati:
+        try:
+            res = supabase.auth.exchange_code_for_session(
+                {"auth_code": code, "code_verifier": verifier}
+            )
+        except Exception:
+            continue
+        if res and res.user and res.session:
+            st.session_state.utente               = res.user
+            st.session_state["_sb_access_token"]  = res.session.access_token
+            st.session_state["_sb_refresh_token"] = res.session.refresh_token
+            salva_sessione_cookie(res)
+            return
+
+    st.session_state["_google_errore"] = "Accesso con Google non riuscito. Riprova."
 
 
 # ── FORM LOGIN / REGISTRAZIONE — Elegant dark (Notte-style) ──────────────────
@@ -491,6 +607,29 @@ def mostra_auth(supabase):
 
     <div class="auth-divider"></div>
     """, unsafe_allow_html=True)
+
+    # ── Accedi con Google ────────────────────────────────────────────────────
+    _err_google = st.session_state.pop("_google_errore", None)
+    if _err_google:
+        st.error(_err_google)
+    _url_google = url_login_google()
+    if _url_google:
+        st.markdown(
+            f'<a href="{html.escape(_url_google, quote=True)}" target="_self" style="'
+            'display:flex;align-items:center;justify-content:center;gap:10px;'
+            f'background:#fff;color:{_TEXT};border:1.5px solid {_BORDER2};border-radius:12px;'
+            'padding:.7rem 1rem;font-weight:700;font-size:.97rem;text-decoration:none;'
+            'font-family:DM Sans,sans-serif;margin:.2rem 0 .9rem;">'
+            '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">'
+            '<path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/>'
+            '<path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/>'
+            '<path fill="#FBBC05" d="M10.5 28.7a14.5 14.5 0 0 1 0-9.4l-7.9-6.1a24 24 0 0 0 0 21.6l7.9-6.1z"/>'
+            '<path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/>'
+            '</svg>Continua con Google</a>'
+            f'<div style="text-align:center;color:{_MUTED};font-size:.8rem;margin-bottom:.4rem;'
+            'font-family:DM Sans,sans-serif;">oppure con la tua email</div>',
+            unsafe_allow_html=True,
+        )
 
     # ── Tabs ─────────────────────────────────────────────────────────────────
     tab_login, tab_reg, tab_reset = st.tabs(
