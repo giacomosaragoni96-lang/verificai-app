@@ -630,7 +630,7 @@ def mostra_auth(supabase):
     _url_google = url_login_google()
     if _url_google:
         st.markdown(
-            f'<a href="{html.escape(_url_google, quote=True)}" target="_self" style="'
+            f'<a href="{html.escape(_url_google, quote=True)}" target="_top" rel="noopener" style="'
             'display:flex;align-items:center;justify-content:center;gap:10px;'
             f'background:#fff;color:{_TEXT};border:1.5px solid {_BORDER2};border-radius:12px;'
             'padding:.7rem 1rem;font-weight:700;font-size:.97rem;text-decoration:none;'
