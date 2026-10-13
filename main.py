@@ -645,20 +645,6 @@ components.html(
     f'var BSEL=\'[data-testid="stButton"]>button,div.stButton>button\';'
     f'function fx(){{'
     f'if(isLight){{'
-    # Fix expander open headers on light themes
-    f'd.querySelectorAll(ESEL).forEach(function(e){{'
-    f'e.style.setProperty("background",ebg,"important");'
-    f'e.style.setProperty("background-color",ebg,"important");'
-    f'e.style.setProperty("color",efg,"important");'
-    f'e.style.setProperty("-webkit-text-fill-color",efg,"important");'
-    f'e.style.setProperty("border-bottom",ebd,"important");'
-    f'e.style.setProperty("border-radius","12px 12px 0 0","important");'
-    f'}});'
-    f'd.querySelectorAll(ESEL.split(",").map(function(s){{return s+" *";}}).join(",")).forEach(function(e){{'
-    f'e.style.setProperty("color",efg,"important");'
-    f'e.style.setProperty("-webkit-text-fill-color",efg,"important");'
-    f'e.style.setProperty("background-color","transparent","important");'
-    f'}});'
     # Fix ALL secondary buttons with aggressive inline styles
     f'var allSecBtns = d.querySelectorAll('
     f'  \'button[data-testid="stBaseButton-secondary"],'
@@ -677,12 +663,6 @@ components.html(
     f'  e.style.setProperty("-webkit-text-fill-color","{T["text"]}","important");'
     f'  e.style.setProperty("border","1.5px solid {T["border2"]}","important");'
     f'  e.style.setProperty("border-radius","8px","important");'
-    f'}});'
-    # Fix download buttons
-    f'd.querySelectorAll(\'div.stDownloadButton > button\').forEach(function(e){{'
-    f'  if(e.closest(\'[data-testid="stSidebar"]\'))return;'
-    f'  e.style.setProperty("color","{T.get("success","#059669")}","important");'
-    f'  e.style.setProperty("-webkit-text-fill-color","{T.get("success","#059669")}","important");'
     f'}});'
     f'}}'
     f'}}'
@@ -1708,7 +1688,7 @@ def _render_percorso_b_form():
             _mat_ora = st.session_state.get("sel_materia_b", _mat_list[_mat_idx])
             _scu_ora = st.session_state.get("sel_scuola_b", SCUOLE[_scu_idx])
             if _udef.get("materia") and _udef.get("scuola"):
-                _box_ms = st.expander(f"📚 {_mat_ora} · {_scu_ora}  —  cambia", expanded=False)
+                _box_ms = st.expander(f"{_mat_ora} · {_scu_ora}  —  cambia", expanded=False, icon=":material/school:")
             else:
                 _box_ms = st.container()
             with _box_ms:
@@ -1765,8 +1745,7 @@ def _render_percorso_b_form():
             # ── RICHIESTA UNICA: argomento + indicazioni nello stesso riquadro ─────────
             st.markdown(
                 '<div class="opt-label">Cosa vuoi nella verifica? ✱ '
-                '<span style="font-weight:400;opacity:.6;">— argomento nella prima riga, '
-                'poi cosa includere o evitare</span></div>',
+                '<span class="opt-hint">Argomento nella prima riga, poi cosa includere o evitare</span></div>',
                 unsafe_allow_html=True,
             )
             _esempio = esempio_richiesta(materia_scelta)
@@ -1838,7 +1817,7 @@ def _render_percorso_b_form():
             con_griglia  = mostra_punteggi
             punti_totali = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
 
-            with st.expander("⚙️ Altre opzioni (numero esercizi, punteggi, struttura)", expanded=False):
+            with st.expander("Altre opzioni (numero esercizi, punteggi, struttura)", expanded=False, icon=":material/tune:"):
 
                 st.markdown('<div class="opt-label">Numero esatto di esercizi</div>', unsafe_allow_html=True)
                 num_esercizi = st.selectbox(
@@ -1960,7 +1939,7 @@ def _render_percorso_b_form():
                 st.session_state["_up_ciclo"] += 1
                 st.warning(_rifiuto.get("messaggio") or "Questo file non sembra materiale scolastico.", icon="📎")
             _fm = st.session_state.get("_file_materiale")
-            with st.expander("📎 Hai già del materiale? (opzionale)", expanded=bool(_fm)):
+            with st.expander("Hai già del materiale? (opzionale)", expanded=bool(_fm), icon=":material/attach_file:"):
                 if not _fm:
                     _up = st.file_uploader(
                         "Carica appunti, una verifica o un foglio di esercizi",
@@ -2280,8 +2259,8 @@ def _lancia_generazione(
 def _render_stage_input():
     # La schermata di creazione e' anche la home: titolo breve + form.
     st.markdown(
-        f'<div style="text-align:center;padding:.4rem 0 1.1rem;">'
-        f'<div style="font-family:DM Sans,sans-serif;font-size:2rem;font-weight:900;'
+        f'<div class="vf-narrow" style="text-align:center;padding:.2rem 0 1rem;">'
+        f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
         f'letter-spacing:-.025em;color:{T["text"]};line-height:1.15;">Crea la tua verifica</div>'
         f'<div style="font-size:.98rem;color:{T["text2"]};margin-top:.35rem;'
         f'font-family:DM Sans,sans-serif;">Scrivi cosa ti serve: al resto pensa l’AI.</div></div>',

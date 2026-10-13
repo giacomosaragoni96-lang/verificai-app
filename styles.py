@@ -4405,6 +4405,153 @@ font-family: 'DM Sans', sans-serif;
     stroke: {_SB_INPUT_TEXT} !important;
   }}
 
+  /* ═══ POLISH UX (ultime regole: colore primario coerente, controlli, form) ═══ */
+
+  /* Placeholder davvero grigio (il fill del testo lo rendeva scuro come il testo vero) */
+  html body .stApp textarea::placeholder,
+  html body .stApp input::placeholder {{
+    color: {_placeholder_color} !important;
+    -webkit-text-fill-color: {_placeholder_color} !important;
+    opacity: .85 !important;
+  }}
+
+  /* Pulsante primario: stesso blu del tema ovunque (anche download_button, che era rosso) */
+  html body .stApp button[data-testid="stBaseButton-primary"],
+  html body .stApp button[data-testid="stBaseButton-primaryFormSubmit"],
+  html body .stApp [data-testid="stDownloadButton"] button[data-testid="stBaseButton-primary"] {{
+    background: linear-gradient(135deg, {_acc} 0%, {_acc2} 100%) !important;
+    color: {_btn_text} !important;
+    -webkit-text-fill-color: {_btn_text} !important;
+    border: none !important;
+    border-radius: {_radius_md} !important;
+    font-weight: 700 !important;
+    min-height: 48px !important;
+    box-shadow: 0 4px 16px {_acc_glow} !important;
+  }}
+  html body .stApp button[data-testid="stBaseButton-primary"]:disabled {{
+    background: {T['bg2']} !important;
+    color: {T['muted']} !important;
+    -webkit-text-fill-color: {T['muted']} !important;
+    border: 1.5px dashed {T['border2']} !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }}
+  html body .stApp button[data-testid="stBaseButton-primary"] p,
+  html body .stApp button[data-testid="stBaseButton-primary"] span {{
+    color: inherit !important;
+    -webkit-text-fill-color: inherit !important;
+  }}
+
+  /* "Crea verifica": grande ma sobrio, nello stesso blu del resto (via il verde/oro) */
+  html body .stApp .cta-genera-wrap button {{
+    min-height: 56px !important;
+    font-size: 1.1rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -.005em !important;
+    border-radius: {_radius_md} !important;
+    border: none !important;
+  }}
+  html body .stApp .cta-genera-wrap button:not(:disabled) {{
+    background: linear-gradient(135deg, {_acc} 0%, {_acc2} 100%) !important;
+    box-shadow: 0 6px 20px {_acc_glow} !important;
+  }}
+  html body .stApp .cta-genera-wrap button:not(:disabled):hover {{
+    background: linear-gradient(135deg, {_acc2} 0%, {_acc} 100%) !important;
+    box-shadow: 0 8px 24px {_acc_ring} !important;
+  }}
+  html body .stApp .cta-genera-wrap button:disabled {{
+    border: 1.5px dashed {T['border2']} !important;
+  }}
+
+  /* Radio: cerchio vuoto se non scelto, anello blu se scelto (prima: tutti neri) */
+  html body .stApp [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child {{
+    background: {T['card']} !important;
+    border: 2px solid {T['border2']} !important;
+    box-shadow: none !important;
+  }}
+  html body .stApp [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) > div:first-child {{
+    background: {T['card']} !important;
+    border: 6px solid {_acc} !important;
+  }}
+
+  /* Toggle e checkbox: blu del tema invece del rosso predefinito */
+  html body .stApp [data-testid="stToggle"] label > div:first-child {{
+    background: {T['border2']} !important;
+  }}
+  html body .stApp [data-testid="stToggle"] label:has(input:checked) > div:first-child {{
+    background: {_acc} !important;
+  }}
+  html body .stApp [data-testid="stCheckbox"] label:has(input:checked) > span:first-child {{
+    background: {_acc} !important;
+    border-color: {_acc} !important;
+  }}
+
+  /* Campi di testo: un solo bordo (quello del campo), blu al focus; via il doppio bordo nero */
+  html body .stApp [data-testid="stTextArea"] [data-baseweb="textarea"],
+  html body .stApp [data-testid="stTextInput"] [data-baseweb="base-input"],
+  html body .stApp [data-testid="stTextInput"] [data-baseweb="input"] {{
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }}
+  html body .stApp [data-testid="stTextArea"] textarea,
+  html body .stApp [data-testid="stTextInput"] input {{
+    border: 1.5px solid {T['border2']} !important;
+  }}
+  html body .stApp [data-testid="stTextArea"] textarea:focus,
+  html body .stApp [data-testid="stTextInput"] input:focus {{
+    border-color: {_acc} !important;
+    box-shadow: 0 0 0 3px {_acc_ring} !important;
+  }}
+
+  /* Schermata di creazione: colonna stretta e centrata, logo piu' piccolo */
+  [data-testid="stMainBlockContainer"]:has(.vf-narrow),
+  .main .block-container:has(.vf-narrow) {{
+    max-width: 820px !important;
+  }}
+  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header {{
+    padding: 1rem 1rem .4rem !important;
+    margin-bottom: 0 !important;
+  }}
+  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-icon {{ font-size: 2.3rem !important; }}
+  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-name {{ font-size: clamp(2.1rem, 5vw, 2.9rem) !important; }}
+  .opt-label .opt-hint {{
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    font-size: .8rem;
+    color: {T['muted']};
+    margin-left: .35rem;
+  }}
+
+  /* Expander del contenuto principale: aspetto unico (aperto e chiuso), nessuna fascia colorata */
+  html body .stApp [data-testid="stMain"] details[data-testid="stExpander"] {{
+    background: {T['card']} !important;
+    border: 1px solid {T['border']} !important;
+    border-radius: {_radius_md} !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+  }}
+  html body .stApp [data-testid="stMain"] details[data-testid="stExpander"] > summary {{
+    background: transparent !important;
+    background-color: transparent !important;
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
+    border: none !important;
+  }}
+  html body .stApp [data-testid="stMain"] details[data-testid="stExpander"][open] > summary {{
+    border-bottom: 1px solid {T['border']} !important;
+  }}
+  html body .stApp [data-testid="stMain"] details[data-testid="stExpander"] > summary:hover {{
+    background: {T['hover']} !important;
+  }}
+  html body .stApp [data-testid="stMain"] details[data-testid="stExpander"] > summary p,
+  html body .stApp [data-testid="stMain"] details[data-testid="stExpander"] > summary span {{
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
+  }}
+
 </style>
 """
 
