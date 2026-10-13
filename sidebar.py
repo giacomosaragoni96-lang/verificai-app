@@ -31,18 +31,19 @@ def render_sidebar(
     theme_changed = False
 
     with st.sidebar:
-        _acc = T.get("sidebar_accent", "#79C0FF")
         # I colori della sidebar seguono il tema (chiara in Carta, scura in Notte);
         # il testo usa sidebar_input_text del tema.
         _sb_text  = T.get("sidebar_input_text", "#E6EDF3")
         _sb_muted = T.get("sidebar_muted", "#94A3B8")
         
-        # Linea separatoria elegante
-        st.markdown(
-            f'<div style="height:2px;background:linear-gradient(90deg, {_acc}88, {_acc}33, transparent);'
-            f'border-radius:2px;margin:1.5rem 0 2rem 0;"></div>',
-            unsafe_allow_html=True
-        )
+        # Ordine a schermo: uso mensile → le mie verifiche → tema → strumenti admin → utente.
+        # (il codice sotto resta nell'ordine di calcolo; i contenitori fissano la posizione)
+        _c_uso     = st.container()
+        _c_storico = st.container()
+        _c_tema    = st.container()
+        _c_admin   = st.container()
+        _c_user    = st.container()
+
         # ── MODELLO AI — scelto dal piano, non dall'utente ───────────────────
         # Free → Flash Lite · Pro → Flash 2.5 · Gold → Pro 2.5.
         # Solo l'admin può scegliere a mano (expander chiuso).
@@ -51,7 +52,7 @@ def render_sidebar(
         _piano = "admin" if is_admin else st.session_state.get("piano_utente", "free")
 
         if is_admin:
-            with st.expander("🔧 Strumenti admin", expanded=False):
+            with _c_admin, st.expander("Strumenti admin", expanded=False, icon=":material/build:"):
                 _nomi_admin = list(MODELLI_DISPONIBILI.keys())
                 _sel_modello = st.selectbox(
                     "Modello",
@@ -67,133 +68,137 @@ def render_sidebar(
             )
 
         # ── TEMA ──────────────────────────────────────────────────────────────
-        if THEMES and THEME_LABELS and len(THEMES) > 1:
-            st.markdown(
-                f'<div class="sidebar-label" style="margin-top:.9rem;">Tema</div>',
-                unsafe_allow_html=True,
-            )
-            _theme_keys   = list(THEMES.keys())
-            _theme_names  = [THEME_LABELS.get(k, k) for k in _theme_keys]
-            _cur_theme    = st.session_state.get("theme", _theme_keys[0])
-            _cur_idx      = _theme_keys.index(_cur_theme) if _cur_theme in _theme_keys else 0
-            _sel_theme_name = st.selectbox(
-                "tema",
-                _theme_names,
-                index=_cur_idx,
-                label_visibility="collapsed",
-                key="sb_tema_sel",
-            )
-            _sel_theme_key = _theme_keys[_theme_names.index(_sel_theme_name)]
-            if _sel_theme_key != _cur_theme:
-                st.session_state.theme = _sel_theme_key
-                theme_changed = True
+        with _c_tema:
+            if THEMES and THEME_LABELS and len(THEMES) > 1:
+                st.markdown(
+                    f'<div class="sidebar-label" style="margin-top:.9rem;">Tema</div>',
+                    unsafe_allow_html=True,
+                )
+                _theme_keys   = list(THEMES.keys())
+                _theme_names  = [THEME_LABELS.get(k, k) for k in _theme_keys]
+                _cur_theme    = st.session_state.get("theme", _theme_keys[0])
+                _cur_idx      = _theme_keys.index(_cur_theme) if _cur_theme in _theme_keys else 0
+                _sel_theme_name = st.selectbox(
+                    "tema",
+                    _theme_names,
+                    index=_cur_idx,
+                    label_visibility="collapsed",
+                    key="sb_tema_sel",
+                )
+                _sel_theme_key = _theme_keys[_theme_names.index(_sel_theme_name)]
+                if _sel_theme_key != _cur_theme:
+                    st.session_state.theme = _sel_theme_key
+                    theme_changed = True
 
         # ── CONTATORE MENSILE ─────────────────────────────────────────────────
-        # Piano illimitato → solo il numero del mese; piano free → "X di N" con barra.
-        _gg_reset, _hh_reset = giorni_al_reset_func()
-        _reset_str = _reset_label(_gg_reset, _hh_reset)
+        with _c_uso:
+            # Piano illimitato → solo il numero del mese; piano free → "X di N" con barra.
+            _gg_reset, _hh_reset = giorni_al_reset_func()
+            _reset_str = _reset_label(_gg_reset, _hh_reset)
 
-        if illimitato:
-            _valore  = f"{verifiche_mese_count}"
-            _sotto   = "Illimitate con il tuo piano"
-            _barra   = ""
-        else:
-            _perc_uso  = min(100, int(verifiche_mese_count / LIMITE_MENSILE * 100))
-            _color_bar = (T["error"] if limite_raggiunto
-                          else (T["warn"] if _perc_uso >= 70 else T["success"]))
-            _valore = f"{verifiche_mese_count} di {LIMITE_MENSILE}"
-            _sotto  = f"🔄 {_reset_str}"
-            _barra  = (
-                f'<div style="background:{T.get("sidebar_border", "#475569")};border-radius:10px;'
-                'overflow:hidden;height:4px;width:100%;position:relative;">'
-                f'<div style="width:{_perc_uso}%;background:{_color_bar};height:100%;'
-                'border-radius:10px;transition:width .6s ease;position:absolute;'
-                'top:0;left:0;"></div></div>'
+            if illimitato:
+                _valore  = f"{verifiche_mese_count}"
+                _sotto   = "Illimitate con il tuo piano"
+                _barra   = ""
+            else:
+                _perc_uso  = min(100, int(verifiche_mese_count / LIMITE_MENSILE * 100))
+                _color_bar = (T["error"] if limite_raggiunto
+                              else (T["warn"] if _perc_uso >= 70 else T["success"]))
+                _valore = f"{verifiche_mese_count} di {LIMITE_MENSILE}"
+                _sotto  = f"🔄 {_reset_str}"
+                _barra  = (
+                    f'<div style="background:{T.get("sidebar_border", "#475569")};border-radius:10px;'
+                    'overflow:hidden;height:4px;width:100%;position:relative;">'
+                    f'<div style="width:{_perc_uso}%;background:{_color_bar};height:100%;'
+                    'border-radius:10px;transition:width .6s ease;position:absolute;'
+                    'top:0;left:0;"></div></div>'
+                )
+
+            st.markdown('<div class="sidebar-label" style="margin-top:.5rem;">Utilizzo mensile</div>',
+                        unsafe_allow_html=True)
+            st.markdown(
+                '<div style="margin-bottom:.6rem;font-family:\'DM Sans\',sans-serif;">'
+                '<div style="display:flex;justify-content:space-between;align-items:center;'
+                'margin-bottom:.5rem;">'
+                f'<span style="font-size:.85rem;font-weight:600;color:{_sb_text};">'
+                'Verifiche questo mese</span>'
+                f'<span style="font-size:.9rem;font-weight:800;color:{_sb_text};">{_valore}</span>'
+                '</div>'
+                f'{_barra}'
+                f'<div style="text-align:left;font-size:.78rem;font-weight:500;'
+                f'color:{_sb_muted};margin-top:6px;">{_sotto}</div>'
+                '</div>',
+                unsafe_allow_html=True,
             )
 
-        st.markdown('<div class="sidebar-label" style="margin-top:.5rem;">Utilizzo mensile</div>',
-                    unsafe_allow_html=True)
-        st.markdown(
-            '<div style="margin-bottom:.6rem;font-family:\'DM Sans\',sans-serif;">'
-            '<div style="display:flex;justify-content:space-between;align-items:center;'
-            'margin-bottom:.5rem;">'
-            f'<span style="font-size:.85rem;font-weight:600;color:{_sb_text};">'
-            'Verifiche questo mese</span>'
-            f'<span style="font-size:.9rem;font-weight:800;color:{_sb_text};">{_valore}</span>'
-            '</div>'
-            f'{_barra}'
-            f'<div style="text-align:right;font-size:.75rem;font-weight:500;'
-            f'color:{_sb_muted};margin-top:6px;">{_sotto}</div>'
-            '</div>',
-            unsafe_allow_html=True,
-        )
-
-        if limite_raggiunto:
-            _render_limite_raggiunto(T, LIMITE_MENSILE, _reset_str, contatto_url,
-                                     text_color=_sb_text)
+            if limite_raggiunto:
+                _render_limite_raggiunto(T, LIMITE_MENSILE, _reset_str, contatto_url,
+                                         text_color=_sb_text)
 
         # ── LE MIE VERIFICHE — un solo pulsante con il conteggio ──────────────
-        total_verifiche = None
-        try:
-            if utente is not None and supabase_admin is not None:
-                storico_count = (
-                    supabase_admin.table("verifiche_storico")
-                    .select("id", count="exact")
-                    .eq("user_id", utente.id)
-                    .is_("deleted_at", "null")
-                    .execute()
-                )
-                total_verifiche = storico_count.count if storico_count else 0
-        except Exception as _e:
-            logger.warning(f"Conteggio storico non disponibile: {_e}")
+        with _c_storico:
+            total_verifiche = None
+            try:
+                if utente is not None and supabase_admin is not None:
+                    storico_count = (
+                        supabase_admin.table("verifiche_storico")
+                        .select("id", count="exact")
+                        .eq("user_id", utente.id)
+                        .is_("deleted_at", "null")
+                        .execute()
+                    )
+                    total_verifiche = storico_count.count if storico_count else 0
+            except Exception as _e:
+                logger.warning(f"Conteggio storico non disponibile: {_e}")
 
-        _lbl_storico = (
-            f"📚 Le mie verifiche ({total_verifiche})"
-            if total_verifiche is not None else "📚 Le mie verifiche"
-        )
-        st.markdown('<div style="height:.9rem"></div>', unsafe_allow_html=True)
-        if st.button(_lbl_storico, key="open_storico", use_container_width=True, type="secondary"):
-            st.session_state.stage = "MIE_VERIFICHE"
-            st.rerun()
+            _lbl_storico = (
+                f"Le mie verifiche ({total_verifiche})"
+                if total_verifiche is not None else "Le mie verifiche"
+            )
+            st.markdown('<div style="height:.9rem"></div>', unsafe_allow_html=True)
+            if st.button(_lbl_storico, key="open_storico", use_container_width=True, type="secondary", icon=":material/folder_open:"):
+                st.session_state.stage = "MIE_VERIFICHE"
+                st.rerun()
 
         # ── USER + LOGOUT ─────────────────────────────────────────────────────
-        if utente is not None:
-            email_utente = utente.email or ""
-            iniziale     = email_utente[0].upper() if email_utente else "?"
-        else:
-            email_utente = ""
-            iniziale     = "?"
+        with _c_user:
+            if utente is not None:
+                email_utente = utente.email or ""
+                iniziale     = email_utente[0].upper() if email_utente else "?"
+            else:
+                email_utente = ""
+                iniziale     = "?"
 
-        _piano_label = {
-            "admin": "Admin",
-            "gold":  "Piano Gold",
-            "pro":   "Piano Pro",
-        }.get(_piano, "Piano gratuito")
-        _piano_icon = {
-            "admin": "⚙️",
-            "gold":  "🌟",
-            "pro":   "⚡",
-        }.get(_piano, "🎓")
-        st.markdown(f"""
-        <div class="user-pill">
-          <div class="user-avatar">{iniziale}</div>
-          <div class="user-info">
-            <div class="user-email">{email_utente}</div>
-            <div class="user-role">{_piano_icon} {_piano_label}</div>
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
+            _piano_label = {
+                "admin": "Admin",
+                "gold":  "Piano Gold",
+                "pro":   "Piano Pro",
+            }.get(_piano, "Piano gratuito")
+            _piano_icon = {
+                "admin": "⚙️",
+                "gold":  "🌟",
+                "pro":   "⚡",
+            }.get(_piano, "🎓")
+            st.markdown(f"""
+            <div class="user-pill">
+              <div class="user-avatar">{iniziale}</div>
+              <div class="user-info">
+                <div class="user-email">{email_utente}</div>
+                <div class="user-role">{_piano_icon} {_piano_label}</div>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
 
-        st.markdown('<div class="logout-btn-wrap">', unsafe_allow_html=True)
-        if st.button("↩ Esci dall'account", key="logout_btn"):
-            from auth import cancella_sessione_cookie
-            cancella_sessione_cookie()
-            supabase_client.auth.sign_out()
-            st.session_state.utente          = None
-            st.session_state.supabase       = None
-            st.session_state.stage          = "INPUT"
-            st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown('<div class="logout-btn-wrap">', unsafe_allow_html=True)
+            if st.button("↩ Esci dall'account", key="logout_btn"):
+                from auth import cancella_sessione_cookie
+                cancella_sessione_cookie()
+                supabase_client.auth.sign_out()
+                st.session_state.utente          = None
+                st.session_state.supabase       = None
+                st.session_state.stage          = "INPUT"
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
     return {
         "modello_id":    modello_id,

@@ -1177,7 +1177,7 @@ def _render_le_tue_verifiche():
         f"""
         <div style="text-align: center; margin-bottom: 2rem;">
             <h1 style="font-size: 2.5rem; font-weight: 700; color: {T['text']}; margin-bottom: 0.5rem;">
-                📄 Le Tue Verifiche
+                Le Tue Verifiche
             </h1>
             <p style="font-size: 1.2rem; color: {T['muted']};">
                 Gestisci, visualizza e scarica tutte le verifiche che hai creato
@@ -1191,92 +1191,28 @@ def _render_le_tue_verifiche():
     stats = _get_verifiche_stats()
     verifiche = _load_user_verifiche()
     
-    # Stats in alto con dati reali
-    col1, col2, col3, col4 = st.columns(4, gap="small")
-    
-    with col1:
-        st.markdown(
-            f"""
-            <div style="
-                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-                border-radius: 12px;
-                padding: 1.5rem;
-                text-align: center;
-                color: white;
-            ">
-                <div style="font-size: 2rem; font-weight: 700;">{stats['totali']}</div>
-                <div style="font-size: 0.9rem; opacity: 0.9;">Totali</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    
-    with col2:
-        st.markdown(
-            f"""
-            <div style="
-                background: linear-gradient(135deg, #10b981, #059669);
-                border-radius: 12px;
-                padding: 1.5rem;
-                text-align: center;
-                color: white;
-            ">
-                <div style="font-size: 2rem; font-weight: 700;">{stats['questo_mese']}</div>
-                <div style="font-size: 0.9rem; opacity: 0.9;">Questo mese</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    
-    with col3:
-        st.markdown(
-            f"""
-            <div style="
-                background: linear-gradient(135deg, #f59e0b, #d97706);
-                border-radius: 12px;
-                padding: 1.5rem;
-                text-align: center;
-                color: white;
-            ">
-                <div style="font-size: 2rem; font-weight: 700;">{stats['materie']}</div>
-                <div style="font-size: 0.9rem; opacity: 0.9;">Materie</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    
-    with col4:
-        st.markdown(
-            f"""
-            <div style="
-                background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-                border-radius: 12px;
-                padding: 1.5rem;
-                text-align: center;
-                color: white;
-            ">
-                <div style="font-size: 2rem; font-weight: 700;">{stats['qualita_media']}</div>
-                <div style="font-size: 0.9rem; opacity: 0.9;">Qualità</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    
-    st.markdown("---")
-    
+    # Riepilogo su una riga (al posto delle quattro card colorate)
+    st.markdown(
+        f'<div style="text-align:center;margin:-.4rem 0 1.4rem;font-family:DM Sans,sans-serif;'
+        f'font-size:.95rem;color:{T["text2"]};">'
+        f'<strong style="color:{T["text"]};">{stats["totali"]}</strong> verifiche in tutto &nbsp;·&nbsp; '
+        f'<strong style="color:{T["text"]};">{stats["questo_mese"]}</strong> questo mese</div>',
+        unsafe_allow_html=True,
+    )
+
     # Filtri e ricerca
     col_search, col_materia, col_ordine = st.columns([3, 2, 2])
     
     with col_search:
-        search_query = st.text_input("🔍 Cerca verifica...", placeholder="Cerca per materia, argomento...")
+        search_query = st.text_input("Cerca", placeholder="Cerca per materia o argomento…")
     
     # Materie uniche dalle verifiche reali
     materie_real = ["Tutte"] + sorted(list(set([v.get("materia", "Sconosciuta") for v in verifiche if v.get("materia")])))
     with col_materia:
-        materia_filter = st.selectbox("📚 Materia", materie_real)
+        materia_filter = st.selectbox("Materia", materie_real)
     
     with col_ordine:
-        ordine_filter = st.selectbox("📅 Ordina per", ["Più recenti", "Più vecchie", "Alfabetico", "Materia"])
+        ordine_filter = st.selectbox("Ordina per", ["Più recenti", "Più vecchie", "Alfabetico", "Materia"])
     
     # Filtra le verifiche
     verifiche_filtrate = verifiche.copy()
@@ -1321,17 +1257,17 @@ def _render_le_tue_verifiche():
                         background: {T['card']};
                         border: 1px solid {T['border']};
                         border-radius: 12px;
-                        padding: 1.5rem;
-                        margin-bottom: 1rem;
-                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                        padding: 1.1rem 1.3rem;
+                        margin-bottom: .6rem;
+                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
                         transition: box-shadow 0.2s;
                     " onmouseover="this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.1)'">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
                             <div>
-                                <h3 style="font-size: 1.3rem; font-weight: 600; color: {T['text']}; margin: 0 0 0.5rem 0;">
+                                <h3 style="font-size: 1.12rem; font-weight: 700; color: {T['text']}; margin: 0 0 0.55rem 0; padding: 0;">
                                     {verifica.get('argomento', 'Verifica senza titolo')}
                                 </h3>
-                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                     <span style="background: {T['accent_light']}; color: {T['accent']}; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
                                         📚 {verifica.get('materia', 'Sconosciuta')}
                                     </span>
@@ -1359,7 +1295,7 @@ def _render_le_tue_verifiche():
                 col4 = col4.popover("⋯", help="Rinomina o elimina questa verifica")
 
                 with col1:
-                    if st.button(f"👁️ Anteprima", key=f"preview_{verifica.get('id')}_{i}"):
+                    if st.button("Anteprima", icon=":material/visibility:", use_container_width=True, key=f"preview_{verifica.get('id')}_{i}"):
                         if verifica.get("latex_a"):
                             # Compila PDF per anteprima
                             try:
@@ -1387,7 +1323,7 @@ def _render_le_tue_verifiche():
                     pdf_disabled = not LATEX_AVAILABLE
                     pdf_help = "Non disponibile: LaTeX non è installato" if pdf_disabled else "Scarica la verifica in formato PDF"
                     
-                    if st.button("⬇ Scarica PDF", key=f"download_{verifica.get('id')}_{i}", 
+                    if st.button("Scarica PDF", icon=":material/download:", use_container_width=True, key=f"download_{verifica.get('id')}_{i}", 
                                  disabled=pdf_disabled, help=pdf_help):
                         if verifica.get("latex_a"):
                             try:
@@ -1411,7 +1347,7 @@ def _render_le_tue_verifiche():
                             st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
                 
                 with col3:
-                    if st.button("📂 Apri e modifica", key=f"facsimile_{verifica.get('id')}_{i}", type="primary"):
+                    if st.button("Apri e modifica", icon=":material/edit_note:", use_container_width=True, key=f"facsimile_{verifica.get('id')}_{i}", type="primary"):
                         if verifica.get("latex_a"):
                             try:
                                 # Carica la verifica come template per facsimile
@@ -1493,7 +1429,7 @@ def _render_le_tue_verifiche():
 
                 with col7:
                     # Condivisione
-                    if st.button(f"🔗 Condividi", key=f"share_{verifica.get('id')}_{i}"):
+                    if st.button("Condividi", icon=":material/link:", use_container_width=True, key=f"share_{verifica.get('id')}_{i}"):
                         link = _genera_link_condivisione(verifica.get("id"))
                         if link:
                             st.success("🔗 Link generato!")
@@ -1541,7 +1477,7 @@ def _render_le_tue_verifiche():
                 
                 # Divider tra verifiche (tranne l'ultima)
                 if i < min(len(verifiche_filtrate), _n_mostra) - 1:
-                    st.markdown("---")
+                    st.markdown("<div style='height:1.1rem'></div>", unsafe_allow_html=True)
         if len(verifiche_filtrate) > _n_mostra:
             if st.button(f"Mostra altre ({len(verifiche_filtrate) - _n_mostra})", key="storico_mostra_altre", use_container_width=True):
                 st.session_state["_storico_mostra"] = _n_mostra + 8
@@ -3794,7 +3730,10 @@ def _render_stage_final():
     st.markdown(
         f'<div style="text-align:center;margin:.2rem 0 1.1rem;">'
         f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:900;'
-        f'color:{T["text"]};letter-spacing:-.025em;line-height:1.15;">✅ La verifica è pronta</div>'
+        f'color:{T["text"]};letter-spacing:-.025em;line-height:1.15;">'
+        f'<span style="display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;'
+        f'border-radius:50%;background:{T["success"]};color:#fff;font-size:1rem;margin-right:.55rem;'
+        f'vertical-align:.12em;">✓</span>La verifica è pronta</div>'
         f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin-top:.35rem;">'
         + mat_str + ' &nbsp;·&nbsp; ' + scu_str + ' &nbsp;·&nbsp; ' + arg_str +
         f'</div></div>',
@@ -4310,7 +4249,7 @@ def _render_stage_final():
     st.markdown("<div style='height:1.4rem'></div>", unsafe_allow_html=True)
     _nav_c1, _nav_c2, _nav_c3 = st.columns([1, 2, 1])
     with _nav_c2:
-        if st.button("🆕 Genera nuova verifica", type="primary",
+        if st.button("Genera nuova verifica", icon=":material/add:",
                      use_container_width=True, key="btn_new_s3_bottom"):
             st.session_state.stage            = STAGE_INPUT
             st.session_state["_prev_stage"]   = None
