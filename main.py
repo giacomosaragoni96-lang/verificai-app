@@ -2425,6 +2425,7 @@ def _render_percorso_a_wizard():
                 label_visibility="collapsed",
                 key="wiz_custom_istr",
             ).strip()
+        _can_confirm = not (_sel_intent == "custom" and not _custom_istr)
 
         # Confirm + Back row
         st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
