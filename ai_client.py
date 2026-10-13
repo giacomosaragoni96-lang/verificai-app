@@ -269,6 +269,8 @@ class ModelloAI:
         temp = _temperatura(generation_config)
         if temp is not None:
             kw["temperature"] = temp
+        if isinstance(generation_config, dict) and generation_config.get("json"):
+            kw["response_mime_type"] = "application/json"      # risposta in JSON valido
         pensiero = _ragionamento_config(model_id, self.ragionamento)
         if pensiero is not None:
             kw["thinking_config"] = pensiero

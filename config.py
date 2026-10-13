@@ -75,6 +75,7 @@ COMPITI_AI = {
     "griglia":           ("medio",  0),
     "cambio_esercizio":  ("veloce", None),
     "analisi_file":      ("veloce", None),
+    "importazione":      ("medio",  1024),   # lettura di schede e libri per la banca esercizi
 }
 
 
@@ -105,6 +106,70 @@ def get_model_id_per_piano(piano: str, materia: str = "") -> str:
     if piano in ("pro", "admin"):
         return MODELLI_DISPONIBILI["⚡ Flash 2.5 (bilanciato · Pro)"]["id"]
     return MODEL_FAST_ID
+
+# ── DIFFICOLTÀ DEGLI ESERCIZI PER TIPO DI SCUOLA ──────────────────────────────
+# Livelli normalizzati: 1 = base, 2 = medio, 3 = sfida (le "stelle" dei libri; le fonti con altre
+# scale, per esempio 5 livelli, vengono ricondotte a questi tre).
+# Per ogni scuola: (quota ★1, quota ★2, quota ★3) di una verifica, e il tetto di esercizi da ★3
+# (None = nessun tetto). Le quote si applicano al numero di esercizi con arrotondamento ai resti
+# maggiori. Dove il tetto esiste, un ★3 compare solo se la verifica ha almeno
+# MIN_ESERCIZI_PER_3_STELLE esercizi; va sempre in fondo (ordine crescente).
+DISTRIBUZIONE_DIFFICOLTA = {
+    "Scuola Primaria (Elementari)":             ((1.0, 0.0, 0.0), 0),
+    "Scuola Secondaria I grado (Medie)":        ((0.6, 0.4, 0.0), 0),
+    "Liceo Scientifico":                        ((0.0, 0.6, 0.4), None),
+    "Liceo Classico":                           ((0.0, 0.7, 0.3), None),
+    "Liceo Linguistico":                        ((0.0, 0.8, 0.2), 1),
+    "Liceo delle Scienze Umane":                ((0.0, 0.8, 0.2), 1),
+    "Liceo Artistico":                          ((0.2, 0.7, 0.1), 1),
+    "Istituto Tecnico Tecnologico/Industriale": ((0.2, 0.6, 0.2), 2),
+    "Istituto Tecnico Economico":               ((0.3, 0.6, 0.1), 1),
+    "Istituto Tecnico Agrario/Ambientale":      ((0.3, 0.6, 0.1), 1),
+    "Istituto Professionale":                   ((0.4, 0.4, 0.2), 1),
+    "Generico":                                 ((0.3, 0.5, 0.2), 1),
+}
+MIN_ESERCIZI_PER_3_STELLE = 4
+
+
+def distribuzione_difficolta(scuola: str, n: int) -> dict:
+    """Quanti esercizi per livello in una verifica di n esercizi: {1: x, 2: y, 3: z}."""
+    perc, tetto3 = DISTRIBUZIONE_DIFFICOLTA.get(scuola, DISTRIBUZIONE_DIFFICOLTA["Generico"])
+    perc = list(perc)
+    if tetto3 is not None and n < MIN_ESERCIZI_PER_3_STELLE and perc[2] > 0:
+        # verifica troppo corta per una sfida: la quota va al livello medio (o base)
+        perc[1 if perc[1] > 0 else 0] += perc[2]
+        perc[2] = 0.0
+    quote = [n * p for p in perc]
+    base = [int(q) for q in quote]
+    resto = n - sum(base)
+    candidati = sorted((i for i in range(3) if perc[i] > 0), key=lambda i: (-(quote[i] - base[i]), i))
+    for i in candidati[:resto]:
+        base[i] += 1
+    if tetto3 is not None and base[2] > tetto3:
+        eccesso = base[2] - tetto3
+        base[2] = tetto3
+        base[1 if perc[1] > 0 else 0] += eccesso
+    if (tetto3 is not None and tetto3 >= 1 and perc[2] > 0 and n >= MIN_ESERCIZI_PER_3_STELLE
+            and base[2] == 0):
+        da = 0 if base[0] > 0 else 1
+        base[da] -= 1
+        base[2] = 1
+    return {1: base[0], 2: base[1], 3: base[2]}
+
+
+def sequenza_difficolta(scuola: str, n: int) -> list:
+    """I livelli della verifica in ordine di svolgimento (dal più facile al più difficile)."""
+    d = distribuzione_difficolta(scuola, n)
+    return [1] * d[1] + [2] * d[2] + [3] * d[3]
+
+
+def livello_normalizzato(livello: int, livelli_della_fonte: int) -> int:
+    """Riconduce un livello (1..L) della fonte a 1-3. Con 3 livelli o meno è l'identità."""
+    if livelli_della_fonte <= 3:
+        return max(1, min(3, int(livello)))
+    import math
+    return max(1, min(3, math.ceil(int(livello) * 3 / livelli_della_fonte)))
+
 
 # ── TEMA UI ─────────────────────────────────────────────────────────────────────
 # Tema default: Carta (light) + opzione Notte (dark)
