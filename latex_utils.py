@@ -948,6 +948,52 @@ def _rimuovi_legende_pgf(testo: str) -> str:
     return ''.join(out)
 
 
+def _limiti_ai(testo: str):
+    """
+    Intervalli (xmin, xmax, ymin, ymax) numerici scritti dall'AI nelle opzioni del primo
+    \\begin{axis}[...]; None se mancano o non sono numeri. L'AI li sceglie guardando la
+    funzione: meglio rispettarli che ripiegare su un generico -6..6 che taglia la curva.
+    """
+    m = re.search(r'\\begin\{axis\}\[([^\]]*)\]', testo)
+    if not m:
+        return None
+    valori = {}
+    for asse in "xy":
+        for lim in ("min", "max"):
+            mm = re.search(
+                r'(?<![A-Za-z])' + asse + lim + r'\s*=\s*\{?\s*(-?\d+(?:\.\d+)?)\s*\}?',
+                m.group(1),
+            )
+            if not mm:
+                return None
+            numero = float(mm.group(1))
+            valori[asse + lim] = int(numero) if numero == int(numero) else numero
+    if valori["xmax"] <= valori["xmin"] or valori["ymax"] <= valori["ymin"]:
+        return None
+    return valori
+
+
+def _passo_tick(minimo, massimo, cm_totali: float, cm_min: float) -> int:
+    """Passo dei numeri sull'asse (1, 2, 5, 10…): almeno cm_min centimetri tra due numeri."""
+    try:
+        span = float(massimo) - float(minimo)
+    except (TypeError, ValueError):
+        return 1
+    if span <= 0:
+        return 1
+    for passo in (1, 2, 5, 10, 20, 50):
+        if passo * cm_totali / span >= cm_min:
+            return passo
+    return 50
+
+
+def _opzioni_tick(lim: dict) -> str:
+    """Opzioni pgfplots per numeri sugli assi leggibili (grafico largo 9 cm e alto 5 cm)."""
+    sx = _passo_tick(lim.get("xmin"), lim.get("xmax"), 9.0, 0.8)
+    sy = _passo_tick(lim.get("ymin"), lim.get("ymax"), 5.0, 0.55)
+    return f", xtick distance={sx}, ytick distance={sy}, tick label style={{font=\\scriptsize}}"
+
+
 def _pulisci_opzioni_asse(testo: str) -> str:
     """
     Toglie limiti, dominio, campioni, etichette, titolo e legenda (opzioni e comandi)
@@ -956,7 +1002,8 @@ def _pulisci_opzioni_asse(testo: str) -> str:
     testo = _rimuovi_legende_pgf(testo)
     testo = _rimuovi_opzioni_pgf(
         testo,
-        r'[xy]min|[xy]max|(?:[xy]\s*)?domain|samples|xlabel|ylabel|title|legend[ a-zA-Z]*',
+        r'[xy]min|[xy]max|(?:[xy]\s*)?domain|samples|xlabel|ylabel|title|legend[ a-zA-Z]*'
+        r'|[xy]tick(?:\s+distance)?|(?:[xy]\s*)?tick label style|minor [xy]?\s*tick num',
     )
     # Virgole doppie o a bordo parentesi lasciate dalle rimozioni
     testo = re.sub(r',\s*,', ',', testo)
@@ -993,11 +1040,12 @@ def limita_altezza_grafici(latex: str) -> str:
         if '\\begin{axis}' in tikz_with_spacing:
             # Analizza la funzione per determinare i limiti appropriati
             func_match = re.search(r'\\addplot.*?\{([^}]+)\}', tikz_with_spacing)
+            _lim_ai = _limiti_ai(tikz_with_spacing)   # intervalli numerici scelti dall'AI, se ci sono
             if func_match:
                 func_expr = func_match.group(1)
-                
-                # Calcola limiti dinamici basati sulla funzione
-                dynamic_limits = _calculate_dynamic_limits(func_expr)
+
+                # Limiti: quelli dell'AI se ci sono, altrimenti calcolati dalla funzione
+                dynamic_limits = _lim_ai or _calculate_dynamic_limits(func_expr)
                 
                 tikz_with_spacing = _pulisci_opzioni_asse(tikz_with_spacing)
                 
@@ -1007,13 +1055,24 @@ def limita_altezza_grafici(latex: str) -> str:
                 # Fallback: limiti standard
                 tikz_with_spacing = _pulisci_opzioni_asse(tikz_with_spacing)
                 
-                axis_options = 'xmin=-6, xmax=6, ymin=-6, ymax=6, axis lines=middle, xlabel=$x$, ylabel=$y$, grid=major, width=9cm, height=5cm, domain=-6:6, samples=100'
+                _l2 = _lim_ai or {"xmin": -6, "xmax": 6, "ymin": -6, "ymax": 6}
+                axis_options = (
+                    f'xmin={_l2["xmin"]}, xmax={_l2["xmax"]}, ymin={_l2["ymin"]}, ymax={_l2["ymax"]}, '
+                    'axis lines=middle, xlabel=$x$, ylabel=$y$, grid=major, width=9cm, height=5cm, '
+                    f'domain={_l2["xmin"]}:{_l2["xmax"]}, samples=100'
+                )
             
+            # Numeri sugli assi: pochi, piccoli e distanziati (a passo 1 le etichette di x e y
+            # si sovrappongono vicino all'origine e il grafico diventa illeggibile).
+            _lim = dynamic_limits if func_match else (_lim_ai or {"xmin": -6, "xmax": 6, "ymin": -6, "ymax": 6})
+            axis_options += _opzioni_tick(_lim)
+
             axis_pattern = r'\\begin\{axis\}\[([^\]]*)\]'
             if re.search(axis_pattern, tikz_with_spacing):
+                # funzione di sostituzione: axis_options contiene backslash (\scriptsize)
                 tikz_with_spacing = re.sub(
                     axis_pattern,
-                    f'\\\\begin{{axis}}[\\1, {axis_options}]',
+                    lambda m: "\\begin{axis}[" + m.group(1) + ", " + axis_options + "]",
                     tikz_with_spacing
                 )
             else:
@@ -1027,10 +1086,10 @@ def limita_altezza_grafici(latex: str) -> str:
             if 'xmin=' not in tikz_with_spacing:
                 tikz_with_spacing = re.sub(
                     r'\\begin\{axis\}',
-                    f'\\begin{{axis}}[{axis_options}]',
+                    lambda m: "\\begin{axis}[" + axis_options + "]",
                     tikz_with_spacing
                 )
-        
+
         return tikz_with_spacing
     
     # Applica i limiti a tutti i blocchi tikzpicture
