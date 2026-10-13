@@ -161,6 +161,7 @@ def url_login_google():
         "redirect_to": redirect_to,
         "code_challenge": challenge,
         "code_challenge_method": "s256",
+        "prompt": "select_account",     # Google chiede sempre quale account usare
     })
     st.session_state["_google_login"] = {"url": url, "t": ora}
     return url
