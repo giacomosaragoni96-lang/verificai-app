@@ -410,6 +410,28 @@ def prompt_rigenera_blocco(
     )
 
 
+def istruzione_livello_esercizio(piu_difficile: bool, argomento: str) -> str:
+    """
+    Istruzione fissa per "Più facile" / "Più difficile", da passare a
+    prompt_rigenera_blocco come ISTRUZIONE DEL DOCENTE (lavora su un solo esercizio).
+    """
+    if piu_difficile:
+        cambio = (
+            "Rendi questo esercizio PIÙ DIFFICILE: usa numeri meno immediati, "
+            "richiedi un passaggio di ragionamento in più e chiedi di giustificare i risultati."
+        )
+    else:
+        cambio = (
+            "Rendi questo esercizio PIÙ FACILE: semplifica i numeri, riduci la complessità "
+            "dei calcoli e usa una formulazione più guidata."
+        )
+    return (
+        f"{cambio} Mantieni lo stesso argomento ('{argomento}'), la stessa tipologia di "
+        f"esercizio e lo stesso numero di sottopunti. Non inserire soluzioni, risposte o commenti. "
+        f"Se l'esercizio contiene un grafico, mantienilo come codice TikZ/pgfplots completo e compilabile."
+    )
+
+
 def prompt_analisi_documento(
     materie_valide: list[str],
     mathpix_context: str | None = None,

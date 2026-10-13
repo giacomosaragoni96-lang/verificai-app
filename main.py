@@ -8,6 +8,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import base64
+import copy
 import logging
 import re
 import os
@@ -17,10 +18,13 @@ from datetime import datetime, timezone
 import google.generativeai as genai
 
 from sidebar import render_sidebar
-from generation import genera_verifica, analizza_documento_caricato, compila_contesto_generazione
+from generation import (
+    genera_verifica, analizza_documento_caricato, compila_contesto_generazione,
+    rigenera_singolo_blocco,
+)
 from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
-    prompt_rubrica_valutazione, prompt_variante_rapida,
+    prompt_rubrica_valutazione, prompt_variante_rapida, istruzione_livello_esercizio,
 )
 from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
 from latex_utils import (
@@ -2861,6 +2865,137 @@ def _render_stage_preview():
 #  STAGE_REVIEW
 # ═══════════════════════════════════════════════════════════════════════════════
 
+def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali: int,
+                          riscala_totale: bool = False):
+    """
+    Ricostruisce il LaTeX della Fila A da review_blocks, applica il post-processing
+    deterministico, compila il PDF e aggiorna session_state (latex, pdf, anteprima).
+
+    riscala_totale=True ridistribuisce i punti su tutta la verifica (serve quando cambia
+    il numero di esercizi); in tal caso review_blocks viene riletto dal LaTeX risultante.
+    Ritorna (pdf_bytes | None, errore).
+    """
+    latex = reconstruct_latex(
+        st.session_state.review_preamble, st.session_state.review_blocks,
+    )
+    latex = fix_items_environment(latex)
+    latex = migliora_spaziatura_sottopunti(latex)
+    latex = aggiungi_spaziatura_grafici_tabelle(latex)
+    latex = limita_altezza_grafici(latex)
+    latex = rimuovi_vspace_corpo(latex)
+    latex = rimuovi_punti_subsection(latex)
+    if mostra_punteggi and riscala_totale:
+        latex = prepara_esercizi_aperti(latex, punti_totali)
+        latex = riscala_punti(latex, punti_totali)
+    if con_griglia:
+        latex = inietta_griglia(latex, punti_totali)
+
+    va = st.session_state.verifiche["A"]
+    va["latex"] = va["latex_originale"] = latex
+    if riscala_totale:
+        _pre, _blocchi = extract_blocks(latex)
+        if _blocchi:
+            st.session_state.review_preamble = _pre
+            st.session_state.review_blocks   = _blocchi
+
+    pdf, err = compila_pdf(latex)
+    if pdf:
+        va["pdf"]     = pdf
+        va["pdf_ts"]  = time.time()
+        va["preview"] = True
+        imgs, _ = pdf_to_images_bytes(pdf)
+        st.session_state.preview_images  = imgs or []
+        st.session_state.preview_page    = 0
+        st.session_state.last_preview_ts = 0
+    return pdf, err
+
+
+def _pulisci_stato_revisione():
+    """Cancella i valori per-esercizio (punteggi, undo, conferme) quando cambia la struttura."""
+    for _k in list(st.session_state.keys()):
+        if (_k.startswith("item_pt_") or _k.startswith("_undo_block_")
+                or _k in ("recalibra_pts", "_conf_elimina", "review_selectbox")):
+            del st.session_state[_k]
+
+
+def _rigenera_esercizio_guidato(idx, istruzione, etichetta, materia, argomento, modello,
+                                mostra_punteggi, con_griglia, punti_totali, status_ph):
+    """
+    "Più facile" / "Più difficile": rigenera un solo esercizio con un'istruzione fissa
+    (rigenera_singolo_blocco → prompt_rigenera_blocco), riporta i punti all'originale,
+    ricompila il PDF. Il backup per "Annulla modifica" è salvato prima della chiamata.
+    """
+    blocchi = st.session_state.review_blocks
+    n_blocks = len(blocchi)
+    title, body = blocchi[idx]["title"], blocchi[idx]["body"]
+    _pts = st.session_state.get("recalibra_pts", [])
+    target = int(_pts[idx]) if _pts and len(_pts) == n_blocks else parse_pts_from_block_body(body)
+
+    st.session_state[f"_undo_block_{idx}"] = dict(blocchi[idx])
+    with status_ph.status(f"{etichetta} l'esercizio {idx+1}…", expanded=True) as stato:
+        try:
+            nuovo = rigenera_singolo_blocco(
+                genai.GenerativeModel(modello), materia,
+                f"\\subsection*{{{title}}}\n{body}", istruzione, mostra_punteggi,
+            )
+            m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", nuovo, re.DOTALL)
+            new_title = m.group(1) if m else title
+            new_body  = m.group(2).strip() if m else nuovo.strip()
+            new_title = re.sub(r"\s*\(\d+\s*pt\)", "", new_title).strip() or title
+            if mostra_punteggi and target > 0:
+                new_body = riscala_single_block(new_title, new_body, target)
+            blocchi[idx]["title"] = new_title
+            blocchi[idx]["body"]  = new_body
+            st.session_state.pop("recalibra_pts", None)
+
+            pdf, err = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali)
+            if not pdf:
+                stato.update(label="PDF non aggiornato", state="error", expanded=False)
+                _mostra_errore(
+                    "Ho modificato l'esercizio ma non sono riuscito a rifare il PDF", err,
+                    consiglio="Premi «Annulla modifica» per tornare indietro, poi riprova.",
+                )
+                return
+            stato.update(label="Esercizio aggiornato!", state="complete", expanded=False)
+            st.toast(f"Esercizio {idx+1} aggiornato!", icon="✅")
+            time.sleep(0.3)
+            st.rerun()
+        except Exception as e:
+            stato.update(label="Modifica non riuscita", state="error", expanded=False)
+            _mostra_errore("Non sono riuscito a modificare questo esercizio", e)
+
+
+def _elimina_esercizio(idx, mostra_punteggi, con_griglia, punti_totali) -> bool:
+    """
+    Elimina un esercizio, rinumera i titoli, ridistribuisce i punti sul totale e
+    ricompila. Se il PDF non si compila ripristina lo stato precedente.
+    """
+    backup_blocchi = copy.deepcopy(st.session_state.review_blocks)
+    backup_pre     = st.session_state.review_preamble
+    va             = st.session_state.verifiche["A"]
+    backup_latex   = (va.get("latex"), va.get("latex_originale"))
+
+    blocchi = st.session_state.review_blocks
+    del blocchi[idx]
+    for i, b in enumerate(blocchi):
+        b["title"] = re.sub(
+            r"^(Esercizio\s*)\d+", lambda m, n=i + 1: f"{m.group(1)}{n}",
+            b["title"], flags=re.IGNORECASE,
+        )
+    pdf, err = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali, riscala_totale=True)
+    if not pdf:
+        st.session_state.review_blocks   = backup_blocchi
+        st.session_state.review_preamble = backup_pre
+        va["latex"], va["latex_originale"] = backup_latex
+        _mostra_errore_pdf(err, "questa verifica")
+        return False
+    _pulisci_stato_revisione()
+    st.session_state.review_sel_idx = min(idx, len(st.session_state.review_blocks) - 1)
+    st.session_state.gen_params["num_esercizi"] = len(st.session_state.review_blocks)
+    st.session_state.force_preview_refresh = True
+    return True
+
+
 def _render_stage_review():
     gp              = st.session_state.gen_params
     blocks          = st.session_state.review_blocks
@@ -3247,7 +3382,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 
     # ══════════════════════════════════════════════════════════════════════════
     #  LAYOUT DUE COLONNE
-    #  Sinistra [2]: box unico — KaTeX + Modifica AI + Ricalibra Punteggi
+    #  Sinistra [2]: box unico — KaTeX + azioni esercizio + Altre modifiche
     #  Destra   [3]: anteprima PDF una pagina alla volta con navigazione ◀▶
     # ══════════════════════════════════════════════════════════════════════════
     col_left, col_pdf = st.columns([2, 3], gap="medium")
@@ -3346,30 +3481,64 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         unsafe_allow_html=True
                     )
 
-            # ── Pulsanti Quick Regen — senza label ridondante ─────────────
+            # ── Azioni sull'esercizio: rigenera, numeri, più facile/difficile, elimina ──
+            _marker = '<div class="btn-outline-accent-marker" style="display:none;height:0;line-height:0"></div>'
             _qr_col1, _qr_col2 = st.columns(2, gap="small")
             with _qr_col1:
-                st.markdown(
-                    '<div class="btn-outline-accent-marker" style="display:none;height:0;line-height:0"></div>',
-                    unsafe_allow_html=True
-                )
+                st.markdown(_marker, unsafe_allow_html=True)
                 quick_regen = st.button(
                     "Cambia i numeri",
                     key=f"quick_regen_{idx}",
                     use_container_width=True,
-                    help="Genera nuovi valori e dati numerici mantenendo la stessa struttura dell'esercizio.",
+                    help="Stesso esercizio con valori e dati numerici nuovi.",
                 )
             with _qr_col2:
-                st.markdown(
-                    '<div class="btn-outline-accent-marker" style="display:none;height:0;line-height:0"></div>',
-                    unsafe_allow_html=True
-                )
+                st.markdown(_marker, unsafe_allow_html=True)
                 cambia_tutto = st.button(
-                    "Cambia esercizio",
+                    "Rigenera",
                     key=f"cambia_tutto_{idx}",
                     use_container_width=True,
-                    help="Genera un esercizio completamente diverso in struttura e tipologia, mantenendo argomento e pertinenza didattica",
+                    help="Un esercizio completamente diverso, sullo stesso argomento.",
                 )
+            _lv_col1, _lv_col2, _lv_col3 = st.columns(3, gap="small")
+            with _lv_col1:
+                st.markdown(_marker, unsafe_allow_html=True)
+                piu_facile = st.button(
+                    "Più facile", key=f"piu_facile_{idx}", use_container_width=True,
+                    help="Semplifica numeri e calcoli, mantenendo lo stesso argomento.",
+                )
+            with _lv_col2:
+                st.markdown(_marker, unsafe_allow_html=True)
+                piu_difficile = st.button(
+                    "Più difficile", key=f"piu_difficile_{idx}", use_container_width=True,
+                    help="Numeri meno immediati e un passaggio di ragionamento in più.",
+                )
+            with _lv_col3:
+                st.markdown(_marker, unsafe_allow_html=True)
+                elimina = st.button(
+                    "Elimina", key=f"elimina_{idx}", use_container_width=True,
+                    disabled=(n_blocks <= 1),
+                    help="Toglie questo esercizio e ridistribuisce i punti sugli altri.",
+                )
+            if elimina:
+                st.session_state["_conf_elimina"] = idx
+            elif st.session_state.get("_conf_elimina") not in (None, idx):
+                st.session_state.pop("_conf_elimina", None)
+
+            elimina_si = False
+            if st.session_state.get("_conf_elimina") == idx:
+                st.warning(
+                    f"Eliminare l'esercizio {idx+1}? I punti verranno ridistribuiti sugli altri esercizi."
+                )
+                _el_c1, _el_c2 = st.columns(2, gap="small")
+                with _el_c1:
+                    elimina_si = st.button("Sì, elimina", key=f"elimina_si_{idx}",
+                                           type="primary", use_container_width=True)
+                with _el_c2:
+                    if st.button("No, tienilo", key=f"elimina_no_{idx}", use_container_width=True):
+                        st.session_state.pop("_conf_elimina", None)
+                        st.rerun()
+
             # Placeholder feedback immediato — sotto i pulsanti, nella colonna sinistra
             _action_ph = st.empty()
             if quick_regen:
@@ -3379,45 +3548,46 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 
             st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
 
-            # ── Modifica con AI — fuori dall'expander, sempre visibile ────────
-            st.markdown(
-                '<div style="font-size:.95rem;color:' + T["text2"] + ';margin-bottom:.5rem;'
-                'font-family:DM Sans,sans-serif;line-height:1.5;">'
-                'Descrivi la modifica — l\'AI rigenererà solo questo esercizio.'
-                '</div>'
-                '<div style="font-size:.9rem;color:' + T["warn"] + ';margin-bottom:.7rem;'
-                'font-family:DM Sans,sans-serif;font-weight:600;'
-                'background:' + T["warn"] + '18;border:1px solid ' + T["warn"] + '44;'
-                'border-radius:8px;padding:.4rem .7rem;">'
-                'Per cambiare i punteggi usa il pannello qui sotto.</div>',
-                unsafe_allow_html=True
-            )
-            istruzione = st.text_area(
-                f"Modifica esercizio {idx+1}",
-                placeholder="es. Aumenta la difficoltà · Cambia i numeri · Converti in Vero/Falso · Aggiungi un sottopunto",
-                key=f"rw_istr_{idx}",
-                label_visibility="collapsed",
-                height=80,
-            )
-            rigenera = st.button(
-                "✏️ Applica modifica", key=f"rw_btn_{idx}",
-                use_container_width=True, disabled=not istruzione.strip(),
-                type="primary",
-                help="L'AI applica le tue istruzioni e rigenera solo questo esercizio, senza modificare gli altri.",
-            )
-            # ── Placeholder feedback immediato sotto il pulsante cliccato ─────
-            _loading_ph = st.empty()
-            if rigenera and istruzione.strip():
-                _istr_low_quick = istruzione.lower()
-                if any(kw in _istr_low_quick for kw in _SCORE_KEYWORDS):
-                    _loading_ph.warning(
-                        "⚠️ **Hai menzionato punteggi / punti.**\n\n"
-                        "Per modificare i punti usa il pannello **⚖️ Ricalibra Punteggi** "
-                        "qui sopra — imposta i valori desiderati e premi **Applica Punteggi**. "
-                        "Il pannello AI è riservato alle modifiche al contenuto (testo, difficoltà, formato)."
-                    )
-                else:
-                    _loading_ph.info(f"Elaborazione in corso — modifico l'esercizio {idx+1}…")
+            # ── Altre modifiche — descrizione libera, chiusa di default ──────────
+            with st.expander("✏️ Altre modifiche", expanded=False):
+                st.markdown(
+                    '<div style="font-size:.95rem;color:' + T["text2"] + ';margin-bottom:.5rem;'
+                    'font-family:DM Sans,sans-serif;line-height:1.5;">'
+                    'Descrivi la modifica — l\'AI rigenererà solo questo esercizio.'
+                    '</div>'
+                    '<div style="font-size:.9rem;color:' + T["warn"] + ';margin-bottom:.7rem;'
+                    'font-family:DM Sans,sans-serif;font-weight:600;'
+                    'background:' + T["warn"] + '18;border:1px solid ' + T["warn"] + '44;'
+                    'border-radius:8px;padding:.4rem .7rem;">'
+                    'Per cambiare i punteggi usa «Cambia i punteggi» qui sotto.</div>',
+                    unsafe_allow_html=True
+                )
+                istruzione = st.text_area(
+                    f"Modifica esercizio {idx+1}",
+                    placeholder="es. Converti in Vero/Falso · Aggiungi un sottopunto · Usa un contesto di vita quotidiana",
+                    key=f"rw_istr_{idx}",
+                    label_visibility="collapsed",
+                    height=80,
+                )
+                rigenera = st.button(
+                    "✏️ Applica modifica", key=f"rw_btn_{idx}",
+                    use_container_width=True, disabled=not istruzione.strip(),
+                    type="primary",
+                    help="L'AI applica le tue istruzioni e rigenera solo questo esercizio, senza modificare gli altri.",
+                )
+                # ── Placeholder feedback immediato sotto il pulsante cliccato ─────
+                _loading_ph = st.empty()
+                if rigenera and istruzione.strip():
+                    _istr_low_quick = istruzione.lower()
+                    if any(kw in _istr_low_quick for kw in _SCORE_KEYWORDS):
+                        _loading_ph.warning(
+                            "⚠️ **Hai menzionato punteggi / punti.**\n\n"
+                            "Per modificare i punti usa il pannello **⚖️ Cambia i punteggi** "
+                            "qui sotto — imposta i valori desiderati e premi **Applica Punteggi**. "
+                            "Questo campo è riservato alle modifiche al contenuto (testo, difficoltà, formato)."
+                        )
+                    else:
+                        _loading_ph.info(f"Elaborazione in corso — modifico l'esercizio {idx+1}…")
 
 
     # ── COLONNA DESTRA — anteprima PDF una pagina alla volta ─────────────────
@@ -3605,6 +3775,25 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             except Exception as _qr_e:
                 _qr_st.update(label="Variante non riuscita", state="error", expanded=False)
                 _mostra_errore("Non sono riuscito a cambiare i numeri di questo esercizio", _qr_e)
+
+    # ── Più facile / Più difficile — un solo esercizio, istruzione fissa ──────
+    if piu_facile or piu_difficile:
+        _action_ph.empty()
+        _rigenera_esercizio_guidato(
+            idx,
+            istruzione_livello_esercizio(bool(piu_difficile), argomento_str),
+            "Rendo più difficile" if piu_difficile else "Rendo più facile",
+            materia_str, argomento_str, modello_rw,
+            mostra_punteggi, con_griglia, punti_totali, _action_ph,
+        )
+
+    # ── Elimina esercizio (dopo conferma) ─────────────────────────────────────
+    if elimina_si:
+        with st.spinner("Elimino l'esercizio e ricalcolo i punti…"):
+            _ok_el = _elimina_esercizio(idx, mostra_punteggi, con_griglia, punti_totali)
+        if _ok_el:
+            st.toast("Esercizio eliminato", icon="🗑️")
+            st.rerun()
 
     # ── Logica modifica AI ────────────────────────────────────────────────────
     if rigenera and istruzione.strip():
@@ -3937,7 +4126,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 
     # ── Ricalibra Punteggi — sopra il pulsante Conferma ──────────────────
     if mostra_punteggi and n_blocks > 0:
-        with st.expander("⚖️ Ricalibra Punteggi", expanded=False):
+        with st.expander("⚖️ Cambia i punteggi", expanded=False):
 
             # ── Intestazione compatta ──────────────────────────────────────
             st.markdown(
