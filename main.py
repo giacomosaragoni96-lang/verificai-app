@@ -1194,12 +1194,12 @@ def _render_le_tue_verifiche():
             st.rerun()
     
     st.markdown(
-        """
+        f"""
         <div style="text-align: center; margin-bottom: 2rem;">
-            <h1 style="font-size: 2.5rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem;">
+            <h1 style="font-size: 2.5rem; font-weight: 700; color: {T['text']}; margin-bottom: 0.5rem;">
                 📄 Le Tue Verifiche
             </h1>
-            <p style="font-size: 1.2rem; color: #6b7280;">
+            <p style="font-size: 1.2rem; color: {T['muted']};">
                 Gestisci, visualizza e scarica tutte le verifiche che hai creato
             </p>
         </div>
@@ -1338,8 +1338,8 @@ def _render_le_tue_verifiche():
                 st.markdown(
                     f"""
                     <div style="
-                        background: white;
-                        border: 1px solid #e5e7eb;
+                        background: {T['card']};
+                        border: 1px solid {T['border']};
                         border-radius: 12px;
                         padding: 1.5rem;
                         margin-bottom: 1rem;
@@ -1348,20 +1348,20 @@ def _render_le_tue_verifiche():
                     " onmouseover="this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.1)'">
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                             <div>
-                                <h3 style="font-size: 1.3rem; font-weight: 600; color: #1f2937; margin: 0 0 0.5rem 0;">
+                                <h3 style="font-size: 1.3rem; font-weight: 600; color: {T['text']}; margin: 0 0 0.5rem 0;">
                                     {verifica.get('argomento', 'Verifica senza titolo')}
                                 </h3>
                                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
-                                    <span style="background: #eff6ff; color: #1d4ed8; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
+                                    <span style="background: {T['accent_light']}; color: {T['accent']}; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
                                         📚 {verifica.get('materia', 'Sconosciuta')}
                                     </span>
-                                    <span style="background: #f0fdf4; color: #059669; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
+                                    <span style="background: {T['success']}22; color: {T['success']}; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
                                         🏫 {verifica.get('scuola', 'Non specificata')}
                                     </span>
-                                    <span style="background: #fefce8; color: #ca8a04; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
+                                    <span style="background: {T['warn']}22; color: {T['warn']}; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
                                         📝 {verifica.get('num_esercizi', '?')} esercizi
                                     </span>
-                                    <span style="background: #f3f4f6; color: #6b7280; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
+                                    <span style="background: {T['bg2']}; color: {T['muted']}; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
                                         📅 {data_formattata}
                                     </span>
                                 </div>
@@ -1520,18 +1520,18 @@ def _render_le_tue_verifiche():
                             st.markdown(
                                 f"""
                                 <div style="
-                                    background: #f0fdf4;
-                                    border: 1px solid #86efac;
+                                    background: {T['success']}18;
+                                    border: 1px solid {T['success']};
                                     border-radius: 8px;
                                     padding: 1rem;
                                     margin: 0.5rem 0;
                                 ">
-                                    <div style="font-size: 0.9rem; color: #059669; margin-bottom: 0.5rem;">
+                                    <div style="font-size: 0.9rem; color: {T['success']}; margin-bottom: 0.5rem;">
                                         📋 Link da condividere:
                                     </div>
                                     <div style="
-                                        background: white;
-                                        border: 1px solid #d1d5db;
+                                        background: {T['card']}; color: {T['text']};
+                                        border: 1px solid {T['border2']};
                                         border-radius: 4px;
                                         padding: 0.5rem;
                                         font-family: monospace;
@@ -1543,7 +1543,7 @@ def _render_le_tue_verifiche():
                                     <div style="margin-top: 0.5rem;">
                                         <button onclick="navigator.clipboard.writeText('{link}')" 
                                                 style="
-                                                    background: #059669;
+                                                    background: {T['success']};
                                                     color: white;
                                                     border: none;
                                                     padding: 0.25rem 0.5rem;
@@ -2046,11 +2046,11 @@ def _render_percorso_b_form():
             # Avviso PDF non disponibile
             if not LATEX_AVAILABLE:
                 st.markdown(
-                    f'<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;'
+                    '<div style="background:' + T["warn"] + '22;border:1px solid ' + T["warn"] + ';border-radius:8px;'
                     f'padding:.8rem;margin:.5rem 0;">'
-                    f'<div style="text-align:center;font-size:.85rem;color:#92400E;font-weight:600;">'
+                    '<div style="text-align:center;font-size:.85rem;color:' + T["warn"] + ';font-weight:600;">'
                     f'⚠️ PDF non disponibile - LaTeX non installato</div>'
-                    f'<div style="text-align:center;font-size:.75rem;color:#B45309;margin-top:.2rem;">'
+                    '<div style="text-align:center;font-size:.75rem;color:' + T["warn"] + ';margin-top:.2rem;">'
                     f'Potrai generare la verifica ma non scaricare il PDF</div></div>',
                     unsafe_allow_html=True,
                 )
@@ -2228,7 +2228,6 @@ def _lancia_generazione(
             '</div></div>',
             unsafe_allow_html=True
         )
-        time.sleep(0.7)
         _prog.empty()
 
         try:
@@ -2554,7 +2553,6 @@ def _rigenera_esercizio_guidato(idx, istruzione, etichetta, materia, argomento, 
                 return
             stato.update(label="Esercizio aggiornato!", state="complete", expanded=False)
             st.toast(f"Esercizio {idx+1} aggiornato!", icon="✅")
-            time.sleep(0.3)
             st.rerun()
         except Exception as e:
             stato.update(label="Modifica non riuscita", state="error", expanded=False)
@@ -2895,7 +2893,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 """, height=0, scrolling=False)
 
     st.markdown(
-        '<div style="background:linear-gradient(135deg,#1E3A5F 0%,#2563EB 100%);'
+        '<div style="background:linear-gradient(135deg,' + T["accent2"] + ' 0%,' + T["accent"] + ' 100%);'
         'border-radius:16px;padding:1.1rem 1.4rem;margin-bottom:.9rem;">'
         '<div style="display:flex;align-items:center;gap:14px;">'
         '<span style="font-size:2rem;">✏️</span>'
@@ -3050,7 +3048,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         )
                         if _undo_pdf:
                             st.toast("↩️ Modifica annullata — versione precedente ripristinata!", icon="↩️")
-                            time.sleep(0.2); st.rerun()
+                            st.rerun()
                         else:
                             _mostra_errore_pdf(_undo_err, "questa verifica")
                 with _undo_col2:
@@ -3330,7 +3328,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 else:
                     _qr_st.update(label="Variante pronta!", state="complete", expanded=False)
                     st.toast(f"Variante esercizio {idx+1} generata!", icon="✅")
-                    time.sleep(0.3); st.rerun()
+                    st.rerun()
             except Exception as _qr_e:
                 _qr_st.update(label="Variante non riuscita", state="error", expanded=False)
                 _mostra_errore("Non sono riuscito a cambiare i numeri di questo esercizio", _qr_e)
@@ -3434,7 +3432,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 # Header animato
                 st.markdown(f"""
                 <div style="
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    background: linear-gradient(135deg, {T['accent2']} 0%, {T['accent']} 100%);
                     border-radius: 12px;
                     padding: 1rem;
                     margin-bottom: 1rem;
@@ -3500,7 +3498,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     # Messaggio di successo elegante
                     _loading_ph.markdown(f"""
                     <div style="
-                        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                        background: linear-gradient(135deg, {T['success']} 0%, {T['success']} 100%);
                         border-radius: 12px;
                         padding: 1rem;
                         box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
@@ -3533,7 +3531,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     </style>
                     """, unsafe_allow_html=True)
                     
-                    time.sleep(0.8); st.rerun()
+                    st.toast(f"Esercizio {idx+1} aggiornato!", icon="✅"); st.rerun()
                 else:
                     _loading_ph.empty()
                     _mostra_errore(
@@ -3632,7 +3630,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 else:
                     _ct_st.update(label="Esercizio cambiato!", state="complete", expanded=False)
                     st.toast(f"Esercizio {idx+1} cambiato!", icon="✅")
-                    time.sleep(0.3); st.rerun()
+                    st.rerun()
             except Exception as _ct_e:
                 _ct_st.update(label="Cambio non riuscito", state="error", expanded=False)
                 _mostra_errore("Non sono riuscito a cambiare questo esercizio", _ct_e)
