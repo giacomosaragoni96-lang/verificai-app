@@ -574,10 +574,11 @@ if "_share_generating"    not in st.session_state: st.session_state._share_gener
 # ── Idea #3: Quick regen state ──────────────────────────────────────────────
 if "_quick_regen_idx"     not in st.session_state: st.session_state._quick_regen_idx = None
 if "_facsimile_mode"        not in st.session_state: st.session_state["_facsimile_mode"]        = False
-if "_fac_dialog_pending"   not in st.session_state: st.session_state["_fac_dialog_pending"]   = False
 if "_fac_dialog_data"      not in st.session_state: st.session_state["_fac_dialog_data"]      = {}
-if "_fac_dialog_shown_for" not in st.session_state: st.session_state["_fac_dialog_shown_for"] = None
 if "_fac_confirmed"        not in st.session_state: st.session_state["_fac_confirmed"]        = False
+# File di materiale caricato (analizzato solo quando si preme "Crea verifica")
+if "_file_materiale"       not in st.session_state: st.session_state["_file_materiale"]       = None
+if "_up_ciclo"             not in st.session_state: st.session_state["_up_ciclo"]             = 0
 if "_pb_argomento_source"    not in st.session_state: st.session_state["_pb_argomento_source"] = None
 if "_pb_argomento_manual_val" not in st.session_state: st.session_state["_pb_argomento_manual_val"] = ""
 
@@ -1017,16 +1018,8 @@ def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str)
         st.session_state.analisi_doc = result
         _consolida_info()
 
-        # ── Proposta facsimile: se è una verifica con alta confidence → apri dialog ─
-        _is_verifica_ai = (
-            result.get("tipo_documento") == "verifica"
-            and float(result.get("confidence", 0)) >= 0.70
-            and st.session_state.get("_fac_dialog_shown_for") != file_hash
-        )
-        if _is_verifica_ai:
-            st.session_state["_fac_dialog_pending"] = True
-            st.session_state["_fac_dialog_data"]    = result
-            st.session_state["_fac_dialog_shown_for"] = file_hash
+        # Al prossimo render (prima dei widget) materia e scuola rilevate riempiono i menu
+        st.session_state["_applica_analisi"] = True
 
         # ── Prepara toast da mostrare al prossimo render ────────────────────────
         _det_materia = result.get("materia", "")
@@ -1046,47 +1039,6 @@ def _esegui_analisi_documento(file_bytes: bytes, mime_type: str, file_name: str)
     except Exception as e:
         logger.error(f"Analisi documento non riuscita: {e}", exc_info=True)
         st.warning("Non sono riuscito a leggere il file. Compila i campi a mano oppure prova con un altro file.", icon="🔬")
-
-
-def _compute_file_tags(analisi: dict) -> list:
-    """Restituisce una lista di tag descrittivi (max 6) derivati dall'analisi AI del file."""
-    tags = []
-    tipo = analisi.get("tipo_documento", "")
-    _tipo_map = {
-        "verifica": ("📋", "Verifica", "tipo"),
-        "appunti": ("📒", "Appunti", "tipo"),
-        "libro": ("📚", "Libro", "tipo"),
-        "esercizi_sciolti": ("📝", "Esercizi", "tipo"),
-        "esercizio_singolo": ("✏️", "Esercizio", "tipo"),
-        "misto": ("📄", "Misto", "tipo"),
-    }
-    if tipo in _tipo_map:
-        icon, label, kind = _tipo_map[tipo]
-        tags.append((icon, label, kind))
-
-    tipi_domande = analisi.get("tipi_domande") or []
-    for td in tipi_domande:
-        if td == "Aperto":
-            tags.append(("💬", "Aperto", "content"))
-        elif td == "Scelta multipla":
-            tags.append(("🔘", "Quiz", "content"))
-        elif td == "Vero/Falso":
-            tags.append(("✔", "V/F", "content"))
-        elif td == "Completamento":
-            tags.append(("✍️", "Completamento", "content"))
-
-    stile = (analisi.get("stile_desc") or "").lower()
-    if any(w in stile for w in ("teoria", "definizione", "concetto", "spiegazione")):
-        tags.append(("📖", "Teoria", "content"))
-    elif any(w in stile for w in ("sintesi", "riassunto", "schema", "mappa")):
-        tags.append(("🗂️", "Sintesi", "content"))
-
-    if analisi.get("ha_formule"):
-        tags.append(("∑", "Formule", "formula"))
-    if analisi.get("ha_grafici"):
-        tags.append(("📈", "Grafici", "grafico"))
-
-    return tags[:6]
 
 
 def _consolida_info():
@@ -1840,42 +1792,15 @@ def _render_le_tue_verifiche():
             st.rerun()
 
 
-@st.dialog("📋 Verifica rilevata!")
-def _mostra_dialogo_facsimile():
-    """Popup che appare quando l'AI rileva che il file caricato è una verifica."""
-    _a    = st.session_state.get("_fac_dialog_data", {})
-    _mat  = _a.get("materia", "")
-    _arg  = (_a.get("contenuto_argomento") or "")
-    _n_es = _a.get("num_esercizi_rilevati") or "?"
-    _pt   = _a.get("punti_totali_rilevati")
-    _conf = int(float(_a.get("confidence", 0)) * 100)
+class _FileInMemoria:
+    """File caricato tenuto in memoria: stessa interfaccia minima di un UploadedFile
+    (type, name, getvalue) per genera_verifica, ma non dipende dal widget di upload."""
 
-    _pt_str  = f" da **{_pt} pt**" if _pt else ""
-    _arg_str = f" su *{_arg[:70]}{'…' if len(_arg) > 70 else ''}*" if _arg else ""
-    _mat_str = f" di **{_mat}**" if _mat else ""
+    def __init__(self, dati: bytes, mime: str, nome: str):
+        self._dati, self.type, self.name = dati, mime, nome
 
-    st.markdown(
-        f"Ho analizzato il file e ho trovato una **verifica{_mat_str}** "
-        f"con **{_n_es} esercizi**{_pt_str}{_arg_str}."
-    )
-    st.markdown(
-        "Vuoi generare subito un **facsimile**? Stessa struttura e punteggi, "
-        "ma dati, valori e quesiti completamente nuovi."
-    )
-    if _pt:
-        st.caption(f"Punteggio rilevato: {_pt} pt · Confidenza AI: {_conf}%")
-    
-    _d1, _d2 = st.columns(2)
-    with _d1:
-        if st.button("⚡ Sì, genera facsimile", type="primary", use_container_width=True,
-                     disabled=_limite):
-            st.session_state["_fac_dialog_pending"] = False
-            st.session_state["_fac_confirmed"]      = True
-            st.rerun()
-    with _d2:
-        if st.button("Continua a configurare", use_container_width=True):
-            st.session_state["_fac_dialog_pending"] = False
-            st.rerun()
+    def getvalue(self) -> bytes:
+        return self._dati
 
 
 def _render_percorso_b_form():
@@ -1890,11 +1815,15 @@ def _render_percorso_b_form():
     └─────────────────────────────────────────────────┘
     """
 
-    # ── Popup facsimile se verifica rilevata ─────────────────────────────────
-    if st.session_state.get("_fac_dialog_pending"):
-        _mostra_dialogo_facsimile()
+    # ── Materia e scuola rilevate dal file (applicate prima di creare i widget) ──
+    if st.session_state.pop("_applica_analisi", False):
+        _ic0 = st.session_state.info_consolidate
+        if _ic0.get("materia") in MATERIE:
+            st.session_state["sel_materia_b"] = _ic0["materia"]
+        if _ic0.get("scuola") in SCUOLE:
+            st.session_state["sel_scuola_b"] = _ic0["scuola"]
 
-    # ── Generazione facsimile confermata dal dialog ───────────────────────────
+    # ── Generazione facsimile: scelta «Rifai questa verifica con dati nuovi» ──
     if st.session_state.get("_fac_confirmed"):
         st.session_state["_fac_confirmed"] = False
         _a_fac = st.session_state.get("_fac_dialog_data", {})
@@ -1947,7 +1876,10 @@ def _render_percorso_b_form():
                 note_generali=note_fac,
                 s_es=_s_es_fac,
                 imgs_es=_imgs_es_fac,
-                file_ispirazione=st.session_state.get("file_ispirazione"),
+                file_ispirazione=(
+                    _FileInMemoria(_fm_fac["bytes"], _fm_fac["mime"], _fm_fac["name"])
+                    if (_fm_fac := st.session_state.get("_file_materiale")) else None
+                ),
                 prog_placeholder=_prog_fac,
             )
             # La generazione fallita non fa rerun: restituisce valori neutri (nessun avvio)
@@ -2105,13 +2037,9 @@ def _render_percorso_b_form():
             _par_dur   = parametri_durata(durata_nome, difficolta)
             durata_str = _par_dur["durata"]
 
-            # Numero di esercizi di partenza: dal file (verifica da rifare) o dalla durata scelta
+            # Numero di esercizi di partenza: quello della durata scelta. Con «Rifai questa
+            # verifica» numero di esercizi e punti vengono dal file (vedi il ramo facsimile).
             _n_default = _par_dur["num_esercizi"]
-            if _info_cons.get("num_esercizi_rilevati"):
-                try:
-                    _n_default = max(1, min(int(_info_cons["num_esercizi_rilevati"]), 15))
-                except (ValueError, TypeError):
-                    pass
             _n_opts = list(range(1, 16))
             _n_idx  = (_n_opts.index(_n_default) if _n_default in _n_opts else 3)
 
@@ -2236,179 +2164,70 @@ def _render_percorso_b_form():
                         )
                         st.rerun()
 
-            # ── Expander upload documento ──────────────────────────────────────
-            _lista_b_curr_pre = st.session_state.analisi_docs_list
-            _n_docs = len(_lista_b_curr_pre)
-            _upload_label = (
-                f"📎 {_n_docs} documento{'i' if _n_docs > 1 else ''} caricato{'i' if _n_docs > 1 else ''}"
-                if _n_docs else "📎 Carica un documento (opzionale)"
-            )
-            with st.expander(_upload_label, expanded=bool(_n_docs)):
-
-                _lista_b = st.session_state.analisi_docs_list
-                _upload_key_b = f"pb_file_up_{len(_lista_b)}"
-                st.markdown('<div class="file-uploader-compact file-uploader-narrow">', unsafe_allow_html=True)
-                _file_b = st.file_uploader(
-                    "Inserisci materiale",
-                    type=["pdf", "png", "jpg", "jpeg"],
-                    key=_upload_key_b,
-                    label_visibility="collapsed",
-                    help="Carica una verifica, appunti o un capitolo. L'AI analizza il contenuto e aggiorna i campi automaticamente.",
-                )
-                st.markdown('</div>', unsafe_allow_html=True)
-
-                if _file_b:
-                    _fb_bytes = _file_b.getvalue()
-                    _fb_hash  = hash(_fb_bytes)
-                    _existing_b = {d["file_hash"] for d in _lista_b}
-                    if _fb_hash not in _existing_b:
-                        _ph_b = st.empty()
-                        _ph_b.markdown(
-                            '<div class="ocr-skeleton-wrap">'
-                            '<div class="ocr-skeleton-header">'
-                            '<div class="ocr-skeleton-icon">🔬</div>'
-                            '<div style="flex:1">'
-                            '<div class="ocr-skeleton-title">Analisi AI in corso…</div>'
-                            '<div class="ocr-skeleton-sub">Lettura · Identificazione · Classificazione</div>'
-                            '</div></div>'
-                            '<div class="ocr-skeleton-steps">'
-                            '<div class="ocr-skeleton-step ocr-step-active"><span>📖</span> Lettura</div>'
-                            '<div class="ocr-skeleton-step"><span>🧠</span> Argomento</div>'
-                            '<div class="ocr-skeleton-step"><span>🏷️</span> Tipo</div>'
-                            '</div>'
-                            '<div class="ocr-skeleton-doc">'
-                            '<div class="ocr-skeleton-scan"></div>'
-                            '<div class="ocr-skeleton-line" style="width:90%"></div>'
-                            '<div class="ocr-skeleton-line" style="width:70%"></div>'
-                            '</div></div>',
-                            unsafe_allow_html=True,
-                        )
-                        st.session_state.file_ispirazione = _file_b
-                        _esegui_analisi_documento(_fb_bytes, _file_b.type or "image/png", _file_b.name)
-                        _ph_b.empty()
-                        if st.session_state.get("_pb_argomento_source") != "manual":
-                            st.session_state["_pb_argomento_source"] = None
-                    else:
-                        st.toast("File già presente.", icon="ℹ️")
-
-                _lista_b_curr = st.session_state.analisi_docs_list
-
-                if not _lista_b_curr:
+            # ── Hai già del materiale? Upload + tre scelte (l'AI legge il file solo al clic) ──
+            _rifiuto = st.session_state.pop("_analisi_rifiuto", None)
+            if _rifiuto:
+                # file non scolastico: lo tolgo e spiego perché
+                st.session_state["_file_materiale"] = None
+                st.session_state.file_ispirazione = None
+                st.session_state["_up_ciclo"] += 1
+                st.warning(_rifiuto.get("messaggio") or "Questo file non sembra materiale scolastico.", icon="📎")
+            _fm = st.session_state.get("_file_materiale")
+            with st.expander("📎 Hai già del materiale? (opzionale)", expanded=bool(_fm)):
+                if not _fm:
+                    _up = st.file_uploader(
+                        "Carica appunti, una verifica o un foglio di esercizi",
+                        type=["pdf", "png", "jpg", "jpeg"],
+                        key=f"pb_file_up_{st.session_state['_up_ciclo']}",
+                        help="PDF o foto. Il file viene letto quando premi «Crea verifica».",
+                    )
+                    if _up:
+                        _bytes_up = _up.getvalue()
+                        st.session_state["_file_materiale"] = {
+                            "bytes": _bytes_up, "mime": _up.type or "image/png",
+                            "name": _up.name, "hash": hash(_bytes_up),
+                        }
+                        st.session_state.file_ispirazione = _FileInMemoria(
+                            _bytes_up, _up.type or "image/png", _up.name)
+                        st.rerun()
+                else:
+                    _nome_f = _fm["name"] if len(_fm["name"]) <= 38 else _fm["name"][:35] + "…"
                     st.markdown(
-                        f'<div style="background:{T["hint_bg"]};border:1.5px solid {T["hint_border"]};'
-                        f'border-radius:12px;padding:1.2rem;margin:.8rem 0;">'
-                        f'<div style="text-align:center;">'
-                        f'<div style="font-size:2rem;margin-bottom:.5rem;">📄</div>'
-                        f'<div style="font-size:.9rem;font-weight:600;color:{T["hint_text"]};margin-bottom:.3rem;">'
-                        f'Nessun file ancora caricato</div>'
-                        f'<div style="font-size:.8rem;color:{T["hint_text"]};line-height:1.4;">'
-                        f'Carica <strong>appunti, libro di testo o una verifica precedente</strong> —<br>'
-                        f'l\'AI la userà come riferimento per generare gli esercizi.</div>'
-                        f'</div></div>',
+                        f'<div class="file-pool-card"><div class="fpc-header">'
+                        f'<span class="fpc-name">📄 {_nome_f}</span></div></div>',
                         unsafe_allow_html=True,
                     )
-                else:
-                    _MODO_OPTIONS = {
-                        "base_conoscenza":   "📚 Usa come fonte",
-                        "includi_esercizio": "✏️ Riadatta esercizi",
+                    _SCELTE_MATERIALE = {
+                        "base_conoscenza":   "📚 Prendi spunto dai miei appunti",
+                        "includi_esercizio": "✏️ Includi questi esercizi nella verifica",
+                        "copia_fedele":      "🔁 Rifai questa verifica con dati nuovi",
                     }
-                    _rimuovi_idx = None
-
-                    for _fi, _fentry in enumerate(_lista_b_curr):
-                        _fhash_str = str(_fentry["file_hash"])
-                        _fa        = _fentry.get("analisi", {})
-                        _fa_mat    = _fa.get("materia", "")
-                        _fa_es     = _fa.get("num_esercizi_rilevati") or 0
-
-                        _tags = _compute_file_tags(_fa)
-                        _tag_class_map = {
-                            "tipo": "doc-tag-tipo", "content": "doc-tag-content",
-                            "formula": "doc-tag-formula", "grafico": "doc-tag-grafico",
-                        }
-                        _tags_html = "".join(
-                            f'<span class="doc-tag {_tag_class_map.get(k,"doc-tag-content")}">{ico} {lbl}</span>'
-                            for ico, lbl, k in _tags
-                        ) if _tags else ""
-
-                        _meta_parts = []
-                        if _fa_mat:
-                            _meta_parts.append(f"<strong>{_fa_mat}</strong>")
-                        if _fa_es:
-                            _meta_parts.append(f"{_fa_es} es.")
-                        _meta_str = " · ".join(_meta_parts)
-
-                        _fname_display = _fentry["file_name"]
-                        if len(_fname_display) > 30:
-                            _fname_display = _fname_display[:27] + "…"
-
-                        _meta_span = f'<span class="fpc-meta">{_meta_str}</span>' if _meta_str else ""
-                        st.markdown(
-                            f'<div class="file-pool-card">'
-                            f'  <div class="fpc-header">'
-                            f'    <span class="fpc-name">📄 {_fname_display}</span>'
-                            f'    {_meta_span}'
-                            f'  </div>'
-                            + (f'  <div class="doc-tags">{_tags_html}</div>' if _tags_html else '')
-                            + '</div>',
-                            unsafe_allow_html=True,
-                        )
-
-                        _modo_prev = _fentry.get("file_mode", "base_conoscenza")
-                        if _modo_prev not in _MODO_OPTIONS:
-                            _modo_prev = "base_conoscenza"
-                        _sel_modo = st.radio(
-                            f"Modalità file {_fi}",
-                            options=list(_MODO_OPTIONS.keys()),
-                            index=list(_MODO_OPTIONS.keys()).index(_modo_prev),
-                            format_func=lambda x: _MODO_OPTIONS[x],
-                            key=f"pb_mode_{_fhash_str}",
-                            horizontal=True,
-                            label_visibility="collapsed",
-                        )
-                        if _sel_modo != _lista_b_curr[_fi].get("file_mode"):
-                            st.session_state.analisi_docs_list[_fi]["file_mode"] = _sel_modo
-                            st.session_state.analisi_docs_list[_fi]["confirmed"] = True
-                            _consolida_info()
-
-                        if _sel_modo == "includi_esercizio":
-                            if _fa_es > 1:
-                                _hint_txt = (
-                                    f'L\'AI riprende la struttura dei <strong>{_fa_es} esercizi</strong> '
-                                    f'del file e genera valori completamente nuovi.'
-                                )
-                            elif _fa_es == 1:
-                                _hint_txt = "L'AI riprende la struttura delle domande del file e cambia i valori."
-                            else:
-                                _hint_txt = "L'AI riadatta le domande del file inserendo dati e contesti nuovi."
-                        else:
-                            _hint_txt = (
-                                "L'AI legge il documento e crea esercizi <strong>originali</strong> "
-                                "sull'argomento trattato."
-                            )
-                        _hint_cls = "file-includi-hint" if _sel_modo == "includi_esercizio" else "file-fonte-hint"
-                        st.markdown(
-                            f'<div class="{_hint_cls}">💡 {_hint_txt}</div>',
-                            unsafe_allow_html=True,
-                        )
-
-                        st.markdown('<div class="fpc-delete-row">', unsafe_allow_html=True)
-                        if st.button("✕ rimuovi", key=f"pb_rm_{_fhash_str}_{_fi}",
-                                     help="Rimuovi questo file dal pool"):
-                            _rimuovi_idx = _fi
-                        st.markdown('</div>', unsafe_allow_html=True)
-
-                    if _rimuovi_idx is not None:
-                        _rimosso = st.session_state.analisi_docs_list.pop(_rimuovi_idx)
-                        st.session_state.istruzioni_per_file.pop(str(_rimosso.get("file_hash")), None)
-                        _consolida_info()
+                    _scelta_mat = st.radio(
+                        "Cosa vuoi fare con questo file?",
+                        options=list(_SCELTE_MATERIALE),
+                        format_func=lambda k: _SCELTE_MATERIALE[k],
+                        key="sel_materiale_b",
+                    )
+                    _SUGGERIMENTI_MATERIALE = {
+                        "base_conoscenza":   "Esercizi nuovi sugli argomenti del tuo materiale, nello stesso livello.",
+                        "includi_esercizio": "Gli esercizi del file entrano nella verifica; l'AI crea gli altri.",
+                        "copia_fedele":      "Stessa struttura e stessi punteggi del file, con numeri e testi nuovi "
+                                             "(il numero di esercizi e i punti vengono dal file).",
+                    }
+                    st.caption(_SUGGERIMENTI_MATERIALE[_scelta_mat])
+                    if st.button("✕ Togli il file", key="pb_rm_materiale"):
+                        for _k_rm in ("_file_materiale", "analisi_doc", "file_mode", "file_ispirazione"):
+                            st.session_state[_k_rm] = None
+                        st.session_state.analisi_docs_list = []
+                        st.session_state.info_consolidate = {}
+                        st.session_state.istruzioni_per_file = {}
+                        st.session_state["_up_ciclo"] += 1
                         if st.session_state.get("_pb_argomento_source") != "manual":
                             st.session_state["_pb_argomento_source"] = None
-                            if not st.session_state.analisi_docs_list:
-                                st.session_state.info_consolidate = {}
                         st.rerun()
 
             # ── CTA: Genera Bozza ─────────────────────────────────────────────────
-            _manca_arg = not argomento
+            _manca_arg = not argomento and not _fm
             st.markdown("<div style='height:.9rem'></div>", unsafe_allow_html=True)
 
             if _manca_arg and not _limite:
@@ -2421,7 +2240,7 @@ def _render_percorso_b_form():
 
             st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
             genera_btn = st.button(
-                "🚀  Genera Bozza",
+                "🚀  Crea verifica",
                 use_container_width=True,
                 type="primary",
                 disabled=_limite or _manca_arg,
@@ -2693,11 +2512,42 @@ def _render_stage_input():
             _prog_ph_b, durata_str, durata_nome,
         ) = _render_percorso_b_form()
 
-        _riprova = st.session_state.pop("_riprova_genera", False)
-        if not (genera_btn or _riprova) or _limite:
+        _riprova      = st.session_state.pop("_riprova_genera", False)
+        _dopo_analisi = st.session_state.pop("_genera_dopo_analisi", False)
+        if not (genera_btn or _riprova or _dopo_analisi) or _limite:
             return
 
+        # ── Il file viene letto dall'AI solo adesso (1 chiamata, solo se si crea davvero) ──
+        _fm    = st.session_state.get("_file_materiale")
+        _voce  = next((e for e in st.session_state.analisi_docs_list
+                       if _fm and e["file_hash"] == _fm["hash"]), None)
+        if _fm and _voce is None:
+            st.session_state["_genera_dopo_analisi"] = True
+            with st.spinner("Leggo il tuo file…"):
+                _esegui_analisi_documento(_fm["bytes"], _fm["mime"], _fm["name"])
+            # Se arriviamo qui la lettura non è andata a buon fine (nessun rerun): niente di fatto
+            st.session_state.pop("_genera_dopo_analisi", None)
+            return
+
+        # ── Applica la scelta fatta sul file ──────────────────────────────────────
+        _scelta_mat = None
+        if _voce is not None:
+            _scelta_mat = st.session_state.get("sel_materiale_b", "base_conoscenza")
+            _voce["file_mode"] = _scelta_mat
+            _voce["confirmed"] = True
+            st.session_state.file_mode = _scelta_mat
+            _consolida_info()
+            if _scelta_mat == "copia_fedele":
+                # «Rifai questa verifica»: numero di esercizi e punti vengono dal file
+                st.session_state["_fac_dialog_data"] = {**_voce["analisi"], "file_hash": _voce["file_hash"]}
+                st.session_state["_fac_confirmed"] = True
+                st.rerun()
+
         if not argomento:
+            st.warning(
+                "Non ho capito l'argomento dal file: scrivilo nel riquadro «Cosa vuoi nella verifica?».",
+                icon="✍️",
+            )
             return
 
         _note_finale = note_extra
@@ -2759,7 +2609,9 @@ def _render_stage_input():
             note_generali=_note_finale,
             s_es=s_es,
             imgs_es=imgs_es_finale,
-            file_ispirazione=None,
+            # «Prendi spunto dai miei appunti»: il file viene davvero allegato alla richiesta
+            file_ispirazione=(_FileInMemoria(_fm["bytes"], _fm["mime"], _fm["name"])
+                              if (_scelta_mat == "base_conoscenza" and _fm) else None),
             prog_placeholder=_prog_ph_b,
         )
         return
