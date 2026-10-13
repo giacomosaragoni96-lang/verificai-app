@@ -78,8 +78,10 @@ DOCX: `docx_export.py` converte il LaTeX (oggi passando da Gemini) e costruisce 
 Il codice Stripe è stato rimosso: l'app non incassa né scrive abbonamenti, legge soltanto la
 tabella `subscriptions` (`subscription_management.get_user_subscription`, status `active`/`trialing`).
 Il piano si assegna a mano dal database Supabase con una riga in `subscriptions`:
-`user_id`, `plan_id` (`pro` o `premium`), `status` = `active`, `stripe_subscription_id` con un
+`user_id`, `plan_id` = `pro`, `status` = `active`, `stripe_subscription_id` con un
 valore segnaposto univoco `manual-<uuid>` (la colonna è `NOT NULL UNIQUE` nello schema).
+Assegnare solo `pro`: `premium` non va assegnato finché non viene allineato (oggi la sidebar
+lo tratta come free, mentre `get_user_plan_limits` lo tratta come illimitato).
 Per togliere il piano si porta `status` a `canceled`. Senza riga attiva l'utente è `free`.
 Non si toccano lo schema né le tabelle dal codice dell'app.
 
@@ -94,6 +96,7 @@ Non si toccano lo schema né le tabelle dal codice dell'app.
 - `prompts.py`: nell'esempio tabelle `\\\\begin` produce `\\begin` (LaTeX errato per il modello).
 - `_safe_generate` riprova anche su errori non recuperabili (429 crediti, chiave non valida).
 - `google-generativeai` è deprecata (da migrare a `google-genai`).
+- `main.py`: `_can_confirm` usato ma mai definito (NameError possibile alle righe ~2436 e ~2470).
 
 ## Lingua
 
