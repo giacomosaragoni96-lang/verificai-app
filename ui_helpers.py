@@ -25,6 +25,42 @@ STAGE_FINAL   = "FINAL"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+#  LIMITE MENSILE — testo di rinnovo e messaggio unico
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _reset_label(giorni: int, ore: int) -> str:
+    """Testo di rinnovo del contatore mensile (es. 'Si rinnova tra 18 giorni')."""
+    if giorni == 0:
+        return f"Si rinnova tra {ore} ore"
+    if giorni == 1:
+        return "Si rinnova domani"
+    return f"Si rinnova tra {giorni} giorni"
+
+
+def _render_limite_raggiunto(
+    T: dict,
+    limite: int,
+    reset_str: str,
+    contatto_url: str,
+    text_color: str | None = None,
+) -> None:
+    """Messaggio unico mostrato quando il limite mensile è esaurito (sidebar e form)."""
+    err = T.get("error", "#EF4444")
+    testo = text_color or T.get("text", "#1F2937")
+    st.markdown(
+        f'<div style="background:{err}18;border:1px solid {err}44;border-radius:10px;'
+        f'padding:.7rem .9rem;margin:.5rem 0;font-size:.82rem;color:{testo};'
+        f'font-family:DM Sans,sans-serif;line-height:1.5;">'
+        f'<b>Hai usato le {limite} verifiche gratuite di questo mese.</b><br/>'
+        f'{reset_str}. Ti servono più verifiche? '
+        f'<a href="{contatto_url}" target="_blank" rel="noopener" '
+        f'style="color:{err};font-weight:700;">Scrivici</a>.'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 #  BACK BUTTON
 # ═══════════════════════════════════════════════════════════════════════════════
 

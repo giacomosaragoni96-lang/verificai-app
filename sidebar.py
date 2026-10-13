@@ -6,6 +6,8 @@ import logging
 
 import streamlit as st
 
+from ui_helpers import _reset_label, _render_limite_raggiunto
+
 logger = logging.getLogger("verificai.sidebar")
 
 
@@ -20,6 +22,8 @@ def render_sidebar(
     LIMITE_MENSILE,
     giorni_al_reset_func,
     supabase_client,
+    contatto_url: str,
+    illimitato: bool = False,
     THEMES: dict = None,
     THEME_LABELS: dict = None,
 ) -> dict:
@@ -85,89 +89,48 @@ def render_sidebar(
                 theme_changed = True
 
         # ── CONTATORE MENSILE ─────────────────────────────────────────────────
-        st.markdown(
-            f'<div class="sidebar-label" style="margin-top:.5rem;font-size:0.85rem;font-weight:600;">Utilizzo mensile</div>',
-            unsafe_allow_html=True
-        )
-        _perc_uso   = min(100, int(verifiche_mese_count / LIMITE_MENSILE * 100))
-        _color_bar  = (T["error"] if limite_raggiunto
-                       else (T["warn"] if _perc_uso >= 70 else T["success"]))
-
+        # Piano illimitato → solo il numero del mese; piano free → "X di N" con barra.
         _gg_reset, _hh_reset = giorni_al_reset_func()
-        if _gg_reset == 0:
-            _reset_str = f"Si rinnova tra {_hh_reset} ore"
-        elif _gg_reset == 1:
-            _reset_str = "Si rinnova domani"
-        else:
-            _reset_str = f"Si rinnova tra {_gg_reset} giorni"
+        _reset_str = _reset_label(_gg_reset, _hh_reset)
 
-        st.markdown(f"""
-        <style>
-        @media (max-width: 768px) {{
-          .mobile-progress-container {{
-            margin-bottom: 0.6rem !important;
-            padding: 0.4rem !important;
-          }}
-          .mobile-progress-header {{
-            font-size: 0.7rem !important;
-            margin-bottom: 0.3rem !important;
-          }}
-          .mobile-progress-bar {{
-            height: 3px !important;
-            margin: 0.2rem 0 !important;
-          }}
-          .mobile-progress-text {{
-            font-size: 0.6rem !important;
-            margin-top: 0.3rem !important;
-          }}
-        }}
-        </style>
-        <div class="mobile-progress-container" style="margin-bottom: 0.6rem; background: rgba(255,255,255,0); border: none; padding: 0;">
-          <div class="mobile-progress-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
-            <span style="font-size: 0.85rem; font-weight:600; color: {_sb_text}; font-family: 'DM Sans', sans-serif;">
-              Verifiche questo mese
-            </span>
-            <span style="font-size: 0.9rem; font-weight: 800; color: {_sb_text}; font-family: 'DM Sans', sans-serif;">
-              {verifiche_mese_count} / {LIMITE_MENSILE}
-            </span>
-          </div>
-          <div class="mobile-progress-bar" style="
-            background: rgba(255,255,255,0) !important;
-            border: none !important;
-            border-radius: 10px;
-            overflow: hidden;
-            height: 4px;
-            width: 100%;
-            position: relative;
-          ">
-            <div style="
-              width: {_perc_uso}%;
-              background: {_color_bar};
-              height: 100%;
-              border-radius: 10px;
-              transition: width .6s ease;
-              position: absolute;
-              top: 0;
-              left: 0;
-            "></div>
-          </div>
-          <div class="mobile-progress-text" style="text-align: right; font-size: 0.75rem; font-weight:500; color: {_sb_muted}; margin-top: 6px; font-family: 'DM Sans', sans-serif;">
-            🔄 {_reset_str}
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
+        if illimitato:
+            _valore  = f"{verifiche_mese_count}"
+            _sotto   = "Illimitate con il tuo piano"
+            _barra   = ""
+        else:
+            _perc_uso  = min(100, int(verifiche_mese_count / LIMITE_MENSILE * 100))
+            _color_bar = (T["error"] if limite_raggiunto
+                          else (T["warn"] if _perc_uso >= 70 else T["success"]))
+            _valore = f"{verifiche_mese_count} di {LIMITE_MENSILE}"
+            _sotto  = f"🔄 {_reset_str}"
+            _barra  = (
+                '<div style="background:rgba(255,255,255,.12);border-radius:10px;'
+                'overflow:hidden;height:4px;width:100%;position:relative;">'
+                f'<div style="width:{_perc_uso}%;background:{_color_bar};height:100%;'
+                'border-radius:10px;transition:width .6s ease;position:absolute;'
+                'top:0;left:0;"></div></div>'
+            )
+
+        st.markdown('<div class="sidebar-label" style="margin-top:.5rem;">Utilizzo mensile</div>',
+                    unsafe_allow_html=True)
+        st.markdown(
+            '<div style="margin-bottom:.6rem;font-family:\'DM Sans\',sans-serif;">'
+            '<div style="display:flex;justify-content:space-between;align-items:center;'
+            'margin-bottom:.5rem;">'
+            f'<span style="font-size:.85rem;font-weight:600;color:{_sb_text};">'
+            'Verifiche questo mese</span>'
+            f'<span style="font-size:.9rem;font-weight:800;color:{_sb_text};">{_valore}</span>'
+            '</div>'
+            f'{_barra}'
+            f'<div style="text-align:right;font-size:.75rem;font-weight:500;'
+            f'color:{_sb_muted};margin-top:6px;">{_sotto}</div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
 
         if limite_raggiunto:
-            _err_c = T.get("error", "#EF4444")
-            st.markdown(
-                f'<div style="background:{_err_c}18;border:1px solid {_err_c}44;'
-                f'border-radius:10px;padding:.6rem .9rem;margin:.4rem 0;'
-                f'font-size:.78rem;color:{_sb_text};font-family:DM Sans,sans-serif;'
-                f'font-weight:600;line-height:1.5;">'
-                f'⚠️ Limite mensile raggiunto ({LIMITE_MENSILE} verifiche). {_reset_str}.'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+            _render_limite_raggiunto(T, LIMITE_MENSILE, _reset_str, contatto_url,
+                                     text_color=_sb_text)
 
         # ── LE MIE VERIFICHE — un solo pulsante con il conteggio ──────────────
         total_verifiche = None

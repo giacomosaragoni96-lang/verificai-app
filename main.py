@@ -47,6 +47,7 @@ from ui_helpers import (
     _render_back_button, _make_katex_html, _render_sticky_header,
     _render_step_progress,
     STAGE_INPUT, STAGE_PREVIEW, STAGE_REVIEW, STAGE_FINAL,
+    _reset_label, _render_limite_raggiunto,
 )
 
 logger = logging.getLogger("verificai.main")
@@ -551,6 +552,10 @@ if "_pb_argomento_manual_val" not in st.session_state: st.session_state["_pb_arg
 _verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
 _is_admin       = st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False
 
+# Piano senza limite mensile (admin, pro, premium): deciso dal risultato di
+# can_generate_verification, non dal nome del piano.
+_illimitato = _is_admin
+
 # Carica informazioni abbonamento utente
 try:
     from subscription_management import get_subscription_manager
@@ -567,7 +572,8 @@ try:
         _verifiche_mese
     )
     _limite = not _is_admin and not limits_check['can_generate']
-    
+    _illimitato = _is_admin or limits_check.get('remaining') == float('inf')
+
 except ImportError:
     # Fallback sistema vecchio se modulo non disponibile
     _limite = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
@@ -680,6 +686,7 @@ settings   = render_sidebar(
     limite_raggiunto=_limite, T=T,
     MODELLI_DISPONIBILI=MODELLI_DISPONIBILI, LIMITE_MENSILE=LIMITE_MENSILE,
     giorni_al_reset_func=_giorni_al_reset, supabase_client=supabase,
+    contatto_url=FEEDBACK_FORM_URL, illimitato=_illimitato,
     THEMES=THEMES, THEME_LABELS=THEME_LABELS,
 )
 modello_id = settings.get("modello_id", "gemini-2.5-flash-lite")
@@ -2412,13 +2419,10 @@ def _render_percorso_b_form():
             # Placeholder progress bar — apparirà subito sotto il pulsante
             _prog_placeholder = st.empty()
             if _limite:
-                st.markdown(
-                    f'<div style="text-align:center;font-size:.82rem;color:#EF4444;'
-                    f'font-family:DM Sans,sans-serif;font-weight:600;margin-top:.4rem;">'
-                    f'⛔ Limite mensile raggiunto.</div>',
-                    unsafe_allow_html=True,
+                _render_limite_raggiunto(
+                    T, LIMITE_MENSILE, _reset_label(*_giorni_al_reset()), FEEDBACK_FORM_URL,
                 )
-            
+
             # Avviso PDF non disponibile
             if not LATEX_AVAILABLE:
                 st.markdown(
