@@ -331,6 +331,35 @@ _SCORE_KEYWORDS = {
 
 
 
+# ── Post-processing LaTeX unico ────────────────────────────────────────────────
+
+def _postprocessa_latex(latex: str, mostra_punteggi: bool, punti_totali: int,
+                        riscala_totale: bool = False, punti_custom: list | None = None,
+                        con_griglia: bool = False) -> str:
+    """
+    Post-processing deterministico unico (stringa → stringa) per ogni modifica:
+    sistema gli ambienti, le spaziature e i grafici, toglie i punti dai titoli e, se
+    riscala_totale, riporta la somma dei punti a punti_totali (o ai punti_custom per
+    esercizio). con_griglia inietta la tabella dei punteggi (chi aggiunge
+    \\end{document} dopo passa False e la inietta da sé).
+    """
+    latex = fix_items_environment(latex)
+    latex = migliora_spaziatura_sottopunti(latex)
+    latex = aggiungi_spaziatura_grafici_tabelle(latex)
+    latex = limita_altezza_grafici(latex)
+    latex = rimuovi_vspace_corpo(latex)
+    latex = rimuovi_punti_subsection(latex)
+    if mostra_punteggi and riscala_totale:
+        latex = prepara_esercizi_aperti(latex, punti_totali)
+        if punti_custom:
+            latex = riscala_punti_custom(latex, punti_custom)
+        else:
+            latex = riscala_punti(latex, punti_totali)
+    if con_griglia:
+        latex = inietta_griglia(latex, punti_totali)
+    return latex
+
+
 # ── On-demand variant generation ───────────────────────────────────────────────
 
 def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
@@ -347,16 +376,8 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
     preamb_a   = extract_preambolo(latex_a)
 
     def _post(corpo: str) -> str:
-        corpo = fix_items_environment(corpo)
-        corpo = migliora_spaziatura_sottopunti(corpo)
-        corpo = aggiungi_spaziatura_grafici_tabelle(corpo)
-        corpo = limita_altezza_grafici(corpo)
-        corpo = rimuovi_vspace_corpo(corpo)
-        if mostra_punteggi:
-            corpo = rimuovi_punti_subsection(corpo)
-            corpo = prepara_esercizi_aperti(corpo, punti_totali)
-            corpo = riscala_punti(corpo, punti_totali)
-        return corpo
+        # La griglia viene iniettata da _compile, dopo \end{document}.
+        return _postprocessa_latex(corpo, mostra_punteggi, punti_totali, riscala_totale=True)
 
     def _compile(latex: str):
         if "\\end{document}" not in latex:
@@ -2866,33 +2887,30 @@ def _render_stage_preview():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali: int,
-                          riscala_totale: bool = False):
+                          riscala_totale: bool = False, punti_custom: list | None = None,
+                          rileggi_blocchi: bool = False):
     """
     Ricostruisce il LaTeX della Fila A da review_blocks, applica il post-processing
-    deterministico, compila il PDF e aggiorna session_state (latex, pdf, anteprima).
+    deterministico (_postprocessa_latex), compila il PDF e aggiorna session_state
+    (latex, pdf, anteprima).
 
     riscala_totale=True ridistribuisce i punti su tutta la verifica (serve quando cambia
-    il numero di esercizi); in tal caso review_blocks viene riletto dal LaTeX risultante.
+    il numero di esercizi o si confermano i punteggi); in tal caso review_blocks viene
+    riletto dal LaTeX risultante (lo stesso succede con rileggi_blocchi=True).
+    punti_custom: punti per esercizio scelti dal docente.
     Ritorna (pdf_bytes | None, errore).
     """
     latex = reconstruct_latex(
         st.session_state.review_preamble, st.session_state.review_blocks,
     )
-    latex = fix_items_environment(latex)
-    latex = migliora_spaziatura_sottopunti(latex)
-    latex = aggiungi_spaziatura_grafici_tabelle(latex)
-    latex = limita_altezza_grafici(latex)
-    latex = rimuovi_vspace_corpo(latex)
-    latex = rimuovi_punti_subsection(latex)
-    if mostra_punteggi and riscala_totale:
-        latex = prepara_esercizi_aperti(latex, punti_totali)
-        latex = riscala_punti(latex, punti_totali)
-    if con_griglia:
-        latex = inietta_griglia(latex, punti_totali)
+    latex = _postprocessa_latex(
+        latex, mostra_punteggi, punti_totali,
+        riscala_totale=riscala_totale, punti_custom=punti_custom, con_griglia=con_griglia,
+    )
 
     va = st.session_state.verifiche["A"]
     va["latex"] = va["latex_originale"] = latex
-    if riscala_totale:
+    if riscala_totale or rileggi_blocchi:
         _pre, _blocchi = extract_blocks(latex)
         if _blocchi:
             st.session_state.review_preamble = _pre
@@ -3443,36 +3461,14 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                                 del st.session_state[_k]
                         if "recalibra_pts" in st.session_state:
                             del st.session_state["recalibra_pts"]
-                        _undo_latex = reconstruct_latex(
-                            st.session_state.review_preamble,
-                            st.session_state.review_blocks
+                        _undo_pdf, _undo_err = _ricompila_verifica_a(
+                            mostra_punteggi, con_griglia, punti_totali, riscala_totale=True,
                         )
-                        _undo_latex = fix_items_environment(_undo_latex)
-                        _undo_latex = migliora_spaziatura_sottopunti(_undo_latex)
-                        _undo_latex = aggiungi_spaziatura_grafici_tabelle(_undo_latex)
-                        _undo_latex = limita_altezza_grafici(_undo_latex)
-                        _undo_latex = rimuovi_vspace_corpo(_undo_latex)
-                        if mostra_punteggi:
-                            _undo_latex = rimuovi_punti_subsection(_undo_latex)
-                            _undo_latex = prepara_esercizi_aperti(_undo_latex, punti_totali)
-                            _undo_latex = riscala_punti(_undo_latex, punti_totali)
-                        if con_griglia:
-                            _undo_latex = inietta_griglia(_undo_latex, punti_totali)
-                        st.session_state.verifiche["A"]["latex"]           = _undo_latex
-                        st.session_state.verifiche["A"]["latex_originale"] = _undo_latex
-                        _undo_pdf, _ = compila_pdf(_undo_latex)
                         if _undo_pdf:
-                            st.session_state.verifiche["A"]["pdf"]    = _undo_pdf
-                            st.session_state.verifiche["A"]["pdf_ts"] = time.time()
-                            st.session_state.verifiche["A"]["preview"] = True
-                            _undo_imgs, _ = pdf_to_images_bytes(_undo_pdf)
-                            st.session_state.preview_images = _undo_imgs or []
-                            st.session_state.preview_page   = 0
-                            # Forza aggiornamento preview dopo annullamento
-                            st.session_state.last_preview_ts = 0
-                            logger.info(f"Preview aggiornato dopo annullamento - {len(_undo_imgs) if _undo_imgs else 0} pagine")
-                        st.toast("↩️ Modifica annullata — versione precedente ripristinata!", icon="↩️")
-                        time.sleep(0.2); st.rerun()
+                            st.toast("↩️ Modifica annullata — versione precedente ripristinata!", icon="↩️")
+                            time.sleep(0.2); st.rerun()
+                        else:
+                            _mostra_errore_pdf(_undo_err, "questa verifica")
                 with _undo_col2:
                     st.markdown(
                         f'<div style="font-size:.72rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
@@ -3738,21 +3734,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 st.session_state.review_blocks[idx]["body"]  = _qr_new_body
                 if "recalibra_pts" in st.session_state:
                     del st.session_state["recalibra_pts"]
-                _qr_latex = reconstruct_latex(
-                    st.session_state.review_preamble,
-                    st.session_state.review_blocks
-                )
-                _qr_latex = fix_items_environment(_qr_latex)
-                _qr_latex = migliora_spaziatura_sottopunti(_qr_latex)
-                _qr_latex = aggiungi_spaziatura_grafici_tabelle(_qr_latex)
-                _qr_latex = limita_altezza_grafici(_qr_latex)
-                _qr_latex = rimuovi_vspace_corpo(_qr_latex)
-                _qr_latex = rimuovi_punti_subsection(_qr_latex)
-                if con_griglia:
-                    _qr_latex = inietta_griglia(_qr_latex, punti_totali)
-                st.session_state.verifiche["A"]["latex"]           = _qr_latex
-                st.session_state.verifiche["A"]["latex_originale"] = _qr_latex
-                _qr_pdf, _ = compila_pdf(_qr_latex)
+                _qr_pdf, _ = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali)
                 if not _qr_pdf:
                     _qr_st.update(label="PDF non aggiornato", state="error", expanded=False)
                     _mostra_errore(
@@ -3760,15 +3742,6 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         consiglio="Premi «Annulla modifica» per tornare indietro, poi riprova.",
                     )
                 else:
-                    st.session_state.verifiche["A"]["pdf"]    = _qr_pdf
-                    st.session_state.verifiche["A"]["pdf_ts"] = time.time()
-                    st.session_state.verifiche["A"]["preview"] = True
-                    _qr_imgs, _ = pdf_to_images_bytes(_qr_pdf)
-                    st.session_state.preview_images = _qr_imgs or []
-                    st.session_state.preview_page   = 0
-                    # Forza aggiornamento preview dopo rigenerazione
-                    st.session_state.last_preview_ts = 0
-                    logger.info(f"Preview aggiornato dopo rigenerazione - {len(_qr_imgs) if _qr_imgs else 0} pagine")
                     _qr_st.update(label="Variante pronta!", state="complete", expanded=False)
                     st.toast(f"Variante esercizio {idx+1} generata!", icon="✅")
                     time.sleep(0.3); st.rerun()
@@ -3930,36 +3903,10 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 if "recalibra_pts" in st.session_state:
                     del st.session_state["recalibra_pts"]
 
-                # Fix: ricompila il PDF e aggiorna la preview dopo la modifica
-                _latex_rw = reconstruct_latex(
-                    st.session_state.review_preamble,
-                    st.session_state.review_blocks
-                )
-                _latex_rw = fix_items_environment(_latex_rw)
-                _latex_rw = rimuovi_vspace_corpo(_latex_rw)
-                _latex_rw = rimuovi_punti_subsection(_latex_rw)
-                if con_griglia:
-                    _latex_rw = inietta_griglia(_latex_rw, punti_totali)
-                st.session_state.verifiche["A"]["latex"]           = _latex_rw
-                st.session_state.verifiche["A"]["latex_originale"] = _latex_rw
-                _pdf_rw, _err_rw = compila_pdf(_latex_rw)
+                # Ricompila il PDF e aggiorna la preview dopo la modifica
+                _pdf_rw, _err_rw = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali)
                 logger.info(f"COMPILAZIONE PDF POST-MODIFICA - Success: {_pdf_rw is not None}, Error: {_err_rw}")
                 if _pdf_rw:
-                    logger.info(f"PDF generato con successo - Size: {len(_pdf_rw)} bytes")
-                    st.session_state.verifiche["A"]["pdf"]    = _pdf_rw
-                    st.session_state.verifiche["A"]["pdf_ts"] = time.time()
-                    st.session_state.verifiche["A"]["preview"] = True
-                    _imgs_rw, _ = pdf_to_images_bytes(_pdf_rw)
-                    logger.info(f"IMMAGINI PREVIEW GENERATE - Count: {len(_imgs_rw) if _imgs_rw else 0}")
-                    st.session_state.preview_images = _imgs_rw or []
-                    st.session_state.preview_page   = 0
-                    st.session_state.last_preview_ts = 0
-                    if _imgs_rw:
-                        logger.info(f"Preview aggiornato immediatamente dopo modifica - {len(_imgs_rw)} pagine")
-                    else:
-                        logger.warning("Preview vuoto dopo modifica")
-                    
-                    # FORZA REFRESH ESPPLICITO del preview
                     st.session_state.force_preview_refresh = True
 
                     # Messaggio di successo elegante
@@ -4085,21 +4032,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     "title": _ct_title or title,
                     "body":  _ct_body,
                 }
-                _ct_latex = reconstruct_latex(
-                    st.session_state.review_preamble,
-                    st.session_state.review_blocks
-                )
-                _ct_latex = fix_items_environment(_ct_latex)
-                _ct_latex = migliora_spaziatura_sottopunti(_ct_latex)
-                _ct_latex = aggiungi_spaziatura_grafici_tabelle(_ct_latex)
-                _ct_latex = limita_altezza_grafici(_ct_latex)
-                _ct_latex = rimuovi_vspace_corpo(_ct_latex)
-                _ct_latex = rimuovi_punti_subsection(_ct_latex)
-                if con_griglia:
-                    _ct_latex = inietta_griglia(_ct_latex, punti_totali)
-                st.session_state.verifiche["A"]["latex"]           = _ct_latex
-                st.session_state.verifiche["A"]["latex_originale"] = _ct_latex
-                _ct_pdf, _ = compila_pdf(_ct_latex)
+                _ct_pdf, _ = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali)
                 if not _ct_pdf:
                     _ct_st.update(label="PDF non aggiornato", state="error", expanded=False)
                     _mostra_errore(
@@ -4107,15 +4040,6 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         consiglio="Premi «Annulla modifica» per tornare indietro, poi riprova.",
                     )
                 else:
-                    st.session_state.verifiche["A"]["pdf"]     = _ct_pdf
-                    st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
-                    st.session_state.verifiche["A"]["preview"] = True
-                    _ct_imgs, _ = pdf_to_images_bytes(_ct_pdf)
-                    st.session_state.preview_images = _ct_imgs or []
-                    st.session_state.preview_page   = 0
-                    # Forza aggiornamento preview dopo cambio esercizio
-                    st.session_state.last_preview_ts = 0
-                    logger.info(f"Preview aggiornato dopo cambio esercizio - {len(_ct_imgs) if _ct_imgs else 0} pagine")
                     _ct_st.update(label="Esercizio cambiato!", state="complete", expanded=False)
                     st.toast(f"Esercizio {idx+1} cambiato!", icon="✅")
                     time.sleep(0.3); st.rerun()
@@ -4261,36 +4185,12 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                             f"{_clean_rc} ({_ex_tot_rc} pt)"
                         )
 
-                _latex_rc = reconstruct_latex(
-                    st.session_state.review_preamble,
-                    st.session_state.review_blocks
-                )
-                _latex_rc = fix_items_environment(_latex_rc)
-                _latex_rc = migliora_spaziatura_sottopunti(_latex_rc)
-                _latex_rc = aggiungi_spaziatura_grafici_tabelle(_latex_rc)
-                _latex_rc = limita_altezza_grafici(_latex_rc)
-                _latex_rc = rimuovi_vspace_corpo(_latex_rc)
-                _latex_rc = rimuovi_punti_subsection(_latex_rc)
-                # NON chiamare riscala_punti_custom: i pt sono già esatti per item
-                if con_griglia:
-                    _latex_rc = inietta_griglia(_latex_rc, punti_totali)
-
-                st.session_state.verifiche["A"]["latex"]           = _latex_rc
-                st.session_state.verifiche["A"]["latex_originale"] = _latex_rc
-
                 with st.spinner("Ricompilazione PDF con i nuovi punteggi…"):
-                    _pdf_rc, _err_rc = compila_pdf(_latex_rc)
+                    # I punti sono già esatti per sottopunto: nessuna riscalatura del totale.
+                    _pdf_rc, _err_rc = _ricompila_verifica_a(
+                        mostra_punteggi, con_griglia, punti_totali, rileggi_blocchi=True,
+                    )
                 if _pdf_rc:
-                    st.session_state.verifiche["A"]["pdf"]     = _pdf_rc
-                    st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
-                    st.session_state.verifiche["A"]["preview"] = True
-                    _imgs_rc, _ = pdf_to_images_bytes(_pdf_rc)
-                    st.session_state.preview_images = _imgs_rc or []
-                    st.session_state.preview_page   = 0
-                    _new_preamble, _new_blocks = extract_blocks(_latex_rc)
-                    if _new_blocks:
-                        st.session_state.review_preamble = _new_preamble
-                        st.session_state.review_blocks   = _new_blocks
                     # Reset item_pt_ keys — si reinizializzeranno dai nuovi dati
                     for _kk in list(st.session_state.keys()):
                         if re.match(r"^item_pt_\d+_\d+$", _kk):
@@ -4315,37 +4215,12 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 
     if confirm_pdf:
         with st.spinner("Generazione PDF finale in corso… potrebbe richiedere qualche secondo"):
-            latex_final = reconstruct_latex(
-                st.session_state.review_preamble,
-                st.session_state.review_blocks
+            _pts_custom = st.session_state.get("recalibra_pts", [])
+            pdf_bytes, err = _ricompila_verifica_a(
+                mostra_punteggi, con_griglia, punti_totali, riscala_totale=True,
+                punti_custom=_pts_custom if _pts_custom and len(_pts_custom) == n_blocks else None,
             )
-            latex_final = fix_items_environment(latex_final)
-            latex_final = migliora_spaziatura_sottopunti(latex_final)
-            latex_final = aggiungi_spaziatura_grafici_tabelle(latex_final)
-            latex_final = limita_altezza_grafici(latex_final)
-            latex_final = rimuovi_vspace_corpo(latex_final)
-            if mostra_punteggi:
-                latex_final = rimuovi_punti_subsection(latex_final)
-                latex_final = prepara_esercizi_aperti(latex_final, punti_totali)
-                _pts_custom = st.session_state.get("recalibra_pts", [])
-                if _pts_custom and len(_pts_custom) == n_blocks:
-                    latex_final = riscala_punti_custom(latex_final, _pts_custom)
-                else:
-                    latex_final = riscala_punti(latex_final, punti_totali)
-            if con_griglia:
-                latex_final = inietta_griglia(latex_final, punti_totali)
-
-            st.session_state.verifiche["A"]["latex"]           = latex_final
-            st.session_state.verifiche["A"]["latex_originale"] = latex_final
-
-            pdf_bytes, err = compila_pdf(latex_final)
             if pdf_bytes:
-                st.session_state.verifiche["A"]["pdf"]     = pdf_bytes
-                st.session_state.verifiche["A"]["pdf_ts"]  = time.time()
-                st.session_state.verifiche["A"]["preview"] = True
-                imgs_f, _ = pdf_to_images_bytes(pdf_bytes)
-                st.session_state.preview_images = imgs_f or []
-                st.session_state.preview_page   = 0
                 st.session_state.stage = STAGE_FINAL
                 st.rerun()
             else:
