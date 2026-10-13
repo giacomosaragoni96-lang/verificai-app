@@ -1124,10 +1124,39 @@ def _calculate_dynamic_limits(func_expr: str) -> dict:
     return limits
 
 
+def _isola_grafici_tikz(latex: str) -> str:
+    """
+    Mette ogni tikzpicture in un blocco centrato, con un paragrafo prima e dopo.
+    Un tikzpicture è una scatola "in linea": se il testo segue subito
+    \\end{tikzpicture} si affianca al grafico invece di andare sotto. Non tocca i grafici
+    già centrati o dentro center/figure/table/tabular/array/minipage/adjustbox.
+    """
+    ambienti = ("center", "figure", "table", "tabular", "array", "minipage", "adjustbox")
+
+    def _dentro(prima: str) -> bool:
+        for nome in ambienti:
+            if prima.count("\\begin{" + nome + "}") > prima.count("\\end{" + nome + "}"):
+                return True
+        return prima.rstrip().endswith("\\centering")
+
+    pezzi, ultimo = [], 0
+    for m in re.finditer(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', latex, flags=re.DOTALL):
+        pezzi.append(latex[ultimo:m.start()])
+        if _dentro(latex[:m.start()]):
+            pezzi.append(m.group(0))
+        else:
+            pezzi.append("\n\n\\begin{center}\n" + m.group(0) + "\n\\end{center}\n\n")
+        ultimo = m.end()
+    pezzi.append(latex[ultimo:])
+    return ''.join(pezzi)
+
+
 def aggiungi_spaziatura_grafici_tabelle(latex: str) -> str:
     """
-    Aggiunge spaziatura prima dei grafici e delle tabelle.
+    Aggiunge spaziatura prima dei grafici e delle tabelle e isola i grafici dal testo.
     """
+    latex = _isola_grafici_tikz(latex)
+
     # Aggiungi spaziatura prima dei grafici TikZ
     latex = re.sub(
         r'(?<!\n\n)\\begin\{tikzpicture\}',
