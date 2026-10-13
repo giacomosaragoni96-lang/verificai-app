@@ -15,7 +15,22 @@
       "Bash(grep -rn \"Pro\\\\|Gold\\\\|upgrade\\\\|pro\\\\|gold\" /c/Users/gobli/Desktop/verificai/*.py)",
       "Bash(grep -rn \"href\\\\|upgrade\\\\|pro\\\\|pricing\\\\|payment\\\\|stripe\" /c/Users/gobli/Desktop/verificai/*.py)",
       "Bash(grep -rn \"TODO\\\\|FIXME\\\\|NOTE\\\\|XXX\\\\|FUTURE\\\\|payment\\\\|stripe\\\\|upgrade\" /c/Users/gobli/Desktop/verificai/*.py)",
-      "Bash(grep -rn \"profiles\\\\|users\\\\|user_plan\\\\|subscription\" /c/Users/gobli/Desktop/verificai/*.py)"
+      "Bash(grep -rn \"profiles\\\\|users\\\\|user_plan\\\\|subscription\" /c/Users/gobli/Desktop/verificai/*.py)",
+      "PowerShell($p=\\(Resolve-Path 'main.py'\\).Path; $l=[System.Collections.Generic.List[string]]\\([System.IO.File]::ReadAllLines\\($p\\)\\); \"[$\\($l[6565]\\)] [$\\($l[6566]\\)] [$\\($l[6595]\\)] count=$\\($l.Count\\)\"; \"[$\\($l[141]\\)] [$\\($l[157]\\)] [$\\($l[158]\\)]\"; $raw=[System.IO.File]::ReadAllText\\($p\\); $raw.Contains\\(\"`r`n\"\\))",
+      "PowerShell($p=\\(Resolve-Path 'main.py'\\).Path; $l=[System.Collections.Generic.List[string]]\\([System.IO.File]::ReadAllLines\\($p\\)\\); $l.RemoveRange\\(6565,31\\); $l.RemoveRange\\(141,17\\); [System.IO.File]::WriteAllText\\($p, \\(\\($l -join \"`r`n\"\\) + \"`r`n\"\\), \\(New-Object System.Text.UTF8Encoding\\($false\\)\\)\\); py -c \"import py_compile; py_compile.compile\\('main.py', doraise=True\\); print\\('COMPILE_OK'\\)\"; git diff --stat main.py; Select-String -Path main.py -Pattern 'payment_status|payment_plan|stripe|webhook|query_params' | ForEach-Object { \"$\\($_.LineNumber\\): $\\($_.Line.Trim\\(\\)\\)\" }; \"--- ctx top\"; Get-Content main.py -Encoding UTF8 | Select-Object -Skip 136 -First 10; \"--- tail\"; Get-Content main.py -Encoding UTF8 -Tail 6)",
+      "Bash(echo \"devcontainer grep exit=$?\")",
+      "Bash(echo \"example grep exit=$?\")",
+      "PowerShell(py -c \"import sys, types; m=types.ModuleType\\('supabase'\\); m.Client=object; sys.modules['supabase']=m; import config, subscription_management as s; print\\('IMPORT_OK stripe_plans=', hasattr\\(config,'STRIPE_PLANS'\\)\\); class T: pass; sm=s.SubscriptionManager\\(None\\); print\\(sm.can_generate_verification\\('u',5\\)\\); print\\(sm.can_generate_verification\\('u',2\\)\\)\")",
+      "PowerShell(py -c \"import streamlit\" 2>&1)",
+      "PowerShell(py -c \"import sys, types; m=types.ModuleType\\('supabase'\\); m.Client=object; sys.modules['supabase']=m; import config, subscription_management as s; print\\('IMPORT_OK stripe_plans=', hasattr\\(config,'STRIPE_PLANS'\\)\\); sm=s.SubscriptionManager\\(None\\); print\\(sm.can_generate_verification\\('u',5\\)\\); print\\(sm.can_generate_verification\\('u',2\\)\\)\")",
+      "PowerShell(py -m pyflakes --version 2>&1)",
+      "PowerShell($t=\"$env:TEMP\\\\main_head.py\"; git show HEAD:main.py | Out-File -Encoding utf8 $t; py -m pyflakes $t 2>&1 | Select-String 'undefined name'; Select-String -Path main.py -Pattern '_can_confirm' | ForEach-Object { \"$\\($_.LineNumber\\): $\\($_.Line.Trim\\(\\)\\)\" })",
+      "PowerShell(git add main.py sidebar.py config.py subscription_management.py)",
+      "PowerShell(git diff --ignore-cr-at-eol CLAUDE.md)",
+      "PowerShell(git add CLAUDE.md)"
+    ],
+    "deny": [
+      ".streamlit/secrets.toml"
     ]
   }
 }

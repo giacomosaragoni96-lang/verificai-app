@@ -7,7 +7,7 @@ Riconosce tre tipi di file:
     \\opzioni{}{}{}{}; (*) = facoltativo; punti dalla riga "Max" della tabella finale.
   • SCHEDA:   \\section*{Livello N -- titolo} con esercizi \\es{...} o \\item.
   • APPUNTI:  teoria con riquadri (tcolorbox), esempi svolti, esercizi: non hanno una struttura fissa,
-              vanno letti con l'AI (importa_esercizi.py lo fa passando il sorgente LaTeX).
+              non hanno una struttura fissa (oggi si riconoscono solo per non confonderle con le verifiche).
 """
 import re
 

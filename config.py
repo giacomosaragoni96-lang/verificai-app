@@ -75,7 +75,6 @@ COMPITI_AI = {
     "griglia":           ("medio",  0),
     "cambio_esercizio":  ("veloce", None),
     "analisi_file":      ("veloce", None),
-    "importazione":      ("medio",  1024),   # lettura di schede e libri per la banca esercizi
 }
 
 

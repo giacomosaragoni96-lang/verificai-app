@@ -42,10 +42,10 @@ Avvio locale: `streamlit run main.py`. Pacchetti di sistema in `packages.txt`
 
 - UI (usano Streamlit): `main.py`, `sidebar.py`, `ui_helpers.py`, `styles.py`, `auth.py`
 - Logica: `generation.py` (pipeline AI), `latex_utils.py` (parsing/compilazione LaTeX), `docx_export.py`
-- Banca esercizi (solo admin, non ancora usata dalla generazione): `banca_import.py` (analisi di file .tex/.pdf in esercizi,
-  usa `estrai_tex.py` e l'AI), `banca.py` (Supabase: tabelle in `banca_esercizi.sql`, da creare a mano), `ui_banca.py` (pagina «Banca»,
-  stage `BANCA`), `importa_esercizi.py` (stessa cosa da riga di comando, con `--salva`). `config.DISTRIBUZIONE_DIFFICOLTA` = quanti
-  esercizi ★1/★2/★3 per scuola. I file in `materiale/` restano fuori da git.
+- Modelli di verifica (solo admin, non ancora usati dalla generazione): `banca_import.py` (legge una verifica .tex con
+  `estrai_tex.py`, senza AI), `banca.py` (Supabase: tabelle in `modelli_verifica.sql`, da creare a mano), `ui_banca.py` (pagina,
+  stage `BANCA`). `config.DISTRIBUZIONE_DIFFICOLTA` = quanti esercizi ★1/★2/★3 per scuola (non ancora usata). La banca di esercizi
+  è stata abbandonata. I file in `materiale/` restano fuori da git.
 - Prova da riga di comando con l'AI vera: `prova_generazione.py` (scenari di esempio, costi, PDF in `prove_output/`).
 - Client AI: `ai_client.py` (adattatore su `google-genai`, senza streamlit): sceglie modello e ragionamento per compito
   (`config.COMPITI_AI`), registra token e costi (`riepilogo_uso`, mostrato nell'expander admin), non riprova sugli errori definitivi.

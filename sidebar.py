@@ -60,7 +60,7 @@ def render_sidebar(
                     _nomi_admin,
                     key="sb_modello_admin",
                 )
-                if st.button("Banca esercizi", key="open_banca", use_container_width=True,
+                if st.button("Modelli di verifica", key="open_banca", use_container_width=True,
                              icon=":material/library_books:"):
                     st.session_state.stage = "BANCA"
                     st.rerun()
