@@ -139,23 +139,6 @@ if "utente" not in st.session_state:
 if st.session_state.utente is None:
     ripristina_sessione(supabase)
 
-# ── GESTIONE PARAMETRI URL (pagamenti Stripe) ─────────────────────────────
-query_params = st.query_params
-payment_status = query_params.get("payment", None)
-payment_plan = query_params.get("plan", None)
-
-if payment_status and payment_plan:
-    if payment_status == "success":
-        st.success(f"🎉 Pagamento completato! Sei ora abbonato a VerificAI {payment_plan.title()}.")
-        # Pulisci parametri URL
-        query_params.clear()
-        st.rerun()
-    elif payment_status == "cancelled":
-        st.info("💳 Pagamento annullato. Puoi provare di nuovo in qualsiasi momento.")
-        # Pulisci parametri URL
-        query_params.clear()
-        st.rerun()
-
 # Mostra auth se non loggato
 if st.session_state.utente is None:
     mostra_auth(supabase)
@@ -6563,34 +6546,3 @@ components.html(
     height=30
 )
 
-
-# ── WEBHOOK STRIPE ─────────────────────────────────────────────────────────────
-# Endpoint per webhook Stripe - da configurare in Dashboard Stripe
-if st.query_params.get("webhook") == "stripe":
-    try:
-        from webhooks import handle_stripe_webhook, validate_webhook_request
-        
-        # Valida richiesta
-        if not validate_webhook_request(st.request):
-            st.error("Webhook non valido", status_code=400)
-            st.stop()
-        
-        # Processa webhook
-        request_data = {
-            'body': st.request.body.decode('utf-8'),
-            'headers': dict(st.request.headers)
-        }
-        
-        result = handle_stripe_webhook(request_data, supabase_admin)
-        
-        if result['success']:
-            st.success("Webhook processato con successo")
-        else:
-            st.error(f"Errore webhook: {result.get('error')}")
-            st.status_code = result.get('status_code', 500)
-            
-    except Exception as e:
-        logger.error(f"Errore critico webhook: {e}")
-        st.error("Errore interno server", status_code=500)
-    
-    st.stop()

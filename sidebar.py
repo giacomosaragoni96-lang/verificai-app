@@ -117,7 +117,7 @@ def render_sidebar(
             modello_id = MODELLI_DISPONIBILI[_sel_pro]["id"]
             st.markdown(
                 f'<div style="font-size:0.72rem;color:{_sb_muted};padding:3px 0 0 2px;">'
-                f'⚡ Piano Pro attivo. Per materie scientifiche (matematica, fisica, chimica) considera il Piano Gold.</div>',
+                f'⚡ Piano Pro attivo.</div>',
                 unsafe_allow_html=True
             )
         elif _piano == "gold":
@@ -143,8 +143,7 @@ def render_sidebar(
                 f'border-radius:8px;padding:6px 10px;font-size:0.74rem;color:{T["hint_text"]}; '
                 f'margin:4px 0;font-family:DM Sans,sans-serif;">'
                 f'⚡ <b>Flash 2.5 Lite</b> — Piano Free<br/>'
-                f'<span style="opacity:.8;">Passa al Piano Pro per Flash 2.5 (umanistiche) '
-                f'o Gold per il motore avanzato (materie scientifiche).</span></div>',
+                f'<span style="opacity:.8;">Piano Free: {LIMITE_MENSILE} verifiche al mese.</span></div>',
                 unsafe_allow_html=True
             )
 
