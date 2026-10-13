@@ -914,8 +914,42 @@ def _rimuovi_opzioni_pgf(testo: str, chiavi_regex: str) -> str:
     return ''.join(out)
 
 
+def _rimuovi_legende_pgf(testo: str) -> str:
+    """
+    Toglie i comandi \\addlegendentry{...} e \\legend{...}: una legenda con l'equazione
+    della curva (es. "y = ½(x-1)² - 2") rivela la risposta di un esercizio sul grafico.
+    """
+    pattern = re.compile(r'\\(?:addlegendentry|legend)\b\s*(?:\[[^\]]*\])?\s*\{')
+    out, i, n = [], 0, len(testo)
+    while True:
+        m = pattern.search(testo, i)
+        if not m:
+            out.append(testo[i:])
+            break
+        out.append(testo[i:m.start()])
+        j, profondita = m.end() - 1, 0
+        while j < n:
+            if testo[j] == '{':
+                profondita += 1
+            elif testo[j] == '}':
+                profondita -= 1
+                if profondita == 0:
+                    j += 1
+                    break
+            j += 1
+        # Se il comando termina con ";" lo consuma, altrimenti salta la riga vuota residua
+        if j < n and testo[j] == ';':
+            j += 1
+        i = j
+    return ''.join(out)
+
+
 def _pulisci_opzioni_asse(testo: str) -> str:
-    """Toglie limiti, dominio, campioni, etichette, titolo e legenda dagli assi pgfplots."""
+    """
+    Toglie limiti, dominio, campioni, etichette, titolo e legenda (opzioni e comandi)
+    dagli assi pgfplots.
+    """
+    testo = _rimuovi_legende_pgf(testo)
     testo = _rimuovi_opzioni_pgf(
         testo,
         r'[xy]min|[xy]max|(?:[xy]\s*)?domain|samples|xlabel|ylabel|title|legend[ a-zA-Z]*',
