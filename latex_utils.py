@@ -1183,6 +1183,51 @@ def _calculate_dynamic_limits(func_expr: str) -> dict:
     return limits
 
 
+def chiudi_center_aperti(latex: str) -> str:
+    """
+    Chiude i \\begin{center} rimasti senza \\end{center} alla fine dell'esercizio in cui
+    compaiono. Un solo center aperto (l'AI se lo dimentica, o un grafico viene tolto) fa
+    centrare tutti gli esercizi successivi. Il preambolo e l'intestazione non si toccano.
+    """
+    parti = re.split(r'(?=\\subsection\*)', latex)
+    for i, parte in enumerate(parti):
+        if i == 0:
+            continue                    # preambolo + intestazione (center bilanciato)
+        mancanti = parte.count("\\begin{center}") - parte.count("\\end{center}")
+        if mancanti <= 0:
+            continue
+        chiusura = "\n" + "\\end{center}\n" * mancanti
+        fine = parte.rfind("\\end{document}")
+        if fine != -1:
+            parti[i] = parte[:fine].rstrip() + chiusura + parte[fine:]
+        else:
+            parti[i] = parte.rstrip() + chiusura + "\n"
+    return ''.join(parti)
+
+
+_RIMANDO_GRAFICO = re.compile(
+    r'(?:seguente|in\s+figura|nella\s+figura|dalla\s+figura|dal\s+grafico|nel\s+grafico|'
+    r'grafico\s+(?:seguente|in\s+figura|rappresentato|riportato|mostrato)|figura\s+seguente)',
+    re.IGNORECASE,
+)
+
+
+def esercizi_con_grafico_mancante(blocchi: list) -> list:
+    """
+    Indici (da 0) degli esercizi il cui testo rimanda a un grafico ("si osservi il
+    seguente grafico", "dalla figura") ma che non contengono nessun grafico.
+    """
+    mancanti = []
+    for i, b in enumerate(blocchi):
+        corpo = b.get("body", "") or ""
+        testo = re.sub(r'\\begin\{(?:tikzpicture|axis)\}.*?\\end\{(?:tikzpicture|axis)\}', '', corpo, flags=re.DOTALL)
+        ha_grafico = bool(re.search(r'\\begin\{(?:tikzpicture|axis)\}|\\includegraphics', corpo))
+        cita = re.search(r'grafic|figura', testo, re.IGNORECASE) and _RIMANDO_GRAFICO.search(testo)
+        if cita and not ha_grafico:
+            mancanti.append(i)
+    return mancanti
+
+
 def _isola_grafici_tikz(latex: str) -> str:
     """
     Mette ogni tikzpicture in un blocco centrato, con un paragrafo prima e dopo.
@@ -1214,6 +1259,7 @@ def aggiungi_spaziatura_grafici_tabelle(latex: str) -> str:
     """
     Aggiunge spaziatura prima dei grafici e delle tabelle e isola i grafici dal testo.
     """
+    latex = chiudi_center_aperti(latex)
     latex = _isola_grafici_tikz(latex)
 
     # Aggiungi spaziatura prima dei grafici TikZ

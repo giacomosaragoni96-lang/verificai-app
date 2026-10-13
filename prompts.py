@@ -209,6 +209,9 @@ def prompt_corpo_verifica(
         f"  'costruire' o qualsiasi variante → NON generare NESSUN codice TikZ/pgfplots in quell'esercizio.\n"
         f"  Questo vale anche se solo una parte dell'esercizio lo richiede.\n"
         f"- Genera codice TikZ SOLO se il grafico è un DATO fornito (es. 'dal grafico seguente...').\n"
+        f"- COERENZA GRAFICI: se il testo scrive 'si osservi il seguente grafico' o 'dalla figura', il grafico DEVE\n"
+        f"  comparire subito dopo come codice TikZ/pgfplots COMPLETO dentro \\begin{{center}}...\\end{{center}}\n"
+        f"  (ogni \\begin{{center}} deve avere il suo \\end{{center}}). Mai un rimando a un grafico senza il grafico.\n"
         f"- AUTOCONTROLLO: prima di scrivere \\begin{{tikzpicture}}, verifica che il testo NON contenga\n"
         f"  'rappresenta', 'disegna', 'traccia', 'graficamente', 'costruisci'. Se sì: stop, niente TikZ.\n"
         f"- ANNOTAZIONI SUL GRAFICO: il grafico DEVE mostrare SOLO la curva e gli assi con scala numerica.\n"
@@ -422,7 +425,10 @@ REGOLA_GRAFICO_CURVE = (
     "(per una parabola con asse orizzontale la forma parametrica ({f(t)},{t})). "
     "NON unire pochi punti con 'coordinates': verrebbero collegati da segmenti e una parabola non è una spezzata. "
     "I dati devono descrivere davvero la curva (es. tre punti che determinano una parabola non possono essere allineati). "
-    "Sul grafico niente legenda né equazione scritta: sono la risposta."
+    "Sul grafico niente legenda né equazione scritta: sono la risposta. "
+    "COERENZA: se il testo dice «si osservi il seguente grafico» o «dalla figura», il grafico DEVE essere "
+    "presente subito dopo come codice TikZ/pgfplots completo (\\begin{center}\\begin{tikzpicture}...\\end{tikzpicture}\\end{center}, "
+    "ogni \\begin{center} chiuso da \\end{center}); se non puoi disegnarlo, riscrivi la domanda senza rimandare a un grafico."
 )
 
 

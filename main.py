@@ -37,7 +37,7 @@ from latex_utils import (
     parse_items_from_block, apply_item_pts_to_body,
     prepara_esercizi_aperti, conta_punti_latex,
     migliora_spaziatura_sottopunti, limita_altezza_grafici, aggiungi_spaziatura_grafici_tabelle,
-    normalizza_sottopunti_inline, bilancia_punti,
+    normalizza_sottopunti_inline, bilancia_punti, esercizi_con_grafico_mancante,
 )
 from config import (
     APP_NAME, APP_ICON, SHARE_URL, FEEDBACK_FORM_URL,
@@ -3317,6 +3317,12 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 
             if re.search(r"\\begin\{(tikzpicture|axis)\}", body):
                 st.info("📊 Questo esercizio contiene un grafico — sarà visibile nel PDF scaricato.")
+            elif idx in esercizi_con_grafico_mancante(blocks):
+                st.warning(
+                    "Questo esercizio rimanda a un grafico che non è stato disegnato. "
+                    "Premi «Rigenera» per riprovare, oppure correggi il testo in «Altre modifiche».",
+                    icon="📉",
+                )
 
             # ── Pulsante ANNULLA MODIFICA ─────────────────────────────────
             _undo_key = f"_undo_block_{idx}"
@@ -4207,6 +4213,14 @@ def _render_stage_final():
             f'font-family:DM Sans,sans-serif;">⚠️ Controlla sempre il contenuto prima di '
             f'distribuirlo agli studenti.</div>',
             unsafe_allow_html=True
+        )
+
+    _senza_grafico = esercizi_con_grafico_mancante(st.session_state.get("review_blocks", []))
+    if _senza_grafico:
+        st.warning(
+            "Attenzione: l'esercizio " + ", ".join(str(i + 1) for i in _senza_grafico)
+            + " cita un grafico che nel PDF non c'è. Apri «Modifica gli esercizi» e premi «Rigenera».",
+            icon="📉",
         )
 
     # ═══════════════════════════════════════════════════════════════════════════
