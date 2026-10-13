@@ -5,7 +5,7 @@
 import logging
 
 import streamlit as st
-from ai_client import riepilogo_uso
+from ai_client import modelli_sostituiti, riepilogo_uso
 
 from ui_helpers import _reset_label, _render_limite_raggiunto
 
@@ -60,6 +60,8 @@ def render_sidebar(
                     _nomi_admin,
                     key="sb_modello_admin",
                 )
+                for _vecchio, _nuovo in modelli_sostituiti().items():
+                    st.caption(f"⚠️ {_vecchio} non è più disponibile: uso {_nuovo}")
                 # Consumi reali dall'ultimo riavvio (token e costo stimato per compito e modello)
                 _uso = riepilogo_uso()
                 if _uso:

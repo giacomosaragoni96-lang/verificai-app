@@ -45,7 +45,10 @@ PREZZI_USD_PER_MILIONE = {
     "gemini-2.5-flash-lite": (0.10, 0.40),
     "gemini-2.5-flash":      (0.30, 2.50),
     "gemini-2.5-pro":        (1.25, 10.00),
+    "gemini-3.5-flash-lite": (0.30, 2.50),
 }
+# Stima per i modelli della serie 3.x non elencati sopra (famiglia → input, output).
+PREZZI_STIMATI_GEN3 = {"lite": (0.30, 2.50), "flash": (0.50, 3.00), "pro": (2.00, 12.00)}
 
 # Tetto ai token di ragionamento per i compiti che servono davvero: ragionare senza limite
 # su Flash e Pro costa ~25.000 token a verifica (misurato dal report di fatturazione).
@@ -79,7 +82,7 @@ def scegli_modello_per_compito(compito: str, model_id_piano: str):
     else:
         model_id = model_id_piano
     if model_id == MODEL_FAST_ID:
-        return model_id, None            # Lite: ragionamento spento di default, non lo tocco
+        return model_id, (0 if ragionamento == 0 else None)   # Lite: spento solo dove richiesto
     if ragionamento == "alto":
         ragionamento = RAGIONAMENTO_ALTO.get(model_id)
     return model_id, ragionamento
