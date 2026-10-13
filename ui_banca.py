@@ -226,7 +226,8 @@ def _tab_modelli(sb):
             st.dataframe(pd.DataFrame([{
                 "Sezione": x["nome"], "Tipo": x["tipo"], "Quesiti": x["n_quesiti"],
                 "Punti": " · ".join("—" if p is None else str(p) for p in x["punti"]),
-                "Facoltativi": ", ".join(x["facoltativi"]) or "—"} for x in s.get("sezioni", [])]),
+                "Facoltativi": ("tutto l'esercizio (*)" if x["facoltativi"] and len(x["facoltativi"]) == x["n_quesiti"]
+                                else ", ".join(x["facoltativi"]) or "—")} for x in s.get("sezioni", [])]),
                 hide_index=True, use_container_width=True)
             nome = st.text_input("Nome del modello", value=m["nome"], key=f"bk_mn_{m['id']}")
             b1, b2, b3 = st.columns(3)

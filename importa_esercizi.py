@@ -41,13 +41,19 @@ def _h(x) -> str:
     return html.escape(str(x if x is not None else ""))
 
 
+def _facoltativi(s: dict) -> str:
+    if s["facoltativi"] and len(s["facoltativi"]) == s["n_quesiti"]:
+        return "tutto l'esercizio (*)"
+    return ", ".join(s["facoltativi"]) or "—"
+
+
 def pagina_html(titolo: str, esercizi: list, modello: dict | None, nota: str = "") -> str:
     struttura = (f"<p style='background:#fffaeb;border:1px solid #fec84b;padding:.6rem .8rem'>{_h(nota)}</p>" if nota else "")
     if modello:
         righe = "".join(
             f"<tr><td>{_h(s['nome'])}</td><td>{_h(s['tipo'])}</td><td>{s['n_quesiti']}</td>"
             f"<td>{_h(' · '.join(str(p) if p is not None else '—' for p in s['punti']))}</td>"
-            f"<td>{_h(', '.join(s['facoltativi']) or '—')}</td></tr>" for s in modello["sezioni"])
+            f"<td>{_h(_facoltativi(s))}</td></tr>" for s in modello["sezioni"])
         struttura += (
             f"<h2>Struttura della verifica</h2><p>{_h(modello['titolo'])} — <b>{_h(modello['argomento'])}</b><br>"
             f"Punti base <b>{modello['punti_base']}</b> + facoltativi <b>{modello['punti_extra']}</b> = "
