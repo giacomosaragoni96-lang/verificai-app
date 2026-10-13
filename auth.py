@@ -118,12 +118,25 @@ def _url_app() -> str:
     return str(url).rstrip("/")
 
 
+@st.cache_data(ttl=300, show_spinner=False)
+def _google_attivo(base: str) -> bool:
+    """True se su Supabase il provider Google è acceso (impostazioni pubbliche del progetto)."""
+    try:
+        import requests
+        r = requests.get(f"{base}/auth/v1/settings", timeout=5)
+        return bool(r.ok and r.json().get("external", {}).get("google"))
+    except Exception:
+        return False
+
+
 def url_login_google():
     """Indirizzo a cui mandare il browser per il login con Google (None se non configurato)."""
     try:
         base = str(st.secrets["SUPABASE_URL"]).rstrip("/")
     except Exception:
         return None
+    if not _google_attivo(base):
+        return None   # provider spento su Supabase: niente pulsante che porterebbe a un errore
 
     ora = time.time()
     in_cache = st.session_state.get("_google_login")
