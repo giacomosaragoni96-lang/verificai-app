@@ -43,10 +43,9 @@ Avvio locale: `streamlit run main.py`. Pacchetti di sistema in `packages.txt`
 - UI (usano Streamlit): `main.py`, `sidebar.py`, `ui_helpers.py`, `styles.py`, `auth.py`
 - Logica: `generation.py` (pipeline AI), `latex_utils.py` (parsing/compilazione LaTeX), `docx_export.py`
 - Configurazione e prompt: `config.py`, `prompts.py`
-- Pagamenti (collegati all'app, vedi "Stato di Stripe"): `payments.py` (importa Streamlit),
-  `webhooks.py`, `subscription_management.py`, `database_schema.sql`
-- Non usati: `setup.py` (nessuno lo importa); `extra-streamlit-components` e
-  `streamlit-cookies-controller` (solo in requirements, `auth.get_cookie_controller()` è uno stub).
+- Abbonamenti (solo lettura): `subscription_management.py` (piano utente e limiti), `database_schema.sql`
+- Non usati: `extra-streamlit-components` e `streamlit-cookies-controller`
+  (solo in requirements, `auth.get_cookie_controller()` è uno stub).
 - Mancante: `mathpix_utils.py` è importato da `main.py` ma non esiste, quindi Mathpix è sempre disattivato.
 
 ## Architettura
@@ -74,15 +73,15 @@ se il caricamento dell'abbonamento fallisce. Admin escluso.
 
 DOCX: `docx_export.py` converte il LaTeX (oggi passando da Gemini) e costruisce il file con python-docx.
 
-## Stato di Stripe
+## Piani e abbonamenti
 
-Il codice Stripe è ancora collegato, ma il modulo `stripe` NON è in `requirements.txt`:
-- `main.py` gestisce `?payment=…&plan=…` e chiama `subscription_management` a ogni run.
-- Endpoint `?webhook=stripe` in `main.py`: non funziona (usa `st.request`, che non esiste;
-  Streamlit non può ricevere webhook).
-- `sidebar.py` mostra il bottone di upgrade (importa `payments`).
-- Prezzo nella UI 4,90 EUR, in `config.py` 4,50 EUR; i `price_id` di pro e premium sono identici.
-Usare solo chiavi sandbox (`sk_test_`).
+Il codice Stripe è stato rimosso: l'app non incassa né scrive abbonamenti, legge soltanto la
+tabella `subscriptions` (`subscription_management.get_user_subscription`, status `active`/`trialing`).
+Il piano si assegna a mano dal database Supabase con una riga in `subscriptions`:
+`user_id`, `plan_id` (`pro` o `premium`), `status` = `active`, `stripe_subscription_id` con un
+valore segnaposto univoco `manual-<uuid>` (la colonna è `NOT NULL UNIQUE` nello schema).
+Per togliere il piano si porta `status` a `canceled`. Senza riga attiva l'utente è `free`.
+Non si toccano lo schema né le tabelle dal codice dell'app.
 
 ## Problemi noti (audit ottobre 2026, da correggere)
 
@@ -95,7 +94,6 @@ Usare solo chiavi sandbox (`sk_test_`).
 - `prompts.py`: nell'esempio tabelle `\\\\begin` produce `\\begin` (LaTeX errato per il modello).
 - `_safe_generate` riprova anche su errori non recuperabili (429 crediti, chiave non valida).
 - `google-generativeai` è deprecata (da migrare a `google-genai`).
-- `sidebar.py`: `st.write("DEBUG: …")` visibili agli utenti.
 
 ## Lingua
 
