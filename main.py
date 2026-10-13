@@ -25,6 +25,7 @@ from generation import (
 from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
     prompt_rubrica_valutazione, prompt_variante_rapida, istruzione_livello_esercizio,
+    REGOLA_SOTTOPUNTI_MODIFICA, REGOLA_GRAFICO_CURVE,
 )
 from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
 from latex_utils import (
@@ -36,6 +37,7 @@ from latex_utils import (
     parse_items_from_block, apply_item_pts_to_body,
     prepara_esercizi_aperti, conta_punti_latex,
     migliora_spaziatura_sottopunti, limita_altezza_grafici, aggiungi_spaziatura_grafici_tabelle,
+    normalizza_sottopunti_inline,
 )
 from config import (
     APP_NAME, APP_ICON, SHARE_URL, FEEDBACK_FORM_URL,
@@ -343,6 +345,7 @@ def _postprocessa_latex(latex: str, mostra_punteggi: bool, punti_totali: int,
     esercizio). con_griglia inietta la tabella dei punteggi (chi aggiunge
     \\end{document} dopo passa False e la inietta da sé).
     """
+    latex = normalizza_sottopunti_inline(latex)   # "a) … b) …" nel paragrafo → elenco
     latex = fix_items_environment(latex)
     latex = migliora_spaziatura_sottopunti(latex)
     latex = aggiungi_spaziatura_grafici_tabelle(latex)
@@ -3579,6 +3582,8 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
               f"NON usare \\includegraphics{{placeholder}} né commenti '%% inserire grafico'.\n"
             f"- NON inserire MAI commenti LaTeX (%% ...) nel corpo degli esercizi.\n"
             f"- Mantieni lo STESSO numero di sotto-punti.\n"
+            f"- {REGOLA_SOTTOPUNTI_MODIFICA}\n"
+            f"- {REGOLA_GRAFICO_CURVE}\n"
             f"- {_qr_punti_nota}\n"
             f"- Restituisci SOLO il blocco \\subsection*{{...}} con la variante.\n"
             f"- NON includere preambolo o \\begin{{document}}.\n"
@@ -3703,8 +3708,10 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 f"- Mantieni OBBLIGATORIAMENTE l'argomento '{argomento_str}'.\n"
                 f"- Restituisci SOLO il blocco \\subsection*{{...}} con il nuovo esercizio.\n"
                 f"- Mantieni struttura LaTeX (\\subsection*, enumerate, \\item[a]), ecc).\n"
+                f"- {REGOLA_SOTTOPUNTI_MODIFICA}\n"
                 f"- {punti_nota}\n"
                 f"- {_grafici_rule_rw}\n"
+                f"- {REGOLA_GRAFICO_CURVE}\n"
                 f"- NON inserire MAI commenti LaTeX (%% ...) nel corpo degli esercizi.\n"
                 f"- NON includere preambolo o \\begin{{document}}.\n"
                 f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
@@ -3871,9 +3878,11 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             f"- L'esercizio DEVE restare su '{argomento_str}' in '{materia_str}'. NON introdurre altri argomenti.\n"
             f"- Restituisci SOLO il blocco \\subsection*{{...}} con il nuovo esercizio.\n"
             f"- Mantieni la struttura LaTeX (\\subsection*, enumerate, \\item[a]), ecc).\n"
+            f"- {REGOLA_SOTTOPUNTI_MODIFICA}\n"
             f"- {_ct_punti_nota}\n"
             f"- Se includi un grafico, usa SOLO codice TikZ/pgfplots COMPLETO e COMPILABILE. "
               f"NON usare \\includegraphics{{placeholder}} né commenti '%% inserire figura'.\n"
+            f"- {REGOLA_GRAFICO_CURVE}\n"
             f"- NON inserire MAI commenti LaTeX (%% ...) nel corpo degli esercizi.\n"
             f"- NON includere preambolo o \\begin{{document}}.\n"
         )

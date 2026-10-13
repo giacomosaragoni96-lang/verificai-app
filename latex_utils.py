@@ -1148,6 +1148,57 @@ def aggiungi_spaziatura_grafici_tabelle(latex: str) -> str:
     return latex
 
 
+def normalizza_sottopunti_inline(latex: str) -> str:
+    """
+    Trasforma in un vero elenco i sottopunti scritti in linea nel testo:
+
+        "Si consideri … a) Determina … (15 pt) b) Risolvi … (10 pt)"
+        →  \\begin{enumerate}[a)] \\item[a)] Determina … \\item[b)] Risolvi … \\end{enumerate}
+
+    Succede quando l'AI riscrive un esercizio e ignora la regola dei sottopunti.
+    Conservativa: serve la sequenza a), b)[, c)…] nello stesso paragrafo; elenchi,
+    tikzpicture, tabelle e formule non vengono toccati.
+    """
+    protetti: list[str] = []
+
+    def _proteggi(m):
+        protetti.append(m.group(0))
+        return f"\x00{len(protetti) - 1}\x00"
+
+    testo = re.sub(
+        r'\\begin\{(enumerate|itemize|tikzpicture|tabular|array|equation\*?|align\*?)\}.*?\\end\{\1\}',
+        _proteggi, latex, flags=re.DOTALL,
+    )
+    testo = re.sub(r'\$\$.*?\$\$|\\\[.*?\\\]|\\\(.*?\\\)|\$[^$\n]*\$', _proteggi, testo, flags=re.DOTALL)
+
+    etichetta = re.compile(r'(?:(?<=\s)|^)([a-h])\)(?=\s)')
+
+    def _converti(par: str) -> str:
+        seq = []
+        for m in etichetta.finditer(par):
+            if m.group(1) == chr(ord('a') + len(seq)):
+                seq.append(m)
+        if len(seq) < 2:
+            return par
+        intro = par[:seq[0].start()].rstrip()
+        voci = []
+        for i, m in enumerate(seq):
+            fine = seq[i + 1].start() if i + 1 < len(seq) else len(par)
+            voci.append(f"\\item[{m.group(1)})] " + par[m.end():fine].strip())
+        elenco = "\\begin{enumerate}[a)]\n" + "\n".join(voci) + "\n\\end{enumerate}"
+        return (intro + "\n" if intro else "") + elenco
+
+    parti = re.split(r'(\n[ \t]*\n)', testo)
+    testo = ''.join(p if i % 2 else _converti(p) for i, p in enumerate(parti))
+
+    while '\x00' in testo:
+        nuovo = re.sub(r'\x00(\d+)\x00', lambda m: protetti[int(m.group(1))], testo)
+        if nuovo == testo:
+            break
+        testo = nuovo
+    return testo
+
+
 def migliora_spaziatura_sottopunti(latex: str) -> str:
     """
     Migliora la spaziatura tra i sottopunti degli esercizi.

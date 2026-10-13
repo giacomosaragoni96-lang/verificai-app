@@ -410,6 +410,22 @@ def prompt_rigenera_blocco(
     )
 
 
+# Regole condivise dai prompt delle modifiche a un solo esercizio (main.py).
+REGOLA_SOTTOPUNTI_MODIFICA = (
+    "SOTTOPUNTI: con due o più richieste usa \\begin{enumerate}[a)] con \\item[a)], \\item[b)], ... "
+    "(un \\item per richiesta e il punteggio (N pt) alla fine di ogni \\item). "
+    "NON scrivere mai a) b) dentro un paragrafo di testo. Con una sola richiesta: testo diretto, senza enumerate."
+)
+
+REGOLA_GRAFICO_CURVE = (
+    "GRAFICI DI FUNZIONI: disegna la curva SEMPRE con \\addplot[domain=a:b, samples=100]{espressione in x} "
+    "(per una parabola con asse orizzontale la forma parametrica ({f(t)},{t})). "
+    "NON unire pochi punti con 'coordinates': verrebbero collegati da segmenti e una parabola non è una spezzata. "
+    "I dati devono descrivere davvero la curva (es. tre punti che determinano una parabola non possono essere allineati). "
+    "Sul grafico niente legenda né equazione scritta: sono la risposta."
+)
+
+
 def istruzione_livello_esercizio(piu_difficile: bool, argomento: str) -> str:
     """
     Istruzione fissa per "Più facile" / "Più difficile", da passare a
@@ -428,7 +444,9 @@ def istruzione_livello_esercizio(piu_difficile: bool, argomento: str) -> str:
     return (
         f"{cambio} Mantieni lo stesso argomento ('{argomento}'), la stessa tipologia di "
         f"esercizio e lo stesso numero di sottopunti. Non inserire soluzioni, risposte o commenti. "
-        f"Se l'esercizio contiene un grafico, mantienilo come codice TikZ/pgfplots completo e compilabile."
+        f"{REGOLA_SOTTOPUNTI_MODIFICA} "
+        f"Se l'esercizio contiene un grafico, mantienilo come codice TikZ/pgfplots completo e compilabile. "
+        f"{REGOLA_GRAFICO_CURVE}"
     )
 
 
