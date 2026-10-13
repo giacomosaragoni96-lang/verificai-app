@@ -57,15 +57,10 @@ def render_sidebar(
     pdf_to_images_func=None,
 ) -> dict:
 
-    STAGE_INPUT  = "INPUT"
-    STAGE_REVIEW = "REVIEW"
-    STAGE_FINAL  = "FINAL"
-
     theme_changed = False
 
     with st.sidebar:
         _acc = T.get("sidebar_accent", "#79C0FF")
-        _acc2 = T.get("accent2", _acc)
         # La sidebar ha sempre sfondo scuro → i colori testo devono essere CHIARI
         # indipendentemente dal tema principale (chiaro/scuro).
         _sb_text  = T.get("sidebar_input_text", "#E6EDF3")
@@ -177,8 +172,6 @@ def render_sidebar(
         _perc_uso   = min(100, int(verifiche_mese_count / LIMITE_MENSILE * 100))
         _color_bar  = (T["error"] if limite_raggiunto
                        else (T["warn"] if _perc_uso >= 70 else T["success"]))
-        _count_class = ("limit-reached" if limite_raggiunto
-                        else ("limit-near" if _perc_uso >= 70 else ""))
 
         _gg_reset, _hh_reset = giorni_al_reset_func()
         if _gg_reset == 0:
@@ -356,7 +349,6 @@ def render_sidebar(
                 # Quality metrics
                 excellent_rate = stats.get('excellent', 0) / total * 100
                 good_rate = stats.get('good', 0) / total * 100
-                poor_rate = stats.get('poor', 0) / total * 100
                 
                 st.metric("📈 Tasso Successo", f"{excellent_rate + good_rate:.1f}%", 
                          f"+{excellent_rate:.1f}% eccellente")

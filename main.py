@@ -8,7 +8,6 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import base64
-import html as html_lib
 import logging
 import re
 import os
@@ -21,8 +20,8 @@ from sidebar import render_sidebar
 from generation import genera_verifica, analizza_documento_caricato, compila_contesto_generazione
 from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
-    prompt_modifica, prompt_qa_verifica,
-    prompt_rubrica_valutazione, prompt_da_template, prompt_variante_rapida,
+    prompt_qa_verifica,
+    prompt_rubrica_valutazione, prompt_variante_rapida,
 )
 from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
 from latex_utils import (
@@ -30,16 +29,16 @@ from latex_utils import (
     fix_items_environment, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
-    parse_pts_from_block_body, valida_totale, riscala_single_block,
+    parse_pts_from_block_body, riscala_single_block,
     parse_items_from_block, apply_item_pts_to_body,
     prepara_esercizi_aperti, conta_punti_latex,
-    migliora_spaziatura_sottopunti, limita_altezza_grafici, assicura_punti_visibili, aggiungi_spaziatura_grafici_tabelle,
+    migliora_spaziatura_sottopunti, limita_altezza_grafici, aggiungi_spaziatura_grafici_tabelle,
 )
 from config import (
-    APP_NAME, APP_ICON, APP_TAGLINE, SHARE_URL, FEEDBACK_FORM_URL,
+    APP_NAME, APP_ICON, SHARE_URL, FEEDBACK_FORM_URL,
     LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, NOTE_PLACEHOLDER, TIPI_ESERCIZIO,
-    MATERIE_ICONS, MODEL_FAST_ID, get_model_id_per_piano, MATERIE_STEM,
+    MODEL_FAST_ID, get_model_id_per_piano,
 )
 # THEME_LABELS è definito nel nuovo config.py — fallback per compatibilità
 try:
@@ -48,11 +47,12 @@ except ImportError:
     THEME_LABELS = {k: k.replace("_", " ").title() for k in THEMES}
 from dotenv import load_dotenv
 from supabase import create_client, Client
-from auth import mostra_auth, ripristina_sessione, cancella_sessione_cookie
+from auth import mostra_auth, ripristina_sessione
 from styles import get_css, _is_light_color
 from ui_helpers import (
     _render_back_button, _make_katex_html, _render_sticky_header,
-    _render_step_progress, _split_download_button,
+    _render_step_progress,
+    STAGE_INPUT, STAGE_PREVIEW, STAGE_REVIEW, STAGE_FINAL,
 )
 
 logger = logging.getLogger("verificai.main")
@@ -77,11 +77,7 @@ except ImportError:
 
 
 # ── COSTANTI STAGE ────────────────────────────────────────────────────────────
-STAGE_INPUT   = "INPUT"
-STAGE_PREVIEW = "PREVIEW"   # ← NUOVO: anteprima rapida post-generazione
-STAGE_REVIEW  = "REVIEW"
-STAGE_FINAL   = "FINAL"
-STAGE_MIE_VERIFICHE = "MIE_VERIFICHE"  # ← NUOVO: pagina "Le tue verifiche"
+STAGE_MIE_VERIFICHE = "MIE_VERIFICHE"  # pagina "Le tue verifiche"
 
 # ── PAGE CONFIG ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -528,17 +524,12 @@ if "last_argomento"    not in st.session_state: st.session_state.last_argomento 
 if "_storico_refresh"  not in st.session_state: st.session_state._storico_refresh = 0
 if "_preferiti"        not in st.session_state: st.session_state._preferiti = set()
 if "_storico_page"     not in st.session_state: st.session_state._storico_page = 1
-if "_saved_to_storico" not in st.session_state: st.session_state._saved_to_storico = False
 if "gen_time_sec"      not in st.session_state: st.session_state.gen_time_sec = None
 # ── Idea #19: Rubrica valutazione ────────────────────────────────────────────
 if "rubrica_testo"     not in st.session_state: st.session_state.rubrica_testo = None
 if "_rubrica_gen"      not in st.session_state: st.session_state._rubrica_gen = False
 if "_rubrica_pdf"      not in st.session_state: st.session_state["_rubrica_pdf"] = None
 if "_rubrica_docx"     not in st.session_state: st.session_state["_rubrica_docx"] = None
-# ── Idea #8: Template gallery ────────────────────────────────────────────────
-if "_template_sel"     not in st.session_state: st.session_state._template_sel = None
-# ── Idea #2: One-click variant state ─────────────────────────────────────────
-if "_variant_rapida_gen" not in st.session_state: st.session_state._variant_rapida_gen = False
 if "file_ispirazione"  not in st.session_state: st.session_state.file_ispirazione = None
 if "mathpix_context"   not in st.session_state: st.session_state.mathpix_context = None
 if "mathpix_file_hash" not in st.session_state: st.session_state.mathpix_file_hash = None
@@ -550,16 +541,12 @@ if "analisi_docs_list"    not in st.session_state: st.session_state.analisi_docs
 if "info_consolidate"     not in st.session_state: st.session_state.info_consolidate = {}
 # Istruzioni per file (key = file_hash → testo istruzione)
 if "istruzioni_per_file"  not in st.session_state: st.session_state.istruzioni_per_file = {}
-# Esercizi personalizzati da file (accumulo durante sessione)
-if "_es_custom_da_file"   not in st.session_state: st.session_state["_es_custom_da_file"] = {}
 # Percorso utente: None | "A" | "B"
 if "input_percorso"       not in st.session_state: st.session_state.input_percorso = None
 # Dialogo conferma Percorso A: None | "in_attesa" | "confermato"
 if "dialogo_stato"        not in st.session_state: st.session_state.dialogo_stato = None
 # Modalità uso file scelta dall'utente dopo il dialogo
 if "file_mode"            not in st.session_state: st.session_state.file_mode = None
-# Esercizio specifico da includere (testo estratto)
-if "esercizio_da_includere" not in st.session_state: st.session_state.esercizio_da_includere = None
 # QA mode (accessibile da entrambi i percorsi)
 if "qa_mode"              not in st.session_state: st.session_state.qa_mode = False
 if "qa_result"            not in st.session_state: st.session_state.qa_result = None
@@ -579,7 +566,6 @@ if "_fac_dialog_pending"   not in st.session_state: st.session_state["_fac_dialo
 if "_fac_dialog_data"      not in st.session_state: st.session_state["_fac_dialog_data"]      = {}
 if "_fac_dialog_shown_for" not in st.session_state: st.session_state["_fac_dialog_shown_for"] = None
 if "_fac_confirmed"        not in st.session_state: st.session_state["_fac_confirmed"]        = False
-if "_pers_open"           not in st.session_state: st.session_state["_pers_open"] = False
 if "_pb_argomento_source"    not in st.session_state: st.session_state["_pb_argomento_source"] = None
 if "_pb_argomento_manual_val" not in st.session_state: st.session_state["_pb_argomento_manual_val"] = ""
 # Wizard state (Percorso A)
@@ -1077,8 +1063,6 @@ def _reset_percorso():
     st.session_state.analisi_docs_list     = []
     st.session_state.info_consolidate      = {}
     st.session_state.istruzioni_per_file   = {}
-    st.session_state["_es_custom_da_file"] = {}
-    st.session_state.esercizio_da_includere = None
     st.session_state.file_ispirazione      = None
     st.session_state.mathpix_context       = None
     st.session_state.mathpix_file_hash     = None
@@ -1439,11 +1423,6 @@ def _render_bivio():
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  _render_facsimile_dedicato()  ← NUOVA funzione, aggiungere prima di _render_stage_input
-# ═══════════════════════════════════════════════════════════════════════════════
-
-
 def _load_user_verifiche():
     """
     Carica tutte le verifiche dell'utente da Supabase
@@ -1477,14 +1456,6 @@ def _rinomina_verifica(verifica_id: int, nuovo_nome: str):
     except Exception as e:
         st.error(f"⚠️ Errore rinomina: {e}")
         return None
-
-def _toggle_preferito(verifica_id: int, is_preferito: bool):
-    """
-    Aggiunge/rimuove una verifica dai preferiti
-    """
-    # TEMPORANEAMENTE DISABILITATO - la colonna 'preferito' non esiste nel database
-    st.warning("⚠️ Funzionalità preferiti in sviluppo - colonna database mancante")
-    return None
 
 def _genera_link_condivisione(verifica_id: int):
     """
@@ -2912,18 +2883,6 @@ def _render_percorso_a_wizard():
                 st.rerun()
 
 
-def _render_dialogo_conferma():
-    """Deprecato — ora tutto in _render_percorso_a_wizard()."""
-    _render_percorso_a_wizard()
-
-
-def _render_percorso_a_configura(num_esercizi_totali_ref: list):
-    """Deprecato — ora tutto in _render_percorso_a_upload()."""
-    # Questo path non dovrebbe più essere raggiunto.
-    # Restituisce valori di default sicuri per evitare crash.
-    return ("", "Matematica", "Generico", True, True, 100, False)
-
-
 @st.dialog("📋 Verifica rilevata!")
 def _mostra_dialogo_facsimile():
     """Popup che appare quando l'AI rileva che il file caricato è una verifica."""
@@ -3075,14 +3034,10 @@ def _render_percorso_b_form():
 
             # Auto-fill da analisi file se disponibile
             _info_cons = st.session_state.info_consolidate
-            _mat_autofilled = False
-            _scu_autofilled = False
             if _info_cons.get("materia") and _info_cons["materia"] in _mat_list:
                 _mat_idx = _mat_list.index(_info_cons["materia"])
-                _mat_autofilled = True
             if _info_cons.get("scuola") and _info_cons["scuola"] in SCUOLE:
                 _scu_idx = SCUOLE.index(_info_cons["scuola"])
-                _scu_autofilled = True
 
             with _col_m:
                 st.markdown('<div class="opt-label">Materia ✱</div>', unsafe_allow_html=True)
@@ -3444,7 +3399,7 @@ def _render_percorso_b_form():
                         )
                         if _sel_modo != _lista_b_curr[_fi].get("file_mode"):
                             st.session_state.analisi_docs_list[_fi]["file_mode"] = _sel_modo
-                            st.session_state.analisi_docs_list[_fi]["confirmed"] = (_sel_modo != "ignora")
+                            st.session_state.analisi_docs_list[_fi]["confirmed"] = True
                             _consolida_info()
 
                         if _sel_modo == "includi_esercizio":
@@ -3564,28 +3519,6 @@ def _render_percorso_b_form():
         genera_btn,
         _prog_placeholder,
     )
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  _render_stage_input()  ← AGGIUNGERE routing per "FACSIMILE" (linea ~2471)
-#
-#  Nel blocco if/elif della funzione esistente, aggiungere PRIMA di "if percorso == 'A'":
-#
-#      if percorso == "FACSIMILE":
-#          _render_facsimile_dedicato()
-#          return
-#
-# ═══════════════════════════════════════════════════════════════════════════════
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  SESSION STATE INIT PATCH (~linea 519 main.py)
-#  Aggiungere nel blocco di inizializzazione:
-#
-#      if "_pb_argomento_source"    not in st.session_state:
-#          st.session_state["_pb_argomento_source"]     = None
-#      if "_pb_argomento_manual_val" not in st.session_state:
-#          st.session_state["_pb_argomento_manual_val"] = ""
-# ═══════════════════════════════════════════════════════════════════════════════
 
 
 def _lancia_generazione(
@@ -4062,23 +3995,7 @@ def _render_stage_input():
         if not argomento:
             return
 
-        # ── Idea #8: se template selezionato, inietta struttura nelle note ──
-        _tmpl_sel_id = st.session_state.get("_template_sel")
-        _tmpl_nota_extra = ""
-        if _tmpl_sel_id:
-            _TMPL_MAP = {
-                "classico_misto":     "Struttura: 1 esercizio aperto (3 sottopunti), 1 scelta multipla (4 domande), 1 vero/falso (5 affermazioni).",
-                "stem_calcolo":       "Struttura: 3 esercizi numerici aperti. Es.1: problema con 4 sottopunti. Es.2: applicativo con 3 sottopunti. Es.3: dimostrazione/verifica con 2 sottopunti.",
-                "letterario":         "Struttura: 1 comprensione testo (3 domande), 1 analisi/commento (3 domande), 1 completamento (5 lacune), 1 scelta multipla teorica (4 domande).",
-                "breve_bes":          "Struttura semplificata BES/DSA: 1 vero/falso (4 affermazioni brevi), 1 scelta multipla (3 domande chiare), 1 completamento (4 spazi). Linguaggio diretto, frasi brevi.",
-                "interrogazione_orale": "Struttura per orale: 1 domanda aperta ampia, 3 domande di approfondimento mirate, 1 domanda di collegamento interdisciplinare. Formato lista domande.",
-                "ripasso_veloce":     "Struttura quiz rapido: 6 scelte multiple (1 risposta corretta su 4), 6 vero/falso. Domande brevi, nessun esercizio aperto.",
-            }
-            _tmpl_nota_extra = _TMPL_MAP.get(_tmpl_sel_id, "")
-
         _note_finale = note_extra
-        if _tmpl_nota_extra:
-            _note_finale = (_tmpl_nota_extra + "\n\n" + note_extra).strip()
 
         s_es, imgs_es = _build_prompt_esercizi(
             st.session_state.esercizi_custom,
@@ -4466,11 +4383,9 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
     _c_card    = T["card"]
     _c_text    = T["text"]
     _c_text2   = T["text2"]
-    _c_muted   = T["muted"]
     _c_accent  = T["accent"]
     _c_accent2 = T["accent2"]
     _c_border2 = T["border2"]
-    _c_hover   = T["hover"]
     _c_bg2     = T["bg2"]
     components.html(f"""
 <script>
@@ -5403,12 +5318,6 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 _title_rc = re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]).strip()
                 _title_short = (_title_rc[:45] + "…") if len(_title_rc) > 45 else _title_rc
 
-                # Debug: mostra cosa viene rilevato
-                print(f"DEBUG: Es {_i+1} - Title: {_title_rc}")
-                print(f"DEBUG: Es {_i+1} - Items found: {len(_items_rc)}")
-                for j, (label, text, pts) in enumerate(_items_rc):
-                    print(f"  Item {j+1}: {label} - {pts}pt - {text[:30]}...")
-
                 if not _items_rc:
                     _all_new_item_pts[_i] = []
                     continue
@@ -5479,7 +5388,6 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             # ── Barra totale ───────────────────────────────────────────────
             _rc_ok   = (_grand_total_rc == punti_totali)
             _rc_diff = _grand_total_rc - punti_totali
-            _rc_diff_str = ("+" if _rc_diff > 0 else "") + str(_rc_diff)
 
             st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
             if _rc_ok:
@@ -5650,48 +5558,6 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 # ═══════════════════════════════════════════════════════════════════════════════
 #  STAGE_FINAL
 # ═══════════════════════════════════════════════════════════════════════════════
-
-def _salva_feedback(rating: str, gen_params: dict):
-    """
-    Salva il feedback di qualità e lo invia al database per analisi.
-    """
-    try:
-        # Salva nel session state per statistiche immediate
-        if not hasattr(st.session_state, 'quality_stats'):
-            st.session_state.quality_stats = {'excellent': 0, 'good': 0, 'sufficient': 0, 'poor': 0}
-        
-        st.session_state.quality_stats[rating] = st.session_state.quality_stats.get(rating, 0) + 1
-        
-        # Prepara i dati per il database
-        feedback_data = {
-            'rating': rating,
-            'materia': gen_params.get('materia', ''),
-            'argomento': gen_params.get('argomento', ''),
-            'difficolta': gen_params.get('difficolta', ''),
-            'num_esercizi': gen_params.get('num_esercizi', 0),
-            'punti_totali': gen_params.get('punti_totali', 0),
-            'modello_id': gen_params.get('modello_id', ''),
-            'ha_griglia': gen_params.get('con_griglia', False),
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'user_id': st.session_state.get('user_id', 'anonymous'),
-            'validation_score': getattr(st.session_state, 'last_validation_score', None),
-            'compilation_success': st.session_state.verifiche.get("A", {}).get("pdf") is not None
-        }
-        
-        # Invia al database (se disponibile)
-        if 'supabase' in st.session_state and st.session_state.supabase:
-            try:
-                st.session_state.supabase.table('quality_feedback').insert(feedback_data).execute()
-                logger.info(f"Feedback salvato: {rating} per {gen_params.get('materia', 'sconosciuta')}")
-            except Exception as e:
-                logger.warning(f"Impossibile salvare feedback al database: {e}")
-        
-        # Log locale per debugging
-        logger.info(f"FEEDBACK QUALITÀ: {rating} | {gen_params.get('materia', '')} | {gen_params.get('argomento', '')}")
-        
-    except Exception as e:
-        logger.error(f"Errore nel salvataggio feedback: {e}")
-
 
 def _render_stage_final():
     gp   = st.session_state.gen_params
@@ -6178,19 +6044,7 @@ def _render_stage_final():
                 logger.error(f"Errore aggiornamento preview forzato (final page): {e}")
         else:
             logger.warning("PDF ts presente ma nessun PDF disponibile per preview (final page)")
-    
-    # Vecchia logica mantenuta come fallback
-    elif current_pdf_ts and current_pdf_ts > last_preview_ts:
-        vA_pdf = vA.get("pdf")
-        if vA_pdf:
-            try:
-                new_imgs, _ = pdf_to_images_bytes(vA_pdf)
-                st.session_state.preview_images = new_imgs or []
-                st.session_state.last_preview_ts = current_pdf_ts
-                logger.info(f"Preview images aggiornate (final page) - timestamp PDF: {current_pdf_ts}")
-            except Exception as e:
-                logger.error(f"Errore aggiornamento preview (final page): {e}")
-    
+
     imgs = st.session_state.preview_images
     if imgs or vA.get("pdf"):
         with st.expander("📄 Anteprima PDF", expanded=False):
@@ -6298,15 +6152,11 @@ def _render_stage_final():
             st.session_state.preview_page      = 0
             st.session_state.last_preview_ts   = 0
             st.session_state.esercizi_custom       = []
-            st.session_state._saved_to_storico     = False
-            st.session_state["_es_custom_da_file"] = {}
             st.session_state.rubrica_testo         = None
             st.session_state["_rubrica_pdf"]       = None
             st.session_state["_rubrica_docx"]      = None
             st.session_state._rubrica_gen          = False
-            st.session_state._template_sel         = None
-            st.session_state._variant_rapida_gen   = False
-            st.session_state["_gen_fila_b"]        = False
+            st.session_state["_gen_fila_b"]       = False
             st.session_state["_gen_bes"]           = False
             st.session_state["_gen_sol"]           = False
             st.session_state.analisi_docs_list  = []
