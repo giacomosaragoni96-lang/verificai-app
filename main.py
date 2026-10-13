@@ -42,7 +42,7 @@ from latex_utils import (
 from config import (
     APP_NAME, APP_ICON, SHARE_URL, FEEDBACK_FORM_URL,
     LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
-    SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, NOTE_PLACEHOLDER, TIPI_ESERCIZIO,
+    SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS,
 )
 from dotenv import load_dotenv
@@ -54,6 +54,7 @@ from ui_helpers import (
     _render_step_progress,
     STAGE_INPUT, STAGE_PREVIEW, STAGE_REVIEW, STAGE_FINAL,
     _reset_label, _render_limite_raggiunto, _mostra_errore, _mostra_errore_pdf,
+    separa_argomento_e_note,
 )
 
 logger = logging.getLogger("verificai.main")
@@ -1953,18 +1954,6 @@ def _render_percorso_b_form():
     if _toast_msg:
         st.toast(f"✅ Documento analizzato — {_toast_msg}", icon="🔬")
 
-    # ── HINT BOX — Suggerimenti per migliori risultati ───────────────────────
-    st.markdown(f"""
-    <div style="background:{T['hint_bg']};border:2px solid {T['hint_border']}; 
-                border-radius:12px;padding:16px 20px;font-size:1rem;color:{T['hint_text']}; 
-                margin:12px 0 20px 0;font-family:DM Sans,sans-serif;line-height:1.6;
-                box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-    🎯 <b>Suggerimento per risultati perfetti:</b><br>
-    Più dettagli fornisci, più la verifica sarà precisa e personalizzata. 
-    Specifica argomenti da escludere, livello di difficoltà, tipo di esercizi preferiti.
-    </div>
-    """, unsafe_allow_html=True)
-
     # ═════════════════════════════════════════════════════════════════════════
     #  FORM PRINCIPALE — colonna sinistra (form) | colonna destra (upload)
     # ═════════════════════════════════════════════════════════════════════════
@@ -2039,36 +2028,44 @@ def _render_percorso_b_form():
                 _arg_default = st.session_state.get("_pb_argomento_manual_val", "")
             elif _auto_arg:
                 _arg_default = _auto_arg
-            # ── LABEL ARGOMENTO ─────────────────────────────────────────────────────
-            st.markdown('<div class="opt-label">Argomento ✱</div>', unsafe_allow_html=True)
-            
+            # ── RICHIESTA UNICA: argomento + indicazioni nello stesso riquadro ─────────
+            st.markdown(
+                '<div class="opt-label">Cosa vuoi nella verifica? ✱ '
+                '<span style="font-weight:400;opacity:.6;">— argomento nella prima riga, '
+                'poi cosa includere o evitare</span></div>',
+                unsafe_allow_html=True,
+            )
+            _esempio = esempio_richiesta(materia_scelta)
+
             # Controlla se c'è già un valore in session state per evitare il warning
             if "argomento_area_b" not in st.session_state:
                 argomento_raw = st.text_area(
-                    "argomento",
+                    "richiesta",
                     value=_arg_default,
-                    placeholder="es. Teorema di Pitagora (escludi dimostrazioni)\nes. Frazioni (semplificazione solo)\nes. Energia cinetica (no formule complesse)",
-                    height=105,
+                    placeholder=_esempio,
+                    height=190,
                     label_visibility="collapsed",
                     key="argomento_area_b",
                 )
             else:
                 argomento_raw = st.text_area(
-                    "argomento",
-                    placeholder="es. Teorema di Pitagora (escludi dimostrazioni)\nes. Frazioni (semplificazione solo)\nes. Energia cinetica (no formule complesse)",
-                    height=105,
+                    "richiesta",
+                    placeholder=_esempio,
+                    height=190,
                     label_visibility="collapsed",
                     key="argomento_area_b",
                 )
 
-            # ── Traccia modifica manuale argomento ────────────────────────────────
+            # ── Traccia modifica manuale del riquadro ─────────────────────────────
             _auto_arg_ref = _info_cons.get("contenuto_argomento", "")
-            argomento = argomento_raw.strip()
-            if argomento and argomento != _auto_arg_ref:
+            _richiesta = argomento_raw.strip()
+            if _richiesta and _richiesta != _auto_arg_ref:
                 st.session_state["_pb_argomento_source"] = "manual"
-                st.session_state["_pb_argomento_manual_val"] = argomento
-            elif not argomento and st.session_state.get("_pb_argomento_source") == "manual":
+                st.session_state["_pb_argomento_manual_val"] = _richiesta
+            elif not _richiesta and st.session_state.get("_pb_argomento_source") == "manual":
                 st.session_state["_pb_argomento_source"] = None
+            # prima riga = argomento (titolo e prompt); righe successive = indicazioni
+            argomento, _note_dal_riquadro = separa_argomento_e_note(_richiesta)
 
             _prefs = st.session_state._docente_prefs.get(materia_scelta, {})
             if not _prefs and st.session_state.utente and materia_scelta in MATERIE:
@@ -2099,12 +2096,11 @@ def _render_percorso_b_form():
             st.markdown('<div class="divider-minimal"></div>', unsafe_allow_html=True)
             # ── Personalizzazione Avanzata — st.expander standard ────────────────
             # Defaults da session state (validi anche quando expander è chiuso)
-            note_extra   = st.session_state.get("_pers_note", "")
             mostra_punteggi = st.session_state.get("_pers_punteggi", _udef.get("mostra_punteggi", True))
             con_griglia  = mostra_punteggi
             punti_totali = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
 
-            with st.expander("✏️ Aggiungi istruzioni o preferenze (opzionale)", expanded=False):
+            with st.expander("⚙️ Altre opzioni (punteggi e struttura)", expanded=False):
 
                 if _prefs.get("stile_desc"):
                     st.markdown(
@@ -2115,19 +2111,6 @@ def _render_percorso_b_form():
                         f'</div>',
                         unsafe_allow_html=True,
                     )
-
-                # ── Note aggiuntive — DENTRO l'expander ──────────────────────────
-                st.markdown('<div class="opt-label">Note aggiuntive <span style="font-weight:400;opacity:.55;">— opzionale</span></div>', unsafe_allow_html=True)
-                note_extra = st.text_area(
-                    "Note AI",
-                    placeholder=NOTE_PLACEHOLDER if isinstance(NOTE_PLACEHOLDER, str) else NOTE_PLACEHOLDER.get(materia_scelta, ""),
-                    value=note_extra,
-                    height=80,
-                    label_visibility="collapsed",
-                    key="note_area_b",
-                )
-                st.session_state["_pers_note"] = note_extra
-                st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
 
                 _tog = st.toggle(
                     "Aggiungi punteggi e griglia di valutazione",
@@ -2446,7 +2429,7 @@ def _render_percorso_b_form():
             _istr_per_file_testi.append(f"[File: {_fentry['file_name']}] {_istr}")
     _istruzioni_combinate = "\n".join(_istr_per_file_testi)
 
-    note_extra_raw = st.session_state.get("note_area_b", "")
+    note_extra_raw = _note_dal_riquadro
     if note_extra_raw and _istruzioni_combinate:
         note_extra_finale = note_extra_raw + "\n\n" + _istruzioni_combinate
 

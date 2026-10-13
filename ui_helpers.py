@@ -26,6 +26,36 @@ STAGE_FINAL   = "FINAL"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+#  RICHIESTA UNICA — argomento + indicazioni nello stesso riquadro
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def separa_argomento_e_note(testo: str, max_argomento: int = 120) -> tuple:
+    """
+    Dal riquadro "Cosa vuoi nella verifica?" ricava (argomento, note).
+
+    La prima riga è l'argomento (serve per il titolo e per il prompt); le righe
+    successive sono le indicazioni (cosa includere o evitare) e vanno nelle note.
+    Se la prima riga è molto lunga viene tagliata a una pausa naturale e il resto
+    passa alle note. Un eventuale "Argomento:" iniziale viene tolto.
+    """
+    righe = [r.strip() for r in (testo or "").splitlines() if r.strip()]
+    if not righe:
+        return "", ""
+    prima = re.sub(r"^(?:argomento|tema)\s*[:\-–]\s*", "", righe[0], flags=re.IGNORECASE)
+    resto_prima = ""
+    if len(prima) > max_argomento:
+        taglio = max(prima.rfind(c, 0, max_argomento) for c in ".;:")
+        if taglio < 15:
+            taglio = prima.rfind(" ", 0, max_argomento)
+        if taglio <= 0:
+            taglio = max_argomento
+        resto_prima = prima[taglio:].lstrip(".;:, ").strip()
+        prima = prima[:taglio].rstrip(" .;:,-")
+    note = "\n".join(([resto_prima] if resto_prima else []) + righe[1:])
+    return prima.strip(), note
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 #  ERRORI — messaggi in italiano comprensibile, dettagli tecnici solo nei log
 # ═══════════════════════════════════════════════════════════════════════════════
 

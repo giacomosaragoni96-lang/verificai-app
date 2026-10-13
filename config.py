@@ -287,6 +287,51 @@ MATERIE_ICONS = {
     "Religione": "✝️", "Altra materia": "📚",
 }
 
+# Esempio completo mostrato in trasparenza nel riquadro "Cosa vuoi nella verifica?":
+# prima riga = argomento, righe successive = cosa includere o evitare.
+ESEMPI_RICHIESTA = {
+    "Matematica": (
+        "Es.\n"
+        "Equazioni di secondo grado e parabola\n"
+        "- 4 esercizi, difficoltà crescente: il primo di calcolo diretto\n"
+        "- includi un grafico da leggere (senza scrivere l'equazione sul grafico)\n"
+        "- un problema di realtà e un vero/falso\n"
+        "- evita le dimostrazioni e i parametri letterali\n"
+        "- usa numeri interi"
+    ),
+    "Fisica": (
+        "Es.\n"
+        "Moto rettilineo uniformemente accelerato\n"
+        "- 4 esercizi: una formula inversa e un grafico velocità-tempo da interpretare\n"
+        "- un problema con dati reali (auto, ascensore)\n"
+        "- evita il calcolo vettoriale\n"
+        "- esprimi tutto in unità SI e chiedi di indicarle"
+    ),
+    "Italiano": (
+        "Es.\n"
+        "Promessi Sposi: capitoli 1-8\n"
+        "- 5 domande: comprensione, analisi dei personaggi, un'inferenza\n"
+        "- una domanda sul lessico e una sul narratore\n"
+        "- includi un breve brano da commentare\n"
+        "- evita domande solo mnemoniche"
+    ),
+}
+ESEMPIO_RICHIESTA_DEFAULT = (
+    "Es.\n"
+    "Il Rinascimento in Italia\n"
+    "- 5 esercizi, difficoltà crescente: parti da domande dirette\n"
+    "- includi 2 domande aperte e un vero/falso\n"
+    "- usa una breve fonte o un brano da commentare\n"
+    "- evita date troppo precise e curiosità secondarie\n"
+    "- linguaggio chiaro, adatto alla classe"
+)
+
+
+def esempio_richiesta(materia: str) -> str:
+    """Esempio in trasparenza per il riquadro della richiesta, scelto in base alla materia."""
+    return ESEMPI_RICHIESTA.get(materia, ESEMPIO_RICHIESTA_DEFAULT)
+
+
 NOTE_PLACEHOLDER = (
     "Es: includi una domanda sulla derivata di sen(x), "
     "aggiungi un grafico con pgfplots, "
