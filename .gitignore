@@ -39,3 +39,6 @@ Thumbs.db
 # Output di prova_generazione.py
 prove_output/
 materiale/
+
+# Impostazioni locali di Claude Code
+.claude/settings.local.json
