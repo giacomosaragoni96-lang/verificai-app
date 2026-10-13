@@ -3777,21 +3777,21 @@ font-family: 'DM Sans', sans-serif;
   .stApp,
   .main,
   section.main,
-  [data-testid="stAppViewContainer"] {{
+  [data-testid="stAppViewContainer"] {
     background-color: ''' + T['bg'] + ''' !important;
-  }}
+  }
 
   /* ── Streamlit header e toolbar ── */
-  header[data-testid="stHeader"] {{
+  header[data-testid="stHeader"] {
     background: ''' + T['bg'] + ''' !important;
     border-bottom: 1px solid ''' + T['border2'] + ''' !important;
-  }}
+  }
 
   /* ── Form widgets: input, textarea, number ── */
   .stApp [data-testid="stTextInput"] input,
   .stApp [data-testid="stTextArea"] textarea,
   .stApp [data-testid="stNumberInput"] input,
-  .stApp [data-testid="stDateInput"] input {{
+  .stApp [data-testid="stDateInput"] input {
     background-color: ''' + T['card'] + ''' !important;
     background: ''' + T['card'] + ''' !important;
     color: ''' + T['text'] + ''' !important;
@@ -3801,149 +3801,149 @@ font-family: 'DM Sans', sans-serif;
     border-radius: 12px !important;
     box-shadow: 0 1px 3px rgba(0,0,0,.06) !important;
     color-scheme: light !important;
-  }}
+  }
   /* ── Popover/dropdown search header su tema chiaro ── */
   [data-baseweb="popover"] [data-baseweb="input"],
   [data-baseweb="popover"] [data-baseweb="input"] > div,
   [data-baseweb="popover"] [data-baseweb="base-input"],
   [data-baseweb="popover"] input,
-  [data-baseweb="popover"] [data-baseweb="block"] {{
+  [data-baseweb="popover"] [data-baseweb="block"] {
     background: ''' + T['card'] + ''' !important;
     background-color: ''' + T['card'] + ''' !important;
     color: ''' + T['text'] + ''' !important;
     -webkit-text-fill-color: ''' + T['text'] + ''' !important;
     caret-color: ''' + T['text'] + ''' !important;
     color-scheme: light !important;
-  }}
+  }
   .stApp [data-testid="stTextInput"] input:focus,
   .stApp [data-testid="stTextArea"] textarea:focus,
-  .stApp [data-testid="stNumberInput"] input:focus {{
+  .stApp [data-testid="stNumberInput"] input:focus {
     border-color: ''' + T['accent'] + ''' !important;
     box-shadow: 0 0 0 3px ''' + T['accent'] + '''22 !important;
-  }}
+  }
 
   /* ── Selectbox & MultiSelect ── */
   .stApp [data-testid="stSelectbox"] > div > div,
   .stApp [data-testid="stMultiSelect"] > div > div,
   .stApp .stSelectbox [data-baseweb="select"] > div,
   .stApp .stTextArea [data-baseweb="textarea"],
-  .stApp .stTextInput [data-baseweb="input"] {{
+  .stApp .stTextInput [data-baseweb="input"] {
     background-color: ''' + T['card'] + ''' !important;
     background: ''' + T['card'] + ''' !important;
     border-color: ''' + T['border2'] + ''' !important;
     border-radius: 12px !important;
-  }}
+  }
   .stApp [data-testid="stSelectbox"] span,
-  .stApp [data-testid="stSelectbox"] div[class] {{
+  .stApp [data-testid="stSelectbox"] div[class] {
     color: ''' + T['text'] + ''' !important;
     -webkit-text-fill-color: ''' + T['text'] + ''' !important;
-  }}
+  }
   .stApp [data-testid="stSelectbox"] svg,
-  .stApp [data-testid="stMultiSelect"] svg {{
+  .stApp [data-testid="stMultiSelect"] svg {
     fill: ''' + T['text2'] + ''' !important;
     stroke: ''' + T['text2'] + ''' !important;
-  }}
+  }
 
   /* ── Labels e testi widget ── */
   .stApp [data-testid="stWidgetLabel"] label,
   .stApp [data-testid="stWidgetLabel"] p,
-  .stApp label, .stApp p {{
+  .stApp label, .stApp p {
     color: ''' + T['text'] + ''' !important;
     -webkit-text-fill-color: ''' + T['text'] + ''' !important;
-  }}
-  .stApp h1, .stApp h2, .stApp h3, .stApp h4 {{
+  }
+  .stApp h1, .stApp h2, .stApp h3, .stApp h4 {
     color: ''' + T['text'] + ''' !important;
-  }}
+  }
 
   /* ── Markdown container ── */
   .stApp [data-testid="stMarkdownContainer"] p,
   .stApp [data-testid="stMarkdownContainer"] span,
-  .stApp [data-testid="stMarkdownContainer"] li {{
+  .stApp [data-testid="stMarkdownContainer"] li {
     color: ''' + T['text'] + ''' !important;
-  }}
+  }
 
   /* ── Metric ── */
   .stApp [data-testid="stMetricValue"],
   .stApp [data-testid="stMetricLabel"],
-  .stApp [data-testid="stMetricDelta"] {{
+  .stApp [data-testid="stMetricDelta"] {
     color: ''' + T['text'] + ''' !important;
-  }}
+  }
 
   /* ── Alert boxes ── */
-  .stApp [data-testid="stInfo"] {{
+  .stApp [data-testid="stInfo"] {
     background-color: ''' + T['accent'] + '''12 !important;
     border-color: ''' + T['accent'] + '''44 !important;
     color: ''' + T['text'] + ''' !important;
-  }}
-  .stApp [data-testid="stSuccess"] {{
+  }
+  .stApp [data-testid="stSuccess"] {
     background-color: ''' + T['success'] + '''12 !important;
     border-color: ''' + T['success'] + '''44 !important;
     color: ''' + T['text'] + ''' !important;
-  }}
-  .stApp [data-testid="stWarning"] {{
+  }
+  .stApp [data-testid="stWarning"] {
     background-color: ''' + T['warn'] + '''12 !important;
     border-color: ''' + T['warn'] + '''44 !important;
     color: ''' + T['text'] + ''' !important;
-  }}
-  .stApp [data-testid="stError"] {{
+  }
+  .stApp [data-testid="stError"] {
     background-color: ''' + T['error'] + '''12 !important;
     border-color: ''' + T['error'] + '''44 !important;
     color: ''' + T['text'] + ''' !important;
-  }}
+  }
 
   /* ── Number input step buttons ── */
-  .stApp [data-testid="stNumberInput"] button {{
+  .stApp [data-testid="stNumberInput"] button {
     background: ''' + T['card'] + ''' !important;
     border-color: ''' + T['border2'] + ''' !important;
     color: ''' + T['text'] + ''' !important;
-  }}
+  }
 
   /* ── Slider ── */
-  .stApp [data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {{
+  .stApp [data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {
     background: ''' + T['accent'] + ''' !important;
     border-color: ''' + T['accent'] + ''' !important;
-  }}
+  }
 
   /* ── Checkbox & Toggle ── */
-  .stApp .stCheckbox label, .stApp .stToggle label {{
+  .stApp .stCheckbox label, .stApp .stToggle label {
     color: ''' + T['text'] + ''' !important;
-  }}
+  }
 
   /* ── File uploader ── */
-  .stApp [data-testid="stFileUploader"] {{
+  .stApp [data-testid="stFileUploader"] {
     background: ''' + T['card'] + ''' !important;
     border-color: ''' + T['border2'] + ''' !important;
-  }}
+  }
   .stApp [data-testid="stFileUploader"] label,
   .stApp [data-testid="stFileUploader"] p,
   .stApp [data-testid="stFileUploader"] span,
-  .stApp [data-testid="stFileUploader"] small {{
+  .stApp [data-testid="stFileUploader"] small {
     color: ''' + T['text2'] + ''' !important;
-  }}
+  }
 
   /* ── Expander (body content) on light ── */
-  .stApp details[data-testid="stExpander"] > div {{
+  .stApp details[data-testid="stExpander"] > div {
     background: ''' + T['card'] + ''' !important;
-  }}
+  }
 
   /* ── Toast ── */
-  .stApp [data-testid="stToast"] {{
+  .stApp [data-testid="stToast"] {
     background: ''' + T['card'] + ''' !important;
     color: ''' + T['text'] + ''' !important;
     border-color: ''' + T['border2'] + ''' !important;
     box-shadow: 0 8px 32px rgba(0,0,0,.10) !important;
-  }}
+  }
 
   /* ── Spinner ── */
-  .stApp [data-testid="stSpinner"] {{
+  .stApp [data-testid="stSpinner"] {
     color: ''' + T['accent'] + ''' !important;
-  }}
+  }
 
   /* ── Dataframe / Table ── */
-  .stApp [data-testid="stDataFrame"] {{
+  .stApp [data-testid="stDataFrame"] {
     background: ''' + T['card'] + ''' !important;
     border-color: ''' + T['border2'] + ''' !important;
-  }}
+  }
   ''' if _is_light else '/* Dark mode: no additional overrides needed */'}
 
 
@@ -4335,6 +4335,75 @@ font-family: 'DM Sans', sans-serif;
   }}
   .preview-card:hover img {{
     transform: scale(1.05) !important;
+  }}
+
+  /* ═══ FIX LEGGIBILITÀ (ultime regole: vincono sulle regole generiche) ═══ */
+
+  /* Selectbox nell'area principale: sfondo e testo del tema, a qualsiasi
+     livello del DOM di baseweb (in alcune versioni di Streamlit restavano neri). */
+  html body .stApp [data-testid="stMain"] [data-testid="stSelectbox"] [data-baseweb="select"],
+  html body .stApp [data-testid="stMain"] [data-testid="stSelectbox"] [data-baseweb="select"] * {{
+    background: {_surf_raised} !important;
+    background-color: {_surf_raised} !important;
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']} !important;
+    color-scheme: {_color_scheme} !important;
+  }}
+  html body .stApp [data-testid="stMain"] [data-testid="stSelectbox"] [data-baseweb="select"] > div:first-child {{
+    border: 1.5px solid {T['border2']} !important;
+    border-radius: {_radius_md} !important;
+  }}
+  html body .stApp [data-testid="stMain"] [data-testid="stSelectbox"] [data-baseweb="select"] svg,
+  html body .stApp [data-testid="stMain"] [data-testid="stSelectbox"] [data-baseweb="select"] svg * {{
+    fill: {T['text2']} !important;
+    stroke: {T['text2']} !important;
+    background: transparent !important;
+  }}
+
+  /* Expander nella sidebar (sfondo sempre scuro): testo chiaro e leggibile */
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] {{
+    background: rgba(255,255,255,.05) !important;
+    background-color: rgba(255,255,255,.05) !important;
+    border: 1px solid {_SB_BORDER} !important;
+    border-radius: 10px !important;
+    margin-bottom: .6rem !important;
+  }}
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] > summary,
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] > summary *,
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] summary[role="button"] * {{
+    background: transparent !important;
+    background-color: transparent !important;
+    color: {_SB_TEXT} !important;
+    -webkit-text-fill-color: {_SB_TEXT} !important;
+    font-size: .88rem !important;
+    font-weight: 600 !important;
+  }}
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] > summary svg,
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] > summary svg * {{
+    fill: {_SB_TEXT} !important;
+    stroke: {_SB_TEXT} !important;
+  }}
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] > div,
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] > div > div {{
+    background: transparent !important;
+    background-color: transparent !important;
+  }}
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] label p,
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] > div p {{
+    color: {_SB_MUTED} !important;
+    -webkit-text-fill-color: {_SB_MUTED} !important;
+  }}
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] [data-baseweb="select"],
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] [data-baseweb="select"] * {{
+    background: {_SB_INPUT_BG} !important;
+    background-color: {_SB_INPUT_BG} !important;
+    color: {_SB_INPUT_TEXT} !important;
+    -webkit-text-fill-color: {_SB_INPUT_TEXT} !important;
+  }}
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] [data-baseweb="select"] svg,
+  html body .stApp [data-testid="stSidebar"] details[data-testid="stExpander"] [data-baseweb="select"] svg * {{
+    fill: {_SB_INPUT_TEXT} !important;
+    stroke: {_SB_INPUT_TEXT} !important;
   }}
 
 </style>
