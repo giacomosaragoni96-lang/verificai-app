@@ -294,7 +294,9 @@ def _assembla_e_compila(
         logger.error(f"Compilazione PDF fallita: {error_msg}")
         
         # Analisi dell'errore per fornire diagnostica specifica
-        if "tikz" in str(error_msg).lower():
+        # (error_msg contiene le righe "!" del log; un errore di pgfplots dice "PGF", non "tikz")
+        msg_errore = str(error_msg).lower()
+        if any(k in msg_errore for k in ("tikz", "pgf", "axis")):
             logger.warning("Errore TikZ rilevato, provo a rimuovere elementi grafici complessi")
             latex_simplified = clean_tikz_spoilers(latex_final, aggressive=True)
             pdf, _ = compila_pdf(latex_simplified)
@@ -302,7 +304,7 @@ def _assembla_e_compila(
                 logger.info("PDF generato con TikZ semplificato")
                 return latex_simplified, pdf
         
-        if "table" in str(error_msg).lower() or "tabular" in str(error_msg).lower():
+        if any(k in msg_errore for k in ("table", "tabular", "array")):
             logger.warning("Errore tabella rilevato, provo a semplificare le tabelle")
             latex_no_tables = re.sub(r'\\begin\{tabular\}.*?\\end\{tabular\}', '[Tabella]', latex_final, flags=re.DOTALL)
             pdf, _ = compila_pdf(latex_no_tables)
@@ -318,6 +320,19 @@ def _assembla_e_compila(
                 logger.info("PDF generato senza griglia")
                 return latex, pdf
         
+        # Grafici TikZ sostituiti da un segnaposto, stesso preambolo
+        if "\\begin{tikzpicture}" in latex_final:
+            logger.warning("Tento sostituendo i grafici TikZ con un segnaposto")
+            latex_no_grafici = re.sub(
+                r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
+                lambda _m: r'\par\noindent\textit{[Grafico non disponibile]}\par',
+                latex_final, flags=re.DOTALL,
+            )
+            pdf, _ = compila_pdf(latex_no_grafici)
+            if pdf:
+                logger.info("PDF generato con grafici sostituiti da segnaposto")
+                return latex_no_grafici, pdf
+
         # Ultimo fallback: versione minimale
         logger.warning("Tento versione minimale del LaTeX")
         latex_minimal = _crea_versione_minimale(latex_final, error_msg)
