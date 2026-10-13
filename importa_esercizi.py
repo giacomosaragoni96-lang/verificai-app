@@ -34,7 +34,7 @@ for _flusso in (sys.stdout, sys.stderr):          # la console di Windows non st
 import ai_client                                  # noqa: E402
 import banca                                      # noqa: E402
 import banca_import                               # noqa: E402
-from config import MODEL_FLASH_ID                 # noqa: E402
+from config import CATEGORIE_SCUOLA, MODEL_FLASH_ID  # noqa: E402
 
 
 def _h(x) -> str:
@@ -132,7 +132,8 @@ def main():
     ap = argparse.ArgumentParser(description="Estrae e cataloga gli esercizi da PDF e LaTeX.")
     ap.add_argument("percorsi", nargs="+", help="file .tex/.pdf oppure cartelle (consiglio: materiale/)")
     ap.add_argument("--materia", default="", help="materia (consigliato con --salva)")
-    ap.add_argument("--scuola", default="", help="tipo di scuola a cui è destinato il materiale (con --salva)")
+    ap.add_argument("--scuola", default="", choices=[""] + CATEGORIE_SCUOLA,
+                    help="scuola a cui è destinato il materiale, con --salva (" + ", ".join(CATEGORIE_SCUOLA) + ")")
     ap.add_argument("--pagine", type=int, default=4, help="pagine per chiamata all'AI per i PDF (default 4)")
     ap.add_argument("--livelli", choices=["auto", "difficolta", "argomenti"], default="auto",
                     help="nelle schede, le sezioni «Livello N» sono difficoltà o argomenti? (auto: lo capisce)")

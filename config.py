@@ -130,6 +130,25 @@ DISTRIBUZIONE_DIFFICOLTA = {
 }
 MIN_ESERCIZI_PER_3_STELLE = 4
 
+# Categorie di scuola della banca esercizi (poche, per non complicare il caricamento).
+CATEGORIE_SCUOLA = ["Elementari", "Medie", "Professionale", "Tecnico", "Liceo"]
+
+
+def categoria_scuola(scuola: str):
+    """Dal tipo di scuola scelto nell'app alla categoria della banca (None se «Generico»)."""
+    s = (scuola or "").lower()
+    if "primaria" in s or "elementari" in s:
+        return "Elementari"
+    if "i grado" in s or "medie" in s:
+        return "Medie"
+    if "professionale" in s:
+        return "Professionale"
+    if "tecnico" in s:
+        return "Tecnico"
+    if "liceo" in s:
+        return "Liceo"
+    return None
+
 
 def distribuzione_difficolta(scuola: str, n: int) -> dict:
     """Quanti esercizi per livello in una verifica di n esercizi: {1: x, 2: y, 3: z}."""

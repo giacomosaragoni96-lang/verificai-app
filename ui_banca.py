@@ -9,7 +9,7 @@ import streamlit as st
 import ai_client
 import banca
 import banca_import
-from config import MATERIE, MODEL_FLASH_ID, SCUOLE
+from config import CATEGORIE_SCUOLA, MATERIE, MODEL_FLASH_ID
 
 _MSG = "_bk_msg"
 
@@ -41,7 +41,8 @@ def _tab_carica(sb):
     st.caption("Carica verifiche, schede, appunti o libri. Gli esercizi vanno in coda: li controlli e li approvi nella scheda «Da approvare».")
     c1, c2 = st.columns(2)
     materia = c1.selectbox("Materia", MATERIE, key="bk_materia")
-    scuola = c2.selectbox("Scuola a cui è destinato", SCUOLE, key="bk_scuola",
+    scuola = c2.selectbox("Scuola a cui è destinato", CATEGORIE_SCUOLA, index=CATEGORIE_SCUOLA.index("Professionale"),
+                          key="bk_scuola",
                           help="Serve per scegliere gli esercizi giusti quando un docente genera una verifica.")
     with st.expander("Opzioni"):
         livelli = st.radio(

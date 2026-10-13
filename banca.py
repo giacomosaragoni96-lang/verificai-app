@@ -165,7 +165,8 @@ def elimina_modello(sb, modello_id: str):
 
 def cerca_esercizi(sb, materia: str, difficolta: int, argomento: str = "", scuola: str | None = None,
                    limite: int = 12, escludi_ids: tuple = ()) -> list:
-    """Esercizi approvati di una materia e di una difficoltà, filtrati per argomento (se dato)."""
+    """Esercizi approvati di una materia e di una difficoltà, filtrati per argomento (se dato).
+    `scuola` è una categoria (config.categoria_scuola): quelli della stessa categoria vengono prima."""
     q = (sb.table(ESERCIZI).select("*").eq("approvato", True).eq("materia", materia)
          .eq("difficolta", difficolta).eq("ruolo", "esercizio"))
     if argomento:
