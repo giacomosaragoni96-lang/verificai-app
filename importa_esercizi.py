@@ -36,7 +36,7 @@ for _flusso in (sys.stdout, sys.stderr):          # la console di Windows non st
 import ai_client                                  # noqa: E402
 from config import MODEL_FLASH_ID, livello_normalizzato  # noqa: E402
 from estrai_tex import corpo_documento, leggi_tex, togli_commenti  # noqa: E402
-from prompts import prompt_etichetta_esercizi, prompt_importa_esercizi  # noqa: E402
+from prompts import prompt_etichetta_esercizi, prompt_importa_esercizi, prompt_tipo_livelli  # noqa: E402
 
 
 # ── chiamate all'AI ───────────────────────────────────────────────────────────
@@ -156,9 +156,20 @@ def esercizi_da_scheda(d: dict) -> list:
 
 def etichetta_con_ai(modello, materia: str, titolo: str, esercizi: list):
     """Argomento, tecniche, difficoltà e tipo per esercizi già estratti dal codice (a gruppi di 40)."""
+    # posizione di ogni esercizio nella sua sezione (indizio sulla difficoltà)
+    conteggi = {}
+    for e in esercizi:
+        conteggi.setdefault(e.get("sezione") or e.get("titolo_sezione") or "", []).append(e)
+    for gruppo_sez in conteggi.values():
+        for k, e in enumerate(gruppo_sez, 1):
+            e["_pos"], e["_su"] = k, len(gruppo_sez)
+
     for inizio in range(0, len(esercizi), 40):
         gruppo = esercizi[inizio:inizio + 40]
-        elenco = [{"id": i, "testo": (e["testo_latex"] + (" | opzioni: " + " ; ".join(e["opzioni"]) if e.get("opzioni") else ""))[:600]}
+        elenco = [{"id": i,
+                   "testo": (e["testo_latex"] + (" | opzioni: " + " ; ".join(e["opzioni"]) if e.get("opzioni") else ""))[:600],
+                   "sezione": e.get("sezione") or e.get("titolo_sezione") or "",
+                   "posizione": e["_pos"], "su": e["_su"]}
                   for i, e in enumerate(gruppo)]
         r = chiedi_json(modello, [prompt_etichetta_esercizi(materia, titolo, json.dumps(elenco, ensure_ascii=False))])
         for et in (r or {}).get("etichette", []):
@@ -171,6 +182,29 @@ def etichetta_con_ai(modello, materia: str, titolo: str, esercizi: list):
                     e[k] = et[k]
             if not e.get("tipo") and et.get("tipo"):
                 e["tipo"] = et["tipo"]
+    for e in esercizi:
+        e.pop("_pos", None)
+        e.pop("_su", None)
+
+
+_PAROLE_DIFFICOLTA = re.compile(r"sfida|facil|difficil|\bbase\b|avanzat|potenziament|approfondiment", re.IGNORECASE)
+
+
+def interpreta_livelli(modello, esercizi: list, modo: str):
+    """Le sezioni «Livello N» sono difficoltà o argomenti diversi? Restituisce (modo, motivo)."""
+    if modo in ("difficolta", "argomenti"):
+        return modo, "scelto con --livelli"
+    titoli = []
+    for e in esercizi:
+        t = e.get("titolo_sezione", "")
+        if t and t not in [x["titolo"] for x in titoli]:
+            titoli.append({"titolo": t, "esempi": [x["testo_latex"] for x in esercizi if x.get("titolo_sezione") == t][:2]})
+    if modello is not None:
+        r = chiedi_json(modello, [prompt_tipo_livelli(json.dumps(titoli, ensure_ascii=False))])
+        if r and r.get("livelli") in ("difficolta", "argomenti"):
+            return r["livelli"], r.get("motivo", "deciso dall'AI")
+    hit = sum(1 for x in titoli if _PAROLE_DIFFICOLTA.search(x["titolo"]))
+    return ("difficolta" if hit else "argomenti"), "dai titoli delle sezioni (senza AI)"
 
 
 # ── normalizzazione e pagina di controllo ─────────────────────────────────────
@@ -195,14 +229,14 @@ def _h(x) -> str:
     return html.escape(str(x if x is not None else ""))
 
 
-def pagina_html(titolo: str, esercizi: list, modello: dict | None) -> str:
-    struttura = ""
+def pagina_html(titolo: str, esercizi: list, modello: dict | None, nota: str = "") -> str:
+    struttura = (f"<p style='background:#fffaeb;border:1px solid #fec84b;padding:.6rem .8rem'>{_h(nota)}</p>" if nota else "")
     if modello:
         righe = "".join(
             f"<tr><td>{_h(s['nome'])}</td><td>{_h(s['tipo'])}</td><td>{s['n_quesiti']}</td>"
             f"<td>{_h(' · '.join(str(p) if p is not None else '—' for p in s['punti']))}</td>"
             f"<td>{_h(', '.join(s['facoltativi']) or '—')}</td></tr>" for s in modello["sezioni"])
-        struttura = (
+        struttura += (
             f"<h2>Struttura della verifica</h2><p>{_h(modello['titolo'])} — <b>{_h(modello['argomento'])}</b><br>"
             f"Punti base <b>{modello['punti_base']}</b> + facoltativi <b>{modello['punti_extra']}</b> = "
             f"<b>{modello['totale']}</b>"
@@ -254,7 +288,7 @@ def elabora_file(percorso: str, a, modello):
     ext = os.path.splitext(percorso)[1].lower()
     print(f"\n▶ {os.path.basename(percorso)}")
     modello_verifica, tipo = None, ext.strip(".")
-    esercizi, titolo = [], nome
+    esercizi, titolo, nota_livelli = [], nome, ""
 
     if ext == ".tex":
         tex = open(percorso, encoding="utf-8", errors="replace").read()
@@ -271,6 +305,18 @@ def elabora_file(percorso: str, a, modello):
                 return None
             esercizi = esercizi_da_appunti(modello, a.materia, tex)
         print(f"   tipo: {tipo} | esercizi letti dal codice: {len(esercizi)}")
+        if tipo == "scheda":
+            interpretazione, motivo = interpreta_livelli(None if a.senza_ai else modello, esercizi, a.livelli)
+            nota_livelli = (f"Le sezioni «Livello N» sono state interpretate come "
+                            f"{'LIVELLI DI DIFFICOLTÀ' if interpretazione == 'difficolta' else 'ARGOMENTI DIVERSI'} "
+                            f"({motivo}). Se è sbagliato rilancia con --livelli "
+                            f"{'argomenti' if interpretazione == 'difficolta' else 'difficolta'}.")
+            print("   " + nota_livelli)
+            if interpretazione == "argomenti":
+                # i titoli sono capitoli: la difficoltà non è il numero di sezione ma si stima per esercizio
+                for e in esercizi:
+                    e["capitolo"] = re.sub(r"^Livello\s+\d+\s*[-–—]*\s*", "", e.get("titolo_sezione", ""))
+                    e["livello_numero"], e["livelli_totali"] = None, None
         if tipo in ("verifica", "scheda") and modello is not None and not a.senza_ai:
             etichetta_con_ai(modello, a.materia, titolo, esercizi)
     elif ext == ".pdf":
@@ -287,9 +333,9 @@ def elabora_file(percorso: str, a, modello):
     base = os.path.join(a.uscita, f"{nome}.{ext.strip('.')}")   # il PDF e il .tex omonimi non si sovrascrivono
     with open(base + ".json", "w", encoding="utf-8") as f:
         json.dump({"fonte": os.path.basename(percorso), "tipo_file": tipo, "titolo": titolo,
-                   "modello_verifica": modello_verifica, "esercizi": esercizi}, f, ensure_ascii=False, indent=1)
+                   "modello_verifica": modello_verifica, "nota_livelli": nota_livelli, "esercizi": esercizi}, f, ensure_ascii=False, indent=1)
     with open(base + ".html", "w", encoding="utf-8") as f:
-        f.write(pagina_html(titolo, esercizi, modello_verifica))
+        f.write(pagina_html(titolo, esercizi, modello_verifica, nota_livelli))
     per = {k: sum(1 for e in esercizi if e["difficolta"] == k) for k in (1, 2, 3)}
     print(f"   → {len(esercizi)} esercizi | ★1: {per[1]}  ★2: {per[2]}  ★3: {per[3]} | {base}.html")
     return {"file": os.path.basename(percorso), "tipo": tipo, "esercizi": len(esercizi)}
@@ -300,6 +346,8 @@ def main():
     ap.add_argument("percorsi", nargs="+", help="file .tex/.pdf oppure cartelle (consiglio: materiale/)")
     ap.add_argument("--materia", default="", help="materia, se vuoi guidare la lettura")
     ap.add_argument("--pagine", type=int, default=4, help="pagine per chiamata all'AI per i PDF (default 4)")
+    ap.add_argument("--livelli", choices=["auto", "difficolta", "argomenti"], default="auto",
+                    help="nelle schede, le sezioni «Livello N» sono difficoltà o argomenti? (auto: lo capisce)")
     ap.add_argument("--senza-ai", action="store_true", help="solo lettura del codice: nessuna etichetta dell'AI")
     ap.add_argument("--uscita", default=os.path.join("materiale", "estratti"), help="cartella di uscita")
     a = ap.parse_args()

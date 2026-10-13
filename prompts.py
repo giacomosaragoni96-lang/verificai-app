@@ -802,12 +802,33 @@ def prompt_etichetta_esercizi(materia: str, titolo: str, elenco_json: str) -> st
         "(già estratti, in LaTeX). Per ciascuno indica:\n"
         "- \"argomento\": l'argomento in poche parole (es. \"scomposizione di polinomi\");\n"
         "- \"tecniche\": elenco breve delle regole o competenze necessarie;\n"
-        "- \"difficolta_stimata\": 1 (base), 2 (medio) o 3 (sfida), rispetto agli altri esercizi dello "
-        "stesso elenco e al livello di una scuola superiore;\n"
+        "- \"difficolta_stimata\": la difficoltà DELL'ESERCIZIO, in assoluto per una scuola superiore "
+        "(non dipende dal capitolo in cui si trova):\n"
+        "    1 = base: applicazione diretta di una regola o di una tecnica, pochi passaggi, numeri semplici;\n"
+        "    2 = medio: più passaggi o tecniche da combinare, calcolo più laborioso;\n"
+        "    3 = sfida: molti passaggi, casi particolari, parametri, dimostrazioni o ragionamento non standard.\n"
+        "  Di solito gli esercizi di una sezione sono in ordine di difficoltà crescente: usa "
+        "\"posizione\" e \"su\" (posizione dell'esercizio nella sua sezione e numero di esercizi della "
+        "sezione) solo come indizio, e giudica il testo.\n"
         "- \"tipo\": \"aperto\", \"vero_falso\", \"scelta_multipla\", \"completamento\" o \"problema\";\n"
         "- \"ha_figura\": true se dipende da un disegno o grafico.\n"
         "NON modificare i testi e NON risolvere gli esercizi.\n\n"
         f"ESERCIZI:\n{elenco_json}\n\n"
         "RISPONDI SOLO con JSON valido: {\"etichette\": [{\"id\": <id>, \"argomento\": \"...\", "
         "\"tecniche\": [\"...\"], \"difficolta_stimata\": 2, \"tipo\": \"aperto\", \"ha_figura\": false}]}"
+    )
+
+
+def prompt_tipo_livelli(titoli_json: str) -> str:
+    """Prompt per capire se le sezioni di una scheda sono livelli di difficoltà o argomenti diversi."""
+    return (
+        "Una scheda di esercizi è divisa in sezioni. Devi capire se le sezioni rappresentano\n"
+        "- \"difficolta\": la STESSA competenza a difficoltà crescente (es. «Livello 1 – Base», "
+        "«Livello 2 – Due regole combinate», «Livello 5 – Sfida»);\n"
+        "- \"argomenti\": argomenti o capitoli DIVERSI (es. «Equazioni di secondo grado», «La parabola», "
+        "«Equazioni fratte»), anche se i titoli iniziano con «Livello N» o «Parte N».\n"
+        "Se c'è un solo argomento ma i titoli sono tecniche diverse in ordine di complessità, è \"difficolta\".\n\n"
+        f"SEZIONI (titolo e primi esercizi):\n{titoli_json}\n\n"
+        "RISPONDI SOLO con JSON valido: {\"livelli\": \"difficolta\" oppure \"argomenti\", "
+        "\"motivo\": \"una frase\"}"
     )
