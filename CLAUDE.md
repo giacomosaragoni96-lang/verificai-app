@@ -96,7 +96,6 @@ Non si toccano lo schema né le tabelle dal codice dell'app.
 - `prompts.py`: nell'esempio tabelle `\\\\begin` produce `\\begin` (LaTeX errato per il modello).
 - `_safe_generate` riprova anche su errori non recuperabili (429 crediti, chiave non valida).
 - `google-generativeai` è deprecata (da migrare a `google-genai`).
-- `main.py`: `_can_confirm` usato ma mai definito (NameError possibile alle righe ~2436 e ~2470).
 
 ## Lingua
 
