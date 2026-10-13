@@ -321,14 +321,14 @@ def _render_sticky_header(T: dict) -> None:
                                 window.parent.document (aggiorna senza duplicare).
     """
     stage   = st.session_state.stage
-    _visual = STAGE_REVIEW if stage == STAGE_PREVIEW else stage
+    # L'editor degli esercizi fa parte del secondo passo ("Scarica"): è opzionale.
+    _visual = STAGE_FINAL if stage in (STAGE_PREVIEW, STAGE_REVIEW) else stage
 
     _step_info = {
-        STAGE_INPUT:  ("01", "Impostazioni", "⚙️"),
-        STAGE_REVIEW: ("02", "Revisiona",    "✏️"),
-        STAGE_FINAL:  ("03", "Scarica",      "📥"),
+        STAGE_INPUT: ("01", "Crea",    "⚙️"),
+        STAGE_FINAL: ("02", "Scarica", "📥"),
     }
-    _num, _label, _icon = _step_info.get(_visual, ("01", "Impostazioni", "⚙️"))
+    _num, _label, _icon = _step_info.get(_visual, ("01", "Crea", "⚙️"))
 
     _bg      = T["card"]
     _border  = T["border"]
@@ -339,14 +339,12 @@ def _render_sticky_header(T: dict) -> None:
 
     _steps_html = ""
     _steps = [
-        ("01", "Impostazioni", STAGE_INPUT),
-        ("02", "Revisiona",    STAGE_REVIEW),
-        ("03", "Scarica",      STAGE_FINAL),
+        ("01", "Crea",    STAGE_INPUT),
+        ("02", "Scarica", STAGE_FINAL),
     ]
     _completed = {
-        STAGE_INPUT:  _visual in (STAGE_REVIEW, STAGE_FINAL),
-        STAGE_REVIEW: _visual == STAGE_FINAL,
-        STAGE_FINAL:  False,
+        STAGE_INPUT: _visual == STAGE_FINAL,
+        STAGE_FINAL: False,
     }
     for _i, (_sn, _sl, _ss) in enumerate(_steps):
         _is_active = (_ss == _visual)
@@ -391,7 +389,7 @@ def _render_sticky_header(T: dict) -> None:
         f'flex-shrink:0;display:flex;align-items:center;gap:5px;">'
         f'<span style="background:{_accent}18;color:{_accent};border:1px solid {_accent}33;'
         f'border-radius:6px;padding:3px 11px;font-weight:700;font-size:.82rem;">'
-        f'Step {_num}/03'
+        f'Step {_num}/02'
         f'</span>'
         f'</div>'
     )
@@ -400,7 +398,7 @@ def _render_sticky_header(T: dict) -> None:
         try:
             _styl.init()
             _styl.sticky_header(
-                f"📝 VerificAI  ·  Step {_num}/03 — {_label}",
+                f"📝 VerificAI  ·  Step {_num}/02 — {_label}",
                 background_color=_bg,
                 border_bottom=f"1.5px solid {_border}",
             )
@@ -465,16 +463,15 @@ def _render_sticky_header(T: dict) -> None:
 
 def _render_step_progress(T: dict) -> None:
     """
-    Stepper centrato elegante: Impostazioni → Revisiona → Scarica.
+    Stepper centrato elegante: Crea → Scarica (l'editor è parte del secondo passo).
     Pill-container con SVG checkmark, linee gradient, tipografia fine.
     """
     stage  = st.session_state.stage
-    visual = STAGE_REVIEW if stage == STAGE_PREVIEW else stage
+    visual = STAGE_FINAL if stage in (STAGE_PREVIEW, STAGE_REVIEW) else stage
 
     steps = [
-        (STAGE_INPUT,  "1", "Impostazioni"),
-        (STAGE_REVIEW, "2", "Revisiona"),
-        (STAGE_FINAL,  "3", "Download"),
+        (STAGE_INPUT, "1", "Crea"),
+        (STAGE_FINAL, "2", "Scarica"),
     ]
     order = {s: i for i, (s, _, _) in enumerate(steps)}
     cur   = order.get(visual, 0)

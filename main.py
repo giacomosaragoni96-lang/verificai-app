@@ -1680,11 +1680,9 @@ def _render_le_tue_verifiche():
                                 
                                 # Attiva modalità facsimile e vai a preview
                                 st.session_state._facsimile_mode = True
-                                st.session_state.stage = STAGE_PREVIEW
+                                st.session_state.stage = STAGE_FINAL
                                 st.session_state._prev_stage = None
                                 st.session_state.input_percorso = None
-                                
-                                st.success("🎲 Facsimile generato! Vai alla preview per creare la tua variante.")
                                 st.rerun()
                                 
                             except Exception as e:
@@ -2592,6 +2590,8 @@ def _lancia_generazione(
         if st.session_state.verifiche["A"]["pdf"]:
             imgs, _ = pdf_to_images_bytes(st.session_state.verifiche["A"]["pdf"])
             st.session_state.preview_images = imgs or []
+            st.session_state.preview_page   = 0
+            st.session_state.last_preview_ts = st.session_state.verifiche["A"].get("pdf_ts") or 0
 
         _prog.markdown(
             '<div style="margin:.6rem 0 1rem 0;">'
@@ -2635,8 +2635,8 @@ def _lancia_generazione(
             punti_totali=punti_totali,
         )
 
-        # ── Transita a STAGE_PREVIEW (anteprima rapida) invece di STAGE_REVIEW
-        st.session_state.stage = STAGE_PREVIEW
+        # ── Vai alla schermata del risultato (anteprima + download + modifica)
+        st.session_state.stage = STAGE_FINAL
         st.rerun()
 
     except Exception as _e:
@@ -2742,146 +2742,6 @@ def _render_stage_input():
 
 
 
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  STAGE_PREVIEW — Anteprima rapida post-generazione (Fase 2.5)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def _render_stage_preview():
-    """
-    Mostra un'anteprima della verifica appena generata.
-    Il docente sceglie se andare direttamente al salvataggio finale
-    oppure entrare nell'editor dei blocchi (STAGE_REVIEW).
-    """
-    gp             = st.session_state.get("gen_params", {})
-    materia_str    = gp.get("materia", "")
-    argomento_str  = gp.get("argomento", "Verifica")
-    scuola_str     = gp.get("difficolta", "")
-    vA             = st.session_state.verifiche.get("A", {})
-    preview_imgs   = st.session_state.get("preview_images", [])
-
-    # ── Header ────────────────────────────────────────────────────────────────
-    _h_acc  = T["accent"]
-    _h_acc2 = T.get("accent2", _h_acc)
-    st.markdown(
-        f'<div style="background:linear-gradient(135deg,{_h_acc} 0%,{_h_acc2} 100%);'
-        f'border-radius:14px;padding:1.2rem 1.8rem;margin-bottom:1.2rem;text-align:center;">'
-        f'<div style="font-family:DM Sans,sans-serif;font-size:1.4rem;font-weight:900;'
-        f'color:#fff;margin-bottom:.3rem;">📄 Anteprima Verifica</div>'
-        f'<div style="font-size:.95rem;color:#ffffffd0;font-family:DM Sans,sans-serif;">'
-        + materia_str + ' · ' + scuola_str + ' · ' + argomento_str +
-        f'</div></div>',
-        unsafe_allow_html=True
-    )
-
-    # ── Preview PDF — 80% larghezza, con navigazione ─────────────────────────
-    if preview_imgs:
-        n_prev = len(preview_imgs)
-        cur_page = st.session_state.get("preview_page", 0)
-        # Clamp in caso di cambio verifica
-        cur_page = max(0, min(cur_page, n_prev - 1))
-
-        # Immagine larga all'80% della colonna (colonne [1,8,1])
-        _img_l, _img_c, _img_r = st.columns([1, 8, 1])
-        with _img_c:
-            st.image(preview_imgs[cur_page], use_container_width=True)
-
-        # Barra navigazione solo se più pagine
-        if n_prev > 1:
-            st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-            _nav_l, _nav_info, _nav_r = st.columns([1, 2, 1])
-            with _nav_l:
-                st.markdown('<div class="page-nav-btn-wrap"></div>', unsafe_allow_html=True)
-                if st.button("◀ Precedente", key="prev_page_btn",
-                             disabled=(cur_page == 0),
-                             use_container_width=True):
-                    st.session_state.preview_page = cur_page - 1
-                    st.rerun()
-            with _nav_info:
-                st.markdown(
-                    f'<div style="text-align:center;font-size:.78rem;font-weight:500;'
-                    f'color:{T["muted"]};font-family:DM Sans,sans-serif;'
-                    f'padding:.45rem 0;">Pagina {cur_page + 1} di {n_prev}</div>',
-                    unsafe_allow_html=True
-                )
-            with _nav_r:
-                st.markdown('<div class="page-nav-btn-wrap"></div>', unsafe_allow_html=True)
-                if st.button("Successiva ▶", key="next_page_btn",
-                             disabled=(cur_page == n_prev - 1),
-                             use_container_width=True):
-                    st.session_state.preview_page = cur_page + 1
-                    st.rerun()
-    elif vA.get("latex"):
-        with st.expander("Anteprima LaTeX (PDF non disponibile)", expanded=True):
-            st.code(vA["latex"][:3000], language="latex")
-    else:
-        st.info("Anteprima non disponibile.")
-
-    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-
-    # ── Due pulsanti di scelta — restyle ──────────────────────────────────────
-    col_ok, col_edit = st.columns(2, gap="medium")
-
-    with col_ok:
-        # Card verde
-        st.markdown(
-            f'<div style="border:2px solid {T["success"]};border-radius:16px;'
-            f'padding:1.1rem 1.3rem;background:{T["card"]};'
-            f'display:flex;flex-direction:column;gap:.5rem;">'
-            f'<div style="font-size:1.6rem;line-height:1;">✅</div>'
-            f'<div style="font-weight:800;font-size:1rem;color:{T["success"]};'
-            f'font-family:DM Sans,sans-serif;">Perfetta così</div>'
-            f'<div style="font-size:.78rem;color:{T["muted"]};line-height:1.45;">'
-            f'Vai direttamente al download — nessuna modifica.</div>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-        if st.button("Scarica PDF", use_container_width=True,
-                     type="primary", key="preview_ok",
-                     help="Vai direttamente al download del PDF — la verifica è pronta."):
-            st.session_state.stage = STAGE_FINAL
-            st.rerun()
-
-    with col_edit:
-        # Card arancio
-        st.markdown(
-            f'<div style="border:2px solid {T["accent"]};border-radius:16px;'
-            f'padding:1.1rem 1.3rem;background:{T["card"]};'
-            f'display:flex;flex-direction:column;gap:.5rem;">'
-            f'<div style="font-size:1.6rem;line-height:1;">✏️</div>'
-            f'<div style="font-weight:800;font-size:1rem;color:{T["accent"]};'
-            f'font-family:DM Sans,sans-serif;">Voglio modificarla</div>'
-            f'<div style="font-size:.78rem;color:{T["muted"]};line-height:1.45;">'
-            f'Apri l\'editor e cambia i singoli esercizi con l\'AI.</div>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-        st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
-        if st.button("Apri editor", use_container_width=True,
-                     key="preview_edit",
-                     help="Apri l'editor interattivo per rifinire testo, punteggi e struttura di ogni esercizio."):
-            st.session_state.stage = STAGE_REVIEW
-            st.rerun()
-
-    st.markdown("<br/>", unsafe_allow_html=True)
-
-    # ── Link "torna alla configurazione" ────────────────────────────────────
-    if st.button("← Ricomincia da capo", key="preview_back",
-                 help="Cancella questa verifica e torna all'inizio per crearne una nuova."):
-        for _k in ("stage", "verifiche", "gen_params", "review_blocks",
-                   "review_preamble", "preview_images", "last_preview_ts", "input_percorso",
-                   "analisi_doc", "file_mode"):
-            if _k in st.session_state:
-                del st.session_state[_k]
-        for _k in list(st.session_state.keys()):
-            if _k.startswith("_undo_block_") or _k.startswith("item_pt_"):
-                del st.session_state[_k]
-        st.session_state.stage = STAGE_INPUT
-        st.rerun()
-
-
 # ═══════════════════════════════════════════════════════════════════════════════
 #  STAGE_REVIEW
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2924,7 +2784,7 @@ def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali
         imgs, _ = pdf_to_images_bytes(pdf)
         st.session_state.preview_images  = imgs or []
         st.session_state.preview_page    = 0
-        st.session_state.last_preview_ts = 0
+        st.session_state.last_preview_ts = va["pdf_ts"]   # anteprima già allineata al PDF
     return pdf, err
 
 
@@ -4272,68 +4132,106 @@ def _render_stage_final():
             f'</div>'
         )
 
-    # ── Header ────────────────────────────────────────────────────────────────
+    # ── Anteprima aggiornata se il PDF è cambiato (modifiche nell'editor) ─────
+    _pdf_ts   = vA.get("pdf_ts")
+    _last_ts  = st.session_state.get("last_preview_ts", 0)
+    _riallinea = (
+        st.session_state.pop("force_preview_refresh", False)
+        or (_pdf_ts and _pdf_ts > _last_ts)
+        or (_pdf_ts and not st.session_state.get("preview_images"))
+    )
+    if _riallinea and vA.get("pdf"):
+        try:
+            _imgs_new, _ = pdf_to_images_bytes(vA["pdf"])
+            st.session_state.preview_images  = _imgs_new or []
+            st.session_state.last_preview_ts = _pdf_ts or time.time()
+        except Exception as _e:
+            logger.error(f"Errore aggiornamento anteprima (final): {_e}")
+
+    # ── Intestazione compatta ─────────────────────────────────────────────────
     st.markdown(
-        f'<div style="'
-        f'background:linear-gradient(160deg,{T["success"]}22 0%,{T["card"]} 55%,{T["accent"]}12 100%);'
-        f'border:1.5px solid {T["success"]}55;border-radius:20px;'
-        f'padding:2rem 1.8rem 1.3rem;margin-bottom:1rem;text-align:center;'
-        f'box-shadow:0 4px 32px {T["success"]}20,0 1px 8px {T["success"]}12;">'
-        f'<div style="font-size:3rem;line-height:1;margin-bottom:.7rem;'
-        f'filter:drop-shadow(0 2px 10px {T["success"]}66);">🎉</div>'
-        f'<div style="font-family:DM Sans,sans-serif;font-size:1.6rem;font-weight:900;'
-        f'color:{T["text"]};letter-spacing:-.025em;margin-bottom:.4rem;line-height:1.15;">'
-        f'La verifica è pronta!</div>'
-        f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;'
-        f'letter-spacing:.01em;">'
+        f'<div style="text-align:center;margin:.2rem 0 1.1rem;">'
+        f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:900;'
+        f'color:{T["text"]};letter-spacing:-.025em;line-height:1.15;">✅ La verifica è pronta</div>'
+        f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin-top:.35rem;">'
         + mat_str + ' &nbsp;·&nbsp; ' + scu_str + ' &nbsp;·&nbsp; ' + arg_str +
-        f'</div>'
-        f'<div style="font-size:.74rem;color:{T["muted"]};margin-top:1rem;padding-top:.7rem;'
-        f'border-top:1px solid {T["border"]}66;font-family:DM Sans,sans-serif;">'
-        f'⚠️ Controlla sempre il contenuto prima di distribuire agli studenti.'
         f'</div></div>',
         unsafe_allow_html=True
     )
 
-    # (timer badges rimossi — non necessari per il docente)
-
     # ═══════════════════════════════════════════════════════════════════════════
-    #  DOWNLOAD PRINCIPALE — pulsante CTA oro, piena larghezza
+    #  RISULTATO — anteprima a sinistra, scarica e modifica a destra
     # ═══════════════════════════════════════════════════════════════════════════
     _fname_a = arg_str + "_FilaA"
-    if vA.get("pdf"):
+    _col_prev, _col_act = st.columns([3, 2], gap="large")
+
+    with _col_prev:
+        _imgs_f = st.session_state.get("preview_images") or []
+        if _imgs_f:
+            _n_pg = len(_imgs_f)
+            _pg_f = max(0, min(st.session_state.get("preview_page", 0), _n_pg - 1))
+            st.image(_imgs_f[_pg_f], use_container_width=True)
+            if _n_pg > 1:
+                _pc, _pm, _pn = st.columns([1, 2, 1])
+                with _pc:
+                    if st.button("◀", key="final_prev_pg", use_container_width=True,
+                                 disabled=(_pg_f == 0)):
+                        st.session_state.preview_page = _pg_f - 1; st.rerun()
+                with _pm:
+                    st.markdown(
+                        f'<div style="text-align:center;font-size:.78rem;font-weight:600;'
+                        f'color:{T["text2"]};font-family:DM Sans,sans-serif;padding:.4rem 0;">'
+                        f'Pagina {_pg_f+1} di {_n_pg}</div>',
+                        unsafe_allow_html=True
+                    )
+                with _pn:
+                    if st.button("▶", key="final_next_pg", use_container_width=True,
+                                 disabled=(_pg_f == _n_pg - 1)):
+                        st.session_state.preview_page = _pg_f + 1; st.rerun()
+        elif vA.get("pdf"):
+            _b64 = base64.b64encode(vA["pdf"]).decode()
+            st.markdown(
+                '<iframe src="data:application/pdf;base64,' + _b64 + '#toolbar=0&navpanes=0" '
+                'style="width:100%;height:620px;border:none;border-radius:8px;"></iframe>',
+                unsafe_allow_html=True
+            )
+        else:
+            st.caption("Anteprima non disponibile.")
+
+    with _col_act:
+        if vA.get("pdf"):
+            st.markdown('<div class="dl-cta-wrap">', unsafe_allow_html=True)
+            st.download_button(
+                label=f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}",
+                data=vA["pdf"],
+                file_name=_fname_a + ".pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                type="primary",
+                key="dl_pdf_hero_A",
+                help="Scarica il PDF della verifica, già formattato e pronto per la stampa.",
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.warning("Il PDF non è ancora pronto. Apri «Modifica gli esercizi» e premi "
+                       "«Conferma e genera PDF finale».")
+        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+        if st.button("✏️ Modifica gli esercizi", key="final_edit", use_container_width=True,
+                     help="Cambia, rendi più facile o più difficile, o elimina i singoli esercizi."):
+            st.session_state.stage = STAGE_REVIEW
+            st.rerun()
         st.markdown(
-            '<div class="dl-cta-wrap">',
-            unsafe_allow_html=True,
+            f'<div style="font-size:.78rem;color:{T["muted"]};margin-top:.8rem;line-height:1.5;'
+            f'font-family:DM Sans,sans-serif;">⚠️ Controlla sempre il contenuto prima di '
+            f'distribuirlo agli studenti.</div>',
+            unsafe_allow_html=True
         )
-        st.download_button(
-            label=f"✅  PDF PRONTO — CLICCA PER SCARICARE  ·  {_stima(vA['pdf'])}",
-            data=vA["pdf"],
-            file_name=_fname_a + ".pdf",
-            mime="application/pdf",
-            use_container_width=True,
-            key="dl_pdf_hero_A",
-            help="Scarica il PDF della verifica Fila A, già formattato e pronto per la stampa.",
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
 
     # ═══════════════════════════════════════════════════════════════════════════
-    #  FEEDBACK QUALITÀ — compatto, thumbs up/down
+    #  ALTRE VERSIONI — Fila B, BES/DSA, soluzioni, griglia, Word
     # ═══════════════════════════════════════════════════════════════════════════
     st.markdown(
-        f'<div style="text-align:center;font-size:.82rem;color:{T["text2"]};'
-        f'font-family:DM Sans,sans-serif;font-weight:600;margin:1.2rem 0 .5rem;">'
-        f'Com\'era questa verifica?</div>',
-        unsafe_allow_html=True,
-    )
-
-    # ── Feedback buttons rimossi su richiesta utente ───────────────────────────
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    #  VARIANTI — 4 card in colonna
-    # ═══════════════════════════════════════════════════════════════════════════
-    st.markdown(
-        f'<div class="variant-section-label">GENERA ULTERIORI VERSIONI DELLA VERIFICA</div>',
+        f'<div class="variant-section-label">ALTRE VERSIONI DELLA VERIFICA</div>',
         unsafe_allow_html=True
     )
     _vc1, _vc2, _vc3, _vc4, _vc5 = st.columns(5, gap="medium")
@@ -4696,72 +4594,10 @@ def _render_stage_final():
                 else:
                     st.error("Errore nella creazione del link. Riprova.")
 
-    # ── Sezioni secondarie collassabili ───────────────────────────────────────
-    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
-
-    # Controlla se il PDF è cambiato e aggiorna le preview se necessario
-    current_pdf_ts = vA.get("pdf_ts")
-    last_preview_ts = st.session_state.get("last_preview_ts", 0)
-    
-    # LOGICA AGGRESSIVA: forza sempre l'aggiornamento se c'è un PDF recente
-    force_update = False
-    
-    # Condizione 0: force refresh esplicito
-    if st.session_state.get("force_preview_refresh", False):
-        force_update = True
-        logger.info("FORCE REFRESH: flag force_preview_refresh rilevato (final page)")
-        # Resetta il flag dopo l'uso
-        st.session_state.force_preview_refresh = False
-    
-    # Condizione 1: timestamp più recente
-    elif current_pdf_ts and current_pdf_ts > last_preview_ts:
-        force_update = True
-        
-    # Condizione 2: se il timestamp del PDF è molto recente (ultimi 5 secondi)
-    elif current_pdf_ts and (time.time() - current_pdf_ts) < 5:
-        force_update = True
-        
-    # Condizione 3: se non ci sono immagini preview ma c'è un PDF
-    elif current_pdf_ts and not st.session_state.get("preview_images"):
-        force_update = True
-    
-    if force_update:
-        vA_pdf = vA.get("pdf")
-        if vA_pdf:
-            try:
-                logger.info(f"FORZATURA AGGIORNAMENTO PREVIEW (FINAL PAGE) - PDF ts: {current_pdf_ts}, Last preview: {last_preview_ts}")
-                new_imgs, _ = pdf_to_images_bytes(vA_pdf)
-                st.session_state.preview_images = new_imgs or []
-                st.session_state.last_preview_ts = current_pdf_ts
-                logger.info(f"Preview images aggiornate FORZATAMENTE (final page) - {len(new_imgs) if new_imgs else 0} pagine")
-            except Exception as e:
-                logger.error(f"Errore aggiornamento preview forzato (final page): {e}")
-        else:
-            logger.warning("PDF ts presente ma nessun PDF disponibile per preview (final page)")
-
-    imgs = st.session_state.preview_images
-    if imgs or vA.get("pdf"):
-        with st.expander("📄 Anteprima PDF", expanded=False):
-            if imgs:
-                cols_prev = st.columns(min(3, len(imgs)))
-                for pi, img_b in enumerate(imgs[:3]):
-                    with cols_prev[pi]:
-                        # Forza refresh delle immagini (st.image non supporta key)
-                        st.image(img_b, use_container_width=True, caption=f"Pagina {pi+1}")
-                if len(imgs) > 3:
-                    st.caption(f"…e altre {len(imgs)-3} pagine nel file PDF scaricato.")
-            elif vA.get("pdf"):
-                b64 = base64.b64encode(vA["pdf"]).decode()
-                st.markdown(
-                    '<iframe src="data:application/pdf;base64,' + b64 + '#toolbar=0&navpanes=0" '
-                    'style="width:100%;height:520px;border:none;border-radius:8px;"></iframe>',
-                    unsafe_allow_html=True
-                )
-
-    # Altri formati (DOCX, .tex) — se disponibili
-    _ha_extra = vA.get("latex") or vB.get("latex") or vR.get("latex") or vS.get("latex")
+    # Word per le altre versioni (la Fila A ha già la sua card "Formato Word")
+    _ha_extra = vB.get("latex") or vR.get("latex") or vRB.get("latex") or vS.get("latex")
     if _ha_extra:
-        with st.expander("📝 Altri formati (Word, LaTeX)", expanded=False):
+        with st.expander("📝 Word delle altre versioni", expanded=False):
             def _show_extra_formats(fid, v, fname_suffix):
                 if not v.get("latex"):
                     return
@@ -4794,14 +4630,8 @@ def _render_stage_final():
                             _mostra_errore("Non sono riuscito a creare il file Word", error_msg,
                                            riprova_flag=_docx_key, riprova_key="riprova_word_"+fid,
                                            consiglio="Riprova: la conversione a volte richiede un secondo tentativo.")
-                st.download_button(
-                    f"⬇ LaTeX sorgente (.tex)",
-                    data=v["latex"].encode("utf-8"), file_name=fname+".tex",
-                    mime="text/plain", use_container_width=True, key="dl_tex_"+fid+"_extra",
-                )
             _ef_c1, _ef_c2 = st.columns(2)
             with _ef_c1:
-                _show_extra_formats("A", vA, "FilaA")
                 if vR.get("latex"): _show_extra_formats("R", vR, "BES_FilaA")
             with _ef_c2:
                 if vB.get("latex"): _show_extra_formats("B", vB, "FilaB")
@@ -4822,20 +4652,14 @@ def _render_stage_final():
 
     # ── Navigazione finale — in fondo alla pagina ─────────────────────────────
     st.markdown("<div style='height:1.4rem'></div>", unsafe_allow_html=True)
-    _nav_c1, _nav_c2 = st.columns([1, 2])
-    with _nav_c1:
-        if _render_back_button("←", key="btn_back_final"):
-            st.session_state.stage = STAGE_REVIEW
-            st.rerun()
+    _nav_c1, _nav_c2, _nav_c3 = st.columns([1, 2, 1])
     with _nav_c2:
         if st.button("🆕 Genera nuova verifica", type="primary",
                      use_container_width=True, key="btn_new_s3_bottom"):
             st.session_state.stage            = STAGE_INPUT
             st.session_state["_prev_stage"]   = None
             st.session_state.input_percorso   = None
-            for _k in list(st.session_state.keys()):
-                if _k.startswith("_undo_block_") or _k.startswith("item_pt_"):
-                    del st.session_state[_k]
+            _pulisci_stato_revisione()
             st.session_state.verifiche         = {
                 "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
                 "S": {"latex": None, "testo": None, "pdf": None},
@@ -5052,8 +4876,9 @@ if _prev_stage != _current_stage:
 
 if not _share_view_active:
     _current = _current_stage
+    if _current == STAGE_PREVIEW:   # sessioni aperte prima dell'unione di anteprima e download
+        st.session_state.stage = _current = STAGE_FINAL
     if   _current == STAGE_INPUT:   _render_stage_input()
-    elif _current == STAGE_PREVIEW: _render_stage_preview()
     elif _current == STAGE_REVIEW:  _render_stage_review()
     elif _current == STAGE_FINAL:   _render_stage_final()
     elif _current == STAGE_MIE_VERIFICHE: _render_le_tue_verifiche()
