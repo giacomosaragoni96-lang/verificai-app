@@ -274,6 +274,9 @@ def _assembla_e_compila(
         corpo_pulito = extract_corpo(latex)
         corpo_con_punti = assicura_punti_visibili(corpo_pulito, punti_totali)
         latex = preambolo + corpo_con_punti
+        # extract_corpo esclude \end{document}: senza griglia (inietta_griglia lo rimetteva) mancherebbe
+        if "\\end{document}" not in latex:
+            latex += "\n\\end{document}"
         latex = rimuovi_punti_subsection(latex)
         # ── CRITICO: prima di riscala_punti, inietta placeholder pts
         # negli esercizi senza \item (domande aperte, esercizi singoli).
@@ -294,7 +297,9 @@ def _assembla_e_compila(
         logger.error(f"Compilazione PDF fallita: {error_msg}")
         
         # Analisi dell'errore per fornire diagnostica specifica
-        if "tikz" in str(error_msg).lower():
+        # (error_msg contiene le righe "!" del log; un errore di pgfplots dice "PGF", non "tikz")
+        msg_errore = str(error_msg).lower()
+        if any(k in msg_errore for k in ("tikz", "pgf", "axis")):
             logger.warning("Errore TikZ rilevato, provo a rimuovere elementi grafici complessi")
             latex_simplified = clean_tikz_spoilers(latex_final, aggressive=True)
             pdf, _ = compila_pdf(latex_simplified)
@@ -302,7 +307,7 @@ def _assembla_e_compila(
                 logger.info("PDF generato con TikZ semplificato")
                 return latex_simplified, pdf
         
-        if "table" in str(error_msg).lower() or "tabular" in str(error_msg).lower():
+        if any(k in msg_errore for k in ("table", "tabular", "array")):
             logger.warning("Errore tabella rilevato, provo a semplificare le tabelle")
             latex_no_tables = re.sub(r'\\begin\{tabular\}.*?\\end\{tabular\}', '[Tabella]', latex_final, flags=re.DOTALL)
             pdf, _ = compila_pdf(latex_no_tables)
@@ -313,11 +318,26 @@ def _assembla_e_compila(
         # Fallback senza griglia
         if con_griglia and mostra_punteggi:
             logger.warning("Tento fallback senza griglia di punteggi")
-            pdf, _ = compila_pdf(latex)
+            # Senza griglia il corpo non ha più \end{document} (lo rimetteva inietta_griglia)
+            latex_no_griglia = latex if "\\end{document}" in latex else latex + "\n\\end{document}"
+            pdf, _ = compila_pdf(latex_no_griglia)
             if pdf:
                 logger.info("PDF generato senza griglia")
-                return latex, pdf
+                return latex_no_griglia, pdf
         
+        # Grafici TikZ sostituiti da un segnaposto, stesso preambolo
+        if "\\begin{tikzpicture}" in latex_final:
+            logger.warning("Tento sostituendo i grafici TikZ con un segnaposto")
+            latex_no_grafici = re.sub(
+                r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
+                lambda _m: r'\par\noindent\textit{[Grafico non disponibile]}\par',
+                latex_final, flags=re.DOTALL,
+            )
+            pdf, _ = compila_pdf(latex_no_grafici)
+            if pdf:
+                logger.info("PDF generato con grafici sostituiti da segnaposto")
+                return latex_no_grafici, pdf
+
         # Ultimo fallback: versione minimale
         logger.warning("Tento versione minimale del LaTeX")
         latex_minimal = _crea_versione_minimale(latex_final, error_msg)
@@ -337,29 +357,37 @@ def _crea_versione_minimale(latex: str, errore: str) -> str:
     Crea una versione minimale del LaTeX quando la compilazione fallisce.
     """
     try:
-        # Estrai il corpo principale
-        corpo_match = re.search(r'\\begin\{document\}(.*?)\\end\{document\}', latex, re.DOTALL)
+        # Estrai preambolo e corpo principale (tollera un \end{document} mancante)
+        corpo_match = re.search(
+            r'^(.*?)\\begin\{document\}(.*?)(?:\\end\{document\}|\Z)', latex, re.DOTALL
+        )
         if corpo_match:
-            corpo = corpo_match.group(1)
+            preambolo_originale = corpo_match.group(1)
+            corpo = corpo_match.group(2)
         else:
+            preambolo_originale = ""
             corpo = latex
-        
+
         # Rimuovi elementi problematici
         corpo_semplificato = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '[Grafico]', corpo, flags=re.DOTALL)
         corpo_semplificato = re.sub(r'\\begin\{tabular\}.*?\\end\{tabular\}', '[Tabella]', corpo_semplificato, flags=re.DOTALL)
         corpo_semplificato = re.sub(r'\\begin\{table\}.*?\\end\{table\}', '', corpo_semplificato, flags=re.DOTALL)
         
-        # Ricostruisci il LaTeX minimale
-        preambolo_minimale = (
-            "\\documentclass[12pt,a4paper]{article}\n"
-            "\\usepackage[utf8]{inputenc}\n"
-            "\\usepackage[italian]{babel}\n"
-            "\\usepackage{amsmath,amsfonts,amssymb}\n"
-            "\\geometry{margin=2cm}\n"
-            "\\pagestyle{empty}\n"
-            "\\begin{document}\n"
-        )
-        
+        # Ricostruisci il LaTeX minimale: stesso preambolo dell'originale (geometry, enumerate,
+        # array, ... già caricati); se manca, un preambolo di ripiego che carica i pacchetti.
+        if "\\documentclass" in preambolo_originale:
+            preambolo_minimale = preambolo_originale + "\\begin{document}\n"
+        else:
+            preambolo_minimale = (
+                "\\documentclass[12pt,a4paper]{article}\n"
+                "\\usepackage[utf8]{inputenc}\n"
+                "\\usepackage[italian]{babel}\n"
+                "\\usepackage{amsmath,amsfonts,amssymb,geometry,array,multicol,enumerate,adjustbox,wasysym}\n"
+                "\\geometry{margin=1.5cm}\n"
+                "\\pagestyle{empty}\n"
+                "\\begin{document}\n"
+            )
+
         return preambolo_minimale + corpo_semplificato + "\n\\end{document}"
         
     except Exception as e:

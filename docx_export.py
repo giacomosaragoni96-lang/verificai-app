@@ -104,7 +104,7 @@ def _tikz_to_png_bytes(tikz_code: str) -> bytes | None:
             
             logger.info("Running pdflatex compilation...")
             result = subprocess.run(
-                ['pdflatex', '-interaction=nonstopmode',
+                ['pdflatex', '-interaction=nonstopmode', '-no-shell-escape',
                  '-output-directory', tmpdir, tex_path],
                 capture_output=True, timeout=30,
             )

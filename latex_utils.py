@@ -1108,7 +1108,7 @@ def migliora_spaziatura_sottopunti(latex: str) -> str:
     latex = re.sub(r'(\\item\s+[^\\]*?)\n(?=\\item)', r'\1\n\n', latex)
     
     # Assicura che ogni \item sia su una riga propria
-    latex = re.sub(r'(\s+)\\item\[', r'\n\\item\[', latex)
+    latex = re.sub(r'(\s+)\\item\[', r'\n\\item[', latex)
     
     # Rimuovi spaziatura eccessiva (più di 2 linee vuote)
     latex = re.sub(r'\n{3,}', '\n\n', latex)
@@ -1783,6 +1783,11 @@ def fix_table_width(latex: str) -> str:
 
 # ── COMPILAZIONE PDF ───────────────────────────────────────────────────────────
 
+def _estrai_errori_log(log: str, n: int = 10) -> list[str]:
+    """Prime n righe del log di pdflatex che iniziano con '!' (gli errori veri)."""
+    return [riga.rstrip() for riga in (log or "").splitlines() if riga.startswith("!")][:n]
+
+
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     """
     Compila codice LaTeX in PDF usando pdflatex.
@@ -1796,9 +1801,10 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     
     logger = logging.getLogger(__name__)
     
-    # Verifica che pdflatex sia disponibile
+    # Verifica che pdflatex sia disponibile e se è MiKTeX (TeX Live non conosce -disable-installer)
     try:
         result = subprocess.run(["pdflatex", "--version"], capture_output=True, text=True, timeout=5)
+        is_miktex = "miktex" in (result.stdout or "").lower()
         if result.returncode != 0:
             logger.error("✗ pdflatex non disponibile")
             return None, "⚠️ LaTeX non è disponibile in questo ambiente."
@@ -1829,8 +1835,13 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
             logger.info("✓ File LaTeX scritto")
 
             logger.info("Avvio compilazione pdflatex...")
+            # Il LaTeX generato dall'AI è input non fidato: niente shell-escape.
+            cmd = ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, "-no-shell-escape"]
+            if is_miktex:
+                cmd.append("-disable-installer")
+            cmd.append(tex_path)
             result = subprocess.run(
-                ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, "-shell-escape", "-disable-installer", tex_path],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=30
@@ -1840,6 +1851,7 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
             
             # Controlla se esiste il file log
             log_path = os.path.join(tmpdir, "v.log")
+            log_content = ""
             if os.path.exists(log_path):
                 with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
                     log_content = f.read()
@@ -1884,7 +1896,16 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                 elif "Emergency stop" in error_output:
                     logger.error("✗ Errore grave: Emergency stop")
                 
-                return None, f"Errore durante la compilazione LaTeX: {result.stderr}"
+                # Messaggio con gli errori veri (righe "!" del log), non con lo stderr
+                errori = _estrai_errori_log(log_content) or _estrai_errori_log(result.stdout)
+                if not errori:
+                    errori = [
+                        riga for riga in error_output.splitlines()
+                        if riga.strip() and "unrecognized option" not in riga
+                    ][-5:]
+                return None, "Errore durante la compilazione LaTeX:\n" + (
+                    "\n".join(errori) if errori else f"pdflatex ha restituito il codice {result.returncode}"
+                )
             else:
                 logger.error("✗ File PDF non generato senza errori evidenti")
                 return None, "File PDF non generato dopo la compilazione"
