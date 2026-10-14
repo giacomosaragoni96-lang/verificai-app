@@ -595,7 +595,7 @@ def mostra_auth(supabase):
     /* ═══ Marchio (lo stesso dell'app) ═══ */
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,800&display=swap');
     .vf-wm {{ display:flex; justify-content:center; align-items:flex-start; gap:.5rem; }}
-    .vf-wm-name {{ font-family:'Fraunces',Georgia,serif; font-weight:700; font-size:clamp(2.8rem,9vw,3.6rem); letter-spacing:-.035em;
+    .vf-wm-name {{ position:relative; font-family:'Fraunces',Georgia,serif; font-weight:700; font-size:clamp(2.8rem,9vw,3.6rem); letter-spacing:-.035em;
                    color:{_TEXT}; line-height:1; }}
     .vf-wm-ai {{ position:relative; display:inline-block; font-style:italic; font-weight:800; padding-right:.06em;
                  background:linear-gradient(135deg,#6366F1,#2563EB); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
@@ -603,7 +603,7 @@ def mostra_auth(supabase):
     .vf-wm-ai::after {{ content:""; position:absolute; left:6%; right:2%; bottom:-.08em; height:.075em; border-radius:999px;
                         background:linear-gradient(90deg,#FCD34D,#F59E0B); }}
     .vf-wm-beta {{ font-size:.6rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:{_PRIMARY};
-                   border:1px solid {_PRIMARY}55; border-radius:999px; padding:2px 7px; margin-top:.55rem; opacity:.85;
+                   border:1px solid {_PRIMARY}55; border-radius:999px; padding:2px 7px; position:absolute; left:100%; top:.55rem; margin-left:.5rem; opacity:.85; letter-spacing:.12em; line-height:1.4;
                    font-family:'DM Sans',sans-serif; }}
     /* campi di accesso: il testo non viene più tagliato; linguetta attiva blu come il resto dell'app */
     [data-testid="stTextInput"] [data-baseweb="input"], [data-testid="stTextInput"] [data-baseweb="base-input"] {{
@@ -650,7 +650,7 @@ def mostra_auth(supabase):
     st.markdown(f"""
     <div style="text-align:center; padding:1rem 0 1.5rem;">
 
-      <div class="vf-wm"><span class="vf-wm-name">Verific<span class="vf-wm-ai">AI</span></span><span class="vf-wm-beta">Beta</span></div>
+      <div class="vf-wm"><span class="vf-wm-name">Verific<span class="vf-wm-ai">AI</span><span class="vf-wm-beta">Beta</span></span></div>
 
       <p class="auth-subheading">
         Crea la tua verifica in <strong style="color:{_PRIMARY}; font-weight:700;">un minuto</strong>.

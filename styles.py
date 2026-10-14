@@ -735,10 +735,11 @@ def get_css(T: dict) -> str:
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: .3rem 1rem .6rem;
-    margin-bottom: .2rem;
+    padding: .1rem 1rem .1rem;
+    margin-bottom: 0;
   }}
   .site-header-logo {{
+    position: relative;
     display: inline-flex;
     align-items: flex-start;
     gap: .5rem;
@@ -786,7 +787,7 @@ def get_css(T: dict) -> str:
     border: 1px solid {_acc_med};
     border-radius: 999px;
     padding: 2px 7px;
-    margin-top: .55rem;
+    position: absolute; left: 100%; top: .55rem; margin-left: .5rem;
     font-family: 'DM Sans', sans-serif;
     opacity: .85;
   }}
@@ -4701,6 +4702,8 @@ font-family: 'DM Sans', sans-serif;
   }}
 
   .st-key-dettatura_js {{ display: none !important; }}
+  .vf-mic-stato {{ font-family: 'DM Sans', sans-serif; font-size: .82rem; color: {T['text2']}; margin: -.35rem 0 .3rem; min-height: 0; }}
+  .vf-mic-stato:empty {{ display: none; }}
 
   /* Caricamento file: testi di Streamlit in italiano */
   [data-testid="stFileUploaderDropzoneInstructions"] > div > span:first-child {{ font-size: 0 !important; }}
