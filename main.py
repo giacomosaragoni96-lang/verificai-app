@@ -891,6 +891,18 @@ html body .stApp [class*="st-key-banner_piano_"] [data-testid="stButton"] button
   transform:skewX(-22deg); animation:vf-riflesso 3.4s ease-in-out infinite; pointer-events:none;
 }
 @media (prefers-reduced-motion: reduce) { html body .stApp [class*="st-key-banner_piano_"] [data-testid="stButton"] button[data-testid^="stBaseButton"]::after { animation:none !important; } }
+/* «Nascondi»: discreto, a destra, senza lo stile oro del pulsante principale */
+html body .stApp [class*="st-key-banner_piano_"] [class*="st-key-pro_nascondi"] button[data-testid^="stBaseButton"] {
+  background:transparent !important; background-color:transparent !important; box-shadow:none !important; border:0 !important;
+  padding:.2rem .4rem !important; width:auto !important; transform:none !important; filter:none !important;
+}
+html body .stApp [class*="st-key-banner_piano_"] [class*="st-key-pro_nascondi"] button[data-testid^="stBaseButton"] p,
+html body .stApp [class*="st-key-banner_piano_"] [class*="st-key-pro_nascondi"] button[data-testid^="stBaseButton"] span,
+html body .stApp [class*="st-key-banner_piano_"] [class*="st-key-pro_nascondi"] button[data-testid^="stBaseButton"] div {
+  color:rgba(255,255,255,.78) !important; -webkit-text-fill-color:rgba(255,255,255,.78) !important; font-weight:600 !important;
+  font-size:.82rem !important; text-decoration:underline;
+}
+html body .stApp [class*="st-key-banner_piano_"] [class*="st-key-pro_nascondi"] button[data-testid^="stBaseButton"]::after { display:none !important; }
 /* elenco a schede: una voce per cosa da provare */
 html body .stApp [class*="st-key-banner_piano_"] .g-lista {
   list-style:none; margin:.7rem 0 0 !important; padding:0 !important; display:grid; gap:.5rem .7rem;
@@ -1213,33 +1225,40 @@ def _banner_piano(dove: str) -> None:
         return
     if dove == "input":
         # nella pagina di creazione l'invito è una riga sola: il confronto completo sta nella pagina del Pro
-        with _slot.container(key=f"banner_piano_{dove}"):
-            st.markdown(
-                _CSS_BANNER_PIANO +
-                f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">✨</span>Piano Pro · Per la tua classe</div>'
-                f'<div class="g-t">Passa al piano Pro</div>'
-                f'<div class="g-s">Modello più accurato, Fila B, BES/DSA, soluzioni e scheda di allenamento: '
-                f'{PREZZO_PRO_ANNUALE} € per 12 mesi, un solo pagamento.</div></div>',
-                unsafe_allow_html=True,
-            )
-            if st.button("Scopri il piano Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
-                _vai_a_upgrade(None)
-        return
+        _html = (f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">✨</span>Piano Pro · Per la tua classe</div>'
+                 f'<div class="g-t">Passa al piano Pro</div>'
+                 f'<div class="g-s">Modello più accurato, Fila B, BES/DSA, soluzioni e scheda di allenamento: '
+                 f'{PREZZO_PRO_ANNUALE} € per 12 mesi, un solo pagamento.</div></div>')
     else:
         _titolo = "Con il piano Pro questa verifica può avere di più"
         _voci = [("🎯", "Modello AI più accurato", "Esercizi più precisi."),
                  ("📚", "Fila B, BES/DSA, soluzioni", "Le versioni per la classe."),
                  ("📦", "Scheda di allenamento e ZIP", "Circa 40 esercizi e tutti i file.")]
-    with _slot.container(key=f"banner_piano_{dove}"):
-        st.markdown(
-            _CSS_BANNER_PIANO +
-            f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">✨</span>Piano Pro · Per la tua classe</div>'
-            f'<div class="g-t">{_titolo}</div>{_html_voci(_voci)}'
-            f'<div class="g-nota">{PREZZO_PRO_ANNUALE} € per 12 mesi, un solo pagamento.</div></div>',
-            unsafe_allow_html=True,
-        )
-        if st.button("Scopri il piano Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
-            _vai_a_upgrade(None)
+        _html = (f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">✨</span>Piano Pro · Per la tua classe</div>'
+                 f'<div class="g-t">{_titolo}</div>{_html_voci(_voci)}'
+                 f'<div class="g-nota">{PREZZO_PRO_ANNUALE} € per 12 mesi, un solo pagamento.</div></div>')
+
+    def _nascondi():
+        st.session_state["_banner_pro_nascosto"] = True
+
+    def _corpo(con_nascondi: bool):
+        st.markdown(_CSS_BANNER_PIANO + _html, unsafe_allow_html=True)
+        with st.container(horizontal=True, horizontal_alignment="distribute", vertical_alignment="center"):
+            if st.button("Scopri il piano Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
+                _vai_a_upgrade(None)
+            if con_nascondi:
+                st.button("Nascondi", key=f"pro_nascondi_{dove}", type="tertiary", on_click=_nascondi,
+                          help="Lo trovi in una tendina chiusa, qui sopra")
+
+    if st.session_state.get("_banner_pro_nascosto"):
+        # nascosto: resta una tendina chiusa a una riga, che lo riapre
+        with _slot.container():
+            with st.expander("Piano Pro: cosa include", expanded=False, icon=":material/workspace_premium:"):
+                with st.container(key=f"banner_piano_{dove}"):
+                    _corpo(False)
+    else:
+        with _slot.container(key=f"banner_piano_{dove}"):
+            _corpo(True)
 
 
 def _apri_storico() -> None:
