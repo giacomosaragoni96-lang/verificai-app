@@ -41,7 +41,7 @@ LEGALE = {
     "partita_iva": "",
     "aggiornamento": "14 ottobre 2026",
 }
-LEGALE_PRONTO = False
+LEGALE_PRONTO = True
 PREZZO_PRO_ANNUALE = 39                 # euro, anno scolastico (pagamento unico)
 CHECKOUT_URL_PRO = "https://verificai.lemonsqueezy.com/checkout/buy/cd7d56f4-10c1-4807-bc2f-90dffa200268"   # prodotto di PROVA (test mode)
 # ID del negozio e del prodotto Lemon Squeezy: una licenza vale solo se sono questi (None = nessun codice accettato).
