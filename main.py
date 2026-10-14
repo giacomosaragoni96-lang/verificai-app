@@ -864,7 +864,7 @@ html body .stApp [class*="st-key-banner_piano_"] .g-nota {
 # Bersagli che pulsano (selettori CSS). Si usano sia le classi delle chiavi sia i data-testid, per reggere i cambi di Streamlit.
 _BERSAGLI_GUIDA = {
     "argomento": [".st-key-argomento_area_b", '[data-testid="stTextArea"]'],
-    "opzioni": ['[data-testid="stExpander"]:has(.g-altre)'],
+    "opzioni": ['[data-testid="stExpander"]:has(.g-altre)', '[data-testid="stFileUploader"]'],   # «Altre opzioni» e i due caricamenti (file e logo)
     "crea": [".st-key-genera_btn_b", '[data-testid="stButton"]:has([data-testid="stBaseButton-primary"])'],
     "modifica": ['.st-key-review_selectbox', '[class*="st-key-piu_facile_"]', '[class*="st-key-piu_difficile_"]',
                  '[class*="st-key-quick_regen_"]', '[class*="st-key-cambia_tutto_"]'],
