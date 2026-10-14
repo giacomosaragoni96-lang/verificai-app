@@ -1184,7 +1184,7 @@ def _prepara_logo(dati: bytes):
             if len(buf.getvalue()) <= 110_000:
                 # Formato scelto dalla forma: un'immagine molto più larga che alta è un logo con il
                 # nome della scuola (largo), una più quadrata è il solo simbolo (piccolo).
-                tipo = "largo" if im.width / max(1, im.height) >= 2.0 else "piccolo"
+                tipo = "largo" if im.width / max(1, im.height) >= 3.0 else "piccolo"
                 return base64.b64encode(buf.getvalue()).decode(), tipo
     except Exception as e:
         logger.warning(f"Logo non leggibile: {e}")
