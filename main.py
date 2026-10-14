@@ -801,14 +801,14 @@ _PASSI_GUIDA = {
     "input": [
         {"id": "arg", "titolo": "Scrivi l'argomento",
          "testo": "Nel riquadro scrivi di cosa parla la verifica e, se vuoi, cosa includere o evitare.",
-         "target": ".st-key-argomento_area_b textarea"},
+         "target": [".st-key-argomento_area_b [data-baseweb=\"textarea\"]", ".st-key-argomento_area_b textarea"]},
         {"id": "opz", "titolo": "Prova anche il logo e un tuo file",
          "testo": "Apri «Altre opzioni»: puoi mettere il logo della tua scuola e partire da un tuo file (appunti o una verifica da rifare). "
                   "Sono funzioni Pro, gratis solo in questa prima verifica.",
-         "target": '[data-testid="stExpander"]:has(.g-altre)'},
+         "target": ['[data-testid="stExpander"]:has(.g-altre)']},
         {"id": "crea", "titolo": "Crea la verifica",
          "testo": "Premi «Crea verifica»: in circa un minuto è pronta.",
-         "target": ".st-key-genera_btn_b button"},
+         "target": [".st-key-genera_btn_b button"]},
     ],
     "final": [
         {"id": "mod", "titolo": "Controlla e modifica gli esercizi",
@@ -817,19 +817,40 @@ _PASSI_GUIDA = {
         {"id": "kit", "titolo": "Crea tutto il kit",
          "testo": "Con «Prepara tutto il kit» ottieni Fila B, versione BES/DSA, soluzioni e scheda di allenamento. "
                   "Sono gratis solo per questa verifica.",
-         "target": ".st-key-kit_tutto button"},
+         "target": [".st-key-kit_tutto button"]},
         {"id": "zip", "titolo": "Scarica tutto in un solo file",
          "testo": "«Scarica tutto (ZIP)» raccoglie la verifica e tutte le versioni create. È un'occasione unica: "
                   "dalla prossima verifica Fila B, BES/DSA, soluzioni e scheda sono solo con Pro.",
-         "target": ".st-key-dl_kit_zip button"},
+         "target": [".st-key-dl_kit_zip button"]},
     ],
 }
 
 _CSS_GUIDA = """
 <style>
 @keyframes gpulse { 0%,100% { box-shadow:0 0 0 0 rgba(245,158,11,0); } 50% { box-shadow:0 0 0 7px rgba(245,158,11,.6); } }
+/* guida: testo più leggibile e pulsanti discreti, bianchi sul blu */
+html body .stApp [class*="st-key-banner_piano_"] .g-t { font-family:'DM Sans',sans-serif; font-weight:800; font-size:1rem; line-height:1.3; color:#fff; }
+html body .stApp [class*="st-key-banner_piano_"] .g-s { font-family:'DM Sans',sans-serif; font-size:.88rem; line-height:1.5; color:#fff; margin-top:.15rem; }
+html body .stApp [class*="st-key-banner_piano_"] .g-k { font-family:'DM Sans',sans-serif; font-size:.78rem; color:rgba(255,255,255,.85); }
+html body .stApp [class*="st-key-guida_"] { width:auto !important; flex:0 0 auto !important; }
+html body .stApp [class*="st-key-guida_"] button {
+  background:rgba(255,255,255,.14) !important; border:1px solid rgba(255,255,255,.55) !important; border-radius:999px !important;
+  min-height:0 !important; height:auto !important; padding:.18rem .75rem !important; width:auto !important; box-shadow:none !important;
+}
+html body .stApp [class*="st-key-guida_"] button p,
+html body .stApp [class*="st-key-guida_"] button span { color:#fff !important; font-weight:700 !important; font-size:.8rem !important; margin:0 !important; line-height:1.2 !important; }
+html body .stApp [class*="st-key-guida_"] button:hover:not(:disabled) { background:rgba(255,255,255,.28) !important; }
+html body .stApp [class*="st-key-guida_"] button:disabled { opacity:.4 !important; }
+html body .stApp [class*="st-key-guida_nascondi"] button { background:transparent !important; border-color:transparent !important; }
+html body .stApp [class*="st-key-guida_nascondi"] button p,
+html body .stApp [class*="st-key-guida_nascondi"] button span { font-weight:500 !important; text-decoration:underline; opacity:.85; }
 </style>
 """
+
+
+def _html_separatore() -> str:
+    """Linea sottile tra le sezioni di «Altre opzioni»."""
+    return (f'<div style="height:1px;background:{T["border2"]};opacity:.9;margin:1.2rem 0 .7rem;"></div>')
 
 
 def _guida_vai(dove: str, i: int) -> None:
@@ -862,6 +883,7 @@ def _guida_benvenuto(dove: str, slot) -> None:
     Guida a passi (a «slider») per chi crea la prima verifica, con tutte le funzioni Pro sbloccate: scrivere l'argomento,
     provare logo e file, creare, modificare, creare il kit e scaricare lo ZIP. Il passo avanza da solo secondo quello che
     l'utente fa; con ‹ › si può scorrere a mano. L'elemento da usare nel passo attuale pulsa in giallo.
+    Tutto lo stile e l'evidenziazione stanno nello stesso blocco di testo della striscia: nessun elemento in più che allunghi la pagina.
     """
     passi = _PASSI_GUIDA[dove]
     auto, fatti = _stato_guida(dove)
@@ -876,24 +898,24 @@ def _guida_benvenuto(dove: str, slot) -> None:
     spunta = " ✓" if fatti[i] else ""
     titolo = ("🎁 Regalo di benvenuto: la prima verifica è tutta Pro" if dove == "input"
               else "🎁 Regalo di benvenuto: tutto il Pro su questa verifica")
-    st.markdown(_CSS_BANNER_PIANO + _CSS_GUIDA, unsafe_allow_html=True)
+    evidenzia = ""
     if p["target"]:
-        st.markdown(f"<style>html body .stApp {p['target']} {{animation:gpulse 1.5s ease-in-out infinite;border-radius:10px;}}</style>",
-                    unsafe_allow_html=True)
+        regole = ", ".join(f"html body .stApp {t}" for t in p["target"])
+        evidenzia = f"<style>{regole} {{animation:gpulse 1.5s ease-in-out infinite;border-radius:10px;}}</style>"
     with slot.container(key=f"banner_piano_{dove}"):
         st.markdown(
-            f'<div class="bp-wrap"><div class="bp-t">{titolo}</div>'
-            f'<div class="bp-s" style="margin-top:.35rem;"><span style="opacity:.8;">Passo {n_corr} di {n_tot}</span> &nbsp;{puntini}</div>'
-            f'<div class="bp-t" style="margin-top:.4rem;font-size:.95rem;">{p["titolo"]}{spunta}</div>'
-            f'<div class="bp-s">{p["testo"]}</div></div>',
+            _CSS_BANNER_PIANO + _CSS_GUIDA + evidenzia +
+            f'<div class="bp-wrap" style="padding-bottom:.2rem;">'
+            f'<div class="g-t">{titolo}</div>'
+            f'<div class="g-k" style="margin-top:.3rem;">Passo {n_corr} di {n_tot} &nbsp;{puntini}</div>'
+            f'<div class="g-t" style="margin-top:.55rem;font-size:1.05rem;">{p["titolo"]}{spunta}</div>'
+            f'<div class="g-s">{p["testo"]}</div></div>',
             unsafe_allow_html=True,
         )
-        c1, c2, c3 = st.columns([1, 1, 2.2], gap="small")
-        c1.button("‹ Indietro", key=f"guida_prec_{dove}", disabled=(i == 0), on_click=_guida_vai, args=(dove, i - 1),
-                  use_container_width=True)
-        c2.button("Avanti ›", key=f"guida_succ_{dove}", disabled=(i == len(passi) - 1), on_click=_guida_vai, args=(dove, i + 1),
-                  use_container_width=True)
-        c3.button("Nascondi la guida", key=f"guida_nascondi_{dove}", on_click=_guida_nascondi, type="tertiary")
+        c1, c2, c3, _vuoto = st.columns([1.1, 1.1, 1.9, 2], gap="small")
+        c1.button("‹ Indietro", key=f"guida_prec_{dove}", disabled=(i == 0), on_click=_guida_vai, args=(dove, i - 1))
+        c2.button("Avanti ›", key=f"guida_succ_{dove}", disabled=(i == len(passi) - 1), on_click=_guida_vai, args=(dove, i + 1))
+        c3.button("Nascondi la guida", key=f"guida_nascondi_{dove}", on_click=_guida_nascondi)
 
 
 def _banner_piano(dove: str) -> None:
@@ -2236,7 +2258,7 @@ def _render_percorso_b_form(_prog_placeholder):
                     )
                     st.session_state["_pers_pt"] = punti_totali
 
-                st.markdown('<div class="opt-label" style="margin-top:.8rem;">Hai già del materiale? (opzionale)</div>', unsafe_allow_html=True)
+                st.markdown(_html_separatore() + '<div class="opt-label">Hai già del materiale? (opzionale)</div>', unsafe_allow_html=True)
                 if _pro_bloccato("materiale") and not _fm:
                     st.caption("Carica appunti o una verifica già fatta e VerificAI ne crea una nuova, con dati diversi: "
                                "è una funzione del piano Pro.")
@@ -2294,7 +2316,7 @@ def _render_percorso_b_form(_prog_placeholder):
                         st.rerun()
 
                 # ── Logo della scuola: si carica una volta, poi compare in tutte le verifiche ──
-                st.markdown('<div class="opt-label" style="margin-top:.8rem;">Logo della scuola (opzionale)</div>',
+                st.markdown(_html_separatore() + '<div class="opt-label">Logo della scuola (opzionale)</div>',
                             unsafe_allow_html=True)
                 _logo_s = _logo_scuola()
                 _logo_bloccato = _pro_bloccato("logo")
