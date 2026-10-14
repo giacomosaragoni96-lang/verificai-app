@@ -75,7 +75,21 @@ COMPITI_AI = {
     "griglia":           ("medio",  0),
     "cambio_esercizio":  ("veloce", None),
     "analisi_file":      ("veloce", None),
+    "scheda":            ("medio",  1024),   # scheda di allenamento: una chiamata per sezione
 }
+
+# ── SCHEDA DI ALLENAMENTO ─────────────────────────────────────────────────────
+# ~40 esercizi graduati, una sezione per ogni esercizio della verifica (scheda.py).
+SCHEDA = {
+    "esercizi_totali": 40,
+    "min_per_sezione": 4,
+    "max_per_sezione": 12,
+    "max_sezioni": 8,        # con più esercizi nella verifica si raggruppano a coppie
+    "parallelo": 4,          # chiamate all'AI in contemporanea
+}
+
+# Etichetta «Pro» sulle funzioni del kit: spenta finché non parte la monetizzazione.
+MOSTRA_BADGE_PRO = False
 
 
 def scegli_modello_per_compito(compito: str, model_id_piano: str):

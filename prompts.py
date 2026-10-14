@@ -471,6 +471,60 @@ def prompt_nuovo_esercizio(
     )
 
 
+SEPARATORE_SCHEDA = "====="
+
+
+def prompt_scheda_sezione(
+    materia: str,
+    scuola: str,
+    argomento: str,
+    titolo_esercizio: str,
+    corpo_esercizio: str,
+    livelli: list,
+    calibrazione: str = "",
+) -> str:
+    """
+    Esercizi di allenamento per UNA sezione della scheda: stesso tipo di richiesta di un esercizio
+    della verifica, dati diversi, difficoltà secondo la sequenza `livelli` (1, 2, 3).
+    La risposta è una serie di blocchi separati da una riga di «=====».
+    """
+    n = len(livelli)
+    elenco = ", ".join(f"{i + 1}: livello {liv}" for i, liv in enumerate(livelli))
+    calib = f"\nLIVELLO DELLA CLASSE: {calibrazione.strip()}\n" if calibrazione and calibrazione.strip() else ""
+    return (
+        f"Sei un docente esperto di {materia} e LaTeX. Prepara una SCHEDA DI ALLENAMENTO che gli studenti di {scuola} "
+        f"svolgeranno PRIMA della verifica sull'argomento «{argomento}».\n"
+        f"{calib}\n"
+        f"Questo è uno degli esercizi della VERIFICA (serve solo per capire il tipo di richiesta, NON copiarlo):\n"
+        f"«{titolo_pulito(titolo_esercizio)}»\n{corpo_esercizio}\n\n"
+        f"Scrivi esattamente {n} esercizi di allenamento sullo STESSO tipo di richiesta, con dati, numeri e situazioni DIVERSI, "
+        f"in quest'ordine di difficoltà ({elenco}):\n"
+        f"- livello 1 (★): applicazione diretta della regola o della definizione, pochi passaggi, numeri semplici;\n"
+        f"- livello 2 (★★): esercizio tipico da verifica, più passaggi o due idee da combinare;\n"
+        f"- livello 3 (★★★): sfida: un ragionamento in più (problema di realtà, parametro, caso particolare), "
+        f"ma risolvibile da uno studente preparato in pochi minuti.\n\n"
+        f"REGOLE:\n"
+        f"- Scrivi SOLO il testo di ciascun esercizio, in LaTeX, senza numero e senza stelle: li aggiunge il programma.\n"
+        f"- Separa un esercizio dal successivo con una riga contenente soltanto {SEPARATORE_SCHEDA}\n"
+        f"- Ogni esercizio: 1-4 righe. Con più richieste usa \\begin{{enumerate}}[a)] con \\item[a)], \\item[b)], al massimo 3; "
+        f"con una richiesta sola, testo diretto.\n"
+        f"- {REGOLA_SOTTOPUNTI_MODIFICA}\n"
+        f"- NIENTE soluzioni, risposte, risultati o suggerimenti. NIENTE punteggi. NIENTE titoli (\\subsection) né preambolo.\n"
+        f"- Niente grafici, a meno che l'esercizio della verifica ne abbia uno: in quel caso al massimo 2 esercizi con grafico, "
+        f"seguendo queste regole: {REGOLA_GRAFICO_CURVE}\n"
+        f"- Ogni esercizio deve essere diverso dagli altri e risolvibile con i dati scritti.\n"
+        f"- Nessun commento LaTeX (%), nessun Markdown, nessuna spiegazione fuori dagli esercizi.\n"
+        f"OUTPUT: SOLO i {n} esercizi in LaTeX separati da {SEPARATORE_SCHEDA}"
+    )
+
+
+def titolo_pulito(titolo: str) -> str:
+    """Titolo di un esercizio senza «Esercizio N:» davanti né punteggio."""
+    import re as _re
+    t = _re.sub(r"^\s*Esercizio\s*\d+\s*[:.\-–]\s*", "", titolo or "", flags=_re.IGNORECASE)
+    return _re.sub(r"\s*\(\d+\s*pt\)", "", t).strip()
+
+
 # Regole condivise dai prompt delle modifiche a un solo esercizio (main.py).
 REGOLA_SOTTOPUNTI_MODIFICA = (
     "SOTTOPUNTI: con due o più richieste usa \\begin{enumerate}[a)] con \\item[a)], \\item[b)], ... "
