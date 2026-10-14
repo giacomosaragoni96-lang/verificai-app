@@ -4434,8 +4434,8 @@ def _render_stage_final():
         'html body .stApp .st-key-az_principali [data-testid="stDownloadButton"],'
         'html body .stApp .st-key-az_principali [data-testid="stButton"]{margin:0 !important;}'
         # resta agganciata in alto mentre si scorre l'anteprima e il kit
-        f'html body .stApp [data-testid="stLayoutWrapper"]:has(> .st-key-az_principali){{position:sticky;top:3.4rem;z-index:90;background:{T["bg"]};'
-        f'padding:.45rem 0 .5rem;border-bottom:1px solid {T["border"]};}}</style>',
+        f'@media (min-width:641px){{html body .stApp [data-testid="stLayoutWrapper"]:has(> .st-key-az_principali){{position:sticky;top:3.4rem;z-index:90;background:{T["bg"]};'
+        f'padding:.45rem 0 .5rem;border-bottom:1px solid {T["border"]};}}}}</style>',
         unsafe_allow_html=True,
     )
     _box_az = st.container(key="az_principali")
@@ -4481,6 +4481,18 @@ def _render_stage_final():
             _n_tot = len(_imgs_f)
             _pg = min(max(int(st.session_state.get("final_pagina", 0)), 0), _n_tot - 1)
             st.image(_imgs_f[_pg], use_container_width=True)
+            if vA.get("pdf") and len(vA["pdf"]) < 6_000_000:
+                # solo su telefono (CSS): apre il PDF a tutto schermo in una scheda nuova, dove si legge davvero
+                with st.container(key="apri_pdf_tel"):
+                    components.html(
+                        '<button id="b" style="width:100%;padding:12px;border:1px solid #CBD5E1;border-radius:10px;'
+                        'background:#fff;font:600 15px DM Sans,Arial,sans-serif;color:#0F172A;">Apri il PDF a tutto schermo</button>'
+                        '<script>var B64="' + base64.b64encode(vA["pdf"]).decode() + '";'
+                        'document.getElementById("b").onclick=function(){var s=atob(B64),n=s.length,a=new Uint8Array(n);'
+                        'for(var i=0;i<n;i++)a[i]=s.charCodeAt(i);'
+                        'window.open(URL.createObjectURL(new Blob([a],{type:"application/pdf"})),"_blank");};</script>',
+                        height=52,
+                    )
             st.button("Riduci anteprima" if _zoom else "Ingrandisci anteprima", key="final_zoom_btn", type="tertiary",
                       icon=":material/zoom_out_map:" if not _zoom else ":material/zoom_in_map:",
                       on_click=lambda: st.session_state.update(final_zoom=not st.session_state.get("final_zoom", False)))
