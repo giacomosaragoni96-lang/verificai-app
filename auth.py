@@ -30,8 +30,8 @@ _TEXT2     = "#475569"
 _MUTED     = "#64748B"
 _BORDER    = "#E2E8F0"
 _BORDER2   = "#CBD5E1"
-_ACCENT    = "#3B82F6"
-_ACCENT2   = "#60A5FA"
+_ACCENT    = "#2563EB"   # lo stesso blu dell'app
+_ACCENT2   = "#3B82F6"
 _ACCENT_L  = "#EFF6FF"
 
 # Colori moderni aggiuntivi
@@ -155,7 +155,12 @@ def url_login_google():
     sid       = _secrets.token_urlsafe(12)
     pendenti[sid] = (verifier, ora)
 
-    redirect_to = f"{_url_app()}/?" + urlencode({"goauth": sid})
+    # Un link condiviso (?share=) non deve perdersi nel giro di login con Google
+    _par_ritorno = {"goauth": sid}
+    _share = st.query_params.get("share")
+    if _share and isinstance(_share, str) and len(_share) <= 64:
+        _par_ritorno["share"] = _share
+    redirect_to = f"{_url_app()}/?" + urlencode(_par_ritorno)
     url = f"{base}/auth/v1/authorize?" + urlencode({
         "provider": "google",
         "redirect_to": redirect_to,
@@ -206,6 +211,25 @@ def gestisci_ritorno_google(supabase):
             return
 
     st.session_state["_google_errore"] = "Accesso con Google non riuscito. Riprova."
+
+
+# Messaggi della pagina di accesso: un solo stile, testo scuro su fondo chiaro (contrasto AA).
+_MSG_STILI = {
+    "errore": ("#FEF2F2", "#991B1B", "#FCA5A5", "❌"),
+    "avviso": ("#FFFBEB", "#78350F", "#FCD34D", "⚠️"),
+    "ok":     ("#F0FDF4", "#14532D", "#86EFAC", "✅"),
+    "info":   ("#EFF6FF", "#1E3A8A", "#93C5FD", "ℹ️"),
+}
+
+
+def _msg(tipo: str, testo: str) -> None:
+    sfondo, colore, bordo, icona = _MSG_STILI.get(tipo, _MSG_STILI["info"])
+    st.markdown(
+        f'<div role="alert" style="background:{sfondo};color:{colore};border:1px solid {bordo};'
+        'border-radius:12px;padding:.8rem 1rem;margin:.8rem 0;font-family:DM Sans,sans-serif;'
+        f'font-weight:500;font-size:.92rem;line-height:1.5;">{icona} {html.escape(testo)}</div>',
+        unsafe_allow_html=True,
+    )
 
 
 # ── FORM LOGIN / REGISTRAZIONE — Elegant dark (Notte-style) ──────────────────
@@ -434,7 +458,8 @@ def mostra_auth(supabase):
 
     /* ═══ Modern Primary Button ─══ */
     div.stButton > button[kind="primary"],
-    div.stButton > button[data-testid="stBaseButton-primary"] {{
+    div.stButton > button[data-testid="stBaseButton-primary"],
+    [data-testid="stFormSubmitButton"] > button {{
         background: linear-gradient(135deg, {_PRIMARY}, {_PRIMARY_L}) !important;
         color: white !important;
         -webkit-text-fill-color: white !important;
@@ -602,7 +627,7 @@ def mostra_auth(supabase):
     </style>
     """, unsafe_allow_html=True)
 
-    # ── Modern Header ───────────────────────────────────────────────────
+    # ── Intestazione ────────────────────────────────────────────────────
     st.markdown(f"""
     <div style="text-align:center; padding:1rem 0 1.5rem;">
 
@@ -615,7 +640,7 @@ def mostra_auth(supabase):
       </div>
 
       <p class="auth-subheading">
-        Verifiche scolastiche professionali in <strong style="color:{_PRIMARY}; font-weight:700;">30 secondi</strong>.
+        Crea la tua verifica in <strong style="color:{_PRIMARY}; font-weight:700;">un minuto</strong>.
       </p>
 
     </div>
@@ -623,10 +648,14 @@ def mostra_auth(supabase):
     <div class="auth-divider"></div>
     """, unsafe_allow_html=True)
 
+    # Link condiviso da un collega: chi non è registrato arriva qui, glielo diciamo
+    if st.query_params.get("share"):
+        _msg("info", "Un collega ha condiviso una verifica con te: accedi o registrati e la trovi qui.")
+
     # ── Accedi con Google ────────────────────────────────────────────────────
     _err_google = st.session_state.pop("_google_errore", None)
     if _err_google:
-        st.error(_err_google)
+        _msg("errore", _err_google)
     _url_google = url_login_google()
     if _url_google:
         st.markdown(
@@ -641,27 +670,23 @@ def mostra_auth(supabase):
             '<path fill="#FBBC05" d="M10.5 28.7a14.5 14.5 0 0 1 0-9.4l-7.9-6.1a24 24 0 0 0 0 21.6l7.9-6.1z"/>'
             '<path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/>'
             '</svg>Continua con Google</a>'
-            f'<div style="text-align:center;color:{_MUTED};font-size:.8rem;margin-bottom:.4rem;'
-            'font-family:DM Sans,sans-serif;">oppure con la tua email</div>',
+            f'<div style="text-align:center;color:{_TEXT2};font-size:.8rem;margin-bottom:.4rem;'
+            'font-family:DM Sans,sans-serif;">Si apre in una nuova scheda · oppure con la tua email</div>',
             unsafe_allow_html=True,
         )
 
-    # ── Tabs ─────────────────────────────────────────────────────────────────
-    tab_login, tab_reg, tab_reset = st.tabs(
-        ["Accedi", "Registrati", "Password dimenticata?"]
-    )
+    # ── Schede ───────────────────────────────────────────────────────────────
+    tab_login, tab_reg = st.tabs(["Accedi", "Registrati"])
 
     with tab_login:
-        email    = st.text_input("Email",    key="login_email", placeholder="docente@scuola.it")
-        password = st.text_input("Password", key="login_pass",  placeholder="••••••••",
-                                 type="password")
-        if st.button("Accedi →", type="primary", use_container_width=True, key="btn_login"):
+        with st.form("form_login", border=False):
+            email    = st.text_input("Email",    key="login_email", placeholder="docente@scuola.it")
+            password = st.text_input("Password", key="login_pass",  placeholder="••••••••",
+                                     type="password")
+            invia_login = st.form_submit_button("Accedi →", type="primary", use_container_width=True)
+        if invia_login:
             if not email or not password:
-                st.markdown('''
-                <div style="background: #2C3E50; color: #FFFFFF; padding: 16px 20px; border-radius: 8px; margin: 16px 0; font-family: system-ui, -apple-system, sans-serif; font-weight: 500; border-left: 4px solid #E74C3C; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    ⚠️ Inserisci email e password.
-                </div>
-                ''', unsafe_allow_html=True)
+                _msg("avviso", "Inserisci email e password.")
             else:
                 try:
                     res = supabase.auth.sign_in_with_password(
@@ -673,113 +698,44 @@ def mostra_auth(supabase):
                     salva_sessione_cookie(res)
                     st.rerun()
                 except Exception as e:
-                    err = str(e).lower()
-                    if "invalid login" in err or "invalid credentials" in err:
-                        st.markdown(f'''
-                        <div style="
-                            background: {_WARNING} !important;
-                            color: #1E293B !important;
-                            padding: 1rem 1.5rem !important;
-                            border-radius: 12px !important;
-                            margin: 1rem 0 !important;
-                            font-family: 'DM Sans', sans-serif !important;
-                            font-weight: 500 !important;
-                            border: 1px solid {_WARNING} !important;
-                            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
-                        ">
-                            ⚠️ Password errata. Clicca su <strong>Password dimenticata?</strong> qui sopra per reimpostarla.
-                        </div>
-                        ''', unsafe_allow_html=True)
-                    elif "email not confirmed" in err:
-                        st.markdown(f'''
-                        <div style="
-                            background: {_WARNING} !important;
-                            color: #1E293B !important;
-                            padding: 1rem 1.5rem !important;
-                            border-radius: 12px !important;
-                            margin: 1rem 0 !important;
-                            font-family: 'DM Sans', sans-serif !important;
-                            font-weight: 500 !important;
-                            border: 1px solid {_WARNING} !important;
-                            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
-                        ">
-                            ⚠️ Email non confermata. Controlla la casella di posta.
-                        </div>
-                        ''', unsafe_allow_html=True)
-                    elif "user not found" in err or "no user" in err:
-                        st.markdown(f'''
-                        <div style="
-                            background: {_WARNING} !important;
-                            color: #1E293B !important;
-                            padding: 1rem 1.5rem !important;
-                            border-radius: 12px !important;
-                            margin: 1rem 0 !important;
-                            font-family: 'DM Sans', sans-serif !important;
-                            font-weight: 500 !important;
-                            border: 1px solid {_WARNING} !important;
-                            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
-                        ">
-                            ⚠️ Nessun account trovato. Registrati prima.
-                        </div>
-                        ''', unsafe_allow_html=True)
+                    if "email not confirmed" in str(e).lower():
+                        _msg("avviso", "Email non confermata. Apri il link che ti abbiamo inviato per posta e poi accedi.")
                     else:
-                        st.markdown(f'''
-                        <div style="
-                            background: {_WARNING} !important;
-                            color: #1E293B !important;
-                            padding: 1rem 1.5rem !important;
-                            border-radius: 12px !important;
-                            margin: 1rem 0 !important;
-                            font-family: 'DM Sans', sans-serif !important;
-                            font-weight: 500 !important;
-                            border: 1px solid {_WARNING} !important;
-                            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
-                        ">
-                            ⚠️ Accesso non riuscito. Controlla email e password.
-                        </div>
-                        ''', unsafe_allow_html=True)
-                    time.sleep(2)
+                        _msg("errore", "Email o password non corrette. Se non ricordi la password, "
+                                       "usa «Password dimenticata?» qui sotto.")
+
+        with st.expander("Password dimenticata?"):
+            st.markdown(
+                '<div class="auth-reset-hint">'
+                "Inserisci la tua email: ti mandiamo un link per scegliere una nuova password."
+                "</div>",
+                unsafe_allow_html=True,
+            )
+            email_reset = st.text_input("Email", key="reset_email", placeholder="docente@scuola.it")
+            if st.button("Invia link di reset →", use_container_width=True, key="btn_reset"):
+                if not email_reset:
+                    _msg("avviso", "Inserisci la tua email.")
+                else:
+                    try:
+                        supabase.auth.reset_password_email(email_reset)
+                        _msg("ok", "Se l'email è registrata, riceverai un link per reimpostare la password.")
+                    except Exception:
+                        _msg("errore", "Non sono riuscito a inviare l'email. Riprova tra qualche minuto.")
 
     with tab_reg:
-        email_r    = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
-        password_r = st.text_input(
-            "Password (min. 6 caratteri)", key="reg_pass",
-            placeholder="••••••••", type="password",
-        )
-        if st.button("Crea account gratuito →", type="primary",
-                     use_container_width=True, key="btn_reg"):
+        with st.form("form_registrazione", border=False):
+            email_r    = st.text_input("Email", key="reg_email", placeholder="docente@scuola.it")
+            password_r = st.text_input(
+                "Password (almeno 6 caratteri)", key="reg_pass",
+                placeholder="••••••••", type="password",
+            )
+            invia_reg = st.form_submit_button("Crea account gratuito →", type="primary",
+                                              use_container_width=True)
+        if invia_reg:
             if not email_r or not password_r:
-                st.markdown(f'''
-                <div style="
-                    background: {_WARNING} !important;
-                    color: #1E293B !important;
-                    padding: 1rem 1.5rem !important;
-                    border-radius: 12px !important;
-                    margin: 1rem 0 !important;
-                    font-family: 'DM Sans', sans-serif !important;
-                    font-weight: 500 !important;
-                    border: 1px solid {_WARNING} !important;
-                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
-                ">
-                    ⚠️ Inserisci email e password.
-                </div>
-                ''', unsafe_allow_html=True)
+                _msg("avviso", "Inserisci email e password.")
             elif len(password_r) < 6:
-                st.markdown(f'''
-                <div style="
-                    background: {_WARNING} !important;
-                    color: #1E293B !important;
-                    padding: 1rem 1.5rem !important;
-                    border-radius: 12px !important;
-                    margin: 1rem 0 !important;
-                    font-family: 'DM Sans', sans-serif !important;
-                    font-weight: 500 !important;
-                    border: 1px solid {_WARNING} !important;
-                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
-                ">
-                    ⚠️ La password deve essere di almeno 6 caratteri.
-                </div>
-                ''', unsafe_allow_html=True)
+                _msg("avviso", "La password deve essere di almeno 6 caratteri.")
             else:
                 try:
                     res = supabase.auth.sign_up({"email": email_r, "password": password_r})
@@ -788,132 +744,28 @@ def mostra_auth(supabase):
                         st.session_state["_sb_access_token"]  = res.session.access_token
                         st.session_state["_sb_refresh_token"] = res.session.refresh_token
                         salva_sessione_cookie(res)
-                    st.markdown(f'''
-                    <div style="
-                        background: {_SUCCESS} !important;
-                        color: #1E293B !important;
-                        padding: 1rem 1.5rem !important;
-                        border-radius: 12px !important;
-                        margin: 1rem 0 !important;
-                        font-family: 'DM Sans', sans-serif !important;
-                        font-weight: 500 !important;
-                        border: 1px solid {_SUCCESS} !important;
-                        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
-                    ">
-                        ✅ Benvenuto su VerificAI! Account creato.
-                    </div>
-                    ''', unsafe_allow_html=True)
-                    time.sleep(1)
-                    st.rerun()
+                        st.rerun()
+                    _msg("ok", "Account creato. Ti abbiamo mandato un'email: conferma l'indirizzo e poi accedi.")
                 except Exception as e:
                     _err_str = str(e).lower()
                     if "already registered" in _err_str or "already exists" in _err_str:
-                        st.markdown(f'''
-                        <div style="
-                            background: {_ERROR} !important;
-                            color: #1E293B !important;
-                            padding: 1rem 1.5rem !important;
-                            border-radius: 12px !important;
-                            margin: 1rem 0 !important;
-                            font-family: 'DM Sans', sans-serif !important;
-                            font-weight: 500 !important;
-                            border: 1px solid {_ERROR} !important;
-                            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
-                        ">
-                            ❌ Questa email è già registrata. Prova ad accedere oppure clicca su <strong>Password dimenticata?</strong>.
-                        </div>
-                        ''', unsafe_allow_html=True)
+                        _msg("errore", "Questa email è già registrata. Prova ad accedere, oppure usa "
+                                       "«Password dimenticata?» nella scheda Accedi.")
                     else:
-                        st.markdown(f'''
-                        <div style="
-                            background: {_ERROR} !important;
-                            color: #1E293B !important;
-                            padding: 1rem 1.5rem !important;
-                            border-radius: 12px !important;
-                            margin: 1rem 0 !important;
-                            font-family: 'DM Sans', sans-serif !important;
-                            font-weight: 500 !important;
-                            border: 1px solid {_ERROR} !important;
-                            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
-                        ">
-                            ❌ Registrazione non riuscita. Controlla i dati inseriti e riprova, o contattaci se il problema persiste.
-                        </div>
-                        ''', unsafe_allow_html=True)
+                        _msg("errore", "Registrazione non riuscita. Controlla i dati e riprova; "
+                                       "se il problema continua, scrivici.")
 
-    with tab_reset:
-        st.markdown(
-            '<div class="auth-reset-hint">'
-            "Inserisci la tua email. Riceverai un link per reimpostare la password."
-            "</div>",
-            unsafe_allow_html=True,
-        )
-        email_reset = st.text_input("Email", key="reset_email", placeholder="docente@scuola.it")
-        if st.button("Invia link di reset →", type="primary",
-                     use_container_width=True, key="btn_reset"):
-            if not email_reset:
-                st.markdown(f'''
-                <div style="
-                    background: {_WARNING} !important;
-                    color: #1E293B !important;
-                    padding: 1rem 1.5rem !important;
-                    border-radius: 12px !important;
-                    margin: 1rem 0 !important;
-                    font-family: 'DM Sans', sans-serif !important;
-                    font-weight: 500 !important;
-                    border: 1px solid {_WARNING} !important;
-                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
-                ">
-                    ⚠️ Inserisci la tua email.
-                </div>
-                ''', unsafe_allow_html=True)
-            else:
-                try:
-                    supabase.auth.reset_password_email(email_reset)
-                    st.markdown(f'''
-                    <div style="
-                        background: {_SUCCESS} !important;
-                        color: #1E293B !important;
-                        padding: 1rem 1.5rem !important;
-                        border-radius: 12px !important;
-                        margin: 1rem 0 !important;
-                        font-family: 'DM Sans', sans-serif !important;
-                        font-weight: 500 !important;
-                        border: 1px solid {_SUCCESS} !important;
-                        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
-                    ">
-                        ✅ Email inviata! Controlla la casella di posta.
-                    </div>
-                    ''', unsafe_allow_html=True)
-                except Exception as e:
-                    st.markdown(f'''
-                    <div style="
-                        background: {_ERROR} !important;
-                        color: #1E293B !important;
-                        padding: 1rem 1.5rem !important;
-                        border-radius: 12px !important;
-                        margin: 1rem 0 !important;
-                        font-family: 'DM Sans', sans-serif !important;
-                        font-weight: 500 !important;
-                        border: 1px solid {_ERROR} !important;
-                        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
-                    ">
-                        ❌ Errore nell'invio: {e}
-                    </div>
-                    ''', unsafe_allow_html=True)
-
-    # ── Modern Trust Bar + Footer ────────────────────────────────────────────
+    # ── Barra di fiducia + footer ────────────────────────────────────────────
     st.markdown(f"""
     <div class="auth-trust">
-      <div class="auth-trust-item">🔒&ensp;Dati protetti</div>
+      <div class="auth-trust-item">🎁&ensp;5 verifiche gratis al mese</div>
       <div class="auth-trust-item">🇮🇹&ensp;Per docenti italiani</div>
-      <div class="auth-trust-item">⚡&ensp;Gratis per iniziare</div>
+      <div class="auth-trust-item">🔒&ensp;I tuoi dati restano tuoi</div>
     </div>
     <div style="text-align:center; padding:1rem 0 0.5rem; font-family:'DM Sans',sans-serif;">
-      <p style="font-size:0.8rem; color:{_MUTED}; margin:0; font-weight:500;">
-        Accedendo accetti i&nbsp;<a href="#"
-          style="color:{_TEXT2}; font-weight:600; text-decoration:none; transition:color .2s;"
-          onmouseover="this.style.color='{_PRIMARY}'" 
-          onmouseout="this.style.color='{_TEXT2}'">termini di utilizzo</a>.
+      <p style="font-size:0.8rem; color:{_TEXT2}; margin:0; font-weight:500;">
+        Accedendo accetti l'<a href="?pagina=privacy" target="_blank" rel="noopener"
+          style="color:{_TEXT}; font-weight:600;">informativa sulla privacy</a>.
       </p>
     </div>
     """, unsafe_allow_html=True)

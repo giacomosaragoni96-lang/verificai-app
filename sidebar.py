@@ -92,17 +92,14 @@ def render_sidebar(
                     unsafe_allow_html=True,
                 )
                 _theme_keys   = list(THEMES.keys())
-                _theme_names  = [THEME_LABELS.get(k, k) for k in _theme_keys]
                 _cur_theme    = st.session_state.get("theme", _theme_keys[0])
-                _cur_idx      = _theme_keys.index(_cur_theme) if _cur_theme in _theme_keys else 0
-                _sel_theme_name = st.selectbox(
-                    "tema",
-                    _theme_names,
-                    index=_cur_idx,
-                    label_visibility="collapsed",
-                    key="sb_tema_sel",
+                # due temi soltanto (Carta e Notte): un interruttore al posto di una tendina
+                _scuro = st.toggle(
+                    "Tema scuro", value=(_cur_theme == "notte"), key="sb_tema_scuro",
                 )
-                _sel_theme_key = _theme_keys[_theme_names.index(_sel_theme_name)]
+                _sel_theme_key = "notte" if _scuro else _theme_keys[0]
+                if _sel_theme_key not in _theme_keys:
+                    _sel_theme_key = _theme_keys[0]
                 if _sel_theme_key != _cur_theme:
                     st.session_state.theme = _sel_theme_key
                     theme_changed = True
@@ -122,7 +119,7 @@ def render_sidebar(
                 _color_bar = (T["error"] if limite_raggiunto
                               else (T["warn"] if _perc_uso >= 70 else T["success"]))
                 _valore = f"{verifiche_mese_count} di {LIMITE_MENSILE}"
-                _sotto  = f"🔄 {_reset_str}"
+                _sotto  = _reset_str
                 _barra  = (
                     f'<div style="background:{T.get("sidebar_border", "#475569")};border-radius:10px;'
                     'overflow:hidden;height:4px;width:100%;position:relative;">'
@@ -174,6 +171,8 @@ def render_sidebar(
             )
             st.markdown('<div style="height:.9rem"></div>', unsafe_allow_html=True)
             if st.button(_lbl_storico, key="open_storico", use_container_width=True, type="secondary", icon=":material/folder_open:"):
+                if st.session_state.get("stage") != "MIE_VERIFICHE":
+                    st.session_state["_stage_prima"] = st.session_state.get("stage")   # per tornare indietro
                 st.session_state.stage = "MIE_VERIFICHE"
                 st.rerun()
 

@@ -1503,7 +1503,9 @@ def rimuovi_vspace_corpo(latex: str) -> str:
     preambolo = latex[:idx]
     corpo = latex[idx:]
     corpo = re.sub(r'\\vspace\*?\{[^}]*\}', '', corpo)
-    corpo = re.sub(r'\\hspace\*?\{[^}]*\}', '', corpo)
+    # Gli spazi orizzontali si tolgono, ma non quelli che disegnano la riga da completare:
+    # \underline{\hspace{3cm}} senza lo \hspace diventava \underline{} (nel PDF il vuoto spariva).
+    corpo = re.sub(r'(?<!\\underline\{)\\hspace\*?\{[^}]*\}', '', corpo)
     corpo = re.sub(r'\\(?:big|med|small)skip\b', '', corpo)
     corpo = re.sub(r'\n{3,}', '\n\n', corpo)
 

@@ -53,11 +53,10 @@ from styles import get_css, _is_light_color
 from ui_banca import render_banca
 from ui_helpers import (
     render_privacy,
-    _make_katex_html, _render_sticky_header,
-    _render_step_progress,
+    _make_katex_html,
     STAGE_INPUT, STAGE_PREVIEW, STAGE_REVIEW, STAGE_FINAL,
     _reset_label, _render_limite_raggiunto, _mostra_errore, _mostra_errore_pdf,
-    separa_argomento_e_note,
+    separa_argomento_e_note, _esc, spazio, messaggio,
 )
 
 logger = logging.getLogger("verificai.main")
@@ -190,6 +189,12 @@ def _giorni_al_reset():
                             hour=0, minute=0, second=0, microsecond=0)
     d = reset - now
     return d.days, d.seconds // 3600
+
+
+def _dl(*args, **kwargs):
+    """st.download_button senza rerun al clic: scaricare non deve ricaricare tutta la pagina."""
+    kwargs.setdefault("on_click", "ignore")
+    return st.download_button(*args, **kwargs)
 
 
 def _stima(b):
@@ -600,6 +605,7 @@ _is_admin       = st.session_state.utente.email in ADMIN_EMAILS if st.session_st
 # Piano senza limite mensile (admin, pro, premium): deciso dal risultato di
 # can_generate_verification, non dal nome del piano.
 _illimitato = _is_admin
+_restanti = None   # verifiche che restano questo mese (None = non calcolabile o illimitate)
 
 # Carica informazioni abbonamento utente
 try:
@@ -618,15 +624,20 @@ try:
     )
     _limite = not _is_admin and not limits_check['can_generate']
     _illimitato = _is_admin or limits_check.get('remaining') == float('inf')
+    _rest = limits_check.get('remaining')
+    if isinstance(_rest, (int, float)) and _rest != float('inf'):
+        _restanti = max(0, int(_rest))
 
 except ImportError:
     # Fallback sistema vecchio se modulo non disponibile
     _limite = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
+    _restanti = max(0, LIMITE_MENSILE - _verifiche_mese)
     st.session_state.piano_utente = "free"
     st.session_state.abbonamento_attivo = None
 except Exception as e:
     logger.error(f"Errore caricamento abbonamento: {e}")
     _limite = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
+    _restanti = max(0, LIMITE_MENSILE - _verifiche_mese)
     st.session_state.piano_utente = "free"
     st.session_state.abbonamento_attivo = None
 
@@ -1059,18 +1070,55 @@ def _load_user_verifiche():
     """
     if not st.session_state.utente:
         return []
-    
+
     try:
-        res = supabase_admin.table("verifiche_storico")\
-            .select("*")\
-            .eq("user_id", st.session_state.utente.id)\
-            .order("created_at", desc=True)\
-            .execute()
-        
-        return res.data if res.data else []
+        return _elenco_verifiche(st.session_state.utente.id, st.session_state._storico_refresh)
     except Exception as e:
         _mostra_errore("Non sono riuscito a caricare le tue verifiche", e)
         return []
+
+
+@st.cache_data(ttl=120, show_spinner=False)
+def _elenco_verifiche(user_id: str, refresh: int) -> list:
+    """Elenco leggero dello storico (senza il LaTeX, che pesa): una query ogni 2 minuti
+    o appena cambia `_storico_refresh` (nuova verifica, rinomina, eliminazione)."""
+    res = supabase_admin.table("verifiche_storico")\
+        .select("id,argomento,materia,scuola,num_esercizi,created_at")\
+        .eq("user_id", user_id)\
+        .is_("deleted_at", "null")\
+        .order("created_at", desc=True)\
+        .execute()
+    return res.data or []
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _contenuto_verifica(user_id: str, verifica_id) -> dict:
+    """LaTeX di una verifica dello storico (Fila A e, se salvate, Fila B e BES/DSA)."""
+    res = supabase_admin.table("verifiche_storico")\
+        .select("latex_a,latex_b,latex_r")\
+        .eq("id", verifica_id).eq("user_id", user_id)\
+        .limit(1).execute()
+    return (res.data or [{}])[0]
+
+
+@st.cache_data(ttl=600, max_entries=20, show_spinner=False)
+def _pdf_da_latex(latex: str):
+    """Compila (una volta sola per testo) il PDF di una verifica già salvata: (pdf, errore)."""
+    return compila_pdf(latex)
+
+def _salva_variante_storico(colonna: str, latex: str) -> None:
+    """Aggiunge Fila B ("latex_b") o BES/DSA ("latex_r") alla riga dello storico della verifica
+    in corso, così non si perdono quando si crea una nuova verifica. Un errore si ignora."""
+    _id = st.session_state.get("_storico_id")
+    if not (_id and latex and st.session_state.utente):
+        return
+    try:
+        supabase_admin.table("verifiche_storico").update({colonna: latex})\
+            .eq("id", _id).eq("user_id", st.session_state.utente.id).execute()
+        _contenuto_verifica.clear()
+    except Exception as e:
+        logger.warning(f"Salvataggio {colonna} nello storico non riuscito: {e}")
+
 
 def _rinomina_verifica(verifica_id: int, nuovo_nome: str):
     """
@@ -1080,8 +1128,10 @@ def _rinomina_verifica(verifica_id: int, nuovo_nome: str):
         res = supabase_admin.table("verifiche_storico")\
             .update({"argomento": nuovo_nome})\
             .eq("id", verifica_id)\
+            .eq("user_id", st.session_state.utente.id)\
             .execute()
-        
+        st.session_state._storico_refresh += 1
+
         return res.data if res.data else None
     except Exception as e:
         _mostra_errore("Non sono riuscito a rinominare la verifica", e)
@@ -1104,21 +1154,20 @@ def _genera_link_condivisione(verifica_id: int):
             return None
         
         verifica = res.data[0]
-        
-        # Genera codice di condivisione
-        code = _generate_share_code()
-        
-        # Salva nella tabella shared_verifiche (solo campi base che sicuramente esistono)
-        supabase_admin.table("shared_verifiche").insert({
-            "short_code": code,
-            "user_id": st.session_state.utente.id,
-            "latex_a": verifica.get("latex_a"),
-            # Rimossi tutti i campi che potrebbero non esistere:
-            # latex_b, latex_r, materia, argomento, scuola, num_esercizi, modello, percorso_scelto
-        }).execute()
-        
+
+        # Stesso salvataggio della schermata del risultato: titolo, materia, scadenza a 30 giorni
+        code = _create_share_link(
+            latex_a=verifica.get("latex_a"),
+            materia=verifica.get("materia", ""),
+            argomento=verifica.get("argomento", ""),
+            scuola=verifica.get("scuola", ""),
+            num_esercizi=verifica.get("num_esercizi") or 0,
+        )
+        if not code:
+            raise RuntimeError("creazione del link non riuscita")
+
         return f"{SHARE_URL}?share={code}"
-        
+
     except Exception as e:
         _mostra_errore("Non sono riuscito a creare il link di condivisione", e)
         return None
@@ -1171,40 +1220,111 @@ def _get_verifiche_stats():
         "qualita_media": 4.8  # Placeholder - si può calcolare da feedback reali
     }
 
+def _apri_verifica_salvata(verifica: dict, contenuto: dict) -> bool:
+    """
+    Carica una verifica dello storico nella schermata del risultato (anteprima, download,
+    modifica). Parte da uno stato pulito, così nulla della verifica aperta prima si mescola
+    a questa; Fila B e BES/DSA tornano disponibili se erano state salvate.
+    """
+    latex_a = contenuto.get("latex_a")
+    if not latex_a:
+        return False
+    st.session_state.verifiche = {
+        "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
+        "S": {"latex": None, "testo": None, "pdf": None},
+    }
+    _pulisci_stato_revisione()
+    st.session_state.rubrica_testo = None
+    st.session_state["_rubrica_docx"] = None
+    st.session_state._share_code = None
+    va = st.session_state.verifiche["A"]
+    va["latex"] = va["latex_originale"] = latex_a
+    for fid, col in (("B", "latex_b"), ("R", "latex_r")):
+        if contenuto.get(col):
+            st.session_state.verifiche[fid]["latex"] = contenuto[col]
+    pdf_bytes, _err = _pdf_da_latex(latex_a)
+    st.session_state.preview_images = []
+    if pdf_bytes:
+        va["pdf"] = pdf_bytes
+        va["pdf_ts"] = time.time()
+        va["preview"] = True
+        images, _ = pdf_to_images_bytes(pdf_bytes)
+        st.session_state.preview_images = images or []
+        st.session_state.last_preview_ts = va["pdf_ts"]
+    pre, blocks = extract_blocks(latex_a)
+    st.session_state.review_preamble = pre if blocks else ""
+    st.session_state.review_blocks = blocks or []
+    st.session_state.review_sel_idx = 0
+    st.session_state.gen_params = {
+        "materia": verifica.get("materia", "Matematica"),
+        "difficolta": verifica.get("scuola", "Liceo Scientifico"),
+        "argomento": verifica.get("argomento", "Verifica"),
+        "num_esercizi": verifica.get("num_esercizi", 5),
+        "mostra_punteggi": True,
+        "punti_totali": 100,
+        "con_griglia": True,
+        "modello_id": modello_id,
+    }
+    st.session_state["_storico_id"] = verifica.get("id")
+    st.session_state._facsimile_mode = True
+    st.session_state.stage = STAGE_FINAL
+    st.session_state._prev_stage = None
+    st.session_state.input_percorso = None
+    return True
+
+
 def _render_le_tue_verifiche():
     """
-    Pagina "Le tue verifiche" - Gestione verifiche create dall'utente
+    Pagina "Le mie verifiche" - Gestione verifiche create dall'utente
     """
-    # Pulsante per tornare indietro
-    col_back, col_center = st.columns([1, 4])
-    with col_back:
-        if st.button("← Torna Indietro", key="back_from_mie_verifiche", 
-                     help="Torna alla pagina principale"):
-            st.session_state.stage = STAGE_INPUT
-            st.session_state.input_percorso = None
+    # Torna dove si era (es. alla verifica in corso), altrimenti al form di creazione
+    _dove = st.session_state.get("_stage_prima")
+    if _dove not in (STAGE_FINAL, STAGE_REVIEW) or not st.session_state.get("gen_params"):
+        _dove = STAGE_INPUT
+    _c_indietro, _ = st.columns([1, 3])
+    with _c_indietro:
+        if st.button("← Indietro", key="back_from_mie_verifiche",
+                     help="Torna a quello che stavi facendo", use_container_width=True):
+            st.session_state.stage = _dove
             st.rerun()
-    
+
     st.markdown(
         f"""
-        <div style="text-align: center; margin-bottom: 2rem;">
-            <h1 style="font-size: 2.5rem; font-weight: 700; color: {T['text']}; margin-bottom: 0.5rem;">
-                Le Tue Verifiche
-            </h1>
-            <p style="font-size: 1.2rem; color: {T['muted']};">
-                Gestisci, visualizza e scarica tutte le verifiche che hai creato
-            </p>
+        <div style="text-align:center;margin:.2rem 0 1rem;">
+            <div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;
+                        letter-spacing:-.025em;color:{T['text']};line-height:1.15;">Le mie verifiche</div>
+            <div style="font-size:.9rem;color:{T['text2']};font-family:DM Sans,sans-serif;margin-top:.35rem;">
+                Riapri, scarica o condividi le verifiche che hai creato.</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    
-    # Carica dati reali
+
+    # Carica dati reali (elenco leggero, in cache: il LaTeX si legge solo quando serve)
     stats = _get_verifiche_stats()
     verifiche = _load_user_verifiche()
-    
-    # Riepilogo su una riga (al posto delle quattro card colorate)
+    _uid = st.session_state.utente.id
+
+    if not verifiche:
+        st.markdown(
+            f'<div style="text-align:center;padding:2rem 1rem;border:1px dashed {T["border2"]};'
+            f'border-radius:14px;color:{T["text2"]};font-family:DM Sans,sans-serif;">'
+            f'<div style="font-size:1.05rem;font-weight:700;color:{T["text"]};margin-bottom:.3rem;">'
+            f'Non hai ancora creato verifiche</div>'
+            f'Appena ne crei una la trovi qui, pronta da riaprire.</div>',
+            unsafe_allow_html=True,
+        )
+        _, _c_prima, _ = st.columns([1, 2, 1])
+        with _c_prima:
+            if st.button("Crea la tua prima verifica", type="primary", use_container_width=True,
+                         icon=":material/add:", key="storico_prima"):
+                st.session_state.stage = STAGE_INPUT
+                st.rerun()
+        return
+
+    # Riepilogo su una riga
     st.markdown(
-        f'<div style="text-align:center;margin:-.4rem 0 1.4rem;font-family:DM Sans,sans-serif;'
+        f'<div style="text-align:center;margin:0 0 1.2rem;font-family:DM Sans,sans-serif;'
         f'font-size:.95rem;color:{T["text2"]};">'
         f'<strong style="color:{T["text"]};">{stats["totali"]}</strong> verifiche in tutto &nbsp;·&nbsp; '
         f'<strong style="color:{T["text"]};">{stats["questo_mese"]}</strong> questo mese</div>',
@@ -1213,298 +1333,193 @@ def _render_le_tue_verifiche():
 
     # Filtri e ricerca
     col_search, col_materia, col_ordine = st.columns([3, 2, 2])
-    
+
     with col_search:
         search_query = st.text_input("Cerca", placeholder="Cerca per materia o argomento…")
-    
+
     # Materie uniche dalle verifiche reali
     materie_real = ["Tutte"] + sorted(list(set([v.get("materia", "Sconosciuta") for v in verifiche if v.get("materia")])))
     with col_materia:
         materia_filter = st.selectbox("Materia", materie_real)
-    
+
     with col_ordine:
         ordine_filter = st.selectbox("Ordina per", ["Più recenti", "Più vecchie", "Alfabetico", "Materia"])
-    
+
     # Filtra le verifiche
     verifiche_filtrate = verifiche.copy()
-    
+
     if search_query:
-        verifiche_filtrate = [v for v in verifiche_filtrate if 
-            search_query.lower() in v.get("materia", "").lower() or 
-            search_query.lower() in v.get("argomento", "").lower()]
-    
+        _q = search_query.lower()
+        verifiche_filtrate = [v for v in verifiche_filtrate if
+            _q in (v.get("materia") or "").lower() or
+            _q in (v.get("argomento") or "").lower()]
+
     if materia_filter != "Tutte":
         verifiche_filtrate = [v for v in verifiche_filtrate if v.get("materia") == materia_filter]
-    
+
     # Ordina le verifiche
     if ordine_filter == "Più recenti":
-        verifiche_filtrate.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        verifiche_filtrate.sort(key=lambda x: x.get("created_at") or "", reverse=True)
     elif ordine_filter == "Più vecchie":
-        verifiche_filtrate.sort(key=lambda x: x.get("created_at", ""))
+        verifiche_filtrate.sort(key=lambda x: x.get("created_at") or "")
     elif ordine_filter == "Alfabetico":
-        verifiche_filtrate.sort(key=lambda x: x.get("argomento", ""))
+        verifiche_filtrate.sort(key=lambda x: (x.get("argomento") or "").lower())
     elif ordine_filter == "Materia":
-        verifiche_filtrate.sort(key=lambda x: x.get("materia", ""))
-    
+        verifiche_filtrate.sort(key=lambda x: x.get("materia") or "")
+
     # Mostra verifiche reali — a blocchi di 8 ("Mostra altre"): con centinaia di verifiche
     # il vecchio elenco completo creava migliaia di pulsanti a ogni clic.
     _n_mostra = max(8, int(st.session_state.get("_storico_mostra", 8)))
-    if verifiche_filtrate:
-        for i, verifica in enumerate(verifiche_filtrate[:_n_mostra]):
-            # Formatta data
-            data_formattata = "Data non disponibile"
-            if verifica.get("created_at"):
-                try:
-                    created_dt = datetime.fromisoformat(verifica["created_at"].replace('Z', '+00:00'))
-                    data_formattata = created_dt.strftime("%d/%m/%Y")
-                except:
-                    pass
-            
-            with st.container():
-                # Header della verifica
-                st.markdown(
-                    f"""
-                    <div style="
-                        background: {T['card']};
-                        border: 1px solid {T['border']};
-                        border-radius: 12px;
-                        padding: 1.1rem 1.3rem;
-                        margin-bottom: .6rem;
-                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-                        transition: box-shadow 0.2s;
-                    " onmouseover="this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.1)'">
-                        <div style="display: flex; justify-content: space-between; align-items: start;">
-                            <div>
-                                <h3 style="font-size: 1.12rem; font-weight: 700; color: {T['text']}; margin: 0 0 0.55rem 0; padding: 0;">
-                                    {verifica.get('argomento', 'Verifica senza titolo')}
-                                </h3>
-                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                    <span style="background: {T['accent_light']}; color: {T['accent']}; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
-                                        📚 {verifica.get('materia', 'Sconosciuta')}
-                                    </span>
-                                    <span style="background: {T['success']}22; color: {T['success']}; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
-                                        🏫 {verifica.get('scuola', 'Non specificata')}
-                                    </span>
-                                    <span style="background: {T['warn']}22; color: {T['warn']}; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
-                                        📝 {verifica.get('num_esercizi', '?')} esercizi
-                                    </span>
-                                    <span style="background: {T['bg2']}; color: {T['muted']}; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
-                                        📅 {data_formattata}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+    if not verifiche_filtrate:
+        st.info("Nessuna verifica corrisponde alla ricerca: prova a cancellare i filtri.", icon="🔎")
+        return
+
+    for i, verifica in enumerate(verifiche_filtrate[:_n_mostra]):
+        _vid = verifica.get("id")
+        # Formatta data
+        data_formattata = "Data non disponibile"
+        if verifica.get("created_at"):
+            try:
+                created_dt = datetime.fromisoformat(verifica["created_at"].replace('Z', '+00:00'))
+                data_formattata = created_dt.strftime("%d/%m/%Y")
+            except Exception:
+                pass
+
+        with st.container():
+            # Titolo, materia in evidenza, il resto in una riga sola
+            st.markdown(
+                f"""
+                <div style="background:{T['card']};border:1px solid {T['border']};border-radius:12px;
+                            padding:1rem 1.3rem;margin-bottom:.5rem;">
+                    <div style="font-size:1.08rem;font-weight:700;color:{T['text']};margin:0 0 .45rem 0;">
+                        {_esc(verifica.get('argomento') or 'Verifica senza titolo')}
                     </div>
-                    """,
-                    unsafe_allow_html=True,
+                    <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;
+                                font-size:.88rem;color:{T['text2']};">
+                        <span style="background:{T['accent_light']};color:{T['accent']};padding:.2rem .7rem;
+                                     border-radius:20px;font-weight:600;">
+                            {_esc(verifica.get('materia') or 'Sconosciuta')}</span>
+                        <span>{_esc(verifica.get('scuola') or 'Scuola non indicata')}
+                              · {_esc(verifica.get('num_esercizi') or '?')} esercizi
+                              · {_esc(data_formattata)}</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            # Azioni principali in primo piano; Rinomina ed Elimina nel menu "⋯".
+            c_apri, c_pdf, c_prev, c_share, c_menu = st.columns([1.35, 1, 1, 1, 0.5])
+
+            with c_apri:
+                if st.button("Apri e modifica", icon=":material/edit_note:", use_container_width=True,
+                             key=f"facsimile_{_vid}_{i}", type="primary"):
+                    try:
+                        _cont = _contenuto_verifica(_uid, _vid)
+                        if _apri_verifica_salvata(verifica, _cont):
+                            st.rerun()
+                        else:
+                            st.warning("Il contenuto di questa verifica non è disponibile.", icon="⚠️")
+                    except Exception as e:
+                        _mostra_errore("Non sono riuscito ad aprire questa verifica", e)
+
+            with c_pdf:
+                _nome_pdf = re.sub(r"[^\w\-]+", "_", verifica.get("argomento") or "verifica").strip("_")[:60]
+
+                def _pdf_al_clic(_v=_vid):
+                    # il PDF si prepara solo quando si preme (e una volta sola per testo, in cache)
+                    _lat = _contenuto_verifica(_uid, _v).get("latex_a")
+                    _pdf, _err = _pdf_da_latex(_lat) if _lat else (None, "manca il contenuto")
+                    if not _pdf:
+                        logger.error(f"PDF storico {_v}: {str(_err)[:500]}")
+                        raise RuntimeError(
+                            "Non sono riuscito a creare il PDF di questa verifica. "
+                            "Riprova oppure aprila con «Apri e modifica»."
+                        )
+                    return _pdf
+
+                _dl(
+                    "Scarica PDF", data=_pdf_al_clic,
+                    file_name=f"{_nome_pdf}_{data_formattata.replace('/', '')}.pdf",
+                    mime="application/pdf", icon=":material/download:",
+                    use_container_width=True, key=f"download_{_vid}_{i}",
+                    disabled=not LATEX_AVAILABLE,
+                    help="Non disponibile: LaTeX non è installato" if not LATEX_AVAILABLE
+                         else "Scarica la verifica in formato PDF",
                 )
-                
-                # Azioni principali in primo piano; Rinomina ed Elimina nel menu "⋯".
-                # I nomi colN restano quelli del codice sotto; l'ordine a schermo è:
-                # Apri e modifica (col3) · Scarica PDF (col2) · Anteprima (col1) · Condividi (col7) · ⋯ (col4)
-                col3, col2, col1, col7, col4 = st.columns([1.35, 1, 1, 1, 0.5])
-                col4 = col4.popover("⋯", help="Rinomina o elimina questa verifica")
 
-                with col1:
-                    if st.button("Anteprima", icon=":material/visibility:", use_container_width=True, key=f"preview_{verifica.get('id')}_{i}"):
-                        if verifica.get("latex_a"):
-                            # Compila PDF per anteprima
-                            try:
-                                pdf_bytes, error = compila_pdf(verifica["latex_a"])
-                                if pdf_bytes:
-                                    # Converti in immagini per anteprima
-                                    images, _ = pdf_to_images_bytes(pdf_bytes)
-                                    if images:
-                                        st.success("📄 Anteprima generata!")
-                                        
-                                        # Mostra anteprima in un container
-                                        with st.expander("📄 Anteprima Verifica", expanded=True):
-                                            for j, img in enumerate(images[:3]):  # Max 3 pagine
-                                                st.image(img, caption=f"Pagina {j+1}", use_container_width=True)
-                                    else:
-                                        st.error("Non sono riuscito a creare l'anteprima. Riprova.", icon="⚠️")
-                                else:
-                                    _mostra_errore_pdf(error, "questa verifica")
-                            except Exception as e:
-                                _mostra_errore("Non sono riuscito a creare l'anteprima", e)
+            with c_prev:
+                if st.button("Anteprima", icon=":material/visibility:", use_container_width=True,
+                             key=f"preview_{_vid}_{i}"):
+                    try:
+                        _lat = _contenuto_verifica(_uid, _vid).get("latex_a")
+                        if not _lat:
+                            st.warning("Il contenuto di questa verifica non è disponibile.", icon="⚠️")
                         else:
-                            st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
-                
-                with col2:
-                    pdf_disabled = not LATEX_AVAILABLE
-                    pdf_help = "Non disponibile: LaTeX non è installato" if pdf_disabled else "Scarica la verifica in formato PDF"
-                    
-                    if st.button("Scarica PDF", icon=":material/download:", use_container_width=True, key=f"download_{verifica.get('id')}_{i}", 
-                                 disabled=pdf_disabled, help=pdf_help):
-                        if verifica.get("latex_a"):
-                            try:
-                                pdf_bytes, error = compila_pdf(verifica["latex_a"])
-                                if pdf_bytes:
-                                    # Nome file
-                                    filename = f"{verifica.get('argomento', 'verifica').replace(' ', '_').replace('/', '_')}_{data_formattata.replace('/', '')}.pdf"
-                                    st.download_button(
-                                        label="⬇️ Click per scaricare",
-                                        data=pdf_bytes,
-                                        file_name=filename,
-                                        mime="application/pdf",
-                                        use_container_width=True,
-                                        key=f"final_dl_{verifica.get('id')}_{i}"
-                                    )
-                                else:
-                                    _mostra_errore_pdf(error, "questa verifica")
-                            except Exception as e:
-                                _mostra_errore("Non sono riuscito a preparare il PDF", e)
-                        else:
-                            st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
-                
-                with col3:
-                    if st.button("Apri e modifica", icon=":material/edit_note:", use_container_width=True, key=f"facsimile_{verifica.get('id')}_{i}", type="primary"):
-                        if verifica.get("latex_a"):
-                            try:
-                                # Carica la verifica come template per facsimile
-                                st.session_state.verifiche["A"]["latex"] = verifica["latex_a"]
-                                st.session_state.verifiche["A"]["latex_originale"] = verifica["latex_a"]
-                                
-                                # Compila PDF per preview
-                                pdf_bytes, error = compila_pdf(verifica["latex_a"])
-                                if pdf_bytes:
-                                    st.session_state.verifiche["A"]["pdf"] = pdf_bytes
-                                    st.session_state.verifiche["A"]["preview"] = True
-                                    
-                                    # Genera immagini per preview
-                                    images, _ = pdf_to_images_bytes(pdf_bytes)
-                                    st.session_state.preview_images = images or []
-                                
-                                # Estrai blocchi per review
-                                pre, blocks = extract_blocks(verifica["latex_a"])
-                                if blocks:
-                                    st.session_state.review_preamble = pre
-                                    st.session_state.review_blocks = blocks
-                                
-                                # Imposta parametri di generazione basati sulla verifica originale
-                                st.session_state.gen_params = {
-                                    "materia": verifica.get("materia", "Matematica"),
-                                    "difficolta": verifica.get("scuola", "Liceo Scientifico"),
-                                    "argomento": verifica.get("argomento", "Verifica"),
-                                    "num_esercizi": verifica.get("num_esercizi", 5),
-                                    "mostra_punteggi": True,
-                                    "punti_totali": 100,
-                                    "con_griglia": True,
-                                }
-                                
-                                # Attiva modalità facsimile e vai a preview
-                                st.session_state._facsimile_mode = True
-                                st.session_state.stage = STAGE_FINAL
-                                st.session_state._prev_stage = None
-                                st.session_state.input_percorso = None
-                                st.rerun()
-                                
-                            except Exception as e:
-                                _mostra_errore("Non sono riuscito ad aprire questa verifica", e)
-                        else:
-                            st.warning("⚠️ Contenuto LaTeX non disponibile per questa verifica")
-                
-                with col4:
-                    _vid = verifica.get("id")
-                    # Rinomina
-                    nuovo_nome = st.text_input(
-                        "Nome della verifica",
-                        value=verifica.get("argomento", ""),
-                        key=f"rename_input_{_vid}_{i}",
-                    )
-                    if st.button("💾 Salva nome", key=f"save_rename_{_vid}_{i}", use_container_width=True):
-                        if nuovo_nome.strip() and _rinomina_verifica(_vid, nuovo_nome.strip()):
-                            st.rerun()
-                    st.divider()
-                    # Elimina: conferma esplicita in due passaggi
-                    if not st.session_state.get(f"confirm_delete_{_vid}", False):
-                        if st.button("🗑️ Elimina", key=f"delete_{_vid}_{i}", use_container_width=True):
-                            st.session_state[f"confirm_delete_{_vid}"] = True
-                            st.rerun()
-                    else:
-                        st.warning("Eliminare definitivamente questa verifica?")
-                        _c_si, _c_no = st.columns(2)
-                        if _c_si.button("Sì, elimina", key=f"delete_yes_{_vid}_{i}", type="primary", use_container_width=True):
-                            try:
-                                res = supabase_admin.table("verifiche_storico").delete().eq("id", _vid).execute()
-                                st.session_state.pop(f"confirm_delete_{_vid}", None)
-                                if res.data:
-                                    st.rerun()
-                                else:
-                                    st.error("Non sono riuscito a eliminare la verifica. Riprova.", icon="⚠️")
-                            except Exception as e:
-                                _mostra_errore("Non sono riuscito a eliminare la verifica", e)
-                        if _c_no.button("No", key=f"delete_no_{_vid}_{i}", use_container_width=True):
+                            with st.spinner("Preparo l'anteprima…"):
+                                pdf_bytes, error = _pdf_da_latex(_lat)
+                                images, _ = pdf_to_images_bytes(pdf_bytes) if pdf_bytes else (None, None)
+                            if images:
+                                with st.expander("Anteprima", expanded=True):
+                                    for j, img in enumerate(images[:3]):  # max 3 pagine
+                                        st.image(img, caption=f"Pagina {j+1}", use_container_width=True)
+                            elif pdf_bytes:
+                                st.error("Non sono riuscito a creare l'anteprima. Riprova.", icon="⚠️")
+                            else:
+                                _mostra_errore_pdf(error, "questa verifica")
+                    except Exception as e:
+                        _mostra_errore("Non sono riuscito a creare l'anteprima", e)
+
+            with c_share:
+                if st.button("Condividi", icon=":material/link:", use_container_width=True,
+                             key=f"share_{_vid}_{i}"):
+                    link = _genera_link_condivisione(_vid)
+                    if link:
+                        st.caption("Link per i colleghi (vale 30 giorni): copialo con l'icona a destra.")
+                        st.code(link, language=None)
+
+            with c_menu.popover("⋯", help="Rinomina o elimina questa verifica"):
+                nuovo_nome = st.text_input(
+                    "Nome della verifica",
+                    value=verifica.get("argomento", ""),
+                    key=f"rename_input_{_vid}_{i}",
+                )
+                if st.button("Salva nome", icon=":material/save:", key=f"save_rename_{_vid}_{i}",
+                             use_container_width=True):
+                    if nuovo_nome.strip() and _rinomina_verifica(_vid, nuovo_nome.strip()):
+                        st.rerun()
+                st.divider()
+                # Elimina: conferma esplicita in due passaggi
+                if not st.session_state.get(f"confirm_delete_{_vid}", False):
+                    if st.button("Elimina", icon=":material/delete:", key=f"delete_{_vid}_{i}",
+                                 use_container_width=True):
+                        st.session_state[f"confirm_delete_{_vid}"] = True
+                        st.rerun()
+                else:
+                    st.warning("Eliminare definitivamente questa verifica?")
+                    _c_si, _c_no = st.columns(2)
+                    if _c_si.button("Sì, elimina", key=f"delete_yes_{_vid}_{i}", type="primary", use_container_width=True):
+                        try:
+                            res = supabase_admin.table("verifiche_storico").delete()\
+                                .eq("id", _vid).eq("user_id", _uid).execute()
                             st.session_state.pop(f"confirm_delete_{_vid}", None)
-                            st.rerun()
+                            if res.data:
+                                st.session_state._storico_refresh += 1
+                                st.rerun()
+                            else:
+                                st.error("Non sono riuscito a eliminare la verifica. Riprova.", icon="⚠️")
+                        except Exception as e:
+                            _mostra_errore("Non sono riuscito a eliminare la verifica", e)
+                    if _c_no.button("No", key=f"delete_no_{_vid}_{i}", use_container_width=True):
+                        st.session_state.pop(f"confirm_delete_{_vid}", None)
+                        st.rerun()
 
-                with col7:
-                    # Condivisione
-                    if st.button("Condividi", icon=":material/link:", use_container_width=True, key=f"share_{verifica.get('id')}_{i}"):
-                        link = _genera_link_condivisione(verifica.get("id"))
-                        if link:
-                            st.success("🔗 Link generato!")
-                            st.markdown(
-                                f"""
-                                <div style="
-                                    background: {T['success']}18;
-                                    border: 1px solid {T['success']};
-                                    border-radius: 8px;
-                                    padding: 1rem;
-                                    margin: 0.5rem 0;
-                                ">
-                                    <div style="font-size: 0.9rem; color: {T['success']}; margin-bottom: 0.5rem;">
-                                        📋 Link da condividere:
-                                    </div>
-                                    <div style="
-                                        background: {T['card']}; color: {T['text']};
-                                        border: 1px solid {T['border2']};
-                                        border-radius: 4px;
-                                        padding: 0.5rem;
-                                        font-family: monospace;
-                                        font-size: 0.8rem;
-                                        word-break: break-all;
-                                    ">
-                                        {link}
-                                    </div>
-                                    <div style="margin-top: 0.5rem;">
-                                        <button onclick="navigator.clipboard.writeText('{link}')" 
-                                                style="
-                                                    background: {T['success']};
-                                                    color: white;
-                                                    border: none;
-                                                    padding: 0.25rem 0.5rem;
-                                                    border-radius: 4px;
-                                                    font-size: 0.8rem;
-                                                    cursor: pointer;
-                                                ">
-                                            📋 Copia link
-                                        </button>
-                                    </div>
-                                </div>
-                                """,
-                                unsafe_allow_html=True
-                            )
-                
-                # Divider tra verifiche (tranne l'ultima)
-                if i < min(len(verifiche_filtrate), _n_mostra) - 1:
-                    st.markdown("<div style='height:1.1rem'></div>", unsafe_allow_html=True)
-        if len(verifiche_filtrate) > _n_mostra:
-            if st.button(f"Mostra altre ({len(verifiche_filtrate) - _n_mostra})", key="storico_mostra_altre", use_container_width=True):
-                st.session_state["_storico_mostra"] = _n_mostra + 8
-                st.rerun()
-    else:
-        st.info("📝 Nessuna verifica trovata. Inizia a creare la tua prima verifica!")
-    
-    # Pulsante per creare nuova verifica
-    st.markdown("---")
-    col_center = st.columns([1, 2, 1])
-    with col_center[1]:
-        if st.button("🆕 Crea Nuova Verifica", type="primary", use_container_width=True):
-            st.session_state.stage = STAGE_INPUT
-            st.session_state.input_percorso = None
+            spazio("lg")
+
+    if len(verifiche_filtrate) > _n_mostra:
+        if st.button(f"Mostra altre ({len(verifiche_filtrate) - _n_mostra})", key="storico_mostra_altre", use_container_width=True):
+            st.session_state["_storico_mostra"] = _n_mostra + 8
             st.rerun()
-
 
 class _FileInMemoria:
     """File caricato tenuto in memoria: stessa interfaccia minima di un UploadedFile
@@ -1517,7 +1532,7 @@ class _FileInMemoria:
         return self._dati
 
 
-def _render_percorso_b_form():
+def _render_percorso_b_form(_prog_placeholder):
     """
     Percorso B — Layout a colonna singola con upload inline:
     ┌─────────────────────────────────────────────────┐
@@ -1617,8 +1632,8 @@ def _render_percorso_b_form():
             # ── Dashboard: sezione form (layout bilanciato) ───────────────────────
             # Section header rimosso per evitare ripetizioni
 
-            # Avanzamento: subito sotto il titolo (in basso, sotto il pulsante, non si vedeva)
-            _prog_placeholder = st.empty()
+            # L'avanzamento e gli errori stanno in cima alla pagina: il segnaposto
+            # (_prog_placeholder) lo crea _render_stage_input, fuori da questo form.
 
             _mat_list = MATERIE + ["✏️ Altra materia..."]
             _mat_prev = _prev.get("materia") or _udef.get("materia", "Matematica")
@@ -1703,18 +1718,18 @@ def _render_percorso_b_form():
             # Controlla se c'è già un valore in session state per evitare il warning
             if "argomento_area_b" not in st.session_state:
                 argomento_raw = st.text_area(
-                    "richiesta",
+                    "Cosa vuoi nella verifica? (obbligatorio)",
                     value=_arg_default,
                     placeholder=_esempio,
-                    height=190,
+                    height=150,
                     label_visibility="collapsed",
                     key="argomento_area_b",
                 )
             else:
                 argomento_raw = st.text_area(
-                    "richiesta",
+                    "Cosa vuoi nella verifica? (obbligatorio)",
                     placeholder=_esempio,
-                    height=190,
+                    height=150,
                     label_visibility="collapsed",
                     key="argomento_area_b",
                 )
@@ -1742,7 +1757,7 @@ def _render_percorso_b_form():
             _dur_salvata = DURATA_DEFAULT
             st.markdown('<div class="opt-label">Quanto deve essere lunga?</div>', unsafe_allow_html=True)
             durata_nome = st.radio(
-                "Durata", _nomi_dur, index=_nomi_dur.index(_dur_salvata),
+                "Quanto deve essere lunga la verifica?", _nomi_dur, index=_nomi_dur.index(_dur_salvata),
                 format_func=lambda n: etichetta_durata(n, difficolta),
                 horizontal=True, key="sel_durata_b", label_visibility="collapsed",
             )
@@ -1765,7 +1780,7 @@ def _render_percorso_b_form():
 
             with st.expander("Altre opzioni (numero esercizi, punteggi)", expanded=False, icon=":material/tune:"):
 
-                st.markdown('<div class="opt-label">Numero esatto di esercizi</div>', unsafe_allow_html=True)
+                st.markdown('<div class="opt-label">Cambia il numero di esercizi</div>', unsafe_allow_html=True)
                 num_esercizi = st.selectbox(
                     "Numero esercizi",
                     options=_n_opts,
@@ -1786,7 +1801,7 @@ def _render_percorso_b_form():
                     )
 
                 _tog = st.toggle(
-                    "Aggiungi punteggi e griglia di valutazione",
+                    "Mostra i punti accanto a ogni domanda",
                     value=mostra_punteggi, key="toggle_punteggi_b",
                 )
                 mostra_punteggi = _tog
@@ -1884,13 +1899,13 @@ def _render_percorso_b_form():
 
             # ── CTA: Genera Bozza ─────────────────────────────────────────────────
             _manca_arg = not argomento and not _fm
-            st.markdown("<div style='height:.9rem'></div>", unsafe_allow_html=True)
+            spazio("lg")
 
             if _manca_arg and not _limite:
                 st.markdown(
-                    f'<div style="text-align:center;font-size:.82rem;color:{T["warn"]};'
+                    f'<div style="text-align:center;font-size:.88rem;color:{T["text2"]};'
                     f'font-family:DM Sans,sans-serif;margin-bottom:.3rem;">'
-                    f'Inserisci l\'argomento per continuare.</div>',
+                    f'✍️ Scrivi l\'argomento nel riquadro per continuare.</div>',
                     unsafe_allow_html=True,
                 )
 
@@ -1909,18 +1924,21 @@ def _render_percorso_b_form():
                 _render_limite_raggiunto(
                     T, LIMITE_MENSILE, _reset_label(*_giorni_al_reset()), FEEDBACK_FORM_URL,
                 )
+            elif not _illimitato and _restanti is not None:
+                # il contatore sta anche nella sidebar, ma di solito è chiusa
+                st.markdown(
+                    f'<div style="text-align:center;font-size:.85rem;color:{T["text2"]};'
+                    f'font-family:DM Sans,sans-serif;margin-top:.4rem;">'
+                    f'Ti {"resta" if _restanti == 1 else "restano"} <b>{_restanti}</b> '
+                    f'{"verifica" if _restanti == 1 else "verifiche"} gratuit{"a" if _restanti == 1 else "e"} '
+                    f'questo mese.</div>',
+                    unsafe_allow_html=True,
+                )
 
             # Avviso PDF non disponibile
             if not LATEX_AVAILABLE:
-                st.markdown(
-                    '<div style="background:' + T["warn"] + '22;border:1px solid ' + T["warn"] + ';border-radius:8px;'
-                    f'padding:.8rem;margin:.5rem 0;">'
-                    '<div style="text-align:center;font-size:.85rem;color:' + T["warn"] + ';font-weight:600;">'
-                    f'⚠️ PDF non disponibile - LaTeX non installato</div>'
-                    '<div style="text-align:center;font-size:.75rem;color:' + T["warn"] + ';margin-top:.2rem;">'
-                    f'Potrai generare la verifica ma non scaricare il PDF</div></div>',
-                    unsafe_allow_html=True,
-                )
+                messaggio("avviso", "Il PDF non è disponibile su questo server (manca LaTeX): "
+                                    "puoi creare la verifica ma non scaricare il PDF.")
 
     # ── Costruisci nota finale con istruzioni per-file ────────────────────────
     _istr_per_file_testi = []
@@ -1978,31 +1996,43 @@ def _lancia_generazione(
     """
     calibrazione = CALIBRAZIONE_SCUOLA.get(difficolta, "")
     _t_start = time.time()
-    _n_steps = 5   # titolo · esercizi · QA · PDF · salvataggio
+    _n_steps = 4   # titolo · esercizi · controllo · PDF
     _step    = [0]
-    # Usa il placeholder passato (vicino al pulsante) oppure crea uno nuovo
+    # Usa il placeholder passato (in cima alla pagina) oppure crea uno nuovo
     _prog    = prog_placeholder if prog_placeholder is not None else st.empty()
+
+    def _passo_leggibile(testo: str) -> str:
+        """Traduce il messaggio interno della pipeline in una frase per il docente."""
+        t = (testo or "").lower()
+        if "titolo" in t:
+            return "Scelgo il titolo"
+        if "esercizi" in t and "generazione" in t:
+            return "Scrivo gli esercizi"
+        if "controllo" in t or "qualit" in t:
+            return "Ricontrollo gli esercizi"
+        if "pdf" in t:
+            return "Preparo il PDF"
+        return "Ancora un momento"
 
     def _avanza(testo):
         _step[0] += 1
-        perc  = int(min(_step[0] / _n_steps, 0.97) * 100)
+        perc  = int(min(_step[0] / _n_steps, 0.95) * 100)
         _acc  = T["accent"]
         _bg   = T["border"]
         _txt  = T["text2"]
         _prog.markdown(
-            f'<div style="margin:.6rem 0 1rem 0;padding:.7rem 1rem;'
-            f'background:{T["card"]};border:1px solid {T["border2"]};'
-            f'border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);">'
-            f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
-            f'<div style="width:8px;height:8px;border-radius:50%;background:{_acc};'
-            f'animation:pulse-dot 1.2s ease-in-out infinite;flex-shrink:0;"></div>'
-            f'<div style="font-size:.85rem;font-weight:600;color:{_txt};'
-            f'font-family:DM Sans,sans-serif;">{testo}</div>'
-            f'<div style="margin-left:auto;font-size:.75rem;color:{_txt};opacity:.6;">{perc}%</div>'
-            f'</div>'
-            f'<div style="background:{_bg};border-radius:100px;height:6px;overflow:hidden;">'
-            f'<div style="background:linear-gradient(90deg,{_acc},{_acc}cc);'
-            f'width:{perc}%;height:100%;border-radius:100px;transition:width .5s cubic-bezier(.4,0,.2,1);"></div>'
+            f'<style>@keyframes vf-scorri{{0%{{background-position:200% 0}}100%{{background-position:-200% 0}}}}</style>'
+            f'<div role="status" aria-live="polite" style="margin:.4rem 0 1.2rem 0;padding:1.1rem 1.3rem;'
+            f'background:{T["card"]};border:1px solid {T["border2"]};border-radius:14px;">'
+            f'<div style="font-family:DM Sans,sans-serif;font-size:1.05rem;font-weight:800;'
+            f'color:{T["text"]};margin-bottom:.15rem;">Sto creando la tua verifica…</div>'
+            f'<div style="font-size:.9rem;color:{_txt};font-family:DM Sans,sans-serif;margin-bottom:.8rem;">'
+            f'{_esc(_passo_leggibile(testo))} · di solito ci vuole circa un minuto. '
+            f'Non toccare e non chiudere la pagina.</div>'
+            f'<div style="background:{_bg};border-radius:100px;height:8px;overflow:hidden;">'
+            f'<div style="width:{perc}%;height:100%;border-radius:100px;'
+            f'background:linear-gradient(90deg,{_acc},{_acc}88,{_acc});background-size:200% 100%;'
+            f'animation:vf-scorri 2.2s linear infinite;transition:width .5s ease;"></div>'
             f'</div></div>',
             unsafe_allow_html=True
         )
@@ -2085,20 +2115,10 @@ def _lancia_generazione(
             st.session_state.preview_page   = 0
             st.session_state.last_preview_ts = st.session_state.verifiche["A"].get("pdf_ts") or 0
 
-        _prog.markdown(
-            '<div style="margin:.6rem 0 1rem 0;">'
-            '<div style="font-size:.82rem;font-weight:600;color:' + T["success"] + ';'
-            'font-family:DM Sans,sans-serif;margin-bottom:6px;">'
-            '✅ Bozza pronta! Ora puoi rivedere gli esercizi.</div>'
-            '<div style="background:' + T["border"] + ';border-radius:100px;height:8px;overflow:hidden;">'
-            '<div style="background:' + T["success"] + ';width:100%;height:100%;border-radius:100px;"></div>'
-            '</div></div>',
-            unsafe_allow_html=True
-        )
         _prog.empty()
 
         try:
-            supabase_admin.table("verifiche_storico").insert({
+            _ris_ins = supabase_admin.table("verifiche_storico").insert({
                 "user_id":        st.session_state.utente.id,
                 "materia":        materia_scelta,
                 "argomento":      ris["titolo"],
@@ -2113,10 +2133,16 @@ def _lancia_generazione(
                 "file_mode":       st.session_state.get("file_mode"),
             }).execute()
             st.session_state._storico_refresh += 1
-            st.toast("✅ Bozza salvata!", icon="💾")
+            # id della riga appena creata: serve per aggiungerle poi Fila B e BES/DSA
+            st.session_state["_storico_id"] = (_ris_ins.data or [{}])[0].get("id")
+            # st.toast/st.warning qui si perderebbero con il rerun: li mostra la schermata del risultato
+            st.session_state["_toast_dopo"] = ("Salvata in «Le mie verifiche»", "💾")
         except Exception as _e:
             logger.warning(f"Salvataggio storico non riuscito: {_e}")
-            st.warning("⚠️ La bozza è pronta, ma non sono riuscito a salvarla nello storico.")
+            st.session_state["_avviso_dopo"] = (
+                "La verifica è pronta, ma non sono riuscito a salvarla in «Le mie verifiche»: "
+                "scarica subito il PDF."
+            )
 
         # ── IDEA #1: Salva preferenze silenti dopo generazione riuscita ────
         _save_user_defaults_silent(
@@ -2132,11 +2158,13 @@ def _lancia_generazione(
         st.rerun()
 
     except Exception as _e:
+        # L'errore si mostra in cima alla pagina, sopra il form (che il rerun ridisegna):
+        # sotto il pulsante non si vedrebbe, perché la pagina è scorsa in alto.
         _prog.empty()
-        _mostra_errore(
-            "Non sono riuscito a creare la verifica", _e,
-            riprova_flag="_riprova_genera", riprova_key="riprova_genera",
-        )
+        st.session_state["_esito_gen"] = {
+            "azione": "Non sono riuscito a creare la verifica", "exc": _e,
+        }
+        st.rerun()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2146,6 +2174,14 @@ def _lancia_generazione(
 
 def _render_stage_input():
     # La schermata di creazione e' anche la home: titolo breve + form.
+    # La sidebar è chiusa all'avvio: l'accesso allo storico sta anche qui, in alto a destra.
+    _c_vuota, _c_storico_top = st.columns([3, 1])
+    with _c_storico_top:
+        if st.button("Le mie verifiche", icon=":material/folder_open:", type="tertiary",
+                     use_container_width=True, key="top_storico"):
+            st.session_state["_stage_prima"] = STAGE_INPUT
+            st.session_state.stage = STAGE_MIE_VERIFICHE
+            st.rerun()
     st.markdown(
         f'<div class="vf-narrow" style="text-align:center;padding:.2rem 0 1rem;">'
         f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
@@ -2155,12 +2191,26 @@ def _render_stage_input():
         unsafe_allow_html=True,
     )
 
-    (
-        argomento, materia_scelta, difficolta,
-        mostra_punteggi, con_griglia, punti_totali,
-        num_esercizi_totali, note_extra, genera_btn,
-        _prog_ph_b, durata_str, durata_nome,
-    ) = _render_percorso_b_form()
+    # In cima: attesa della generazione ed eventuale errore dell'ultimo tentativo
+    _prog_ph_b = st.empty()
+    _esito = st.session_state.pop("_esito_gen", None)
+    if _esito:
+        with _prog_ph_b.container():
+            _mostra_errore(
+                _esito["azione"], _esito["exc"],
+                riprova_flag="_riprova_genera", riprova_key="riprova_genera",
+            )
+
+    # Il form sta in un contenitore svuotabile: durante la generazione sparisce, così un clic
+    # o un tocco per sbaglio non riavvia la pagina e non fa perdere la richiesta.
+    _form_ph = st.empty()
+    with _form_ph.container():
+        (
+            argomento, materia_scelta, difficolta,
+            mostra_punteggi, con_griglia, punti_totali,
+            num_esercizi_totali, note_extra, genera_btn,
+            _prog_fac_ph, durata_str, durata_nome,
+        ) = _render_percorso_b_form(_prog_ph_b)
 
     _riprova      = st.session_state.pop("_riprova_genera", False)
     _dopo_analisi = st.session_state.pop("_genera_dopo_analisi", False)
@@ -2256,6 +2306,7 @@ def _render_stage_input():
     else:
         imgs_es_finale = imgs_es
 
+    _form_ph.empty()   # da qui il form non c'è più: resta solo la card di attesa
     _lancia_generazione(
         materia_scelta=materia_scelta,
         argomento=argomento,
@@ -2769,25 +2820,12 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 """, height=0, scrolling=False)
 
     st.markdown(
-        '<div style="background:linear-gradient(135deg,' + T["accent2"] + ' 0%,' + T["accent"] + ' 100%);'
-        'border-radius:16px;padding:1.1rem 1.4rem;margin-bottom:.9rem;">'
-        '<div style="display:flex;align-items:center;gap:14px;">'
-        '<span style="font-size:2rem;">✏️</span>'
-        '<div style="flex:1;">'
-        '<div style="font-family:DM Sans,sans-serif;font-size:1.35rem;font-weight:900;color:#fff;letter-spacing:-.01em;">'
-        'Revisione Bozza</div>'
-        '<div style="font-size:1rem;color:#ffffffcc;margin-top:3px;">'
-        + materia_str + ' · ' + scuola_str + ' · ' + argomento_str + '</div>'
-        '</div>'
-        '<div style="background:#ffffff22;border:1px solid #ffffff44;border-radius:18px;'
-        'padding:5px 15px;font-size:.88rem;font-weight:800;color:#fff;white-space:nowrap;">'
-        + str(n_blocks) + ' esercizi</div>'
-        '</div>'
-        '<div style="font-size:.88rem;color:#ffffff99;margin-top:.5rem;padding-top:.45rem;'
-        'border-top:1px solid #ffffff22;">'
-        'Seleziona l\'esercizio, modifica con l\'AI o cambia i dati. '
-        'Premi <strong style="color:#fff;">Conferma e genera PDF</strong> quando sei soddisfatto.'
-        '</div></div>',
+        f'<div style="text-align:center;margin:.2rem 0 1rem;">'
+        f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
+        f'color:{T["text"]};letter-spacing:-.025em;line-height:1.15;">Modifica gli esercizi</div>'
+        f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin-top:.35rem;">'
+        f'{_esc(materia_str)} · {_esc(scuola_str)} · {_esc(argomento_str)} · {n_blocks} esercizi<br>'
+        f'Ogni modifica rifà subito il PDF: quando hai finito torna al download.</div></div>',
         unsafe_allow_html=True
     )
 
@@ -2807,10 +2845,25 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
     idx = st.session_state.review_sel_idx
     if idx >= n_blocks: idx = 0
 
-    sel_label = st.selectbox(
-        "Seleziona esercizio da rivedere:",
-        labels, index=idx, key="review_selectbox"
-    )
+    # ◀ ▶ per scorrere gli esercizi; la tendina resta per saltare a uno qualsiasi
+    _rv_p, _rv_s, _rv_n = st.columns([1, 7, 1], vertical_alignment="bottom", gap="small")
+    with _rv_p:
+        if st.button("◀", key="rev_prec", use_container_width=True, disabled=(idx <= 0),
+                     help="Esercizio precedente"):
+            st.session_state["review_selectbox"] = labels[idx - 1]
+            st.session_state.review_sel_idx = idx - 1
+            st.rerun()
+    with _rv_n:
+        if st.button("▶", key="rev_succ", use_container_width=True, disabled=(idx >= n_blocks - 1),
+                     help="Esercizio successivo"):
+            st.session_state["review_selectbox"] = labels[idx + 1]
+            st.session_state.review_sel_idx = idx + 1
+            st.rerun()
+    with _rv_s:
+        sel_label = st.selectbox(
+            "Esercizio da modificare",
+            labels, index=idx, key="review_selectbox"
+        )
     idx = labels.index(sel_label)
     st.session_state.review_sel_idx = idx
 
@@ -2871,7 +2924,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             elif idx in esercizi_con_grafico_mancante(blocks):
                 st.warning(
                     "Questo esercizio rimanda a un grafico che non è stato disegnato. "
-                    "Premi «Rigenera» per riprovare, oppure correggi il testo in «Altre modifiche».",
+                    "Premi «Cambia esercizio» per riprovare, oppure correggi il testo in «Altre modifiche».",
                     icon="📉",
                 )
 
@@ -2937,24 +2990,8 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 
             # ── Azioni sull'esercizio: rigenera, numeri, più facile/difficile, elimina ──
             _marker = '<div class="btn-outline-accent-marker" style="display:none;height:0;line-height:0"></div>'
-            _qr_col1, _qr_col2 = st.columns(2, gap="small")
-            with _qr_col1:
-                st.markdown(_marker, unsafe_allow_html=True)
-                quick_regen = st.button(
-                    "Cambia i numeri",
-                    key=f"quick_regen_{idx}",
-                    use_container_width=True,
-                    help="Stesso esercizio con valori e dati numerici nuovi.",
-                )
-            with _qr_col2:
-                st.markdown(_marker, unsafe_allow_html=True)
-                cambia_tutto = st.button(
-                    "Rigenera",
-                    key=f"cambia_tutto_{idx}",
-                    use_container_width=True,
-                    help="Un esercizio completamente diverso, sullo stesso argomento.",
-                )
-            _lv_col1, _lv_col2, _lv_col3 = st.columns(3, gap="small")
+            # Prima ciò che si usa più spesso (livello), poi le sostituzioni, in fondo l'azione distruttiva
+            _lv_col1, _lv_col2 = st.columns(2, gap="small")
             with _lv_col1:
                 st.markdown(_marker, unsafe_allow_html=True)
                 piu_facile = st.button(
@@ -2967,13 +3004,30 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     "Più difficile", key=f"piu_difficile_{idx}", use_container_width=True,
                     help="Numeri meno immediati e un passaggio di ragionamento in più.",
                 )
-            with _lv_col3:
+            _qr_col1, _qr_col2 = st.columns(2, gap="small")
+            with _qr_col1:
                 st.markdown(_marker, unsafe_allow_html=True)
-                elimina = st.button(
-                    "Elimina", key=f"elimina_{idx}", use_container_width=True,
-                    disabled=(n_blocks <= 1),
-                    help="Toglie questo esercizio e ridistribuisce i punti sugli altri.",
+                quick_regen = st.button(
+                    "Cambia i numeri",
+                    key=f"quick_regen_{idx}",
+                    use_container_width=True,
+                    help="Stesso esercizio con valori e dati numerici nuovi.",
                 )
+            with _qr_col2:
+                st.markdown(_marker, unsafe_allow_html=True)
+                cambia_tutto = st.button(
+                    "Cambia esercizio",
+                    key=f"cambia_tutto_{idx}",
+                    use_container_width=True,
+                    help="Un esercizio completamente diverso, sullo stesso argomento.",
+                )
+            st.caption("«Cambia i numeri» tiene lo stesso esercizio con dati nuovi; "
+                       "«Cambia esercizio» ne propone uno diverso sullo stesso argomento.")
+            elimina = st.button(
+                "Elimina questo esercizio", key=f"elimina_{idx}", type="tertiary",
+                icon=":material/delete:", disabled=(n_blocks <= 1),
+                help="Toglie questo esercizio e ridistribuisce i punti sugli altri.",
+            )
             if elimina:
                 st.session_state["_conf_elimina"] = idx
             elif st.session_state.get("_conf_elimina") not in (None, idx):
@@ -3000,20 +3054,16 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             elif cambia_tutto:
                 _action_ph.info(f"Generazione nuovo esercizio {idx+1}…")
 
-            st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
+            spazio("sm")
 
             # ── Altre modifiche — descrizione libera, chiusa di default ──────────
             with st.expander("✏️ Altre modifiche", expanded=False):
                 st.markdown(
                     '<div style="font-size:.95rem;color:' + T["text2"] + ';margin-bottom:.5rem;'
                     'font-family:DM Sans,sans-serif;line-height:1.5;">'
-                    'Descrivi la modifica — l\'AI rigenererà solo questo esercizio.'
-                    '</div>'
-                    '<div style="font-size:.9rem;color:' + T["warn"] + ';margin-bottom:.7rem;'
-                    'font-family:DM Sans,sans-serif;font-weight:600;'
-                    'background:' + T["warn"] + '18;border:1px solid ' + T["warn"] + '44;'
-                    'border-radius:8px;padding:.4rem .7rem;">'
-                    'Per cambiare i punteggi usa «Cambia i punteggi» qui sotto.</div>',
+                    'Descrivi la modifica — l\'AI rigenererà solo questo esercizio. '
+                    'I punteggi si cambiano più sotto, in «Cambia i punteggi».'
+                    '</div>',
                     unsafe_allow_html=True
                 )
                 istruzione = st.text_area(
@@ -3102,7 +3152,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             st.image(imgs[_pg], use_container_width=True)
 
             if n_pages > 1:
-                st.markdown("<div style='height:.2rem'></div>", unsafe_allow_html=True)
+                spazio("xs")
                 _pc, _pm, _pn = st.columns([1, 2, 1])
                 with _pc:
                     if st.button("◀", key="prev_pg", use_container_width=True,
@@ -3303,41 +3353,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             st.session_state[f"_undo_block_{idx}"] = dict(st.session_state.review_blocks[idx])
             _loading_ph.empty()
             
-            # Container elegante per la barra di stato
-            with _loading_ph.container():
-                # Header animato
-                st.markdown(f"""
-                <div style="
-                    background: linear-gradient(135deg, {T['accent2']} 0%, {T['accent']} 100%);
-                    border-radius: 12px;
-                    padding: 1rem;
-                    margin-bottom: 1rem;
-                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
-                    animation: pulse 2s infinite;
-                ">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="
-                            width: 24px; height: 24px;
-                            border: 3px solid rgba(255,255,255,0.3);
-                            border-top: 3px solid white;
-                            border-radius: 50%;
-                            animation: spin 1s linear infinite;
-                        "></div>
-                        <div style="color: white; font-family: 'DM Sans', sans-serif; font-weight: 600;">
-                            🎨 Modifica esercizio {idx+1} in corso...
-                        </div>
-                    </div>
-                    <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-top: 0.5rem; font-family: 'DM Sans', sans-serif;">
-                        L'AI sta analizzando la richiesta e rigenerando l'esercizio...
-                    </div>
-                </div>
-                
-                <style>
-                @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
-                @keyframes pulse {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.8; }} 100% {{ opacity: 1; }} }}
-                </style>
-                """, unsafe_allow_html=True)
-            
+            _loading_ph.info(f"Modifico l'esercizio {idx+1}… ci vogliono pochi secondi.", icon="⏳")
             try:
                 model_rw_obj = crea_modello(modello_rw).per("modifica")
                 resp  = model_rw_obj.generate_content(_prompt_rw)
@@ -3371,42 +3387,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 if _pdf_rw:
                     st.session_state.force_preview_refresh = True
 
-                    # Messaggio di successo elegante
-                    _loading_ph.markdown(f"""
-                    <div style="
-                        background: linear-gradient(135deg, {T['success']} 0%, {T['success']} 100%);
-                        border-radius: 12px;
-                        padding: 1rem;
-                        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
-                        animation: slideIn 0.5s ease-out;
-                    ">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="
-                                width: 24px; height: 24px;
-                                background: white;
-                                border-radius: 50%;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-size: 14px;
-                            ">✓</div>
-                            <div style="color: white; font-family: 'DM Sans', sans-serif; font-weight: 600;">
-                                🎉 Modifica applicata con successo!
-                            </div>
-                        </div>
-                        <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-top: 0.5rem; font-family: 'DM Sans', sans-serif;">
-                            L'esercizio {idx+1} è stato aggiornato e il PDF è stato rigenerato.
-                        </div>
-                    </div>
-                    
-                    <style>
-                    @keyframes slideIn {{ 
-                        0% {{ transform: translateY(-20px); opacity: 0; }} 
-                        100% {{ transform: translateY(0); opacity: 1; }} 
-                    }}
-                    </style>
-                    """, unsafe_allow_html=True)
-                    
+                    # (nessun messaggio di successo qui: il rerun lo cancellerebbe; basta il toast)
                     st.toast(f"Esercizio {idx+1} aggiornato!", icon="✅"); st.rerun()
                 else:
                     _loading_ph.empty()
@@ -3521,10 +3502,13 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 _tit = _clean_title(re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]))
                 for _j, (_lbl, _short, _pt) in enumerate(_items_rc):
                     _testo = (_short or "").strip()
+                    if _testo in ("", "[formula]"):
+                        # riga fatta solo di formula: "[formula]" non dice nulla al docente
+                        _testo = "(formula)" if _pt else "(opzione di risposta)"
                     _righe.append((_i, _j))
                     _dati.append({
                         "Esercizio": f"{_i+1}. {_tit[:30]}" if _j == 0 else "",
-                        "Richiesta": (f"{_lbl} {_testo[:46]}…" if len(_testo) > 46
+                        "Richiesta": (f"{_lbl} {_testo[:70]}…" if len(_testo) > 70
                                       else f"{_lbl} {_testo}").strip(),
                         "Punti": int(_pt),
                     })
@@ -3601,19 +3585,18 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     else:
                         _mostra_errore_pdf(_err_rc, "questa verifica")
 
-    # ── Pulsante CONFERMA — oro, piena larghezza ──────────────────────────────
-    st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
-    st.markdown('<div class="btn-confirm-gold">', unsafe_allow_html=True)
+    # ── Pulsante principale della schermata: torna al PDF ─────────────────────
+    spazio("md")
     confirm_pdf = st.button(
-        "🎯 Conferma e genera PDF finale",
+        "Fatto: torna al PDF",
+        icon=":material/check:",
         type="primary",
         use_container_width=True,
         key="btn_confirm_final"
     )
-    st.markdown('</div>', unsafe_allow_html=True)
 
     if confirm_pdf:
-        with st.spinner("Generazione PDF finale in corso… potrebbe richiedere qualche secondo"):
+        with st.spinner("Preparo il PDF aggiornato… ancora qualche secondo"):
             _pts_custom = st.session_state.get("recalibra_pts", [])
             pdf_bytes, err = _ricompila_verifica_a(
                 mostra_punteggi, con_griglia, punti_totali, riscala_totale=True,
@@ -3626,11 +3609,22 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 _mostra_errore_pdf(err, "questa verifica")
 
     # ── Pulsante RICONFIGURA — piccolo, discreto, sotto ───────────────────────
-    st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
+    spazio("sm")
     st.markdown('<div class="btn-riconfigura-small">', unsafe_allow_html=True)
-    if st.button("← Riconfigura", use_container_width=False, key="btn_riconfigura"):
-        st.session_state.stage = STAGE_INPUT; st.rerun()
+    if st.button("← Ricomincia da capo", use_container_width=False, key="btn_riconfigura"):
+        st.session_state["_conf_ricomincia"] = True
     st.markdown('</div>', unsafe_allow_html=True)
+    if st.session_state.get("_conf_ricomincia"):
+        st.warning("Tornando al form si perdono le modifiche fatte agli esercizi. La verifica originale resta in «Le mie verifiche».")
+        _rc1, _rc2 = st.columns(2, gap="small")
+        with _rc1:
+            if st.button("Sì, ricomincia", key="btn_ricomincia_si", use_container_width=True):
+                st.session_state.pop("_conf_ricomincia", None)
+                st.session_state.stage = STAGE_INPUT; st.rerun()
+        with _rc2:
+            if st.button("No, resta qui", key="btn_ricomincia_no", use_container_width=True):
+                st.session_state.pop("_conf_ricomincia", None)
+                st.rerun()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -3687,49 +3681,83 @@ def _render_stage_final():
         except Exception as _e:
             logger.error(f"Errore aggiornamento anteprima (final): {_e}")
 
+    # ── Messaggi lasciati dalla schermata precedente (un rerun li avrebbe cancellati) ──
+    _toast_d = st.session_state.pop("_toast_dopo", None)
+    if _toast_d:
+        st.toast(_toast_d[0], icon=_toast_d[1])
+    _avviso_d = st.session_state.pop("_avviso_dopo", None)
+    if _avviso_d:
+        st.warning(_avviso_d, icon="⚠️")
+
     # ── Intestazione compatta ─────────────────────────────────────────────────
     st.markdown(
         f'<div style="text-align:center;margin:.2rem 0 1.1rem;">'
-        f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:900;'
+        f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
         f'color:{T["text"]};letter-spacing:-.025em;line-height:1.15;">'
         f'<span style="display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;'
         f'border-radius:50%;background:{T["success"]};color:#fff;font-size:1rem;margin-right:.55rem;'
         f'vertical-align:.12em;">✓</span>La verifica è pronta</div>'
         f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin-top:.35rem;">'
-        + mat_str + ' &nbsp;·&nbsp; ' + scu_str + ' &nbsp;·&nbsp; ' + arg_str +
+        + _esc(mat_str) + ' &nbsp;·&nbsp; ' + _esc(scu_str) + ' &nbsp;·&nbsp; ' + _esc(arg_str) +
         f'</div></div>',
         unsafe_allow_html=True
     )
 
     # ═══════════════════════════════════════════════════════════════════════════
-    #  RISULTATO — anteprima a sinistra, scarica e modifica a destra
+    #  AZIONI PRINCIPALI — sopra l'anteprima: sempre in vista, anche su telefono
     # ═══════════════════════════════════════════════════════════════════════════
     _fname_a = arg_str + "_FilaA"
-    _col_prev, _col_act = st.columns([3, 2], gap="large")
+    _az_dl, _az_mod, _az_new = st.columns([2, 1.3, 1.1], gap="small")
+    with _az_dl:
+        if vA.get("pdf"):
+            st.markdown('<div class="dl-cta-wrap">', unsafe_allow_html=True)
+            _dl(
+                label=f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}",
+                data=vA["pdf"],
+                file_name=_fname_a + ".pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                type="primary",
+                key="dl_pdf_hero_A",
+                on_click="ignore",
+                help="Scarica il PDF della verifica, già formattato e pronto per la stampa.",
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.warning("Il PDF non è ancora pronto. Apri «Modifica gli esercizi»: ogni modifica lo rifà.")
+    with _az_mod:
+        if st.button("Modifica gli esercizi", icon=":material/edit:", key="final_edit",
+                     use_container_width=True,
+                     help="Cambia, rendi più facile o più difficile, o elimina i singoli esercizi."):
+            st.session_state.stage = STAGE_REVIEW
+            st.rerun()
+    with _az_new:
+        if st.button("Nuova verifica", icon=":material/add:", key="btn_new_top",
+                     use_container_width=True):
+            _nuova_verifica()
+    st.markdown(
+        f'<div style="text-align:center;font-size:.85rem;color:{T["text2"]};margin:.5rem 0 1rem;'
+        f'line-height:1.5;font-family:DM Sans,sans-serif;">Controlla sempre il contenuto prima di '
+        f'distribuirlo agli studenti. La verifica è salvata in «Le mie verifiche».</div>',
+        unsafe_allow_html=True
+    )
 
+    _senza_grafico = esercizi_con_grafico_mancante(st.session_state.get("review_blocks", []))
+    if _senza_grafico:
+        st.warning(
+            "Attenzione: l'esercizio " + ", ".join(str(i + 1) for i in _senza_grafico)
+            + " cita un grafico che nel PDF non c'è. Apri «Modifica gli esercizi» e usa «Cambia esercizio».",
+            icon="📉",
+        )
+
+    # ── Anteprima: tutte le pagine una sotto l'altra ──────────────────────────
+    _, _col_prev, _ = st.columns([1, 3, 1])
     with _col_prev:
         _imgs_f = st.session_state.get("preview_images") or []
         if _imgs_f:
-            _n_pg = len(_imgs_f)
-            _pg_f = max(0, min(st.session_state.get("preview_page", 0), _n_pg - 1))
-            st.image(_imgs_f[_pg_f], use_container_width=True)
-            if _n_pg > 1:
-                _pc, _pm, _pn = st.columns([1, 2, 1])
-                with _pc:
-                    if st.button("◀", key="final_prev_pg", use_container_width=True,
-                                 disabled=(_pg_f == 0)):
-                        st.session_state.preview_page = _pg_f - 1; st.rerun()
-                with _pm:
-                    st.markdown(
-                        f'<div style="text-align:center;font-size:.78rem;font-weight:600;'
-                        f'color:{T["text2"]};font-family:DM Sans,sans-serif;padding:.4rem 0;">'
-                        f'Pagina {_pg_f+1} di {_n_pg}</div>',
-                        unsafe_allow_html=True
-                    )
-                with _pn:
-                    if st.button("▶", key="final_next_pg", use_container_width=True,
-                                 disabled=(_pg_f == _n_pg - 1)):
-                        st.session_state.preview_page = _pg_f + 1; st.rerun()
+            for _n_p, _img_p in enumerate(_imgs_f, start=1):
+                st.image(_img_p, use_container_width=True,
+                         caption=f"Pagina {_n_p} di {len(_imgs_f)}" if len(_imgs_f) > 1 else None)
         elif vA.get("pdf"):
             _b64 = base64.b64encode(vA["pdf"]).decode()
             st.markdown(
@@ -3739,43 +3767,6 @@ def _render_stage_final():
             )
         else:
             st.caption("Anteprima non disponibile.")
-
-    with _col_act:
-        if vA.get("pdf"):
-            st.markdown('<div class="dl-cta-wrap">', unsafe_allow_html=True)
-            st.download_button(
-                label=f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}",
-                data=vA["pdf"],
-                file_name=_fname_a + ".pdf",
-                mime="application/pdf",
-                use_container_width=True,
-                type="primary",
-                key="dl_pdf_hero_A",
-                help="Scarica il PDF della verifica, già formattato e pronto per la stampa.",
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            st.warning("Il PDF non è ancora pronto. Apri «Modifica gli esercizi» e premi "
-                       "«Conferma e genera PDF finale».")
-        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
-        if st.button("✏️ Modifica gli esercizi", key="final_edit", use_container_width=True,
-                     help="Cambia, rendi più facile o più difficile, o elimina i singoli esercizi."):
-            st.session_state.stage = STAGE_REVIEW
-            st.rerun()
-        st.markdown(
-            f'<div style="font-size:.78rem;color:{T["muted"]};margin-top:.8rem;line-height:1.5;'
-            f'font-family:DM Sans,sans-serif;">⚠️ Controlla sempre il contenuto prima di '
-            f'distribuirlo agli studenti.</div>',
-            unsafe_allow_html=True
-        )
-
-    _senza_grafico = esercizi_con_grafico_mancante(st.session_state.get("review_blocks", []))
-    if _senza_grafico:
-        st.warning(
-            "Attenzione: l'esercizio " + ", ".join(str(i + 1) for i in _senza_grafico)
-            + " cita un grafico che nel PDF non c'è. Apri «Modifica gli esercizi» e premi «Rigenera».",
-            icon="📉",
-        )
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  ALTRE VERSIONI — Fila B, BES/DSA, soluzioni, griglia, Word
@@ -3789,7 +3780,8 @@ def _render_stage_final():
     for _ in range(5):
         with st.container(border=True):
             _rw.append(st.columns([3.4, 1.6], vertical_alignment="center", gap="medium"))
-    (_vc1, _vb1), (_vc2, _vb2), (_vc3, _vb3), (_vc4, _vb4), (_vc5, _vb5) = _rw   # Fila B, BES, Soluzioni, Griglia, Word
+    # Ordine a schermo: Soluzioni, Fila B, Word, BES/DSA, Griglia (le più richieste per prime)
+    (_vc3, _vb3), (_vc1, _vb1), (_vc5, _vb5), (_vc2, _vb2), (_vc4, _vb4) = _rw
 
     # ── FILA B ────────────────────────────────────────────────────────────────
     with _vc1:
@@ -3808,21 +3800,21 @@ def _render_stage_final():
         )
         with _vb1:
             if _b_pdf:
-                st.download_button(
+                _dl(
                     f"⬇ Scarica Fila B (PDF) · {_stima(_b_pdf)}",
                     data=_b_pdf, file_name=arg_str+"_FilaB.pdf",
                     mime="application/pdf", use_container_width=True, key="dl_pdf_B_v2",
                 )
             elif _b_lat:
                 if st.button("📄 Crea PDF Fila B", key="compile_B_v2",
-                             use_container_width=True, type="primary"):
+                             use_container_width=True, type="secondary"):
                     with st.spinner("Compilazione PDF Fila B in corso…"):
                         _pdf_bc, _ = compila_pdf(_b_lat)
                     if _pdf_bc:
                         st.session_state.verifiche["B"]["pdf"] = _pdf_bc; st.rerun()
             else:
                 if st.button("⚡ Genera Fila B", key="one_click_B_v2",
-                             use_container_width=True, type="primary"):
+                             use_container_width=True, type="secondary"):
                     st.session_state["_gen_fila_b"] = True; st.rerun()
 
         if st.session_state.get("_gen_fila_b"):
@@ -3841,6 +3833,7 @@ def _render_stage_final():
                     _latex_b_new = re.sub(r"\n?```$","",_latex_b_new)
                 _pdf_b_new, _ = compila_pdf(_latex_b_new)
                 st.session_state.verifiche["B"]["latex"] = _latex_b_new
+                _salva_variante_storico("latex_b", _latex_b_new)
                 if _pdf_b_new: st.session_state.verifiche["B"]["pdf"] = _pdf_b_new
                 _ph_b.empty()
                 if _pdf_b_new:
@@ -3870,21 +3863,21 @@ def _render_stage_final():
         )
         with _vb2:
             if _r_pdf:
-                st.download_button(
+                _dl(
                     f"⬇ Scarica BES/DSA (PDF) · {_stima(_r_pdf)}",
                     data=_r_pdf, file_name=arg_str+"_BES_FilaA.pdf",
                     mime="application/pdf", use_container_width=True, key="dl_pdf_R_v2",
                 )
             elif _r_lat:
                 if st.button("📄 Crea PDF BES/DSA", key="compile_R_v2",
-                             use_container_width=True, type="primary"):
+                             use_container_width=True, type="secondary"):
                     with st.spinner("Compilazione PDF BES/DSA in corso…"):
                         _pdf_rc, _ = compila_pdf(_r_lat)
                     if _pdf_rc:
                         st.session_state.verifiche["R"]["pdf"] = _pdf_rc; st.rerun()
             else:
                 if st.button("🌟 Genera BES/DSA", key="one_click_R_v2",
-                             use_container_width=True, type="primary"):
+                             use_container_width=True, type="secondary"):
                     st.session_state["_gen_bes"] = True; st.rerun()
 
         if st.session_state.get("_gen_bes"):
@@ -3895,6 +3888,7 @@ def _render_stage_final():
             try:
                 res_r = _genera_variante("R", mod_id, gp, vA)
                 st.session_state.verifiche["R"] = {**vR, **res_r}
+                _salva_variante_storico("latex_r", res_r.get("latex"))
                 _ph_r.empty(); st.toast("✅ BES/DSA pronta!", icon="🌟"); st.rerun()
             except Exception as _e:
                 _ph_r.empty()
@@ -3918,21 +3912,21 @@ def _render_stage_final():
         )
         with _vb3:
             if _s_pdf:
-                st.download_button(
+                _dl(
                     f"⬇ Scarica Soluzioni (PDF) · {_stima(_s_pdf)}",
                     data=_s_pdf, file_name=arg_str+"_Soluzioni.pdf",
                     mime="application/pdf", use_container_width=True, key="dl_pdf_S_v2",
                 )
             elif _s_lat:
                 if st.button("📄 Crea PDF Soluzioni", key="compile_S_v2",
-                             use_container_width=True, type="primary"):
+                             use_container_width=True, type="secondary"):
                     with st.spinner("Compilazione PDF Soluzioni in corso…"):
                         _pdf_sc, _ = compila_pdf(_s_lat)
                     if _pdf_sc:
                         st.session_state.verifiche["S"]["pdf"] = _pdf_sc; st.rerun()
             else:
                 if st.button("✅ Genera Soluzioni", key="one_click_S_v2",
-                             use_container_width=True, type="primary"):
+                             use_container_width=True, type="secondary"):
                     st.session_state["_gen_sol"] = True; st.rerun()
 
         if st.session_state.get("_gen_sol"):
@@ -3965,7 +3959,7 @@ def _render_stage_final():
         )
         with _vb5:
             if _docx_a:
-                st.download_button(
+                _dl(
                     f"⬇ Scarica Word (.docx) · {_stima(_docx_a)}",
                     data=_docx_a,
                     file_name=arg_str + "_FilaA.docx",
@@ -3975,7 +3969,7 @@ def _render_stage_final():
                 )
             elif vA.get("latex"):
                 if st.button("📝 Genera Word", key="gen_docx_A_card",
-                             use_container_width=True, type="primary"):
+                             use_container_width=True, type="secondary"):
                     st.session_state[_docx_key] = True
                 if st.session_state.get(_docx_key, False):
                     with st.spinner("Conversione in formato Word in corso… (30–60 sec)"):
@@ -4020,7 +4014,7 @@ def _render_stage_final():
                         st.session_state['_rubrica_docx'] = _docx_bytes
                 _rub_docx = st.session_state.get('_rubrica_docx')
                 if _rub_docx:
-                    st.download_button(
+                    _dl(
                         '⬇ Scarica Griglia (.docx)',
                         data=_rub_docx,
                         file_name=arg_str + '_GrigliaValutazione.docx',
@@ -4029,7 +4023,7 @@ def _render_stage_final():
                         key='dl_rubrica_docx_v2', use_container_width=True,
                     )
                 else:
-                    st.download_button(
+                    _dl(
                         '⬇ Scarica griglia (.txt)',
                         data=st.session_state.rubrica_testo.encode('utf-8'),
                         file_name=arg_str + '_Griglia.txt',
@@ -4037,7 +4031,7 @@ def _render_stage_final():
                     )
             else:
                 if st.button('📊 Genera Griglia', key='btn_gen_griglia_v2',
-                             use_container_width=True, type='primary'):
+                             use_container_width=True, type="secondary"):
                     st.session_state._rubrica_gen = True
                     st.rerun()
         if st.session_state.get('_rubrica_gen') and not _rub_ready:
@@ -4062,7 +4056,7 @@ def _render_stage_final():
     # ═══════════════════════════════════════════════════════════════════════════
     #  IDEA #5 — CONDIVIDI CON IL DIPARTIMENTO
     # ═══════════════════════════════════════════════════════════════════════════
-    st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
+    spazio("md")
 
     _share_code = st.session_state._share_code
     _latex_a_share = vA.get("latex", "")
@@ -4179,7 +4173,7 @@ def _render_stage_final():
                 st.markdown(f'<div class="s3-card-label">{fname_suffix.replace("_"," ")}</div>',
                             unsafe_allow_html=True)
                 if v.get("docx"):
-                    st.download_button(
+                    _dl(
                         f"📝 Word · {_stima(v['docx'])}",
                         data=v["docx"], file_name=fname+".docx",
                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -4218,54 +4212,42 @@ def _render_stage_final():
             st.caption("Copia da qui il LaTeX se un grafico o l'impaginazione non vanno.")
             st.code(vA["latex"], language="latex")
 
-    # Link feedback
-    st.markdown(
-        '<div style="margin-top:14px;text-align:center;font-size:.78rem;'
-        'font-family:DM Sans,sans-serif;color:' + T["muted"] + ';">'
-        'Qualcosa non va o hai un suggerimento? '
-        '<a href="' + FEEDBACK_FORM_URL + '" target="_blank" '
-        'style="color:' + T["accent"] + ';font-weight:600;">Lasciaci un feedback 💬</a>'
-        '</div>',
-        unsafe_allow_html=True
-    )
+    spazio("lg")
 
-    # ── Navigazione finale — in fondo alla pagina ─────────────────────────────
-    st.markdown("<div style='height:1.4rem'></div>", unsafe_allow_html=True)
-    _nav_c1, _nav_c2, _nav_c3 = st.columns([1, 2, 1])
-    with _nav_c2:
-        if st.button("Genera nuova verifica", icon=":material/add:",
-                     use_container_width=True, key="btn_new_s3_bottom"):
-            st.session_state.stage            = STAGE_INPUT
-            st.session_state["_prev_stage"]   = None
-            st.session_state.input_percorso   = None
-            _pulisci_stato_revisione()
-            st.session_state.verifiche         = {
-                "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
-                "S": {"latex": None, "testo": None, "pdf": None},
-            }
-            st.session_state.review_preamble   = ""
-            st.session_state.review_blocks     = []
-            st.session_state.review_sel_idx    = 0
-            st.session_state.gen_params        = {}
-            st.session_state.preview_images    = []
-            st.session_state.preview_page      = 0
-            st.session_state.last_preview_ts   = 0
-            st.session_state.esercizi_custom       = []
-            st.session_state.rubrica_testo         = None
-            st.session_state["_rubrica_pdf"]       = None
-            st.session_state["_rubrica_docx"]      = None
-            st.session_state._rubrica_gen          = False
-            st.session_state["_gen_fila_b"]       = False
-            st.session_state["_gen_bes"]           = False
-            st.session_state["_gen_sol"]           = False
-            st.session_state.analisi_docs_list  = []
-            st.session_state.info_consolidate   = {}
-            st.session_state["_analisi_rifiuto"] = None
-            st.session_state["_facsimile_mode"] = False
-            st.session_state._share_code       = None
-            st.session_state._share_generating   = False
-            st.rerun()
-    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+
+def _nuova_verifica() -> None:
+    """Torna al form di creazione azzerando la verifica in corso (le versioni non salvate si perdono)."""
+    st.session_state.stage            = STAGE_INPUT
+    st.session_state["_prev_stage"]   = None
+    st.session_state.input_percorso   = None
+    _pulisci_stato_revisione()
+    st.session_state.verifiche         = {
+        "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
+        "S": {"latex": None, "testo": None, "pdf": None},
+    }
+    st.session_state.review_preamble   = ""
+    st.session_state.review_blocks     = []
+    st.session_state.review_sel_idx    = 0
+    st.session_state.gen_params        = {}
+    st.session_state.preview_images    = []
+    st.session_state.preview_page      = 0
+    st.session_state.last_preview_ts   = 0
+    st.session_state.esercizi_custom       = []
+    st.session_state.rubrica_testo         = None
+    st.session_state["_rubrica_pdf"]       = None
+    st.session_state["_rubrica_docx"]      = None
+    st.session_state._rubrica_gen          = False
+    st.session_state["_gen_fila_b"]       = False
+    st.session_state["_gen_bes"]           = False
+    st.session_state["_gen_sol"]           = False
+    st.session_state.analisi_docs_list  = []
+    st.session_state.info_consolidate   = {}
+    st.session_state["_analisi_rifiuto"] = None
+    st.session_state["_facsimile_mode"] = False
+    st.session_state._share_code       = None
+    st.session_state._share_generating   = False
+    st.session_state.pop("_storico_id", None)
+    st.rerun()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -4286,6 +4268,9 @@ if _share_param and isinstance(_share_param, str) and len(_share_param) >= 6:
         _sh_lat  = _shared_record.get("latex_a", "")
         _sh_date = _shared_record.get("created_at", "")[:10]
         _sh_n_es = _shared_record.get("num_esercizi", "?")
+        # il titolo lo ha scelto un altro utente: va escapato prima di entrare nell'HTML
+        _sh_mat_h, _sh_arg_h, _sh_scu_h = _esc(_sh_mat), _esc(_sh_arg), _esc(_sh_scu)
+        _sh_date_h, _sh_n_es_h = _esc(_sh_date), _esc(_sh_n_es)
 
         st.markdown(
             f'<div class="shared-view-banner">'
@@ -4294,13 +4279,13 @@ if _share_param and isinstance(_share_param, str) and len(_share_param) >= 6:
             f'    <div>'
             f'      <div class="shared-view-title">Verifica condivisa da un collega</div>'
             f'      <div class="shared-view-meta">'
-            f'{_sh_mat} · {_sh_scu} · {_sh_arg}'
+            f'{_sh_mat_h} · {_sh_scu_h} · {_sh_arg_h}'
             f'      </div>'
             f'    </div>'
             f'  </div>'
             f'  <div class="shared-view-badges">'
-            f'    <span class="shared-view-badge">📝 {_sh_n_es} esercizi</span>'
-            f'    <span class="shared-view-badge">📅 {_sh_date}</span>'
+            f'    <span class="shared-view-badge">📝 {_sh_n_es_h} esercizi</span>'
+            f'    <span class="shared-view-badge">📅 {_sh_date_h}</span>'
             f'    <span class="shared-view-badge">🔒 Solo lettura</span>'
             f'  </div>'
             f'</div>',
@@ -4309,7 +4294,7 @@ if _share_param and isinstance(_share_param, str) and len(_share_param) >= 6:
 
         # Compila PDF per anteprima
         if _sh_lat:
-            _sh_pdf, _sh_err = compila_pdf(_sh_lat)
+            _sh_pdf, _sh_err = _pdf_da_latex(_sh_lat)   # in cache: non si ricompila a ogni clic
             if _sh_pdf:
                 _sh_imgs, _ = pdf_to_images_bytes(_sh_pdf)
                 if _sh_imgs:
@@ -4324,14 +4309,14 @@ if _share_param and isinstance(_share_param, str) and len(_share_param) >= 6:
                         with _sh_cols[_shi]:
                             st.image(_sh_img, use_container_width=True, caption=f"Pag. {_shi+1}")
 
-                st.download_button(
+                _dl(
                     f"📄  Scarica PDF originale",
                     data=_sh_pdf, file_name=f"{_sh_arg}_condivisa.pdf",
                     mime="application/pdf", use_container_width=True,
                     key="dl_shared_pdf",
                 )
 
-            st.markdown("<div style='height:.6rem'></div>", unsafe_allow_html=True)
+            spazio("sm")
 
             # CTA: genera la tua variante
             st.markdown(
@@ -4397,24 +4382,14 @@ if _share_param and isinstance(_share_param, str) and len(_share_param) >= 6:
             st.rerun()
 
 if not _share_view_active:
-    # Mostra sticky header solo quando NON si è sulla landing iniziale E NON sulla pagina "Le tue verifiche"
-    _show_bc = not (
-        st.session_state.stage == STAGE_INPUT
-        or st.session_state.stage == STAGE_MIE_VERIFICHE
-        or st.session_state.stage == STAGE_BANCA
-    )
-    if _show_bc:
-        _render_sticky_header(T)
-        _render_step_progress(T)
-    else:
-        # Sulla landing o pagina "Le tue verifiche": rimuovi l'eventuale sticky header rimasto
-        components.html("""
+    # Niente più header fisso né stepper (il titolo di ogni pagina dice già dove si è):
+    # si toglie solo quello che una sessione già aperta può avere ancora nella pagina.
+    components.html("""
 <script>
 (function() {
   var doc = window.parent.document;
   var old = doc.getElementById('_vai_sticky_hdr');
   if (old) old.remove();
-  // Ripristina padding-top del container
   var main = doc.querySelector('.main .block-container');
   if (main) main.style.paddingTop = '';
 })();
@@ -4475,30 +4450,10 @@ if not _share_view_active:
 # ── FOOTER ────────────────────────────────────────────────────────────────────
 st.markdown(
     '<div class="app-footer">'
-    '⚠️ Le verifiche generate dall\'AI sono suggerimenti didattici — '
-    'rivedi sempre il contenuto prima di distribuirlo.<br>'
-    '<span style="opacity:.5;">VerificAI · Versione Beta</span>'
+    'VerificAI · Versione Beta · '
+    '<a href="?pagina=privacy" target="_blank" rel="noopener" style="color:inherit;">Privacy</a>'
     '</div>',
     unsafe_allow_html=True
 )
 
-components.html(
-    "<style>body{margin:0;padding:0;background:transparent}"
-    "#sb{background:none;border:none;cursor:pointer;color:" + T["accent"] + ";"
-    "font-weight:600;font-size:.72rem;font-family:DM Sans,sans-serif;"
-    "padding:0;display:block;margin:0 auto;text-align:center;width:100%}"
-    "#sb:hover{text-decoration:underline}</style>"
-    "<button id='sb' onclick='copyL()'>🔗 Condividi con i colleghi</button>"
-    "<script>"
-    "function copyL(){"
-    "var u='" + SHARE_URL + "';"
-    "var b=document.getElementById('sb');"
-    "if(navigator.clipboard&&navigator.clipboard.writeText){"
-    "navigator.clipboard.writeText(u).then(function(){"
-    "b.innerText='✅ Link copiato!';setTimeout(function(){b.innerText='🔗 Condividi con i colleghi'},2000)"
-    "}).catch(function(){b.innerText=u})"
-    "}else{b.innerText=u}}"
-    "</script>",
-    height=30
-)
 

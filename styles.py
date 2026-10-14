@@ -4432,7 +4432,7 @@ font-family: 'DM Sans', sans-serif;
     background: {T['bg2']} !important;
     color: {T['muted']} !important;
     -webkit-text-fill-color: {T['muted']} !important;
-    border: 1.5px dashed {T['border2']} !important;
+    border: 1.5px solid {T['border2']} !important;
     box-shadow: none !important;
     opacity: 1 !important;
     filter: none !important;
@@ -4461,7 +4461,7 @@ font-family: 'DM Sans', sans-serif;
     box-shadow: 0 8px 24px {_acc_ring} !important;
   }}
   html body .stApp .cta-genera-wrap button:disabled {{
-    border: 1.5px dashed {T['border2']} !important;
+    border: 1.5px solid {T['border2']} !important;
   }}
 
   /* Radio: cerchio vuoto se non scelto, pieno blu con punto bianco se scelto */

@@ -432,7 +432,7 @@ ESEMPI_RICHIESTA = {
     "Matematica": (
         "Es.\n"
         "Equazioni di secondo grado e parabola\n"
-        "- 4 esercizi, difficoltà crescente: il primo di calcolo diretto\n"
+        "- difficoltà crescente: il primo di calcolo diretto\n"
         "- includi un grafico da leggere (senza scrivere l'equazione sul grafico)\n"
         "- un problema di realtà e un vero/falso\n"
         "- evita le dimostrazioni e i parametri letterali\n"
@@ -441,7 +441,7 @@ ESEMPI_RICHIESTA = {
     "Fisica": (
         "Es.\n"
         "Moto rettilineo uniformemente accelerato\n"
-        "- 4 esercizi: una formula inversa e un grafico velocità-tempo da interpretare\n"
+        "- una formula inversa e un grafico velocità-tempo da interpretare\n"
         "- un problema con dati reali (auto, ascensore)\n"
         "- evita il calcolo vettoriale\n"
         "- esprimi tutto in unità SI e chiedi di indicarle"
@@ -449,7 +449,7 @@ ESEMPI_RICHIESTA = {
     "Italiano": (
         "Es.\n"
         "Promessi Sposi: capitoli 1-8\n"
-        "- 5 domande: comprensione, analisi dei personaggi, un'inferenza\n"
+        "- comprensione, analisi dei personaggi, un'inferenza\n"
         "- una domanda sul lessico e una sul narratore\n"
         "- includi un breve brano da commentare\n"
         "- evita domande solo mnemoniche"
@@ -458,12 +458,34 @@ ESEMPI_RICHIESTA = {
 ESEMPIO_RICHIESTA_DEFAULT = (
     "Es.\n"
     "Il Rinascimento in Italia\n"
-    "- 5 esercizi, difficoltà crescente: parti da domande dirette\n"
+    "- difficoltà crescente: parti da domande dirette\n"
     "- includi 2 domande aperte e un vero/falso\n"
     "- usa una breve fonte o un brano da commentare\n"
     "- evita date troppo precise e curiosità secondarie\n"
     "- linguaggio chiaro, adatto alla classe"
 )
+
+
+# ── TOKEN DI DESIGN ─────────────────────────────────────────────────────────────
+# Una sola scala per spazi, raggi, ombre e tipografia (i colori stanno in THEMES).
+# Chi scrive HTML o CSS nuovo usa questi valori, non numeri a caso.
+SPAZIO_REM = {"xs": 0.25, "sm": 0.5, "md": 0.75, "lg": 1.0, "xl": 1.5, "xxl": 2.0}
+RAGGIO_PX = {"controllo": 8, "card": 12, "superficie": 16, "chip": 999}
+OMBRA = {
+    "riposo": "0 1px 3px rgba(0,0,0,.08)",
+    "rialzo": "0 4px 16px rgba(0,0,0,.12)",
+}
+TIPO_REM = {
+    "titolo_pagina": 1.7,   # una sola misura per il titolo di ogni pagina
+    "sezione": 1.15,
+    "testo": 1.0,
+    "secondario": 0.875,
+    "minimo": 0.8,          # niente testo più piccolo di così
+}
+AREA_TOCCO_MIN_PX = 44      # altezza minima di ogni controllo interattivo
+
+# Pulsanti: primario (pieno, uno per schermata) · secondario (contorno) ·
+# terziario (solo testo, type="tertiary") · distruttivo (terziario con testo rosso).
 
 
 # Durata della verifica: un solo scatto sceglie numero di esercizi e tempo previsto.
@@ -494,10 +516,11 @@ def parametri_durata(nome: str, scuola: str = "") -> dict:
 
 
 def etichetta_durata(nome: str, scuola: str = "") -> str:
-    """Testo del selettore: es. 'Standard · 5 esercizi'."""
+    """Testo del selettore: es. 'Standard · 5 esercizi · 1 ora'."""
     p = parametri_durata(nome, scuola)
     n = p["num_esercizi"]
-    return f"{nome} · {n} {'esercizio' if n == 1 else 'esercizi'}"
+    tempo = p["durata"].replace("minuti", "min")
+    return f"{nome} · {n} {'esercizio' if n == 1 else 'esercizi'} · {tempo}"
 
 
 def esempio_richiesta(materia: str) -> str:
