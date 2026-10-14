@@ -3590,15 +3590,16 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 punti_nota = "NON inserire punteggi (X pt)."
 
             # Rileva se l'esercizio originale ha un grafico (TikZ/pgfplots)
-            _ha_grafico = bool(re.search(r'\\\\begin\{(tikzpicture|axis|pgfpicture)\}', body))
+            _ha_grafico = bool(re.search(r'\\begin\{(tikzpicture|axis|pgfpicture)\}', body))
             _grafici_rule_rw = (
-                "- GRAFICI: l'esercizio originale contiene un grafico TikZ/pgfplots. "
-                "SE la modifica lo richiede o mantiene il grafico, DEVI generare CODICE TikZ COMPLETO e FUNZIONANTE. "
+                "- GRAFICI: l'esercizio originale contiene un grafico. "
+                "SE la modifica lo richiede o mantiene il grafico, scrivi al suo posto UNA riga [[GRAFICO: y = ... | x da A a B]] "
+                "con la funzione giusta (NON codice TikZ: lo disegna il programma). "
                 "NON scrivere mai commenti come '% qui andrebbe il grafico' o '% inserire figura' o '\\includegraphics{placeholder}'. "
-                "Il grafico DEVE essere codice LaTeX compilabile. Se non puoi generarlo, rimuovi la richiesta grafica dall'esercizio."
+                "Se non puoi dare la funzione, rimuovi la richiesta grafica dall'esercizio."
                 if _ha_grafico else
                 "- NON aggiungere \\includegraphics, placeholder o commenti '% qui andrebbe'. "
-                "Se l'istruzione richiede un grafico, usare SOLO codice TikZ/pgfplots completo e compilabile."
+                "Se l'istruzione richiede il grafico di una funzione, usare SOLO la riga [[GRAFICO: y = ... | x da A a B]] (mai codice TikZ)."
             )
             _prompt_rw = (
                 f"Sei un docente esperto di {materia_str} e LaTeX.\n"

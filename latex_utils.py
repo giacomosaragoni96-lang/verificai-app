@@ -4,6 +4,7 @@
 # ───────────────────────────────────────────────────────────────────────────────
 
 import logging
+import math
 import os
 import re
 import io
@@ -1202,11 +1203,142 @@ def _pulisci_opzioni_asse(testo: str) -> str:
     return testo
 
 
+# ── Grafici da specifica ────────────────────────────────────────────────────────────
+# L'AI non scrive il codice TikZ della curva: scrive una riga
+#   [[GRAFICO: y = -x^2 + 2x + 3 ; y = x + 1 | x da -2 a 4]]
+# e il programma disegna il grafico con un modello fisso (sempre compilabile).
+
+_RE_GRAFICO_SPEC = re.compile(r'\[\[\s*GRAFICO\s*:(.*?)\]\]', re.IGNORECASE | re.DOTALL)
+_FUNZIONI_GRAFICO = {
+    "sqrt": ("sqrt", math.sqrt), "sin": ("sin", lambda v: math.sin(v)),
+    "cos": ("cos", lambda v: math.cos(v)), "tan": ("tan", lambda v: math.tan(v)),
+    "ln": ("ln", math.log), "exp": ("exp", math.exp), "abs": ("abs", abs),
+}
+
+
+def _espressione_grafico(testo: str):
+    """
+    Converte «y = -x^2 + 2x + 3» in (espressione pgfplots, funzione python) oppure None
+    se contiene qualcosa di non previsto (solo x, numeri, + - * / ^ ( ) e poche funzioni).
+    """
+    t = (testo or "").strip().replace("−", "-").replace("–", "-").replace("·", "*").replace("×", "*")
+    t = re.sub(r'^\s*(?:y|f\s*\(\s*x\s*\))\s*=\s*', '', t, flags=re.IGNORECASE)
+    t = t.replace("$", "").replace("\\left", "").replace("\\right", "").replace("\\cdot", "*")
+    t = re.sub(r'(?<=\d),(?=\d)', '.', t)                     # 0,5 → 0.5
+    t = re.sub(r'\\(sqrt|sin|cos|tan|ln|exp)\b', r'\1', t)
+    t = re.sub(r'\s+', '', t).lower()
+    if not t or len(t) > 80:
+        return None
+    # multiplicazione implicita: 2x, 2(, )(, x(, )x, 3sin → con *
+    t = re.sub(r'(?<=[\d.)x])(?=x|\(|sqrt|sin|cos|tan|ln|exp|abs)', '*', t)
+    t = re.sub(r'(?<=\))(?=\d)', '*', t)
+    if re.search(r'[^0-9x+\-*/^().a-z]', t):
+        return None
+    for nome in re.findall(r'[a-z]+', t):
+        if nome != "x" and nome not in _FUNZIONI_GRAFICO:
+            return None
+    try:
+        py = t.replace("^", "**")
+        ns = {"x": 0.5, "__builtins__": {}}
+        ns.update({k: v[1] for k, v in _FUNZIONI_GRAFICO.items()})
+        eval(compile(py, "<grafico>", "eval"), ns)   # solo controllo di sintassi con valori innocui
+    except ZeroDivisionError:
+        pass
+    except (ValueError, OverflowError):
+        pass
+    except Exception:
+        return None
+
+    def f(v):
+        ns2 = {"x": v, "__builtins__": {}}
+        ns2.update({k: w[1] for k, w in _FUNZIONI_GRAFICO.items()})
+        return eval(compile(py, "<grafico>", "eval"), ns2)
+
+    return t, f
+
+
+def _numero_grafico(s: str):
+    try:
+        return float(s.replace(",", ".").replace("−", "-").replace("–", "-").strip())
+    except ValueError:
+        return None
+
+
+def _fmt_num(v: float) -> str:
+    return str(int(v)) if abs(v - round(v)) < 1e-9 else f"{v:.2f}".rstrip("0").rstrip(".")
+
+
+def _tikz_da_specifica(corpo: str):
+    """Codice TikZ del grafico per il contenuto di [[GRAFICO: …]]; None se non interpretabile."""
+    parti = [p.strip() for p in corpo.split("|")]
+    curve_txt = [c for c in re.split(r'[;\n]', parti[0]) if c.strip()]
+    xmin, xmax = -5.0, 5.0
+    for extra in parti[1:]:
+        m = re.search(r'x\s*(?:da|from|:|in)?\s*\[?\s*(-?[\d.,−–]+)\s*(?:a|to|;|,|\.\.|-)\s*(-?[\d.,−–]+)', extra, re.IGNORECASE)
+        if m:
+            a, b = _numero_grafico(m.group(1)), _numero_grafico(m.group(2))
+            if a is not None and b is not None and b > a:
+                xmin, xmax = a, b
+    curve = []
+    for c in curve_txt[:3]:
+        r = _espressione_grafico(c)
+        if r is None:
+            return None
+        curve.append(r)
+    if not curve:
+        return None
+    # intervallo verticale dai valori reali della curva
+    ys = []
+    for _, f in curve:
+        for i in range(0, 201):
+            x = xmin + (xmax - xmin) * i / 200
+            try:
+                y = float(f(x))
+            except Exception:
+                continue
+            if isinstance(y, float) and math.isfinite(y) and abs(y) < 1e6:
+                ys.append(y)
+    if not ys:
+        return None
+    ys.sort()
+    lo, hi = ys[0], ys[-1]
+    if hi - lo > 40:                       # asintoti: si tagliano gli estremi
+        lo, hi = ys[len(ys) // 20], ys[-len(ys) // 20 - 1]
+    lo, hi = min(lo, 0.0), max(hi, 0.0)
+    margine = max((hi - lo) * 0.1, 0.5)
+    ymin, ymax = math.floor(lo - margine), math.ceil(hi + margine)
+    xa, xb = math.floor(xmin), math.ceil(xmax)
+    righe = [
+        r"\begin{center}",
+        r"\begin{tikzpicture}",
+        f"\\begin{{axis}}[trig format plots=rad, xmin={_fmt_num(xa)}, xmax={_fmt_num(xb)}, ymin={_fmt_num(ymin)}, ymax={_fmt_num(ymax)}, "
+        r"axis lines=middle, xlabel=$x$, ylabel=$y$, grid=major, width=9cm, height=5cm, "
+        f"domain={_fmt_num(xmin)}:{_fmt_num(xmax)}, samples=100, unbounded coords=jump]",
+    ]
+    for espr, _ in curve:
+        righe.append(f"\\addplot[thick, blue, no markers]{{{espr}}};")
+    righe += [r"\end{axis}", r"\end{tikzpicture}", r"\end{center}"]
+    return "\n".join(righe)
+
+
+def espandi_grafici_specifica(latex: str) -> str:
+    """Sostituisce ogni [[GRAFICO: …]] con il suo TikZ; se non interpretabile lo toglie."""
+    def _sost(m):
+        tikz = _tikz_da_specifica(m.group(1))
+        if tikz is None:
+            logger.warning("Specifica di grafico non interpretabile: %r", m.group(1)[:80])
+            return ""
+        return tikz
+    return _RE_GRAFICO_SPEC.sub(_sost, latex or "")
+
+
 def limita_altezza_grafici(latex: str) -> str:
     """
     Aggiunge limiti di altezza ai grafici TikZ per evitare che occupino tropo spazio.
     Adatta dinamicamente i limiti per includere sempre punti importanti.
+    Prima espande le specifiche [[GRAFICO: …]] scritte dall'AI nel loro TikZ.
     """
+    latex = espandi_grafici_specifica(latex)
     def _add_height_limit(tikz_block):
         # Aggiungi spaziatura prima del grafico se non presente
         tikz_with_spacing = "\n\n" + tikz_block if not tikz_block.startswith("\n") else tikz_block
