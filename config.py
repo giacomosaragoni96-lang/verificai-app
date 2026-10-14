@@ -591,6 +591,23 @@ def etichetta_durata(nome: str, scuola: str = "") -> str:
     return f"{nome} · {n} {'esercizio' if n == 1 else 'esercizi'}"
 
 
+# Argomenti pronti da un clic sotto il riquadro della richiesta (tre per materia; chi non è elencato non ne vede)
+SUGGERIMENTI_ARGOMENTO = {
+    "Matematica": ["Equazioni di secondo grado", "Le frazioni", "Il teorema di Pitagora"],
+    "Fisica": ["Il moto rettilineo uniforme", "Le leggi di Newton", "La corrente elettrica"],
+    "Chimica": ["La tavola periodica", "Le reazioni chimiche", "Le moli"],
+    "Biologia": ["La cellula", "La genetica di Mendel", "Il sistema nervoso"],
+    "Italiano": ["I Promessi Sposi", "L'analisi del testo", "Dante e la Divina Commedia"],
+    "Storia": ["Il Rinascimento", "La Rivoluzione francese", "La Prima guerra mondiale"],
+    "Geografia": ["I climi del mondo", "L'Unione Europea", "La popolazione mondiale"],
+    "Inglese": ["Present perfect", "Past simple", "Conditionals"],
+    "Latino": ["La terza declinazione", "Il perfetto", "Il cum narrativo"],
+    "Filosofia": ["Platone", "Cartesio", "Kant"],
+    "Informatica": ["Gli algoritmi", "I database", "Le reti di computer"],
+    "Scienze della Terra": ["I terremoti", "I vulcani", "L'atmosfera"],
+}
+
+
 def esempio_richiesta(materia: str) -> str:
     """Esempio in trasparenza per il riquadro della richiesta, scelto in base alla materia."""
     return ESEMPI_RICHIESTA.get(materia, ESEMPIO_RICHIESTA_DEFAULT)

@@ -50,7 +50,7 @@ from latex_utils import (
 from config import (
     APP_NAME, APP_ICON, SHARE_URL, FEEDBACK_FORM_URL,
     LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
-    SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
+    SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, SUGGERIMENTI_ARGOMENTO, TIPI_ESERCIZIO,
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
     MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, PREZZO_PRO_ANNUALE, LEGALE_PRONTO, TETTO_BREVE, MAX_FACCIATE, WORD_ATTIVO,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS,
@@ -844,6 +844,12 @@ html body .stApp [class*="st-key-banner_piano_"] .g-lista {
   list-style:none; margin:.7rem 0 0 !important; padding:0 !important; display:grid; gap:.5rem .7rem;
 }
 @media (max-width: 860px) { html body .stApp [class*="st-key-banner_piano_"] .g-lista { grid-template-columns:1fr !important; } }
+/* telefono: elenco a due colonne e senza descrizioni, per non riempire lo schermo */
+@media (max-width: 600px) {
+  html body .stApp [class*="st-key-banner_piano_"] .g-lista { grid-template-columns:1fr 1fr !important; gap:.35rem !important; }
+  html body .stApp [class*="st-key-banner_piano_"] .g-voce-d { display:none; }
+  html body .stApp [class*="st-key-banner_piano_"] .g-voce { padding:.4rem .5rem; align-items:center; }
+}
 html body .stApp [class*="st-key-banner_piano_"] .g-voce {
   display:flex; gap:.6rem; align-items:flex-start; background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.13);
   border-radius:12px; padding:.5rem .7rem; margin:0 !important;
@@ -2133,6 +2139,7 @@ def _render_percorso_b_form(_prog_placeholder):
             # alla prima visita restano visibili entrambi i menu.
             _mat_ora = st.session_state.get("sel_materia_b", _mat_list[_mat_idx])
             _scu_ora = st.session_state.get("sel_scuola_b", SCUOLE[_scu_idx])
+            _c_arg = st.container()      # l'argomento sta in cima; qui sotto materia e scuola come impostazioni
             if _udef.get("materia") and _udef.get("scuola"):
                 _box_ms = st.expander(f"{_mat_ora} · {_scu_ora}  —  cambia", expanded=False, icon=":material/school:")
             else:
@@ -2188,32 +2195,42 @@ def _render_percorso_b_form(_prog_placeholder):
                 _arg_default = st.session_state.get("_pb_argomento_manual_val", "")
             elif _auto_arg:
                 _arg_default = _auto_arg
-            # ── RICHIESTA UNICA: argomento + indicazioni nello stesso riquadro ─────────
-            st.markdown(
-                '<div class="opt-label">Cosa vuoi nella verifica? ✱ '
-                '<span class="opt-hint">Argomento nella prima riga, poi cosa includere o evitare</span></div>',
-                unsafe_allow_html=True,
-            )
+            # ── RICHIESTA UNICA: argomento + indicazioni nello stesso riquadro (disegnata in cima, prima di materia e scuola) ──
             _esempio = esempio_richiesta(materia_scelta)
+            _segnaposto = _esempio.split("\n")[0] + "\n…poi, se vuoi, cosa includere o evitare"
 
-            # Controlla se c'è già un valore in session state per evitare il warning
-            if "argomento_area_b" not in st.session_state:
-                argomento_raw = st.text_area(
-                    "Cosa vuoi nella verifica? (obbligatorio)",
-                    value=_arg_default,
-                    placeholder=_esempio,
-                    height=110,
-                    label_visibility="collapsed",
-                    key="argomento_area_b",
+            def _usa_suggerimento(testo):
+                st.session_state["argomento_area_b"] = testo
+
+            with _c_arg:
+                st.markdown(
+                    '<div class="opt-label">Di cosa parla la verifica? ✱ '
+                    '<span class="opt-hint">Argomento nella prima riga, poi cosa includere o evitare</span></div>',
+                    unsafe_allow_html=True,
                 )
-            else:
-                argomento_raw = st.text_area(
-                    "Cosa vuoi nella verifica? (obbligatorio)",
-                    placeholder=_esempio,
-                    height=110,
-                    label_visibility="collapsed",
-                    key="argomento_area_b",
-                )
+                # Controlla se c'è già un valore in session state per evitare il warning
+                if "argomento_area_b" not in st.session_state:
+                    argomento_raw = st.text_area(
+                        "Cosa vuoi nella verifica? (obbligatorio)",
+                        value=_arg_default,
+                        placeholder=_segnaposto,
+                        height=110,
+                        label_visibility="collapsed",
+                        key="argomento_area_b",
+                    )
+                else:
+                    argomento_raw = st.text_area(
+                        "Cosa vuoi nella verifica? (obbligatorio)",
+                        placeholder=_segnaposto,
+                        height=110,
+                        label_visibility="collapsed",
+                        key="argomento_area_b",
+                    )
+                _sugg = SUGGERIMENTI_ARGOMENTO.get(materia_scelta, [])
+                if _sugg and not argomento_raw.strip():
+                    with st.container(key="sugg_argomento", horizontal=True):
+                        for _k, _t in enumerate(_sugg):
+                            st.button(_t, key=f"sugg_arg_{_k}", type="tertiary", on_click=_usa_suggerimento, args=(_t,))
 
             # ── Traccia modifica manuale del riquadro ─────────────────────────────
             _auto_arg_ref = _info_cons.get("contenuto_argomento", "")
@@ -2248,7 +2265,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 st.session_state["_up_ciclo"] += 1
                 st.warning(_rifiuto.get("messaggio") or "Questo file non sembra materiale scolastico.", icon="📎")
             _fm = st.session_state.get("_file_materiale")
-            with st.expander("Altre opzioni (lunghezza, materiale, punteggi, logo)", expanded=bool(_fm), icon=":material/tune:"):
+            with st.expander("Altre opzioni (esercizi, materiale, punteggi, logo)", expanded=bool(_fm), icon=":material/tune:"):
                 st.markdown('<span class="g-altre" style="display:none"></span>', unsafe_allow_html=True)
                 # ── DURATA: un solo scatto sceglie numero di esercizi e tempo previsto ──────
                 _nomi_dur = list(DURATE)
@@ -2424,12 +2441,14 @@ def _render_percorso_b_form(_prog_placeholder):
                 "🚀  Crea verifica",
                 use_container_width=True,
                 type="primary",
-                disabled=_limite or _blocco_conteggio or _manca_arg,
+                disabled=_limite or _blocco_conteggio,
                 key="genera_btn_b",
-                help=("Scrivi prima l'argomento nel riquadro per continuare." if (_manca_arg and not _limite) else
-                      "Avvia la generazione AI della verifica. Potrai modificare ogni singolo esercizio prima di scaricare il PDF."),
+                help="Avvia la generazione AI della verifica. Potrai modificare ogni singolo esercizio prima di scaricare il PDF.",
             )
             st.markdown('</div>', unsafe_allow_html=True)
+            if genera_btn and _manca_arg:
+                genera_btn = False
+                messaggio("avviso", "Scrivi prima di cosa parla la verifica, nel riquadro in alto: basta una riga, ad esempio «Le frazioni».")
             _sp1, _sp2, _sp3 = st.columns([3, 2, 3])
             _sp2.button("Le mie verifiche", key="apri_storico_input", type="tertiary", icon=":material/folder_open:",
                         on_click=_apri_storico, use_container_width=True, help="Ritrova le verifiche che hai già creato.")
@@ -2539,6 +2558,12 @@ def _lancia_generazione(
             return "Preparo il PDF"
         return "Ancora un momento"
 
+    _NOMI_PASSI = ["Titolo", "Esercizi", "Controllo", "PDF"]
+
+    def _indice_passo(testo: str) -> int:
+        return {"Scelgo il titolo": 0, "Scrivo gli esercizi": 1, "Ricontrollo gli esercizi": 2, "Preparo il PDF": 3}.get(
+            _passo_leggibile(testo), 1)
+
     def _avanza(testo):
         _step[0] += 1
         perc  = int(min(_step[0] / _n_steps, 0.95) * 100)
@@ -2554,6 +2579,14 @@ def _lancia_generazione(
             f'<div style="font-size:.9rem;color:{_txt};font-family:DM Sans,sans-serif;margin-bottom:.8rem;">'
             f'{_esc(_passo_leggibile(testo))} · di solito ci vuole circa un minuto. '
             f'Non toccare e non chiudere la pagina.</div>'
+            f'<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.7rem;font-family:DM Sans,sans-serif;font-size:.78rem;font-weight:700;">'
+            + "".join(
+                f'<span style="padding:.12rem .6rem;border-radius:999px;'
+                + (f'background:{_acc};color:#fff;' if _k == _indice_passo(testo) else
+                   f'background:{_bg};color:{_txt};opacity:{1 if _k < _indice_passo(testo) else .6};')
+                + f'">{"✓ " if _k < _indice_passo(testo) else ""}{_nome}</span>'
+                for _k, _nome in enumerate(_NOMI_PASSI))
+            + f'</div>'
             f'<div style="background:{_bg};border-radius:100px;height:8px;overflow:hidden;">'
             f'<div style="width:{perc}%;height:100%;border-radius:100px;'
             f'background:linear-gradient(90deg,{_acc},{_acc}88,{_acc});background-size:200% 100%;'
