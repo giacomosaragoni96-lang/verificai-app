@@ -2244,7 +2244,9 @@ _stato_compilazione = threading.local()   # errori "!" dell'ultima compilazione,
 # tolto prima di mandare il LaTeX all'AI (rimuovi_logo_b64): pesa decine di KB.
 
 _RE_LOGO = re.compile(r"^%LOGO_B64:(\w+):([A-Za-z0-9+/=]+)[ \t]*\r?\n?", re.MULTILINE)
-LARGHEZZA_LOGO = {"largo": 0.38, "piccolo": 0.15}   # frazione di \linewidth
+# tipo → (larghezza come frazione di \linewidth, altezza massima in cm), a scala 1
+DIMENSIONI_LOGO = {"largo": (0.38, 2.3), "piccolo": (0.11, 1.6)}
+SCALE_LOGO = (0.75, 1.0, 1.25)
 _PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 
@@ -2259,28 +2261,31 @@ def estrai_logo(latex: str):
     return (m.group(1), m.group(2)) if m else None
 
 
-def inserisci_logo(latex: str, tipo: str, b64: str) -> str:
+def inserisci_logo(latex: str, tipo: str, b64: str, scala: float = 1.0) -> str:
     """
     Mette il logo a sinistra del titolo (titolo allineato a destra), come nelle verifiche
-    della scuola. Se l'intestazione non è quella attesa restituisce il LaTeX invariato.
+    della scuola. `scala` (0.75 · 1 · 1.25) rimpicciolisce o ingrandisce il logo. Se
+    l'intestazione non è quella attesa restituisce il LaTeX invariato.
     """
     latex = rimuovi_logo_b64(latex)
-    w = LARGHEZZA_LOGO.get(tipo, LARGHEZZA_LOGO["largo"])
+    w0, h0 = DIMENSIONI_LOGO.get(tipo, DIMENSIONI_LOGO["largo"])
+    w = min(0.6, w0 * scala)
+    h = round(h0 * scala, 2)
     if "logo_scuola.png" not in latex:
         def _sost(m):
             # «Verifica di Matematica: Le frazioni» → due righe: titolo in grassetto e, sotto,
             # l'argomento come sottotitolo (invece di due punti e testo che va a capo a destra)
             principale, due_punti, argomento = m.group(1).partition(":")
             if due_punti and argomento.strip():
-                titolo = (f"\\textbf{{\\large {principale.strip()}}}\\\\[3pt]"
-                          f"{{\\normalsize {argomento.strip()}}}")
+                titolo = (f"\\textbf{{\\Large {principale.strip()}}}\\\\[4pt]"
+                          f"{{\\large {argomento.strip()}}}")
             else:
-                titolo = f"\\textbf{{\\large {m.group(1)}}}"
+                titolo = f"\\textbf{{\\Large {m.group(1)}}}"
             return (
-                f"\\noindent\\begin{{minipage}}[c]{{{w}\\linewidth}}"
-                f"\\raggedright\\includegraphics[width=\\linewidth,height=2.3cm,keepaspectratio]"
+                f"\\noindent\\begin{{minipage}}[c]{{{w:.3f}\\linewidth}}"
+                f"\\raggedright\\includegraphics[width=\\linewidth,height={h}cm,keepaspectratio]"
                 f"{{logo_scuola.png}}\\end{{minipage}}\\hfill"
-                f"\\begin{{minipage}}[c]{{{0.97 - w:.2f}\\linewidth}}\\raggedleft"
+                f"\\begin{{minipage}}[c]{{{0.97 - w:.3f}\\linewidth}}\\raggedleft"
                 f"{titolo}\\end{{minipage}}\\par\\vspace{{0.3cm}}\n"
                 f"\\begin{{center}}"
             )
@@ -2307,17 +2312,17 @@ def copia_intestazione_con_logo(latex_a: str, latex_b: str, suffisso: str = " �
     if not pre_a or not corpo_b:
         return latex_b
     # il suffisso va in fondo al sottotitolo (se c'è) o al titolo
-    pre_b, n = re.subn(
-        r"(\\normalsize )(.*?)(\}\\end\{minipage\})",
-        lambda m: m.group(1) + m.group(2) + suffisso + m.group(3),
-        pre_a, count=1, flags=re.DOTALL,
-    )
-    if n == 0:
-        pre_b = re.sub(
-            r"(\\textbf\{\\large )(.*?)(\}\\end\{minipage\})",
-            lambda m: m.group(1) + m.group(2) + suffisso + m.group(3),
+    pre_b = pre_a
+    for schema in (
+        r"(\\\\\[\d+pt\]\{\\(?:large|normalsize) )(.*?)(\}\\end\{minipage\})",   # sottotitolo
+        r"(\\textbf\{\\(?:Large|large) )(.*?)(\}\\end\{minipage\})",              # solo titolo
+    ):
+        pre_b, n = re.subn(
+            schema, lambda m: m.group(1) + m.group(2) + suffisso + m.group(3),
             pre_a, count=1, flags=re.DOTALL,
         )
+        if n:
+            break
     return pre_b.rstrip() + "\n" + corpo_b + "\n\\end{document}\n"
 
 

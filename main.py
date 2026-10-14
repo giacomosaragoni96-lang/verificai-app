@@ -1192,7 +1192,7 @@ def _prepara_logo(dati: bytes):
 
 
 @st.cache_data(ttl=3600, max_entries=24, show_spinner=False)
-def _anteprima_intestazione(b64: str, tipo: str, attivo: bool, materia: str):
+def _anteprima_intestazione(b64: str, tipo: str, attivo: bool, materia: str, scala: float = 1.0):
     """
     Immagine REALE dell'intestazione della verifica (logo + titolo + riga Nome/Classe): si
     compila con pdflatex la stessa intestazione che finirà nel PDF e si ritaglia la parte alta.
@@ -1205,7 +1205,7 @@ def _anteprima_intestazione(b64: str, tipo: str, attivo: bool, materia: str):
         pre, _ = _costruisci_preambolo(materia, "titolo della verifica", "", False)
         latex = pre + "\\end{document}\n"
         if attivo:
-            latex = inserisci_logo(latex, tipo, b64)
+            latex = inserisci_logo(latex, tipo, b64, scala)
         pdf, _err = compila_pdf(latex)
         imgs, _ = pdf_to_images_bytes(pdf) if pdf else (None, None)
         if not imgs:
@@ -1960,10 +1960,20 @@ def _render_percorso_b_form(_prog_placeholder):
                                               value=_logo_s.get("attivo", True), key="logo_attivo_b")
                     if _attivo_nuovo != _logo_s.get("attivo", True):
                         _salva_logo({**_logo_s, "attivo": _attivo_nuovo})
+                    _etichette_scala = {0.75: "Più piccolo", 1.0: "Normale", 1.25: "Più grande"}
+                    _scala_salvata = float(_logo_s.get("scala", 1.0))
+                    _scala_nuova = st.select_slider(
+                        "Dimensione del logo", options=list(_etichette_scala),
+                        value=_scala_salvata if _scala_salvata in _etichette_scala else 1.0,
+                        format_func=_etichette_scala.get, key="logo_scala_b",
+                    )
+                    if _scala_nuova != _scala_salvata:
+                        _salva_logo({**_logo_s, "scala": _scala_nuova})
                     # Anteprima immediata dell'intestazione: niente generazione sprecata
                     with st.spinner("Preparo l'anteprima dell'intestazione…"):
                         _img_int = _anteprima_intestazione(
-                            _logo_s["b64"], _logo_s.get("tipo", "largo"), _attivo_nuovo, materia_scelta)
+                            _logo_s["b64"], _logo_s.get("tipo", "largo"), _attivo_nuovo, materia_scelta,
+                            _scala_nuova)
                     if _img_int:
                         st.image(_img_int, width=560)
                         st.caption("Intestazione come sarà nel PDF (il titolo sarà quello della tua verifica).")
@@ -2233,7 +2243,8 @@ def _lancia_generazione(
         # (e quindi anche nelle versioni che ne derivano); si ricompila il PDF con il logo.
         _logo_s = _logo_scuola()
         if _logo_s and _logo_s.get("attivo", True) and ris["A"].get("latex"):
-            _lat_logo = inserisci_logo(ris["A"]["latex"], _logo_s.get("tipo", "largo"), _logo_s["b64"])
+            _lat_logo = inserisci_logo(ris["A"]["latex"], _logo_s.get("tipo", "largo"), _logo_s["b64"],
+                                         float(_logo_s.get("scala", 1.0)))
             if _lat_logo != ris["A"]["latex"]:
                 _pdf_logo, _err_logo, _lat_logo = compila_pdf_sicuro(_lat_logo)
                 if _pdf_logo:
