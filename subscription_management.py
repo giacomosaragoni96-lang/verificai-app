@@ -1,15 +1,23 @@
 # ── subscription_management.py ───────────────────────────────────────────────────────
-# Lettura abbonamento utente da Supabase e limiti del piano.
-# Il piano si assegna a mano scrivendo la riga nella tabella `subscriptions`.
+# Piano dell'utente e cosa può fare (sola lettura da Supabase).
+# Il piano si assegna a mano scrivendo la riga nella tabella `subscriptions`
+# (e, in futuro, la scrive solo il processo di attivazione della licenza: mai l'utente).
+#
+# calcola_entitlements() è una funzione pura (nessun database, nessun Streamlit): dato
+# l'abbonamento letto e il numero di verifiche del mese dice piano, tetto e funzioni.
 # ───────────────────────────────────────────────────────────────────────────────
 
 import logging
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
+
 from supabase import Client
 
-from config import FREE_PLAN_LIMITS
+from config import (
+    FREE_PLAN_LIMITS, FUNZIONI_PRO, MONETIZZAZIONE_ATTIVA, PIANI,
+)
 
-# Configurazione logger
 logger = logging.getLogger(__name__)
 
 # Nomi mostrati per i piani a pagamento
@@ -19,24 +27,93 @@ _PLAN_NAMES = {
 }
 
 
+def _scaduto(fine_periodo) -> bool:
+    """True se la data di fine periodo è passata (None = senza scadenza, es. piano assegnato a mano)."""
+    if not fine_periodo:
+        return False
+    try:
+        fine = datetime.fromisoformat(str(fine_periodo).replace("Z", "+00:00"))
+        if fine.tzinfo is None:
+            fine = fine.replace(tzinfo=timezone.utc)
+        return fine < datetime.now(timezone.utc)
+    except Exception:
+        logger.warning("Data di fine periodo non leggibile: %r", fine_periodo)
+        return False
+
+
+@dataclass(frozen=True)
+class Entitlements:
+    """Cosa può fare un utente adesso. Si crea con calcola_entitlements()."""
+    piano: str                          # "free" | "pro" | "admin"
+    scadenza: Optional[str]             # fine del periodo pagato (None se non applicabile)
+    tetto_mensile: float                # verifiche al mese (inf = senza tetto)
+    verifiche_mese: Optional[int]       # già create questo mese; None = non si è riusciti a contarle
+    famiglia_modello: str               # "lite" | "flash"  (mai un ID di modello)
+    funzioni: frozenset
+
+    @property
+    def illimitato(self) -> bool:
+        return self.tetto_mensile == float("inf")
+
+    @property
+    def errore_conteggio(self) -> bool:
+        """Il conteggio non è disponibile: per chi ha un tetto si blocca la creazione (mai «0»)."""
+        return self.verifiche_mese is None and self.piano != "admin" and not self.illimitato
+
+    @property
+    def restanti(self) -> Optional[int]:
+        if self.illimitato or self.verifiche_mese is None:
+            return None
+        return max(0, int(self.tetto_mensile - self.verifiche_mese))
+
+    @property
+    def limite_raggiunto(self) -> bool:
+        return (self.piano != "admin" and not self.illimitato
+                and self.verifiche_mese is not None and self.verifiche_mese >= self.tetto_mensile)
+
+    def puo(self, funzione: str) -> bool:
+        """Con la monetizzazione spenta tutto è aperto; da accesa contano le funzioni del piano."""
+        if not MONETIZZAZIONE_ATTIVA or self.piano == "admin":
+            return True
+        return funzione in self.funzioni
+
+
+def calcola_entitlements(abbonamento: Optional[Dict[str, Any]], verifiche_mese: Optional[int],
+                         is_admin: bool = False) -> Entitlements:
+    """
+    abbonamento    : dict di SubscriptionManager.get_user_subscription (o None)
+    verifiche_mese : verifiche create nel mese; None se il conteggio non è riuscito
+    """
+    if is_admin:
+        return Entitlements("admin", None, float("inf"), verifiche_mese, "flash", frozenset(FUNZIONI_PRO))
+    piano = (abbonamento or {}).get("plan_id") or "free"
+    if piano == "premium":          # non si vende ancora: vale come Pro finché non viene allineato
+        piano = "pro"
+    scadenza = (abbonamento or {}).get("current_period_end")
+    if piano != "free" and _scaduto(scadenza):
+        logger.info("Abbonamento scaduto (%s): piano free", scadenza)
+        piano = "free"
+    if piano not in PIANI:
+        piano = "free"
+    cfg = PIANI[piano]
+    return Entitlements(
+        piano, scadenza if piano != "free" else None, float(cfg["tetto_mensile"]),
+        verifiche_mese, cfg["famiglia_modello"], frozenset(cfg["funzioni"]),
+    )
+
+
 class SubscriptionManager:
-    """Legge gli abbonamenti utente da Supabase e calcola i limiti del piano"""
+    """Legge gli abbonamenti utente da Supabase."""
 
     def __init__(self, supabase_client: Client):
         self.supabase = supabase_client
 
     def get_user_subscription(self, user_id: str) -> Optional[Dict[str, Any]]:
         """
-        Recupera l'abbonamento attivo di un utente.
-
-        Args:
-            user_id: ID utente Supabase
-
-        Returns:
-            Dict con dati abbonamento (piano free se non c'è nulla di attivo)
+        Recupera l'abbonamento attivo di un utente (piano free se non c'è nulla di attivo,
+        anche in caso di errore: non si regala Pro per un guasto).
         """
         try:
-            # Cerca abbonamento attivo
             response = self.supabase.table('subscriptions') \
                 .select('*') \
                 .eq('user_id', user_id) \
@@ -47,7 +124,6 @@ class SubscriptionManager:
 
             if response.data:
                 subscription = response.data[0]
-
                 return {
                     'id': subscription['id'],
                     'user_id': subscription['user_id'],
@@ -60,7 +136,6 @@ class SubscriptionManager:
                     'created_at': subscription['created_at']
                 }
 
-            # Nessun abbonamento attivo → piano free
             return self._get_free_plan_info(user_id)
 
         except Exception as e:
@@ -84,80 +159,6 @@ class SubscriptionManager:
             ],
             'created_at': None
         }
-
-    def get_user_plan_limits(self, user_id: str) -> Dict[str, Any]:
-        """
-        Restituisce i limiti del piano utente.
-
-        Args:
-            user_id: ID utente Supabase
-
-        Returns:
-            Dict con limiti del piano
-        """
-        subscription = self.get_user_subscription(user_id)
-        plan_id = subscription['plan_id']
-
-        if plan_id == 'free':
-            return {
-                'verifiche_mensili': FREE_PLAN_LIMITS['verifiche_mensili'],
-                'modello_ai': FREE_PLAN_LIMITS['modello_ai'],
-                'unlimited': False
-            }
-        elif plan_id == 'pro':
-            return {
-                'verifiche_mensili': float('inf'),  # Illimitate
-                'modello_ai': 'gemini-2.5-flash',
-                'unlimited': True
-            }
-        elif plan_id == 'premium':
-            return {
-                'verifiche_mensili': float('inf'),  # Illimitate
-                'modello_ai': 'gemini-2.5-pro',
-                'unlimited': True
-            }
-        else:
-            # Fallback a free
-            return {
-                'verifiche_mensili': FREE_PLAN_LIMITS['verifiche_mensili'],
-                'modello_ai': FREE_PLAN_LIMITS['modello_ai'],
-                'unlimited': False
-            }
-
-    def can_generate_verification(self, user_id: str, current_month_count: int) -> Dict[str, Any]:
-        """
-        Verifica se l'utente può generare una verifica.
-
-        Args:
-            user_id: ID utente Supabase
-            current_month_count: Numero verifiche generate nel mese corrente
-
-        Returns:
-            Dict con risultato e messaggio
-        """
-        limits = self.get_user_plan_limits(user_id)
-
-        if limits['unlimited']:
-            return {
-                'can_generate': True,
-                'remaining': float('inf'),
-                'message': 'Verifiche illimitate con il tuo piano'
-            }
-        else:
-            remaining = limits['verifiche_mensili'] - current_month_count
-
-            if remaining > 0:
-                return {
-                    'can_generate': True,
-                    'remaining': remaining,
-                    'message': f'Ti restano {remaining} {"verifica" if remaining == 1 else "verifiche"} questo mese'
-                }
-            else:
-                return {
-                    'can_generate': False,
-                    'remaining': 0,
-                    'message': f'Hai raggiunto il limite di {limits["verifiche_mensili"]} verifiche mensili.'
-                }
 
 
 # Funzioni helper per compatibilità

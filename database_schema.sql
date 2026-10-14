@@ -1,5 +1,5 @@
 -- ── database_schema.sql ─────────────────────────────────────────────────────────────
--- Schema per integrazione Stripe e gestione abbonamenti in VerificAI
+-- Schema per la gestione degli abbonamenti in VerificAI (provider di pagamento: Lemon Squeezy, vedi migrazione_monetizzazione_fase0.sql)
 -- Esegui in Supabase Dashboard > SQL Editor
 -- ───────────────────────────────────────────────────────────────────────────────
 
@@ -67,17 +67,7 @@ ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own subscriptions" ON subscriptions
     FOR SELECT USING (auth.uid() = user_id);
 
--- Policy: utenti possono inserire solo i propri abbonamenti
-CREATE POLICY "Users can insert own subscriptions" ON subscriptions
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- Policy: utenti possono aggiornare solo i propri abbonamenti
-CREATE POLICY "Users can update own subscriptions" ON subscriptions
-    FOR UPDATE USING (auth.uid() = user_id);
-
--- Policy: utenti possono eliminare solo i propri abbonamenti
-CREATE POLICY "Users can delete own subscriptions" ON subscriptions
-    FOR DELETE USING (auth.uid() = user_id);
+-- (nessuna policy di scrittura per gli utenti: scrive solo il server con la chiave di servizio)
 
 -- RLS per payments
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
@@ -86,9 +76,7 @@ ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own payments" ON payments
     FOR SELECT USING (auth.uid() = user_id);
 
--- Policy: utenti possono inserire solo i propri pagamenti
-CREATE POLICY "Users can insert own payments" ON payments
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- (nessuna policy di scrittura per gli utenti: scrive solo il server con la chiave di servizio)
 
 -- RLS per plans (sola lettura pubblica per utenti autenticati)
 ALTER TABLE plans ENABLE ROW LEVEL SECURITY;
@@ -151,13 +139,7 @@ ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own profile" ON user_profiles
     FOR SELECT USING (auth.uid() = user_id);
 
--- Policy: utenti possono inserire solo il proprio profilo
-CREATE POLICY "Users can insert own profile" ON user_profiles
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- Policy: utenti possono aggiornare solo il proprio profilo
-CREATE POLICY "Users can update own profile" ON user_profiles
-    FOR UPDATE USING (auth.uid() = user_id);
+-- (nessuna policy di scrittura per gli utenti: scrive solo il server con la chiave di servizio)
 
 -- Commenti per documentazione
 COMMENT ON TABLE subscriptions IS 'Abbonamenti utente con integrazione Stripe';

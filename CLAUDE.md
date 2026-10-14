@@ -50,7 +50,9 @@ Avvio locale: `streamlit run main.py`. Pacchetti di sistema in `packages.txt`
 - Client AI: `ai_client.py` (adattatore su `google-genai`, senza streamlit): sceglie modello e ragionamento per compito
   (`config.COMPITI_AI`), registra token e costi (`riepilogo_uso`, mostrato nell'expander admin), non riprova sugli errori definitivi.
 - Configurazione e prompt: `config.py`, `prompts.py`
-- Abbonamenti (solo lettura): `subscription_management.py` (piano utente e limiti), `database_schema.sql`
+- Abbonamenti (solo lettura): `subscription_management.py` (`calcola_entitlements`: piano, tetto e funzioni in un'unica
+  fonte, funzione pura), `config.PIANI`/`FUNZIONI_PRO`, `database_schema.sql`, `migrazione_monetizzazione_fase0.sql`
+- Kit/scheda di allenamento: `scheda.py` (logica, senza streamlit), prompt in `prompts.py`
 - Non usati: `extra-streamlit-components` e `streamlit-cookies-controller`
   (solo in requirements, `auth.get_cookie_controller()` è uno stub).
 - Mancante: `mathpix_utils.py` è importato da `main.py` ma non esiste, quindi Mathpix è sempre disattivato.
@@ -69,14 +71,18 @@ deterministico (fix_items_environment, riscala_punti, inietta_griglia) -> compil
 -> opzionali (Fila B, versione ridotta BES/DSA, soluzioni).
 
 Piani reali: `free`, `pro`, `premium` (da `subscription_management`) e `admin` (email in
-`ADMIN_EMAILS`). `gold` esiste nel codice ma non è raggiungibile; `premium` oggi cade sul ramo free.
+`ADMIN_EMAILS`). `gold` esiste nel codice ma non è raggiungibile; `premium` vale come `pro` (normalizzato in
+`calcola_entitlements`).
 Modello: lo sceglie la sidebar in base al piano; `config.get_model_id_per_piano` è solo un ripiego
 se il modello scelto non è valido per il piano. Free = flash-lite; pro = sempre gemini-2.5-flash
 (nessun upgrade STEM); gemini-2.5-pro solo per gold e per admin con materia in `MATERIE_STEM`;
 admin può scegliere a mano qualsiasi modello.
-Limite mensile: lo decide `subscription_manager.can_generate_verification` (`FREE_PLAN_LIMITS`,
-illimitato per pro/premium; contatore su `verifiche_storico`). `LIMITE_MENSILE` è solo il ripiego
-se il caricamento dell'abbonamento fallisce. Admin escluso.
+Limite mensile: lo decide `calcola_entitlements` (`config.PIANI`: free = `LIMITE_MENSILE`, pro illimitato per ora;
+abbonamento scaduto = free). Il contatore conta le righe di `verifiche_storico` **comprese quelle eliminate**:
+«Elimina» è logico (`deleted_at`), altrimenti si aggirerebbe il tetto. Se il conteggio non si legge la creazione è
+**bloccata** con «riprova» (mai «0»); `_puo_generare_ora()` ricontrolla dentro `_lancia_generazione`. Admin escluso.
+Funzioni del Pro (`config.FUNZIONI_PRO`, `ENT.puo("fila_b")`): aperte a tutti finché `MONETIZZAZIONE_ATTIVA` è False.
+Il piano dichiara la **famiglia** del modello (lite/flash), mai un ID: lo risolve `ai_client`.
 
 DOCX: `docx_export.py` converte il LaTeX (oggi passando da Gemini) e costruisce il file con python-docx.
 
@@ -87,8 +93,9 @@ tabella `subscriptions` (`subscription_management.get_user_subscription`, status
 Il piano si assegna a mano dal database Supabase con una riga in `subscriptions`:
 `user_id`, `plan_id` = `pro`, `status` = `active`, `stripe_subscription_id` con un
 valore segnaposto univoco `manual-<uuid>` (la colonna è `NOT NULL UNIQUE` nello schema).
-Assegnare solo `pro`: `premium` non va assegnato finché non viene allineato (oggi la sidebar
-lo tratta come free, mentre `get_user_plan_limits` lo tratta come illimitato).
+Una riga con `current_period_end` nel passato non vale più (torna free); senza scadenza (piano manuale) vale sempre.
+`premium` non si vende: se assegnato vale come `pro`. Le policy RLS non permettono agli utenti di scrivere in
+`subscriptions`/`payments`/`user_profiles` (vedi `migrazione_monetizzazione_fase0.sql`, da eseguire in Supabase).
 Per togliere il piano si porta `status` a `canceled`. Senza riga attiva l'utente è `free`.
 Non si toccano lo schema né le tabelle dal codice dell'app.
 
@@ -99,8 +106,8 @@ Non si toccano lo schema né le tabelle dal codice dell'app.
 - `generation.py`: testo di prompt fuori da `prompts.py`; `genera_verifica` e
   `genera_verifica_streaming` sono quasi duplicate.
 - `prompts.py`: nell'esempio tabelle `\\\\begin` produce `\\begin` (LaTeX errato per il modello).
-- `main.py`: `_get_verifiche_mese` ritorna 0 in caso di errore Supabase, quindi il contatore si azzera e il limite mensile viene aggirato.
-- `main.py`: `_lancia_generazione` non ricontrolla il limite mensile; lo fa solo il `disabled` del pulsante Genera.
+- (risolti in fase 0 della monetizzazione: conteggio che valeva 0 in errore, limite non ricontrollato, tetto aggirabile
+  eliminando le verifiche.)
 
 ## Lingua
 
