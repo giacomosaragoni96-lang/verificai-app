@@ -887,7 +887,11 @@ def _html_separatore() -> str:
 def _css_pulsa(chiavi: list) -> str:
     """CSS che fa pulsare in giallo gli elementi indicati (nomi di _BERSAGLI_GUIDA)."""
     sel = ", ".join(f"html body .stApp {s}" for k in chiavi for s in _BERSAGLI_GUIDA[k])
-    return f"<style>{sel} {{animation:gpulse 1.5s ease-in-out infinite;border-radius:12px;}}</style>"
+    # rete di sicurezza in solo CSS: mentre ci si passa sopra o dopo un clic (focus) il lampeggio si ferma; lo spegnimento
+    # definitivo lo fa lo script (_js_guida_visti)
+    fermo = ", ".join(f"html body .stApp {s}:hover, html body .stApp {s}:focus-within" for k in chiavi for s in _BERSAGLI_GUIDA[k])
+    return (f"<style>{sel} {{animation:gpulse 1.5s ease-in-out infinite;border-radius:12px;}}"
+            f"{fermo} {{animation:none !important;outline:none !important;box-shadow:none !important;}}</style>")
 
 
 def _js_guida_visti(epoca: str = "") -> str:
