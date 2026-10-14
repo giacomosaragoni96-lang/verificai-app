@@ -2245,8 +2245,23 @@ _stato_compilazione = threading.local()   # errori "!" dell'ultima compilazione,
 
 _RE_LOGO = re.compile(r"^%LOGO_B64:(\w+):([A-Za-z0-9+/=]+)[ \t]*\r?\n?", re.MULTILINE)
 # tipo → (larghezza come frazione di \linewidth, altezza massima in cm), a scala 1
-DIMENSIONI_LOGO = {"largo": (0.38, 2.3), "piccolo": (0.11, 1.6)}
+DIMENSIONI_LOGO = {"largo": (0.5, 2.0), "piccolo": (0.25, 1.3)}
 SCALE_LOGO = (0.75, 1.0, 1.25)
+SOGLIA_LOGO_LARGO = 3.0   # rapporto larghezza/altezza da cui un logo è «largo» (con il nome della scuola)
+
+
+def _proporzioni_png(b64: str):
+    """Rapporto larghezza/altezza di un PNG letto dall'intestazione (senza PIL), None se illeggibile."""
+    import base64
+    import struct
+    try:
+        d = base64.b64decode(b64[:48])
+        if d[:8] != b"\x89PNG\r\n\x1a\n":
+            return None
+        larghezza, altezza = struct.unpack(">II", d[16:24])
+        return larghezza / altezza if altezza else None
+    except Exception:
+        return None
 _PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 
@@ -2268,6 +2283,11 @@ def inserisci_logo(latex: str, tipo: str, b64: str, scala: float = 1.0) -> str:
     l'intestazione non è quella attesa restituisce il LaTeX invariato.
     """
     latex = rimuovi_logo_b64(latex)
+    # Il formato si deduce dalle proporzioni dell'immagine (quello salvato può essere vecchio):
+    # un logo con il nome della scuola è molto più largo che alto, un simbolo è più compatto.
+    _prop = _proporzioni_png(b64)
+    if _prop is not None:
+        tipo = "largo" if _prop >= SOGLIA_LOGO_LARGO else "piccolo"
     w0, h0 = DIMENSIONI_LOGO.get(tipo, DIMENSIONI_LOGO["largo"])
     w = min(0.6, w0 * scala)
     h = round(h0 * scala, 2)
@@ -2326,6 +2346,20 @@ def copia_intestazione_con_logo(latex_a: str, latex_b: str, suffisso: str = " �
     return pre_b.rstrip() + "\n" + corpo_b + "\n\\end{document}\n"
 
 
+_RE_PUNTI_FINE = re.compile(r"[ \t]*\((\d+(?:[.,]\d+)?)\s*pt\)(?=[ \t]*(?:\n|\\\\|\Z))")
+_RE_PUNTI_ALTROVE = re.compile(r"[ \t]*(?<!\{)\((\d+(?:[.,]\d+)?)\s*pt\)")
+
+
+def formatta_punti(latex: str) -> str:
+    """
+    Distingue il punteggio dal testo dell'esercizio: a fine riga va al margine destro in
+    grassetto, in mezzo alla riga (es. prima delle caselle V/F) è staccato e in grassetto.
+    Solo per il PDF: il LaTeX salvato resta con «(N pt)», che serve per contare e riscalare i punti.
+    """
+    latex = _RE_PUNTI_FINE.sub(lambda m: f"\\hfill\\textbf{{({m.group(1)} pt)}}", latex)
+    return _RE_PUNTI_ALTROVE.sub(lambda m: f"\\quad\\textbf{{({m.group(1)} pt)}}", latex)
+
+
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     """
     Compila codice LaTeX in PDF usando pdflatex.
@@ -2366,6 +2400,7 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
         except Exception:
             _png_logo = None
     codice_latex = rimuovi_logo_b64(codice_latex)
+    codice_latex = formatta_punti(codice_latex)
     if _png_logo is None and "logo_scuola.png" in codice_latex:
         # logo mancante o non valido: meglio una verifica senza logo che un errore di compilazione
         codice_latex = re.sub(r"\\includegraphics\[[^\]]*\]\{logo_scuola\.png\}", "", codice_latex)
