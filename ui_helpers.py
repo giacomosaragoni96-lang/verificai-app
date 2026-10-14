@@ -174,6 +174,8 @@ def _render_limite_raggiunto(
     reset_str: str,
     contatto_url: str,
     text_color: str | None = None,
+    pro_cb=None,
+    pro_key: str = "",
 ) -> None:
     """Messaggio unico mostrato quando il limite mensile è esaurito (sidebar e form)."""
     # Non è un errore ma un limite normale: tono neutro (colore d'accento), non rosso
@@ -189,13 +191,18 @@ def _render_limite_raggiunto(
         f'padding:.8rem .95rem;margin:.5rem 0;font-size:.88rem;color:{testo};'
         f'font-family:DM Sans,sans-serif;line-height:1.55;">'
         f'<b>Hai usato le {limite} verifiche di questo mese.</b><br/>'
-        f'Tornano a disposizione il 1° {_prossimo} ({reset_str.lower()}).<br/>'
-        f'<a href="{html_lib.escape(contatto_url, quote=True)}" target="_blank" rel="noopener" '
-        f'style="display:inline-block;margin-top:.45rem;color:{acc};font-weight:700;">'
-        f'Chiedi più verifiche →</a>'
-        f'</div>',
+        f'Tornano a disposizione il 1° {_prossimo} ({reset_str.lower()}).'
+        + ("" if pro_cb else
+           f'<br/><a href="{html_lib.escape(contatto_url, quote=True)}" target="_blank" rel="noopener" '
+           f'style="display:inline-block;margin-top:.45rem;color:{acc};font-weight:700;">'
+           f'Chiedi più verifiche →</a>')
+        + '</div>',
         unsafe_allow_html=True,
     )
+    if pro_cb:   # con i piani attivi: più verifiche = piano Pro
+        if st.button("Passa a Pro per averne di più", key=f"limite_pro_{pro_key}", icon=":material/workspace_premium:",
+                     use_container_width=True):
+            pro_cb()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -23,13 +23,14 @@ FREE_PLAN_LIMITS = {
 # Interruttore della monetizzazione: SPENTO = ogni funzione è aperta a tutti (comportamento di oggi).
 # Con l'interruttore acceso le funzioni elencate in FUNZIONI_PRO richiedono il piano Pro.
 MONETIZZAZIONE_ATTIVA = True
-FUNZIONI_PRO = ("fila_b", "bes", "soluzioni", "word", "griglia", "logo", "scheda", "zip")
+FUNZIONI_PRO = ("fila_b", "bes", "soluzioni", "word", "griglia", "logo", "scheda", "zip", "materiale")
 
 # Come si chiamano le funzioni nei messaggi «con Pro puoi…»
 ETICHETTE_FUNZIONI = {
     "fila_b": "la Fila B", "bes": "la versione BES/DSA", "soluzioni": "le soluzioni", "word": "il file Word",
     "griglia": "la griglia di valutazione", "logo": "il logo della scuola",
     "scheda": "la scheda di allenamento", "zip": "il kit completo in un solo file",
+    "materiale": "la verifica a partire dai tuoi appunti o da una verifica già fatta",
 }
 PREZZO_PRO_ANNUALE = 39                 # euro, anno scolastico (pagamento unico)
 CHECKOUT_URL_PRO = "https://verificai.lemonsqueezy.com/checkout/buy/cd7d56f4-10c1-4807-bc2f-90dffa200268"   # prodotto di PROVA (test mode)

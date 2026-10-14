@@ -2053,24 +2053,18 @@ def _render_percorso_b_form(_prog_placeholder):
                 # Si parte sempre da «Standard»: la lunghezza cambia da verifica a verifica,
                 # non ha senso ereditare quella dell'ultima volta.
                 _dur_salvata = DURATA_DEFAULT
-                st.markdown('<div class="opt-label">Quanto deve essere lunga?</div>', unsafe_allow_html=True)
-                durata_nome = st.radio(
-                    "Quanto deve essere lunga la verifica?", _nomi_dur, index=_nomi_dur.index(_dur_salvata),
-                    format_func=lambda n: etichetta_durata(n, difficolta),
-                    horizontal=True, key="sel_durata_b", label_visibility="collapsed",
-                )
-                st.caption("Potrai aggiungere o togliere esercizi dopo, nella schermata di modifica.")
+                durata_nome = _dur_salvata   # la lunghezza si sceglie col numero di esercizi (sotto)
                 _par_dur   = parametri_durata(durata_nome, difficolta)
                 durata_str = _par_dur["durata"]
 
                 # Numero di esercizi di partenza: quello della durata scelta. Con «Rifai questa
                 # verifica» numero di esercizi e punti vengono dal file (vedi il ramo facsimile).
                 _n_default = _par_dur["num_esercizi"]
-                _n_opts = list(range(1, 16))
+                _n_opts = list(range(3, 11))      # meno di 3 o piu' di 10 esercizi non sono una verifica
                 _n_idx  = (_n_opts.index(_n_default) if _n_default in _n_opts else 3)
 
 
-                st.markdown('<div class="opt-label">Cambia il numero di esercizi</div>', unsafe_allow_html=True)
+                st.markdown('<div class="opt-label">Quanti esercizi nella verifica?</div>', unsafe_allow_html=True)
                 num_esercizi = st.selectbox(
                     "Numero esercizi",
                     options=_n_opts,
@@ -2126,7 +2120,11 @@ def _render_percorso_b_form(_prog_placeholder):
                     st.session_state["_pers_pt"] = punti_totali
 
                 st.markdown('<div class="opt-label" style="margin-top:.8rem;">Hai già del materiale? (opzionale)</div>', unsafe_allow_html=True)
-                if not _fm:
+                if _pro_bloccato("materiale") and not _fm:
+                    st.caption("Carica appunti o una verifica già fatta e VerificAI ne crea una nuova, con dati diversi: "
+                               "è una funzione del piano Pro.")
+                    _pulsante_pro("materiale", "pro_materiale", "Carica un file con Pro")
+                elif not _fm:
                     _up = st.file_uploader(
                         "Carica appunti, una verifica o un foglio di esercizi",
                         type=["pdf", "png", "jpg", "jpeg"],
@@ -2247,6 +2245,7 @@ def _render_percorso_b_form(_prog_placeholder):
             if _limite:
                 _render_limite_raggiunto(
                     T, _TETTO_MENSILE, _reset_label(*_giorni_al_reset()), FEEDBACK_FORM_URL,
+                    pro_cb=(lambda: _vai_a_upgrade(None)) if MONETIZZAZIONE_ATTIVA else None, pro_key="form",
                 )
             elif _blocco_conteggio:
                 messaggio("avviso", "Non riesco a controllare il tuo utilizzo mensile in questo momento. "

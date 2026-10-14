@@ -137,7 +137,14 @@ def render_sidebar(
             )
 
             if limite_raggiunto:
+                def _vai_pro():
+                    st.session_state["_upgrade_da"] = st.session_state.get("stage")
+                    st.session_state["_upgrade_funzione"] = None
+                    st.session_state.stage = "UPGRADE"
+                    st.rerun()
+
                 _render_limite_raggiunto(T, LIMITE_MENSILE, _reset_str, contatto_url,
+                                         pro_cb=_vai_pro if MONETIZZAZIONE_ATTIVA else None, pro_key="sb",
                                          text_color=_sb_text)
 
         # ── LE MIE VERIFICHE — un solo pulsante con il conteggio ──────────────
