@@ -3474,6 +3474,9 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
     if idx >= n_blocks: idx = 0
 
     # ◀ ▶ per scorrere gli esercizi; la tendina resta per saltare a uno qualsiasi
+    st.markdown('<style>html body .stApp .st-key-rev_prec button, html body .stApp .st-key-rev_succ button'
+                '{min-height:2.5rem !important;height:2.5rem !important;padding:0 !important;font-size:.95rem !important;}</style>',
+                unsafe_allow_html=True)
     _rv_p, _rv_s, _rv_n = st.columns([1, 7, 1], vertical_alignment="bottom", gap="small")
     with _rv_p:
         if st.button("◀", key="rev_prec", use_container_width=True, disabled=(idx <= 0),
@@ -3544,7 +3547,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 
             # ── Anteprima KaTeX dell'esercizio selezionato ───────────────────
             katex_html = _make_katex_html(title, body, T)
-            est_height = max(220, min(550, 160 + len(body) // 4))
+            est_height = max(170, min(550, 120 + len(body) // 4))
             components.html(katex_html, height=est_height, scrolling=True)
 
             if re.search(r"\\begin\{(tikzpicture|axis)\}", body):
@@ -4381,32 +4384,42 @@ def _render_stage_final():
 
     _banner_piano("final")
 
-    # ── Autoverifica degli esercizi (materie scientifiche): cosa ha trovato e corretto ──
-    _av = st.session_state.get("_autoverifica") or {}
-    if _av.get("irrisolti"):
-        _righe = "\n".join(f"- **Esercizio {x['num']}**: {x['problema']}" for x in _av["irrisolti"])
-        st.warning("Il controllo automatico non è sicuro di questi esercizi: verificali prima di usarli.\n\n" + _righe, icon="🧮")
-    if _av.get("corretti"):
-        _nums = ", ".join(str(n) for n in _av["corretti"])
-        st.caption(f"🧮 Controllo automatico: ho corretto l'esercizio {_nums} (i dati non erano coerenti).")
+    # ── Avvisi: tutti nello stesso punto, sopra le azioni ──
+    with st.container(key="avvisi_final"):
+        _av = st.session_state.get("_autoverifica") or {}
+        if _av.get("irrisolti"):
+            _righe = "\n".join(f"- **Esercizio {x['num']}**: {x['problema']}" for x in _av["irrisolti"])
+            st.warning("Il controllo automatico non è sicuro di questi esercizi: verificali prima di usarli.\n\n" + _righe, icon="🧮")
+        if _av.get("corretti"):
+            _nums = ", ".join(str(n) for n in _av["corretti"])
+            st.caption(f"🧮 Controllo automatico: ho corretto l'esercizio {_nums} (i dati non erano coerenti).")
 
-    # ── Più di 2 facciate: avviso e riduzione (si stampa su 2 fogli fronte-retro, non su 3) ──
-    _n_pag = conta_pagine_pdf(vA.get("pdf"))
-    if _n_pag and _n_pag > MAX_FACCIATE:
-        _cp1, _cp2 = st.columns([4.2, 1.6], vertical_alignment="center", gap="small")
-        _cp1.warning(f"La verifica occupa {_n_pag} facciate. Di solito ne bastano {MAX_FACCIATE}: puoi ridurre carattere e margini "
-                     f"oppure togliere un esercizio.", icon="📄")
-        if _cp2.button("Riduci a 2 facciate", key="riduci_facciate", use_container_width=True):
-            with st.spinner("Riduco l'impaginazione…"):
-                _rid = riduci_a_pagine(vA.get("latex") or "", MAX_FACCIATE)
-            if _rid:
-                vA["latex"], vA["pdf"], _ = _rid
-                vA["pdf_ts"] = time.time()
-                st.session_state["_toast_dopo"] = (f"Ora la verifica sta in {_rid[2]} facciate", "📄")
-            else:
-                st.session_state["_avviso_dopo"] = ("Anche riducendo carattere e margini la verifica resta su più di "
-                                                    f"{MAX_FACCIATE} facciate: togli un esercizio o accorcia i testi.")
-            st.rerun()
+        # ── Più di 2 facciate: avviso e riduzione (si stampa su 2 fogli fronte-retro, non su 3) ──
+        _n_pag = conta_pagine_pdf(vA.get("pdf"))
+        if _n_pag and _n_pag > MAX_FACCIATE:
+            _cp1, _cp2 = st.columns([4.2, 1.6], vertical_alignment="center", gap="small")
+            _cp1.warning(f"La verifica occupa {_n_pag} facciate. Di solito ne bastano {MAX_FACCIATE}: puoi ridurre carattere e margini "
+                         f"oppure togliere un esercizio.", icon="📄")
+            if _cp2.button("Riduci a 2 facciate", key="riduci_facciate", use_container_width=True):
+                with st.spinner("Riduco l'impaginazione…"):
+                    _rid = riduci_a_pagine(vA.get("latex") or "", MAX_FACCIATE)
+                if _rid:
+                    vA["latex"], vA["pdf"], _ = _rid
+                    vA["pdf_ts"] = time.time()
+                    st.session_state["_toast_dopo"] = (f"Ora la verifica sta in {_rid[2]} facciate", "📄")
+                else:
+                    st.session_state["_avviso_dopo"] = ("Anche riducendo carattere e margini la verifica resta su più di "
+                                                        f"{MAX_FACCIATE} facciate: togli un esercizio o accorcia i testi.")
+                st.rerun()
+
+        _senza_grafico = esercizi_con_grafico_mancante(st.session_state.get("review_blocks", []))
+        if _senza_grafico:
+            st.warning(
+                "Attenzione: l'esercizio " + ", ".join(str(i + 1) for i in _senza_grafico)
+                + " cita un grafico che nel PDF non c'è. Apri «Modifica gli esercizi» e usa «Cambia esercizio».",
+                icon="📉",
+            )
+
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  AZIONI PRINCIPALI — sopra l'anteprima: sempre in vista, anche su telefono
@@ -4419,7 +4432,10 @@ def _render_stage_final():
         'height:52px !important;margin:0 !important;transform:none !important;'
         'font-size:1rem !important;font-weight:700 !important;border-radius:12px !important;}'
         'html body .stApp .st-key-az_principali [data-testid="stDownloadButton"],'
-        'html body .stApp .st-key-az_principali [data-testid="stButton"]{margin:0 !important;}</style>',
+        'html body .stApp .st-key-az_principali [data-testid="stButton"]{margin:0 !important;}'
+        # resta agganciata in alto mentre si scorre l'anteprima e il kit
+        f'html body .stApp [data-testid="stLayoutWrapper"]:has(> .st-key-az_principali){{position:sticky;top:3.4rem;z-index:90;background:{T["bg"]};'
+        f'padding:.45rem 0 .5rem;border-bottom:1px solid {T["border"]};}}</style>',
         unsafe_allow_html=True,
     )
     _box_az = st.container(key="az_principali")
@@ -4452,30 +4468,22 @@ def _render_stage_final():
     st.markdown(
         f'<div style="text-align:center;font-size:.85rem;color:{T["text2"]};margin:.5rem 0 1rem;'
         f'line-height:1.5;font-family:DM Sans,sans-serif;">Controlla sempre il contenuto prima di '
-        f'distribuirlo agli studenti. La verifica è salvata in «Le mie verifiche».</div>'
-        f'<div style="text-align:center;margin:0 0 .8rem;"><span style="display:inline-block;'
-        f'background:{T["accent_light"]};color:{T["accent"]};border-radius:999px;padding:.3rem .9rem;'
-        f'font-size:.85rem;font-weight:700;font-family:DM Sans,sans-serif;">'
-        f'↓ Più in basso: Soluzioni, Fila B, versione BES/DSA e griglia</span></div>',
+        f'distribuirlo agli studenti. La verifica è salvata in «Le mie verifiche».</div>',
         unsafe_allow_html=True
     )
 
-    _senza_grafico = esercizi_con_grafico_mancante(st.session_state.get("review_blocks", []))
-    if _senza_grafico:
-        st.warning(
-            "Attenzione: l'esercizio " + ", ".join(str(i + 1) for i in _senza_grafico)
-            + " cita un grafico che nel PDF non c'è. Apri «Modifica gli esercizi» e usa «Cambia esercizio».",
-            icon="📉",
-        )
-
     # ── Anteprima: una pagina alla volta, con ◀ ▶ (così il kit sotto resta vicino) ──────────
-    _, _col_prev, _ = st.columns([1, 3, 1])
+    _zoom = bool(st.session_state.get("final_zoom", False))
+    _, _col_prev, _ = st.columns([0.15, 3, 0.15] if _zoom else [1, 3, 1])
     with _col_prev:
         _imgs_f = st.session_state.get("preview_images") or []
         if _imgs_f:
             _n_tot = len(_imgs_f)
             _pg = min(max(int(st.session_state.get("final_pagina", 0)), 0), _n_tot - 1)
             st.image(_imgs_f[_pg], use_container_width=True)
+            st.button("Riduci anteprima" if _zoom else "Ingrandisci anteprima", key="final_zoom_btn", type="tertiary",
+                      icon=":material/zoom_out_map:" if not _zoom else ":material/zoom_in_map:",
+                      on_click=lambda: st.session_state.update(final_zoom=not st.session_state.get("final_zoom", False)))
             if _n_tot > 1:
                 def _vai_pagina(delta: int, _n=_n_tot):
                     st.session_state["final_pagina"] = min(max(int(st.session_state.get("final_pagina", 0)) + delta, 0), _n - 1)
