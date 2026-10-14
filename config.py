@@ -157,6 +157,15 @@ def scegli_modello_per_compito(compito: str, model_id_piano: str):
         ragionamento = RAGIONAMENTO_ALTO.get(model_id)
     return model_id, ragionamento
 
+NOTA_ISTRUZIONI_STEM = "Svolgere tutti gli esercizi mostrando i passaggi."
+NOTA_ISTRUZIONI_UMANISTICA = "Rispondere a tutte le richieste in modo chiaro e completo."
+
+
+def nota_istruzioni_verifica(materia: str) -> str:
+    """Frase sotto l'intestazione della verifica: «mostrando i passaggi» vale per le materie scientifiche, non per Storia o Italiano."""
+    return NOTA_ISTRUZIONI_STEM if (materia or "") in MATERIE_STEM else NOTA_ISTRUZIONI_UMANISTICA
+
+
 MATERIE_STEM = {
     "Matematica", "Fisica", "Chimica", "Informatica",
     "Scienze della Terra", "Biologia",

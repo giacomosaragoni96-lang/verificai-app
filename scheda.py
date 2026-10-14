@@ -18,10 +18,15 @@ from prompts import SEPARATORE_SCHEDA, prompt_scheda_sezione, titolo_pulito
 logger = logging.getLogger("verificai.scheda")
 
 _STELLE = {1: r"$\bigstar$", 2: r"$\bigstar\bigstar$", 3: r"$\bigstar\bigstar\bigstar$"}
-_NOTA_SCHEDA = (
-    r"Svolgi gli esercizi sul quaderno, mostrando i passaggi. "
-    r"Difficolt\`a: $\bigstar$ base \quad $\bigstar\bigstar$ media \quad $\bigstar\bigstar\bigstar$ sfida."
-)
+_LIVELLI_SCHEDA = r"Difficolt\`a: $\bigstar$ base \quad $\bigstar\bigstar$ media \quad $\bigstar\bigstar\bigstar$ sfida."
+
+
+def _nota_scheda(materia: str) -> str:
+    """«Mostrando i passaggi» solo per le materie scientifiche."""
+    from config import MATERIE_STEM
+    inizio = ("Svolgi gli esercizi sul quaderno, mostrando i passaggi. " if materia in MATERIE_STEM
+              else "Svolgi gli esercizi sul quaderno. ")
+    return inizio + _LIVELLI_SCHEDA
 _MAX_CARATTERI_ESERCIZIO = 1500   # testo dell'esercizio della verifica passato all'AI
 
 
@@ -108,7 +113,8 @@ def _preambolo_scheda(latex_verifica: str, materia: str) -> str:
         from generation import _costruisci_preambolo   # intestazione standard se la verifica non ne ha una riconoscibile
         pre, _ = _costruisci_preambolo(materia, "", "", False)
     pre = pre.replace("Verifica di ", "Allenamento di ", 1)
-    pre = re.sub(r"Svolgere tutti gli esercizi mostrando i passaggi\.", lambda _m: _NOTA_SCHEDA, pre, count=1)
+    pre = re.sub(r"(?:Svolgere tutti gli esercizi mostrando i passaggi|Rispondere a tutte le richieste in modo chiaro e completo)\.",
+                 lambda _m: _nota_scheda(materia), pre, count=1)
     return pre
 
 
