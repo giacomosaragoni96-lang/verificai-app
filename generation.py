@@ -12,7 +12,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from config import QA_SALTA_SE_PUNTEGGIO_ALMENO, AUTOVERIFICA_ATTIVA, nota_istruzioni_verifica
+from config import QA_SALTA_SE_PUNTEGGIO_ALMENO, AUTOVERIFICA_ATTIVA, MAX_FACCIATE, nota_istruzioni_verifica
 from autoverifica import autoverifica_corpo
 
 from prompts import (
@@ -58,6 +58,7 @@ except ImportError:
             f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
         )
 from latex_utils import (
+    conta_pagine_pdf, riduci_a_pagine,
     compila_pdf, compila_pdf_sicuro, inietta_griglia, riscala_punti, riscala_punti_custom,
     fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
@@ -388,6 +389,14 @@ def _assembla_e_compila(
         logger.error("Tutti i tentativi di compilazione falliti")
         return latex_final, None
 
+    # Più di MAX_FACCIATE facciate (spesso la sola tabella dei punteggi finisce su un foglio a parte):
+    # si prova a stringere carattere e margini; se non basta si tiene il PDF com'è (avviso e pulsante nella pagina finale)
+    n_pag = conta_pagine_pdf(pdf)
+    if n_pag and n_pag > MAX_FACCIATE:
+        ridotto = riduci_a_pagine(latex_final, MAX_FACCIATE)
+        if ridotto:
+            logger.info("Verifica ridotta da %s a %s facciate", n_pag, ridotto[2])
+            latex_final, pdf, _ = ridotto
     return latex_final, pdf
 
 
