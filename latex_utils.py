@@ -2286,6 +2286,26 @@ def inserisci_logo(latex: str, tipo: str, b64: str) -> str:
     return latex.replace("\\begin{document}", "\\begin{document}\n%LOGO_B64:" + tipo + ":" + b64 + "\n", 1)
 
 
+def copia_intestazione_con_logo(latex_a: str, latex_b: str, suffisso: str = " — Fila B") -> str:
+    """
+    Fila B scritta dall'AI: se la Fila A ha il logo, la B prende l'intestazione della A (logo
+    incluso, titolo + suffisso) e tiene solo i suoi esercizi. L'AI riscrive l'intestazione a
+    modo suo, per questo non basta cercare di inserirci il logo.
+    """
+    if not estrai_logo(latex_a):
+        return latex_b
+    pre_a = extract_preambolo(latex_a)
+    corpo_b = extract_corpo(latex_b)
+    if not pre_a or not corpo_b:
+        return latex_b
+    pre_b = re.sub(
+        r"(\\textbf\{\\large )(.*?)(\}\\end\{minipage\})",
+        lambda m: m.group(1) + m.group(2) + suffisso + m.group(3),
+        pre_a, count=1, flags=re.DOTALL,
+    )
+    return pre_b.rstrip() + "\n" + corpo_b + "\n\\end{document}\n"
+
+
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     """
     Compila codice LaTeX in PDF usando pdflatex.

@@ -31,7 +31,7 @@ from prompts import (
 )
 from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
 from latex_utils import (
-    compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, estrai_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
+    compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, copia_intestazione_con_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
     fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
@@ -2312,10 +2312,10 @@ def _render_stage_input():
     # La schermata di creazione e' anche la home: titolo breve + form.
     st.markdown(
         f'<div class="vf-narrow" style="text-align:center;padding:.1rem 0 .5rem;">'
-        f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
-        f'letter-spacing:-.025em;color:{T["text"]};line-height:1.15;">Crea la tua verifica</div>'
-        f'<div style="font-size:.98rem;color:{T["text2"]};margin-top:.35rem;'
-        f'font-family:DM Sans,sans-serif;">Scrivi cosa ti serve: al resto pensa l’AI.</div></div>',
+        f'<div style="font-family:DM Sans,sans-serif;font-size:1.55rem;font-weight:800;'
+        f'letter-spacing:-.02em;color:{T["text"]};line-height:1.15;">Crea la tua verifica</div>'
+        f'<div style="font-size:.88rem;font-weight:400;color:{T["text2"]};margin-top:.3rem;'
+        f'font-family:DM Sans,sans-serif;">Scrivi l’argomento: in un minuto la verifica è pronta.</div></div>',
         unsafe_allow_html=True,
     )
 
@@ -4053,9 +4053,8 @@ def _render_stage_final():
                 if _latex_b_new.startswith("```"):
                     _latex_b_new = re.sub(r"^```[a-z]*\n?","",_latex_b_new)
                     _latex_b_new = re.sub(r"\n?```$","",_latex_b_new)
-                _logo_a = estrai_logo(vA.get("latex", ""))
-                if _logo_a:   # il logo della Fila A passa anche alla Fila B
-                    _latex_b_new = inserisci_logo(_latex_b_new, *_logo_a)
+                # il logo della Fila A passa anche alla Fila B (intestazione della A + esercizi della B)
+                _latex_b_new = copia_intestazione_con_logo(vA.get("latex", ""), _latex_b_new)
                 _pdf_b_new, _ = compila_pdf(_latex_b_new)
                 st.session_state.verifiche["B"]["latex"] = _latex_b_new
                 _salva_variante_storico("latex_b", _latex_b_new)
