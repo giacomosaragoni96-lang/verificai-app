@@ -34,6 +34,7 @@ from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
 from scheda import genera_scheda
 from subscription_management import calcola_entitlements, get_subscription_manager
 from ui_upgrade import render_upgrade
+from ui_legale import render_termini, render_rimborsi
 from licenze import attiva_licenza, riconvalida_se_serve
 from latex_utils import (
     compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, copia_intestazione_con_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
@@ -51,7 +52,7 @@ from config import (
     LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
-    MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI,
+    MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, LEGALE_PRONTO,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS,
 )
 from dotenv import load_dotenv
@@ -136,9 +137,15 @@ configura_ai(API_KEY)
 
 # ── Pagina pubblica: informativa sulla privacy (richiesta da Google per il login) ──
 # Solo testo statico, visibile senza accedere; non dà accesso a nessuna funzione dell'app.
-if st.query_params.get("pagina") == "privacy":
+if st.query_params.get("pagina") in ("privacy", "termini", "rimborsi"):
     st.markdown(get_css(T), unsafe_allow_html=True)
-    render_privacy(T, FEEDBACK_FORM_URL)
+    _pag = st.query_params.get("pagina")
+    if _pag == "termini":
+        render_termini(T)
+    elif _pag == "rimborsi":
+        render_rimborsi(T)
+    else:
+        render_privacy(T, FEEDBACK_FORM_URL)
     st.stop()
 
 # ── AUTENTICAZIONE ────────────────────────────────────────────────────────────
@@ -5090,7 +5097,9 @@ st.markdown(
     '<div class="app-footer">'
     'VerificAI · Versione Beta · '
     '<a href="?pagina=privacy" target="_blank" rel="noopener" style="color:inherit;">Privacy</a>'
-    '</div>',
+    + ((' · <a href="?pagina=termini" target="_blank" rel="noopener" style="color:inherit;">Termini</a>'
+        ' · <a href="?pagina=rimborsi" target="_blank" rel="noopener" style="color:inherit;">Rimborsi</a>') if LEGALE_PRONTO else '')
+    + '</div>',
     unsafe_allow_html=True
 )
 

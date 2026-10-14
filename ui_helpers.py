@@ -745,12 +745,13 @@ def _render_step_progress(T: dict) -> None:
 
 def render_privacy(T: dict, contatto_url: str) -> None:
     """Pagina pubblica «Informativa sulla privacy» (si apre con ?pagina=privacy, senza accedere)."""
+    from config import LEGALE as _LEG
     st.markdown(
         f'<div style="max-width:760px;margin:0 auto;font-family:DM Sans,sans-serif;'
         f'color:{T["text"]};line-height:1.6;">'
         f'<h1 style="font-size:1.9rem;font-weight:800;margin:1rem 0 .2rem;">Informativa sulla privacy</h1>'
         f'<div style="color:{T["muted"]};font-size:.9rem;margin-bottom:1.5rem;">'
-        f'VerificAI · ultimo aggiornamento: 13 ottobre 2026</div></div>',
+        f'VerificAI · ultimo aggiornamento: 14 ottobre 2026</div></div>',
         unsafe_allow_html=True,
     )
     _c1, _c2, _c3 = st.columns([1, 6, 1])
@@ -758,7 +759,7 @@ def render_privacy(T: dict, contatto_url: str) -> None:
         st.markdown(f"""
 **Chi siamo.** VerificAI è un servizio web per docenti che genera verifiche scolastiche con l'aiuto
 dell'intelligenza artificiale. Il servizio è gestito da Giacomo Saragoni. Per qualsiasi richiesta
-sui tuoi dati puoi scriverci dal [modulo di contatto]({contatto_url}).
+sui tuoi dati puoi scriverci a **{_LEG['email']}**.
 
 ### Quali dati trattiamo
 - **Account:** l'indirizzo email con cui ti registri. Se accedi con Google riceviamo da Google
@@ -767,6 +768,8 @@ sui tuoi dati puoi scriverci dal [modulo di contatto]({contatto_url}).
   e il loro storico.
 - **File che carichi** (appunti, verifiche, fogli di esercizi): vengono usati solo per generare la verifica richiesta.
 - **Dati d'uso:** il numero di verifiche create nel mese e le preferenze che salvi (per esempio materia e scuola abituali).
+- **Acquisto del piano Pro:** il pagamento è gestito da Lemon Squeezy, che ti vende il piano. Noi **non vediamo né conserviamo i dati della tua carta**:
+  riceviamo solo l'esito, il codice di licenza e la sua scadenza, che salviamo insieme al tuo account.
 
 ### Perché li trattiamo
 Per farti accedere, generare le verifiche, mostrarti lo storico, applicare i limiti del piano e
@@ -778,6 +781,7 @@ Usiamo fornitori che trattano i dati per nostro conto:
 - **Google:** accesso con Google e Gemini, il modello di intelligenza artificiale che riceve l'argomento,
   le istruzioni e gli eventuali file per generare la verifica.
 - **Streamlit Community Cloud:** hosting dell'applicazione.
+- **Lemon Squeezy:** pagamenti, imposte e fatture del piano Pro, e verifica del codice di licenza.
 
 ### Consiglio importante
 Non inserire nelle richieste o nei file dati personali degli studenti (nomi, voti, valutazioni individuali).
@@ -789,6 +793,6 @@ e puoi chiederci in qualsiasi momento di cancellare l'account e tutti i dati col
 
 ### I tuoi diritti
 Hai diritto di chiedere accesso, rettifica, cancellazione, limitazione o portabilità dei tuoi dati
-e di opporti al loro trattamento. Per esercitarli usa il [modulo di contatto]({contatto_url}).
+e di opporti al loro trattamento. Per esercitarli scrivi a **{_LEG['email']}**.
 Puoi anche rivolgerti al Garante per la protezione dei dati personali (garanteprivacy.it).
 """)
