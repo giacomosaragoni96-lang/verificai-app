@@ -25,6 +25,7 @@ _lock = threading.Lock()
 _registro = deque(maxlen=1000)      # ultime chiamate (in memoria, si azzera al riavvio)
 
 _alias: dict = {}                   # modello richiesto → modello realmente usato (se ritirato)
+_ritirati = set()                    # modelli elencati ma che rispondono 404: da non riproporre
 _modelli_disponibili = None         # elenco dei modelli che la chiave può usare (cache)
 _senza_ragionamento: set = set()    # modelli che rifiutano la configurazione del ragionamento
 
@@ -113,6 +114,8 @@ def _scopri_modello(richiesto: str):
         logger.error("Elenco modelli non disponibile: %s", e)
         return None
     for nome in elenco:
+        if nome in _ritirati:
+            continue
         m = re.fullmatch(r"gemini-(\d+(?:\.\d+)?)-(flash-lite|flash|pro)(-[a-z0-9\-]+)?", nome)
         if not m or m.group(2) != nome_fam:
             continue
@@ -288,6 +291,7 @@ class ModelloAI:
             except errors.APIError as e:
                 testo = str(e).lower()
                 if _non_disponibile(e) and sostituzioni < 2:
+                    _ritirati.add(mid)
                     nuovo = _scopri_modello(self.model_id)
                     if nuovo and nuovo != mid:
                         logger.warning("Modello %s non disponibile, uso %s", mid, nuovo)
