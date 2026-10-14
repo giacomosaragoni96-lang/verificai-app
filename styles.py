@@ -4047,7 +4047,7 @@ font-family: 'DM Sans', sans-serif;
 
     /* ── Site header (logo landing) ──────────────────────────────────── */
     .site-header {{ padding: 0.6rem 0.8rem; }}
-    .site-header-name {{ font-size: 1.1rem !important; }}
+    .site-header-name {{ font-size: 2.6rem !important; }}
 
     /* ── Context sync badge ──────────────────────────────────────────── */
     .context-sync-badge {{ font-size: 0.72rem; padding: 0.3rem 0.55rem; }}
@@ -4680,6 +4680,15 @@ font-family: 'DM Sans', sans-serif;
   @media (prefers-reduced-motion: reduce) {{
     html body .stApp .st-key-genera_btn_b button:not(:disabled), html body .stApp .st-key-genera_btn_b button:not(:disabled)::after {{ animation: none !important; }}
   }}
+
+  /* Argomenti suggeriti: pillole che riempiono il riquadro con un clic */
+  .st-key-sugg_argomento {{ gap: .4rem !important; flex-wrap: wrap !important; margin-top: -.3rem; }}
+  .st-key-sugg_argomento button {{
+    border: 1px solid {T['border2']} !important; border-radius: 999px !important; background: {T['card']} !important;
+    padding: .15rem .8rem !important; min-height: 0 !important; height: auto !important;
+  }}
+  .st-key-sugg_argomento button p {{ font-size: .82rem !important; color: {T['text2']} !important; }}
+  .st-key-sugg_argomento button:hover {{ border-color: {_acc} !important; }}
 
   /* Caricamento file: testi di Streamlit in italiano */
   [data-testid="stFileUploaderDropzoneInstructions"] > div > span:first-child {{ font-size: 0 !important; }}
