@@ -1191,8 +1191,14 @@ def _prepara_logo(dati: bytes):
     return None
 
 
+# Da aumentare ogni volta che cambia il layout dell'intestazione col logo (latex_utils.inserisci_logo):
+# fa parte della chiave della cache, così un'anteprima vecchia non resta in memoria dopo un aggiornamento.
+_LAYOUT_LOGO = 5
+
+
 @st.cache_data(ttl=3600, max_entries=24, show_spinner=False)
-def _anteprima_intestazione(b64: str, tipo: str, attivo: bool, materia: str, scala: float = 1.0):
+def _anteprima_intestazione(b64: str, tipo: str, attivo: bool, materia: str, scala: float = 1.0,
+                            layout: int = _LAYOUT_LOGO):
     """
     Immagine REALE dell'intestazione della verifica (logo + titolo + riga Nome/Classe): si
     compila con pdflatex la stessa intestazione che finirà nel PDF e si ritaglia la parte alta.
@@ -1973,7 +1979,7 @@ def _render_percorso_b_form(_prog_placeholder):
                     with st.spinner("Preparo l'anteprima dell'intestazione…"):
                         _img_int = _anteprima_intestazione(
                             _logo_s["b64"], _logo_s.get("tipo", "largo"), _attivo_nuovo, materia_scelta,
-                            _scala_nuova)
+                            _scala_nuova, _LAYOUT_LOGO)
                     if _img_int:
                         st.image(_img_int, width=560)
                         st.caption("Intestazione come sarà nel PDF (il titolo sarà quello della tua verifica).")
