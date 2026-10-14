@@ -647,6 +647,7 @@ if "_pb_argomento_manual_val" not in st.session_state: st.session_state["_pb_arg
 
 # ── CONTATORI E GESTIONE ABBONAMENTI ────────────────────────────────────────
 _is_admin       = st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False
+st.session_state["_admin_diagnostica"] = _is_admin   # gli errori mostrano il dettaglio tecnico solo all'admin
 _verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0   # None se non riesce
 
 
