@@ -908,9 +908,9 @@ def _guida_benvenuto(dove: str, slot) -> None:
                       "Prima di premere «Crea verifica» puoi provare, in <b>«Altre opzioni»</b>, queste funzioni "
                       "(gratis solo in questa prima verifica):",
                       ["opzioni", "crea"],
-                      voci=[("🏫", "Logo della scuola", "Compare nell'intestazione della verifica e della Fila B."),
+                      voci=[("🏫", "Logo della scuola", "Compare nell'intestazione della verifica."),
                             ("📎", "Un tuo file", "Appunti o una verifica già fatta: ne ricava una nuova, con dati diversi."),
-                            ("⚙️", "Numero di esercizi e punteggi", "Scegli quanti esercizi e quanti punti totali.")],
+                            ("⚙️", "Esercizi e punteggi", "Scegli quanti esercizi e quanti punti totali.")],
                       nota="Quando sei pronto premi <b>«Crea verifica»</b>: in circa un minuto è pronta.",
                       chips=chips, passi=(2, 2))
     elif dove == "review":
@@ -926,7 +926,7 @@ def _guida_benvenuto(dove: str, slot) -> None:
         _riquadro("Regalo di benvenuto · La tua prima verifica", "Hai creato la tua prima verifica: sfrutta tutto il Pro!",
                   "Finché è la prima hai tutto sbloccato: prova i pulsanti che <b>lampeggiano</b> in giallo. "
                   "<b>Scorri in basso</b>, sotto l'anteprima, per trovarli tutti "
-                  '(<a href="#kit-completo" style="color:#fff;font-weight:700;">vai subito al kit ↓</a>).',
+                  '(<a href="#kit-completo" style="color:#fff;font-weight:700;white-space:nowrap;">vai al kit</a>).',
                   ["apri_modifica", "kit"],
                   voci=[("✏️", "Modifica gli esercizi", "Cambia, semplifica, aggiungi o togli esercizi (pulsante qui sopra)."),
                         ("📄", "Fila B", "Stessa verifica con dati diversi, contro la copiatura."),
@@ -4415,17 +4415,17 @@ def _render_stage_final():
         if _imgs_f:
             _n_tot = len(_imgs_f)
             _pg = min(max(int(st.session_state.get("final_pagina", 0)), 0), _n_tot - 1)
+            st.image(_imgs_f[_pg], use_container_width=True)
             if _n_tot > 1:
                 def _vai_pagina(delta: int, _n=_n_tot):
                     st.session_state["final_pagina"] = min(max(int(st.session_state.get("final_pagina", 0)) + delta, 0), _n - 1)
                 _fp1, _fp2, _fp3 = st.columns([1, 2, 1], vertical_alignment="center", gap="small")
                 _fp1.button("◀", key="final_prev_pg", use_container_width=True, disabled=(_pg <= 0),
                             on_click=_vai_pagina, args=(-1,), help="Pagina precedente")
-                _fp2.markdown(f'<div style="text-align:center;font-family:DM Sans,sans-serif;font-size:.9rem;font-weight:600;'
+                _fp2.markdown('<style>html body .stApp [class*="st-key-final_prev_pg"] button, html body .stApp [class*="st-key-final_next_pg"] button{min-height:2.2rem !important;height:2.2rem !important;padding:0 !important;}</style>' + f'<div style="text-align:center;font-family:DM Sans,sans-serif;font-size:.9rem;font-weight:600;'
                               f'color:{T["text2"]};">Pagina {_pg + 1} di {_n_tot}</div>', unsafe_allow_html=True)
                 _fp3.button("▶", key="final_next_pg", use_container_width=True, disabled=(_pg >= _n_tot - 1),
                             on_click=_vai_pagina, args=(1,), help="Pagina successiva")
-            st.image(_imgs_f[_pg], use_container_width=True)
         elif vA.get("pdf"):
             _b64 = base64.b64encode(vA["pdf"]).decode()
             st.markdown(
