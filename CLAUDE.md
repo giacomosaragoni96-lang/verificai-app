@@ -52,6 +52,9 @@ Avvio locale: `streamlit run main.py`. Pacchetti di sistema in `packages.txt`
 - Configurazione e prompt: `config.py`, `prompts.py`
 - Abbonamenti (solo lettura): `subscription_management.py` (`calcola_entitlements`: piano, tetto e funzioni in un'unica
   fonte, funzione pura), `config.PIANI`/`FUNZIONI_PRO`, `database_schema.sql`, `migrazione_monetizzazione_fase0.sql`
+- Pagina «Passa a Pro»: `ui_upgrade.py` (stage `UPGRADE`; esempi Lite/Pro in `assets/esempi/free_N.png` e `pro_N.png`).
+  Blocchi funzione in `main.py` (`_pro_bloccato`, `_pulsante_pro`, `_vai_a_upgrade`), eventi in `usage_events` (`_registra_evento`).
+  Assaggio: la prima verifica di ogni utente free (`_prima_verifica_id`) ha tutto il Pro, modello compreso; tutto spento finché `MONETIZZAZIONE_ATTIVA` è False.
 - Kit/scheda di allenamento: `scheda.py` (logica, senza streamlit), prompt in `prompts.py`
 - Non usati: `extra-streamlit-components` e `streamlit-cookies-controller`
   (solo in requirements, `auth.get_cookie_controller()` è uno stub).

@@ -25,6 +25,15 @@ FREE_PLAN_LIMITS = {
 MONETIZZAZIONE_ATTIVA = False
 FUNZIONI_PRO = ("fila_b", "bes", "soluzioni", "word", "griglia", "logo", "scheda", "zip")
 
+# Come si chiamano le funzioni nei messaggi «con Pro puoi…»
+ETICHETTE_FUNZIONI = {
+    "fila_b": "la Fila B", "bes": "la versione BES/DSA", "soluzioni": "le soluzioni", "word": "il file Word",
+    "griglia": "la griglia di valutazione", "logo": "il logo della scuola",
+    "scheda": "la scheda di allenamento", "zip": "il kit completo in un solo file",
+}
+PREZZO_PRO_ANNUALE = 39                 # euro, anno scolastico (pagamento unico)
+CHECKOUT_URL_PRO = ""                   # link di acquisto (fase 2): vuoto = pulsante non ancora attivo
+
 # famiglia_modello: «lite» o «flash» (NON un ID): il modello vero lo sceglie get_model_id_per_piano
 # e lo risolve ai_client nel più recente della famiglia.
 # Il tetto del Pro oggi è illimitato (piano assegnato a mano); al lancio diventerà 100 al mese.

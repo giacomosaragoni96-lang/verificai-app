@@ -50,6 +50,7 @@ class Entitlements:
     verifiche_mese: Optional[int]       # già create questo mese; None = non si è riusciti a contarle
     famiglia_modello: str               # "lite" | "flash"  (mai un ID di modello)
     funzioni: frozenset
+    assaggio: bool = False              # sta lavorando sulla sua prima verifica: tutto il Pro
 
     @property
     def illimitato(self) -> bool:
@@ -79,10 +80,12 @@ class Entitlements:
 
 
 def calcola_entitlements(abbonamento: Optional[Dict[str, Any]], verifiche_mese: Optional[int],
-                         is_admin: bool = False) -> Entitlements:
+                         is_admin: bool = False, assaggio: bool = False) -> Entitlements:
     """
     abbonamento    : dict di SubscriptionManager.get_user_subscription (o None)
     verifiche_mese : verifiche create nel mese; None se il conteggio non è riuscito
+    assaggio       : la verifica su cui sta lavorando è la prima in assoluto dell'utente: per un utente
+                     free vale tutto il Pro (funzioni e modello), ma il tetto mensile resta quello free
     """
     if is_admin:
         return Entitlements("admin", None, float("inf"), verifiche_mese, "flash", frozenset(FUNZIONI_PRO))
@@ -96,6 +99,11 @@ def calcola_entitlements(abbonamento: Optional[Dict[str, Any]], verifiche_mese: 
     if piano not in PIANI:
         piano = "free"
     cfg = PIANI[piano]
+    if assaggio and piano == "free":
+        return Entitlements(
+            piano, None, float(cfg["tetto_mensile"]), verifiche_mese,
+            PIANI["pro"]["famiglia_modello"], frozenset(PIANI["pro"]["funzioni"]), True,
+        )
     return Entitlements(
         piano, scadenza if piano != "free" else None, float(cfg["tetto_mensile"]),
         verifiche_mese, cfg["famiglia_modello"], frozenset(cfg["funzioni"]),
