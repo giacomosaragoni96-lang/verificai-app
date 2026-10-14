@@ -797,6 +797,41 @@ html body .stApp [class*="st-key-banner_piano_"] button:hover { background:#EFF6
 """
 
 
+def _passi_benvenuto(dove: str) -> str:
+    """
+    HTML della guida passo passo per chi crea la prima verifica: i quattro passi con quello attuale in evidenza
+    (lo stato si legge da st.session_state, quindi la guida avanza da sola) e, nella pagina del risultato,
+    quali funzioni Pro ha già provato e quali restano.
+    """
+    voci = ["Scrivi l'argomento", "Premi «Crea verifica»", "Controlla e modifica", "Prova le funzioni Pro"]
+    extra = (("B", "Fila B"), ("S", "Soluzioni"), ("R", "BES/DSA"), ("SC", "Scheda di allenamento"))
+    provate, da_provare = [], []
+    if dove == "input":
+        attivo = 0 if not (st.session_state.get("argomento_area_b") or "").strip() else 1
+    else:
+        v = st.session_state.get("verifiche") or {}
+        for k, nome in extra:
+            d = v.get(k) or {}
+            (provate if (d.get("pdf") or d.get("latex")) else da_provare).append(nome)
+        attivo = 3 if provate else 2
+    pezzi = []
+    for i, testo in enumerate(voci):
+        if i == attivo:
+            pezzi.append(f'<b style="color:#fff;background:rgba(255,255,255,.22);border-radius:6px;padding:1px 7px;">{i + 1}. {testo}</b>')
+        else:
+            segno = "✓ " if i < attivo else ""
+            pezzi.append(f'<span style="opacity:.7;">{segno}{i + 1}. {testo}</span>')
+    html = '<div style="margin-top:.45rem;line-height:1.9;">' + " &nbsp;›&nbsp; ".join(pezzi) + "</div>"
+    if dove == "final" and (provate or da_provare):
+        if da_provare:
+            html += ('<div style="margin-top:.15rem;">Da provare adesso, solo per questa prima verifica: <b>'
+                     + ", ".join(da_provare) + "</b>."
+                     + (f" Già fatte: {', '.join(provate)}." if provate else "") + "</div>")
+        else:
+            html += '<div style="margin-top:.15rem;">Hai provato tutto il kit: scarica i file che ti servono.</div>'
+    return html
+
+
 def _banner_piano(dove: str) -> None:
     """
     Striscia blu in cima alla pagina per chi non ha Pro (stesso stile per tutti):
@@ -812,11 +847,13 @@ def _banner_piano(dove: str) -> None:
         if dove == "input":
             _titolo = "🎁 Regalo di benvenuto: la prima verifica è tutta Pro"
             _testo = ("Usi il modello migliore e puoi creare tutto: Fila B, BES/DSA, soluzioni, griglia, scheda, logo. "
-                      "Dalla seconda: modello più veloce (può sbagliare) e funzioni extra solo con Pro.")
+                      "Dalla seconda: modello più veloce (può sbagliare) e funzioni extra solo con Pro."
+                      + _passi_benvenuto("input"))
         else:
             _titolo = "🎁 Regalo di benvenuto: hai tutto il Pro su questa verifica"
             _testo = ("Crea ora Fila B, BES/DSA, soluzioni, griglia e scheda. "
-                      "Dalla prossima verifica restano solo con Pro.")
+                      "Dalla prossima verifica restano solo con Pro."
+                      + _passi_benvenuto("final"))
     else:
         _titolo = "Passa al piano Pro"
         _testo = ("Esercizi scritti dal modello AI più accurato e, per ogni verifica, il kit completo per la classe: "
