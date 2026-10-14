@@ -8,6 +8,7 @@ import streamlit as st
 from ai_client import modelli_sostituiti, riepilogo_uso
 
 from ui_helpers import _reset_label, _render_limite_raggiunto
+from config import MONETIZZAZIONE_ATTIVA
 
 logger = logging.getLogger("verificai.sidebar")
 
@@ -160,6 +161,13 @@ def render_sidebar(
                     st.session_state["_stage_prima"] = st.session_state.get("stage")   # per tornare indietro
                 st.session_state.stage = "MIE_VERIFICHE"
                 st.rerun()
+            if MONETIZZAZIONE_ATTIVA and not is_admin and st.session_state.get("piano_utente", "free") == "free":
+                if st.button("Passa a Pro", key="open_upgrade", use_container_width=True, type="secondary",
+                             icon=":material/workspace_premium:"):
+                    st.session_state["_upgrade_da"] = st.session_state.get("stage")
+                    st.session_state["_upgrade_funzione"] = None
+                    st.session_state.stage = "UPGRADE"
+                    st.rerun()
 
         # ── USER + LOGOUT ─────────────────────────────────────────────────────
         with _c_user:

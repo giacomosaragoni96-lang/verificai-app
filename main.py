@@ -33,6 +33,7 @@ from prompts import (
 from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
 from scheda import genera_scheda
 from subscription_management import calcola_entitlements, get_subscription_manager
+from ui_upgrade import render_upgrade
 from latex_utils import (
     compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, copia_intestazione_con_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
     fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
@@ -49,7 +50,7 @@ from config import (
     LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
-    MOSTRA_BADGE_PRO,
+    MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS,
 )
 from dotenv import load_dotenv
@@ -80,6 +81,7 @@ except ImportError:
 
 # ── COSTANTI STAGE ────────────────────────────────────────────────────────────
 STAGE_MIE_VERIFICHE = "MIE_VERIFICHE"  # pagina "Le tue verifiche"
+STAGE_UPGRADE = "UPGRADE"               # pagina «Passa a Pro»
 STAGE_BANCA = "BANCA"                   # pagina "Banca esercizi" (solo admin)
 
 # ── PAGE CONFIG ───────────────────────────────────────────────────────────────
@@ -660,18 +662,86 @@ def _abbonamento_utente(user_id: str) -> dict:
 # Piano, tetto e funzioni dell'utente: un'unica fonte (subscription_management.calcola_entitlements).
 # Se l'abbonamento non si legge si resta Free (mai Pro per un guasto); se il conteggio non si legge
 # per chi ha un tetto la creazione è bloccata con un messaggio «riprova», non con «limite raggiunto».
+def _prima_verifica_id(user_id: str):
+    """
+    (ok, id): id della PRIMA verifica mai creata dall'utente (anche eliminata), None se non ne ha.
+    ok=False se non si riesce a leggere: in quel caso niente assaggio (mai Pro per un guasto).
+    Una volta trovata la si ricorda nella sessione.
+    """
+    _k = "_prima_verifica"
+    _c = st.session_state.get(_k)
+    if _c and _c[0] == user_id and _c[1] is not None:
+        return True, _c[1]
+    try:
+        res = supabase_admin.table("verifiche_storico").select("id")            .eq("user_id", user_id).order("created_at").limit(1).execute()
+        _id = (res.data or [{}])[0].get("id") if res.data else None
+        st.session_state[_k] = (user_id, _id)
+        return True, _id
+    except Exception as e:
+        logger.warning("_prima_verifica_id failed for %s: %s", user_id, e)
+        return False, None
+
+
+def _assaggio_attivo() -> bool:
+    """True se la verifica su cui lavora l'utente è la sua prima in assoluto (tutto il Pro, una volta sola)."""
+    if not MONETIZZAZIONE_ATTIVA or _is_admin or not st.session_state.utente:
+        return False
+    ok, prima = _prima_verifica_id(st.session_state.utente.id)
+    if not ok:
+        return False
+    if prima is None:
+        return True                         # non ha ancora creato nulla: quella che sta per creare è la prima
+    return str(st.session_state.get("_storico_id")) == str(prima)
+
+
+_ASSAGGIO = _assaggio_attivo()
 try:
-    ENT = calcola_entitlements(_abbonamento_utente(st.session_state.utente.id), _verifiche_mese, _is_admin)
+    ENT = calcola_entitlements(_abbonamento_utente(st.session_state.utente.id), _verifiche_mese, _is_admin, _ASSAGGIO)
 except Exception as e:
     logger.error(f"Errore caricamento abbonamento: {e}")
-    ENT = calcola_entitlements(None, _verifiche_mese, _is_admin)
+    ENT = calcola_entitlements(None, _verifiche_mese, _is_admin, _ASSAGGIO)
 
-st.session_state.piano_utente = ENT.piano if ENT.piano != "admin" else "free"   # l'admin si riconosce da _is_admin
+# l'assaggio sceglie il modello come il Pro; l'admin si riconosce da _is_admin
+st.session_state.piano_utente = "pro" if ENT.assaggio else (ENT.piano if ENT.piano != "admin" else "free")
 _limite = ENT.limite_raggiunto
 _blocco_conteggio = ENT.errore_conteggio
 _illimitato = ENT.illimitato
 _restanti = ENT.restanti
 _TETTO_MENSILE = int(ENT.tetto_mensile) if not ENT.illimitato else LIMITE_MENSILE
+
+
+def _registra_evento(tipo: str, modello: str | None = None, verifica_id=None, costo_usd: float | None = None) -> None:
+    """Scrive un evento d'uso in `usage_events` (tetti, costi, metriche). Mai bloccante: un errore si ignora."""
+    if not st.session_state.utente or supabase_admin is None:
+        return
+    try:
+        supabase_admin.table("usage_events").insert({
+            "user_id": st.session_state.utente.id, "tipo": tipo, "modello": modello,
+            "costo_usd": costo_usd, "verifica_id": verifica_id,
+        }).execute()
+    except Exception as e:
+        logger.warning("usage_events non scritto (%s): %s", tipo, e)
+
+
+def _vai_a_upgrade(funzione: str | None = None) -> None:
+    """Porta alla pagina «Passa a Pro» ricordando da dove si arriva."""
+    st.session_state["_upgrade_da"] = st.session_state.stage
+    st.session_state["_upgrade_funzione"] = funzione
+    _registra_evento("paywall:" + (funzione or "pagina"), verifica_id=st.session_state.get("_storico_id"))
+    st.session_state.stage = STAGE_UPGRADE
+    st.rerun()
+
+
+def _pro_bloccato(funzione: str) -> bool:
+    """True se la funzione richiede Pro e l'utente non ce l'ha (sempre False a monetizzazione spenta)."""
+    return not ENT.puo(funzione)
+
+
+def _pulsante_pro(funzione: str, key: str, testo: str = "Con Pro") -> None:
+    """Al posto dell'azione di una funzione Pro: un pulsante che porta alla pagina di confronto."""
+    if st.button(f"🔒 {testo}", key=key, use_container_width=True, type="secondary",
+                 help=f"Per avere {ETICHETTE_FUNZIONI.get(funzione, 'questa funzione')} serve il piano Pro."):
+        _vai_a_upgrade(funzione)
 
 # ── CSS + FEEDBACK ────────────────────────────────────────────
 st.markdown(get_css(T), unsafe_allow_html=True)
@@ -1970,7 +2040,11 @@ def _render_percorso_b_form(_prog_placeholder):
                 st.markdown('<div class="opt-label" style="margin-top:.8rem;">Logo della scuola (opzionale)</div>',
                             unsafe_allow_html=True)
                 _logo_s = _logo_scuola()
-                if _logo_s:
+                _logo_bloccato = _pro_bloccato("logo")
+                if _logo_bloccato:
+                    st.caption("Il logo della tua scuola sull'intestazione è una funzione del piano Pro.")
+                    _pulsante_pro("logo", "pro_logo", "Logo della scuola con Pro")
+                elif _logo_s:
                     _attivo_nuovo = st.toggle("Metti il logo nelle verifiche",
                                               value=_logo_s.get("attivo", True), key="logo_attivo_b")
                     if _attivo_nuovo != _logo_s.get("attivo", True):
@@ -2267,7 +2341,7 @@ def _lancia_generazione(
         # Logo della scuola: se l'utente ne ha uno attivo va nell'intestazione della Fila A
         # (e quindi anche nelle versioni che ne derivano); si ricompila il PDF con il logo.
         _logo_s = _logo_scuola()
-        if _logo_s and _logo_s.get("attivo", True) and ris["A"].get("latex"):
+        if _logo_s and _logo_s.get("attivo", True) and ris["A"].get("latex") and not _pro_bloccato("logo"):
             _lat_logo = inserisci_logo(ris["A"]["latex"], _logo_s.get("tipo", "largo"), _logo_s["b64"],
                                          float(_logo_s.get("scala", 1.0)))
             if _lat_logo != ris["A"]["latex"]:
@@ -2335,6 +2409,7 @@ def _lancia_generazione(
             st.session_state._storico_refresh += 1
             # id della riga appena creata: serve per aggiungerle poi Fila B e BES/DSA
             st.session_state["_storico_id"] = (_ris_ins.data or [{}])[0].get("id")
+            _registra_evento("verifica", modello=_modello_id_eff, verifica_id=st.session_state["_storico_id"])
             # st.toast/st.warning qui si perderebbero con il rerun: li mostra la schermata del risultato
             st.session_state["_toast_dopo"] = ("Salvata in «Le mie verifiche»", "💾")
         except Exception as _e:
@@ -4121,14 +4196,16 @@ def _render_stage_final():
     ) if not presente]
     _kc1, _kc2 = st.columns(2, gap="small")
     with _kc1:
-        if st.button("Prepara tutto il kit", icon=":material/auto_awesome:", key="kit_tutto",
+        if _pro_bloccato("zip"):
+            _pulsante_pro("zip", "pro_kit", "Prepara tutto il kit con Pro")
+        elif st.button("Prepara tutto il kit", icon=":material/auto_awesome:", key="kit_tutto",
                      use_container_width=True, disabled=(not _kit_mancanti) or _kit_in_corso,
                      help="Crea Fila B, BES/DSA, Soluzioni e scheda di allenamento, una dopo l'altra "
                           "(circa un minuto). Quello che c'è già non si rifà."):
             st.session_state["_kit_coda"] = [k for k in ("B", "R", "S", "SC") if k in _kit_mancanti]
             st.rerun()
     with _kc2:
-        if len(_kit_pronti) >= 2:
+        if len(_kit_pronti) >= 2 and not _pro_bloccato("zip"):
             _dl("Scarica tutto (ZIP)", data=lambda: _zip_kit(_kit_pronti),
                 file_name=_nome_base_file(mat_str, arg_str) + "_kit.zip", mime="application/zip",
                 icon=":material/folder_zip:", use_container_width=True, key="dl_kit_zip",
@@ -4192,6 +4269,8 @@ def _render_stage_final():
                         _pdf_bc, _ = compila_pdf(_b_lat)
                     if _pdf_bc:
                         st.session_state.verifiche["B"]["pdf"] = _pdf_bc; st.rerun()
+            elif _pro_bloccato("fila_b"):
+                _pulsante_pro("fila_b", "pro_fila_b")
             else:
                 if st.button("⚡ Genera Fila B", key="one_click_B_v2",
                              use_container_width=True, type="secondary"):
@@ -4216,6 +4295,7 @@ def _render_stage_final():
                 _pdf_b_new, _ = compila_pdf(_latex_b_new)
                 st.session_state.verifiche["B"]["latex"] = _latex_b_new
                 _salva_variante_storico("latex_b", _latex_b_new)
+                _registra_evento("fila_b", modello=mod_id, verifica_id=st.session_state.get("_storico_id"))
                 if _pdf_b_new: st.session_state.verifiche["B"]["pdf"] = _pdf_b_new
                 _ph_b.empty()
                 if _pdf_b_new:
@@ -4258,6 +4338,8 @@ def _render_stage_final():
                         _pdf_rc, _ = compila_pdf(_r_lat)
                     if _pdf_rc:
                         st.session_state.verifiche["R"]["pdf"] = _pdf_rc; st.rerun()
+            elif _pro_bloccato("bes"):
+                _pulsante_pro("bes", "pro_bes")
             else:
                 if st.button("🌟 Genera BES/DSA", key="one_click_R_v2",
                              use_container_width=True, type="secondary"):
@@ -4272,6 +4354,7 @@ def _render_stage_final():
                 res_r = _genera_variante("R", mod_id, gp, vA)
                 st.session_state.verifiche["R"] = {**vR, **res_r}
                 _salva_variante_storico("latex_r", res_r.get("latex"))
+                _registra_evento("bes", modello=mod_id, verifica_id=st.session_state.get("_storico_id"))
                 _ph_r.empty(); st.toast("✅ BES/DSA pronta!", icon="🌟"); st.rerun()
             except Exception as _e:
                 _ph_r.empty()
@@ -4308,6 +4391,8 @@ def _render_stage_final():
                         _pdf_sc, _ = compila_pdf(_s_lat)
                     if _pdf_sc:
                         st.session_state.verifiche["S"]["pdf"] = _pdf_sc; st.rerun()
+            elif _pro_bloccato("soluzioni"):
+                _pulsante_pro("soluzioni", "pro_soluzioni")
             else:
                 if st.button("✅ Genera Soluzioni", key="one_click_S_v2",
                              use_container_width=True, type="secondary"):
@@ -4352,6 +4437,8 @@ def _render_stage_final():
                     use_container_width=True,
                     key="dl_docx_A_card",
                 )
+            elif vA.get("latex") and _pro_bloccato("word"):
+                _pulsante_pro("word", "pro_word")
             elif vA.get("latex"):
                 if st.button("📝 Genera Word", key="gen_docx_A_card",
                              use_container_width=True, type="secondary"):
@@ -4414,6 +4501,8 @@ def _render_stage_final():
                         file_name=arg_str + '_Griglia.txt',
                         mime='text/plain', key='dl_rubrica_v2', use_container_width=True,
                     )
+            elif _pro_bloccato("griglia"):
+                _pulsante_pro("griglia", "pro_griglia")
             else:
                 if st.button('📊 Genera Griglia', key='btn_gen_griglia_v2',
                              use_container_width=True, type="secondary"):
@@ -4465,6 +4554,8 @@ def _render_stage_final():
                 data=vSC["pdf"], file_name=_nome_base_file(mat_str, arg_str) + "_Scheda_allenamento.pdf",
                 mime="application/pdf", use_container_width=True, key="dl_pdf_SC",
             )
+        elif _pro_bloccato("scheda"):
+            _pulsante_pro("scheda", "pro_scheda")
         else:
             if st.button("🎯 Crea la scheda", key="one_click_SC", use_container_width=True, type="secondary",
                          disabled=bool(st.session_state.get("_gen_scheda"))):
@@ -4891,6 +4982,12 @@ if not _share_view_active:
     elif _current == STAGE_REVIEW:  _render_stage_review()
     elif _current == STAGE_FINAL:   _render_stage_final()
     elif _current == STAGE_MIE_VERIFICHE: _render_le_tue_verifiche()
+    elif _current == STAGE_UPGRADE:
+        def _esci_da_upgrade():
+            st.session_state.stage = st.session_state.get("_upgrade_da") or STAGE_INPUT
+            st.rerun()
+        _gia_usato = (not ENT.assaggio) and ENT.piano == "free" and MONETIZZAZIONE_ATTIVA
+        render_upgrade(_esci_da_upgrade, st.session_state.get("_upgrade_funzione"), _gia_usato)
     elif _current == STAGE_BANCA:
         if _is_admin:
             def _esci_dalla_banca():
