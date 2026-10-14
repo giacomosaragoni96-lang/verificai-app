@@ -52,6 +52,9 @@ Avvio locale: `streamlit run main.py`. Pacchetti di sistema in `packages.txt`
 - Configurazione e prompt: `config.py`, `prompts.py`
 - Abbonamenti (solo lettura): `subscription_management.py` (`calcola_entitlements`: piano, tetto e funzioni in un'unica
   fonte, funzione pura), `config.PIANI`/`FUNZIONI_PRO`, `database_schema.sql`, `migrazione_monetizzazione_fase0.sql`
+- Licenze Pro (Lemon Squeezy, API pubblica, nessuna chiave segreta): `licenze.py` (senza streamlit). L'app scrive in `subscriptions`
+  SOLO dopo aver validato il codice ed essersi assicurata che store/prodotto siano i nostri (`config.LEMON_STORE_ID`/`LEMON_PRODUCT_ID`,
+  vuoti = nessun codice accettato); ricontrollo ogni 24 ore (`riconvalida_se_serve`), tolleranza 3 giorni. Migrazione: `migrazione_monetizzazione_fase2.sql`.
 - Pagina «Passa a Pro»: `ui_upgrade.py` (stage `UPGRADE`; esempi Lite/Pro in `assets/esempi/free_N.png` e `pro_N.png`).
   Blocchi funzione in `main.py` (`_pro_bloccato`, `_pulsante_pro`, `_vai_a_upgrade`), eventi in `usage_events` (`_registra_evento`).
   Assaggio: la prima verifica di ogni utente free (`_prima_verifica_id`) ha tutto il Pro, modello compreso; tutto spento finché `MONETIZZAZIONE_ATTIVA` è False.
