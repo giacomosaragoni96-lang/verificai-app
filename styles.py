@@ -4700,6 +4700,8 @@ font-family: 'DM Sans', sans-serif;
     font-size: .82rem; font-weight: 600; line-height: 1.35;
   }}
 
+  .st-key-dettatura_js {{ display: none !important; }}
+
   /* Caricamento file: testi di Streamlit in italiano */
   [data-testid="stFileUploaderDropzoneInstructions"] > div > span:first-child {{ font-size: 0 !important; }}
   [data-testid="stFileUploaderDropzoneInstructions"] > div > span:first-child::after {{

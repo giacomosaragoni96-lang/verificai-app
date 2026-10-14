@@ -902,6 +902,73 @@ def _css_pulsa(chiavi: list) -> str:
             f"{fuoco} {{animation:none !important;outline:none !important;box-shadow:none !important;}}</style>")
 
 
+def _js_dettatura() -> str:
+    """
+    Script (statico) che aggiunge un piccolo microfono nell'angolo del riquadro dell'argomento: si parla e il testo
+    compare. Usa il riconoscimento vocale del browser (gratis, nessun costo AI; Chrome, Edge e Safari). Dove il browser
+    non lo ha, il pulsante non compare. Il testo si aggiunge in fondo a quello già scritto.
+    """
+    return r"""<script>(function () {
+  var P = window.parent, D = P.document;
+  var SR = P.SpeechRecognition || P.webkitSpeechRecognition;
+  if (!SR) return;
+  if (P.__vfMicObs) { try { P.__vfMicObs.disconnect(); } catch (e) {} }
+  var ICONA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v4"></path></svg>';
+  var rec = null, attivo = false, btn = null;
+  function area() { return D.querySelector('textarea[aria-label^="Cosa vuoi nella verifica"]'); }
+  function scrivi(ta, testo) {
+    var setter = Object.getOwnPropertyDescriptor(P.HTMLTextAreaElement.prototype, 'value').set;
+    var v = ta.value || '';
+    setter.call(ta, v + (v && !/\s$/.test(v) ? ' ' : '') + testo);
+    ta.dispatchEvent(new P.Event('input', { bubbles: true }));
+  }
+  function stato(b, acceso) {
+    b.style.color = acceso ? '#DC2626' : '#64748B';
+    b.style.borderColor = acceso ? '#DC2626' : '#CBD5E1';
+    b.title = acceso ? 'Smetti di dettare' : 'Detta a voce';
+    b.setAttribute('aria-label', b.title);
+  }
+  function ferma() {
+    attivo = false;
+    try { if (rec) rec.stop(); } catch (e) {}
+    if (btn) stato(btn, false);
+    var ta = area();
+    if (ta) { ta.focus(); ta.blur(); }          // così Streamlit prende il testo
+  }
+  function avvia() {
+    var ta = area(); if (!ta) return;
+    rec = new SR(); rec.lang = 'it-IT'; rec.continuous = true; rec.interimResults = false;
+    rec.onresult = function (e) {
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) scrivi(ta, e.results[i][0].transcript.trim());
+      }
+    };
+    rec.onerror = function () { ferma(); };
+    rec.onend = function () { if (attivo) { try { rec.start(); } catch (e) { ferma(); } } };
+    attivo = true; stato(btn, true);
+    try { rec.start(); } catch (e) { ferma(); }
+  }
+  function monta() {
+    var ta = area(); if (!ta) return;
+    var box = ta.closest('[data-testid="stTextArea"]'); if (!box) return;
+    if (box.querySelector('.vf-mic')) return;
+    box.style.position = 'relative';
+    btn = D.createElement('button');
+    btn.type = 'button'; btn.className = 'vf-mic'; btn.innerHTML = ICONA;
+    btn.style.cssText = 'position:absolute;right:10px;bottom:10px;width:34px;height:34px;border-radius:50%;'
+      + 'border:1px solid #CBD5E1;background:#fff;display:flex;align-items:center;justify-content:center;'
+      + 'cursor:pointer;padding:0;z-index:5;';
+    stato(btn, false);
+    btn.onclick = function () { if (attivo) ferma(); else avvia(); };
+    box.appendChild(btn);
+  }
+  monta();
+  P.__vfMicObs = new P.MutationObserver(monta);
+  P.__vfMicObs.observe(D.body, { childList: true, subtree: true });
+})();</script>"""
+
+
+
 def _js_guida_visti(epoca: str = "") -> str:
     """
     Script (statico) che, al primo passaggio del mouse o clic su un elemento evidenziato dalla guida, spegne il lampeggio
@@ -2205,6 +2272,8 @@ def _render_percorso_b_form(_prog_placeholder):
                     '<span class="opt-hint">Argomento nella prima riga</span></div>',
                     unsafe_allow_html=True,
                 )
+                with st.container(key="dettatura_js"):
+                    components.html(_js_dettatura(), height=0)
                 st.markdown('<div class="vf-tip">💡 Più dettagli dai, più la verifica sarà come la immagini</div>', unsafe_allow_html=True)
                 # Controlla se c'è già un valore in session state per evitare il warning
                 if "argomento_area_b" not in st.session_state:
