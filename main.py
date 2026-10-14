@@ -747,30 +747,28 @@ def _vai_a_upgrade(funzione: str | None = None) -> None:
 
 _CSS_BANNER_PIANO = """
 <style>
-/* Striscia blu per chi non ha Pro: un riquadro di Streamlit (con bordo) riconosciuto dal marcatore .bp-marker */
-html body .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.bp-marker) {
-  background:#2563EB !important; border:0 !important; border-radius:10px !important; padding:.55rem .85rem .65rem !important;
-  margin:.2rem 0 .6rem;
+/* Striscia blu per chi non ha Pro: contenitore con chiave (classe st-key-banner_piano_*, stabile tra le versioni) */
+html body .stApp [class*="st-key-banner_piano_"] {
+  background:#2563EB !important; border-radius:10px; padding:.55rem .85rem .65rem !important;
+  margin:.2rem 0 .6rem; gap:.3rem !important;
 }
-html body .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.bp-marker) > div { gap:.3rem !important; }
-html body .stApp .bp-marker { display:none; }
 /* Streamlit toglie 1rem in fondo al markdown: il riempimento lo ripristina */
-html body .stApp .bp-wrap { padding-bottom:1rem; }
-html body .stApp .bp-wrap .bp-t {
+html body .stApp [class*="st-key-banner_piano_"] .bp-wrap { padding-bottom:1rem; }
+html body .stApp [class*="st-key-banner_piano_"] .bp-t {
   font-family:'DM Sans',sans-serif; font-weight:700; font-size:.9rem; line-height:1.3; color:#fff;
 }
-html body .stApp .bp-wrap .bp-s {
+html body .stApp [class*="st-key-banner_piano_"] .bp-s {
   font-family:'DM Sans',sans-serif; font-size:.8rem; line-height:1.4; color:rgba(255,255,255,.92); margin-top:.15rem;
 }
-html body .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.bp-marker) button {
+html body .stApp [class*="st-key-banner_piano_"] button {
   background:#fff !important; border:0 !important; border-radius:8px !important; min-height:0 !important;
   padding:.25rem .8rem !important; width:auto !important;
 }
-html body .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.bp-marker) button p,
-html body .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.bp-marker) button span {
+html body .stApp [class*="st-key-banner_piano_"] button p,
+html body .stApp [class*="st-key-banner_piano_"] button span {
   color:#1D4ED8 !important; font-weight:700 !important; font-size:.82rem !important; margin:0 !important; line-height:1.2 !important;
 }
-html body .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.bp-marker) button:hover { background:#EFF6FF !important; }
+html body .stApp [class*="st-key-banner_piano_"] button:hover { background:#EFF6FF !important; }
 </style>
 """
 
@@ -802,10 +800,10 @@ def _banner_piano(dove: str) -> None:
                   if dove == "input" else
                   "Con Pro questa verifica può avere anche Fila B, versione BES/DSA, soluzioni, Word, griglia, "
                   "scheda di allenamento, e gli esercizi sono scritti dal modello AI più accurato.")
-    with _slot.container(border=True):
-        st.markdown(_CSS_BANNER_PIANO, unsafe_allow_html=True)
+    st.markdown(_CSS_BANNER_PIANO, unsafe_allow_html=True)
+    with _slot.container(key=f"banner_piano_{dove}"):
         st.markdown(
-            f'<div class="bp-marker"></div><div class="bp-wrap"><div class="bp-t">{_titolo}</div>'
+            f'<div class="bp-wrap"><div class="bp-t">{_titolo}</div>'
             f'<div class="bp-s">{_testo}</div></div>',
             unsafe_allow_html=True,
         )
@@ -2032,27 +2030,6 @@ def _render_percorso_b_form(_prog_placeholder):
                 _prefs = _carica_docente_preferenze(st.session_state.utente.id, materia_scelta)
                 st.session_state._docente_prefs[materia_scelta] = _prefs
 
-            # ── DURATA: un solo scatto sceglie numero di esercizi e tempo previsto ──────
-            _nomi_dur = list(DURATE)
-            # Si parte sempre da «Standard»: la lunghezza cambia da verifica a verifica,
-            # non ha senso ereditare quella dell'ultima volta.
-            _dur_salvata = DURATA_DEFAULT
-            st.markdown('<div class="opt-label">Quanto deve essere lunga?</div>', unsafe_allow_html=True)
-            durata_nome = st.radio(
-                "Quanto deve essere lunga la verifica?", _nomi_dur, index=_nomi_dur.index(_dur_salvata),
-                format_func=lambda n: etichetta_durata(n, difficolta),
-                horizontal=True, key="sel_durata_b", label_visibility="collapsed",
-            )
-            st.caption("Potrai aggiungere o togliere esercizi dopo, nella schermata di modifica.")
-            _par_dur   = parametri_durata(durata_nome, difficolta)
-            durata_str = _par_dur["durata"]
-
-            # Numero di esercizi di partenza: quello della durata scelta. Con «Rifai questa
-            # verifica» numero di esercizi e punti vengono dal file (vedi il ramo facsimile).
-            _n_default = _par_dur["num_esercizi"]
-            _n_opts = list(range(1, 16))
-            _n_idx  = (_n_opts.index(_n_default) if _n_default in _n_opts else 3)
-
             # ── Divisore sottile prima di Personalizzazione ──────────────────────
             st.markdown('<div class="divider-minimal"></div>', unsafe_allow_html=True)
             # ── Personalizzazione Avanzata — st.expander standard ────────────────
@@ -2061,7 +2038,37 @@ def _render_percorso_b_form(_prog_placeholder):
             con_griglia  = mostra_punteggi
             punti_totali = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
 
-            with st.expander("Altre opzioni (numero esercizi, punteggi, logo)", expanded=False, icon=":material/tune:"):
+            # ── Hai già del materiale? Upload + tre scelte (l'AI legge il file solo al clic) ──
+            _rifiuto = st.session_state.pop("_analisi_rifiuto", None)
+            if _rifiuto:
+                # file non scolastico: lo tolgo e spiego perché
+                st.session_state["_file_materiale"] = None
+                st.session_state.file_ispirazione = None
+                st.session_state["_up_ciclo"] += 1
+                st.warning(_rifiuto.get("messaggio") or "Questo file non sembra materiale scolastico.", icon="📎")
+            _fm = st.session_state.get("_file_materiale")
+            with st.expander("Altre opzioni (lunghezza, materiale, punteggi, logo)", expanded=bool(_fm), icon=":material/tune:"):
+                # ── DURATA: un solo scatto sceglie numero di esercizi e tempo previsto ──────
+                _nomi_dur = list(DURATE)
+                # Si parte sempre da «Standard»: la lunghezza cambia da verifica a verifica,
+                # non ha senso ereditare quella dell'ultima volta.
+                _dur_salvata = DURATA_DEFAULT
+                st.markdown('<div class="opt-label">Quanto deve essere lunga?</div>', unsafe_allow_html=True)
+                durata_nome = st.radio(
+                    "Quanto deve essere lunga la verifica?", _nomi_dur, index=_nomi_dur.index(_dur_salvata),
+                    format_func=lambda n: etichetta_durata(n, difficolta),
+                    horizontal=True, key="sel_durata_b", label_visibility="collapsed",
+                )
+                st.caption("Potrai aggiungere o togliere esercizi dopo, nella schermata di modifica.")
+                _par_dur   = parametri_durata(durata_nome, difficolta)
+                durata_str = _par_dur["durata"]
+
+                # Numero di esercizi di partenza: quello della durata scelta. Con «Rifai questa
+                # verifica» numero di esercizi e punti vengono dal file (vedi il ramo facsimile).
+                _n_default = _par_dur["num_esercizi"]
+                _n_opts = list(range(1, 16))
+                _n_idx  = (_n_opts.index(_n_default) if _n_default in _n_opts else 3)
+
 
                 st.markdown('<div class="opt-label">Cambia il numero di esercizi</div>', unsafe_allow_html=True)
                 num_esercizi = st.selectbox(
@@ -2118,66 +2125,7 @@ def _render_percorso_b_form(_prog_placeholder):
                     )
                     st.session_state["_pers_pt"] = punti_totali
 
-                # ── Logo della scuola: si carica una volta, poi compare in tutte le verifiche ──
-                st.markdown('<div class="opt-label" style="margin-top:.8rem;">Logo della scuola (opzionale)</div>',
-                            unsafe_allow_html=True)
-                _logo_s = _logo_scuola()
-                _logo_bloccato = _pro_bloccato("logo")
-                if _logo_bloccato:
-                    st.caption("Il logo della tua scuola sull'intestazione è una funzione del piano Pro.")
-                    _pulsante_pro("logo", "pro_logo", "Logo della scuola con Pro")
-                elif _logo_s:
-                    _attivo_nuovo = st.toggle("Metti il logo nelle verifiche",
-                                              value=_logo_s.get("attivo", True), key="logo_attivo_b")
-                    if _attivo_nuovo != _logo_s.get("attivo", True):
-                        _salva_logo({**_logo_s, "attivo": _attivo_nuovo})
-                    _etichette_scala = {0.75: "Più piccolo", 1.0: "Normale", 1.25: "Più grande"}
-                    _scala_salvata = float(_logo_s.get("scala", 1.0))
-                    _scala_nuova = st.select_slider(
-                        "Dimensione del logo", options=list(_etichette_scala),
-                        value=_scala_salvata if _scala_salvata in _etichette_scala else 1.0,
-                        format_func=_etichette_scala.get, key="logo_scala_b",
-                    )
-                    if _scala_nuova != _scala_salvata:
-                        _salva_logo({**_logo_s, "scala": _scala_nuova})
-                    # Anteprima immediata dell'intestazione: niente generazione sprecata
-                    with st.spinner("Preparo l'anteprima dell'intestazione…"):
-                        _img_int = _anteprima_intestazione(
-                            _logo_s["b64"], _logo_s.get("tipo", "largo"), _attivo_nuovo, materia_scelta,
-                            _scala_nuova, _LAYOUT_LOGO)
-                    if _img_int:
-                        st.image(_img_int, width=560)
-                        st.caption("Intestazione come sarà nel PDF (il titolo sarà quello della tua verifica).")
-                    if st.button("Cambia o togli il logo", key="logo_togli", icon=":material/delete:"):
-                        _salva_logo(None)
-                        st.rerun()
-                    st.caption("Vale per le nuove verifiche e per la Fila B; nel file Word non compare.")
-                else:
-                    _logo_up = st.file_uploader(
-                        "Carica il logo della tua scuola (PNG o JPG)", type=["png", "jpg", "jpeg"],
-                        key="logo_up_b", help="Si salva sul tuo account: lo carichi una volta sola.",
-                    )
-                    st.caption("Meglio un'immagine nitida (almeno 600 px di larghezza) con sfondo bianco o "
-                               "trasparente. Margini e formato (largo o piccolo) li sistema da solo il programma; "
-                               "dopo il caricamento vedi subito l'anteprima dell'intestazione.")
-                    if _logo_up is not None:
-                        _esito_logo = _prepara_logo(_logo_up.getvalue())
-                        if _esito_logo:
-                            _salva_logo({"b64": _esito_logo[0], "tipo": _esito_logo[1], "attivo": True})
-                            st.rerun()
-                        else:
-                            st.warning("Non riesco a leggere questa immagine: prova con un PNG o un JPG più piccolo.")
-
-            # ── Hai già del materiale? Upload + tre scelte (l'AI legge il file solo al clic) ──
-            _rifiuto = st.session_state.pop("_analisi_rifiuto", None)
-            if _rifiuto:
-                # file non scolastico: lo tolgo e spiego perché
-                st.session_state["_file_materiale"] = None
-                st.session_state.file_ispirazione = None
-                st.session_state["_up_ciclo"] += 1
-                st.warning(_rifiuto.get("messaggio") or "Questo file non sembra materiale scolastico.", icon="📎")
-            _fm = st.session_state.get("_file_materiale")
-            with st.expander("Hai già del materiale? (opzionale)", expanded=bool(_fm), icon=":material/attach_file:"):
+                st.markdown('<div class="opt-label" style="margin-top:.8rem;">Hai già del materiale? (opzionale)</div>', unsafe_allow_html=True)
                 if not _fm:
                     _up = st.file_uploader(
                         "Carica appunti, una verifica o un foglio di esercizi",
@@ -2229,6 +2177,56 @@ def _render_percorso_b_form(_prog_placeholder):
                         if st.session_state.get("_pb_argomento_source") != "manual":
                             st.session_state["_pb_argomento_source"] = None
                         st.rerun()
+
+                # ── Logo della scuola: si carica una volta, poi compare in tutte le verifiche ──
+                st.markdown('<div class="opt-label" style="margin-top:.8rem;">Logo della scuola (opzionale)</div>',
+                            unsafe_allow_html=True)
+                _logo_s = _logo_scuola()
+                _logo_bloccato = _pro_bloccato("logo")
+                if _logo_bloccato:
+                    st.caption("Il logo della tua scuola sull'intestazione è una funzione del piano Pro.")
+                    _pulsante_pro("logo", "pro_logo", "Logo della scuola con Pro")
+                elif _logo_s:
+                    _attivo_nuovo = st.toggle("Metti il logo nelle verifiche",
+                                              value=_logo_s.get("attivo", True), key="logo_attivo_b")
+                    if _attivo_nuovo != _logo_s.get("attivo", True):
+                        _salva_logo({**_logo_s, "attivo": _attivo_nuovo})
+                    _etichette_scala = {0.75: "Più piccolo", 1.0: "Normale", 1.25: "Più grande"}
+                    _scala_salvata = float(_logo_s.get("scala", 1.0))
+                    _scala_nuova = st.select_slider(
+                        "Dimensione del logo", options=list(_etichette_scala),
+                        value=_scala_salvata if _scala_salvata in _etichette_scala else 1.0,
+                        format_func=_etichette_scala.get, key="logo_scala_b",
+                    )
+                    if _scala_nuova != _scala_salvata:
+                        _salva_logo({**_logo_s, "scala": _scala_nuova})
+                    # Anteprima immediata dell'intestazione: niente generazione sprecata
+                    with st.spinner("Preparo l'anteprima dell'intestazione…"):
+                        _img_int = _anteprima_intestazione(
+                            _logo_s["b64"], _logo_s.get("tipo", "largo"), _attivo_nuovo, materia_scelta,
+                            _scala_nuova, _LAYOUT_LOGO)
+                    if _img_int:
+                        st.image(_img_int, width=560)
+                        st.caption("Intestazione come sarà nel PDF (il titolo sarà quello della tua verifica).")
+                    if st.button("Cambia o togli il logo", key="logo_togli", icon=":material/delete:"):
+                        _salva_logo(None)
+                        st.rerun()
+                    st.caption("Vale per le nuove verifiche e per la Fila B; nel file Word non compare.")
+                else:
+                    _logo_up = st.file_uploader(
+                        "Carica il logo della tua scuola (PNG o JPG)", type=["png", "jpg", "jpeg"],
+                        key="logo_up_b", help="Si salva sul tuo account: lo carichi una volta sola.",
+                    )
+                    st.caption("Meglio un'immagine nitida (almeno 600 px di larghezza) con sfondo bianco o "
+                               "trasparente. Margini e formato (largo o piccolo) li sistema da solo il programma; "
+                               "dopo il caricamento vedi subito l'anteprima dell'intestazione.")
+                    if _logo_up is not None:
+                        _esito_logo = _prepara_logo(_logo_up.getvalue())
+                        if _esito_logo:
+                            _salva_logo({"b64": _esito_logo[0], "tipo": _esito_logo[1], "attivo": True})
+                            st.rerun()
+                        else:
+                            st.warning("Non riesco a leggere questa immagine: prova con un PNG o un JPG più piccolo.")
 
             # ── CTA: Genera Bozza ─────────────────────────────────────────────────
             _manca_arg = not argomento and not _fm
