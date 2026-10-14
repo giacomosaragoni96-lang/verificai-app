@@ -2475,7 +2475,7 @@ font-family: 'DM Sans', sans-serif;
      FAB — Floating feedback button
      ════════════════════════════════════════════════════════════════════════ */
   .fab-link {{
-    position: fixed; bottom: 1rem; right: 1rem;
+    position: fixed; bottom: 3.8rem; right: 1rem;   /* sopra il «Manage app» di Streamlit Cloud, che vede solo chi gestisce l'app */
     z-index: 998;
     background: {T['card']};
     color: {T['text2']} !important;
