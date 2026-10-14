@@ -906,7 +906,8 @@ def _js_dettatura() -> str:
     """
     Script (statico) che aggiunge un piccolo microfono nell'angolo del riquadro dell'argomento: si parla e il testo
     compare. Usa il riconoscimento vocale del browser (gratis, nessun costo AI; Chrome, Edge e Safari). Dove il browser
-    non lo ha, il pulsante non compare. Il testo si aggiunge in fondo a quello già scritto.
+    non lo ha, il pulsante non compare. Il testo si aggiunge in fondo a quello già scritto. Sotto il riquadro una riga
+    di stato dice cosa succede (ascolto, permesso negato, ecc.), così un problema non resta muto.
     """
     return r"""<script>(function () {
   var P = window.parent, D = P.document;
@@ -914,39 +915,75 @@ def _js_dettatura() -> str:
   if (!SR) return;
   if (P.__vfMicObs) { try { P.__vfMicObs.disconnect(); } catch (e) {} }
   var ICONA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v4"></path></svg>';
-  var rec = null, attivo = false, btn = null;
+  var MESSAGGI = {
+    'not-allowed': 'Il browser non ha dato il permesso al microfono: clicca il lucchetto accanto all\u2019indirizzo e consentilo.',
+    'service-not-allowed': 'Il browser non consente la dettatura da questa pagina.',
+    'no-speech': 'Non ho sentito nulla: riprova avvicinandoti al microfono.',
+    'audio-capture': 'Non trovo nessun microfono collegato.',
+    'network': 'La dettatura ha bisogno di internet: controlla la connessione.',
+    'language-not-supported': 'Lingua non supportata dal browser.'
+  };
+  var rec = null, attivo = false, btn = null, ricevuto = false;
   function area() { return D.querySelector('textarea[aria-label^="Cosa vuoi nella verifica"]'); }
+  function stato(testo) {
+    var box = area() && area().closest('[data-testid="stTextArea"]'); if (!box) return;
+    var r = box.parentElement.querySelector('.vf-mic-stato');
+    if (!r) { r = D.createElement('div'); r.className = 'vf-mic-stato'; box.parentElement.insertBefore(r, box.nextSibling); }
+    r.textContent = testo || '';
+  }
   function scrivi(ta, testo) {
     var setter = Object.getOwnPropertyDescriptor(P.HTMLTextAreaElement.prototype, 'value').set;
     var v = ta.value || '';
     setter.call(ta, v + (v && !/\s$/.test(v) ? ' ' : '') + testo);
     ta.dispatchEvent(new P.Event('input', { bubbles: true }));
   }
-  function stato(b, acceso) {
-    b.style.color = acceso ? '#DC2626' : '#64748B';
-    b.style.borderColor = acceso ? '#DC2626' : '#CBD5E1';
-    b.title = acceso ? 'Smetti di dettare' : 'Detta a voce';
-    b.setAttribute('aria-label', b.title);
+  function colore(acceso) {
+    if (!btn) return;
+    btn.style.color = acceso ? '#DC2626' : '#64748B';
+    btn.style.borderColor = acceso ? '#DC2626' : '#CBD5E1';
+    btn.title = acceso ? 'Smetti di dettare' : 'Detta a voce';
+    btn.setAttribute('aria-label', btn.title);
   }
-  function ferma() {
+  function ferma(messaggio) {
     attivo = false;
     try { if (rec) rec.stop(); } catch (e) {}
-    if (btn) stato(btn, false);
+    colore(false);
+    stato(messaggio || '');
     var ta = area();
     if (ta) { ta.focus(); ta.blur(); }          // così Streamlit prende il testo
   }
-  function avvia() {
+  function parti() {
     var ta = area(); if (!ta) return;
-    rec = new SR(); rec.lang = 'it-IT'; rec.continuous = true; rec.interimResults = false;
+    rec = new SR(); rec.lang = 'it-IT'; rec.continuous = true; rec.interimResults = true;
+    rec.onstart = function () { stato('Sto ascoltando: parla pure.'); };
     rec.onresult = function (e) {
+      ricevuto = true;
+      var provvisorio = '';
       for (var i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) scrivi(ta, e.results[i][0].transcript.trim());
+        else provvisorio += e.results[i][0].transcript;
       }
+      stato(provvisorio ? '\u2026 ' + provvisorio : 'Sto ascoltando: parla pure.');
     };
-    rec.onerror = function () { ferma(); };
-    rec.onend = function () { if (attivo) { try { rec.start(); } catch (e) { ferma(); } } };
-    attivo = true; stato(btn, true);
-    try { rec.start(); } catch (e) { ferma(); }
+    rec.onerror = function (e) { ferma(MESSAGGI[e.error] || ('Dettatura non riuscita (' + e.error + ').')); };
+    rec.onend = function () {
+      if (!attivo) return;
+      try { rec.start(); } catch (e) { ferma('La dettatura si è interrotta.'); }
+    };
+    attivo = true; ricevuto = false; colore(true); stato('Avvio il microfono\u2026');
+    try { rec.start(); } catch (e) { ferma('Non riesco ad avviare il microfono (' + e.name + ').'); }
+  }
+  function avvia() {
+    // chiede prima il permesso al microfono: il browser mostra la sua richiesta e un eventuale rifiuto si capisce
+    var md = P.navigator.mediaDevices;
+    if (md && md.getUserMedia) {
+      md.getUserMedia({ audio: true }).then(function (flusso) {
+        flusso.getTracks().forEach(function (t) { t.stop(); });
+        parti();
+      }).catch(function (err) {
+        ferma(err && err.name === 'NotFoundError' ? MESSAGGI['audio-capture'] : MESSAGGI['not-allowed']);
+      });
+    } else { parti(); }
   }
   function monta() {
     var ta = area(); if (!ta) return;
@@ -958,15 +995,14 @@ def _js_dettatura() -> str:
     btn.style.cssText = 'position:absolute;right:10px;bottom:10px;width:34px;height:34px;border-radius:50%;'
       + 'border:1px solid #CBD5E1;background:#fff;display:flex;align-items:center;justify-content:center;'
       + 'cursor:pointer;padding:0;z-index:5;';
-    stato(btn, false);
-    btn.onclick = function () { if (attivo) ferma(); else avvia(); };
+    colore(false);
+    btn.onclick = function () { if (attivo) ferma(''); else avvia(); };
     box.appendChild(btn);
   }
   monta();
   P.__vfMicObs = new P.MutationObserver(monta);
   P.__vfMicObs.observe(D.body, { childList: true, subtree: true });
 })();</script>"""
-
 
 
 def _js_guida_visti(epoca: str = "") -> str:
@@ -2269,12 +2305,12 @@ def _render_percorso_b_form(_prog_placeholder):
             with _c_arg:
                 st.markdown(
                     '<div class="opt-label">Di cosa parla la verifica? ✱ '
-                    '<span class="opt-hint">Argomento nella prima riga</span></div>',
+                    '<span class="opt-hint">Argomento nella prima riga</span></div>'
+                    '<div class="vf-tip">💡 Più dettagli dai, più la verifica sarà come la immagini</div>',
                     unsafe_allow_html=True,
                 )
                 with st.container(key="dettatura_js"):
                     components.html(_js_dettatura(), height=0)
-                st.markdown('<div class="vf-tip">💡 Più dettagli dai, più la verifica sarà come la immagini</div>', unsafe_allow_html=True)
                 # Controlla se c'è già un valore in session state per evitare il warning
                 if "argomento_area_b" not in st.session_state:
                     argomento_raw = st.text_area(
@@ -2813,7 +2849,7 @@ def _render_stage_input():
         f'<div class="vf-narrow" style="text-align:center;margin:.2rem 0 1.1rem;">'
         f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
         f'letter-spacing:-.025em;color:{T["text"]};line-height:1.15;">Crea la tua verifica</div>'
-        f'<div style="font-size:.9rem;font-weight:400;color:{T["text2"]};margin-top:.35rem;'
+        f'<div style="font-size:.82rem;font-weight:400;color:{T["text2"]};margin-top:.3rem;'
         f'font-family:DM Sans,sans-serif;">Scrivi l’argomento: in un minuto la verifica è pronta.</div></div>',
         unsafe_allow_html=True,
     )
