@@ -2475,13 +2475,15 @@ font-family: 'DM Sans', sans-serif;
      FAB — Floating feedback button
      ════════════════════════════════════════════════════════════════════════ */
   .fab-link {{
-    position: fixed; bottom: 1.2rem; right: 1.2rem;
+    position: fixed; bottom: 1rem; right: 1rem;
     z-index: 998;
     background: {T['card']};
     color: {T['text2']} !important;
-    font-size: 0.92rem; font-weight: 700;
+    font-size: 1.05rem; font-weight: 700;
     font-family: 'DM Sans', sans-serif;
-    padding: .45rem .85rem;
+    width: 2.5rem; height: 2.5rem; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    opacity: .9;
     border-radius: 100px;
     border: 1.5px solid {T['border']};
     box-shadow: {T.get('shadow_md', '0 4px 20px rgba(0,0,0,.08)')};
@@ -4677,6 +4679,20 @@ font-family: 'DM Sans', sans-serif;
   }}
   @media (prefers-reduced-motion: reduce) {{
     html body .stApp .st-key-genera_btn_b button:not(:disabled), html body .stApp .st-key-genera_btn_b button:not(:disabled)::after {{ animation: none !important; }}
+  }}
+
+  /* Caricamento file: testi di Streamlit in italiano */
+  [data-testid="stFileUploaderDropzoneInstructions"] > div > span:first-child {{ font-size: 0 !important; }}
+  [data-testid="stFileUploaderDropzoneInstructions"] > div > span:first-child::after {{
+    content: "Trascina qui il file"; font-size: 1rem; line-height: 1.4; display: block;
+  }}
+  [data-testid="stFileUploaderDropzoneInstructions"] > div > span:last-child {{ font-size: 0 !important; }}
+  [data-testid="stFileUploaderDropzoneInstructions"] > div > span:last-child::after {{
+    content: "Fino a 200 MB per file"; font-size: .8rem; line-height: 1.4; display: block;
+  }}
+  html body .stApp [data-testid="stFileUploaderDropzone"] button[data-testid="stBaseButton-secondary"] {{ font-size: 0 !important; line-height: 0 !important; }}
+  html body .stApp [data-testid="stFileUploaderDropzone"] button[data-testid="stBaseButton-secondary"]::after {{
+    content: "Sfoglia"; font-size: .9rem; line-height: 1.4; font-weight: 700;
   }}
 
   /* Sidebar: meno vuoto in cima */
