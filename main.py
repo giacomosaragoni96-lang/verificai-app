@@ -812,16 +812,29 @@ html body .stApp [class*="st-key-banner_piano_"] .g-chip {
 html body .stApp [class*="st-key-banner_piano_"] .g-pun { display:inline-flex; gap:5px; margin-left:auto; }
 html body .stApp [class*="st-key-banner_piano_"] .g-pun i { display:block; width:18px; height:4px; border-radius:3px; background:rgba(255,255,255,.3); }
 html body .stApp [class*="st-key-banner_piano_"] .g-pun i.on { background:#FCD34D; }
-/* pulsante del riquadro Free («Scopri Pro»): bianco, a pillola */
+/* pulsante «Scopri il piano Pro»: oro caldo con riflesso, spicca sul blu e invita al clic */
 html body .stApp [class*="st-key-banner_piano_"] button {
-  background:#fff !important; border:0 !important; border-radius:999px !important; min-height:0 !important; height:auto !important;
-  padding:.3rem .95rem !important; width:auto !important; box-shadow:none !important;
+  position:relative !important; overflow:hidden !important;
+  background:linear-gradient(135deg,#FDE68A 0%,#FBBF24 55%,#F59E0B 100%) !important; border:0 !important; border-radius:999px !important;
+  min-height:0 !important; height:auto !important; padding:.6rem 1.5rem !important; width:auto !important;
+  box-shadow:0 10px 22px rgba(245,158,11,.38), inset 0 1px 0 rgba(255,255,255,.55) !important;
+  transition:transform .15s ease, box-shadow .15s ease, filter .15s ease !important;
 }
 html body .stApp [class*="st-key-banner_piano_"] button p,
 html body .stApp [class*="st-key-banner_piano_"] button span {
-  color:#1E3A8A !important; font-weight:700 !important; font-size:.83rem !important; margin:0 !important; line-height:1.2 !important;
+  color:#1E3A8A !important; font-weight:800 !important; font-size:.95rem !important; margin:0 !important; line-height:1.2 !important; letter-spacing:.005em;
 }
-html body .stApp [class*="st-key-banner_piano_"] button:hover:not(:disabled) { background:#EFF6FF !important; }
+html body .stApp [class*="st-key-banner_piano_"] button:hover:not(:disabled) {
+  transform:translateY(-2px) !important; filter:brightness(1.04);
+  box-shadow:0 14px 28px rgba(245,158,11,.5), inset 0 1px 0 rgba(255,255,255,.6) !important;
+}
+html body .stApp [class*="st-key-banner_piano_"] button:active:not(:disabled) { transform:translateY(0) !important; }
+html body .stApp [class*="st-key-banner_piano_"] button::after {
+  content:""; position:absolute; top:-20%; left:-70%; width:35%; height:140%;
+  background:linear-gradient(100deg, rgba(255,255,255,0), rgba(255,255,255,.7), rgba(255,255,255,0));
+  transform:skewX(-22deg); animation:vf-riflesso 3.4s ease-in-out infinite; pointer-events:none;
+}
+@media (prefers-reduced-motion: reduce) { html body .stApp [class*="st-key-banner_piano_"] button::after { animation:none !important; } }
 /* elenco a schede: una voce per cosa da provare */
 html body .stApp [class*="st-key-banner_piano_"] .g-lista {
   list-style:none; margin:.7rem 0 0 !important; padding:0 !important; display:grid; gap:.5rem .7rem;
@@ -977,7 +990,7 @@ def _banner_piano(dove: str) -> None:
             f'<div class="g-nota">{PREZZO_PRO_ANNUALE} € per l\'anno scolastico · un solo pagamento, senza rinnovi automatici.</div></div>',
             unsafe_allow_html=True,
         )
-        if st.button("Scopri il piano Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
+        if st.button("Scopri il piano Pro  →", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
             _vai_a_upgrade(None)
 
 
