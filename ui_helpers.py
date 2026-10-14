@@ -91,6 +91,8 @@ def _messaggio_errore(exc) -> str:
         return "C'è un problema con il servizio. Riprova più tardi; se continua, scrivici."
     if any(k in t for k in ("latex", "pdflatex", "tikz", "compil")):
         return "Non sono riuscito a impaginare il PDF. Riprova: di solito basta un secondo tentativo."
+    if any(k in t for k in ("not found", "404", "not supported", "no longer available")):
+        return "Il modello scelto non è disponibile in questo momento. Riprova con un altro modello."
     if any(k in t for k in ("safety", "blocked", "finish_reason", "candidate")):
         return "L'assistente non ha prodotto una risposta valida. Riprova, magari cambiando leggermente la richiesta."
     return "Qualcosa non ha funzionato. Riprova."
@@ -117,6 +119,9 @@ def _mostra_errore(
         exc_info=exc if isinstance(exc, BaseException) else False,
     )
     st.error(f"{azione}. {consiglio or _messaggio_errore(exc)}", icon="⚠️")
+    if st.session_state.get("_admin_diagnostica") and exc is not None:
+        # solo per l'admin: il motivo tecnico, per capire cosa non va senza aprire i log
+        st.caption(f"Dettaglio tecnico (visibile solo all'admin): {type(exc).__name__}: {str(exc)[:700]}")
     if riprova_flag and riprova_key:
         if st.button("🔁 Riprova", key=riprova_key):
             st.session_state[riprova_flag] = True

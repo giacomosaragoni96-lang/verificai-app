@@ -154,6 +154,17 @@ def parse_esercizi(latex: str) -> list:
             items_found.append((raw_label, pt_match.group(1)))
 
         if items_found:
+            # Controllo di coerenza: se i punti dei sottopunti riconosciuti non sommano a tutti i
+            # (N pt) dell'esercizio (es. una seconda domanda fuori dall'elenco), la tabella darebbe
+            # un totale sbagliato: si mostra il totale dell'esercizio come voce unica.
+            _blocco_pulito = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '', block, flags=re.DOTALL)
+            _tot_blocco = sum(float(x.replace(',', '.')) for x in
+                              re.findall(r'\(\s*(\d+(?:[.,]\d+)?)\s*pt\s*\)', _blocco_pulito))
+            _tot_items = sum(float(str(p).replace(',', '.')) for _, p in items_found)
+            if abs(_tot_blocco - _tot_items) > 0.5:
+                _tot_txt = str(int(_tot_blocco)) if _tot_blocco == int(_tot_blocco) else str(_tot_blocco)
+                items_found = [('', _tot_txt)]
+        if items_found:
             # Esercizio con sottopunti e punteggi espliciti
             esercizi.append({'num': num_label, 'items': items_found})
         else:
