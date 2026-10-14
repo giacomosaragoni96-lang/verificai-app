@@ -516,11 +516,10 @@ def parametri_durata(nome: str, scuola: str = "") -> dict:
 
 
 def etichetta_durata(nome: str, scuola: str = "") -> str:
-    """Testo del selettore: es. 'Standard · 5 esercizi · 1 ora'."""
+    """Testo del selettore: es. 'Standard · 5 esercizi'."""
     p = parametri_durata(nome, scuola)
     n = p["num_esercizi"]
-    tempo = p["durata"].replace("minuti", "min")
-    return f"{nome} · {n} {'esercizio' if n == 1 else 'esercizi'} · {tempo}"
+    return f"{nome} · {n} {'esercizio' if n == 1 else 'esercizi'}"
 
 
 def esempio_richiesta(materia: str) -> str:
