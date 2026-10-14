@@ -100,11 +100,13 @@ def parse_esercizi(latex: str) -> list:
         header_match = re.match(r'([^}]*)', block)
         header = header_match.group(1) if header_match else f"Es {i+1}"
 
-        if any(x in header for x in ["Sezione", "Chiusa", "Risposta", "Quesiti"]):
+        num_match = re.search(r'(?:Esercizio\s+)?(\d+)', header)
+        if num_match:
+            num_label = num_match.group(1)
+        elif any(x in header for x in ["Sezione", "Chiusa", "Risposta", "Quesiti"]):
             num_label = "A"
         else:
-            num_match = re.search(r'(?:Esercizio\s+)?(\d+)', header)
-            num_label = num_match.group(1) if num_match else str(i + 1)
+            num_label = str(i + 1)
 
         items_found = []
         lines = block.split('\n')
