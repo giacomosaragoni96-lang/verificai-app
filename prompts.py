@@ -141,32 +141,28 @@ def prompt_corpo_verifica(
         grafici_rule = ""
 
     # ── Regola diversità tipologie — in base al numero di esercizi ─────────────
+    # Gli esercizi «chiusi» (scelta multipla, vero/falso, completamento) contano INSIEME: in una verifica vera ce ne sono
+    # uno o due, il resto sono esercizi aperti (calcolo, problemi, analisi, domande a risposta aperta).
+    max_chiusi = 1 if num_esercizi <= 4 else (2 if num_esercizi <= 7 else 3)
     if num_esercizi <= 2:
         diversita_rule = (
             "- VARIETÀ TIPOLOGIE: con soli 1-2 esercizi usa domande aperte articolate "
             "in più sottopunti (a, b, c…) che coprono sia la procedura sia la comprensione concettuale."
         )
-    elif num_esercizi <= 4:
-        diversita_rule = (
-            "- VARIETÀ TIPOLOGIE PEDAGOGICA: devi mixare ALMENO 2 tipologie diverse tra quelle adatte alla materia:\n"
-            "  • Esercizio aperto (calcolo / dimostrazione / analisi)\n"
-            "  • Scelta multipla (\\begin{enumerate}[a)] con 4 opzioni) — 1 sola corretta\n"
-            "  • Vero/Falso ($\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F})\n"
-            "  • Completamento (\\underline{\\hspace{3cm}})\n"
-            "  Non clonare la stessa tipologia per tutti gli esercizi.\n"
-            "  Disponi gli esercizi dal più semplice al più complesso (facilità decrescente)."
-        )
     else:
         diversita_rule = (
-            "- VARIETÀ TIPOLOGIE PEDAGOGICA — REGOLA FONDAMENTALE:\n"
-            "  Distribuisci le tipologie su tutti gli esercizi per valutare competenze diverse:\n"
-            f"  • ~{max(1, num_esercizi // 3)} esercizi aperti (calcolo / dimostrazione / analisi / problema)\n"
-            f"  • ~{max(1, num_esercizi // 4)} esercizi a scelta multipla (4 opzioni, 1 sola corretta)\n"
-            f"  • ~{max(1, num_esercizi // 5)} esercizi Vero/Falso o completamento\n"
-            "  • I restanti: domande di comprensione concettuale, definizioni, esempi.\n"
-            "  NON generare 5+ esercizi tutti della stessa tipologia.\n"
-            "  L'ordine deve seguire la tassonomia di Bloom: ricorda → comprendi → applica → analizza.\n"
-            "  Il primo esercizio deve essere accessibile anche agli studenti in difficoltà."
+            "- TIPOLOGIE — REGOLA FONDAMENTALE: una verifica vera è fatta soprattutto di esercizi APERTI "
+            "(calcolo, problemi, dimostrazioni, analisi, domande a risposta aperta, confronti).\n"
+            f"  • Gli esercizi CHIUSI sono tre tipologie: scelta multipla, vero/falso, completamento. In TUTTA la verifica ce ne sono "
+            f"AL MASSIMO {max_chiusi} IN TOTALE (le tre tipologie contano insieme): "
+            f"{'uno solo, di una sola tipologia' if max_chiusi == 1 else ('due al massimo, di tipologie diverse, oppure uno solo' if max_chiusi == 2 else 'tre al massimo, di tipologie diverse')}. "
+            + ("MAI tutti e tre i tipi chiusi nella stessa verifica.\n" if max_chiusi <= 2 else "\n")
+            + f"  • Tutti gli altri esercizi (almeno {num_esercizi - max_chiusi}) sono APERTI.\n"
+            "  • Per una materia umanistica gli esercizi aperti sono: definizioni, spiegazioni, analisi di un fenomeno o di una fonte, "
+            "confronti, collegamenti, commento.\n"
+            "  • Disponi gli esercizi dal più semplice al più complesso; il primo deve essere accessibile anche agli studenti in difficoltà "
+            "(un'applicazione diretta o un esercizio chiuso breve).\n"
+            "  • L'ordine segue la tassonomia di Bloom: ricorda → comprendi → applica → analizza."
         )
 
     return (

@@ -50,7 +50,7 @@ riservatezza delle tue credenziali. L'account è per un solo docente e non va co
 - **Free:** gratuito, fino a {LIMITE_MENSILE} verifiche al mese, con il modello AI base. La **prima verifica** di ogni account
   include, una sola volta, tutte le funzioni del piano Pro.
 - **Pro:** {PREZZO_PRO_ANNUALE} € per un anno scolastico (pagamento unico, senza rinnovo automatico), con il modello AI
-  più accurato e le funzioni extra (Fila B, versione BES/DSA, soluzioni, file Word, griglia di valutazione,
+  più accurato e le funzioni extra (Fila B, versione BES/DSA, soluzioni, griglia di valutazione,
   scheda di allenamento, logo della scuola, creazione da un file caricato). Il piano dura 365 giorni dall'attivazione.
 
 Funzioni, limiti e prezzi possono cambiare: le modifiche non riguardano il periodo già pagato.
