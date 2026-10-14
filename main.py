@@ -810,10 +810,23 @@ _PASSI_GUIDA = {
          "testo": "Premi «Crea verifica»: in circa un minuto è pronta.",
          "target": [".st-key-genera_btn_b button"]},
     ],
+    "review": [
+        {"id": "sel", "titolo": "Scegli l'esercizio da modificare",
+         "testo": "Scorri gli esercizi con le frecce ◀ ▶ oppure scegline uno dalla tendina.",
+         "target": [".st-key-review_selectbox", ".st-key-rev_prec button", ".st-key-rev_succ button"]},
+        {"id": "cambia", "titolo": "Cambialo come preferisci",
+         "testo": "«Più facile», «Più difficile», «Cambia i numeri» o «Cambia esercizio»; in fondo puoi aggiungerne uno o toglierlo. "
+                  "Ogni modifica rifà subito il PDF.",
+         "target": ['[class*="st-key-piu_facile_"] button', '[class*="st-key-piu_difficile_"] button',
+                    '[class*="st-key-quick_regen_"] button', '[class*="st-key-cambia_tutto_"] button']},
+        {"id": "torna", "titolo": "Torna al PDF",
+         "testo": "Quando hai finito premi «Fatto: torna al PDF»: da lì crei il kit e scarichi tutto.",
+         "target": [".st-key-btn_confirm_final button"]},
+    ],
     "final": [
         {"id": "mod", "titolo": "Controlla e modifica gli esercizi",
-         "testo": "Leggi la verifica: puoi cambiare un esercizio, aggiungerne o toglierne, e scaricare il PDF.",
-         "target": None},
+         "testo": "Leggi la verifica. Per cambiare un esercizio, aggiungerne o toglierne premi «Modifica gli esercizi».",
+         "target": [".st-key-final_edit button"]},
         {"id": "kit", "titolo": "Crea tutto il kit",
          "testo": "Con «Prepara tutto il kit» ottieni Fila B, versione BES/DSA, soluzioni e scheda di allenamento. "
                   "Sono gratis solo per questa verifica.",
@@ -863,18 +876,20 @@ def _guida_nascondi() -> None:
 
 def _stato_guida(dove: str):
     """(passo automatico, stati «fatto» per passo) secondo quello che l'utente ha già fatto."""
+    if dove == "review":
+        st.session_state["_guida_ha_modificato"] = True      # è entrato nella modifica: poi la pagina finale riparte dal kit
+        return 0, [False, False, False]
     if dove == "input":
         scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
         logo = bool(_logo_scuola())
         file_ = bool(st.session_state.get("_file_materiale"))
-        fatti = [scritto, logo or file_, False]
-        auto = 0 if not scritto else 1
-    else:
-        v = st.session_state.get("verifiche") or {}
-        extra = [bool((v.get(k) or {}).get("pdf") or (v.get(k) or {}).get("latex")) for k in ("B", "S", "R")]
-        extra.append(bool((v.get("SC") or {}).get("pdf")))
-        fatti = [False, sum(extra) >= 2, sum(extra) >= 4]
-        auto = 2 if sum(extra) >= 3 else (1 if any(extra) else 0)
+        return (0 if not scritto else 1), [scritto, logo or file_, False]
+    v = st.session_state.get("verifiche") or {}
+    extra = [bool((v.get(k) or {}).get("pdf") or (v.get(k) or {}).get("latex")) for k in ("B", "S", "R")]
+    extra.append(bool((v.get("SC") or {}).get("pdf")))
+    modificato = bool(st.session_state.get("_guida_ha_modificato"))
+    fatti = [modificato, sum(extra) >= 2, sum(extra) >= 4]
+    auto = 2 if sum(extra) >= 3 else (1 if (any(extra) or modificato) else 0)
     return auto, fatti
 
 
@@ -890,8 +905,8 @@ def _guida_benvenuto(dove: str, slot) -> None:
     man = st.session_state.get("_guida_manuale")
     i = man["i"] if (man and man.get("dove") == dove and 0 <= man["i"] < len(passi)) else auto
     p = passi[i]
-    n_tot = len(_PASSI_GUIDA["input"]) + len(_PASSI_GUIDA["final"])
-    n_corr = i + 1 + (len(_PASSI_GUIDA["input"]) if dove == "final" else 0)
+    n_tot = 9        # argomento→crea (1-3), «modifica» (4) con i suoi passi (5-7), kit e ZIP (8-9)
+    n_corr = {"input": [1, 2, 3], "review": [5, 6, 7], "final": [4, 8, 9]}[dove][i]
     puntini = "".join(
         f'<span style="display:inline-block;width:{18 if k == i else 7}px;height:7px;border-radius:4px;margin-right:4px;'
         f'background:rgba(255,255,255,{1 if k == i else .4});"></span>' for k in range(len(passi)))
@@ -926,7 +941,7 @@ def _banner_piano(dove: str) -> None:
     Sta in un segnaposto (st.empty) che si svuota quando il banner non serve: così non resta mai a schermo.
     """
     _slot = st.empty()
-    if not MONETIZZAZIONE_ATTIVA or (_is_admin and not _SIM) or ENT.piano != "free":
+    if not MONETIZZAZIONE_ATTIVA or (_is_admin and not _SIM) or ENT.piano != "free" or (dove == "review" and not ENT.assaggio):
         _slot.empty()
         return
     if ENT.assaggio and not st.session_state.get("_guida_nascosta"):
@@ -3376,6 +3391,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
         f'Ogni modifica rifà subito il PDF: quando hai finito torna al download.</div></div>',
         unsafe_allow_html=True
     )
+    _banner_piano("review")
 
     if not blocks:
         st.warning("⚠️ Nessun esercizio trovato. Torna indietro e rigenera.")
