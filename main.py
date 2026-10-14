@@ -824,19 +824,19 @@ html body .stApp [class*="st-key-banner_piano_"] button span {
 html body .stApp [class*="st-key-banner_piano_"] button:hover:not(:disabled) { background:#EFF6FF !important; }
 /* elenco a schede: una voce per cosa da provare */
 html body .stApp [class*="st-key-banner_piano_"] .g-lista {
-  list-style:none; margin:.8rem 0 0 !important; padding:0 !important; display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:.6rem .9rem;
+  list-style:none; margin:.7rem 0 0 !important; padding:0 !important; display:grid; gap:.5rem .7rem;
 }
+@media (max-width: 860px) { html body .stApp [class*="st-key-banner_piano_"] .g-lista { grid-template-columns:1fr !important; } }
 html body .stApp [class*="st-key-banner_piano_"] .g-voce {
-  display:flex; gap:.7rem; align-items:flex-start; background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.13);
-  border-radius:12px; padding:.7rem .85rem; margin:0 !important;
+  display:flex; gap:.6rem; align-items:flex-start; background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.13);
+  border-radius:12px; padding:.5rem .7rem; margin:0 !important;
 }
 html body .stApp [class*="st-key-banner_piano_"] .g-voce-ico {
-  flex:0 0 auto; width:1.9rem; height:1.9rem; border-radius:50%; background:rgba(255,255,255,.17);
-  display:flex; align-items:center; justify-content:center; font-size:1rem;
+  flex:0 0 auto; width:1.7rem; height:1.7rem; border-radius:50%; background:rgba(255,255,255,.17);
+  display:flex; align-items:center; justify-content:center; font-size:.9rem;
 }
 html body .stApp [class*="st-key-banner_piano_"] .g-voce-t { font-family:'DM Sans',sans-serif; font-weight:700; font-size:.92rem; color:#fff; line-height:1.3; }
-html body .stApp [class*="st-key-banner_piano_"] .g-voce-d { font-family:'DM Sans',sans-serif; font-size:.82rem; color:rgba(255,255,255,.86); line-height:1.45; margin-top:.1rem; }
+html body .stApp [class*="st-key-banner_piano_"] .g-voce-d { font-family:'DM Sans',sans-serif; font-size:.79rem; color:rgba(255,255,255,.86); line-height:1.4; margin-top:.05rem; }
 html body .stApp [class*="st-key-banner_piano_"] .g-nota {
   margin-top:.9rem; padding-top:.75rem; border-top:1px solid rgba(255,255,255,.2); font-family:'DM Sans',sans-serif;
   font-size:.86rem; line-height:1.5; color:#FDE68A;
@@ -880,7 +880,8 @@ def _guida_benvenuto(dove: str, slot) -> None:
     Il messaggio è lungo di proposito (lo vede solo chi è alla prima verifica): elenco a schede, ognuna con icona e spiegazione.
     """
     def _voci(voci: list) -> str:
-        return ('<ul class="g-lista">' + "".join(
+        colonne = 3 if len(voci) in (3, 5, 6) else 2         # 6 schede = 3 + 3, 4 schede = 2 + 2
+        return (f'<ul class="g-lista" style="grid-template-columns:repeat({colonne},minmax(0,1fr));">' + "".join(
             f'<li class="g-voce"><span class="g-voce-ico">{ic}</span><div><div class="g-voce-t">{t}</div>'
             f'<div class="g-voce-d">{d}</div></div></li>' for ic, t, d in voci) + "</ul>")
 
@@ -924,15 +925,16 @@ def _guida_benvenuto(dove: str, slot) -> None:
                   nota="Quando hai finito premi <b>«Fatto: torna al PDF»</b>.")
     else:
         _riquadro("Regalo di benvenuto · La tua prima verifica", "Hai creato la tua prima verifica: sfrutta tutto il Pro!",
-                  "Finché è la prima hai tutto sbloccato. Prova adesso tutto quello che puoi fare: "
-                  "sono i pulsanti che <b>lampeggiano</b> in giallo.",
+                  "Finché è la prima hai tutto sbloccato: prova i pulsanti che <b>lampeggiano</b> in giallo. "
+                  "<b>Scorri in basso</b>, sotto l'anteprima, per trovarli tutti "
+                  '(<a href="#kit-completo" style="color:#fff;font-weight:700;">vai subito al kit ↓</a>).',
                   ["apri_modifica", "kit"],
-                  voci=[("✏️", "Modifica gli esercizi", "Cambiali, rendili più facili o più difficili, aggiungine o toglinene. Il pulsante è qui sopra."),
-                        ("📄", "Fila B", "La stessa verifica con dati diversi, contro la copiatura."),
-                        ("🧩", "Versione BES/DSA", "Una versione ridotta e semplificata per chi ha un piano personalizzato."),
-                        ("✅", "Soluzioni", "Le risposte pronte, per correggere più in fretta."),
-                        ("🎯", "Scheda di allenamento", "Circa 40 esercizi da dare alla classe prima della verifica."),
-                        ("📦", "Tutto il kit in un file", "Con «Prepara tutto il kit» crei tutto in un colpo, poi scarichi lo ZIP.")],
+                  voci=[("✏️", "Modifica gli esercizi", "Cambia, semplifica, aggiungi o togli esercizi (pulsante qui sopra)."),
+                        ("📄", "Fila B", "Stessa verifica con dati diversi, contro la copiatura."),
+                        ("🧩", "Versione BES/DSA", "Più semplice, per chi ha un piano personalizzato."),
+                        ("✅", "Soluzioni", "Le risposte pronte, per correggere in fretta."),
+                        ("🎯", "Scheda di allenamento", "Circa 40 esercizi da dare alla classe prima."),
+                        ("📦", "Tutto il kit in un file", "«Prepara tutto il kit», poi scarichi lo ZIP.")],
                   nota="Dalla prossima verifica queste funzioni restano solo con Pro: provale adesso, finché sono gratis.")
 
 
@@ -4304,6 +4306,20 @@ def _render_stage_final():
     if _avviso_d:
         st.warning(_avviso_d, icon="⚠️")
 
+    # ── Intestazione compatta ─────────────────────────────────────────────────
+    st.markdown(
+        f'<div style="text-align:center;margin:.2rem 0 1.1rem;">'
+        f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
+        f'color:{T["text"]};letter-spacing:-.025em;line-height:1.15;">'
+        f'<span style="display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;'
+        f'border-radius:50%;background:{T["success"]};color:#fff;font-size:1rem;margin-right:.55rem;'
+        f'vertical-align:.12em;">✓</span>La verifica è pronta</div>'
+        f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin-top:.35rem;">'
+        + _esc(mat_str) + ' &nbsp;·&nbsp; ' + _esc(scu_str) + ' &nbsp;·&nbsp; ' + _esc(arg_str) +
+        f'</div></div>',
+        unsafe_allow_html=True
+    )
+
     _banner_piano("final")
 
     # ── Autoverifica degli esercizi (materie scientifiche): cosa ha trovato e corretto ──
@@ -4332,20 +4348,6 @@ def _render_stage_final():
                 st.session_state["_avviso_dopo"] = ("Anche riducendo carattere e margini la verifica resta su più di "
                                                     f"{MAX_FACCIATE} facciate: togli un esercizio o accorcia i testi.")
             st.rerun()
-
-    # ── Intestazione compatta ─────────────────────────────────────────────────
-    st.markdown(
-        f'<div style="text-align:center;margin:.2rem 0 1.1rem;">'
-        f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
-        f'color:{T["text"]};letter-spacing:-.025em;line-height:1.15;">'
-        f'<span style="display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;'
-        f'border-radius:50%;background:{T["success"]};color:#fff;font-size:1rem;margin-right:.55rem;'
-        f'vertical-align:.12em;">✓</span>La verifica è pronta</div>'
-        f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin-top:.35rem;">'
-        + _esc(mat_str) + ' &nbsp;·&nbsp; ' + _esc(scu_str) + ' &nbsp;·&nbsp; ' + _esc(arg_str) +
-        f'</div></div>',
-        unsafe_allow_html=True
-    )
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  AZIONI PRINCIPALI — sopra l'anteprima: sempre in vista, anche su telefono
@@ -4498,24 +4500,31 @@ def _render_stage_final():
             unsafe_allow_html=True
         )
 
-    # Una riga per documento (titolo + descrizione a sinistra, azione a destra), per gruppo
-    st.markdown(f'<div class="variant-section-label" style="margin-top:.6rem;">Per la verifica</div>',
-                unsafe_allow_html=True)
-    _rw = []
-    for _k_riga in range(5):
-        if _k_riga == 2 and not WORD_ATTIVO:
+    # Una riga per documento (titolo + descrizione a sinistra, azione a destra), in due tendine:
+    # «Versioni della verifica» (aperta) e «Per la classe e la valutazione» (aperta durante la prima verifica, per i lampeggi).
+    st.markdown('<div id="kit-completo"></div>', unsafe_allow_html=True)
+    _apri_g2 = bool(ENT.assaggio or vSC.get("pdf") or st.session_state.get("_gen_scheda") or st.session_state.get("_rubrica_gen"))
+    _riga = lambda: st.columns([3.4, 1.6], vertical_alignment="center", gap="medium")
+    with st.expander("Versioni della verifica: soluzioni, Fila B, versione BES/DSA", expanded=True, icon=":material/file_copy:"):
+        with st.container(border=True):
+            _vc3, _vb3 = _riga()                  # Soluzioni
+        with st.container(border=True):
+            _vc1, _vb1 = _riga()                  # Fila B
+        if WORD_ATTIVO:
+            with st.container(border=True):
+                _vc5, _vb5 = _riga()              # Word
+        else:
             # riga del Word: spenta (conversione non affidabile). Il codice resta, ma scrive in contenitori nascosti.
             st.markdown('<style>[class*="st-key-word_nascosto"]{display:none !important;}</style>', unsafe_allow_html=True)
-            _rw.append((st.container(key="word_nascosto_a"), st.container(key="word_nascosto_b")))
-            continue
+            _vc5, _vb5 = st.container(key="word_nascosto_a"), st.container(key="word_nascosto_b")
         with st.container(border=True):
-            _rw.append(st.columns([3.4, 1.6], vertical_alignment="center", gap="medium"))
-    # Ordine a schermo: Soluzioni, Fila B, Word, BES/DSA, Griglia (le più richieste per prime)
-    (_vc3, _vb3), (_vc1, _vb1), (_vc5, _vb5), (_vc2, _vb2), (_vc4, _vb4) = _rw
-    st.markdown(f'<div class="variant-section-label" style="margin-top:.9rem;">Per la classe</div>',
-                unsafe_allow_html=True)
-    with st.container(border=True):
-        _vc6, _vb6 = st.columns([3.4, 1.6], vertical_alignment="center", gap="medium")
+            _vc2, _vb2 = _riga()                  # BES/DSA
+    with st.expander("Per la classe e la valutazione: scheda di allenamento e griglia", expanded=_apri_g2,
+                     icon=":material/groups:"):
+        with st.container(border=True):
+            _vc6, _vb6 = _riga()                  # Scheda di allenamento
+        with st.container(border=True):
+            _vc4, _vb4 = _riga()                  # Griglia di valutazione
 
     # ── FILA B ────────────────────────────────────────────────────────────────
     with _vc1:
