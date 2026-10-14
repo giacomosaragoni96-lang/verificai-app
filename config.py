@@ -22,7 +22,7 @@ FREE_PLAN_LIMITS = {
 # ── PIANI E FUNZIONI ───────────────────────────────────────────────────────────
 # Interruttore della monetizzazione: SPENTO = ogni funzione è aperta a tutti (comportamento di oggi).
 # Con l'interruttore acceso le funzioni elencate in FUNZIONI_PRO richiedono il piano Pro.
-MONETIZZAZIONE_ATTIVA = False
+MONETIZZAZIONE_ATTIVA = True
 FUNZIONI_PRO = ("fila_b", "bes", "soluzioni", "word", "griglia", "logo", "scheda", "zip")
 
 # Come si chiamano le funzioni nei messaggi «con Pro puoi…»
