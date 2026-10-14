@@ -4521,8 +4521,8 @@ font-family: 'DM Sans', sans-serif;
     padding: .1rem 1rem 0 !important;
     margin-bottom: 0 !important;
   }}
-  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-icon {{ font-size: 2.5rem !important; }}
-  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-name {{ font-size: clamp(2.3rem, 5vw, 3.1rem) !important; }}
+  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-icon {{ font-size: 2rem !important; }}
+  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-name {{ font-size: clamp(1.9rem, 4vw, 2.4rem) !important; }}
   .opt-label .opt-hint {{
     text-transform: none;
     letter-spacing: 0;
