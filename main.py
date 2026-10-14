@@ -32,6 +32,7 @@ from prompts import (
 )
 from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
 from scheda import genera_scheda
+from subscription_management import calcola_entitlements, get_subscription_manager
 from latex_utils import (
     compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, copia_intestazione_con_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
     fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
@@ -179,8 +180,23 @@ def _get_verifiche_mese(user_id):
             .gte("created_at", primo).execute()
         return res.count or 0
     except Exception as e:
+        # None = «non lo so»: chi ha un tetto non può creare finché il conteggio non torna (mai 0)
         logger.warning("_get_verifiche_mese failed for %s: %s", user_id, e)
-        return 0
+        return None
+
+
+def _puo_generare_ora():
+    """(ok, motivo): ricalcola il tetto mensile adesso. Chi ha un tetto non crea se il conteggio non si legge."""
+    if _is_admin or not st.session_state.utente:
+        return True, ""
+    uid = st.session_state.utente.id
+    n = _get_verifiche_mese(uid)
+    ent = calcola_entitlements(_abbonamento_utente(uid), n, False)
+    if ent.errore_conteggio:
+        return False, "Non riesco a controllare il tuo utilizzo mensile in questo momento. Riprova tra qualche istante."
+    if ent.limite_raggiunto:
+        return False, f"Hai usato le {int(ent.tetto_mensile)} verifiche di questo mese. Tornano a disposizione il mese prossimo."
+    return True, ""
 
 
 def _giorni_al_reset():
@@ -630,47 +646,31 @@ if "_pb_argomento_source"    not in st.session_state: st.session_state["_pb_argo
 if "_pb_argomento_manual_val" not in st.session_state: st.session_state["_pb_argomento_manual_val"] = ""
 
 # ── CONTATORI E GESTIONE ABBONAMENTI ────────────────────────────────────────
-_verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0
 _is_admin       = st.session_state.utente.email in ADMIN_EMAILS if st.session_state.utente else False
+_verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_state.utente else 0   # None se non riesce
 
-# Piano senza limite mensile (admin, pro, premium): deciso dal risultato di
-# can_generate_verification, non dal nome del piano.
-_illimitato = _is_admin
-_restanti = None   # verifiche che restano questo mese (None = non calcolabile o illimitate)
 
-# Carica informazioni abbonamento utente
+@st.cache_data(ttl=60, show_spinner=False)
+def _abbonamento_utente(user_id: str) -> dict:
+    """Abbonamento dell'utente, in cache per un minuto (non si rilegge a ogni clic)."""
+    return get_subscription_manager(supabase_admin).get_user_subscription(user_id)
+
+
+# Piano, tetto e funzioni dell'utente: un'unica fonte (subscription_management.calcola_entitlements).
+# Se l'abbonamento non si legge si resta Free (mai Pro per un guasto); se il conteggio non si legge
+# per chi ha un tetto la creazione è bloccata con un messaggio «riprova», non con «limite raggiunto».
 try:
-    from subscription_management import get_subscription_manager
-    subscription_manager = get_subscription_manager(supabase_admin)
-    user_subscription = subscription_manager.get_user_subscription(st.session_state.utente.id)
-    
-    # Salva in session_state per uso in altre parti dell'app
-    st.session_state.piano_utente = user_subscription['plan_id']
-    st.session_state.abbonamento_attivo = user_subscription
-    
-    # Verifica limiti basandosi sul piano
-    limits_check = subscription_manager.can_generate_verification(
-        st.session_state.utente.id, 
-        _verifiche_mese
-    )
-    _limite = not _is_admin and not limits_check['can_generate']
-    _illimitato = _is_admin or limits_check.get('remaining') == float('inf')
-    _rest = limits_check.get('remaining')
-    if isinstance(_rest, (int, float)) and _rest != float('inf'):
-        _restanti = max(0, int(_rest))
-
-except ImportError:
-    # Fallback sistema vecchio se modulo non disponibile
-    _limite = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
-    _restanti = max(0, LIMITE_MENSILE - _verifiche_mese)
-    st.session_state.piano_utente = "free"
-    st.session_state.abbonamento_attivo = None
+    ENT = calcola_entitlements(_abbonamento_utente(st.session_state.utente.id), _verifiche_mese, _is_admin)
 except Exception as e:
     logger.error(f"Errore caricamento abbonamento: {e}")
-    _limite = (not _is_admin) and (_verifiche_mese >= LIMITE_MENSILE)
-    _restanti = max(0, LIMITE_MENSILE - _verifiche_mese)
-    st.session_state.piano_utente = "free"
-    st.session_state.abbonamento_attivo = None
+    ENT = calcola_entitlements(None, _verifiche_mese, _is_admin)
+
+st.session_state.piano_utente = ENT.piano if ENT.piano != "admin" else "free"   # l'admin si riconosce da _is_admin
+_limite = ENT.limite_raggiunto
+_blocco_conteggio = ENT.errore_conteggio
+_illimitato = ENT.illimitato
+_restanti = ENT.restanti
+_TETTO_MENSILE = int(ENT.tetto_mensile) if not ENT.illimitato else LIMITE_MENSILE
 
 # ── CSS + FEEDBACK ────────────────────────────────────────────
 st.markdown(get_css(T), unsafe_allow_html=True)
@@ -749,9 +749,9 @@ if _STYLED_AVAILABLE:
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 settings   = render_sidebar(
     supabase_admin=supabase_admin, utente=st.session_state.utente,
-    verifiche_mese_count=_verifiche_mese, is_admin=_is_admin,
+    verifiche_mese_count=_verifiche_mese or 0, is_admin=_is_admin,
     limite_raggiunto=_limite, T=T,
-    MODELLI_DISPONIBILI=MODELLI_DISPONIBILI, LIMITE_MENSILE=LIMITE_MENSILE,
+    MODELLI_DISPONIBILI=MODELLI_DISPONIBILI, LIMITE_MENSILE=_TETTO_MENSILE,
     giorni_al_reset_func=_giorni_al_reset, supabase_client=supabase,
     contatto_url=FEEDBACK_FORM_URL, illimitato=_illimitato,
     THEMES=THEMES, THEME_LABELS=THEME_LABELS,
@@ -1626,8 +1626,11 @@ def _render_le_tue_verifiche():
                     _c_si, _c_no = st.columns(2)
                     if _c_si.button("Sì, elimina", key=f"delete_yes_{_vid}_{i}", type="primary", use_container_width=True):
                         try:
-                            res = supabase_admin.table("verifiche_storico").delete()\
-                                .eq("id", _vid).eq("user_id", _uid).execute()
+                            # Eliminazione «logica»: sparisce dall'elenco ma continua a contare nel tetto
+                            # mensile (altrimenti basterebbe eliminare le verifiche per averne altre gratis).
+                            res = supabase_admin.table("verifiche_storico")\
+                                .update({"deleted_at": datetime.now(timezone.utc).isoformat()})\
+                                .eq("id", _vid).eq("user_id", _uid).is_("deleted_at", "null").execute()
                             st.session_state.pop(f"confirm_delete_{_vid}", None)
                             if res.data:
                                 st.session_state._storico_refresh += 1
@@ -2087,7 +2090,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 "🚀  Crea verifica",
                 use_container_width=True,
                 type="primary",
-                disabled=_limite or _manca_arg,
+                disabled=_limite or _blocco_conteggio or _manca_arg,
                 key="genera_btn_b",
                 help="Avvia la generazione AI della verifica. Potrai modificare ogni singolo esercizio prima di scaricare il PDF.",
             )
@@ -2095,8 +2098,11 @@ def _render_percorso_b_form(_prog_placeholder):
 
             if _limite:
                 _render_limite_raggiunto(
-                    T, LIMITE_MENSILE, _reset_label(*_giorni_al_reset()), FEEDBACK_FORM_URL,
+                    T, _TETTO_MENSILE, _reset_label(*_giorni_al_reset()), FEEDBACK_FORM_URL,
                 )
+            elif _blocco_conteggio:
+                messaggio("avviso", "Non riesco a controllare il tuo utilizzo mensile in questo momento. "
+                                    "Riprova tra qualche istante.")
             elif not _illimitato and _restanti is not None:
                 # il contatore sta anche nella sidebar, ma di solito è chiusa
                 st.markdown(
@@ -2167,6 +2173,13 @@ def _lancia_generazione(
     Funzione condivisa dai due percorsi: lancia genera_verifica,
     aggiorna session_state e transita a STAGE_REVIEW.
     """
+    # Ricontrollo del limite al momento di partire (non solo il pulsante disabilitato): copre doppio
+    # clic, schede aperte in parallelo e un conteggio che prima non era disponibile.
+    _ok_gen, _motivo_gen = _puo_generare_ora()
+    if not _ok_gen:
+        st.session_state["_esito_gen"] = {"testo": _motivo_gen}
+        st.rerun()
+
     calibrazione = CALIBRAZIONE_SCUOLA.get(difficolta, "")
     _t_start = time.time()
     _n_steps = 4   # titolo · esercizi · controllo · PDF
@@ -2374,10 +2387,13 @@ def _render_stage_input():
     _esito = st.session_state.pop("_esito_gen", None)
     if _esito:
         with _prog_ph_b.container():
-            _mostra_errore(
-                _esito["azione"], _esito["exc"],
-                riprova_flag="_riprova_genera", riprova_key="riprova_genera",
-            )
+            if _esito.get("testo"):          # rifiuto prima di iniziare (limite o conteggio non disponibile)
+                messaggio("avviso", _esito["testo"], icon="⚠️")
+            else:
+                _mostra_errore(
+                    _esito["azione"], _esito["exc"],
+                    riprova_flag="_riprova_genera", riprova_key="riprova_genera",
+                )
 
     # Il form sta in un contenitore svuotabile: durante la generazione sparisce, così un clic
     # o un tocco per sbaglio non riavvia la pagina e non fa perdere la richiesta.
@@ -2392,7 +2408,7 @@ def _render_stage_input():
 
     _riprova      = st.session_state.pop("_riprova_genera", False)
     _dopo_analisi = st.session_state.pop("_genera_dopo_analisi", False)
-    if not (genera_btn or _riprova or _dopo_analisi) or _limite:
+    if not (genera_btn or _riprova or _dopo_analisi) or _limite or _blocco_conteggio:
         return
 
     # La barra di avanzamento sta in alto: porto la pagina in cima così si vede subito

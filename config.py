@@ -19,6 +19,20 @@ FREE_PLAN_LIMITS = {
     "modello_ai": "gemini-2.5-flash-lite"
 }
 
+# ── PIANI E FUNZIONI ───────────────────────────────────────────────────────────
+# Interruttore della monetizzazione: SPENTO = ogni funzione è aperta a tutti (comportamento di oggi).
+# Con l'interruttore acceso le funzioni elencate in FUNZIONI_PRO richiedono il piano Pro.
+MONETIZZAZIONE_ATTIVA = False
+FUNZIONI_PRO = ("fila_b", "bes", "soluzioni", "word", "griglia", "logo", "scheda", "zip")
+
+# famiglia_modello: «lite» o «flash» (NON un ID): il modello vero lo sceglie get_model_id_per_piano
+# e lo risolve ai_client nel più recente della famiglia.
+# Il tetto del Pro oggi è illimitato (piano assegnato a mano); al lancio diventerà 100 al mese.
+PIANI = {
+    "free": {"tetto_mensile": LIMITE_MENSILE, "famiglia_modello": "lite",  "funzioni": ()},
+    "pro":  {"tetto_mensile": float("inf"),   "famiglia_modello": "flash", "funzioni": FUNZIONI_PRO},
+}
+
 # ── MODELLI AI ─────────────────────────────────────────────────────────────────
 MODELLI_DISPONIBILI = {
     "⚡ Flash 2.5 Lite (veloce · Free)": {
