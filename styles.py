@@ -4702,6 +4702,9 @@ font-family: 'DM Sans', sans-serif;
   }}
 
   .st-key-dettatura_js {{ display: none !important; }}
+  .st-key-arg_blocco {{ gap: .45rem !important; }}
+  .st-key-arg_blocco .vf-tip {{ margin: .35rem 0 0; }}
+  .st-key-arg_blocco .opt-label {{ margin-bottom: 0 !important; }}
   .vf-mic-stato {{ font-family: 'DM Sans', sans-serif; font-size: .82rem; color: {T['text2']}; margin: -.35rem 0 .3rem; min-height: 0; }}
   .vf-mic-stato:empty {{ display: none; }}
 

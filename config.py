@@ -23,6 +23,9 @@ FREE_PLAN_LIMITS = {
 # Interruttore della monetizzazione: SPENTO = ogni funzione è aperta a tutti (comportamento di oggi).
 # Con l'interruttore acceso le funzioni elencate in FUNZIONI_PRO richiedono il piano Pro.
 MONETIZZAZIONE_ATTIVA = True
+# Inviti tra colleghi: per ogni amico che si iscrive e completa la prima verifica, chi invita guadagna verifiche con tutto il Pro
+BONUS_PER_INVITO = 2
+MAX_INVITI_CON_BONUS = 5
 FUNZIONI_PRO = ("fila_b", "bes", "soluzioni", "word", "griglia", "logo", "scheda", "zip", "materiale")
 
 # Come si chiamano le funzioni nei messaggi «con Pro puoi…»
