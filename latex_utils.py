@@ -697,12 +697,67 @@ _TOKEN_ENUM = re.compile(
 )
 
 
+_CUE_OPZIONI = re.compile(
+    r"opzion|alternativ|risposta\s+(?:corretta|giusta|esatta)|sceglier|scegli|seleziona|"
+    r"individuare\s+l['’]?\s*unic|quale\s+(?:tra|delle|dei)|tra\s+le\s+seguenti",
+    re.IGNORECASE,
+)
+_RE_LISTA_ESTERNA = re.compile(
+    r"^\\begin\{(?:enumerate|itemize)\}(?:\[[^\]]*\])?(.*)\\end\{(?:enumerate|itemize)\}$", re.DOTALL)
+_RE_PUNTI_ITEM = re.compile(r"\(\s*(\d+(?:[.,]\d+)?)\s*pt\s*\)")
+
+
+def _appiattisci_blocco(blocco: str) -> str:
+    """Un esercizio con domanda + elenco di OPZIONI di risposta → opzioni in un blocco A) B) C) D)
+    senza \\item e con un solo punteggio (la somma): le opzioni non sono sottopunti da valutare."""
+    # liste di primo livello: (inizio, fine)
+    spazi, livello, inizio = [], 0, None
+    for m in _TOKEN_LISTA.finditer(blocco):
+        if m.group(0).startswith("\\begin"):
+            livello += 1
+            if livello == 1:
+                inizio = m.start()
+        else:
+            if livello == 1 and inizio is not None:
+                spazi.append((inizio, m.end()))
+                inizio = None
+            livello = max(0, livello - 1)
+    for a, b in reversed(spazi):
+        lista = blocco[a:b]
+        mm = _RE_LISTA_ESTERNA.match(lista)
+        if not mm or lista.count("\\begin{") > 1:      # niente liste annidate
+            continue
+        elementi = re.split(r"\\item(?:\[[^\]]*\])?", mm.group(1))[1:]
+        if not 3 <= len(elementi) <= 6:
+            continue
+        if not _CUE_OPZIONI.search(blocco[max(0, a - 300):a]):
+            continue
+        punti = [float(p.replace(",", ".")) for e in elementi for p in _RE_PUNTI_ITEM.findall(e)]
+        puliti = [re.sub(r"(?:\\\\\s*)+$", "", _RE_PUNTI_ITEM.sub("", e)).strip() for e in elementi]
+        if any(len(t) > 110 or not t or "\n\n" in t for t in puliti):
+            continue
+        righe = "\\\\\n".join(f"\\textbf{{{chr(65 + i)})}} {t}" for i, t in enumerate(puliti))
+        totale = sum(punti)
+        coda = f"\n({int(totale) if totale == int(totale) else totale} pt)" if totale else ""
+        blocco = blocco[:a] + "\\begin{quote}\n" + righe + "\n\\end{quote}" + coda + blocco[b:]
+    return blocco
+
+
+def _appiattisci_scelta_multipla(latex: str) -> str:
+    """Applica _appiattisci_blocco a ogni esercizio (\\subsection*)."""
+    parti = re.split(r"(?=\\subsection\*\{)", latex)
+    return "".join(_appiattisci_blocco(p) if p.startswith("\\subsection*{") else p for p in parti)
+
+
 def rifinisci_scelta_multipla_e_vf(latex: str) -> str:
     """
+    0) Domanda con elenco di opzioni a) b) c) d) a primo livello: le opzioni non sono sottopunti,
+       diventano un blocco A) B) C) D) e il punteggio è uno solo (prima che i punti vengano ripartiti).
     1) Le opzioni di una scelta multipla (elenco dentro un sottopunto, senza punteggi) diventano
        A) B) C) D): dentro un sottopunto gia' chiamato a) o b) le lettere minuscole confondono.
     2) "[] V [] F" resta sempre sulla stessa riga: la casella e la lettera non vanno a capo da sole.
     """
+    latex = _appiattisci_scelta_multipla(latex)
     latex = _VF_RE.sub(lambda m: "\\mbox{" + m.group(0) + "}", latex)
 
     pila, modifiche = [], []
