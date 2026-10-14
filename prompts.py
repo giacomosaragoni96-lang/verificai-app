@@ -862,3 +862,54 @@ def prompt_variante_rapida(
         f"OUTPUT: SOLO codice LaTeX completo identico nella struttura, "
         f"con \\end{{document}} finale. Nessuna spiegazione."
     )
+
+
+# ── Autoverifica degli esercizi (materie scientifiche) ─────────────────────────────
+def prompt_autoverifica(materia: str, scuola: str, esercizi: list) -> str:
+    """
+    Chiede all'AI di RISOLVERE ogni esercizio e di segnalare solo gli errori certi.
+    esercizi = [(numero, testo_latex), ...]. La risposta è un JSON.
+    """
+    elenco = "\n\n".join(f"=== ESERCIZIO {n} ===\n{t}" for n, t in esercizi)
+    return (
+        f"Sei un revisore severo di verifiche di {materia} per: {scuola}.\n"
+        f"Per OGNI esercizio qui sotto: RISOLVILO davvero, con tutti i calcoli, poi controlla che sia corretto e ben posto.\n\n"
+        f"{elenco}\n\n"
+        f"SEGNALA ok=false SOLO per errori CERTI di questi tipi:\n"
+        f"1. Dati incoerenti o impossibili: il problema non ha soluzione, oppure ha una soluzione diversa da quella che la richiesta "
+        f"presuppone (es. un'equazione senza soluzioni reali dove si chiede di trovarle, punti incompatibili con il tipo di curva, "
+        f"due punti con la stessa ascissa per una parabola con asse verticale, un parametro che non può esistere).\n"
+        f"2. Scelta multipla: nessuna opzione corretta, più di un'opzione corretta, opzioni duplicate.\n"
+        f"3. Vero/falso: un'affermazione né vera né falsa, ambigua o dipendente da dati mancanti.\n"
+        f"4. Completamento: più risposte ugualmente corrette o nessuna.\n"
+        f"5. Grafico: la riga [[GRAFICO: ...]] non corrisponde ai dati o alle domande dell'esercizio (funzione diversa, "
+        f"intervallo che non mostra i punti richiesti).\n"
+        f"6. Testo incompleto: frase senza richiesta, sottopunto che non chiede nulla.\n"
+        f"Non segnalare questioni di stile, difficoltà o formulazione. Nel dubbio: ok=true.\n\n"
+        f"Rispondi SOLO con questo JSON (nessun altro testo):\n"
+        f'{{"esercizi": [{{"num": <numero>, "ok": true|false, "problema": "<una frase: cosa non va, con i numeri>", '
+        f'"suggerimento": "<come correggere, ad esempio quali dati cambiare>"}}]}}\n'
+        f"Includi TUTTI gli esercizi, nell'ordine."
+    )
+
+
+def prompt_correggi_esercizio(materia: str, argomento: str, blocco_latex: str, problema: str, suggerimento: str,
+                              mostra_punteggi: bool) -> str:
+    """Riscrive UN esercizio per eliminare un errore trovato dall'autoverifica, mantenendo tipo e punteggi."""
+    punti = ("Mantieni ESATTAMENTE gli stessi punteggi (N pt) di ogni sottopunto."
+             if mostra_punteggi else "Non inserire punteggi.")
+    return (
+        f"Sei un docente esperto di {materia}. Questo esercizio, per una verifica su '{argomento}', contiene un ERRORE.\n\n"
+        f"ESERCIZIO:\n{blocco_latex}\n\n"
+        f"ERRORE TROVATO: {problema}\n"
+        f"SUGGERIMENTO: {suggerimento}\n\n"
+        f"Riscrivi LO STESSO esercizio correggendo l'errore:\n"
+        f"- stessa tipologia, stesso titolo \\subsection*{{...}}, stesso numero di sottopunti, stesso livello di difficoltà;\n"
+        f"- cambia i dati (numeri, funzioni, opzioni) quanto basta perché l'esercizio sia corretto e risolvibile;\n"
+        f"- {punti}\n"
+        f"- {REGOLA_SOTTOPUNTI_MODIFICA}\n"
+        f"- {REGOLA_GRAFICO_CURVE}\n"
+        f"- Scelta multipla: ESATTAMENTE una opzione corretta, opzioni distinte e plausibili.\n"
+        f"- Nessuna soluzione, risposta o commento. Nessun commento LaTeX (%).\n"
+        f"OUTPUT: SOLO il blocco \\subsection*{{...}} corretto, in LaTeX."
+    )

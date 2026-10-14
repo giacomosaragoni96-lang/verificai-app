@@ -12,7 +12,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from config import QA_SALTA_SE_PUNTEGGIO_ALMENO
+from config import QA_SALTA_SE_PUNTEGGIO_ALMENO, AUTOVERIFICA_ATTIVA
+from autoverifica import autoverifica_corpo
 
 from prompts import (
     prompt_titolo,
@@ -724,6 +725,10 @@ def genera_verifica(
         corpo_a = corpo_corretto
 
     corpo_a = _tronca_al_numero_giusto(corpo_a, num_esercizi)
+    if AUTOVERIFICA_ATTIVA:
+        _avanza("🧮  Controllo che gli esercizi siano corretti…")
+        corpo_a, risultato["_autoverifica"] = autoverifica_corpo(
+            model, materia, difficolta, argomento, corpo_a, mostra_punteggi, on_progress=_avanza)
     _avanza("🖨️  Compilazione PDF…")
     latex_a, pdf_a = _assembla_e_compila(
         preambolo_a, corpo_a, mostra_punteggi, punti_totali, con_griglia
