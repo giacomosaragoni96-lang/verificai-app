@@ -822,6 +822,25 @@ html body .stApp [class*="st-key-banner_piano_"] button span {
   color:#1E3A8A !important; font-weight:700 !important; font-size:.83rem !important; margin:0 !important; line-height:1.2 !important;
 }
 html body .stApp [class*="st-key-banner_piano_"] button:hover:not(:disabled) { background:#EFF6FF !important; }
+/* elenco a schede: una voce per cosa da provare */
+html body .stApp [class*="st-key-banner_piano_"] .g-lista {
+  list-style:none; margin:.8rem 0 0 !important; padding:0 !important; display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:.6rem .9rem;
+}
+html body .stApp [class*="st-key-banner_piano_"] .g-voce {
+  display:flex; gap:.7rem; align-items:flex-start; background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.13);
+  border-radius:12px; padding:.7rem .85rem; margin:0 !important;
+}
+html body .stApp [class*="st-key-banner_piano_"] .g-voce-ico {
+  flex:0 0 auto; width:1.9rem; height:1.9rem; border-radius:50%; background:rgba(255,255,255,.17);
+  display:flex; align-items:center; justify-content:center; font-size:1rem;
+}
+html body .stApp [class*="st-key-banner_piano_"] .g-voce-t { font-family:'DM Sans',sans-serif; font-weight:700; font-size:.92rem; color:#fff; line-height:1.3; }
+html body .stApp [class*="st-key-banner_piano_"] .g-voce-d { font-family:'DM Sans',sans-serif; font-size:.82rem; color:rgba(255,255,255,.86); line-height:1.45; margin-top:.1rem; }
+html body .stApp [class*="st-key-banner_piano_"] .g-nota {
+  margin-top:.9rem; padding-top:.75rem; border-top:1px solid rgba(255,255,255,.2); font-family:'DM Sans',sans-serif;
+  font-size:.86rem; line-height:1.5; color:#FDE68A;
+}
 </style>
 """
 
@@ -858,40 +877,63 @@ def _guida_benvenuto(dove: str, slot) -> None:
       input  : passo 1 scrivi l'argomento · passo 2 prova logo/file in «Altre opzioni» e crea
       final  : pulsano «Modifica gli esercizi» e, più in basso, tutti i pulsanti del kit
       review : pulsano la scelta dell'esercizio, i pulsanti di modifica e «Fatto: torna al PDF»
+    Il messaggio è lungo di proposito (lo vede solo chi è alla prima verifica): elenco a schede, ognuna con icona e spiegazione.
     """
-    def _riquadro(etichetta, titolo, testo, pulsa, chips="", passi=None):
+    def _voci(voci: list) -> str:
+        return ('<ul class="g-lista">' + "".join(
+            f'<li class="g-voce"><span class="g-voce-ico">{ic}</span><div><div class="g-voce-t">{t}</div>'
+            f'<div class="g-voce-d">{d}</div></div></li>' for ic, t, d in voci) + "</ul>")
+
+    def _riquadro(etichetta, titolo, testo, pulsa, voci=None, nota="", chips="", passi=None):
         pun = ("" if not passi else '<span class="g-pun">' + "".join(
             f'<i class="{"on" if k < passi[0] else ""}"></i>' for k in range(passi[1])) + "</span>")
+        corpo = (f'<div class="g-s">{testo}</div>' if testo else "") + (_voci(voci) if voci else "") + chips
+        corpo += (f'<div class="g-nota">{nota}</div>' if nota else "")
         with slot.container(key=f"banner_piano_{dove}"):
             st.markdown(_CSS_BANNER_PIANO + _css_pulsa(pulsa) +
                         f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">🎁</span>{etichetta}{pun}</div>'
-                        f'<div class="g-t">{titolo}</div><div class="g-s">{testo}</div>{chips}</div>', unsafe_allow_html=True)
+                        f'<div class="g-t">{titolo}</div>{corpo}</div>', unsafe_allow_html=True)
 
     if dove == "input":
         scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
         if not scritto:
             _riquadro("Regalo di benvenuto · Passo 1 di 2", "Scrivi l'argomento",
-                      "Nel riquadro qui sotto scrivi di cosa parla la verifica e, se vuoi, cosa includere o evitare.",
+                      "Nel riquadro qui sotto scrivi di cosa parla la verifica e, se vuoi, cosa includere o evitare "
+                      "(per esempio: «difficoltà crescente», «includi un grafico», «evita le dimostrazioni»).",
                       ["argomento"], passi=(1, 2))
         else:
             chips = (('<span class="g-chip">✓ Logo caricato</span>' if _logo_scuola() else "") +
                      ('<span class="g-chip">✓ File caricato</span>' if st.session_state.get("_file_materiale") else ""))
             _riquadro("Regalo di benvenuto · Passo 2 di 2", "Ora crea la tua verifica",
-                      "Se vuoi, prova prima «Altre opzioni»: il logo della tua scuola e il caricamento di un tuo file (appunti o una "
-                      "verifica da rifare) sono gratis solo in questa prima verifica. Poi premi «Crea verifica».",
-                      ["opzioni", "crea"], chips, passi=(2, 2))
+                      "Prima di premere «Crea verifica» puoi provare, in <b>«Altre opzioni»</b>, queste funzioni "
+                      "(gratis solo in questa prima verifica):",
+                      ["opzioni", "crea"],
+                      voci=[("🏫", "Logo della scuola", "Compare nell'intestazione della verifica e della Fila B."),
+                            ("📎", "Un tuo file", "Appunti o una verifica già fatta: ne ricava una nuova, con dati diversi."),
+                            ("⚙️", "Numero di esercizi e punteggi", "Scegli quanti esercizi e quanti punti totali.")],
+                      nota="Quando sei pronto premi <b>«Crea verifica»</b>: in circa un minuto è pronta.",
+                      chips=chips, passi=(2, 2))
     elif dove == "review":
         _riquadro("Regalo di benvenuto · Modifica", "Cambia gli esercizi come preferisci",
-                  "Scegli un esercizio con le frecce o la tendina, poi usa «Più facile», «Più difficile», «Cambia i numeri» o "
-                  "«Cambia esercizio». Ogni modifica rifà subito il PDF. Quando hai finito premi «Fatto: torna al PDF».",
-                  ["modifica", "torna"])
+                  "Ogni modifica rifà subito il PDF. Ecco cosa puoi fare:",
+                  ["modifica", "torna"],
+                  voci=[("🔎", "Scegli l'esercizio", "Scorri con le frecce ◀ ▶ oppure usa la tendina."),
+                        ("🎚️", "Più facile / Più difficile", "Cambia il livello mantenendo lo stesso argomento."),
+                        ("🔄", "Cambia i numeri / Cambia esercizio", "Stesso esercizio con dati nuovi, oppure uno completamente diverso."),
+                        ("➕", "Aggiungi o elimina", "Aggiungi un esercizio in fondo o togli quello che non ti serve.")],
+                  nota="Quando hai finito premi <b>«Fatto: torna al PDF»</b>.")
     else:
         _riquadro("Regalo di benvenuto · La tua prima verifica", "Hai creato la tua prima verifica: sfrutta tutto il Pro!",
-                  "Finché è la prima hai tutto sbloccato. I pulsanti che lampeggiano sono quelli da provare: <b>«Modifica gli esercizi»</b> "
-                  "qui sopra e, più in basso, la <b>Fila B</b>, la <b>versione BES/DSA</b>, le <b>soluzioni</b>, la <b>scheda di allenamento</b> "
-                  "e <b>«Prepara tutto il kit»</b>, per poi <b>scaricare tutto in un solo file (ZIP)</b>. "
-                  "Dalla prossima verifica queste funzioni sono solo con Pro.",
-                  ["apri_modifica", "kit"])
+                  "Finché è la prima hai tutto sbloccato. Prova adesso tutto quello che puoi fare: "
+                  "sono i pulsanti che <b>lampeggiano</b> in giallo.",
+                  ["apri_modifica", "kit"],
+                  voci=[("✏️", "Modifica gli esercizi", "Cambiali, rendili più facili o più difficili, aggiungine o toglinene. Il pulsante è qui sopra."),
+                        ("📄", "Fila B", "La stessa verifica con dati diversi, contro la copiatura."),
+                        ("🧩", "Versione BES/DSA", "Una versione ridotta e semplificata per chi ha un piano personalizzato."),
+                        ("✅", "Soluzioni", "Le risposte pronte, per correggere più in fretta."),
+                        ("🎯", "Scheda di allenamento", "Circa 40 esercizi da dare alla classe prima della verifica."),
+                        ("📦", "Tutto il kit in un file", "Con «Prepara tutto il kit» crei tutto in un colpo, poi scarichi lo ZIP.")],
+                  nota="Dalla prossima verifica queste funzioni restano solo con Pro: provale adesso, finché sono gratis.")
 
 
 def _banner_piano(dove: str) -> None:
