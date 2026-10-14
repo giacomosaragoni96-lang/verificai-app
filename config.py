@@ -51,7 +51,7 @@ TETTO_BREVE = {"verifiche": 6, "minuti": 10}
 MAX_FACCIATE = 2
 # Esportazione Word: spenta finche' la conversione non e' affidabile (testo, scelte multiple, grafici e tabella si perdevano)
 WORD_ATTIVO = False
-PREZZO_PRO_ANNUALE = 39                 # euro, anno scolastico (pagamento unico)
+PREZZO_PRO_ANNUALE = 39                 # euro, 12 mesi dall'attivazione (pagamento unico)
 CHECKOUT_URL_PRO = "https://verificai.lemonsqueezy.com/checkout/buy/cd7d56f4-10c1-4807-bc2f-90dffa200268"   # prodotto di PROVA (test mode)
 # ID del negozio e del prodotto Lemon Squeezy: una licenza vale solo se sono questi (None = nessun codice accettato).
 # Compaiono nel dettaglio tecnico (solo admin) al primo tentativo di attivazione.

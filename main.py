@@ -1213,7 +1213,7 @@ def _banner_piano(dove: str) -> None:
                 f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">✨</span>Piano Pro · Per la tua classe</div>'
                 f'<div class="g-t">Passa al piano Pro</div>'
                 f'<div class="g-s">Modello più accurato, Fila B, BES/DSA, soluzioni e scheda di allenamento: '
-                f'{PREZZO_PRO_ANNUALE} € per l\'anno scolastico, un solo pagamento.</div></div>',
+                f'{PREZZO_PRO_ANNUALE} € per 12 mesi, un solo pagamento.</div></div>',
                 unsafe_allow_html=True,
             )
             if st.button("Scopri il piano Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
@@ -1229,7 +1229,7 @@ def _banner_piano(dove: str) -> None:
             _CSS_BANNER_PIANO +
             f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">✨</span>Piano Pro · Per la tua classe</div>'
             f'<div class="g-t">{_titolo}</div>{_html_voci(_voci)}'
-            f'<div class="g-nota">{PREZZO_PRO_ANNUALE} € per l\'anno scolastico, un solo pagamento.</div></div>',
+            f'<div class="g-nota">{PREZZO_PRO_ANNUALE} € per 12 mesi, un solo pagamento.</div></div>',
             unsafe_allow_html=True,
         )
         if st.button("Scopri il piano Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
