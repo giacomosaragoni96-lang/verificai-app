@@ -772,169 +772,128 @@ def _vai_a_upgrade(funzione: str | None = None) -> None:
     st.rerun()
 
 
-_CSS_BANNER_PIANO = """
-<style>
-@keyframes gpulse {
-  0%,100% { box-shadow:0 0 0 0 rgba(245,158,11,0); outline:3px solid rgba(245,158,11,0); outline-offset:3px; }
-  50%     { box-shadow:0 0 0 8px rgba(245,158,11,.45); outline:3px solid rgba(245,158,11,.95); outline-offset:3px; }
-}
-/* Riquadro dei messaggi sul piano (assaggio, Free, guida): blu notte, sobrio. Contenitore con chiave: classe st-key-banner_piano_* */
-html body .stApp [class*="st-key-banner_piano_"] {
-  background:linear-gradient(135deg,#1E3A8A 0%,#1D4ED8 100%) !important; border-radius:14px; padding:.9rem 1.15rem 1rem !important;
-  margin:.3rem 0 .9rem; gap:.4rem !important; border:1px solid rgba(255,255,255,.14); box-shadow:0 8px 24px rgba(30,58,138,.22);
-}
-/* Streamlit toglie 1rem in fondo al markdown: il riempimento lo ripristina */
-html body .stApp [class*="st-key-banner_piano_"] .bp-wrap { padding-bottom:.3rem; }
-html body .stApp [class*="st-key-banner_piano_"] .g-k {
-  font-family:'DM Sans',sans-serif; font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#FCD34D;
-}
-html body .stApp [class*="st-key-banner_piano_"] .bp-t,
-html body .stApp [class*="st-key-banner_piano_"] .g-t {
-  font-family:'DM Sans',sans-serif; font-weight:700; font-size:1.05rem; line-height:1.3; color:#fff; margin-top:.2rem;
-}
-html body .stApp [class*="st-key-banner_piano_"] .bp-s,
-html body .stApp [class*="st-key-banner_piano_"] .g-s {
-  font-family:'DM Sans',sans-serif; font-size:.87rem; line-height:1.55; color:rgba(255,255,255,.92); margin-top:.25rem;
-}
-html body .stApp [class*="st-key-banner_piano_"] .g-chip {
-  display:inline-block; font-family:'DM Sans',sans-serif; font-size:.74rem; font-weight:600; color:#fff;
-  background:rgba(255,255,255,.16); border-radius:999px; padding:.1rem .6rem; margin:.45rem .35rem 0 0;
-}
-/* pulsanti: uno principale bianco, uno secondario con bordo, e un link */
-html body .stApp [class*="st-key-banner_piano_"] button,
-html body .stApp [class*="st-key-banner_piano_"] [data-testid="stDownloadButton"] button {
-  background:#fff !important; border:0 !important; border-radius:999px !important; min-height:0 !important; height:auto !important;
-  padding:.3rem .95rem !important; width:auto !important; box-shadow:none !important;
-}
-html body .stApp [class*="st-key-banner_piano_"] button p,
-html body .stApp [class*="st-key-banner_piano_"] button span {
-  color:#1E3A8A !important; font-weight:700 !important; font-size:.83rem !important; margin:0 !important; line-height:1.2 !important;
-}
-html body .stApp [class*="st-key-banner_piano_"] button:hover:not(:disabled) { background:#EFF6FF !important; }
-html body .stApp [class*="st-key-banner_piano_"] button:disabled { opacity:.55 !important; }
-html body .stApp [class*="st-key-guida_sec"] button { background:transparent !important; border:1px solid rgba(255,255,255,.6) !important; }
-html body .stApp [class*="st-key-guida_sec"] button p, html body .stApp [class*="st-key-guida_sec"] button span { color:#fff !important; }
-html body .stApp [class*="st-key-guida_sec"] button:hover:not(:disabled) { background:rgba(255,255,255,.14) !important; }
-html body .stApp [class*="st-key-guida_nascondi"] button { background:transparent !important; padding:.1rem .2rem !important; }
-html body .stApp [class*="st-key-guida_nascondi"] button p, html body .stApp [class*="st-key-guida_nascondi"] button span {
-  color:rgba(255,255,255,.75) !important; font-weight:500 !important; font-size:.76rem !important; text-decoration:underline;
-}
-html body .stApp [class*="st-key-guida_"] { width:auto !important; flex:0 0 auto !important; }
-</style>
-"""
-
-# Bersagli che pulsano (selettori CSS). Si usano sia le classi delle chiavi sia i data-testid, per reggere i cambi di Streamlit.
-_BERSAGLI_GUIDA = {
-    "argomento": [".st-key-argomento_area_b", '[data-testid="stTextArea"]'],
-    "opzioni": ['[data-testid="stExpander"]:has(.g-altre)'],
-    "crea": [".st-key-genera_btn_b", '[data-testid="stButton"]:has([data-testid="stBaseButton-primary"])'],
-    "modifica": ['.st-key-review_selectbox', '[class*="st-key-piu_facile_"]', '[class*="st-key-piu_difficile_"]',
-                 '[class*="st-key-quick_regen_"]', '[class*="st-key-cambia_tutto_"]'],
-    "torna": [".st-key-btn_confirm_final", '[data-testid="stButton"]:has([data-testid="stBaseButton-primary"])'],
-}
-
-
-def _html_separatore() -> str:
-    """Linea sottile tra le sezioni di «Altre opzioni»."""
-    return (f'<div style="height:1px;background:{T["border2"]};opacity:.9;margin:1.2rem 0 .7rem;"></div>')
-
-
-def _css_pulsa(chiavi: list) -> str:
-    """CSS che fa pulsare in giallo gli elementi indicati (nomi di _BERSAGLI_GUIDA)."""
-    sel = ", ".join(f"html body .stApp {s}" for k in chiavi for s in _BERSAGLI_GUIDA[k])
-    return f"<style>{sel} {{animation:gpulse 1.5s ease-in-out infinite;border-radius:12px;}}</style>"
-
-
-def _guida_nascondi() -> None:
-    st.session_state["_guida_nascosta"] = True
-
-
-def _guida_prepara_kit(mancanti: list) -> None:
-    st.session_state["_kit_coda"] = list(mancanti)      # la coda la esegue la pagina finale, un elemento per volta
-
-
-def _guida_modifica() -> None:
-    st.session_state.stage = STAGE_REVIEW
-
-
-def _guida_benvenuto(dove: str, slot) -> None:
-    """
-    Guida per chi crea la prima verifica, con tutte le funzioni Pro sbloccate. Non ha pulsanti avanti/indietro: avanza da sola
-    e fa pulsare in giallo l'elemento da usare.
-      input  : passo 1 scrivi l'argomento · passo 2 prova logo/file in «Altre opzioni» e crea
-      final  : messaggio finale con i pulsanti per creare il kit, scaricare lo ZIP e modificare (niente scroll)
-      review : come si modificano gli esercizi e come tornare al PDF
-    """
-    nascondi = lambda: st.button("Nascondi la guida", key=f"guida_nascondi_{dove}", on_click=_guida_nascondi)
-    if dove == "input":
-        scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
-        n = 2 if scritto else 1
-        etichetta = f"Passo {n} di 2"
-        if not scritto:
-            titolo, testo = "Scrivi l'argomento", "Nel riquadro qui sotto scrivi di cosa parla la verifica e, se vuoi, cosa includere o evitare."
-            pulsa, chips = ["argomento"], ""
-        else:
-            titolo = "Ora crea la tua verifica"
-            testo = ("Se vuoi, prova prima «Altre opzioni»: il logo della tua scuola e il caricamento di un tuo file (appunti o una verifica "
-                     "da rifare) sono gratis solo in questa prima verifica. Poi premi «Crea verifica».")
-            pulsa = ["opzioni", "crea"]
-            chips = (('<span class="g-chip">✓ Logo caricato</span>' if _logo_scuola() else "") +
-                     ('<span class="g-chip">✓ File caricato</span>' if st.session_state.get("_file_materiale") else ""))
-        with slot.container(key=f"banner_piano_{dove}"):
-            st.markdown(_CSS_BANNER_PIANO + _css_pulsa(pulsa) +
-                        f'<div class="bp-wrap"><div class="g-k">🎁 Regalo di benvenuto · {etichetta}</div>'
-                        f'<div class="g-t">{titolo}</div><div class="g-s">{testo}</div>{chips}</div>', unsafe_allow_html=True)
-            nascondi()
-        return
-
-    if dove == "review":
-        with slot.container(key=f"banner_piano_{dove}"):
-            st.markdown(_CSS_BANNER_PIANO + _css_pulsa(["modifica", "torna"]) +
-                        '<div class="bp-wrap"><div class="g-k">🎁 Regalo di benvenuto · Modifica</div>'
-                        '<div class="g-t">Cambia gli esercizi come preferisci</div>'
-                        '<div class="g-s">Scegli un esercizio con le frecce o la tendina, poi usa «Più facile», «Più difficile», «Cambia i numeri» '
-                        'o «Cambia esercizio». Ogni modifica rifà subito il PDF. Quando hai finito premi «Fatto: torna al PDF».</div></div>',
-                        unsafe_allow_html=True)
-            nascondi()
-        return
-
-    # ── pagina finale: messaggio e pulsanti, così non serve scorrere la pagina ──
-    gp = st.session_state.get("gen_params") or {}
-    ver = st.session_state.get("verifiche") or {}
-    vA, vB, vR, vS = ver.get("A") or {}, ver.get("B") or {}, ver.get("R") or {}, ver.get("S") or {}
-    vSC = ver.get("SC") or {}
-    presenti = {"B": bool(vB.get("pdf") or vB.get("latex")), "R": bool(vR.get("pdf") or vR.get("latex")),
-                "S": bool(vS.get("pdf") or vS.get("latex")), "SC": bool(vSC.get("pdf"))}
-    nomi = {"B": "Fila B", "R": "BES/DSA", "S": "Soluzioni", "SC": "Scheda di allenamento"}
-    mancanti = [k for k, ok in presenti.items() if not ok]
-    in_corso = bool(st.session_state.get("_kit_coda")) or any(st.session_state.get(f) for f in
-                                                              ("_gen_fila_b", "_gen_bes", "_gen_sol", "_gen_scheda"))
-    pronti = [nomi[k] for k, ok in presenti.items() if ok]
-    elementi = _elementi_kit(gp.get("argomento", "Verifica"), gp.get("materia", ""), vA, vB, vR, vS, vSC,
-                             st.session_state.get("_rubrica_docx"))
-    stato = (f'<span class="g-chip">✓ {" · ".join(pronti)}</span>' if pronti else "")
-    with slot.container(key=f"banner_piano_{dove}"):
-        st.markdown(_CSS_BANNER_PIANO +
-                    '<div class="bp-wrap"><div class="g-k">🎁 Regalo di benvenuto · La tua prima verifica</div>'
-                    '<div class="g-t">Hai creato la tua prima verifica: sfrutta tutto il Pro!</div>'
-                    '<div class="g-s">Finché è la prima hai tutto sbloccato. Crea la Fila B, la versione BES/DSA, le soluzioni e la scheda di '
-                    'allenamento, poi scarica tutto in un solo file. Puoi anche modificare gli esercizi. '
-                    'Dalla prossima verifica queste funzioni sono solo con Pro.</div>' + stato + '</div>', unsafe_allow_html=True)
-        b1, b2, _v = st.columns([1.4, 1.3, 2.3], gap="small", vertical_alignment="center")
-        with b1:
-            if not mancanti and len(elementi) >= 2:
-                _dl("Scarica tutto (ZIP)", data=lambda: _zip_kit(elementi),
-                    file_name=_nome_base_file(gp.get("materia", ""), gp.get("argomento", "Verifica")) + "_kit.zip",
-                    mime="application/zip", icon=":material/folder_zip:", key="guida_cta_zip")
-            else:
-                st.button("Prepara tutto il kit", key="guida_cta_kit", icon=":material/auto_awesome:", disabled=in_corso or not mancanti,
-                          on_click=_guida_prepara_kit, args=(mancanti,),
-                          help="Crea Fila B, BES/DSA, soluzioni e scheda, una dopo l'altra (circa un minuto).")
-        with b2:
-            st.button("Modifica gli esercizi", key="guida_sec_modifica", icon=":material/edit:", on_click=_guida_modifica)
-        nascondi()
-
-
+_CSS_BANNER_PIANO = """
+<style>
+@keyframes gpulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(245,158,11,0); outline:3px solid rgba(245,158,11,0); outline-offset:3px; }
+  50%     { box-shadow:0 0 0 8px rgba(245,158,11,.45); outline:3px solid rgba(245,158,11,.95); outline-offset:3px; }
+}
+/* Riquadro dei messaggi sul piano (assaggio, Free, guida): blu notte con un velo di luce in alto a destra.
+   Contenitore con chiave: classe st-key-banner_piano_* */
+html body .stApp [class*="st-key-banner_piano_"] {
+  background:radial-gradient(120% 140% at 100% 0%, rgba(255,255,255,.20) 0%, rgba(255,255,255,0) 46%),
+             linear-gradient(135deg,#1E3A8A 0%,#1D4ED8 100%) !important;
+  border-radius:16px; padding:1.05rem 1.3rem 1.1rem !important; margin:.3rem 0 1rem; gap:.4rem !important;
+  border:1px solid rgba(255,255,255,.16); box-shadow:0 10px 28px rgba(30,58,138,.24), inset 0 1px 0 rgba(255,255,255,.14);
+}
+/* Streamlit toglie 1rem in fondo al markdown: il riempimento lo ripristina */
+html body .stApp [class*="st-key-banner_piano_"] .bp-wrap { padding-bottom:.2rem; }
+html body .stApp [class*="st-key-banner_piano_"] .g-k {
+  display:flex; align-items:center; gap:.5rem; font-family:'DM Sans',sans-serif; font-size:.68rem; font-weight:700;
+  letter-spacing:.11em; text-transform:uppercase; color:#FCD34D;
+}
+html body .stApp [class*="st-key-banner_piano_"] .g-ico {
+  display:inline-flex; align-items:center; justify-content:center; width:1.55rem; height:1.55rem; border-radius:50%;
+  background:rgba(255,255,255,.16); font-size:.85rem; letter-spacing:0;
+}
+html body .stApp [class*="st-key-banner_piano_"] .bp-t,
+html body .stApp [class*="st-key-banner_piano_"] .g-t {
+  font-family:'DM Sans',sans-serif; font-weight:700; font-size:1.12rem; line-height:1.3; color:#fff; margin-top:.45rem; letter-spacing:-.01em;
+}
+html body .stApp [class*="st-key-banner_piano_"] .bp-s,
+html body .stApp [class*="st-key-banner_piano_"] .g-s {
+  font-family:'DM Sans',sans-serif; font-size:.9rem; line-height:1.6; color:rgba(255,255,255,.93); margin-top:.3rem; max-width:62rem;
+}
+html body .stApp [class*="st-key-banner_piano_"] .g-s b { color:#fff; }
+html body .stApp [class*="st-key-banner_piano_"] .g-chip {
+  display:inline-block; font-family:'DM Sans',sans-serif; font-size:.74rem; font-weight:600; color:#fff;
+  background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.18); border-radius:999px; padding:.12rem .65rem; margin:.55rem .4rem 0 0;
+}
+html body .stApp [class*="st-key-banner_piano_"] .g-pun { display:inline-flex; gap:5px; margin-left:auto; }
+html body .stApp [class*="st-key-banner_piano_"] .g-pun i { display:block; width:18px; height:4px; border-radius:3px; background:rgba(255,255,255,.3); }
+html body .stApp [class*="st-key-banner_piano_"] .g-pun i.on { background:#FCD34D; }
+/* pulsante del riquadro Free («Scopri Pro»): bianco, a pillola */
+html body .stApp [class*="st-key-banner_piano_"] button {
+  background:#fff !important; border:0 !important; border-radius:999px !important; min-height:0 !important; height:auto !important;
+  padding:.3rem .95rem !important; width:auto !important; box-shadow:none !important;
+}
+html body .stApp [class*="st-key-banner_piano_"] button p,
+html body .stApp [class*="st-key-banner_piano_"] button span {
+  color:#1E3A8A !important; font-weight:700 !important; font-size:.83rem !important; margin:0 !important; line-height:1.2 !important;
+}
+html body .stApp [class*="st-key-banner_piano_"] button:hover:not(:disabled) { background:#EFF6FF !important; }
+</style>
+"""
+
+# Bersagli che pulsano (selettori CSS). Si usano sia le classi delle chiavi sia i data-testid, per reggere i cambi di Streamlit.
+_BERSAGLI_GUIDA = {
+    "argomento": [".st-key-argomento_area_b", '[data-testid="stTextArea"]'],
+    "opzioni": ['[data-testid="stExpander"]:has(.g-altre)'],
+    "crea": [".st-key-genera_btn_b", '[data-testid="stButton"]:has([data-testid="stBaseButton-primary"])'],
+    "modifica": ['.st-key-review_selectbox', '[class*="st-key-piu_facile_"]', '[class*="st-key-piu_difficile_"]',
+                 '[class*="st-key-quick_regen_"]', '[class*="st-key-cambia_tutto_"]'],
+    "torna": [".st-key-btn_confirm_final", '[data-testid="stButton"]:has([data-testid="stBaseButton-primary"])'],
+    # pagina del risultato: «Modifica gli esercizi» e tutti i pulsanti del kit (Fila B, BES/DSA, soluzioni, scheda, griglia, ZIP)
+    "apri_modifica": [".st-key-final_edit"],
+    "kit": [".st-key-kit_tutto", ".st-key-dl_kit_zip", '[class*="st-key-one_click_"]', '[class*="st-key-compile_"]',
+            ".st-key-btn_gen_griglia_v2"],
+}
+
+
+def _html_separatore() -> str:
+    """Linea sottile tra le sezioni di «Altre opzioni»."""
+    return (f'<div style="height:1px;background:{T["border2"]};opacity:.9;margin:1.2rem 0 .7rem;"></div>')
+
+
+def _css_pulsa(chiavi: list) -> str:
+    """CSS che fa pulsare in giallo gli elementi indicati (nomi di _BERSAGLI_GUIDA)."""
+    sel = ", ".join(f"html body .stApp {s}" for k in chiavi for s in _BERSAGLI_GUIDA[k])
+    return f"<style>{sel} {{animation:gpulse 1.5s ease-in-out infinite;border-radius:12px;}}</style>"
+
+
+def _guida_benvenuto(dove: str, slot) -> None:
+    """
+    Guida per chi crea la prima verifica, con tutte le funzioni Pro sbloccate (si vede sempre: finisce da sola con la seconda
+    verifica). Niente pulsanti: avanza da sola e fa pulsare in giallo gli elementi da usare.
+      input  : passo 1 scrivi l'argomento · passo 2 prova logo/file in «Altre opzioni» e crea
+      final  : pulsano «Modifica gli esercizi» e, più in basso, tutti i pulsanti del kit
+      review : pulsano la scelta dell'esercizio, i pulsanti di modifica e «Fatto: torna al PDF»
+    """
+    def _riquadro(etichetta, titolo, testo, pulsa, chips="", passi=None):
+        pun = ("" if not passi else '<span class="g-pun">' + "".join(
+            f'<i class="{"on" if k < passi[0] else ""}"></i>' for k in range(passi[1])) + "</span>")
+        with slot.container(key=f"banner_piano_{dove}"):
+            st.markdown(_CSS_BANNER_PIANO + _css_pulsa(pulsa) +
+                        f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">🎁</span>{etichetta}{pun}</div>'
+                        f'<div class="g-t">{titolo}</div><div class="g-s">{testo}</div>{chips}</div>', unsafe_allow_html=True)
+
+    if dove == "input":
+        scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
+        if not scritto:
+            _riquadro("Regalo di benvenuto · Passo 1 di 2", "Scrivi l'argomento",
+                      "Nel riquadro qui sotto scrivi di cosa parla la verifica e, se vuoi, cosa includere o evitare.",
+                      ["argomento"], passi=(1, 2))
+        else:
+            chips = (('<span class="g-chip">✓ Logo caricato</span>' if _logo_scuola() else "") +
+                     ('<span class="g-chip">✓ File caricato</span>' if st.session_state.get("_file_materiale") else ""))
+            _riquadro("Regalo di benvenuto · Passo 2 di 2", "Ora crea la tua verifica",
+                      "Se vuoi, prova prima «Altre opzioni»: il logo della tua scuola e il caricamento di un tuo file (appunti o una "
+                      "verifica da rifare) sono gratis solo in questa prima verifica. Poi premi «Crea verifica».",
+                      ["opzioni", "crea"], chips, passi=(2, 2))
+    elif dove == "review":
+        _riquadro("Regalo di benvenuto · Modifica", "Cambia gli esercizi come preferisci",
+                  "Scegli un esercizio con le frecce o la tendina, poi usa «Più facile», «Più difficile», «Cambia i numeri» o "
+                  "«Cambia esercizio». Ogni modifica rifà subito il PDF. Quando hai finito premi «Fatto: torna al PDF».",
+                  ["modifica", "torna"])
+    else:
+        _riquadro("Regalo di benvenuto · La tua prima verifica", "Hai creato la tua prima verifica: sfrutta tutto il Pro!",
+                  "Finché è la prima hai tutto sbloccato. I pulsanti che lampeggiano sono quelli da provare: <b>«Modifica gli esercizi»</b> "
+                  "qui sopra e, più in basso, la <b>Fila B</b>, la <b>versione BES/DSA</b>, le <b>soluzioni</b>, la <b>scheda di allenamento</b> "
+                  "e <b>«Prepara tutto il kit»</b>, per poi <b>scaricare tutto in un solo file (ZIP)</b>. "
+                  "Dalla prossima verifica queste funzioni sono solo con Pro.",
+                  ["apri_modifica", "kit"])
+
+
 def _banner_piano(dove: str) -> None:
     """
     Striscia blu in cima alla pagina per chi non ha Pro (stesso stile per tutti):
@@ -946,7 +905,7 @@ def _banner_piano(dove: str) -> None:
     if not MONETIZZAZIONE_ATTIVA or (_is_admin and not _SIM) or ENT.piano != "free" or (dove == "review" and not ENT.assaggio):
         _slot.empty()
         return
-    if ENT.assaggio and not st.session_state.get("_guida_nascosta"):
+    if ENT.assaggio:
         _guida_benvenuto(dove, _slot)
         return
     if ENT.assaggio:
