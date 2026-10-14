@@ -671,9 +671,14 @@ def mostra_auth(supabase):
             '<path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/>'
             '</svg>Continua con Google</a>'
             f'<div style="text-align:center;color:{_TEXT2};font-size:.8rem;margin-bottom:.4rem;'
-            'font-family:DM Sans,sans-serif;">Si apre in una nuova scheda · oppure con la tua email</div>',
+            'font-family:DM Sans,sans-serif;">Si apre in una nuova scheda</div>',
             unsafe_allow_html=True,
         )
+
+    # ── Email e password: nascoste sotto Google (restano disponibili, es. per account di prova) ──
+    # Se l'accesso con Google non è attivo il modulo resta aperto.
+    _email_exp = st.expander("Preferisci usare email e password?", expanded=not _url_google)
+    _email_exp.__enter__()
 
     # ── Schede ───────────────────────────────────────────────────────────────
     tab_login, tab_reg = st.tabs(["Accedi", "Registrati"])
@@ -754,6 +759,8 @@ def mostra_auth(supabase):
                     else:
                         _msg("errore", "Registrazione non riuscita. Controlla i dati e riprova; "
                                        "se il problema continua, scrivici.")
+
+    _email_exp.__exit__(None, None, None)
 
     # ── Barra di fiducia + footer ────────────────────────────────────────────
     st.markdown(f"""
