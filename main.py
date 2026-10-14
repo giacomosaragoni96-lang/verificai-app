@@ -1182,10 +1182,37 @@ def _prepara_logo(dati: bytes):
             buf = io.BytesIO()
             r.save(buf, "PNG", optimize=True)
             if len(buf.getvalue()) <= 110_000:
-                return base64.b64encode(buf.getvalue()).decode()
+                # Formato scelto dalla forma: un'immagine molto più larga che alta è un logo con il
+                # nome della scuola (largo), una più quadrata è il solo simbolo (piccolo).
+                tipo = "largo" if im.width / max(1, im.height) >= 2.0 else "piccolo"
+                return base64.b64encode(buf.getvalue()).decode(), tipo
     except Exception as e:
         logger.warning(f"Logo non leggibile: {e}")
     return None
+
+
+def _html_anteprima_logo(logo: dict, attivo: bool, materia: str, argomento: str) -> str:
+    """Riquadro con la riga di intestazione della verifica (logo + titolo), com'è nel PDF."""
+    frac = {"largo": 0.38, "piccolo": 0.15}.get(logo.get("tipo"), 0.38)
+    titolo = f"Verifica di {materia}: {argomento or 'argomento della verifica'}"
+    img = (
+        f'<div style="width:{frac * 100:.0f}%;flex:none;">'
+        f'<img src="data:image/png;base64,{logo["b64"]}" alt="Logo della scuola" '
+        f'style="max-width:100%;max-height:70px;object-fit:contain;display:block;"/></div>'
+        if attivo else ""
+    )
+    return (
+        f'<div style="max-width:520px;margin:.6rem 0 .3rem;padding:.9rem 1rem;background:#fff;'
+        f'border:1px solid {T["border2"]};border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);'
+        f'font-family:serif;color:#111;">'
+        f'<div style="font-size:.68rem;font-family:DM Sans,sans-serif;color:#6B7280;margin-bottom:.5rem;">'
+        f'Così apparirà in cima alla verifica</div>'
+        f'<div style="display:flex;align-items:center;justify-content:space-between;gap:.8rem;">{img}'
+        f'<div style="flex:1;text-align:right;font-weight:700;font-size:.92rem;line-height:1.25;">'
+        f'{_esc(titolo)}</div></div>'
+        f'<div style="text-align:center;font-size:.72rem;margin-top:.7rem;">'
+        f'<b>Nome:</b> ____________________ &nbsp; <b>Classe e Data:</b> ______________</div></div>'
+    )
 
 
 def _salva_variante_storico(colonna: str, latex: str) -> None:
@@ -1923,38 +1950,29 @@ def _render_percorso_b_form(_prog_placeholder):
                             unsafe_allow_html=True)
                 _logo_s = _logo_scuola()
                 if _logo_s:
-                    _lc1, _lc2 = st.columns([1, 2], gap="medium")
-                    with _lc1:
-                        st.image(base64.b64decode(_logo_s["b64"]), width=130)
-                    with _lc2:
-                        _tipi_logo = {"largo": "Largo, con il nome della scuola",
-                                      "piccolo": "Piccolo, solo il simbolo"}
-                        _tipo_nuovo = st.radio(
-                            "Che tipo di logo è?", list(_tipi_logo), format_func=_tipi_logo.get,
-                            index=list(_tipi_logo).index(_logo_s.get("tipo", "largo")),
-                            key="logo_tipo_b",
-                        )
-                        _attivo_nuovo = st.toggle("Metti il logo nelle verifiche",
-                                                  value=_logo_s.get("attivo", True), key="logo_attivo_b")
-                        if (_tipo_nuovo, _attivo_nuovo) != (_logo_s.get("tipo", "largo"), _logo_s.get("attivo", True)):
-                            _salva_logo({**_logo_s, "tipo": _tipo_nuovo, "attivo": _attivo_nuovo})
-                        if st.button("Togli il logo", key="logo_togli", icon=":material/delete:"):
-                            _salva_logo(None)
-                            st.rerun()
-                    st.caption("Il logo sta a sinistra del titolo. Vale per le nuove verifiche e per la Fila B; "
-                               "nel file Word non compare.")
+                    _attivo_nuovo = st.toggle("Metti il logo nelle verifiche",
+                                              value=_logo_s.get("attivo", True), key="logo_attivo_b")
+                    if _attivo_nuovo != _logo_s.get("attivo", True):
+                        _salva_logo({**_logo_s, "attivo": _attivo_nuovo})
+                    # Anteprima immediata dell'intestazione: niente generazione sprecata
+                    st.markdown(_html_anteprima_logo(_logo_s, _attivo_nuovo, materia_scelta, argomento),
+                                unsafe_allow_html=True)
+                    if st.button("Cambia o togli il logo", key="logo_togli", icon=":material/delete:"):
+                        _salva_logo(None)
+                        st.rerun()
+                    st.caption("Vale per le nuove verifiche e per la Fila B; nel file Word non compare.")
                 else:
                     _logo_up = st.file_uploader(
                         "Carica il logo della tua scuola (PNG o JPG)", type=["png", "jpg", "jpeg"],
                         key="logo_up_b", help="Si salva sul tuo account: lo carichi una volta sola.",
                     )
-                    st.caption("Per un buon risultato: immagine nitida (almeno 600 px di larghezza), "
-                               "meglio con sfondo bianco o trasparente. Il programma toglie da solo "
-                               "i margini bianchi.")
+                    st.caption("Meglio un'immagine nitida (almeno 600 px di larghezza) con sfondo bianco o "
+                               "trasparente. Margini e formato (largo o piccolo) li sistema da solo il programma; "
+                               "dopo il caricamento vedi subito l'anteprima dell'intestazione.")
                     if _logo_up is not None:
-                        _b64_logo = _prepara_logo(_logo_up.getvalue())
-                        if _b64_logo:
-                            _salva_logo({"b64": _b64_logo, "tipo": "largo", "attivo": True})
+                        _esito_logo = _prepara_logo(_logo_up.getvalue())
+                        if _esito_logo:
+                            _salva_logo({"b64": _esito_logo[0], "tipo": _esito_logo[1], "attivo": True})
                             st.rerun()
                         else:
                             st.warning("Non riesco a leggere questa immagine: prova con un PNG o un JPG più piccolo.")
