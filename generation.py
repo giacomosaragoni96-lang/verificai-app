@@ -12,7 +12,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from config import QA_SALTA_SE_PUNTEGGIO_ALMENO, AUTOVERIFICA_ATTIVA
+from config import QA_SALTA_SE_PUNTEGGIO_ALMENO, AUTOVERIFICA_ATTIVA, nota_istruzioni_verifica
 from autoverifica import autoverifica_corpo
 
 from prompts import (
@@ -248,7 +248,7 @@ def _costruisci_preambolo(
     titolo_variante: str,   # es. "Versione A", "Versione B", "" se nessuna
     e_mat: bool,
 ) -> str:
-    nota_bes = "Svolgere tutti gli esercizi mostrando i passaggi."
+    nota_bes = nota_istruzioni_verifica(materia)
     titolo_header = (
         f"Verifica di {materia}: {titolo_clean}"
         + (f" — {titolo_variante}" if titolo_variante else "")

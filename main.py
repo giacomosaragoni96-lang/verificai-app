@@ -2098,16 +2098,6 @@ def _render_percorso_b_form(_prog_placeholder):
                     format_func=lambda x: f"{x} esercizi",
                 )
 
-                if _prefs.get("stile_desc"):
-                    st.markdown(
-                        f'<div style="background:{T["hint_bg"]};border:1px solid {T["hint_border"]};'
-                        f'border-radius:8px;padding:.4rem .7rem;font-size:.9rem;color:{T["hint_text"]};'
-                        f'font-family:DM Sans,sans-serif;margin-bottom:.7rem;">'
-                        f'Preferenze salvate per <b>{materia_scelta}</b>: {_prefs["stile_desc"]}'
-                        f'</div>',
-                        unsafe_allow_html=True,
-                    )
-
                 _tog = st.toggle(
                     "Mostra i punti accanto a ogni domanda",
                     value=mostra_punteggi, key="toggle_punteggi_b",
