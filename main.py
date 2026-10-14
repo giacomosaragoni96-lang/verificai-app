@@ -787,7 +787,7 @@ html body .stApp [class*="st-key-banner_piano_"] {
   border:1px solid rgba(255,255,255,.16); box-shadow:0 10px 28px rgba(30,58,138,.24), inset 0 1px 0 rgba(255,255,255,.14);
 }
 /* Streamlit toglie 1rem in fondo al markdown: il riempimento lo ripristina */
-html body .stApp [class*="st-key-banner_piano_"] .bp-wrap { padding-bottom:.2rem; }
+html body .stApp [class*="st-key-banner_piano_"] .bp-wrap { padding-bottom:1rem; }
 html body .stApp [class*="st-key-banner_piano_"] .g-k {
   display:flex; align-items:center; gap:.5rem; font-family:'DM Sans',sans-serif; font-size:.68rem; font-weight:700;
   letter-spacing:.11em; text-transform:uppercase; color:#FCD34D;
@@ -899,8 +899,7 @@ def _guida_benvenuto(dove: str, slot) -> None:
         scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
         if not scritto:
             _riquadro("Regalo di benvenuto · Passo 1 di 2", "Scrivi l'argomento",
-                      "Nel riquadro qui sotto scrivi di cosa parla la verifica e, se vuoi, cosa includere o evitare "
-                      "(per esempio: «difficoltà crescente», «includi un grafico», «evita le dimostrazioni»).",
+                      "Nel riquadro qui sotto scrivi di cosa parla la verifica e, se vuoi, cosa includere o evitare.",
                       ["argomento"], passi=(1, 2))
         else:
             chips = (('<span class="g-chip">✓ Logo caricato</span>' if _logo_scuola() else "") +
