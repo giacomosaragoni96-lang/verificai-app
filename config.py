@@ -32,7 +32,11 @@ ETICHETTE_FUNZIONI = {
     "scheda": "la scheda di allenamento", "zip": "il kit completo in un solo file",
 }
 PREZZO_PRO_ANNUALE = 39                 # euro, anno scolastico (pagamento unico)
-CHECKOUT_URL_PRO = ""                   # link di acquisto (fase 2): vuoto = pulsante non ancora attivo
+CHECKOUT_URL_PRO = "https://verificai.lemonsqueezy.com/checkout/buy/cd7d56f4-10c1-4807-bc2f-90dffa200268"   # prodotto di PROVA (test mode)
+# ID del negozio e del prodotto Lemon Squeezy: una licenza vale solo se sono questi (None = nessun codice accettato).
+# Compaiono nel dettaglio tecnico (solo admin) al primo tentativo di attivazione.
+LEMON_STORE_ID = None
+LEMON_PRODUCT_ID = None
 
 # famiglia_modello: «lite» o «flash» (NON un ID): il modello vero lo sceglie get_model_id_per_piano
 # e lo risolve ai_client nel più recente della famiglia.

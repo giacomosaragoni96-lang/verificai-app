@@ -34,6 +34,7 @@ from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
 from scheda import genera_scheda
 from subscription_management import calcola_entitlements, get_subscription_manager
 from ui_upgrade import render_upgrade
+from licenze import attiva_licenza, riconvalida_se_serve
 from latex_utils import (
     compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, copia_intestazione_con_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
     fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
@@ -656,6 +657,7 @@ _verifiche_mese = _get_verifiche_mese(st.session_state.utente.id) if st.session_
 @st.cache_data(ttl=60, show_spinner=False)
 def _abbonamento_utente(user_id: str) -> dict:
     """Abbonamento dell'utente, in cache per un minuto (non si rilegge a ogni clic)."""
+    riconvalida_se_serve(supabase_admin, user_id)     # licenza Lemon Squeezy: ricontrollo ogni 24 ore
     return get_subscription_manager(supabase_admin).get_user_subscription(user_id)
 
 
@@ -5063,7 +5065,17 @@ if not _share_view_active:
             st.session_state.stage = st.session_state.get("_upgrade_da") or STAGE_INPUT
             st.rerun()
         _gia_usato = (not ENT.assaggio) and ENT.piano == "free" and MONETIZZAZIONE_ATTIVA
-        render_upgrade(_esci_da_upgrade, st.session_state.get("_upgrade_funzione"), _gia_usato)
+
+        def _attiva_codice(codice):
+            esito = attiva_licenza(supabase_admin, st.session_state.utente.id, codice)
+            if esito.ok:
+                _abbonamento_utente.clear()          # il piano si rilegge subito
+                _registra_evento("licenza_attivata")
+            return esito.ok, esito.messaggio, esito.dettaglio_admin
+
+        render_upgrade(_esci_da_upgrade, st.session_state.get("_upgrade_funzione"), _gia_usato,
+                       e_pro=(ENT.piano == "pro" and not _SIM), email=getattr(st.session_state.utente, "email", None),
+                       on_attiva=_attiva_codice, e_admin=_is_admin)
     elif _current == STAGE_BANCA:
         if _is_admin:
             def _esci_dalla_banca():
