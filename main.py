@@ -50,7 +50,7 @@ from latex_utils import (
 from config import (
     APP_NAME, APP_ICON, SHARE_URL, FEEDBACK_FORM_URL,
     LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
-    SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, SUGGERIMENTI_ARGOMENTO, TIPI_ESERCIZIO,
+    SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
     MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, PREZZO_PRO_ANNUALE, LEGALE_PRONTO, TETTO_BREVE, MAX_FACCIATE, WORD_ATTIVO,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS,
@@ -2199,15 +2199,13 @@ def _render_percorso_b_form(_prog_placeholder):
             _esempio = esempio_richiesta(materia_scelta)
             _segnaposto = _esempio.split("\n")[0] + "\n…poi, se vuoi, cosa includere o evitare"
 
-            def _usa_suggerimento(testo):
-                st.session_state["argomento_area_b"] = testo
-
             with _c_arg:
                 st.markdown(
                     '<div class="opt-label">Di cosa parla la verifica? ✱ '
-                    '<span class="opt-hint">Argomento nella prima riga, poi cosa includere o evitare</span></div>',
+                    '<span class="opt-hint">Argomento nella prima riga</span></div>',
                     unsafe_allow_html=True,
                 )
+                st.caption("Più dettagli dai, più la verifica sarà simile a quella che hai in mente: tipi di esercizio, livello, cosa includere o evitare.")
                 # Controlla se c'è già un valore in session state per evitare il warning
                 if "argomento_area_b" not in st.session_state:
                     argomento_raw = st.text_area(
@@ -2226,11 +2224,6 @@ def _render_percorso_b_form(_prog_placeholder):
                         label_visibility="collapsed",
                         key="argomento_area_b",
                     )
-                _sugg = SUGGERIMENTI_ARGOMENTO.get(materia_scelta, [])
-                if _sugg and not argomento_raw.strip():
-                    with st.container(key="sugg_argomento", horizontal=True):
-                        for _k, _t in enumerate(_sugg):
-                            st.button(_t, key=f"sugg_arg_{_k}", type="tertiary", on_click=_usa_suggerimento, args=(_t,))
 
             # ── Traccia modifica manuale del riquadro ─────────────────────────────
             _auto_arg_ref = _info_cons.get("contenuto_argomento", "")
