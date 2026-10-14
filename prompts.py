@@ -413,6 +413,43 @@ def prompt_rigenera_blocco(
     )
 
 
+def prompt_nuovo_esercizio(
+    materia: str,
+    argomento: str,
+    scuola: str,
+    esercizi_esistenti: str,
+    numero: int,
+    mostra_punteggi: bool,
+    punti: int,
+) -> str:
+    """Un esercizio in più per una verifica già scritta (pulsante «Aggiungi un esercizio»)."""
+    punti_nota = (
+        f"Assegna circa {punti} pt in totale, con il formato (N pt) alla fine di ogni \\item "
+        f"(i punti verranno ribilanciati sul totale della verifica)."
+        if mostra_punteggi
+        else "NON inserire punteggi (X pt)."
+    )
+    return (
+        f"Sei un docente esperto di {materia} e LaTeX. Aggiungi UN esercizio nuovo a una verifica "
+        f"per {scuola}.\n\n"
+        f"ARGOMENTO DELLA VERIFICA: {argomento}\n\n"
+        f"ESERCIZI GIÀ PRESENTI (da NON ripetere nemmeno concettualmente):\n{esercizi_esistenti}\n\n"
+        f"REGOLE:\n"
+        f"- L'esercizio deve restare su '{argomento}' in '{materia}', con livello adatto a {scuola}.\n"
+        f"- Scegli un tipo e un aspetto diversi da quelli già presenti.\n"
+        f"- Titolo nel formato \\subsection*{{Esercizio {numero}: titolo breve}}.\n"
+        f"- LUNGHEZZA MASSIMA: 8-10 righe di testo.\n"
+        f"- VIETATO inserire soluzioni, risposte o risultati.\n"
+        f"- {REGOLA_SOTTOPUNTI_MODIFICA}\n"
+        f"- {punti_nota}\n"
+        f"- {REGOLA_GRAFICO_CURVE}\n"
+        f"- Se includi un grafico usa SOLO codice TikZ/pgfplots completo e compilabile.\n"
+        f"- NON inserire commenti LaTeX (%) nel corpo.\n"
+        f"- NON includere preambolo, \\documentclass o \\begin{{document}}.\n"
+        f"OUTPUT: SOLO il blocco \\subsection*{{...}} dell'esercizio, in LaTeX."
+    )
+
+
 # Regole condivise dai prompt delle modifiche a un solo esercizio (main.py).
 REGOLA_SOTTOPUNTI_MODIFICA = (
     "SOTTOPUNTI: con due o più richieste usa \\begin{enumerate}[a)] con \\item[a)], \\item[b)], ... "

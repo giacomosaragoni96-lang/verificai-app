@@ -25,6 +25,7 @@ from generation import (
 from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
     prompt_rubrica_valutazione, prompt_variante_rapida, istruzione_livello_esercizio,
+    prompt_nuovo_esercizio,
     REGOLA_SOTTOPUNTI_MODIFICA, REGOLA_GRAFICO_CURVE,
 )
 from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
@@ -1761,6 +1762,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 format_func=lambda n: etichetta_durata(n, difficolta),
                 horizontal=True, key="sel_durata_b", label_visibility="collapsed",
             )
+            st.caption("Potrai aggiungere o togliere esercizi dopo, nella schermata di modifica.")
             _par_dur   = parametri_durata(durata_nome, difficolta)
             durata_str = _par_dur["durata"]
 
@@ -2174,14 +2176,6 @@ def _lancia_generazione(
 
 def _render_stage_input():
     # La schermata di creazione e' anche la home: titolo breve + form.
-    # La sidebar è chiusa all'avvio: l'accesso allo storico sta anche qui, in alto a destra.
-    _c_vuota, _c_storico_top = st.columns([3, 1])
-    with _c_storico_top:
-        if st.button("Le mie verifiche", icon=":material/folder_open:", type="tertiary",
-                     use_container_width=True, key="top_storico"):
-            st.session_state["_stage_prima"] = STAGE_INPUT
-            st.session_state.stage = STAGE_MIE_VERIFICHE
-            st.rerun()
     st.markdown(
         f'<div class="vf-narrow" style="text-align:center;padding:.2rem 0 1rem;">'
         f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
@@ -2512,6 +2506,53 @@ def _elimina_esercizio(idx, mostra_punteggi, con_griglia, punti_totali) -> bool:
         return False
     _pulisci_stato_revisione()
     st.session_state.review_sel_idx = min(idx, len(st.session_state.review_blocks) - 1)
+    st.session_state.gen_params["num_esercizi"] = len(st.session_state.review_blocks)
+    st.session_state.force_preview_refresh = True
+    return True
+
+
+def _aggiungi_esercizio(mostra_punteggi, con_griglia, punti_totali, materia, argomento,
+                        scuola, modello) -> bool:
+    """
+    Aggiunge in fondo un esercizio nuovo (stesso argomento, diverso dagli altri), ridistribuisce
+    i punti sul totale e ricompila. Se qualcosa va storto ripristina lo stato precedente.
+    """
+    blocchi = st.session_state.review_blocks
+    n = len(blocchi)
+    if n >= 15:
+        st.warning("Una verifica può avere al massimo 15 esercizi.", icon="⚠️")
+        return False
+    esistenti = "\n".join(f"- {b['title']}: {b['body'][:160].strip()}…" for b in blocchi)
+    prompt = prompt_nuovo_esercizio(
+        materia, argomento, scuola, esistenti, n + 1, mostra_punteggi,
+        max(5, punti_totali // (n + 1)),
+    )
+    backup_blocchi = copy.deepcopy(blocchi)
+    backup_pre     = st.session_state.review_preamble
+    va             = st.session_state.verifiche["A"]
+    backup_latex   = (va.get("latex"), va.get("latex_originale"))
+    try:
+        testo = crea_modello(modello).per("modifica").generate_content(prompt).text
+        testo = testo.replace("```latex", "").replace("```", "").strip()
+        testo = re.sub(r"\\end\{document\}.*$", "", testo, flags=re.DOTALL).strip()
+        m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", testo, re.DOTALL)
+        titolo = re.sub(r"\s*\(\d+\s*pt\)", "", m.group(1)).strip() if m else f"Esercizio {n + 1}"
+        corpo = m.group(2).strip() if m else testo
+        if not re.match(r"^Esercizio\s*\d+", titolo, flags=re.IGNORECASE):
+            titolo = f"Esercizio {n + 1}: {titolo}"
+        blocchi.append({"title": titolo, "body": corpo})
+        pdf, err = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali, riscala_totale=True)
+    except Exception as e:
+        pdf, err = None, e
+    if not pdf:
+        st.session_state.review_blocks   = backup_blocchi
+        st.session_state.review_preamble = backup_pre
+        va["latex"], va["latex_originale"] = backup_latex
+        _mostra_errore("Non sono riuscito ad aggiungere l'esercizio", err,
+                       consiglio="Non ho cambiato nulla: riprova.")
+        return False
+    _pulisci_stato_revisione()
+    st.session_state.review_sel_idx = len(st.session_state.review_blocks) - 1
     st.session_state.gen_params["num_esercizi"] = len(st.session_state.review_blocks)
     st.session_state.force_preview_refresh = True
     return True
@@ -3023,11 +3064,19 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 )
             st.caption("«Cambia i numeri» tiene lo stesso esercizio con dati nuovi; "
                        "«Cambia esercizio» ne propone uno diverso sullo stesso argomento.")
-            elimina = st.button(
-                "Elimina questo esercizio", key=f"elimina_{idx}", type="tertiary",
-                icon=":material/delete:", disabled=(n_blocks <= 1),
-                help="Toglie questo esercizio e ridistribuisce i punti sugli altri.",
-            )
+            _ea_c1, _ea_c2 = st.columns(2, gap="small")
+            with _ea_c1:
+                aggiungi = st.button(
+                    "Aggiungi un esercizio", key=f"aggiungi_{idx}", type="tertiary",
+                    icon=":material/add:", disabled=(n_blocks >= 15),
+                    help="Crea un esercizio nuovo in fondo e ridistribuisce i punti.",
+                )
+            with _ea_c2:
+                elimina = st.button(
+                    "Elimina questo esercizio", key=f"elimina_{idx}", type="tertiary",
+                    icon=":material/delete:", disabled=(n_blocks <= 1),
+                    help="Toglie questo esercizio e ridistribuisce i punti sugli altri.",
+                )
             if elimina:
                 st.session_state["_conf_elimina"] = idx
             elif st.session_state.get("_conf_elimina") not in (None, idx):
@@ -3269,6 +3318,16 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             materia_str, argomento_str, modello_rw,
             mostra_punteggi, con_griglia, punti_totali, _action_ph,
         )
+
+    # ── Aggiungi un esercizio ─────────────────────────────────────────────────
+    if aggiungi:
+        _action_ph.empty()
+        with st.spinner("Creo un nuovo esercizio e ridistribuisco i punti…"):
+            _ok_ag = _aggiungi_esercizio(mostra_punteggi, con_griglia, punti_totali,
+                                         materia_str, argomento_str, scuola_str, modello_rw)
+        if _ok_ag:
+            st.toast("Esercizio aggiunto in fondo", icon="➕")
+            st.rerun()
 
     # ── Elimina esercizio (dopo conferma) ─────────────────────────────────────
     if elimina_si:
@@ -3707,10 +3766,20 @@ def _render_stage_final():
     #  AZIONI PRINCIPALI — sopra l'anteprima: sempre in vista, anche su telefono
     # ═══════════════════════════════════════════════════════════════════════════
     _fname_a = arg_str + "_FilaA"
-    _az_dl, _az_mod, _az_new = st.columns([2, 1.3, 1.1], gap="small")
+    # Tre pulsanti della stessa altezza e sulla stessa linea: niente contenitori HTML attorno
+    # a uno solo di essi (i margini extra lo sfalsavano), l'altezza è fissata dalla chiave.
+    st.markdown(
+        '<style>html body .stApp .st-key-az_principali button{min-height:52px !important;'
+        'height:52px !important;margin:0 !important;transform:none !important;'
+        'font-size:1rem !important;font-weight:700 !important;border-radius:12px !important;}'
+        'html body .stApp .st-key-az_principali [data-testid="stDownloadButton"],'
+        'html body .stApp .st-key-az_principali [data-testid="stButton"]{margin:0 !important;}</style>',
+        unsafe_allow_html=True,
+    )
+    _box_az = st.container(key="az_principali")
+    _az_dl, _az_mod, _az_new = _box_az.columns([1.3, 1, 1], gap="small", vertical_alignment="center")
     with _az_dl:
         if vA.get("pdf"):
-            st.markdown('<div class="dl-cta-wrap">', unsafe_allow_html=True)
             _dl(
                 label=f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}",
                 data=vA["pdf"],
@@ -3722,7 +3791,6 @@ def _render_stage_final():
                 on_click="ignore",
                 help="Scarica il PDF della verifica, già formattato e pronto per la stampa.",
             )
-            st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.warning("Il PDF non è ancora pronto. Apri «Modifica gli esercizi»: ogni modifica lo rifà.")
     with _az_mod:

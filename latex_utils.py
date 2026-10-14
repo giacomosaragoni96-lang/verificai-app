@@ -702,7 +702,7 @@ def build_griglia_latex(esercizi: list, punti_totali: int) -> str:
         for ex in esercizi
     ) + " & \\textbf{Tot} \\\\ \\hline"
 
-    row_sotto = "\\textbf{Sotto.}" + "".join(
+    row_sotto = "" + "".join(
         f" & {label if label else '—'}"
         for ex in esercizi for label, _ in ex['items']
     ) + " & \\\\ \\hline"

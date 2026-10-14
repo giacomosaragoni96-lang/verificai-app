@@ -41,7 +41,6 @@ def render_sidebar(
         # (il codice sotto resta nell'ordine di calcolo; i contenitori fissano la posizione)
         _c_uso     = st.container()
         _c_storico = st.container()
-        _c_tema    = st.container()
         _c_admin   = st.container()
         _c_user    = st.container()
 
@@ -85,24 +84,10 @@ def render_sidebar(
             )
 
         # ── TEMA ──────────────────────────────────────────────────────────────
-        with _c_tema:
-            if THEMES and THEME_LABELS and len(THEMES) > 1:
-                st.markdown(
-                    f'<div class="sidebar-label" style="margin-top:.9rem;">Tema</div>',
-                    unsafe_allow_html=True,
-                )
-                _theme_keys   = list(THEMES.keys())
-                _cur_theme    = st.session_state.get("theme", _theme_keys[0])
-                # due temi soltanto (Carta e Notte): un interruttore al posto di una tendina
-                _scuro = st.toggle(
-                    "Tema scuro", value=(_cur_theme == "notte"), key="sb_tema_scuro",
-                )
-                _sel_theme_key = "notte" if _scuro else _theme_keys[0]
-                if _sel_theme_key not in _theme_keys:
-                    _sel_theme_key = _theme_keys[0]
-                if _sel_theme_key != _cur_theme:
-                    st.session_state.theme = _sel_theme_key
-                    theme_changed = True
+        # Il tema scuro non si sceglie più: una sessione rimasta su "notte" torna a Carta.
+        if THEMES and st.session_state.get("theme") != list(THEMES.keys())[0]:
+            st.session_state.theme = list(THEMES.keys())[0]
+            theme_changed = True
 
         # ── CONTATORE MENSILE ─────────────────────────────────────────────────
         with _c_uso:

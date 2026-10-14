@@ -1114,7 +1114,7 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
             else:
                 # Griglia dettagliata (una colonna per sottopunto)
                 row_es    = ["Es."]
-                row_sotto = ["Sotto."]
+                row_sotto = [""]
                 row_max   = ["Max"]
                 for ex in esercizi_parsed:
                     for label_clean, pts in ex['items']:
