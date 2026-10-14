@@ -890,18 +890,27 @@ def _css_pulsa(chiavi: list) -> str:
     return f"<style>{sel} {{animation:gpulse 1.5s ease-in-out infinite;border-radius:12px;}}</style>"
 
 
-def _js_guida_visti() -> str:
+def _js_guida_visti(epoca: str = "") -> str:
     """
     Script (statico) che, al primo passaggio del mouse o clic su un elemento evidenziato dalla guida, spegne il lampeggio
     di quell'elemento per il resto della sessione del browser. Lo stato sta in sessionStorage della pagina e lo stile
     di «spento» è una regola CSS aggiunta all'head: regge ai ridisegni di Streamlit.
+    `epoca` cambia quando la guida riparte da capo (nuova verifica, o l'admin cambia «Vedi l'app come»): allora lo stato si azzera.
     """
     import json as _json
     selettori = sorted({sel for lista in _BERSAGLI_GUIDA.values() for sel in lista})
     return """<script>
 (function () {
   try {
-    var P = window.parent, D = P.document, SEL = """ + _json.dumps(selettori) + """;
+    var P = window.parent, D = P.document, SEL = """ + _json.dumps(selettori) + """, EPOCA = """ + _json.dumps(epoca) + """;
+    try {
+      if (P.sessionStorage.getItem('vf_guida_epoca') !== EPOCA) {          // la guida riparte: si dimentica quello che era stato visto
+        P.sessionStorage.setItem('vf_guida_epoca', EPOCA);
+        P.sessionStorage.setItem('vf_guida_visti', '{}');
+        P.__vfVisti = {};
+        Array.prototype.slice.call(D.querySelectorAll('style[id^="vf-visto-"]')).forEach(function (n) { n.remove(); });
+      }
+    } catch (e) {}
     if (!P.__vfVisti) {
       try { P.__vfVisti = JSON.parse(P.sessionStorage.getItem('vf_guida_visti') || '{}'); } catch (e) { P.__vfVisti = {}; }
     }
@@ -957,7 +966,7 @@ def _guida_benvenuto(dove: str, slot) -> None:
             st.markdown(_CSS_BANNER_PIANO + _css_pulsa(pulsa) +
                         f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">🎁</span>{etichetta}{pun}</div>'
                         f'<div class="g-t">{titolo}</div>{corpo}</div>', unsafe_allow_html=True)
-            components.html(_js_guida_visti(), height=0)
+            components.html(_js_guida_visti(f"{_SIM}|{st.session_state.get('_guida_epoca', 0)}"), height=0)
 
     if dove == "input":
         scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
@@ -5144,6 +5153,7 @@ def _nuova_verifica() -> None:
     st.session_state["_prev_stage"]   = None
     st.session_state.input_percorso   = None
     st.session_state["_autoverifica"] = None
+    st.session_state["_guida_epoca"] = st.session_state.get("_guida_epoca", 0) + 1     # la guida di benvenuto riparte da capo
     _pulisci_stato_revisione()
     st.session_state.verifiche         = {
         "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
