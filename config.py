@@ -430,8 +430,7 @@ MATERIE_ICONS = {
 # prima riga = argomento, righe successive = cosa includere o evitare.
 ESEMPI_RICHIESTA = {
     "Matematica": (
-        "Es.\n"
-        "Equazioni di secondo grado e parabola\n"
+        "Es. Equazioni di secondo grado e parabola\n"
         "- difficoltà crescente: il primo di calcolo diretto\n"
         "- includi un grafico da leggere (senza scrivere l'equazione sul grafico)\n"
         "- un problema di realtà e un vero/falso\n"
@@ -439,16 +438,14 @@ ESEMPI_RICHIESTA = {
         "- usa numeri interi"
     ),
     "Fisica": (
-        "Es.\n"
-        "Moto rettilineo uniformemente accelerato\n"
+        "Es. Moto rettilineo uniformemente accelerato\n"
         "- una formula inversa e un grafico velocità-tempo da interpretare\n"
         "- un problema con dati reali (auto, ascensore)\n"
         "- evita il calcolo vettoriale\n"
         "- esprimi tutto in unità SI e chiedi di indicarle"
     ),
     "Italiano": (
-        "Es.\n"
-        "Promessi Sposi: capitoli 1-8\n"
+        "Es. Promessi Sposi: capitoli 1-8\n"
         "- comprensione, analisi dei personaggi, un'inferenza\n"
         "- una domanda sul lessico e una sul narratore\n"
         "- includi un breve brano da commentare\n"
@@ -456,8 +453,7 @@ ESEMPI_RICHIESTA = {
     ),
 }
 ESEMPIO_RICHIESTA_DEFAULT = (
-    "Es.\n"
-    "Il Rinascimento in Italia\n"
+    "Es. Il Rinascimento in Italia\n"
     "- difficoltà crescente: parti da domande dirette\n"
     "- includi 2 domande aperte e un vero/falso\n"
     "- usa una breve fonte o un brano da commentare\n"

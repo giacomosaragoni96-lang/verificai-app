@@ -8,6 +8,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import base64
+import io
 import copy
 import logging
 import re
@@ -30,7 +31,7 @@ from prompts import (
 )
 from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
 from latex_utils import (
-    compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, riscala_punti, riscala_punti_custom,
+    compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, estrai_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
     fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
@@ -442,12 +443,19 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
         try:
             corpo = _chiedi()
             tolti = n_sotto - len(re.findall(r"\\item\b", corpo))
-            if tolti > n_max:   # ha tagliato troppo: un solo nuovo tentativo, più esplicito
-                corpo = _chiedi(
+            # Ha tagliato troppo: fino a due nuovi tentativi, sempre più espliciti; se nessuno
+            # rispetta il tetto si tiene quello che ha tolto meno sottopunti.
+            for _tent in range(2):
+                if tolti <= n_max:
+                    break
+                _nuovo = _chiedi(
                     f"\n\nATTENZIONE: nel tentativo precedente hai eliminato {tolti} sottopunti, "
                     f"ma il massimo consentito è {n_max}. Rimetti i sottopunti più semplici "
-                    f"finché non ne togli al massimo {n_max}."
+                    f"finché non ne togli al massimo {n_max}. Conserva TUTTI gli esercizi."
                 )
+                _tolti_nuovo = n_sotto - len(re.findall(r"\\item\b", _nuovo))
+                if _tolti_nuovo < tolti:
+                    corpo, tolti = _nuovo, _tolti_nuovo
         except Exception as e:
             raise RuntimeError(f"Verifica ridotta: {e}") from e
         corpo = rimuovi_griglia(corpo)
@@ -1125,6 +1133,54 @@ def _pdf_da_latex(latex: str):
     """Compila (una volta sola per testo) il PDF di una verifica già salvata: (pdf, errore)."""
     return compila_pdf(latex)
 
+def _latex_per_ai(latex: str) -> str:
+    """LaTeX senza il logo (dati base64 e immagine): all'AI non serve e peserebbe decine di KB."""
+    latex = rimuovi_logo_b64(latex or "")
+    return re.sub(r"\\includegraphics\[[^\]]*\]\{logo_scuola\.png\}", "", latex)
+
+
+# ── Logo della scuola (salvato per utente in docente_preferenze, materia "__logo__") ──
+def _logo_scuola():
+    """Logo salvato ({'b64', 'tipo', 'attivo'}) o None; si legge dal database una volta per sessione."""
+    if not st.session_state.get("_logo_scuola_caricato"):
+        prefs = {}
+        if st.session_state.utente:
+            prefs = _carica_docente_preferenze(st.session_state.utente.id, "__logo__")
+        st.session_state["_logo_scuola"] = prefs if prefs.get("b64") else None
+        st.session_state["_logo_scuola_caricato"] = True
+    return st.session_state.get("_logo_scuola")
+
+
+def _salva_logo(prefs) -> None:
+    st.session_state["_logo_scuola"] = prefs or None
+    st.session_state["_logo_scuola_caricato"] = True
+    _salva_docente_preferenze("__logo__", prefs or {})
+
+
+def _prepara_logo(dati: bytes):
+    """Immagine caricata → PNG su fondo bianco, ridotto (al massimo ~110 KB), in base64. None se illeggibile."""
+    try:
+        from PIL import Image
+        im = Image.open(io.BytesIO(dati))
+        im.load()
+        if im.mode in ("RGBA", "LA", "P"):
+            im = im.convert("RGBA")
+            fondo = Image.new("RGBA", im.size, (255, 255, 255, 255))
+            fondo.alpha_composite(im)
+            im = fondo
+        im = im.convert("RGB")
+        for larghezza in (700, 500, 350):
+            r = im if im.width <= larghezza else im.resize(
+                (larghezza, max(1, int(im.height * larghezza / im.width))), Image.LANCZOS)
+            buf = io.BytesIO()
+            r.save(buf, "PNG", optimize=True)
+            if len(buf.getvalue()) <= 110_000:
+                return base64.b64encode(buf.getvalue()).decode()
+    except Exception as e:
+        logger.warning(f"Logo non leggibile: {e}")
+    return None
+
+
 def _salva_variante_storico(colonna: str, latex: str) -> None:
     """Aggiunge Fila B ("latex_b") o BES/DSA ("latex_r") alla riga dello storico della verifica
     in corso, così non si perdono quando si crea una nuova verifica. Un errore si ignora."""
@@ -1798,7 +1854,7 @@ def _render_percorso_b_form(_prog_placeholder):
             con_griglia  = mostra_punteggi
             punti_totali = st.session_state.get("_pers_pt", _udef.get("punti_totali", 100))
 
-            with st.expander("Altre opzioni (numero esercizi, punteggi)", expanded=False, icon=":material/tune:"):
+            with st.expander("Altre opzioni (numero esercizi, punteggi, logo)", expanded=False, icon=":material/tune:"):
 
                 st.markdown('<div class="opt-label">Cambia il numero di esercizi</div>', unsafe_allow_html=True)
                 num_esercizi = st.selectbox(
@@ -1854,6 +1910,44 @@ def _render_percorso_b_form(_prog_placeholder):
                         format_func=lambda x: f"{x} pt",
                     )
                     st.session_state["_pers_pt"] = punti_totali
+
+                # ── Logo della scuola: si carica una volta, poi compare in tutte le verifiche ──
+                st.markdown('<div class="opt-label" style="margin-top:.8rem;">Logo della scuola (opzionale)</div>',
+                            unsafe_allow_html=True)
+                _logo_s = _logo_scuola()
+                if _logo_s:
+                    _lc1, _lc2 = st.columns([1, 2], gap="medium")
+                    with _lc1:
+                        st.image(base64.b64decode(_logo_s["b64"]), width=130)
+                    with _lc2:
+                        _tipi_logo = {"largo": "Largo, con il nome della scuola",
+                                      "piccolo": "Piccolo, solo il simbolo"}
+                        _tipo_nuovo = st.radio(
+                            "Che tipo di logo è?", list(_tipi_logo), format_func=_tipi_logo.get,
+                            index=list(_tipi_logo).index(_logo_s.get("tipo", "largo")),
+                            key="logo_tipo_b",
+                        )
+                        _attivo_nuovo = st.toggle("Metti il logo nelle verifiche",
+                                                  value=_logo_s.get("attivo", True), key="logo_attivo_b")
+                        if (_tipo_nuovo, _attivo_nuovo) != (_logo_s.get("tipo", "largo"), _logo_s.get("attivo", True)):
+                            _salva_logo({**_logo_s, "tipo": _tipo_nuovo, "attivo": _attivo_nuovo})
+                        if st.button("Togli il logo", key="logo_togli", icon=":material/delete:"):
+                            _salva_logo(None)
+                            st.rerun()
+                    st.caption("Il logo sta a sinistra del titolo. Vale per le nuove verifiche e per la Fila B; "
+                               "nel file Word non compare.")
+                else:
+                    _logo_up = st.file_uploader(
+                        "Carica il logo della tua scuola (PNG o JPG)", type=["png", "jpg", "jpeg"],
+                        key="logo_up_b", help="Si salva sul tuo account: lo carichi una volta sola.",
+                    )
+                    if _logo_up is not None:
+                        _b64_logo = _prepara_logo(_logo_up.getvalue())
+                        if _b64_logo:
+                            _salva_logo({"b64": _b64_logo, "tipo": "largo", "attivo": True})
+                            st.rerun()
+                        else:
+                            st.warning("Non riesco a leggere questa immagine: prova con un PNG o un JPG più piccolo.")
 
             # ── Hai già del materiale? Upload + tre scelte (l'AI legge il file solo al clic) ──
             _rifiuto = st.session_state.pop("_analisi_rifiuto", None)
@@ -2097,6 +2191,18 @@ def _lancia_generazione(
             on_progress=_avanza,
         )
 
+        # Logo della scuola: se l'utente ne ha uno attivo va nell'intestazione della Fila A
+        # (e quindi anche nelle versioni che ne derivano); si ricompila il PDF con il logo.
+        _logo_s = _logo_scuola()
+        if _logo_s and _logo_s.get("attivo", True) and ris["A"].get("latex"):
+            _lat_logo = inserisci_logo(ris["A"]["latex"], _logo_s.get("tipo", "largo"), _logo_s["b64"])
+            if _lat_logo != ris["A"]["latex"]:
+                _pdf_logo, _err_logo, _lat_logo = compila_pdf_sicuro(_lat_logo)
+                if _pdf_logo:
+                    ris["A"]["latex"], ris["A"]["pdf"] = _lat_logo, _pdf_logo
+                else:
+                    logger.warning(f"Logo non applicato: {str(_err_logo)[:300]}")
+
         if "_validation_score" in ris:
             logger.info(f"Validation score: {ris['_validation_score']}")
 
@@ -2195,7 +2301,7 @@ def _lancia_generazione(
 def _render_stage_input():
     # La schermata di creazione e' anche la home: titolo breve + form.
     st.markdown(
-        f'<div class="vf-narrow" style="text-align:center;padding:.2rem 0 1rem;">'
+        f'<div class="vf-narrow" style="text-align:center;padding:.1rem 0 .5rem;">'
         f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
         f'letter-spacing:-.025em;color:{T["text"]};line-height:1.15;">Crea la tua verifica</div>'
         f'<div style="font-size:.98rem;color:{T["text2"]};margin-top:.35rem;'
@@ -2390,11 +2496,27 @@ def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali
     )
 
     va = st.session_state.verifiche["A"]
+    latex_prima = va.get("latex")
     # Compila prima: se un grafico esce rotto (errori TikZ) viene sostituito da un segnaposto
     # e il LaTeX effettivo cambia.
     latex_inviato = latex
     pdf, err, latex = compila_pdf_sicuro(latex)
     va["latex"] = va["latex_originale"] = latex
+    # Fila B, BES/DSA, Soluzioni e Word derivano dalla Fila A: se la A è cambiata non sono più
+    # coerenti (es. un esercizio eliminato tornerebbe nella versione BES) e vanno rifatte.
+    if pdf and latex_prima and latex != latex_prima and any(
+        st.session_state.verifiche[f].get("latex") for f in ("B", "R", "RB", "S")
+    ):
+        for _f in ("B", "R", "RB"):
+            st.session_state.verifiche[_f] = _vf()
+        st.session_state.verifiche["S"] = {"latex": None, "testo": None, "pdf": None}
+        va["docx"] = None
+        st.session_state.rubrica_testo = None
+        st.session_state["_rubrica_docx"] = None
+        st.session_state["_avviso_dopo"] = (
+            "Hai modificato la verifica: Fila B, BES/DSA e Soluzioni già create non valgono più "
+            "e vanno rigenerate dalla nuova versione."
+        )
     # Se i punti sono stati ridistribuiti o un grafico è stato sostituito, i blocchi vanno
     # riletti dal LaTeX finale (altrimenti l'editor mostrerebbe i valori vecchi).
     if latex != latex_inviato:
@@ -3824,7 +3946,11 @@ def _render_stage_final():
     st.markdown(
         f'<div style="text-align:center;font-size:.85rem;color:{T["text2"]};margin:.5rem 0 1rem;'
         f'line-height:1.5;font-family:DM Sans,sans-serif;">Controlla sempre il contenuto prima di '
-        f'distribuirlo agli studenti. La verifica è salvata in «Le mie verifiche».</div>',
+        f'distribuirlo agli studenti. La verifica è salvata in «Le mie verifiche».</div>'
+        f'<div style="text-align:center;margin:0 0 .8rem;"><span style="display:inline-block;'
+        f'background:{T["accent_light"]};color:{T["accent"]};border-radius:999px;padding:.3rem .9rem;'
+        f'font-size:.85rem;font-weight:700;font-family:DM Sans,sans-serif;">'
+        f'↓ Più in basso: Soluzioni, Fila B, Word, versione BES/DSA e griglia</span></div>',
         unsafe_allow_html=True
     )
 
@@ -3911,12 +4037,15 @@ def _render_stage_final():
             try:
                 _mod_b = crea_modello(mod_id).per("variante")
                 _latex_b_new = _mod_b.generate_content(
-                    [prompt_variante_rapida(vA.get("latex",""), mat_str)],
+                    [prompt_variante_rapida(_latex_per_ai(vA.get("latex","")), mat_str)],
                     generation_config={"temperature": 0.7},
                 ).text.strip()
                 if _latex_b_new.startswith("```"):
                     _latex_b_new = re.sub(r"^```[a-z]*\n?","",_latex_b_new)
                     _latex_b_new = re.sub(r"\n?```$","",_latex_b_new)
+                _logo_a = estrai_logo(vA.get("latex", ""))
+                if _logo_a:   # il logo della Fila A passa anche alla Fila B
+                    _latex_b_new = inserisci_logo(_latex_b_new, *_logo_a)
                 _pdf_b_new, _ = compila_pdf(_latex_b_new)
                 st.session_state.verifiche["B"]["latex"] = _latex_b_new
                 _salva_variante_storico("latex_b", _latex_b_new)
@@ -4060,7 +4189,7 @@ def _render_stage_final():
                 if st.session_state.get(_docx_key, False):
                     with st.spinner("Conversione in formato Word in corso… (30–60 sec)"):
                         try:
-                            _db, _emsg = latex_to_docx_via_ai(vA["latex"], con_griglia=con_griglia)
+                            _db, _emsg = latex_to_docx_via_ai(_latex_per_ai(vA["latex"]), con_griglia=con_griglia)
                         except Exception as _e:
                             _db, _emsg = None, str(_e)
                     st.session_state[_docx_key] = False
@@ -4127,7 +4256,7 @@ def _render_stage_final():
             try:
                 _mr = crea_modello(mod_id).per("griglia")
                 _pr = prompt_rubrica_valutazione(
-                    corpo_latex=vA.get('latex', ''), materia=mat_str,
+                    corpo_latex=_latex_per_ai(vA.get("latex", "")), materia=mat_str,
                     livello=scu_str, punti_totali=gp.get('punti_totali', 100),
                 )
                 _rr = _mr.generate_content(
@@ -4272,7 +4401,7 @@ def _render_stage_final():
                     if st.session_state.get(_docx_key, False):
                         with st.spinner("Conversione in formato Word in corso…"):
                             try:
-                                db, error_msg = latex_to_docx_via_ai(v["latex"], con_griglia=con_griglia)
+                                db, error_msg = latex_to_docx_via_ai(_latex_per_ai(v["latex"]), con_griglia=con_griglia)
                             except Exception as e:
                                 db = None
                                 error_msg = str(e)

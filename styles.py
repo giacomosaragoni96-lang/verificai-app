@@ -4515,13 +4515,14 @@ font-family: 'DM Sans', sans-serif;
   [data-testid="stMainBlockContainer"]:has(.vf-narrow),
   .main .block-container:has(.vf-narrow) {{
     max-width: 820px !important;
+    padding-top: .3rem !important;
   }}
   [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header {{
-    padding: 1rem 1rem .4rem !important;
+    padding: .1rem 1rem 0 !important;
     margin-bottom: 0 !important;
   }}
-  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-icon {{ font-size: 2.3rem !important; }}
-  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-name {{ font-size: clamp(2.1rem, 5vw, 2.9rem) !important; }}
+  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-icon {{ font-size: 1.9rem !important; }}
+  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-name {{ font-size: clamp(1.8rem, 4.5vw, 2.4rem) !important; }}
   .opt-label .opt-hint {{
     text-transform: none;
     letter-spacing: 0;
