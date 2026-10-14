@@ -30,7 +30,7 @@ from prompts import (
 )
 from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
 from latex_utils import (
-    compila_pdf, compila_pdf_sicuro, inietta_griglia, riscala_punti, riscala_punti_custom,
+    compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, riscala_punti, riscala_punti_custom,
     fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
@@ -392,7 +392,7 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
     punti_totali    = gp.get("punti_totali", 100)
     con_griglia     = gp.get("con_griglia", False)
     materia         = gp.get("materia", "")
-    perc_ridotta    = gp.get("perc_ridotta", 25)
+    perc_ridotta    = gp.get("perc_ridotta", 20)
     argomento       = gp.get("argomento", "")
 
     latex_a    = vA.get("latex", "")
@@ -426,13 +426,31 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
                 "latex_originale": latex}
 
     if tipo == "R":
+        # La riduzione è leggera (al massimo il 20% dei sottopunti): si calcola il tetto qui e lo
+        # si fa rispettare, perché l'AI da sola tendeva a tagliare metà della verifica.
+        corpo_sa = rimuovi_griglia(corpo_a)
+        n_sotto  = len(re.findall(r"\\item\b", corpo_sa))
+        n_max    = n_sotto * perc_ridotta // 100
+
+        def _chiedi(extra: str = "") -> str:
+            r = model_v.per("variante").generate_content(
+                prompt_versione_ridotta(corpo_sa, materia, perc_ridotta, mostra_punteggi,
+                                        punti_totali, max_da_togliere=n_max,
+                                        totale_sottopunti=n_sotto) + extra)
+            return pulisci_corpo_latex(r.text.replace("```latex", "").replace("```", "").strip())
+
         try:
-            resp  = model_v.per("variante").generate_content(
-                prompt_versione_ridotta(corpo_a, materia, perc_ridotta,
-                                        mostra_punteggi, punti_totali))
+            corpo = _chiedi()
+            tolti = n_sotto - len(re.findall(r"\\item\b", corpo))
+            if tolti > n_max:   # ha tagliato troppo: un solo nuovo tentativo, più esplicito
+                corpo = _chiedi(
+                    f"\n\nATTENZIONE: nel tentativo precedente hai eliminato {tolti} sottopunti, "
+                    f"ma il massimo consentito è {n_max}. Rimetti i sottopunti più semplici "
+                    f"finché non ne togli al massimo {n_max}."
+                )
         except Exception as e:
             raise RuntimeError(f"Verifica ridotta: {e}") from e
-        corpo = pulisci_corpo_latex(resp.text.replace("```latex","").replace("```","").strip())
+        corpo = rimuovi_griglia(corpo)
         corpo = _post(corpo)
         latex, pdf = _compile(preamb_a + "\n" + corpo)
         return {**_vf(), "latex": latex, "pdf": pdf, "preview": bool(pdf),
@@ -2072,7 +2090,7 @@ def _lancia_generazione(
             difficolta=difficolta, calibrazione=calibrazione, durata=durata_scelta,
             num_esercizi=num_esercizi_totali, punti_totali=punti_totali,
             mostra_punteggi=mostra_punteggi, con_griglia=con_griglia,
-            doppia_fila=False, bes_dsa=False, perc_ridotta=25,
+            doppia_fila=False, bes_dsa=False, perc_ridotta=20,
             bes_dsa_b=False, genera_soluzioni=False,
             note_generali=note_generali, istruzioni_esercizi=s_es,
             immagini_esercizi=imgs_es, file_ispirazione=file_ispirazione,
@@ -2101,7 +2119,7 @@ def _lancia_generazione(
             "argomento": ris["titolo"], "durata": durata_scelta,
             "num_esercizi": num_esercizi_totali, "punti_totali": punti_totali,
             "mostra_punteggi": mostra_punteggi, "con_griglia": con_griglia,
-            "perc_ridotta": 25, "modello_id": _modello_id_eff,
+            "perc_ridotta": 20, "modello_id": _modello_id_eff,
         }
 
         preamble, blocks = extract_blocks(st.session_state.verifiche["A"]["latex"])

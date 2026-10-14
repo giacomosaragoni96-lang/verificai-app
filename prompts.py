@@ -321,6 +321,8 @@ def prompt_versione_ridotta(
     mostra_punteggi: bool,
     punti_totali: int,
     versione_label: str = "",
+    max_da_togliere: int | None = None,
+    totale_sottopunti: int | None = None,
 ) -> str:
     _v_tag = f" ({versione_label})" if versione_label else ""
     punti_str = (
@@ -328,14 +330,33 @@ def prompt_versione_ridotta(
         if mostra_punteggi
         else "NON inserire punteggi."
     )
+    # Con un tetto esplicito la riduzione è leggera: la versione resta quasi identica all'originale.
+    if max_da_togliere is not None:
+        tetto = (
+            f"La verifica ha {totale_sottopunti} sottopunti: elimina AL MASSIMO {max_da_togliere} "
+            f"sottopunti in tutto (circa il {perc_ridotta}%), NON di più. "
+            if totale_sottopunti else
+            f"Elimina AL MASSIMO {max_da_togliere} sottopunti in tutto, NON di più. "
+        )
+        riduzione = (
+            f"La struttura deve restare quasi identica all'originale: TUTTI gli esercizi restano, "
+            f"con le stesse richieste e lo stesso ordine. {tetto}"
+            f"Non togliere più di 1 sottopunto per esercizio e non svuotare nessun esercizio. "
+            f"Se togli qualcosa, parti dai sottopunti più complessi."
+        )
+    else:
+        riduzione = (
+            f"La struttura deve essere simile all'originale ma con circa il {perc_ridotta}% di sottopunti IN MENO "
+            f"rispetto al totale.\n"
+            f"Scegli quali sottopunti eliminare partendo dai più complessi. Mantieni sempre almeno 1 sottopunto per esercizio."
+        )
     return (
         f"Sei un docente esperto. Hai già generato questa verifica{_v_tag}:\n\n"
         f"{corpo_latex}\n\n"
         f"Devi creare una versione RIDOTTA per studenti con sostegno o certificazione (BES/DSA/NAI).\n"
-        f"La struttura deve essere simile all'originale ma con circa il {perc_ridotta}% di sottopunti IN MENO "
-        f"rispetto al totale.\n"
-        f"Scegli quali sottopunti eliminare partendo dai più complessi. Mantieni sempre almeno 1 sottopunto per esercizio.\n"
+        f"{riduzione}\n"
         f"{punti_str}\n"
+        f"NON copiare né riscrivere la tabella dei punteggi / griglia finale: viene aggiunta in automatico.\n"
         f"IMPORTANTE: PRIMA di ogni \\begin{{tabular}} lascia SEMPRE una riga vuota per evitare\n"
         f"sovrapposizioni con il testo. Le tabelle devono essere su righe separate.\n"
         f"NON aggiungere nessun simbolo (*), nessuna nota BES, nessuna indicazione che si tratta di una verifica ridotta.\n"
