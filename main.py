@@ -2197,7 +2197,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 _arg_default = _auto_arg
             # ── RICHIESTA UNICA: argomento + indicazioni nello stesso riquadro (disegnata in cima, prima di materia e scuola) ──
             _esempio = esempio_richiesta(materia_scelta)
-            _segnaposto = _esempio.split("\n")[0] + "\n…poi, se vuoi, cosa includere o evitare"
+            _segnaposto = _esempio
 
             with _c_arg:
                 st.markdown(
@@ -2205,14 +2205,14 @@ def _render_percorso_b_form(_prog_placeholder):
                     '<span class="opt-hint">Argomento nella prima riga</span></div>',
                     unsafe_allow_html=True,
                 )
-                st.caption("Più dettagli dai, più la verifica sarà simile a quella che hai in mente: tipi di esercizio, livello, cosa includere o evitare.")
+                st.markdown('<div class="vf-tip">💡 Più dettagli dai, più la verifica sarà come la immagini</div>', unsafe_allow_html=True)
                 # Controlla se c'è già un valore in session state per evitare il warning
                 if "argomento_area_b" not in st.session_state:
                     argomento_raw = st.text_area(
                         "Cosa vuoi nella verifica? (obbligatorio)",
                         value=_arg_default,
                         placeholder=_segnaposto,
-                        height=110,
+                        height=200,
                         label_visibility="collapsed",
                         key="argomento_area_b",
                     )
@@ -2220,7 +2220,7 @@ def _render_percorso_b_form(_prog_placeholder):
                     argomento_raw = st.text_area(
                         "Cosa vuoi nella verifica? (obbligatorio)",
                         placeholder=_segnaposto,
-                        height=110,
+                        height=200,
                         label_visibility="collapsed",
                         key="argomento_area_b",
                     )
