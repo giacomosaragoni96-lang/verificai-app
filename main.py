@@ -745,22 +745,24 @@ def _vai_a_upgrade(funzione: str | None = None) -> None:
 
 _CSS_BANNER_PIANO = """
 <style>
-html body .stApp [class*="st-key-banner_piano_"] {
-  background:#2563EB; border-radius:10px; padding:.6rem .85rem .65rem; margin:.2rem 0 .7rem; gap:.15rem;
+html body .stApp [class*="st-key-banner_piano_"] { position:relative; margin:.2rem 0 .7rem; }
+html body .stApp .bp-box { background:#2563EB; border-radius:10px; padding:.65rem .9rem .7rem; }
+html body .stApp .bp-box .bp-t {
+  font-family:'DM Sans',sans-serif; font-weight:700; font-size:.9rem; line-height:1.3; color:#fff;
 }
-html body .stApp [class*="st-key-banner_piano_"] .bp-t {
-  font-family:'DM Sans',sans-serif; font-weight:700; font-size:.9rem; line-height:1.25; color:#fff;
+html body .stApp .bp-box .bp-s {
+  font-family:'DM Sans',sans-serif; font-size:.8rem; line-height:1.4; color:rgba(255,255,255,.92); margin-top:.15rem;
 }
-html body .stApp [class*="st-key-banner_piano_"] .bp-s {
-  font-family:'DM Sans',sans-serif; font-size:.8rem; line-height:1.35; color:rgba(255,255,255,.92); margin-top:.1rem;
-}
-html body .stApp [class*="st-key-banner_piano_"] button {
+/* spazio riservato in fondo alla striscia: ci sta sopra il pulsante (posizionato in modo assoluto) */
+html body .stApp .bp-box .bp-spazio { height:2.1rem; }
+html body .stApp [class*="st-key-banner_pro_"] { position:absolute !important; left:.9rem; bottom:.6rem; width:auto !important; }
+html body .stApp [class*="st-key-banner_pro_"] button {
   background:#fff !important; border:0 !important; border-radius:8px !important; min-height:0 !important;
-  padding:.22rem .8rem !important; margin-top:.3rem; width:auto !important;
+  padding:.2rem .8rem !important; width:auto !important;
 }
-html body .stApp [class*="st-key-banner_piano_"] button p,
-html body .stApp [class*="st-key-banner_piano_"] button span { color:#1D4ED8 !important; font-weight:700 !important; font-size:.82rem !important; }
-html body .stApp [class*="st-key-banner_piano_"] button:hover { background:#EFF6FF !important; }
+html body .stApp [class*="st-key-banner_pro_"] button p,
+html body .stApp [class*="st-key-banner_pro_"] button span { color:#1D4ED8 !important; font-weight:700 !important; font-size:.82rem !important; }
+html body .stApp [class*="st-key-banner_pro_"] button:hover { background:#EFF6FF !important; }
 </style>
 """
 
@@ -770,29 +772,35 @@ def _banner_piano(dove: str) -> None:
     Striscia blu in cima alla pagina per chi non ha Pro (stesso stile per tutti):
     prima verifica = regalo di benvenuto (cosa può fare e cosa cambia dopo);
     piano Free = invito a passare a Pro, con il pulsante dentro la striscia. dove = "input" | "final".
+    La striscia è un unico blocco HTML (altezza sempre giusta); il pulsante vi sta sopra, in basso a sinistra.
     """
     if not MONETIZZAZIONE_ATTIVA or (_is_admin and not _SIM) or ENT.piano != "free":
         return
     st.markdown(_CSS_BANNER_PIANO, unsafe_allow_html=True)
-    with st.container(key=f"banner_piano_{dove}"):
-        if ENT.assaggio:
-            if dove == "input":
-                _titolo = "🎁 Regalo di benvenuto: la prima verifica è tutta Pro"
-                _testo = ("Usi il modello migliore e puoi creare tutto: Fila B, BES/DSA, soluzioni, Word, griglia, scheda, logo. "
-                          "Dalla seconda: modello più veloce (può sbagliare) e funzioni extra solo con Pro.")
-            else:
-                _titolo = "🎁 Regalo di benvenuto: hai tutto il Pro su questa verifica"
-                _testo = ("Crea ora Fila B, BES/DSA, soluzioni, Word, griglia e scheda. "
-                          "Dalla prossima verifica restano solo con Pro.")
-            st.markdown(f'<div class="bp-t">{_titolo}</div><div class="bp-s">{_testo}</div>', unsafe_allow_html=True)
-            return
+    if ENT.assaggio:
+        if dove == "input":
+            _titolo = "🎁 Regalo di benvenuto: la prima verifica è tutta Pro"
+            _testo = ("Usi il modello migliore e puoi creare tutto: Fila B, BES/DSA, soluzioni, Word, griglia, scheda, logo. "
+                      "Dalla seconda: modello più veloce (può sbagliare) e funzioni extra solo con Pro.")
+        else:
+            _titolo = "🎁 Regalo di benvenuto: hai tutto il Pro su questa verifica"
+            _testo = ("Crea ora Fila B, BES/DSA, soluzioni, Word, griglia e scheda. "
+                      "Dalla prossima verifica restano solo con Pro.")
+        _spazio = ""
+    else:
         _titolo = "Passa al piano Pro"
         _testo = ("Esercizi con il modello migliore e tutto il kit: Fila B, BES/DSA, soluzioni, Word, griglia, scheda, logo."
                   if dove == "input" else
                   "Per avere il modello migliore e tutto il kit: Fila B, BES/DSA, soluzioni, Word, griglia, scheda.")
-        st.markdown(f'<div class="bp-t">{_titolo}</div><div class="bp-s">{_testo}</div>', unsafe_allow_html=True)
-        if st.button("Scopri Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
-            _vai_a_upgrade(None)
+        _spazio = '<div class="bp-spazio"></div>'
+    with st.container(key=f"banner_piano_{dove}"):
+        st.markdown(
+            f'<div class="bp-box"><div class="bp-t">{_titolo}</div><div class="bp-s">{_testo}</div>{_spazio}</div>',
+            unsafe_allow_html=True,
+        )
+        if not ENT.assaggio:
+            if st.button("Scopri Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
+                _vai_a_upgrade(None)
 
 
 def _pro_bloccato(funzione: str) -> bool:
