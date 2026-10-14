@@ -4365,14 +4365,24 @@ def _render_stage_final():
             icon="📉",
         )
 
-    # ── Anteprima: tutte le pagine una sotto l'altra ──────────────────────────
+    # ── Anteprima: una pagina alla volta, con ◀ ▶ (così il kit sotto resta vicino) ──────────
     _, _col_prev, _ = st.columns([1, 3, 1])
     with _col_prev:
         _imgs_f = st.session_state.get("preview_images") or []
         if _imgs_f:
-            for _n_p, _img_p in enumerate(_imgs_f, start=1):
-                st.image(_img_p, use_container_width=True,
-                         caption=f"Pagina {_n_p} di {len(_imgs_f)}" if len(_imgs_f) > 1 else None)
+            _n_tot = len(_imgs_f)
+            _pg = min(max(int(st.session_state.get("final_pagina", 0)), 0), _n_tot - 1)
+            if _n_tot > 1:
+                def _vai_pagina(delta: int, _n=_n_tot):
+                    st.session_state["final_pagina"] = min(max(int(st.session_state.get("final_pagina", 0)) + delta, 0), _n - 1)
+                _fp1, _fp2, _fp3 = st.columns([1, 2, 1], vertical_alignment="center", gap="small")
+                _fp1.button("◀", key="final_prev_pg", use_container_width=True, disabled=(_pg <= 0),
+                            on_click=_vai_pagina, args=(-1,), help="Pagina precedente")
+                _fp2.markdown(f'<div style="text-align:center;font-family:DM Sans,sans-serif;font-size:.9rem;font-weight:600;'
+                              f'color:{T["text2"]};">Pagina {_pg + 1} di {_n_tot}</div>', unsafe_allow_html=True)
+                _fp3.button("▶", key="final_next_pg", use_container_width=True, disabled=(_pg >= _n_tot - 1),
+                            on_click=_vai_pagina, args=(1,), help="Pagina successiva")
+            st.image(_imgs_f[_pg], use_container_width=True)
         elif vA.get("pdf"):
             _b64 = base64.b64encode(vA["pdf"]).decode()
             st.markdown(
