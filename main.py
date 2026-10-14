@@ -694,12 +694,21 @@ def _assaggio_attivo() -> bool:
     return str(st.session_state.get("_storico_id")) == str(prima)
 
 
-_ASSAGGIO = _assaggio_attivo()
-try:
-    ENT = calcola_entitlements(_abbonamento_utente(st.session_state.utente.id), _verifiche_mese, _is_admin, _ASSAGGIO)
-except Exception as e:
-    logger.error(f"Errore caricamento abbonamento: {e}")
-    ENT = calcola_entitlements(None, _verifiche_mese, _is_admin, _ASSAGGIO)
+SIM_NUOVO = "Utente nuovo (prima verifica)"
+SIM_FREE = "Utente Free (dopo la prima)"
+# Solo l'admin: «Strumenti admin → Vedi l'app come» mostra l'app come la vedrebbe un altro utente
+_SIM = st.session_state.get("sb_simula_piano") if _is_admin else None
+if _SIM in (SIM_NUOVO, SIM_FREE):
+    _ASSAGGIO = (_SIM == SIM_NUOVO)
+    ENT = calcola_entitlements(None, _verifiche_mese, False, _ASSAGGIO)
+else:
+    _SIM = None
+    _ASSAGGIO = _assaggio_attivo()
+    try:
+        ENT = calcola_entitlements(_abbonamento_utente(st.session_state.utente.id), _verifiche_mese, _is_admin, _ASSAGGIO)
+    except Exception as e:
+        logger.error(f"Errore caricamento abbonamento: {e}")
+        ENT = calcola_entitlements(None, _verifiche_mese, _is_admin, _ASSAGGIO)
 
 # l'assaggio sceglie il modello come il Pro; l'admin si riconosce da _is_admin
 st.session_state.piano_utente = "pro" if ENT.assaggio else (ENT.piano if ENT.piano != "admin" else "free")
@@ -730,6 +739,50 @@ def _vai_a_upgrade(funzione: str | None = None) -> None:
     _registra_evento("paywall:" + (funzione or "pagina"), verifica_id=st.session_state.get("_storico_id"))
     st.session_state.stage = STAGE_UPGRADE
     st.rerun()
+
+
+def _banner_piano(dove: str) -> None:
+    """
+    Spiega a chi non ha Pro dove si trova: durante l'assaggio (prima verifica) cosa ha e cosa succede dopo;
+    sul piano Free cosa cambia (modello più veloce, funzioni bloccate). dove = "input" | "final".
+    """
+    if not MONETIZZAZIONE_ATTIVA or (_is_admin and not _SIM) or ENT.piano != "free":
+        return
+    _tetto = int(ENT.tetto_mensile)
+    with st.container(border=True):
+        if ENT.assaggio:
+            if dove == "input":
+                st.markdown(
+                    "**🎁 La tua prima verifica è completa, con tutto il Pro**\n\n"
+                    "Questa prima verifica la crei con il modello AI migliore e puoi scaricare tutto: Fila B, versione BES/DSA, "
+                    "soluzioni, file Word, griglia di valutazione, scheda di allenamento e logo della scuola. "
+                    "Vale una volta sola, e anche quando la riapri dallo storico.\n\n"
+                    f"**Dalla seconda verifica sei sul piano Free** ({_tetto} al mese): gli esercizi sono scritti da un modello più "
+                    "veloce ma meno preciso, che di solito fa bene ma può sbagliare (controlla sempre il risultato), "
+                    "e le funzioni extra sono bloccate finché non passi a Pro."
+                )
+            else:
+                st.markdown(
+                    "**🎁 Questa è la tua prima verifica: hai tutte le funzioni Pro**\n\n"
+                    "Crea adesso quello che ti serve (Fila B, BES/DSA, soluzioni, Word, griglia, scheda). "
+                    "Per questa verifica restano disponibili anche quando la riapri. "
+                    f"Dalla prossima verifica sarai sul piano Free ({_tetto} al mese, modello più veloce e funzioni extra bloccate)."
+                )
+        else:
+            _n = ENT.verifiche_mese
+            _uso = f"{_n} di {_tetto} verifiche questo mese · " if _n is not None else ""
+            if dove == "input":
+                st.markdown(
+                    f"**Piano Free** · {_uso}modello AI veloce: di solito fa bene ma può sbagliare, controlla sempre gli esercizi.\n\n"
+                    "Con Pro: modello più accurato, Fila B, versione BES/DSA, soluzioni, Word, griglia, scheda di allenamento e logo."
+                )
+            else:
+                st.markdown(
+                    "**Piano Free** · questa verifica è stata scritta dal modello veloce: controlla bene gli esercizi.\n\n"
+                    "Con Pro: modello più accurato e tutto il kit (Fila B, BES/DSA, soluzioni, Word, griglia, scheda)."
+                )
+            if st.button("Scopri cosa include Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
+                _vai_a_upgrade(None)
 
 
 def _pro_bloccato(funzione: str) -> bool:
@@ -2458,6 +2511,8 @@ def _render_stage_input():
         unsafe_allow_html=True,
     )
 
+    _banner_piano("input")
+
     # In cima: attesa della generazione ed eventuale errore dell'ultimo tentativo
     _prog_ph_b = st.empty()
     _esito = st.session_state.pop("_esito_gen", None)
@@ -4070,6 +4125,8 @@ def _render_stage_final():
     _avviso_d = st.session_state.pop("_avviso_dopo", None)
     if _avviso_d:
         st.warning(_avviso_d, icon="⚠️")
+
+    _banner_piano("final")
 
     # ── Intestazione compatta ─────────────────────────────────────────────────
     st.markdown(

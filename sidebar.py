@@ -60,6 +60,11 @@ def render_sidebar(
                     _nomi_admin,
                     key="sb_modello_admin",
                 )
+                st.selectbox(
+                    "Vedi l'app come", ["Io (admin)", "Utente nuovo (prima verifica)", "Utente Free (dopo la prima)"],
+                    key="sb_simula_piano",
+                    help="Solo per provare: mostra blocchi e messaggi come li vedrebbe un altro utente.",
+                )
                 if st.button("Modelli di verifica", key="open_banca", use_container_width=True,
                              icon=":material/library_books:"):
                     st.session_state.stage = "BANCA"
