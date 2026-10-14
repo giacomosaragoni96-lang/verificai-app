@@ -4515,7 +4515,7 @@ font-family: 'DM Sans', sans-serif;
   [data-testid="stMainBlockContainer"]:has(.vf-narrow),
   .main .block-container:has(.vf-narrow) {{
     max-width: 820px !important;
-    padding-top: .3rem !important;
+    padding-top: 2rem !important;
   }}
   [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header {{
     padding: .1rem 1rem 0 !important;
