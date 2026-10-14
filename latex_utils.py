@@ -2268,12 +2268,20 @@ def inserisci_logo(latex: str, tipo: str, b64: str) -> str:
     w = LARGHEZZA_LOGO.get(tipo, LARGHEZZA_LOGO["largo"])
     if "logo_scuola.png" not in latex:
         def _sost(m):
+            # «Verifica di Matematica: Le frazioni» → due righe: titolo in grassetto e, sotto,
+            # l'argomento come sottotitolo (invece di due punti e testo che va a capo a destra)
+            principale, due_punti, argomento = m.group(1).partition(":")
+            if due_punti and argomento.strip():
+                titolo = (f"\\textbf{{\\large {principale.strip()}}}\\\\[3pt]"
+                          f"{{\\normalsize {argomento.strip()}}}")
+            else:
+                titolo = f"\\textbf{{\\large {m.group(1)}}}"
             return (
                 f"\\noindent\\begin{{minipage}}[c]{{{w}\\linewidth}}"
                 f"\\raggedright\\includegraphics[width=\\linewidth,height=2.3cm,keepaspectratio]"
                 f"{{logo_scuola.png}}\\end{{minipage}}\\hfill"
                 f"\\begin{{minipage}}[c]{{{0.97 - w:.2f}\\linewidth}}\\raggedleft"
-                f"\\textbf{{\\large {m.group(1)}}}\\end{{minipage}}\\par\\vspace{{0.3cm}}\n"
+                f"{titolo}\\end{{minipage}}\\par\\vspace{{0.3cm}}\n"
                 f"\\begin{{center}}"
             )
         nuovo, n = re.subn(
@@ -2298,11 +2306,18 @@ def copia_intestazione_con_logo(latex_a: str, latex_b: str, suffisso: str = " �
     corpo_b = extract_corpo(latex_b)
     if not pre_a or not corpo_b:
         return latex_b
-    pre_b = re.sub(
-        r"(\\textbf\{\\large )(.*?)(\}\\end\{minipage\})",
+    # il suffisso va in fondo al sottotitolo (se c'è) o al titolo
+    pre_b, n = re.subn(
+        r"(\\normalsize )(.*?)(\}\\end\{minipage\})",
         lambda m: m.group(1) + m.group(2) + suffisso + m.group(3),
         pre_a, count=1, flags=re.DOTALL,
     )
+    if n == 0:
+        pre_b = re.sub(
+            r"(\\textbf\{\\large )(.*?)(\}\\end\{minipage\})",
+            lambda m: m.group(1) + m.group(2) + suffisso + m.group(3),
+            pre_a, count=1, flags=re.DOTALL,
+        )
     return pre_b.rstrip() + "\n" + corpo_b + "\n\\end{document}\n"
 
 
