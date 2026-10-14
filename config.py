@@ -44,6 +44,10 @@ LEGALE = {
 LEGALE_PRONTO = True
 # Tetto di sicurezza contro abusi e costi anomali: al massimo tante verifiche in quanti minuti (per utente, admin escluso)
 TETTO_BREVE = {"verifiche": 6, "minuti": 10}
+# Facciate massime consigliate per una verifica (si stampa su 2 fogli fronte-retro); oltre: avviso e riduzione
+MAX_FACCIATE = 2
+# Esportazione Word: spenta finche' la conversione non e' affidabile (testo, scelte multiple, grafici e tabella si perdevano)
+WORD_ATTIVO = False
 PREZZO_PRO_ANNUALE = 39                 # euro, anno scolastico (pagamento unico)
 CHECKOUT_URL_PRO = "https://verificai.lemonsqueezy.com/checkout/buy/cd7d56f4-10c1-4807-bc2f-90dffa200268"   # prodotto di PROVA (test mode)
 # ID del negozio e del prodotto Lemon Squeezy: una licenza vale solo se sono questi (None = nessun codice accettato).

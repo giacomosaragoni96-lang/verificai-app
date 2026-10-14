@@ -37,7 +37,7 @@ from ui_upgrade import render_upgrade
 from ui_legale import render_termini, render_rimborsi
 from licenze import attiva_licenza, riconvalida_se_serve
 from latex_utils import (
-    compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, copia_intestazione_con_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
+    conta_pagine_pdf, riduci_a_pagine, compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, copia_intestazione_con_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
     fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
@@ -52,7 +52,7 @@ from config import (
     LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
-    MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, LEGALE_PRONTO, TETTO_BREVE,
+    MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, LEGALE_PRONTO, TETTO_BREVE, MAX_FACCIATE, WORD_ATTIVO,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS,
 )
 from dotenv import load_dotenv
@@ -811,18 +811,18 @@ def _banner_piano(dove: str) -> None:
     if ENT.assaggio:
         if dove == "input":
             _titolo = "🎁 Regalo di benvenuto: la prima verifica è tutta Pro"
-            _testo = ("Usi il modello migliore e puoi creare tutto: Fila B, BES/DSA, soluzioni, Word, griglia, scheda, logo. "
+            _testo = ("Usi il modello migliore e puoi creare tutto: Fila B, BES/DSA, soluzioni, griglia, scheda, logo. "
                       "Dalla seconda: modello più veloce (può sbagliare) e funzioni extra solo con Pro.")
         else:
             _titolo = "🎁 Regalo di benvenuto: hai tutto il Pro su questa verifica"
-            _testo = ("Crea ora Fila B, BES/DSA, soluzioni, Word, griglia e scheda. "
+            _testo = ("Crea ora Fila B, BES/DSA, soluzioni, griglia e scheda. "
                       "Dalla prossima verifica restano solo con Pro.")
     else:
         _titolo = "Passa al piano Pro"
         _testo = ("Esercizi scritti dal modello AI più accurato e, per ogni verifica, il kit completo per la classe: "
-                  "Fila B, versione BES/DSA, soluzioni, Word, griglia di valutazione, scheda di allenamento e logo della scuola."
+                  "Fila B, versione BES/DSA, soluzioni, griglia di valutazione, scheda di allenamento e logo della scuola."
                   if dove == "input" else
-                  "Con Pro questa verifica può avere anche Fila B, versione BES/DSA, soluzioni, Word, griglia, "
+                  "Con Pro questa verifica può avere anche Fila B, versione BES/DSA, soluzioni, griglia, "
                   "scheda di allenamento, e gli esercizi sono scritti dal modello AI più accurato.")
     st.markdown(_CSS_BANNER_PIANO, unsafe_allow_html=True)
     with _slot.container(key=f"banner_piano_{dove}"):
@@ -4096,7 +4096,7 @@ def _elementi_kit(argomento, materia, vA, vB, vR, vS, vSC, rubrica_docx) -> list
         ("BES/DSA", "_BES_FilaA.pdf", vR.get("pdf")),
         ("Soluzioni", "_Soluzioni.pdf", vS.get("pdf")),
         ("Scheda di allenamento", "_Scheda_allenamento.pdf", (vSC or {}).get("pdf")),
-        ("Word", "_FilaA.docx", vA.get("docx")),
+        ("Word", "_FilaA.docx", vA.get("docx") if WORD_ATTIVO else None),
         ("Griglia", "_Griglia.docx", rubrica_docx),
     )
     return [{"etichetta": e, "nome_file": base + n, "dati": d} for e, n, d in voci if d]
@@ -4171,6 +4171,24 @@ def _render_stage_final():
 
     _banner_piano("final")
 
+    # ── Più di 2 facciate: avviso e riduzione (si stampa su 2 fogli fronte-retro, non su 3) ──
+    _n_pag = conta_pagine_pdf(vA.get("pdf"))
+    if _n_pag and _n_pag > MAX_FACCIATE:
+        _cp1, _cp2 = st.columns([4.2, 1.6], vertical_alignment="center", gap="small")
+        _cp1.warning(f"La verifica occupa {_n_pag} facciate. Di solito ne bastano {MAX_FACCIATE}: puoi ridurre carattere e margini "
+                     f"oppure togliere un esercizio.", icon="📄")
+        if _cp2.button("Riduci a 2 facciate", key="riduci_facciate", use_container_width=True):
+            with st.spinner("Riduco l'impaginazione…"):
+                _rid = riduci_a_pagine(vA.get("latex") or "", MAX_FACCIATE)
+            if _rid:
+                vA["latex"], vA["pdf"], _ = _rid
+                vA["pdf_ts"] = time.time()
+                st.session_state["_toast_dopo"] = (f"Ora la verifica sta in {_rid[2]} facciate", "📄")
+            else:
+                st.session_state["_avviso_dopo"] = ("Anche riducendo carattere e margini la verifica resta su più di "
+                                                    f"{MAX_FACCIATE} facciate: togli un esercizio o accorcia i testi.")
+            st.rerun()
+
     # ── Intestazione compatta ─────────────────────────────────────────────────
     st.markdown(
         f'<div style="text-align:center;margin:.2rem 0 1.1rem;">'
@@ -4233,7 +4251,7 @@ def _render_stage_final():
         f'<div style="text-align:center;margin:0 0 .8rem;"><span style="display:inline-block;'
         f'background:{T["accent_light"]};color:{T["accent"]};border-radius:999px;padding:.3rem .9rem;'
         f'font-size:.85rem;font-weight:700;font-family:DM Sans,sans-serif;">'
-        f'↓ Più in basso: Soluzioni, Fila B, Word, versione BES/DSA e griglia</span></div>',
+        f'↓ Più in basso: Soluzioni, Fila B, versione BES/DSA e griglia</span></div>',
         unsafe_allow_html=True
     )
 
@@ -4330,7 +4348,12 @@ def _render_stage_final():
     st.markdown(f'<div class="variant-section-label" style="margin-top:.6rem;">Per la verifica</div>',
                 unsafe_allow_html=True)
     _rw = []
-    for _ in range(5):
+    for _k_riga in range(5):
+        if _k_riga == 2 and not WORD_ATTIVO:
+            # riga del Word: spenta (conversione non affidabile). Il codice resta, ma scrive in contenitori nascosti.
+            st.markdown('<style>[class*="st-key-word_nascosto"]{display:none !important;}</style>', unsafe_allow_html=True)
+            _rw.append((st.container(key="word_nascosto_a"), st.container(key="word_nascosto_b")))
+            continue
         with st.container(border=True):
             _rw.append(st.columns([3.4, 1.6], vertical_alignment="center", gap="medium"))
     # Ordine a schermo: Soluzioni, Fila B, Word, BES/DSA, Griglia (le più richieste per prime)
@@ -4807,7 +4830,7 @@ def _render_stage_final():
     # Word per le altre versioni (la Fila A ha già la sua card "Formato Word")
     _ha_extra = vB.get("latex") or vR.get("latex") or vRB.get("latex") or vS.get("latex")
     if _ha_extra:
-        with st.expander("📝 Word delle altre versioni", expanded=False):
+        with (st.expander("📝 Word delle altre versioni", expanded=False) if WORD_ATTIVO else st.container(key="word_nascosto_c")):
             def _show_extra_formats(fid, v, fname_suffix):
                 if not v.get("latex"):
                     return

@@ -2568,7 +2568,7 @@ def formatta_punti(latex: str) -> str:
     grassetto, in mezzo alla riga (es. prima delle caselle V/F) è staccato e in grassetto.
     Solo per il PDF: il LaTeX salvato resta con «(N pt)», che serve per contare e riscalare i punti.
     """
-    latex = _RE_PUNTI_FINE.sub(lambda m: f"\\unskip\\nobreak\\hspace{{0.6em}}\\hfill\\mbox{{\\textbf{{({m.group(1)} pt)}}}}", latex)
+    latex = _RE_PUNTI_FINE.sub(lambda m: f" \\hspace*{{0.6em plus 1fill}}\\mbox{{\\textbf{{({m.group(1)} pt)}}}}", latex)
     return _RE_PUNTI_ALTROVE.sub(lambda m: f"\\quad\\mbox{{\\textbf{{({m.group(1)} pt)}}}}", latex)
 
 
@@ -2784,3 +2784,48 @@ def pdf_to_images_bytes(pdf_bytes: bytes) -> tuple[list[bytes] | None, str | Non
         logger.warning(f"pdftoppm fallito: {e}")
     
     return None, "Impossibile convertire PDF in immagini"
+
+
+# ── Quante facciate occupa la verifica: avviso e compattazione ───────────────────────
+def conta_pagine_pdf(pdf: bytes | None) -> int | None:
+    """Numero di pagine di un PDF (None se non si riesce a leggerlo)."""
+    if not pdf:
+        return None
+    try:
+        try:
+            import pymupdf as _fitz
+        except ImportError:
+            import fitz as _fitz
+        with _fitz.open(stream=pdf, filetype="pdf") as doc:
+            return doc.page_count
+    except Exception as e:
+        logger.warning("conta_pagine_pdf: %s", e)
+        return None
+
+
+# livello → (corpo del testo, margini): ogni livello è un po' più stretto del precedente
+_LIVELLI_COMPATTI = {1: ("11pt", "1.5cm"), 2: ("11pt", "1.2cm"), 3: ("10pt", "1.1cm")}
+
+
+def compatta_latex(latex: str, livello: int) -> str:
+    """Riduce carattere e margini del preambolo (stesso contenuto, meno facciate). livello = 1, 2 o 3."""
+    corpo, margine = _LIVELLI_COMPATTI[livello]
+    latex = re.sub(r"(\\documentclass\[)(?:\d+pt)", lambda m: m.group(1) + corpo, latex, count=1)
+    latex = re.sub(r"\\geometry\{margin=[^}]*\}", lambda m: "\\geometry{margin=" + margine + "}", latex, count=1)
+    return latex
+
+
+def riduci_a_pagine(latex: str, max_pagine: int = 2):
+    """
+    Prova i livelli di compattazione finché il PDF sta in max_pagine facciate.
+    Ritorna (latex, pdf, pagine) del primo livello che ce la fa, oppure None se nemmeno il più stretto basta.
+    """
+    for livello in (1, 2, 3):
+        candidato = compatta_latex(latex, livello)
+        if candidato == latex:
+            continue
+        pdf, _err, candidato = compila_pdf_sicuro(candidato)
+        n = conta_pagine_pdf(pdf)
+        if pdf and n is not None and n <= max_pagine:
+            return candidato, pdf, n
+    return None
