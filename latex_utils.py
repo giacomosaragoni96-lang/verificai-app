@@ -2888,3 +2888,52 @@ def riduci_a_pagine(latex: str, max_pagine: int = 2):
         if pdf and n is not None and n <= max_pagine:
             return candidato, pdf, n
     return None
+
+
+# ── Pesi dei punteggi per tipo di esercizio ───────────────────────────────────────
+_PAROLE_CHIUSO = ("vero o falso", "vero/falso", "vero, falso", "scelta multipla", "completamento", "risposta multipla")
+_PAROLE_PROBLEMA = ("problema", "modellizz", "modellazione", "storiografic", "confronto", "caso di studio", "dimostrazione")
+PESO_CHIUSO, PESO_PROBLEMA = 0.6, 1.5
+
+
+def _peso_esercizio(titolo: str) -> float:
+    t = (titolo or "").lower()
+    if any(k in t for k in _PAROLE_CHIUSO):
+        return PESO_CHIUSO
+    if any(k in t for k in _PAROLE_PROBLEMA):
+        return PESO_PROBLEMA
+    return 1.0
+
+
+def pesa_punti_per_tipo(latex: str) -> str:
+    """
+    Se i punteggi non rispettano il peso dei tipi di esercizio (le domande chiuse valgono quasi quanto le aperte, oppure
+    tutti i sottopunti hanno lo stesso valore), li pesa: le domande chiuse (scelta multipla, vero/falso, completamento)
+    valgono meno, i problemi e le analisi articolate di più. Poi riscala_punti riporta la somma al totale.
+    Non tocca le verifiche con punteggi già ben differenziati.
+    """
+    parti = re.split(r"(?=\\subsection\*\{)", latex)
+    if len(parti) <= 1:
+        return latex
+    esercizi = []                       # (indice parte, peso, valori dei sottopunti)
+    for k, blocco in enumerate(parti[1:], 1):
+        m = re.match(r"\\subsection\*\{([^}]*)\}", blocco)
+        vals = [float(v.replace(",", ".")) for v in _PT_PATTERN.findall(blocco)]
+        if m and vals:
+            esercizi.append((k, _peso_esercizio(m.group(1)), vals))
+    tutti = [v for _, _, vs in esercizi for v in vs]
+    if len(tutti) < 6 or min(tutti) <= 0:
+        return latex
+    chiusi = [v for _, w, vs in esercizi if w == PESO_CHIUSO for v in vs]
+    altri = [v for _, w, vs in esercizi if w != PESO_CHIUSO for v in vs]
+    uniforme = max(tutti) <= 1.2 * min(tutti)
+    chiusi_troppo_pesanti = bool(chiusi and altri) and (sum(chiusi) / len(chiusi)) >= 0.7 * (sum(altri) / len(altri))
+    if not (uniforme or chiusi_troppo_pesanti):
+        return latex                    # già differenziati
+    pesi = {k: w for k, w, _ in esercizi}
+    nuovi = [parti[0]]
+    for k, blocco in enumerate(parti[1:], 1):
+        w = pesi.get(k, 1.0)
+        nuovi.append(_PT_PATTERN.sub(
+            lambda mm, w=w: "(%d pt)" % max(1, round(float(mm.group(1).replace(",", ".")) * w * 10)), blocco))
+    return "".join(nuovi)

@@ -58,7 +58,7 @@ except ImportError:
             f"OUTPUT: SOLO codice LaTeX del blocco esercizio."
         )
 from latex_utils import (
-    conta_pagine_pdf, riduci_a_pagine,
+    conta_pagine_pdf, riduci_a_pagine, pesa_punti_per_tipo,
     compila_pdf, compila_pdf_sicuro, inietta_griglia, riscala_punti, riscala_punti_custom,
     fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
@@ -323,6 +323,7 @@ def _assembla_e_compila(
         # Senza questo step quei blocchi non hanno (N pt) → riscala_punti
         # li ignora → griglia mostra '—' e il totale è sbagliato.
         latex = prepara_esercizi_aperti(latex, punti_totali)
+        latex = pesa_punti_per_tipo(latex)    # punteggi tutti uguali → pesati per tipo di esercizio
         latex = riscala_punti(latex, punti_totali)
     else:
         # Guardia deterministica: rimuove punteggi residui anche se l'AI li ha inseriti
