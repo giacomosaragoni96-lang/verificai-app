@@ -892,11 +892,8 @@ def _css_pulsa(chiavi: list) -> str:
     sul = ", ".join(f"html body .stApp {s}:hover" for k in chiavi for s in _BERSAGLI_GUIDA[k])
     fuoco = ", ".join(f"html body .stApp {s}:focus-within" for k in chiavi for s in _BERSAGLI_GUIDA[k])
     return (f"<style>{sel} {{animation:gpulse 1.5s ease-in-out infinite;border-radius:12px;}}"
-            # chi ha chiesto «riduci animazioni»: niente movimento, ma un anello giallo fisso che indica comunque cosa usare
-            f"@media (prefers-reduced-motion: reduce) {{{sel} {{animation:none !important;"
-            f"outline:3px solid rgba(245,158,11,.9);outline-offset:3px;}}}}"
             f"{sul} {{animation:none !important;outline:none !important;box-shadow:none !important;}}"
-            f"{fuoco} {{animation:none !important;box-shadow:none !important;}}</style>")
+            f"{fuoco} {{animation:none !important;outline:none !important;box-shadow:none !important;}}</style>")
 
 
 def _js_guida_visti(epoca: str = "") -> str:
