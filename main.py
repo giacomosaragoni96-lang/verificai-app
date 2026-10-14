@@ -743,46 +743,43 @@ def _vai_a_upgrade(funzione: str | None = None) -> None:
 
 def _banner_piano(dove: str) -> None:
     """
-    Spiega a chi non ha Pro dove si trova: durante l'assaggio (prima verifica) cosa ha e cosa succede dopo;
-    sul piano Free cosa cambia (modello più veloce, funzioni bloccate). dove = "input" | "final".
+    Spiega a chi non ha Pro dove si trova. Prima verifica (assaggio): striscia blu ben visibile con cosa ha
+    e cosa succede dopo; piano Free: riquadro sobrio con cosa cambia. dove = "input" | "final".
     """
     if not MONETIZZAZIONE_ATTIVA or (_is_admin and not _SIM) or ENT.piano != "free":
         return
     _tetto = int(ENT.tetto_mensile)
-    with st.container(border=True):
-        if ENT.assaggio:
-            if dove == "input":
-                st.markdown(
-                    "**🎁 La tua prima verifica è completa, con tutto il Pro**\n\n"
-                    "Questa prima verifica la crei con il modello AI migliore e puoi scaricare tutto: Fila B, versione BES/DSA, "
-                    "soluzioni, file Word, griglia di valutazione, scheda di allenamento e logo della scuola. "
-                    "Vale una volta sola, e anche quando la riapri dallo storico.\n\n"
-                    f"**Dalla seconda verifica sei sul piano Free** ({_tetto} al mese): gli esercizi sono scritti da un modello più "
-                    "veloce ma meno preciso, che di solito fa bene ma può sbagliare (controlla sempre il risultato), "
-                    "e le funzioni extra sono bloccate finché non passi a Pro."
-                )
-            else:
-                st.markdown(
-                    "**🎁 Questa è la tua prima verifica: hai tutte le funzioni Pro**\n\n"
-                    "Crea adesso quello che ti serve (Fila B, BES/DSA, soluzioni, Word, griglia, scheda). "
-                    "Per questa verifica restano disponibili anche quando la riapri. "
-                    f"Dalla prossima verifica sarai sul piano Free ({_tetto} al mese, modello più veloce e funzioni extra bloccate)."
-                )
+    if ENT.assaggio:
+        if dove == "input":
+            _titolo = "🎁 La tua prima verifica è con tutto il Pro"
+            _testo = ("Modello migliore e tutte le funzioni: Fila B, BES/DSA, soluzioni, Word, scheda, logo. "
+                      f"Dalla seconda: piano Free ({_tetto} al mese), modello più veloce che può sbagliare "
+                      "e funzioni extra bloccate.")
         else:
-            _n = ENT.verifiche_mese
-            _uso = f"{_n} di {_tetto} verifiche questo mese · " if _n is not None else ""
-            if dove == "input":
-                st.markdown(
-                    f"**Piano Free** · {_uso}modello AI veloce: di solito fa bene ma può sbagliare, controlla sempre gli esercizi.\n\n"
-                    "Con Pro: modello più accurato, Fila B, versione BES/DSA, soluzioni, Word, griglia, scheda di allenamento e logo."
-                )
-            else:
-                st.markdown(
-                    "**Piano Free** · questa verifica è stata scritta dal modello veloce: controlla bene gli esercizi.\n\n"
-                    "Con Pro: modello più accurato e tutto il kit (Fila B, BES/DSA, soluzioni, Word, griglia, scheda)."
-                )
-            if st.button("Scopri cosa include Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
-                _vai_a_upgrade(None)
+            _titolo = "🎁 Prima verifica: hai tutto il Pro"
+            _testo = ("Crea adesso Fila B, BES/DSA, soluzioni, Word, griglia e scheda: restano tue anche se riapri la verifica. "
+                      "Dalla prossima verifica sei sul piano Free.")
+        st.markdown(
+            f'<div role="note" style="background:linear-gradient(135deg,{T["accent"]},{T["accent2"]});color:#fff;'
+            f'border-radius:14px;padding:.85rem 1.1rem;margin:.2rem 0 .8rem;font-family:DM Sans,sans-serif;'
+            f'box-shadow:0 4px 14px rgba(37,99,235,.28);">'
+            f'<div style="font-weight:800;font-size:1rem;line-height:1.25;color:#fff;">{_titolo}</div>'
+            f'<div style="font-size:.88rem;line-height:1.4;margin-top:.25rem;color:rgba(255,255,255,.92);">{_testo}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+        return
+    _n = ENT.verifiche_mese
+    _uso = f"{_n} di {_tetto} questo mese · " if _n is not None else ""
+    with st.container(border=True):
+        if dove == "input":
+            st.markdown(f"**Piano Free** · {_uso}modello veloce: controlla sempre gli esercizi. "
+                        "Con Pro: modello migliore e tutto il kit.")
+        else:
+            st.markdown("**Piano Free** · scritta dal modello veloce: controlla bene gli esercizi. "
+                        "Con Pro: modello migliore e tutto il kit.")
+        if st.button("Scopri cosa include Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
+            _vai_a_upgrade(None)
 
 
 def _pro_bloccato(funzione: str) -> bool:
