@@ -104,7 +104,7 @@ def render_upgrade(on_back, funzione: str | None = None, assaggio_usato: bool = 
         return
 
     st.markdown(_CSS + '<div class="up-hero"><h1>VerificAI Pro</h1>'
-                '<p>Tutto il kit per la tua classe, con un solo pagamento per l\'anno scolastico.</p></div>',
+                '<p>Tutto il kit per la tua classe, con un solo pagamento per 12 mesi.</p></div>',
                 unsafe_allow_html=True)
     if e_pro:
         st.success("Hai già il piano Pro: tutte le funzioni sono attive. Grazie!")
@@ -116,7 +116,7 @@ def render_upgrade(on_back, funzione: str | None = None, assaggio_usato: bool = 
 
     st.markdown('<div class="up-piani">'
                 + _scheda("Free", "0 €", "per sempre", _FREE_VOCI)
-                + _scheda("Pro", f"{PREZZO_PRO_ANNUALE} €", "anno scolastico · un solo pagamento", _PRO_VOCI, pro=True)
+                + _scheda("Pro", f"{PREZZO_PRO_ANNUALE} €", "per 12 mesi · un solo pagamento", _PRO_VOCI, pro=True)
                 + '</div>', unsafe_allow_html=True)
 
     url = _url_acquisto(email)
@@ -154,7 +154,7 @@ def render_upgrade(on_back, funzione: str | None = None, assaggio_usato: bool = 
     with st.expander("Posso usarlo su più account?"):
         st.write("Il codice vale per un solo account. Se cambi email o account, scrivici dal link Feedback e lo sistemiamo.")
     with st.expander("Quanto dura e cosa succede dopo?"):
-        st.write("Il piano dura un anno dall'attivazione. Alla scadenza torni al piano Free e le verifiche che hai creato restano tue. Non c'è nessun rinnovo automatico.")
+        st.write("Il piano dura 12 mesi dal giorno dell'attivazione. Alla scadenza torni al piano Free e le verifiche che hai creato restano tue. Non c'è nessun rinnovo automatico.")
     with st.expander("Posso essere rimborsato?"):
         st.write("Sì: entro 14 giorni dall'acquisto puoi chiedere il rimborso integrale. Il codice viene disattivato e torni al piano Free.")
     with st.expander("Le mie verifiche e i miei dati sono al sicuro?"):
