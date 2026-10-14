@@ -891,18 +891,22 @@ html body .stApp [class*="st-key-banner_piano_"] [data-testid="stButton"] button
   transform:skewX(-22deg); animation:vf-riflesso 3.4s ease-in-out infinite; pointer-events:none;
 }
 @media (prefers-reduced-motion: reduce) { html body .stApp [class*="st-key-banner_piano_"] [data-testid="stButton"] button[data-testid^="stBaseButton"]::after { animation:none !important; } }
-/* «Nascondi»: discreto, a destra, senza lo stile oro del pulsante principale */
-html body .stApp [class*="st-key-banner_piano_"] [class*="st-key-pro_nascondi"] button[data-testid^="stBaseButton"] {
-  background:transparent !important; background-color:transparent !important; box-shadow:none !important; border:0 !important;
-  padding:.2rem .4rem !important; width:auto !important; transform:none !important; filter:none !important;
-}
-html body .stApp [class*="st-key-banner_piano_"] [class*="st-key-pro_nascondi"] button[data-testid^="stBaseButton"] p,
-html body .stApp [class*="st-key-banner_piano_"] [class*="st-key-pro_nascondi"] button[data-testid^="stBaseButton"] span,
-html body .stApp [class*="st-key-banner_piano_"] [class*="st-key-pro_nascondi"] button[data-testid^="stBaseButton"] div {
-  color:rgba(255,255,255,.78) !important; -webkit-text-fill-color:rgba(255,255,255,.78) !important; font-weight:600 !important;
-  font-size:.82rem !important; text-decoration:underline;
-}
-html body .stApp [class*="st-key-banner_piano_"] [class*="st-key-pro_nascondi"] button[data-testid^="stBaseButton"]::after { display:none !important; }
+/* «Nascondi» / «Mostra»: riga discreta che chiude il riquadro senza ricaricare la pagina */
+html body .stApp [class*="st-key-banner_piano_"] .bp-det { position:relative; }
+html body .stApp [class*="st-key-banner_piano_"] .bp-det > summary { list-style:none; cursor:pointer; }
+html body .stApp [class*="st-key-banner_piano_"] .bp-det > summary::-webkit-details-marker { display:none; }
+html body .stApp [class*="st-key-banner_piano_"] .bp-det[open] > summary { position:absolute; top:0; right:0; z-index:2; }
+html body .stApp [class*="st-key-banner_piano_"] .bp-det[open] .bp-sum-t,
+html body .stApp [class*="st-key-banner_piano_"] .bp-det[open] .bp-sum-m { display:none; }
+html body .stApp [class*="st-key-banner_piano_"] .bp-det:not([open]) .bp-sum-n { display:none; }
+html body .stApp [class*="st-key-banner_piano_"] .bp-det:not([open]) > summary { display:flex; justify-content:space-between; align-items:center; }
+html body .stApp [class*="st-key-banner_piano_"] .bp-sum-t { font-family:'DM Sans',sans-serif; font-weight:700; font-size:.95rem; color:#fff !important; line-height:1.7; }
+html body .stApp [class*="st-key-banner_piano_"] .bp-sum-n,
+html body .stApp [class*="st-key-banner_piano_"] .bp-sum-m { font-family:'DM Sans',sans-serif; font-weight:600; font-size:.82rem; color:rgba(255,255,255,.85) !important; text-decoration:underline; line-height:1.7; }
+html body .stApp [class*="st-key-banner_piano_"] .bp-det:not([open]) { padding-bottom:.9rem; }
+/* chiuso: sparisce anche il pulsante e il riquadro si riduce a una riga */
+html body .stApp [class*="st-key-banner_piano_"]:has(.bp-det:not([open])) [class*="st-key-banner_pro_"] { display:none !important; }
+html body .stApp [class*="st-key-banner_piano_"]:has(.bp-det:not([open])) { padding-top:.55rem !important; padding-bottom:.55rem !important; overflow:visible !important; }
 /* elenco a schede: una voce per cosa da provare */
 html body .stApp [class*="st-key-banner_piano_"] .g-lista {
   list-style:none; margin:.7rem 0 0 !important; padding:0 !important; display:grid; gap:.5rem .7rem;
@@ -1238,27 +1242,13 @@ def _banner_piano(dove: str) -> None:
                  f'<div class="g-t">{_titolo}</div>{_html_voci(_voci)}'
                  f'<div class="g-nota">{PREZZO_PRO_ANNUALE} € per 12 mesi, un solo pagamento.</div></div>')
 
-    def _nascondi():
-        st.session_state["_banner_pro_nascosto"] = True
-
-    def _corpo(con_nascondi: bool):
-        st.markdown(_CSS_BANNER_PIANO + _html, unsafe_allow_html=True)
-        with st.container(horizontal=True, horizontal_alignment="distribute", vertical_alignment="center"):
-            if st.button("Scopri il piano Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
-                _vai_a_upgrade(None)
-            if con_nascondi:
-                st.button("Nascondi", key=f"pro_nascondi_{dove}", type="tertiary", on_click=_nascondi,
-                          help="Lo trovi in una tendina chiusa, qui sopra")
-
-    if st.session_state.get("_banner_pro_nascosto"):
-        # nascosto: resta una tendina chiusa a una riga, che lo riapre
-        with _slot.container():
-            with st.expander("Piano Pro: cosa include", expanded=False, icon=":material/workspace_premium:"):
-                with st.container(key=f"banner_piano_{dove}"):
-                    _corpo(False)
-    else:
-        with _slot.container(key=f"banner_piano_{dove}"):
-            _corpo(True)
+    # «Nascondi» è un <details>: si chiude e si riapre nel browser, senza ricaricare la pagina
+    _dettagli = ('<details class="bp-det" open><summary class="bp-sum"><span class="bp-sum-t">✨ Piano Pro: cosa include</span>'
+                 '<span class="bp-sum-n">Nascondi</span><span class="bp-sum-m">Mostra</span></summary>' + _html + '</details>')
+    with _slot.container(key=f"banner_piano_{dove}"):
+        st.markdown(_CSS_BANNER_PIANO + _dettagli, unsafe_allow_html=True)
+        if st.button("Scopri il piano Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
+            _vai_a_upgrade(None)
 
 
 def _apri_storico() -> None:
