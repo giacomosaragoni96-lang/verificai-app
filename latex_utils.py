@@ -1270,6 +1270,81 @@ def _fmt_num(v: float) -> str:
     return str(int(v)) if abs(v - round(v)) < 1e-9 else f"{v:.2f}".rstrip("0").rstrip(".")
 
 
+def _valori_curva(f, xmin: float, xmax: float, n: int = 400) -> list:
+    """Campioni (x, y) finiti della curva nell'intervallo."""
+    out = []
+    for i in range(n + 1):
+        x = xmin + (xmax - xmin) * i / n
+        try:
+            y = float(f(x))
+        except Exception:
+            continue
+        if math.isfinite(y) and abs(y) < 1e6:
+            out.append((x, y))
+    return out
+
+
+def _punti_notevoli(f, xmin: float, xmax: float) -> list:
+    """Ascisse che il grafico deve mostrare: zeri (cambi di segno) e massimi/minimi locali (vertici)."""
+    pts = _valori_curva(f, xmin, xmax)
+    x_notevoli = []
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        if y0 == 0:
+            x_notevoli.append(x0)
+        elif y0 * y1 < 0 and abs(y1 - y0) < 50:       # cambio di segno (non un asintoto)
+            x_notevoli.append(x0 - y0 * (x1 - x0) / (y1 - y0))
+    for (xa, ya), (xb, yb), (xc, yc) in zip(pts, pts[1:], pts[2:]):
+        if (yb > ya and yb >= yc) or (yb < ya and yb <= yc):     # massimo o minimo locale
+            x_notevoli.append(xb)
+    return x_notevoli
+
+
+def _finestra_grafico(curve: list, xmin: float, xmax: float):
+    """
+    Intervalli da mostrare (xmin, xmax, ymin, ymax): quelli dell'AI, ma ristretti attorno agli zeri, ai vertici e
+    all'intersezione con l'asse y, così la curva riempie il riquadro (9 x 5 cm) invece di perdersi in una scala enorme.
+    """
+    notevoli = []
+    for _, f in curve:
+        notevoli += _punti_notevoli(f, xmin, xmax)
+    ristringi = bool(notevoli)           # restringere solo se ci sono zeri o vertici (non per iperboli, esponenziali…)
+    if xmin <= 0 <= xmax:
+        notevoli.append(0.0)
+    if notevoli and ristringi:
+        lo, hi = min(notevoli), max(notevoli)
+        margine = max((hi - lo) * 0.35, 1.0)
+        a, b = lo - margine, hi + margine
+        if (b - a) < 0.6 * (xmax - xmin):               # l'AI ha scelto un intervallo molto più largo del necessario
+            xmin, xmax = max(xmin, a), min(xmax, b)
+    campioni = []
+    for _, f in curve:
+        campioni += [y for _, y in _valori_curva(f, xmin, xmax, 200)]
+    if not campioni:
+        return None
+    campioni.sort()
+    lo, hi = campioni[0], campioni[-1]
+    if hi - lo > 40:                                    # asintoti: si tagliano gli estremi
+        lo, hi = campioni[len(campioni) // 20], campioni[-len(campioni) // 20 - 1]
+    larghezza = max(xmax - xmin, 1.0)
+    altezza_max = 1.8 * larghezza                        # il riquadro è largo 9 cm e alto 5 cm
+    if hi - lo > altezza_max:                            # la curva esce dal riquadro: si tiene la parte che interessa
+        y_int = []
+        for _, f in curve:
+            for x in notevoli or [(xmin + xmax) / 2]:
+                try:
+                    y = float(f(x))
+                except Exception:
+                    continue
+                if math.isfinite(y):
+                    y_int.append(y)
+        y_int = y_int or [lo, hi]
+        centro = (min(y_int) + max(y_int)) / 2
+        lo, hi = max(lo, centro - altezza_max / 2), min(hi, centro + altezza_max / 2)
+    lo, hi = min(lo, 0.0), max(hi, 0.0)
+    margine_y = max((hi - lo) * 0.1, 0.5)
+    return xmin, xmax, math.floor(lo - margine_y), math.ceil(hi + margine_y)
+
+
 def _tikz_da_specifica(corpo: str):
     """Codice TikZ del grafico per il contenuto di [[GRAFICO: …]]; None se non interpretabile."""
     parti = [p.strip() for p in corpo.split("|")]
@@ -1289,26 +1364,10 @@ def _tikz_da_specifica(corpo: str):
         curve.append(r)
     if not curve:
         return None
-    # intervallo verticale dai valori reali della curva
-    ys = []
-    for _, f in curve:
-        for i in range(0, 201):
-            x = xmin + (xmax - xmin) * i / 200
-            try:
-                y = float(f(x))
-            except Exception:
-                continue
-            if isinstance(y, float) and math.isfinite(y) and abs(y) < 1e6:
-                ys.append(y)
-    if not ys:
+    finestra = _finestra_grafico(curve, xmin, xmax)
+    if finestra is None:
         return None
-    ys.sort()
-    lo, hi = ys[0], ys[-1]
-    if hi - lo > 40:                       # asintoti: si tagliano gli estremi
-        lo, hi = ys[len(ys) // 20], ys[-len(ys) // 20 - 1]
-    lo, hi = min(lo, 0.0), max(hi, 0.0)
-    margine = max((hi - lo) * 0.1, 0.5)
-    ymin, ymax = math.floor(lo - margine), math.ceil(hi + margine)
+    xmin, xmax, ymin, ymax = finestra
     xa, xb = math.floor(xmin), math.ceil(xmax)
     righe = [
         r"\begin{center}",
