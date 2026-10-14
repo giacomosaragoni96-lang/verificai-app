@@ -788,6 +788,9 @@ html body .stApp [class*="st-key-banner_piano_"] {
 }
 /* Streamlit toglie 1rem in fondo al markdown: il riempimento lo ripristina */
 html body .stApp [class*="st-key-banner_piano_"] .bp-wrap { padding-bottom:1rem; }
+/* lo script invisibile della guida (iframe alto 0) non deve occupare spazio */
+html body .stApp [class*="st-key-banner_piano_"] [data-testid="stElementContainer"]:has(iframe),
+html body .stApp [class*="st-key-banner_piano_"] div:has(> iframe[height="0"]) { display:none !important; }
 html body .stApp [class*="st-key-banner_piano_"] .g-k {
   display:flex; align-items:center; gap:.5rem; font-family:'DM Sans',sans-serif; font-size:.68rem; font-weight:700;
   letter-spacing:.11em; text-transform:uppercase; color:#FCD34D;
@@ -887,6 +890,49 @@ def _css_pulsa(chiavi: list) -> str:
     return f"<style>{sel} {{animation:gpulse 1.5s ease-in-out infinite;border-radius:12px;}}</style>"
 
 
+def _js_guida_visti() -> str:
+    """
+    Script (statico) che, al primo passaggio del mouse o clic su un elemento evidenziato dalla guida, spegne il lampeggio
+    di quell'elemento per il resto della sessione del browser. Lo stato sta in sessionStorage della pagina e lo stile
+    di «spento» è una regola CSS aggiunta all'head: regge ai ridisegni di Streamlit.
+    """
+    import json as _json
+    selettori = sorted({sel for lista in _BERSAGLI_GUIDA.values() for sel in lista})
+    return """<script>
+(function () {
+  try {
+    var P = window.parent, D = P.document, SEL = """ + _json.dumps(selettori) + """;
+    if (!P.__vfVisti) {
+      try { P.__vfVisti = JSON.parse(P.sessionStorage.getItem('vf_guida_visti') || '{}'); } catch (e) { P.__vfVisti = {}; }
+    }
+    function spegni(sel) {
+      var id = 'vf-visto-' + sel.replace(/[^a-zA-Z0-9]/g, '').slice(0, 60);
+      if (D.getElementById(id)) return;
+      var st = D.createElement('style'); st.id = id;
+      st.textContent = 'html body .stApp ' + sel + ' { animation: none !important; outline: none !important; box-shadow: none !important; }';
+      D.head.appendChild(st);
+    }
+    Object.keys(P.__vfVisti).forEach(spegni);
+    if (P.__vfAscolta) return;
+    P.__vfAscolta = true;
+    function visto(e) {
+      SEL.forEach(function (sel) {
+        try {
+          if (e.target.closest && e.target.closest(sel) && !P.__vfVisti[sel]) {
+            P.__vfVisti[sel] = true;
+            try { P.sessionStorage.setItem('vf_guida_visti', JSON.stringify(P.__vfVisti)); } catch (x) {}
+            spegni(sel);
+          }
+        } catch (x) {}
+      });
+    }
+    D.addEventListener('mouseover', visto, true);
+    D.addEventListener('click', visto, true);
+  } catch (e) {}
+})();
+</script>"""
+
+
 def _guida_benvenuto(dove: str, slot) -> None:
     """
     Guida per chi crea la prima verifica, con tutte le funzioni Pro sbloccate (si vede sempre: finisce da sola con la seconda
@@ -911,6 +957,7 @@ def _guida_benvenuto(dove: str, slot) -> None:
             st.markdown(_CSS_BANNER_PIANO + _css_pulsa(pulsa) +
                         f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">🎁</span>{etichetta}{pun}</div>'
                         f'<div class="g-t">{titolo}</div>{corpo}</div>', unsafe_allow_html=True)
+            components.html(_js_guida_visti(), height=0)
 
     if dove == "input":
         scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
