@@ -866,6 +866,8 @@ _BERSAGLI_GUIDA = {
     "modifica": ['.st-key-review_selectbox', '[class*="st-key-piu_facile_"]', '[class*="st-key-piu_difficile_"]',
                  '[class*="st-key-quick_regen_"]', '[class*="st-key-cambia_tutto_"]'],
     "torna": [".st-key-btn_confirm_final", '[data-testid="stButton"]:has([data-testid="stBaseButton-primary"])'],
+    "storico": ['[data-testid="stExpandSidebarButton"]', '[data-testid="stSidebarCollapsedControl"]',
+                '[data-testid="collapsedControl"]', 'button[aria-label="Open sidebar"]'],
     # pagina del risultato: «Modifica gli esercizi» e tutti i pulsanti del kit (Fila B, BES/DSA, soluzioni, scheda, griglia, ZIP)
     "apri_modifica": [".st-key-final_edit", ".st-key-dl_pdf_hero_A", ".st-key-dl_pdf_basso_A"],
     "kit": ['[data-testid="stExpander"]:has(.g-kit1)', '[data-testid="stExpander"]:has(.g-kit2)',
@@ -922,11 +924,13 @@ def _guida_benvenuto(dove: str, slot) -> None:
             _riquadro("Regalo di benvenuto · Passo 2 di 2", "Ora crea la tua verifica",
                       "Prima di premere «Crea verifica» puoi provare, in <b>«Altre opzioni»</b>, queste funzioni "
                       "(gratis solo in questa prima verifica):",
-                      ["opzioni", "crea"],
+                      ["opzioni", "crea", "storico"],
                       voci=[("🏫", "Logo della scuola", "Compare nell'intestazione della verifica."),
                             ("📎", "Un tuo file", "Appunti o una verifica già fatta: ne ricava una nuova, con dati diversi."),
                             ("⚙️", "Esercizi e punteggi", "Scegli quanti esercizi e quanti punti totali.")],
-                      nota="Quando sei pronto premi <b>«Crea verifica»</b>: in circa un minuto è pronta.",
+                      nota="Quando sei pronto premi <b>«Crea verifica»</b>: in circa un minuto è pronta. "
+                           "Le verifiche create le ritrovi sempre in <b>«Le mie verifiche»</b>, nella barra laterale: "
+                           "apri la barra con la freccia che <b>lampeggia</b> in alto a sinistra.",
                       chips=chips, passi=(2, 2))
     elif dove == "review":
         _riquadro("Regalo di benvenuto · Modifica", "Cambia gli esercizi come preferisci",
@@ -942,14 +946,15 @@ def _guida_benvenuto(dove: str, slot) -> None:
                   "Finché è la prima hai tutto sbloccato: prova ciò che <b>lampeggia</b> in giallo. "
                   "<b>Scorri in basso</b>, sotto l'anteprima: apri le tendine per trovare tutto e, in fondo, scarica tutti i file in un solo ZIP "
                   '(<a href="#kit-completo" style="color:#fff;font-weight:700;white-space:nowrap;">vai al kit</a>).',
-                  ["apri_modifica", "kit"],
+                  ["apri_modifica", "kit", "storico"],
                   voci=[("⬇️", "Scarica il PDF", "Pronto per la stampa: il pulsante è qui sotto e sotto l'anteprima."),
                         ("✏️", "Modifica gli esercizi", "Cambia, semplifica, aggiungi o togli esercizi."),
                         ("📄", "Fila B", "Stessa verifica con dati diversi, contro la copiatura."),
                         ("🧩", "Versione BES/DSA", "Più semplice, per chi ha un piano personalizzato."),
                         ("✅", "Soluzioni", "Le risposte pronte, per correggere in fretta."),
                         ("🎯", "Scheda di allenamento", "Circa 40 esercizi da dare alla classe prima.")],
-                  nota="Dalla prossima verifica queste funzioni restano solo con il piano Pro: provale adesso, finché sono gratis.")
+                  nota="La verifica è salvata in <b>«Le mie verifiche»</b> (barra laterale, freccia che lampeggia in alto a sinistra). "
+                       "Dalla prossima verifica queste funzioni restano solo con il piano Pro: provale adesso, finché sono gratis.")
 
 
 def _html_voci(voci: list) -> str:
@@ -993,6 +998,13 @@ def _banner_piano(dove: str) -> None:
         )
         if st.button("Scopri il piano Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
             _vai_a_upgrade(None)
+
+
+def _apri_storico() -> None:
+    """Apre la pagina «Le mie verifiche» (come il pulsante della barra laterale), ricordando da dove si arriva."""
+    if st.session_state.get("stage") != "MIE_VERIFICHE":
+        st.session_state["_stage_prima"] = st.session_state.get("stage")
+    st.session_state.stage = "MIE_VERIFICHE"
 
 
 def _pro_bloccato(funzione: str) -> bool:
@@ -2704,6 +2716,9 @@ def _render_stage_input():
         unsafe_allow_html=True,
     )
 
+    _sp1, _sp2, _sp3 = st.columns([3, 2, 3])
+    _sp2.button("Le mie verifiche", key="apri_storico_input", type="tertiary", icon=":material/folder_open:",
+                on_click=_apri_storico, use_container_width=True, help="Ritrova le verifiche che hai già creato.")
     _banner_piano("input")
 
     # In cima: attesa della generazione ed eventuale errore dell'ultimo tentativo
@@ -4415,6 +4430,9 @@ def _render_stage_final():
         unsafe_allow_html=True
     )
 
+    _st1, _st2, _st3 = st.columns([3, 2, 3])
+    _st2.button("Apri «Le mie verifiche»", key="apri_storico_final", type="tertiary", icon=":material/folder_open:",
+                on_click=_apri_storico, use_container_width=True, help="La verifica è già salvata: qui trovi tutte le tue verifiche.")
     _senza_grafico = esercizi_con_grafico_mancante(st.session_state.get("review_blocks", []))
     if _senza_grafico:
         st.warning(
