@@ -52,7 +52,7 @@ from config import (
     LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
-    MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, LEGALE_PRONTO,
+    MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, LEGALE_PRONTO, TETTO_BREVE,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS,
 )
 from dotenv import load_dotenv
@@ -195,6 +195,19 @@ def _get_verifiche_mese(user_id):
         return None
 
 
+def _verifiche_recenti(user_id):
+    """Verifiche create dall'utente negli ultimi TETTO_BREVE['minuti'] minuti; None se non si legge (non blocca)."""
+    from datetime import datetime, timedelta, timezone
+    da = (datetime.now(timezone.utc) - timedelta(minutes=TETTO_BREVE["minuti"])).isoformat()
+    try:
+        res = supabase_admin.table("verifiche_storico").select("id", count="exact")\
+            .eq("user_id", user_id).gte("created_at", da).execute()
+        return res.count or 0
+    except Exception as e:
+        logger.warning("_verifiche_recenti failed for %s: %s", user_id, e)
+        return None
+
+
 def _puo_generare_ora():
     """(ok, motivo): ricalcola il tetto mensile adesso. Chi ha un tetto non crea se il conteggio non si legge."""
     if _is_admin or not st.session_state.utente:
@@ -206,6 +219,10 @@ def _puo_generare_ora():
         return False, "Non riesco a controllare il tuo utilizzo mensile in questo momento. Riprova tra qualche istante."
     if ent.limite_raggiunto:
         return False, f"Hai usato le {int(ent.tetto_mensile)} verifiche di questo mese. Tornano a disposizione il mese prossimo."
+    recenti = _verifiche_recenti(uid)
+    if recenti is not None and recenti >= TETTO_BREVE["verifiche"]:
+        return False, (f"Hai creato {recenti} verifiche in pochi minuti. Aspetta qualche minuto e riprova: "
+                       "serve a tenere il servizio veloce per tutti.")
     return True, ""
 
 
