@@ -1206,10 +1206,19 @@ def _banner_piano(dove: str) -> None:
         _guida_benvenuto(dove, _slot)
         return
     if dove == "input":
-        _titolo = "Passa al piano Pro"
-        _voci = [("🎯", "Modello AI più accurato", "Esercizi più precisi."),
-                 ("📚", "Tutte le versioni", "Fila B, BES/DSA, soluzioni, scheda."),
-                 ("🏫", "La tua scuola", "Logo e verifiche da un tuo file.")]
+        # nella pagina di creazione l'invito è una riga sola: il confronto completo sta nella pagina del Pro
+        with _slot.container(key=f"banner_piano_{dove}"):
+            st.markdown(
+                _CSS_BANNER_PIANO +
+                f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">✨</span>Piano Pro · Per la tua classe</div>'
+                f'<div class="g-t">Passa al piano Pro</div>'
+                f'<div class="g-s">Modello più accurato, Fila B, BES/DSA, soluzioni e scheda di allenamento: '
+                f'{PREZZO_PRO_ANNUALE} € per l\'anno scolastico, un solo pagamento.</div></div>',
+                unsafe_allow_html=True,
+            )
+            if st.button("Scopri il piano Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
+                _vai_a_upgrade(None)
+        return
     else:
         _titolo = "Con il piano Pro questa verifica può avere di più"
         _voci = [("🎯", "Modello AI più accurato", "Esercizi più precisi."),
@@ -5574,7 +5583,7 @@ if not _share_view_active:
 
         render_upgrade(_esci_da_upgrade, st.session_state.get("_upgrade_funzione"), _gia_usato,
                        e_pro=(ENT.piano == "pro" and not _SIM), email=getattr(st.session_state.utente, "email", None),
-                       on_attiva=_attiva_codice, e_admin=_is_admin)
+                       on_attiva=_attiva_codice, e_admin=_is_admin, invito=_INVITO)
     elif _current == STAGE_BANCA:
         if _is_admin:
             def _esci_dalla_banca():
