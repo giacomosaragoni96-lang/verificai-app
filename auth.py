@@ -160,6 +160,10 @@ def url_login_google():
     _share = st.query_params.get("share")
     if _share and isinstance(_share, str) and len(_share) <= 64:
         _par_ritorno["share"] = _share
+    # Anche il link di invito di un collega (?ref=) deve sopravvivere al giro con Google
+    _ref = st.session_state.get("_ref") or st.query_params.get("ref")
+    if _ref and isinstance(_ref, str) and len(_ref) <= 16 and _ref.isalnum():
+        _par_ritorno["ref"] = _ref
     redirect_to = f"{_url_app()}/?" + urlencode(_par_ritorno)
     url = f"{base}/auth/v1/authorize?" + urlencode({
         "provider": "google",

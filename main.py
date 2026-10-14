@@ -57,7 +57,8 @@ from config import (
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
-from auth import mostra_auth, ripristina_sessione
+from auth import mostra_auth, ripristina_sessione, _url_app
+import inviti
 from styles import get_css, _is_light_color
 from ui_banca import render_banca
 from ui_helpers import (
@@ -148,6 +149,11 @@ if st.query_params.get("pagina") in ("privacy", "termini", "rimborsi"):
         render_privacy(T, FEEDBACK_FORM_URL)
     st.stop()
 
+# ── Link di invito di un collega (?ref=CODICE): si ricorda anche se l'accesso passa da Google ──
+_ref_url = inviti.codice_valido(st.query_params.get("ref"))
+if _ref_url:
+    st.session_state["_ref"] = _ref_url
+
 # ── AUTENTICAZIONE ────────────────────────────────────────────────────────────
 if "utente" not in st.session_state:
     st.session_state.utente = None
@@ -160,6 +166,10 @@ if st.session_state.utente is None:
 if st.session_state.utente is None:
     mostra_auth(supabase)
     st.stop()
+
+# Collega l'utente nuovo a chi l'ha invitato (vale solo se non ha ancora nessuna verifica)
+if st.session_state.get("_ref") and supabase_admin is not None:
+    inviti.registra_invito(supabase_admin, st.session_state.pop("_ref"), st.session_state.utente.id)
 
 # ── VERIFICA DISPONIBILITÀ LATEX (dopo autenticazione) ─────────────────────────────
 try:
@@ -708,16 +718,52 @@ def _prima_verifica_id(user_id: str):
         return False, None
 
 
+def _bonus_residui() -> int:
+    """Verifiche con tutto il Pro guadagnate con gli inviti e non ancora usate (letto al massimo ogni minuto)."""
+    uid = st.session_state.utente.id
+    _c = st.session_state.get("_bonus_cache")
+    if _c and _c[0] == uid and time.time() - _c[2] < 60:
+        return _c[1]
+    _ok, _, _, _res = inviti.riepilogo(supabase_admin, uid)
+    _val = _res if _ok else 0
+    st.session_state["_bonus_cache"] = (uid, _val, time.time())
+    return _val
+
+
+def _e_verifica_bonus(verifica_id) -> bool:
+    _ids = st.session_state.setdefault("_bonus_ids", set())
+    if str(verifica_id) in _ids:
+        return True
+    if inviti.e_verifica_bonus(supabase_admin, st.session_state.utente.id, verifica_id):
+        _ids.add(str(verifica_id))
+        return True
+    return False
+
+
 def _assaggio_attivo() -> bool:
-    """True se la verifica su cui lavora l'utente è la sua prima in assoluto (tutto il Pro, una volta sola)."""
+    """
+    True se la verifica su cui lavora l'utente ha tutto il Pro: la sua prima in assoluto, oppure una «verifica bonus»
+    (guadagnata invitando un collega). `_assaggio_tipo` dice quale: "prima" | "bonus" | None.
+    """
+    st.session_state["_assaggio_tipo"] = None
     if not MONETIZZAZIONE_ATTIVA or _is_admin or not st.session_state.utente:
         return False
     ok, prima = _prima_verifica_id(st.session_state.utente.id)
     if not ok:
         return False
-    if prima is None:
-        return True                         # non ha ancora creato nulla: quella che sta per creare è la prima
-    return str(st.session_state.get("_storico_id")) == str(prima)
+    _sid = st.session_state.get("_storico_id")
+    if prima is None or str(_sid) == str(prima):
+        st.session_state["_assaggio_tipo"] = "prima"      # non ha ancora creato nulla (la prossima è la prima) o sta lavorando sulla prima
+        return True
+    if not _sid:                                          # sta per creare una nuova verifica: con crediti sarà una verifica bonus
+        if _bonus_residui() > 0:
+            st.session_state["_assaggio_tipo"] = "bonus"
+            return True
+        return False
+    if _e_verifica_bonus(_sid):
+        st.session_state["_assaggio_tipo"] = "bonus"
+        return True
+    return False
 
 
 SIM_NUOVO = "Utente nuovo (prima verifica)"
@@ -1141,6 +1187,12 @@ def _banner_piano(dove: str) -> None:
     if not MONETIZZAZIONE_ATTIVA or (_is_admin and not _SIM) or ENT.piano != "free" or (dove == "review" and not ENT.assaggio):
         _slot.empty()
         return
+    if ENT.assaggio and st.session_state.get("_assaggio_tipo") == "bonus" and not _SIM:
+        with _slot.container(key=f"banner_piano_{dove}"):
+            st.markdown(_CSS_BANNER_PIANO + '<div class="bp-wrap"><div class="g-k"><span class="g-ico">🎁</span>Verifica bonus</div>'
+                        '<div class="bp-s">Per aver invitato un collega, questa verifica ha tutto il piano Pro.</div></div>',
+                        unsafe_allow_html=True)
+        return
     if ENT.assaggio:
         _guida_benvenuto(dove, _slot)
         return
@@ -1211,7 +1263,26 @@ if _STYLED_AVAILABLE:
         pass
 
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
+@st.cache_data(ttl=60, show_spinner=False)
+def _info_invito(user_id: str) -> dict | None:
+    """Link personale e conteggi degli inviti (in cache un minuto). None se le tabelle non ci sono o non si legge."""
+    codice = inviti.codice_di(supabase_admin, user_id)
+    ok, convalidati, guadagnati, residui = inviti.riepilogo(supabase_admin, user_id)
+    if not codice or not ok:
+        return None
+    return {"link": f"{_url_app()}/?ref={codice}", "convalidati": convalidati, "residui": residui}
+
+
+_INVITO = None
+if (MONETIZZAZIONE_ATTIVA and st.session_state.utente and supabase_admin is not None
+        and not st.query_params.get("share") and (_is_admin or ENT.piano == "free")):
+    try:
+        _INVITO = _info_invito(st.session_state.utente.id)
+    except Exception as _e_inv:
+        logger.warning("info inviti non disponibile: %s", _e_inv)
+
 settings   = render_sidebar(
+    invito=_INVITO,
     supabase_admin=supabase_admin, utente=st.session_state.utente,
     verifiche_mese_count=_verifiche_mese or 0, is_admin=_is_admin,
     limite_raggiunto=_limite, T=T,
@@ -2242,7 +2313,7 @@ def _render_percorso_b_form(_prog_placeholder):
             # alla prima visita restano visibili entrambi i menu.
             _mat_ora = st.session_state.get("sel_materia_b", _mat_list[_mat_idx])
             _scu_ora = st.session_state.get("sel_scuola_b", SCUOLE[_scu_idx])
-            _c_arg = st.container()      # l'argomento sta in cima; qui sotto materia e scuola come impostazioni
+            _c_arg = st.container(key="arg_blocco")      # l'argomento sta in cima; qui sotto materia e scuola come impostazioni
             if _udef.get("materia") and _udef.get("scuola"):
                 _box_ms = st.expander(f"{_mat_ora} · {_scu_ora}  —  cambia", expanded=False, icon=":material/school:")
             else:
@@ -2806,6 +2877,12 @@ def _lancia_generazione(
             # id della riga appena creata: serve per aggiungerle poi Fila B e BES/DSA
             st.session_state["_storico_id"] = (_ris_ins.data or [{}])[0].get("id")
             _registra_evento("verifica", modello=_modello_id_eff, verifica_id=st.session_state["_storico_id"])
+            if st.session_state.get("_assaggio_tipo") == "bonus" and st.session_state["_storico_id"]:
+                if inviti.usa_bonus(supabase_admin, st.session_state.utente.id, st.session_state["_storico_id"]):
+                    st.session_state.setdefault("_bonus_ids", set()).add(str(st.session_state["_storico_id"]))
+                    st.session_state.pop("_bonus_cache", None)
+            elif st.session_state.get("_assaggio_tipo") == "prima":
+                inviti.convalida_invito(supabase_admin, st.session_state.utente.id)      # ha completato la prima: l'invito vale
             # st.toast/st.warning qui si perderebbero con il rerun: li mostra la schermata del risultato
             st.session_state["_toast_dopo"] = ("Salvata in «Le mie verifiche»", "💾")
         except Exception as _e:
