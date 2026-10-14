@@ -20,6 +20,7 @@ _CONFRONTO = (
     ("File Word e griglia di valutazione", "—", "Sì"),
     ("Logo della scuola sulla verifica", "—", "Sì"),
     ("Scheda di allenamento (~40 esercizi) e kit in un solo file", "—", "Sì"),
+    ("Verifica da un tuo file (appunti o verifica già fatta)", "—", "Sì"),
 )
 
 
@@ -73,6 +74,7 @@ def render_upgrade(on_back, funzione: str | None = None, assaggio_usato: bool = 
         "**Soluzioni**: le risposte pronte per correggere più in fretta.",
         "**File Word e griglia di valutazione**: per modificare la verifica a mano e valutare con criteri chiari.",
         "**Scheda di allenamento**: circa 40 esercizi per prepararsi prima della verifica.",
+        "**Parti dai tuoi appunti**: carichi un file (appunti, una verifica già fatta) e ne esce una verifica nuova con dati diversi.",
         "**Logo della scuola** nell'intestazione, anche sulla Fila B.",
     )
     st.markdown("**Cosa ottieni con Pro**\n\n" + "\n".join(f"- {v}" for v in _vantaggi))
