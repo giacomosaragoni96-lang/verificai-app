@@ -4047,7 +4047,15 @@ font-family: 'DM Sans', sans-serif;
 
     /* ── Site header (logo landing) ──────────────────────────────────── */
     .site-header {{ padding: 0.6rem 0.8rem; }}
-    .site-header-name {{ font-size: 2.6rem !important; }}
+    .site-header-name {{ font-size: 3.1rem !important; }}
+
+    /* ── Telefono: Feedback solo nel footer (l'icona fluttuante copriva i campi); frecce degli esercizi sulla stessa riga ── */
+    .fab-link {{ display: none !important; }}
+    [data-testid="stHorizontalBlock"]:has(.st-key-rev_prec) {{ flex-wrap: nowrap !important; flex-direction: row !important; gap: .4rem !important; }}
+    [data-testid="stHorizontalBlock"]:has(.st-key-rev_prec) > div {{ min-width: 0 !important; }}
+    [data-testid="stHorizontalBlock"]:has(.st-key-rev_prec) > div:nth-child(1),
+    [data-testid="stHorizontalBlock"]:has(.st-key-rev_prec) > div:nth-child(3) {{ flex: 0 0 2.8rem !important; width: 2.8rem !important; }}
+    [data-testid="stHorizontalBlock"]:has(.st-key-rev_prec) > div:nth-child(2) {{ flex: 1 1 0 !important; }}
 
     /* ── Context sync badge ──────────────────────────────────────────── */
     .context-sync-badge {{ font-size: 0.72rem; padding: 0.3rem 0.55rem; }}
@@ -4680,6 +4688,10 @@ font-family: 'DM Sans', sans-serif;
   @media (prefers-reduced-motion: reduce) {{
     html body .stApp .st-key-genera_btn_b button:not(:disabled), html body .stApp .st-key-genera_btn_b button:not(:disabled)::after {{ animation: none !important; }}
   }}
+
+  /* «Apri il PDF»: solo su telefono, dove l'anteprima è troppo piccola per leggerla */
+  .st-key-apri_pdf_tel {{ display: none; }}
+  @media (max-width: 640px) {{ .st-key-apri_pdf_tel {{ display: block; }} }}
 
   /* Caricamento file: testi di Streamlit in italiano */
   [data-testid="stFileUploaderDropzoneInstructions"] > div > span:first-child {{ font-size: 0 !important; }}
