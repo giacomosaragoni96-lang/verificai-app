@@ -61,7 +61,7 @@ def render_sidebar(
                     key="sb_modello_admin",
                 )
                 st.selectbox(
-                    "Vedi l'app come", ["Io (admin)", "Utente nuovo (prima verifica)", "Utente Free (dopo la prima)"],
+                    "Vedi l'app come", ["Io (admin)", "Utente nuovo (prima verifica)", "Utente Free (dopo la prima)", "Utente Pro"],
                     key="sb_simula_piano",
                     help="Solo per provare: mostra blocchi e messaggi come li vedrebbe un altro utente.",
                 )
