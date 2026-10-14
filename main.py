@@ -124,6 +124,12 @@ if _theme_key not in THEMES:
     st.session_state.theme = _theme_key
 T = THEMES[_theme_key]
 
+
+@st.cache_data(show_spinner=False)
+def _css_tema(chiave: str) -> str:
+    """Il foglio di stile dipende solo dal tema: si costruisce una volta (get_css è lungo) e non a ogni clic."""
+    return get_css(THEMES[chiave])
+
 # ── CONFIGURAZIONE API ────────────────────────────────────────────────────────
 load_dotenv()
 API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -139,7 +145,7 @@ configura_ai(API_KEY)
 # ── Pagina pubblica: informativa sulla privacy (richiesta da Google per il login) ──
 # Solo testo statico, visibile senza accedere; non dà accesso a nessuna funzione dell'app.
 if st.query_params.get("pagina") in ("privacy", "termini", "rimborsi"):
-    st.markdown(get_css(T), unsafe_allow_html=True)
+    st.markdown(_css_tema(_theme_key), unsafe_allow_html=True)
     _pag = st.query_params.get("pagina")
     if _pag == "termini":
         render_termini(T)
@@ -1255,7 +1261,7 @@ def _pulsante_pro(funzione: str, key: str, testo: str = "Con il piano Pro") -> N
         _vai_a_upgrade(funzione)
 
 # ── CSS + FEEDBACK ────────────────────────────────────────────
-st.markdown(get_css(T), unsafe_allow_html=True)
+st.markdown(_css_tema(st.session_state.theme if st.session_state.get("theme") in THEMES else _theme_key), unsafe_allow_html=True)
 if not _is_admin:      # Share, stella, matita, GitHub e Deploy servono solo a chi gestisce l'app
     st.markdown('<style>[data-testid="stToolbarActions"], [data-testid="stAppDeployButton"], '
                 '[data-testid="stMainMenu"] { display:none !important; }</style>', unsafe_allow_html=True)
