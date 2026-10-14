@@ -579,14 +579,14 @@ def mostra_auth(supabase):
 
     /* ═══ Modern Trust Bar ═══ */
     .auth-trust {{
-        display: flex; justify-content: center; gap: 2rem;
+        display: flex; justify-content: center; flex-wrap: wrap; gap: .5rem 1.2rem;
         margin-top: 1.5rem; padding-top: 1.5rem;
         border-top: 1px solid rgba({_BORDER.replace('#', '')},.2);
         opacity: 0.9;
     }}
     .auth-trust-item {{
-        display: flex; align-items: center; gap: 0.5rem;
-        font-size: 0.8rem; color: {_MUTED};
+        display: flex; align-items: center; gap: 0.4rem; white-space: nowrap;
+        font-size: 0.78rem; color: {_MUTED};
         font-family: 'DM Sans', sans-serif;
         font-weight: 500;
         letter-spacing: 0.01em;
@@ -767,7 +767,7 @@ def mostra_auth(supabase):
     <div class="auth-trust">
       <div class="auth-trust-item">🎁&ensp;5 verifiche gratis al mese</div>
       <div class="auth-trust-item">🇮🇹&ensp;Per docenti italiani</div>
-      <div class="auth-trust-item">🔒&ensp;I tuoi dati restano tuoi</div>
+      <div class="auth-trust-item">🔒&ensp;Dati al sicuro</div>
     </div>
     <div style="text-align:center; padding:1rem 0 0.5rem; font-family:'DM Sans',sans-serif;">
       <p style="font-size:0.8rem; color:{_TEXT2}; margin:0; font-weight:500;">

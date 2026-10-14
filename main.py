@@ -747,26 +747,30 @@ def _vai_a_upgrade(funzione: str | None = None) -> None:
 
 _CSS_BANNER_PIANO = """
 <style>
-html body .stApp [class*="st-key-banner_piano_"] { position:relative; margin:.2rem 0 .7rem; }
-html body .stApp .bp-wrap { padding-bottom:1rem; }   /* Streamlit toglie 1rem in fondo al markdown: lo ripristina */
-html body .stApp .bp-box { background:#2563EB; border-radius:10px; padding:.65rem .9rem .7rem; }
-html body .stApp .bp-box .bp-t {
+/* Striscia blu per chi non ha Pro: un riquadro di Streamlit (con bordo) riconosciuto dal marcatore .bp-marker */
+html body .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.bp-marker) {
+  background:#2563EB !important; border:0 !important; border-radius:10px !important; padding:.55rem .85rem .65rem !important;
+  margin:.2rem 0 .6rem;
+}
+html body .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.bp-marker) > div { gap:.3rem !important; }
+html body .stApp .bp-marker { display:none; }
+/* Streamlit toglie 1rem in fondo al markdown: il riempimento lo ripristina */
+html body .stApp .bp-wrap { padding-bottom:1rem; }
+html body .stApp .bp-wrap .bp-t {
   font-family:'DM Sans',sans-serif; font-weight:700; font-size:.9rem; line-height:1.3; color:#fff;
 }
-html body .stApp .bp-box .bp-s {
+html body .stApp .bp-wrap .bp-s {
   font-family:'DM Sans',sans-serif; font-size:.8rem; line-height:1.4; color:rgba(255,255,255,.92); margin-top:.15rem;
 }
-/* spazio riservato in fondo alla striscia: ci sta sopra il pulsante (posizionato in modo assoluto) */
-html body .stApp .bp-box .bp-spazio { height:3rem; }
-html body .stApp [class*="st-key-banner_pro_"] { position:absolute !important; left:.9rem; bottom:.6rem; width:auto !important; }
-html body .stApp [class*="st-key-banner_pro_"] button {
+html body .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.bp-marker) button {
   background:#fff !important; border:0 !important; border-radius:8px !important; min-height:0 !important;
-  padding:.2rem .8rem !important; width:auto !important; height:auto !important; line-height:1.2 !important;
+  padding:.25rem .8rem !important; width:auto !important;
 }
-html body .stApp [class*="st-key-banner_pro_"] button p { margin:0 !important; line-height:1.2 !important; }
-html body .stApp [class*="st-key-banner_pro_"] button p,
-html body .stApp [class*="st-key-banner_pro_"] button span { color:#1D4ED8 !important; font-weight:700 !important; font-size:.82rem !important; }
-html body .stApp [class*="st-key-banner_pro_"] button:hover { background:#EFF6FF !important; }
+html body .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.bp-marker) button p,
+html body .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.bp-marker) button span {
+  color:#1D4ED8 !important; font-weight:700 !important; font-size:.82rem !important; margin:0 !important; line-height:1.2 !important;
+}
+html body .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.bp-marker) button:hover { background:#EFF6FF !important; }
 </style>
 """
 
@@ -776,11 +780,12 @@ def _banner_piano(dove: str) -> None:
     Striscia blu in cima alla pagina per chi non ha Pro (stesso stile per tutti):
     prima verifica = regalo di benvenuto (cosa può fare e cosa cambia dopo);
     piano Free = invito a passare a Pro, con il pulsante dentro la striscia. dove = "input" | "final".
-    La striscia è un unico blocco HTML (altezza sempre giusta); il pulsante vi sta sopra, in basso a sinistra.
+    Sta in un segnaposto (st.empty) che si svuota quando il banner non serve: così non resta mai a schermo.
     """
+    _slot = st.empty()
     if not MONETIZZAZIONE_ATTIVA or (_is_admin and not _SIM) or ENT.piano != "free":
+        _slot.empty()
         return
-    st.markdown(_CSS_BANNER_PIANO, unsafe_allow_html=True)
     if ENT.assaggio:
         if dove == "input":
             _titolo = "🎁 Regalo di benvenuto: la prima verifica è tutta Pro"
@@ -790,7 +795,6 @@ def _banner_piano(dove: str) -> None:
             _titolo = "🎁 Regalo di benvenuto: hai tutto il Pro su questa verifica"
             _testo = ("Crea ora Fila B, BES/DSA, soluzioni, Word, griglia e scheda. "
                       "Dalla prossima verifica restano solo con Pro.")
-        _spazio = ""
     else:
         _titolo = "Passa al piano Pro"
         _testo = ("Esercizi scritti dal modello AI più accurato e, per ogni verifica, il kit completo per la classe: "
@@ -798,10 +802,11 @@ def _banner_piano(dove: str) -> None:
                   if dove == "input" else
                   "Con Pro questa verifica può avere anche Fila B, versione BES/DSA, soluzioni, Word, griglia, "
                   "scheda di allenamento, e gli esercizi sono scritti dal modello AI più accurato.")
-        _spazio = '<div class="bp-spazio"></div>'
-    with st.container(key=f"banner_piano_{dove}"):
+    with _slot.container(border=True):
+        st.markdown(_CSS_BANNER_PIANO, unsafe_allow_html=True)
         st.markdown(
-            f'<div class="bp-wrap"><div class="bp-box"><div class="bp-t">{_titolo}</div><div class="bp-s">{_testo}</div>{_spazio}</div></div>',
+            f'<div class="bp-marker"></div><div class="bp-wrap"><div class="bp-t">{_titolo}</div>'
+            f'<div class="bp-s">{_testo}</div></div>',
             unsafe_allow_html=True,
         )
         if not ENT.assaggio:
@@ -1998,7 +2003,7 @@ def _render_percorso_b_form(_prog_placeholder):
                     "Cosa vuoi nella verifica? (obbligatorio)",
                     value=_arg_default,
                     placeholder=_esempio,
-                    height=150,
+                    height=110,
                     label_visibility="collapsed",
                     key="argomento_area_b",
                 )
@@ -2006,7 +2011,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 argomento_raw = st.text_area(
                     "Cosa vuoi nella verifica? (obbligatorio)",
                     placeholder=_esempio,
-                    height=150,
+                    height=110,
                     label_visibility="collapsed",
                     key="argomento_area_b",
                 )
@@ -2229,14 +2234,6 @@ def _render_percorso_b_form(_prog_placeholder):
             _manca_arg = not argomento and not _fm
             spazio("lg")
 
-            if _manca_arg and not _limite:
-                st.markdown(
-                    f'<div style="text-align:center;font-size:.88rem;color:{T["text2"]};'
-                    f'font-family:DM Sans,sans-serif;margin-bottom:.3rem;">'
-                    f'✍️ Scrivi l\'argomento nel riquadro per continuare.</div>',
-                    unsafe_allow_html=True,
-                )
-
             st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
             genera_btn = st.button(
                 "🚀  Crea verifica",
@@ -2244,7 +2241,8 @@ def _render_percorso_b_form(_prog_placeholder):
                 type="primary",
                 disabled=_limite or _blocco_conteggio or _manca_arg,
                 key="genera_btn_b",
-                help="Avvia la generazione AI della verifica. Potrai modificare ogni singolo esercizio prima di scaricare il PDF.",
+                help=("Scrivi prima l'argomento nel riquadro per continuare." if (_manca_arg and not _limite) else
+                      "Avvia la generazione AI della verifica. Potrai modificare ogni singolo esercizio prima di scaricare il PDF."),
             )
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -2527,10 +2525,10 @@ def _lancia_generazione(
 def _render_stage_input():
     # La schermata di creazione e' anche la home: titolo breve + form.
     st.markdown(
-        f'<div class="vf-narrow" style="text-align:center;padding:.1rem 0 .5rem;">'
+        f'<div class="vf-narrow" style="text-align:center;padding:0 0 .2rem;">'
         f'<div style="font-family:DM Sans,sans-serif;font-size:1.55rem;font-weight:800;'
         f'letter-spacing:-.02em;color:{T["text"]};line-height:1.15;">Crea la tua verifica</div>'
-        f'<div style="font-size:.88rem;font-weight:400;color:{T["text2"]};margin-top:.3rem;'
+        f'<div style="font-size:.84rem;font-weight:400;color:{T["text2"]};margin-top:.15rem;'
         f'font-family:DM Sans,sans-serif;">Scrivi l’argomento: in un minuto la verifica è pronta.</div></div>',
         unsafe_allow_html=True,
     )
