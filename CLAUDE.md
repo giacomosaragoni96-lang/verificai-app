@@ -58,6 +58,7 @@ Avvio locale: `streamlit run main.py`. Pacchetti di sistema in `packages.txt`
 - Pagina «Passa a Pro»: `ui_upgrade.py` (stage `UPGRADE`; esempi Lite/Pro in `assets/esempi/free_N.png` e `pro_N.png`).
   Blocchi funzione in `main.py` (`_pro_bloccato`, `_pulsante_pro`, `_vai_a_upgrade`), eventi in `usage_events` (`_registra_evento`).
   Assaggio: la prima verifica di ogni utente free (`_prima_verifica_id`) ha tutto il Pro, modello compreso; tutto spento finché `MONETIZZAZIONE_ATTIVA` è False.
+- Inviti tra colleghi: `inviti.py` (senza streamlit, tabelle `codici_invito`/`inviti`/`bonus_usati` in `migrazione_inviti.sql`, da eseguire a mano). Link `?ref=CODICE`; l'invitato si collega solo se nuovo (nessuna verifica); l'invito vale quando completa la prima; chi invita guadagna `config.BONUS_PER_INVITO` verifiche con tutto il Pro (max `MAX_INVITI_CON_BONUS` amici). In `main.py`: `_assaggio_attivo` (`_assaggio_tipo` = prima|bonus), `_info_invito`; pannello nella sidebar. Senza le tabelle tutto resta spento (le funzioni non sollevano).
 - Kit/scheda di allenamento: `scheda.py` (logica, senza streamlit), prompt in `prompts.py`
 - Non usati: `extra-streamlit-components` e `streamlit-cookies-controller`
   (solo in requirements, `auth.get_cookie_controller()` è uno stub).
