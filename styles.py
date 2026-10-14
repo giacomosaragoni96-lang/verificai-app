@@ -4693,6 +4693,13 @@ font-family: 'DM Sans', sans-serif;
   .st-key-apri_pdf_tel {{ display: none; }}
   @media (max-width: 640px) {{ .st-key-apri_pdf_tel {{ display: block; }} }}
 
+  /* Suggerimento sotto il titolo del riquadro: una riga sola, con un accento */
+  .vf-tip {{
+    display: inline-block; margin: .1rem 0 .55rem; padding: .22rem .75rem; border-radius: 999px;
+    background: {T['accent_light']}; color: {T['accent']}; font-family: 'DM Sans', sans-serif;
+    font-size: .82rem; font-weight: 600; line-height: 1.35;
+  }}
+
   /* Caricamento file: testi di Streamlit in italiano */
   [data-testid="stFileUploaderDropzoneInstructions"] > div > span:first-child {{ font-size: 0 !important; }}
   [data-testid="stFileUploaderDropzoneInstructions"] > div > span:first-child::after {{

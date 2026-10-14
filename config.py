@@ -504,34 +504,36 @@ MATERIE_ICONS = {
 ESEMPI_RICHIESTA = {
     "Matematica": (
         "Es. Equazioni di secondo grado e parabola\n"
-        "- difficoltà crescente: il primo di calcolo diretto\n"
-        "- includi un grafico da leggere (senza scrivere l'equazione sul grafico)\n"
-        "- un problema di realtà e un vero/falso\n"
-        "- evita le dimostrazioni e i parametri letterali\n"
-        "- usa numeri interi"
+        "Parti con un esercizio di calcolo diretto, poi aumenta piano piano la difficoltà.\n"
+        "Metti un vero o falso sui concetti essenziali, un esercizio a risposta aperta in cui spiegare un ragionamento "
+        "e un problema di realtà, con una situazione di vita quotidiana.\n"
+        "Includi un grafico da leggere e interpretare.\n"
+        "Evita le dimostrazioni e usa numeri interi, per non perdere tempo nei calcoli."
     ),
     "Fisica": (
-        "Es. Moto rettilineo uniformemente accelerato\n"
-        "- una formula inversa e un grafico velocità-tempo da interpretare\n"
-        "- un problema con dati reali (auto, ascensore)\n"
-        "- evita il calcolo vettoriale\n"
-        "- esprimi tutto in unità SI e chiedi di indicarle"
+        "Es. Il moto rettilineo uniformemente accelerato\n"
+        "Parti da una domanda sui concetti essenziali (vero o falso), poi un esercizio di calcolo con i dati già pronti.\n"
+        "Aggiungi un problema con una situazione reale, come un'auto che frena o un ascensore, "
+        "e un grafico velocità-tempo da interpretare.\n"
+        "Chiedi almeno una volta di spiegare a parole il perché del risultato.\n"
+        "Evita il calcolo con i vettori e fai indicare sempre le unità di misura."
     ),
     "Italiano": (
-        "Es. Promessi Sposi: capitoli 1-8\n"
-        "- comprensione, analisi dei personaggi, un'inferenza\n"
-        "- una domanda sul lessico e una sul narratore\n"
-        "- includi un breve brano da commentare\n"
-        "- evita domande solo mnemoniche"
+        "Es. I Promessi Sposi, capitoli 1-8\n"
+        "Parti con qualche domanda di comprensione sul testo, poi un'analisi dei personaggi principali.\n"
+        "Metti un vero o falso sulla trama, una domanda aperta in cui spiegare con parole proprie "
+        "e un breve brano da commentare.\n"
+        "Includi una domanda sul lessico e una su chi racconta la storia.\n"
+        "Evita domande che richiedono solo di ricordare a memoria."
     ),
 }
 ESEMPIO_RICHIESTA_DEFAULT = (
     "Es. Il Rinascimento in Italia\n"
-    "- difficoltà crescente: parti da domande dirette\n"
-    "- includi 2 domande aperte e un vero/falso\n"
-    "- usa una breve fonte o un brano da commentare\n"
-    "- evita date troppo precise e curiosità secondarie\n"
-    "- linguaggio chiaro, adatto alla classe"
+    "Parti con domande dirette sui fatti principali, poi aumenta piano piano la difficoltà.\n"
+    "Metti un vero o falso sui concetti essenziali, due domande aperte in cui spiegare con parole proprie "
+    "e un breve brano o una fonte da commentare.\n"
+    "Includi un esercizio che chieda di collegare cause e conseguenze.\n"
+    "Evita date troppo precise e curiosità secondarie, e usa un linguaggio chiaro, adatto alla classe."
 )
 
 
