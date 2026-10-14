@@ -2566,8 +2566,8 @@ def formatta_punti(latex: str) -> str:
     grassetto, in mezzo alla riga (es. prima delle caselle V/F) è staccato e in grassetto.
     Solo per il PDF: il LaTeX salvato resta con «(N pt)», che serve per contare e riscalare i punti.
     """
-    latex = _RE_PUNTI_FINE.sub(lambda m: f"\\hfill\\textbf{{({m.group(1)} pt)}}", latex)
-    return _RE_PUNTI_ALTROVE.sub(lambda m: f"\\quad\\textbf{{({m.group(1)} pt)}}", latex)
+    latex = _RE_PUNTI_FINE.sub(lambda m: f"\\unskip\\nobreak\\hspace{{0.6em}}\\hfill\\mbox{{\\textbf{{({m.group(1)} pt)}}}}", latex)
+    return _RE_PUNTI_ALTROVE.sub(lambda m: f"\\quad\\mbox{{\\textbf{{({m.group(1)} pt)}}}}", latex)
 
 
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
