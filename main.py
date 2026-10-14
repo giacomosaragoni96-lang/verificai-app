@@ -1191,28 +1191,34 @@ def _prepara_logo(dati: bytes):
     return None
 
 
-def _html_anteprima_logo(logo: dict, attivo: bool, materia: str, argomento: str) -> str:
-    """Riquadro con la riga di intestazione della verifica (logo + titolo), com'è nel PDF."""
-    frac = {"largo": 0.38, "piccolo": 0.15}.get(logo.get("tipo"), 0.38)
-    titolo = f"Verifica di {materia}: {argomento or 'argomento della verifica'}"
-    img = (
-        f'<div style="width:{frac * 100:.0f}%;flex:none;">'
-        f'<img src="data:image/png;base64,{logo["b64"]}" alt="Logo della scuola" '
-        f'style="max-width:100%;max-height:70px;object-fit:contain;display:block;"/></div>'
-        if attivo else ""
-    )
-    return (
-        f'<div style="max-width:520px;margin:.6rem 0 .3rem;padding:.9rem 1rem;background:#fff;'
-        f'border:1px solid {T["border2"]};border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);'
-        f'font-family:serif;color:#111;">'
-        f'<div style="font-size:.68rem;font-family:DM Sans,sans-serif;color:#6B7280;margin-bottom:.5rem;">'
-        f'Così apparirà in cima alla verifica</div>'
-        f'<div style="display:flex;align-items:center;justify-content:space-between;gap:.8rem;">{img}'
-        f'<div style="flex:1;text-align:right;font-weight:700;font-size:.92rem;line-height:1.25;">'
-        f'{_esc(titolo)}</div></div>'
-        f'<div style="text-align:center;font-size:.72rem;margin-top:.7rem;">'
-        f'<b>Nome:</b> ____________________ &nbsp; <b>Classe e Data:</b> ______________</div></div>'
-    )
+@st.cache_data(ttl=3600, max_entries=24, show_spinner=False)
+def _anteprima_intestazione(b64: str, tipo: str, attivo: bool, materia: str):
+    """
+    Immagine REALE dell'intestazione della verifica (logo + titolo + riga Nome/Classe): si
+    compila con pdflatex la stessa intestazione che finirà nel PDF e si ritaglia la parte alta.
+    Una volta sola per logo (cache). None se la compilazione non riesce: meglio nessuna
+    anteprima che un'anteprima diversa dal risultato.
+    """
+    try:
+        from PIL import Image
+        from generation import _costruisci_preambolo
+        pre, _ = _costruisci_preambolo(materia, "titolo della verifica", "", False)
+        latex = pre + "\\end{document}\n"
+        if attivo:
+            latex = inserisci_logo(latex, tipo, b64)
+        pdf, _err = compila_pdf(latex)
+        imgs, _ = pdf_to_images_bytes(pdf) if pdf else (None, None)
+        if not imgs:
+            return None
+        im = Image.open(io.BytesIO(imgs[0])).convert("RGB")
+        w, h = im.size
+        im = im.crop((int(w * 0.05), int(h * 0.025), int(w * 0.95), int(h * 0.185)))
+        buf = io.BytesIO()
+        im.save(buf, "PNG")
+        return buf.getvalue()
+    except Exception as e:
+        logger.warning(f"Anteprima intestazione non riuscita: {e}")
+        return None
 
 
 def _salva_variante_storico(colonna: str, latex: str) -> None:
@@ -1955,8 +1961,12 @@ def _render_percorso_b_form(_prog_placeholder):
                     if _attivo_nuovo != _logo_s.get("attivo", True):
                         _salva_logo({**_logo_s, "attivo": _attivo_nuovo})
                     # Anteprima immediata dell'intestazione: niente generazione sprecata
-                    st.markdown(_html_anteprima_logo(_logo_s, _attivo_nuovo, materia_scelta, argomento),
-                                unsafe_allow_html=True)
+                    with st.spinner("Preparo l'anteprima dell'intestazione…"):
+                        _img_int = _anteprima_intestazione(
+                            _logo_s["b64"], _logo_s.get("tipo", "largo"), _attivo_nuovo, materia_scelta)
+                    if _img_int:
+                        st.image(_img_int, width=560)
+                        st.caption("Intestazione come sarà nel PDF (il titolo sarà quello della tua verifica).")
                     if st.button("Cambia o togli il logo", key="logo_togli", icon=":material/delete:"):
                         _salva_logo(None)
                         st.rerun()
