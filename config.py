@@ -32,6 +32,16 @@ ETICHETTE_FUNZIONI = {
     "scheda": "la scheda di allenamento", "zip": "il kit completo in un solo file",
     "materiale": "la verifica a partire dai tuoi appunti o da una verifica già fatta",
 }
+# Dati del fornitore per le pagine legali (Termini, Rimborsi, Privacy). Indirizzo e partita IVA: compaiono solo se compilati.
+# LEGALE_PRONTO = True fa comparire i link a Termini e Rimborsi nell'app: da accendere solo dopo la revisione delle bozze.
+LEGALE = {
+    "nome": "Giacomo Saragoni",
+    "email": "verificai.support@gmail.com",
+    "indirizzo": "",
+    "partita_iva": "",
+    "aggiornamento": "14 ottobre 2026",
+}
+LEGALE_PRONTO = False
 PREZZO_PRO_ANNUALE = 39                 # euro, anno scolastico (pagamento unico)
 CHECKOUT_URL_PRO = "https://verificai.lemonsqueezy.com/checkout/buy/cd7d56f4-10c1-4807-bc2f-90dffa200268"   # prodotto di PROVA (test mode)
 # ID del negozio e del prodotto Lemon Squeezy: una licenza vale solo se sono questi (None = nessun codice accettato).
