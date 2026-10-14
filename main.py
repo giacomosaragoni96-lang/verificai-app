@@ -746,6 +746,7 @@ def _vai_a_upgrade(funzione: str | None = None) -> None:
 _CSS_BANNER_PIANO = """
 <style>
 html body .stApp [class*="st-key-banner_piano_"] { position:relative; margin:.2rem 0 .7rem; }
+html body .stApp .bp-wrap { padding-bottom:1rem; }   /* Streamlit toglie 1rem in fondo al markdown: lo ripristina */
 html body .stApp .bp-box { background:#2563EB; border-radius:10px; padding:.65rem .9rem .7rem; }
 html body .stApp .bp-box .bp-t {
   font-family:'DM Sans',sans-serif; font-weight:700; font-size:.9rem; line-height:1.3; color:#fff;
@@ -795,7 +796,7 @@ def _banner_piano(dove: str) -> None:
         _spazio = '<div class="bp-spazio"></div>'
     with st.container(key=f"banner_piano_{dove}"):
         st.markdown(
-            f'<div class="bp-box"><div class="bp-t">{_titolo}</div><div class="bp-s">{_testo}</div>{_spazio}</div>',
+            f'<div class="bp-wrap"><div class="bp-box"><div class="bp-t">{_titolo}</div><div class="bp-s">{_testo}</div>{_spazio}</div></div>',
             unsafe_allow_html=True,
         )
         if not ENT.assaggio:
