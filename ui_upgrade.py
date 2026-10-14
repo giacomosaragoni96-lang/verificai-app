@@ -61,9 +61,9 @@ def render_upgrade(on_back, funzione: str | None = None, assaggio_usato: bool = 
         st.success("Hai già il piano Pro: tutte le funzioni sono attive. Grazie!")
         return
     if funzione in ETICHETTE_FUNZIONI:
-        st.info(f"Con Pro puoi avere {ETICHETTE_FUNZIONI[funzione]} e tutto il resto del kit per la tua classe.")
+        st.info(f"Con il piano Pro puoi avere {ETICHETTE_FUNZIONI[funzione]} e tutto il resto del kit per la tua classe.")
     if assaggio_usato:
-        st.caption("Nella tua prima verifica hai provato tutto il Pro. Da ora sei sul piano Free.")
+        st.caption("Nella tua prima verifica hai provato tutte le funzioni del piano Pro. Da ora sei sul piano Free.")
 
     st.markdown(f"**{PREZZO_PRO_ANNUALE} € per l'anno scolastico**, pagamento unico. Niente rinnovi automatici.")
 
@@ -77,7 +77,7 @@ def render_upgrade(on_back, funzione: str | None = None, assaggio_usato: bool = 
         "**Parti dai tuoi appunti**: carichi un file (appunti, una verifica già fatta) e ne esce una verifica nuova con dati diversi.",
         "**Logo della scuola** nell'intestazione, anche sulla Fila B.",
     )
-    st.markdown("**Cosa ottieni con Pro**\n\n" + "\n".join(f"- {v}" for v in _vantaggi))
+    st.markdown("**Cosa ottieni con il piano Pro**\n\n" + "\n".join(f"- {v}" for v in _vantaggi))
 
     righe = "| | Free | Pro |\n|---|---|---|\n" + "\n".join(f"| {a} | {b} | {c} |" for a, b, c in _CONFRONTO)
     st.markdown(righe)

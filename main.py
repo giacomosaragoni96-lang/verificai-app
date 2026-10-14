@@ -854,8 +854,9 @@ _BERSAGLI_GUIDA = {
     "torna": [".st-key-btn_confirm_final", '[data-testid="stButton"]:has([data-testid="stBaseButton-primary"])'],
     # pagina del risultato: «Modifica gli esercizi» e tutti i pulsanti del kit (Fila B, BES/DSA, soluzioni, scheda, griglia, ZIP)
     "apri_modifica": [".st-key-final_edit"],
-    "kit": [".st-key-kit_tutto", ".st-key-dl_kit_zip", '[class*="st-key-one_click_"]', '[class*="st-key-compile_"]',
-            ".st-key-btn_gen_griglia_v2"],
+    "kit": ['[data-testid="stExpander"]:has(.g-kit1)', '[data-testid="stExpander"]:has(.g-kit2)',
+            '[data-testid="stExpander"]:has(.g-kit3)', ".st-key-kit_tutto", ".st-key-dl_kit_zip",
+            '[class*="st-key-one_click_"]', '[class*="st-key-compile_"]', ".st-key-btn_gen_griglia_v2"],
 }
 
 
@@ -923,9 +924,9 @@ def _guida_benvenuto(dove: str, slot) -> None:
                         ("➕", "Aggiungi o elimina", "Aggiungi un esercizio in fondo o togli quello che non ti serve.")],
                   nota="Quando hai finito premi <b>«Fatto: torna al PDF»</b>.")
     else:
-        _riquadro("Regalo di benvenuto · La tua prima verifica", "Hai creato la tua prima verifica: sfrutta tutto il Pro!",
-                  "Finché è la prima hai tutto sbloccato: prova i pulsanti che <b>lampeggiano</b> in giallo. "
-                  "<b>Scorri in basso</b>, sotto l'anteprima, per trovarli tutti "
+        _riquadro("Regalo di benvenuto · La tua prima verifica", "Hai creato la tua prima verifica: prova tutte le funzioni del piano Pro!",
+                  "Finché è la prima hai tutto sbloccato: prova ciò che <b>lampeggia</b> in giallo. "
+                  "<b>Scorri in basso</b>, sotto l'anteprima: apri le tendine per trovare tutto "
                   '(<a href="#kit-completo" style="color:#fff;font-weight:700;white-space:nowrap;">vai al kit</a>).',
                   ["apri_modifica", "kit"],
                   voci=[("✏️", "Modifica gli esercizi", "Cambia, semplifica, aggiungi o togli esercizi (pulsante qui sopra)."),
@@ -934,7 +935,7 @@ def _guida_benvenuto(dove: str, slot) -> None:
                         ("✅", "Soluzioni", "Le risposte pronte, per correggere in fretta."),
                         ("🎯", "Scheda di allenamento", "Circa 40 esercizi da dare alla classe prima."),
                         ("📦", "Tutto il kit in un file", "«Prepara tutto il kit», poi scarichi lo ZIP.")],
-                  nota="Dalla prossima verifica queste funzioni restano solo con Pro: provale adesso, finché sono gratis.")
+                  nota="Dalla prossima verifica queste funzioni restano solo con il piano Pro: provale adesso, finché sono gratis.")
 
 
 def _banner_piano(dove: str) -> None:
@@ -953,19 +954,19 @@ def _banner_piano(dove: str) -> None:
         return
     if ENT.assaggio:
         if dove == "input":
-            _titolo = "🎁 Regalo di benvenuto: la prima verifica è tutta Pro"
+            _titolo = "🎁 Regalo di benvenuto: la prima verifica include il piano Pro"
             _testo = ("Usi il modello migliore e puoi creare tutto: Fila B, BES/DSA, soluzioni, griglia, scheda, logo. "
-                      "Dalla seconda: modello più veloce (può sbagliare) e funzioni extra solo con Pro.")
+                      "Dalla seconda: modello più veloce (può sbagliare) e funzioni extra solo con il piano Pro.")
         else:
-            _titolo = "🎁 Regalo di benvenuto: hai tutto il Pro su questa verifica"
+            _titolo = "🎁 Regalo di benvenuto: su questa verifica hai tutto il piano Pro"
             _testo = ("Crea ora Fila B, BES/DSA, soluzioni, griglia e scheda. "
-                      "Dalla prossima verifica restano solo con Pro.")
+                      "Dalla prossima verifica restano solo con il piano Pro.")
     else:
         _titolo = "Passa al piano Pro"
         _testo = ("Esercizi scritti dal modello AI più accurato e, per ogni verifica, il kit completo per la classe: "
                   "Fila B, versione BES/DSA, soluzioni, griglia di valutazione, scheda di allenamento e logo della scuola."
                   if dove == "input" else
-                  "Con Pro questa verifica può avere anche Fila B, versione BES/DSA, soluzioni, griglia, "
+                  "Con il piano Pro questa verifica può avere anche Fila B, versione BES/DSA, soluzioni, griglia, "
                   "scheda di allenamento, e gli esercizi sono scritti dal modello AI più accurato.")
     st.markdown(_CSS_BANNER_PIANO, unsafe_allow_html=True)
     with _slot.container(key=f"banner_piano_{dove}"):
@@ -984,7 +985,7 @@ def _pro_bloccato(funzione: str) -> bool:
     return not ENT.puo(funzione)
 
 
-def _pulsante_pro(funzione: str, key: str, testo: str = "Con Pro") -> None:
+def _pulsante_pro(funzione: str, key: str, testo: str = "Con il piano Pro") -> None:
     """Al posto dell'azione di una funzione Pro: un pulsante che porta alla pagina di confronto."""
     if st.button(f"🔒 {testo}", key=key, use_container_width=True, type="secondary",
                  help=f"Per avere {ETICHETTE_FUNZIONI.get(funzione, 'questa funzione')} serve il piano Pro."):
@@ -2281,7 +2282,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 if _pro_bloccato("materiale") and not _fm:
                     st.caption("Carica appunti o una verifica già fatta e VerificAI ne crea una nuova, con dati diversi: "
                                "è una funzione del piano Pro.")
-                    _pulsante_pro("materiale", "pro_materiale", "Carica un file con Pro")
+                    _pulsante_pro("materiale", "pro_materiale", "Carica un file con il piano Pro")
                 elif not _fm:
                     _up = st.file_uploader(
                         "Carica appunti, una verifica o un foglio di esercizi",
@@ -2341,7 +2342,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 _logo_bloccato = _pro_bloccato("logo")
                 if _logo_bloccato:
                     st.caption("Il logo della tua scuola sull'intestazione è una funzione del piano Pro.")
-                    _pulsante_pro("logo", "pro_logo", "Logo della scuola con Pro")
+                    _pulsante_pro("logo", "pro_logo", "Logo della scuola con il piano Pro")
                 elif _logo_s:
                     _attivo_nuovo = st.toggle("Metti il logo nelle verifiche",
                                               value=_logo_s.get("attivo", True), key="logo_attivo_b")
@@ -4456,55 +4457,19 @@ def _render_stage_final():
         st.session_state[_flag_kit[_prossimo]] = True
     _kit_in_corso = bool(_coda_kit) or any(st.session_state.get(f) for f in _flag_kit.values())
 
-    st.markdown(
-        f'<div class="variant-section-label" style="margin-top:.4rem;">IL KIT COMPLETO PER LA TUA CLASSE</div>'
-        f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:-.2rem 0 .7rem;">'
-        f'Tutto pronto a partire dalla stessa verifica: versioni, soluzioni e una scheda per allenarsi.</div>',
-        unsafe_allow_html=True
-    )
     _kit_pronti = _elementi_kit(arg_str, mat_str, vA, vB, vR, vS, vSC, st.session_state.get("_rubrica_docx"))
     _kit_mancanti = [k for k, presente in (
         ("B", vB.get("pdf") or vB.get("latex")), ("R", vR.get("pdf") or vR.get("latex")),
         ("S", vS.get("pdf") or vS.get("latex")), ("SC", vSC.get("pdf")),
     ) if not presente]
-    _kc1, _kc2 = st.columns(2, gap="small")
-    with _kc1:
-        if _pro_bloccato("zip"):
-            _pulsante_pro("zip", "pro_kit", "Prepara tutto il kit con Pro")
-        elif st.button("Prepara tutto il kit", icon=":material/auto_awesome:", key="kit_tutto",
-                     use_container_width=True, disabled=(not _kit_mancanti) or _kit_in_corso,
-                     help="Crea Fila B, BES/DSA, Soluzioni e scheda di allenamento, una dopo l'altra "
-                          "(circa un minuto). Quello che c'è già non si rifà."):
-            st.session_state["_kit_coda"] = [k for k in ("B", "R", "S", "SC") if k in _kit_mancanti]
-            st.rerun()
-    with _kc2:
-        if len(_kit_pronti) >= 2 and not _pro_bloccato("zip"):
-            _dl("Scarica tutto (ZIP)", data=lambda: _zip_kit(_kit_pronti),
-                file_name=_nome_base_file(mat_str, arg_str) + "_kit.zip", mime="application/zip",
-                icon=":material/folder_zip:", use_container_width=True, key="dl_kit_zip",
-                help="Tutti i documenti pronti in un solo file.")
-    if _kit_in_corso:
-        st.markdown(
-            f'<div role="status" style="margin:.6rem 0;padding:.7rem 1rem;border:1px solid {T["border2"]};'
-            f'border-radius:12px;background:{T["card"]};font-size:.9rem;color:{T["text2"]};'
-            f'font-family:DM Sans,sans-serif;">⏳ Sto preparando il kit'
-            + (f' (ancora {len(_coda_kit)} dopo questo passaggio)' if _coda_kit else '')
-            + '. Ci vuole circa un minuto: non toccare la pagina.</div>',
-            unsafe_allow_html=True
-        )
-    if _kit_pronti:
-        st.markdown(
-            f'<div style="font-size:.85rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.3rem 0 .6rem;">'
-            f'Pronti nel kit: <b>{_esc(" · ".join(e["etichetta"] for e in _kit_pronti))}</b></div>',
-            unsafe_allow_html=True
-        )
 
     # Una riga per documento (titolo + descrizione a sinistra, azione a destra), in due tendine:
-    # «Versioni della verifica» (aperta) e «Per la classe e la valutazione» (aperta durante la prima verifica, per i lampeggi).
+    # «Versioni della verifica», «Per la classe e la valutazione» e «Scarica tutti i file in una volta»: tutte chiuse
+    # (durante la prima verifica lampeggiano, vedi la guida). I segnaposto .g-kitN servono a farle lampeggiare.
     st.markdown('<div id="kit-completo"></div>', unsafe_allow_html=True)
-    _apri_g2 = bool(ENT.assaggio or vSC.get("pdf") or st.session_state.get("_gen_scheda") or st.session_state.get("_rubrica_gen"))
     _riga = lambda: st.columns([3.4, 1.6], vertical_alignment="center", gap="medium")
-    with st.expander("Versioni della verifica: soluzioni, Fila B, versione BES/DSA", expanded=True, icon=":material/file_copy:"):
+    with st.expander("Versioni della verifica: soluzioni, Fila B, versione BES/DSA", expanded=False, icon=":material/file_copy:"):
+        st.markdown('<span class="g-kit1" style="display:none"></span>', unsafe_allow_html=True)
         with st.container(border=True):
             _vc3, _vb3 = _riga()                  # Soluzioni
         with st.container(border=True):
@@ -4518,12 +4483,51 @@ def _render_stage_final():
             _vc5, _vb5 = st.container(key="word_nascosto_a"), st.container(key="word_nascosto_b")
         with st.container(border=True):
             _vc2, _vb2 = _riga()                  # BES/DSA
-    with st.expander("Per la classe e la valutazione: scheda di allenamento e griglia", expanded=_apri_g2,
+    with st.expander("Per la classe e la valutazione: scheda di allenamento e griglia", expanded=False,
                      icon=":material/groups:"):
+        st.markdown('<span class="g-kit2" style="display:none"></span>', unsafe_allow_html=True)
         with st.container(border=True):
             _vc6, _vb6 = _riga()                  # Scheda di allenamento
         with st.container(border=True):
             _vc4, _vb4 = _riga()                  # Griglia di valutazione
+    with st.expander("Scarica tutti i file in una volta", expanded=bool(_kit_in_corso), icon=":material/folder_zip:"):
+        st.markdown('<span class="g-kit3" style="display:none"></span>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:-.2rem 0 .7rem;">'
+            f'Crea in un colpo Fila B, BES/DSA, soluzioni e scheda di allenamento, poi scarica tutto in un unico file ZIP.</div>',
+            unsafe_allow_html=True
+        )
+        _kc1, _kc2 = st.columns(2, gap="small")
+        with _kc1:
+            if _pro_bloccato("zip"):
+                _pulsante_pro("zip", "pro_kit", "Prepara tutto il kit con il piano Pro")
+            elif st.button("Prepara tutto il kit", icon=":material/auto_awesome:", key="kit_tutto",
+                           use_container_width=True, disabled=(not _kit_mancanti) or _kit_in_corso,
+                           help="Crea Fila B, BES/DSA, Soluzioni e scheda di allenamento, una dopo l'altra "
+                                "(circa un minuto). Quello che c'è già non si rifà."):
+                st.session_state["_kit_coda"] = [k for k in ("B", "R", "S", "SC") if k in _kit_mancanti]
+                st.rerun()
+        with _kc2:
+            if len(_kit_pronti) >= 2 and not _pro_bloccato("zip"):
+                _dl("Scarica tutto (ZIP)", data=lambda: _zip_kit(_kit_pronti),
+                    file_name=_nome_base_file(mat_str, arg_str) + "_kit.zip", mime="application/zip",
+                    icon=":material/folder_zip:", use_container_width=True, key="dl_kit_zip",
+                    help="Tutti i documenti pronti in un solo file.")
+        if _kit_in_corso:
+            st.markdown(
+                f'<div role="status" style="margin:.6rem 0;padding:.7rem 1rem;border:1px solid {T["border2"]};'
+                f'border-radius:12px;background:{T["card"]};font-size:.9rem;color:{T["text2"]};'
+                f'font-family:DM Sans,sans-serif;">⏳ Sto preparando il kit'
+                + (f' (ancora {len(_coda_kit)} dopo questo passaggio)' if _coda_kit else '')
+                + '. Ci vuole circa un minuto: non toccare la pagina.</div>',
+                unsafe_allow_html=True
+            )
+        if _kit_pronti:
+            st.markdown(
+                f'<div style="font-size:.85rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.3rem 0 .6rem;">'
+                f'Pronti nel kit: <b>{_esc(" · ".join(e["etichetta"] for e in _kit_pronti))}</b></div>',
+                unsafe_allow_html=True
+            )
 
     # ── FILA B ────────────────────────────────────────────────────────────────
     with _vc1:
