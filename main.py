@@ -969,7 +969,7 @@ def _js_dettatura() -> str:
     'network': 'La dettatura ha bisogno di internet: controlla la connessione.',
     'language-not-supported': 'Lingua non supportata dal browser.'
   };
-  var rec = null, attivo = false, btn = null, ricevuto = false;
+  var rec = null, attivo = false, btn = null, ricevuto = false, timer = null;
   function area() { return D.querySelector('textarea[aria-label^="Cosa vuoi nella verifica"]'); }
   function stato(testo) {
     var box = area() && area().closest('[data-testid="stTextArea"]'); if (!box) return;
@@ -990,7 +990,16 @@ def _js_dettatura() -> str:
     btn.title = acceso ? 'Smetti di dettare' : 'Detta a voce';
     btn.setAttribute('aria-label', btn.title);
   }
+  function silenzio() {
+    // dopo qualche secondo senza parlato la dettatura si chiude da sola (e lo stato non resta «in ascolto»)
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      if (!attivo) return;
+      ferma(ricevuto ? '' : MESSAGGI['no-speech']);
+    }, ricevuto ? 3000 : 8000);
+  }
   function ferma(messaggio) {
+    clearTimeout(timer);
     attivo = false;
     try { if (rec) rec.stop(); } catch (e) {}
     colore(false);
@@ -1001,9 +1010,9 @@ def _js_dettatura() -> str:
   function parti() {
     var ta = area(); if (!ta) return;
     rec = new SR(); rec.lang = 'it-IT'; rec.continuous = true; rec.interimResults = true;
-    rec.onstart = function () { stato('Sto ascoltando: parla pure.'); };
+    rec.onstart = function () { stato('Sto ascoltando: parla pure.'); silenzio(); };
     rec.onresult = function (e) {
-      ricevuto = true;
+      ricevuto = true; silenzio();
       var provvisorio = '';
       for (var i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) scrivi(ta, e.results[i][0].transcript.trim());
@@ -1949,7 +1958,7 @@ def _render_le_tue_verifiche():
     st.markdown(
         f"""
         <div style="text-align:center;margin:.2rem 0 1rem;">
-            <div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;
+            <div class="vf-tp" style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;
                         letter-spacing:-.025em;color:{T['text']};line-height:1.15;">Le mie verifiche</div>
             <div style="font-size:.9rem;color:{T['text2']};font-family:DM Sans,sans-serif;margin-top:.35rem;">
                 Riapri, scarica o condividi le verifiche che hai creato.</div>
@@ -2924,7 +2933,7 @@ def _render_stage_input():
     # La schermata di creazione e' anche la home: titolo breve + form.
     st.markdown(
         f'<div class="vf-narrow" style="text-align:center;margin:.2rem 0 1.1rem;">'
-        f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
+        f'<div class="vf-tp" style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
         f'letter-spacing:-.025em;color:{T["text"]};line-height:1.15;">Crea la tua verifica</div>'
         f'<div style="font-size:.82rem;font-weight:400;color:{T["text2"]};margin-top:.3rem;'
         f'font-family:DM Sans,sans-serif;">Scrivi l’argomento: in un minuto la verifica è pronta.</div></div>',
@@ -3630,7 +3639,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 
     st.markdown(
         f'<div style="text-align:center;margin:.2rem 0 1rem;">'
-        f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
+        f'<div class="vf-tp" style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
         f'color:{T["text"]};letter-spacing:-.025em;line-height:1.15;">Modifica gli esercizi</div>'
         f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin-top:.35rem;">'
         f'{_esc(materia_str)} · {_esc(scuola_str)} · {_esc(argomento_str)} · {n_blocks} esercizi<br>'
@@ -4553,7 +4562,7 @@ def _render_stage_final():
     # ── Intestazione compatta ─────────────────────────────────────────────────
     st.markdown(
         f'<div style="text-align:center;margin:.2rem 0 1.1rem;">'
-        f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
+        f'<div class="vf-tp" style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
         f'color:{T["text"]};letter-spacing:-.025em;line-height:1.15;">'
         f'<span style="display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;'
         f'border-radius:50%;background:{T["success"]};color:#fff;font-size:1rem;margin-right:.55rem;'
