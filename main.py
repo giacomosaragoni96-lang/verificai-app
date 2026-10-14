@@ -972,45 +972,40 @@ def _guida_benvenuto(dove: str, slot) -> None:
         scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
         if not scritto:
             _riquadro("Regalo di benvenuto · Passo 1 di 2", "Scrivi l'argomento",
-                      "Nel riquadro qui sotto scrivi di cosa parla la verifica e, se vuoi, cosa includere o evitare.",
+                      "Scrivi nel riquadro di cosa parla la verifica e, se vuoi, cosa includere o evitare.",
                       ["argomento"], passi=(1, 2))
         else:
             chips = (('<span class="g-chip">✓ Logo caricato</span>' if _logo_scuola() else "") +
                      ('<span class="g-chip">✓ File caricato</span>' if st.session_state.get("_file_materiale") else ""))
             _riquadro("Regalo di benvenuto · Passo 2 di 2", "Ora crea la tua verifica",
-                      "Prima di premere «Crea verifica» puoi provare, in <b>«Altre opzioni»</b>, queste funzioni "
-                      "(gratis solo in questa prima verifica):",
+                      "In <b>«Altre opzioni»</b> puoi provare, gratis solo per questa verifica:",
                       ["opzioni", "crea", "storico"],
-                      voci=[("🏫", "Logo della scuola", "Compare nell'intestazione della verifica."),
-                            ("📎", "Un tuo file", "Appunti o una verifica già fatta: ne ricava una nuova, con dati diversi."),
-                            ("⚙️", "Esercizi e punteggi", "Scegli quanti esercizi e quanti punti totali.")],
-                      nota="Quando sei pronto premi <b>«Crea verifica»</b>: in circa un minuto è pronta. "
-                           "Le verifiche create le ritrovi sempre in <b>«Le mie verifiche»</b>, nella barra laterale: "
-                           "apri la barra con la freccia che <b>lampeggia</b> in alto a sinistra.",
+                      voci=[("🏫", "Logo della scuola", "Nell'intestazione della verifica."),
+                            ("📎", "Un tuo file", "Appunti o una verifica da rifare."),
+                            ("⚙️", "Esercizi e punteggi", "Quanti esercizi e quanti punti.")],
+                      nota="Poi premi <b>«Crea verifica»</b>. Le tue verifiche restano in <b>«Le mie verifiche»</b> (barra laterale: la freccia in alto a sinistra).",
                       chips=chips, passi=(2, 2))
     elif dove == "review":
         _riquadro("Regalo di benvenuto · Modifica", "Cambia gli esercizi come preferisci",
-                  "Ogni modifica rifà subito il PDF. Ecco cosa puoi fare:",
+                  "Ogni modifica rifà subito il PDF.",
                   ["modifica", "torna"],
-                  voci=[("🔎", "Scegli l'esercizio", "Scorri con le frecce ◀ ▶ oppure usa la tendina."),
-                        ("🎚️", "Più facile / Più difficile", "Cambia il livello mantenendo lo stesso argomento."),
-                        ("🔄", "Cambia i numeri / Cambia esercizio", "Stesso esercizio con dati nuovi, oppure uno completamente diverso."),
-                        ("➕", "Aggiungi o elimina", "Aggiungi un esercizio in fondo o togli quello che non ti serve.")],
-                  nota="Quando hai finito premi <b>«Fatto: torna al PDF»</b>.")
+                  voci=[("🔎", "Scegli l'esercizio", "Frecce ◀ ▶ o tendina."),
+                        ("🎚️", "Più facile / Più difficile", "Cambia il livello."),
+                        ("🔄", "Cambia i numeri / l'esercizio", "Dati nuovi o esercizio diverso."),
+                        ("➕", "Aggiungi o elimina", "In fondo, o togli quello che non serve.")],
+                  nota="Finito? Premi <b>«Fatto: torna al PDF»</b>.")
     else:
-        _riquadro("Regalo di benvenuto · La tua prima verifica", "Hai creato la tua prima verifica: prova tutte le funzioni del piano Pro!",
-                  "Finché è la prima hai tutto sbloccato: prova ciò che <b>lampeggia</b> in giallo. "
-                  "<b>Scorri in basso</b>, sotto l'anteprima: apri le tendine per trovare tutto e, in fondo, scarica tutti i file in un solo ZIP "
+        _riquadro("Regalo di benvenuto · La tua prima verifica", "Hai creato la tua prima verifica!",
+                  "Hai tutto sbloccato: prova ciò che <b>lampeggia</b>, scorrendo in basso "
                   '(<a href="#kit-completo" style="color:#fff;font-weight:700;white-space:nowrap;">vai al kit</a>).',
                   ["apri_modifica", "kit", "storico"],
-                  voci=[("⬇️", "Scarica il PDF", "Pronto per la stampa: il pulsante è qui sotto e sotto l'anteprima."),
-                        ("✏️", "Modifica gli esercizi", "Cambia, semplifica, aggiungi o togli esercizi."),
-                        ("📄", "Fila B", "Stessa verifica con dati diversi, contro la copiatura."),
-                        ("🧩", "Versione BES/DSA", "Più semplice, per chi ha un piano personalizzato."),
-                        ("✅", "Soluzioni", "Le risposte pronte, per correggere in fretta."),
-                        ("🎯", "Scheda di allenamento", "Circa 40 esercizi da dare alla classe prima.")],
-                  nota="La verifica è salvata in <b>«Le mie verifiche»</b> (barra laterale, freccia che lampeggia in alto a sinistra). "
-                       "Dalla prossima verifica queste funzioni restano solo con il piano Pro: provale adesso, finché sono gratis.")
+                  voci=[("⬇️", "Scarica il PDF", "Pronto per la stampa."),
+                        ("✏️", "Modifica gli esercizi", "Cambia, aggiungi o togli."),
+                        ("📄", "Fila B", "Dati diversi, contro la copiatura."),
+                        ("🧩", "Versione BES/DSA", "Più semplice, per i piani personalizzati."),
+                        ("✅", "Soluzioni", "Le risposte per correggere."),
+                        ("🎯", "Scheda di allenamento", "Circa 40 esercizi per la classe.")],
+                  nota="Salvata in <b>«Le mie verifiche»</b> (barra laterale). Dalla prossima verifica queste funzioni sono solo con il piano Pro.")
 
 
 def _html_voci(voci: list) -> str:
@@ -1035,21 +1030,21 @@ def _banner_piano(dove: str) -> None:
         _guida_benvenuto(dove, _slot)
         return
     if dove == "input":
-        _titolo = "Passa al piano Pro: esercizi più precisi e tutto il kit per la classe"
-        _voci = [("🎯", "Modello AI più accurato", "Esercizi più precisi e con meno errori."),
-                 ("📚", "Tutte le versioni", "Fila B, versione BES/DSA, soluzioni e scheda di allenamento."),
-                 ("🏫", "La tua scuola", "Il logo nell'intestazione e verifiche create da un tuo file.")]
+        _titolo = "Passa al piano Pro"
+        _voci = [("🎯", "Modello AI più accurato", "Esercizi più precisi."),
+                 ("📚", "Tutte le versioni", "Fila B, BES/DSA, soluzioni, scheda."),
+                 ("🏫", "La tua scuola", "Logo e verifiche da un tuo file.")]
     else:
-        _titolo = "Questa verifica può avere molto di più con il piano Pro"
-        _voci = [("🎯", "Modello AI più accurato", "Esercizi scritti con più precisione."),
-                 ("📚", "Fila B, BES/DSA e soluzioni", "Le versioni pronte per la classe e per la correzione."),
-                 ("📦", "Scheda di allenamento e kit", "Circa 40 esercizi e tutti i file in un solo ZIP.")]
+        _titolo = "Con il piano Pro questa verifica può avere di più"
+        _voci = [("🎯", "Modello AI più accurato", "Esercizi più precisi."),
+                 ("📚", "Fila B, BES/DSA, soluzioni", "Le versioni per la classe."),
+                 ("📦", "Scheda di allenamento e ZIP", "Circa 40 esercizi e tutti i file.")]
     with _slot.container(key=f"banner_piano_{dove}"):
         st.markdown(
             _CSS_BANNER_PIANO +
             f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">✨</span>Piano Pro · Per la tua classe</div>'
             f'<div class="g-t">{_titolo}</div>{_html_voci(_voci)}'
-            f'<div class="g-nota">{PREZZO_PRO_ANNUALE} € per l\'anno scolastico · un solo pagamento, senza rinnovi automatici.</div></div>',
+            f'<div class="g-nota">{PREZZO_PRO_ANNUALE} € per l\'anno scolastico, un solo pagamento.</div></div>',
             unsafe_allow_html=True,
         )
         if st.button("Scopri il piano Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
@@ -4486,9 +4481,6 @@ def _render_stage_final():
         unsafe_allow_html=True
     )
 
-    _st1, _st2, _st3 = st.columns([3, 2, 3])
-    _st2.button("Apri «Le mie verifiche»", key="apri_storico_final", type="tertiary", icon=":material/folder_open:",
-                on_click=_apri_storico, use_container_width=True, help="La verifica è già salvata: qui trovi tutte le tue verifiche.")
     _senza_grafico = esercizi_con_grafico_mancante(st.session_state.get("review_blocks", []))
     if _senza_grafico:
         st.warning(
@@ -5144,6 +5136,10 @@ def _render_stage_final():
             st.caption("Copia da qui il LaTeX se un grafico o l'impaginazione non vanno.")
             st.code(vA["latex"], language="latex")
 
+    # In fondo alla pagina: le verifiche salvate
+    _sf1, _sf2, _sf3 = st.columns([3, 2, 3])
+    _sf2.button("Apri «Le mie verifiche»", key="apri_storico_final", type="tertiary", icon=":material/folder_open:",
+                on_click=_apri_storico, use_container_width=True, help="La verifica è già salvata: qui trovi tutte le tue verifiche.")
     spazio("lg")
 
 
