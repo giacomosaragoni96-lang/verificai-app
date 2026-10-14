@@ -2473,6 +2473,9 @@ def _render_percorso_b_form(_prog_placeholder):
                       "Avvia la generazione AI della verifica. Potrai modificare ogni singolo esercizio prima di scaricare il PDF."),
             )
             st.markdown('</div>', unsafe_allow_html=True)
+            _sp1, _sp2, _sp3 = st.columns([3, 2, 3])
+            _sp2.button("Le mie verifiche", key="apri_storico_input", type="tertiary", icon=":material/folder_open:",
+                        on_click=_apri_storico, use_container_width=True, help="Ritrova le verifiche che hai già creato.")
 
             if _limite:
                 _render_limite_raggiunto(
@@ -2763,9 +2766,6 @@ def _render_stage_input():
         unsafe_allow_html=True,
     )
 
-    _sp1, _sp2, _sp3 = st.columns([3, 2, 3])
-    _sp2.button("Le mie verifiche", key="apri_storico_input", type="tertiary", icon=":material/folder_open:",
-                on_click=_apri_storico, use_container_width=True, help="Ritrova le verifiche che hai già creato.")
     _banner_piano("input")
 
     # In cima: attesa della generazione ed eventuale errore dell'ultimo tentativo
