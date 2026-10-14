@@ -797,39 +797,103 @@ html body .stApp [class*="st-key-banner_piano_"] button:hover { background:#EFF6
 """
 
 
-def _passi_benvenuto(dove: str) -> str:
-    """
-    HTML della guida passo passo per chi crea la prima verifica: i quattro passi con quello attuale in evidenza
-    (lo stato si legge da st.session_state, quindi la guida avanza da sola) e, nella pagina del risultato,
-    quali funzioni Pro ha già provato e quali restano.
-    """
-    voci = ["Scrivi l'argomento", "Premi «Crea verifica»", "Controlla e modifica", "Prova le funzioni Pro"]
-    extra = (("B", "Fila B"), ("S", "Soluzioni"), ("R", "BES/DSA"), ("SC", "Scheda di allenamento"))
-    provate, da_provare = [], []
+_PASSI_GUIDA = {
+    "input": [
+        {"id": "arg", "titolo": "Scrivi l'argomento",
+         "testo": "Nel riquadro scrivi di cosa parla la verifica e, se vuoi, cosa includere o evitare.",
+         "target": ".st-key-argomento_area_b textarea"},
+        {"id": "opz", "titolo": "Prova anche il logo e un tuo file",
+         "testo": "Apri «Altre opzioni»: puoi mettere il logo della tua scuola e partire da un tuo file (appunti o una verifica da rifare). "
+                  "Sono funzioni Pro, gratis solo in questa prima verifica.",
+         "target": '[data-testid="stExpander"]:has(.g-altre)'},
+        {"id": "crea", "titolo": "Crea la verifica",
+         "testo": "Premi «Crea verifica»: in circa un minuto è pronta.",
+         "target": ".st-key-genera_btn_b button"},
+    ],
+    "final": [
+        {"id": "mod", "titolo": "Controlla e modifica gli esercizi",
+         "testo": "Leggi la verifica: puoi cambiare un esercizio, aggiungerne o toglierne, e scaricare il PDF.",
+         "target": None},
+        {"id": "kit", "titolo": "Crea tutto il kit",
+         "testo": "Con «Prepara tutto il kit» ottieni Fila B, versione BES/DSA, soluzioni e scheda di allenamento. "
+                  "Sono gratis solo per questa verifica.",
+         "target": ".st-key-kit_tutto button"},
+        {"id": "zip", "titolo": "Scarica tutto in un solo file",
+         "testo": "«Scarica tutto (ZIP)» raccoglie la verifica e tutte le versioni create. È un'occasione unica: "
+                  "dalla prossima verifica Fila B, BES/DSA, soluzioni e scheda sono solo con Pro.",
+         "target": ".st-key-dl_kit_zip button"},
+    ],
+}
+
+_CSS_GUIDA = """
+<style>
+@keyframes gpulse { 0%,100% { box-shadow:0 0 0 0 rgba(245,158,11,0); } 50% { box-shadow:0 0 0 7px rgba(245,158,11,.6); } }
+</style>
+"""
+
+
+def _guida_vai(dove: str, i: int) -> None:
+    st.session_state["_guida_manuale"] = {"dove": dove, "i": i}
+
+
+def _guida_nascondi() -> None:
+    st.session_state["_guida_nascosta"] = True
+
+
+def _stato_guida(dove: str):
+    """(passo automatico, stati «fatto» per passo) secondo quello che l'utente ha già fatto."""
     if dove == "input":
-        attivo = 0 if not (st.session_state.get("argomento_area_b") or "").strip() else 1
+        scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
+        logo = bool(_logo_scuola())
+        file_ = bool(st.session_state.get("_file_materiale"))
+        fatti = [scritto, logo or file_, False]
+        auto = 0 if not scritto else 1
     else:
         v = st.session_state.get("verifiche") or {}
-        for k, nome in extra:
-            d = v.get(k) or {}
-            (provate if (d.get("pdf") or d.get("latex")) else da_provare).append(nome)
-        attivo = 3 if provate else 2
-    pezzi = []
-    for i, testo in enumerate(voci):
-        if i == attivo:
-            pezzi.append(f'<b style="color:#fff;background:rgba(255,255,255,.22);border-radius:6px;padding:1px 7px;">{i + 1}. {testo}</b>')
-        else:
-            segno = "✓ " if i < attivo else ""
-            pezzi.append(f'<span style="opacity:.7;">{segno}{i + 1}. {testo}</span>')
-    html = '<div style="margin-top:.45rem;line-height:1.9;">' + " &nbsp;›&nbsp; ".join(pezzi) + "</div>"
-    if dove == "final" and (provate or da_provare):
-        if da_provare:
-            html += ('<div style="margin-top:.15rem;">Da provare adesso, solo per questa prima verifica: <b>'
-                     + ", ".join(da_provare) + "</b>."
-                     + (f" Già fatte: {', '.join(provate)}." if provate else "") + "</div>")
-        else:
-            html += '<div style="margin-top:.15rem;">Hai provato tutto il kit: scarica i file che ti servono.</div>'
-    return html
+        extra = [bool((v.get(k) or {}).get("pdf") or (v.get(k) or {}).get("latex")) for k in ("B", "S", "R")]
+        extra.append(bool((v.get("SC") or {}).get("pdf")))
+        fatti = [False, sum(extra) >= 2, sum(extra) >= 4]
+        auto = 2 if sum(extra) >= 3 else (1 if any(extra) else 0)
+    return auto, fatti
+
+
+def _guida_benvenuto(dove: str, slot) -> None:
+    """
+    Guida a passi (a «slider») per chi crea la prima verifica, con tutte le funzioni Pro sbloccate: scrivere l'argomento,
+    provare logo e file, creare, modificare, creare il kit e scaricare lo ZIP. Il passo avanza da solo secondo quello che
+    l'utente fa; con ‹ › si può scorrere a mano. L'elemento da usare nel passo attuale pulsa in giallo.
+    """
+    passi = _PASSI_GUIDA[dove]
+    auto, fatti = _stato_guida(dove)
+    man = st.session_state.get("_guida_manuale")
+    i = man["i"] if (man and man.get("dove") == dove and 0 <= man["i"] < len(passi)) else auto
+    p = passi[i]
+    n_tot = len(_PASSI_GUIDA["input"]) + len(_PASSI_GUIDA["final"])
+    n_corr = i + 1 + (len(_PASSI_GUIDA["input"]) if dove == "final" else 0)
+    puntini = "".join(
+        f'<span style="display:inline-block;width:{18 if k == i else 7}px;height:7px;border-radius:4px;margin-right:4px;'
+        f'background:rgba(255,255,255,{1 if k == i else .4});"></span>' for k in range(len(passi)))
+    spunta = " ✓" if fatti[i] else ""
+    titolo = ("🎁 Regalo di benvenuto: la prima verifica è tutta Pro" if dove == "input"
+              else "🎁 Regalo di benvenuto: tutto il Pro su questa verifica")
+    st.markdown(_CSS_BANNER_PIANO + _CSS_GUIDA, unsafe_allow_html=True)
+    if p["target"]:
+        st.markdown(f"<style>html body .stApp {p['target']} {{animation:gpulse 1.5s ease-in-out infinite;border-radius:10px;}}</style>",
+                    unsafe_allow_html=True)
+    with slot.container(key=f"banner_piano_{dove}"):
+        st.markdown(
+            f'<div class="bp-wrap"><div class="bp-t">{titolo}</div>'
+            f'<div class="bp-s" style="margin-top:.35rem;"><span style="opacity:.8;">Passo {n_corr} di {n_tot}</span> &nbsp;{puntini}</div>'
+            f'<div class="bp-t" style="margin-top:.4rem;font-size:.95rem;">{p["titolo"]}{spunta}</div>'
+            f'<div class="bp-s">{p["testo"]}</div></div>',
+            unsafe_allow_html=True,
+        )
+        c1, c2, c3 = st.columns([1, 1, 2.2], gap="small")
+        c1.button("‹ Indietro", key=f"guida_prec_{dove}", disabled=(i == 0), on_click=_guida_vai, args=(dove, i - 1),
+                  use_container_width=True)
+        c2.button("Avanti ›", key=f"guida_succ_{dove}", disabled=(i == len(passi) - 1), on_click=_guida_vai, args=(dove, i + 1),
+                  use_container_width=True)
+        c3.button("Nascondi la guida", key=f"guida_nascondi_{dove}", on_click=_guida_nascondi, type="tertiary")
 
 
 def _banner_piano(dove: str) -> None:
@@ -843,17 +907,18 @@ def _banner_piano(dove: str) -> None:
     if not MONETIZZAZIONE_ATTIVA or (_is_admin and not _SIM) or ENT.piano != "free":
         _slot.empty()
         return
+    if ENT.assaggio and not st.session_state.get("_guida_nascosta"):
+        _guida_benvenuto(dove, _slot)
+        return
     if ENT.assaggio:
         if dove == "input":
             _titolo = "🎁 Regalo di benvenuto: la prima verifica è tutta Pro"
             _testo = ("Usi il modello migliore e puoi creare tutto: Fila B, BES/DSA, soluzioni, griglia, scheda, logo. "
-                      "Dalla seconda: modello più veloce (può sbagliare) e funzioni extra solo con Pro."
-                      + _passi_benvenuto("input"))
+                      "Dalla seconda: modello più veloce (può sbagliare) e funzioni extra solo con Pro.")
         else:
             _titolo = "🎁 Regalo di benvenuto: hai tutto il Pro su questa verifica"
             _testo = ("Crea ora Fila B, BES/DSA, soluzioni, griglia e scheda. "
-                      "Dalla prossima verifica restano solo con Pro."
-                      + _passi_benvenuto("final"))
+                      "Dalla prossima verifica restano solo con Pro.")
     else:
         _titolo = "Passa al piano Pro"
         _testo = ("Esercizi scritti dal modello AI più accurato e, per ogni verifica, il kit completo per la classe: "
@@ -2109,6 +2174,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 st.warning(_rifiuto.get("messaggio") or "Questo file non sembra materiale scolastico.", icon="📎")
             _fm = st.session_state.get("_file_materiale")
             with st.expander("Altre opzioni (lunghezza, materiale, punteggi, logo)", expanded=bool(_fm), icon=":material/tune:"):
+                st.markdown('<span class="g-altre" style="display:none"></span>', unsafe_allow_html=True)
                 # ── DURATA: un solo scatto sceglie numero di esercizi e tempo previsto ──────
                 _nomi_dur = list(DURATE)
                 # Si parte sempre da «Standard»: la lunghezza cambia da verifica a verifica,
