@@ -62,6 +62,23 @@ def separa_argomento_e_note(testo: str, max_argomento: int = 120) -> tuple:
 _logger = logging.getLogger("verificai.ui")
 
 
+def spazio(livello: str = "md") -> None:
+    """Spazio verticale preso dalla scala di config.SPAZIO_REM (xs, sm, md, lg, xl, xxl)."""
+    from config import SPAZIO_REM
+    rem = SPAZIO_REM.get(livello, SPAZIO_REM["md"])
+    st.markdown(f"<div style='height:{rem}rem'></div>", unsafe_allow_html=True)
+
+
+def messaggio(tipo: str, testo: str, icon: str | None = None) -> None:
+    """Un solo modo di mostrare un messaggio fisso: tipo = errore | avviso | ok | info."""
+    {"errore": st.error, "avviso": st.warning, "ok": st.success}.get(tipo, st.info)(testo, icon=icon)
+
+
+def _esc(valore) -> str:
+    """Escape per ogni testo (titolo, materia, scuola…) inserito in HTML con unsafe_allow_html."""
+    return html_lib.escape("" if valore is None else str(valore), quote=True)
+
+
 def _messaggio_errore(exc) -> str:
     """Traduce un'eccezione (o un testo di errore) in una frase per il docente."""
     t = str(exc).lower() if exc is not None else ""
@@ -154,16 +171,23 @@ def _render_limite_raggiunto(
     text_color: str | None = None,
 ) -> None:
     """Messaggio unico mostrato quando il limite mensile è esaurito (sidebar e form)."""
-    err = T.get("error", "#EF4444")
+    # Non è un errore ma un limite normale: tono neutro (colore d'accento), non rosso
+    acc = T.get("accent", "#2563EB")
     testo = text_color or T.get("text", "#1F2937")
+    _mesi = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio",
+             "agosto", "settembre", "ottobre", "novembre", "dicembre"]
+    from datetime import datetime, timezone
+    _ora = datetime.now(timezone.utc)
+    _prossimo = _mesi[_ora.month % 12]
     st.markdown(
-        f'<div style="background:{err}18;border:1px solid {err}44;border-radius:10px;'
-        f'padding:.7rem .9rem;margin:.5rem 0;font-size:.82rem;color:{testo};'
-        f'font-family:DM Sans,sans-serif;line-height:1.5;">'
-        f'<b>Hai usato le {limite} verifiche gratuite di questo mese.</b><br/>'
-        f'{reset_str}. Ti servono più verifiche? '
-        f'<a href="{contatto_url}" target="_blank" rel="noopener" '
-        f'style="color:{err};font-weight:700;">Scrivici</a>.'
+        f'<div role="status" style="background:{acc}14;border:1px solid {acc}55;border-radius:10px;'
+        f'padding:.8rem .95rem;margin:.5rem 0;font-size:.88rem;color:{testo};'
+        f'font-family:DM Sans,sans-serif;line-height:1.55;">'
+        f'<b>Hai usato le {limite} verifiche di questo mese.</b><br/>'
+        f'Tornano a disposizione il 1° {_prossimo} ({reset_str.lower()}).<br/>'
+        f'<a href="{html_lib.escape(contatto_url, quote=True)}" target="_blank" rel="noopener" '
+        f'style="display:inline-block;margin-top:.45rem;color:{acc};font-weight:700;">'
+        f'Chiedi più verifiche →</a>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -201,84 +225,151 @@ def _render_back_button(
 #  KATEX HTML RENDERER
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _make_katex_html(title: str, body: str, T: dict) -> str:
+_RE_MATEMATICA = re.compile(
+    r"\$\$.*?\$\$|\$[^$]+?\$|\\\[.*?\\\]|\\\(.*?\\\)", re.DOTALL,
+)
+
+
+def _spec_elenco(spec: str) -> str:
+    """
+    Da 'a)', '(a)', 'label=\\alph*)', 'A.', 'i)', '1.' … ricava la numerazione di un enumerate
+    e restituisce il tag <ol> con prefisso, tipo e suffisso (stessa etichetta del PDF).
+    """
+    s = (spec or "").strip()
+    s = re.sub(r"^label\s*=\s*", "", s)
+    s = s.replace("\\textup{", "").replace("\\textbf{", "").replace("}", "")
+    m = re.search(r"\\alph\*|\\Alph\*|\\roman\*|\\Roman\*|\\arabic\*|[aAiI1]", s)
+    if not m:
+        return '<ol class="lt" style="--t:decimal;--p:\'\';--s:\'.\'">'
+    tok = m.group(0)
+    tipo = {
+        "\\alph*": "lower-alpha", "a": "lower-alpha",
+        "\\Alph*": "upper-alpha", "A": "upper-alpha",
+        "\\roman*": "lower-roman", "i": "lower-roman",
+        "\\Roman*": "upper-roman", "I": "upper-roman",
+        "\\arabic*": "decimal", "1": "decimal",
+    }[tok]
+    pre = s[:m.start()].replace("'", "")
+    suf = s[m.end():].replace("'", "")
+    return f'<ol class="lt" style="--t:{tipo};--p:\'{pre}\';--s:\'{suf}\'">'
+
+
+def _tabella_html(m) -> str:
+    """tabular → <table> (solo il necessario per capire la struttura)."""
+    corpo = re.sub(r"\\(?:hline|cline\{[^}]*\})", "", m.group(1))
+    righe = [r for r in re.split(r"\\\\", corpo) if r.strip()]
+    out = ["<table>"]
+    for r in righe:
+        celle = "".join(f"<td>{c.strip()}</td>" for c in r.split("&"))
+        out.append(f"<tr>{celle}</tr>")
+    out.append("</table>")
+    return "".join(out)
+
+
+def _latex_a_html(body: str) -> str:
+    """
+    LaTeX di un esercizio → HTML per l'anteprima (le formule le disegna KaTeX).
+    Le zone matematiche ($…$, \\[…\\], ambienti align…) vengono messe da parte prima di
+    toccare il testo e rimesse intatte alla fine: \\frac, \\sqrt, \\mathbb non vanno mai
+    trattati come comandi di testo.
+    """
     t = body
 
-    # 0. Rimuovi commenti LaTeX (% ... fino a fine riga)
-    t = re.sub(r'(?<![%])%[^\n\r]*', '', t)
+    # 0. Commenti LaTeX (% … fino a fine riga), ma non \%
+    t = re.sub(r"(?<!\\)%[^\n\r]*", "", t)
     t = re.sub(
-        r'\\includegraphics(?:\[[^\]]*\])?\{[^}]*\}',
+        r"\\includegraphics(?:\[[^\]]*\])?\{[^}]*\}",
         '<div class="graph-ph">🖼 Immagine — visibile nel PDF finale</div>',
         t,
     )
 
-    # 1. TikZ → placeholder
+    # 1. TikZ → segnaposto
     t = re.sub(
         r"\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}",
-        '<div class="graph-ph">📊 Grafico TikZ — visibile nel PDF finale</div>',
+        '<div class="graph-ph">📊 Grafico — visibile nel PDF finale</div>',
         t, flags=re.DOTALL,
     )
     t = re.sub(r"\\begin\{axis\}.*?\\end\{axis\}", "", t, flags=re.DOTALL)
     t = re.sub(
         r"\\begin\{pgfpicture\}.*?\\end\{pgfpicture\}",
-        '<div class="graph-ph">📊 Grafico pgf — visibile nel PDF finale</div>',
+        '<div class="graph-ph">📊 Grafico — visibile nel PDF finale</div>',
         t, flags=re.DOTALL,
     )
 
-    # 2. Display math \[...\] → $$...$$
-    t = re.sub(r"\\\[(.*?)\\\]", r"$$\1$$", t, flags=re.DOTALL)
+    # 2. Matematica: ambienti display → $$…$$, poi tutte le zone messe da parte
     t = re.sub(
         r"\\begin\{(align\*?|equation\*?|gather\*?|multline\*?)\}(.*?)\\end\{\1\}",
-        r"$$\2$$", t, flags=re.DOTALL,
+        lambda m: "$$" + m.group(2) + "$$", t, flags=re.DOTALL,
     )
+    zone: list = []
 
-    # 3. Liste
-    t = re.sub(r"\\begin\{enumerate\}(\[[^\]]*\])?\s*", "<ol>", t)
+    def _metti_da_parte(m):
+        z = m.group(0)
+        if z.startswith("\\["):
+            z = "$$" + z[2:-2] + "$$"
+        elif z.startswith("\\("):
+            z = "$" + z[2:-2] + "$"
+        zone.append(z)
+        return f"§§M{len(zone) - 1}§§"
+
+    t = _RE_MATEMATICA.sub(_metti_da_parte, t)
+
+    # 3. Liste: la numerazione segue l'etichetta scelta (a), 1., i) …) come nel PDF
+    t = re.sub(r"\\begin\{enumerate\}\s*(?:\[([^\]]*)\])?\s*",
+               lambda m: _spec_elenco(m.group(1)), t)
     t = re.sub(r"\\end\{enumerate\}", "</ol>", t)
-    t = re.sub(r"\\begin\{itemize\}\s*", "<ul>", t)
+    t = re.sub(r"\\begin\{itemize\}\s*(?:\[[^\]]*\])?\s*", "<ul>", t)
     t = re.sub(r"\\end\{itemize\}", "</ul>", t)
-    t = re.sub(r"\\item\[([^\]]+)\]\s*", r'<li><span class="lbl">\1</span>&ensp;', t)
+    t = re.sub(r"\\item\[([^\]]+)\]\s*", r'<li class="e"><span class="lbl">\1</span>&ensp;', t)
     t = re.sub(r"\\item\s*", "<li>", t)
 
-    # 4. Formattazione testo
+    # 4. Tabelle
+    t = re.sub(r"\\begin\{tabular\}(?:\{[^}]*\})?(.*?)\\end\{tabular\}", _tabella_html, t,
+               flags=re.DOTALL)
+
+    # 5. Formattazione testo
     t = re.sub(r"\\textbf\{([^}]*)\}", r"<strong>\1</strong>", t)
     t = re.sub(r"\\textit\{([^}]*)\}", r"<em>\1</em>", t)
     t = re.sub(r"\\emph\{([^}]*)\}", r"<em>\1</em>", t)
+    t = re.sub(r"\\underline\{\\hspace\*?\{[^}]*\}\}", '<span class="blank">&nbsp;</span>', t)
     t = re.sub(r"\\underline\{([^}]*)\}", r"<u>\1</u>", t)
 
-    # 5. Spazi e riempitivi
-    t = re.sub(
-        r"\\underline\{\\hspace\{[^}]*\}\}",
-        '<span class="blank">___________</span>',
-        t,
-    )
+    # 6. Spazi e riempitivi
     t = re.sub(r"\\hspace\*?\{[^}]*\}", "&ensp;&ensp;", t)
     t = re.sub(r"\\vspace\*?\{[^}]*\}", "<br>", t)
-    t = re.sub(r"\\\\", "<br>", t)
+    t = re.sub(r"\\\\(?:\[[^\]]*\])?", "<br>", t)
     t = re.sub(r"\\newline\b", "<br>", t)
 
-    # 6. Comandi comuni
+    # 7. Comandi comuni
     t = re.sub(r"\\noindent\s*", "", t)
-    t = re.sub(r"\\quad\b", "&emsp;", t)
     t = re.sub(r"\\qquad\b", "&emsp;&emsp;", t)
+    t = re.sub(r"\\quad\b", "&emsp;", t)
     t = re.sub(r"\\ldots\b|\\dots\b", "…", t)
     t = re.sub(r"\\newpage\b|\\clearpage\b", "<hr>", t)
     t = re.sub(r"\\medskip\b|\\bigskip\b", "<br>", t)
     t = re.sub(r"\\smallskip\b", "", t)
+    t = re.sub(r"\\([%&#_{}])", r"\1", t)          # \% \& \# \_ \{ \} → carattere
 
-    # 7. Rimuovi \begin/\end non-math residui
-    math_envs = r"(math|equation|align|gather|multline|pmatrix|bmatrix|vmatrix|cases)"
-    t = re.sub(r"\\begin\{(?!" + math_envs + r")[^}]*\}", "", t)
-    t = re.sub(r"\\end\{(?!"  + math_envs + r")[^}]*\}", "", t)
+    # 8. \begin/\end residui (fuori dalla matematica)
+    t = re.sub(r"\\begin\{[^}]*\}", "", t)
+    t = re.sub(r"\\end\{[^}]*\}", "", t)
 
-    # 8. Comandi LaTeX generici con argomento
+    # 9. Comandi di testo generici con argomento: resta l'argomento
     t = re.sub(r"\\(?:small|large|Large|huge|Huge|normalsize|centering)\b", "", t)
-    t = re.sub(r"\\[a-zA-Z]+\*?\{([^}$]{0,80})\}", r"\1", t)
+    t = re.sub(r"\\[a-zA-Z]+\*?\{([^}$§]{0,80})\}", r"\1", t)
 
-    # 9. Paragrafi - mantieni la separazione tra paragrafi
-    t = re.sub(r"\n\n+", "</p><p>", t)  # Converti doppi newline in separatori paragrafo
-    t = re.sub(r"\n", "<br>", t)        # Converti singoli newline in break
-    t = re.sub(r"\s{3,}", " ", t)       # Rimuovi spazi multipli
+    # 10. Paragrafi
+    t = re.sub(r"\n\n+", "</p><p>", t)
+    t = re.sub(r"\n", "<br>", t)
+    t = re.sub(r"[ \t]{3,}", " ", t)
+
+    # 11. Rimette le formule al loro posto, intatte (il $ e il resto li gestisce KaTeX)
+    t = re.sub(r"§§M(\d+)§§", lambda m: html_lib.escape(zone[int(m.group(1))], quote=False), t)
+    return t
+
+
+def _make_katex_html(title: str, body: str, T: dict) -> str:
+    t = _latex_a_html(body)
 
     safe_title = html_lib.escape(title)
     bg    = T["bg2"]
@@ -308,6 +399,13 @@ def _make_katex_html(title: str, body: str, T: dict) -> str:
         ".b{padding:2px 10px}"
         "ol,ul{padding-left:1.5em;margin:6px 0}"
         "li{margin:5px 0}"
+        "ol.lt{list-style:none;counter-reset:c;padding-left:0}"
+        "ol.lt>li{counter-increment:c;position:relative;padding-left:2em}"
+        "ol.lt>li::before{content:var(--p) counter(c,var(--t)) var(--s);position:absolute;"
+        "left:0;font-weight:700;color:" + acc + "}"
+        "ol.lt>li.e{padding-left:0}ol.lt>li.e::before{content:none}"
+        "table{border-collapse:collapse;margin:8px 0}"
+        "td{border:1px solid " + bdr + ";padding:3px 10px}"
         ".lbl{font-weight:700;color:" + acc + "}"
         ".blank{display:inline-block;border-bottom:1.5px solid " + fg2 + ";"
         "min-width:110px;margin:0 3px}"
