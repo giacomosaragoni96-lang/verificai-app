@@ -2301,6 +2301,18 @@ def inserisci_logo(latex: str, tipo: str, b64: str, scala: float = 1.0) -> str:
                           f"{{\\large {argomento.strip()}}}")
             else:
                 titolo = f"\\textbf{{\\Large {m.group(1)}}}"
+            if tipo == "piccolo" and _prop is not None:
+                # Simbolo da solo: il titolo gli sta accanto (a sinistra, con un po' d'aria), non
+                # tutto a destra: con un logo piccolo si aprirebbe un buco in mezzo alla riga.
+                larg_cm = min(h * _prop, w * 18)
+                return (
+                    f"\\noindent\\begin{{minipage}}[c]{{{larg_cm:.2f}cm}}"
+                    f"\\raggedright\\includegraphics[width=\\linewidth,height={h}cm,keepaspectratio]"
+                    f"{{logo_scuola.png}}\\end{{minipage}}\\hspace{{0.7cm}}"
+                    f"\\begin{{minipage}}[c]{{\\dimexpr\\linewidth-{larg_cm:.2f}cm-0.7cm\\relax}}\\raggedright"
+                    f"{titolo}\\end{{minipage}}\\par\\vspace{{0.3cm}}\n"
+                    f"\\begin{{center}}"
+                )
             return (
                 f"\\noindent\\begin{{minipage}}[c]{{{w:.3f}\\linewidth}}"
                 f"\\raggedright\\includegraphics[width=\\linewidth,height={h}cm,keepaspectratio]"
