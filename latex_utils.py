@@ -1703,16 +1703,22 @@ def riscala_punti_custom(latex: str, pts_per_esercizio: list) -> str:
     return preamble + ''.join(result)
 
 
-def inietta_griglia(latex: str, punti_totali: int) -> str:
-    # Rimuovi griglia preesistente
+def rimuovi_griglia(latex: str) -> str:
+    """Toglie la tabella dei punteggi (anche se l'AI ha perso il commento % GRIGLIA)."""
     latex = re.sub(
         r'(\\vspace\{[^}]+\}\s*)?% GRIGLIA.*?\\end\{center\}',
         '', latex, flags=re.DOTALL
     )
     latex = re.sub(
-        r'(\\vspace\{[^}]+\}\s*)?\\begin\{center\}\s*\\textbf\{Griglia[^}]*\}.*?\\end\{center\}',
+        r'(\\vspace\{[^}]+\}\s*)?\\begin\{center\}\s*\\textbf\{(?:Griglia|Tabella Punteggi)[^}]*\}.*?\\end\{center\}',
         '', latex, flags=re.DOTALL
     )
+    return latex
+
+
+def inietta_griglia(latex: str, punti_totali: int) -> str:
+    # Rimuovi griglia preesistente
+    latex = rimuovi_griglia(latex)
 
     esercizi = parse_esercizi(latex)
     if not esercizi:
