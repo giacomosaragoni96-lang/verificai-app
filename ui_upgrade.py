@@ -66,6 +66,17 @@ def render_upgrade(on_back, funzione: str | None = None, assaggio_usato: bool = 
 
     st.markdown(f"**{PREZZO_PRO_ANNUALE} € per l'anno scolastico**, pagamento unico. Niente rinnovi automatici.")
 
+    _vantaggi = (
+        "**Modello AI più accurato**: esercizi più precisi e con meno errori.",
+        "**Fila B**: la stessa verifica con dati diversi, contro la copiatura.",
+        "**Versione BES/DSA**: una versione ridotta e semplificata per gli studenti con piano personalizzato.",
+        "**Soluzioni**: le risposte pronte per correggere più in fretta.",
+        "**File Word e griglia di valutazione**: per modificare la verifica a mano e valutare con criteri chiari.",
+        "**Scheda di allenamento**: circa 40 esercizi per prepararsi prima della verifica.",
+        "**Logo della scuola** nell'intestazione, anche sulla Fila B.",
+    )
+    st.markdown("**Cosa ottieni con Pro**\n\n" + "\n".join(f"- {v}" for v in _vantaggi))
+
     righe = "| | Free | Pro |\n|---|---|---|\n" + "\n".join(f"| {a} | {b} | {c} |" for a, b, c in _CONFRONTO)
     st.markdown(righe)
 

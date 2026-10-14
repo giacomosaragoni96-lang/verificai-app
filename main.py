@@ -757,12 +757,13 @@ html body .stApp .bp-box .bp-s {
   font-family:'DM Sans',sans-serif; font-size:.8rem; line-height:1.4; color:rgba(255,255,255,.92); margin-top:.15rem;
 }
 /* spazio riservato in fondo alla striscia: ci sta sopra il pulsante (posizionato in modo assoluto) */
-html body .stApp .bp-box .bp-spazio { height:2.1rem; }
+html body .stApp .bp-box .bp-spazio { height:3rem; }
 html body .stApp [class*="st-key-banner_pro_"] { position:absolute !important; left:.9rem; bottom:.6rem; width:auto !important; }
 html body .stApp [class*="st-key-banner_pro_"] button {
   background:#fff !important; border:0 !important; border-radius:8px !important; min-height:0 !important;
-  padding:.2rem .8rem !important; width:auto !important;
+  padding:.2rem .8rem !important; width:auto !important; height:auto !important; line-height:1.2 !important;
 }
+html body .stApp [class*="st-key-banner_pro_"] button p { margin:0 !important; line-height:1.2 !important; }
 html body .stApp [class*="st-key-banner_pro_"] button p,
 html body .stApp [class*="st-key-banner_pro_"] button span { color:#1D4ED8 !important; font-weight:700 !important; font-size:.82rem !important; }
 html body .stApp [class*="st-key-banner_pro_"] button:hover { background:#EFF6FF !important; }
@@ -792,9 +793,11 @@ def _banner_piano(dove: str) -> None:
         _spazio = ""
     else:
         _titolo = "Passa al piano Pro"
-        _testo = ("Esercizi con il modello migliore e tutto il kit: Fila B, BES/DSA, soluzioni, Word, griglia, scheda, logo."
+        _testo = ("Esercizi scritti dal modello AI più accurato e, per ogni verifica, il kit completo per la classe: "
+                  "Fila B, versione BES/DSA, soluzioni, Word, griglia di valutazione, scheda di allenamento e logo della scuola."
                   if dove == "input" else
-                  "Per avere il modello migliore e tutto il kit: Fila B, BES/DSA, soluzioni, Word, griglia, scheda.")
+                  "Con Pro questa verifica può avere anche Fila B, versione BES/DSA, soluzioni, Word, griglia, "
+                  "scheda di allenamento, e gli esercizi sono scritti dal modello AI più accurato.")
         _spazio = '<div class="bp-spazio"></div>'
     with st.container(key=f"banner_piano_{dove}"):
         st.markdown(
