@@ -2455,9 +2455,6 @@ def _render_percorso_b_form(_prog_placeholder):
                         "Carica il logo della tua scuola (PNG o JPG)", type=["png", "jpg", "jpeg"],
                         key="logo_up_b", help="Si salva sul tuo account: lo carichi una volta sola.",
                     )
-                    st.caption("Meglio un'immagine nitida (almeno 600 px di larghezza) con sfondo bianco o "
-                               "trasparente. Margini e formato (largo o piccolo) li sistema da solo il programma; "
-                               "dopo il caricamento vedi subito l'anteprima dell'intestazione.")
                     if _logo_up is not None:
                         _esito_logo = _prepara_logo(_logo_up.getvalue())
                         if _esito_logo:
@@ -2774,10 +2771,10 @@ def _render_stage_input():
         unsafe_allow_html=True,
     )
 
+    # In cima, sopra il riquadro di benvenuto: attesa della generazione ed eventuale errore dell'ultimo tentativo
+    _prog_ph_b = st.empty()
     _banner_piano("input")
 
-    # In cima: attesa della generazione ed eventuale errore dell'ultimo tentativo
-    _prog_ph_b = st.empty()
     _esito = st.session_state.pop("_esito_gen", None)
     if _esito:
         with _prog_ph_b.container():
