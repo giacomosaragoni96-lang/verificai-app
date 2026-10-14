@@ -1088,13 +1088,12 @@ _on_landing = (st.session_state.stage == STAGE_INPUT)   # la creazione è anche 
 
 # ── HEADER UNIFICATO — il marchio VerificAI è su ogni pagina (più grande nella schermata di creazione) ──
 _LOGO_SVG = (
-    '<svg class="site-header-svg" viewBox="0 0 48 48" aria-hidden="true">'
-    '<defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3B82F6"/>'
-    '<stop offset="1" stop-color="#1D4ED8"/></linearGradient></defs>'
-    '<rect width="48" height="48" rx="12" fill="url(#vg)"/>'
-    '<path d="M14 11h14l8 8v17a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V13a2 2 0 0 1 2-2z" fill="#fff" fill-opacity=".96"/>'
-    '<path d="M28 11v8h8z" fill="#BFDBFE"/>'
-    '<path d="M17 29l4.2 4.2L31 23" stroke="#1D4ED8" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+    '<svg class="site-header-svg" viewBox="0 0 64 64" aria-hidden="true">'
+    '<defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366F1"/>'
+    '<stop offset="1" stop-color="#2563EB"/></linearGradient></defs>'
+    '<rect x="2" y="2" width="60" height="60" rx="18" fill="url(#vg)"/>'
+    '<path d="M16 34l11 11 21-25" stroke="#fff" stroke-width="7.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+    '<path d="M49 7l2.3 6 6 2.3-6 2.3L49 23.6l-2.3-6-6-2.3 6-2.3z" fill="#FCD34D"/>'
     '</svg>'
 )
 st.markdown(
@@ -2692,10 +2691,10 @@ def _lancia_generazione(
 def _render_stage_input():
     # La schermata di creazione e' anche la home: titolo breve + form.
     st.markdown(
-        f'<div class="vf-narrow" style="text-align:center;padding:0 0 .2rem;">'
-        f'<div style="font-family:DM Sans,sans-serif;font-size:1.55rem;font-weight:800;'
-        f'letter-spacing:-.02em;color:{T["text"]};line-height:1.15;">Crea la tua verifica</div>'
-        f'<div style="font-size:.84rem;font-weight:400;color:{T["text2"]};margin-top:.15rem;'
+        f'<div class="vf-narrow" style="text-align:center;margin:.2rem 0 1.1rem;">'
+        f'<div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
+        f'letter-spacing:-.025em;color:{T["text"]};line-height:1.15;">Crea la tua verifica</div>'
+        f'<div style="font-size:.9rem;font-weight:400;color:{T["text2"]};margin-top:.35rem;'
         f'font-family:DM Sans,sans-serif;">Scrivi l’argomento: in un minuto la verifica è pronta.</div></div>',
         unsafe_allow_html=True,
     )
