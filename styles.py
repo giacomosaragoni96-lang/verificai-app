@@ -3974,8 +3974,8 @@ font-family: 'DM Sans', sans-serif;
     /* ── Container: padding laterale ridotto ─────────────────────────── */
     .main .block-container,
     .block-container {{
-      padding-left: 0.65rem !important;
-      padding-right: 0.65rem !important;
+      padding-left: 1.1rem !important;
+      padding-right: 1.1rem !important;
       padding-top: 0.8rem !important;
       padding-bottom: 2rem !important;
       max-width: 100% !important;
@@ -4049,6 +4049,7 @@ font-family: 'DM Sans', sans-serif;
     /* ── Site header (logo landing) ──────────────────────────────────── */
     .site-header {{ padding: 0.6rem 0.8rem; }}
     .site-header-name {{ font-size: 3.1rem !important; }}
+    .vf-tp {{ font-size: 1.4rem !important; }}
 
     /* ── Telefono: Feedback solo nel footer (l'icona fluttuante copriva i campi); frecce degli esercizi sulla stessa riga ── */
     .fab-link {{ display: none !important; }}
@@ -4087,8 +4088,8 @@ font-family: 'DM Sans', sans-serif;
     /* ── Padding ultra-compatto ──────────────────────────────────────── */
     .main .block-container,
     .block-container {{
-      padding-left: 0.4rem !important;
-      padding-right: 0.4rem !important;
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
     }}
 
     /* ── Landing headline ancora più piccola ─────────────────────────── */
@@ -4705,7 +4706,7 @@ font-family: 'DM Sans', sans-serif;
   .st-key-arg_blocco {{ gap: .45rem !important; }}
   .st-key-arg_blocco .vf-tip {{ margin: .35rem 0 0; }}
   .st-key-arg_blocco .opt-label {{ margin-bottom: 0 !important; }}
-  .vf-mic-stato {{ font-family: 'DM Sans', sans-serif; font-size: .82rem; color: {T['text2']}; margin: -.35rem 0 .3rem; min-height: 0; }}
+  .vf-mic-stato {{ font-family: 'DM Sans', sans-serif; font-size: .82rem; color: {T['text2']}; margin: .3rem 0 .3rem; min-height: 0; }}
   .vf-mic-stato:empty {{ display: none; }}
 
   /* Caricamento file: testi di Streamlit in italiano */
