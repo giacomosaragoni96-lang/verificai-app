@@ -812,29 +812,30 @@ html body .stApp [class*="st-key-banner_piano_"] .g-chip {
 html body .stApp [class*="st-key-banner_piano_"] .g-pun { display:inline-flex; gap:5px; margin-left:auto; }
 html body .stApp [class*="st-key-banner_piano_"] .g-pun i { display:block; width:18px; height:4px; border-radius:3px; background:rgba(255,255,255,.3); }
 html body .stApp [class*="st-key-banner_piano_"] .g-pun i.on { background:#FCD34D; }
-/* pulsante «Scopri il piano Pro»: oro caldo con riflesso, spicca sul blu e invita al clic */
-html body .stApp [class*="st-key-banner_piano_"] button {
+/* pulsante «Scopri il piano Pro»: oro caldo con riflesso. Il selettore è lungo apposta: deve battere gli stili globali dei pulsanti */
+html body .stApp [class*="st-key-banner_piano_"] [data-testid="stButton"] button[data-testid^="stBaseButton"] {
   position:relative !important; overflow:hidden !important;
-  background:linear-gradient(135deg,#FDE68A 0%,#FBBF24 55%,#F59E0B 100%) !important; border:0 !important; border-radius:999px !important;
-  min-height:0 !important; height:auto !important; padding:.6rem 1.5rem !important; width:auto !important;
-  box-shadow:0 10px 22px rgba(245,158,11,.38), inset 0 1px 0 rgba(255,255,255,.55) !important;
+  background:linear-gradient(135deg,#FDE68A 0%,#FBBF24 55%,#F59E0B 100%) !important; background-color:#FBBF24 !important;
+  border:0 !important; border-radius:999px !important;
+  min-height:0 !important; height:auto !important; padding:.65rem 1.7rem !important; width:auto !important;
+  box-shadow:0 10px 22px rgba(245,158,11,.40), inset 0 1px 0 rgba(255,255,255,.6) !important;
   transition:transform .15s ease, box-shadow .15s ease, filter .15s ease !important;
 }
-html body .stApp [class*="st-key-banner_piano_"] button p,
-html body .stApp [class*="st-key-banner_piano_"] button span {
-  color:#1E3A8A !important; font-weight:800 !important; font-size:.95rem !important; margin:0 !important; line-height:1.2 !important; letter-spacing:.005em;
+html body .stApp [class*="st-key-banner_piano_"] [data-testid="stButton"] button[data-testid^="stBaseButton"] p, html body .stApp [class*="st-key-banner_piano_"] [data-testid="stButton"] button[data-testid^="stBaseButton"] span, html body .stApp [class*="st-key-banner_piano_"] [data-testid="stButton"] button[data-testid^="stBaseButton"] div {
+  color:#1E3A8A !important; -webkit-text-fill-color:#1E3A8A !important; font-weight:800 !important; font-size:1rem !important;
+  margin:0 !important; line-height:1.2 !important; letter-spacing:.005em;
 }
-html body .stApp [class*="st-key-banner_piano_"] button:hover:not(:disabled) {
-  transform:translateY(-2px) !important; filter:brightness(1.04);
-  box-shadow:0 14px 28px rgba(245,158,11,.5), inset 0 1px 0 rgba(255,255,255,.6) !important;
+html body .stApp [class*="st-key-banner_piano_"] [data-testid="stButton"] button[data-testid^="stBaseButton"]:hover:not(:disabled) {
+  transform:translateY(-2px) !important; filter:brightness(1.05);
+  box-shadow:0 14px 28px rgba(245,158,11,.52), inset 0 1px 0 rgba(255,255,255,.65) !important;
 }
-html body .stApp [class*="st-key-banner_piano_"] button:active:not(:disabled) { transform:translateY(0) !important; }
-html body .stApp [class*="st-key-banner_piano_"] button::after {
+html body .stApp [class*="st-key-banner_piano_"] [data-testid="stButton"] button[data-testid^="stBaseButton"]:active:not(:disabled) { transform:translateY(0) !important; }
+html body .stApp [class*="st-key-banner_piano_"] [data-testid="stButton"] button[data-testid^="stBaseButton"]::after {
   content:""; position:absolute; top:-20%; left:-70%; width:35%; height:140%;
-  background:linear-gradient(100deg, rgba(255,255,255,0), rgba(255,255,255,.7), rgba(255,255,255,0));
+  background:linear-gradient(100deg, rgba(255,255,255,0), rgba(255,255,255,.75), rgba(255,255,255,0));
   transform:skewX(-22deg); animation:vf-riflesso 3.4s ease-in-out infinite; pointer-events:none;
 }
-@media (prefers-reduced-motion: reduce) { html body .stApp [class*="st-key-banner_piano_"] button::after { animation:none !important; } }
+@media (prefers-reduced-motion: reduce) { html body .stApp [class*="st-key-banner_piano_"] [data-testid="stButton"] button[data-testid^="stBaseButton"]::after { animation:none !important; } }
 /* elenco a schede: una voce per cosa da provare */
 html body .stApp [class*="st-key-banner_piano_"] .g-lista {
   list-style:none; margin:.7rem 0 0 !important; padding:0 !important; display:grid; gap:.5rem .7rem;
@@ -990,7 +991,7 @@ def _banner_piano(dove: str) -> None:
             f'<div class="g-nota">{PREZZO_PRO_ANNUALE} € per l\'anno scolastico · un solo pagamento, senza rinnovi automatici.</div></div>',
             unsafe_allow_html=True,
         )
-        if st.button("Scopri il piano Pro  →", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
+        if st.button("Scopri il piano Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
             _vai_a_upgrade(None)
 
 
@@ -1100,19 +1101,10 @@ if settings.get("theme_changed"):
 _on_landing = (st.session_state.stage == STAGE_INPUT)   # la creazione è anche la home
 
 # ── HEADER UNIFICATO — il marchio VerificAI è su ogni pagina (più grande nella schermata di creazione) ──
-_LOGO_SVG = (
-    '<svg class="site-header-svg" viewBox="0 0 64 64" aria-hidden="true">'
-    '<defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366F1"/>'
-    '<stop offset="1" stop-color="#2563EB"/></linearGradient></defs>'
-    '<rect x="2" y="2" width="60" height="60" rx="18" fill="url(#vg)"/>'
-    '<path d="M16 34l11 11 21-25" stroke="#fff" stroke-width="7.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
-    '<path d="M49 7l2.3 6 6 2.3-6 2.3L49 23.6l-2.3-6-6-2.3 6-2.3z" fill="#FCD34D"/>'
-    '</svg>'
-)
 st.markdown(
     '<div class="site-header">'
     '  <a class="site-header-logo" href="/" target="_self">'
-    + _LOGO_SVG +
+    +
     '    <span class="site-header-name">Verific<span class="site-header-ai">AI</span></span>'
     '    <span class="site-header-beta">Beta</span>'
     '  </a>'

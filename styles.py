@@ -74,6 +74,7 @@ def get_css(T: dict) -> str:
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,800;1,9..144,700;1,9..144,800&display=swap');
 
   *, *::before, *::after {{ box-sizing: border-box; }}
 
@@ -734,41 +735,47 @@ def get_css(T: dict) -> str:
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.1rem 1rem .5rem;
+    padding: .3rem 1rem .6rem;
     margin-bottom: .2rem;
   }}
   .site-header-logo {{
     display: inline-flex;
-    align-items: center;
-    gap: .85rem;
+    align-items: flex-start;
+    gap: .5rem;
     text-decoration: none !important;
-  }}
-  .site-header-svg {{
-    width: clamp(3rem, 6.5vw, 3.9rem);
-    height: clamp(3rem, 6.5vw, 3.9rem);
-    flex: 0 0 auto;
-    filter: drop-shadow(0 8px 14px rgba(79,70,229,.32));
   }}
   .site-header-name {{
     display: inline-flex;
-    align-items: center;
-    font-family: 'DM Sans', sans-serif;
-    font-size: clamp(2.7rem, 6.4vw, 3.7rem);
-    font-weight: 800;
-    letter-spacing: -0.05em;
+    align-items: baseline;
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-size: clamp(2.9rem, 6.6vw, 4rem);
+    font-weight: 700;
+    letter-spacing: -0.035em;
     color: {T['text']};
     line-height: 1;
   }}
   .site-header-ai {{
+    position: relative;
     display: inline-block;
-    margin-left: .1em;
-    padding: .02em .17em .06em;
-    border-radius: .3em;
-    color: #fff !important;
-    -webkit-text-fill-color: #fff !important;
+    margin-left: .04em;
+    font-style: italic;
+    font-weight: 800;
     background: linear-gradient(135deg, #6366F1 0%, #2563EB 100%);
-    letter-spacing: -.02em;
-    box-shadow: 0 6px 14px rgba(79,70,229,.28);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    padding-right: .06em;
+  }}
+  .site-header-ai::after {{
+    content: "";
+    position: absolute;
+    left: 6%;
+    right: 2%;
+    bottom: -.08em;
+    height: .075em;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #FCD34D, #F59E0B);
   }}
   .site-header-beta {{
     font-size: .6rem;
@@ -779,8 +786,7 @@ def get_css(T: dict) -> str:
     border: 1px solid {_acc_med};
     border-radius: 999px;
     padding: 2px 7px;
-    align-self: flex-start;
-    margin-top: .3rem;
+    margin-top: .55rem;
     font-family: 'DM Sans', sans-serif;
     opacity: .85;
   }}
@@ -4520,6 +4526,8 @@ font-family: 'DM Sans', sans-serif;
   }}
 
   /* Schermata di creazione: colonna stretta e centrata, logo piu' piccolo */
+  /* il marchio sta alla stessa altezza in tutte le pagine */
+  [data-testid="stMainBlockContainer"], .main .block-container {{ padding-top: 2.7rem !important; }}
   [data-testid="stMainBlockContainer"]:has(.vf-narrow),
   .main .block-container:has(.vf-narrow) {{
     max-width: 820px !important;
