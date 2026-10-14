@@ -734,34 +734,41 @@ def get_css(T: dict) -> str:
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: .9rem 1rem .5rem;
-    margin-bottom: .4rem;
+    padding: 1.1rem 1rem .5rem;
+    margin-bottom: .2rem;
   }}
   .site-header-logo {{
     display: inline-flex;
     align-items: center;
-    gap: .7rem;
+    gap: .85rem;
     text-decoration: none !important;
   }}
   .site-header-svg {{
-    width: 2.5rem;
-    height: 2.5rem;
+    width: clamp(3rem, 6.5vw, 3.9rem);
+    height: clamp(3rem, 6.5vw, 3.9rem);
     flex: 0 0 auto;
-    filter: drop-shadow(0 4px 10px {_acc}40);
+    filter: drop-shadow(0 8px 14px rgba(79,70,229,.32));
   }}
   .site-header-name {{
+    display: inline-flex;
+    align-items: center;
     font-family: 'DM Sans', sans-serif;
-    font-size: clamp(2rem, 4.4vw, 2.5rem);
+    font-size: clamp(2.7rem, 6.4vw, 3.7rem);
     font-weight: 800;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.05em;
     color: {T['text']};
     line-height: 1;
   }}
   .site-header-ai {{
-    background: linear-gradient(135deg, {_acc}, {T.get('accent2', _acc)});
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    display: inline-block;
+    margin-left: .1em;
+    padding: .02em .17em .06em;
+    border-radius: .3em;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+    background: linear-gradient(135deg, #6366F1 0%, #2563EB 100%);
+    letter-spacing: -.02em;
+    box-shadow: 0 6px 14px rgba(79,70,229,.28);
   }}
   .site-header-beta {{
     font-size: .6rem;
@@ -773,7 +780,7 @@ def get_css(T: dict) -> str:
     border-radius: 999px;
     padding: 2px 7px;
     align-self: flex-start;
-    margin-top: .15rem;
+    margin-top: .3rem;
     font-family: 'DM Sans', sans-serif;
     opacity: .85;
   }}
@@ -4518,12 +4525,6 @@ font-family: 'DM Sans', sans-serif;
     max-width: 820px !important;
     padding-top: 2.7rem !important;
   }}
-  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header {{
-    padding: .1rem 1rem 0 !important;
-    margin-bottom: 0 !important;
-  }}
-  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-svg {{ width: 3rem !important; height: 3rem !important; }}
-  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-name {{ font-size: clamp(2.5rem, 5.4vw, 3.1rem) !important; }}
   .opt-label .opt-hint {{
     text-transform: none;
     letter-spacing: 0;
@@ -4653,6 +4654,21 @@ font-family: 'DM Sans', sans-serif;
     background: {T['hover']} !important;
     border-color: {_acc} !important;
     transform: none !important;
+  }}
+
+  /* «Crea verifica»: quando è attivo, un riflesso lo attraversa ogni pochi secondi (invita a premerlo) */
+  @keyframes vf-riflesso {{ 0%, 55% {{ left:-70%; }} 100% {{ left:150%; }} }}
+  @keyframes vf-respiro  {{ 0%, 100% {{ transform:scale(1); }} 50% {{ transform:scale(1.012); }} }}
+  html body .stApp .st-key-genera_btn_b button:not(:disabled) {{
+    position: relative !important; overflow: hidden !important; animation: vf-respiro 3.2s ease-in-out infinite;
+  }}
+  html body .stApp .st-key-genera_btn_b button:not(:disabled)::after {{
+    content: "" !important; position: absolute; top: -20%; left: -70%; width: 38%; height: 140%;
+    background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.65) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-22deg); animation: vf-riflesso 3.2s ease-in-out infinite; pointer-events: none;
+  }}
+  @media (prefers-reduced-motion: reduce) {{
+    html body .stApp .st-key-genera_btn_b button:not(:disabled), html body .stApp .st-key-genera_btn_b button:not(:disabled)::after {{ animation: none !important; }}
   }}
 
   /* Sidebar: meno vuoto in cima */
