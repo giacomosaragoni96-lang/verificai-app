@@ -294,6 +294,14 @@ class ModelloAI:
                         _alias[self.model_id] = nuovo
                         sostituzioni += 1
                         continue
+                    if nuovo is None:
+                        fam = _famiglia(self.model_id) or ""
+                        visibili = [n for n in (_modelli_disponibili or []) if fam and fam in n]
+                        raise RuntimeError(
+                            f"Il modello {mid} è ritirato e la chiave non vede un sostituto della famiglia «{fam}». "
+                            f"Modelli visibili di quella famiglia: {', '.join(visibili[:8]) or 'nessuno'}. "
+                            f"(Pro 3.x richiede spesso un account Google AI a pagamento.)"
+                        ) from e
                 if (getattr(e, "code", None) == 400 and cfg is not None
                         and getattr(cfg, "thinking_config", None) is not None
                         and ("thinking" in testo or "thought" in testo)):
