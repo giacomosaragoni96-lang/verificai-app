@@ -2433,6 +2433,7 @@ def _lancia_generazione(
             immagini_esercizi=imgs_es, file_ispirazione=file_ispirazione,
             on_progress=_avanza,
         )
+        st.session_state["_autoverifica"] = ris.get("_autoverifica")
 
         # Logo della scuola: se l'utente ne ha uno attivo va nell'intestazione della Fila A
         # (e quindi anche nelle versioni che ne derivano); si ricompila il PDF con il logo.
@@ -4171,6 +4172,17 @@ def _render_stage_final():
 
     _banner_piano("final")
 
+    # ── Autoverifica degli esercizi (materie scientifiche): cosa ha trovato e corretto ──
+    _av = st.session_state.get("_autoverifica") or {}
+    if _av.get("irrisolti"):
+        _righe = "\n".join(f"- **Esercizio {x['num']}**: {x['problema']}" for x in _av["irrisolti"])
+        st.warning("Il controllo automatico non è sicuro di questi esercizi: verificali prima di usarli.\n\n" + _righe, icon="🧮")
+    if _av.get("corretti"):
+        _nums = ", ".join(str(n) for n in _av["corretti"])
+        st.caption(f"🧮 Controllo automatico: ho corretto l'esercizio {_nums} (i dati non erano coerenti).")
+    elif _av.get("eseguita") and not _av.get("irrisolti"):
+        st.caption("🧮 Controllo automatico eseguito: nessun errore trovato negli esercizi.")
+
     # ── Più di 2 facciate: avviso e riduzione (si stampa su 2 fogli fronte-retro, non su 3) ──
     _n_pag = conta_pagine_pdf(vA.get("pdf"))
     if _n_pag and _n_pag > MAX_FACCIATE:
@@ -4886,6 +4898,7 @@ def _nuova_verifica() -> None:
     st.session_state.stage            = STAGE_INPUT
     st.session_state["_prev_stage"]   = None
     st.session_state.input_percorso   = None
+    st.session_state["_autoverifica"] = None
     _pulisci_stato_revisione()
     st.session_state.verifiche         = {
         "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),

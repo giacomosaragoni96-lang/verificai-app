@@ -120,7 +120,11 @@ COMPITI_AI = {
     "cambio_esercizio":  ("veloce", None),
     "analisi_file":      ("veloce", None),
     "scheda":            ("medio",  1024),   # scheda di allenamento: una chiamata per sezione
+    "autoverifica":      ("flash",  3072),   # risolve gli esercizi e corregge gli errori: SEMPRE Flash, anche col piano Free
 }
+
+# Autoverifica degli esercizi nelle materie scientifiche (autoverifica.py). Costo: circa 1-2 centesimi a verifica.
+AUTOVERIFICA_ATTIVA = True
 
 # ── SCHEDA DI ALLENAMENTO ─────────────────────────────────────────────────────
 # ~40 esercizi graduati, una sezione per ogni esercizio della verifica (scheda.py).
@@ -141,6 +145,8 @@ def scegli_modello_per_compito(compito: str, model_id_piano: str):
     tipo, ragionamento = COMPITI_AI.get(compito, ("piano", None))
     if tipo == "veloce":
         model_id = MODEL_FAST_ID
+    elif tipo == "flash":
+        model_id = MODEL_FLASH_ID
     elif tipo == "medio":
         model_id = MODEL_FAST_ID if model_id_piano == MODEL_FAST_ID else MODEL_FLASH_ID
     else:
