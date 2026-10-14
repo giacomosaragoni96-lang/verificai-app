@@ -1160,7 +1160,7 @@ def _salva_logo(prefs) -> None:
 def _prepara_logo(dati: bytes):
     """Immagine caricata → PNG su fondo bianco, ridotto (al massimo ~110 KB), in base64. None se illeggibile."""
     try:
-        from PIL import Image
+        from PIL import Image, ImageChops
         im = Image.open(io.BytesIO(dati))
         im.load()
         if im.mode in ("RGBA", "LA", "P"):
@@ -1169,6 +1169,13 @@ def _prepara_logo(dati: bytes):
             fondo.alpha_composite(im)
             im = fondo
         im = im.convert("RGB")
+        # Sfondo quasi bianco → bianco puro (toglie il riquadro grigiastro dei JPG) e via i
+        # margini bianchi: così il logo si allinea al bordo e la sua altezza è quella vera.
+        im = im.point(lambda v: 255 if v > 238 else v)
+        riquadro = ImageChops.difference(im, Image.new("RGB", im.size, (255, 255, 255))).getbbox()
+        if riquadro:
+            x0, y0, x1, y1 = riquadro
+            im = im.crop((max(0, x0 - 4), max(0, y0 - 4), min(im.width, x1 + 4), min(im.height, y1 + 4)))
         for larghezza in (700, 500, 350):
             r = im if im.width <= larghezza else im.resize(
                 (larghezza, max(1, int(im.height * larghezza / im.width))), Image.LANCZOS)
@@ -1941,6 +1948,9 @@ def _render_percorso_b_form(_prog_placeholder):
                         "Carica il logo della tua scuola (PNG o JPG)", type=["png", "jpg", "jpeg"],
                         key="logo_up_b", help="Si salva sul tuo account: lo carichi una volta sola.",
                     )
+                    st.caption("Per un buon risultato: immagine nitida (almeno 600 px di larghezza), "
+                               "meglio con sfondo bianco o trasparente. Il programma toglie da solo "
+                               "i margini bianchi.")
                     if _logo_up is not None:
                         _b64_logo = _prepara_logo(_logo_up.getvalue())
                         if _b64_logo:

@@ -49,6 +49,43 @@ def _livello_sottopunti(profondita: list):
     return top
 
 
+_TOKEN_LISTA = re.compile(r'\\begin\{(?:enumerate|itemize)\}|\\end\{(?:enumerate|itemize)\}')
+
+
+def _maschera_liste_annidate(body: str):
+    """
+    Mette da parte le liste annidate (le opzioni A-D di una scelta multipla dentro un sottopunto):
+    non sono sottopunti e non hanno punteggio. Restituisce (testo con segnaposto, blocchi); il
+    punteggio che segue la lista resta sulla stessa riga del sottopunto che la contiene.
+    """
+    blocchi, out, pos, livello, inizio = [], [], 0, 0, None
+    for m in _TOKEN_LISTA.finditer(body):
+        if m.group(0).startswith('\\begin'):
+            livello += 1
+            if livello == 2 and inizio is None:
+                inizio = m.start()
+        else:
+            if livello == 2 and inizio is not None:
+                fine = m.end()
+                out.append(body[pos:inizio].rstrip())
+                blocchi.append(body[inizio:fine])
+                out.append(f" \x00{len(blocchi) - 1}\x00 ")
+                pos = fine + re.match(r'\s*', body[fine:]).end()
+                inizio = None
+            livello = max(0, livello - 1)
+    out.append(body[pos:])
+    return ''.join(out), blocchi
+
+
+def _ripristina_liste_annidate(testo: str, blocchi: list) -> str:
+    return re.sub(r' ?\x00(\d+)\x00 ?', lambda m: "\n" + blocchi[int(m.group(1))] + "\n", testo)
+
+
+def _senza_liste_annidate(body: str) -> str:
+    testo, blocchi = _maschera_liste_annidate(body)
+    return re.sub(r' ?\x00\d+\x00 ?', ' ', testo) if blocchi else body
+
+
 def parse_esercizi(latex: str) -> list:
     """
     Analizza il LaTeX e restituisce una lista di esercizi con i loro punteggi.
@@ -95,7 +132,11 @@ def parse_esercizi(latex: str) -> list:
             window_lines = []
             for lj in range(li, min(li + 15, len(lines))):
                 if lj > li and re.search(r'\\item(?:\[|(?!\w))', lines[lj]):
-                    break
+                    # un item annidato (opzione A-D) non chiude il sottopunto: il suo punteggio
+                    # sta dopo l'elenco delle opzioni. Chiude solo un item dello stesso livello o superiore.
+                    if (profondita[lj] is None or profondita[li] is None
+                            or profondita[lj] <= profondita[li]):
+                        break
                 window_lines.append(lines[lj])
             search_window = '\n'.join(window_lines)
             search_window = re.sub(
@@ -253,7 +294,8 @@ def parse_items_from_block(body: str, title: str = "") -> list:
     """
     import logging
     logger = logging.getLogger(__name__)
-    
+    body = _senza_liste_annidate(body)
+
     logger.info(f"=== PARSE ITEMS FROM BLOCK ===")
     logger.info(f"Title: {title}")
     logger.info(f"Body length: {len(body)} characters")
@@ -624,6 +666,7 @@ def apply_item_pts_to_body(body: str, new_pts_list: list) -> str:
     """Sostituisce (X pt) su ogni \\item (o unico (N pt) nel body) con i valori da new_pts_list."""
     if not new_pts_list:
         return body
+    body, _blocchi = _maschera_liste_annidate(body)
     count = [0]
 
     def replacer(m):
@@ -636,12 +679,14 @@ def apply_item_pts_to_body(body: str, new_pts_list: list) -> str:
         return line
 
     if re.search(r'\\item\[', body):
-        return re.sub(r'\\item\[[^\]]*\][^\n]*', replacer, body)
-    if re.search(r'\\item\s+', body):
-        return re.sub(r'\\item\s+[^\n]+', replacer, body)
-    if len(new_pts_list) == 1:
-        return re.sub(r'\(\d+\s*pt\)', f'({new_pts_list[0]} pt)', body, count=1)
-    return body
+        risultato = re.sub(r'\\item\[[^\]]*\][^\n]*', replacer, body)
+    elif re.search(r'\\item\s+', body):
+        risultato = re.sub(r'\\item\s+[^\n]+', replacer, body)
+    elif len(new_pts_list) == 1:
+        risultato = re.sub(r'\(\d+\s*pt\)', f'({new_pts_list[0]} pt)', body, count=1)
+    else:
+        risultato = body
+    return _ripristina_liste_annidate(risultato, _blocchi)
 
 
 # ── SCELTA MULTIPLA E VERO/FALSO: finiture deterministiche ─────────────────────
@@ -2199,7 +2244,7 @@ _stato_compilazione = threading.local()   # errori "!" dell'ultima compilazione,
 # tolto prima di mandare il LaTeX all'AI (rimuovi_logo_b64): pesa decine di KB.
 
 _RE_LOGO = re.compile(r"^%LOGO_B64:(\w+):([A-Za-z0-9+/=]+)[ \t]*\r?\n?", re.MULTILINE)
-LARGHEZZA_LOGO = {"largo": 0.35, "piccolo": 0.13}   # frazione di \linewidth
+LARGHEZZA_LOGO = {"largo": 0.38, "piccolo": 0.15}   # frazione di \linewidth
 _PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 
@@ -2225,7 +2270,8 @@ def inserisci_logo(latex: str, tipo: str, b64: str) -> str:
         def _sost(m):
             return (
                 f"\\noindent\\begin{{minipage}}[c]{{{w}\\linewidth}}"
-                f"\\includegraphics[width=\\linewidth]{{logo_scuola.png}}\\end{{minipage}}\\hfill"
+                f"\\raggedright\\includegraphics[width=\\linewidth,height=2.3cm,keepaspectratio]"
+                f"{{logo_scuola.png}}\\end{{minipage}}\\hfill"
                 f"\\begin{{minipage}}[c]{{{0.97 - w:.2f}\\linewidth}}\\raggedleft"
                 f"\\textbf{{\\large {m.group(1)}}}\\end{{minipage}}\\par\\vspace{{0.3cm}}\n"
                 f"\\begin{{center}}"
