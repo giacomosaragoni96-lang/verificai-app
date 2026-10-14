@@ -2192,6 +2192,54 @@ def compila_pdf_sicuro(latex: str) -> tuple:
 _stato_compilazione = threading.local()   # errori "!" dell'ultima compilazione, per thread
 
 
+# ── LOGO DELLA SCUOLA ──────────────────────────────────────────────────────────
+# Il logo viaggia dentro il LaTeX come riga di commento «%LOGO_B64:tipo:dati» subito dopo
+# \begin{document}: così resta con la verifica (storico, versioni) senza file esterni. Il
+# commento non arriva mai a pdflatex (compila_pdf lo toglie e scrive logo_scuola.png) e va
+# tolto prima di mandare il LaTeX all'AI (rimuovi_logo_b64): pesa decine di KB.
+
+_RE_LOGO = re.compile(r"^%LOGO_B64:(\w+):([A-Za-z0-9+/=]+)[ \t]*\r?\n?", re.MULTILINE)
+LARGHEZZA_LOGO = {"largo": 0.35, "piccolo": 0.13}   # frazione di \linewidth
+_PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+
+
+def rimuovi_logo_b64(latex: str) -> str:
+    """Toglie la riga con i dati del logo (da usare prima di inviare il LaTeX all'AI)."""
+    return _RE_LOGO.sub("", latex or "")
+
+
+def estrai_logo(latex: str):
+    """(tipo, dati base64) del logo contenuto nel LaTeX, oppure None."""
+    m = _RE_LOGO.search(latex or "")
+    return (m.group(1), m.group(2)) if m else None
+
+
+def inserisci_logo(latex: str, tipo: str, b64: str) -> str:
+    """
+    Mette il logo a sinistra del titolo (titolo allineato a destra), come nelle verifiche
+    della scuola. Se l'intestazione non è quella attesa restituisce il LaTeX invariato.
+    """
+    latex = rimuovi_logo_b64(latex)
+    w = LARGHEZZA_LOGO.get(tipo, LARGHEZZA_LOGO["largo"])
+    if "logo_scuola.png" not in latex:
+        def _sost(m):
+            return (
+                f"\\noindent\\begin{{minipage}}[c]{{{w}\\linewidth}}"
+                f"\\includegraphics[width=\\linewidth]{{logo_scuola.png}}\\end{{minipage}}\\hfill"
+                f"\\begin{{minipage}}[c]{{{0.97 - w:.2f}\\linewidth}}\\raggedleft"
+                f"\\textbf{{\\large {m.group(1)}}}\\end{{minipage}}\\par\\vspace{{0.3cm}}\n"
+                f"\\begin{{center}}"
+            )
+        nuovo, n = re.subn(
+            r"\\begin\{center\}\s*\\textbf\{\\large (.*?)\}\s*\\\\\s*\\vspace\{0\.3cm\}",
+            _sost, latex, count=1, flags=re.DOTALL,
+        )
+        if n == 0:
+            return latex
+        latex = nuovo
+    return latex.replace("\\begin{document}", "\\begin{document}\n%LOGO_B64:" + tipo + ":" + b64 + "\n", 1)
+
+
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
     """
     Compila codice LaTeX in PDF usando pdflatex.
@@ -2219,7 +2267,23 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
 
     logger.info(f"=== INIZIO COMPILAZIONE PDF ===")
     logger.info(f"Dimensione codice LaTeX: {len(codice_latex)} caratteri")
-    
+
+    # Logo della scuola: i dati stanno in un commento; pdflatex non li vede, riceve il file PNG
+    import base64
+    _png_logo = None
+    _logo = estrai_logo(codice_latex)
+    if _logo:
+        try:
+            _bytes = base64.b64decode(_logo[1])
+            if _bytes[:8] == _PNG_MAGIC:
+                _png_logo = _bytes
+        except Exception:
+            _png_logo = None
+    codice_latex = rimuovi_logo_b64(codice_latex)
+    if _png_logo is None and "logo_scuola.png" in codice_latex:
+        # logo mancante o non valido: meglio una verifica senza logo che un errore di compilazione
+        codice_latex = re.sub(r"\\includegraphics\[[^\]]*\]\{logo_scuola\.png\}", "", codice_latex)
+
     # Applica fix pre-compilazione: rimuovi spoiler TikZ, poi fix label math
     logger.info("Applicazione fix pre-compilazione...")
     codice_latex = clean_tikz_spoilers(codice_latex)
@@ -2238,6 +2302,9 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
             with open(tex_path, "w", encoding="utf-8") as f:
                 f.write(codice_latex)
             logger.info("✓ File LaTeX scritto")
+            if _png_logo is not None:
+                with open(os.path.join(tmpdir, "logo_scuola.png"), "wb") as f:
+                    f.write(_png_logo)
 
             logger.info("Avvio compilazione pdflatex...")
             # Il LaTeX generato dall'AI è input non fidato: niente shell-escape.
@@ -2249,6 +2316,7 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
                 cmd,
                 capture_output=True,
                 text=True,
+                cwd=tmpdir,     # così pdflatex trova logo_scuola.png accanto al .tex
                 timeout=30
             )
 
