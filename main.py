@@ -52,7 +52,7 @@ from config import (
     LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
-    MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, LEGALE_PRONTO, TETTO_BREVE, MAX_FACCIATE, WORD_ATTIVO,
+    MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, PREZZO_PRO_ANNUALE, LEGALE_PRONTO, TETTO_BREVE, MAX_FACCIATE, WORD_ATTIVO,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS,
 )
 from dotenv import load_dotenv
@@ -853,7 +853,7 @@ _BERSAGLI_GUIDA = {
                  '[class*="st-key-quick_regen_"]', '[class*="st-key-cambia_tutto_"]'],
     "torna": [".st-key-btn_confirm_final", '[data-testid="stButton"]:has([data-testid="stBaseButton-primary"])'],
     # pagina del risultato: «Modifica gli esercizi» e tutti i pulsanti del kit (Fila B, BES/DSA, soluzioni, scheda, griglia, ZIP)
-    "apri_modifica": [".st-key-final_edit"],
+    "apri_modifica": [".st-key-final_edit", ".st-key-dl_pdf_hero_A", ".st-key-dl_pdf_basso_A"],
     "kit": ['[data-testid="stExpander"]:has(.g-kit1)', '[data-testid="stExpander"]:has(.g-kit2)',
             '[data-testid="stExpander"]:has(.g-kit3)', ".st-key-kit_tutto", ".st-key-dl_kit_zip",
             '[class*="st-key-one_click_"]', '[class*="st-key-compile_"]', ".st-key-btn_gen_griglia_v2"],
@@ -926,24 +926,31 @@ def _guida_benvenuto(dove: str, slot) -> None:
     else:
         _riquadro("Regalo di benvenuto · La tua prima verifica", "Hai creato la tua prima verifica: prova tutte le funzioni del piano Pro!",
                   "Finché è la prima hai tutto sbloccato: prova ciò che <b>lampeggia</b> in giallo. "
-                  "<b>Scorri in basso</b>, sotto l'anteprima: apri le tendine per trovare tutto "
+                  "<b>Scorri in basso</b>, sotto l'anteprima: apri le tendine per trovare tutto e, in fondo, scarica tutti i file in un solo ZIP "
                   '(<a href="#kit-completo" style="color:#fff;font-weight:700;white-space:nowrap;">vai al kit</a>).',
                   ["apri_modifica", "kit"],
-                  voci=[("✏️", "Modifica gli esercizi", "Cambia, semplifica, aggiungi o togli esercizi (pulsante qui sopra)."),
+                  voci=[("⬇️", "Scarica il PDF", "Pronto per la stampa: il pulsante è qui sotto e sotto l'anteprima."),
+                        ("✏️", "Modifica gli esercizi", "Cambia, semplifica, aggiungi o togli esercizi."),
                         ("📄", "Fila B", "Stessa verifica con dati diversi, contro la copiatura."),
                         ("🧩", "Versione BES/DSA", "Più semplice, per chi ha un piano personalizzato."),
                         ("✅", "Soluzioni", "Le risposte pronte, per correggere in fretta."),
-                        ("🎯", "Scheda di allenamento", "Circa 40 esercizi da dare alla classe prima."),
-                        ("📦", "Tutto il kit in un file", "«Prepara tutto il kit», poi scarichi lo ZIP.")],
+                        ("🎯", "Scheda di allenamento", "Circa 40 esercizi da dare alla classe prima.")],
                   nota="Dalla prossima verifica queste funzioni restano solo con il piano Pro: provale adesso, finché sono gratis.")
+
+
+def _html_voci(voci: list) -> str:
+    """Elenco a schede (icona, titolo, spiegazione) nello stile dei riquadri blu."""
+    colonne = 3 if len(voci) in (3, 5, 6) else 2
+    return (f'<ul class="g-lista" style="grid-template-columns:repeat({colonne},minmax(0,1fr));">' + "".join(
+        f'<li class="g-voce"><span class="g-voce-ico">{ic}</span><div><div class="g-voce-t">{t}</div>'
+        f'<div class="g-voce-d">{d}</div></div></li>' for ic, t, d in voci) + "</ul>")
 
 
 def _banner_piano(dove: str) -> None:
     """
-    Striscia blu in cima alla pagina per chi non ha Pro (stesso stile per tutti):
-    prima verifica = regalo di benvenuto (cosa può fare e cosa cambia dopo);
-    piano Free = invito a passare a Pro, con il pulsante dentro la striscia. dove = "input" | "final".
-    Sta in un segnaposto (st.empty) che si svuota quando il banner non serve: così non resta mai a schermo.
+    Riquadro blu in cima alla pagina per chi non ha il piano Pro (stesso stile della guida di benvenuto):
+    prima verifica = guida a passi (assaggio); piano Free = invito a passare a Pro con tre vantaggi, il prezzo e il pulsante.
+    dove = "input" | "final" | "review". Sta in un segnaposto che si svuota quando non serve: così non resta mai a schermo.
     """
     _slot = st.empty()
     if not MONETIZZAZIONE_ATTIVA or (_is_admin and not _SIM) or ENT.piano != "free" or (dove == "review" and not ENT.assaggio):
@@ -952,32 +959,26 @@ def _banner_piano(dove: str) -> None:
     if ENT.assaggio:
         _guida_benvenuto(dove, _slot)
         return
-    if ENT.assaggio:
-        if dove == "input":
-            _titolo = "🎁 Regalo di benvenuto: la prima verifica include il piano Pro"
-            _testo = ("Usi il modello migliore e puoi creare tutto: Fila B, BES/DSA, soluzioni, griglia, scheda, logo. "
-                      "Dalla seconda: modello più veloce (può sbagliare) e funzioni extra solo con il piano Pro.")
-        else:
-            _titolo = "🎁 Regalo di benvenuto: su questa verifica hai tutto il piano Pro"
-            _testo = ("Crea ora Fila B, BES/DSA, soluzioni, griglia e scheda. "
-                      "Dalla prossima verifica restano solo con il piano Pro.")
+    if dove == "input":
+        _titolo = "Passa al piano Pro: esercizi più precisi e tutto il kit per la classe"
+        _voci = [("🎯", "Modello AI più accurato", "Esercizi più precisi e con meno errori."),
+                 ("📚", "Tutte le versioni", "Fila B, versione BES/DSA, soluzioni e scheda di allenamento."),
+                 ("🏫", "La tua scuola", "Il logo nell'intestazione e verifiche create da un tuo file.")]
     else:
-        _titolo = "Passa al piano Pro"
-        _testo = ("Esercizi scritti dal modello AI più accurato e, per ogni verifica, il kit completo per la classe: "
-                  "Fila B, versione BES/DSA, soluzioni, griglia di valutazione, scheda di allenamento e logo della scuola."
-                  if dove == "input" else
-                  "Con il piano Pro questa verifica può avere anche Fila B, versione BES/DSA, soluzioni, griglia, "
-                  "scheda di allenamento, e gli esercizi sono scritti dal modello AI più accurato.")
-    st.markdown(_CSS_BANNER_PIANO, unsafe_allow_html=True)
+        _titolo = "Questa verifica può avere molto di più con il piano Pro"
+        _voci = [("🎯", "Modello AI più accurato", "Esercizi scritti con più precisione."),
+                 ("📚", "Fila B, BES/DSA e soluzioni", "Le versioni pronte per la classe e per la correzione."),
+                 ("📦", "Scheda di allenamento e kit", "Circa 40 esercizi e tutti i file in un solo ZIP.")]
     with _slot.container(key=f"banner_piano_{dove}"):
         st.markdown(
-            f'<div class="bp-wrap"><div class="bp-t">{_titolo}</div>'
-            f'<div class="bp-s">{_testo}</div></div>',
+            _CSS_BANNER_PIANO +
+            f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">✨</span>Piano Pro · Per la tua classe</div>'
+            f'<div class="g-t">{_titolo}</div>{_html_voci(_voci)}'
+            f'<div class="g-nota">{PREZZO_PRO_ANNUALE} € per l\'anno scolastico · un solo pagamento, senza rinnovi automatici.</div></div>',
             unsafe_allow_html=True,
         )
-        if not ENT.assaggio:
-            if st.button("Scopri Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
-                _vai_a_upgrade(None)
+        if st.button("Scopri il piano Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
+            _vai_a_upgrade(None)
 
 
 def _pro_bloccato(funzione: str) -> bool:
@@ -1085,18 +1086,27 @@ if settings.get("theme_changed"):
 # Flag per sapere se siamo sulla landing (usato da breadcrumb e header)
 _on_landing = (st.session_state.stage == STAGE_INPUT)   # la creazione è anche la home
 
-# ── HEADER UNIFICATO — visibile solo sulla landing ────────────────────────────
-if _on_landing:
-    st.markdown(
-        '<div class="site-header">'
-        '  <a class="site-header-logo" href="/" target="_self">'
-        '    <span class="site-header-icon">' + APP_ICON + '</span>'
-        '    <span class="site-header-name">Verific<span class="site-header-ai">AI</span></span>'
-        '    <span class="site-header-beta">Beta</span>'
-        '  </a>'
-        '</div>',
-        unsafe_allow_html=True
-    )
+# ── HEADER UNIFICATO — il marchio VerificAI è su ogni pagina (più grande nella schermata di creazione) ──
+_LOGO_SVG = (
+    '<svg class="site-header-svg" viewBox="0 0 48 48" aria-hidden="true">'
+    '<defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3B82F6"/>'
+    '<stop offset="1" stop-color="#1D4ED8"/></linearGradient></defs>'
+    '<rect width="48" height="48" rx="12" fill="url(#vg)"/>'
+    '<path d="M14 11h14l8 8v17a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V13a2 2 0 0 1 2-2z" fill="#fff" fill-opacity=".96"/>'
+    '<path d="M28 11v8h8z" fill="#BFDBFE"/>'
+    '<path d="M17 29l4.2 4.2L31 23" stroke="#1D4ED8" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+    '</svg>'
+)
+st.markdown(
+    '<div class="site-header">'
+    '  <a class="site-header-logo" href="/" target="_self">'
+    + _LOGO_SVG +
+    '    <span class="site-header-name">Verific<span class="site-header-ai">AI</span></span>'
+    '    <span class="site-header-beta">Beta</span>'
+    '  </a>'
+    '</div>',
+    unsafe_allow_html=True
+)
 
 
 
@@ -4436,6 +4446,18 @@ def _render_stage_final():
             )
         else:
             st.caption("Anteprima non disponibile.")
+        if vA.get("pdf"):
+            _dl(
+                label=f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}",
+                data=vA["pdf"],
+                file_name=_fname_a + ".pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                type="primary",
+                key="dl_pdf_basso_A",
+                on_click="ignore",
+                help="Scarica il PDF della verifica, già formattato e pronto per la stampa.",
+            )
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  IL KIT COMPLETO — Fila B, BES/DSA, soluzioni, griglia, Word, scheda di allenamento
@@ -4479,7 +4501,7 @@ def _render_stage_final():
                 _vc5, _vb5 = _riga()              # Word
         else:
             # riga del Word: spenta (conversione non affidabile). Il codice resta, ma scrive in contenitori nascosti.
-            st.markdown('<style>[class*="st-key-word_nascosto"]{display:none !important;}</style>', unsafe_allow_html=True)
+            st.markdown('<style>[class*="st-key-word_nascosto"], html body .stApp div:has(> [class*="st-key-word_nascosto"]){display:none !important;}</style>', unsafe_allow_html=True)
             _vc5, _vb5 = st.container(key="word_nascosto_a"), st.container(key="word_nascosto_b")
         with st.container(border=True):
             _vc2, _vb2 = _riga()                  # BES/DSA

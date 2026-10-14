@@ -734,25 +734,26 @@ def get_css(T: dict) -> str:
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2.8rem 1rem 1.8rem;
-    margin-bottom: 1rem;
+    padding: .9rem 1rem .5rem;
+    margin-bottom: .4rem;
   }}
   .site-header-logo {{
     display: inline-flex;
     align-items: center;
-    gap: 14px;
+    gap: .7rem;
     text-decoration: none !important;
   }}
-  .site-header-icon {{
-    font-size: 3.8rem;
-    line-height: 1;
-    filter: drop-shadow(0 3px 14px {_acc}55);
+  .site-header-svg {{
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: 0 0 auto;
+    filter: drop-shadow(0 4px 10px {_acc}40);
   }}
   .site-header-name {{
     font-family: 'DM Sans', sans-serif;
-    font-size: clamp(3.4rem, 7vw, 5rem);
-    font-weight: 900;
-    letter-spacing: -0.05em;
+    font-size: clamp(2rem, 4.4vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.045em;
     color: {T['text']};
     line-height: 1;
   }}
@@ -763,18 +764,18 @@ def get_css(T: dict) -> str:
     background-clip: text;
   }}
   .site-header-beta {{
-    font-size: 0.88rem;
+    font-size: .6rem;
     font-weight: 800;
-    letter-spacing: .1em;
+    letter-spacing: .12em;
     text-transform: uppercase;
-    background: {_acc_soft};
     color: {_acc};
     border: 1px solid {_acc_med};
-    border-radius: 20px;
-    padding: 4px 10px;
+    border-radius: 999px;
+    padding: 2px 7px;
     align-self: flex-start;
-    margin-top: 8px;
+    margin-top: .15rem;
     font-family: 'DM Sans', sans-serif;
+    opacity: .85;
   }}
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -4521,8 +4522,8 @@ font-family: 'DM Sans', sans-serif;
     padding: .1rem 1rem 0 !important;
     margin-bottom: 0 !important;
   }}
-  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-icon {{ font-size: 2rem !important; }}
-  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-name {{ font-size: clamp(1.9rem, 4vw, 2.4rem) !important; }}
+  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-svg {{ width: 3rem !important; height: 3rem !important; }}
+  [data-testid="stMainBlockContainer"]:has(.vf-narrow) .site-header-name {{ font-size: clamp(2.5rem, 5.4vw, 3.1rem) !important; }}
   .opt-label .opt-hint {{
     text-transform: none;
     letter-spacing: 0;
