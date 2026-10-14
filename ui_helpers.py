@@ -219,18 +219,7 @@ def _render_back_button(
     Uniforme in tutta l'app. Restituisce True se cliccato.
     """
     st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
-    _col, _spacer = st.columns([1, 4])
-    with _col:
-        st.markdown('<div class="btn-back-discrete">', unsafe_allow_html=True)
-        clicked = st.button(
-            label,
-            key=key,
-            use_container_width=True,
-            help=help,
-            type="secondary"
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
-    return clicked
+    return st.button(label, key=key, help=help, type="tertiary")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

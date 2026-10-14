@@ -52,7 +52,7 @@ def render_upgrade(on_back, funzione: str | None = None, assaggio_usato: bool = 
     on_attiva      : callable(codice) -> (ok, messaggio, dettaglio_admin); None = campo non mostrato
     e_admin        : mostra il dettaglio tecnico degli errori
     """
-    if st.button("← Indietro", key="up_indietro"):
+    if st.button("← Indietro", key="up_indietro", type="tertiary"):
         on_back()
         return
 

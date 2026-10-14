@@ -889,9 +889,14 @@ def _css_pulsa(chiavi: list) -> str:
     sel = ", ".join(f"html body .stApp {s}" for k in chiavi for s in _BERSAGLI_GUIDA[k])
     # rete di sicurezza in solo CSS: mentre ci si passa sopra o dopo un clic (focus) il lampeggio si ferma; lo spegnimento
     # definitivo lo fa lo script (_js_guida_visti)
-    fermo = ", ".join(f"html body .stApp {s}:hover, html body .stApp {s}:focus-within" for k in chiavi for s in _BERSAGLI_GUIDA[k])
+    sul = ", ".join(f"html body .stApp {s}:hover" for k in chiavi for s in _BERSAGLI_GUIDA[k])
+    fuoco = ", ".join(f"html body .stApp {s}:focus-within" for k in chiavi for s in _BERSAGLI_GUIDA[k])
     return (f"<style>{sel} {{animation:gpulse 1.5s ease-in-out infinite;border-radius:12px;}}"
-            f"{fermo} {{animation:none !important;outline:none !important;box-shadow:none !important;}}</style>")
+            # chi ha chiesto «riduci animazioni»: niente movimento, ma un anello giallo fisso che indica comunque cosa usare
+            f"@media (prefers-reduced-motion: reduce) {{{sel} {{animation:none !important;"
+            f"outline:3px solid rgba(245,158,11,.9);outline-offset:3px;}}}}"
+            f"{sul} {{animation:none !important;outline:none !important;box-shadow:none !important;}}"
+            f"{fuoco} {{animation:none !important;box-shadow:none !important;}}</style>")
 
 
 def _js_guida_visti(epoca: str = "") -> str:
@@ -1075,61 +1080,13 @@ def _pulsante_pro(funzione: str, key: str, testo: str = "Con il piano Pro") -> N
 
 # ── CSS + FEEDBACK ────────────────────────────────────────────
 st.markdown(get_css(T), unsafe_allow_html=True)
+if not _is_admin:      # Share, stella, matita, GitHub e Deploy servono solo a chi gestisce l'app
+    st.markdown('<style>[data-testid="stToolbarActions"], [data-testid="stAppDeployButton"], '
+                '[data-testid="stMainMenu"] { display:none !important; }</style>', unsafe_allow_html=True)
 
-# ── JS fix expander open header ─────────────────────────────────
-# st.markdown non esegue <script>. components.html usa un iframe sandbox con
-# allow-same-origin che permette window.parent.document → accesso al DOM reale.
-_theme_is_light = _is_light_color(T.get("bg", "#000000"))
-_exp_fix_bg   = T.get("accent_light", "#E0F2FE")
-_exp_fix_fg   = T.get("accent", "#0D9488")
-_exp_fix_bdr  = T.get("accent", "#0D9488") + "44"
-_btn_fix_bg   = T.get("card", T.get("bg2", "#FFFFFF"))
-_btn_fix_fg   = T.get("text", "#0F1117")
-_btn_fix_bdr  = T.get("border2", "#CDD1D9")
-_is_lt        = "1" if _theme_is_light else ""
-components.html(
-    f'<script>'
-    f'(function(){{'
-    f'var p=window.parent,d=p&&p.document;'
-    f'if(!d)return;'
-    f'var isLight="{_is_lt}";'
-    f'var ebg="{_exp_fix_bg}",efg="{_exp_fix_fg}",ebd="1px solid {_exp_fix_bdr}";'
-    f'var btnBg="{_btn_fix_bg}",btnFg="{_btn_fix_fg}",btnBd="1.5px solid {_btn_fix_bdr}";'
-    f'var ESEL=\'[data-testid="stExpander"] details[open]>summary,[data-testid="stExpander"][open]>summary\';'
-    f'var BSEL=\'[data-testid="stButton"]>button,div.stButton>button\';'
-    f'function fx(){{'
-    f'if(isLight){{'
-    # Fix ALL secondary buttons with aggressive inline styles
-    f'var allSecBtns = d.querySelectorAll('
-    f'  \'button[data-testid="stBaseButton-secondary"],'
-    f'  \'button[kind="secondary"],'
-    f'  \'div.stButton > button:not([kind="primary"]):not([data-testid*="primary"]),'
-    f'  \'[data-testid="stButton"] > button:not([data-testid*="primary"])'
-    f');'
-    f'allSecBtns.forEach(function(e){{'
-    f'  if(e.closest(\'[data-testid="stSidebar"]\'))return;'
-    f'  var dt = (e.getAttribute("data-testid")||"").toLowerCase();'
-    f'  var kd = (e.getAttribute("kind")||"").toLowerCase();'
-    f'  if(dt.indexOf("primary")!==-1||kd==="primary")return;'
-    f'  e.style.setProperty("background","{T.get("card", T["bg2"])}","important");'
-    f'  e.style.setProperty("background-color","{T.get("card", T["bg2"])}","important");'
-    f'  e.style.setProperty("color","{T["text"]}","important");'
-    f'  e.style.setProperty("-webkit-text-fill-color","{T["text"]}","important");'
-    f'  e.style.setProperty("border","1.5px solid {T["border2"]}","important");'
-    f'  e.style.setProperty("border-radius","8px","important");'
-    f'}});'
-    f'}}'
-    f'}}'
-    f'try{{new MutationObserver(fx).observe(d.body,{{subtree:true,attributes:true,childList:true}});}}catch(err){{}}'
-    f'fx();'
-    f'}})();'
-    f'</script>',
-    height=0,
-    scrolling=False,
-)
 st.markdown(
-    '<a class="fab-link" href="' + FEEDBACK_FORM_URL + '" target="_blank" '
-    'rel="noopener noreferrer">💬 Feedback</a>',
+    '<a class="fab-link" href="' + FEEDBACK_FORM_URL + '" target="_blank" title="Scrivici un feedback" '
+    'aria-label="Scrivici un feedback" rel="noopener noreferrer">💬</a>',
     unsafe_allow_html=True
 )
 
@@ -1807,12 +1764,10 @@ def _render_le_tue_verifiche():
     _dove = st.session_state.get("_stage_prima")
     if _dove not in (STAGE_FINAL, STAGE_REVIEW) or not st.session_state.get("gen_params"):
         _dove = STAGE_INPUT
-    _c_indietro, _ = st.columns([1, 3])
-    with _c_indietro:
-        if st.button("← Indietro", key="back_from_mie_verifiche",
-                     help="Torna a quello che stavi facendo", use_container_width=True):
-            st.session_state.stage = _dove
-            st.rerun()
+    if st.button("← Indietro", key="back_from_mie_verifiche", type="tertiary",
+                 help="Torna a quello che stavi facendo"):
+        st.session_state.stage = _dove
+        st.rerun()
 
     st.markdown(
         f"""
@@ -5402,6 +5357,7 @@ st.markdown(
     '<div class="app-footer">'
     'VerificAI · Versione Beta · '
     '<a href="?pagina=privacy" target="_blank" rel="noopener" style="color:inherit;">Privacy</a>'
+    ' · <a href="' + FEEDBACK_FORM_URL + '" target="_blank" rel="noopener" style="color:inherit;">Feedback</a>'
     + ((' · <a href="?pagina=termini" target="_blank" rel="noopener" style="color:inherit;">Termini</a>'
         ' · <a href="?pagina=rimborsi" target="_blank" rel="noopener" style="color:inherit;">Rimborsi</a>') if LEGALE_PRONTO else '')
     + '</div>',
