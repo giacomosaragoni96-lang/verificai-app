@@ -743,54 +743,56 @@ def _vai_a_upgrade(funzione: str | None = None) -> None:
     st.rerun()
 
 
-def _striscia_piano(colore: str, titolo: str, testo: str) -> str:
-    """Striscia compatta, a tinta unita, per i messaggi sul piano (assaggio e Free)."""
-    return (
-        f'<div role="note" style="background:{colore};color:#fff;border-radius:10px;padding:.55rem .85rem;'
-        f'font-family:DM Sans,sans-serif;">'
-        f'<div style="font-weight:700;font-size:.88rem;line-height:1.25;color:#fff;">{titolo}</div>'
-        f'<div style="font-size:.78rem;line-height:1.35;margin-top:.12rem;color:rgba(255,255,255,.9);">{testo}</div>'
-        f'</div>'
-    )
+_CSS_BANNER_PIANO = """
+<style>
+html body .stApp [class*="st-key-banner_piano_"] {
+  background:#2563EB; border-radius:10px; padding:.6rem .85rem .65rem; margin:.2rem 0 .7rem; gap:.15rem;
+}
+html body .stApp [class*="st-key-banner_piano_"] .bp-t {
+  font-family:'DM Sans',sans-serif; font-weight:700; font-size:.9rem; line-height:1.25; color:#fff;
+}
+html body .stApp [class*="st-key-banner_piano_"] .bp-s {
+  font-family:'DM Sans',sans-serif; font-size:.8rem; line-height:1.35; color:rgba(255,255,255,.92); margin-top:.1rem;
+}
+html body .stApp [class*="st-key-banner_piano_"] button {
+  background:#fff !important; border:0 !important; border-radius:8px !important; min-height:0 !important;
+  padding:.22rem .8rem !important; margin-top:.3rem; width:auto !important;
+}
+html body .stApp [class*="st-key-banner_piano_"] button p,
+html body .stApp [class*="st-key-banner_piano_"] button span { color:#1D4ED8 !important; font-weight:700 !important; font-size:.82rem !important; }
+html body .stApp [class*="st-key-banner_piano_"] button:hover { background:#EFF6FF !important; }
+</style>
+"""
 
 
 def _banner_piano(dove: str) -> None:
     """
-    Spiega a chi non ha Pro dove si trova, in una striscia compatta: blu durante l'assaggio (prima verifica),
-    grigio-ardesia sul piano Free (con il pulsante per scoprire Pro). dove = "input" | "final".
+    Striscia blu in cima alla pagina per chi non ha Pro (stesso stile per tutti):
+    prima verifica = regalo di benvenuto (cosa può fare e cosa cambia dopo);
+    piano Free = invito a passare a Pro, con il pulsante dentro la striscia. dove = "input" | "final".
     """
     if not MONETIZZAZIONE_ATTIVA or (_is_admin and not _SIM) or ENT.piano != "free":
         return
-    _tetto = int(ENT.tetto_mensile)
-    if ENT.assaggio:
-        if dove == "input":
-            _titolo = "🎁 Prima verifica con tutto il Pro"
-            _testo = ("Usi il modello migliore e puoi creare tutto: Fila B, BES/DSA, soluzioni, Word, griglia, scheda e logo. "
-                      f"Dalla seconda sei sul piano Free: {_tetto} verifiche al mese, modello più veloce "
-                      "(può sbagliare: controlla sempre) e funzioni extra con Pro.")
-        else:
-            _titolo = "🎁 Prima verifica: hai tutto il Pro"
-            _testo = ("Crea adesso Fila B, BES/DSA, soluzioni, Word, griglia e scheda: restano disponibili anche se "
-                      "riapri questa verifica. Dalla prossima sei sul piano Free, con modello più veloce e funzioni extra bloccate.")
-        st.markdown(_striscia_piano("#2563EB", _titolo, _testo), unsafe_allow_html=True)
-        st.markdown('<div style="height:.4rem"></div>', unsafe_allow_html=True)
-        return
-    _n = ENT.verifiche_mese
-    _uso = f"{_n} di {_tetto} verifiche usate questo mese. " if _n is not None else ""
-    _titolo = "Piano Free"
-    if dove == "input":
-        _testo = (f"{_uso}Il modello è più veloce ma meno preciso: controlla sempre gli esercizi. "
-                  "Con Pro: modello migliore, Fila B, BES/DSA, soluzioni, Word, griglia, scheda e logo.")
-    else:
-        _testo = ("Questa verifica è scritta dal modello veloce: controlla bene gli esercizi. "
-                  "Con Pro: modello migliore e tutto il kit (Fila B, BES/DSA, soluzioni, Word, griglia, scheda).")
-    _c1, _c2 = st.columns([4.2, 1.3], vertical_alignment="center", gap="small")
-    _c1.markdown(_striscia_piano("#475569", _titolo, _testo), unsafe_allow_html=True)
-    with _c2:
-        if st.button("Scopri Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:",
-                     use_container_width=True):
+    st.markdown(_CSS_BANNER_PIANO, unsafe_allow_html=True)
+    with st.container(key=f"banner_piano_{dove}"):
+        if ENT.assaggio:
+            if dove == "input":
+                _titolo = "🎁 Regalo di benvenuto: la prima verifica è tutta Pro"
+                _testo = ("Usi il modello migliore e puoi creare tutto: Fila B, BES/DSA, soluzioni, Word, griglia, scheda, logo. "
+                          "Dalla seconda: modello più veloce (può sbagliare) e funzioni extra solo con Pro.")
+            else:
+                _titolo = "🎁 Regalo di benvenuto: hai tutto il Pro su questa verifica"
+                _testo = ("Crea ora Fila B, BES/DSA, soluzioni, Word, griglia e scheda. "
+                          "Dalla prossima verifica restano solo con Pro.")
+            st.markdown(f'<div class="bp-t">{_titolo}</div><div class="bp-s">{_testo}</div>', unsafe_allow_html=True)
+            return
+        _titolo = "Passa al piano Pro"
+        _testo = ("Esercizi con il modello migliore e tutto il kit: Fila B, BES/DSA, soluzioni, Word, griglia, scheda, logo."
+                  if dove == "input" else
+                  "Per avere il modello migliore e tutto il kit: Fila B, BES/DSA, soluzioni, Word, griglia, scheda.")
+        st.markdown(f'<div class="bp-t">{_titolo}</div><div class="bp-s">{_testo}</div>', unsafe_allow_html=True)
+        if st.button("Scopri Pro", key=f"banner_pro_{dove}", icon=":material/workspace_premium:"):
             _vai_a_upgrade(None)
-    st.markdown('<div style="height:.2rem"></div>', unsafe_allow_html=True)
 
 
 def _pro_bloccato(funzione: str) -> bool:
