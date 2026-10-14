@@ -9,6 +9,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import base64
 import io
+import zipfile
 import copy
 import logging
 import re
@@ -30,6 +31,7 @@ from prompts import (
     REGOLA_SOTTOPUNTI_MODIFICA, REGOLA_GRAFICO_CURVE,
 )
 from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
+from scheda import genera_scheda
 from latex_utils import (
     compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, copia_intestazione_con_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
     fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
@@ -46,6 +48,7 @@ from config import (
     LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
+    MOSTRA_BADGE_PRO,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS,
 )
 from dotenv import load_dotenv
@@ -573,6 +576,7 @@ if "verifiche"         not in st.session_state:
     st.session_state.verifiche = {
         "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
         "S": {"latex": None, "testo": None, "pdf": None},
+        "SC": {"latex": None, "pdf": None, "n": 0, "avvisi": []},
     }
 if "review_preamble"   not in st.session_state: st.session_state.review_preamble = ""
 if "review_blocks"     not in st.session_state: st.session_state.review_blocks = []
@@ -1353,6 +1357,7 @@ def _apri_verifica_salvata(verifica: dict, contenuto: dict) -> bool:
     st.session_state.verifiche = {
         "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
         "S": {"latex": None, "testo": None, "pdf": None},
+        "SC": {"latex": None, "pdf": None, "n": 0, "avvisi": []},
     }
     _pulisci_stato_revisione()
     st.session_state.rubrica_testo = None
@@ -2560,17 +2565,18 @@ def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali
     # Fila B, BES/DSA, Soluzioni e Word derivano dalla Fila A: se la A è cambiata non sono più
     # coerenti (es. un esercizio eliminato tornerebbe nella versione BES) e vanno rifatte.
     if pdf and latex_prima and latex != latex_prima and any(
-        st.session_state.verifiche[f].get("latex") for f in ("B", "R", "RB", "S")
+        (st.session_state.verifiche.get(f) or {}).get("latex") for f in ("B", "R", "RB", "S", "SC")
     ):
         for _f in ("B", "R", "RB"):
             st.session_state.verifiche[_f] = _vf()
         st.session_state.verifiche["S"] = {"latex": None, "testo": None, "pdf": None}
+        st.session_state.verifiche["SC"] = {"latex": None, "pdf": None, "n": 0, "avvisi": []}
         va["docx"] = None
         st.session_state.rubrica_testo = None
         st.session_state["_rubrica_docx"] = None
         st.session_state["_avviso_dopo"] = (
-            "Hai modificato la verifica: Fila B, BES/DSA e Soluzioni già create non valgono più "
-            "e vanno rigenerate dalla nuova versione."
+            "Hai modificato la verifica: Fila B, BES/DSA, Soluzioni e scheda di allenamento già create "
+            "non valgono più e vanno rigenerate dalla nuova versione."
         )
     # Se i punti sono stati ridistribuiti o un grafico è stato sostituito, i blocchi vanno
     # riletti dal LaTeX finale (altrimenti l'editor mostrerebbe i valori vecchi).
@@ -3885,6 +3891,35 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 #  STAGE_FINAL
 # ═══════════════════════════════════════════════════════════════════════════════
 
+def _nome_base_file(materia: str, argomento: str) -> str:
+    """Nome di file sicuro: «Matematica_Le_frazioni_algebriche»."""
+    return re.sub(r"[^\w\-]+", "_", f"{materia}_{argomento}").strip("_")[:60] or "verifica"
+
+
+def _elementi_kit(argomento, materia, vA, vB, vR, vS, vSC, rubrica_docx) -> list:
+    """I documenti già pronti del kit: [{"etichetta", "nome_file", "dati"}] (PDF e Word)."""
+    base = _nome_base_file(materia, argomento)
+    voci = (
+        ("Fila A", "_FilaA.pdf", vA.get("pdf")),
+        ("Fila B", "_FilaB.pdf", vB.get("pdf")),
+        ("BES/DSA", "_BES_FilaA.pdf", vR.get("pdf")),
+        ("Soluzioni", "_Soluzioni.pdf", vS.get("pdf")),
+        ("Scheda di allenamento", "_Scheda_allenamento.pdf", (vSC or {}).get("pdf")),
+        ("Word", "_FilaA.docx", vA.get("docx")),
+        ("Griglia", "_Griglia.docx", rubrica_docx),
+    )
+    return [{"etichetta": e, "nome_file": base + n, "dati": d} for e, n, d in voci if d]
+
+
+def _zip_kit(elementi: list) -> bytes:
+    """Tutti i documenti pronti in un solo file ZIP (libreria standard, nessuna dipendenza)."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        for e in elementi:
+            z.writestr(e["nome_file"], e["dati"])
+    return buf.getvalue()
+
+
 def _render_stage_final():
     gp   = st.session_state.gen_params
     vA   = st.session_state.verifiche["A"]
@@ -4036,19 +4071,79 @@ def _render_stage_final():
             st.caption("Anteprima non disponibile.")
 
     # ═══════════════════════════════════════════════════════════════════════════
-    #  ALTRE VERSIONI — Fila B, BES/DSA, soluzioni, griglia, Word
+    #  IL KIT COMPLETO — Fila B, BES/DSA, soluzioni, griglia, Word, scheda di allenamento
     # ═══════════════════════════════════════════════════════════════════════════
+    # Etichetta «Pro» sulle funzioni del kit: spenta finché non parte la monetizzazione
+    _PRO = (
+        f' <span style="font-size:.62rem;font-weight:800;letter-spacing:.06em;color:{T["accent"]};'
+        f'border:1px solid {T["accent"]};border-radius:6px;padding:1px 6px;vertical-align:middle;">PRO</span>'
+        if MOSTRA_BADGE_PRO else ""
+    )
+    vSC = st.session_state.verifiche.get("SC") or {"latex": None, "pdf": None, "n": 0, "avvisi": []}
+
+    # Coda di «Prepara tutto il kit»: un elemento per volta, perché ogni creazione fa un rerun
+    _flag_kit = {"B": "_gen_fila_b", "R": "_gen_bes", "S": "_gen_sol", "SC": "_gen_scheda"}
+    _coda_kit = st.session_state.get("_kit_coda") or []
+    if _coda_kit and not any(st.session_state.get(f) for f in _flag_kit.values()):
+        _prossimo = _coda_kit.pop(0)
+        st.session_state["_kit_coda"] = _coda_kit
+        st.session_state[_flag_kit[_prossimo]] = True
+    _kit_in_corso = bool(_coda_kit) or any(st.session_state.get(f) for f in _flag_kit.values())
+
     st.markdown(
-        f'<div class="variant-section-label">ALTRE VERSIONI DELLA VERIFICA</div>',
+        f'<div class="variant-section-label" style="margin-top:.4rem;">IL KIT COMPLETO PER LA TUA CLASSE</div>'
+        f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:-.2rem 0 .7rem;">'
+        f'Tutto pronto a partire dalla stessa verifica: versioni, soluzioni e una scheda per allenarsi.</div>',
         unsafe_allow_html=True
     )
-    # Una riga per versione (titolo + descrizione a sinistra, azione a destra), nell'ordine a schermo
+    _kit_pronti = _elementi_kit(arg_str, mat_str, vA, vB, vR, vS, vSC, st.session_state.get("_rubrica_docx"))
+    _kit_mancanti = [k for k, presente in (
+        ("B", vB.get("pdf") or vB.get("latex")), ("R", vR.get("pdf") or vR.get("latex")),
+        ("S", vS.get("pdf") or vS.get("latex")), ("SC", vSC.get("pdf")),
+    ) if not presente]
+    _kc1, _kc2 = st.columns(2, gap="small")
+    with _kc1:
+        if st.button("Prepara tutto il kit", icon=":material/auto_awesome:", key="kit_tutto",
+                     use_container_width=True, disabled=(not _kit_mancanti) or _kit_in_corso,
+                     help="Crea Fila B, BES/DSA, Soluzioni e scheda di allenamento, una dopo l'altra "
+                          "(circa un minuto). Quello che c'è già non si rifà."):
+            st.session_state["_kit_coda"] = [k for k in ("B", "R", "S", "SC") if k in _kit_mancanti]
+            st.rerun()
+    with _kc2:
+        if len(_kit_pronti) >= 2:
+            _dl("Scarica tutto (ZIP)", data=lambda: _zip_kit(_kit_pronti),
+                file_name=_nome_base_file(mat_str, arg_str) + "_kit.zip", mime="application/zip",
+                icon=":material/folder_zip:", use_container_width=True, key="dl_kit_zip",
+                help="Tutti i documenti pronti in un solo file.")
+    if _kit_in_corso:
+        st.markdown(
+            f'<div role="status" style="margin:.6rem 0;padding:.7rem 1rem;border:1px solid {T["border2"]};'
+            f'border-radius:12px;background:{T["card"]};font-size:.9rem;color:{T["text2"]};'
+            f'font-family:DM Sans,sans-serif;">⏳ Sto preparando il kit'
+            + (f' (ancora {len(_coda_kit)} dopo questo passaggio)' if _coda_kit else '')
+            + '. Ci vuole circa un minuto: non toccare la pagina.</div>',
+            unsafe_allow_html=True
+        )
+    if _kit_pronti:
+        st.markdown(
+            f'<div style="font-size:.85rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.3rem 0 .6rem;">'
+            f'Pronti nel kit: <b>{_esc(" · ".join(e["etichetta"] for e in _kit_pronti))}</b></div>',
+            unsafe_allow_html=True
+        )
+
+    # Una riga per documento (titolo + descrizione a sinistra, azione a destra), per gruppo
+    st.markdown(f'<div class="variant-section-label" style="margin-top:.6rem;">Per la verifica</div>',
+                unsafe_allow_html=True)
     _rw = []
     for _ in range(5):
         with st.container(border=True):
             _rw.append(st.columns([3.4, 1.6], vertical_alignment="center", gap="medium"))
     # Ordine a schermo: Soluzioni, Fila B, Word, BES/DSA, Griglia (le più richieste per prime)
     (_vc3, _vb3), (_vc1, _vb1), (_vc5, _vb5), (_vc2, _vb2), (_vc4, _vb4) = _rw
+    st.markdown(f'<div class="variant-section-label" style="margin-top:.9rem;">Per la classe</div>',
+                unsafe_allow_html=True)
+    with st.container(border=True):
+        _vc6, _vb6 = st.columns([3.4, 1.6], vertical_alignment="center", gap="medium")
 
     # ── FILA B ────────────────────────────────────────────────────────────────
     with _vc1:
@@ -4059,9 +4154,9 @@ def _render_stage_final():
             f'<div class="variant-card variant-card-blue">'
             f'  <div class="variant-card-header">'
             f'    <span class="variant-card-icon">📋</span>'
-            f'    <span class="variant-card-title">Fila B</span>'
+            f'    <span class="variant-card-title">Fila B{_PRO}</span>'
             f'  </div>'
-            f'  <div class="variant-card-desc">Stessa struttura e stessi punteggi, con dati diversi. Pronta in pochi secondi.</div>'
+            f'  <div class="variant-card-desc">Stessa struttura e stessi punteggi con dati diversi, contro la copiatura. Pronta in pochi secondi.</div>'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -4112,6 +4207,7 @@ def _render_stage_final():
                 st.rerun()
             except Exception as _e:
                 _ph_b.empty()
+                st.session_state["_kit_coda"] = []   # un errore ferma la coda del kit
                 _mostra_errore("Non sono riuscito a creare la Fila B", _e,
                                riprova_flag="_gen_fila_b", riprova_key="riprova_fila_b")
 
@@ -4124,7 +4220,7 @@ def _render_stage_final():
             f'<div class="variant-card variant-card-violet">'
             f'  <div class="variant-card-header">'
             f'    <span class="variant-card-icon">🌟</span>'
-            f'    <span class="variant-card-title">Versione BES/DSA</span>'
+            f'    <span class="variant-card-title">Versione BES/DSA{_PRO}</span>'
             f'  </div>'
             f'  <div class="variant-card-desc">Per studenti con BES o DSA: linguaggio più semplice e struttura alleggerita.</div>'
             f'</div>',
@@ -4161,6 +4257,7 @@ def _render_stage_final():
                 _ph_r.empty(); st.toast("✅ BES/DSA pronta!", icon="🌟"); st.rerun()
             except Exception as _e:
                 _ph_r.empty()
+                st.session_state["_kit_coda"] = []   # un errore ferma la coda del kit
                 _mostra_errore("Non sono riuscito a creare la versione BES/DSA", _e,
                                riprova_flag="_gen_bes", riprova_key="riprova_bes")
 
@@ -4173,9 +4270,9 @@ def _render_stage_final():
             f'<div class="variant-card variant-card-green">'
             f'  <div class="variant-card-header">'
             f'    <span class="variant-card-icon">📝</span>'
-            f'    <span class="variant-card-title">Soluzioni</span>'
+            f'    <span class="variant-card-title">Soluzioni{_PRO}</span>'
             f'  </div>'
-            f'  <div class="variant-card-desc">Riservate al docente: risposte complete e svolgimenti.</div>'
+            f'  <div class="variant-card-desc">Risposte e svolgimenti riservati al docente: niente correzione da preparare a mano.</div>'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -4209,6 +4306,7 @@ def _render_stage_final():
                 _ph_s.empty(); st.toast("✅ Soluzioni pronte!", icon="✅"); st.rerun()
             except Exception as _e:
                 _ph_s.empty()
+                st.session_state["_kit_coda"] = []   # un errore ferma la coda del kit
                 _mostra_errore("Non sono riuscito a creare le soluzioni", _e,
                                riprova_flag="_gen_sol", riprova_key="riprova_sol")
 
@@ -4220,7 +4318,7 @@ def _render_stage_final():
             f'<div class="variant-card variant-card-teal">'
             f'  <div class="variant-card-header">'
             f'    <span class="variant-card-icon">📝</span>'
-            f'    <span class="variant-card-title">Formato Word</span>'
+            f'    <span class="variant-card-title">Formato Word{_PRO}</span>'
             f'  </div>'
             f'  <div class="variant-card-desc">File .docx modificabile con Word o Google Docs.</div>'
             f'</div>',
@@ -4263,7 +4361,7 @@ def _render_stage_final():
             f'<div class="variant-card variant-card-orange">'
             f'  <div class="variant-card-header">'
             f'    <span class="variant-card-icon">📊</span>'
-            f'    <span class="variant-card-title">Griglia di Valutazione</span>'
+            f'    <span class="variant-card-title">Griglia di Valutazione{_PRO}</span>'
             f'  </div>'
             f'  <div class="variant-card-desc">Griglia di valutazione per competenze (Linee Guida MIM).</div>'
             f'</div>',
@@ -4321,6 +4419,73 @@ def _render_stage_final():
                 _rph.empty()
                 _mostra_errore("Non sono riuscito a creare la griglia di valutazione", _er,
                                riprova_flag="_rubrica_gen", riprova_key="riprova_griglia")
+
+    # ── SCHEDA DI ALLENAMENTO — per la classe, da dare prima della verifica ──────
+    with _vc6:
+        st.markdown(
+            f'<div class="variant-card variant-card-pink">'
+            f'  <div class="variant-card-header">'
+            f'    <span class="variant-card-icon">🎯</span>'
+            f'    <span class="variant-card-title">Scheda di allenamento{_PRO} '
+            f'<span style="font-size:.62rem;font-weight:800;letter-spacing:.06em;color:{T["success"]};'
+            f'border:1px solid {T["success"]};border-radius:6px;padding:1px 6px;vertical-align:middle;">NOVITÀ</span></span>'
+            f'  </div>'
+            f'  <div class="variant-card-desc">Circa 40 esercizi graduati ★ ★★ ★★★ sugli stessi tipi di richiesta '
+            f'della verifica, da dare alla classe per allenarsi prima.</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        if vSC.get("avvisi"):
+            for _av in vSC["avvisi"][:3]:
+                st.caption(f"⚠️ {_av}")
+        if vSC.get("pdf") and vSC.get("n"):
+            st.caption(f"{vSC['n']} esercizi · controlla sempre il contenuto prima di darla agli studenti.")
+    with _vb6:
+        if vSC.get("pdf"):
+            _dl(
+                f"⬇ Scarica scheda (PDF) · {_stima(vSC['pdf'])}",
+                data=vSC["pdf"], file_name=_nome_base_file(mat_str, arg_str) + "_Scheda_allenamento.pdf",
+                mime="application/pdf", use_container_width=True, key="dl_pdf_SC",
+            )
+        else:
+            if st.button("🎯 Crea la scheda", key="one_click_SC", use_container_width=True, type="secondary",
+                         disabled=bool(st.session_state.get("_gen_scheda"))):
+                st.session_state["_gen_scheda"] = True
+                st.rerun()
+
+    if st.session_state.get("_gen_scheda"):
+        st.session_state["_gen_scheda"] = False
+        _ph_sc = st.empty()
+
+        def _avanza_scheda(testo):
+            _ph_sc.markdown(
+                _skeleton_html("🎯", "Preparo la scheda di allenamento…",
+                               f"{_esc(testo)} · circa 30 secondi, non toccare la pagina"),
+                unsafe_allow_html=True)
+
+        _avanza_scheda("Leggo la verifica")
+        try:
+            _res_sc = genera_scheda(
+                crea_modello(mod_id), mat_str, scu_str, arg_str, vA.get("latex", ""),
+                on_progress=_avanza_scheda,
+            )
+            _ph_sc.empty()
+            if _res_sc.get("pdf"):
+                st.session_state.verifiche["SC"] = {
+                    "latex": _res_sc["latex"], "pdf": _res_sc["pdf"],
+                    "n": _res_sc["n_esercizi"], "avvisi": _res_sc["avvisi"],
+                }
+                st.toast("Scheda di allenamento pronta!", icon="🎯")
+                st.rerun()
+            else:
+                st.session_state.pop("_kit_coda", None)
+                _mostra_errore("Non sono riuscito a impaginare la scheda", "compilazione PDF",
+                               riprova_flag="_gen_scheda", riprova_key="riprova_scheda")
+        except Exception as _e:
+            _ph_sc.empty()
+            st.session_state["_kit_coda"] = []   # un errore ferma la coda: «Prepara tutto il kit» riprende da qui
+            _mostra_errore("Non sono riuscito a creare la scheda di allenamento", _e,
+                           riprova_flag="_gen_scheda", riprova_key="riprova_scheda")
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  IDEA #5 — CONDIVIDI CON IL DIPARTIMENTO
@@ -4493,6 +4658,7 @@ def _nuova_verifica() -> None:
     st.session_state.verifiche         = {
         "A": _vf(), "B": _vf(), "R": _vf(), "RB": _vf(),
         "S": {"latex": None, "testo": None, "pdf": None},
+        "SC": {"latex": None, "pdf": None, "n": 0, "avvisi": []},
     }
     st.session_state.review_preamble   = ""
     st.session_state.review_blocks     = []
@@ -4509,6 +4675,8 @@ def _nuova_verifica() -> None:
     st.session_state["_gen_fila_b"]       = False
     st.session_state["_gen_bes"]           = False
     st.session_state["_gen_sol"]           = False
+    st.session_state["_gen_scheda"]       = False
+    st.session_state["_kit_coda"]         = []
     st.session_state.analisi_docs_list  = []
     st.session_state.info_consolidate   = {}
     st.session_state["_analisi_rifiuto"] = None
