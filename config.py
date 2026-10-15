@@ -431,7 +431,7 @@ CALIBRAZIONE_SCUOLA = {
     "Liceo Scientifico": (
         "Liceo scientifico (14–19 anni): rigore scientifico e matematico, "
         "uso appropriato di notazioni formali (ℝ, ∀, ∃, etc.). "
-        "Può includere dimostrazioni, problemi aperti, ragionamento deduttivo. "
+        "Può includere dimostrazioni (solo se il docente non le esclude), problemi aperti, ragionamento deduttivo. "
         "Livello: programma MIUR liceo scientifico."
     ),
     "Liceo Classico": (
