@@ -100,7 +100,9 @@ contato in `usage_events` (tipo `modifica`, per `verifica_id`) così riaprire la
 contatore della sessione. Eliminare esercizi, cambiare i punteggi e annullare non contano. L'anteprima del singolo esercizio col grafico è
 `latex_utils.anteprima_esercizio_png` (compila solo quell'esercizio, in cache per testo).
 
-DOCX: `docx_export.py` converte il LaTeX (oggi passando da Gemini) e costruisce il file con python-docx.
+DOCX: `docx_export.latex_to_docx_modificabile` (senza AI): pandoc converte il testo (formule = equazioni di Word), ogni grafico TikZ è compilato a parte
+e inserito come immagine centrata, la tabella dei punteggi è una sola tabella stretta con i totali per esercizio, poi rifiniture con python-docx (A4, font,
+intestazione, logo). Serve `pandoc` (già in `packages.txt`). Il vecchio `latex_to_docx_via_ai` resta nel file ma non si usa. Pulsante «Versione Word modificabile» in FINAL.
 
 ## Piani e abbonamenti
 
