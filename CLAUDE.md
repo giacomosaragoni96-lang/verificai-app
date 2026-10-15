@@ -114,6 +114,10 @@ bene solo se una riga di consegna copre tutte le richieste dello stesso tipo; co
 il suo verbo («Risolvi la disequazione:», «Discuti, al variare di k, la disequazione:»). Se non capisce il compito non tocca nulla. Pulizia (`_ripulisci_consegne`): se la consegna in testa copre il compito, toglie la frase («Studia il segno e risolvi…:») davanti alle richieste fatte di
 SOLA formula (solo se la frase finisce con i due punti e il compito è lo stesso); senza consegna, con richieste tutte uguali, la porta in testa.
 
+ATTENZIONE: il piano, il controllo della difficoltà e i RUOLI rigidi sono SPENTI (`config.PIANO_ATTIVO = False`, `RUOLI_ESERCIZI_ATTIVI = False`): con le note del piano
+e i ruoli i sottopunti diventavano mini-esercizi con descrizione propria. Restano punti DIVERSI per esercizio, l'esercizio «Per l'eccellenza» e le regole di prompt su consegne e difficoltà.
+Per riaccenderli: mettere i due flag a True (il codice c'è ed è provato).
+
 PIANO prima del testo (`piano_verifica.py`, senza streamlit, per ogni materia): con la struttura-tipo, dopo il titolo una chiamata breve (compito AI «piano»)
 riempie lo scheletro (ruoli e punti decisi dal codice) con titolo, tipo e richieste (livello 1-3 + nota) di ogni esercizio; `normalizza_piano` la controlla
 (conteggi, livelli crescenti, mix ~40/40/20, max esercizi chiusi) e calcola i punti per richiesta dal livello; `piano_a_testo` la passa a chi scrive gli

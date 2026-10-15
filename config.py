@@ -149,6 +149,12 @@ COMPITI_AI = {
 # Autoverifica degli esercizi nelle materie scientifiche (autoverifica.py). Costo: circa 1-2 centesimi a verifica.
 AUTOVERIFICA_ATTIVA = True
 
+# Piano e ruoli rigidi degli esercizi. SPENTI: con le note del piano e i ruoli (centrale 4-8 richieste, ecc.) i sottopunti diventavano
+# mini-esercizi con descrizione propria. Il codice resta (piano_verifica.py, controllo della difficoltà): True per riaccenderli.
+PIANO_ATTIVO = False             # chiamata del piano + controllo della difficoltà dopo la scrittura
+RUOLI_ESERCIZI_ATTIVI = False    # ruoli e numero di richieste per ruolo nelle istruzioni (spento: restano punti DIVERSI per esercizio
+                                 # e l'esercizio «per l'eccellenza», senza dire quante richieste deve avere ciascuno)
+
 # ── SCHEDA DI ALLENAMENTO ─────────────────────────────────────────────────────
 # ~40 esercizi graduati, una sezione per ogni esercizio della verifica (scheda.py).
 SCHEDA = {
