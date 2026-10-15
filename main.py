@@ -1336,8 +1336,8 @@ def _guida_benvenuto(dove: str, slot) -> None:
                   nota="Finito? Premi <b>«Fatto: torna al PDF»</b>.")
     else:
         _riquadro(f"{_eti} · La tua prima verifica", "Hai creato la tua prima verifica!",
-                  ("Prova ciò che <b>lampeggia</b>, scorrendo in basso " if _test else "Hai tutto sbloccato: prova ciò che <b>lampeggia</b>, scorrendo in basso ") +
-                  '(<a href="#kit-completo" style="color:#fff;font-weight:700;white-space:nowrap;">vai al kit</a>).',
+                  "Prova tutto ciò che <b>lampeggia</b>, scorrendo in basso." if _test else
+                  "Hai tutto sbloccato: prova tutto ciò che <b>lampeggia</b>, scorrendo in basso.",
                   ["apri_modifica", "kit", "storico"],
                   voci=[("⬇️", "Scarica il PDF", "Pronto per la stampa."),
                         ("✏️", "Modifica gli esercizi", "Cambia, aggiungi o togli."),
