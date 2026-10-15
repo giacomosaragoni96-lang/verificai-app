@@ -3015,3 +3015,42 @@ def pesa_punti_per_tipo(latex: str) -> str:
         nuovi.append(_PT_PATTERN.sub(
             lambda mm, w=w: "(%d pt)" % max(1, round(float(mm.group(1).replace(",", ".")) * w * 10)), blocco))
     return "".join(nuovi)
+
+
+# ── Anteprima del solo esercizio ─────────────────────────────────────────────────
+def anteprima_esercizio_png(preambolo: str, titolo: str, corpo: str):
+    """
+    PNG del solo esercizio (con il grafico, le caselle V/F e i punteggi), compilato col preambolo della verifica ma senza
+    intestazione né tabella dei punteggi, e ritagliato sul contenuto. None se non si riesce a compilarlo: chi chiama
+    ripiega su un'anteprima testuale.
+    """
+    inizio = (preambolo or "").find("\\begin{document}")
+    if inizio == -1 or not (corpo or "").strip():
+        return None
+    doc = (preambolo[:inizio + len("\\begin{document}")] + "\n\\pagestyle{empty}\n"
+           + "\\subsection*{" + (titolo or "") + "}\n" + corpo.strip() + "\n\\end{document}\n")
+    try:
+        pdf, _err, _usato = compila_pdf_sicuro(doc)
+        if not pdf:
+            return None
+        immagini, _ = pdf_to_images_bytes(pdf)
+        if not immagini:
+            return None
+        png = immagini[0]
+    except Exception as e:
+        logger.warning("Anteprima dell'esercizio non riuscita: %s", e)
+        return None
+    try:                                              # ritaglio dei margini bianchi (Pillow arriva con pdf2image)
+        from PIL import Image, ImageChops
+        img = Image.open(io.BytesIO(png)).convert("RGB")
+        riquadro = ImageChops.difference(img, Image.new("RGB", img.size, (255, 255, 255))).getbbox()
+        if riquadro:
+            m = 24
+            img = img.crop((max(0, riquadro[0] - m), max(0, riquadro[1] - m),
+                            min(img.width, riquadro[2] + m), min(img.height, riquadro[3] + m)))
+            buf = io.BytesIO()
+            img.save(buf, "PNG")
+            return buf.getvalue()
+    except Exception as e:
+        logger.info("Ritaglio dell'anteprima non riuscito (uso la pagina intera): %s", e)
+    return png

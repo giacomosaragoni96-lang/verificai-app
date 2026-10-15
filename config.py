@@ -34,6 +34,7 @@ ETICHETTE_FUNZIONI = {
     "griglia": "la griglia di valutazione", "logo": "il logo della scuola",
     "scheda": "la scheda di allenamento", "zip": "il kit completo in un solo file",
     "materiale": "la verifica a partire dai tuoi appunti o da una verifica già fatta",
+    "modifiche": "più modifiche con l'AI su ogni verifica",
 }
 # Dati del fornitore per le pagine legali (Termini, Rimborsi, Privacy). Indirizzo e partita IVA: compaiono solo se compilati.
 # LEGALE_PRONTO = True fa comparire i link a Termini e Rimborsi nell'app: da accendere solo dopo la revisione delle bozze.
@@ -47,6 +48,10 @@ LEGALE = {
 LEGALE_PRONTO = True
 # Tetto di sicurezza contro abusi e costi anomali: al massimo tante verifiche in quanti minuti (per utente, admin escluso)
 TETTO_BREVE = {"verifiche": 6, "minuti": 10}
+# Modifiche con l'AI per ogni verifica («Più facile», «Cambia i numeri», «Cambia esercizio», «Applica modifica», «Aggiungi»):
+# ognuna è una chiamata all'AI e rifà il PDF, quindi ha un tetto per verifica (si conta in `usage_events`). Admin escluso.
+# Il piano Pro (e la prima verifica «assaggio») ha il tetto più alto.
+MODIFICHE_PER_VERIFICA = {"free": 10, "pro": 40}
 # Facciate massime consigliate per una verifica (si stampa su 2 fogli fronte-retro); oltre: avviso e riduzione
 MAX_FACCIATE = 2
 # Esportazione Word: spenta finche' la conversione non e' affidabile (testo, scelte multiple, grafici e tabella si perdevano)
