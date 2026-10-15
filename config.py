@@ -76,7 +76,7 @@ MODELLI_DISPONIBILI = {
         "id":    "gemini-2.5-flash",
         "piano": "pro",
     },
-    "🧠 Pro 2.5 (STEM/Gold)": {
+    "🧠 Pro 2.5 (solo prove admin)": {
         "id":    "gemini-2.5-pro",
         "piano": "gold",
     },
@@ -175,10 +175,9 @@ MATERIE_STEM = {
 }
 
 def get_model_id_per_piano(piano: str, materia: str = "") -> str:
-    is_stem = materia in MATERIE_STEM
-    if piano == "gold" or (piano == "admin" and is_stem):
-        return MODELLI_DISPONIBILI["🧠 Pro 2.5 (STEM/Gold)"]["id"]
-    if piano in ("pro", "admin"):
+    # Il Pro 2.5 costa 3-4 volte Flash senza un vantaggio netto: non si sceglie MAI in automatico,
+    # nemmeno per gold o per l'admin con materie STEM. L'admin può sceglierlo a mano dalla sidebar.
+    if piano in ("pro", "admin", "gold"):
         return MODELLI_DISPONIBILI["⚡ Flash 2.5 (bilanciato · Pro)"]["id"]
     return MODEL_FAST_ID
 
