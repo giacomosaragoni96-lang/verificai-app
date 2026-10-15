@@ -781,7 +781,7 @@ def _aggiungi_caselle_vf(latex: str) -> str:
         testa, coda = (blocco, "") if coda_i == -1 else (blocco[:coda_i], blocco[coda_i:])
         pezzi = re.split(r"(?=\\item\b)", testa)
         for j, pezzo in enumerate(pezzi):
-            if not pezzo.startswith("\\item") or "\\square" in pezzo:
+            if not pezzo.startswith("\\item") or re.search(r"\\square|\\Box|\\boxempty|[□☐]", pezzo):
                 continue
             testo = re.sub(r"^\\item(?:\[[^\]]*\])?", "", pezzo)
             testo = re.sub(r"\(\s*\d+(?:[.,]\d+)?\s*pt\s*\)", "", testo)
@@ -803,6 +803,7 @@ def rifinisci_scelta_multipla_e_vf(latex: str) -> str:
     """
     latex = _appiattisci_scelta_multipla(latex)
     latex = _aggiungi_caselle_vf(latex)
+    latex = _RE_VF_DOPPIE.sub(lambda m: m.group(1), latex)
     latex = _VF_RE.sub(lambda m: "\\mbox{" + m.group(0) + "}", latex)
 
     pila, modifiche = [], []
@@ -2761,10 +2762,13 @@ _RE_PUNTI_ALTROVE = re.compile(r"[ \t]*(?<!\{)\((\d+(?:[.,]\d+)?)\s*pt\)")
 # Caselle V/F (scritte dall'AI in più forme, anche con «\\», «\par» o «\hfill» davanti): si riscrivono sempre uguali, a destra.
 _VF_CORPO = (r"\$\\square\$\s*(?:\\textbf\{V\}|V)\s*(?:\$\\quad\\square\$|\\quad\s*\$\\square\$|\\qquad\s*\$\\square\$|~+\s*\$\\square\$|\$\\square\$)"
              r"\s*(?:\\textbf\{F\}|F)")
-_VF_SEP = r"(?:\s|\\\\(?:\[[^\]]*\])?|\\par\b|\\hfill\b|\\quad\b|\\qquad\b|\\hspace\*?\{[^}]*\})*"
+_VF_SEP = r"(?:\s|\\(?=\s)|\\\\(?:\[[^\]]*\])?|\\par\b|\\hfill\b|\\quad\b|\\qquad\b|\\hspace\*?\{[^}]*\})*"
 _VF_BOX = r"(?:\\mbox\{\s*(" + _VF_CORPO + r")\s*\}|(" + _VF_CORPO + r"))"
 _VF_PT = r"\(\s*(\d+(?:[.,]\d+)?)\s*pt\s*\)"
 _RE_VF_FINE = re.compile(_VF_SEP + _VF_BOX)
+# due serie di caselle una dopo l'altra (succede se l'AI le scrive e ne vengono aggiunte altre): ne basta una
+_VF_BOX_NC = r"(?:\\mbox\{\s*" + _VF_CORPO + r"\s*\}|" + _VF_CORPO + r")"
+_RE_VF_DOPPIE = re.compile("(" + _VF_BOX_NC + ")(?:" + _VF_SEP + _VF_BOX_NC + ")+")
 # punti + caselle sulla stessa richiesta (nell'anteprima del singolo esercizio, senza tabella): i punti in una colonna fissa a destra,
 # subito prima delle caselle, così sono allineati in tutte le affermazioni
 _RE_VF_PUNTI_PRIMA = re.compile(_VF_SEP + _VF_PT + _VF_SEP + _VF_BOX)     # gruppi: 1 punti, 2-3 caselle
@@ -2781,6 +2785,7 @@ def formatta_punti(latex: str) -> str:
     grassetto, in mezzo alla riga (es. prima delle caselle V/F) è staccato e in grassetto.
     Solo per il PDF: il LaTeX salvato resta con «(N pt)», che serve per contare e riscalare i punti.
     """
+    latex = _RE_VF_DOPPIE.sub(lambda m: m.group(1), latex)
     # le caselle V/F stanno in fondo alla riga, a destra; se non ci stanno vanno a capo, sempre a destra
     # (\hspace*{\fill} e non \hfill: quest'ultimo sparisce a inizio riga e le caselle resterebbero a sinistra)
     latex = _RE_VF_FINE.sub(lambda m: " \\hspace*{\\fill}\\mbox{" + (m.group(1) or m.group(2)) + "}", latex)
