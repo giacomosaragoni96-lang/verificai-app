@@ -105,3 +105,58 @@ SELECT e.tipo, count(*) AS volte,
 FROM usage_events e JOIN auth.users u ON u.id = e.user_id
 WHERE e.created_at > now() - interval '30 days' AND u.email <> 'giacomosaragoni96@gmail.com'          -- ADMIN
 GROUP BY e.tipo ORDER BY dollari_stimati DESC;
+
+-- ───────────────────────────────────────────────────────────────────────────────
+-- QUESTIONARIO DEI TESTER (tabella questionario_tester, pagina ?pagina=questionario). Tutto aggregato.
+-- ───────────────────────────────────────────────────────────────────────────────
+
+-- Q1) Quante risposte e quante persone hanno lasciato l'email
+SELECT count(*) AS risposte, count(email_facoltativa) AS con_email FROM questionario_tester;
+
+-- Q2) TEMPO: come fanno oggi e quanto ci mettono con VerificAI
+SELECT risposte->>'tempo_da_zero' AS tempo_normale, count(*) FROM questionario_tester GROUP BY 1 ORDER BY 2 DESC;
+SELECT risposte->>'tempo_con'     AS tempo_con_verificai, count(*) FROM questionario_tester GROUP BY 1 ORDER BY 2 DESC;
+SELECT risposte->>'risparmio'     AS tempo_risparmiato, count(*) FROM questionario_tester GROUP BY 1 ORDER BY 2 DESC;
+
+-- Q3) SODDISFAZIONE: utilità e facilità (medie 1–5) e NPS (0–10: % promotori 9–10 meno % detrattori 0–6)
+SELECT round(avg((risposte->>'utile')::numeric), 2)  AS utile_medio,
+       round(avg((risposte->>'facile')::numeric), 2) AS facile_medio,
+       round(100.0 * count(*) FILTER (WHERE (risposte->>'consiglieresti')::int >= 9) / NULLIF(count(*) FILTER (WHERE risposte ? 'consiglieresti'), 0)
+           - 100.0 * count(*) FILTER (WHERE (risposte->>'consiglieresti')::int <= 6) / NULLIF(count(*) FILTER (WHERE risposte ? 'consiglieresti'), 0), 0) AS nps
+FROM questionario_tester;
+SELECT risposte->>'useresti' AS la_userebbe_per_una_verifica_vera, count(*) FROM questionario_tester GROUP BY 1 ORDER BY 2 DESC;
+SELECT risposte->>'pronta' AS verifica_pronta_da_usare, risposte->>'correzioni' AS correzioni, count(*) FROM questionario_tester GROUP BY 1, 2 ORDER BY 3 DESC;
+
+-- Q4) DISPOSIZIONE A PAGARE e formula preferita
+SELECT risposte->>'pagheresti' AS pagheresti, count(*) FROM questionario_tester GROUP BY 1 ORDER BY 2 DESC;
+SELECT risposte->>'formula' AS formula_preferita, count(*) FROM questionario_tester GROUP BY 1 ORDER BY 2 DESC;
+SELECT risposte->>'verifiche_mese' AS verifiche_al_mese, count(*) FROM questionario_tester GROUP BY 1 ORDER BY 2 DESC;
+
+-- Q5) PREZZO (metodo Van Westendorp): quartili e mediana di ciascuna delle quattro domande, in euro all'anno
+SELECT d.domanda,
+       count(*) AS risposte,
+       round(percentile_cont(0.25) WITHIN GROUP (ORDER BY d.v)::numeric, 1) AS primo_quartile,
+       round(percentile_cont(0.5)  WITHIN GROUP (ORDER BY d.v)::numeric, 1) AS mediana,
+       round(percentile_cont(0.75) WITHIN GROUP (ORDER BY d.v)::numeric, 1) AS terzo_quartile
+FROM (
+    SELECT 'troppo basso (dubito della qualità)' AS domanda, (risposte->>'vw_troppo_basso')::numeric AS v FROM questionario_tester WHERE risposte ? 'vw_troppo_basso'
+    UNION ALL SELECT 'conveniente',       (risposte->>'vw_conveniente')::numeric  FROM questionario_tester WHERE risposte ? 'vw_conveniente'
+    UNION ALL SELECT 'comincia a essere caro', (risposte->>'vw_caro')::numeric    FROM questionario_tester WHERE risposte ? 'vw_caro'
+    UNION ALL SELECT 'troppo caro',        (risposte->>'vw_troppo_caro')::numeric FROM questionario_tester WHERE risposte ? 'vw_troppo_caro'
+) d GROUP BY d.domanda ORDER BY mediana;
+-- Lettura: la zona di prezzo accettabile va circa dalla mediana di «troppo basso» (o «conveniente») fino alla mediana di «comincia a essere caro»;
+-- oltre la mediana di «troppo caro» quasi nessuno compra. Servono almeno 20–30 risposte perché abbia senso.
+
+-- Q6) FUNZIONI: quali sono piaciute di più e quali userebbero ogni mese
+SELECT 'piaciuta' AS tipo, f AS funzione, count(*) AS persone
+FROM questionario_tester, jsonb_array_elements_text(risposte->'piaciuto') AS f GROUP BY f
+UNION ALL
+SELECT 'ogni mese', f, count(*)
+FROM questionario_tester, jsonb_array_elements_text(risposte->'funzioni_mese') AS f GROUP BY f
+ORDER BY tipo, persone DESC;
+
+-- Q7) TESTI LIBERI più recenti (cosa manca, cosa confonde, cosa è di troppo)
+SELECT created_at::date AS giorno, risposte->>'manca' AS manca, risposte->>'confuso' AS confuso, risposte->>'troppo' AS di_troppo, risposte->>'altro' AS altro
+FROM questionario_tester
+WHERE risposte ? 'manca' OR risposte ? 'confuso' OR risposte ? 'troppo' OR risposte ? 'altro'
+ORDER BY id DESC LIMIT 50;

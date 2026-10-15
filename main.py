@@ -37,6 +37,7 @@ from scheda import genera_scheda
 from subscription_management import calcola_entitlements, get_subscription_manager
 from ui_upgrade import render_upgrade
 from ui_legale import render_termini, render_rimborsi
+from ui_questionario import render_questionario
 from licenze import attiva_licenza, riconvalida_se_serve
 from segnalazioni import costruisci_segnalazione, MAX_PER_SESSIONE
 from latex_utils import (
@@ -151,13 +152,15 @@ configura_ai(API_KEY)
 
 # ── Pagina pubblica: informativa sulla privacy (richiesta da Google per il login) ──
 # Solo testo statico, visibile senza accedere; non dà accesso a nessuna funzione dell'app.
-if st.query_params.get("pagina") in ("privacy", "termini", "rimborsi"):
+if st.query_params.get("pagina") in ("privacy", "termini", "rimborsi", "questionario"):
     st.markdown(_css_tema(_theme_key), unsafe_allow_html=True)
     _pag = st.query_params.get("pagina")
     if _pag == "termini":
         render_termini(T)
     elif _pag == "rimborsi":
         render_rimborsi(T)
+    elif _pag == "questionario":          # il parere dei tester: pagina pubblica e anonima
+        render_questionario(T, supabase_admin)
     else:
         render_privacy(T, FEEDBACK_FORM_URL)
     st.stop()
@@ -1378,7 +1381,7 @@ if not _is_admin:      # Share, stella, matita, GitHub e Deploy servono solo a c
                 '[data-testid="stMainMenu"] { display:none !important; }</style>', unsafe_allow_html=True)
 
 st.markdown(
-    '<a class="fab-link" href="' + FEEDBACK_FORM_URL + '" target="_blank" title="Scrivici un feedback" '
+    '<a class="fab-link" href="?pagina=questionario" target="_blank" title="Scrivici un feedback" '
     'aria-label="Scrivici un feedback" rel="noopener noreferrer">💬 Lasciaci un feedback</a>',
     unsafe_allow_html=True
 )
@@ -5767,7 +5770,7 @@ st.markdown(
     '<div class="app-footer">'
     'VerificAI · Versione Beta · '
     '<a href="?pagina=privacy" target="_blank" rel="noopener" style="color:inherit;">Privacy</a>'
-    ' · <a href="' + FEEDBACK_FORM_URL + '" target="_blank" rel="noopener" style="color:inherit;">Feedback</a>'
+    ' · <a href="?pagina=questionario" target="_blank" rel="noopener" style="color:inherit;">Feedback</a>'
     + ((' · <a href="?pagina=termini" target="_blank" rel="noopener" style="color:inherit;">Termini</a>'
         ' · <a href="?pagina=rimborsi" target="_blank" rel="noopener" style="color:inherit;">Rimborsi</a>') if LEGALE_PRONTO else '')
     + '</div>',
