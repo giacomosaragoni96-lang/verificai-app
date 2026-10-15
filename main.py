@@ -3142,7 +3142,7 @@ def _lancia_generazione(
             return "Preparo la struttura"
         if "esercizi" in t and "generazione" in t:
             return "Scrivo gli esercizi"
-        if "controllo" in t or "qualit" in t:
+        if "controllo" in t or "qualit" in t or "difficolt" in t:
             return "Ricontrollo gli esercizi"
         if "pdf" in t:
             return "Preparo il PDF"

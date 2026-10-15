@@ -27,7 +27,7 @@ from prompts import (
     prompt_piano_verifica,
 )
 from piano_verifica import (
-    scheletro_piano, normalizza_piano, estrai_json, piano_a_testo, applica_punti_piano, max_esercizi_chiusi,
+    scheletro_piano, normalizza_piano, estrai_json, piano_a_testo, applica_punti_piano, max_esercizi_chiusi, _conta_sottopunti,
 )
 
 # prompt_rigenera_blocco potrebbe non essere ancora in prompts.py (deploy graduale)
@@ -155,6 +155,7 @@ except Exception:                                   # SDK assente (test in isola
 _COMPITO_DA_PASSO = (
     ("Generazione titolo", "titolo"),
     ("Piano della verifica", "piano"),
+    ("Calibrazione difficoltà", "difficolta"),
     ("Generazione esercizi", "corpo"),
     ("Controllo qualità", "controllo_qualita"),
     ("Soluzioni", "soluzioni"),
@@ -607,19 +608,19 @@ def rigenera_singolo_blocco(
 
 # ── FUNZIONE PRINCIPALE ───────────────────────────────────────────────────────────
 
-def pianifica_verifica(model, materia: str, argomento: str, scuola: str, calibrazione: str, durata: str,
-                       num_esercizi: int, punti_totali: int, primo_base: bool, eccellenza: bool, note_docente: str = ""):
-    """
-    Il PIANO della verifica (vedi piano_verifica.py): una chiamata breve decide titolo, tipo e richieste (livello + nota) di ogni
-    esercizio; il codice la controlla. Le istruzioni del docente hanno la precedenza (il piano si adatta a lui, mai il contrario).
-    Ritorna (piano | None, debug). Qualsiasi problema → None: si genera come prima, senza piano. Non solleva mai eccezioni.
-    """
-    debug = {"prompt": "", "risposta": "", "errore": "", "piano": None}
-    try:
-        scheletro = scheletro_piano(num_esercizi, punti_totali, primo_base, eccellenza, argomento)
-        prompt = prompt_piano_verifica(materia, argomento, scuola, calibrazione, durata, scheletro, note_docente,
-                                       max_esercizi_chiusi(num_esercizi))
-        debug["prompt"] = prompt
+def pianifica_verifica(model, materia: str, argomento: str, scuola: str, calibrazione: str, durata: str,
+                       num_esercizi: int, punti_totali: int, primo_base: bool, eccellenza: bool, note_docente: str = ""):
+    """
+    Il PIANO della verifica (vedi piano_verifica.py): una chiamata breve decide titolo, tipo e richieste (livello + nota) di ogni
+    esercizio; il codice la controlla. Le istruzioni del docente hanno la precedenza (il piano si adatta a lui, mai il contrario).
+    Ritorna (piano | None, debug). Qualsiasi problema → None: si genera come prima, senza piano. Non solleva mai eccezioni.
+    """
+    debug = {"prompt": "", "risposta": "", "errore": "", "piano": None}
+    try:
+        scheletro = scheletro_piano(num_esercizi, punti_totali, primo_base, eccellenza, argomento)
+        prompt = prompt_piano_verifica(materia, argomento, scuola, calibrazione, durata, scheletro, note_docente,
+                                       max_esercizi_chiusi(num_esercizi))
+        debug["prompt"] = prompt
         migliore, aggiunta = None, ""
         for tentativo in range(2):
             risposta = _safe_generate(model, prompt + aggiunta, "Piano della verifica", retries=1).text
@@ -639,12 +640,43 @@ def pianifica_verifica(model, materia: str, argomento: str, scuola: str, calibra
             return migliore, debug
         debug["errore"] = "risposta non utilizzabile"
 
-    except Exception as e:                      # noqa: BLE001 — il piano è un di più: mai bloccare la generazione
-        logger.warning("Piano della verifica non riuscito: %s", e)
-        debug["errore"] = str(e)[:300]
-    return None, debug
-
-
+    except Exception as e:                      # noqa: BLE001 — il piano è un di più: mai bloccare la generazione
+        logger.warning("Piano della verifica non riuscito: %s", e)
+        debug["errore"] = str(e)[:300]
+    return None, debug
+
+
+def ritocca_difficolta(model, materia: str, argomento: str, corpo: str, piano: dict | None, mostra_punteggi: bool = True):
+    """
+    Secondo sguardo sulla difficoltà (solo con un piano e solo se il docente non ha dato istruzioni sulla struttura: allora decide lui).
+    L'AI riscrive le richieste il cui livello reale non corrisponde a quello del piano. La risposta si accetta solo se la forma è identica
+    (stesso numero di esercizi e di richieste, stessi grafici); altrimenti si tiene il testo di prima. Ritorna (corpo, esito).
+    """
+    if not piano or piano.get("vincolo"):
+        return corpo, "non eseguito"
+    from prompts import prompt_ritocco_difficolta
+    try:
+        r = _safe_generate(model, prompt_ritocco_difficolta(materia, argomento, corpo, piano_a_testo(piano, False)),
+                           "Calibrazione difficoltà", retries=1)
+        nuovo = pulisci_corpo_latex(_pulisci_risposta(r.text))
+    except Exception as e:                      # noqa: BLE001 — è un di più: mai bloccare la generazione
+        logger.warning("Calibrazione della difficoltà non riuscita: %s", e)
+        return corpo, "errore"
+    vecchi = re.split(r"(?=\\subsection\*\{)", corpo)[1:]
+    nuovi = re.split(r"(?=\\subsection\*\{)", nuovo)[1:]
+    if not nuovi or len(vecchi) != len(nuovi):
+        return corpo, "scartato: numero di esercizi diverso"
+    for v, n in zip(vecchi, nuovi):
+        if _conta_sottopunti(v) != _conta_sottopunti(n):
+            return corpo, "scartato: numero di richieste diverso"
+        if len(re.findall(r"\[\[\s*GRAFICO|\\begin\{tikzpicture\}", v)) != len(re.findall(r"\[\[\s*GRAFICO|\\begin\{tikzpicture\}", n)):
+            return corpo, "scartato: grafici diversi"
+    _norma = lambda t: re.sub(r"\\end\{document\}|\s+", "", t)
+    if _norma(nuovo) == _norma(corpo):
+        return corpo, "invariato"
+    return nuovo, "applicato"
+
+
 def genera_verifica(
     model,
     materia: str,
@@ -804,6 +836,10 @@ def genera_verifica(
          ("saltato (struttura ottima)" if validation_score >= (QA_SALTA_SE_PUNTEGGIO_ALMENO or 2) else "non applicato")))
     corpo_a = _tronca_al_numero_giusto(corpo_a, num_esercizi)
     risultato["_debug"]["dopo_controllo_qualita"] = corpo_a
+    if piano and not piano.get("vincolo"):
+        _avanza("🎚️  Calibro la difficoltà degli esercizi…")
+        corpo_a, risultato["_debug"]["calibrazione_difficolta"] = ritocca_difficolta(
+            model, materia, argomento, corpo_a, piano, mostra_punteggi)
     if AUTOVERIFICA_ATTIVA:
         _avanza("🧮  Controllo che gli esercizi siano corretti…")
         corpo_a, risultato["_autoverifica"] = autoverifica_corpo(
