@@ -148,7 +148,7 @@ def parse_esercizi(latex: str) -> list:
             )
 
             pt_match = re.search(
-                r'[\(\[]?\s*(\d+(?:[.,]\d+)?)\s*(?:pt|punt[io]|p\.?)\s*[\)\]]?',
+                r'[\(\[]?\s*(\d+(?:[.,]\d+)?)\s*(?:pt\b|punt[io]\b|p\.)\s*[\)\]]?',   # «1789 per» non è «1789 p»
                 search_window, re.IGNORECASE
             )
             if not pt_match:
