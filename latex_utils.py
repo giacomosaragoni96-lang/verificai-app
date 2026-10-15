@@ -2707,7 +2707,12 @@ _RE_PUNTI_FINE = re.compile(r"[ \t]*\((\d+(?:[.,]\d+)?)\s*pt\)(?=[ \t]*(?:\n|\\\
 _RE_PUNTI_ALTROVE = re.compile(r"[ \t]*(?<!\{)\((\d+(?:[.,]\d+)?)\s*pt\)")
 
 
-_RE_VF_FINE = re.compile(r"[ \t]*(\\mbox\{\$\\square\$\s*\\textbf\{V\}\s*\$\\quad\\square\$\s*\\textbf\{F\}\})")
+# Caselle V/F (scritte dall'AI in più forme, anche con «\\», «\par» o «\hfill» davanti): si riscrivono sempre uguali, a destra.
+_VF_CORPO = (r"\$\\square\$\s*(?:\\textbf\{V\}|V)\s*(?:\$\\quad\\square\$|\\quad\s*\$\\square\$|\\qquad\s*\$\\square\$|~+\s*\$\\square\$|\$\\square\$)"
+             r"\s*(?:\\textbf\{F\}|F)")
+_RE_VF_FINE = re.compile(
+    r"(?:\s|\\\\(?:\[[^\]]*\])?|\\par\b|\\hfill\b|\\quad\b|\\qquad\b|\\hspace\*?\{[^}]*\})*"
+    r"(?:\\mbox\{\s*(" + _VF_CORPO + r")\s*\}|(" + _VF_CORPO + r"))")
 
 
 def formatta_punti(latex: str) -> str:
@@ -2724,7 +2729,23 @@ def formatta_punti(latex: str) -> str:
         latex = _RE_PUNTI_FINE.sub(lambda m: f" \\hspace*{{0.6em plus 1fill}}\\mbox{{\\textbf{{({m.group(1)} pt)}}}}", latex)
         latex = _RE_PUNTI_ALTROVE.sub(lambda m: f"\\quad\\mbox{{\\textbf{{({m.group(1)} pt)}}}}", latex)
     # le caselle V/F stanno in fondo alla riga, a destra; se non ci stanno vanno a capo, sempre a destra
-    return _RE_VF_FINE.sub(lambda m: "\\hfill" + m.group(1), latex)
+    # (\hspace*{\fill} e non \hfill: quest'ultimo sparisce a inizio riga e le caselle resterebbero a sinistra)
+    latex = _RE_VF_FINE.sub(lambda m: " \\hspace*{\\fill}\\mbox{" + (m.group(1) or m.group(2)) + "}", latex)
+    return _virgolette_italiane(latex)
+
+
+_RE_TESTO_NO_VIRGOLETTE = re.compile(r"(\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}|\$\$.*?\$\$|\$[^$\n]*\$|\\\[.*?\\\]|%[^\n]*)", re.DOTALL)
+
+
+def _virgolette_italiane(latex: str) -> str:
+    """"così" (virgolette dritte, che in PDF vengono ”così”) → «così». Non tocca TikZ, formule, commenti né il preambolo."""
+    inizio = latex.find("\\begin{document}")
+    testa, corpo = (latex[:inizio], latex[inizio:]) if inizio != -1 else ("", latex)
+    pezzi = _RE_TESTO_NO_VIRGOLETTE.split(corpo)         # posti dispari = parti da non toccare
+    for k in range(0, len(pezzi), 2):
+        pezzi[k] = re.sub(r'(?<![\\\w])"([^"\n]{1,200}?)"', "«\\1»", pezzi[k])
+        pezzi[k] = pezzi[k].replace("``", "«").replace("''", "»")
+    return testa + "".join(pezzi)
 
 
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
