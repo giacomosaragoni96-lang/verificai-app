@@ -1376,6 +1376,234 @@ _RE_VF = re.compile(r'\\mbox\{\s*\$\\square\$\s*\\textbf\{V\}\s*\$\\quad\\square
 _RE_VF_NUDO = re.compile(r'\$\\square\$\s*\\textbf\{V\}\s*\$\\quad\\square\$\s*\\textbf\{F\}')
 
 
+# ── Formule come testo (senza equazioni di Word) ──────────────────────────────────────────
+# Le equazioni di Word (OMML) in alcune versioni di Word non si vedono: restano spazi vuoti. Le formule diventano testo con
+# esponenti e pedici veri (formattazione di Word), simboli Unicode e lettere in corsivo: si vedono e si modificano ovunque.
+
+_SIMBOLI_MATEMATICI = {
+    "le": "\u2264", "leq": "\u2264", "leqslant": "\u2264", "ge": "\u2265", "geq": "\u2265", "geqslant": "\u2265", "ne": "\u2260", "neq": "\u2260",
+    "approx": "\u2248", "cdot": "\u00b7", "times": "\u00d7", "div": "\u00f7", "pm": "\u00b1", "mp": "\u2213", "infty": "\u221e", "in": "\u2208",
+    "notin": "\u2209", "subset": "\u2282", "subseteq": "\u2286", "cup": "\u222a", "cap": "\u2229", "emptyset": "\u2205", "varnothing": "\u2205",
+    "forall": "\u2200", "exists": "\u2203", "to": "\u2192", "rightarrow": "\u2192", "Rightarrow": "\u21d2", "Leftrightarrow": "\u21d4",
+    "leftrightarrow": "\u2194", "implies": "\u21d2", "iff": "\u21d4", "circ": "\u00b0", "degree": "\u00b0", "ldots": "\u2026", "dots": "\u2026",
+    "cdots": "\u22ef", "perp": "\u22a5", "parallel": "\u2225", "angle": "\u2220", "triangle": "\u25b3", "square": "\u2610", "propto": "\u221d",
+    "sum": "\u2211", "prod": "\u220f", "int": "\u222b", "partial": "\u2202", "nabla": "\u2207", "sim": "\u223c", "equiv": "\u2261",
+    "alpha": "\u03b1", "beta": "\u03b2", "gamma": "\u03b3", "delta": "\u03b4", "epsilon": "\u03b5", "varepsilon": "\u03b5", "theta": "\u03b8",
+    "lambda": "\u03bb", "mu": "\u03bc", "pi": "\u03c0", "rho": "\u03c1", "sigma": "\u03c3", "tau": "\u03c4", "phi": "\u03c6", "varphi": "\u03c6",
+    "omega": "\u03c9", "Delta": "\u0394", "Gamma": "\u0393", "Theta": "\u0398", "Lambda": "\u039b", "Pi": "\u03a0", "Sigma": "\u03a3",
+    "Phi": "\u03a6", "Omega": "\u03a9",
+}
+_INSIEMI = {"R": "\u211d", "N": "\u2115", "Z": "\u2124", "Q": "\u211a", "C": "\u2102"}
+_FUNZIONI_TESTO = {"sin", "cos", "tan", "cot", "sec", "csc", "arcsin", "arccos", "arctan", "ln", "log", "exp", "lim", "min", "max", "sup", "inf", "det", "mod"}
+
+
+def _gruppo(s: str, i: int):
+    """Argomento che comincia in s[i]: tra graffe, un comando o un solo carattere. Ritorna (contenuto, indice dopo)."""
+    while i < len(s) and s[i] == " ":
+        i += 1
+    if i >= len(s):
+        return "", i
+    if s[i] == "{":
+        liv = 0
+        for j in range(i, len(s)):
+            if s[j] == "{":
+                liv += 1
+            elif s[j] == "}":
+                liv -= 1
+                if liv == 0:
+                    return s[i + 1:j], j + 1
+        return s[i + 1:], len(s)
+    if s[i] == "\\":
+        m = re.match(r"\\([A-Za-z]+|.)", s[i:])
+        return m.group(0), i + len(m.group(0))
+    return s[i], i + 1
+
+
+def _tex_testo(x: str) -> str:
+    """Testo semplice da inserire in LaTeX: si tolgono i comandi e si proteggono i caratteri speciali."""
+    x = re.sub(r"\\[A-Za-z]+", "", x).replace("{", "").replace("}", "").replace("\\", "")
+    return x.replace("&", "\\&").replace("%", "\\%").replace("#", "\\#").replace("$", "\\$").replace("_", "\\_")
+
+
+def _atomico(t: str) -> bool:
+    """True se un pezzo di formula è un blocco unico (numero, lettera, potenza): le parentesi nelle frazioni non servono."""
+    pulito = re.sub(r"\\text(?:it|superscript|subscript)\{([^{}]*)\}", r"\1", t).replace("{", "").replace("}", "")
+    return re.fullmatch(r"[\w.,\u00b0\u221a]+", pulito) is not None
+
+
+def _matematica_a_testo(m: str) -> str:
+    """Una formula LaTeX → testo LaTeX semplice (\\textit, \\textsuperscript, \\textsubscript, simboli Unicode) che pandoc sa fare in Word."""
+    m = m.strip()
+    blocchi = []
+
+    def _cases(mm):                      # sistema: una riga per condizione, con la graffa davanti
+        righe = [_matematica_a_testo(r.replace("&", " ")) for r in re.split(r"\\\\", mm.group(1)) if r.strip()]
+        blocchi.append("\\{ " + " \\\\ ".join(righe))
+        return "\u2983%d\u2984" % (len(blocchi) - 1)
+    m = re.sub(r"\\begin\{cases\}(.*?)\\end\{cases\}", _cases, m, flags=re.DOTALL)
+    m = re.sub(r"\\(?:left|right|big|Big|bigg|Bigg|displaystyle|textstyle)(?![A-Za-z])\.?", "", m)
+    m = re.sub(r"\\[,;:!]|\\q?quad|(?<!\\)\\ ", " ", m)
+
+    out = []
+    i, n = 0, len(m)
+    while i < n:
+        ch = m[i]
+        if ch == "\u2983":
+            j = m.index("\u2984", i)
+            out.append(blocchi[int(m[i + 1:j])])
+            i = j + 1
+        elif ch == "\\":
+            mm = re.match(r"\\([A-Za-z]+|.)", m[i:])
+            nome = mm.group(1)
+            i += len(mm.group(0))
+            if nome in ("frac", "dfrac", "tfrac"):
+                a, i = _gruppo(m, i)
+                b, i = _gruppo(m, i)
+                ta, tb = _matematica_a_testo(a), _matematica_a_testo(b)
+                out.append((ta if _atomico(ta) else "(" + ta + ")") + "/" + (tb if _atomico(tb) else "(" + tb + ")"))
+            elif nome == "sqrt":
+                if i < n and m[i] == "[":
+                    j = m.index("]", i)
+                    idx = m[i + 1:j]
+                    i = j + 1
+                    a, i = _gruppo(m, i)
+                    pref = "\u221b" if idx == "3" else "\u221c" if idx == "4" else "\\textsuperscript{" + _matematica_a_testo(idx) + "}\u221a"
+                    out.append(pref + "(" + _matematica_a_testo(a) + ")")
+                else:
+                    a, i = _gruppo(m, i)
+                    t = _matematica_a_testo(a)
+                    out.append("\u221a" + (t if _atomico(t) else "(" + t + ")"))
+            elif nome in ("text", "mathrm", "textbf", "mathbf", "operatorname", "textit", "mbox"):
+                a, i = _gruppo(m, i)
+                out.append(_tex_testo(a))
+            elif nome in ("overline", "bar", "widehat", "vec", "overrightarrow", "hat"):
+                a, i = _gruppo(m, i)
+                out.append(_matematica_a_testo(a) + ("\u0305" if nome in ("overline", "bar") else ""))
+            elif nome == "mathbb":
+                a, i = _gruppo(m, i)
+                out.append(_INSIEMI.get(a, a))
+            elif nome in _SIMBOLI_MATEMATICI:
+                out.append(_SIMBOLI_MATEMATICI[nome])
+            elif nome in _FUNZIONI_TESTO:
+                out.append(nome)
+            elif nome in ("%", "&", "#", "$", "_"):
+                out.append("\\" + nome)
+            elif nome in ("{", "}"):
+                out.append("\\" + nome)
+            elif nome == "\\":
+                out.append(" \\\\ ")
+            elif nome in ("begin", "end"):
+                _, i = _gruppo(m, i)
+            # un comando sconosciuto si ignora
+        elif ch in "^_":
+            a, i = _gruppo(m, i + 1)
+            tag = "textsuperscript" if ch == "^" else "textsubscript"
+            out.append("\\" + tag + "{" + _matematica_a_testo(a) + "}")
+        elif ch in "{}":
+            i += 1
+        elif ch.isalpha() and ch.isascii():
+            j = i
+            while j < n and m[j].isalpha() and m[j].isascii():
+                j += 1
+            parola = m[i:j]
+            out.append("\\textit{" + parola + "}")
+            i = j
+        elif ch in "&%#":
+            out.append("\\" + ch)
+            i += 1
+        elif ch == "-":
+            out.append("\u2212")
+            i += 1
+        elif ch == "*":
+            out.append("\u00b7")
+            i += 1
+        elif ch == "~":
+            out.append(" ")
+            i += 1
+        else:
+            out.append(ch)
+            i += 1
+    return re.sub(r" {2,}", " ", "".join(out))
+
+
+_RE_MATEMATICA_DOC = re.compile(
+    r"\\\[(.*?)\\\]|\$\$(.*?)\$\$|\\begin\{(equation\*?|align\*?|gather\*?)\}(.*?)\\end\{\3\}|\\\((.*?)\\\)|(?<!\\)\$(.*?)(?<!\\)\$", re.DOTALL)
+
+
+def _converti_matematica(testo: str) -> str:
+    """Sostituisce ogni formula ($…$, \\[…\\], ambienti) con il suo testo; le formule «a sé» stanno su un paragrafo centrato."""
+    def _sost(mm):
+        display = mm.group(1) is not None or mm.group(2) is not None or mm.group(3) is not None
+        corpo = mm.group(1) or mm.group(2) or mm.group(4) or mm.group(5) or mm.group(6) or ""
+        t = _matematica_a_testo(corpo.replace("&", " ") if display else corpo)
+        return ("\n\n\\begin{center}" + t + "\\end{center}\n\n") if display else t
+    return _RE_MATEMATICA_DOC.sub(_sost, testo)
+
+
+# ── Elenchi come paragrafi con l'etichetta scritta (a) b) c)…) ─────────────────────────────
+# Alcune versioni di pandoc/Word perdevano le lettere degli elenchi (comparivano puntini): le etichette si scrivono nel testo e si
+# rifiniscono dopo (rientro sporgente), così a) b) c) ci sono sempre.
+
+_RE_TOKEN_ELENCO = re.compile(r"\\begin\{(enumerate|itemize)\}(\[[^\]]*\])?|\\end\{(?:enumerate|itemize)\}|\\item(\[[^\]]*\])?")
+
+
+def _romano(n: int) -> str:
+    val = [(10, "x"), (9, "ix"), (5, "v"), (4, "iv"), (1, "i")]
+    out = ""
+    for v, r in val:
+        while n >= v:
+            out += r
+            n -= v
+    return out
+
+
+def _etichetta(formato: str, n: int) -> str:
+    """L'etichetta dell'n-esimo elemento (da 1) secondo il formato dell'elenco: «a)», «(a)», «1.», «i)», «label=\\roman*.»…"""
+    f = (formato or "").strip("[] ")
+    m = re.search(r"label\s*=\s*([^,\]]*)", f)
+    if m:
+        f = m.group(1).replace("\\alph*", "a").replace("\\Alph*", "A").replace("\\arabic*", "1").replace("\\roman*", "i").replace("\\Roman*", "I")
+    if not f:
+        f = "1."
+    ch = re.search(r"[aAiI1]", f)
+    if not ch:
+        return str(n) + "."
+    c = ch.group(0)
+    valore = {"a": chr(ord("a") + (n - 1) % 26), "A": chr(ord("A") + (n - 1) % 26), "1": str(n), "i": _romano(n), "I": _romano(n).upper()}[c]
+    return f[:ch.start()] + valore + f[ch.end():]
+
+
+def _liste_a_paragrafi(testo: str) -> str:
+    """\\begin{enumerate}…\\item… → paragrafi che cominciano con «§livello§etichetta§T§» (poi _rifinisci_docx li rende elenchi sporgenti)."""
+    pila = []
+    out, pos = [], 0
+    for m in _RE_TOKEN_ELENCO.finditer(testo):
+        out.append(testo[pos:m.start()])
+        pos = m.end()
+        t = m.group(0)
+        if t.startswith("\\begin"):
+            pila.append({"tipo": m.group(1), "fmt": (m.group(2) or ""), "n": 0})
+            out.append("\n\n")
+        elif t.startswith("\\end"):
+            if pila:
+                pila.pop()
+            out.append("\n\n")
+        else:
+            if not pila:
+                pila.append({"tipo": "enumerate", "fmt": "", "n": 0})
+            el = pila[-1]
+            el["n"] += 1
+            if m.group(3):
+                lab = re.sub(r"[{}\\]", "", m.group(3).strip("[]")).strip()
+            elif el["tipo"] == "itemize":
+                lab = "\u2022"
+            else:
+                lab = _etichetta(el["fmt"], el["n"])
+            out.append(f"\n\n\u00a7{len(pila)}\u00a7{lab}\u00a7T\u00a7")
+    out.append(testo[pos:])
+    return "".join(out)
+
+
 def _pandoc_disponibile() -> bool:
     import shutil
     return shutil.which("pandoc") is not None
@@ -1396,6 +1624,8 @@ def _prepara_per_pandoc(testo: str, cartella: str, contatore: list) -> str:
     t = _RE_TIKZ.sub(_grafico, testo)
     t = _RE_VF.sub(lambda m: "\u2610 \\textbf{V}~~~~~~~~\u2610 \\textbf{F}", t)
     t = _RE_VF_NUDO.sub(lambda m: "\u2610 \\textbf{V}~~~~~~~~\u2610 \\textbf{F}", t)
+    t = _converti_matematica(t)                      # formule → testo con esponenti e pedici (niente equazioni di Word)
+    t = _liste_a_paragrafi(t)                        # a) b) c) scritti nel testo
     t = re.sub(r'\\underline\{\\hspace\*?\{[^}]*\}\}', r'\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_', t)
     t = re.sub(r'\\(?:vfill|newpage|clearpage|noindent)\b', '', t)
     t = re.sub(r'\\vspace\*?\{[^}]*\}', '', t)
@@ -1435,38 +1665,72 @@ def _bordi_tabella(tbl) -> None:
 
 
 def _tabella_punteggi(doc, totali: list, punti_totali) -> None:
-    """Tabella dei punteggi stretta: un totale per esercizio (Max e Voto), larga quanto il testo."""
+    """Tabella dei punteggi stretta e centrata: un totale per esercizio con le righe Max e Voto (spazio per il voto dello studente)."""
     from docx.shared import Cm, Pt
     from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.enum.table import WD_TABLE_ALIGNMENT
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
     n = len(totali)
     if not n:
         return
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_before = Pt(14)
+    p.paragraph_format.keep_with_next = True
     r = p.add_run("Tabella punteggi"); r.bold = True; r.font.size = Pt(11)
     tbl = doc.add_table(rows=3, cols=n + 2)
-    from docx.enum.table import WD_TABLE_ALIGNMENT
     tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
     tbl.autofit = False                                        # larghezze fisse: la tabella non esce dalla pagina
     _bordi_tabella(tbl)
-    larghezza = 17.0                                           # cm utili (A4 con margini di 2 cm)
+    utile = 16.0                                               # cm: un po' meno del testo (17), così sta dentro i margini
     primo, ultimo = 1.6, 1.8
-    altre = max(1.0, (larghezza - primo - ultimo) / n)
-    larghezze = [primo] + [min(altre, 2.4)] * n + [ultimo]
+    altre = min(2.2, max(1.0, (utile - primo - ultimo) / n))
+    larghezze = [primo] + [altre] * n + [ultimo]
+    # larghezza totale e griglia: devono coincidere con le celle, altrimenti Word le ridistribuisce e la tabella scivola a destra
+    twips = [int(w * 567) for w in larghezze]
+    tblpr = tbl._tbl.tblPr
+    tblw = tblpr.find(qn("w:tblW"))
+    if tblw is None:
+        tblw = OxmlElement("w:tblW"); tblpr.insert(0, tblw)
+    tblw.set(qn("w:type"), "dxa"); tblw.set(qn("w:w"), str(sum(twips)))
+    for gc, w in zip(tbl._tbl.tblGrid.findall(qn("w:gridCol")), twips):
+        gc.set(qn("w:w"), str(w))
     tot = sum(totali)
+    fmt = lambda v: str(int(v)) if v == int(v) else str(v)
     righe = [["Es."] + [str(i + 1) for i in range(n)] + ["Tot"],
-             ["Max"] + [str(int(t)) if t == int(t) else str(t) for t in totali] + [str(int(tot)) if tot == int(tot) else str(tot)],
+             ["Max"] + [fmt(t) for t in totali] + [fmt(tot)],
              ["Voto"] + [""] * (n + 1)]
+    altezze = [0.8, 0.8, 1.4]
     corpo_pt = 10 if n <= 8 else 8
     for ri, riga in enumerate(righe):
-        tbl.rows[ri].height = Cm(0.9)
+        tbl.rows[ri].height = Cm(altezze[ri])
+        trpr = tbl.rows[ri]._tr.get_or_add_trPr()
+        trpr.append(OxmlElement("w:cantSplit"))
         for ci, testo in enumerate(riga):
             cella = tbl.cell(ri, ci)
             cella.width = Cm(larghezze[ci])
             par = cella.paragraphs[0]
             par.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            par.paragraph_format.keep_with_next = (ri < 2)     # le tre righe restano insieme (e col titolo)
+            par.paragraph_format.space_after = Pt(0)
             run = par.add_run(testo); run.font.size = Pt(corpo_pt); run.bold = (ri == 0 or ci == 0)
+
+
+def _senza_tema(stile) -> None:
+    """Toglie da uno stile i riferimenti al tema di Office (colore e carattere azzurri/Calibri), che altrimenti vincono sul nostro."""
+    from docx.oxml.ns import qn
+    rpr = stile.element.get_or_add_rPr()
+    for fonts in rpr.findall(qn("w:rFonts")):
+        for att in ("w:asciiTheme", "w:hAnsiTheme", "w:eastAsiaTheme", "w:cstheme"):
+            if fonts.get(qn(att)) is not None:
+                del fonts.attrib[qn(att)]
+        fonts.set(qn("w:ascii"), "Times New Roman"); fonts.set(qn("w:hAnsi"), "Times New Roman")
+    for col in rpr.findall(qn("w:color")):
+        for att in ("w:themeColor", "w:themeShade", "w:themeTint"):
+            if col.get(qn(att)) is not None:
+                del col.attrib[qn(att)]
+        col.set(qn("w:val"), "000000")
 
 
 def _rifinisci_docx(percorso_in: str, titolo: str, sottotitolo: str, istruzione: str, logo, totali: list, punti_totali, con_griglia: bool) -> bytes:
@@ -1500,6 +1764,7 @@ def _rifinisci_docx(percorso_in: str, titolo: str, sottotitolo: str, istruzione:
         st.font.size = Pt(13)
         st.font.bold = True
         st.font.color.rgb = RGBColor(0, 0, 0)
+        _senza_tema(st)
         st.paragraph_format.space_before = Pt(12)
         st.paragraph_format.space_after = Pt(4)
         st.paragraph_format.keep_with_next = True
@@ -1510,6 +1775,21 @@ def _rifinisci_docx(percorso_in: str, titolo: str, sottotitolo: str, istruzione:
             par.alignment = WD_ALIGN_PARAGRAPH.CENTER
             par.paragraph_format.space_before = Pt(4)
             par.paragraph_format.space_after = Pt(6)
+
+    # elenchi: «§1§a)§T§testo» → etichetta, tabulazione e rientro sporgente (a livello 2 più a destra)
+    for par in doc.paragraphs:
+        m = re.match(r"\u00a7(\d)\u00a7(.*?)\u00a7T\u00a7", par.text, re.DOTALL)
+        if not m:
+            continue
+        livello = int(m.group(1))
+        for run in par.runs:
+            if "\u00a7" in run.text:
+                run.text = re.sub(r"\u00a7\d\u00a7", "", run.text).replace("\u00a7T\u00a7", "\t")
+        rientro = Cm(0.9 * livello)
+        par.paragraph_format.left_indent = rientro
+        par.paragraph_format.first_line_indent = Cm(-0.9)
+        par.paragraph_format.tab_stops.add_tab_stop(rientro)
+        par.paragraph_format.space_after = Pt(3)
 
     # intestazione in cima: logo, titolo, riga per nome e classe, istruzione
     primo = doc.paragraphs[0] if doc.paragraphs else doc.add_paragraph()
