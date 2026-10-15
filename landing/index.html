@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VerificAI — verifiche scolastiche pronte in pochi minuti</title>
 <meta name="description" content="VerificAI è un servizio web per docenti che genera verifiche scolastiche (PDF e Word) con l'intelligenza artificiale: scrivi l'argomento, ottieni la verifica con punteggi, Fila B e soluzioni.">
+<meta name="theme-color" content="#FAF8F4">
+<link rel="canonical" href="https://verificai.net/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563EB'/%3E%3Ctext x='32' y='45' font-family='Georgia,serif' font-size='38' font-weight='bold' text-anchor='middle' fill='white'%3EV%3C/text%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="it_IT">
+<meta property="og:site_name" content="VerificAI">
+<meta property="og:url" content="https://verificai.net/">
+<meta property="og:title" content="VerificAI — verifiche pronte da stampare in pochi minuti">
+<meta property="og:description" content="Scrivi l'argomento e ottieni la verifica già impaginata, con punteggi e grafici, in PDF o in Word modificabile. Gratis durante la fase beta.">
+<meta property="og:image" content="https://verificai.net/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="VerificAI: verifiche pronte da stampare in pochi minuti, in PDF o Word">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,800;1,9..144,700;1,9..144,800&display=swap" rel="stylesheet">
@@ -29,6 +43,7 @@
   /* hero */
   .hero { text-align:center; max-width:760px; margin:0 auto; padding: 2.2rem 0 1.5rem; }
   .hero h1 { font-family:"Fraunces", Georgia, serif; font-size: clamp(2rem, 4vw, 3rem); line-height:1.1; letter-spacing:-.025em; margin:0 0 1.1rem; }
+  .hero h1 { text-wrap:balance; }
   .hero h1 em { color:var(--blu); }
   .hero p.sub { font-size:1.08rem; color:var(--grigio); margin:0 auto 1.6rem; max-width:34rem; }
   .hero .azioni { display:flex; gap:1.4rem; align-items:center; justify-content:center; flex-wrap:wrap; }
@@ -68,6 +83,7 @@
   /* chiusura */
   .cta { background:linear-gradient(135deg,var(--blu),var(--blu-scuro)); color:#fff; border-radius:26px; padding:2.6rem 1.6rem; text-align:center; margin:1.5rem 0; }
   .cta h2 { color:#fff; } .cta p { color:#DBEAFE; max-width:34rem; margin:0 auto 1.4rem; }
+  .chi a { color:var(--blu-scuro); font-weight:700; text-decoration-color:var(--oro); text-underline-offset:3px; }
   .chi { display:flex; gap:1.2rem; align-items:center; background:#fff; border:1px solid var(--bordo); border-radius:18px; padding:1.3rem 1.5rem; }
   .chi .av { flex:0 0 3.4rem; height:3.4rem; border-radius:50%; background:var(--blu); color:#fff; font-family:"Fraunces",Georgia,serif; font-weight:800; font-size:1.4rem; display:flex; align-items:center; justify-content:center; }
   footer { padding: 2rem 0 3rem; color:var(--grigio); font-size:.92rem; text-align:center; }
@@ -94,7 +110,7 @@
       <a class="btn" href="https://verificai.streamlit.app">Crea la tua prima verifica</a>
     </div>
     <div class="gratis"><b>Gratis</b> durante la fase beta</div>
-    <div class="nota">Accesso con email e password o con Google</div>
+    <div class="nota">5 verifiche al mese · accesso con email e password o con Google</div>
   </div>
 
   <section id="esempi">
@@ -140,7 +156,7 @@
 
   <section>
     <h2>Cosa puoi fare</h2>
-    <p class="intro">Per matematica, fisica, italiano e le altre materie, per ogni ordine di scuola.</p>
+    <p class="intro">Per matematica, fisica, italiano e le altre materie, per ogni ordine di scuola. La prima verifica ha tutte le funzioni; per averle anche sulle successive basta compilare un breve questionario.</p>
     <div class="griglia">
       <div class="cosa"><div class="i">✍️</div><b>Parti da ciò che hai</b><span>Una descrizione, i tuoi appunti o una verifica già fatta da rifare con dati nuovi.</span></div>
       <div class="cosa"><div class="i">✏️</div><b>Modifica un esercizio</b><span>Più facile, più difficile, numeri diversi o un esercizio nuovo, senza rifare tutto.</span></div>
@@ -166,7 +182,7 @@
 
   <section>
     <div class="cta">
-      <h2>Prova VerificAI, è gratis</h2>
+      <h2>Prova VerificAI: gratis durante la beta</h2>
       <p>Crea la tua prima verifica in pochi minuti. Ti basta un indirizzo email.</p>
       <a class="btn bianco" href="https://verificai.streamlit.app">Crea la tua prima verifica</a>
     </div>
