@@ -1489,6 +1489,8 @@ def _tikz_da_specifica(corpo: str):
     tacche = ""
     if x_extra:
         tacche += f"xtick={{{_tacche_con_extra(xa, xb, x_extra)}}}, "
+        # la retta tratteggiata passa dall'etichetta sull'asse: gli assi stanno sopra e l'etichetta ha lo sfondo bianco
+        tacche += "axis on top, every x tick label/.append style={fill=white, text opacity=1, inner sep=1.5pt}, "
     if y_extra:
         tacche += f"ytick={{{_tacche_con_extra(ymin, ymax, y_extra)}}}, "
     righe = [
