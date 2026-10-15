@@ -1066,6 +1066,36 @@ _BERSAGLI_GUIDA = {
 }
 
 
+def _css_kit() -> str:
+    """Stile del kit in FINAL (tendine «Versioni», «Per la classe», «Scarica tutti»): colore e profondità al posto del bianco piatto."""
+    _tx = T["text"]
+    _kit = [("g-kit1", "#2563EB", "#3B82F6"), ("g-kit2", "#7C3AED", "#A78BFA"), ("g-kit3", "#D97706", "#F59E0B")]
+    css = ""
+    for _c, _a, _b in _kit:
+        d = f'html body .stApp details[data-testid="stExpander"]:has(.{_c})'
+        css += (
+            f'{d} {{background:linear-gradient(160deg,{_a}10 0%,{_a}22 100%) !important;border:1.5px solid {_a}55 !important;'
+            f'border-radius:18px !important;box-shadow:0 6px 18px {_a}26,0 1px 3px rgba(15,23,42,.08);margin-bottom:.8rem !important;}}'
+            f'{d} > summary {{background:transparent !important;padding:1rem 1.2rem !important;font-size:.98rem !important;}}'
+            f'{d} > summary svg * {{fill:{_a} !important;stroke:{_a} !important;}}'
+            f'{d}[open] > summary {{background:linear-gradient(135deg,{_a} 0%,{_b} 100%) !important;border-radius:16px 16px 0 0 !important;}}'
+            f'{d}[open] > summary svg * {{fill:#fff !important;stroke:#fff !important;}}'
+            f'{d} [data-testid="stVerticalBlockBorderWrapper"] {{background:{T["card"]} !important;border:1px solid {_a}33 !important;'
+            f'border-left:5px solid {_a} !important;border-radius:14px !important;box-shadow:0 3px 12px rgba(15,23,42,.10);'
+            f'transition:transform .15s ease,box-shadow .15s ease;}}'
+            f'{d} [data-testid="stVerticalBlockBorderWrapper"]:hover {{transform:translateY(-2px);box-shadow:0 8px 20px {_a}33;}}'
+            f'{d} [data-testid="stVerticalBlockBorderWrapper"] button {{background:#fff !important;color:{_a} !important;'
+            f'-webkit-text-fill-color:{_a} !important;border:1.8px solid {_a} !important;border-radius:12px !important;font-weight:700 !important;'
+            f'box-shadow:0 2px 6px {_a}22;transition:all .15s ease;}}'
+            f'{d} [data-testid="stVerticalBlockBorderWrapper"] button * {{color:{_a} !important;-webkit-text-fill-color:{_a} !important;}}'
+            f'{d} [data-testid="stVerticalBlockBorderWrapper"] button:hover {{background:linear-gradient(135deg,{_a},{_b}) !important;'
+            f'border-color:{_a} !important;box-shadow:0 6px 16px {_a}55;transform:translateY(-1px);}}'
+            f'{d} [data-testid="stVerticalBlockBorderWrapper"] button:hover,{d} [data-testid="stVerticalBlockBorderWrapper"] button:hover * '
+            f'{{color:#fff !important;-webkit-text-fill-color:#fff !important;}}'
+        )
+    return f'<style>{css}</style>'
+
+
 def _html_separatore() -> str:
     """Linea sottile tra le sezioni di «Altre opzioni»."""
     return (f'<div style="height:1px;background:{T["border2"]};opacity:.9;margin:1.2rem 0 .7rem;"></div>')
@@ -5140,7 +5170,7 @@ def _render_stage_final():
     # Una riga per documento (titolo + descrizione a sinistra, azione a destra), in due tendine:
     # «Versioni della verifica», «Per la classe e la valutazione» e «Scarica tutti i file in una volta»: tutte chiuse
     # (durante la prima verifica lampeggiano, vedi la guida). I segnaposto .g-kitN servono a farle lampeggiare.
-    st.markdown('<div id="kit-completo"></div>', unsafe_allow_html=True)
+    st.markdown('<div id="kit-completo"></div>' + _css_kit(), unsafe_allow_html=True)
     _riga = lambda: st.columns([3.4, 1.6], vertical_alignment="center", gap="medium")
     with st.expander("Versioni della verifica: soluzioni, Fila B, versione BES/DSA", expanded=False, icon=":material/file_copy:"):
         st.markdown('<span class="g-kit1" style="display:none"></span>', unsafe_allow_html=True)
@@ -5148,11 +5178,10 @@ def _render_stage_final():
             _vc3, _vb3 = _riga()                  # Soluzioni
         with st.container(border=True):
             _vc1, _vb1 = _riga()                  # Fila B
-        if WORD_ATTIVO:
-            with st.container(border=True):
-                _vc5, _vb5 = _riga()              # Word
+        if False:
+            pass
         else:
-            # riga del Word: spenta (conversione non affidabile). Il codice resta, ma scrive in contenitori nascosti.
+            # riga del Word: nascosta, il Word sta nella scheda sotto la verifica. Il codice resta, ma scrive in contenitori nascosti.
             st.markdown('<style>[class*="st-key-word_nascosto"], html body .stApp div:has(> [class*="st-key-word_nascosto"]){display:none !important;}</style>', unsafe_allow_html=True)
             _vc5, _vb5 = st.container(key="word_nascosto_a"), st.container(key="word_nascosto_b")
         with st.container(border=True):
