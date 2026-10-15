@@ -79,13 +79,14 @@ def prompt_corpo_verifica(
             f"  * SOMMA TOTALE TASSATIVA: la somma di TUTTI i (X pt) di TUTTI gli esercizi deve essere\n"
             f"    ESATTAMENTE {punti_totali} pt. NON {punti_totali-1}, NON {punti_totali+1}. ESATTAMENTE {punti_totali}.\n"
             f"  * PRIMA DI TERMINARE: somma mentalmente tutti i (X pt) che hai scritto. Se non fa {punti_totali}, correggi.\n"
-            f"  * PESO DEI PUNTI: NON dare lo stesso punteggio a tutto. Il peso dipende da tipo e difficoltà:\n"
-            f"    - domande chiuse (scelta multipla, vero/falso, completamento): poco, circa 2-5 pt ciascuna (i vero/falso i più bassi);\n"
-            f"    - applicazione diretta di una definizione o formula: circa 5-8 pt;\n"
-            f"    - esercizi di calcolo con più passaggi, analisi di un grafico, spiegazioni: circa 8-12 pt;\n"
-            f"    - problemi complessi, modellizzazione, confronti o analisi articolate: circa 12-20 pt.\n"
-            f"    Più difficile e più lungo = più punti. Gli esercizi chiusi, tutti insieme, valgono al massimo circa un terzo del totale. "
-            f"Usa numeri interi.\n"
+            f"  * PESO DEI PUNTI: NON dare lo stesso punteggio a tutto. Gli ESERCIZI valgono cifre DIVERSE (l'esercizio centrale il 35-50% "
+            f"del totale, l'apertura poco) e dentro ogni esercizio le richieste crescono di valore con la difficoltà:\n"
+            f"    - richieste facili: circa 3-6 pt; medie: 6-10 pt; difficili: 10-16 pt;\n"
+            f"    - domande chiuse (scelta multipla, vero/falso, completamento): poco, circa 2-5 pt ciascuna (i vero/falso i più bassi), "
+            f"tutte insieme al massimo circa un terzo del totale;\n"
+            f"    - uno studio completo di funzione o un problema di modellizzazione in UNA richiesta: circa 20-30 pt;\n"
+            f"    - l'esercizio per l'eccellenza: 3-10 pt.\n"
+            f"    Più difficile e più lungo = più punti. Usa numeri interi.\n"
             f"  * NON inserire punti nel titolo \\subsection*, SOLO nei \\item.\n"
             f"  * REGOLA CRITICA: se un esercizio ha un solo sottopunto, usa comunque \\item[a)] con il suo punteggio.\n"
             f"    NON lasciare MAI un esercizio senza \\item con punteggio — la tabella punteggi sarà inutilizzabile."
@@ -181,6 +182,7 @@ def prompt_corpo_verifica(
         f"{ f'Punti totali da distribuire: {punti_totali} pt.' if mostra_punteggi else ''}\n"
         f"{s_mathpix}"
         f"{istruzioni_esercizi}\n"
+        f"\n{rampe_esempio(materia, argomento)}"
         f"\nCALIBRAZIONE LIVELLO E TEMPO:\n"
         f"{calibrazione}\n"
         f"- DURATA PREVISTA: {durata}. Regola la lunghezza dei calcoli, il numero di incognite e la complessità "
@@ -237,14 +239,17 @@ def prompt_corpo_verifica(
         f"con molteplicità o un caso senza soluzioni; nei radicali le condizioni di esistenza e i segni; nei problemi un dato "
         f"inutile o da ricavare. Esempi (altre materie): un caso limite, un'eccezione, un concetto che si confonde con un altro. "
         f"I numeri restano puliti, ma la STRUTTURA dell'esercizio deve richiedere ragionamento.\n"
-        f"- STRUTTURA DEGLI ESERCIZI — REGOLA FONDAMENTALE: ogni esercizio è un ARGOMENTO (per esempio equazioni fratte, "
-        f"disequazioni, sistemi, radicali, razionalizzazione) e contiene PIÙ richieste (a, b, c, d: di norma 3-4, mai una sola) che "
-        f"sono tipi o casi DIVERSI dello stesso argomento, in ordine di difficoltà crescente. Esempio per le equazioni fratte: "
-        f"a) una semplice; b) una con denominatori di segno opposto (x - 3 e 9 - x); c) una con denominatore da scomporre e una "
-        f"soluzione da scartare; d) una di grado superiore. Esempio per le disequazioni: una fratta, una a prodotto, un sistema di tre "
-        f"disequazioni. Ogni richiesta è BREVE (una formula o una frase): a renderla più difficile sono i dati e il tipo, non la "
-        f"lunghezza del testo. Mai una sola richiesta lunga e composita al posto di più richieste. In totale circa "
-        f"{int(round(num_esercizi * 3.5))} richieste in tutta la verifica.\n"
+        f"- STRUTTURA DEGLI ESERCIZI — REGOLA FONDAMENTALE: segui la STRUTTURA-TIPO delle istruzioni sopra (ruoli e punti di ogni "
+        f"esercizio). L'esercizio CENTRALE ha 4-8 richieste brevi, tipi o casi DIVERSI dello stesso argomento, in ordine di difficoltà "
+        f"crescente. Esempio per le equazioni fratte: a) una semplice; b) denominatori di segno opposto (x - 3 e 9 - x); c) denominatore "
+        f"da scomporre e una soluzione da scartare; d) una di grado superiore. Per le disequazioni: una fratta, una a prodotto, un "
+        f"sistema di tre. Gli altri esercizi hanno 1-4 richieste. Le richieste sono BREVI (una formula o una frase): a renderle "
+        f"difficili sono i dati e il tipo, non la lunghezza del testo. ECCEZIONE: lo studio completo di una funzione e un problema di "
+        f"modellizzazione sono UNA richiesta unica, con consegna brevissima ma intrinsecamente lunga e impegnativa (e con molti punti).\n"
+        f"- LE RICHIESTE DIFFICILI DEVONO ESSERLO DAVVERO: la più difficile dell'esercizio centrale e l'esercizio per l'eccellenza devono "
+        f"mettere in difficoltà anche uno studente preparato: combinano più concetti, nascondono una trappola, richiedono scomposizioni, "
+        f"discussione di casi o parametri. NON basta un calcolo più lungo o con numeri più grandi. Le richieste facili restano facili: "
+        f"serve una scala vera, dal banale al quasi proibitivo.\n"
         f"- VERO/FALSO fatto bene: il titolo dell'esercizio contiene le parole «Vero o Falso»; circa metà delle affermazioni sono "
         f"false; niente «sempre», «mai», «necessariamente», «esclusivamente» che rendono ambigua la risposta; almeno una falsa deve "
         f"richiedere di pensare a un controesempio. Ogni richiesta è UNA affermazione da giudicare (mai «Spiega…» dentro un Vero/Falso) "
@@ -1032,3 +1037,134 @@ def prompt_modifica_verifica(
         f"OUTPUT: TUTTI gli esercizi della verifica modificata, ciascuno come \\subsection*{{...}} seguito dal suo corpo, "
         f"oppure la riga NESSUNA_MODIFICA. Solo codice LaTeX."
     )
+
+
+# ── STRUTTURA-TIPO DELLA VERIFICA ─────────────────────────────────────────────
+# Modellata su verifiche vere di matematica del triennio: 4-6 esercizi, uno CENTRALE che vale molto (35-50% dei punti) con
+# 4-8 richieste a rampa, un'apertura breve, un esercizio di lettura/analisi, un problema, e in fondo un esercizio «per
+# l'eccellenza» (pochi punti, molto difficile). I punti non sono mai uguali tra gli esercizi.
+
+# Pesi (in %) per ruolo, per numero di esercizi «normali» (senza quello per l'eccellenza). Ruoli: A apertura, C centrale,
+# M medio, G lettura/analisi, P problema.
+_PESI_STRUTTURA = {
+    1: [("C", 100)],
+    2: [("A", 30), ("C", 70)],
+    3: [("A", 15), ("C", 50), ("G", 35)],
+    4: [("A", 12), ("C", 40), ("G", 25), ("P", 23)],
+    5: [("A", 10), ("C", 34), ("M", 20), ("G", 22), ("P", 14)],
+    6: [("A", 8), ("C", 30), ("M", 14), ("G", 22), ("C", 14), ("P", 12)],
+    7: [("A", 8), ("C", 26), ("M", 12), ("G", 20), ("C", 12), ("M", 12), ("P", 10)],
+}
+
+_DESCRIZIONE_STUDIO = (
+    "STUDIO COMPLETO di una funzione (dominio, simmetrie, intersezioni, segno, limiti e asintoti, derivata e monotonia se "
+    "l'argomento le include, grafico qualitativo) oppure lettura di un grafico con molte richieste brevi: è MOLTO impegnativo, "
+    "pesa 25-30 punti, e può essere UNA richiesta unica con consegna brevissima («Studia la funzione … e rappresentane il "
+    "grafico qualitativo»)"
+)
+
+_DESCRIZIONE_RUOLO = {
+    "A": "APERTURA BREVE: poche richieste semplici (una domanda teorica/definizione o un calcolo diretto)",
+    "C": "ESERCIZIO CENTRALE: l'abilità principale dell'argomento, 4-8 richieste brevi a rampa, dalla più facile a una DAVVERO difficile",
+    "M": "esercizio di difficoltà MEDIA: 2-4 richieste, dal diretto al leggermente articolato",
+    "G": "SECONDO TIPO di esercizi dell'argomento (un'altra famiglia di casi) oppure LETTURA/ANALISI (un grafico, dei dati, un testo, una fonte): 2-6 richieste brevi, di difficoltà media o alta",
+    "P": "PROBLEMA di ragionamento o applicato: 1-3 richieste, difficile",
+}
+
+
+def _arrotonda_a_somma(valori: list, totale: int) -> list:
+    """Interi che sommano esattamente a totale, in proporzione a valori (il resto va ai più grandi)."""
+    somma = sum(valori) or 1
+    quote = [v * totale / somma for v in valori]
+    base = [int(q) for q in quote]
+    resto = totale - sum(base)
+    for i in sorted(range(len(valori)), key=lambda i: -(quote[i] - base[i]))[:max(resto, 0)]:
+        base[i] += 1
+    return base
+
+
+_PAROLE_STUDIO_FUNZIONE = ("funzion", "limit", "derivat", "asintot", "continuit", "dominio", "integral")
+
+
+def struttura_verifica(num_totale: int, punti_totali: int, primo_base: bool = False, eccellenza: bool = True,
+                       argomento: str = "") -> list:
+    """
+    Struttura-tipo di una verifica di num_totale esercizi: [{"ruolo", "descrizione", "punti"}] (la somma dei punti fa punti_totali).
+    Con eccellenza=True l'ULTIMO esercizio è quello «per l'eccellenza» (3-10 punti circa il 6%) e conta tra i num_totale.
+    """
+    num_totale = max(1, int(num_totale))
+    ecc = bool(eccellenza) and num_totale >= 3
+    normali = num_totale - (1 if ecc else 0)
+    pesi = _PESI_STRUTTURA.get(min(normali, 7))
+    if normali > 7:                                   # oltre 7: gli esercizi in più sono medi
+        pesi = pesi[:-1] + [("M", 8)] * (normali - 7) + pesi[-1:]
+    studio = any(k in (argomento or "").lower() for k in _PAROLE_STUDIO_FUNZIONE)
+    if studio:                                        # lo studio completo di una funzione pesa molto (25-30%)
+        pesi = [(r, max(w, 28) if r == "G" else w) for r, w in pesi]
+    ruoli = [r for r, _ in pesi]
+    punti_ecc = min(10, max(3, round(punti_totali * 0.06))) if ecc else 0
+    punti = _arrotonda_a_somma([w for _, w in pesi], punti_totali - punti_ecc)
+    if primo_base and ruoli:
+        ruoli[0] = "B"
+    voci = []
+    for r, p in zip(ruoli, punti):
+        d = ("APERTURA: un ripasso FACILE dei concetti base (poche richieste dirette)" if r == "B" else _DESCRIZIONE_RUOLO[r])
+        if r == "G" and studio:
+            d = _DESCRIZIONE_STUDIO
+        voci.append({"ruolo": r, "descrizione": d, "punti": p})
+    if ecc:
+        voci.append({"ruolo": "E", "punti": punti_ecc, "descrizione":
+                     "ESERCIZIO PER L'ECCELLENZA, ultimo e facoltativo (titolo «Per l'eccellenza»): MOLTO difficile, un problema che richiede "
+                     "un'idea o un ragionamento non standard (modellizzazione, parametro, caso da discutere), 1-2 richieste"})
+    return voci
+
+
+# Rampe di difficoltà d'esempio, per far capire il livello (NON da copiare): chiave = parole dell'argomento.
+_RAMPE_ESEMPIO = [
+    (("fratt", "frazioni algebriche", "frazionari"),
+     "equazioni fratte: (1) 3/x + 1/(2x) = 7 · (2) 2/(x-1) - 3/(x+2) = 1/(x²+x-2) · "
+     "(3) x/(x²-4x+4) - 5/(x²-4) = 1/(x+2), con C.E. e una soluzione da scartare · "
+     "(4) (1/(x²-x) - 2/(x²-1)) : (x-3)/(x³-x) + 1/(x-1) = x/(x+1), con scomposizioni e divisione di frazioni"),
+    (("esponenzial",),
+     "equazioni esponenziali: (1) 5^x = 25√5/∛5 · (2) 2·3^x + (5/3)·3^x = 11√3 · (3) 4·5^x = 3^(x+2), che richiede i logaritmi · "
+     "(4) 9^x - 10·3^x + 9 = 0, per sostituzione"),
+    (("logaritm",),
+     "logaritmi: (1) calcolo con le proprietà: log₂12 + ½log₂9 - log₂18 · (2) dominio di ln(x²-x-6) + ln(9-x) · "
+     "(3) log₃(x+2) - log₃x = 1 · (4) log₂²x - 3log₂x = -2 · (5) 3·2^(x+1) = 5^x"),
+    (("derivat",),
+     "derivate: (1) 3x⁴ - 2/x + √x · (2) (x²-2x)eˣ · (3) ln(x²/(x-1)) · (4) x²eˣ/(x+2) · (5) √(x² + eˣ) · "
+     "poi la retta tangente a una funzione fratta in un punto"),
+    (("limit", "asintot", "continuit"),
+     "limiti: (1) lim (2x³-5x+1)/(x³+2x²) per x→+∞, solo il risultato · (2) lim (x²-5x+6)/(x²-4) per x→2, con passaggi · "
+     "(3) lim (√(x²+4x) - x) per x→+∞ · (4) lim (1 - 3/(2x))^x per x→+∞ · (5) lim ln(1+3x²)/(x·sin x) per x→0"),
+    (("dominio", "domini", "funzioni reali"),
+     "domini: (1) ln(x²-x-6) · (2) ∛(x+1)/√(x²-5x+4) · (3) x/(x·ln(x+3)), con ln al denominatore · (4) ln(√(x-1) - 1) · "
+     "(5) √((|3x-1| - |x+2|)/(x²-x-6))"),
+    (("scompos", "polinom"),
+     "scomposizioni: (1) 4x²y + 8xy · (2) ab + 3a - 2b - 6 · (3) x² - 3x - 10 · (4) 2y² - 7y - 4 · (5) x³ + 1/8 · "
+     "(6) x³ - 9x - x² + 9 · (7) 4a² - 4b² + 8bc - 4c²"),
+    (("disequaz",),
+     "disequazioni: (1) 3x - 5 > x + 1 · (2) x² - 5x + 6 ≤ 0 · (3) (x²-4)/(x-3) > 0 · (4) |x²-4| < 3x · "
+     "(5) un sistema di tre disequazioni di tipo diverso"),
+    (("radical", "razionalizz"),
+     "radicali: (1) semplificare √18 + √50 - √8 · (2) razionalizzare 2/√3 · (3) razionalizzare 1/(√x - √y) · "
+     "(4) semplificare un'espressione con radicali letterali e condizioni di esistenza"),
+    (("cinematica", "moto"),
+     "cinematica: (1) accelerazione da due dati di velocità e tempo · (2) spazio percorso da un grafico v-t · "
+     "(3) frenata con spazio e tempo di arresto · (4) due corpi: quando e dove si incontrano (equazione di secondo grado con discriminante quadrato perfetto)"),
+]
+
+_RAMPA_GENERICA = (
+    "per qualsiasi materia: (a) riconoscere o definire · (b) applicare in un caso standard · (c) caso con un'eccezione, un dato da "
+    "ricavare o un passaggio che si sbaglia facilmente · (d) collegare due concetti o affrontare una situazione nuova"
+)
+
+
+def rampe_esempio(materia: str, argomento: str) -> str:
+    """Testo con 1-2 rampe di difficoltà d'esempio adatte all'argomento (o quella generica)."""
+    t = f"{materia} {argomento}".lower()
+    trovate = [r for chiavi, r in _RAMPE_ESEMPIO if any(c in t for c in chiavi)][:2]
+    if not trovate:
+        trovate = [_RAMPA_GENERICA]
+    return ("ESEMPI DI RAMPA DI DIFFICOLTÀ (servono SOLO a capire il livello: NON copiarli, inventa esercizi nuovi con altri dati):\n"
+            + "\n".join(f"  • {r}" for r in trovate) + "\n")

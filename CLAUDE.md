@@ -100,6 +100,12 @@ contato in `usage_events` (tipo `modifica`, per `verifica_id`) così riaprire la
 contatore della sessione. Eliminare esercizi, cambiare i punteggi e annullare non contano. L'anteprima del singolo esercizio col grafico è
 `latex_utils.anteprima_esercizio_png` (compila solo quell'esercizio, in cache per testo).
 
+Struttura-tipo della verifica (`prompts.struttura_verifica`, modellata su verifiche vere di matematica): 4-6 esercizi con ruoli e punti DIVERSI (apertura breve,
+esercizio centrale 35-50% dei punti con 4-8 richieste a rampa, esercizio di lettura/analisi o studio di funzione 25-30%, problema, e in fondo «Per l'eccellenza»
+3-10 pt, interruttore `toggle_eccellenza` acceso di default; l'esercizio per l'eccellenza si AGGIUNGE agli esercizi scelti). Le rampe di difficoltà d'esempio
+(`rampe_esempio`, anonime, per parola chiave dell'argomento) servono solo a calibrare il livello. Il primo esercizio «di base» è opzionale (`toggle_primo_base`).
+Con esercizi scelti a mano o «Rifai questa verifica» la struttura-tipo non si usa (`_build_prompt_esercizi(struttura_tipo=False)`).
+
 Modifica rapida in FINAL (box «Vuoi cambiare qualcosa? Chiedilo», sotto l'anteprima, sopra «Scarica PDF»): `main._box_modifica_rapida` (solo interfaccia),
 logica in `generation.modifica_verifica_libera` (senza streamlit; i grafici escono come segnaposto `[[FIGURA n]]` e rientrano dopo), prompt in
 `prompts.prompt_modifica_verifica`. Conta nel tetto `MODIFICHE_PER_VERIFICA`, rifà il PDF con `_ricompila_verifica_a(riscala_totale=True)`, aggiorna `latex_a`
