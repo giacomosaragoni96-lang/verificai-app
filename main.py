@@ -61,7 +61,7 @@ from config import (
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
     MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, PREZZO_PRO_ANNUALE, LEGALE_PRONTO, TETTO_BREVE, MAX_FACCIATE, WORD_ATTIVO,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS, MODIFICHE_PER_VERIFICA, FEEDBACK_PRIMA_DEL_DOWNLOAD, MOSTRA_BOX_FEEDBACK,
-    PREZZI_VISIBILI, INVITI_ATTIVI, VERIFICHE_PER_CODICE,
+    PREZZI_VISIBILI, INVITI_ATTIVI, VERIFICHE_PER_CODICE, PIANO_ATTIVO, RUOLI_ESERCIZI_ATTIVI,
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -605,9 +605,15 @@ def _build_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_pun
     struttura = None
     if struttura_tipo and not esercizi_custom and num_totale > 0:
         struttura = struttura_verifica(num_totale, punti_totali if punti_totali else 100, primo_base, eccellenza, argomento)
-        righe.append("STRUTTURA-TIPO DELLA VERIFICA — segui i ruoli e, se ci sono i punti, anche i punti di ogni esercizio:")
-        for i, v in enumerate(struttura, 1):
-            righe.append(f"  - Esercizio {i}: {v['descrizione']}" + (f" — circa {v['punti']} pt" if mostra_punteggi else ""))
+        if RUOLI_ESERCIZI_ATTIVI:
+            righe.append("STRUTTURA-TIPO DELLA VERIFICA — segui i ruoli e, se ci sono i punti, anche i punti di ogni esercizio:")
+            for i, v in enumerate(struttura, 1):
+                righe.append(f"  - Esercizio {i}: {v['descrizione']}" + (f" — circa {v['punti']} pt" if mostra_punteggi else ""))
+        elif struttura[-1]["ruolo"] == "E":
+            # solo l'esercizio finale per l'eccellenza: niente ruoli né numero di richieste per gli altri
+            righe.append(f"L'ULTIMO esercizio (Esercizio {num_totale}) si intitola «Per l'eccellenza»: facoltativo, MOLTO difficile "
+                         f"(un problema che richiede un'idea o un ragionamento non standard), 1-2 richieste"
+                         + (f", circa {struttura[-1]['punti']} pt" if mostra_punteggi else "") + ".")
         righe.append("ORDINE: difficoltà crescente (l'esercizio per l'eccellenza, se c'è, va per ultimo).")
     if mostra_punteggi and num_totale > 0:
         if struttura:
@@ -3516,7 +3522,7 @@ def _render_stage_input():
                           if (_scelta_mat == "base_conoscenza" and _fm) else None),
         prog_placeholder=_prog_ph_b,
         piano_struttura=({"primo_base": bool(st.session_state.get("toggle_primo_base", False)), "eccellenza": _ecc}
-                         if not st.session_state.esercizi_custom else None),
+                         if (PIANO_ATTIVO and not st.session_state.esercizi_custom) else None),
     )
     return
 
