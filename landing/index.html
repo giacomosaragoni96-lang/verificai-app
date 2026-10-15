@@ -71,6 +71,8 @@
   .passo b { display:block; font-size:1rem; margin-bottom:.2rem; }
   .passo span { color:var(--grigio); }
   .segreto { background:#FEF3C7; border:1.5px solid #FCD34D; border-radius:20px; padding:1.5rem 1.6rem; color:#78350F; }
+  .segreto .no { color:#DC2626; font-size:1.15em; margin-right:.15em; }
+  .segreto .si { color:#16A34A; font-size:1.15em; margin-right:.15em; }
   .segreto h3 { margin:0 0 .4rem; font-size:1.05rem; }
   .esempi { display:grid; grid-template-columns: 1fr 2fr; gap:1rem; margin-top:1rem; }
   .esempi div { background:rgba(255,255,255,.65); border-radius:12px; padding:.8rem 1rem; }
@@ -114,8 +116,8 @@
   </div>
 
   <section id="esempi">
-    <h2>Guarda una verifica vera</h2>
-    <p class="intro">Tre verifiche generate da VerificAI, così come escono: clicca per aprire il PDF completo.</p>
+    <h2>Guarda un esempio generato con VerificAI</h2>
+    <p class="intro">Tre verifiche create da VerificAI, così come escono: clicca per aprire il PDF completo.</p>
     <div class="esempi-vero">
       <a class="vero" href="esempio-matematica.pdf" target="_blank" rel="noopener">
         <div class="anteprima"><img src="esempio-matematica.png" alt="Anteprima della verifica di Matematica" loading="lazy"></div>
@@ -148,8 +150,8 @@
       <h3>💡 Il segreto: più informazioni dai, meglio viene la verifica</h3>
       L'intelligenza artificiale non legge nel pensiero: se scrivi solo l'argomento, il resto lo sceglie lei. Basta dirle cosa vuoi.
       <div class="esempi">
-        <div><b>Poco</b>«Equazioni di secondo grado»</div>
-        <div><b>Meglio</b>«Equazioni di secondo grado, 2ª liceo scientifico. Parti con un esercizio di calcolo diretto, poi un vero o falso sui concetti essenziali, un problema di vita quotidiana e un grafico da interpretare. Numeri interi, niente dimostrazioni.»</div>
+        <div><b><span class="no">✗</span> Poco</b>«Equazioni di secondo grado»</div>
+        <div><b><span class="si">✓</span> Meglio</b>«Equazioni di secondo grado, 2ª liceo scientifico. Parti con un esercizio di calcolo diretto, poi un vero o falso sui concetti essenziali, un problema di vita quotidiana e un grafico da interpretare. Numeri interi, niente dimostrazioni.»</div>
       </div>
     </div>
   </section>
