@@ -1356,12 +1356,8 @@ def _mini_feedback_richiesto() -> bool:
     return True
 
 
-@st.dialog("Un attimo prima di scaricare", width="small")
-def _dialogo_mini_feedback(pdf: bytes, nome_file: str) -> None:
-    """
-    Finestra che si apre al clic su «Scarica PDF» (solo la prima volta in questo browser): due domande da 5 secondi e poi il
-    PDF si scarica da qui. È l'unica cosa che chiediamo in cambio dell'uso gratuito.
-    """
+def _stile_dialogo() -> None:
+    """Colori dei pulsanti dentro le finestre (st.dialog): stanno fuori da .stApp e senza questo prendono quelli predefiniti di Streamlit."""
     st.markdown(f"""<style>
 [data-testid="stDialog"] [data-testid="stBaseButton-primary"], [data-testid="stDialog"] [data-testid="stBaseButton-primaryFormSubmit"],
 [data-testid="stDialog"] [data-testid="stDownloadButton"] button {{
@@ -1373,6 +1369,15 @@ def _dialogo_mini_feedback(pdf: bytes, nome_file: str) -> None:
   color: #fff !important; -webkit-text-fill-color: #fff !important; font-weight: 700 !important; letter-spacing: .01em !important;
 }}
 </style>""", unsafe_allow_html=True)
+
+
+@st.dialog("Un attimo prima di scaricare", width="small")
+def _dialogo_mini_feedback(pdf: bytes, nome_file: str) -> None:
+    """
+    Finestra che si apre al clic su «Scarica PDF» (solo la prima volta in questo browser): due domande da 5 secondi e poi il
+    PDF si scarica da qui. È l'unica cosa che chiediamo in cambio dell'uso gratuito.
+    """
+    _stile_dialogo()
     if st.session_state.get("_mini_dialogo_fatto"):
         st.success("Grazie! Ecco il tuo PDF.", icon="✅")
         _dl("⬇  Scarica il PDF", data=pdf, file_name=nome_file, mime="application/pdf", type="primary",
@@ -1407,6 +1412,54 @@ def _dialogo_mini_feedback(pdf: bytes, nome_file: str) -> None:
         st.session_state["_mini_ok"] = True
         st.session_state["_mini_dialogo_fatto"] = True
         st.rerun(scope="fragment")
+
+
+def _benvenuto_richiesto() -> bool:
+    """True alla prima visita (nessuna verifica creata, nessun cookie): si mostra una sola volta il pop-up di benvenuto."""
+    if (_is_admin and not _SIM) or not _GUIDA_PRIMO or st.session_state.get("_benvenuto_visto"):
+        return False
+    try:
+        if st.context.cookies.get("vf_benvenuto") == "1":
+            st.session_state["_benvenuto_visto"] = True
+            return False
+    except Exception:
+        pass
+    return True
+
+
+@st.dialog("Benvenuto in VerificAI 👋", width="large")
+def _dialogo_benvenuto() -> None:
+    """Pop-up della prima visita: come si fa in tre passi e perché conviene dare più informazioni."""
+    _stile_dialogo()
+    _tx, _t2, _ac = T["text"], T["text2"], T["accent"]
+    _passi = [("✍️", "Scrivi l'argomento", "e, soprattutto, come vuoi la verifica."),
+              ("⚡", "Premi «Crea verifica»", "in circa un minuto è pronta."),
+              ("✏️", "Modifica e scarica", "cambia un esercizio con un tocco, poi scarica il PDF.")]
+    _righe = "".join(
+        f'<div style="display:flex;gap:.8rem;align-items:center;margin:.5rem 0;">'
+        f'<div style="flex:0 0 2.2rem;height:2.2rem;border-radius:50%;background:{_ac};color:#fff;font-weight:800;display:flex;'
+        f'align-items:center;justify-content:center;">{i}</div>'
+        f'<div style="font-family:DM Sans,sans-serif;color:{_tx};line-height:1.35;"><b>{ic} {t}</b> — <span style="color:{_t2};">{d}</span></div></div>'
+        for i, (ic, t, d) in enumerate(_passi, 1))
+    st.markdown(
+        f'<div style="font-family:DM Sans,sans-serif;color:{_t2};margin-bottom:.4rem;">Una verifica pronta da stampare in pochi minuti. Come si fa:</div>'
+        + _righe +
+        f'<div style="margin-top:1.1rem;padding:1rem 1.1rem;border-radius:14px;background:#FEF3C7;border:1.5px solid #FCD34D;'
+        f'font-family:DM Sans,sans-serif;color:#78350F;line-height:1.5;">'
+        f'<div style="font-weight:800;font-size:1.05rem;margin-bottom:.3rem;">💡 Il segreto: più informazioni dai, meglio viene la verifica</div>'
+        f'L\'AI non legge nel pensiero: se scrivi solo l\'argomento, il resto lo sceglie lei e il risultato può essere diverso da quello che hai in mente. '
+        f'Basta dirle cosa vuoi.'
+        f'<div style="margin-top:.6rem;"><span style="font-weight:800;">Poco:</span> «Equazioni di secondo grado»</div>'
+        f'<div style="margin-top:.3rem;"><span style="font-weight:800;">Meglio:</span> «Equazioni di secondo grado, 2ª liceo scientifico. '
+        f'Parti con un esercizio di calcolo diretto, poi un vero o falso sui concetti essenziali, un problema di vita quotidiana '
+        f'e un grafico da interpretare. Numeri interi, niente dimostrazioni.»</div></div>'
+        f'<div style="margin:.9rem 0 .5rem;font-family:DM Sans,sans-serif;color:{_t2};font-size:.92rem;">'
+        f'Una frase in più è la differenza tra una verifica «così così» e una che puoi stampare così com\'è.</div>',
+        unsafe_allow_html=True)
+    # chiudere con la X conta come visto: il cookie si scrive appena la finestra si apre
+    components.html('<script>try{window.parent.document.cookie="vf_benvenuto=1; max-age=31536000; path=/; SameSite=Lax";}catch(e){}</script>', height=0)
+    if st.button("Iniziamo →", type="primary", use_container_width=True, key="benvenuto_ok"):
+        st.rerun()
 
 
 def _banner_piano(dove: str) -> None:
@@ -3175,6 +3228,9 @@ def _lancia_generazione(
 
 def _render_stage_input():
     # La schermata di creazione e' anche la home: titolo breve + form.
+    if _benvenuto_richiesto():
+        st.session_state["_benvenuto_visto"] = True        # una volta per sessione; il cookie lo ricorda per le prossime
+        _dialogo_benvenuto()
     st.markdown(
         f'<div class="vf-narrow" style="text-align:center;margin:.2rem 0 1.1rem;">'
         f'<div class="vf-tp" style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
