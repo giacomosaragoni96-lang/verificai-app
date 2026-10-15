@@ -1,0 +1,34 @@
+PAGINA PUBBLICA DI VERIFICAI (per la verifica di Google)
+
+Google non può verificare il sito «verificai.streamlit.app» come tuo (streamlit.app è di Streamlit) e la sua home è dietro il login.
+Serve un dominio tuo con una pagina pubblica. Questa cartella contiene i due file da mettere online:
+
+  index.html    → la home: spiega cosa fa VerificAI, senza login, con il nome «VerificAI» e il link all'app
+  privacy.html  → l'informativa sulla privacy completa (con i dati di Google e la dichiarazione «Uso limitato»)
+
+PASSI (circa un'ora, poi si aspetta Google)
+
+1) Compra un dominio (circa 10 €/anno): per esempio verificai.it o verificai.app. Va bene qualsiasi registrar
+   (Cloudflare Registrar, Aruba, Namecheap...).
+
+2) Pubblica questi due file con un hosting gratuito. La via più semplice è Netlify:
+     - vai su https://app.netlify.com/drop e trascina dentro la CARTELLA «landing» → ottieni un indirizzo tipo xxxx.netlify.app
+     - poi «Domain management → Add a domain» e inserisci il tuo dominio; Netlify ti dice quali record DNS impostare
+   (alternativa: GitHub Pages o Cloudflare Pages, stesso risultato).
+
+3) Verifica il dominio come tuo in Google Search Console (https://search.google.com/search-console):
+   «Aggiungi proprietà → Dominio», incolla il record TXT che ti dà nelle impostazioni DNS del registrar e conferma.
+   Fallo con lo stesso account Google con cui hai creato il progetto Google Cloud.
+
+4) In Google Cloud → Google Auth Platform → Branding:
+     - Nome app: VerificAI                       (deve essere identico al nome sulla home)
+     - Home page: https://IL-TUO-DOMINIO/
+     - Norme sulla privacy: https://IL-TUO-DOMINIO/privacy.html
+     - Domini autorizzati: IL-TUO-DOMINIO  (lascia anche verificai.supabase.co)
+     - Logo: quello di VerificAI (facoltativo, ma conta per la verifica del marchio)
+   Salva, poi clicca «Ho risolto i problemi» → «Procedi».
+   La verifica dura di solito da qualche giorno a un paio di settimane.
+
+5) Quando la verifica del marchio è approvata, la schermata di consenso mostra «VerificAI» con il tuo logo invece dell'indirizzo di Supabase.
+
+Nota: l'informativa della pagina deve essere la stessa dell'app (?pagina=privacy). Se la cambi, cambia entrambe.

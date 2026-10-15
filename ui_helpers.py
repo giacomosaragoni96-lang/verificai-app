@@ -782,6 +782,13 @@ sui tuoi dati puoi scriverci a **{_LEG['email']}**.
 {_ACQUISTO}- **Segnalazioni anonime:** se usi «Qualcosa non va in questa verifica?» salviamo quello che scrivi e, se lasci la spunta,
   il testo della verifica e i dettagli tecnici della generazione. **Non** salviamo il tuo nome, la tua email né il tuo indirizzo IP.
 
+### Come usiamo i dati che riceviamo da Google
+I dati dell'accesso con Google (email, nome e foto del profilo) li usiamo **soltanto** per creare il tuo account, farti accedere
+e mostrarti il tuo nome nell'applicazione. Non li usiamo per pubblicità, non li vendiamo, non li cediamo a terzi e non li usiamo per
+addestrare modelli di intelligenza artificiale; sono condivisi solo con il fornitore che gestisce l'autenticazione per nostro conto (Supabase).
+L'uso e il trasferimento a qualsiasi altra app delle informazioni ricevute dalle API di Google da parte di VerificAI rispetteranno la
+Google API Services User Data Policy, inclusi i requisiti di Uso limitato (*Limited Use*).
+
 ### Perché li trattiamo
 Per farti accedere, generare le verifiche, mostrarti lo storico, applicare i limiti del piano e
 migliorare il servizio. Non vendiamo i tuoi dati e non li usiamo per pubblicità.

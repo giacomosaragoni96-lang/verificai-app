@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VerificAI — verifiche scolastiche pronte in pochi minuti</title>
+<meta name="description" content="VerificAI è un servizio web per docenti che genera verifiche scolastiche (PDF e Word) con l'intelligenza artificiale: scrivi l'argomento, ottieni la verifica con punteggi, versione B e soluzioni.">
+<style>
+  :root { --blu:#2563EB; --blu-scuro:#1E3A8A; --testo:#0F172A; --grigio:#475569; --chiaro:#F8FAFC; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color:var(--testo); background:#fff; line-height:1.6; }
+  header, section, footer { max-width: 960px; margin: 0 auto; padding: 0 1.25rem; }
+  .nav { display:flex; justify-content:space-between; align-items:center; padding:1rem 0; }
+  .logo { font-weight:800; font-size:1.5rem; letter-spacing:-.02em; }
+  .logo span { color: var(--blu); font-style: italic; }
+  .hero { text-align:center; padding: 3rem 0 2.5rem; }
+  .hero h1 { font-size: clamp(1.9rem, 5vw, 3rem); line-height:1.15; margin:.2rem 0 1rem; letter-spacing:-.02em; }
+  .hero p { font-size:1.15rem; color:var(--grigio); max-width: 640px; margin: 0 auto 1.6rem; }
+  .btn { display:inline-block; background:linear-gradient(135deg,var(--blu),var(--blu-scuro)); color:#fff !important; padding:.9rem 1.6rem; border-radius:12px; font-weight:700; text-decoration:none; box-shadow:0 8px 22px rgba(37,99,235,.28); }
+  .beta { display:inline-block; font-size:.72rem; font-weight:800; letter-spacing:.08em; border:1.5px solid var(--blu); color:var(--blu); border-radius:999px; padding:.1rem .55rem; vertical-align:middle; margin-left:.4rem; }
+  .passi { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:1rem; margin: 1rem 0 2.5rem; }
+  .card { background:var(--chiaro); border:1px solid #E2E8F0; border-radius:16px; padding:1.2rem 1.3rem; }
+  .card b { display:block; margin-bottom:.3rem; }
+  h2 { font-size:1.5rem; margin: 2.2rem 0 .6rem; }
+  ul { padding-left: 1.2rem; } li { margin:.35rem 0; }
+  footer { padding: 2rem 1.25rem 3rem; color:var(--grigio); font-size:.92rem; border-top:1px solid #E2E8F0; margin-top:3rem; text-align:center; }
+  a { color: var(--blu); }
+</style>
+</head>
+<body>
+<header>
+  <div class="nav">
+    <div class="logo">Verific<span>AI</span><span class="beta">BETA</span></div>
+    <a href="https://verificai.streamlit.app" class="btn" style="padding:.6rem 1.1rem;">Prova gratis</a>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>Verifiche scolastiche pronte in pochi minuti</h1>
+  <p><b>VerificAI</b> è un servizio web per docenti: scrivi l'argomento e come vuoi la verifica, e ottieni una verifica già impaginata, con i punteggi, pronta da stampare o da modificare in Word.</p>
+  <a class="btn" href="https://verificai.streamlit.app">Crea la tua prima verifica</a>
+  <p style="font-size:.9rem;margin-top:.9rem;">Gratuito durante la fase beta. Si accede con email e password oppure con Google.</p>
+</section>
+
+<section>
+  <div class="passi">
+    <div class="card"><b>1. Scrivi l'argomento</b>Materia, scuola e argomento, e come la vuoi: più informazioni dai, meglio viene la verifica.</div>
+    <div class="card"><b>2. Crea la verifica</b>L'intelligenza artificiale scrive gli esercizi, controlla i calcoli e prepara il PDF con la tabella dei punteggi.</div>
+    <div class="card"><b>3. Modifica e scarica</b>Rendi più facile o più difficile un esercizio, cambia i numeri, poi scarica il PDF o la versione Word modificabile.</div>
+  </div>
+
+  <h2>Cosa puoi fare con VerificAI</h2>
+  <ul>
+    <li>Creare verifiche di matematica, fisica, storia e altre materie, per ogni ordine di scuola.</li>
+    <li>Modificare un singolo esercizio: più facile, più difficile, numeri diversi, esercizio nuovo.</li>
+    <li>Ottenere la Fila B, la versione per studenti con BES/DSA, le soluzioni e una scheda di allenamento per la classe.</li>
+    <li>Scaricare il PDF pronto per la stampa o un file Word da ritoccare.</li>
+  </ul>
+
+  <h2>Chi lo ha fatto</h2>
+  <p>VerificAI è un progetto di Giacomo Saragoni, docente, nato per far risparmiare tempo ai colleghi. Per domande o suggerimenti: <a href="mailto:verificai.support@gmail.com">verificai.support@gmail.com</a>.</p>
+
+  <h2>Privacy</h2>
+  <p>Per accedere basta un indirizzo email (con Google riceviamo solo email, nome e foto del profilo). Non vendiamo i tuoi dati. Leggi l'<a href="privacy.html">informativa sulla privacy</a>.</p>
+</section>
+
+<footer>
+  VerificAI · Versione beta · <a href="privacy.html">Privacy</a> · <a href="https://verificai.streamlit.app">Apri l'applicazione</a>
+</footer>
+</body>
+</html>
