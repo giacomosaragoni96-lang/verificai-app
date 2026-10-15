@@ -793,11 +793,6 @@ def mostra_auth(supabase):
 
     # ── Barra di fiducia + footer ────────────────────────────────────────────
     st.markdown(f"""
-    <div class="auth-trust">
-      <div class="auth-trust-item">🎁&ensp;5 verifiche gratis al mese</div>
-      <div class="auth-trust-item">🇮🇹&ensp;Per docenti italiani</div>
-      <div class="auth-trust-item">🔒&ensp;Dati al sicuro</div>
-    </div>
     <div style="text-align:center; padding:1rem 0 0.5rem; font-family:'DM Sans',sans-serif;">
       <p style="font-size:0.8rem; color:{_TEXT2}; margin:0; font-weight:500;">
         Accedendo accetti l'<a href="?pagina=privacy" target="_blank" rel="noopener"
