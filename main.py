@@ -32,7 +32,7 @@ from prompts import (
     prompt_nuovo_esercizio,
     REGOLA_SOTTOPUNTI_MODIFICA, REGOLA_GRAFICO_CURVE,
 )
-from docx_export import latex_to_docx_via_ai, _rubrica_to_docx
+from docx_export import latex_to_docx_modificabile, _rubrica_to_docx
 from scheda import genera_scheda
 from subscription_management import calcola_entitlements, get_subscription_manager
 from ui_upgrade import render_upgrade
@@ -3439,6 +3439,8 @@ def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali
     latex_inviato = latex
     pdf, err, latex = compila_pdf_sicuro(latex)
     va["latex"] = va["latex_originale"] = latex
+    if latex != latex_prima:
+        va["docx"] = None                       # il Word va rifatto dal testo nuovo
     # Fila B, BES/DSA, Soluzioni e Word derivano dalla Fila A: se la A è cambiata non sono più
     # coerenti (es. un esercizio eliminato tornerebbe nella versione BES) e vanno rifatte.
     if pdf and latex_prima and latex != latex_prima and any(
@@ -4958,6 +4960,38 @@ def _render_stage_final():
         f'distribuirlo agli studenti. La verifica è salvata in «Le mie verifiche».</div>',
         unsafe_allow_html=True
     )
+    # ── Versione Word modificabile: per chi preferisce lavorare in Word ──────────────────────────
+    if WORD_ATTIVO and vA.get("latex"):
+        with st.container(border=True):
+            _w1, _w2 = st.columns([2.2, 1.2], vertical_alignment="center", gap="medium")
+            with _w1:
+                st.markdown(
+                    f'<div style="font-family:DM Sans,sans-serif;color:{T["text"]};line-height:1.45;">'
+                    f'<b style="font-size:1.02rem;">📝 Preferisci lavorare in Word?</b><br>'
+                    f'<span style="color:{T["text2"]};font-size:.9rem;">Scarica la versione modificabile: il testo e le formule (equazioni di Word) '
+                    f'si ritoccano direttamente, i grafici sono già inseriti come immagini e i punteggi stanno in una tabella ordinata.</span></div>',
+                    unsafe_allow_html=True)
+            with _w2:
+                if vA.get("docx"):
+                    _dl(f"📝 Scarica Word · {_stima(vA['docx'])}", data=vA["docx"], file_name=arg_str + "_FilaA.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True, type="primary", key="dl_docx_A_generale")
+                elif _pro_bloccato("word"):
+                    _pulsante_pro("word", "pro_word_generale")
+                elif st.button("📝 Crea il file Word", key="gen_docx_A_generale", use_container_width=True, type="primary"):
+                    with st.spinner("Preparo il file Word… (qualche secondo)"):
+                        try:
+                            _db, _emsg = latex_to_docx_modificabile(vA["latex"], mat_str, arg_str, con_griglia)
+                        except Exception as _e:
+                            _db, _emsg = None, str(_e)
+                    if _db:
+                        st.session_state.verifiche["A"]["docx"] = _db
+                        _registra_evento("word", verifica_id=st.session_state.get("_storico_id"))
+                        st.rerun()
+                    else:
+                        _mostra_errore("Non sono riuscito a creare il file Word", _emsg,
+                                       consiglio="Riprova tra un momento; il PDF resta disponibile.")
+
 
     # ── Anteprima: una pagina alla volta, con ◀ ▶ (così il kit sotto resta vicino) ──────────
     _zoom = False
@@ -5315,7 +5349,7 @@ def _render_stage_final():
                 if st.session_state.get(_docx_key, False):
                     with st.spinner("Conversione in formato Word in corso… (30–60 sec)"):
                         try:
-                            _db, _emsg = latex_to_docx_via_ai(_latex_per_ai(vA["latex"]), con_griglia=con_griglia)
+                            _db, _emsg = latex_to_docx_modificabile(vA["latex"], mat_str, arg_str, con_griglia)
                         except Exception as _e:
                             _db, _emsg = None, str(_e)
                     st.session_state[_docx_key] = False
@@ -5601,7 +5635,7 @@ def _render_stage_final():
                     if st.session_state.get(_docx_key, False):
                         with st.spinner("Conversione in formato Word in corso…"):
                             try:
-                                db, error_msg = latex_to_docx_via_ai(_latex_per_ai(v["latex"]), con_griglia=con_griglia)
+                                db, error_msg = latex_to_docx_modificabile(v["latex"], mat_str, arg_str, con_griglia)
                             except Exception as e:
                                 db = None
                                 error_msg = str(e)

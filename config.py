@@ -60,8 +60,8 @@ TETTO_BREVE = {"verifiche": 6, "minuti": 10}
 MODIFICHE_PER_VERIFICA = {"free": 10, "pro": 40}
 # Facciate massime consigliate per una verifica (si stampa su 2 fogli fronte-retro); oltre: avviso e riduzione
 MAX_FACCIATE = 2
-# Esportazione Word: spenta finche' la conversione non e' affidabile (testo, scelte multiple, grafici e tabella si perdevano)
-WORD_ATTIVO = False
+# Esportazione Word (docx_export.latex_to_docx_modificabile: pandoc, formule modificabili, grafici come immagini, tabella punteggi stretta).
+WORD_ATTIVO = True
 PREZZO_PRO_ANNUALE = 39                 # euro, 12 mesi dall'attivazione (pagamento unico)
 CHECKOUT_URL_PRO = "https://verificai.lemonsqueezy.com/checkout/buy/cd7d56f4-10c1-4807-bc2f-90dffa200268"   # prodotto di PROVA (test mode)
 # ID del negozio e del prodotto Lemon Squeezy: una licenza vale solo se sono questi (None = nessun codice accettato).

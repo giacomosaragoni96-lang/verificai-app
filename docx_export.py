@@ -1362,3 +1362,244 @@ def _rubrica_to_docx(
 
     except Exception:
         return None
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  WORD MODIFICABILE (senza AI): LaTeX → pandoc → .docx, poi rifiniture con python-docx
+#  - formule: diventano equazioni di Word (modificabili)
+#  - grafici: ognuno è compilato a parte, ritagliato e inserito come immagine centrata
+#  - tabella dei punteggi: una sola tabella stretta (un totale per esercizio), che sta nella pagina
+# ══════════════════════════════════════════════════════════════════════════════
+
+_RE_TIKZ = re.compile(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', re.DOTALL)
+_RE_VF = re.compile(r'\\mbox\{\s*\$\\square\$\s*\\textbf\{V\}\s*\$\\quad\\square\$\s*\\textbf\{F\}\s*\}')
+_RE_VF_NUDO = re.compile(r'\$\\square\$\s*\\textbf\{V\}\s*\$\\quad\\square\$\s*\\textbf\{F\}')
+
+
+def _pandoc_disponibile() -> bool:
+    import shutil
+    return shutil.which("pandoc") is not None
+
+
+def _prepara_per_pandoc(testo: str, cartella: str, contatore: list) -> str:
+    """Un blocco di LaTeX pronto per pandoc: grafici → immagini, caselle V/F e righe da compilare in testo semplice."""
+    def _grafico(m):
+        n = contatore[0]
+        contatore[0] += 1
+        png = _tikz_to_png_bytes(m.group(0))
+        if not png:
+            return "\n\n\\textit{[grafico non disponibile]}\n\n"
+        with open(os.path.join(cartella, f"g{n}.png"), "wb") as f:
+            f.write(png)
+        return f"\n\n\\begin{{center}}\\includegraphics[width=10cm]{{g{n}.png}}\\end{{center}}\n\n"
+
+    t = _RE_TIKZ.sub(_grafico, testo)
+    t = _RE_VF.sub(lambda m: "\u2610 \\textbf{V}~~~~~~~~\u2610 \\textbf{F}", t)
+    t = _RE_VF_NUDO.sub(lambda m: "\u2610 \\textbf{V}~~~~~~~~\u2610 \\textbf{F}", t)
+    t = re.sub(r'\\underline\{\\hspace\*?\{[^}]*\}\}', r'\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_', t)
+    t = re.sub(r'\\(?:vfill|newpage|clearpage|noindent)\b', '', t)
+    t = re.sub(r'\\vspace\*?\{[^}]*\}', '', t)
+    t = re.sub(r'(?<!\\)%[^\n]*', '', t)
+    return t
+
+
+def _intestazione_da_latex(latex: str, materia: str, argomento: str):
+    """(titolo, sottotitolo, istruzione) letti dall'intestazione del LaTeX; se mancano si ricavano da materia e argomento."""
+    pulisci = lambda x: re.sub(r'\\[a-zA-Z]+\*?|[{}]', '', x).strip()
+    m = re.search(r'\\textbf\{\\(?:large|Large|LARGE)\s+(.*?)\}\s*(?:\\\\|\n)', latex, re.DOTALL)
+    titolo = pulisci(m.group(1)) if m else ""
+    if not titolo:
+        titolo = f"Verifica di {materia}" + (f": {argomento}" if argomento else "")
+    m = re.search(r'\\\\\[[^\]]*\]\s*\{\\large\s+(.*?)\}', latex, re.DOTALL)
+    sottotitolo = pulisci(m.group(1)) if m else ""
+    m = re.search(r'\\textit\{\\small\s+(.*?)\}\s*\n?\\end\{center\}', latex, re.DOTALL)
+    istruzione = pulisci(m.group(1)) if m else ""
+    return titolo, sottotitolo, istruzione
+
+
+def _bordi_tabella(tbl) -> None:
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    props = tbl._tbl.tblPr
+    bordi = OxmlElement("w:tblBorders")
+    for lato in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        e = OxmlElement(f"w:{lato}")
+        e.set(qn("w:val"), "single"); e.set(qn("w:sz"), "6"); e.set(qn("w:space"), "0"); e.set(qn("w:color"), "444444")
+        bordi.append(e)
+    for ancora in ("w:shd", "w:tblLayout", "w:tblCellMar", "w:tblLook"):        # i bordi vanno prima di questi (ordine dello schema)
+        el = props.find(qn(ancora))
+        if el is not None:
+            el.addprevious(bordi)
+            return
+    props.append(bordi)
+
+
+def _tabella_punteggi(doc, totali: list, punti_totali) -> None:
+    """Tabella dei punteggi stretta: un totale per esercizio (Max e Voto), larga quanto il testo."""
+    from docx.shared import Cm, Pt
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    n = len(totali)
+    if not n:
+        return
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_before = Pt(14)
+    r = p.add_run("Tabella punteggi"); r.bold = True; r.font.size = Pt(11)
+    tbl = doc.add_table(rows=3, cols=n + 2)
+    from docx.enum.table import WD_TABLE_ALIGNMENT
+    tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tbl.autofit = False                                        # larghezze fisse: la tabella non esce dalla pagina
+    _bordi_tabella(tbl)
+    larghezza = 17.0                                           # cm utili (A4 con margini di 2 cm)
+    primo, ultimo = 1.6, 1.8
+    altre = max(1.0, (larghezza - primo - ultimo) / n)
+    larghezze = [primo] + [min(altre, 2.4)] * n + [ultimo]
+    tot = sum(totali)
+    righe = [["Es."] + [str(i + 1) for i in range(n)] + ["Tot"],
+             ["Max"] + [str(int(t)) if t == int(t) else str(t) for t in totali] + [str(int(tot)) if tot == int(tot) else str(tot)],
+             ["Voto"] + [""] * (n + 1)]
+    corpo_pt = 10 if n <= 8 else 8
+    for ri, riga in enumerate(righe):
+        tbl.rows[ri].height = Cm(0.9)
+        for ci, testo in enumerate(riga):
+            cella = tbl.cell(ri, ci)
+            cella.width = Cm(larghezze[ci])
+            par = cella.paragraphs[0]
+            par.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = par.add_run(testo); run.font.size = Pt(corpo_pt); run.bold = (ri == 0 or ci == 0)
+
+
+def _rifinisci_docx(percorso_in: str, titolo: str, sottotitolo: str, istruzione: str, logo, totali: list, punti_totali, con_griglia: bool) -> bytes:
+    """Pagina A4 con margini normali, font e spaziature da verifica, intestazione, immagini centrate e tabella dei punteggi."""
+    import docx
+    from docx.shared import Cm, Pt, RGBColor
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+    doc = docx.Document(percorso_in)
+    for sez in doc.sections:
+        sez.page_width, sez.page_height = Cm(21.0), Cm(29.7)
+        sez.left_margin = sez.right_margin = Cm(2.0)
+        sez.top_margin = sez.bottom_margin = Cm(1.8)
+
+    for nome in ("Normal", "Body Text", "First Paragraph", "Compact", "Block Text"):
+        try:
+            st = doc.styles[nome]
+        except KeyError:
+            continue
+        st.font.name = "Times New Roman"
+        st.font.size = Pt(11)
+        st.paragraph_format.space_before = Pt(0)
+        st.paragraph_format.space_after = Pt(4)
+        st.paragraph_format.line_spacing = 1.1
+    for nome in ("Heading 1", "Heading 2", "Heading 3"):
+        try:
+            st = doc.styles[nome]
+        except KeyError:
+            continue
+        st.font.name = "Times New Roman"
+        st.font.size = Pt(13)
+        st.font.bold = True
+        st.font.color.rgb = RGBColor(0, 0, 0)
+        st.paragraph_format.space_before = Pt(12)
+        st.paragraph_format.space_after = Pt(4)
+        st.paragraph_format.keep_with_next = True
+
+    # le immagini (grafici) stanno da sole al centro, senza spingere il testo fuori dalla pagina
+    for par in doc.paragraphs:
+        if par._p.xpath(".//w:drawing"):
+            par.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            par.paragraph_format.space_before = Pt(4)
+            par.paragraph_format.space_after = Pt(6)
+
+    # intestazione in cima: logo, titolo, riga per nome e classe, istruzione
+    primo = doc.paragraphs[0] if doc.paragraphs else doc.add_paragraph()
+    nuovi = []
+    if logo:
+        try:
+            p = primo.insert_paragraph_before("")
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.add_run().add_picture(io.BytesIO(logo), height=Cm(1.7))
+            nuovi.append(p)
+        except Exception as e:
+            logger.warning("Logo non inserito nel Word: %s", e)
+    p = primo.insert_paragraph_before("")
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r = p.add_run(titolo); r.bold = True; r.font.size = Pt(16)
+    p.paragraph_format.space_after = Pt(6)
+    if sottotitolo:
+        p = primo.insert_paragraph_before("")
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r = p.add_run(sottotitolo); r.font.size = Pt(13)
+        p.paragraph_format.space_after = Pt(6)
+    p = primo.insert_paragraph_before("")
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r = p.add_run("Nome: " + "_" * 30 + "      Classe e Data: " + "_" * 22); r.font.size = Pt(10.5)
+    p.paragraph_format.space_after = Pt(4)
+    if istruzione:
+        p = primo.insert_paragraph_before("")
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r = p.add_run(istruzione); r.italic = True; r.font.size = Pt(10)
+        p.paragraph_format.space_after = Pt(8)
+
+    if con_griglia:
+        _tabella_punteggi(doc, totali, punti_totali)
+
+    buf = io.BytesIO()
+    doc.save(buf)
+    return buf.getvalue()
+
+
+def latex_to_docx_modificabile(codice_latex: str, materia: str = "", argomento: str = "",
+                               con_griglia: bool = True) -> tuple[bytes | None, str | None]:
+    """
+    Versione Word modificabile della verifica, senza AI: pandoc converte il testo (le formule diventano equazioni di Word),
+    i grafici sono immagini ritagliate e centrate, i punteggi stanno in una tabella stretta.
+    Ritorna (bytes del .docx, None) oppure (None, messaggio d'errore).
+    """
+    if not _pandoc_disponibile():
+        return None, "Pandoc non è installato su questo server."
+    from latex_utils import extract_blocks, rimuovi_griglia, rimuovi_logo_b64, estrai_logo
+    import base64
+
+    try:
+        logo = None
+        _l = estrai_logo(codice_latex)
+        if _l:
+            try:
+                logo = base64.b64decode(_l[1])
+            except Exception:
+                logo = None
+        latex = rimuovi_griglia(rimuovi_logo_b64(codice_latex or ""))
+        pre, blocchi = extract_blocks(latex)
+        if not blocchi:
+            return None, "Non ho trovato esercizi nel testo della verifica."
+        titolo, sottotitolo, istruzione = _intestazione_da_latex(pre, materia, argomento)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            contatore = [0]
+            parti = []
+            for b in blocchi:
+                parti.append("\\subsection*{" + b["title"] + "}\n\n" + _prepara_per_pandoc(b["body"], tmp, contatore))
+            tex = ("\\documentclass{article}\n\\usepackage{amsmath,amssymb}\n\\begin{document}\n"
+                   + "\n\n".join(parti) + "\n\\end{document}\n")
+            sorgente = os.path.join(tmp, "v.tex")
+            uscita = os.path.join(tmp, "v.docx")
+            with open(sorgente, "w", encoding="utf-8") as f:
+                f.write(tex)
+            r = subprocess.run(["pandoc", "-f", "latex", "-t", "docx", "-o", uscita, "--resource-path=" + tmp, sorgente],
+                               capture_output=True, timeout=90, cwd=tmp)
+            if r.returncode != 0 or not os.path.exists(uscita):
+                return None, "Pandoc non è riuscito: " + (r.stderr.decode("utf-8", "replace")[:300] if r.stderr else "errore sconosciuto")
+
+            totali = []
+            try:
+                for e in parse_esercizi(latex):
+                    valori = [float(str(p).replace(",", ".")) for _l, p in e["items"] if str(p).replace(",", ".").replace(".", "", 1).isdigit()]
+                    totali.append(sum(valori))
+            except Exception as e:
+                logger.warning("Totali dei punteggi non calcolati: %s", e)
+            punti_totali = sum(totali)
+            return _rifinisci_docx(uscita, titolo, sottotitolo, istruzione, logo, totali, punti_totali, con_griglia), None
+    except Exception as e:
+        logger.exception("Word modificabile non riuscito")
+        return None, f"Non sono riuscito a creare il file Word: {e}"
