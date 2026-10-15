@@ -1210,6 +1210,26 @@ def _pulisci_opzioni_asse(testo: str) -> str:
 #   [[GRAFICO: y = -x^2 + 2x + 3 ; y = x + 1 | x da -2 a 4]]
 # e il programma disegna il grafico con un modello fisso (sempre compilabile).
 
+_RE_ETICHETTA_ASSE = re.compile(r'^\$?\s*([A-Za-z](?:_\{?[A-Za-z0-9]{1,3}\}?)?)\s*\$?$')
+
+
+def _etichetta_asse(testo):
+    """«t» o «$v_0$» → «$t$»; None se non è un simbolo semplice (così non entra codice LaTeX scritto dall'AI)."""
+    m = _RE_ETICHETTA_ASSE.match((testo or "").strip())
+    return "$" + m.group(1) + "$" if m else None
+
+
+def _etichette_assi_da_opzioni(blocco: str):
+    """(xlabel, ylabel) semplici già presenti nelle opzioni dell'asse; altrimenti ($x$, $y$)."""
+    m = re.search(r'\\begin\{axis\}\[([^\]]*)\]', blocco)
+    opz = m.group(1) if m else ""
+    out = []
+    for nome, predefinito in (("xlabel", "$x$"), ("ylabel", "$y$")):
+        mm = re.search(r'(?<![A-Za-z])' + nome + r'\s*=\s*(\$[^$,]*\$)', opz)
+        out.append(_etichetta_asse(mm.group(1)) if mm and _etichetta_asse(mm.group(1)) else predefinito)
+    return out[0], out[1]
+
+
 _RE_GRAFICO_SPEC = re.compile(r'\[\[\s*GRAFICO\s*:(.*?)\]\]', re.IGNORECASE | re.DOTALL)
 _FUNZIONI_GRAFICO = {
     "sqrt": ("sqrt", math.sqrt), "sin": ("sin", lambda v: math.sin(v)),
@@ -1284,19 +1304,25 @@ def _valori_curva(f, xmin: float, xmax: float, n: int = 400) -> list:
     return out
 
 
-def _punti_notevoli(f, xmin: float, xmax: float) -> list:
-    """Ascisse che il grafico deve mostrare: zeri (cambi di segno) e massimi/minimi locali (vertici)."""
+def _zeri_ed_estremi(f, xmin: float, xmax: float):
+    """(zeri, estremi): ascisse dei cambi di segno e dei massimi/minimi locali (vertici) della curva."""
     pts = _valori_curva(f, xmin, xmax)
-    x_notevoli = []
+    zeri, estremi = [], []
     for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
         if y0 == 0:
-            x_notevoli.append(x0)
+            zeri.append(x0)
         elif y0 * y1 < 0 and abs(y1 - y0) < 50:       # cambio di segno (non un asintoto)
-            x_notevoli.append(x0 - y0 * (x1 - x0) / (y1 - y0))
+            zeri.append(x0 - y0 * (x1 - x0) / (y1 - y0))
     for (xa, ya), (xb, yb), (xc, yc) in zip(pts, pts[1:], pts[2:]):
         if (yb > ya and yb >= yc) or (yb < ya and yb <= yc):     # massimo o minimo locale
-            x_notevoli.append(xb)
-    return x_notevoli
+            estremi.append(xb)
+    return zeri, estremi
+
+
+def _punti_notevoli(f, xmin: float, xmax: float) -> list:
+    """Ascisse che il grafico deve mostrare: zeri (cambi di segno) e massimi/minimi locali (vertici)."""
+    zeri, estremi = _zeri_ed_estremi(f, xmin, xmax)
+    return zeri + estremi
 
 
 def _finestra_grafico(curve: list, xmin: float, xmax: float):
@@ -1304,10 +1330,15 @@ def _finestra_grafico(curve: list, xmin: float, xmax: float):
     Intervalli da mostrare (xmin, xmax, ymin, ymax): quelli dell'AI, ma ristretti attorno agli zeri, ai vertici e
     all'intersezione con l'asse y, così la curva riempie il riquadro (9 x 5 cm) invece di perdersi in una scala enorme.
     """
-    notevoli = []
+    notevoli, n_zeri, n_estremi = [], 0, 0
     for _, f in curve:
-        notevoli += _punti_notevoli(f, xmin, xmax)
-    ristringi = bool(notevoli)           # restringere solo se ci sono zeri o vertici (non per iperboli, esponenziali…)
+        zeri, estremi = _zeri_ed_estremi(f, xmin, xmax)
+        notevoli += zeri + estremi
+        n_zeri += len(zeri)
+        n_estremi += len(estremi)
+    # Si restringe solo con un vertice o con almeno due zeri (parabole, cubiche…): una retta o una curva con un solo
+    # zero (v = 2t, y = x - 2) va mostrata per tutto l'intervallo scelto, perché le domande ne usano gli estremi.
+    ristringi = n_estremi > 0 or n_zeri >= 2
     if xmin <= 0 <= xmax:
         notevoli.append(0.0)
     if notevoli and ristringi:
@@ -1327,7 +1358,7 @@ def _finestra_grafico(curve: list, xmin: float, xmax: float):
         lo, hi = campioni[len(campioni) // 20], campioni[-len(campioni) // 20 - 1]
     larghezza = max(xmax - xmin, 1.0)
     altezza_max = 1.8 * larghezza                        # il riquadro è largo 9 cm e alto 5 cm
-    if hi - lo > altezza_max:                            # la curva esce dal riquadro: si tiene la parte che interessa
+    if hi - lo > altezza_max and n_estremi > 0:          # curva con vertici troppo alta: si tiene la parte che interessa
         y_int = []
         for _, f in curve:
             for x in notevoli or [(xmin + xmax) / 2]:
@@ -1350,8 +1381,13 @@ def _tikz_da_specifica(corpo: str):
     parti = [p.strip() for p in corpo.split("|")]
     curve_txt = [c for c in re.split(r'[;\n]', parti[0]) if c.strip()]
     xmin, xmax = -5.0, 5.0
+    xl, yl = "$x$", "$y$"
     for extra in parti[1:]:
-        m = re.search(r'x\s*(?:da|from|:|in)?\s*\[?\s*(-?[\d.,−–]+)\s*(?:a|to|;|,|\.\.|-)\s*(-?[\d.,−–]+)', extra, re.IGNORECASE)
+        ma = re.match(r'\s*assi\s*:?\s*([^,;\s]+)\s*[,;]\s*([^,;\s]+)\s*$', extra, re.IGNORECASE)
+        if ma:
+            xl, yl = _etichetta_asse(ma.group(1)) or xl, _etichetta_asse(ma.group(2)) or yl
+            continue
+        m = re.search(r'x\s*(?:da|from|:|in)?\s*\[?\s*(-?[\d.,−–]+)\s*(?:a|to\w*|;|,|\.\.|-)\s*(-?[\d.,−–]+)', extra, re.IGNORECASE)
         if m:
             a, b = _numero_grafico(m.group(1)), _numero_grafico(m.group(2))
             if a is not None and b is not None and b > a:
@@ -1373,7 +1409,7 @@ def _tikz_da_specifica(corpo: str):
         r"\begin{center}",
         r"\begin{tikzpicture}",
         f"\\begin{{axis}}[trig format plots=rad, xmin={_fmt_num(xa)}, xmax={_fmt_num(xb)}, ymin={_fmt_num(ymin)}, ymax={_fmt_num(ymax)}, "
-        r"axis lines=middle, xlabel=$x$, ylabel=$y$, grid=major, width=9cm, height=5cm, "
+        f"axis lines=middle, xlabel={xl}, ylabel={yl}, grid=major, width=9cm, height=5cm, "
         f"domain={_fmt_num(xmin)}:{_fmt_num(xmax)}, samples=100, unbounded coords=jump]",
     ]
     for espr, _ in curve:
@@ -1411,6 +1447,7 @@ def limita_altezza_grafici(latex: str) -> str:
         if '\\begin{axis}' in tikz_with_spacing:
             # Analizza la funzione per determinare i limiti appropriati
             func_match = re.search(r'\\addplot.*?\{([^}]+)\}', tikz_with_spacing)
+            _xl, _yl = _etichette_assi_da_opzioni(tikz_with_spacing)
             _lim_ai = _limiti_ai(tikz_with_spacing)   # intervalli numerici scelti dall'AI, se ci sono
             if func_match:
                 func_expr = func_match.group(1)
@@ -1421,7 +1458,7 @@ def limita_altezza_grafici(latex: str) -> str:
                 tikz_with_spacing = _pulisci_opzioni_asse(tikz_with_spacing)
                 
                 # Aggiungi limiti dinamici
-                axis_options = f'xmin={dynamic_limits["xmin"]}, xmax={dynamic_limits["xmax"]}, ymin={dynamic_limits["ymin"]}, ymax={dynamic_limits["ymax"]}, axis lines=middle, xlabel=$x$, ylabel=$y$, grid=major, width=9cm, height=5cm, domain={dynamic_limits["xmin"]}:{dynamic_limits["xmax"]}, samples=100'
+                axis_options = f'xmin={dynamic_limits["xmin"]}, xmax={dynamic_limits["xmax"]}, ymin={dynamic_limits["ymin"]}, ymax={dynamic_limits["ymax"]}, axis lines=middle, xlabel={_xl}, ylabel={_yl}, grid=major, width=9cm, height=5cm, domain={dynamic_limits["xmin"]}:{dynamic_limits["xmax"]}, samples=100'
             else:
                 # Fallback: limiti standard
                 tikz_with_spacing = _pulisci_opzioni_asse(tikz_with_spacing)
@@ -1429,7 +1466,7 @@ def limita_altezza_grafici(latex: str) -> str:
                 _l2 = _lim_ai or {"xmin": -6, "xmax": 6, "ymin": -6, "ymax": 6}
                 axis_options = (
                     f'xmin={_l2["xmin"]}, xmax={_l2["xmax"]}, ymin={_l2["ymin"]}, ymax={_l2["ymax"]}, '
-                    'axis lines=middle, xlabel=$x$, ylabel=$y$, grid=major, width=9cm, height=5cm, '
+                    f'axis lines=middle, xlabel={_xl}, ylabel={_yl}, grid=major, width=9cm, height=5cm, '
                     f'domain={_l2["xmin"]}:{_l2["xmax"]}, samples=100'
                 )
             
@@ -1576,9 +1613,11 @@ def chiudi_center_aperti(latex: str) -> str:
     return ''.join(parti)
 
 
+# Solo rimandi a UN grafico dato («il seguente grafico», «in figura»). Non «nel grafico spazio-tempo di un moto»:
+# è un'affermazione generale, tipica dei Vero/Falso di fisica, e non rimanda a nessuna figura.
 _RIMANDO_GRAFICO = re.compile(
-    r'(?:seguente|in\s+figura|nella\s+figura|dalla\s+figura|dal\s+grafico|nel\s+grafico|'
-    r'grafico\s+(?:seguente|in\s+figura|rappresentato|riportato|mostrato)|figura\s+seguente)',
+    r'(?:grafico\s+seguente|seguente\s+(?:grafico|figura)|in\s+figura|nella\s+figura|dalla\s+figura|'
+    r'grafico\s+(?:in\s+figura|rappresentato|riportato|mostrato|qui\s+sotto|sopra|sotto)|figura\s+seguente)',
     re.IGNORECASE,
 )
 
@@ -1591,6 +1630,8 @@ def esercizi_con_grafico_mancante(blocchi: list) -> list:
     mancanti = []
     for i, b in enumerate(blocchi):
         corpo = b.get("body", "") or ""
+        if "\\square" in corpo:          # Vero/Falso: parla in generale dei grafici, non ne mostra uno
+            continue
         testo = re.sub(r'\\begin\{(?:tikzpicture|axis)\}.*?\\end\{(?:tikzpicture|axis)\}', '', corpo, flags=re.DOTALL)
         ha_grafico = bool(re.search(r'\\begin\{(?:tikzpicture|axis)\}|\\includegraphics', corpo))
         cita = re.search(r'grafic|figura', testo, re.IGNORECASE) and _RIMANDO_GRAFICO.search(testo)
