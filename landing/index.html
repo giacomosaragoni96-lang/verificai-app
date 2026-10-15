@@ -27,19 +27,20 @@
   .btn.bianco { background:#fff; color:var(--blu-scuro) !important; box-shadow:0 10px 26px rgba(0,0,0,.2); }
   .link { color:var(--blu-scuro); font-weight:700; text-decoration:none; }
   /* hero */
-  .hero { display:grid; grid-template-columns: .85fr 1.15fr; gap:1rem; align-items:center; padding: .5rem 0 1.5rem; }
+  .hero { display:grid; grid-template-columns: 1fr 1.05fr; gap:1.5rem; align-items:center; padding: .5rem 0 1.5rem; }
   .hero h1 { font-family:"Fraunces", Georgia, serif; font-size: clamp(1.9rem, 3.4vw, 2.55rem); line-height:1.12; letter-spacing:-.025em; margin:0 0 1.1rem; }
   .hero h1 em { color:var(--blu); }
   .hero p.sub { font-size:1.02rem; color:var(--grigio); margin:0 0 1.5rem; max-width:31rem; }
   .hero .azioni { display:flex; gap:1.2rem; align-items:center; flex-wrap:wrap; }
   .nota { font-size:.9rem; color:var(--grigio); margin-top:1rem; }
-  .mock { position:relative; justify-self:center; width:100%; max-width:680px; height:540px; }
-  .mock .f { position:absolute; width:64%; background:#fff; border:1px solid var(--bordo); border-radius:10px; overflow:hidden; box-shadow:0 22px 44px rgba(15,23,42,.20), 0 5px 14px rgba(15,23,42,.10); }
+  .mock { position:relative; justify-self:center; width:100%; max-width:560px; height:520px; }
+  .mock .f { position:absolute; width:66%; background:#fff; border:1px solid var(--bordo); border-radius:10px; overflow:hidden; box-shadow:0 22px 44px rgba(15,23,42,.20), 0 5px 14px rgba(15,23,42,.10); }
   .mock .f img { width:100%; height:auto; display:block; }
-  .mock .f::after { content:""; position:absolute; left:0; right:0; bottom:0; height:60px; background:linear-gradient(to bottom, rgba(255,255,255,0), #fff 90%); }
-  .mock .f1 { left:0; top:44px; transform: rotate(-9deg); transform-origin: bottom right; z-index:1; }
-  .mock .f3 { right:0; top:40px; transform: rotate(9deg); transform-origin: bottom left; z-index:1; }
-  .mock .f2 { left:19%; top:0; z-index:2; transform: rotate(0.5deg); }
+  .mock .f a { display:block; cursor:zoom-in; }
+  .mock .f::after { content:""; pointer-events:none; position:absolute; left:0; right:0; bottom:0; height:60px; background:linear-gradient(to bottom, rgba(255,255,255,0), #fff 90%); }
+  .mock .f1 { left:0; top:50px; transform: rotate(-8deg); transform-origin: bottom right; z-index:1; }
+  .mock .f3 { right:0; top:46px; transform: rotate(8deg); transform-origin: bottom left; z-index:1; }
+  .mock .f2 { left:17%; top:0; z-index:2; transform: rotate(0.5deg); }
   .mock .badge { position:absolute; left:8%; bottom:6px; z-index:3; background:#fff; border:1px solid var(--bordo); border-radius:14px; padding:.55rem .9rem; font-weight:700; font-size:.92rem; box-shadow:0 10px 24px rgba(15,23,42,.16); transform: rotate(-3deg); }
   /* sezioni */
   section { padding: 1.6rem 0; }
@@ -67,7 +68,7 @@
   .chi .av { flex:0 0 3.4rem; height:3.4rem; border-radius:50%; background:var(--blu); color:#fff; font-family:"Fraunces",Georgia,serif; font-weight:800; font-size:1.4rem; display:flex; align-items:center; justify-content:center; }
   footer { padding: 2rem 0 3rem; color:var(--grigio); font-size:.92rem; text-align:center; }
   footer a { color:var(--grigio); }
-  @media (max-width: 820px) { .hero { grid-template-columns: 1fr; } .mock { max-width:440px; height:360px; } .logo { font-size:1.9rem; } .esempi { grid-template-columns: 1fr; } .chi { flex-direction:column; text-align:center; } }
+  @media (max-width: 820px) { .hero { grid-template-columns: 1fr; } .mock { max-width:420px; height:400px; } .logo { font-size:1.9rem; } .esempi { grid-template-columns: 1fr; } .chi { flex-direction:column; text-align:center; } }
 </style>
 </head>
 <body>
@@ -88,10 +89,10 @@
       <div class="nota">Gratuito durante la fase beta · accesso con email e password o con Google</div>
     </div>
     <div class="mock">
-      <div class="f f1"><img src="esempio-storia.png" alt="Esempio di verifica di storia generata da VerificAI, con il logo della scuola"></div>
-      <div class="f f3"><img src="esempio-fisica.png" alt="Esempio di verifica di fisica generata da VerificAI"></div>
-      <div class="f f2"><img src="esempio-matematica.png" alt="Esempio di verifica di matematica generata da VerificAI, con il logo della scuola e i punteggi"></div>
-      <div class="badge">📄 PDF o Word · con il logo della tua scuola</div>
+      <div class="f f1"><a href="esempio-storia.png" target="_blank" rel="noopener"><img src="esempio-storia.png" alt="Esempio di verifica di storia generata da VerificAI"></a></div>
+      <div class="f f3"><a href="esempio-fisica.png" target="_blank" rel="noopener"><img src="esempio-fisica.png" alt="Esempio di verifica di fisica generata da VerificAI"></a></div>
+      <div class="f f2"><a href="esempio-matematica.png" target="_blank" rel="noopener"><img src="esempio-matematica.png" alt="Esempio di verifica di matematica generata da VerificAI, con un grafico e i punteggi"></a></div>
+      <div class="badge">📄 PDF o Word · grafici, punteggi, logo della scuola</div>
     </div>
   </div>
 
