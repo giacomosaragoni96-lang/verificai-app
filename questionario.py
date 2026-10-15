@@ -17,7 +17,7 @@ FUNZIONI = ["Generazione della verifica", "Modifica di un singolo esercizio", "F
 
 # Ogni sezione: (titolo, introduzione, [domande]). Tipi: scelta (una risposta), multi (più risposte), scala (da A a B),
 # testo (risposta lunga), riga (risposta breve), euro (cifra in euro).
-SEZIONI = [
+_SEZ_BASE = [
     ("1. Chi sei (facoltativo)", "", [
         {"id": "ordine", "tipo": "multi", "testo": "In che ordine di scuola insegni?",
          "opzioni": ["Scuola primaria", "Secondaria di primo grado (medie)", "Liceo", "Istituto tecnico", "Istituto professionale", "Altro"]},
@@ -75,6 +75,19 @@ SEZIONI = [
     ("6. Ultima cosa (facoltativa)", "", [
         {"id": "altro", "tipo": "testo", "testo": "Altro che vuoi dirci?"},
     ]),
+]
+
+_BASE = {d["id"]: d for _t, _i, ds in _SEZ_BASE for d in ds}
+# Ordine pensato per chi si stanca: prima le domande che contano di più (tempo, utilità, cosa manca, prezzo), in fondo quelle su di sé.
+SEZIONI = [
+    ("1. Il tuo tempo", "", [_BASE[i] for i in ("tempo_da_zero", "tempo_con", "risparmio", "utile", "useresti", "pronta", "correzioni")]),
+    ("2. Cosa cambieresti", "", [_BASE[i] for i in ("facile", "intuitivo", "confuso", "manca", "troppo")]),
+    ("3. Se un giorno fosse a pagamento",
+     "Per ora VerificAI è gratuito: queste domande servono a capire cosa avrebbe senso, non a venderti nulla.",
+     [_BASE[i] for i in ("pagheresti", "perche", "formula", "verifiche_mese", "vw_troppo_basso", "vw_conveniente", "vw_caro",
+                         "vw_troppo_caro", "consiglieresti")]),
+    ("4. Cosa ti è piaciuto", "", [_BASE[i] for i in ("piaciuto", "funzioni_mese")]),
+    ("5. Su di te (facoltativo)", "", [_BASE[i] for i in ("ordine", "materie", "verifiche_anno", "parte_pesante", "altro")]),
 ]
 
 _DOMANDE = {d["id"]: d for _t, _i, ds in SEZIONI for d in ds}

@@ -1256,9 +1256,11 @@ def _guida_benvenuto(dove: str, slot) -> None:
     _eti = "Benvenuto" if _test else "Regalo di benvenuto"
     _NOTA_BETA = ("Salvata in <b>«Le mie verifiche»</b> (barra laterale).<br><br>"
                   "🎉 <b>Congratulazioni: sei uno dei primi a provare VerificAI!</b> L'applicazione è in beta e per ora è "
-                  "<b>completamente gratuita</b>. Il tuo parere è fondamentale per migliorarla: "
-                  '<a href="?pagina=questionario" target="_blank" rel="noopener" style="color:#fff;font-weight:700;text-decoration:underline;">'
-                  "lascia il tuo feedback</a> (4 minuti, anonimo).")
+                  "<b>completamente gratuita</b>. Il tuo parere è fondamentale per migliorarla. "
+                  "Bastano 4 minuti e le risposte sono anonime.<br>"
+                  '<a href="?pagina=questionario" target="_blank" rel="noopener" style="display:inline-block;margin-top:.5rem;background:#fff;color:#1E3A8A;'
+                  'font-weight:800;padding:.6rem 1.1rem;border-radius:10px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.18);">'
+                  "Lascia il tuo feedback →</a>")
 
     if dove == "input":
         scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
@@ -1311,6 +1313,39 @@ def _html_voci(voci: list) -> str:
         f'<div class="g-voce-d">{d}</div></div></li>' for ic, t, d in voci) + "</ul>")
 
 
+_CSS_BOX_FEEDBACK = """<style>
+.vf-fb{background:radial-gradient(120% 140% at 100% 0%, rgba(255,255,255,.20) 0%, rgba(255,255,255,0) 46%),linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);
+ color:#fff;border-radius:16px;padding:1.1rem 1.3rem;display:flex;gap:1.1rem;align-items:center;flex-wrap:wrap;margin:.3rem 0 1rem;
+ box-shadow:0 10px 28px rgba(30,58,138,.24);font-family:'DM Sans',sans-serif;}
+.vf-fb .vf-fb-ico{font-size:2rem;line-height:1;}
+.vf-fb .vf-fb-testo{flex:1 1 320px;min-width:0;}
+.vf-fb .vf-fb-t{font-weight:800;font-size:1.1rem;margin-bottom:.2rem;}
+.vf-fb .vf-fb-d{font-size:.94rem;line-height:1.5;opacity:.96;}
+.vf-fb a.vf-fb-b{background:#fff;color:#1E3A8A !important;font-weight:800;padding:.7rem 1.2rem;border-radius:10px;text-decoration:none !important;
+ white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.18);}
+.vf-fb a.vf-fb-b:hover{background:#EFF6FF;}
+.vf-fb.vf-fb-c{padding:.7rem 1rem;}
+.vf-fb.vf-fb-c .vf-fb-ico{font-size:1.4rem;}
+.vf-fb.vf-fb-c .vf-fb-t{font-size:.98rem;margin:0;}
+</style>"""
+
+
+def _box_feedback(compatto: bool = False) -> None:
+    """Riquadro blu ben visibile che chiede il parere (prova pubblica: è l'unica cosa che chiediamo in cambio dell'uso gratuito).
+    Sparisce da solo, in questo browser, dopo aver inviato il questionario (il flag lo mette la pagina del questionario)."""
+    if compatto:
+        corpo = ('<div class="vf-fb-testo"><div class="vf-fb-t">VerificAI è in beta e gratuita: il tuo parere ci serve davvero.</div></div>')
+    else:
+        corpo = ('<div class="vf-fb-testo"><div class="vf-fb-t">Aiutaci a migliorare VerificAI</div>'
+                 '<div class="vf-fb-d">VerificAI è in <b>beta</b> e per ora è <b>completamente gratuita</b>: l\'unica cosa che ti chiediamo '
+                 'è un parere sincero. Bastano 4 minuti e le risposte sono anonime. Per noi è fondamentale.</div></div>')
+    st.markdown(_CSS_BOX_FEEDBACK + f'<div class="vf-fb{" vf-fb-c" if compatto else ""}"><div class="vf-fb-ico">💬</div>{corpo}'
+                '<a class="vf-fb-b" href="?pagina=questionario" target="_blank" rel="noopener">Lascia il tuo feedback →</a></div>',
+                unsafe_allow_html=True)
+    components.html('<script>try{if(window.parent.localStorage.getItem("vf_feedback_ok")){window.parent.document.querySelectorAll(".vf-fb")'
+                    '.forEach(function(e){e.style.display="none";});}}catch(e){}</script>', height=0)
+
+
 def _banner_piano(dove: str) -> None:
     """
     Riquadro blu in cima alla pagina per chi non ha il piano Pro (stesso stile della guida di benvenuto):
@@ -1322,13 +1357,10 @@ def _banner_piano(dove: str) -> None:
         # prova pubblica: nessun piano né prezzo, ma chi crea la sua prima verifica ha la guida (con gli elementi che lampeggiano)
         if _GUIDA_PRIMO and not (_is_admin and not _SIM):
             _guida_benvenuto(dove, _slot)
-        elif dove == "final" and not (_is_admin and not _SIM):
-            # dopo la prima verifica: una riga discreta per ricordare la beta e il feedback
-            _slot.markdown(
-                f'<div style="text-align:center;font-family:DM Sans,sans-serif;font-size:.9rem;color:{T["text2"]};margin:.2rem 0 .8rem;">'
-                f'VerificAI è in beta e per ora è gratuita: il tuo parere ci aiuta a migliorarla. '
-                f'<a href="?pagina=questionario" target="_blank" rel="noopener" style="color:{T["accent"]};font-weight:700;">Lascia un feedback</a> (4 minuti, anonimo)</div>',
-                unsafe_allow_html=True)
+        elif dove in ("final", "input") and not (_is_admin and not _SIM):
+            # dopo la prima verifica: il riquadro che chiede il parere (grande nel risultato, compatto nella creazione)
+            with _slot.container():
+                _box_feedback(compatto=(dove == "input"))
         else:
             _slot.empty()
         return
