@@ -22,7 +22,8 @@ FREE_PLAN_LIMITS = {
 # ── PIANI E FUNZIONI ───────────────────────────────────────────────────────────
 # Interruttore della monetizzazione: SPENTO = ogni funzione è aperta a tutti (comportamento di oggi).
 # Con l'interruttore acceso le funzioni elencate in FUNZIONI_PRO richiedono il piano Pro.
-MONETIZZAZIONE_ATTIVA = True
+# FASE DI PROVA PUBBLICA (dal 15 ottobre 2026): spenta, tutto aperto, nessun prezzo né riferimento ai pagamenti. Si riaccende dopo i feedback.
+MONETIZZAZIONE_ATTIVA = False
 # Inviti tra colleghi: per ogni amico che si iscrive e completa la prima verifica, chi invita guadagna verifiche con tutto il Pro
 BONUS_PER_INVITO = 2
 MAX_INVITI_CON_BONUS = 5
@@ -45,7 +46,7 @@ LEGALE = {
     "partita_iva": "",
     "aggiornamento": "14 ottobre 2026",
 }
-LEGALE_PRONTO = True
+LEGALE_PRONTO = False      # in prova pubblica Termini e Rimborsi (bozze sul piano a pagamento) non si mostrano
 # Tetto di sicurezza contro abusi e costi anomali: al massimo tante verifiche in quanti minuti (per utente, admin escluso)
 TETTO_BREVE = {"verifiche": 6, "minuti": 10}
 # Modifiche con l'AI per ogni verifica («Più facile», «Cambia i numeri», «Cambia esercizio», «Applica modifica», «Aggiungi»):
