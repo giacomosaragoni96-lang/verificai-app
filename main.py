@@ -16,6 +16,7 @@ import logging
 import re
 import os
 import time
+import hashlib
 from datetime import datetime, timezone
 
 from ai_client import crea_modello, configura as configura_ai, riepilogo_uso, numero_chiamate, chiamate_da
@@ -46,7 +47,7 @@ from latex_utils import (
     parse_items_from_block, apply_item_pts_to_body,
     prepara_esercizi_aperti, conta_punti_latex,
     migliora_spaziatura_sottopunti, limita_altezza_grafici, aggiungi_spaziatura_grafici_tabelle,
-    normalizza_sottopunti_inline, bilancia_punti, esercizi_con_grafico_mancante,
+    normalizza_sottopunti_inline, bilancia_punti, esercizi_con_grafico_mancante, anteprima_esercizio_png,
 )
 from config import (
     APP_NAME, APP_ICON, SHARE_URL, FEEDBACK_FORM_URL,
@@ -54,7 +55,7 @@ from config import (
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
     MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, PREZZO_PRO_ANNUALE, LEGALE_PRONTO, TETTO_BREVE, MAX_FACCIATE, WORD_ATTIVO,
-    MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS,
+    MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS, MODIFICHE_PER_VERIFICA,
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -814,6 +815,51 @@ def _registra_evento(tipo: str, modello: str | None = None, verifica_id=None, co
         }).execute()
     except Exception as e:
         logger.warning("usage_events non scritto (%s): %s", tipo, e)
+
+
+def _tetto_modifiche():
+    """Quante modifiche con l'AI sono permesse su ogni verifica (None = nessun tetto, per l'admin)."""
+    if ENT.piano == "admin":
+        return None
+    return MODIFICHE_PER_VERIFICA["pro" if (ENT.piano != "free" or ENT.assaggio) else "free"]
+
+
+def _modifiche_usate() -> int:
+    """Modifiche con l'AI già fatte su questa verifica: dal registro `usage_events` (così riaprire la verifica non azzera il
+    conto) e dal contatore della sessione. Se il registro non risponde vale il contatore della sessione."""
+    chiave = str(st.session_state.get("_storico_id") or "nuova")
+    contatori = st.session_state.setdefault("_mod_usate", {})
+    if chiave not in contatori:
+        n = 0
+        _sid = st.session_state.get("_storico_id")
+        if _sid and st.session_state.utente and supabase_admin is not None:
+            try:
+                r = (supabase_admin.table("usage_events").select("id", count="exact")
+                     .eq("user_id", st.session_state.utente.id).eq("tipo", "modifica").eq("verifica_id", _sid).execute())
+                n = int(r.count or 0)
+            except Exception as e:
+                logger.warning("conteggio modifiche non letto: %s", e)
+        contatori[chiave] = n
+    return contatori[chiave]
+
+
+def _conta_modifica(modello: str | None = None) -> None:
+    """Segna una modifica con l'AI (contatore della sessione + registro `usage_events`)."""
+    chiave = str(st.session_state.get("_storico_id") or "nuova")
+    contatori = st.session_state.setdefault("_mod_usate", {})
+    contatori[chiave] = _modifiche_usate() + 1
+    _registra_evento("modifica", modello=modello, verifica_id=st.session_state.get("_storico_id"))
+
+
+def _immagine_esercizio(title: str, body: str):
+    """Immagine del solo esercizio (con il grafico), in cache per testo; None se non si riesce a compilarla."""
+    cache = st.session_state.setdefault("_img_esercizi", {})
+    chiave = hashlib.md5((title + "\x00" + body).encode("utf-8")).hexdigest()
+    if chiave not in cache:
+        if len(cache) > 24:
+            cache.clear()
+        cache[chiave] = anteprima_esercizio_png(st.session_state.get("review_preamble", ""), title, body)
+    return cache[chiave]
 
 
 def _vai_a_upgrade(funzione: str | None = None) -> None:
@@ -3759,38 +3805,45 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
     body  = block["body"]
 
     # ══════════════════════════════════════════════════════════════════════════
-    #  LAYOUT DUE COLONNE
-    #  Sinistra [2]: box unico — KaTeX + azioni esercizio + Altre modifiche
-    #  Destra   [3]: anteprima PDF una pagina alla volta con navigazione ◀▶
+    #  LAYOUT SNELLO
+    #  1) l'esercizio com'è, solo lui (col grafico se c'è) · 2) «Cosa vuoi cambiare?» + pulsanti rapidi
+    #  3) altre azioni (aggiungi, elimina) · 4) punteggi · 5) PDF completo, chiuso di default
     # ══════════════════════════════════════════════════════════════════════════
-    col_left, col_pdf = st.columns([2, 3], gap="medium")
+    _tetto_mod = _tetto_modifiche()
+    _usate_mod = _modifiche_usate()
+    _finite = _tetto_mod is not None and _usate_mod >= _tetto_mod
+    _ha_grafico_es = bool(re.search(r"\\begin\{(tikzpicture|axis)\}", body))
 
-    # ── COLONNA SINISTRA ──────────────────────────────────────────────────────
-    with col_left:
-        with st.container(border=True):
+    with st.container(border=True):
 
-            # ── Anteprima KaTeX dell'esercizio selezionato ───────────────────
+        # ── 1) L'esercizio selezionato: solo lui, come uscirà nel PDF ────────────
+        _img_es = None
+        if _ha_grafico_es:
+            with st.spinner("Preparo l'anteprima con il grafico…"):
+                _img_es = _immagine_esercizio(title, body)
+        if _img_es:
+            st.image(_img_es, use_container_width=True)
+        else:
             katex_html = _make_katex_html(title, body, T)
             est_height = max(170, min(550, 120 + len(body) // 4))
             components.html(katex_html, height=est_height, scrolling=True)
-
-            if re.search(r"\\begin\{(tikzpicture|axis)\}", body):
+            if _ha_grafico_es:
                 st.info("📊 Questo esercizio contiene un grafico — sarà visibile nel PDF scaricato.")
-            elif idx in esercizi_con_grafico_mancante(blocks):
-                st.warning(
-                    "Questo esercizio rimanda a un grafico che non è stato disegnato. "
-                    "Premi «Cambia esercizio» per riprovare, oppure correggi il testo in «Altre modifiche».",
-                    icon="📉",
-                )
+        if not _ha_grafico_es and idx in esercizi_con_grafico_mancante(blocks):
+            st.warning(
+                "Questo esercizio rimanda a un grafico che non è stato disegnato. "
+                "Premi «Cambia esercizio» per riprovare, oppure scrivi qui sotto cosa correggere.",
+                icon="📉",
+            )
 
-            # ── Pulsante ANNULLA MODIFICA ─────────────────────────────────
-            _undo_key = f"_undo_block_{idx}"
-            if _undo_key in st.session_state:
-                _undo_backup = st.session_state[_undo_key]
-                _undo_col1, _undo_col2 = st.columns([1, 2])
-                with _undo_col1:
-                    st.markdown(
-                        f'''<style>
+        # ── Pulsante ANNULLA MODIFICA ─────────────────────────────────────────
+        _undo_key = f"_undo_block_{idx}"
+        if _undo_key in st.session_state:
+            _undo_backup = st.session_state[_undo_key]
+            _undo_col1, _undo_col2 = st.columns([1, 2])
+            with _undo_col1:
+                st.markdown(
+                    f'''<style>
   [data-testid="stVerticalBlock"] > div:has(.undo-btn-marker) + div > div > button,
   [data-testid="stVerticalBlock"] > div:has(.undo-btn-marker) + div button {{
     background: transparent !important;
@@ -3811,238 +3864,206 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
   }}
 </style>
 <div class="undo-btn-marker" style="display:none;height:0;line-height:0"></div>''',
-                        unsafe_allow_html=True
-                    )
-                    if st.button(
-                        "↩️ Annulla modifica",
-                        key=f"undo_btn_{idx}",
-                        use_container_width=True,
-                        help="Ripristina la versione dell'esercizio precedente alla modifica"
-                    ):
-                        st.session_state.review_blocks[idx] = dict(_undo_backup)
-                        del st.session_state[_undo_key]
-                        # Pulisci item_pt_ keys per questo esercizio
-                        for _k in list(st.session_state.keys()):
-                            if _k.startswith(f"item_pt_{idx}_"):
-                                del st.session_state[_k]
-                        if "recalibra_pts" in st.session_state:
-                            del st.session_state["recalibra_pts"]
-                        _undo_pdf, _undo_err = _ricompila_verifica_a(
-                            mostra_punteggi, con_griglia, punti_totali, riscala_totale=True,
-                        )
-                        if _undo_pdf:
-                            st.toast("↩️ Modifica annullata — versione precedente ripristinata!", icon="↩️")
-                            st.rerun()
-                        else:
-                            _mostra_errore_pdf(_undo_err, "questa verifica")
-                with _undo_col2:
-                    st.markdown(
-                        f'<div style="font-size:.72rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
-                        f'padding:.3rem 0;line-height:1.4;">'
-                        f'🕐 Versione precedente disponibile</div>',
-                        unsafe_allow_html=True
-                    )
-
-            # ── Azioni sull'esercizio: rigenera, numeri, più facile/difficile, elimina ──
-            _marker = '<div class="btn-outline-accent-marker" style="display:none;height:0;line-height:0"></div>'
-            # Prima ciò che si usa più spesso (livello), poi le sostituzioni, in fondo l'azione distruttiva
-            _lv_col1, _lv_col2 = st.columns(2, gap="small")
-            with _lv_col1:
-                st.markdown(_marker, unsafe_allow_html=True)
-                piu_facile = st.button(
-                    "Più facile", key=f"piu_facile_{idx}", use_container_width=True,
-                    help="Semplifica numeri e calcoli, mantenendo lo stesso argomento.",
+                    unsafe_allow_html=True
                 )
-            with _lv_col2:
-                st.markdown(_marker, unsafe_allow_html=True)
-                piu_difficile = st.button(
-                    "Più difficile", key=f"piu_difficile_{idx}", use_container_width=True,
-                    help="Numeri meno immediati e un passaggio di ragionamento in più.",
-                )
-            _qr_col1, _qr_col2 = st.columns(2, gap="small")
-            with _qr_col1:
-                st.markdown(_marker, unsafe_allow_html=True)
-                quick_regen = st.button(
-                    "Cambia i numeri",
-                    key=f"quick_regen_{idx}",
+                if st.button(
+                    "↩️ Annulla modifica",
+                    key=f"undo_btn_{idx}",
                     use_container_width=True,
-                    help="Stesso esercizio con valori e dati numerici nuovi.",
-                )
-            with _qr_col2:
-                st.markdown(_marker, unsafe_allow_html=True)
-                cambia_tutto = st.button(
-                    "Cambia esercizio",
-                    key=f"cambia_tutto_{idx}",
-                    use_container_width=True,
-                    help="Un esercizio completamente diverso, sullo stesso argomento.",
-                )
-            st.caption("«Cambia i numeri» tiene lo stesso esercizio con dati nuovi; "
-                       "«Cambia esercizio» ne propone uno diverso sullo stesso argomento.")
-            _ea_c1, _ea_c2 = st.columns(2, gap="small")
-            with _ea_c1:
-                aggiungi = st.button(
-                    "Aggiungi un esercizio", key=f"aggiungi_{idx}", type="tertiary",
-                    icon=":material/add:", disabled=(n_blocks >= 15),
-                    help="Crea un esercizio nuovo in fondo e ridistribuisce i punti.",
-                )
-            with _ea_c2:
-                elimina = st.button(
-                    "Elimina questo esercizio", key=f"elimina_{idx}", type="tertiary",
-                    icon=":material/delete:", disabled=(n_blocks <= 1),
-                    help="Toglie questo esercizio e ridistribuisce i punti sugli altri.",
-                )
-            if elimina:
-                st.session_state["_conf_elimina"] = idx
-            elif st.session_state.get("_conf_elimina") not in (None, idx):
-                st.session_state.pop("_conf_elimina", None)
-
-            elimina_si = False
-            if st.session_state.get("_conf_elimina") == idx:
-                st.warning(
-                    f"Eliminare l'esercizio {idx+1}? I punti verranno ridistribuiti sugli altri esercizi."
-                )
-                _el_c1, _el_c2 = st.columns(2, gap="small")
-                with _el_c1:
-                    elimina_si = st.button("Sì, elimina", key=f"elimina_si_{idx}",
-                                           type="primary", use_container_width=True)
-                with _el_c2:
-                    if st.button("No, tienilo", key=f"elimina_no_{idx}", use_container_width=True):
-                        st.session_state.pop("_conf_elimina", None)
+                    help="Ripristina la versione dell'esercizio precedente alla modifica"
+                ):
+                    st.session_state.review_blocks[idx] = dict(_undo_backup)
+                    del st.session_state[_undo_key]
+                    # Pulisci item_pt_ keys per questo esercizio
+                    for _k in list(st.session_state.keys()):
+                        if _k.startswith(f"item_pt_{idx}_"):
+                            del st.session_state[_k]
+                    if "recalibra_pts" in st.session_state:
+                        del st.session_state["recalibra_pts"]
+                    _undo_pdf, _undo_err = _ricompila_verifica_a(
+                        mostra_punteggi, con_griglia, punti_totali, riscala_totale=True,
+                    )
+                    if _undo_pdf:
+                        st.toast("↩️ Modifica annullata — versione precedente ripristinata!", icon="↩️")
                         st.rerun()
-
-            # Placeholder feedback immediato — sotto i pulsanti, nella colonna sinistra
-            _action_ph = st.empty()
-            if quick_regen:
-                _action_ph.info(f"Generazione variante esercizio {idx+1}…")
-            elif cambia_tutto:
-                _action_ph.info(f"Generazione nuovo esercizio {idx+1}…")
-
-            spazio("sm")
-
-            # ── Altre modifiche — descrizione libera, chiusa di default ──────────
-            with st.expander("✏️ Altre modifiche", expanded=False):
-                st.markdown(
-                    '<div style="font-size:.95rem;color:' + T["text2"] + ';margin-bottom:.5rem;'
-                    'font-family:DM Sans,sans-serif;line-height:1.5;">'
-                    'Descrivi la modifica — l\'AI rigenererà solo questo esercizio. '
-                    'I punteggi si cambiano più sotto, in «Cambia i punteggi».'
-                    '</div>',
-                    unsafe_allow_html=True
-                )
-                istruzione = st.text_area(
-                    f"Modifica esercizio {idx+1}",
-                    placeholder="es. Converti in Vero/Falso · Aggiungi un sottopunto · Usa un contesto di vita quotidiana",
-                    key=f"rw_istr_{idx}",
-                    label_visibility="collapsed",
-                    height=80,
-                )
-                rigenera = st.button(
-                    "✏️ Applica modifica", key=f"rw_btn_{idx}",
-                    use_container_width=True, disabled=not istruzione.strip(),
-                    type="primary",
-                    help="L'AI applica le tue istruzioni e rigenera solo questo esercizio, senza modificare gli altri.",
-                )
-                # ── Placeholder feedback immediato sotto il pulsante cliccato ─────
-                _loading_ph = st.empty()
-                if rigenera and istruzione.strip():
-                    _istr_low_quick = istruzione.lower()
-                    if any(kw in _istr_low_quick for kw in _SCORE_KEYWORDS):
-                        _loading_ph.warning(
-                            "⚠️ **Hai menzionato punteggi / punti.**\n\n"
-                            "Per modificare i punti usa il pannello **⚖️ Cambia i punteggi** "
-                            "qui sotto — imposta i valori desiderati e premi **Applica Punteggi**. "
-                            "Questo campo è riservato alle modifiche al contenuto (testo, difficoltà, formato)."
-                        )
                     else:
-                        _loading_ph.info(f"Elaborazione in corso — modifico l'esercizio {idx+1}…")
-
-
-    # ── COLONNA DESTRA — anteprima PDF una pagina alla volta ─────────────────
-    with col_pdf:
-        st.markdown(
-            '<div style="font-size:.72rem;font-weight:700;color:' + T["muted"] + ';'
-            'text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;">'
-            '📄 Anteprima PDF completo</div>',
-            unsafe_allow_html=True
-        )
-        # Controlla se il PDF è cambiato e aggiorna le preview se necessario
-        vA = st.session_state.verifiche.get("A", {})
-        current_pdf_ts = vA.get("pdf_ts")
-        last_preview_ts = st.session_state.get("last_preview_ts", 0)
-        
-        # LOGICA AGGRESSIVA: forza sempre l'aggiornamento se c'è un PDF recente
-        force_update = False
-        
-        # Condizione 0: force refresh esplicito
-        if st.session_state.get("force_preview_refresh", False):
-            force_update = True
-            logger.info("FORCE REFRESH: flag force_preview_refresh rilevato")
-            # Resetta il flag dopo l'uso
-            st.session_state.force_preview_refresh = False
-        
-        # Condizione 1: timestamp più recente
-        elif current_pdf_ts and current_pdf_ts > last_preview_ts:
-            force_update = True
-            
-        # Condizione 2: se il timestamp del PDF è molto recente (ultimi 5 secondi)
-        elif current_pdf_ts and (time.time() - current_pdf_ts) < 5:
-            force_update = True
-            
-        # Condizione 3: se non ci sono immagini preview ma c'è un PDF
-        elif current_pdf_ts and not st.session_state.get("preview_images"):
-            force_update = True
-        
-        if force_update:
-            vA_pdf = vA.get("pdf")
-            if vA_pdf:
-                try:
-                    logger.info(f"FORZATURA AGGIORNAMENTO PREVIEW - PDF ts: {current_pdf_ts}, Last preview: {last_preview_ts}")
-                    new_imgs, _ = pdf_to_images_bytes(vA_pdf)
-                    st.session_state.preview_images = new_imgs or []
-                    st.session_state.last_preview_ts = current_pdf_ts
-                    logger.info(f"Preview images aggiornate FORZATAMENTE - {len(new_imgs) if new_imgs else 0} pagine")
-                except Exception as e:
-                    logger.error(f"Errore aggiornamento preview forzato: {e}")
-            else:
-                logger.warning("PDF ts presente ma nessun PDF disponibile per preview")
-        
-        imgs = st.session_state.preview_images
-        if imgs:
-            n_pages  = len(imgs)
-            _pg = max(0, min(st.session_state.get("preview_page", 0), n_pages - 1))
-
-            # Forza refresh dell'immagine (st.image non supporta key)
-            st.image(imgs[_pg], use_container_width=True)
-
-            if n_pages > 1:
-                spazio("xs")
-                _pc, _pm, _pn = st.columns([1, 2, 1])
-                with _pc:
-                    if st.button("◀", key="prev_pg", use_container_width=True,
-                                 disabled=(_pg == 0)):
-                        st.session_state.preview_page = _pg - 1; st.rerun()
-                with _pm:
-                    st.markdown(
-                        f'<div style="text-align:center;font-size:.75rem;font-weight:600;'
-                        f'color:{T["text2"]};font-family:DM Sans,sans-serif;padding:.35rem 0;">'
-                        f'Pag. {_pg+1} / {n_pages}</div>',
-                        unsafe_allow_html=True
-                    )
-                with _pn:
-                    if st.button("▶", key="next_pg", use_container_width=True,
-                                 disabled=(_pg == n_pages - 1)):
-                        st.session_state.preview_page = _pg + 1; st.rerun()
-        else:
-            vA_pdf = st.session_state.verifiche["A"].get("pdf")
-            if vA_pdf:
-                b64 = base64.b64encode(vA_pdf).decode()
+                        _mostra_errore_pdf(_undo_err, "questa verifica")
+            with _undo_col2:
                 st.markdown(
-                    '<iframe src="data:application/pdf;base64,' + b64 + '#toolbar=0&navpanes=0&scrollbar=1" '
-                    'style="width:100%;height:560px;border:none;border-radius:8px;"></iframe>',
+                    f'<div style="font-size:.72rem;color:{T["muted"]};font-family:DM Sans,sans-serif;'
+                    f'padding:.3rem 0;line-height:1.4;">'
+                    f'🕐 Versione precedente disponibile</div>',
                     unsafe_allow_html=True
                 )
+
+        # ── 2) Cosa vuoi cambiare? Box libero + pulsanti rapidi ──────────────────
+        st.markdown(
+            f'<div style="font-family:DM Sans,sans-serif;font-size:.95rem;font-weight:700;color:{T["text"]};'
+            f'margin:.7rem 0 .3rem;">Cosa vuoi cambiare?</div>',
+            unsafe_allow_html=True,
+        )
+        istruzione = st.text_area(
+            f"Modifica esercizio {idx+1}",
+            placeholder="es. Rendi il testo più semplice · Converti in Vero/Falso · Aggiungi un sottopunto · Usa un contesto di vita quotidiana",
+            key=f"rw_istr_{idx}",
+            label_visibility="collapsed",
+            height=90,
+            disabled=_finite,
+        )
+        rigenera = st.button(
+            "✏️ Applica modifica", key=f"rw_btn_{idx}",
+            use_container_width=True, disabled=(not istruzione.strip()) or _finite,
+            type="primary",
+            help="L'AI applica le tue istruzioni e rigenera solo questo esercizio, senza modificare gli altri. "
+                 "I punteggi si cambiano più sotto, in «Cambia i punteggi».",
+        )
+        # ── Placeholder feedback immediato sotto il pulsante cliccato ───────────
+        _loading_ph = st.empty()
+        if rigenera and istruzione.strip():
+            _istr_low_quick = istruzione.lower()
+            if any(kw in _istr_low_quick for kw in _SCORE_KEYWORDS):
+                _loading_ph.warning(
+                    "⚠️ **Hai menzionato punteggi / punti.**\n\n"
+                    "Per modificare i punti usa il pannello **⚖️ Cambia i punteggi** "
+                    "qui sotto — imposta i valori desiderati e premi **Applica Punteggi**. "
+                    "Questo campo è riservato alle modifiche al contenuto (testo, difficoltà, formato)."
+                )
             else:
-                st.caption("Anteprima non disponibile.")
+                _loading_ph.info(f"Elaborazione in corso — modifico l'esercizio {idx+1}…")
+
+        # Pulsanti rapidi: prima ciò che si usa più spesso (livello), poi le sostituzioni
+        st.markdown(
+            f'<div style="font-family:DM Sans,sans-serif;font-size:.8rem;color:{T["muted"]};margin:.5rem 0 .25rem;">'
+            f'Oppure con un tocco</div>',
+            unsafe_allow_html=True,
+        )
+        _marker = '<div class="btn-outline-accent-marker" style="display:none;height:0;line-height:0"></div>'
+        _lv_col1, _lv_col2 = st.columns(2, gap="small")
+        with _lv_col1:
+            st.markdown(_marker, unsafe_allow_html=True)
+            piu_facile = st.button(
+                "Più facile", key=f"piu_facile_{idx}", use_container_width=True, disabled=_finite,
+                help="Semplifica numeri e calcoli, mantenendo lo stesso argomento.",
+            )
+        with _lv_col2:
+            st.markdown(_marker, unsafe_allow_html=True)
+            piu_difficile = st.button(
+                "Più difficile", key=f"piu_difficile_{idx}", use_container_width=True, disabled=_finite,
+                help="Numeri meno immediati e un passaggio di ragionamento in più.",
+            )
+        _qr_col1, _qr_col2 = st.columns(2, gap="small")
+        with _qr_col1:
+            st.markdown(_marker, unsafe_allow_html=True)
+            quick_regen = st.button(
+                "Cambia i numeri",
+                key=f"quick_regen_{idx}",
+                use_container_width=True, disabled=_finite,
+                help="Stesso esercizio con valori e dati numerici nuovi.",
+            )
+        with _qr_col2:
+            st.markdown(_marker, unsafe_allow_html=True)
+            cambia_tutto = st.button(
+                "Cambia esercizio",
+                key=f"cambia_tutto_{idx}",
+                use_container_width=True, disabled=_finite,
+                help="Un esercizio completamente diverso, sullo stesso argomento.",
+            )
+
+        # Placeholder feedback immediato — sotto i pulsanti
+        _action_ph = st.empty()
+        if quick_regen:
+            _action_ph.info(f"Generazione variante esercizio {idx+1}…")
+        elif cambia_tutto:
+            _action_ph.info(f"Generazione nuovo esercizio {idx+1}…")
+
+        # Tetto di modifiche con l'AI per verifica (ognuna è una chiamata all'AI)
+        if _tetto_mod is not None:
+            if _finite:
+                if ENT.piano == "free" and not ENT.assaggio:
+                    st.warning(
+                        f"Hai usato tutte le {_tetto_mod} modifiche con l'AI di questa verifica. Puoi ancora cambiare i "
+                        f"punteggi, eliminare esercizi o scaricarla; con il piano Pro ne hai {MODIFICHE_PER_VERIFICA['pro']} "
+                        f"per verifica, oppure crea una nuova verifica.",
+                        icon="🔒",
+                    )
+                    if MONETIZZAZIONE_ATTIVA and st.button("Con il piano Pro", key="mod_upgrade", icon=":material/lock:",
+                                                           use_container_width=True):
+                        _vai_a_upgrade("modifiche")
+                else:
+                    st.warning(
+                        f"Hai usato tutte le {_tetto_mod} modifiche con l'AI di questa verifica. Puoi ancora cambiare i "
+                        f"punteggi, eliminare esercizi o scaricarla; per altre modifiche crea una nuova verifica.",
+                        icon="🔒",
+                    )
+            else:
+                st.caption(f"Modifiche con l'AI su questa verifica: {_usate_mod} di {_tetto_mod}")
+
+    # ── 3) Altre azioni: aggiungere o eliminare un esercizio ─────────────────────
+    elimina_si = False
+    with st.expander("Altre azioni: aggiungi o elimina un esercizio",
+                     expanded=(st.session_state.get("_conf_elimina") == idx)):
+        _ea_c1, _ea_c2 = st.columns(2, gap="small")
+        with _ea_c1:
+            aggiungi = st.button(
+                "Aggiungi un esercizio", key=f"aggiungi_{idx}", type="tertiary",
+                icon=":material/add:", disabled=(n_blocks >= 15) or _finite,
+                help="Crea un esercizio nuovo in fondo e ridistribuisce i punti.",
+            )
+        with _ea_c2:
+            elimina = st.button(
+                "Elimina questo esercizio", key=f"elimina_{idx}", type="tertiary",
+                icon=":material/delete:", disabled=(n_blocks <= 1),
+                help="Toglie questo esercizio e ridistribuisce i punti sugli altri.",
+            )
+        if elimina:
+            st.session_state["_conf_elimina"] = idx
+        elif st.session_state.get("_conf_elimina") not in (None, idx):
+            st.session_state.pop("_conf_elimina", None)
+
+        if st.session_state.get("_conf_elimina") == idx:
+            st.warning(
+                f"Eliminare l'esercizio {idx+1}? I punti verranno ridistribuiti sugli altri esercizi."
+            )
+            _el_c1, _el_c2 = st.columns(2, gap="small")
+            with _el_c1:
+                elimina_si = st.button("Sì, elimina", key=f"elimina_si_{idx}",
+                                       type="primary", use_container_width=True)
+            with _el_c2:
+                if st.button("No, tienilo", key=f"elimina_no_{idx}", use_container_width=True):
+                    st.session_state.pop("_conf_elimina", None)
+                    st.rerun()
+
+    # ── Anteprima PDF: tenuta aggiornata qui, mostrata più sotto in «Vedi il PDF completo» ──
+    vA = st.session_state.verifiche.get("A", {})
+    current_pdf_ts = vA.get("pdf_ts")
+    last_preview_ts = st.session_state.get("last_preview_ts", 0)
+    force_update = False
+    if st.session_state.get("force_preview_refresh", False):          # force refresh esplicito
+        force_update = True
+        st.session_state.force_preview_refresh = False
+    elif current_pdf_ts and current_pdf_ts > last_preview_ts:         # PDF più recente dell'anteprima
+        force_update = True
+    elif current_pdf_ts and (time.time() - current_pdf_ts) < 5:       # PDF appena rifatto
+        force_update = True
+    elif current_pdf_ts and not st.session_state.get("preview_images"):   # nessuna immagine ma c'è un PDF
+        force_update = True
+    if force_update and vA.get("pdf"):
+        try:
+            new_imgs, _ = pdf_to_images_bytes(vA["pdf"])
+            st.session_state.preview_images = new_imgs or []
+            st.session_state.last_preview_ts = current_pdf_ts
+        except Exception as e:
+            logger.error(f"Errore aggiornamento preview: {e}")
+
+    # ── Conteggio delle modifiche con l'AI (tetto per verifica) ───────────────────
+    _azione_ai = bool(
+        quick_regen or cambia_tutto or piu_facile or piu_difficile or aggiungi
+        or (rigenera and istruzione.strip() and not any(kw in istruzione.lower() for kw in _SCORE_KEYWORDS))
+    )
+    if _azione_ai and _finite:        # difesa lato server: i pulsanti disabilitati non devono mai partire
+        quick_regen = cambia_tutto = piu_facile = piu_difficile = aggiungi = rigenera = False
+    elif _azione_ai:
+        _conta_modifica(modello_rw)
 
     # ── IDEA #3: Quick Regen — variante rapida handler ──────────────────────
     if quick_regen:
@@ -4458,6 +4479,42 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         st.rerun()
                     else:
                         _mostra_errore_pdf(_err_rc, "questa verifica")
+
+    # ── PDF completo: una pagina alla volta, chiuso di default ─────────────────────
+    with st.expander("📄 Vedi il PDF completo", expanded=False):
+        imgs = st.session_state.preview_images
+        if imgs:
+            n_pages  = len(imgs)
+            _pg = max(0, min(st.session_state.get("preview_page", 0), n_pages - 1))
+            st.image(imgs[_pg], use_container_width=True)
+            if n_pages > 1:
+                _pc, _pm, _pn = st.columns([1, 2, 1])
+                with _pc:
+                    if st.button("◀", key="prev_pg", use_container_width=True,
+                                 disabled=(_pg == 0)):
+                        st.session_state.preview_page = _pg - 1; st.rerun()
+                with _pm:
+                    st.markdown(
+                        f'<div style="text-align:center;font-size:.75rem;font-weight:600;'
+                        f'color:{T["text2"]};font-family:DM Sans,sans-serif;padding:.35rem 0;">'
+                        f'Pag. {_pg+1} / {n_pages}</div>',
+                        unsafe_allow_html=True
+                    )
+                with _pn:
+                    if st.button("▶", key="next_pg", use_container_width=True,
+                                 disabled=(_pg == n_pages - 1)):
+                        st.session_state.preview_page = _pg + 1; st.rerun()
+        else:
+            vA_pdf = st.session_state.verifiche["A"].get("pdf")
+            if vA_pdf:
+                b64 = base64.b64encode(vA_pdf).decode()
+                st.markdown(
+                    '<iframe src="data:application/pdf;base64,' + b64 + '#toolbar=0&navpanes=0&scrollbar=1" '
+                    'style="width:100%;height:560px;border:none;border-radius:8px;"></iframe>',
+                    unsafe_allow_html=True
+                )
+            else:
+                st.caption("Anteprima non disponibile.")
 
     # ── Pulsante principale della schermata: torna al PDF ─────────────────────
     spazio("md")

@@ -91,6 +91,11 @@ abbonamento scaduto = free). Il contatore conta le righe di `verifiche_storico` 
 **bloccata** con «riprova» (mai «0»); `_puo_generare_ora()` ricontrolla dentro `_lancia_generazione`. Admin escluso.
 Funzioni del Pro (`config.FUNZIONI_PRO`, `ENT.puo("fila_b")`): aperte a tutti finché `MONETIZZAZIONE_ATTIVA` è False.
 Il piano dichiara la **famiglia** del modello (lite/flash), mai un ID: lo risolve `ai_client`.
+Modifiche con l'AI nella schermata «Modifica gli esercizi» (Più facile, Cambia i numeri, Cambia esercizio, Applica modifica, Aggiungi):
+ognuna è una chiamata all'AI e ha un tetto **per verifica** (`config.MODIFICHE_PER_VERIFICA`: free 10, pro e «assaggio» 40, admin nessuno),
+contato in `usage_events` (tipo `modifica`, per `verifica_id`) così riaprire la verifica non azzera il conto; se il registro non risponde vale il
+contatore della sessione. Eliminare esercizi, cambiare i punteggi e annullare non contano. L'anteprima del singolo esercizio col grafico è
+`latex_utils.anteprima_esercizio_png` (compila solo quell'esercizio, in cache per testo).
 
 DOCX: `docx_export.py` converte il LaTeX (oggi passando da Gemini) e costruisce il file con python-docx.
 
