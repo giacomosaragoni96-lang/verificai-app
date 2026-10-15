@@ -58,7 +58,7 @@ from config import (
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
     MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, PREZZO_PRO_ANNUALE, LEGALE_PRONTO, TETTO_BREVE, MAX_FACCIATE, WORD_ATTIVO,
-    MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS, MODIFICHE_PER_VERIFICA, FEEDBACK_PRIMA_DEL_DOWNLOAD,
+    MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS, MODIFICHE_PER_VERIFICA, FEEDBACK_PRIMA_DEL_DOWNLOAD, MOSTRA_BOX_FEEDBACK,
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -1255,14 +1255,6 @@ def _guida_benvenuto(dove: str, slot) -> None:
     # Con i pagamenti spenti (prova pubblica) la guida è la stessa ma non parla di regali, piani né funzioni «solo per questa verifica»
     _test = not MONETIZZAZIONE_ATTIVA
     _eti = "Benvenuto" if _test else "Regalo di benvenuto"
-    _NOTA_BETA = ("Salvata in <b>«Le mie verifiche»</b> (barra laterale).<br><br>"
-                  "🎉 <b>Congratulazioni: sei uno dei primi a provare VerificAI!</b> L'applicazione è in beta e per ora è "
-                  "<b>completamente gratuita</b>. Il tuo parere è fondamentale per migliorarla. "
-                  "Bastano 4 minuti e le risposte sono anonime.<br>"
-                  '<a href="?pagina=questionario" target="_blank" rel="noopener" style="display:inline-block;margin-top:.5rem;background:#fff;color:#1E3A8A;'
-                  'font-weight:800;padding:.6rem 1.1rem;border-radius:10px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.18);">'
-                  "Lascia il tuo feedback →</a>")
-
     if dove == "input":
         scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
         if not scritto:
@@ -1302,7 +1294,7 @@ def _guida_benvenuto(dove: str, slot) -> None:
                         ("🧩", "Versione BES/DSA", "Più semplice, per i piani personalizzati."),
                         ("✅", "Soluzioni", "Le risposte per correggere."),
                         ("🎯", "Scheda di allenamento", "Circa 40 esercizi per la classe.")],
-                  nota=(_NOTA_BETA if _test else
+                  nota=("Salvata in <b>«Le mie verifiche»</b> (barra laterale)." if _test else
                         "Salvata in <b>«Le mie verifiche»</b> (barra laterale). Dalla prossima verifica queste funzioni sono solo con il piano Pro."))
 
 
@@ -1377,6 +1369,9 @@ def _card_mini_feedback() -> None:
         _r2 = st.radio("Ti è servito davvero?  (1 = per niente → 5 = moltissimo)", [1, 2, 3, 4, 5], index=None,
                        horizontal=True, key="mini_utile")
         _vai = st.form_submit_button("Sblocca il download", type="primary", use_container_width=True)
+    st.markdown(f'<div style="text-align:center;font-size:.85rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:-.3rem 0 .8rem;">'
+                f'Hai 4 minuti? <a href="?pagina=questionario" target="_blank" rel="noopener" style="color:{T["accent"]};font-weight:700;">'
+                f'Il questionario completo</a> ci aiuta ancora di più (anonimo).</div>', unsafe_allow_html=True)
     if _vai:
         if _r1 is None or _r2 is None:
             st.warning("Rispondi a tutte e due: ci vogliono 5 secondi.", icon="⏱️")
@@ -1403,7 +1398,7 @@ def _banner_piano(dove: str) -> None:
         # prova pubblica: nessun piano né prezzo, ma chi crea la sua prima verifica ha la guida (con gli elementi che lampeggiano)
         if _GUIDA_PRIMO and not (_is_admin and not _SIM):
             _guida_benvenuto(dove, _slot)
-        elif dove in ("final", "input") and not (_is_admin and not _SIM):
+        elif MOSTRA_BOX_FEEDBACK and dove in ("final", "input") and not (_is_admin and not _SIM):
             # dopo la prima verifica: il riquadro che chiede il parere (grande nel risultato, compatto nella creazione)
             with _slot.container():
                 _box_feedback(compatto=(dove == "input"))

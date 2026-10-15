@@ -50,6 +50,8 @@ LEGALE_PRONTO = False      # in prova pubblica Termini e Rimborsi (bozze sul pia
 # Prova pubblica: prima di scaricare il PDF la prima volta (poi un cookie di un anno lo ricorda) due domande veloci: tempo risparmiato e utilità.
 # Sono l'unica cosa che chiediamo in cambio dell'uso gratuito; il questionario completo resta facoltativo. False = nessun passaggio.
 FEEDBACK_PRIMA_DEL_DOWNLOAD = True
+# Riquadri blu che chiedono il feedback nella schermata del risultato e in quella di creazione: spenti (si chiede solo prima del download).
+MOSTRA_BOX_FEEDBACK = False
 # Tetto di sicurezza contro abusi e costi anomali: al massimo tante verifiche in quanti minuti (per utente, admin escluso)
 TETTO_BREVE = {"verifiche": 6, "minuti": 10}
 # Modifiche con l'AI per ogni verifica («Più facile», «Cambia i numeri», «Cambia esercizio», «Applica modifica», «Aggiungi»):
