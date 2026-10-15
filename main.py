@@ -1254,6 +1254,11 @@ def _guida_benvenuto(dove: str, slot) -> None:
     # Con i pagamenti spenti (prova pubblica) la guida è la stessa ma non parla di regali, piani né funzioni «solo per questa verifica»
     _test = not MONETIZZAZIONE_ATTIVA
     _eti = "Benvenuto" if _test else "Regalo di benvenuto"
+    _NOTA_BETA = ("Salvata in <b>«Le mie verifiche»</b> (barra laterale).<br><br>"
+                  "🎉 <b>Congratulazioni: sei uno dei primi a provare VerificAI!</b> L'applicazione è in beta e per ora è "
+                  "<b>completamente gratuita</b>. Il tuo parere è fondamentale per migliorarla: "
+                  '<a href="?pagina=questionario" target="_blank" rel="noopener" style="color:#fff;font-weight:700;text-decoration:underline;">'
+                  "lascia il tuo feedback</a> (4 minuti, anonimo).")
 
     if dove == "input":
         scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
@@ -1294,7 +1299,7 @@ def _guida_benvenuto(dove: str, slot) -> None:
                         ("🧩", "Versione BES/DSA", "Più semplice, per i piani personalizzati."),
                         ("✅", "Soluzioni", "Le risposte per correggere."),
                         ("🎯", "Scheda di allenamento", "Circa 40 esercizi per la classe.")],
-                  nota=("Salvata in <b>«Le mie verifiche»</b> (barra laterale)." if _test else
+                  nota=(_NOTA_BETA if _test else
                         "Salvata in <b>«Le mie verifiche»</b> (barra laterale). Dalla prossima verifica queste funzioni sono solo con il piano Pro."))
 
 
@@ -1317,6 +1322,13 @@ def _banner_piano(dove: str) -> None:
         # prova pubblica: nessun piano né prezzo, ma chi crea la sua prima verifica ha la guida (con gli elementi che lampeggiano)
         if _GUIDA_PRIMO and not (_is_admin and not _SIM):
             _guida_benvenuto(dove, _slot)
+        elif dove == "final" and not (_is_admin and not _SIM):
+            # dopo la prima verifica: una riga discreta per ricordare la beta e il feedback
+            _slot.markdown(
+                f'<div style="text-align:center;font-family:DM Sans,sans-serif;font-size:.9rem;color:{T["text2"]};margin:.2rem 0 .8rem;">'
+                f'VerificAI è in beta e per ora è gratuita: il tuo parere ci aiuta a migliorarla. '
+                f'<a href="?pagina=questionario" target="_blank" rel="noopener" style="color:{T["accent"]};font-weight:700;">Lascia un feedback</a> (4 minuti, anonimo)</div>',
+                unsafe_allow_html=True)
         else:
             _slot.empty()
         return
@@ -1382,7 +1394,7 @@ if not _is_admin:      # Share, stella, matita, GitHub e Deploy servono solo a c
 
 st.markdown(
     '<a class="fab-link" href="?pagina=questionario" target="_blank" title="Scrivici un feedback" '
-    'aria-label="Scrivici un feedback" rel="noopener noreferrer">💬 Lasciaci un feedback</a>',
+    'aria-label="Scrivici un feedback" rel="noopener noreferrer">💬<span class="fab-t">Feedback</span></a>',
     unsafe_allow_html=True
 )
 
