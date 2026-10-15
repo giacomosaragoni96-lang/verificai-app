@@ -1426,7 +1426,12 @@ def _tikz_da_specifica(corpo: str):
     curve_txt = [c for c in re.split(r'[;\n]', parti[0]) if c.strip()]
     xmin, xmax = -5.0, 5.0
     xl, yl = "$x$", "$y$"
+    asintoti_txt = []                      # rette tratteggiate: «x = 2», «y = 1», «y = x + 2»
     for extra in parti[1:]:
+        mt = re.match(r'\s*asintot\w*\s*:?\s*(.*)$', extra, re.IGNORECASE | re.DOTALL)
+        if mt:
+            asintoti_txt += [t for t in re.split(r';|\n|,\s*(?=[xy]\s*=)|\s+e\s+(?=[xy]\s*=)', mt.group(1)) if t.strip()]
+            continue
         ma = re.match(r'\s*assi\s*:?\s*([^,;\s]+)\s*[,;]\s*([^,;\s]+)\s*$', extra, re.IGNORECASE)
         if ma:
             xl, yl = _etichetta_asse(ma.group(1)) or xl, _etichetta_asse(ma.group(2)) or yl
@@ -1436,6 +1441,15 @@ def _tikz_da_specifica(corpo: str):
             a, b = _numero_grafico(m.group(1)), _numero_grafico(m.group(2))
             if a is not None and b is not None and b > a:
                 xmin, xmax = a, b
+    # «x = 2» (e, se c'è già una curva, «y = 1») scritti tra le curve sono asintoti: si disegnano tratteggiati
+    veri = []
+    for c in curve_txt:
+        if re.match(r'\s*x\s*=\s*-?[\d.,−–]+\s*$', c, re.IGNORECASE) or (
+                len(curve_txt) > 1 and re.match(r'\s*y\s*=\s*-?[\d.,−–]+\s*$', c, re.IGNORECASE)):
+            asintoti_txt.append(c)
+        else:
+            veri.append(c)
+    curve_txt = veri
     curve = []
     for c in curve_txt[:3]:
         r = _espressione_grafico(c)
@@ -1459,6 +1473,16 @@ def _tikz_da_specifica(corpo: str):
     ]
     for espr, _ in curve:
         righe.append(f"\\addplot[thick, blue, no markers]{{{espr}}};")
+    for t in asintoti_txt[:4]:
+        mv = re.match(r'\s*x\s*=\s*(-?[\d.,−–]+)\s*$', t, re.IGNORECASE)
+        if mv:                                                     # asintoto verticale: segmento tratteggiato a tutta altezza
+            c = _numero_grafico(mv.group(1))
+            if c is not None and xa <= c <= xb:
+                righe.append(f"\\addplot[dashed, thick, gray, no markers] coordinates {{({_fmt_num(c)},{_fmt_num(ymin)}) ({_fmt_num(c)},{_fmt_num(ymax)})}};")
+            continue
+        r = _espressione_grafico(t)                                # orizzontale o obliquo: retta tratteggiata
+        if r is not None:
+            righe.append(f"\\addplot[dashed, thick, gray, no markers, samples=2]{{{r[0]}}};")
     righe += [r"\end{axis}", r"\end{tikzpicture}", r"\end{center}"]
     return "\n".join(righe)
 
@@ -1678,7 +1702,7 @@ def esercizi_con_grafico_mancante(blocchi: list) -> list:
         if "\\square" in corpo:          # Vero/Falso: parla in generale dei grafici, non ne mostra uno
             continue
         testo = re.sub(r'\\begin\{(?:tikzpicture|axis)\}.*?\\end\{(?:tikzpicture|axis)\}', '', corpo, flags=re.DOTALL)
-        ha_grafico = bool(re.search(r'\\begin\{(?:tikzpicture|axis)\}|\\includegraphics', corpo))
+        ha_grafico = bool(re.search(r'\\begin\{(?:tikzpicture|axis)\}|\\includegraphics|\[\[\s*GRAFICO', corpo, re.IGNORECASE))
         cita = re.search(r'grafic|figura', testo, re.IGNORECASE) and _RIMANDO_GRAFICO.search(testo)
         if cita and not ha_grafico:
             mancanti.append(i)

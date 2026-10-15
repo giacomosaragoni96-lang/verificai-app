@@ -4070,7 +4070,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
     _tetto_mod = _tetto_modifiche()
     _usate_mod = _modifiche_usate()
     _finite = _tetto_mod is not None and _usate_mod >= _tetto_mod
-    _ha_grafico_es = bool(re.search(r"\\begin\{(tikzpicture|axis)\}", body))
+    _ha_grafico_es = bool(re.search(r"\\begin\{(tikzpicture|axis)\}|\[\[\s*GRAFICO", body, re.IGNORECASE))
 
     with st.container(border=True):
 
@@ -4469,7 +4469,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 punti_nota = "NON inserire punteggi (X pt)."
 
             # Rileva se l'esercizio originale ha un grafico (TikZ/pgfplots)
-            _ha_grafico = bool(re.search(r'\\begin\{(tikzpicture|axis|pgfpicture)\}', body))
+            _ha_grafico = bool(re.search(r'\\begin\{(tikzpicture|axis|pgfpicture)\}|\[\[\s*GRAFICO', body, re.IGNORECASE))
             _grafici_rule_rw = (
                 "- GRAFICI: l'esercizio originale contiene un grafico. "
                 "SE la modifica lo richiede o mantiene il grafico, scrivi al suo posto UNA riga [[GRAFICO: y = ... | x da A a B]] "
