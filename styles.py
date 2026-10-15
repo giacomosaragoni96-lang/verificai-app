@@ -4749,6 +4749,20 @@ font-family: 'DM Sans', sans-serif;
     html body .stApp button p {{ text-wrap: balance; }}
   }}
 
+  /* ── Telefono: i box con testo a sinistra e pulsante a destra si impilano per davvero (prima il pulsante finiva SOPRA le scritte) ── */
+  @media (max-width: 640px) {{
+    html body .stApp :is([class*="st-key-box_sblocco"], [class*="st-key-box_invito"], .st-key-word_card, details[data-testid="stExpander"] [data-testid="stVerticalBlockBorderWrapper"]) [data-testid="stHorizontalBlock"] {{
+      flex-direction: column !important; flex-wrap: nowrap !important; align-items: stretch !important; gap: .7rem !important; height: auto !important;
+    }}
+    html body .stApp :is([class*="st-key-box_sblocco"], [class*="st-key-box_invito"], .st-key-word_card, details[data-testid="stExpander"] [data-testid="stVerticalBlockBorderWrapper"]) [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{
+      width: 100% !important; min-width: 100% !important; max-width: 100% !important; flex: 0 0 auto !important; height: auto !important; min-height: 0 !important;
+    }}
+    html body .stApp :is([class*="st-key-box_sblocco"], [class*="st-key-box_invito"], .st-key-word_card, details[data-testid="stExpander"] [data-testid="stVerticalBlockBorderWrapper"]) [data-testid="stColumn"] > div,
+    html body .stApp :is([class*="st-key-box_sblocco"], [class*="st-key-box_invito"], .st-key-word_card, details[data-testid="stExpander"] [data-testid="stVerticalBlockBorderWrapper"]) [data-testid="stMarkdownContainer"] {{
+      height: auto !important; min-height: 0 !important; overflow: visible !important;
+    }}
+  }}
+
 </style>
 """
 

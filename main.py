@@ -1550,14 +1550,34 @@ html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button {background:tr
 html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button, html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button * {color:rgba(255,255,255,.92) !important;
   -webkit-text-fill-color:rgba(255,255,255,.92) !important;font-size:.8rem !important;font-weight:600 !important;text-decoration:underline;}
 html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button:hover * {color:#fff !important;-webkit-text-fill-color:#fff !important;}
-html body .stApp div[class*="st-key-bx_invita"]:not(#vf) button {background:rgba(255,255,255,.14) !important;background-color:rgba(255,255,255,.14) !important;
-  border:1.5px solid rgba(255,255,255,.62) !important;border-radius:12px !important;padding:.5rem .8rem !important;margin-top:.5rem;min-height:0 !important;}
-html body .stApp div[class*="st-key-bx_invita"]:not(#vf) button, html body .stApp div[class*="st-key-bx_invita"]:not(#vf) button * {
-  color:#fff !important;-webkit-text-fill-color:#fff !important;font-weight:700 !important;font-size:.84rem !important;text-decoration:none !important;}
-html body .stApp div[class*="st-key-bx_invita"]:not(#vf) button:hover {background:rgba(255,255,255,.26) !important;}
 html body .stApp div[class*="st-key-box_sblocco"][data-fatto] a.bx-b, html body .stApp div[class*="st-key-box_sblocco"][data-fatto] .bx-pills,
 html body .stApp div[class*="st-key-box_sblocco"][data-fatto] .bx-mini {display:none;}
 </style>"""
+
+
+def _box_invito(dove: str) -> None:
+    """Secondo box, più discreto e di un altro colore, sotto quello del questionario: «Invita un collega» (+2 verifiche per ogni amico)."""
+    if not _INVITO:
+        return
+    with st.container(key=f"box_invito_{dove}"):
+        _c1, _c2 = st.columns([3, 1.3], vertical_alignment="center", gap="medium")
+        with _c1:
+            st.markdown(
+                f'<style>html body .stApp div[class*="st-key-box_invito"]:not(#vf) {{background:{T["bg2"]};border:1px solid {T["border2"]};'
+                f'border-left:4px solid #14B8A6;border-radius:14px;padding:.8rem 1.1rem;margin:0 0 1rem;box-shadow:0 2px 8px rgba(15,23,42,.06);}}'
+                f'.bi-wrap{{display:flex;gap:.8rem;align-items:center;font-family:DM Sans,sans-serif;}}'
+                f'.bi-badge{{flex:0 0 2.6rem;height:2.6rem;border-radius:13px;background:#CCFBF1;display:flex;align-items:center;justify-content:center;font-size:1.3rem;}}'
+                f'.bi-t{{font-weight:800;font-size:1rem;color:{T["text"]};line-height:1.25;}}'
+                f'.bi-d{{font-size:.85rem;color:{T["text2"]};line-height:1.4;margin-top:.1rem;}}</style>'
+                '<div class="bi-wrap"><div class="bi-badge">👥</div><div>'
+                '<div class="bi-t">Invita un collega</div>'
+                f'<div class="bi-d">Per ogni collega che si iscrive col tuo link e crea la sua prima verifica, '
+                f'<b>+{BONUS_PER_INVITO} verifiche complete</b> per te.</div></div></div>',
+                unsafe_allow_html=True)
+        with _c2:
+            if st.button("Invita un collega", key=f"bi_btn_{dove}", use_container_width=True, icon=":material/group_add:"):
+                _registra_evento("invito_apri")
+                apri_dialogo_invito(T, _INVITO)
 
 
 def _box_sblocco(dove: str) -> None:
@@ -1572,23 +1592,16 @@ def _box_sblocco(dove: str) -> None:
                         '<div class="bx-wrap"><div class="bx-badge">🎁</div><div class="bx-testo">'
                         '<div class="bx-eyebrow">Sblocca di più</div>'
                         '<div class="bx-t">Altre verifiche con tutte le funzioni</div>'
-                        + (f'<div class="bx-d"><b>{VERIFICHE_PER_CODICE} verifiche complete</b> compilando il questionario, e altre '
-                           f'<b>{BONUS_PER_INVITO} per ogni collega</b> che inviti.</div>' if _INVITO else
-                           f'<div class="bx-d">Compila il questionario e ricevi subito un codice per {VERIFICHE_PER_CODICE} verifiche complete.</div>')
+                        + f'<div class="bx-d">Compila il questionario e ricevi subito un codice per <b>{VERIFICHE_PER_CODICE} verifiche complete</b>.</div>'
                         + _pillole + '</div></div>',
                         unsafe_allow_html=True)
         with _c2:
             st.markdown('<a class="bx-b" href="?pagina=questionario" target="_blank" rel="noopener">Compila il questionario</a>'
                         f'<div class="bx-mini">⏱ 4 minuti · anonimo · +{VERIFICHE_PER_CODICE} verifiche</div>',
                         unsafe_allow_html=True)
-            if _INVITO:
-                with st.container(key=f"bx_invita_{dove}"):
-                    if st.button(f"Invita un collega · +{BONUS_PER_INVITO}", key=f"bx_invita_btn_{dove}", use_container_width=True,
-                                 icon=":material/group_add:"):
-                        _registra_evento("invito_apri")
-                        apri_dialogo_invito(T, _INVITO)
             if st.button("Ho già un codice", key=f"sblocco_codice_{dove}", type="tertiary"):
                 _vai_a_upgrade(None)
+    _box_invito(dove)
     # questionario già inviato in questo browser: via il pulsante del questionario, il testo invita a inserire il codice
     components.html('<script>try{if(window.parent.localStorage.getItem("vf_feedback_ok")){var D=window.parent.document;'
                     'D.querySelectorAll(\'[class*="st-key-box_sblocco"]\').forEach(function(e){e.setAttribute("data-fatto","1");'
@@ -5010,9 +5023,12 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
     mostra_punteggi, punti_totali, con_griglia = gp.get("mostra_punteggi", True), gp.get("punti_totali", 100), gp.get("con_griglia", False)
     if st.session_state.pop("_mod_rapida_pulisci", False):
         st.session_state["mod_rapida_testo"] = ""
+    _fatto = st.session_state.pop("_mod_rapida_ok", False)
     _tetto, _usate = _tetto_modifiche(), _modifiche_usate()
     _finite = _tetto is not None and _usate >= _tetto
     with st.container(key="mod_rapida"):
+        if _fatto:
+            st.success("Fatto: ho modificato la verifica. L'anteprima qui sopra è già aggiornata (puoi annullare qui sotto).", icon="✅")
         st.markdown(_CSS_MOD_RAPIDA.replace("__ACC__", T["accent"]).replace("__TX__", T["text"]).replace("__T2__", T["text2"]) +
                     '<div class="mr-t">✨ Vuoi cambiare qualcosa? Chiedilo</div>'
                     '<div class="mr-d">Scrivi cosa modificare e la verifica si rifà subito: niente da ricominciare.</div>',
@@ -5023,6 +5039,7 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
         with st.container(key="mod_applica"):
             _applica = st.button("Applica la modifica", key="mod_rapida_applica", type="primary", use_container_width=True,
                                  icon=":material/auto_fix_high:", disabled=_finite)
+        _stato = st.empty()          # qui compare l'avviso «sto lavorando», vicino al pulsante (anche su telefono)
         if _tetto is not None:
             st.caption(f"Modifiche con l'AI su questa verifica: {_usate} di {_tetto}")
         if _finite:
@@ -5045,7 +5062,7 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
               "blocchi": [dict(b) for b in (st.session_state.get("review_blocks") or [])]}
     _conta_modifica(mod_id)
     try:
-        with st.spinner("Modifico la verifica… di solito ci vuole circa mezzo minuto"):
+        with _stato.container(), st.spinner("Sto modificando la verifica… ci vuole circa mezzo minuto, non chiudere la pagina"):
             _res = modifica_verifica_libera(crea_modello(mod_id).per("modifica"), mat_str, arg_str, vA["latex"], _richiesta,
                                             mostra_punteggi, punti_totali)
             if _res.get("ok"):
@@ -5062,6 +5079,7 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
         st.session_state["final_pagina"] = 0
         _salva_variante_storico("latex_a", st.session_state.verifiche["A"].get("latex"))
         st.session_state["_mod_rapida_pulisci"] = True
+        st.session_state["_mod_rapida_ok"] = True
         st.toast("Verifica modificata!", icon="✅")
         st.rerun()
     # qualcosa non è andato: la verifica torna com'era
