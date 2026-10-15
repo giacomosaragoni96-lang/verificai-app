@@ -12,12 +12,13 @@
   :root { --blu:#2563EB; --blu-scuro:#1E3A8A; --testo:#0F172A; --grigio:#475569; --carta:#FAF8F4; --bordo:#E7E2D8; --oro:#F59E0B; }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
-  body { margin:0; font-family:"DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color:var(--testo); background:var(--carta); line-height:1.6; }
+  body { margin:0; font-family:"DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color:var(--testo); background:var(--carta); line-height:1.55; font-size:15.5px; }
   .w { max-width: 1080px; margin: 0 auto; padding: 0 1.4rem; }
   .serif { font-family:"Fraunces", Georgia, serif; }
   /* barra */
   .nav { display:flex; justify-content:space-between; align-items:center; padding:1.1rem 0; }
-  .logo { font-family:"Fraunces", Georgia, serif; font-weight:800; font-size:2.6rem; letter-spacing:-.02em; line-height:1; }
+  .logo { font-family:"Fraunces", Georgia, serif; font-weight:800; font-size:2.3rem; letter-spacing:-.02em; line-height:1.1; }
+  .logo .m { background: linear-gradient(transparent 58%, #FDE68A 58%); padding:0 .12em; }
   .logo i { color:var(--blu); }
   .logo small { font-family:"DM Sans",sans-serif; font-style:normal; font-size:.78rem; font-weight:800; letter-spacing:.1em; color:var(--blu); border:2px solid var(--blu); border-radius:999px; padding:.18rem .65rem; margin-left:.6rem; vertical-align:middle; }
   .btn { display:inline-block; background:linear-gradient(135deg,var(--blu),var(--blu-scuro)); color:#fff !important; padding:.95rem 1.7rem; border-radius:14px; font-weight:700; text-decoration:none; box-shadow:0 10px 26px rgba(37,99,235,.30); transition:transform .15s ease, box-shadow .15s ease; }
@@ -26,14 +27,14 @@
   .btn.bianco { background:#fff; color:var(--blu-scuro) !important; box-shadow:0 10px 26px rgba(0,0,0,.2); }
   .link { color:var(--blu-scuro); font-weight:700; text-decoration:none; }
   /* hero */
-  .hero { display:grid; grid-template-columns: 1fr 1.1fr; gap:1.5rem; align-items:center; padding: .5rem 0 2rem; }
-  .hero h1 { font-family:"Fraunces", Georgia, serif; font-size: clamp(2.1rem, 4.4vw, 3.2rem); line-height:1.08; letter-spacing:-.025em; margin:0 0 1.1rem; }
+  .hero { display:grid; grid-template-columns: .85fr 1.15fr; gap:1rem; align-items:center; padding: .5rem 0 1.5rem; }
+  .hero h1 { font-family:"Fraunces", Georgia, serif; font-size: clamp(1.9rem, 3.4vw, 2.55rem); line-height:1.12; letter-spacing:-.025em; margin:0 0 1.1rem; }
   .hero h1 em { color:var(--blu); }
-  .hero p.sub { font-size:1.18rem; color:var(--grigio); margin:0 0 1.7rem; max-width:34rem; }
+  .hero p.sub { font-size:1.02rem; color:var(--grigio); margin:0 0 1.5rem; max-width:31rem; }
   .hero .azioni { display:flex; gap:1.2rem; align-items:center; flex-wrap:wrap; }
   .nota { font-size:.9rem; color:var(--grigio); margin-top:1rem; }
-  .mock { position:relative; justify-self:center; width:100%; max-width:600px; height:470px; }
-  .mock .f { position:absolute; width:62%; background:#fff; border:1px solid var(--bordo); border-radius:10px; overflow:hidden; box-shadow:0 22px 44px rgba(15,23,42,.20), 0 5px 14px rgba(15,23,42,.10); }
+  .mock { position:relative; justify-self:center; width:100%; max-width:680px; height:540px; }
+  .mock .f { position:absolute; width:64%; background:#fff; border:1px solid var(--bordo); border-radius:10px; overflow:hidden; box-shadow:0 22px 44px rgba(15,23,42,.20), 0 5px 14px rgba(15,23,42,.10); }
   .mock .f img { width:100%; height:auto; display:block; }
   .mock .f::after { content:""; position:absolute; left:0; right:0; bottom:0; height:60px; background:linear-gradient(to bottom, rgba(255,255,255,0), #fff 90%); }
   .mock .f1 { left:0; top:44px; transform: rotate(-9deg); transform-origin: bottom right; z-index:1; }
@@ -42,23 +43,23 @@
   .mock .badge { position:absolute; left:8%; bottom:6px; z-index:3; background:#fff; border:1px solid var(--bordo); border-radius:14px; padding:.55rem .9rem; font-weight:700; font-size:.92rem; box-shadow:0 10px 24px rgba(15,23,42,.16); transform: rotate(-3deg); }
   /* sezioni */
   section { padding: 1.6rem 0; }
-  h2 { font-family:"Fraunces", Georgia, serif; font-size: clamp(1.6rem, 3.2vw, 2.2rem); letter-spacing:-.02em; margin:0 0 .5rem; }
+  h2 { font-family:"Fraunces", Georgia, serif; font-size: clamp(1.4rem, 2.6vw, 1.8rem); letter-spacing:-.02em; margin:0 0 .5rem; }
   .intro { color:var(--grigio); max-width:40rem; margin:0 0 1.6rem; }
   .passi { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:1.1rem; }
   .passo { background:#fff; border:1px solid var(--bordo); border-radius:18px; padding:1.4rem; }
-  .passo .n { font-family:"Fraunces", Georgia, serif; font-size:2.6rem; font-weight:800; color:var(--blu); line-height:1; margin-bottom:.4rem; }
-  .passo b { display:block; font-size:1.08rem; margin-bottom:.2rem; }
+  .passo .n { font-family:"Fraunces", Georgia, serif; font-size:2rem; font-weight:800; color:var(--blu); line-height:1; margin-bottom:.4rem; }
+  .passo b { display:block; font-size:1rem; margin-bottom:.2rem; }
   .passo span { color:var(--grigio); }
   .segreto { background:#FEF3C7; border:1.5px solid #FCD34D; border-radius:20px; padding:1.5rem 1.6rem; color:#78350F; }
-  .segreto h3 { margin:0 0 .4rem; font-size:1.2rem; }
+  .segreto h3 { margin:0 0 .4rem; font-size:1.05rem; }
   .esempi { display:grid; grid-template-columns: 1fr 2fr; gap:1rem; margin-top:1rem; }
   .esempi div { background:rgba(255,255,255,.65); border-radius:12px; padding:.8rem 1rem; }
   .esempi b { display:block; font-size:.82rem; letter-spacing:.06em; text-transform:uppercase; margin-bottom:.15rem; }
   .griglia { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; }
   .cosa { background:#fff; border:1px solid var(--bordo); border-radius:16px; padding:1.1rem 1.2rem; }
   .cosa .i { font-size:1.5rem; }
-  .cosa b { display:block; margin:.2rem 0; }
-  .cosa span { color:var(--grigio); font-size:.95rem; }
+  .cosa b { display:block; margin:.15rem 0; font-size:.98rem; }
+  .cosa span { color:var(--grigio); font-size:.9rem; }
   /* chiusura */
   .cta { background:linear-gradient(135deg,var(--blu),var(--blu-scuro)); color:#fff; border-radius:26px; padding:2.6rem 1.6rem; text-align:center; margin:1.5rem 0; }
   .cta h2 { color:#fff; } .cta p { color:#DBEAFE; max-width:34rem; margin:0 auto 1.4rem; }
@@ -66,13 +67,13 @@
   .chi .av { flex:0 0 3.4rem; height:3.4rem; border-radius:50%; background:var(--blu); color:#fff; font-family:"Fraunces",Georgia,serif; font-weight:800; font-size:1.4rem; display:flex; align-items:center; justify-content:center; }
   footer { padding: 2rem 0 3rem; color:var(--grigio); font-size:.92rem; text-align:center; }
   footer a { color:var(--grigio); }
-  @media (max-width: 820px) { .hero { grid-template-columns: 1fr; } .mock { max-width:420px; height:330px; } .logo { font-size:2.1rem; } .esempi { grid-template-columns: 1fr; } .chi { flex-direction:column; text-align:center; } }
+  @media (max-width: 820px) { .hero { grid-template-columns: 1fr; } .mock { max-width:440px; height:360px; } .logo { font-size:1.9rem; } .esempi { grid-template-columns: 1fr; } .chi { flex-direction:column; text-align:center; } }
 </style>
 </head>
 <body>
 <div class="w">
   <div class="nav">
-    <div class="logo">Verific<i>AI</i><small>BETA</small></div>
+    <div class="logo"><span class="m">Verific<i>AI</i></span><small>BETA</small></div>
     <a href="https://verificai.streamlit.app" class="btn s">Prova gratis</a>
   </div>
 
@@ -90,7 +91,7 @@
       <div class="f f1"><img src="esempio-storia.png" alt="Esempio di verifica di storia generata da VerificAI, con il logo della scuola"></div>
       <div class="f f3"><img src="esempio-fisica.png" alt="Esempio di verifica di fisica generata da VerificAI"></div>
       <div class="f f2"><img src="esempio-matematica.png" alt="Esempio di verifica di matematica generata da VerificAI, con il logo della scuola e i punteggi"></div>
-      <div class="badge">📄 PDF o Word, con i punteggi</div>
+      <div class="badge">📄 PDF o Word · con il logo della tua scuola</div>
     </div>
   </div>
 
@@ -125,6 +126,7 @@
       <div class="cosa"><div class="i">✅</div><b>Soluzioni</b><span>Le risposte svolte, per correggere più in fretta.</span></div>
       <div class="cosa"><div class="i">📝</div><b>Word modificabile</b><span>Un file da ritoccare come preferisci, con i grafici già inseriti.</span></div>
       <div class="cosa"><div class="i">🎯</div><b>Scheda di allenamento</b><span>Circa 40 esercizi graduati per preparare la classe.</span></div>
+      <div class="cosa"><div class="i">🏫</div><b>Il logo della tua scuola</b><span>Puoi aggiungere il logo della tua scuola nell'intestazione di ogni verifica.</span></div>
     </div>
   </section>
 
