@@ -2896,9 +2896,15 @@ _PAROLE_PROBLEMA = ("problema", "modellizz", "modellazione", "storiografic", "co
 PESO_CHIUSO, PESO_PROBLEMA = 0.6, 1.5
 
 
-def _peso_esercizio(titolo: str) -> float:
+_CASELLE_VF = re.compile(r"\\square\$?\s*\\textbf\{V\}")
+
+
+def _peso_esercizio(titolo: str, corpo: str = "") -> float:
     t = (titolo or "").lower()
     if any(k in t for k in _PAROLE_CHIUSO):
+        return PESO_CHIUSO
+    # il titolo non sempre nomina la tipologia: se le richieste hanno le caselle V/F, l'esercizio è chiuso lo stesso
+    if corpo and len(_CASELLE_VF.findall(corpo)) >= 2:
         return PESO_CHIUSO
     if any(k in t for k in _PAROLE_PROBLEMA):
         return PESO_PROBLEMA
@@ -2920,7 +2926,7 @@ def pesa_punti_per_tipo(latex: str) -> str:
         m = re.match(r"\\subsection\*\{([^}]*)\}", blocco)
         vals = [float(v.replace(",", ".")) for v in _PT_PATTERN.findall(blocco)]
         if m and vals:
-            esercizi.append((k, _peso_esercizio(m.group(1)), vals))
+            esercizi.append((k, _peso_esercizio(m.group(1), blocco), vals))
     tutti = [v for _, _, vs in esercizi for v in vs]
     if len(tutti) < 6 or min(tutti) <= 0:
         return latex
