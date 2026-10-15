@@ -29,7 +29,7 @@ _ETICHETTA_TIPO = {"aperto": "aperto", "vero_falso": "Vero/Falso", "scelta_multi
                    "completamento": "completamento"}
 _NOME_LIVELLO = {1: "FACILE", 2: "MEDIO", 3: "DIFFICILE"}
 # numero di richieste ammesso per ruolo: (minimo, massimo)
-_LIMITI_RICHIESTE = {"A": (1, 4), "B": (1, 4), "C": (3, 8), "M": (2, 4), "G": (1, 6), "P": (1, 3), "E": (1, 2)}
+_LIMITI_RICHIESTE = {"A": (1, 4), "B": (1, 4), "C": (3, 8), "M": (2, 4), "G": (2, 6), "P": (2, 3), "E": (1, 2)}
 # peso dei punti di una richiesta in base al livello (facile : media : difficile ≈ 1 : 1,7 : 2,7)
 _PESO_LIVELLO = {1: 10, 2: 17, 3: 27}
 # parole che rivelano che le note del docente dicono qualcosa sulla struttura (rete di sicurezza oltre al giudizio dell'AI)
@@ -128,6 +128,9 @@ def normalizza_piano(grezzo, scheletro: list, note_docente: str = "") -> dict | 
             "tipo": tipo, "richieste": rich, "_punti_docente": e.get("punti") if vincolo else None,
         })
 
+    sotto = [] if vincolo else [i for i, e in enumerate(esercizi)
+                                if len(e["richieste"]) < _LIMITI_RICHIESTE.get(e["ruolo"], (1, 8))[0]
+                                and not (e["ruolo"] == "G" and len(e["richieste"]) == 1)]
     if vincolo:
         _punti_del_docente(esercizi)
         for e in esercizi:
@@ -148,7 +151,7 @@ def normalizza_piano(grezzo, scheletro: list, note_docente: str = "") -> dict | 
     _riequilibra_mix(esercizi)
     for e in esercizi:
         e["punti_richieste"] = punti_richieste([r["livello"] for r in e["richieste"]], e["punti"], e["tipo"])
-    return {"esercizi": esercizi, "vincolo": False}
+    return {"esercizi": esercizi, "vincolo": False, "sotto": sotto}
 
 
 def _punti_del_docente(esercizi: list) -> None:
@@ -250,7 +253,7 @@ def piano_a_testo(piano: dict, mostra_punteggi: bool = True) -> str:
             lettera = "abcdefghijklmnopqrstuvwxyz"[k % 26]
             pt = e["punti_richieste"][k] if (not vincolo and k < len(e.get("punti_richieste") or [])) else None
             righe.append(f"   {lettera}) {_NOME_LIVELLO[r['livello']]}"
-                         + (f" — {r['nota']}" if r["nota"] else "")
+                         + (f" — [nota per te, NON scriverla nel testo: {r['nota']}]" if r["nota"] else "")
                          + (f" — ({pt} pt)" if (mostra_punteggi and pt is not None) else ""))
     righe.append("Consegna di ogni esercizio: UNA riga, breve. Le richieste sono brevi: la difficoltà sta nei dati e nel tipo, non nella lunghezza. "
                  "Se la nota di una richiesta indica una trappola o un passaggio da fare, i dati devono richiederlo davvero.")

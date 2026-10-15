@@ -30,7 +30,7 @@ from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
     prompt_rubrica_valutazione, prompt_variante_rapida, istruzione_livello_esercizio,
     prompt_nuovo_esercizio,
-    REGOLA_SOTTOPUNTI_MODIFICA, REGOLA_GRAFICO_CURVE, struttura_verifica,
+    REGOLA_SOTTOPUNTI_MODIFICA, REGOLA_GRAFICO_CURVE, REGOLA_CONSEGNE_BREVI, struttura_verifica,
 )
 from docx_export import latex_to_docx_modificabile, _rubrica_to_docx
 from scheda import genera_scheda
@@ -4546,7 +4546,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 f"ESERCIZIO ORIGINALE:\n\\subsection*{{{title}}}\n{body}\n\n"
                 f"ISTRUZIONE DEL DOCENTE: {istruzione.strip()}\n\n"
                 f"REGOLE FONDAMENTALI:\n"
-                f"- LUNGHEZZA: consegna breve (una riga) e richieste brevi, in ordine di difficoltà crescente.\n"
+                f"- {REGOLA_CONSEGNE_BREVI}\n"
                 f"- VIETATO ASSOLUTO: NON inserire MAI soluzioni, risposte o risultati.\n"
                 f"- VIETATO MAPPE E DIAGRAMMI: NON generare MAI mappe, diagrammi spaziali o geografici.\n"
                 f"- Applica SOLO la modifica richiesta. NON riscrivere da zero, modifica l'esistente.\n"
@@ -4642,7 +4642,8 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             f"ESERCIZIO DA SOSTITUIRE (struttura e tipo da NON replicare):\n\\subsection*{{{title}}}\n{body}\n\n"
             f"ALTRI ESERCIZI GIA PRESENTI (da NON duplicare concettualmente):\n{_altri_testo}\n\n"
             f"REGOLE FONDAMENTALI:\n"
-            f"- LUNGHEZZA: consegna breve (una riga) e 3-4 richieste brevi (a, b, c, d) di tipo diverso, in ordine di difficoltà crescente.\n"
+            f"- {REGOLA_CONSEGNE_BREVI}\n"
+            f"- 3-4 richieste (a, b, c, d) di tipo diverso, in ordine di difficoltà crescente.\n"
             f"- VIETATO ASSOLUTO: NON inserire MAI soluzioni, risposte o risultati. MAI scrivere '= X', 'la risposta è', 'il risultato è'.\n"
             f"- VIETATO MAPPE E DIAGRAMMI: NON generare MAI mappe, diagrammi spaziali o geografici.\n"
             f"- CONTROLLO DUPLICATI: ANALIZZA gli altri esercizi sopra. NON generare un esercizio che testi "

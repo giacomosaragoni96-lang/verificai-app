@@ -620,15 +620,25 @@ def pianifica_verifica(model, materia: str, argomento: str, scuola: str, calibra
         prompt = prompt_piano_verifica(materia, argomento, scuola, calibrazione, durata, scheletro, note_docente,
                                        max_esercizi_chiusi(num_esercizi))
         debug["prompt"] = prompt
-        for tentativo in range(2):
-            richiesta = prompt if tentativo == 0 else (prompt + "\n\nRISPONDI SOLO CON IL JSON, senza testo prima o dopo.")
-            risposta = _safe_generate(model, richiesta, "Piano della verifica", retries=1).text
-            debug["risposta"] = risposta
-            piano = normalizza_piano(estrai_json(risposta), scheletro, note_docente)
-            if piano:
-                debug["piano"] = piano
-                return piano, debug
-        debug["errore"] = "risposta non utilizzabile"
+        migliore, aggiunta = None, ""
+        for tentativo in range(2):
+            risposta = _safe_generate(model, prompt + aggiunta, "Piano della verifica", retries=1).text
+            piano = normalizza_piano(estrai_json(risposta), scheletro, note_docente)
+            if piano:
+                if migliore is None or len(piano.get("sotto") or []) < len(migliore.get("sotto") or []):
+                    migliore = piano
+                    debug["risposta"], debug["piano"] = risposta, piano
+                if not piano.get("sotto"):
+                    break
+                aggiunta = ("\n\nATTENZIONE: nel piano precedente alcuni esercizi (" + ", ".join(str(i + 1) for i in piano["sotto"]) +
+                            ") hanno troppe poche richieste. Rifai il piano rispettando i numeri minimi di richieste indicati per ogni ruolo.")
+            else:
+                debug["risposta"] = risposta
+                aggiunta = "\n\nRISPONDI SOLO CON IL JSON, senza testo prima o dopo."
+        if migliore:
+            return migliore, debug
+        debug["errore"] = "risposta non utilizzabile"
+
     except Exception as e:                      # noqa: BLE001 — il piano è un di più: mai bloccare la generazione
         logger.warning("Piano della verifica non riuscito: %s", e)
         debug["errore"] = str(e)[:300]
