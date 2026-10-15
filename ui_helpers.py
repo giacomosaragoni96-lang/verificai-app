@@ -757,9 +757,14 @@ def render_privacy(T: dict, contatto_url: str) -> None:
         f'color:{T["text"]};line-height:1.6;">'
         f'<h1 style="font-size:1.9rem;font-weight:800;margin:1rem 0 .2rem;">Informativa sulla privacy</h1>'
         f'<div style="color:{T["muted"]};font-size:.9rem;margin-bottom:1.5rem;">'
-        f'VerificAI · ultimo aggiornamento: 14 ottobre 2026</div></div>',
+        f'VerificAI · ultimo aggiornamento: 15 ottobre 2026</div></div>',
         unsafe_allow_html=True,
     )
+    from config import MONETIZZAZIONE_ATTIVA as _MON
+    # I fornitori dei pagamenti compaiono solo quando i pagamenti esistono
+    _ACQUISTO = ("- **Acquisto del piano Pro:** il pagamento è gestito da Lemon Squeezy, che ti vende il piano. Noi **non vediamo né conserviamo i dati della tua carta**:\n"
+                 "  riceviamo solo l'esito, il codice di licenza e la sua scadenza, che salviamo insieme al tuo account.\n") if _MON else ""
+    _LEMON = "- **Lemon Squeezy:** pagamenti, imposte e fatture del piano Pro, e verifica del codice di licenza.\n" if _MON else ""
     _c1, _c2, _c3 = st.columns([1, 6, 1])
     with _c2:
         st.markdown(f"""
@@ -774,8 +779,8 @@ sui tuoi dati puoi scriverci a **{_LEG['email']}**.
   e il loro storico.
 - **File che carichi** (appunti, verifiche, fogli di esercizi): vengono usati solo per generare la verifica richiesta.
 - **Dati d'uso:** il numero di verifiche create nel mese e le preferenze che salvi (per esempio materia e scuola abituali).
-- **Acquisto del piano Pro:** il pagamento è gestito da Lemon Squeezy, che ti vende il piano. Noi **non vediamo né conserviamo i dati della tua carta**:
-  riceviamo solo l'esito, il codice di licenza e la sua scadenza, che salviamo insieme al tuo account.
+{_ACQUISTO}- **Segnalazioni anonime:** se usi «Qualcosa non va in questa verifica?» salviamo quello che scrivi e, se lasci la spunta,
+  il testo della verifica e i dettagli tecnici della generazione. **Non** salviamo il tuo nome, la tua email né il tuo indirizzo IP.
 
 ### Perché li trattiamo
 Per farti accedere, generare le verifiche, mostrarti lo storico, applicare i limiti del piano e
@@ -787,8 +792,7 @@ Usiamo fornitori che trattano i dati per nostro conto:
 - **Google:** accesso con Google e Gemini, il modello di intelligenza artificiale che riceve l'argomento,
   le istruzioni e gli eventuali file per generare la verifica.
 - **Streamlit Community Cloud:** hosting dell'applicazione.
-- **Lemon Squeezy:** pagamenti, imposte e fatture del piano Pro, e verifica del codice di licenza.
-
+{_LEMON}
 ### Consiglio importante
 Non inserire nelle richieste o nei file dati personali degli studenti (nomi, voti, valutazioni individuali).
 Per generare una verifica non servono.

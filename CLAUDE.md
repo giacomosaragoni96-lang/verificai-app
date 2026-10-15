@@ -104,6 +104,10 @@ DOCX: `docx_export.py` converte il LaTeX (oggi passando da Gemini) e costruisce 
 
 ## Piani e abbonamenti
 
+**Prova pubblica (dal 15 ottobre 2026):** `MONETIZZAZIONE_ATTIVA = False` e `LEGALE_PRONTO = False`: ogni funzione è aperta a tutti, nessun prezzo, banner,
+invito o link a Termini/Rimborsi; restano i tetti (5 verifiche al mese, 10 modifiche con l'AI per verifica, `TETTO_BREVE`). Il prezzo non si dice: si ricava
+dal questionario (domande Van Westendorp). Per tornare ai piani basta riaccendere i due interruttori (la privacy mostra Lemon Squeezy solo con i pagamenti accesi).
+
 Il codice Stripe è stato rimosso: l'app non incassa né scrive abbonamenti, legge soltanto la
 tabella `subscriptions` (`subscription_management.get_user_subscription`, status `active`/`trialing`).
 Il piano si assegna a mano dal database Supabase con una riga in `subscriptions`:
