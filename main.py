@@ -7,6 +7,7 @@
 
 import streamlit as st
 import streamlit.components.v1 as components
+import json
 import base64
 import io
 import zipfile
@@ -17,7 +18,7 @@ import os
 import time
 from datetime import datetime, timezone
 
-from ai_client import crea_modello, configura as configura_ai, riepilogo_uso
+from ai_client import crea_modello, configura as configura_ai, riepilogo_uso, numero_chiamate, chiamate_da
 
 from sidebar import render_sidebar
 from generation import (
@@ -2825,6 +2826,7 @@ def _lancia_generazione(
 
     try:
         model_obj = crea_modello(_modello_id_eff)
+        _n_chiamate_prima = numero_chiamate()
         ris = genera_verifica(
             model=model_obj, materia=materia_scelta, argomento=argomento,
             difficolta=difficolta, calibrazione=calibrazione, durata=durata_scelta,
@@ -2837,6 +2839,13 @@ def _lancia_generazione(
             on_progress=_avanza,
         )
         st.session_state["_autoverifica"] = ris.get("_autoverifica")
+        if _is_admin and ris.get("_debug"):        # solo admin: materiale per capire cosa ha fatto ogni modello
+            _dbg = dict(ris["_debug"])
+            _dbg["richiesta"] = {"materia": materia_scelta, "scuola": difficolta, "durata": durata_scelta,
+                                 "esercizi": num_esercizi_totali, "punti": punti_totali, "note": note_generali,
+                                 "istruzioni_esercizi": s_es, "modello_scelto": _modello_id_eff}
+            _dbg["chiamate"] = chiamate_da(_n_chiamate_prima)
+            st.session_state["_debug_gen"] = _dbg
 
         # Logo della scuola: se l'utente ne ha uno attivo va nell'intestazione della Fila A
         # (e quindi anche nelle versioni che ne derivano); si ricompila il PDF con il logo.
@@ -5349,6 +5358,31 @@ def _render_stage_final():
         with st.expander("🔧 Strumenti admin — LaTeX sorgente (Fila A)", expanded=False):
             st.caption("Copia da qui il LaTeX se un grafico o l'impaginazione non vanno.")
             st.code(vA["latex"], language="latex")
+
+    # Solo admin: tutto quello che serve per confrontare i modelli (prompt, risposta grezza, passaggi automatici, consumi)
+    if _is_admin and st.session_state.get("_debug_gen"):
+        _d = st.session_state["_debug_gen"]
+        with st.expander("🔧 Strumenti admin — Debug generazione", expanded=False):
+            _righe_ch = [f"- {c['compito']} · {c['modello']} · {c['secondi']} s · in {c['input']} · out {c['output']} · ragionamento {c['pensiero']} · ${c['costo_usd']:.4f}"
+                         for c in _d.get("chiamate", [])]
+            st.markdown("**Chiamate di questa generazione**\n\n" + ("\n".join(_righe_ch) or "nessuna"))
+            st.caption(f"Controllo qualità: {_d.get('controllo_qualita')} · punteggio struttura: {_d.get('validation_score')}")
+            _av_d = _d.get("autoverifica") or {}
+            st.caption(f"Autoverifica: eseguita={_av_d.get('eseguita')} · controllati={_av_d.get('controllati')} · "
+                       f"corretti={_av_d.get('corretti')} · irrisolti={len(_av_d.get('irrisolti') or [])}")
+            _testo_dbg = "\n\n".join([
+                "=== RICHIESTA ===\n" + json.dumps(_d.get("richiesta"), ensure_ascii=False, indent=2, default=str),
+                "=== CHIAMATE ===\n" + json.dumps(_d.get("chiamate"), ensure_ascii=False, indent=2, default=str),
+                f"=== CONTROLLO QUALITÀ ===\n{_d.get('controllo_qualita')} (punteggio {_d.get('validation_score')})",
+                "=== AUTOVERIFICA ===\n" + json.dumps(_d.get("autoverifica"), ensure_ascii=False, indent=2, default=str),
+                "=== PROMPT INVIATO AL MODELLO ===\n" + str(_d.get("prompt")),
+                "=== RISPOSTA GREZZA DEL MODELLO ===\n" + str(_d.get("risposta_grezza")),
+                "=== DOPO CONTROLLO QUALITÀ ===\n" + str(_d.get("dopo_controllo_qualita")),
+                "=== DOPO AUTOVERIFICA ===\n" + str(_d.get("dopo_autoverifica")),
+                "=== LATEX FINALE (dopo pesi, punti, griglia, logo) ===\n" + str(vA.get("latex")),
+            ])
+            st.download_button("Scarica il debug (.txt)", _testo_dbg.encode("utf-8"), file_name="debug_generazione.txt",
+                               mime="text/plain", key="dl_debug_gen")
 
     # In fondo alla pagina: le verifiche salvate
     _sf1, _sf2, _sf3 = st.columns([3, 2, 3])

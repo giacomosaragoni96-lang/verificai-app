@@ -686,6 +686,9 @@ def genera_verifica(
 
     ra = _safe_generate(model, inp, "Generazione esercizi")
     corpo_a = pulisci_corpo_latex(_pulisci_risposta(ra.text))
+    # Diagnostica per l'admin: cosa ha scritto il modello e cosa è stato cambiato dopo (nessun effetto sul risultato)
+    risultato["_debug"] = {"prompt": inp[0], "risposta_grezza": ra.text, "dopo_pulizia": corpo_a,
+                           "controllo_qualita": "non eseguito", "autoverifica": None}
 
     # ── 4. CONTROLLO QUALITÀ MIGLIORATO ────────────────────────────────────────────
     _avanza("🔎  Controllo qualità e validazione contenuto…")
@@ -734,11 +737,19 @@ def genera_verifica(
     if corpo_corretto and n_corr == n_orig:
         corpo_a = corpo_corretto
 
+    risultato["_debug"]["validation_score"] = validation_score
+    risultato["_debug"]["controllo_qualita"] = (
+        "eseguito, versione accettata" if (corpo_corretto and n_corr == n_orig) else
+        ("eseguito, scartato (numero di esercizi diverso)" if corpo_corretto else
+         ("saltato (struttura ottima)" if validation_score >= (QA_SALTA_SE_PUNTEGGIO_ALMENO or 2) else "non applicato")))
     corpo_a = _tronca_al_numero_giusto(corpo_a, num_esercizi)
+    risultato["_debug"]["dopo_controllo_qualita"] = corpo_a
     if AUTOVERIFICA_ATTIVA:
         _avanza("🧮  Controllo che gli esercizi siano corretti…")
         corpo_a, risultato["_autoverifica"] = autoverifica_corpo(
             model, materia, difficolta, argomento, corpo_a, mostra_punteggi, on_progress=_avanza)
+        risultato["_debug"]["autoverifica"] = risultato["_autoverifica"]
+        risultato["_debug"]["dopo_autoverifica"] = corpo_a
     _avanza("🖨️  Compilazione PDF…")
     latex_a, pdf_a = _assembla_e_compila(
         preambolo_a, corpo_a, mostra_punteggi, punti_totali, con_griglia

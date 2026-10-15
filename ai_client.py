@@ -187,6 +187,18 @@ def azzera_uso():
         _registro.clear()
 
 
+def numero_chiamate() -> int:
+    """Quante chiamate sono state registrate finora (serve a isolare quelle di una singola generazione)."""
+    with _lock:
+        return len(_registro)
+
+
+def chiamate_da(n: int) -> list:
+    """Le chiamate registrate dopo la n-esima: compito, modello vero, token, ragionamento, costo, secondi."""
+    with _lock:
+        return [dict(v) for v in _registro[n:]]
+
+
 def riepilogo_uso(ultime: int | None = None) -> list:
     """Totali per (compito, modello) sulle ultime N chiamate registrate (None = tutte)."""
     with _lock:
