@@ -3113,6 +3113,7 @@ def _lancia_generazione(
     imgs_es: list,
     file_ispirazione=None,
     prog_placeholder=None,         # st.empty() creato nel form, vicino al pulsante
+    piano_struttura=None,          # {"primo_base", "eccellenza"}: con la struttura-tipo si pianifica prima di scrivere
 ):
     """
     Funzione condivisa dai due percorsi: lancia genera_verifica,
@@ -3127,7 +3128,7 @@ def _lancia_generazione(
 
     calibrazione = CALIBRAZIONE_SCUOLA.get(difficolta, "")
     _t_start = time.time()
-    _n_steps = 4   # titolo · esercizi · controllo · PDF
+    _n_steps = 5 if piano_struttura is not None else 4   # titolo · (struttura) · esercizi · controllo · PDF
     _step    = [0]
     # Usa il placeholder passato (in cima alla pagina) oppure crea uno nuovo
     _prog    = prog_placeholder if prog_placeholder is not None else st.empty()
@@ -3137,6 +3138,8 @@ def _lancia_generazione(
         t = (testo or "").lower()
         if "titolo" in t:
             return "Scelgo il titolo"
+        if "struttura" in t:
+            return "Preparo la struttura"
         if "esercizi" in t and "generazione" in t:
             return "Scrivo gli esercizi"
         if "controllo" in t or "qualit" in t:
@@ -3145,11 +3148,14 @@ def _lancia_generazione(
             return "Preparo il PDF"
         return "Ancora un momento"
 
-    _NOMI_PASSI = ["Titolo", "Esercizi", "Controllo", "PDF"]
+    _NOMI_PASSI = ["Titolo", "Struttura", "Esercizi", "Controllo", "PDF"] if piano_struttura is not None else ["Titolo", "Esercizi", "Controllo", "PDF"]
 
     def _indice_passo(testo: str) -> int:
-        return {"Scelgo il titolo": 0, "Scrivo gli esercizi": 1, "Ricontrollo gli esercizi": 2, "Preparo il PDF": 3}.get(
-            _passo_leggibile(testo), 1)
+        _ordine = (["Scelgo il titolo", "Preparo la struttura", "Scrivo gli esercizi", "Ricontrollo gli esercizi", "Preparo il PDF"]
+                   if piano_struttura is not None else
+                   ["Scelgo il titolo", "Scrivo gli esercizi", "Ricontrollo gli esercizi", "Preparo il PDF"])
+        _p = _passo_leggibile(testo)
+        return _ordine.index(_p) if _p in _ordine else min(1, len(_ordine) - 1)
 
     def _avanza(testo):
         _step[0] += 1
@@ -3223,7 +3229,7 @@ def _lancia_generazione(
             bes_dsa_b=False, genera_soluzioni=False,
             note_generali=note_generali, istruzioni_esercizi=s_es,
             immagini_esercizi=imgs_es, file_ispirazione=file_ispirazione,
-            on_progress=_avanza,
+            on_progress=_avanza, piano_struttura=piano_struttura,
         )
         st.session_state["_autoverifica"] = ris.get("_autoverifica")
         if ris.get("_debug"):        # materiale per capire cosa ha fatto ogni modello: lo mostra solo l'admin; per tutti serve alle segnalazioni
@@ -3441,6 +3447,8 @@ def _render_stage_input():
 
     # L'esercizio «per l'eccellenza» si aggiunge a quelli scelti (e c'è solo se il docente non ha scelto gli esercizi a mano)
     _ecc = bool(st.session_state.get("toggle_eccellenza", True)) and not st.session_state.esercizi_custom
+    if re.search(r"(senza|niente|non\s+\w+)\s+(l['’]\s*)?(esercizi\w*\s+)?(per\s+l['’]\s*)?eccellenza", (_note_finale or "").lower()):
+        _ecc = False       # il docente lo ha escluso a parole: vince lui sull'interruttore
     num_esercizi_totali = num_esercizi_totali + (1 if _ecc else 0)
     s_es, imgs_es = _build_prompt_esercizi(
         st.session_state.esercizi_custom,
@@ -3506,6 +3514,8 @@ def _render_stage_input():
         file_ispirazione=(_FileInMemoria(_fm["bytes"], _fm["mime"], _fm["name"])
                           if (_scelta_mat == "base_conoscenza" and _fm) else None),
         prog_placeholder=_prog_ph_b,
+        piano_struttura=({"primo_base": bool(st.session_state.get("toggle_primo_base", False)), "eccellenza": _ecc}
+                         if not st.session_state.esercizi_custom else None),
     )
     return
 

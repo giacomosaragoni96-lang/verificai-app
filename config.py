@@ -130,6 +130,7 @@ QA_SALTA_SE_PUNTEGGIO_ALMENO = 1.0
 #   ragionamento: "alto" = RAGIONAMENTO_ALTO · numero = tetto in token · 0 = spento · None = predefinito
 COMPITI_AI = {
     "titolo":            ("veloce", 0),
+    "piano":             ("medio",  0),      # il piano della verifica (struttura prima del testo): breve, Lite col piano free, Flash col Pro
     "corpo":             ("piano",  "alto"),
     "soluzioni":         ("piano",  "alto"),
     "controllo_qualita": ("medio",  0),
