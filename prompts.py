@@ -589,6 +589,8 @@ REGOLA_GRAFICO_CURVE = (
     "la funzione con x e aggiungi in fondo i nomi degli assi: [[GRAFICO: y = <funzione di x> | x da <A> a <B> | assi t, v]] "
     "(prima l'asse orizzontale). "
     "Più curve nello stesso grafico: separale con ; (al massimo 3). "
+    "Asintoti tratteggiati (solo se li chiede il docente o se non sono la risposta di una domanda): aggiungi in fondo "
+    "| asintoti x = 2, y = 1 (verticali «x = numero», orizzontali o obliqui «y = espressione»); MAI scriverli come codice TikZ. "
     "Scegli un intervallo che mostri bene le caratteristiche della curva (vertice, intersezioni). "
     "La funzione deve essere ESATTAMENTE quella a cui si riferiscono le domande. "
     "UTILITÀ DEL GRAFICO: un grafico dato deve SERVIRE. Le richieste devono obbligare a LEGGERLO (vertice, zeri, segno, valori in un punto, "
