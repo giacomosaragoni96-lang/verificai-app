@@ -1495,6 +1495,9 @@ def _box_sblocco(dove: str) -> None:
         _vai_a_upgrade(None)
 
 
+_SLOT_BANNER: dict = {}      # per rerun: segnaposto del riquadro blu di ogni pagina, per toglierlo mentre si genera
+
+
 def _banner_piano(dove: str) -> None:
     """
     Riquadro blu in cima alla pagina per chi non ha il piano Pro (stesso stile della guida di benvenuto):
@@ -1502,6 +1505,7 @@ def _banner_piano(dove: str) -> None:
     dove = "input" | "final" | "review". Sta in un segnaposto che si svuota quando non serve: così non resta mai a schermo.
     """
     _slot = st.empty()
+    _SLOT_BANNER[dove] = _slot
     if not MONETIZZAZIONE_ATTIVA:
         # prova pubblica: nessun piano né prezzo, ma chi crea la sua prima verifica ha la guida (con gli elementi che lampeggiano)
         if _GUIDA_PRIMO and not (_is_admin and not _SIM):
@@ -3080,6 +3084,9 @@ def _lancia_generazione(
 
     def _avanza(testo):
         _step[0] += 1
+        if _SLOT_BANNER.get("input") is not None:      # durante l'attesa la guida di benvenuto non serve più
+            _SLOT_BANNER["input"].empty()
+            _SLOT_BANNER["input"] = None
         perc  = int(min(_step[0] / _n_steps, 0.95) * 100)
         _acc  = T["accent"]
         _bg   = T["border"]
