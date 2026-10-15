@@ -22,6 +22,7 @@ logger = logging.getLogger("verificai.ai")
 
 _client = None
 _lock = threading.Lock()
+_conta = 0                         # numero progressivo delle chiamate (non si azzera)
 _registro = deque(maxlen=1000)      # ultime chiamate (in memoria, si azzera al riavvio)
 
 _alias: dict = {}                   # modello richiesto → modello realmente usato (se ritirato)
@@ -172,7 +173,10 @@ def _registra(model_id: str, compito: str | None, uso: dict, secondi: float):
         "t": time.time(), "modello": model_id, "compito": compito or "-",
         "secondi": round(secondi, 1), "costo_usd": _costo_usd(model_id, uso), **uso,
     }
+    global _conta
     with _lock:
+        _conta += 1
+        voce["n"] = _conta
         _registro.append(voce)
     logger.info(
         "AI uso | %s | %s | in=%d out=%d pensiero=%d | ~$%.4f | %.1fs",
@@ -190,13 +194,13 @@ def azzera_uso():
 def numero_chiamate() -> int:
     """Quante chiamate sono state registrate finora (serve a isolare quelle di una singola generazione)."""
     with _lock:
-        return len(_registro)
+        return _conta
 
 
 def chiamate_da(n: int) -> list:
     """Le chiamate registrate dopo la n-esima: compito, modello vero, token, ragionamento, costo, secondi."""
     with _lock:
-        return [dict(v) for v in _registro[n:]]
+        return [dict(v) for v in _registro if v.get("n", 0) > n]
 
 
 def riepilogo_uso(ultime: int | None = None) -> list:
