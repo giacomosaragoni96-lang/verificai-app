@@ -992,3 +992,43 @@ def prompt_correggi_esercizio(materia: str, argomento: str, blocco_latex: str, p
         f"- Nessuna soluzione, risposta o commento. Nessun commento LaTeX (%).\n"
         f"OUTPUT: SOLO il blocco \\subsection*{{...}} corretto, in LaTeX."
     )
+
+
+def prompt_modifica_verifica(
+    materia: str,
+    argomento: str,
+    blocchi: str,
+    richiesta: str,
+    mostra_punteggi: bool = True,
+    punti_totali: int = 100,
+) -> str:
+    """Modifica «al volo» di tutta la verifica da una richiesta scritta dal docente (es. «semplifica il primo esercizio»).
+    blocchi = gli esercizi attuali, ciascuno come \\subsection*{...} seguito dal corpo; le figure sono segnaposto [[FIGURA n]]."""
+    punti = (
+        f"Ogni \\item ha il punteggio nel formato (N pt) sulla stessa riga; la somma di tutti i punti deve restare {punti_totali} pt."
+        if mostra_punteggi else "NON inserire punteggi (N pt)."
+    )
+    return (
+        f"Sei un docente esperto di {materia} e LaTeX. Hai davanti una verifica sull'argomento «{argomento}» e una RICHIESTA "
+        f"del docente per modificarla.\n\n"
+        f"RICHIESTA DEL DOCENTE:\n«{richiesta.strip()}»\n\n"
+        f"VERIFICA ATTUALE (esercizi in LaTeX):\n{blocchi}\n\n"
+        f"COSA FARE:\n"
+        f"- Applica SOLO ciò che il docente chiede. Gli esercizi che la richiesta non riguarda li ricopi IDENTICI, parola per parola.\n"
+        f"- Se chiede di rendere un esercizio più facile o più difficile, o di cambiarne i dati o il tipo, riscrivi quell'esercizio; "
+        f"se chiede di togliere un esercizio, omettilo; se chiede di aggiungerne uno, scrivilo nuovo (sull'argomento della verifica) "
+        f"e mettilo dove richiesto, altrimenti in fondo.\n"
+        f"- Se la richiesta non riguarda la modifica di questa verifica o non è realizzabile, NON modificare nulla e rispondi "
+        f"con la sola riga: NESSUNA_MODIFICA: <motivo in una frase, in italiano>.\n"
+        f"- I segnaposto [[FIGURA n]] sono grafici già pronti: lasciali ESATTAMENTE dove sono, dentro lo stesso esercizio. "
+        f"Se togli l'esercizio, togli anche il suo segnaposto. Se serve un grafico nuovo o diverso, usa la regola dei grafici qui sotto.\n"
+        f"- Numera gli esercizi di nuovo in ordine: \\subsection*{{Esercizio 1: titolo}}, \\subsection*{{Esercizio 2: titolo}}, ...\n"
+        f"- {punti}\n"
+        f"- {REGOLA_SOTTOPUNTI_MODIFICA}\n"
+        f"- {REGOLA_GRAFICO_CURVE}\n"
+        f"- Consegne brevi e richieste brevi, in ordine di difficoltà crescente; dati puliti (numeri interi o frazioni semplici).\n"
+        f"- Nessuna soluzione, risposta o commento. Nessun commento LaTeX (%). Niente preambolo, niente \\begin{{document}}, "
+        f"niente \\end{{document}}.\n\n"
+        f"OUTPUT: TUTTI gli esercizi della verifica modificata, ciascuno come \\subsection*{{...}} seguito dal suo corpo, "
+        f"oppure la riga NESSUNA_MODIFICA. Solo codice LaTeX."
+    )

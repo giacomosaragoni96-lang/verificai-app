@@ -24,7 +24,7 @@ from ai_client import crea_modello, configura as configura_ai, riepilogo_uso, nu
 from sidebar import render_sidebar
 from generation import (
     genera_verifica, analizza_documento_caricato, compila_contesto_generazione,
-    rigenera_singolo_blocco,
+    rigenera_singolo_blocco, modifica_verifica_libera,
 )
 from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
@@ -4917,6 +4917,128 @@ def _zip_kit(elementi: list) -> bytes:
     return buf.getvalue()
 
 
+_CSS_MOD_RAPIDA = """<style>
+html body .stApp div[class*="st-key-mod_rapida"]:not(#vf) {background:linear-gradient(160deg,__ACC__10 0%,__ACC__24 100%);
+  border:1.5px solid __ACC__44;border-radius:18px;padding:1rem 1.15rem 1.05rem;box-shadow:0 8px 22px __ACC__22;margin:.7rem 0 .9rem;}
+html body .stApp div[class*="st-key-mod_rapida"]:not(#vf) .mr-t {font-family:'DM Sans',sans-serif;font-weight:800;font-size:1.02rem;color:__TX__;line-height:1.25;}
+html body .stApp div[class*="st-key-mod_rapida"]:not(#vf) .mr-d {font-family:'DM Sans',sans-serif;font-size:.86rem;color:__T2__;margin:.15rem 0 .55rem;line-height:1.4;}
+html body .stApp div[class*="st-key-mod_rapida"]:not(#vf) textarea {background:#fff !important;border:1.5px solid __ACC__55 !important;border-radius:12px !important;
+  font-size:.95rem !important;min-height:4.2rem !important;}
+html body .stApp div[class*="st-key-mod_rapida"]:not(#vf) textarea:focus {border-color:__ACC__ !important;box-shadow:0 0 0 3px __ACC__22 !important;}
+html body .stApp div[class*="st-key-mod_chip"]:not(#vf) button {min-height:2rem !important;height:auto !important;padding:.25rem .7rem !important;border-radius:999px !important;
+  background:#fff !important;border:1px solid __ACC__55 !important;box-shadow:0 2px 6px rgba(15,23,42,.06) !important;}
+html body .stApp div[class*="st-key-mod_chip"]:not(#vf) button, html body .stApp div[class*="st-key-mod_chip"]:not(#vf) button * {
+  color:__ACC__ !important;-webkit-text-fill-color:__ACC__ !important;font-size:.8rem !important;font-weight:600 !important;}
+html body .stApp div[class*="st-key-mod_chip"]:not(#vf) button:hover {background:__ACC__14 !important;}
+html body .stApp div[class*="st-key-mod_applica"]:not(#vf) button {min-height:2.8rem !important;font-weight:800 !important;border-radius:12px !important;}
+</style>"""
+
+_SUGGERIMENTI_MOD = ("Semplifica il primo esercizio", "Rendi più difficile l'ultimo esercizio", "Aggiungi un esercizio sulle applicazioni")
+
+
+def _imposta_testo_mod(testo: str) -> None:
+    st.session_state["mod_rapida_testo"] = testo
+
+
+def _annulla_mod_rapida() -> None:
+    """Rimette la verifica com'era prima dell'ultima modifica rapida (solo la Fila A: le altre versioni vanno rifatte)."""
+    _s = st.session_state.get("_undo_mod_rapida")
+    if not _s:
+        return
+    st.session_state.verifiche["A"].clear()
+    st.session_state.verifiche["A"].update(_s["vA"])
+    st.session_state.review_preamble = _s["pre"]
+    st.session_state.review_blocks = _s["blocchi"]
+    try:
+        _imm, _ = pdf_to_images_bytes(_s["vA"].get("pdf"))
+        st.session_state.preview_images = _imm or []
+    except Exception:
+        st.session_state.preview_images = []
+    st.session_state["final_pagina"] = 0
+    _salva_variante_storico("latex_a", _s["vA"].get("latex"))
+    st.session_state.pop("_undo_mod_rapida", None)
+
+
+def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
+    """Box sotto l'anteprima: il docente scrive cosa cambiare («semplifica il primo esercizio») e l'AI rifà la verifica."""
+    mat_str, arg_str = gp.get("materia", ""), gp.get("argomento", "Verifica")
+    mostra_punteggi, punti_totali, con_griglia = gp.get("mostra_punteggi", True), gp.get("punti_totali", 100), gp.get("con_griglia", False)
+    if st.session_state.pop("_mod_rapida_pulisci", False):
+        st.session_state["mod_rapida_testo"] = ""
+    _tetto, _usate = _tetto_modifiche(), _modifiche_usate()
+    _finite = _tetto is not None and _usate >= _tetto
+    with st.container(key="mod_rapida"):
+        st.markdown(_CSS_MOD_RAPIDA.replace("__ACC__", T["accent"]).replace("__TX__", T["text"]).replace("__T2__", T["text2"]) +
+                    '<div class="mr-t">✨ Vuoi cambiare qualcosa? Chiedilo</div>'
+                    '<div class="mr-d">Scrivi cosa modificare e la verifica si rifà subito: niente da ricominciare.</div>',
+                    unsafe_allow_html=True)
+        st.text_area("Cosa vuoi cambiare?", key="mod_rapida_testo", label_visibility="collapsed", height=90,
+                     placeholder="Es. Semplifica il primo esercizio · Togli l'ultimo esercizio · Aggiungi un problema con una situazione reale",
+                     disabled=_finite)
+        _cc = st.columns(len(_SUGGERIMENTI_MOD), gap="small")
+        for _i, (_col, _s) in enumerate(zip(_cc, _SUGGERIMENTI_MOD)):
+            with _col:
+                with st.container(key=f"mod_chip_{_i}"):
+                    st.button(_s, key=f"mod_chip_btn_{_i}", use_container_width=True, on_click=_imposta_testo_mod, args=(_s,),
+                              disabled=_finite)
+        with st.container(key="mod_applica"):
+            _applica = st.button("Applica la modifica", key="mod_rapida_applica", type="primary", use_container_width=True,
+                                 icon=":material/auto_fix_high:", disabled=_finite)
+        if _tetto is not None:
+            st.caption(f"Modifiche con l'AI su questa verifica: {_usate} di {_tetto}")
+        if _finite:
+            st.info("Hai usato tutte le modifiche con l'AI di questa verifica. Puoi ancora cambiare gli esercizi a mano da «Modifica gli esercizi».")
+    if st.session_state.get("_undo_mod_rapida"):
+        st.button("↩ Annulla l'ultima modifica", key="mod_rapida_annulla", on_click=_annulla_mod_rapida, type="tertiary")
+    _msg = st.session_state.pop("_mod_rapida_msg", None)
+    if _msg:
+        st.info(_msg)
+
+    if not _applica:
+        return
+    _richiesta = (st.session_state.get("mod_rapida_testo") or "").strip()
+    if not _richiesta:
+        st.warning("Scrivi cosa vuoi cambiare, oppure scegli uno dei suggerimenti.")
+        return
+    if _finite or not vA.get("latex"):
+        return
+    _prima = {"vA": dict(vA), "pre": st.session_state.get("review_preamble"),
+              "blocchi": [dict(b) for b in (st.session_state.get("review_blocks") or [])]}
+    _conta_modifica(mod_id)
+    try:
+        with st.spinner("Modifico la verifica… di solito ci vuole circa mezzo minuto"):
+            _res = modifica_verifica_libera(crea_modello(mod_id).per("modifica"), mat_str, arg_str, vA["latex"], _richiesta,
+                                            mostra_punteggi, punti_totali)
+            if _res.get("ok"):
+                st.session_state.review_preamble = _res["preambolo"]
+                st.session_state.review_blocks = _res["blocchi"]
+                _pdf, _err = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali, riscala_totale=True)
+            else:
+                _pdf, _err = None, None
+    except Exception as _e:
+        logger.warning("modifica rapida non riuscita: %s", _e)
+        _res, _pdf, _err = {"ok": False, "messaggio": ""}, None, str(_e)
+    if _res.get("ok") and _pdf:
+        st.session_state["_undo_mod_rapida"] = _prima
+        st.session_state["final_pagina"] = 0
+        _salva_variante_storico("latex_a", st.session_state.verifiche["A"].get("latex"))
+        st.session_state["_mod_rapida_pulisci"] = True
+        st.toast("Verifica modificata!", icon="✅")
+        st.rerun()
+    # qualcosa non è andato: la verifica torna com'era
+    st.session_state.verifiche["A"].clear()
+    st.session_state.verifiche["A"].update(_prima["vA"])
+    st.session_state.review_preamble = _prima["pre"]
+    st.session_state.review_blocks = _prima["blocchi"]
+    if _res.get("ok"):
+        _mostra_errore_pdf(_err, "questa verifica")
+    elif _res.get("messaggio"):
+        st.warning(_res["messaggio"])
+    else:
+        _mostra_errore("Non sono riuscito a modificare la verifica", _err or "errore sconosciuto",
+                       consiglio="Riprova tra un momento; la verifica è rimasta com'era.")
+
+
 def _render_stage_final():
     gp   = st.session_state.gen_params
     vA   = st.session_state.verifiche["A"]
@@ -5123,6 +5245,8 @@ def _render_stage_final():
             )
         else:
             st.caption("Anteprima non disponibile.")
+        if vA.get("pdf") and vA.get("latex"):
+            _box_modifica_rapida(gp, vA, mod_id)
         if vA.get("pdf") and not _mini_gate:
             _dl(
                 label=f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}",

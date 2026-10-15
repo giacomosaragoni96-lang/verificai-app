@@ -100,6 +100,11 @@ contato in `usage_events` (tipo `modifica`, per `verifica_id`) così riaprire la
 contatore della sessione. Eliminare esercizi, cambiare i punteggi e annullare non contano. L'anteprima del singolo esercizio col grafico è
 `latex_utils.anteprima_esercizio_png` (compila solo quell'esercizio, in cache per testo).
 
+Modifica rapida in FINAL (box «Vuoi cambiare qualcosa? Chiedilo», sotto l'anteprima, sopra «Scarica PDF»): `main._box_modifica_rapida` (solo interfaccia),
+logica in `generation.modifica_verifica_libera` (senza streamlit; i grafici escono come segnaposto `[[FIGURA n]]` e rientrano dopo), prompt in
+`prompts.prompt_modifica_verifica`. Conta nel tetto `MODIFICHE_PER_VERIFICA`, rifà il PDF con `_ricompila_verifica_a(riscala_totale=True)`, aggiorna `latex_a`
+nello storico; se qualcosa va storto la verifica torna com'era, e «Annulla l'ultima modifica» ripristina la Fila A (le altre versioni vanno rifatte).
+
 Punteggi: il LaTeX salvato tiene «(N pt)» accanto a ogni richiesta (servono per contare, riscalare, modificare); nel PDF (`latex_utils.formatta_punti`,
 solo se c'è la «% GRIGLIA») e nel Word si tolgono e restano solo nella tabella in fondo. Le caselle V/F vanno a destra a fine riga (`\hfill`; nel Word tabulazione a destra).
 
