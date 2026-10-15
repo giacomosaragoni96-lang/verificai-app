@@ -796,6 +796,9 @@ else:
         logger.error(f"Errore caricamento abbonamento: {e}")
         ENT = calcola_entitlements(None, _verifiche_mese, _is_admin, _ASSAGGIO)
 
+# Strumenti e dettagli tecnici dell'admin: solo se è davvero lui, non quando guarda l'app come un altro utente
+_admin_vista = _is_admin and not _SIM
+st.session_state["_admin_diagnostica"] = _admin_vista
 # l'assaggio sceglie il modello come il Pro; l'admin si riconosce da _is_admin
 st.session_state.piano_utente = "pro" if ENT.assaggio else (ENT.piano if ENT.piano != "admin" else "free")
 _limite = ENT.limite_raggiunto
@@ -3586,13 +3589,13 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 .element-container:has(.btn-outline-accent-marker) + .element-container button {{
   background: transparent !important;
   background-color: transparent !important;
-  color: {T["accent"]} !important;
-  -webkit-text-fill-color: {T["accent"]} !important;
-  border: 1.5px solid {T["accent"]} !important;
+  color: {T["text"]} !important;
+  -webkit-text-fill-color: {T["text"]} !important;
+  border: 1.5px solid {T["border2"]} !important;
   border-radius: 10px !important;
-  font-weight: 700 !important;
-  font-size: .88rem !important;
-  min-height: 48px !important;
+  font-weight: 600 !important;
+  font-size: .86rem !important;
+  min-height: 42px !important;
   box-shadow: none !important;
   color-scheme: light !important;
 }}
@@ -3763,62 +3766,12 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
     idx = st.session_state.review_sel_idx
     if idx >= n_blocks: idx = 0
 
-    # ◀ ▶ per scorrere gli esercizi; la tendina resta per saltare a uno qualsiasi
-    st.markdown('<style>html body .stApp .st-key-rev_prec button, html body .stApp .st-key-rev_succ button'
-                '{min-height:2.5rem !important;height:2.5rem !important;padding:0 !important;font-size:.95rem !important;}</style>',
-                unsafe_allow_html=True)
-    _rv_p, _rv_s, _rv_n = st.columns([1, 7, 1], vertical_alignment="bottom", gap="small")
-    with _rv_p:
-        if st.button("◀", key="rev_prec", use_container_width=True, disabled=(idx <= 0),
-                     help="Esercizio precedente"):
-            st.session_state["review_selectbox"] = labels[idx - 1]
-            st.session_state.review_sel_idx = idx - 1
-            st.rerun()
-    with _rv_n:
-        if st.button("▶", key="rev_succ", use_container_width=True, disabled=(idx >= n_blocks - 1),
-                     help="Esercizio successivo"):
-            st.session_state["review_selectbox"] = labels[idx + 1]
-            st.session_state.review_sel_idx = idx + 1
-            st.rerun()
-    with _rv_s:
-        sel_label = st.selectbox(
-            "Esercizio da modificare",
-            labels, index=idx, key="review_selectbox"
-        )
+    sel_label = st.selectbox(
+        "Esercizio da modificare",
+        labels, index=idx, key="review_selectbox"
+    )
     idx = labels.index(sel_label)
     st.session_state.review_sel_idx = idx
-
-    # ── Badge punteggio totale calcolato live ─────────────────────────────────
-    if mostra_punteggi:
-        _latex_live = reconstruct_latex(
-            st.session_state.review_preamble,
-            st.session_state.review_blocks,
-        )
-        _totale_live = conta_punti_latex(_latex_live)
-        _ok   = _totale_live == punti_totali
-        _diff = _totale_live - punti_totali
-        _icon  = "✅" if _ok else ("⬆️" if _diff > 0 else "⬇️")
-        _color = T["success"] if _ok else T["warn"]
-        _label = f"{_totale_live} pt" if _ok else f"{_totale_live} pt ({_diff:+d} pt rispetto al target)"
-        st.markdown(
-            f'<div style="display:flex;align-items:center;gap:10px;'
-            f'background:{_color}18;border:1.5px solid {_color}44;'
-            f'border-radius:10px;padding:.5rem 1rem;margin-bottom:.6rem;">'
-            f'<span style="font-size:1rem;">{_icon}</span>'
-            f'<span style="font-family:\'DM Sans\',sans-serif;font-size:.88rem;'
-            f'font-weight:700;color:{_color};">'
-            f'Punteggio totale calcolato: <strong>{_label}</strong>'
-            f'</span>'
-            f'<span style="font-size:.8rem;color:{T["muted"]};margin-left:auto;">'
-            f'Target: {punti_totali} pt'
-            f'</span></div>',
-            unsafe_allow_html=True,
-        )
-        if not _ok:
-            logger.info(
-                "STAGE_REVIEW: totale live=%d pt, target=%d pt, diff=%+d pt",
-                _totale_live, punti_totali, _diff,
-            )
 
     block = blocks[idx]
     title = block["title"]
@@ -3842,7 +3795,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             with st.spinner("Preparo l'anteprima con il grafico…"):
                 _img_es = _immagine_esercizio(title, body)
         if _img_es:
-            st.image(_img_es, use_container_width=True)
+            st.image(_img_es, width=520)
         else:
             katex_html = _make_katex_html(title, body, T)
             est_height = max(170, min(550, 120 + len(body) // 4))
@@ -4024,14 +3977,16 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                      expanded=(st.session_state.get("_conf_elimina") == idx)):
         _ea_c1, _ea_c2 = st.columns(2, gap="small")
         with _ea_c1:
+            st.markdown(_marker, unsafe_allow_html=True)
             aggiungi = st.button(
-                "Aggiungi un esercizio", key=f"aggiungi_{idx}", type="tertiary",
+                "Aggiungi un esercizio", key=f"aggiungi_{idx}", use_container_width=True,
                 icon=":material/add:", disabled=(n_blocks >= 15) or _finite,
                 help="Crea un esercizio nuovo in fondo e ridistribuisce i punti.",
             )
         with _ea_c2:
+            st.markdown(_marker, unsafe_allow_html=True)
             elimina = st.button(
-                "Elimina questo esercizio", key=f"elimina_{idx}", type="tertiary",
+                "Elimina questo esercizio", key=f"elimina_{idx}", use_container_width=True,
                 icon=":material/delete:", disabled=(n_blocks <= 1),
                 help="Toglie questo esercizio e ridistribuisce i punti sugli altri.",
             )
@@ -4408,97 +4363,123 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 _mostra_errore("Non sono riuscito a cambiare questo esercizio", _ct_e)
 
 
-    # ── Cambia i punteggi — una tabella unica, totale sempre ribilanciato ─────
+    # ── Cambia i punteggi — un numero per esercizio; dentro l'esercizio i punti restano in proporzione ──
     if mostra_punteggi and n_blocks > 0:
         with st.expander("⚖️ Cambia i punteggi", expanded=False):
-            _righe, _dati = [], []          # _righe[k] = (esercizio, sottopunto)
-            for _i, _b in enumerate(st.session_state.review_blocks):
-                _items_rc = parse_items_from_block(_b["body"], _b.get("title", ""))
-                _tit = _clean_title(re.sub(r"\s*\(\d+\s*pt\)", "", _b["title"]))
-                for _j, (_lbl, _short, _pt) in enumerate(_items_rc):
-                    _testo = (_short or "").strip()
-                    if _testo in ("", "[formula]"):
-                        # riga fatta solo di formula: "[formula]" non dice nulla al docente
-                        _testo = "(formula)" if _pt else "(opzione di risposta)"
-                    _righe.append((_i, _j))
-                    _dati.append({
-                        "Esercizio": f"{_i+1}. {_tit[:30]}" if _j == 0 else "",
-                        "Richiesta": (f"{_lbl} {_testo[:70]}…" if len(_testo) > 70
-                                      else f"{_lbl} {_testo}").strip(),
-                        "Punti": int(_pt),
-                    })
+            _per_es = [parse_items_from_block(_b["body"], _b.get("title", "")) for _b in st.session_state.review_blocks]
+            _pt_sub = [[int(round(float(_pt))) for (_l, _s, _pt) in _its] for _its in _per_es]   # punti di ogni richiesta
+            _tot_es = [sum(_p) for _p in _pt_sub]                                                  # punti di ogni esercizio
+            _min_es = [sum(1 for _v in _p if _v > 0) for _p in _pt_sub]                            # almeno 1 pt a richiesta
 
-            if not _dati:
+            if not any(_tot_es):
                 st.caption("Nessun punteggio da modificare in questa verifica.")
             else:
                 st.markdown(
-                    f'<div style="font-size:.88rem;color:{T["text2"]};margin-bottom:.4rem;'
-                    f'font-family:DM Sans,sans-serif;">Cambia i numeri nella colonna <b>Punti</b>. '
-                    f'Il totale deve fare <b>{punti_totali} pt</b>: se non torna, '
-                    f'lo ribilancio io quando applichi.</div>',
+                    f'<div style="font-size:.88rem;color:{T["text2"]};margin-bottom:.5rem;font-family:DM Sans,sans-serif;">'
+                    f'Scegli quanti punti vale ogni <b>esercizio</b>: dentro ogni esercizio le richieste restano in proporzione. '
+                    f'Il totale deve fare <b>{punti_totali} pt</b>.</div>',
                     unsafe_allow_html=True,
                 )
-                _firma = abs(hash(tuple((d["Esercizio"], d["Richiesta"], d["Punti"]) for d in _dati)))
-                _tab = st.data_editor(
-                    _dati,
-                    key=f"rc_editor_{_firma}",   # nuova chiave se i punti cambiano da fuori
-                    hide_index=True,
-                    use_container_width=True,
-                    disabled=["Esercizio", "Richiesta"],
-                    column_config={
-                        "Esercizio": st.column_config.TextColumn("Esercizio", width="medium"),
-                        "Richiesta": st.column_config.TextColumn("Richiesta", width="large"),
-                        "Punti": st.column_config.NumberColumn(
-                            "Punti", min_value=0, max_value=punti_totali, step=1,
-                            format="%d", required=True, width="small"),
-                    },
-                )
-                _tab_righe = _tab.to_dict("records") if hasattr(_tab, "to_dict") else list(_tab)
-
-                def _intero(v):
-                    try:
-                        return max(0, int(v))
-                    except (TypeError, ValueError):
-                        return 0
-
-                _nuovi = [_intero(r.get("Punti")) for r in _tab_righe]
-                _totale_rc = sum(_nuovi)
-                _per_es_sub = {}
-                for (_i, _j), _v in zip(_righe, _nuovi):
-                    _per_es_sub[_i] = _per_es_sub.get(_i, 0) + _v
-                _sub_txt = " · ".join(f"Es. {_i+1}: {_p} pt" for _i, _p in sorted(_per_es_sub.items()))
-
-                if _totale_rc == punti_totali:
-                    st.success(f"Totale: {_totale_rc} pt — perfetto.   ({_sub_txt})", icon="✅")
+                _firma_pt = abs(hash(tuple(_tot_es)))          # nuova chiave se i punti cambiano da fuori
+                _colonne = st.columns(min(3, n_blocks), gap="small")
+                _nuovi_es = []
+                for _i, _t in enumerate(_tot_es):
+                    with _colonne[_i % len(_colonne)]:
+                        if _t == 0:
+                            _nuovi_es.append(0)
+                            continue
+                        _nuovi_es.append(int(st.number_input(
+                            f"Esercizio {_i + 1}", min_value=max(1, _min_es[_i]), max_value=punti_totali,
+                            value=min(punti_totali, max(_t, max(1, _min_es[_i]))), step=1, key=f"pt_es_{_firma_pt}_{_i}",
+                        )))
+                _somma_es = sum(_nuovi_es)
+                _quadra = (_somma_es == punti_totali)
+                if _quadra:
+                    st.success(f"Totale {_somma_es} pt — perfetto.", icon="✅")
                 else:
+                    _delta = punti_totali - _somma_es
                     st.warning(
-                        f"Totale: {_totale_rc} pt invece di {punti_totali}. "
-                        f"Premendo «Applica» ribilancio tutto a {punti_totali} pt in proporzione.   ({_sub_txt})",
+                        f"Totale {_somma_es} pt: {'mancano' if _delta > 0 else 'sono in più'} {abs(_delta)} pt rispetto a {punti_totali}. "
+                        f"Aggiusta i numeri, oppure premi «Ribilancia e applica» e ci penso io.",
                         icon="⚖️",
                     )
 
-                if st.button("✅ Applica punteggi", key="rc_applica",
-                             use_container_width=True, type="primary"):
-                    _finali = _nuovi if _totale_rc == punti_totali else bilancia_punti(_nuovi, punti_totali)
-                    _applica_punti_a_blocchi(_righe, _finali)
-
+                def _applica_totali(nuovi_es: list) -> bool:
+                    """Porta ogni esercizio al suo nuovo totale (richieste in proporzione) e rifà il PDF."""
+                    righe, prima, dopo = [], [], []
+                    for _i, _p in enumerate(_pt_sub):
+                        if not _p:
+                            continue
+                        _nv = _p if int(nuovi_es[_i]) == sum(_p) else bilancia_punti(_p, int(nuovi_es[_i]))
+                        for _j, (_a, _b) in enumerate(zip(_p, _nv)):
+                            righe.append((_i, _j)); prima.append(_a); dopo.append(_b)
+                    st.session_state["_punti_prima"] = {"righe": righe, "punti": prima}
+                    _applica_punti_a_blocchi(righe, dopo)
                     with st.spinner("Ricompilazione PDF con i nuovi punteggi…"):
                         _pdf_rc, _err_rc = _ricompila_verifica_a(
                             mostra_punteggi, con_griglia, punti_totali, rileggi_blocchi=True,
                         )
-                    if _pdf_rc:
-                        for _kk in list(st.session_state.keys()):
-                            if _kk.startswith("rc_editor_") or re.match(r"^item_pt_\d+_\d+$", _kk):
-                                del st.session_state[_kk]
-                        st.session_state.pop("recalibra_pts", None)
-                        st.toast(
-                            "✅ Punteggi applicati" + ("" if _totale_rc == punti_totali
-                                                       else f" (ribilanciati a {punti_totali} pt)"),
-                            icon="⚖️",
-                        )
-                        st.rerun()
-                    else:
+                    if not _pdf_rc:
                         _mostra_errore_pdf(_err_rc, "questa verifica")
+                        return False
+                    for _kk in list(st.session_state.keys()):
+                        if _kk.startswith(("pt_es_", "rc_editor_")) or re.match(r"^item_pt_\d+_\d+$", _kk):
+                            del st.session_state[_kk]
+                    st.session_state.pop("recalibra_pts", None)
+                    return True
+
+                _bp1, _bp2 = st.columns(2, gap="small")
+                with _bp1:
+                    if _quadra:
+                        _applica = st.button("✅ Applica punteggi", key="rc_applica", use_container_width=True, type="primary",
+                                             disabled=(_nuovi_es == _tot_es))
+                    else:
+                        _applica = st.button("Ribilancia e applica", key="rc_ribilancia", use_container_width=True, type="primary")
+                with _bp2:
+                    _annulla_pt = st.button("↩️ Annulla ultimi punteggi", key="rc_annulla", use_container_width=True,
+                                            disabled=("_punti_prima" not in st.session_state))
+                if _applica:
+                    _finali_es = _nuovi_es if _quadra else bilancia_punti(_nuovi_es, punti_totali)
+                    if _applica_totali(_finali_es):
+                        st.toast("✅ Punteggi applicati", icon="⚖️")
+                        st.rerun()
+                if _annulla_pt:
+                    _pp = st.session_state.pop("_punti_prima", None)
+                    if _pp:
+                        _applica_punti_a_blocchi(_pp["righe"], _pp["punti"])
+                        _pdf_an, _err_an = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali, rileggi_blocchi=True)
+                        if _pdf_an:
+                            for _kk in list(st.session_state.keys()):
+                                if _kk.startswith(("pt_es_", "rc_editor_")) or re.match(r"^item_pt_\d+_\d+$", _kk):
+                                    del st.session_state[_kk]
+                            st.session_state.pop("recalibra_pts", None)
+                            st.toast("↩️ Punteggi precedenti ripristinati", icon="↩️")
+                            st.rerun()
+                        else:
+                            _mostra_errore_pdf(_err_an, "questa verifica")
+
+        # ── Totale calcolato in questo momento, sotto la tendina ─────────────────
+        _latex_live = reconstruct_latex(st.session_state.review_preamble, st.session_state.review_blocks)
+        _totale_live = conta_punti_latex(_latex_live)
+        _ok   = _totale_live == punti_totali
+        _diff = _totale_live - punti_totali
+        _icon  = "✅" if _ok else ("⬆️" if _diff > 0 else "⬇️")
+        _color = T["success"] if _ok else T["warn"]
+        _label = f"{_totale_live} pt" if _ok else f"{_totale_live} pt ({_diff:+d} pt rispetto al target)"
+        st.markdown(
+            f'<div style="display:flex;align-items:center;gap:10px;'
+            f'background:{_color}18;border:1.5px solid {_color}44;'
+            f'border-radius:10px;padding:.5rem 1rem;margin:.3rem 0 .6rem;">'
+            f'<span style="font-size:1rem;">{_icon}</span>'
+            f'<span style="font-family:\'DM Sans\',sans-serif;font-size:.88rem;'
+            f'font-weight:700;color:{_color};">'
+            f'Punteggio totale calcolato: <strong>{_label}</strong>'
+            f'</span>'
+            f'<span style="font-size:.8rem;color:{T["muted"]};margin-left:auto;">'
+            f'Target: {punti_totali} pt'
+            f'</span></div>',
+            unsafe_allow_html=True,
+        )
 
     # ── PDF completo: una pagina alla volta, chiuso di default ─────────────────────
     with st.expander("📄 Vedi il PDF completo", expanded=False):
@@ -4774,7 +4755,7 @@ def _render_stage_final():
     )
 
     # ── Anteprima: una pagina alla volta, con ◀ ▶ (così il kit sotto resta vicino) ──────────
-    _zoom = bool(st.session_state.get("final_zoom", False))
+    _zoom = False
     _, _col_prev, _ = st.columns([0.15, 3, 0.15] if _zoom else [1, 3, 1])
     with _col_prev:
         _imgs_f = st.session_state.get("preview_images") or []
@@ -4794,9 +4775,6 @@ def _render_stage_final():
                         'window.open(URL.createObjectURL(new Blob([a],{type:"application/pdf"})),"_blank");};</script>',
                         height=52,
                     )
-            st.button("Riduci anteprima" if _zoom else "Ingrandisci anteprima", key="final_zoom_btn", type="tertiary",
-                      icon=":material/zoom_out_map:" if not _zoom else ":material/zoom_in_map:",
-                      on_click=lambda: st.session_state.update(final_zoom=not st.session_state.get("final_zoom", False)))
             if _n_tot > 1:
                 def _vai_pagina(delta: int, _n=_n_tot):
                     st.session_state["final_pagina"] = min(max(int(st.session_state.get("final_pagina", 0)) + delta, 0), _n - 1)
@@ -5431,13 +5409,13 @@ def _render_stage_final():
 
 
     # Solo admin: sorgente LaTeX della Fila A, da copiare per diagnosticare grafici o impaginazione
-    if _is_admin and vA.get("latex"):
+    if _admin_vista and vA.get("latex"):
         with st.expander("🔧 Strumenti admin — LaTeX sorgente (Fila A)", expanded=False):
             st.caption("Copia da qui il LaTeX se un grafico o l'impaginazione non vanno.")
             st.code(vA["latex"], language="latex")
 
     # Solo admin: tutto quello che serve per confrontare i modelli (prompt, risposta grezza, passaggi automatici, consumi)
-    if _is_admin and st.session_state.get("_debug_gen"):
+    if _admin_vista and st.session_state.get("_debug_gen"):
         _d = st.session_state["_debug_gen"]
         with st.expander("🔧 Strumenti admin — Debug generazione", expanded=False):
             _righe_ch = [f"- {c['compito']} · {c['modello']} · {c['secondi']} s · in {c['input']} · out {c['output']} · ragionamento {c['pensiero']} · ${c['costo_usd']:.4f}"
@@ -5734,7 +5712,7 @@ if not _share_view_active:
 
         render_upgrade(_esci_da_upgrade, st.session_state.get("_upgrade_funzione"), _gia_usato,
                        e_pro=(ENT.piano == "pro" and not _SIM), email=getattr(st.session_state.utente, "email", None),
-                       on_attiva=_attiva_codice, e_admin=_is_admin, invito=_INVITO)
+                       on_attiva=_attiva_codice, e_admin=_admin_vista, invito=_INVITO)
     elif _current == STAGE_BANCA:
         if _is_admin:
             def _esci_dalla_banca():

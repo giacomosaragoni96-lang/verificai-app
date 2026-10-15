@@ -328,6 +328,23 @@ def _latex_a_html(body: str) -> str:
     t = re.sub(r"\\begin\{tabular\}(?:\{[^}]*\})?(.*?)\\end\{tabular\}", _tabella_html, t,
                flags=re.DOTALL)
 
+    # 4b. \mbox{…} (tiene unita la riga «☐ V ☐ F»): nell'anteprima si toglie, restando il contenuto
+    while True:
+        _i = t.find("\\mbox{")
+        if _i == -1:
+            break
+        _liv, _j = 0, _i + len("\\mbox")
+        for _k in range(_j, len(t)):
+            if t[_k] == "{":
+                _liv += 1
+            elif t[_k] == "}":
+                _liv -= 1
+                if _liv == 0:
+                    t = t[:_i] + t[_j + 1:_k] + t[_k + 1:]
+                    break
+        else:                       # graffa non chiusa: si toglie solo il comando
+            t = t[:_i] + t[_j + 1:]
+
     # 5. Formattazione testo
     t = re.sub(r"\\textbf\{([^}]*)\}", r"<strong>\1</strong>", t)
     t = re.sub(r"\\textit\{([^}]*)\}", r"<em>\1</em>", t)
