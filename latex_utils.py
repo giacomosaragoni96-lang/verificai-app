@@ -2761,9 +2761,18 @@ _RE_PUNTI_ALTROVE = re.compile(r"[ \t]*(?<!\{)\((\d+(?:[.,]\d+)?)\s*pt\)")
 # Caselle V/F (scritte dall'AI in più forme, anche con «\\», «\par» o «\hfill» davanti): si riscrivono sempre uguali, a destra.
 _VF_CORPO = (r"\$\\square\$\s*(?:\\textbf\{V\}|V)\s*(?:\$\\quad\\square\$|\\quad\s*\$\\square\$|\\qquad\s*\$\\square\$|~+\s*\$\\square\$|\$\\square\$)"
              r"\s*(?:\\textbf\{F\}|F)")
-_RE_VF_FINE = re.compile(
-    r"(?:\s|\\\\(?:\[[^\]]*\])?|\\par\b|\\hfill\b|\\quad\b|\\qquad\b|\\hspace\*?\{[^}]*\})*"
-    r"(?:\\mbox\{\s*(" + _VF_CORPO + r")\s*\}|(" + _VF_CORPO + r"))")
+_VF_SEP = r"(?:\s|\\\\(?:\[[^\]]*\])?|\\par\b|\\hfill\b|\\quad\b|\\qquad\b|\\hspace\*?\{[^}]*\})*"
+_VF_BOX = r"(?:\\mbox\{\s*(" + _VF_CORPO + r")\s*\}|(" + _VF_CORPO + r"))"
+_VF_PT = r"\(\s*(\d+(?:[.,]\d+)?)\s*pt\s*\)"
+_RE_VF_FINE = re.compile(_VF_SEP + _VF_BOX)
+# punti + caselle sulla stessa richiesta (nell'anteprima del singolo esercizio, senza tabella): i punti in una colonna fissa a destra,
+# subito prima delle caselle, così sono allineati in tutte le affermazioni
+_RE_VF_PUNTI_PRIMA = re.compile(_VF_SEP + _VF_PT + _VF_SEP + _VF_BOX)     # gruppi: 1 punti, 2-3 caselle
+_RE_VF_PUNTI_DOPO = re.compile(_VF_SEP + _VF_BOX + _VF_SEP + _VF_PT)      # gruppi: 1-2 caselle, 3 punti
+
+
+def _vf_con_punti(punti: str, caselle: str) -> str:
+    return " \\hspace*{\\fill}\\makebox[1.8cm][r]{\\textbf{(" + punti + " pt)}}\\quad\\mbox{" + caselle + "}"
 
 
 def formatta_punti(latex: str) -> str:
@@ -2772,16 +2781,18 @@ def formatta_punti(latex: str) -> str:
     grassetto, in mezzo alla riga (es. prima delle caselle V/F) è staccato e in grassetto.
     Solo per il PDF: il LaTeX salvato resta con «(N pt)», che serve per contare e riscalare i punti.
     """
+    # le caselle V/F stanno in fondo alla riga, a destra; se non ci stanno vanno a capo, sempre a destra
+    # (\hspace*{\fill} e non \hfill: quest'ultimo sparisce a inizio riga e le caselle resterebbero a sinistra)
+    latex = _RE_VF_FINE.sub(lambda m: " \\hspace*{\\fill}\\mbox{" + (m.group(1) or m.group(2)) + "}", latex)
     if "% GRIGLIA" in latex:
         # con la tabella dei punteggi in fondo i punti accanto alle richieste sarebbero una ripetizione: si tolgono (solo nel PDF)
         latex = _RE_PUNTI_FINE.sub("", latex)
         latex = _RE_PUNTI_ALTROVE.sub("", latex)
     else:
+        latex = _RE_VF_PUNTI_PRIMA.sub(lambda m: _vf_con_punti(m.group(1), m.group(2) or m.group(3)), latex)
+        latex = _RE_VF_PUNTI_DOPO.sub(lambda m: _vf_con_punti(m.group(3), m.group(1) or m.group(2)), latex)
         latex = _RE_PUNTI_FINE.sub(lambda m: f" \\hspace*{{0.6em plus 1fill}}\\mbox{{\\textbf{{({m.group(1)} pt)}}}}", latex)
         latex = _RE_PUNTI_ALTROVE.sub(lambda m: f"\\quad\\mbox{{\\textbf{{({m.group(1)} pt)}}}}", latex)
-    # le caselle V/F stanno in fondo alla riga, a destra; se non ci stanno vanno a capo, sempre a destra
-    # (\hspace*{\fill} e non \hfill: quest'ultimo sparisce a inizio riga e le caselle resterebbero a sinistra)
-    latex = _RE_VF_FINE.sub(lambda m: " \\hspace*{\\fill}\\mbox{" + (m.group(1) or m.group(2)) + "}", latex)
     return _virgolette_italiane(latex)
 
 
