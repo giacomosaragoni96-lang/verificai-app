@@ -5,6 +5,7 @@ Le domande e la pulizia delle risposte stanno in questionario.py. Anonimo: non s
 import logging
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from questionario import SEZIONI, pulisci_risposte, riga_da_inserire
 
@@ -25,6 +26,7 @@ def render_questionario(T: dict, supabase_admin) -> None:
         )
         if st.session_state.get("_questionario_inviato"):
             st.success("Grazie mille! Le tue risposte ci aiutano a migliorare VerificAI.", icon="✅")
+            components.html('<script>try{window.parent.localStorage.setItem("vf_feedback_ok","1");}catch(e){}</script>', height=0)   # in questo browser il riquadro del feedback non si mostra più
             st.markdown('<a href="/" target="_self" style="color:' + T["accent"] + ';font-weight:700;">← Torna a VerificAI</a>',
                         unsafe_allow_html=True)
             return
