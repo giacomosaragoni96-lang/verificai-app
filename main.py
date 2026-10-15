@@ -30,7 +30,7 @@ from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
     prompt_rubrica_valutazione, prompt_variante_rapida, istruzione_livello_esercizio,
     prompt_nuovo_esercizio,
-    REGOLA_SOTTOPUNTI_MODIFICA, REGOLA_GRAFICO_CURVE,
+    REGOLA_SOTTOPUNTI_MODIFICA, REGOLA_GRAFICO_CURVE, struttura_verifica,
 )
 from docx_export import latex_to_docx_modificabile, _rubrica_to_docx
 from scheda import genera_scheda
@@ -591,7 +591,8 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
 
 # ── Prompt costruzione esercizi ────────────────────────────────────────────────
 
-def _build_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_punteggi, primo_base=False):
+def _build_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_punteggi, primo_base=False,
+                           eccellenza=False, argomento="", struttura_tipo=False):
     n_liberi = max(0, num_totale - len(esercizi_custom))
     righe = [
         f"STRUTTURA ESERCIZI — REGOLA ASSOLUTA:",
@@ -599,11 +600,22 @@ def _build_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_pun
         f"Ogni esercizio è \\subsection*{{Esercizio N: Titolo}}.",
     ]
     immagini = []
+    # Senza esercizi scelti dal docente si segue la struttura-tipo (ruoli e punti diversi per ogni esercizio); altrimenti il vecchio schema
+    struttura = None
+    if struttura_tipo and not esercizi_custom and num_totale > 0:
+        struttura = struttura_verifica(num_totale, punti_totali if punti_totali else 100, primo_base, eccellenza, argomento)
+        righe.append("STRUTTURA-TIPO DELLA VERIFICA — segui i ruoli e, se ci sono i punti, anche i punti di ogni esercizio:")
+        for i, v in enumerate(struttura, 1):
+            righe.append(f"  - Esercizio {i}: {v['descrizione']}" + (f" — circa {v['punti']} pt" if mostra_punteggi else ""))
+        righe.append("ORDINE: difficoltà crescente (l'esercizio per l'eccellenza, se c'è, va per ultimo).")
     if mostra_punteggi and num_totale > 0:
-        pts_b = punti_totali // num_totale
-        resto = punti_totali - pts_b * num_totale
-        pts   = [pts_b] * num_totale
-        if resto: pts[0] += resto
+        if struttura:
+            pts = [v["punti"] for v in struttura]
+        else:
+            pts_b = punti_totali // num_totale
+            resto = punti_totali - pts_b * num_totale
+            pts   = [pts_b] * num_totale
+            if resto: pts[0] += resto
         righe.append(
             f"DISTRIBUZIONE PUNTI — VINCOLO TASSATIVO:\n"
             f"Il punteggio totale della verifica DEVE essere ESATTAMENTE {punti_totali} pt.\n"
@@ -611,7 +623,7 @@ def _build_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_pun
             f"dell'esercizio (es. NO '(20pt)' dopo 'Esercizio 1: ...').\n"
             f"Assegna i punti SOLO ai singoli \\item o sottopunti (a), b), c) ecc.) in modo che\n"
             f"la somma sia ESATTAMENTE {punti_totali} pt. Non aggiungere, non togliere nemmeno 1 pt.\n"
-            f"Indicazione di partenza (adattala liberamente ma rispetta il totale):"
+            f"Totale per esercizio (indicazione, ma NON uguali tra loro; adattala di poco e rispetta il totale):"
         )
         for i in range(num_totale):
             righe.append(f"  - Esercizio {i+1}: circa {pts[i]} pt")
@@ -620,17 +632,6 @@ def _build_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_pun
             f"nel tuo output. Se la somma ≠ {punti_totali} pt, correggi i punti."
         )
 
-    if not esercizi_custom:
-        if primo_base:
-            righe.append(
-                f"PRIMO ESERCIZIO: 'Saperi Essenziali' — concetti base, NO simbolo (*)."
-                f" Gli esercizi 2–{num_totale} approfondiscono."
-            )
-        else:
-            righe.append(
-                f"ORDINE: gli esercizi seguono una difficoltà crescente, e tra loro coprono tutta la scala "
-                f"(semplici, medi, difficili). Nessun esercizio è dedicato ai «saperi essenziali»."
-            )
     righe.append(f"DETTAGLIO ({num_totale} totali):")
     for i, ex in enumerate(esercizi_custom, 1):
         tipo, desc = ex.get("tipo","Aperto"), ex.get("descrizione","").strip()
@@ -2875,6 +2876,8 @@ def _render_percorso_b_form(_prog_placeholder):
                 st.toggle("Il primo esercizio è un ripasso facile dei concetti base", value=False, key="toggle_primo_base",
                           help="Di solito gli esercizi vanno dal semplice al difficile e coprono tutta la scala. "
                                "Attivalo se vuoi aprire la verifica con un esercizio di base.")
+                st.toggle("Aggiungi un esercizio «per l'eccellenza» in fondo", value=True, key="toggle_eccellenza",
+                          help="Un esercizio in più, facoltativo, molto difficile e con pochi punti (3-10), dentro il totale.")
 
                 _tog = st.toggle(
                     "Mostra i punti accanto a ogni domanda",
@@ -3436,12 +3439,16 @@ def _render_stage_input():
 
     _note_finale = note_extra
 
+    # L'esercizio «per l'eccellenza» si aggiunge a quelli scelti (e c'è solo se il docente non ha scelto gli esercizi a mano)
+    _ecc = bool(st.session_state.get("toggle_eccellenza", True)) and not st.session_state.esercizi_custom
+    num_esercizi_totali = num_esercizi_totali + (1 if _ecc else 0)
     s_es, imgs_es = _build_prompt_esercizi(
         st.session_state.esercizi_custom,
         num_esercizi_totali,
         punti_totali if mostra_punteggi else 0,
         mostra_punteggi,
         primo_base=bool(st.session_state.get("toggle_primo_base", False)),
+        eccellenza=_ecc, argomento=argomento, struttura_tipo=True,
     )
 
     # ── Estrai file "includi_esercizio" → vision input ─────────────────────
