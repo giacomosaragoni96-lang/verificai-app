@@ -32,7 +32,12 @@
   .hero h1 em { color:var(--blu); }
   .hero p.sub { font-size:1.08rem; color:var(--grigio); margin:0 auto 1.6rem; max-width:34rem; }
   .hero .azioni { display:flex; gap:1.4rem; align-items:center; justify-content:center; flex-wrap:wrap; }
-  .nota { font-size:.9rem; color:var(--grigio); margin-top:1rem; }
+  .hero p.sub.due { margin:0 auto 1.8rem; }
+  .punti { display:flex; gap:.7rem; justify-content:center; flex-wrap:wrap; margin:0 auto 1.3rem; }
+  .punti span { background:#fff; border:1px solid var(--bordo); border-radius:999px; padding:.5rem 1rem; font-size:.95rem; box-shadow:0 5px 14px rgba(15,23,42,.07); }
+  .gratis { display:inline-block; margin-top:1.3rem; background:#FEF3C7; border:1.5px solid #FCD34D; color:#78350F; padding:.5rem 1.1rem; border-radius:999px; font-size:1rem; }
+  .gratis b { font-weight:800; }
+  .nota { font-size:.9rem; color:var(--grigio); margin-top:.8rem; }
   .esempi-vero { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:1.2rem; margin-top:1rem; }
   .vero { background:#fff; border:1px solid var(--bordo); border-radius:18px; overflow:hidden; text-decoration:none; color:var(--testo); display:block; transition: transform .15s ease, box-shadow .15s ease; }
   .vero:hover { transform: translateY(-3px); box-shadow:0 14px 30px rgba(15,23,42,.12); }
@@ -79,12 +84,18 @@
 
   <div class="hero">
     <h1>Verifiche pronte da stampare in <em>pochi minuti</em></h1>
-    <p class="sub"><b>VerificAI</b> genera verifiche in <b>PDF perfetto</b> e in <b>Word modificabile</b>. Parti da una descrizione, dai tuoi appunti o da una verifica che hai già, e aggiungi il logo della tua scuola.</p>
+    <p class="sub"><b>VerificAI</b> prepara la verifica che descrivi, già impaginata e con i punteggi.</p>
+    <div class="punti">
+      <span>📄 <b>PDF perfetto</b></span>
+      <span>📝 <b>Word modificabile</b></span>
+      <span>🏫 <b>Il logo della tua scuola</b></span>
+    </div>
+    <p class="sub due">Parti da una descrizione, dai tuoi appunti o da una verifica che hai già.</p>
     <div class="azioni">
       <a class="btn" href="https://verificai.streamlit.app">Crea la tua prima verifica</a>
-      <a class="link" href="#esempi">Guarda una verifica vera →</a>
     </div>
-    <div class="nota">Gratuito durante la fase beta · accesso con email e password o con Google</div>
+    <div class="gratis"><b>Gratis</b> durante la fase beta</div>
+    <div class="nota">Accesso con email e password o con Google</div>
   </div>
 
   <section id="esempi">
