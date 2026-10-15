@@ -915,6 +915,10 @@ def prompt_autoverifica(materia: str, scuola: str, esercizi: list) -> str:
         f"5. Grafico: la riga [[GRAFICO: ...]] non corrisponde ai dati o alle domande dell'esercizio (funzione diversa, "
         f"intervallo che non mostra i punti richiesti).\n"
         f"6. Testo incompleto: frase senza richiesta, sottopunto che non chiede nulla.\n"
+        f"7. Dati scomodi: una richiesta di calcolo il cui risultato è chiaramente non pulito per uno studente (radice irrazionale, "
+        f"discriminante che non è un quadrato perfetto, decimali lunghi, v² non quadrato) quando l'esercizio presuppone numeri semplici. "
+        f"Non è un errore se l'esercizio chiede esplicitamente radici o decimali, o se è proprio Δ<0 / assenza di soluzioni il punto. "
+        f"Nel «problema» scrivi il risultato scomodo e nel «suggerimento» quali dati cambiare per ottenere numeri interi.\n"
         f"Non segnalare questioni di stile, difficoltà o formulazione. Nel dubbio: ok=true.\n\n"
         f"Rispondi SOLO con questo JSON (nessun altro testo):\n"
         f'{{"esercizi": [{{"num": <numero>, "ok": true|false, "problema": "<una frase: cosa non va, con i numeri>", '
