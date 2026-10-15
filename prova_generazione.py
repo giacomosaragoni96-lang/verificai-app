@@ -42,6 +42,10 @@ SCENARI = {
         argomento="Studio di funzione: dominio, limiti, derivata prima, massimi e minimi\n"
                   "- 3 esercizi di cui uno con grafico probabile della funzione da disegnare a partire dai dati",
         esercizi=3, grafico=True),
+    "fratte": dict(
+        materia="Matematica", scuola="Liceo Scientifico",
+        argomento="Equazioni e disequazioni fratte",
+        esercizi=4, grafico=False),
     "fisica": dict(
         materia="Fisica", scuola="Liceo Scientifico",
         argomento="Cinematica: moto rettilineo uniformemente accelerato\n- un problema con grafico velocità-tempo da leggere\n"

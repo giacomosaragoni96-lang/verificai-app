@@ -583,8 +583,8 @@ AREA_TOCCO_MIN_PX = 44      # altezza minima di ogni controllo interattivo
 # I punti restano 100 (si cambiano in "Altre opzioni"). Tetto assoluto: 8 esercizi.
 DURATE = {
     "Breve":    {"num_esercizi": 3, "durata": "30 minuti"},
-    "Standard": {"num_esercizi": 5, "durata": "1 ora"},
-    "Lunga":    {"num_esercizi": 8, "durata": "2 ore"},
+    "Standard": {"num_esercizi": 4, "durata": "1 ora"},
+    "Lunga":    {"num_esercizi": 6, "durata": "2 ore"},
 }
 DURATA_DEFAULT = "Standard"
 MAX_ESERCIZI_PRESET = 8

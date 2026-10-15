@@ -591,7 +591,7 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
 
 # ── Prompt costruzione esercizi ────────────────────────────────────────────────
 
-def _build_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_punteggi):
+def _build_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_punteggi, primo_base=False):
     n_liberi = max(0, num_totale - len(esercizi_custom))
     righe = [
         f"STRUTTURA ESERCIZI — REGOLA ASSOLUTA:",
@@ -621,10 +621,16 @@ def _build_prompt_esercizi(esercizi_custom, num_totale, punti_totali, mostra_pun
         )
 
     if not esercizi_custom:
-        righe.append(
-            f"PRIMO ESERCIZIO: 'Saperi Essenziali' — concetti base, NO simbolo (*)."
-            f" Gli esercizi 2–{num_totale} approfondiscono."
-        )
+        if primo_base:
+            righe.append(
+                f"PRIMO ESERCIZIO: 'Saperi Essenziali' — concetti base, NO simbolo (*)."
+                f" Gli esercizi 2–{num_totale} approfondiscono."
+            )
+        else:
+            righe.append(
+                f"ORDINE: gli esercizi seguono una difficoltà crescente, e tra loro coprono tutta la scala "
+                f"(semplici, medi, difficili). Nessun esercizio è dedicato ai «saperi essenziali»."
+            )
     righe.append(f"DETTAGLIO ({num_totale} totali):")
     for i, ex in enumerate(esercizi_custom, 1):
         tipo, desc = ex.get("tipo","Aperto"), ex.get("descrizione","").strip()
@@ -2866,6 +2872,9 @@ def _render_percorso_b_form(_prog_placeholder):
                     key=f"sel_num_es_b_{durata_nome}",   # cambia con la durata: riparte dal preset
                     format_func=lambda x: f"{x} esercizi",
                 )
+                st.toggle("Il primo esercizio è un ripasso facile dei concetti base", value=False, key="toggle_primo_base",
+                          help="Di solito gli esercizi vanno dal semplice al difficile e coprono tutta la scala. "
+                               "Attivalo se vuoi aprire la verifica con un esercizio di base.")
 
                 _tog = st.toggle(
                     "Mostra i punti accanto a ogni domanda",
@@ -3432,6 +3441,7 @@ def _render_stage_input():
         num_esercizi_totali,
         punti_totali if mostra_punteggi else 0,
         mostra_punteggi,
+        primo_base=bool(st.session_state.get("toggle_primo_base", False)),
     )
 
     # ── Estrai file "includi_esercizio" → vision input ─────────────────────
@@ -4519,7 +4529,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 f"ESERCIZIO ORIGINALE:\n\\subsection*{{{title}}}\n{body}\n\n"
                 f"ISTRUZIONE DEL DOCENTE: {istruzione.strip()}\n\n"
                 f"REGOLE FONDAMENTALI:\n"
-                f"- LUNGHEZZA MASSIMA: l'esercizio modificato non deve superare le 8-10 righe di testo.\n"
+                f"- LUNGHEZZA: l'esercizio modificato può essere articolato (fino a 12-15 righe).\n"
                 f"- VIETATO ASSOLUTO: NON inserire MAI soluzioni, risposte o risultati.\n"
                 f"- VIETATO MAPPE E DIAGRAMMI: NON generare MAI mappe, diagrammi spaziali o geografici.\n"
                 f"- Applica SOLO la modifica richiesta. NON riscrivere da zero, modifica l'esistente.\n"
@@ -4615,13 +4625,14 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             f"ESERCIZIO DA SOSTITUIRE (struttura e tipo da NON replicare):\n\\subsection*{{{title}}}\n{body}\n\n"
             f"ALTRI ESERCIZI GIA PRESENTI (da NON duplicare concettualmente):\n{_altri_testo}\n\n"
             f"REGOLE FONDAMENTALI:\n"
-            f"- LUNGHEZZA MASSIMA: il nuovo esercizio non deve superare le 8-10 righe di testo.\n"
+            f"- LUNGHEZZA: il nuovo esercizio può essere articolato (fino a 12-15 righe), con richieste di difficoltà crescente.\n"
             f"- VIETATO ASSOLUTO: NON inserire MAI soluzioni, risposte o risultati. MAI scrivere '= X', 'la risposta è', 'il risultato è'.\n"
             f"- VIETATO MAPPE E DIAGRAMMI: NON generare MAI mappe, diagrammi spaziali o geografici.\n"
             f"- CONTROLLO DUPLICATI: ANALIZZA gli altri esercizi sopra. NON generare un esercizio che testi "
               f"lo stesso concetto matematico o la stessa abilità. Ogni esercizio deve essere UNICO concettualmente.\n"
-            f"- MANTENIMENTO DIFFICOLTÀ: se questo è l'Esercizio 1 (Saperi Essenziali), deve rimanere accessibile e risolvibile in 5-8 minuti. "
-              f"NON aumentare la difficoltà o la complessità.\n"
+            f"- MANTENIMENTO DIFFICOLTÀ: il nuovo esercizio ha una difficoltà simile a quella dell'esercizio sostituito "
+              f"(non più facile). Inserisci almeno un passaggio che rivela la comprensione (per esempio un segno da cambiare, "
+              f"una condizione di esistenza, un caso da discutere).\n"
             f"- Cambia TIPO di esercizio (es. da calcolo numerico a dimostrazione, da aperto a V/F, ecc.).\n"
             f"- Cambia i concetti specifici testati, scegliendo aspetti diversi ma coerenti con '{argomento_str}'.\n"
             f"- L'esercizio DEVE restare su '{argomento_str}' in '{materia_str}'. NON introdurre altri argomenti.\n"
