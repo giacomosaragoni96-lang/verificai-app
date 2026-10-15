@@ -45,7 +45,7 @@ from licenze import attiva_licenza, riconvalida_se_serve
 from segnalazioni import costruisci_segnalazione, MAX_PER_SESSIONE
 from latex_utils import (
     conta_pagine_pdf, riduci_a_pagine, compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, copia_intestazione_con_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
-    fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
+    fix_items_environment, aggiungi_consegne_mancanti, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
     parse_pts_from_block_body, riscala_single_block,
@@ -448,6 +448,7 @@ def _postprocessa_latex(latex: str, mostra_punteggi: bool, punti_totali: int,
     """
     latex = normalizza_sottopunti_inline(latex)   # "a) … b) …" nel paragrafo → elenco
     latex = fix_items_environment(latex)
+    latex = aggiungi_consegne_mancanti(latex)
     latex = rifinisci_scelta_multipla_e_vf(latex)
     latex = migliora_spaziatura_sottopunti(latex)
     latex = aggiungi_spaziatura_grafici_tabelle(latex)

@@ -64,7 +64,7 @@ except ImportError:
 from latex_utils import (
     conta_pagine_pdf, riduci_a_pagine, pesa_punti_per_tipo,
     compila_pdf, compila_pdf_sicuro, inietta_griglia, riscala_punti, riscala_punti_custom,
-    fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
+    fix_items_environment, aggiungi_consegne_mancanti, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
     parse_pts_from_block_body, valida_totale, riscala_single_block,
@@ -310,6 +310,7 @@ def _assembla_e_compila(
     """
     latex = preambolo + clean_tikz_spoilers(corpo)
     latex = fix_items_environment(latex)
+    latex = aggiungi_consegne_mancanti(latex)    # richieste nude senza consegna → ricevono il loro verbo
     latex = rifinisci_scelta_multipla_e_vf(latex)   # opzioni A) B) C) D), V/F su una riga
     latex = normalizza_labels_numerici(latex)   # 1) 2) 3) → a) b) c)
     latex = semplifica_item_singoli(latex)       # enumerate 1 solo item → testo diretto

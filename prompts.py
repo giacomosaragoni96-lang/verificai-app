@@ -615,8 +615,9 @@ REGOLA_DIFFICOLTA_VERA = (
 
 REGOLA_CONSEGNE_BREVI = (
     "CONSEGNE E RICHIESTE SNELLE — REGOLA FONDAMENTALE: ogni esercizio ha UNA riga di consegna, standard e breve, come sui libri di testo "
-    "(«Risolvi le seguenti disequazioni.», «Semplifica le seguenti espressioni.», «Calcola i seguenti limiti.»). Negli esercizi di calcolo "
-    "(equazioni, disequazioni, sistemi, limiti, derivate, scomposizioni, espressioni, radicali…) ogni richiesta è SOLO la formula, senza "
+    "(«Risolvi le seguenti disequazioni.», «Semplifica le seguenti espressioni.», «Calcola i seguenti limiti.»). Quando TUTTE le richieste "
+    "di un esercizio sono dello stesso tipo (tutte equazioni, tutte disequazioni, tutti limiti, derivate, scomposizioni, espressioni, "
+    "radicali…) la consegna sta in UNA riga sopra l'elenco e ogni richiesta è SOLO la formula, senza "
     "parole davanti: NIENTE «risolvi», «determina», «studia il segno», «imposta le condizioni di esistenza», «scomponi in fattori», "
     "«prestando attenzione ai segni», «con coefficienti frazionari», «di grado superiore». Il metodo e il nome del tipo di esercizio li "
     "devono riconoscere gli studenti. "
@@ -627,6 +628,11 @@ REGOLA_CONSEGNE_BREVI = (
     "indeterminata iniziale») e SOLO nella consegna, mai ripetute in ogni richiesta. Nelle richieste che sono solo formule scrivi "
     "\\(\\displaystyle …\\) così le frazioni si leggono bene. Fuori dal calcolo (problemi con una situazione, brani, analisi, domande "
     "aperte) la richiesta può essere una frase, ma diretta, senza spiegare come rispondere. "
+    "ATTENZIONE, DUE CASI IN CUI LA FORMULA NUDA NON VA BENE: (1) quando i compiti dell'esercizio sono DIVERSI (per esempio una richiesta "
+    "chiede le condizioni di esistenza e un'altra una disequazione) ogni richiesta dice cosa fare in poche parole («Determina le condizioni "
+    "di esistenza di …», «Risolvi la disequazione: …»), senza una consegna generica che non vale per tutte; (2) se l'esercizio ha UNA sola "
+    "richiesta (anche quello per l'eccellenza) scrivi sempre cosa fare prima della formula, in una frase breve («Discuti, al variare di k, "
+    "la disequazione: …»): mai la sola formula. "
     "Le NOTE del piano (se ci sono) sono per te: non copiarne le parole nel testo dell'esercizio."
 )
 
@@ -1295,7 +1301,8 @@ def prompt_ritocco_difficolta(materia: str, argomento: str, corpo: str, piano_te
         f"difficoltà non scenda mai.\n"
         f"- le richieste già giuste le ricopi IDENTICHE, parola per parola.\n\n"
         f"REGOLE:\n- {REGOLA_DIFFICOLTA_VERA}\n- {REGOLA_CONSEGNE_BREVI}\n"
-        f"- NON cambiare il numero di esercizi, né il numero di richieste di ogni esercizio, né i titoli, né le consegne. NON toccare i punti "
+        f"- NON cambiare il numero di esercizi, né il numero di richieste di ogni esercizio, né i titoli, né le consegne esistenti (puoi solo "
+        f"AGGIUNGERE una consegna dove manca, secondo la regola sulle consegne). NON toccare i punti "
         f"(N pt), le caselle V/F, i grafici ([[GRAFICO: ...]] o TikZ).\n"
         f"- Le richieste riscritte devono avere una soluzione ben definita e dati puliti (numeri interi o frazioni semplici).\n"
         f"- Nessuna soluzione, risposta o commento.\n\n"
