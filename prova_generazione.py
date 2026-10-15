@@ -72,7 +72,7 @@ def esegui(nome: str, sc: dict, model_id: str, cartella: str):
             calibrazione="", durata="1 ora", num_esercizi=sc["esercizi"], punti_totali=100,
             mostra_punteggi=True, con_griglia=True, doppia_fila=False, bes_dsa=False, perc_ridotta=None,
             bes_dsa_b=False, genera_soluzioni=False, note_generali="", istruzioni_esercizi="",
-            immagini_esercizi=[],
+            immagini_esercizi=[], piano_struttura={"primo_base": False, "eccellenza": True},
         )
     except Exception as e:                           # noqa: BLE001
         print(f"[{nome}] ERRORE: {str(e)[:300]}")

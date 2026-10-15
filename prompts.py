@@ -33,7 +33,10 @@ def prompt_corpo_verifica(
         f"\n\n═══════════════════════════════════════════\n"
         f"ISTRUZIONI PRIORITARIE DEL DOCENTE — RISPETTA QUESTE PRIMA DI TUTTO:\n"
         f"{note_generali.strip()}\n"
-        f"Queste istruzioni PREVALGONO sulle regole generali di struttura: se dicono come aprire la verifica "
+        f"Queste istruzioni hanno la PRECEDENZA ASSOLUTA su TUTTO il resto di questo prompt: struttura-tipo, piano dettagliato, ruoli, "
+        f"livelli di difficoltà, numero di richieste, distribuzione dei punti, esercizio per l'eccellenza, regole di stile. Se c'è un "
+        f"conflitto vince SEMPRE il docente e il resto si adatta (mai il contrario): ciò che chiede va fatto bene e per primo. "
+        f"Se dicono come aprire la verifica "
         f"(«parti con…») vale quello, anche rispetto a «Saperi Essenziali»; se chiedono di evitare qualcosa "
         f"(dimostrazioni, date precise, calcoli con i vettori…) NON farlo in nessun esercizio, nemmeno con verbi come "
         f"«dimostra», «mostra che», «verifica che».\n"
@@ -1068,7 +1071,7 @@ _DESCRIZIONE_RUOLO = {
     "C": "ESERCIZIO CENTRALE: l'abilità principale dell'argomento, 4-8 richieste brevi a rampa, dalla più facile a una DAVVERO difficile",
     "M": "esercizio di difficoltà MEDIA: 2-4 richieste, dal diretto al leggermente articolato",
     "G": "SECONDO TIPO di esercizi dell'argomento (un'altra famiglia di casi) oppure LETTURA/ANALISI (un grafico, dei dati, un testo, una fonte): 2-6 richieste brevi, di difficoltà media o alta",
-    "P": "PROBLEMA di ragionamento o applicato: 1-3 richieste, difficile",
+    "P": "PROBLEMA, CASO o QUESITO DI SINTESI di ragionamento (un problema applicato, un caso da analizzare, un confronto argomentato): 1-3 richieste, difficile",
 }
 
 
@@ -1152,6 +1155,24 @@ _RAMPE_ESEMPIO = [
     (("cinematica", "moto"),
      "cinematica: (1) accelerazione da due dati di velocità e tempo · (2) spazio percorso da un grafico v-t · "
      "(3) frenata con spazio e tempo di arresto · (4) due corpi: quando e dove si incontrano (equazione di secondo grado con discriminante quadrato perfetto)"),
+    (("storia", "geografia"),
+     "storia: (1) collocare un evento (quando, dove, chi) · (2) spiegare una causa o una conseguenza · (3) confrontare due fenomeni o due fonti · "
+     "(4) valutare un'interpretazione e argomentarla con i fatti"),
+    (("italiano", "letteratura", "antologia"),
+     "italiano: (1) comprensione letterale del testo · (2) lessico e figure retoriche · (3) narratore, punto di vista, temi · "
+     "(4) interpretazione e confronto con un altro testo, produzione argomentata"),
+    (("inglese", "francese", "spagnolo", "tedesco", "lingua"),
+     "lingue: (1) vocabolario e completamento · (2) grammatica in contesto · (3) comprensione di un testo con risposte aperte · "
+     "(4) produzione scritta guidata con vincoli di forma e lessico"),
+    (("scienze", "biologia", "chimica", "terra"),
+     "scienze: (1) definizione o riconoscimento · (2) applicazione di una legge o formula a un caso · (3) problema con più passaggi o un dato da ricavare · "
+     "(4) interpretazione di un esperimento o di un grafico, previsione motivata"),
+    (("informatica", "programmazione", "sistemi"),
+     "informatica: (1) leggere un frammento di codice · (2) completare un algoritmo · (3) scrivere una funzione con più casi · "
+     "(4) analizzare correttezza e complessità, o trovare un errore nascosto"),
+    (("diritto", "economia", "arte", "filosofia"),
+     "materie di rielaborazione: (1) definire un concetto · (2) collegarlo a un esempio · (3) confrontare due teorie, norme o autori · "
+     "(4) valutare un caso nuovo argomentando"),
 ]
 
 _RAMPA_GENERICA = (
@@ -1168,3 +1189,60 @@ def rampe_esempio(materia: str, argomento: str) -> str:
         trovate = [_RAMPA_GENERICA]
     return ("ESEMPI DI RAMPA DI DIFFICOLTÀ (servono SOLO a capire il livello: NON copiarli, inventa esercizi nuovi con altri dati):\n"
             + "\n".join(f"  • {r}" for r in trovate) + "\n")
+
+
+def prompt_piano_verifica(
+    materia: str,
+    argomento: str,
+    scuola: str,
+    calibrazione: str,
+    durata: str,
+    scheletro: list,
+    note_docente: str = "",
+    max_chiusi: int = 1,
+) -> str:
+    """Prompt del PIANO: l'AI non scrive esercizi, decide solo titolo, tipo e richieste (con livello e nota) di ogni esercizio.
+    scheletro = [{"ruolo", "descrizione", "punti"}] deciso dal codice (struttura_verifica). Risposta: solo JSON."""
+    righe = []
+    for i, v in enumerate(scheletro, 1):
+        righe.append(f"  Esercizio {i} (circa {v['punti']} pt): {v['descrizione']}")
+    note = (
+        "\nISTRUZIONI DEL DOCENTE — PRECEDENZA ASSOLUTA: se chiedono qualcosa sul numero, l'ordine, il tipo, l'argomento, la difficoltà o "
+        "i punti di esercizi e richieste, o un modo preciso di fare un esercizio, il piano le rispetta ALLA LETTERA; lo scheletro, i ruoli, "
+        "i livelli e le regole qui sotto si adattano a quello che chiede il docente, mai il contrario:\n" + note_docente.strip() + "\n"
+        if (note_docente or "").strip() else ""
+    )
+    return (
+        f"Sei un docente esperto di {materia}. Devi PROGETTARE (non scrivere) una verifica sull'argomento «{argomento}» "
+        f"per {scuola or 'la scuola indicata'}. Durata prevista: {durata}.\n"
+        f"{calibrazione}\n{note}\n"
+        f"SCHELETRO GIÀ DECISO (ruoli e punti non si cambiano; gli esercizi sono {len(scheletro)}, nello stesso ordine):\n"
+        + "\n".join(righe) + "\n\n"
+        f"{rampe_esempio(materia, argomento)}\n"
+        f"COSA DECIDERE, per ogni esercizio:\n"
+        f"- titolo: breve, di quello che l'esercizio verifica (mai «Saperi essenziali»);\n"
+        f"- tipo: «aperto» (quasi sempre), oppure «vero_falso», «scelta_multipla», «completamento»: al massimo {max_chiusi} esercizi "
+        f"chiusi in tutta la verifica, e mai l'esercizio centrale né quello per l'eccellenza;\n"
+        f"- richieste: la lista delle richieste (a, b, c…), ciascuna con un livello da 1 a 3 e una nota brevissima (al massimo 15 parole) "
+        f"su COSA verifica davvero, compresa l'eventuale trappola.\n"
+        f"LIVELLI (valgono per ogni materia): 1 = ricordare o applicare in modo diretto; 2 = un passaggio in più, un caso particolare, "
+        f"una spiegazione; 3 = più concetti insieme, una trappola, un ragionamento non standard, un'analisi o una valutazione: deve "
+        f"essere DAVVERO difficile, non solo più lungo.\n"
+        f"REGOLE:\n"
+        f"- Dentro un esercizio i livelli non scendono mai (dal più facile al più difficile).\n"
+        f"- Numero di richieste: apertura 1-4; centrale 4-8 (a rampa, dalla più facile a una davvero difficile); medio 2-4; "
+        f"secondo tipo o lettura/analisi 1-6; problema 1-3; eccellenza 1-2 (tutte di livello 3).\n"
+        f"- Nell'insieme: circa il 40% di richieste facili, 40% medie, 20% difficili. L'esercizio per l'eccellenza è molto difficile.\n"
+        f"- Le note nominano i passaggi che rivelano la comprensione, quelli in cui gli studenti sbagliano di più (un segno da cambiare, una "
+        f"condizione da controllare, un'eccezione, un dato da ricavare, un concetto che si confonde con un altro).\n"
+        f"- Esercizi diversi verificano cose diverse: niente richieste che ripetono lo stesso concetto con altri numeri.\n"
+        f"- Non scrivere esercizi, dati, formule risolte né soluzioni: solo il piano.\n"
+        f"- «docente_vincola»: scrivi true SOLO se le istruzioni del docente dicono qualcosa sul numero, l'ordine, il tipo, l'argomento, la "
+        f"difficoltà o i punti degli esercizi o delle richieste, o un modo preciso di fare un esercizio (in quel caso le regole sui livelli, "
+        f"sul mix di difficoltà e sul numero di richieste valgono solo dove non contraddicono il docente). Scrivi false se non ci sono "
+        f"istruzioni o se riguardano solo lo stile (numeri interi, niente dimostrazioni, niente date…).\n"
+        f"- «punti»: SOLO se il docente ha indicato i punti di un esercizio, scrivi il suo valore in quell'esercizio; altrimenti omettilo.\n\n"
+        f"OUTPUT: SOLO un oggetto JSON valido, senza altro testo, in questa forma (esattamente {len(scheletro)} esercizi):\n"
+        f'{{"docente_vincola": false, "esercizi": [{{"titolo": "...", "tipo": "aperto", "richieste": [{{"livello": 1, "nota": "..."}}, '
+        f'{{"livello": 3, "nota": "..."}}]}}]}}'
+    )

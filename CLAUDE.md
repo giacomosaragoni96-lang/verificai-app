@@ -106,6 +106,14 @@ esercizio centrale 35-50% dei punti con 4-8 richieste a rampa, esercizio di lett
 (`rampe_esempio`, anonime, per parola chiave dell'argomento) servono solo a calibrare il livello. Il primo esercizio «di base» è opzionale (`toggle_primo_base`).
 Con esercizi scelti a mano o «Rifai questa verifica» la struttura-tipo non si usa (`_build_prompt_esercizi(struttura_tipo=False)`).
 
+PIANO prima del testo (`piano_verifica.py`, senza streamlit, per ogni materia): con la struttura-tipo, dopo il titolo una chiamata breve (compito AI «piano»)
+riempie lo scheletro (ruoli e punti decisi dal codice) con titolo, tipo e richieste (livello 1-3 + nota) di ogni esercizio; `normalizza_piano` la controlla
+(conteggi, livelli crescenti, mix ~40/40/20, max esercizi chiusi) e calcola i punti per richiesta dal livello; `piano_a_testo` la passa a chi scrive gli
+esercizi; `applica_punti_piano` rimette i punti nel LaTeX (in `_assembla_e_compila`). Qualsiasi problema = nessun piano, si genera come prima.
+PRECEDENZA AL DOCENTE (regola assoluta): le sue note vincono su struttura, piano, livelli e punti. Se dicono qualcosa sulla struttura (flag `docente_vincola`
+dell'AI + parole chiave) il codice NON riscrive livelli, tipi o numero di richieste, usa i punti che il docente indica e non impone i punti per richiesta;
+«senza esercizio per l'eccellenza» nelle note spegne l'interruttore.
+
 Modifica rapida in FINAL (box «Vuoi cambiare qualcosa? Chiedilo», sotto l'anteprima, sopra «Scarica PDF»): `main._box_modifica_rapida` (solo interfaccia),
 logica in `generation.modifica_verifica_libera` (senza streamlit; i grafici escono come segnaposto `[[FIGURA n]]` e rientrano dopo), prompt in
 `prompts.prompt_modifica_verifica`. Conta nel tetto `MODIFICHE_PER_VERIFICA`, rifà il PDF con `_ricompila_verifica_a(riscala_totale=True)`, aggiorna `latex_a`

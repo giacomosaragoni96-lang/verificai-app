@@ -24,6 +24,10 @@ from prompts import (
     prompt_soluzioni,
     prompt_analisi_documento,
     prompt_variante_rapida,
+    prompt_piano_verifica,
+)
+from piano_verifica import (
+    scheletro_piano, normalizza_piano, estrai_json, piano_a_testo, applica_punti_piano, max_esercizi_chiusi,
 )
 
 # prompt_rigenera_blocco potrebbe non essere ancora in prompts.py (deploy graduale)
@@ -150,6 +154,7 @@ except Exception:                                   # SDK assente (test in isola
 # Nome del passo → compito (config.COMPITI_AI): decide modello e ragionamento di ogni chiamata.
 _COMPITO_DA_PASSO = (
     ("Generazione titolo", "titolo"),
+    ("Piano della verifica", "piano"),
     ("Generazione esercizi", "corpo"),
     ("Controllo qualità", "controllo_qualita"),
     ("Soluzioni", "soluzioni"),
@@ -296,6 +301,7 @@ def _assembla_e_compila(
     mostra_punteggi: bool,
     punti_totali: int,
     con_griglia: bool,
+    piano: dict | None = None,
 ) -> tuple[str, bytes | None]:
     """
     Assembla preambolo + corpo, applica le trasformazioni post-processing,
@@ -323,6 +329,7 @@ def _assembla_e_compila(
         # Senza questo step quei blocchi non hanno (N pt) → riscala_punti
         # li ignora → griglia mostra '—' e il totale è sbagliato.
         latex = prepara_esercizi_aperti(latex, punti_totali)
+        latex = applica_punti_piano(latex, piano)   # punti decisi dal piano (se c'è e i conti tornano)
         latex = pesa_punti_per_tipo(latex)    # punteggi tutti uguali → pesati per tipo di esercizio
         latex = riscala_punti(latex, punti_totali)
     else:
@@ -600,6 +607,34 @@ def rigenera_singolo_blocco(
 
 # ── FUNZIONE PRINCIPALE ───────────────────────────────────────────────────────────
 
+def pianifica_verifica(model, materia: str, argomento: str, scuola: str, calibrazione: str, durata: str,
+                       num_esercizi: int, punti_totali: int, primo_base: bool, eccellenza: bool, note_docente: str = ""):
+    """
+    Il PIANO della verifica (vedi piano_verifica.py): una chiamata breve decide titolo, tipo e richieste (livello + nota) di ogni
+    esercizio; il codice la controlla. Le istruzioni del docente hanno la precedenza (il piano si adatta a lui, mai il contrario).
+    Ritorna (piano | None, debug). Qualsiasi problema → None: si genera come prima, senza piano. Non solleva mai eccezioni.
+    """
+    debug = {"prompt": "", "risposta": "", "errore": "", "piano": None}
+    try:
+        scheletro = scheletro_piano(num_esercizi, punti_totali, primo_base, eccellenza, argomento)
+        prompt = prompt_piano_verifica(materia, argomento, scuola, calibrazione, durata, scheletro, note_docente,
+                                       max_esercizi_chiusi(num_esercizi))
+        debug["prompt"] = prompt
+        for tentativo in range(2):
+            richiesta = prompt if tentativo == 0 else (prompt + "\n\nRISPONDI SOLO CON IL JSON, senza testo prima o dopo.")
+            risposta = _safe_generate(model, richiesta, "Piano della verifica", retries=1).text
+            debug["risposta"] = risposta
+            piano = normalizza_piano(estrai_json(risposta), scheletro, note_docente)
+            if piano:
+                debug["piano"] = piano
+                return piano, debug
+        debug["errore"] = "risposta non utilizzabile"
+    except Exception as e:                      # noqa: BLE001 — il piano è un di più: mai bloccare la generazione
+        logger.warning("Piano della verifica non riuscito: %s", e)
+        debug["errore"] = str(e)[:300]
+    return None, debug
+
+
 def genera_verifica(
     model,
     materia: str,
@@ -622,6 +657,7 @@ def genera_verifica(
     file_ispirazione=None,      # oggetto file Streamlit o None
     mathpix_context: str | None = None,   # LaTeX estratto da Mathpix OCR
     on_progress=None,           # callback(testo: str) -> None
+    piano_struttura: dict | None = None,  # {"primo_base", "eccellenza"}: se c'è, si pianifica prima di scrivere
 ) -> dict:
     """
     Genera la verifica e restituisce un dizionario con le chiavi:
@@ -665,6 +701,19 @@ def genera_verifica(
         materia, titolo_clean, titolo_variante_a, e_mat
     )
 
+    # ── 2b. PIANO DELLA VERIFICA (opzionale) ──────────────────────────────────
+    piano = None
+    if piano_struttura is not None and num_esercizi >= 2:
+        _avanza("🗺️  Preparo la struttura della verifica…")
+        piano, _dbg_piano = pianifica_verifica(
+            model, materia, argomento, difficolta, calibrazione, durata, num_esercizi, punti_totali,
+            bool(piano_struttura.get("primo_base")), bool(piano_struttura.get("eccellenza")), note_generali)
+        risultato["_piano"] = piano
+        if piano:
+            istruzioni_esercizi = (istruzioni_esercizi or "") + chr(10) + chr(10) + piano_a_testo(piano, mostra_punteggi)
+    else:
+        _dbg_piano = None
+
     # ── 3. CORPO ESERCIZI (FILA A) ────────────────────────────────────────────
     _avanza("🧠  Generazione esercizi in corso…")
 
@@ -689,6 +738,7 @@ def genera_verifica(
     # Diagnostica per l'admin: cosa ha scritto il modello e cosa è stato cambiato dopo (nessun effetto sul risultato)
     risultato["_debug"] = {"prompt": inp[0], "risposta_grezza": ra.text, "dopo_pulizia": corpo_a,
                            "controllo_qualita": "non eseguito", "autoverifica": None}
+    risultato["_debug"]["piano"] = _dbg_piano
 
     # ── 4. CONTROLLO QUALITÀ MIGLIORATO ────────────────────────────────────────────
     _avanza("🔎  Controllo qualità e validazione contenuto…")
@@ -752,7 +802,7 @@ def genera_verifica(
         risultato["_debug"]["dopo_autoverifica"] = corpo_a
     _avanza("🖨️  Compilazione PDF…")
     latex_a, pdf_a = _assembla_e_compila(
-        preambolo_a, corpo_a, mostra_punteggi, punti_totali, con_griglia
+        preambolo_a, corpo_a, mostra_punteggi, punti_totali, con_griglia, piano=piano
     )
     risultato["A"] = {"latex": latex_a, "pdf": pdf_a}
 
