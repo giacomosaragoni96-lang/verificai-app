@@ -127,6 +127,8 @@ def autoverifica_corpo(model, materia: str, scuola: str, argomento: str, corpo: 
         resoconto["controllati"] = len(esercizi)
         problemi = _verifica_con_ripetizione(mod, materia, scuola, esercizi)
         resoconto["eseguita"] = True
+        resoconto["segnalati"] = [{"num": p["num"], "problema": p["problema"], "suggerimento": p["suggerimento"]}
+                                  for p in problemi]          # per capire a posteriori perché è stato riscritto un esercizio
         if not problemi:
             return corpo, resoconto
 
