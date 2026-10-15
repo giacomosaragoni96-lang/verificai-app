@@ -1350,6 +1350,17 @@ def _zeri_ed_estremi(f, xmin: float, xmax: float):
     return zeri, estremi
 
 
+def _ha_poli(f, xmin: float, xmax: float) -> bool:
+    """True se la curva ha un asintoto verticale nell'intervallo (salto di segno con valori molto grandi)."""
+    pts = _valori_curva(f, xmin, xmax, 800)
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        if y0 * y1 < 0 and max(abs(y0), abs(y1)) > 15:
+            return True
+        if max(abs(y0), abs(y1)) > 200:
+            return True
+    return False
+
+
 def _punti_notevoli(f, xmin: float, xmax: float) -> list:
     """Ascisse che il grafico deve mostrare: zeri (cambi di segno) e massimi/minimi locali (vertici)."""
     zeri, estremi = _zeri_ed_estremi(f, xmin, xmax)
@@ -1370,6 +1381,8 @@ def _finestra_grafico(curve: list, xmin: float, xmax: float):
     # Si restringe solo con un vertice o con almeno due zeri (parabole, cubiche…): una retta o una curva con un solo
     # zero (v = 2t, y = x - 2) va mostrata per tutto l'intervallo scelto, perché le domande ne usano gli estremi.
     ristringi = n_estremi > 0 or n_zeri >= 2
+    if any(_ha_poli(f, xmin, xmax) for _, f in curve):
+        ristringi = False                                # asintoti: serve vedere come la curva si avvicina, anche agli estremi
     if xmin <= 0 <= xmax:
         notevoli.append(0.0)
     if notevoli and ristringi:
@@ -1441,7 +1454,8 @@ def _tikz_da_specifica(corpo: str):
         r"\begin{tikzpicture}",
         f"\\begin{{axis}}[trig format plots=rad, xmin={_fmt_num(xa)}, xmax={_fmt_num(xb)}, ymin={_fmt_num(ymin)}, ymax={_fmt_num(ymax)}, "
         f"axis lines=middle, xlabel={xl}, ylabel={yl}, grid=major, width=9cm, height=5cm, "
-        f"domain={_fmt_num(xmin)}:{_fmt_num(xmax)}, samples=100, unbounded coords=jump]",
+        f"domain={_fmt_num(xmin)}:{_fmt_num(xmax)}, samples=200, unbounded coords=jump, "
+        f"restrict y to domain={_fmt_num(ymin - 1)}:{_fmt_num(ymax + 1)}]",
     ]
     for espr, _ in curve:
         righe.append(f"\\addplot[thick, blue, no markers]{{{espr}}};")
@@ -3028,7 +3042,7 @@ def anteprima_esercizio_png(preambolo: str, titolo: str, corpo: str):
     if inizio == -1 or not (corpo or "").strip():
         return None
     doc = (preambolo[:inizio + len("\\begin{document}")] + "\n\\pagestyle{empty}\n"
-           + "\\subsection*{" + (titolo or "") + "}\n" + corpo.strip() + "\n\\end{document}\n")
+           + "\\subsection*{" + (titolo or "") + "}\n" + espandi_grafici_specifica(corpo.strip()) + "\n\\end{document}\n")
     try:
         pdf, _err, _usato = compila_pdf_sicuro(doc)
         if not pdf:
