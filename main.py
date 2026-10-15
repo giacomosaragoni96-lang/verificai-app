@@ -39,6 +39,7 @@ from ui_upgrade import render_upgrade
 from ui_legale import render_termini, render_rimborsi
 from ui_questionario import render_questionario
 from ui_sblocco import render_sblocco
+from ui_inviti import apri_dialogo_invito
 import sblocco
 from questionario import domanda as _domanda_q, pulisci_risposte, riga_rapida
 from licenze import attiva_licenza, riconvalida_se_serve
@@ -61,7 +62,7 @@ from config import (
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
     MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, PREZZO_PRO_ANNUALE, LEGALE_PRONTO, TETTO_BREVE, MAX_FACCIATE, WORD_ATTIVO,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS, MODIFICHE_PER_VERIFICA, FEEDBACK_PRIMA_DEL_DOWNLOAD, MOSTRA_BOX_FEEDBACK,
-    PREZZI_VISIBILI, INVITI_ATTIVI, VERIFICHE_PER_CODICE, PIANO_ATTIVO, RUOLI_ESERCIZI_ATTIVI,
+    PREZZI_VISIBILI, INVITI_ATTIVI, VERIFICHE_PER_CODICE, PIANO_ATTIVO, RUOLI_ESERCIZI_ATTIVI, BONUS_PER_INVITO, LANDING_URL,
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -1549,6 +1550,11 @@ html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button {background:tr
 html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button, html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button * {color:rgba(255,255,255,.92) !important;
   -webkit-text-fill-color:rgba(255,255,255,.92) !important;font-size:.8rem !important;font-weight:600 !important;text-decoration:underline;}
 html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button:hover * {color:#fff !important;-webkit-text-fill-color:#fff !important;}
+html body .stApp div[class*="st-key-bx_invita"]:not(#vf) button {background:rgba(255,255,255,.14) !important;background-color:rgba(255,255,255,.14) !important;
+  border:1.5px solid rgba(255,255,255,.62) !important;border-radius:12px !important;padding:.5rem .8rem !important;margin-top:.5rem;min-height:0 !important;}
+html body .stApp div[class*="st-key-bx_invita"]:not(#vf) button, html body .stApp div[class*="st-key-bx_invita"]:not(#vf) button * {
+  color:#fff !important;-webkit-text-fill-color:#fff !important;font-weight:700 !important;font-size:.84rem !important;text-decoration:none !important;}
+html body .stApp div[class*="st-key-bx_invita"]:not(#vf) button:hover {background:rgba(255,255,255,.26) !important;}
 html body .stApp div[class*="st-key-box_sblocco"][data-fatto] a.bx-b, html body .stApp div[class*="st-key-box_sblocco"][data-fatto] .bx-pills,
 html body .stApp div[class*="st-key-box_sblocco"][data-fatto] .bx-mini {display:none;}
 </style>"""
@@ -1565,14 +1571,22 @@ def _box_sblocco(dove: str) -> None:
             st.markdown(_CSS_BOX_SBLOCCO +
                         '<div class="bx-wrap"><div class="bx-badge">🎁</div><div class="bx-testo">'
                         '<div class="bx-eyebrow">Sblocca di più</div>'
-                        f'<div class="bx-t">Altre {VERIFICHE_PER_CODICE} verifiche con tutte le funzioni</div>'
-                        '<div class="bx-d">Compila il questionario e ricevi subito un codice per usarle.</div>'
+                        '<div class="bx-t">Altre verifiche con tutte le funzioni</div>'
+                        + (f'<div class="bx-d"><b>{VERIFICHE_PER_CODICE} verifiche complete</b> compilando il questionario, e altre '
+                           f'<b>{BONUS_PER_INVITO} per ogni collega</b> che inviti.</div>' if _INVITO else
+                           f'<div class="bx-d">Compila il questionario e ricevi subito un codice per {VERIFICHE_PER_CODICE} verifiche complete.</div>')
                         + _pillole + '</div></div>',
                         unsafe_allow_html=True)
         with _c2:
             st.markdown('<a class="bx-b" href="?pagina=questionario" target="_blank" rel="noopener">Compila il questionario</a>'
-                        '<div class="bx-mini">⏱ 4 minuti · anonimo</div>',
+                        f'<div class="bx-mini">⏱ 4 minuti · anonimo · +{VERIFICHE_PER_CODICE} verifiche</div>',
                         unsafe_allow_html=True)
+            if _INVITO:
+                with st.container(key=f"bx_invita_{dove}"):
+                    if st.button(f"Invita un collega · +{BONUS_PER_INVITO}", key=f"bx_invita_btn_{dove}", use_container_width=True,
+                                 icon=":material/group_add:"):
+                        _registra_evento("invito_apri")
+                        apri_dialogo_invito(T, _INVITO)
             if st.button("Ho già un codice", key=f"sblocco_codice_{dove}", type="tertiary"):
                 _vai_a_upgrade(None)
     # questionario già inviato in questo browser: via il pulsante del questionario, il testo invita a inserire il codice
@@ -1707,7 +1721,7 @@ def _info_invito(user_id: str) -> dict | None:
     ok, convalidati, guadagnati, residui = inviti.riepilogo(supabase_admin, user_id)
     if not codice or not ok:
         return None
-    return {"link": f"{_url_app()}/?ref={codice}", "convalidati": convalidati, "residui": residui}
+    return {"link": f"{LANDING_URL}/?ref={codice}", "convalidati": convalidati, "residui": residui}
 
 
 _INVITO = None
@@ -6246,7 +6260,8 @@ if not _share_view_active:
                     _registra_evento("codice_sbloccato")
                 return esito
             render_sblocco(T, _esci_da_upgrade, st.session_state.get("_upgrade_funzione"),
-                           _bonus_residui() if (MONETIZZAZIONE_ATTIVA and st.session_state.utente) else 0, _riscatta_codice)
+                           _bonus_residui() if (MONETIZZAZIONE_ATTIVA and st.session_state.utente) else 0, _riscatta_codice,
+                           invito=_INVITO)
     elif _current == STAGE_BANCA:
         if _is_admin:
             def _esci_dalla_banca():

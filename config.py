@@ -26,9 +26,11 @@ FREE_PLAN_LIMITS = {
 # linguaggio dei piani sono nascosti (PREZZI_VISIBILI = False). Per l'uso gratuito aperto a tutti: MONETIZZAZIONE_ATTIVA = False.
 MONETIZZAZIONE_ATTIVA = True
 PREZZI_VISIBILI = False          # False: nessun «piano Pro», prezzo o pagina di acquisto; al loro posto lo sblocco con il questionario
-VERIFICHE_PER_CODICE = 5         # verifiche con tutte le funzioni per ogni codice del questionario completo
+VERIFICHE_PER_CODICE = 2         # verifiche con tutte le funzioni per ogni codice del questionario completo
 MAX_CODICI_PER_UTENTE = 2        # codici che un account può usare
-INVITI_ATTIVI = False            # inviti tra colleghi (parlano di «piano Pro»): spenti in prova pubblica
+INVITI_ATTIVI = True             # inviti tra colleghi: +BONUS_PER_INVITO verifiche complete per ogni amico che crea la prima verifica
+                                 # (servono le tabelle di migrazione_inviti.sql; senza, l'invito non compare)
+LANDING_URL = "https://verificai.net"   # il link di invito passa dalla landing (anteprima ben fatta) e poi porta all'app
 # Inviti tra colleghi: per ogni amico che si iscrive e completa la prima verifica, chi invita guadagna verifiche con tutto il Pro
 BONUS_PER_INVITO = 2
 MAX_INVITI_CON_BONUS = 5

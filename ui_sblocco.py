@@ -4,15 +4,17 @@ Spiega lo scambio (questionario completo → codice → verifiche con tutte le f
 """
 import streamlit as st
 
-from config import ETICHETTE_FUNZIONI, VERIFICHE_PER_CODICE
+from config import ETICHETTE_FUNZIONI, VERIFICHE_PER_CODICE, BONUS_PER_INVITO
+from ui_inviti import render_invito
 
 
-def render_sblocco(T: dict, on_back, funzione, residui: int, on_riscatta) -> None:
+def render_sblocco(T: dict, on_back, funzione, residui: int, on_riscatta, invito=None) -> None:
     """
     on_back     : callable che riporta alla pagina precedente
     funzione    : la funzione bloccata che ha portato qui (per il titolo), se c'è
     residui     : verifiche complete ancora a disposizione
     on_riscatta : callable(codice) -> (ok, messaggio)
+    invito      : {"link", "convalidati", "residui"} se gli inviti sono attivi, altrimenti None
     """
     if st.button("← Indietro", key="sb_indietro", type="tertiary"):
         on_back()
@@ -23,7 +25,8 @@ def render_sblocco(T: dict, on_back, funzione, residui: int, on_riscatta) -> Non
         f'<h1 style="font-size:1.9rem;font-weight:800;margin:.4rem 0 .4rem;">Sblocca altre verifiche con tutte le funzioni</h1>'
         f'<div style="color:{T["text2"]};line-height:1.6;">La tua prima verifica aveva tutto il kit. Per le prossime resta '
         f'tutto il necessario per crearle e modificarle; le funzioni extra (Fila B, BES/DSA, soluzioni, scheda di allenamento, griglia, '
-        f'logo, Word, caricamento di appunti) le ottieni così:</div></div>',
+        f'logo, Word, caricamento di appunti) le ottieni così: <b>{VERIFICHE_PER_CODICE} verifiche complete</b> compilando il questionario'
+        + (f', e <b>altre {BONUS_PER_INVITO} per ogni collega</b> che inviti.' if invito else '.') + '</div></div>',
         unsafe_allow_html=True)
     if funzione in ETICHETTE_FUNZIONI:
         st.info(f"Ti serve {ETICHETTE_FUNZIONI[funzione]}? Fa parte delle funzioni che si sbloccano qui sotto.", icon="🔒")
@@ -44,6 +47,9 @@ def render_sblocco(T: dict, on_back, funzione, residui: int, on_riscatta) -> Non
             f'padding:.8rem 1rem;border-radius:12px;background:linear-gradient(135deg,{acc},{T["accent2"]});color:#fff !important;'
             f'font-weight:800;text-decoration:none;font-family:DM Sans,sans-serif;">Compila il questionario completo →</a>',
             unsafe_allow_html=True)
+        if invito:
+            st.markdown("##### Oppure invita un collega")
+            render_invito(T, invito, con_titolo=False)
         if residui > 0:
             st.success(f"Hai {residui} verifiche con tutte le funzioni a disposizione: la prossima che crei ne usa una.", icon="🎁")
         st.markdown("##### Ho un codice")

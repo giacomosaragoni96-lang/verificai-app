@@ -9,6 +9,7 @@ from ai_client import modelli_sostituiti, riepilogo_uso
 
 from ui_helpers import _reset_label, _render_limite_raggiunto
 from config import MONETIZZAZIONE_ATTIVA, PREZZI_VISIBILI, BONUS_PER_INVITO, MAX_INVITI_CON_BONUS
+from ui_inviti import render_invito
 
 logger = logging.getLogger("verificai.sidebar")
 
@@ -185,10 +186,7 @@ def render_sidebar(
         # ── INVITA UN COLLEGA — per ogni amico che crea la sua prima verifica, 2 verifiche con tutto il Pro ──
         if invito:
             with _c_storico, st.expander("Invita un collega", expanded=False, icon=":material/group_add:"):
-                st.caption(f"Per ogni collega che si iscrive e crea la sua prima verifica, tu ricevi "
-                           f"{BONUS_PER_INVITO} verifiche con tutto il piano Pro (fino a {MAX_INVITI_CON_BONUS} colleghi).")
-                st.code(invito["link"], language=None)
-                st.caption(f"Colleghi arrivati: {invito['convalidati']} · Verifiche Pro disponibili: {invito['residui']}")
+                render_invito(T, invito, con_titolo=False)
 
         # ── USER + LOGOUT ─────────────────────────────────────────────────────
         with _c_user:

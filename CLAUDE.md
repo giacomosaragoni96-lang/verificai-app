@@ -148,6 +148,10 @@ intestazione, logo). Serve `pandoc` (già in `packages.txt`). Il vecchio `latex_
 QUESTIONARIO: il questionario completo (domande chiave `questionario.OBBLIGATORIE`) rilascia un codice `VF-XXXX-XXXX` (`sblocco.py`, tabella `codici_sblocco`
 in `migrazione_sblocco.sql`, NON collegato alle risposte) che l'utente inserisce nella pagina «Sblocca» (`ui_sblocco.py`, stage UPGRADE) e vale
 `VERIFICHE_PER_CODICE` verifiche complete (crediti letti da `inviti.riepilogo`, stesso meccanismo dei bonus degli inviti; `INVITI_ATTIVI = False`).
+INVITI TRA COLLEGHI ATTIVI (`INVITI_ATTIVI = True`): il questionario completo vale `VERIFICHE_PER_CODICE = 2` verifiche complete e ogni collega che si iscrive col link di invito e crea
+la sua prima verifica ne vale altre `BONUS_PER_INVITO = 2` (max `MAX_INVITI_CON_BONUS = 5` colleghi). Il link è `LANDING_URL/?ref=CODICE` (la landing lo passa all'app, con `src=invito`);
+interfaccia in `ui_inviti.py` (email con `mailto:`, WhatsApp, link da copiare, contatori, finestra), richiamata dal box «Altre verifiche con tutte le funzioni» (INPUT e FINAL),
+dalla pagina «Sblocca» e dalla sidebar. Servono le tabelle di `migrazione_inviti.sql` (da eseguire a mano in Supabase): senza, l'invito non compare.
 Restano i tetti (5 verifiche al mese, 10 modifiche con l'AI per verifica, `TETTO_BREVE`). Il prezzo non si dice: si ricava dal questionario (Van Westendorp).
 `LEGALE_PRONTO = False`. Per tornare ai piani a pagamento: `PREZZI_VISIBILI = True`. Per l'uso gratuito senza blocchi: `MONETIZZAZIONE_ATTIVA = False`.
 
