@@ -1423,3 +1423,58 @@ def compila_contesto_generazione(
 
     note_generali = "\n\n".join(parti_note)
     return argomento, note_generali
+
+
+# ── MODIFICA LIBERA DELLA VERIFICA ────────────────────────────────────────────
+
+_RE_TIKZ_FIGURA = re.compile(r"\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}", re.DOTALL)
+
+
+def modifica_verifica_libera(model, materia: str, argomento: str, latex: str, richiesta: str,
+                             mostra_punteggi: bool = True, punti_totali: int = 100) -> dict:
+    """
+    Applica a TUTTA la verifica una richiesta scritta dal docente («semplifica il primo esercizio», «togli l'ultimo»…).
+    I grafici (tikzpicture) escono dal testo prima dell'AI, come segnaposto [[FIGURA n]], e rientrano dopo: non si
+    perdono e non si pagano token. Ritorna {"ok": bool, "preambolo", "blocchi", "messaggio"}.
+    ok=False con messaggio = l'AI ha deciso di non modificare nulla (o la risposta non era utilizzabile).
+    """
+    from prompts import prompt_modifica_verifica
+
+    richiesta = (richiesta or "").strip()
+    if not richiesta:
+        return {"ok": False, "messaggio": "Scrivi cosa vuoi cambiare."}
+    preambolo, blocchi = extract_blocks(latex or "")
+    if not blocchi:
+        return {"ok": False, "messaggio": "Non ho trovato gli esercizi della verifica."}
+
+    figure: list = []
+
+    def _segnaposto(m):
+        figure.append(m.group(0))
+        return f"[[FIGURA {len(figure)}]]"
+
+    testo = "\n\n".join(
+        f"\\subsection*{{{b['title']}}}\n" + _RE_TIKZ_FIGURA.sub(_segnaposto, b["body"]) for b in blocchi
+    )
+    prompt = prompt_modifica_verifica(materia, argomento, testo, richiesta, mostra_punteggi, punti_totali)
+    risposta = model.generate_content(prompt).text.replace("```latex", "").replace("```", "").strip()
+
+    if risposta.upper().startswith("NESSUNA_MODIFICA"):
+        motivo = risposta.split(":", 1)[1].strip() if ":" in risposta else ""
+        return {"ok": False, "messaggio": motivo or "Non ho trovato una modifica da fare."}
+
+    _pre, nuovi = extract_blocks(risposta)
+    if not nuovi:
+        return {"ok": False, "messaggio": "Non sono riuscito a capire la modifica: riprova scrivendola in un altro modo."}
+
+    def _rimetti(m):
+        n = int(m.group(1))
+        return figure[n - 1] if 1 <= n <= len(figure) else ""
+
+    for b in nuovi:
+        b["body"] = re.sub(r"\[\[FIGURA\s+(\d+)\]\]", _rimetti, b["body"])
+        b["body"] = re.sub(r"\s*\\end\{document\}.*$", "", b["body"], flags=re.DOTALL).strip()
+    nuovi = [b for b in nuovi if b["body"]]
+    if not nuovi:
+        return {"ok": False, "messaggio": "La risposta era vuota: riprova."}
+    return {"ok": True, "preambolo": preambolo, "blocchi": nuovi, "messaggio": ""}
