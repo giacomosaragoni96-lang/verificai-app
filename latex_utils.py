@@ -2707,14 +2707,24 @@ _RE_PUNTI_FINE = re.compile(r"[ \t]*\((\d+(?:[.,]\d+)?)\s*pt\)(?=[ \t]*(?:\n|\\\
 _RE_PUNTI_ALTROVE = re.compile(r"[ \t]*(?<!\{)\((\d+(?:[.,]\d+)?)\s*pt\)")
 
 
+_RE_VF_FINE = re.compile(r"[ \t]*(\\mbox\{\$\\square\$\s*\\textbf\{V\}\s*\$\\quad\\square\$\s*\\textbf\{F\}\})")
+
+
 def formatta_punti(latex: str) -> str:
     """
     Distingue il punteggio dal testo dell'esercizio: a fine riga va al margine destro in
     grassetto, in mezzo alla riga (es. prima delle caselle V/F) è staccato e in grassetto.
     Solo per il PDF: il LaTeX salvato resta con «(N pt)», che serve per contare e riscalare i punti.
     """
-    latex = _RE_PUNTI_FINE.sub(lambda m: f" \\hspace*{{0.6em plus 1fill}}\\mbox{{\\textbf{{({m.group(1)} pt)}}}}", latex)
-    return _RE_PUNTI_ALTROVE.sub(lambda m: f"\\quad\\mbox{{\\textbf{{({m.group(1)} pt)}}}}", latex)
+    if "% GRIGLIA" in latex:
+        # con la tabella dei punteggi in fondo i punti accanto alle richieste sarebbero una ripetizione: si tolgono (solo nel PDF)
+        latex = _RE_PUNTI_FINE.sub("", latex)
+        latex = _RE_PUNTI_ALTROVE.sub("", latex)
+    else:
+        latex = _RE_PUNTI_FINE.sub(lambda m: f" \\hspace*{{0.6em plus 1fill}}\\mbox{{\\textbf{{({m.group(1)} pt)}}}}", latex)
+        latex = _RE_PUNTI_ALTROVE.sub(lambda m: f"\\quad\\mbox{{\\textbf{{({m.group(1)} pt)}}}}", latex)
+    # le caselle V/F stanno in fondo alla riga, a destra; se non ci stanno vanno a capo, sempre a destra
+    return _RE_VF_FINE.sub(lambda m: "\\hfill" + m.group(1), latex)
 
 
 def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
