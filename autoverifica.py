@@ -85,6 +85,15 @@ def _verifica(model, materia: str, scuola: str, esercizi: list) -> list:
     return problemi
 
 
+def _verifica_con_ripetizione(model, materia: str, scuola: str, esercizi: list) -> list:
+    """Come _verifica, ma se la chiamata cade (guasto momentaneo, per esempio «Bad file descriptor») ci riprova una volta."""
+    try:
+        return _verifica(model, materia, scuola, esercizi)
+    except Exception:
+        logger.warning("Autoverifica: primo tentativo non riuscito, riprovo", exc_info=True)
+        return _verifica(model, materia, scuola, esercizi)
+
+
 def _riscrivi(model, materia, argomento, blocco, problema, mostra_punteggi):
     """Nuovo blocco corretto, oppure None se non è valido (titolo mancante, punteggi diversi)."""
     originale = _senza_fine(blocco)
@@ -116,7 +125,7 @@ def autoverifica_corpo(model, materia: str, scuola: str, argomento: str, corpo: 
         mod = _modello(model)
         esercizi = [(i + 1, _senza_fine(b)) for i, b in enumerate(blocchi)]
         resoconto["controllati"] = len(esercizi)
-        problemi = _verifica(mod, materia, scuola, esercizi)
+        problemi = _verifica_con_ripetizione(mod, materia, scuola, esercizi)
         resoconto["eseguita"] = True
         if not problemi:
             return corpo, resoconto
@@ -150,6 +159,6 @@ def autoverifica_corpo(model, materia: str, scuola: str, argomento: str, corpo: 
         resoconto["corretti"] = sorted(corretti)
         return testa + "".join(nuovi), resoconto
     except Exception as e:
-        logger.warning("Autoverifica non riuscita (tengo il testo originale): %s", e)
+        logger.warning("Autoverifica non riuscita (tengo il testo originale): %s", e, exc_info=True)
         resoconto["errore"] = str(e)[:200]
         return corpo, resoconto
