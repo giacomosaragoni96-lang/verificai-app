@@ -16,6 +16,12 @@ FROM auth.users
 WHERE email <> 'giacomosaragoni96@gmail.com'          -- ADMIN
 GROUP BY 1 ORDER BY 1 DESC;
 
+-- 1b) ACCESSI per provenienza (link dei post con ?src=nome) e per giorno: persone diverse e sessioni
+SELECT split_part(e.tipo, ':', 2) AS provenienza, e.created_at::date AS giorno, count(*) AS accessi, count(DISTINCT e.user_id) AS persone
+FROM usage_events e JOIN auth.users u ON u.id = e.user_id
+WHERE e.tipo LIKE 'accesso:%' AND u.email <> 'giacomosaragoni96@gmail.com'          -- ADMIN
+GROUP BY 1, 2 ORDER BY 2 DESC, 3 DESC;
+
 -- 2) IMBUTO: da iscritti a utenti che tornano
 WITH tester AS (
     SELECT id FROM auth.users WHERE email <> 'giacomosaragoni96@gmail.com'          -- ADMIN

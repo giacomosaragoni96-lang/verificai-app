@@ -38,6 +38,8 @@ from subscription_management import calcola_entitlements, get_subscription_manag
 from ui_upgrade import render_upgrade
 from ui_legale import render_termini, render_rimborsi
 from ui_questionario import render_questionario
+from ui_sblocco import render_sblocco
+import sblocco
 from questionario import domanda as _domanda_q, pulisci_risposte, riga_rapida
 from licenze import attiva_licenza, riconvalida_se_serve
 from segnalazioni import costruisci_segnalazione, MAX_PER_SESSIONE
@@ -59,6 +61,7 @@ from config import (
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
     MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, PREZZO_PRO_ANNUALE, LEGALE_PRONTO, TETTO_BREVE, MAX_FACCIATE, WORD_ATTIVO,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS, MODIFICHE_PER_VERIFICA, FEEDBACK_PRIMA_DEL_DOWNLOAD, MOSTRA_BOX_FEEDBACK,
+    PREZZI_VISIBILI, INVITI_ATTIVI, VERIFICHE_PER_CODICE,
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -165,6 +168,12 @@ if st.query_params.get("pagina") in ("privacy", "termini", "rimborsi", "question
     else:
         render_privacy(T, FEEDBACK_FORM_URL)
     st.stop()
+
+# ── Da dove arriva chi entra (?src=gruppo1 nei link dei post): si ricorda in un cookie, che sopravvive al login con Google ──
+_src_url = st.query_params.get("src")
+if _src_url and re.fullmatch(r"[A-Za-z0-9_-]{1,30}", str(_src_url)):
+    st.session_state["_src"] = str(_src_url)
+    components.html('<script>try{window.parent.document.cookie="vf_src=' + str(_src_url) + '; max-age=2592000; path=/; SameSite=Lax";}catch(e){}</script>', height=0)
 
 # ── Link di invito di un collega (?ref=CODICE): si ricorda anche se l'accesso passa da Google ──
 _ref_url = inviti.codice_valido(st.query_params.get("ref"))
@@ -916,6 +925,18 @@ def _vai_a_upgrade(funzione: str | None = None) -> None:
     st.rerun()
 
 
+# Un evento «accesso» per sessione: quante persone tornano e da quale link sono arrivate (tipo «accesso:gruppo1» o «accesso:diretto»)
+if st.session_state.utente and not _is_admin and not st.session_state.get("_accesso_registrato"):
+    st.session_state["_accesso_registrato"] = True
+    _src_acc = st.session_state.get("_src")
+    if not _src_acc:
+        try:
+            _src_acc = st.context.cookies.get("vf_src")
+        except Exception:
+            _src_acc = None
+    _registra_evento("accesso:" + (re.sub(r"[^A-Za-z0-9_-]", "", str(_src_acc))[:30] if _src_acc else "diretto"))
+
+
 _CSS_BANNER_PIANO = """
 <style>
 @keyframes gpulse {
@@ -1253,7 +1274,7 @@ def _guida_benvenuto(dove: str, slot) -> None:
             components.html(_js_guida_visti(f"{_SIM}|{st.session_state.get('_guida_epoca', 0)}"), height=0)
 
     # Con i pagamenti spenti (prova pubblica) la guida è la stessa ma non parla di regali, piani né funzioni «solo per questa verifica»
-    _test = not MONETIZZAZIONE_ATTIVA
+    _test = not PREZZI_VISIBILI
     _eti = "Benvenuto" if _test else "Regalo di benvenuto"
     if dove == "input":
         scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
@@ -1416,7 +1437,7 @@ def _dialogo_mini_feedback(pdf: bytes, nome_file: str) -> None:
 
 def _benvenuto_richiesto() -> bool:
     """True alla prima visita (nessuna verifica creata, nessun cookie): si mostra una sola volta il pop-up di benvenuto."""
-    if (_is_admin and not _SIM) or not _GUIDA_PRIMO or st.session_state.get("_benvenuto_visto"):
+    if (_is_admin and not _SIM) or not _GUIDA_PRIMO or st.session_state.get("_benvenuto_visto") or st.session_state.get("_assaggio_tipo") == "bonus":
         return False
     try:
         if st.context.cookies.get("vf_benvenuto") == "1":
@@ -1462,6 +1483,22 @@ def _dialogo_benvenuto() -> None:
         st.rerun()
 
 
+def _box_sblocco(dove: str) -> None:
+    """Riquadro per chi ha già fatto la prima verifica: compilando il questionario completo ottiene altre verifiche con tutte le funzioni."""
+    compatto = (dove == "input")
+    testo = (f"Compila il questionario completo (4 minuti, anonimo): alla fine ricevi un codice per {VERIFICHE_PER_CODICE} verifiche "
+             f"con tutte le funzioni (Fila B, BES/DSA, soluzioni, logo, Word…).")
+    corpo = ('<div class="vf-fb-testo"><div class="vf-fb-t">Vuoi altre verifiche con tutte le funzioni?</div>'
+             f'<div class="vf-fb-d">{"" if compatto else "La tua prima verifica aveva tutto il kit. "}{testo}</div></div>')
+    st.markdown(_CSS_BOX_FEEDBACK + f'<div class="vf-fb{" vf-fb-c" if compatto else ""}"><div class="vf-fb-ico">🎁</div>{corpo}'
+                '<a class="vf-fb-b" href="?pagina=questionario" target="_blank" rel="noopener">Compila il questionario →</a></div>',
+                unsafe_allow_html=True)
+    components.html('<script>try{if(window.parent.localStorage.getItem("vf_feedback_ok")){window.parent.document.querySelectorAll(".vf-fb")'
+                    '.forEach(function(e){e.style.display="none";});}}catch(e){}</script>', height=0)
+    if st.button("Ho già un codice", key=f"sblocco_codice_{dove}", type="tertiary", icon=":material/key:"):
+        _vai_a_upgrade(None)
+
+
 def _banner_piano(dove: str) -> None:
     """
     Riquadro blu in cima alla pagina per chi non ha il piano Pro (stesso stile della guida di benvenuto):
@@ -1485,12 +1522,20 @@ def _banner_piano(dove: str) -> None:
         return
     if ENT.assaggio and st.session_state.get("_assaggio_tipo") == "bonus" and not _SIM:
         with _slot.container(key=f"banner_piano_{dove}"):
-            st.markdown(_CSS_BANNER_PIANO + '<div class="bp-wrap"><div class="g-k"><span class="g-ico">🎁</span>Verifica bonus</div>'
-                        '<div class="bp-s">Per aver invitato un collega, questa verifica ha tutto il piano Pro.</div></div>',
-                        unsafe_allow_html=True)
+            _msg = ("Questa verifica ha tutte le funzioni: è una delle tue verifiche complete." if not PREZZI_VISIBILI
+                    else "Per aver invitato un collega, questa verifica ha tutto il piano Pro.")
+            st.markdown(_CSS_BANNER_PIANO + '<div class="bp-wrap"><div class="g-k"><span class="g-ico">🎁</span>Verifica completa</div>'
+                        f'<div class="bp-s">{_msg}</div></div>', unsafe_allow_html=True)
         return
     if ENT.assaggio:
         _guida_benvenuto(dove, _slot)
+        return
+    if not PREZZI_VISIBILI:
+        if dove in ("input", "final"):
+            with _slot.container():
+                _box_sblocco(dove)
+        else:
+            _slot.empty()
         return
     if dove == "input":
         # nella pagina di creazione l'invito è una riga sola: il confronto completo sta nella pagina del Pro
@@ -1529,9 +1574,14 @@ def _pro_bloccato(funzione: str) -> bool:
 
 
 def _pulsante_pro(funzione: str, key: str, testo: str = "Con il piano Pro") -> None:
-    """Al posto dell'azione di una funzione Pro: un pulsante che porta alla pagina di confronto."""
-    if st.button(f"🔒 {testo}", key=key, use_container_width=True, type="secondary",
-                 help=f"Per avere {ETICHETTE_FUNZIONI.get(funzione, 'questa funzione')} serve il piano Pro."):
+    """Al posto dell'azione di una funzione bloccata: porta alla pagina di confronto (o, senza prezzi, allo sblocco con il questionario)."""
+    if not PREZZI_VISIBILI:
+        _lbl = "Sblocca con il questionario"
+        _help = f"Per avere {ETICHETTE_FUNZIONI.get(funzione, 'questa funzione')}: compila il questionario completo e ricevi un codice."
+    else:
+        _lbl = testo
+        _help = f"Per avere {ETICHETTE_FUNZIONI.get(funzione, 'questa funzione')} serve il piano Pro."
+    if st.button(f"🔒 {_lbl}", key=key, use_container_width=True, type="secondary", help=_help):
         _vai_a_upgrade(funzione)
 
 # ── CSS + FEEDBACK ────────────────────────────────────────────
@@ -1573,7 +1623,7 @@ def _info_invito(user_id: str) -> dict | None:
 
 _INVITO = None
 if (MONETIZZAZIONE_ATTIVA and st.session_state.utente and supabase_admin is not None
-        and not st.query_params.get("share") and (_is_admin or ENT.piano == "free")):
+        and INVITI_ATTIVI and not st.query_params.get("share") and (_is_admin or ENT.piano == "free")):
     try:
         _INVITO = _info_invito(st.session_state.utente.id)
     except Exception as _e_inv:
@@ -2798,7 +2848,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 st.markdown(_html_separatore() + '<div class="opt-label">Hai già del materiale? (opzionale)</div>', unsafe_allow_html=True)
                 if _pro_bloccato("materiale") and not _fm:
                     st.caption("Carica appunti o una verifica già fatta e VerificAI ne crea una nuova, con dati diversi: "
-                               "è una funzione del piano Pro.")
+                               + ("è una funzione del piano Pro." if PREZZI_VISIBILI else "è una delle funzioni complete, da sbloccare con il questionario."))
                     _pulsante_pro("materiale", "pro_materiale", "Carica un file con il piano Pro")
                 elif not _fm:
                     _up = st.file_uploader(
@@ -2858,7 +2908,8 @@ def _render_percorso_b_form(_prog_placeholder):
                 _logo_s = _logo_scuola()
                 _logo_bloccato = _pro_bloccato("logo")
                 if _logo_bloccato:
-                    st.caption("Il logo della tua scuola sull'intestazione è una funzione del piano Pro.")
+                    st.caption("Il logo della tua scuola sull'intestazione è una funzione del piano Pro." if PREZZI_VISIBILI
+                               else "Il logo della tua scuola sull'intestazione è una delle funzioni complete, da sbloccare con il questionario.")
                     _pulsante_pro("logo", "pro_logo", "Logo della scuola con il piano Pro")
                 elif _logo_s:
                     _attivo_nuovo = st.toggle("Metti il logo nelle verifiche",
@@ -2923,7 +2974,7 @@ def _render_percorso_b_form(_prog_placeholder):
             if _limite:
                 _render_limite_raggiunto(
                     T, _TETTO_MENSILE, _reset_label(*_giorni_al_reset()), FEEDBACK_FORM_URL,
-                    pro_cb=(lambda: _vai_a_upgrade(None)) if MONETIZZAZIONE_ATTIVA else None, pro_key="form",
+                    pro_cb=(lambda: _vai_a_upgrade(None)) if (MONETIZZAZIONE_ATTIVA and PREZZI_VISIBILI) else None, pro_key="form",
                 )
             elif _blocco_conteggio:
                 messaggio("avviso", "Non riesco a controllare il tuo utilizzo mensile in questo momento. "
@@ -4157,11 +4208,12 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 if ENT.piano == "free" and not ENT.assaggio:
                     st.warning(
                         f"Hai usato tutte le {_tetto_mod} modifiche con l'AI di questa verifica. Puoi ancora cambiare i "
-                        f"punteggi, eliminare esercizi o scaricarla; con il piano Pro ne hai {MODIFICHE_PER_VERIFICA['pro']} "
-                        f"per verifica, oppure crea una nuova verifica.",
+                        f"punteggi, eliminare esercizi o scaricarla; "
+                        + (f"con il piano Pro ne hai {MODIFICHE_PER_VERIFICA['pro']} per verifica, oppure crea una nuova verifica." if PREZZI_VISIBILI
+                           else f"con una verifica completa ne hai {MODIFICHE_PER_VERIFICA['pro']}: la sblocchi con il questionario, oppure crea una nuova verifica."),
                         icon="🔒",
                     )
-                    if MONETIZZAZIONE_ATTIVA and st.button("Con il piano Pro", key="mod_upgrade", icon=":material/lock:",
+                    if MONETIZZAZIONE_ATTIVA and st.button("Con il piano Pro" if PREZZI_VISIBILI else "Sblocca con il questionario", key="mod_upgrade", icon=":material/lock:",
                                                            use_container_width=True):
                         _vai_a_upgrade("modifiche")
                 else:
@@ -5957,9 +6009,19 @@ if not _share_view_active:
                 _registra_evento("licenza_attivata")
             return esito.ok, esito.messaggio, esito.dettaglio_admin
 
-        render_upgrade(_esci_da_upgrade, st.session_state.get("_upgrade_funzione"), _gia_usato,
-                       e_pro=(ENT.piano == "pro" and not _SIM), email=getattr(st.session_state.utente, "email", None),
-                       on_attiva=_attiva_codice, e_admin=_admin_vista, invito=_INVITO)
+        if PREZZI_VISIBILI:
+            render_upgrade(_esci_da_upgrade, st.session_state.get("_upgrade_funzione"), _gia_usato,
+                           e_pro=(ENT.piano == "pro" and not _SIM), email=getattr(st.session_state.utente, "email", None),
+                           on_attiva=_attiva_codice, e_admin=_admin_vista, invito=_INVITO)
+        else:
+            def _riscatta_codice(codice):
+                esito = sblocco.riscatta(supabase_admin, st.session_state.utente.id, codice)
+                if esito[0]:
+                    st.session_state.pop("_bonus_cache", None)          # i crediti si rileggono subito
+                    _registra_evento("codice_sbloccato")
+                return esito
+            render_sblocco(T, _esci_da_upgrade, st.session_state.get("_upgrade_funzione"),
+                           _bonus_residui() if (MONETIZZAZIONE_ATTIVA and st.session_state.utente) else 0, _riscatta_codice)
     elif _current == STAGE_BANCA:
         if _is_admin:
             def _esci_dalla_banca():

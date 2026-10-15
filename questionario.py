@@ -150,3 +150,26 @@ def domanda(qid: str) -> dict:
 def riga_rapida(risposte: dict) -> dict:
     """Le due domande veloci («quanto tempo hai risparmiato?», «ti è servito?»): stessa tabella, versione 0."""
     return {"versione": 0, "risposte": risposte, "email_facoltativa": None}
+
+
+# Domande che servono per ricevere il codice (non «tutto»: quelle su di sé restano facoltative). Etichetta breve → per dire cosa manca.
+OBBLIGATORIE = {
+    "tempo_da_zero": "quanto tempo ci metti di solito", "tempo_con": "quanto ci hai messo con VerificAI", "risparmio": "quanto tempo hai risparmiato",
+    "utile": "ti è servito davvero", "useresti": "la useresti per una verifica vera", "pronta": "se la verifica era pronta da usare",
+    "correzioni": "quanto hai dovuto correggere", "facile": "quanto è stato facile", "manca": "cosa manca (scrivi almeno una frase)",
+    "pagheresti": "se pagheresti", "formula": "la formula che preferiresti", "verifiche_mese": "quante verifiche al mese",
+    "vw_troppo_basso": "il prezzo troppo basso", "vw_conveniente": "il prezzo conveniente", "vw_caro": "il prezzo che comincia a essere caro",
+    "vw_troppo_caro": "il prezzo troppo caro", "consiglieresti": "se lo consiglieresti",
+}
+MIN_CARATTERI_MANCA = 15
+
+
+def e_completo(risposte: dict):
+    """(completo, [cosa manca]): tutte le domande chiave con risposta, un commento vero e prezzi coerenti (dal più basso al più alto)."""
+    mancanti = [lab for qid, lab in OBBLIGATORIE.items() if qid not in risposte]
+    if "manca" in risposte and len(str(risposte["manca"]).strip()) < MIN_CARATTERI_MANCA and OBBLIGATORIE["manca"] not in mancanti:
+        mancanti.append(OBBLIGATORIE["manca"])
+    prezzi = [risposte.get(k) for k in ("vw_troppo_basso", "vw_conveniente", "vw_caro", "vw_troppo_caro")]
+    if all(p is not None for p in prezzi) and any(a > b for a, b in zip(prezzi, prezzi[1:])):
+        mancanti.append("i prezzi devono crescere: dal «troppo basso» al «troppo caro»")
+    return (not mancanti), mancanti

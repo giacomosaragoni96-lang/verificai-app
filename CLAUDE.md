@@ -106,11 +106,13 @@ intestazione, logo). Serve `pandoc` (già in `packages.txt`). Il vecchio `latex_
 
 ## Piani e abbonamenti
 
-**Prova pubblica (dal 15 ottobre 2026):** `MONETIZZAZIONE_ATTIVA = False` e `LEGALE_PRONTO = False`: ogni funzione è aperta a tutti, nessun prezzo, banner,
-invito o link a Termini/Rimborsi; restano i tetti (5 verifiche al mese, 10 modifiche con l'AI per verifica, `TETTO_BREVE`). Il prezzo non si dice: si ricava
-dal questionario (domande Van Westendorp). Alla prima visita (nessuna verifica, cookie `vf_benvenuto`) si apre una volta il pop-up di benvenuto (`_dialogo_benvenuto`: 3 passi + «più informazioni dai, meglio viene»). La guida del primo utente (riquadro blu + elementi che lampeggiano, `_guida_benvenuto`) resta accesa anche a pagamenti spenti, con testi senza
-regali né piani: la mostra `_banner_piano` a chi è alla sua prima verifica (`_GUIDA_PRIMO`, `_prima_esperienza`). Misure d'uso: `riepilogo_uso.sql`
-(query da eseguire a mano in Supabase); questionario dei tester nel sito: pagina pubblica e anonima `?pagina=questionario` (`ui_questionario.py`, domande in `questionario.py`), tabella `questionario_tester` in `migrazione_questionario.sql` (da eseguire a mano), query di lettura in `riepilogo_uso.sql`; il pulsante «Lasciaci un feedback» e il link nel piè di pagina puntano lì; al clic sul PRIMO «Scarica PDF» (poi cookie `vf_mini_ok` di un anno) si apre una finestra (`_dialogo_mini_feedback`, st.dialog) con due domande veloci (tempo risparmiato, utilità) salvate come `versione = 0` — interruttore `config.FEEDBACK_PRIMA_DEL_DOWNLOAD`; i riquadri blu del feedback (`_box_feedback`) sono spenti (`config.MOSTRA_BOX_FEEDBACK`): si chiede il parere solo lì, più il pulsante 💬 e il link nel piè di pagina; gli eventi in `usage_events` sono verifica, modifica, fila_b, bes, soluzioni, griglia, scheda, word, condivisione, materiale. Per tornare ai piani basta riaccendere i due interruttori (la privacy mostra Lemon Squeezy solo con i pagamenti accesi).
+**Prova pubblica (dal 15 ottobre 2026):** `MONETIZZAZIONE_ATTIVA = True` (blocchi delle funzioni accesi: la prima verifica ha tutto, le successive no) ma
+`PREZZI_VISIBILI = False`: nessun prezzo, piano Pro, Lemon Squeezy o checkout nell'interfaccia; al posto dello sblocco a pagamento c'è lo SBLOCCO CON IL
+QUESTIONARIO: il questionario completo (domande chiave `questionario.OBBLIGATORIE`) rilascia un codice `VF-XXXX-XXXX` (`sblocco.py`, tabella `codici_sblocco`
+in `migrazione_sblocco.sql`, NON collegato alle risposte) che l'utente inserisce nella pagina «Sblocca» (`ui_sblocco.py`, stage UPGRADE) e vale
+`VERIFICHE_PER_CODICE` verifiche complete (crediti letti da `inviti.riepilogo`, stesso meccanismo dei bonus degli inviti; `INVITI_ATTIVI = False`).
+Restano i tetti (5 verifiche al mese, 10 modifiche con l'AI per verifica, `TETTO_BREVE`). Il prezzo non si dice: si ricava dal questionario (Van Westendorp).
+`LEGALE_PRONTO = False`. Per tornare ai piani a pagamento: `PREZZI_VISIBILI = True`. Per l'uso gratuito senza blocchi: `MONETIZZAZIONE_ATTIVA = False`.
 
 Il codice Stripe è stato rimosso: l'app non incassa né scrive abbonamenti, legge soltanto la
 tabella `subscriptions` (`subscription_management.get_user_subscription`, status `active`/`trialing`).

@@ -760,7 +760,7 @@ def render_privacy(T: dict, contatto_url: str) -> None:
         f'VerificAI · ultimo aggiornamento: 15 ottobre 2026</div></div>',
         unsafe_allow_html=True,
     )
-    from config import MONETIZZAZIONE_ATTIVA as _MON
+    from config import PREZZI_VISIBILI as _MON
     # I fornitori dei pagamenti compaiono solo quando i pagamenti esistono
     _ACQUISTO = ("- **Acquisto del piano Pro:** il pagamento è gestito da Lemon Squeezy, che ti vende il piano. Noi **non vediamo né conserviamo i dati della tua carta**:\n"
                  "  riceviamo solo l'esito, il codice di licenza e la sua scadenza, che salviamo insieme al tuo account.\n") if _MON else ""

@@ -7,7 +7,7 @@ APP_NAME          = "VerificAI"
 APP_ICON          = "📝"
 APP_TAGLINE       = "Crea verifiche su misura in pochi secondi"
 SHARE_URL         = "https://verificai.streamlit.app"
-FEEDBACK_FORM_URL = "https://forms.gle/KNu8v8iDVUiGkQUL8"
+FEEDBACK_FORM_URL = "?pagina=questionario"      # il questionario nel sito (ha sostituito il vecchio Google Form)
 
 # ── LIMITI E RUOLI ─────────────────────────────────────────────────────────────
 LIMITE_MENSILE = 5
@@ -22,8 +22,13 @@ FREE_PLAN_LIMITS = {
 # ── PIANI E FUNZIONI ───────────────────────────────────────────────────────────
 # Interruttore della monetizzazione: SPENTO = ogni funzione è aperta a tutti (comportamento di oggi).
 # Con l'interruttore acceso le funzioni elencate in FUNZIONI_PRO richiedono il piano Pro.
-# FASE DI PROVA PUBBLICA (dal 15 ottobre 2026): spenta, tutto aperto, nessun prezzo né riferimento ai pagamenti. Si riaccende dopo i feedback.
-MONETIZZAZIONE_ATTIVA = False
+# FASE DI PROVA PUBBLICA: i blocchi delle funzioni sono ACCESI (dopo la prima verifica il kit si sblocca con il questionario), ma i prezzi e il
+# linguaggio dei piani sono nascosti (PREZZI_VISIBILI = False). Per l'uso gratuito aperto a tutti: MONETIZZAZIONE_ATTIVA = False.
+MONETIZZAZIONE_ATTIVA = True
+PREZZI_VISIBILI = False          # False: nessun «piano Pro», prezzo o pagina di acquisto; al loro posto lo sblocco con il questionario
+VERIFICHE_PER_CODICE = 5         # verifiche con tutte le funzioni per ogni codice del questionario completo
+MAX_CODICI_PER_UTENTE = 2        # codici che un account può usare
+INVITI_ATTIVI = False            # inviti tra colleghi (parlano di «piano Pro»): spenti in prova pubblica
 # Inviti tra colleghi: per ogni amico che si iscrive e completa la prima verifica, chi invita guadagna verifiche con tutto il Pro
 BONUS_PER_INVITO = 2
 MAX_INVITI_CON_BONUS = 5

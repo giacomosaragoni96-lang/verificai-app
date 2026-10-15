@@ -8,7 +8,7 @@ import streamlit as st
 from ai_client import modelli_sostituiti, riepilogo_uso
 
 from ui_helpers import _reset_label, _render_limite_raggiunto
-from config import MONETIZZAZIONE_ATTIVA, BONUS_PER_INVITO, MAX_INVITI_CON_BONUS
+from config import MONETIZZAZIONE_ATTIVA, PREZZI_VISIBILI, BONUS_PER_INVITO, MAX_INVITI_CON_BONUS
 
 logger = logging.getLogger("verificai.sidebar")
 
@@ -145,7 +145,7 @@ def render_sidebar(
                     st.rerun()
 
                 _render_limite_raggiunto(T, LIMITE_MENSILE, _reset_str, contatto_url,
-                                         pro_cb=_vai_pro if MONETIZZAZIONE_ATTIVA else None, pro_key="sb",
+                                         pro_cb=_vai_pro if (MONETIZZAZIONE_ATTIVA and PREZZI_VISIBILI) else None, pro_key="sb",
                                          text_color=_sb_text)
 
         # ── LE MIE VERIFICHE — un solo pulsante con il conteggio ──────────────
@@ -175,8 +175,8 @@ def render_sidebar(
                 st.session_state.stage = "MIE_VERIFICHE"
                 st.rerun()
             if MONETIZZAZIONE_ATTIVA and not is_admin and st.session_state.get("piano_utente", "free") == "free":
-                if st.button("Passa a Pro", key="open_upgrade", use_container_width=True, type="secondary",
-                             icon=":material/workspace_premium:"):
+                if st.button("Passa a Pro" if PREZZI_VISIBILI else "Sblocca verifiche complete", key="open_upgrade", use_container_width=True, type="secondary",
+                             icon=":material/workspace_premium:" if PREZZI_VISIBILI else ":material/lock_open:"):
                     st.session_state["_upgrade_da"] = st.session_state.get("stage")
                     st.session_state["_upgrade_funzione"] = None
                     st.session_state.stage = "UPGRADE"
