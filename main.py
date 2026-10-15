@@ -1356,22 +1356,30 @@ def _mini_feedback_richiesto() -> bool:
     return True
 
 
-def _card_mini_feedback() -> None:
-    """Due domande da 5 secondi che sbloccano il download: è l'unica cosa che chiediamo in cambio dell'uso gratuito."""
-    st.markdown(_CSS_BOX_FEEDBACK + '<div class="vf-fb"><div class="vf-fb-ico">⏱️</div><div class="vf-fb-testo">'
-                '<div class="vf-fb-t">Un attimo, prima di scaricare</div>'
-                '<div class="vf-fb-d">VerificAI è in beta e gratuita: due domande da 5 secondi ci dicono se ti è servito davvero. '
-                'Poi il PDF è tuo.</div></div></div>', unsafe_allow_html=True)
-    _dq1, _dq2 = _domanda_q("risparmio"), _domanda_q("utile")
+@st.dialog("Un attimo prima di scaricare", width="small")
+def _dialogo_mini_feedback(pdf: bytes, nome_file: str) -> None:
+    """
+    Finestra che si apre al clic su «Scarica PDF» (solo la prima volta in questo browser): due domande da 5 secondi e poi il
+    PDF si scarica da qui. È l'unica cosa che chiediamo in cambio dell'uso gratuito.
+    """
+    if st.session_state.get("_mini_dialogo_fatto"):
+        st.success("Grazie! Ecco il tuo PDF.", icon="✅")
+        _dl("⬇  Scarica il PDF", data=pdf, file_name=nome_file, mime="application/pdf", type="primary",
+            use_container_width=True, key="dl_pdf_dialogo")
+        st.markdown(f'<div style="text-align:center;font-size:.85rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin-top:.6rem;">'
+                    f'Hai 4 minuti? <a href="?pagina=questionario" target="_blank" rel="noopener" style="color:{T["accent"]};font-weight:700;">'
+                    f'Il questionario completo</a> ci aiuta ancora di più (anonimo).</div>', unsafe_allow_html=True)
+        components.html('<script>try{window.parent.document.cookie="vf_mini_ok=1; max-age=31536000; path=/; SameSite=Lax";}catch(e){}</script>', height=0)
+        return
+    st.markdown(f'<div style="font-family:DM Sans,sans-serif;color:{T["text2"]};font-size:.92rem;line-height:1.5;margin-bottom:.4rem;">'
+                f'VerificAI è in beta e gratuita: due domande da 5 secondi ci dicono se ti è servito davvero. Poi il PDF è tuo.</div>',
+                unsafe_allow_html=True)
+    _dq1 = _domanda_q("risparmio")
     with st.form("mini_feedback", border=False):
-        _r1 = st.radio("Rispetto al tuo solito, quanto tempo pensi di aver risparmiato?", _dq1["opzioni"], index=None,
-                       horizontal=True, key="mini_risparmio")
+        _r1 = st.radio("Rispetto al tuo solito, quanto tempo pensi di aver risparmiato?", _dq1["opzioni"], index=None, key="mini_risparmio")
         _r2 = st.radio("Ti è servito davvero?  (1 = per niente → 5 = moltissimo)", [1, 2, 3, 4, 5], index=None,
                        horizontal=True, key="mini_utile")
-        _vai = st.form_submit_button("Sblocca il download", type="primary", use_container_width=True)
-    st.markdown(f'<div style="text-align:center;font-size:.85rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:-.3rem 0 .8rem;">'
-                f'Hai 4 minuti? <a href="?pagina=questionario" target="_blank" rel="noopener" style="color:{T["accent"]};font-weight:700;">'
-                f'Il questionario completo</a> ci aiuta ancora di più (anonimo).</div>', unsafe_allow_html=True)
+        _vai = st.form_submit_button("Invia e scarica", type="primary", use_container_width=True)
     if _vai:
         if _r1 is None or _r2 is None:
             st.warning("Rispondi a tutte e due: ci vogliono 5 secondi.", icon="⏱️")
@@ -1383,8 +1391,8 @@ def _card_mini_feedback() -> None:
         except Exception as e:                      # un nostro guasto non deve bloccare il download
             logger.warning("domande veloci non salvate: %s", e)
         st.session_state["_mini_ok"] = True
-        st.session_state["_mini_cookie"] = True
-        st.rerun()
+        st.session_state["_mini_dialogo_fatto"] = True
+        st.rerun(scope="fragment")
 
 
 def _banner_piano(dove: str) -> None:
@@ -4844,13 +4852,12 @@ def _render_stage_final():
     )
     _box_az = st.container(key="az_principali")
     _mini_gate = bool(vA.get("pdf")) and _mini_feedback_richiesto()
-    if st.session_state.pop("_mini_cookie", False):
-        components.html('<script>try{window.parent.document.cookie="vf_mini_ok=1; max-age=31536000; path=/; SameSite=Lax";}catch(e){}</script>', height=0)
     _az_dl, _az_mod, _az_new = _box_az.columns([1.3, 1, 1], gap="small", vertical_alignment="center")
     with _az_dl:
         if _mini_gate:
-            st.button("⬇  Scarica PDF", key="dl_pdf_bloccato", type="primary", disabled=True, use_container_width=True,
-                      help="Prima rispondi alle due domande veloci qui sotto: poi il PDF è tuo.")
+            if st.button(f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}", key="dl_pdf_hero_A", type="primary", use_container_width=True,
+                         help="Scarica il PDF della verifica, già formattato e pronto per la stampa."):
+                _dialogo_mini_feedback(vA["pdf"], _fname_a + ".pdf")
         elif vA.get("pdf"):
             _dl(
                 label=f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}",
@@ -4881,8 +4888,6 @@ def _render_stage_final():
         f'distribuirlo agli studenti. La verifica è salvata in «Le mie verifiche».</div>',
         unsafe_allow_html=True
     )
-    if _mini_gate:
-        _card_mini_feedback()
 
     # ── Anteprima: una pagina alla volta, con ◀ ▶ (così il kit sotto resta vicino) ──────────
     _zoom = False
@@ -4936,6 +4941,10 @@ def _render_stage_final():
                 on_click="ignore",
                 help="Scarica il PDF della verifica, già formattato e pronto per la stampa.",
             )
+        elif vA.get("pdf"):
+            if st.button(f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}", key="dl_pdf_basso_A", type="primary", use_container_width=True,
+                         help="Scarica il PDF della verifica, già formattato e pronto per la stampa."):
+                _dialogo_mini_feedback(vA["pdf"], _fname_a + ".pdf")
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  IL KIT COMPLETO — Fila B, BES/DSA, soluzioni, griglia, Word, scheda di allenamento
