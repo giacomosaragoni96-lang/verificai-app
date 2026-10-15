@@ -3192,3 +3192,121 @@ def anteprima_esercizio_png(preambolo: str, titolo: str, corpo: str):
     except Exception as e:
         logger.info("Ritaglio dell'anteprima non riuscito (uso la pagina intera): %s", e)
     return png
+
+
+# ── CONSEGNE MANCANTI ─────────────────────────────────────────────────────────
+# Le richieste di sola formula vanno bene quando una riga di consegna le copre tutte («Risolvi le seguenti disequazioni.»).
+# Non vanno bene quando i compiti sono diversi (una richiesta chiede le condizioni di esistenza e un'altra è una formula nuda)
+# o quando l'esercizio ha UNA sola richiesta senza consegna: lì la richiesta deve dire cosa fare. Rete di sicurezza deterministica.
+
+_RE_MATEMATICA_INLINE = re.compile(r"\\\(.*?\\\)|\$\$.*?\$\$|\$.*?\$|\\\[.*?\\\]", re.DOTALL)
+_RE_RELAZIONE = re.compile(r"\\leqslant|\\geqslant|\\leq|\\geq|\\le\b|\\ge\b|\\neq|<|>|≤|≥")
+_PARAMETRI = ("k", "m", "p", "h")
+
+
+def _ha_parole(testo: str) -> bool:
+    """True se fuori dalle formule c'è del testo (almeno una parola di 3 lettere)."""
+    t = _PT_PATTERN.sub(" ", testo or "")
+    t = re.sub(r"\\(?:hspace\*?|vspace\*?)\{[^}]*\}", " ", t)
+    t = _RE_MATEMATICA_INLINE.sub(" ", t)
+    t = re.sub(r"\\mbox\{[^}]*\}", " ", t)
+    t = re.sub(r"\\[a-zA-Z]+\*?", " ", t)
+    return re.search(r"[A-Za-zÀ-ÿ]{3,}", t) is not None
+
+
+def _formule_in(testo: str) -> str:
+    return " ".join(_RE_MATEMATICA_INLINE.findall(testo or "")) or (testo or "")
+
+
+def _parametro_in(formula: str):
+    f = re.sub(r"\\[a-zA-Z]+", " ", formula)
+    for p in _PARAMETRI:
+        if re.search(rf"(?<![A-Za-z]){p}(?![A-Za-z])", f) and re.search(r"(?<![A-Za-z])x(?![A-Za-z])", f):
+            return p
+    return None
+
+
+def _consegna_per_formula(formula: str, plurale: bool = False):
+    """La consegna adatta a una formula nuda (None se non si capisce che compito sia)."""
+    if r"\begin{cases}" in formula or r"\left\{" in formula and re.search(r"\\\\", formula):
+        return "Risolvi il sistema di disequazioni" if _RE_RELAZIONE.search(formula) else "Risolvi il sistema"
+    rel = _RE_RELAZIONE.search(formula)
+    if rel:
+        par = _parametro_in(formula)
+        if par:
+            return f"Discuti, al variare di {par}, la disequazione"
+        return "Risolvi la disequazione"
+    if "=" in formula:
+        par = _parametro_in(formula)
+        return f"Discuti, al variare di {par}, l'equazione" if par else "Risolvi l'equazione"
+    return None
+
+
+def aggiungi_consegne_mancanti(latex: str) -> str:
+    """
+    Aggiunge la consegna dove manca: (1) esercizio con UNA sola richiesta di sola formula e senza consegna; (2) esercizio senza consegna
+    con richieste di compiti diversi: le richieste di sola formula ricevono il loro verbo («Risolvi la disequazione:»).
+    Un elenco di sole formule senza consegna riceve «Risolvi le seguenti …» se sono tutte equazioni o tutte disequazioni.
+    Non tocca nulla se non capisce il compito (espressioni da semplificare, limiti…).
+    """
+    parti = re.split(r"(?=\\subsection\*\{)", latex)
+    if len(parti) <= 1:
+        return latex
+    out = [parti[0]]
+    for blocco in parti[1:]:
+        m = re.match(r"([^\n]*\n?)", blocco)
+        testa, corpo = blocco[:m.end()], blocco[m.end():]
+        out.append(testa + _sistema_consegna(corpo))
+    return "".join(out)
+
+
+def _sistema_consegna(corpo: str) -> str:
+    primo = re.search(r"\\item\b", corpo)
+    if not primo:
+        # esercizio scritto direttamente: una sola richiesta
+        if corpo.strip() and not _ha_parole(corpo):
+            verbo = _consegna_per_formula(_formule_in(corpo))
+            if verbo:
+                return "\n" + verbo + ":\n" + corpo.lstrip("\n")
+        return corpo
+    intro = corpo[:primo.start()]
+    intro = re.sub(r"\\begin\{enumerate\}(\[[^\]]*\])?", " ", intro)
+    ha_consegna = _ha_parole(intro)
+    masked, blocchi = _maschera_liste_annidate(corpo)
+    voci = list(re.finditer(r"(\\item(?:\[[^\]]*\])?)(.*?)(?=\\item\b|\\end\{enumerate\}|\Z)", masked, re.DOTALL))
+    if not voci:
+        return corpo
+    nude = [not _ha_parole(v.group(2)) for v in voci]
+    if all(not n for n in nude) or (ha_consegna and len(voci) > 1):
+        return corpo                    # tutte con parole, oppure una consegna copre l'elenco
+    nuovo, pos = [], 0
+    if len(voci) == 1 and nude[0]:
+        verbo = _consegna_per_formula(_formule_in(voci[0].group(2)))
+        if not verbo or ha_consegna:
+            return corpo
+        v = voci[0]
+        nuovo.append(masked[pos:v.start(2)] + " " + verbo + ": ")
+        pos = v.start(2)
+    elif not ha_consegna and all(nude):
+        # elenco di sole formule senza consegna: «Risolvi le seguenti …» se sono tutte dello stesso tipo
+        tipi = {_consegna_per_formula(_formule_in(v.group(2))) for v in voci}
+        if len(tipi) == 1 and None not in tipi:
+            plur = {"Risolvi la disequazione": "disequazioni", "Risolvi l'equazione": "equazioni"}.get(next(iter(tipi)))
+            if plur:
+                inizio = re.search(r"\\begin\{enumerate\}", masked)
+                if inizio:
+                    return _ripristina_liste_annidate(
+                        masked[:inizio.start()] + f"Risolvi le seguenti {plur}.\n" + masked[inizio.start():], blocchi)
+        return corpo
+    else:
+        for v, nuda in zip(voci, nude):
+            if not nuda:
+                continue
+            verbo = _consegna_per_formula(_formule_in(v.group(2)))
+            if verbo:
+                nuovo.append(masked[pos:v.start(2)] + " " + verbo + ": ")
+                pos = v.start(2)
+    if not nuovo:
+        return corpo
+    nuovo.append(masked[pos:])
+    return _ripristina_liste_annidate("".join(nuovo), blocchi)
