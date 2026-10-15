@@ -82,8 +82,9 @@ Piani reali: `free`, `pro`, `premium` (da `subscription_management`) e `admin` (
 `calcola_entitlements`).
 Modello: lo sceglie la sidebar in base al piano; `config.get_model_id_per_piano` è solo un ripiego
 se il modello scelto non è valido per il piano. Free = flash-lite; pro = sempre gemini-2.5-flash
-(nessun upgrade STEM); gemini-2.5-pro solo per gold e per admin con materia in `MATERIE_STEM`;
-admin può scegliere a mano qualsiasi modello.
+(nessun upgrade STEM); gemini-2.5-pro (costa 3-4 volte Flash, vantaggio non netto) non si sceglie MAI in automatico,
+nemmeno per gold o per l'admin: solo l'admin può sceglierlo a mano dalla sidebar. L'autoverifica gira a ragionamento basso
+(`config.COMPITI_AI`: 1024; con 3072 la serie 3.x andava al livello alto, 7-9 mila token e fino a 70 s).
 Limite mensile: lo decide `calcola_entitlements` (`config.PIANI`: free = `LIMITE_MENSILE`, pro illimitato per ora;
 abbonamento scaduto = free). Il contatore conta le righe di `verifiche_storico` **comprese quelle eliminate**:
 «Elimina» è logico (`deleted_at`), altrimenti si aggirerebbe il tetto. Se il conteggio non si legge la creazione è
