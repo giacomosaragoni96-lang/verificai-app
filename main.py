@@ -4872,7 +4872,7 @@ def _render_stage_final():
         if _av.get("irrisolti"):
             _righe = "\n".join(f"- **Esercizio {x['num']}**: {x['problema']}" for x in _av["irrisolti"])
             st.warning("Il controllo automatico non è sicuro di questi esercizi: verificali prima di usarli.\n\n" + _righe, icon="🧮")
-        if _av.get("corretti"):
+        if _av.get("corretti") and _admin_vista:        # solo per chi gestisce l'app: al docente basta la verifica già corretta
             _nums = ", ".join(str(n) for n in _av["corretti"])
             st.caption(f"🧮 Controllo automatico: ho corretto l'esercizio {_nums} (i dati non erano coerenti).")
 
