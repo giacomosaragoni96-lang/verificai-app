@@ -1450,32 +1450,28 @@ def _benvenuto_richiesto() -> bool:
 
 @st.dialog("Benvenuto in VerificAI 👋", width="large")
 def _dialogo_benvenuto() -> None:
-    """Pop-up della prima visita: come si fa in tre passi e perché conviene dare più informazioni."""
+    """Pop-up della prima visita: cosa offre VerificAI (poche parole) e perché conviene dare più informazioni."""
     _stile_dialogo()
     _tx, _t2, _ac = T["text"], T["text2"], T["accent"]
-    _passi = [("✍️", "Scrivi l'argomento", "e, soprattutto, come vuoi la verifica."),
-              ("⚡", "Premi «Crea verifica»", "in circa un minuto è pronta."),
-              ("✏️", "Modifica e scarica", "cambia un esercizio con un tocco, poi scarica il PDF.")]
-    _righe = "".join(
-        f'<div style="display:flex;gap:.8rem;align-items:center;margin:.5rem 0;">'
-        f'<div style="flex:0 0 2.2rem;height:2.2rem;border-radius:50%;background:{_ac};color:#fff;font-weight:800;display:flex;'
-        f'align-items:center;justify-content:center;">{i}</div>'
-        f'<div style="font-family:DM Sans,sans-serif;color:{_tx};line-height:1.35;"><b>{ic} {t}</b> — <span style="color:{_t2};">{d}</span></div></div>'
-        for i, (ic, t, d) in enumerate(_passi, 1))
+    _vantaggi = [("📄", "PDF perfetto", "Impaginato, con punteggi e grafici, pronto da stampare."),
+                 ("📝", "Anche in Word", "Un file modificabile come preferisci."),
+                 ("✍️", "Parti da ciò che hai", "Una descrizione, i tuoi appunti o una verifica già fatta."),
+                 ("🏫", "Con il tuo logo", "L'intestazione della tua scuola, in cima a ogni verifica.")]
+    _tessere = "".join(
+        f'<div style="background:{T["bg2"]};border:1.5px solid {T["border"]};border-radius:14px;padding:.8rem .95rem;">'
+        f'<div style="font-size:1.35rem;line-height:1;">{ic}</div>'
+        f'<div style="font-family:DM Sans,sans-serif;font-weight:800;color:{_tx};margin:.3rem 0 .1rem;">{t}</div>'
+        f'<div style="font-family:DM Sans,sans-serif;color:{_t2};font-size:.88rem;line-height:1.35;">{d}</div></div>'
+        for ic, t, d in _vantaggi)
     st.markdown(
-        f'<div style="font-family:DM Sans,sans-serif;color:{_t2};margin-bottom:.4rem;">Una verifica pronta da stampare in pochi minuti. Come si fa:</div>'
-        + _righe +
-        f'<div style="margin-top:1.1rem;padding:1rem 1.1rem;border-radius:14px;background:#FEF3C7;border:1.5px solid #FCD34D;'
-        f'font-family:DM Sans,sans-serif;color:#78350F;line-height:1.5;">'
-        f'<div style="font-weight:800;font-size:1.05rem;margin-bottom:.3rem;">💡 Il segreto: più informazioni dai, meglio viene la verifica</div>'
-        f'L\'AI non legge nel pensiero: se scrivi solo l\'argomento, il resto lo sceglie lei e il risultato può essere diverso da quello che hai in mente. '
-        f'Basta dirle cosa vuoi.'
-        f'<div style="margin-top:.6rem;"><span style="font-weight:800;">Poco:</span> «Equazioni di secondo grado»</div>'
-        f'<div style="margin-top:.3rem;"><span style="font-weight:800;">Meglio:</span> «Equazioni di secondo grado, 2ª liceo scientifico. '
-        f'Parti con un esercizio di calcolo diretto, poi un vero o falso sui concetti essenziali, un problema di vita quotidiana '
-        f'e un grafico da interpretare. Numeri interi, niente dimostrazioni.»</div></div>'
-        f'<div style="margin:.9rem 0 .5rem;font-family:DM Sans,sans-serif;color:{_t2};font-size:.92rem;">'
-        f'Una frase in più è la differenza tra una verifica «così così» e una che puoi stampare così com\'è.</div>',
+        f'<div style="font-family:DM Sans,sans-serif;color:{_tx};font-size:1.08rem;font-weight:700;line-height:1.35;margin-bottom:.8rem;">'
+        f'Verifiche perfette in pochi minuti: scrivi l\'argomento, scarica PDF o Word.</div>'
+        f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;">{_tessere}</div>'
+        f'<div style="margin-top:1rem;padding:.8rem 1rem;border-radius:14px;background:#FEF3C7;border:1.5px solid #FCD34D;'
+        f'font-family:DM Sans,sans-serif;color:#78350F;line-height:1.45;font-size:.93rem;">'
+        f'<b>💡 Più informazioni dai, meglio viene.</b> Invece di «Equazioni di secondo grado», scrivi: '
+        f'«Equazioni di secondo grado, 2ª liceo. Parti dal calcolo diretto, poi un vero o falso, un problema di vita quotidiana '
+        f'e un grafico. Numeri interi.»</div>',
         unsafe_allow_html=True)
     # chiudere con la X conta come visto: il cookie si scrive appena la finestra si apre
     components.html('<script>try{window.parent.document.cookie="vf_benvenuto=1; max-age=31536000; path=/; SameSite=Lax";}catch(e){}</script>', height=0)
@@ -5012,39 +5008,6 @@ def _render_stage_final():
         f'distribuirlo agli studenti. La verifica è salvata in «Le mie verifiche».</div>',
         unsafe_allow_html=True
     )
-    # ── Versione Word modificabile: per chi preferisce lavorare in Word ──────────────────────────
-    if WORD_ATTIVO and vA.get("latex"):
-        with st.container(border=True):
-            _w1, _w2 = st.columns([2.2, 1.2], vertical_alignment="center", gap="medium")
-            with _w1:
-                st.markdown(
-                    f'<div style="font-family:DM Sans,sans-serif;color:{T["text"]};line-height:1.45;">'
-                    f'<b style="font-size:1.02rem;">📝 Preferisci lavorare in Word?</b><br>'
-                    f'<span style="color:{T["text2"]};font-size:.9rem;">Scarica la versione modificabile: il testo e le formule (equazioni di Word) '
-                    f'si ritoccano direttamente, i grafici sono già inseriti come immagini e i punteggi stanno in una tabella ordinata.</span></div>',
-                    unsafe_allow_html=True)
-            with _w2:
-                if vA.get("docx"):
-                    _dl(f"📝 Scarica Word · {_stima(vA['docx'])}", data=vA["docx"], file_name=arg_str + "_FilaA.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        use_container_width=True, type="primary", key="dl_docx_A_generale")
-                elif _pro_bloccato("word"):
-                    _pulsante_pro("word", "pro_word_generale")
-                elif st.button("📝 Crea il file Word", key="gen_docx_A_generale", use_container_width=True, type="primary"):
-                    with st.spinner("Preparo il file Word… (qualche secondo)"):
-                        try:
-                            _db, _emsg = latex_to_docx_modificabile(vA["latex"], mat_str, arg_str, con_griglia)
-                        except Exception as _e:
-                            _db, _emsg = None, str(_e)
-                    if _db:
-                        st.session_state.verifiche["A"]["docx"] = _db
-                        _registra_evento("word", verifica_id=st.session_state.get("_storico_id"))
-                        st.rerun()
-                    else:
-                        _mostra_errore("Non sono riuscito a creare il file Word", _emsg,
-                                       consiglio="Riprova tra un momento; il PDF resta disponibile.")
-
-
     # ── Anteprima: una pagina alla volta, con ◀ ▶ (così il kit sotto resta vicino) ──────────
     _zoom = False
     _, _col_prev, _ = st.columns([0.15, 3, 0.15] if _zoom else [1, 3, 1])
@@ -5101,6 +5064,45 @@ def _render_stage_final():
             if st.button(f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}", key="dl_pdf_basso_A", type="primary", use_container_width=True,
                          help="Scarica il PDF della verifica, già formattato e pronto per la stampa."):
                 _dialogo_mini_feedback(vA["pdf"], _fname_a + ".pdf")
+
+    # ── Versione Word modificabile: sotto la verifica, per chi preferisce lavorare in Word ─────────────────
+    if WORD_ATTIVO and vA.get("latex"):
+        spazio("sm")
+        st.markdown(
+            f'<style>html body .stApp .st-key-word_card {{background:linear-gradient(135deg,{T["accent"]}12 0%,{T["accent"]}26 100%);'
+            f'border:1.5px solid {T["accent"]}55;border-radius:18px;padding:1.1rem 1.3rem;}}'
+            f'html body .stApp .st-key-word_card button {{min-height:3.1rem;font-weight:700;border-radius:12px;}}</style>',
+            unsafe_allow_html=True)
+        with st.container(key="word_card"):
+            _w1, _w2 = st.columns([2.3, 1.2], vertical_alignment="center", gap="medium")
+            with _w1:
+                st.markdown(
+                    f'<div style="display:flex;gap:.9rem;align-items:center;font-family:DM Sans,sans-serif;">'
+                    f'<div style="flex:0 0 3rem;height:3rem;border-radius:12px;background:{T["accent"]};color:#fff;font-size:1.5rem;'
+                    f'display:flex;align-items:center;justify-content:center;">📝</div>'
+                    f'<div style="line-height:1.35;"><div style="font-weight:800;font-size:1.05rem;color:{T["text"]};">Versione Word modificabile</div>'
+                    f'<div style="color:{T["text2"]};font-size:.9rem;">Testo, formule e punteggi da ritoccare come preferisci; i grafici sono già inseriti.</div></div></div>',
+                    unsafe_allow_html=True)
+            with _w2:
+                if vA.get("docx"):
+                    _dl(f"📝 Scarica Word · {_stima(vA['docx'])}", data=vA["docx"], file_name=arg_str + "_FilaA.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True, type="primary", key="dl_docx_A_generale")
+                elif _pro_bloccato("word"):
+                    _pulsante_pro("word", "pro_word_generale")
+                elif st.button("📝 Crea il file Word", key="gen_docx_A_generale", use_container_width=True, type="primary"):
+                    with st.spinner("Preparo il file Word… (qualche secondo)"):
+                        try:
+                            _db, _emsg = latex_to_docx_modificabile(vA["latex"], mat_str, arg_str, con_griglia)
+                        except Exception as _e:
+                            _db, _emsg = None, str(_e)
+                    if _db:
+                        st.session_state.verifiche["A"]["docx"] = _db
+                        _registra_evento("word", verifica_id=st.session_state.get("_storico_id"))
+                        st.rerun()
+                    else:
+                        _mostra_errore("Non sono riuscito a creare il file Word", _emsg,
+                                       consiglio="Riprova tra un momento; il PDF resta disponibile.")
 
     # ═══════════════════════════════════════════════════════════════════════════
     #  IL KIT COMPLETO — Fila B, BES/DSA, soluzioni, griglia, Word, scheda di allenamento
