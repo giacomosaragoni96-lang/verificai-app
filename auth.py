@@ -670,17 +670,10 @@ def mostra_auth(supabase):
     <div style="text-align:center; margin:.3rem 0 1.3rem; padding:1.1rem 1.2rem; border-radius:16px;
                 background:linear-gradient(160deg,{_PRIMARY}10 0%,{_PRIMARY}22 100%); border:1.5px solid {_PRIMARY}33;
                 font-family:'DM Sans',sans-serif;">
-      <div style="font-weight:800; font-size:1.15rem; color:{_TEXT}; margin-bottom:.35rem;">Benvenuto! Crea il tuo account gratuito 👋</div>
+      <div style="font-weight:800; font-size:1.15rem; color:{_TEXT}; margin-bottom:.35rem;">Benvenuto in VerificAI 👋</div>
       <div style="font-size:.93rem; color:{_TEXT2}; line-height:1.5;">
-        Registrati in pochi secondi con Google (o con la tua email) e crea la tua prima verifica,
-        in PDF o in Word modificabile.
+        Accedi oppure crea un account gratuito in pochi secondi: ti basta Google o un indirizzo email.
       </div>
-      <div style="display:flex; justify-content:center; gap:.5rem; flex-wrap:wrap; margin-top:.8rem; font-size:.82rem; font-weight:700; color:{_PRIMARY};">
-        <span style="background:#fff; border-radius:999px; padding:.25rem .7rem; box-shadow:0 2px 6px rgba(15,23,42,.08);">1 · Registrati</span>
-        <span style="background:#fff; border-radius:999px; padding:.25rem .7rem; box-shadow:0 2px 6px rgba(15,23,42,.08);">2 · Descrivi la verifica</span>
-        <span style="background:#fff; border-radius:999px; padding:.25rem .7rem; box-shadow:0 2px 6px rgba(15,23,42,.08);">3 · Scarica</span>
-      </div>
-      <div style="font-size:.8rem; color:{_TEXT2}; margin-top:.7rem;">Hai già un account? Entra allo stesso modo.</div>
     </div>
     """, unsafe_allow_html=True)
 
