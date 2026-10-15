@@ -4735,6 +4735,20 @@ font-family: 'DM Sans', sans-serif;
     padding-top: .5rem !important;
   }}
 
+  /* ── Telefono: a capo più ordinato (SOLO schermi stretti: il desktop non cambia) ───────────── */
+  @media (max-width: 600px) {{
+    /* «Di cosa parla la verifica? ✱» e il suggerimento: su due righe pulite invece di spezzarsi a metà */
+    .opt-label .opt-hint {{ display: block; margin-left: 0; margin-top: .2rem; }}
+    /* titoli delle tendine («Altre opzioni (…)», «Materia · Scuola — cambia»): le righe si bilanciano, niente parola sola a capo */
+    html body .stApp details[data-testid="stExpander"] > summary p,
+    html body .stApp details[data-testid="stExpander"] > summary span {{ text-wrap: balance; line-height: 1.35; }}
+    /* titoli, paragrafi e didascalie: niente parola sola nell'ultima riga */
+    html body .stApp h1, html body .stApp h2, html body .stApp h3 {{ text-wrap: balance; }}
+    html body .stApp .stMarkdown p, html body .stApp [data-testid="stCaptionContainer"] {{ text-wrap: pretty; }}
+    /* etichette dei pulsanti su due righe: bilanciate */
+    html body .stApp button p {{ text-wrap: balance; }}
+  }}
+
 </style>
 """
 

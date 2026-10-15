@@ -4950,20 +4950,8 @@ html body .stApp div[class*="st-key-mod_rapida"]:not(#vf) .mr-d {font-family:'DM
 html body .stApp div[class*="st-key-mod_rapida"]:not(#vf) textarea {background:#fff !important;border:1.5px solid __ACC__55 !important;border-radius:12px !important;
   font-size:.95rem !important;min-height:4.2rem !important;}
 html body .stApp div[class*="st-key-mod_rapida"]:not(#vf) textarea:focus {border-color:__ACC__ !important;box-shadow:0 0 0 3px __ACC__22 !important;}
-html body .stApp div[class*="st-key-mod_chip"]:not(#vf) button {min-height:2rem !important;height:auto !important;padding:.25rem .7rem !important;border-radius:999px !important;
-  background:#fff !important;border:1px solid __ACC__55 !important;box-shadow:0 2px 6px rgba(15,23,42,.06) !important;}
-html body .stApp div[class*="st-key-mod_chip"]:not(#vf) button, html body .stApp div[class*="st-key-mod_chip"]:not(#vf) button * {
-  color:__ACC__ !important;-webkit-text-fill-color:__ACC__ !important;font-size:.8rem !important;font-weight:600 !important;}
-html body .stApp div[class*="st-key-mod_chip"]:not(#vf) button:hover {background:__ACC__14 !important;}
 html body .stApp div[class*="st-key-mod_applica"]:not(#vf) button {min-height:2.8rem !important;font-weight:800 !important;border-radius:12px !important;}
 </style>"""
-
-_SUGGERIMENTI_MOD = ("Semplifica il primo esercizio", "Rendi più difficile l'ultimo esercizio", "Aggiungi un esercizio sulle applicazioni")
-
-
-def _imposta_testo_mod(testo: str) -> None:
-    st.session_state["mod_rapida_testo"] = testo
-
 
 def _annulla_mod_rapida() -> None:
     """Rimette la verifica com'era prima dell'ultima modifica rapida (solo la Fila A: le altre versioni vanno rifatte)."""
@@ -5000,12 +4988,6 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
         st.text_area("Cosa vuoi cambiare?", key="mod_rapida_testo", label_visibility="collapsed", height=90,
                      placeholder="Es. Semplifica il primo esercizio · Togli l'ultimo esercizio · Aggiungi un problema con una situazione reale",
                      disabled=_finite)
-        _cc = st.columns(len(_SUGGERIMENTI_MOD), gap="small")
-        for _i, (_col, _s) in enumerate(zip(_cc, _SUGGERIMENTI_MOD)):
-            with _col:
-                with st.container(key=f"mod_chip_{_i}"):
-                    st.button(_s, key=f"mod_chip_btn_{_i}", use_container_width=True, on_click=_imposta_testo_mod, args=(_s,),
-                              disabled=_finite)
         with st.container(key="mod_applica"):
             _applica = st.button("Applica la modifica", key="mod_rapida_applica", type="primary", use_container_width=True,
                                  icon=":material/auto_fix_high:", disabled=_finite)
