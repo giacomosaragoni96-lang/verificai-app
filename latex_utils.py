@@ -3256,7 +3256,7 @@ def aggiungi_consegne_mancanti(latex: str) -> str:
     for blocco in parti[1:]:
         m = re.match(r"([^\n]*\n?)", blocco)
         testa, corpo = blocco[:m.end()], blocco[m.end():]
-        out.append(testa + _sistema_consegna(corpo))
+        out.append(testa + _sistema_consegna(_ripulisci_consegne(corpo)))
     return "".join(out)
 
 
@@ -3310,3 +3310,88 @@ def _sistema_consegna(corpo: str) -> str:
         return corpo
     nuovo.append(masked[pos:])
     return _ripristina_liste_annidate("".join(nuovo), blocchi)
+
+
+# ── RICHIESTE SNELLE: via le frasi di istruzioni davanti alle formule ─────────
+# Anche con la consegna in testa («Risolvi le seguenti disequazioni.») i modelli deboli scrivono davanti a ogni richiesta una frase
+# («Studia il segno e risolvi la seguente disequazione fratta di primo grado: …»). Si tolgono, ma SOLO se la richiesta è «frase che finisce
+# con i due punti + una formula» e il compito è lo stesso della consegna: così non si perde mai un compito diverso.
+
+_RE_RICHIESTA_CON_PREFISSO = re.compile(
+    r"^(?P<pre>[^\\$]*?:)\s*(?P<formula>\\\(.*?\\\)|\$[^$]+\$|\\\[.*?\\\])\s*(?P<pt>\(\s*\d+(?:[.,]\d+)?\s*pt\s*\))?\s*$",
+    re.DOTALL,
+)
+
+
+def _famiglia_compito(testo: str):
+    t = re.sub(r"^[\s:;,.\-]+", "", (testo or "").lower())
+    if re.match(r"(risolvi|risolvere|studia|trova le soluzioni|determina (l'insieme delle )?(le )?soluzioni)", t):
+        return "risolvi"
+    if re.match(r"(determina|trova|stabilisci|imposta|indica|calcola)\b", t) and re.search(
+            r"condizioni di esistenza|campo di esistenza|dominio|\bc\.?\s?e\.?\b", t):
+        return "ce"
+    for chiave, nome in (("semplifica", "semplifica"), ("scomponi", "scomponi"), ("razionalizza", "razionalizza"),
+                         ("calcola la derivata", "deriva"), ("deriva", "deriva"), ("calcola il limite", "limite"),
+                         ("calcola i limiti", "limite"), ("calcola", "calcola")):
+        if t.startswith(chiave):
+            return nome
+    return None
+
+
+_CONSEGNA_FAMIGLIA = {
+    "semplifica": "Semplifica le seguenti espressioni.",
+    "scomponi": "Scomponi i seguenti polinomi.",
+    "razionalizza": "Razionalizza i denominatori delle seguenti frazioni.",
+    "deriva": "Calcola le derivate delle seguenti funzioni.",
+    "limite": "Calcola i seguenti limiti.",
+}
+
+
+def _ripulisci_consegne(corpo: str) -> str:
+    """Toglie le frasi davanti alle formule quando la consegna le copre; con richieste tutte uguali e senza consegna la porta in testa."""
+    primo = re.search(r"\\item\b", corpo)
+    if not primo:
+        return corpo
+    intro = re.sub(r"\\begin\{enumerate\}(\[[^\]]*\])?", " ", corpo[:primo.start()])
+    masked, blocchi = _maschera_liste_annidate(corpo)
+    voci = list(re.finditer(r"(\\item(?:\[[^\]]*\])?)(.*?)(?=\\item\b|\\end\{enumerate\}|\Z)", masked, re.DOTALL))
+    if not voci:
+        return corpo
+    parsed = [_RE_RICHIESTA_CON_PREFISSO.match(v.group(2).strip()) for v in voci]
+    ha_consegna = _ha_parole(intro)
+    da_togliere = []                                      # indici delle richieste di cui si toglie la frase
+    nuova_consegna = None
+    if ha_consegna:
+        fam = _famiglia_compito(intro)
+        if fam:
+            da_togliere = [i for i, m in enumerate(parsed) if m and _famiglia_compito(m.group("pre")) == fam]
+    elif len(voci) >= 2 and all(parsed):
+        famiglie = {_famiglia_compito(m.group("pre")) for m in parsed}
+        if len(famiglie) == 1 and None not in famiglie:
+            fam = next(iter(famiglie))
+            if fam == "risolvi":
+                tipi = {_consegna_per_formula(m.group("formula")) for m in parsed}
+                plur = {"Risolvi la disequazione": "disequazioni", "Risolvi l'equazione": "equazioni"}.get(next(iter(tipi))) if len(tipi) == 1 and None not in tipi else None
+                if plur:
+                    nuova_consegna = f"Risolvi le seguenti {plur}."
+            else:
+                nuova_consegna = _CONSEGNA_FAMIGLIA.get(fam)
+            if nuova_consegna:
+                da_togliere = list(range(len(voci)))
+    if not da_togliere:
+        return corpo
+    nuovo, pos = [], 0
+    for i in da_togliere:
+        v, m = voci[i], parsed[i]
+        testo = v.group(2)
+        coda = testo[len(testo.rstrip()):]
+        sostituto = " " + m.group("formula") + ((" " + m.group("pt")) if m.group("pt") else "") + coda
+        nuovo.append(masked[pos:v.start(2)] + sostituto)
+        pos = v.end(2)
+    nuovo.append(masked[pos:])
+    risultato = "".join(nuovo)
+    if nuova_consegna:
+        inizio = re.search(r"\\begin\{enumerate\}", risultato)
+        if inizio:
+            risultato = risultato[:inizio.start()] + nuova_consegna + "\n" + risultato[inizio.start():]
+    return _ripristina_liste_annidate(risultato, blocchi)
