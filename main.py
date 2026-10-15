@@ -1509,20 +1509,46 @@ def _dialogo_benvenuto() -> None:
         st.rerun()
 
 
+_CSS_BOX_SBLOCCO = """<style>
+[class*="st-key-box_sblocco"] {background:radial-gradient(120% 140% at 100% 0%, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 50%),
+  linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);border-radius:14px;padding:.8rem 1.1rem;margin:.2rem 0 .9rem;
+  box-shadow:0 6px 18px rgba(30,58,138,.18);}
+[class*="st-key-box_sblocco"] .bx-t {color:#fff !important;font-family:'DM Sans',sans-serif;font-weight:800;font-size:.98rem;line-height:1.25;}
+[class*="st-key-box_sblocco"] .bx-d {color:rgba(255,255,255,.88) !important;font-family:'DM Sans',sans-serif;font-size:.84rem;line-height:1.4;margin-top:.15rem;}
+[class*="st-key-box_sblocco"] a.bx-b {display:block;text-align:center;background:#fff;color:#1E3A8A !important;font-family:'DM Sans',sans-serif;
+  font-weight:800;font-size:.88rem;padding:.55rem .9rem;border-radius:10px;text-decoration:none !important;white-space:nowrap;
+  box-shadow:0 3px 10px rgba(0,0,0,.16);}
+[class*="st-key-box_sblocco"] a.bx-b:hover {background:#EFF6FF;}
+[class*="st-key-box_sblocco"] button {background:transparent !important;border:none !important;box-shadow:none !important;min-height:0 !important;
+  padding:.25rem 0 0 !important;width:100%;}
+[class*="st-key-box_sblocco"] button, [class*="st-key-box_sblocco"] button * {color:rgba(255,255,255,.92) !important;
+  -webkit-text-fill-color:rgba(255,255,255,.92) !important;font-size:.8rem !important;font-weight:600 !important;text-decoration:underline;}
+[class*="st-key-box_sblocco"] button:hover * {color:#fff !important;-webkit-text-fill-color:#fff !important;}
+[class*="st-key-box_sblocco"][data-fatto] a.bx-b {display:none;}
+</style>"""
+
+
 def _box_sblocco(dove: str) -> None:
-    """Riquadro per chi ha già fatto la prima verifica: compilando il questionario completo ottiene altre verifiche con tutte le funzioni."""
-    compatto = (dove == "input")
-    testo = (f"Compila il questionario completo (4 minuti, anonimo): alla fine ricevi un codice per {VERIFICHE_PER_CODICE} verifiche "
-             f"con tutte le funzioni (Fila B, BES/DSA, soluzioni, logo, Word…).")
-    corpo = ('<div class="vf-fb-testo"><div class="vf-fb-t">Vuoi altre verifiche con tutte le funzioni?</div>'
-             f'<div class="vf-fb-d">{"" if compatto else "La tua prima verifica aveva tutto il kit. "}{testo}</div></div>')
-    st.markdown(_CSS_BOX_FEEDBACK + f'<div class="vf-fb{" vf-fb-c" if compatto else ""}"><div class="vf-fb-ico">🎁</div>{corpo}'
-                '<a class="vf-fb-b" href="?pagina=questionario" target="_blank" rel="noopener">Compila il questionario →</a></div>',
-                unsafe_allow_html=True)
-    components.html('<script>try{if(window.parent.localStorage.getItem("vf_feedback_ok")){window.parent.document.querySelectorAll(".vf-fb")'
-                    '.forEach(function(e){e.style.display="none";});}}catch(e){}</script>', height=0)
-    if st.button("Ho già un codice", key=f"sblocco_codice_{dove}", type="tertiary", icon=":material/key:"):
-        _vai_a_upgrade(None)
+    """Riquadro per chi ha già fatto la prima verifica: compilando il questionario completo ottiene altre verifiche con tutte le funzioni.
+    Dentro c'è anche «Ho già un codice»; a questionario inviato (flag nel browser) resta solo quello."""
+    with st.container(key=f"box_sblocco_{dove}"):
+        _c1, _c2 = st.columns([2.6, 1.3], vertical_alignment="center", gap="medium")
+        with _c1:
+            st.markdown(_CSS_BOX_SBLOCCO +
+                        '<div class="bx-t">🎁 Altre verifiche con tutte le funzioni</div>'
+                        f'<div class="bx-d">Compila il questionario (4 minuti, anonimo) e ricevi un codice per {VERIFICHE_PER_CODICE} verifiche complete.</div>',
+                        unsafe_allow_html=True)
+        with _c2:
+            st.markdown('<a class="bx-b" href="?pagina=questionario" target="_blank" rel="noopener">Compila il questionario →</a>',
+                        unsafe_allow_html=True)
+            if st.button("Ho già un codice", key=f"sblocco_codice_{dove}", type="tertiary"):
+                _vai_a_upgrade(None)
+    # questionario già inviato in questo browser: via il pulsante del questionario, il testo invita a inserire il codice
+    components.html('<script>try{if(window.parent.localStorage.getItem("vf_feedback_ok")){var D=window.parent.document;'
+                    'D.querySelectorAll(\'[class*="st-key-box_sblocco"]\').forEach(function(e){e.setAttribute("data-fatto","1");'
+                    'var t=e.querySelector(".bx-t"),d=e.querySelector(".bx-d");'
+                    'if(t)t.textContent="🎁 Hai compilato il questionario?";if(d)d.textContent="Inserisci il codice che hai ricevuto per sbloccare le verifiche complete.";});}}catch(e){}</script>',
+                    height=0)
 
 
 _SLOT_BANNER: dict = {}      # per rerun: segnaposto del riquadro blu di ogni pagina, per toglierlo mentre si genera
