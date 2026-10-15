@@ -112,6 +112,8 @@ GROUP BY e.tipo ORDER BY dollari_stimati DESC;
 
 -- Q1) Quante risposte e quante persone hanno lasciato l'email
 SELECT count(*) AS risposte, count(email_facoltativa) AS con_email FROM questionario_tester;
+-- Le risposte con versione = 0 sono le due domande veloci prima del download (tempo risparmiato e utilità); versione = 1 è il questionario completo.
+SELECT versione, count(*) AS risposte FROM questionario_tester GROUP BY versione ORDER BY versione;
 
 -- Q2) TEMPO: come fanno oggi e quanto ci mettono con VerificAI
 SELECT risposte->>'tempo_da_zero' AS tempo_normale, count(*) FROM questionario_tester GROUP BY 1 ORDER BY 2 DESC;
