@@ -38,6 +38,7 @@ from subscription_management import calcola_entitlements, get_subscription_manag
 from ui_upgrade import render_upgrade
 from ui_legale import render_termini, render_rimborsi
 from licenze import attiva_licenza, riconvalida_se_serve
+from segnalazioni import costruisci_segnalazione, MAX_PER_SESSIONE
 from latex_utils import (
     conta_pagine_pdf, riduci_a_pagine, compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, copia_intestazione_con_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
     fix_items_environment, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
@@ -849,6 +850,25 @@ def _conta_modifica(modello: str | None = None) -> None:
     contatori = st.session_state.setdefault("_mod_usate", {})
     contatori[chiave] = _modifiche_usate() + 1
     _registra_evento("modifica", modello=modello, verifica_id=st.session_state.get("_storico_id"))
+
+
+def _invia_segnalazione(nota: str, esercizio, allega: bool) -> bool:
+    """Scrive una segnalazione ANONIMA in `segnalazioni` (mai user_id, email o IP). False se non è riuscita."""
+    if supabase_admin is None:
+        return False
+    try:
+        _gp = st.session_state.get("gen_params") or {}
+        riga = costruisci_segnalazione(
+            nota, esercizio, _gp, _gp.get("modello_id"), ENT.piano,
+            (st.session_state.verifiche.get("A") or {}).get("latex"),
+            st.session_state.get("_debug_gen"), allega,
+        )
+        supabase_admin.table("segnalazioni").insert(riga).execute()
+        st.session_state["_n_segnalazioni"] = st.session_state.get("_n_segnalazioni", 0) + 1
+        return True
+    except Exception as e:
+        logger.warning("segnalazione non inviata: %s", e)
+        return False
 
 
 def _immagine_esercizio(title: str, body: str):
@@ -2885,7 +2905,7 @@ def _lancia_generazione(
             on_progress=_avanza,
         )
         st.session_state["_autoverifica"] = ris.get("_autoverifica")
-        if _is_admin and ris.get("_debug"):        # solo admin: materiale per capire cosa ha fatto ogni modello
+        if ris.get("_debug"):        # materiale per capire cosa ha fatto ogni modello: lo mostra solo l'admin; per tutti serve alle segnalazioni
             _dbg = dict(ris["_debug"])
             _dbg["richiesta"] = {"materia": materia_scelta, "scuola": difficolta, "durata": durata_scelta,
                                  "esercizi": num_esercizi_totali, "punti": punti_totali, "note": note_generali,
@@ -5440,6 +5460,31 @@ def _render_stage_final():
             ])
             st.download_button("Scarica il debug (.txt)", _testo_dbg.encode("utf-8"), file_name="debug_generazione.txt",
                                mime="text/plain", key="dl_debug_gen")
+
+    # Segnalazione anonima: arriva a chi sviluppa l'app, senza nome né email
+    with st.expander("Qualcosa non va in questa verifica? Segnalalo in modo anonimo", expanded=False):
+        st.caption("Non salviamo il tuo nome né la tua email: arriva solo quello che scrivi qui e, se lasci la spunta, "
+                   "il testo della verifica e i dettagli tecnici della generazione.")
+        if st.session_state.get("_n_segnalazioni", 0) >= MAX_PER_SESSIONE:
+            st.info("Hai già inviato diverse segnalazioni: grazie! Per altro usa il pulsante 💬 del feedback.")
+        else:
+            _blocchi_seg = st.session_state.get("review_blocks") or []
+            _dove_seg = st.selectbox("Dove?", ["Tutta la verifica"] + [f"Esercizio {i + 1}" for i in range(len(_blocchi_seg))],
+                                     key="seg_dove")
+            _nota_seg = st.text_area("Cosa non va?", key="seg_nota", height=100, max_chars=2000,
+                                     placeholder="es. Il grafico non corrisponde al testo · I numeri non tornano · "
+                                                 "L'esercizio 3 è troppo difficile per il livello")
+            _allega_seg = st.checkbox("Allega il testo della verifica e i dettagli tecnici (aiuta a capire il problema; "
+                                      "se nella verifica c'è il nome della scuola, togli la spunta)",
+                                      value=True, key="seg_allega")
+            if st.button("Invia la segnalazione", key="seg_invia", type="primary", disabled=not _nota_seg.strip()):
+                _es_seg = None if _dove_seg == "Tutta la verifica" else int(_dove_seg.split()[-1])
+                if _invia_segnalazione(_nota_seg, _es_seg, _allega_seg):
+                    st.toast("Segnalazione inviata, grazie!", icon="✅")
+                    st.session_state.pop("seg_nota", None)
+                    st.rerun()
+                else:
+                    st.error("Non sono riuscito a inviarla. Riprova più tardi o scrivici dal pulsante 💬 del feedback.")
 
     # In fondo alla pagina: le verifiche salvate
     _sf1, _sf2, _sf3 = st.columns([3, 2, 3])
