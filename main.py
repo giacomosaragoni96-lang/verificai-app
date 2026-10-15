@@ -1362,13 +1362,27 @@ def _dialogo_mini_feedback(pdf: bytes, nome_file: str) -> None:
     Finestra che si apre al clic su «Scarica PDF» (solo la prima volta in questo browser): due domande da 5 secondi e poi il
     PDF si scarica da qui. È l'unica cosa che chiediamo in cambio dell'uso gratuito.
     """
+    st.markdown(f"""<style>
+[data-testid="stDialog"] [data-testid="stBaseButton-primary"], [data-testid="stDialog"] [data-testid="stBaseButton-primaryFormSubmit"],
+[data-testid="stDialog"] [data-testid="stDownloadButton"] button {{
+  background: linear-gradient(135deg, {T["accent"]} 0%, {T["accent2"]} 100%) !important; border: none !important; border-radius: 12px !important;
+  box-shadow: 0 6px 18px {T["accent"]}55 !important; animation: none !important; min-height: 3rem !important;
+}}
+[data-testid="stDialog"] [data-testid="stBaseButton-primary"] *, [data-testid="stDialog"] [data-testid="stBaseButton-primaryFormSubmit"] *,
+[data-testid="stDialog"] [data-testid="stDownloadButton"] button * {{
+  color: #fff !important; -webkit-text-fill-color: #fff !important; font-weight: 700 !important; letter-spacing: .01em !important;
+}}
+</style>""", unsafe_allow_html=True)
     if st.session_state.get("_mini_dialogo_fatto"):
         st.success("Grazie! Ecco il tuo PDF.", icon="✅")
         _dl("⬇  Scarica il PDF", data=pdf, file_name=nome_file, mime="application/pdf", type="primary",
             use_container_width=True, key="dl_pdf_dialogo")
-        st.markdown(f'<div style="text-align:center;font-size:.85rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin-top:.6rem;">'
-                    f'Hai 4 minuti? <a href="?pagina=questionario" target="_blank" rel="noopener" style="color:{T["accent"]};font-weight:700;">'
-                    f'Il questionario completo</a> ci aiuta ancora di più (anonimo).</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="text-align:center;font-family:DM Sans,sans-serif;margin-top:.9rem;font-size:.88rem;color:{T["text2"]};">'
+                    f'La cosa più utile che puoi fare per noi:</div>'
+                    f'<a href="?pagina=questionario" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:.4rem;'
+                    f'padding:.65rem 1rem;border:2px solid {T["accent"]};border-radius:12px;color:{T["accent"]} !important;font-weight:800;'
+                    f'text-decoration:none;font-family:DM Sans,sans-serif;">Compila il questionario completo (4 minuti, anonimo) →</a>',
+                    unsafe_allow_html=True)
         components.html('<script>try{window.parent.document.cookie="vf_mini_ok=1; max-age=31536000; path=/; SameSite=Lax";}catch(e){}</script>', height=0)
         return
     st.markdown(f'<div style="font-family:DM Sans,sans-serif;color:{T["text2"]};font-size:.92rem;line-height:1.5;margin-bottom:.4rem;">'
