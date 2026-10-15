@@ -796,6 +796,20 @@ else:
         logger.error(f"Errore caricamento abbonamento: {e}")
         ENT = calcola_entitlements(None, _verifiche_mese, _is_admin, _ASSAGGIO)
 
+# Guida del primo utente: chi sta creando (o ha appena creato) la sua prima verifica. Con i pagamenti accesi coincide con l'«assaggio»;
+# con i pagamenti spenti si ricava dallo storico; nella simulazione dell'admin segue «Utente nuovo».
+def _prima_esperienza() -> bool:
+    if _is_admin or not st.session_state.utente:
+        return False
+    _ok, _prima = _prima_verifica_id(st.session_state.utente.id)
+    if not _ok:
+        return False
+    _sid = st.session_state.get("_storico_id")
+    return _prima is None or str(_sid) == str(_prima)
+
+
+_GUIDA_PRIMO = ENT.assaggio if (MONETIZZAZIONE_ATTIVA or _SIM) else _prima_esperienza()
+
 # Strumenti e dettagli tecnici dell'admin: solo se è davvero lui, non quando guarda l'app come un altro utente
 _admin_vista = _is_admin and not _SIM
 st.session_state["_admin_diagnostica"] = _admin_vista
@@ -1010,7 +1024,7 @@ _BERSAGLI_GUIDA = {
     "argomento": [".st-key-argomento_area_b", '[data-testid="stTextArea"]'],
     "opzioni": ['[data-testid="stExpander"]:has(.g-altre)', '[data-testid="stFileUploader"]'],   # «Altre opzioni» e i due caricamenti (file e logo)
     "crea": [".st-key-genera_btn_b", '[data-testid="stButton"]:has([data-testid="stBaseButton-primary"])'],
-    "modifica": ['.st-key-review_selectbox', '[class*="st-key-piu_facile_"]', '[class*="st-key-piu_difficile_"]',
+    "modifica": ['.st-key-review_selectbox', '[class*="st-key-rw_istr_"]', '[class*="st-key-piu_facile_"]', '[class*="st-key-piu_difficile_"]',
                  '[class*="st-key-quick_regen_"]', '[class*="st-key-cambia_tutto_"]'],
     "torna": [".st-key-btn_confirm_final", '[data-testid="stButton"]:has([data-testid="stBaseButton-primary"])'],
     "storico": ['[data-testid="stExpandSidebarButton"]', '[data-testid="stSidebarCollapsedControl"]',
@@ -1226,21 +1240,25 @@ def _guida_benvenuto(dove: str, slot) -> None:
         corpo += (f'<div class="g-nota">{nota}</div>' if nota else "")
         with slot.container(key=f"banner_piano_{dove}"):
             st.markdown(_CSS_BANNER_PIANO + _css_pulsa(pulsa) +
-                        f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">🎁</span>{etichetta}{pun}</div>'
+                        f'<div class="bp-wrap"><div class="g-k"><span class="g-ico">{"👋" if not MONETIZZAZIONE_ATTIVA else "🎁"}</span>{etichetta}{pun}</div>'
                         f'<div class="g-t">{titolo}</div>{corpo}</div>', unsafe_allow_html=True)
             components.html(_js_guida_visti(f"{_SIM}|{st.session_state.get('_guida_epoca', 0)}"), height=0)
+
+    # Con i pagamenti spenti (prova pubblica) la guida è la stessa ma non parla di regali, piani né funzioni «solo per questa verifica»
+    _test = not MONETIZZAZIONE_ATTIVA
+    _eti = "Benvenuto" if _test else "Regalo di benvenuto"
 
     if dove == "input":
         scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
         if not scritto:
-            _riquadro("Regalo di benvenuto · Passo 1 di 2", "Scrivi l'argomento",
+            _riquadro(f"{_eti} · Passo 1 di 2", "Scrivi l'argomento",
                       "Scrivi nel riquadro di cosa parla la verifica e, se vuoi, cosa includere o evitare.",
                       ["argomento"], passi=(1, 2))
         else:
             chips = (('<span class="g-chip">✓ Logo caricato</span>' if _logo_scuola() else "") +
                      ('<span class="g-chip">✓ File caricato</span>' if st.session_state.get("_file_materiale") else ""))
-            _riquadro("Regalo di benvenuto · Passo 2 di 2", "Ora crea la tua verifica",
-                      "In <b>«Altre opzioni»</b> puoi provare, gratis solo per questa verifica:",
+            _riquadro(f"{_eti} · Passo 2 di 2", "Ora crea la tua verifica",
+                      "In <b>«Altre opzioni»</b> puoi provare:" if _test else "In <b>«Altre opzioni»</b> puoi provare, gratis solo per questa verifica:",
                       ["opzioni", "crea", "storico"],
                       voci=[("🏫", "Logo della scuola", "Nell'intestazione della verifica."),
                             ("📎", "Un tuo file", "Appunti o una verifica da rifare."),
@@ -1248,17 +1266,19 @@ def _guida_benvenuto(dove: str, slot) -> None:
                       nota="Poi premi <b>«Crea verifica»</b>. Le tue verifiche restano in <b>«Le mie verifiche»</b> (barra laterale: la freccia in alto a sinistra).",
                       chips=chips, passi=(2, 2))
     elif dove == "review":
-        _riquadro("Regalo di benvenuto · Modifica", "Cambia gli esercizi come preferisci",
+        _riquadro(f"{_eti} · Modifica", "Cambia gli esercizi come preferisci",
                   "Ogni modifica rifà subito il PDF.",
                   ["modifica", "torna"],
-                  voci=[("🔎", "Scegli l'esercizio", "Frecce ◀ ▶ o tendina."),
-                        ("🎚️", "Più facile / Più difficile", "Cambia il livello."),
+                  voci=[("🔎", "Scegli l'esercizio", "Dalla tendina in alto."),
+                        ("✍️", "Scrivi cosa cambiare", "Nel riquadro «Cosa vuoi cambiare?»."),
+                        ("🎚️", "Più facile / Più difficile", "Con un tocco, cambia il livello."),
                         ("🔄", "Cambia i numeri / l'esercizio", "Dati nuovi o esercizio diverso."),
-                        ("➕", "Aggiungi o elimina", "In fondo, o togli quello che non serve.")],
+                        ("➕", "Aggiungi o elimina", "In «Altre azioni», sotto."),
+                        ("⚖️", "Cambia i punteggi", "Un numero per ogni esercizio.")],
                   nota="Finito? Premi <b>«Fatto: torna al PDF»</b>.")
     else:
-        _riquadro("Regalo di benvenuto · La tua prima verifica", "Hai creato la tua prima verifica!",
-                  "Hai tutto sbloccato: prova ciò che <b>lampeggia</b>, scorrendo in basso "
+        _riquadro(f"{_eti} · La tua prima verifica", "Hai creato la tua prima verifica!",
+                  ("Prova ciò che <b>lampeggia</b>, scorrendo in basso " if _test else "Hai tutto sbloccato: prova ciò che <b>lampeggia</b>, scorrendo in basso ") +
                   '(<a href="#kit-completo" style="color:#fff;font-weight:700;white-space:nowrap;">vai al kit</a>).',
                   ["apri_modifica", "kit", "storico"],
                   voci=[("⬇️", "Scarica il PDF", "Pronto per la stampa."),
@@ -1267,7 +1287,8 @@ def _guida_benvenuto(dove: str, slot) -> None:
                         ("🧩", "Versione BES/DSA", "Più semplice, per i piani personalizzati."),
                         ("✅", "Soluzioni", "Le risposte per correggere."),
                         ("🎯", "Scheda di allenamento", "Circa 40 esercizi per la classe.")],
-                  nota="Salvata in <b>«Le mie verifiche»</b> (barra laterale). Dalla prossima verifica queste funzioni sono solo con il piano Pro.")
+                  nota=("Salvata in <b>«Le mie verifiche»</b> (barra laterale)." if _test else
+                        "Salvata in <b>«Le mie verifiche»</b> (barra laterale). Dalla prossima verifica queste funzioni sono solo con il piano Pro."))
 
 
 def _html_voci(voci: list) -> str:
@@ -1285,7 +1306,14 @@ def _banner_piano(dove: str) -> None:
     dove = "input" | "final" | "review". Sta in un segnaposto che si svuota quando non serve: così non resta mai a schermo.
     """
     _slot = st.empty()
-    if not MONETIZZAZIONE_ATTIVA or (_is_admin and not _SIM) or ENT.piano != "free" or (dove == "review" and not ENT.assaggio):
+    if not MONETIZZAZIONE_ATTIVA:
+        # prova pubblica: nessun piano né prezzo, ma chi crea la sua prima verifica ha la guida (con gli elementi che lampeggiano)
+        if _GUIDA_PRIMO and not (_is_admin and not _SIM):
+            _guida_benvenuto(dove, _slot)
+        else:
+            _slot.empty()
+        return
+    if (_is_admin and not _SIM) or ENT.piano != "free" or (dove == "review" and not ENT.assaggio):
         _slot.empty()
         return
     if ENT.assaggio and st.session_state.get("_assaggio_tipo") == "bonus" and not _SIM:
@@ -3087,6 +3115,7 @@ def _render_stage_input():
     _voce  = next((e for e in st.session_state.analisi_docs_list
                    if _fm and e["file_hash"] == _fm["hash"]), None)
     if _fm and _voce is None:
+        _registra_evento("materiale")
         st.session_state["_genera_dopo_analisi"] = True
         with _prog_ph_b.container(), st.spinner("Leggo il tuo file…"):
             _esegui_analisi_documento(_fm["bytes"], _fm["mime"], _fm["name"])
@@ -5066,6 +5095,7 @@ def _render_stage_final():
             try:
                 res_s = _genera_variante("S", mod_id, gp, vA)
                 st.session_state.verifiche["S"] = {**vS, **res_s}
+                _registra_evento("soluzioni", modello=mod_id, verifica_id=st.session_state.get("_storico_id"))
                 _ph_s.empty(); st.toast("✅ Soluzioni pronte!", icon="✅"); st.rerun()
             except Exception as _e:
                 _ph_s.empty()
@@ -5111,7 +5141,7 @@ def _render_stage_final():
                             _db, _emsg = None, str(_e)
                     st.session_state[_docx_key] = False
                     if _db:
-                        st.session_state.verifiche["A"]["docx"] = _db; st.rerun()
+                        _registra_evento("word", verifica_id=st.session_state.get("_storico_id")); st.session_state.verifiche["A"]["docx"] = _db; st.rerun()
                     else:
                         _mostra_errore("Non sono riuscito a creare il file Word", _emsg,
                                        riprova_flag=_docx_key, riprova_key="riprova_word",
@@ -5181,6 +5211,7 @@ def _render_stage_final():
                 _rr = _mr.generate_content(
                     [_pr], generation_config={"temperature": 0.5})
                 st.session_state.rubrica_testo = _rr.text.strip()
+                _registra_evento("griglia", verifica_id=st.session_state.get("_storico_id"))
                 _rph.empty(); st.toast('Griglia pronta!', icon='📊'); st.rerun()
             except Exception as _er:
                 _rph.empty()
@@ -5244,6 +5275,7 @@ def _render_stage_final():
                     "latex": _res_sc["latex"], "pdf": _res_sc["pdf"],
                     "n": _res_sc["n_esercizi"], "avvisi": _res_sc["avvisi"],
                 }
+                _registra_evento("scheda", modello=mod_id, verifica_id=st.session_state.get("_storico_id"))
                 st.toast("Scheda di allenamento pronta!", icon="🎯")
                 st.rerun()
             else:
@@ -5359,6 +5391,7 @@ def _render_stage_final():
                     )
                 if _new_code:
                     st.session_state._share_code = _new_code
+                    _registra_evento("condivisione", verifica_id=st.session_state.get("_storico_id"))
                     st.toast("📤 Link di condivisione creato!", icon="📤")
                     st.rerun()
                 else:

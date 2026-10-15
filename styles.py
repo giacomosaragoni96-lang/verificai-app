@@ -2490,13 +2490,20 @@ font-family: 'DM Sans', sans-serif;
     box-shadow: {T.get('shadow_md', '0 4px 20px rgba(0,0,0,.08)')};
     text-decoration: none !important;
     transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    animation: fab-lampeggio 2.4s ease-in-out infinite;   /* in prova: lampeggio blu leggero per invitare al feedback */
+  }}
+  @keyframes fab-lampeggio {{
+    0%, 100% {{ box-shadow: 0 0 0 0 {_acc}00; border-color: {T['border']}; }}
+    50%      {{ box-shadow: 0 0 0 7px {_acc}33; border-color: {_acc}; }}
   }}
   .fab-link:hover {{
+    animation: none;
     border-color: {_acc};
     color: {_acc} !important;
     box-shadow: 0 4px 24px {_acc_soft};
     transform: translateY(-2px);
   }}
+  @media (prefers-reduced-motion: reduce) {{ .fab-link {{ animation: none; }} }}
 
   /* ════════════════════════════════════════════════════════════════════════
      FOOTER
