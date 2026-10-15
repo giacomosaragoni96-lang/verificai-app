@@ -1519,12 +1519,13 @@ _CSS_BOX_SBLOCCO = """<style>
   font-weight:800;font-size:.88rem;padding:.55rem .9rem;border-radius:10px;text-decoration:none !important;white-space:nowrap;
   box-shadow:0 3px 10px rgba(0,0,0,.16);}
 [class*="st-key-box_sblocco"] a.bx-b:hover {background:#EFF6FF;}
-[class*="st-key-box_sblocco"] button {background:transparent !important;border:none !important;box-shadow:none !important;min-height:0 !important;
+html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button {background:transparent !important;background-color:transparent !important;
+  background-image:none !important;border:none !important;border-radius:0 !important;box-shadow:none !important;min-height:0 !important;height:auto !important;
   padding:.25rem 0 0 !important;width:100%;}
-[class*="st-key-box_sblocco"] button, [class*="st-key-box_sblocco"] button * {color:rgba(255,255,255,.92) !important;
+html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button, html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button * {color:rgba(255,255,255,.92) !important;
   -webkit-text-fill-color:rgba(255,255,255,.92) !important;font-size:.8rem !important;font-weight:600 !important;text-decoration:underline;}
-[class*="st-key-box_sblocco"] button:hover * {color:#fff !important;-webkit-text-fill-color:#fff !important;}
-[class*="st-key-box_sblocco"][data-fatto] a.bx-b {display:none;}
+html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button:hover * {color:#fff !important;-webkit-text-fill-color:#fff !important;}
+html body .stApp div[class*="st-key-box_sblocco"][data-fatto] a.bx-b {display:none;}
 </style>"""
 
 
@@ -1539,7 +1540,7 @@ def _box_sblocco(dove: str) -> None:
                         f'<div class="bx-d">Compila il questionario (4 minuti, anonimo) e ricevi un codice per {VERIFICHE_PER_CODICE} verifiche complete.</div>',
                         unsafe_allow_html=True)
         with _c2:
-            st.markdown('<a class="bx-b" href="?pagina=questionario" target="_blank" rel="noopener">Compila il questionario →</a>',
+            st.markdown('<a class="bx-b" href="?pagina=questionario" target="_blank" rel="noopener">Compila il questionario</a>',
                         unsafe_allow_html=True)
             if st.button("Ho già un codice", key=f"sblocco_codice_{dove}", type="tertiary"):
                 _vai_a_upgrade(None)
