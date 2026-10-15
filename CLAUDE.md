@@ -106,6 +106,9 @@ esercizio centrale 35-50% dei punti con 4-8 richieste a rampa, esercizio di lett
 (`rampe_esempio`, anonime, per parola chiave dell'argomento) servono solo a calibrare il livello. Il primo esercizio «di base» è opzionale (`toggle_primo_base`).
 Con esercizi scelti a mano o «Rifai questa verifica» la struttura-tipo non si usa (`_build_prompt_esercizi(struttura_tipo=False)`).
 
+Consegne snelle (`prompts.REGOLA_CONSEGNE_BREVI`, usata anche nelle modifiche): UNA riga di consegna per esercizio («Risolvi le seguenti disequazioni.») e, nei calcoli,
+richieste fatte della SOLA formula (`\(\displaystyle …\)`), senza «studia il segno», «imposta le C.E.», ecc.; le note del piano sono interne e non si copiano nel testo.
+
 PIANO prima del testo (`piano_verifica.py`, senza streamlit, per ogni materia): con la struttura-tipo, dopo il titolo una chiamata breve (compito AI «piano»)
 riempie lo scheletro (ruoli e punti decisi dal codice) con titolo, tipo e richieste (livello 1-3 + nota) di ogni esercizio; `normalizza_piano` la controlla
 (conteggi, livelli crescenti, mix ~40/40/20, max esercizi chiusi) e calcola i punti per richiesta dal livello; `piano_a_testo` la passa a chi scrive gli
