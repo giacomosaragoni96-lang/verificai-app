@@ -604,13 +604,18 @@ REGOLA_SOTTOPUNTI_MODIFICA = (
 )
 
 REGOLA_DIFFICOLTA_VERA = (
-    "DIFFICOLTÀ VERA — COME SI MISURA: una richiesta FACILE ha una sola operazione o 2-3 termini (un passaggio diretto); una MEDIA ha circa il "
-    "doppio (un passaggio in più, una scomposizione, un caso particolare); una DIFFICILE ha ALMENO il doppio della media: più operazioni "
-    "combinate (per l'algebra: somme o differenze di 2-3 frazioni algebriche con denominatori diversi da scomporre, prodotti o quozienti di "
-    "frazioni, radicali o valori assoluti insieme a frazioni, condizioni di esistenza non banali), oppure una trappola, oppure una discussione. "
-    "NON è difficile un polinomio di terzo grado da scomporre, né la stessa richiesta con numeri più grandi. Per ogni materia: la richiesta "
-    "difficile mette insieme più concetti o obbliga a decidere come procedere. Il PARAMETRO (k, a, m…) è un'abilità avanzata: compare solo se "
-    "l'argomento lo prevede e MAI in una richiesta facile o media. Dentro un esercizio la difficoltà non scende mai."
+    "PARTI SEMPRE DA UN LIVELLO ALTO: chi usa questo strumento ha già fatto lezione e vuole mettere alla prova studenti preparati; è meglio "
+    "una verifica troppo impegnativa che banale (il docente la semplifica con «Più facile», non il contrario). "
+    "DIFFICOLTÀ VERA — COME SI MISURA: una richiesta FACILE non è mai banale: richiede già 2 passaggi (per l'algebra NON una disequazione "
+    "o equazione di primo grado semplice, NON un prodotto notevole o una differenza di quadrati immediati; per esempio un trinomio da "
+    "scomporre con coefficienti non unitari, o una frazione algebrica con due fattori da studiare). Una MEDIA ha 3-4 passaggi (una "
+    "scomposizione, un caso particolare, più condizioni, la somma di due frazioni). Una DIFFICILE ha ALMENO il doppio della media: più "
+    "operazioni combinate (per l'algebra: somme o differenze di 2-3 frazioni algebriche con denominatori diversi da scomporre, prodotti o "
+    "quozienti di frazioni, radicali o valori assoluti insieme a frazioni, condizioni di esistenza non banali), oppure una trappola, oppure "
+    "una discussione. NON è difficile un polinomio di terzo grado da scomporre, né la stessa richiesta con numeri più grandi. Per ogni "
+    "materia: la richiesta difficile mette insieme più concetti o obbliga a decidere come procedere; anche la facile chiede di capire, non "
+    "solo di ricordare. Il PARAMETRO (k, a, m…) è un'abilità avanzata: compare solo se l'argomento lo prevede e MAI in una richiesta facile "
+    "o media. Dentro un esercizio la difficoltà non scende mai."
 )
 
 REGOLA_CONSEGNE_BREVI = (
@@ -1098,7 +1103,7 @@ _DESCRIZIONE_STUDIO = (
 )
 
 _DESCRIZIONE_RUOLO = {
-    "A": "APERTURA BREVE: poche richieste semplici (una domanda teorica/definizione o un calcolo diretto)",
+    "A": "APERTURA BREVE: poche richieste dirette ma NON banali (una domanda teorica/definizione o un calcolo diretto che richiede comunque 2 passaggi, mai un esempio da prima lezione)",
     "C": "ESERCIZIO CENTRALE: l'abilità principale dell'argomento, 4-8 richieste brevi a rampa, dalla più facile a una DAVVERO difficile",
     "M": "esercizio di difficoltà MEDIA: 2-4 richieste, dal diretto al leggermente articolato",
     "G": "SECONDO TIPO di esercizi dell'argomento (un'altra famiglia di casi) oppure LETTURA/ANALISI (un grafico, dei dati, un testo, una fonte): 2-6 richieste brevi, di difficoltà media o alta",
@@ -1178,10 +1183,11 @@ _RAMPE_ESEMPIO = [
      "scomposizioni: (1) 4x²y + 8xy · (2) ab + 3a - 2b - 6 · (3) x² - 3x - 10 · (4) 2y² - 7y - 4 · (5) x³ + 1/8 · "
      "(6) x³ - 9x - x² + 9 · (7) 4a² - 4b² + 8bc - 4c²"),
     (("disequaz",),
-     "disequazioni: (1) 3x - 5 > x + 1 · (2) x² - 5x + 6 ≤ 0 · (3) (x²-4)/(x-3) ≥ 0 · "
-     "(4) x/(x²-4) - 1/(x-2) < 2/(x+2) - 1, somma di frazioni con denominatori da scomporre · "
-     "(5) (x³-3x²-x+3)/(x²-4x+3) · (x+2)/(x²-1) ≤ 0, prodotto di frazioni con fattori da scomporre e ripetuti · "
-     "(6) un sistema di tre disequazioni di tipo diverso (fratta, a prodotto, con valore assoluto)"),
+     "disequazioni (questo è il LIVELLO MINIMO, non andare sotto): (1) facile non banale: (x²-5x+6)/(x²-1) ≤ 0 · "
+     "(2) media: (x+1)/(x-2) - 3/(x+2) ≥ 0, somma di due frazioni · (3) media: (x³-4x²-x+4)/(x²-9) ≥ 0, con scomposizione per raccoglimento · "
+     "(4) difficile: x/(x²-4) - 1/(x-2) < 2/(x+2) - 1, somma di frazioni con denominatori da scomporre · "
+     "(5) difficile: (x³-3x²-x+3)/(x²-4x+3) · (x+2)/(x²-1) ≤ 0, prodotto di frazioni con fattori da scomporre e ripetuti · "
+     "(6) difficile: un sistema di tre disequazioni di tipo diverso (fratta, a prodotto, con valore assoluto)"),
     (("radical", "razionalizz"),
      "radicali: (1) semplificare √18 + √50 - √8 · (2) razionalizzare 2/√3 · (3) razionalizzare 1/(√x - √y) · "
      "(4) semplificare un'espressione con radicali letterali e condizioni di esistenza"),
@@ -1269,7 +1275,7 @@ def prompt_piano_verifica(
         f"- Dentro un esercizio i livelli non scendono mai (dal più facile al più difficile).\n"
         f"- Numero di richieste: apertura 1-4; centrale 4-8 (a rampa, dalla più facile a una davvero difficile); medio 2-4; "
         f"secondo tipo o lettura/analisi 2-6 (1 sola solo per lo studio completo di una funzione); problema 2-3; eccellenza 1-2 (tutte di livello 3).\n"
-        f"- Nell'insieme: circa il 40% di richieste facili, 40% medie, 20% difficili. L'esercizio per l'eccellenza è molto difficile.\n"
+        f"- Nell'insieme: circa il 25% di richieste facili (ma non banali), 45% medie, 30% difficili. L'esercizio per l'eccellenza è molto difficile.\n"
         f"- Le note nominano i passaggi che rivelano la comprensione, quelli in cui gli studenti sbagliano di più (un segno da cambiare, una "
         f"condizione da controllare, un'eccezione, un dato da ricavare, un concetto che si confonde con un altro).\n"
         f"- Esercizi diversi verificano cose diverse: niente richieste che ripetono lo stesso concetto con altri numeri.\n"
@@ -1296,7 +1302,11 @@ def prompt_ritocco_difficolta(materia: str, argomento: str, corpo: str, piano_te
         f"COMPITO: controlla ogni richiesta e correggi SOLO quelle il cui livello REALE non corrisponde al piano:\n"
         f"- le richieste DIFFICILI (e tutto l'esercizio per l'eccellenza) devono essere veramente difficili: se sono troppo semplici "
         f"RISCRIVILE più impegnative (altri dati, stesso argomento e stessa forma), con più operazioni, termini e concetti.\n"
-        f"- le richieste FACILI e MEDIE troppo difficili (per esempio con un parametro, o con troppi termini) vanno semplificate.\n"
+        f"- le richieste FACILI non devono essere BANALI: se una facile è un solo passaggio (per esempio una disequazione di primo grado "
+        f"semplice, un prodotto notevole immediato) RISCRIVILA come facile non banale (almeno 2 passaggi). Il livello di partenza deve essere "
+        f"ALTO: se hai dubbi, alza di una tacca.\n"
+        f"- le richieste FACILI e MEDIE che sono davvero troppo difficili (per esempio con un parametro) vanno semplificate.\n"
+        f"- le parti che il piano indica come «volute dal docente» (per esempio un'apertura di base) restano come sono, anche se semplici.\n"
         f"- se dentro un esercizio una richiesta più difficile viene prima di una più facile, riordina o riscrivi in modo che la "
         f"difficoltà non scenda mai.\n"
         f"- le richieste già giuste le ricopi IDENTICHE, parola per parola.\n\n"

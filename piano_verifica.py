@@ -205,7 +205,7 @@ def _regola_livelli(e: dict) -> None:
 
 
 def _riequilibra_mix(esercizi: list) -> None:
-    """Almeno circa il 15% delle richieste difficili e non più del 35%; almeno il 25% facili."""
+    """Livello di partenza ALTO: almeno circa il 25% di richieste difficili e non più del 45%; almeno il 20% facili."""
     tutte = [(e, r) for e in esercizi if e["tipo"] not in _CHIUSI for r in e["richieste"]]
     if len(tutte) < 6:
         return
@@ -216,19 +216,19 @@ def _riequilibra_mix(esercizi: list) -> None:
 
     # poche difficili: l'ultima richiesta media dei problemi/analisi/medi diventa difficile
     for e in reversed(esercizi):
-        if conta(3) >= round(n * 0.15):
+        if conta(3) >= round(n * 0.25):
             break
         if e["ruolo"] in ("G", "P", "M") and e["tipo"] not in _CHIUSI and e["richieste"][-1]["livello"] == 2:
             e["richieste"][-1]["livello"] = 3
     # troppe difficili: le ultime difficili dei problemi/analisi tornano medie (mai il fondo del centrale né l'eccellenza)
     for e in esercizi:
-        if conta(3) <= round(n * 0.35):
+        if conta(3) <= round(n * 0.45):
             break
         if e["ruolo"] in ("G", "P", "M") and len(e["richieste"]) >= 2 and e["richieste"][-1]["livello"] == 3:
             e["richieste"][-1]["livello"] = 2
     # troppo poche facili: la prima richiesta media dell'apertura o dell'esercizio medio diventa facile
     for e in esercizi:
-        if conta(1) >= round(n * 0.25):
+        if conta(1) >= round(n * 0.20):
             break
         if e["ruolo"] in ("A", "M", "G") and e["richieste"][0]["livello"] == 2:
             e["richieste"][0]["livello"] = 1
@@ -248,7 +248,8 @@ def piano_a_testo(piano: dict, mostra_punteggi: bool = True) -> str:
                      "(il piano serve da traccia dove il docente non ha detto nulla).")
     for i, e in enumerate(piano["esercizi"], 1):
         tipo = "" if e["tipo"] == "aperto" else f" — tipo: {_ETICHETTA_TIPO[e['tipo']]} (tutte le richieste dello stesso tipo)"
-        righe.append(f"Esercizio {i}: «{e['titolo']}»{tipo}" + (f" — totale {e['punti']} pt" if mostra_punteggi else ""))
+        base = " — apertura di BASE voluta dal docente: resta semplice" if e["ruolo"] == "B" else ""
+        righe.append(f"Esercizio {i}: «{e['titolo']}»{tipo}{base}" + (f" — totale {e['punti']} pt" if mostra_punteggi else ""))
         for k, r in enumerate(e["richieste"]):
             lettera = "abcdefghijklmnopqrstuvwxyz"[k % 26]
             pt = e["punti_richieste"][k] if (not vincolo and k < len(e.get("punti_richieste") or [])) else None
