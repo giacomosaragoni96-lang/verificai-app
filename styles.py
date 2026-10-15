@@ -2482,9 +2482,9 @@ font-family: 'DM Sans', sans-serif;
     color: {T['text2']} !important;
     font-size: 1.05rem; font-weight: 700;
     font-family: 'DM Sans', sans-serif;
-    width: 2.5rem; height: 2.5rem; padding: 0;
-    display: flex; align-items: center; justify-content: center;
-    opacity: .9;
+    height: 2.5rem; padding: 0 1rem; white-space: nowrap; font-size: .88rem;
+    display: flex; align-items: center; justify-content: center; gap: .4rem;
+    opacity: 1;
     border-radius: 100px;
     border: 1.5px solid {T['border']};
     box-shadow: {T.get('shadow_md', '0 4px 20px rgba(0,0,0,.08)')};
@@ -2494,7 +2494,7 @@ font-family: 'DM Sans', sans-serif;
   }}
   @keyframes fab-lampeggio {{
     0%, 100% {{ box-shadow: 0 0 0 0 {_acc}00; border-color: {T['border']}; }}
-    50%      {{ box-shadow: 0 0 0 7px {_acc}33; border-color: {_acc}; }}
+    50%      {{ box-shadow: 0 0 0 9px {_acc}40; border-color: {_acc}; }}
   }}
   .fab-link:hover {{
     animation: none;
@@ -2503,7 +2503,6 @@ font-family: 'DM Sans', sans-serif;
     box-shadow: 0 4px 24px {_acc_soft};
     transform: translateY(-2px);
   }}
-  @media (prefers-reduced-motion: reduce) {{ .fab-link {{ animation: none; }} }}
 
   /* ════════════════════════════════════════════════════════════════════════
      FOOTER

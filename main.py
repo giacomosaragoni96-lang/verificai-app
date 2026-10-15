@@ -128,9 +128,13 @@ if _theme_key not in THEMES:
 T = THEMES[_theme_key]
 
 
+# La versione del file degli stili entra nella chiave della cache: dopo un aggiornamento del sito il CSS nuovo vale subito, senza riavviare
+_STILI_V = hashlib.md5(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "styles.py"), "rb").read()).hexdigest()[:10]
+
+
 @st.cache_data(show_spinner=False)
-def _css_tema(chiave: str) -> str:
-    """Il foglio di stile dipende solo dal tema: si costruisce una volta (get_css è lungo) e non a ogni clic."""
+def _css_tema(chiave: str, versione: str = "") -> str:
+    """Il foglio di stile dipende solo dal tema (e dalla versione di styles.py): si costruisce una volta e non a ogni clic."""
     return get_css(THEMES[chiave])
 
 # ── CONFIGURAZIONE API ────────────────────────────────────────────────────────
@@ -1368,14 +1372,14 @@ def _pulsante_pro(funzione: str, key: str, testo: str = "Con il piano Pro") -> N
         _vai_a_upgrade(funzione)
 
 # ── CSS + FEEDBACK ────────────────────────────────────────────
-st.markdown(_css_tema(st.session_state.theme if st.session_state.get("theme") in THEMES else _theme_key), unsafe_allow_html=True)
+st.markdown(_css_tema(st.session_state.theme if st.session_state.get("theme") in THEMES else _theme_key, _STILI_V), unsafe_allow_html=True)
 if not _is_admin:      # Share, stella, matita, GitHub e Deploy servono solo a chi gestisce l'app
     st.markdown('<style>[data-testid="stToolbarActions"], [data-testid="stAppDeployButton"], '
                 '[data-testid="stMainMenu"] { display:none !important; }</style>', unsafe_allow_html=True)
 
 st.markdown(
     '<a class="fab-link" href="' + FEEDBACK_FORM_URL + '" target="_blank" title="Scrivici un feedback" '
-    'aria-label="Scrivici un feedback" rel="noopener noreferrer">💬</a>',
+    'aria-label="Scrivici un feedback" rel="noopener noreferrer">💬 Lasciaci un feedback</a>',
     unsafe_allow_html=True
 )
 
