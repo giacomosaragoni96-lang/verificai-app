@@ -1622,8 +1622,9 @@ def _prepara_per_pandoc(testo: str, cartella: str, contatore: list) -> str:
         return f"\n\n\\begin{{center}}\\includegraphics[width=10cm]{{g{n}.png}}\\end{{center}}\n\n"
 
     t = _RE_TIKZ.sub(_grafico, testo)
-    t = _RE_VF.sub(lambda m: "\u2610 \\textbf{V}~~~~~~~~\u2610 \\textbf{F}", t)
-    t = _RE_VF_NUDO.sub(lambda m: "\u2610 \\textbf{V}~~~~~~~~\u2610 \\textbf{F}", t)
+    # «§R§» segna dove le caselle vanno a destra: _rifinisci_docx lo trasforma in una tabulazione allineata a destra
+    t = _RE_VF.sub(lambda m: "\u00a7R\u00a7\u2610 \\textbf{V}~~~~~~~~\u2610 \\textbf{F}", t)
+    t = _RE_VF_NUDO.sub(lambda m: "\u00a7R\u00a7\u2610 \\textbf{V}~~~~~~~~\u2610 \\textbf{F}", t)
     t = _converti_matematica(t)                      # formule → testo con esponenti e pedici (niente equazioni di Word)
     t = _liste_a_paragrafi(t)                        # a) b) c) scritti nel testo
     t = re.sub(r'\\underline\{\\hspace\*?\{[^}]*\}\}', r'\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_', t)
@@ -1791,6 +1792,16 @@ def _rifinisci_docx(percorso_in: str, titolo: str, sottotitolo: str, istruzione:
         par.paragraph_format.tab_stops.add_tab_stop(rientro)
         par.paragraph_format.space_after = Pt(3)
 
+    # caselle V/F: in fondo alla riga, a destra (tabulazione allineata a destra a 16 cm)
+    from docx.enum.text import WD_TAB_ALIGNMENT
+    for par in doc.paragraphs:
+        if "§R§" not in par.text:
+            continue
+        for run in par.runs:
+            if "§R§" in run.text:
+                run.text = re.sub(r"[  ]*§R§", "\t", run.text)
+        par.paragraph_format.tab_stops.add_tab_stop(Cm(16), WD_TAB_ALIGNMENT.RIGHT)
+
     # intestazione in cima: logo, titolo, riga per nome e classe, istruzione
     primo = doc.paragraphs[0] if doc.paragraphs else doc.add_paragraph()
     nuovi = []
@@ -1859,7 +1870,10 @@ def latex_to_docx_modificabile(codice_latex: str, materia: str = "", argomento: 
             contatore = [0]
             parti = []
             for b in blocchi:
-                parti.append("\\subsection*{" + b["title"] + "}\n\n" + _prepara_per_pandoc(b["body"], tmp, contatore))
+                corpo = b["body"]
+                if con_griglia:      # i punti stanno già nella tabella in fondo: accanto alle richieste sarebbero una ripetizione
+                    corpo = re.sub(r"[ \t]*\(\s*\d+(?:[.,]\d+)?\s*pt\s*\)", "", corpo)
+                parti.append("\\subsection*{" + b["title"] + "}\n\n" + _prepara_per_pandoc(corpo, tmp, contatore))
             tex = ("\\documentclass{article}\n\\usepackage{amsmath,amssymb}\n\\begin{document}\n"
                    + "\n\n".join(parti) + "\n\\end{document}\n")
             sorgente = os.path.join(tmp, "v.tex")
