@@ -3791,12 +3791,13 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 
         # ── 1) L'esercizio selezionato: solo lui, come uscirà nel PDF ────────────
         _img_es = None
-        if _ha_grafico_es:
-            with st.spinner("Preparo l'anteprima con il grafico…"):
-                _img_es = _immagine_esercizio(title, body)
+        with st.spinner("Preparo l'anteprima dell'esercizio…"):       # come uscirà nel PDF, per ogni esercizio (in cache)
+            _img_es = _immagine_esercizio(title, body)
         if _img_es:
-            st.image(_img_es, width=520)
-        else:
+            _ia, _ib, _ic = st.columns([1, 6, 1])                     # centrata, a tre quarti della larghezza
+            with _ib:
+                st.image(_img_es, use_container_width=True)
+        else:                                                         # se non si compila: anteprima testuale
             katex_html = _make_katex_html(title, body, T)
             est_height = max(170, min(550, 120 + len(body) // 4))
             components.html(katex_html, height=est_height, scrolling=True)
