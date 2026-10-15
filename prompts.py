@@ -247,9 +247,9 @@ def prompt_corpo_verifica(
         f"difficili sono i dati e il tipo, non la lunghezza del testo. ECCEZIONE: lo studio completo di una funzione e un problema di "
         f"modellizzazione sono UNA richiesta unica, con consegna brevissima ma intrinsecamente lunga e impegnativa (e con molti punti).\n"
         f"- LE RICHIESTE DIFFICILI DEVONO ESSERLO DAVVERO: la più difficile dell'esercizio centrale e l'esercizio per l'eccellenza devono "
-        f"mettere in difficoltà anche uno studente preparato: combinano più concetti, nascondono una trappola, richiedono scomposizioni, "
-        f"discussione di casi o parametri. NON basta un calcolo più lungo o con numeri più grandi. Le richieste facili restano facili: "
-        f"serve una scala vera, dal banale al quasi proibitivo.\n"
+        f"mettere in difficoltà anche uno studente preparato. Le richieste facili restano facili: serve una scala vera, dal banale al "
+        f"quasi proibitivo.\n"
+        f"- {REGOLA_DIFFICOLTA_VERA}\n"
         f"- VERO/FALSO fatto bene: il titolo dell'esercizio contiene le parole «Vero o Falso»; circa metà delle affermazioni sono "
         f"false; niente «sempre», «mai», «necessariamente», «esclusivamente» che rendono ambigua la risposta; almeno una falsa deve "
         f"richiedere di pensare a un controesempio. Ogni richiesta è UNA affermazione da giudicare (mai «Spiega…» dentro un Vero/Falso) "
@@ -601,6 +601,16 @@ REGOLA_SOTTOPUNTI_MODIFICA = (
     "SOTTOPUNTI: con due o più richieste usa \\begin{enumerate}[a)] con \\item[a)], \\item[b)], ... "
     "(un \\item per richiesta e il punteggio (N pt) alla fine di ogni \\item). "
     "NON scrivere mai a) b) dentro un paragrafo di testo. Con una sola richiesta: testo diretto, senza enumerate."
+)
+
+REGOLA_DIFFICOLTA_VERA = (
+    "DIFFICOLTÀ VERA — COME SI MISURA: una richiesta FACILE ha una sola operazione o 2-3 termini (un passaggio diretto); una MEDIA ha circa il "
+    "doppio (un passaggio in più, una scomposizione, un caso particolare); una DIFFICILE ha ALMENO il doppio della media: più operazioni "
+    "combinate (per l'algebra: somme o differenze di 2-3 frazioni algebriche con denominatori diversi da scomporre, prodotti o quozienti di "
+    "frazioni, radicali o valori assoluti insieme a frazioni, condizioni di esistenza non banali), oppure una trappola, oppure una discussione. "
+    "NON è difficile un polinomio di terzo grado da scomporre, né la stessa richiesta con numeri più grandi. Per ogni materia: la richiesta "
+    "difficile mette insieme più concetti o obbliga a decidere come procedere. Il PARAMETRO (k, a, m…) è un'abilità avanzata: compare solo se "
+    "l'argomento lo prevede e MAI in una richiesta facile o media. Dentro un esercizio la difficoltà non scende mai."
 )
 
 REGOLA_CONSEGNE_BREVI = (
@@ -1162,8 +1172,10 @@ _RAMPE_ESEMPIO = [
      "scomposizioni: (1) 4x²y + 8xy · (2) ab + 3a - 2b - 6 · (3) x² - 3x - 10 · (4) 2y² - 7y - 4 · (5) x³ + 1/8 · "
      "(6) x³ - 9x - x² + 9 · (7) 4a² - 4b² + 8bc - 4c²"),
     (("disequaz",),
-     "disequazioni: (1) 3x - 5 > x + 1 · (2) x² - 5x + 6 ≤ 0 · (3) (x²-4)/(x-3) > 0 · (4) |x²-4| < 3x · "
-     "(5) un sistema di tre disequazioni di tipo diverso"),
+     "disequazioni: (1) 3x - 5 > x + 1 · (2) x² - 5x + 6 ≤ 0 · (3) (x²-4)/(x-3) ≥ 0 · "
+     "(4) x/(x²-4) - 1/(x-2) < 2/(x+2) - 1, somma di frazioni con denominatori da scomporre · "
+     "(5) (x³-3x²-x+3)/(x²-4x+3) · (x+2)/(x²-1) ≤ 0, prodotto di frazioni con fattori da scomporre e ripetuti · "
+     "(6) un sistema di tre disequazioni di tipo diverso (fratta, a prodotto, con valore assoluto)"),
     (("radical", "razionalizz"),
      "radicali: (1) semplificare √18 + √50 - √8 · (2) razionalizzare 2/√3 · (3) razionalizzare 1/(√x - √y) · "
      "(4) semplificare un'espressione con radicali letterali e condizioni di esistenza"),
@@ -1244,6 +1256,9 @@ def prompt_piano_verifica(
         f"LIVELLI (valgono per ogni materia): 1 = ricordare o applicare in modo diretto; 2 = un passaggio in più, un caso particolare, "
         f"una spiegazione; 3 = più concetti insieme, una trappola, un ragionamento non standard, un'analisi o una valutazione: deve "
         f"essere DAVVERO difficile, non solo più lungo.\n"
+        f"{REGOLA_DIFFICOLTA_VERA}\n"
+        f"Per ogni richiesta di livello 3 la nota dice COSA la rende davvero difficile (per esempio «somma di tre frazioni con denominatori "
+        f"da scomporre», «caso da discutere», «confronto tra due fonti»).\n"
         f"REGOLE:\n"
         f"- Dentro un esercizio i livelli non scendono mai (dal più facile al più difficile).\n"
         f"- Numero di richieste: apertura 1-4; centrale 4-8 (a rampa, dalla più facile a una davvero difficile); medio 2-4; "
@@ -1261,4 +1276,28 @@ def prompt_piano_verifica(
         f"OUTPUT: SOLO un oggetto JSON valido, senza altro testo, in questa forma (esattamente {len(scheletro)} esercizi):\n"
         f'{{"docente_vincola": false, "esercizi": [{{"titolo": "...", "tipo": "aperto", "richieste": [{{"livello": 1, "nota": "..."}}, '
         f'{{"livello": 3, "nota": "..."}}]}}]}}'
+    )
+
+
+def prompt_ritocco_difficolta(materia: str, argomento: str, corpo: str, piano_testo: str) -> str:
+    """Secondo sguardo sulla difficoltà: l'AI confronta il livello REALE di ogni richiesta con quello del piano e riscrive solo
+    le richieste fuori livello (le difficili troppo facili, i parametri tra le facili, l'ordine che scende). Risposta: tutti gli esercizi."""
+    return (
+        f"Sei un docente esperto di {materia}. Qui sotto c'è una verifica sull'argomento «{argomento}» (esercizi in LaTeX) e il PIANO dei "
+        f"livelli di difficoltà che doveva rispettare.\n\n"
+        f"PIANO:\n{piano_testo}\n\n"
+        f"VERIFICA:\n{corpo}\n\n"
+        f"COMPITO: controlla ogni richiesta e correggi SOLO quelle il cui livello REALE non corrisponde al piano:\n"
+        f"- le richieste DIFFICILI (e tutto l'esercizio per l'eccellenza) devono essere veramente difficili: se sono troppo semplici "
+        f"RISCRIVILE più impegnative (altri dati, stesso argomento e stessa forma), con più operazioni, termini e concetti.\n"
+        f"- le richieste FACILI e MEDIE troppo difficili (per esempio con un parametro, o con troppi termini) vanno semplificate.\n"
+        f"- se dentro un esercizio una richiesta più difficile viene prima di una più facile, riordina o riscrivi in modo che la "
+        f"difficoltà non scenda mai.\n"
+        f"- le richieste già giuste le ricopi IDENTICHE, parola per parola.\n\n"
+        f"REGOLE:\n- {REGOLA_DIFFICOLTA_VERA}\n- {REGOLA_CONSEGNE_BREVI}\n"
+        f"- NON cambiare il numero di esercizi, né il numero di richieste di ogni esercizio, né i titoli, né le consegne. NON toccare i punti "
+        f"(N pt), le caselle V/F, i grafici ([[GRAFICO: ...]] o TikZ).\n"
+        f"- Le richieste riscritte devono avere una soluzione ben definita e dati puliti (numeri interi o frazioni semplici).\n"
+        f"- Nessuna soluzione, risposta o commento.\n\n"
+        f"OUTPUT: la verifica COMPLETA, dall'inizio, nello stesso formato (solo i blocchi \\subsection*{{...}} con i loro corpi), senza altro testo."
     )

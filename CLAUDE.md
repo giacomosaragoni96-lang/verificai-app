@@ -113,6 +113,9 @@ PIANO prima del testo (`piano_verifica.py`, senza streamlit, per ogni materia): 
 riempie lo scheletro (ruoli e punti decisi dal codice) con titolo, tipo e richieste (livello 1-3 + nota) di ogni esercizio; `normalizza_piano` la controlla
 (conteggi, livelli crescenti, mix ~40/40/20, max esercizi chiusi) e calcola i punti per richiesta dal livello; `piano_a_testo` la passa a chi scrive gli
 esercizi; `applica_punti_piano` rimette i punti nel LaTeX (in `_assembla_e_compila`). Qualsiasi problema = nessun piano, si genera come prima.
+Difficoltà vera (`prompts.REGOLA_DIFFICOLTA_VERA`: difficile = almeno il doppio delle operazioni della media, mai un parametro nelle richieste facili/medie) e un
+secondo sguardo dopo la scrittura (`generation.ritocca_difficolta`, compito AI «difficolta», solo con un piano e senza vincoli del docente): l'AI riscrive le
+richieste fuori livello; la risposta vale solo se la forma è identica (stessi esercizi, richieste e grafici), altrimenti si tiene il testo di prima.
 PRECEDENZA AL DOCENTE (regola assoluta): le sue note vincono su struttura, piano, livelli e punti. Se dicono qualcosa sulla struttura (flag `docente_vincola`
 dell'AI + parole chiave) il codice NON riscrive livelli, tipi o numero di richieste, usa i punti che il docente indica e non impone i punti per richiesta;
 «senza esercizio per l'eccellenza» nelle note spegne l'interruttore.
