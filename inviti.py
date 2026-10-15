@@ -13,7 +13,7 @@ import secrets
 import string
 from typing import Optional, Tuple
 
-from config import BONUS_PER_INVITO, MAX_INVITI_CON_BONUS
+from config import BONUS_PER_INVITO, MAX_INVITI_CON_BONUS, VERIFICHE_PER_CODICE
 
 logger = logging.getLogger("verificai.inviti")
 
@@ -96,7 +96,12 @@ def riepilogo(sb, user_id: str) -> Tuple[bool, int, int, int]:
     except Exception as e:
         logger.warning("riepilogo inviti non riuscito: %s", e)
         return False, 0, 0, 0
-    guadagnati = min(convalidati, MAX_INVITI_CON_BONUS) * BONUS_PER_INVITO
+    try:                                    # codici del questionario completo (tabella assente = nessun credito)
+        cd = sb.table("codici_sblocco").select("codice", count="exact").eq("usato_da", user_id).execute()
+        da_codici = int(cd.count or 0) * VERIFICHE_PER_CODICE
+    except Exception:
+        da_codici = 0
+    guadagnati = min(convalidati, MAX_INVITI_CON_BONUS) * BONUS_PER_INVITO + da_codici
     return True, convalidati, guadagnati, max(0, guadagnati - usati)
 
 
