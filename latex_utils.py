@@ -1321,6 +1321,21 @@ def _fmt_num(v: float) -> str:
     return str(int(v)) if abs(v - round(v)) < 1e-9 else f"{v:.2f}".rstrip("0").rstrip(".")
 
 
+def _tacche_con_extra(lo: float, hi: float, extra: list) -> str:
+    """Tacche «tonde» tra lo e hi più i valori in extra (asintoti), togliendo quelle troppo vicine a un extra per non sovrapporre le etichette."""
+    grezzo = (hi - lo) / 6 or 1.0
+    passo = next((n * 10 ** e for e in range(-2, 5) for n in (1, 2, 5) if n * 10 ** e >= grezzo), grezzo)
+    k = math.ceil(lo / passo - 1e-9)
+    tacche = []
+    while k * passo <= hi + 1e-9:
+        v = round(k * passo, 6)
+        if all(abs(v - c) >= 0.65 * passo for c in extra):
+            tacche.append(v)
+        k += 1
+    tacche += [c for c in extra if lo - 1e-9 <= c <= hi + 1e-9]
+    return ",".join(_fmt_num(v) for v in sorted(set(tacche)))
+
+
 def _valori_curva(f, xmin: float, xmax: float, n: int = 400) -> list:
     """Campioni (x, y) finiti della curva nell'intervallo."""
     out = []
@@ -1463,10 +1478,22 @@ def _tikz_da_specifica(corpo: str):
         return None
     xmin, xmax, ymin, ymax = finestra
     xa, xb = math.floor(xmin), math.ceil(xmax)
+    # il valore di ogni asintoto costante («x = 2», «y = 3») diventa una tacca con la sua etichetta: lo studente non deve stimarlo a occhio
+    x_extra, y_extra = [], []
+    for t in asintoti_txt[:4]:
+        mc = re.match(r'\s*([xy])\s*=\s*(-?[\d.,−–]+)\s*$', t, re.IGNORECASE)
+        c = _numero_grafico(mc.group(2)) if mc else None
+        if c is not None:
+            (x_extra if mc.group(1).lower() == "x" else y_extra).append(c)
+    tacche = ""
+    if x_extra:
+        tacche += f"xtick={{{_tacche_con_extra(xa, xb, x_extra)}}}, "
+    if y_extra:
+        tacche += f"ytick={{{_tacche_con_extra(ymin, ymax, y_extra)}}}, "
     righe = [
         r"\begin{center}",
         r"\begin{tikzpicture}",
-        f"\\begin{{axis}}[trig format plots=rad, xmin={_fmt_num(xa)}, xmax={_fmt_num(xb)}, ymin={_fmt_num(ymin)}, ymax={_fmt_num(ymax)}, "
+        f"\\begin{{axis}}[trig format plots=rad, {tacche}xmin={_fmt_num(xa)}, xmax={_fmt_num(xb)}, ymin={_fmt_num(ymin)}, ymax={_fmt_num(ymax)}, "
         f"axis lines=middle, xlabel={xl}, ylabel={yl}, grid=major, width=9cm, height=5cm, "
         f"domain={_fmt_num(xmin)}:{_fmt_num(xmax)}, samples=200, unbounded coords=jump, "
         f"restrict y to domain={_fmt_num(ymin - 1)}:{_fmt_num(ymax + 1)}]",
