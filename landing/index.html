@@ -166,5 +166,17 @@
     VerificAI · Versione beta · <a href="privacy.html">Informativa sulla privacy</a> · <a href="mailto:verificai.support@gmail.com">Contatti</a>
   </footer>
 </div>
+<script>
+  // Se il link della pagina ha ?src=nome (da quale gruppo arriva il visitatore), lo passa ai pulsanti che portano all'app
+  (function () {
+    try {
+      var src = new URLSearchParams(window.location.search).get("src");
+      if (!src || !/^[A-Za-z0-9_-]{1,30}$/.test(src)) return;
+      document.querySelectorAll('a[href^="https://verificai.streamlit.app"]').forEach(function (a) {
+        a.href = "https://verificai.streamlit.app/?src=" + encodeURIComponent(src);
+      });
+    } catch (e) {}
+  })();
+</script>
 </body>
 </html>
