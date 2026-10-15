@@ -140,3 +140,13 @@ def pulisci_risposte(grezze: dict, email: str = ""):
 
 def riga_da_inserire(risposte: dict, email: str | None) -> dict:
     return {"versione": VERSIONE, "risposte": risposte, "email_facoltativa": email}
+
+
+def domanda(qid: str) -> dict:
+    """La definizione di una domanda (per le due domande veloci prima del download)."""
+    return _DOMANDE[qid]
+
+
+def riga_rapida(risposte: dict) -> dict:
+    """Le due domande veloci («quanto tempo hai risparmiato?», «ti è servito?»): stessa tabella, versione 0."""
+    return {"versione": 0, "risposte": risposte, "email_facoltativa": None}

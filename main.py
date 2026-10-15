@@ -38,6 +38,7 @@ from subscription_management import calcola_entitlements, get_subscription_manag
 from ui_upgrade import render_upgrade
 from ui_legale import render_termini, render_rimborsi
 from ui_questionario import render_questionario
+from questionario import domanda as _domanda_q, pulisci_risposte, riga_rapida
 from licenze import attiva_licenza, riconvalida_se_serve
 from segnalazioni import costruisci_segnalazione, MAX_PER_SESSIONE
 from latex_utils import (
@@ -57,7 +58,7 @@ from config import (
     SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
     MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, PREZZO_PRO_ANNUALE, LEGALE_PRONTO, TETTO_BREVE, MAX_FACCIATE, WORD_ATTIVO,
-    MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS, MODIFICHE_PER_VERIFICA,
+    MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS, MODIFICHE_PER_VERIFICA, FEEDBACK_PRIMA_DEL_DOWNLOAD,
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -1326,7 +1327,10 @@ _CSS_BOX_FEEDBACK = """<style>
 .vf-fb a.vf-fb-b:hover{background:#EFF6FF;}
 .vf-fb.vf-fb-c{padding:.7rem 1rem;}
 .vf-fb.vf-fb-c .vf-fb-ico{font-size:1.4rem;}
-.vf-fb.vf-fb-c .vf-fb-t{font-size:.98rem;margin:0;}
+.vf-fb.vf-fb-c .vf-fb-t{font-size:1rem;margin:0 0 .1rem;}
+.vf-fb.vf-fb-c .vf-fb-d{font-size:.86rem;opacity:.88;font-weight:400;}
+.vf-fb.vf-fb-c .vf-fb-testo{flex:1 1 240px;}
+.vf-fb.vf-fb-c a.vf-fb-b{padding:.55rem 1rem;font-size:.9rem;}
 </style>"""
 
 
@@ -1334,7 +1338,8 @@ def _box_feedback(compatto: bool = False) -> None:
     """Riquadro blu ben visibile che chiede il parere (prova pubblica: è l'unica cosa che chiediamo in cambio dell'uso gratuito).
     Sparisce da solo, in questo browser, dopo aver inviato il questionario (il flag lo mette la pagina del questionario)."""
     if compatto:
-        corpo = ('<div class="vf-fb-testo"><div class="vf-fb-t">VerificAI è in beta e gratuita: il tuo parere ci serve davvero.</div></div>')
+        corpo = ('<div class="vf-fb-testo"><div class="vf-fb-t">VerificAI è in beta ed è gratuita</div>'
+                 '<div class="vf-fb-d">Il tuo parere ci serve davvero: bastano 4 minuti.</div></div>')
     else:
         corpo = ('<div class="vf-fb-testo"><div class="vf-fb-t">Aiutaci a migliorare VerificAI</div>'
                  '<div class="vf-fb-d">VerificAI è in <b>beta</b> e per ora è <b>completamente gratuita</b>: l\'unica cosa che ti chiediamo '
@@ -1344,6 +1349,47 @@ def _box_feedback(compatto: bool = False) -> None:
                 unsafe_allow_html=True)
     components.html('<script>try{if(window.parent.localStorage.getItem("vf_feedback_ok")){window.parent.document.querySelectorAll(".vf-fb")'
                     '.forEach(function(e){e.style.display="none";});}}catch(e){}</script>', height=0)
+
+
+def _mini_feedback_richiesto() -> bool:
+    """True se prima di scaricare il PDF vanno ancora fatte le due domande veloci (una volta per browser: lo ricorda un cookie)."""
+    if not FEEDBACK_PRIMA_DEL_DOWNLOAD or (_is_admin and not _SIM) or st.session_state.get("_mini_ok"):
+        return False
+    try:
+        if st.context.cookies.get("vf_mini_ok") == "1":
+            st.session_state["_mini_ok"] = True
+            return False
+    except Exception:
+        pass
+    return True
+
+
+def _card_mini_feedback() -> None:
+    """Due domande da 5 secondi che sbloccano il download: è l'unica cosa che chiediamo in cambio dell'uso gratuito."""
+    st.markdown(_CSS_BOX_FEEDBACK + '<div class="vf-fb"><div class="vf-fb-ico">⏱️</div><div class="vf-fb-testo">'
+                '<div class="vf-fb-t">Un attimo, prima di scaricare</div>'
+                '<div class="vf-fb-d">VerificAI è in beta e gratuita: due domande da 5 secondi ci dicono se ti è servito davvero. '
+                'Poi il PDF è tuo.</div></div></div>', unsafe_allow_html=True)
+    _dq1, _dq2 = _domanda_q("risparmio"), _domanda_q("utile")
+    with st.form("mini_feedback", border=False):
+        _r1 = st.radio("Rispetto al tuo solito, quanto tempo pensi di aver risparmiato?", _dq1["opzioni"], index=None,
+                       horizontal=True, key="mini_risparmio")
+        _r2 = st.radio("Ti è servito davvero?  (1 = per niente → 5 = moltissimo)", [1, 2, 3, 4, 5], index=None,
+                       horizontal=True, key="mini_utile")
+        _vai = st.form_submit_button("Sblocca il download", type="primary", use_container_width=True)
+    if _vai:
+        if _r1 is None or _r2 is None:
+            st.warning("Rispondi a tutte e due: ci vogliono 5 secondi.", icon="⏱️")
+            return
+        _risp, _ = pulisci_risposte({"risparmio": _r1, "utile": _r2})
+        try:
+            if supabase_admin is not None:
+                supabase_admin.table("questionario_tester").insert(riga_rapida(_risp)).execute()
+        except Exception as e:                      # un nostro guasto non deve bloccare il download
+            logger.warning("domande veloci non salvate: %s", e)
+        st.session_state["_mini_ok"] = True
+        st.session_state["_mini_cookie"] = True
+        st.rerun()
 
 
 def _banner_piano(dove: str) -> None:
@@ -4802,9 +4848,15 @@ def _render_stage_final():
         unsafe_allow_html=True,
     )
     _box_az = st.container(key="az_principali")
+    _mini_gate = bool(vA.get("pdf")) and _mini_feedback_richiesto()
+    if st.session_state.pop("_mini_cookie", False):
+        components.html('<script>try{window.parent.document.cookie="vf_mini_ok=1; max-age=31536000; path=/; SameSite=Lax";}catch(e){}</script>', height=0)
     _az_dl, _az_mod, _az_new = _box_az.columns([1.3, 1, 1], gap="small", vertical_alignment="center")
     with _az_dl:
-        if vA.get("pdf"):
+        if _mini_gate:
+            st.button("⬇  Scarica PDF", key="dl_pdf_bloccato", type="primary", disabled=True, use_container_width=True,
+                      help="Prima rispondi alle due domande veloci qui sotto: poi il PDF è tuo.")
+        elif vA.get("pdf"):
             _dl(
                 label=f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}",
                 data=vA["pdf"],
@@ -4834,6 +4886,8 @@ def _render_stage_final():
         f'distribuirlo agli studenti. La verifica è salvata in «Le mie verifiche».</div>',
         unsafe_allow_html=True
     )
+    if _mini_gate:
+        _card_mini_feedback()
 
     # ── Anteprima: una pagina alla volta, con ◀ ▶ (così il kit sotto resta vicino) ──────────
     _zoom = False
@@ -4875,7 +4929,7 @@ def _render_stage_final():
             )
         else:
             st.caption("Anteprima non disponibile.")
-        if vA.get("pdf"):
+        if vA.get("pdf") and not _mini_gate:
             _dl(
                 label=f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}",
                 data=vA["pdf"],
