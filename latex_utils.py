@@ -763,6 +763,36 @@ def _appiattisci_scelta_multipla(latex: str) -> str:
     return "".join(_appiattisci_blocco(p) if p.startswith("\\subsection*{") else p for p in parti)
 
 
+_CASELLE_VF_TESTO = "$\\square$ \\textbf{V} $\\quad\\square$ \\textbf{F}"
+_RICHIESTA_APERTA = re.compile(r"^\s*(?:spiega|motiva|giustifica|descrivi|perch[eé]|corregg|riscrivi|calcola|determina)", re.IGNORECASE)
+
+
+def _aggiungi_caselle_vf(latex: str) -> str:
+    """
+    In un esercizio «Vero o Falso» le affermazioni senza le caselle V/F (a volte il modello le dimentica) le ricevono.
+    Le richieste che sono domande aperte («Spiega…») restano come sono.
+    """
+    parti = re.split(r"(?=\\subsection\*\{)", latex)
+    for k, blocco in enumerate(parti):
+        m = re.match(r"\\subsection\*\{([^}]*)\}", blocco)
+        if not m or not re.search(r"vero\s*(?:o|/|,|e)\s*falso", m.group(1), re.IGNORECASE):
+            continue
+        coda_i = blocco.find("\\end{enumerate}")
+        testa, coda = (blocco, "") if coda_i == -1 else (blocco[:coda_i], blocco[coda_i:])
+        pezzi = re.split(r"(?=\\item\b)", testa)
+        for j, pezzo in enumerate(pezzi):
+            if not pezzo.startswith("\\item") or "\\square" in pezzo:
+                continue
+            testo = re.sub(r"^\\item(?:\[[^\]]*\])?", "", pezzo)
+            testo = re.sub(r"\(\s*\d+(?:[.,]\d+)?\s*pt\s*\)", "", testo)
+            if _RICHIESTA_APERTA.match(testo) or len(testo.strip()) < 15:
+                continue
+            fine = len(pezzo.rstrip())
+            pezzi[j] = pezzo[:fine] + " " + _CASELLE_VF_TESTO + pezzo[fine:]
+        parti[k] = "".join(pezzi) + coda
+    return "".join(parti)
+
+
 def rifinisci_scelta_multipla_e_vf(latex: str) -> str:
     """
     0) Domanda con elenco di opzioni a) b) c) d) a primo livello: le opzioni non sono sottopunti,
@@ -772,6 +802,7 @@ def rifinisci_scelta_multipla_e_vf(latex: str) -> str:
     2) "[] V [] F" resta sempre sulla stessa riga: la casella e la lettera non vanno a capo da sole.
     """
     latex = _appiattisci_scelta_multipla(latex)
+    latex = _aggiungi_caselle_vf(latex)
     latex = _VF_RE.sub(lambda m: "\\mbox{" + m.group(0) + "}", latex)
 
     pila, modifiche = [], []
