@@ -2804,7 +2804,7 @@ def _render_impagina() -> None:
     _cop = _rip["con_punti"] / max(1, _rip["richieste"])
     _SEN, _FOG, _ASS = "Senza tabella dei punti", "Come sul foglio", "Assegno io i punti (100)"
     _opz = [_FOG, _SEN, _ASS] if _cop >= .6 else [_SEN, _ASS]
-    _modo = st.radio("Punteggi", _opz, horizontal=True, key=f"imp_punti_{len(_opz)}")
+    _modo = st.radio("Tabella dei punteggi", _opz, horizontal=True, key=f"imp_punti_{len(_opz)}")
     _mostra, _tot, _fedeli, _lista = True, 100, False, _inclusi
     if _modo == _FOG:
         _lista, _tot, _fatt = impagina.punti_del_foglio(_inclusi)
@@ -3398,6 +3398,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 _tog = st.toggle(
                     "Aggiungi la tabella dei punteggi in fondo",
                     value=mostra_punteggi, key="toggle_punteggi_b",
+                    help="I punti di ogni richiesta non si scrivono accanto alle domande: stanno nella tabella in fondo, da compilare con i voti.",
                 )
                 mostra_punteggi = _tog
                 con_griglia = _tog
