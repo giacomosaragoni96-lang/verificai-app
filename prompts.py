@@ -1342,6 +1342,7 @@ _MARCATORI_FOTO = (
     "TITOLO: titolo breve dell'esercizio, 2-6 parole, senza «Esercizio n»\n"
     "FIGURA: nessuna | grafico_funzione | figura_geometrica | tabella | non_riproducibile\n"
     "DUBBI: una cosa poco leggibile o incerta per riga (e come l'hai letta), oppure la sola parola «nessuno»\n"
+    "RITAGLIO: solo se FIGURA è non_riproducibile: dove sta la figura nelle pagine, scritto «pagina=N x0=… y0=… x1=… y1=…» (pagina = numero della pagina o foto, da 1; x0,y0 = angolo in alto a sinistra e x1,y1 = angolo in basso a destra, in millesimi della pagina da 0 a 1000). Il riquadro deve contenere SOLO la figura, senza il testo dell'esercizio né il suo numero. Altrimenti scrivi «nessuno»\n"
     "TESTO:\n"
     "<il testo dell'esercizio in LaTeX, vedi regole>\n"
     "===FINE===\n"
@@ -1572,3 +1573,14 @@ def prompt_versione_recupero(corpo_latex: str, materia: str, mostra_punteggi: bo
         "TERMINA con \\end{document}. SOLO il corpo in LaTeX (\\subsection* ecc.), senza preambolo.\n\n"
         f"VERIFICA ORIGINALE:\n{corpo_latex}"
     )
+
+
+REGOLA_FIGURE_FOTO = (
+    "FIGURE GIÀ PRONTE: le righe [[FIGURA_FOTO_n]] sono figure prese da un libro, già pronte. Lasciale IDENTICHE, ciascuna dentro lo stesso esercizio e allo stesso punto. "
+    "Se un esercizio contiene una di queste figure, non cambiare i dati che la figura mostra (lascia l'esercizio com'è, o cambia solo ciò che non dipende dalla figura)."
+)
+
+
+def con_regola_figure(prompt: str, testo: str) -> str:
+    """Aggiunge la regola sulle figure-foto al prompt solo se il testo ne contiene."""
+    return prompt + "\n\n" + REGOLA_FIGURE_FOTO if "[[FIGURA_FOTO_" in (testo or "") else prompt

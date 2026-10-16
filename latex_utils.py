@@ -2665,6 +2665,62 @@ def _proporzioni_png(b64: str):
 _PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 
+# ── FIGURE RITAGLIATE DALLA FOTO DEL DOCENTE ───────────────────────────────────────────────────────────────────────
+# Una figura che non si può ridisegnare si ritaglia dalla foto/pagina del docente e viaggia dentro il LaTeX come il logo:
+# una riga «%IMG_B64:figura_xxxxxxxx.png:dati» seguita da \includegraphics. Il LaTeX scritto dall'AI è input non fidato: in compila_pdf
+# restano SOLO i \includegraphics che puntano al logo o a una figura i cui dati sono nel documento (nome controllato, PNG vero, peso limitato).
+
+_RE_IMG = re.compile(r"^%IMG_B64:(figura_[0-9a-f]{8}\.png):([A-Za-z0-9+/=]+)[ \t]*\r?\n?", re.MULTILINE)
+_RE_FIGURA_FOTO = re.compile(r"^%IMG_B64:figura_[0-9a-f]{8}\.png:[A-Za-z0-9+/=]+[ \t]*\n\\begin\{center\}\\includegraphics\[[^\]]*\]\{figura_[0-9a-f]{8}\.png\}\\end\{center\}",
+                             re.MULTILINE)
+MAX_BYTE_FIGURA = 220_000
+
+
+def estrai_immagini(latex: str) -> dict:
+    """{nome: bytes PNG} delle figure contenute nel LaTeX (solo PNG veri e non troppo pesanti)."""
+    import base64
+    out = {}
+    for m in _RE_IMG.finditer(latex or ""):
+        try:
+            dati = base64.b64decode(m.group(2))
+        except Exception:
+            continue
+        if dati[:8] == b"\x89PNG\r\n\x1a\n" and len(dati) <= MAX_BYTE_FIGURA:
+            out[m.group(1)] = dati
+    return out
+
+
+def rimuovi_immagini_b64(latex: str) -> str:
+    return _RE_IMG.sub("", latex or "")
+
+
+def blocco_figura(png: bytes, larghezza_cm: float = 8.0) -> str:
+    """Il LaTeX per inserire una figura (PNG): riga dei dati + immagine centrata."""
+    import base64
+    import hashlib
+    nome = "figura_" + hashlib.md5(png).hexdigest()[:8] + ".png"
+    return (f"%IMG_B64:{nome}:" + base64.b64encode(png).decode() + "\n"
+            f"\\begin{{center}}\\includegraphics[width={larghezza_cm:g}cm,height=6cm,keepaspectratio]{{{nome}}}\\end{{center}}")
+
+
+def proteggi_figure_foto(latex: str):
+    """(latex con segnaposto [[FIGURA_FOTO_n]], [blocchi]): le figure-foto non vanno all'AI (pesano e non servono); si rimettono dopo."""
+    blocchi = []
+
+    def _sost(m):
+        blocchi.append(m.group(0))
+        return f"[[FIGURA_FOTO_{len(blocchi)}]]"
+    return _RE_FIGURA_FOTO.sub(_sost, latex or ""), blocchi
+
+
+def ripristina_figure_foto(latex: str, blocchi: list) -> str:
+    """Rimette i blocchi al posto dei segnaposto; un segnaposto senza blocco si toglie."""
+    def _rimetti(m):
+        n = int(m.group(1))
+        return blocchi[n - 1] if 1 <= n <= len(blocchi) else ""
+    return re.sub(r"\[\[FIGURA_FOTO_(\d+)\]\]", _rimetti, latex or "")
+
+
 def rimuovi_logo_b64(latex: str) -> str:
     """Toglie la riga con i dati del logo (da usare prima di inviare il LaTeX all'AI)."""
     return _RE_LOGO.sub("", latex or "")
@@ -2881,6 +2937,11 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
         except Exception:
             _png_logo = None
     codice_latex = rimuovi_logo_b64(codice_latex)
+    _figure = estrai_immagini(codice_latex)
+    codice_latex = rimuovi_immagini_b64(codice_latex)
+    # sicurezza: solo il logo e le figure della verifica (con i loro dati) possono essere incluse come immagini
+    codice_latex = re.sub(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]*)\}",
+                          lambda m: m.group(0) if (m.group(1) == "logo_scuola.png" or m.group(1) in _figure) else "", codice_latex)
     codice_latex = formatta_punti(codice_latex)
     if _png_logo is None and "logo_scuola.png" in codice_latex:
         # logo mancante o non valido: meglio una verifica senza logo che un errore di compilazione
@@ -2907,6 +2968,9 @@ def compila_pdf(codice_latex: str) -> tuple[bytes | None, str | None]:
             if _png_logo is not None:
                 with open(os.path.join(tmpdir, "logo_scuola.png"), "wb") as f:
                     f.write(_png_logo)
+            for _nome_f, _dati_f in _figure.items():
+                with open(os.path.join(tmpdir, _nome_f), "wb") as f:
+                    f.write(_dati_f)
 
             logger.info("Avvio compilazione pdflatex...")
             # Il LaTeX generato dall'AI è input non fidato: niente shell-escape.

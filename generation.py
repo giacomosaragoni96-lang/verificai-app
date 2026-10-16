@@ -1631,7 +1631,8 @@ def compila_contesto_generazione(
 
 # ── MODIFICA LIBERA DELLA VERIFICA ────────────────────────────────────────────
 
-_RE_TIKZ_FIGURA = re.compile(r"\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}", re.DOTALL)
+_RE_TIKZ_FIGURA = re.compile(r"(?:^%IMG_B64:[^\n]*\n\\begin\{center\}\\includegraphics\[[^\]]*\]\{figura_[0-9a-f]{8}\.png\}\\end\{center\})|\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}",
+                             re.DOTALL | re.MULTILINE)
 
 
 def modifica_verifica_libera(model, materia: str, argomento: str, latex: str, richiesta: str,

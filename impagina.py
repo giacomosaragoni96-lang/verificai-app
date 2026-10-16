@@ -242,13 +242,25 @@ def applica_nota(esercizi: list, nota: dict) -> list:
     return nuovi
 
 
+def _senza_foto(latex: str):
+    """(latex con segnaposto al posto delle figure-foto, blocchi): le immagini non vanno all'AI."""
+    from latex_utils import proteggi_figure_foto
+    return proteggi_figure_foto(latex or "")
+
+
 def _testo_esercizi(esercizi: list) -> str:
-    return "\n\n".join(f"===ESERCIZIO===\nTITOLO: {e.get('titolo', '')}\nTESTO:\n{e['latex']}\n===FINE===" for e in esercizi)
+    return "\n\n".join(f"===ESERCIZIO===\nTITOLO: {e.get('titolo', '')}\nTESTO:\n{_senza_foto(e['latex'])[0]}\n===FINE===" for e in esercizi)
 
 
 def _testo_numerato(esercizi: list) -> str:
     """Gli esercizi con il loro numero (per le note: «Esercizio 2»)."""
-    return "\n\n".join(f"ESERCIZIO {n} — {e.get('titolo', '')}\n{e['latex']}" for n, e in enumerate(esercizi, 1))
+    return "\n\n".join(f"ESERCIZIO {n} — {e.get('titolo', '')}\n{_senza_foto(e['latex'])[0]}" for n, e in enumerate(esercizi, 1))
+
+
+def ripristina_figure_foto_(latex_ai: str, originale: dict) -> str:
+    """Il testo restituito dall'AI con le figure-foto dell'originale rimesse (per confrontarlo con l'originale)."""
+    from latex_utils import ripristina_figure_foto
+    return ripristina_figure_foto(latex_ai, _senza_foto(originale.get("latex"))[1]).strip()
 
 
 def numeri_citati(richiesta: str) -> set:
@@ -279,10 +291,12 @@ def correggi_verifica(model, immagini: list, esercizi: list, richiesta: str) -> 
         if ammessi and n_idx not in ammessi:
             risultato.append(o)              # esercizio non nominato: resta com'era, qualunque cosa abbia risposto il modello
             continue
-        if n["latex"].strip() == (o.get("latex") or "").strip():
+        if ripristina_figure_foto_(n["latex"], o) == (o.get("latex") or "").strip():
             risultato.append(o)
             continue
-        risultato.append({**o, "titolo": n["titolo"], "figura": n["figura"], "latex": n["latex"], "dubbi": n["dubbi"],
+        from latex_utils import ripristina_figure_foto
+        nuovo_latex = ripristina_figure_foto(n["latex"], _senza_foto(o.get("latex"))[1])
+        risultato.append({**o, "titolo": n["titolo"], "figura": o.get("figura") if o.get("ha_figura_foto") else n["figura"], "latex": nuovo_latex, "dubbi": n["dubbi"],
                           "correzioni": [], "ricontrollato": True})
         cambi.append((n_idx, differenze(o.get("latex") or "", n["latex"])))
     if not cambi:
