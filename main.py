@@ -1579,6 +1579,8 @@ _CSS_BOX_SBLOCCO = """<style>
 [class*="st-key-box_sblocco"] .bx-t {color:#fff !important;font-family:'DM Sans',sans-serif;font-weight:800;font-size:1.1rem;line-height:1.22;letter-spacing:-.01em;}
 [class*="st-key-box_sblocco"] .bx-d {color:rgba(255,255,255,.9) !important;font-family:'DM Sans',sans-serif;font-size:.86rem;line-height:1.4;margin-top:.2rem;}
 [class*="st-key-box_sblocco"] .bx-mini {white-space:nowrap;}
+[class*="st-key-box_sblocco"] a.bx-b {padding:.78rem 1rem !important;font-size:.86rem !important;letter-spacing:0 !important;}
+[class*="st-key-box_sblocco"] .bx-mini {margin:.15rem 0 0 !important;}
 [class*="st-key-box_sblocco"] [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .bx-b) {gap:.3rem !important;}
 [class*="st-key-box_sblocco"] [data-testid="stColumn"]:last-child [data-testid="stElementContainer"] {width:100%;}
 [class*="st-key-box_sblocco"] .bx-pills {display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.6rem;}
@@ -1636,7 +1638,7 @@ def _box_sblocco(dove: str) -> None:
     _vantaggi = ["Fila B", "BES/DSA", "Soluzioni", "Scheda di allenamento", "Word"]
     _pillole = "" if dove == "input" else '<div class="bx-pills">' + "".join(f"<span>✓ {v}</span>" for v in _vantaggi) + "</div>"
     with st.container(key=f"box_sblocco_{dove}"):
-        _c1, _c2 = st.columns([2.7, 1.3], vertical_alignment="center", gap="medium")
+        _c1, _c2 = st.columns([2.6, 1.4], vertical_alignment="center", gap="medium")
         with _c1:
             st.markdown(_CSS_BOX_SBLOCCO +
                         '<div class="bx-wrap"><div class="bx-badge">🎁</div><div class="bx-testo">'
