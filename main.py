@@ -2889,10 +2889,10 @@ def _render_impagina() -> None:
 
     _mat_list = [m for m in MATERIE if "Altra" not in m]
     if not dati:
-        st.markdown('<div class="opt-label">La tua verifica (PDF o foto) ✱</div>', unsafe_allow_html=True)
-        _files = st.file_uploader("Carica la tua verifica (PDF o foto)", type=["pdf", "png", "jpg", "jpeg", "webp"], accept_multiple_files=True,
+        st.markdown('<div class="opt-label">La tua verifica (PDF, foto o Word) ✱</div>', unsafe_allow_html=True)
+        _files = st.file_uploader("Carica la tua verifica (PDF, foto o Word)", type=["pdf", "png", "jpg", "jpeg", "webp", "docx"], accept_multiple_files=True,
                                   key=f"imp_up_{st.session_state.get('_imp_ciclo', 0)}", label_visibility="collapsed",
-                                  help="Fino a 8 file. Va bene anche un PDF fatto di screenshot. Foto dritte e leggibili.")
+                                  help="Fino a 8 file. Va bene anche un PDF fatto di screenshot o un file Word (.docx). Foto dritte e leggibili.")
         _cm, _cs = st.columns(2, gap="small")
         _cm.markdown('<div class="opt-label">Materia ✱</div>', unsafe_allow_html=True)
         _cs.markdown('<div class="opt-label">Tipo di scuola ✱</div>', unsafe_allow_html=True)
@@ -3029,7 +3029,9 @@ def _render_impagina() -> None:
         st.caption("La tua verifica")
         for _m in _imm[:2]:
             try:
-                if (_m.get("mime_type") or "").startswith("image/"):
+                if (_m.get("name") or "").lower().endswith(".docx"):
+                    st.caption(f"📝 {_m.get('name')}: file Word letto come testo")
+                elif (_m.get("mime_type") or "").startswith("image/"):
                     st.image(_m["data"], use_container_width=True)
                 else:
                     _pp, _ = pdf_to_images_bytes(_m["data"])

@@ -52,7 +52,11 @@ def leggi_verifica(model, immagini: list, materia: str = "", scuola: str = "", m
             except Exception:
                 pass
 
-    parti = ef._parti(immagini)
+    from docx_import import espandi_file
+    esteso = espandi_file(immagini)
+    if not esteso:
+        return {"ok": False, "esercizi": [], "messaggio": "Non riesco a leggere il file Word: salvalo di nuovo come .docx oppure caricane il PDF."}
+    parti = ef._parti(esteso)
     esercizi, problema, testo = [], None, ""
     _p("lettura")
     for _tentativo in range(2):
@@ -276,7 +280,8 @@ def correggi_verifica(model, immagini: list, esercizi: list, richiesta: str) -> 
     richiesta = (richiesta or "").strip()
     if len(richiesta) < 3:
         return {"ok": False, "esercizi": esercizi, "messaggio": "Scrivi cosa non va (per esempio: «nell'esercizio 2 b) l'esponente è 3»)."}
-    parti = ef._parti(immagini)
+    from docx_import import espandi_file
+    parti = ef._parti(espandi_file(immagini))
     try:
         testo = ef._chiama(model, [prompt_correggi_verifica(_testo_esercizi(esercizi), richiesta[:600], len(parti))] + parti)
     except Exception as e:

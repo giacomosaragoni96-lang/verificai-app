@@ -1507,10 +1507,12 @@ def prompt_leggi_verifica_completa(materia: str, scuola: str, n_immagini: int, m
     return (
         "Sei un trascrittore estremamente accurato di verifiche scolastiche. Ricevi "
         + ("una foto o un PDF" if n_immagini == 1 else f"{n_immagini} foto o PDF")
-        + " con la verifica di un docente, scritta o impaginata male. Il docente la vuole IDENTICA nel contenuto, ma impaginata bene: "
+        + " (oppure il testo estratto da un file Word) con la verifica di un docente, scritta o impaginata male. Il docente la vuole IDENTICA nel contenuto, ma impaginata bene: "
         "il tuo compito è trascrivere tutti gli esercizi in LaTeX senza cambiare nulla di ciò che chiedono.\n"
         + contesto
         + f"La verifica ha al massimo {max_esercizi} esercizi.\n\n"
+        + "Se ricevi il testo di un file Word, le formule sono già in LaTeX e [[IMMAGINE n]] segna dove sta l'immagine n (le immagini seguono nello stesso ordine). "
+        "Un'immagine che non sai riprodurre: FIGURA: non_riproducibile e RITAGLIO: pagina=n x0=0 y0=0 x1=1000 y1=1000 (n = il numero dell'immagine). Togli il segnaposto [[IMMAGINE n]] dal testo.\n\n"
         + _REGOLE_TRASCRIZIONE + "\n" + _ECCEZIONI_VERIFICA_COMPLETA + "\n"
         + _MARCATORI_FOTO.replace("TITOLO: titolo breve dell'esercizio, 2-6 parole, senza «Esercizio n»",
                                   "TITOLO: titolo breve dell'esercizio (2-6 parole, senza «Esercizio n»), oppure vuoto se non ne ha uno")

@@ -68,7 +68,7 @@ def _ritaglio(valore: str):
     pagina, x0, y0, x1, y1 = (int(v) for v in m.groups())
     x0, x1 = sorted((min(1000, x0), min(1000, x1)))
     y0, y1 = sorted((min(1000, y0), min(1000, y1)))
-    if pagina < 1 or x1 - x0 < 40 or y1 - y0 < 40 or (x1 - x0 > 960 and y1 - y0 > 960):
+    if pagina < 1 or x1 - x0 < 40 or y1 - y0 < 40:
         return None
     return {"pagina": pagina, "x0": x0, "y0": y0, "x1": x1, "y1": y1}
 
@@ -185,7 +185,8 @@ def riassunto_per_prompt(ex: dict) -> str:
 # ── CHIAMATE ALL'AI ─────────────────────────────────────────────────────────────────────────────────
 
 def _parti(immagini: list) -> list:
-    return [{"mime_type": i.get("mime_type") or "image/jpeg", "data": i["data"]} for i in immagini]
+    """Le parti da dare al modello: testo (da un file Word) oppure immagine/PDF."""
+    return [i["testo"] if "testo" in i else {"mime_type": i.get("mime_type") or "image/jpeg", "data": i["data"]} for i in immagini]
 
 
 def _chiama(model, contenuto) -> str:
@@ -208,7 +209,7 @@ def controlla_foto(immagini: list, massimo: int = MAX_FOTO) -> str | None:
             return "Una foto è troppo pesante: riducila o ritagliala sull'esercizio."
         if len(d) < 1500:
             return "Una foto sembra vuota o rovinata: riprova a caricarla."
-        if (i.get("mime_type") or "") not in ("image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "application/pdf", ""):
+        if (i.get("mime_type") or "") not in ("image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "application/pdf", "") and not (i.get("name") or "").lower().endswith(".docx"):
             return "Formato non supportato: usa una foto JPG o PNG, oppure un PDF."
     return None
 
@@ -335,9 +336,12 @@ def pagine_da_file(immagini: list, lato_max: int = 1600) -> list:
     """Le pagine delle foto/PDF caricati come PNG (lato massimo `lato_max`), nell'ordine in cui il modello le ha viste."""
     import io as _io
     from PIL import Image
+    from docx_import import espandi_file
     out = []
-    for f in immagini:
+    for f in espandi_file(immagini):
         dati = f.get("data") or b""
+        if not dati:
+            continue
         pezzi = []
         if (f.get("mime_type") or "").startswith("application/pdf"):
             try:
