@@ -1611,6 +1611,13 @@ def _pandoc_disponibile() -> bool:
 
 def _prepara_per_pandoc(testo: str, cartella: str, contatore: list) -> str:
     """Un blocco di LaTeX pronto per pandoc: grafici → immagini, caselle V/F e righe da compilare in testo semplice."""
+    try:                                              # figure ritagliate dalla foto del docente: file accanto ai grafici
+        from latex_utils import estrai_immagini
+        for _nome_f, _dati_f in estrai_immagini(testo).items():
+            with open(os.path.join(cartella, _nome_f), "wb") as _f:
+                _f.write(_dati_f)
+    except Exception:
+        pass
     def _grafico(m):
         n = contatore[0]
         contatore[0] += 1

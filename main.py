@@ -23,6 +23,7 @@ from stili_verifica import STILI, STILE_PREDEFINITO, stili_disponibili, descrizi
 from piano_verifica import numero_esercizi_richiesto
 import impagina
 import profilo
+import esercizio_foto as _ef
 from esercizio_foto import leggi_esercizi_da_foto, correggi_esercizio, stato_esercizio, blocco_latex, riassunto_per_prompt
 from ai_client import crea_modello, configura as configura_ai, riepilogo_uso, numero_chiamate, chiamate_da
 
@@ -33,7 +34,7 @@ from generation import (
 )
 from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
-    prompt_rubrica_valutazione, prompt_variante_rapida, prompt_versione_recupero, istruzione_livello_esercizio,
+    prompt_rubrica_valutazione, prompt_variante_rapida, prompt_versione_recupero, istruzione_livello_esercizio, con_regola_figure,
     prompt_nuovo_esercizio,
     REGOLA_SOTTOPUNTI_MODIFICA, REGOLA_GRAFICO_CURVE, REGOLA_CONSEGNE_BREVI, struttura_verifica,
 )
@@ -50,7 +51,7 @@ from questionario import domanda as _domanda_q, pulisci_risposte, riga_rapida
 from licenze import attiva_licenza, riconvalida_se_serve
 from segnalazioni import costruisci_segnalazione, MAX_PER_SESSIONE
 from latex_utils import (
-    estrai_logo,
+    estrai_logo, proteggi_figure_foto, ripristina_figure_foto, estrai_immagini,
     conta_pagine_pdf, riduci_a_pagine, compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, copia_intestazione_con_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
     fix_items_environment, aggiungi_consegne_mancanti, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
@@ -499,6 +500,11 @@ def _postprocessa_latex(latex: str, mostra_punteggi: bool, punti_totali: int,
 
 # ── On-demand variant generation ───────────────────────────────────────────────
 
+def _rimetti_figure(latex: str) -> str:
+    """Rimette nelle versioni create dall'AI le figure-foto tolte da `_latex_per_ai`."""
+    return ripristina_figure_foto(latex, st.session_state.get("_figure_foto_blocchi") or [])
+
+
 def _titolo_con_suffisso(latex: str, suffisso: str, latex_con_logo_da: str = "") -> str:
     """Aggiunge « — Fila C» o « — Recupero» al titolo dell'intestazione (con il logo l'intestazione è quella della Fila A, già riconosciuta)."""
     if latex_con_logo_da and estrai_logo(latex_con_logo_da):
@@ -516,16 +522,21 @@ def _genera_extra(tipo: str, lettera: str, mod_id: str, gp: dict, vA: dict, prec
     mostra, punti, con_griglia = gp.get("mostra_punteggi", True), gp.get("punti_totali", 100), gp.get("con_griglia", False)
     lat_a = vA.get("latex", "")
     if tipo == "fila":
+        _altre = [_latex_per_ai(x) for x in precedenti if x]
+        _corpo_ai = _latex_per_ai(lat_a)                     # per ultimo: i blocchi tenuti da parte sono quelli della Fila A
         testo = modello.generate_content(
-            [prompt_variante_rapida(_latex_per_ai(lat_a), mat, lettera, [_latex_per_ai(x) for x in precedenti if x])],
+            [con_regola_figure(prompt_variante_rapida(_corpo_ai, mat, lettera, _altre), _corpo_ai)],
             generation_config={"temperature": 0.8}).text.strip()
         testo = re.sub(r"^```[a-z]*\n?", "", testo)
         testo = re.sub(r"\n?```$", "", testo)
+        testo = _rimetti_figure(testo)
         latex = _titolo_con_suffisso(testo, f" — Fila {lettera}", lat_a) if estrai_logo(lat_a) else testo
     else:
-        corpo_a, preamb = rimuovi_griglia(extract_corpo(lat_a)), extract_preambolo(lat_a)
-        r = modello.generate_content([prompt_versione_recupero(corpo_a, mat, mostra, punti, per_chi)])
+        corpo_a, _bl = proteggi_figure_foto(rimuovi_griglia(extract_corpo(lat_a)))
+        preamb = extract_preambolo(lat_a)
+        r = modello.generate_content([con_regola_figure(prompt_versione_recupero(corpo_a, mat, mostra, punti, per_chi), corpo_a)])
         corpo = pulisci_corpo_latex(r.text.replace("```latex", "").replace("```", "").strip())
+        corpo = ripristina_figure_foto(corpo, _bl)
         corpo = _postprocessa_latex(corpo, mostra, punti, riscala_totale=True)
         latex = _titolo_con_suffisso(preamb + "\n" + corpo, " — Recupero", lat_a)
     if "\\subsection*" not in latex:
@@ -548,7 +559,7 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict, istruzioni: s
     argomento       = gp.get("argomento", "")
 
     latex_a    = vA.get("latex", "")
-    corpo_a    = extract_corpo(latex_a)
+    corpo_a, _bl_foto = proteggi_figure_foto(extract_corpo(latex_a))     # le figure-foto non vanno all'AI: si rimettono dopo
     preamb_a   = extract_preambolo(latex_a)
 
     def _post(corpo: str) -> str:
@@ -565,10 +576,11 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict, istruzioni: s
 
     if tipo == "B":
         try:
-            resp   = model_v.per("variante").generate_content(prompt_versione_b(corpo_a))
+            resp   = model_v.per("variante").generate_content(con_regola_figure(prompt_versione_b(corpo_a), corpo_a))
         except Exception as e:
             raise RuntimeError(f"Variante B: {e}") from e
         corpo  = pulisci_corpo_latex(resp.text.replace("```latex","").replace("```","").strip())
+        corpo  = ripristina_figure_foto(corpo, _bl_foto)
         corpo  = _post(corpo)
         preamb = preamb_a.replace("Versione A", "Versione B")
         if "Versione B" not in preamb:
@@ -611,6 +623,7 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict, istruzioni: s
                     corpo, tolti = _nuovo, _tolti_nuovo
         except Exception as e:
             raise RuntimeError(f"Verifica ridotta: {e}") from e
+        corpo = ripristina_figure_foto(corpo, _bl_foto)
         corpo = rimuovi_griglia(corpo)
         corpo = _post(corpo)
         latex, pdf = _compile(preamb_a + "\n" + corpo)
@@ -2237,8 +2250,10 @@ def _pdf_da_latex(latex: str):
     return compila_pdf(latex)
 
 def _latex_per_ai(latex: str) -> str:
-    """LaTeX senza il logo (dati base64 e immagine): all'AI non serve e peserebbe decine di KB."""
+    """LaTeX senza il logo (dati base64 e immagine) e con le figure-foto sostituite da segnaposto [[FIGURA_FOTO_n]]: all'AI non servono e peserebbero decine di KB.
+    I blocchi tolti restano in `_figure_foto_blocchi` per rimetterli con `_rimetti_figure` dopo la risposta."""
     latex = rimuovi_logo_b64(latex or "")
+    latex, st.session_state["_figure_foto_blocchi"] = proteggi_figure_foto(latex)
     return re.sub(r"\\includegraphics\[[^\]]*\]\{logo_scuola\.png\}", "", latex)
 
 
@@ -2942,6 +2957,10 @@ def _render_impagina() -> None:
             if _i in _probl:
                 _mot, _nonrip = _probl[_i]
                 st.warning(_mot, icon="⚠️")
+                _nuovo_f = _ritaglio_figura(_ex, dati, f"i{_i}") if _nonrip else None
+                if _nuovo_f:
+                    _esercizi[_i] = _nuovo_f
+                    st.rerun()
                 if _nonrip and st.toggle("Tienilo con uno spazio vuoto al posto della figura", value=False, key=f"imp_spazio_{_i}"):
                     _spazio.add(len(_inclusi))
                     _inclusi.append(_ex)
@@ -2949,6 +2968,11 @@ def _render_impagina() -> None:
                 else:
                     st.caption("Per ora non è nella verifica." if _nonrip else "Per ora non è nella verifica: correggilo qui sotto.")
                 continue
+            if _ex.get("ha_figura_foto"):
+                _nuovo_f = _ritaglio_figura(_ex, dati, f"i{_i}")
+                if _nuovo_f:
+                    _esercizi[_i] = _nuovo_f
+                    st.rerun()
             if _ex.get("correzioni"):
                 st.info("Ricontrollando le pagine ho corretto:\n" + "\n".join(f"- {c}" for c in _ex["correzioni"]), icon="🔎")
             if _ex.get("dubbi"):
@@ -3319,6 +3343,51 @@ def _azzera_esercizio_foto() -> None:
     st.session_state["_foto_es_ciclo"] = st.session_state.get("_foto_es_ciclo", 0) + 1
 
 
+def _ritaglio_figura(ex: dict, dati: dict, chiave: str):
+    """
+    La figura di un esercizio che non si sa ridisegnare, ritagliata dalla foto/pagina del docente. Il programma propone il riquadro, il docente lo
+    regola con quattro cursori e conferma. Ritorna l'esercizio nuovo (con la figura inserita o tolta) oppure None se non cambia niente.
+    """
+    if ex.get("ha_figura_foto"):
+        _c1, _c2 = st.columns([1, 2], gap="small", vertical_alignment="center")
+        if ex.get("png_figura"):
+            _c1.image(ex["png_figura"], use_container_width=True)
+        _c2.caption("Figura presa dalla tua foto.")
+        if _c2.button("Togli la figura", key=f"rit_togli_{chiave}", type="tertiary", icon=":material/hide_image:"):
+            return _ef.senza_figura(ex)
+        return None
+    if "[[FIGURA NON RIPRODUCIBILE" not in (ex.get("latex") or "").upper():
+        return None
+    if "pagine" not in dati:
+        dati["pagine"] = _ef.pagine_da_file(dati.get("immagini") or [])
+    pagine = dati["pagine"]
+    if not pagine:
+        return None
+    r = ex.get("ritaglio") or {"pagina": 1, "x0": 0, "y0": 0, "x1": 1000, "y1": 1000}
+    with st.expander("Usa la figura della tua foto", expanded=bool(ex.get("ritaglio"))):
+        st.caption("Ho cercato la figura nella foto: sposta i bordi finché dentro c'è solo lei, poi premi «Usa questa figura».")
+        pag = 1
+        if len(pagine) > 1:
+            pag = st.selectbox("Pagina o foto", list(range(1, len(pagine) + 1)), index=min(max(1, r["pagina"]), len(pagine)) - 1, key=f"rit_pag_{chiave}")
+        for nome, chiave_s in (("x0", "Sinistra"), ("x1", "Destra"), ("y0", "Alto"), ("y1", "Basso")):
+            st.session_state.setdefault(f"rit_{nome}_{chiave}", int(r[nome]))
+        a, b = st.columns(2, gap="small")
+        x0 = a.slider("Sinistra", 0, 1000, key=f"rit_x0_{chiave}")
+        x1 = b.slider("Destra", 0, 1000, key=f"rit_x1_{chiave}")
+        y0 = a.slider("Alto", 0, 1000, key=f"rit_y0_{chiave}")
+        y1 = b.slider("Basso", 0, 1000, key=f"rit_y1_{chiave}")
+        png = _ef.ritaglia(pagine[pag - 1], x0, y0, x1, y1)
+        if png:
+            st.image(png, use_container_width=True)
+            if st.button("Usa questa figura", key=f"rit_usa_{chiave}", type="primary", icon=":material/check:"):
+                nuovo = _ef.con_figura(ex, png)
+                _registra_evento("ritaglio_figura")
+                return nuovo
+        else:
+            st.warning("Il riquadro è troppo piccolo: allarga i bordi.")
+    return None
+
+
 def _blocco_esercizio_foto(materia: str, scuola: str, num_esercizi: int) -> None:
     """
     «Un esercizio dal tuo libro?»: foto → lettura → il docente vede la foto accanto a come comparirà e conferma (o corregge) →
@@ -3334,12 +3403,12 @@ def _blocco_esercizio_foto(materia: str, scuola: str, num_esercizi: int) -> None
         return
 
     if not dati:
-        st.caption("Fotografa l'esercizio (o caricane il PDF): lo riporto identico nella verifica, con il suo grafico se si può riprodurre. "
-                   "Foto dritta, ben illuminata, con l'esercizio intero.")
+        st.caption("Fotografa uno o più esercizi (o carica il PDF): li riporto identici nella verifica, con il grafico e, se serve, la figura ritagliata dalla tua foto. "
+                   "Foto dritta, ben illuminata, con gli esercizi interi.")
         _files = st.file_uploader(
             "Foto dell'esercizio", type=["jpg", "jpeg", "png", "webp", "pdf"], accept_multiple_files=True,
             key=f"foto_es_up_{st.session_state.get('_foto_es_ciclo', 0)}", label_visibility="collapsed",
-            help="Se l'esercizio è su due pagine carica entrambe le foto (al massimo 4).")
+            help="Una pagina intera va bene: ti faccio scegliere quali esercizi tenere (fino a 8). Al massimo 6 foto o pagine.")
         if _files and st.button("Leggi l'esercizio", key="foto_es_leggi", icon=":material/document_scanner:"):
             if st.session_state.get("_foto_es_n", 0) >= _MAX_LETTURE_FOTO:
                 st.warning("Hai già letto diverse foto in questa sessione: riprova più tardi.")
@@ -3357,6 +3426,13 @@ def _blocco_esercizio_foto(materia: str, scuola: str, num_esercizi: int) -> None
 
     _imm, _esercizi = dati["immagini"], dati["esercizi"]
     _pronti = []
+    if len(_esercizi) > 2:
+        def _scegli_tutti(valore: bool):
+            for _k, _e in enumerate(_esercizi):
+                st.session_state[f"foto_es_usa_{_k}"] = bool(valore and stato_esercizio(_e)["utilizzabile"])
+        _t1, _t2, _t3 = st.columns([1.3, 1.3, 3], gap="small")
+        _t1.button("Includi tutti", key="foto_es_tutti", type="tertiary", icon=":material/done_all:", on_click=_scegli_tutti, args=(True,))
+        _t2.button("Nessuno", key="foto_es_nessuno", type="tertiary", icon=":material/remove_done:", on_click=_scegli_tutti, args=(False,))
     for _i, _ex in enumerate(_esercizi):
         _stato = stato_esercizio(_ex)
         _img = _anteprima_esercizio_foto(materia, _ex["titolo"], _ex["latex"]) if _stato["utilizzabile"] else None
@@ -3383,7 +3459,15 @@ def _blocco_esercizio_foto(materia: str, scuola: str, num_esercizi: int) -> None
                     st.caption("Anteprima non disponibile.")
             if not _stato["utilizzabile"]:
                 st.warning(_stato["motivo"], icon="⚠️")
+                _nuovo_f = _ritaglio_figura(_ex, dati, f"b{_i}")
+                if _nuovo_f:
+                    _esercizi[_i] = _nuovo_f
+                    st.rerun()
             else:
+                _nuovo_f = _ritaglio_figura(_ex, dati, f"b{_i}") if _ex.get("ha_figura_foto") else None
+                if _nuovo_f:
+                    _esercizi[_i] = _nuovo_f
+                    st.rerun()
                 if _ex.get("correzioni"):
                     st.info("Ricontrollando la foto ho corretto:\n" + "\n".join(f"- {c}" for c in _ex["correzioni"]), icon="🔎")
                 if _ex.get("dubbi"):
@@ -3394,7 +3478,7 @@ def _blocco_esercizio_foto(materia: str, scuola: str, num_esercizi: int) -> None
                     st.caption("Non sono riuscito a ricontrollarlo: guardalo con attenzione.")
             _usa = st.toggle("Includi nella verifica", value=_stato["utilizzabile"], key=f"foto_es_usa_{_i}",
                              disabled=not _stato["utilizzabile"])
-            _opz = list(range(1, max(2, num_esercizi) + 1))
+            _opz = list(range(1, max(num_esercizi, len(_esercizi) + 1) + 1))
             _pos_def = min(1 + 2 * _i, _opz[-1])
             _pos = st.selectbox("In che posizione?", _opz, index=_opz.index(_pos_def), key=f"foto_es_pos_{_i}_{len(_opz)}",
                                 format_func=lambda p, _n=len(_opz): f"{p}° esercizio" + (" (l'ultimo)" if p == _n else ""),
@@ -3415,9 +3499,8 @@ def _blocco_esercizio_foto(materia: str, scuola: str, num_esercizi: int) -> None
     if st.button("✕ Togli la foto", key="foto_es_togli"):
         _azzera_esercizio_foto()
         st.rerun()
-    if len(_pronti) >= max(2, num_esercizi):
-        st.warning(f"La verifica ha {num_esercizi} esercizi: ne lascio almeno uno scritto da VerificAI. Aumenta il numero di esercizi o togli qualcosa.", icon="⚠️")
-        _pronti = _pronti[:max(1, num_esercizi) - 1]
+    if len(_pronti) >= num_esercizi:
+        st.info(f"La verifica avrà {len(_pronti) + 1} esercizi: i tuoi {len(_pronti)} e uno scritto da VerificAI.", icon="ℹ️")
     st.session_state["_foto_es_pronti"] = _pronti
 
 
@@ -4381,6 +4464,8 @@ def _render_stage_input():
     if re.search(r"(senza|niente|non\s+\w+)\s+(l['’]\s*)?(esercizi\w*\s+)?(per\s+l['’]\s*)?eccellenza", (_note_finale or "").lower()):
         _ecc = False       # il docente lo ha escluso a parole: vince lui sull'interruttore
     _fissi_foto = list(st.session_state.get("_foto_es_pronti") or [])
+    if _fissi_foto and num_esercizi_totali <= len(_fissi_foto):
+        num_esercizi_totali = len(_fissi_foto) + 1
     if _n_desc:
         _ecc = _ecc and bool(re.search(r"eccellenza", ((argomento or "") + " " + (note_extra or "")).lower()))
     else:
@@ -6483,12 +6568,13 @@ def _render_stage_final():
             try:
                 _mod_b = crea_modello(mod_id).per("variante")
                 _latex_b_new = _mod_b.generate_content(
-                    [prompt_variante_rapida(_latex_per_ai(vA.get("latex","")), mat_str)],
+                    [con_regola_figure(prompt_variante_rapida(_latex_per_ai(vA.get("latex","")), mat_str), _latex_per_ai(vA.get("latex","")))],
                     generation_config={"temperature": 0.7},
                 ).text.strip()
                 if _latex_b_new.startswith("```"):
                     _latex_b_new = re.sub(r"^```[a-z]*\n?","",_latex_b_new)
                     _latex_b_new = re.sub(r"\n?```$","",_latex_b_new)
+                _latex_b_new = _rimetti_figure(_latex_b_new)
                 # il logo della Fila A passa anche alla Fila B (intestazione della A + esercizi della B)
                 _latex_b_new = copia_intestazione_con_logo(vA.get("latex", ""), _latex_b_new)
                 _pdf_b_new, _ = compila_pdf(_latex_b_new)

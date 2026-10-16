@@ -150,7 +150,7 @@ COMPITI_AI = {
 }
 
 # Esercizi del libro da una foto (esercizio_foto.py): quanti se ne possono includere in una verifica
-MAX_ESERCIZI_DA_FOTO = 3
+MAX_ESERCIZI_DA_FOTO = 8
 
 # Autoverifica degli esercizi nelle materie scientifiche (autoverifica.py). Costo: circa 1-2 centesimi a verifica.
 AUTOVERIFICA_ATTIVA = True

@@ -21,7 +21,7 @@ from prompts import (
 )
 
 FIGURE_VALIDE = ("nessuna", "grafico_funzione", "figura_geometrica", "tabella", "non_riproducibile")
-MAX_FOTO = 4                       # foto o pagine per volta
+MAX_FOTO = 6                       # foto o pagine per volta
 MAX_BYTE_FOTO = 12 * 1024 * 1024   # oltre questa dimensione non si manda al modello
 
 _RE_BLOCCO = re.compile(r"===\s*ESERCIZIO\s*===(.*?)(?:===\s*FINE\s*===|(?====\s*ESERCIZIO\s*===)|\Z)", re.DOTALL | re.IGNORECASE)
@@ -57,6 +57,22 @@ def _dubbi(valore: str, blocco: str) -> list:
     return righe[:8]
 
 
+_RE_RITAGLIO = re.compile(r"pagina\s*=\s*(\d+)\D+x0\s*=\s*(\d+)\D+y0\s*=\s*(\d+)\D+x1\s*=\s*(\d+)\D+y1\s*=\s*(\d+)", re.IGNORECASE)
+
+
+def _ritaglio(valore: str):
+    """{pagina, x0, y0, x1, y1} (millesimi) dal campo RITAGLIO, oppure None se manca o non ha senso."""
+    m = _RE_RITAGLIO.search(valore or "")
+    if not m:
+        return None
+    pagina, x0, y0, x1, y1 = (int(v) for v in m.groups())
+    x0, x1 = sorted((min(1000, x0), min(1000, x1)))
+    y0, y1 = sorted((min(1000, y0), min(1000, y1)))
+    if pagina < 1 or x1 - x0 < 40 or y1 - y0 < 40 or (x1 - x0 > 960 and y1 - y0 > 960):
+        return None
+    return {"pagina": pagina, "x0": x0, "y0": y0, "x1": x1, "y1": y1}
+
+
 def leggi_risposta(testo: str, tieni_punti: bool = False, titolo_vuoto: str = "Esercizio dal libro") -> tuple:
     """(lista di esercizi, problema o None) dalla risposta in formato a marcatori."""
     testo = re.sub(r"```(?:latex|tex)?", "", testo or "")
@@ -72,6 +88,7 @@ def leggi_risposta(testo: str, tieni_punti: bool = False, titolo_vuoto: str = "E
             "titolo": _titolo_pulito(_campo(b, "TITOLO"), titolo_vuoto),
             "figura": figura,
             "dubbi": _dubbi(_campo(b, "DUBBI"), b),
+            "ritaglio": _ritaglio(_campo(b, "RITAGLIO")),
             "latex": corpo,
             "differenze": _campo_multi(b, "DIFFERENZE"),
             "esito": _campo(b, "ESITO").lower(),
@@ -157,7 +174,8 @@ def stato_esercizio(ex: dict) -> dict:
 
 def riassunto_per_prompt(ex: dict) -> str:
     """Poche parole sul contenuto (per dire a chi scrive la verifica cosa c'è già), senza comandi LaTeX."""
-    t = re.sub(r"\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}", " ", ex.get("latex") or "", flags=re.DOTALL)
+    t = re.sub(r"^%IMG_B64:[^\n]*\n", "", ex.get("latex") or "", flags=re.MULTILINE)
+    t = re.sub(r"\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}", " ", t, flags=re.DOTALL)
     t = re.sub(r"\[\[.*?\]\]", " ", t, flags=re.DOTALL)
     t = re.sub(r"\\(?:begin|end)\{[^}]*\}(?:\[[^\]]*\])?|\\item|\\displaystyle|\\[()\[\]]", " ", t)
     t = re.sub(r"\s+", " ", t).strip()
@@ -309,3 +327,83 @@ def inserisci_esercizi(blocchi: list, fissi: list) -> list:
         risultato.insert(min(pos - 1, len(risultato)), f["blocco"])
         precedente = pos
     return rinumera_blocchi(risultato)
+
+
+# ── figure ritagliate dalla foto ───────────────────────────────────────────────────────────────────
+
+def pagine_da_file(immagini: list, lato_max: int = 1600) -> list:
+    """Le pagine delle foto/PDF caricati come PNG (lato massimo `lato_max`), nell'ordine in cui il modello le ha viste."""
+    import io as _io
+    from PIL import Image
+    out = []
+    for f in immagini:
+        dati = f.get("data") or b""
+        pezzi = []
+        if (f.get("mime_type") or "").startswith("application/pdf"):
+            try:
+                from latex_utils import pdf_to_images_bytes
+                pezzi, _ = pdf_to_images_bytes(dati)
+                pezzi = pezzi or []
+            except Exception:
+                pezzi = []
+        else:
+            pezzi = [dati]
+        for p in pezzi:
+            try:
+                im = Image.open(_io.BytesIO(p))
+                im.load()
+                im = im.convert("RGB")
+                if max(im.size) > lato_max:
+                    k = lato_max / max(im.size)
+                    im = im.resize((max(1, int(im.width * k)), max(1, int(im.height * k))), Image.LANCZOS)
+                b = _io.BytesIO()
+                im.save(b, "PNG", optimize=True)
+                out.append(b.getvalue())
+            except Exception:
+                continue
+    return out
+
+
+def ritaglia(pagina_png: bytes, x0: int, y0: int, x1: int, y1: int, lato_max: int = 900, peso_max: int = 200_000):
+    """Ritaglia il riquadro (millesimi della pagina) e lo restituisce come PNG leggero; None se non si riesce o l'area è troppo piccola."""
+    import io as _io
+    from PIL import Image
+    try:
+        im = Image.open(_io.BytesIO(pagina_png)).convert("RGB")
+        w, h = im.size
+        box = (int(w * min(x0, x1) / 1000), int(h * min(y0, y1) / 1000), int(w * max(x0, x1) / 1000), int(h * max(y0, y1) / 1000))
+        if box[2] - box[0] < 20 or box[3] - box[1] < 20:
+            return None
+        im = im.crop(box)
+        for lato in (lato_max, 700, 520, 380):
+            r = im
+            if max(r.size) > lato:
+                k = lato / max(r.size)
+                r = r.resize((max(1, int(r.width * k)), max(1, int(r.height * k))), Image.LANCZOS)
+            b = _io.BytesIO()
+            r.save(b, "PNG", optimize=True)
+            if len(b.getvalue()) <= peso_max:
+                return b.getvalue()
+        return None
+    except Exception:
+        return None
+
+
+def con_figura(ex: dict, png: bytes) -> dict:
+    """L'esercizio con la figura ritagliata al posto del segnaposto (se non c'è il segnaposto la figura va in testa, sotto la consegna)."""
+    from latex_utils import blocco_figura
+    marca = re.compile(r"\[\[\s*FIGURA NON RIPRODUCIBILE\s*\]\]", re.IGNORECASE)
+    latex = ex.get("latex") or ""
+    blocco = blocco_figura(png)
+    nuovo = marca.sub(lambda m: blocco, latex, count=1) if marca.search(latex) else latex.rstrip() + "\n" + blocco
+    return {**ex, "latex_senza_figura": latex, "latex": nuovo, "figura": "foto", "ha_figura_foto": True, "png_figura": png}
+
+
+def senza_figura(ex: dict) -> dict:
+    """Toglie la figura inserita e rimette com'era l'esercizio."""
+    if not ex.get("ha_figura_foto"):
+        return ex
+    base = {k: v for k, v in ex.items() if k not in ("latex_senza_figura", "ha_figura_foto", "png_figura")}
+    base["latex"] = ex.get("latex_senza_figura") or ex.get("latex")
+    base["figura"] = "non_riproducibile"
+    return base
