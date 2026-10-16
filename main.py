@@ -505,7 +505,7 @@ def _rimetti_figure(latex: str) -> str:
     return ripristina_figure_foto(latex, st.session_state.get("_figure_foto_blocchi") or [])
 
 
-_ESITI = (("pronta", "Pronta così", ":material/thumb_up:"), ("ritoccare", "Da ritoccare", ":material/edit:"), ("non_usabile", "Non usabile", ":material/thumb_down:"))
+_ESITI = (("pronta", "Pronta", ":material/thumb_up:"), ("ritoccare", "Da ritoccare", ":material/edit:"), ("non_usabile", "Non usabile", ":material/thumb_down:"))
 
 
 def _riga_esito(mod_id: str) -> None:
@@ -517,7 +517,7 @@ def _riga_esito(mod_id: str) -> None:
         return
     st.markdown(f'<div class="esito-t" style="text-align:center;font-size:.85rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.6rem 0 .1rem;">'
                 f'Com\'è questa verifica?</div>', unsafe_allow_html=True)
-    cols = st.columns([1, 1.15, 1.15, 1.15, 1], gap="small")
+    cols = st.columns([.2, 1, 1.25, 1.25, .2], gap="small")
     for col, (codice, etichetta, icona) in zip(cols[1:4], _ESITI):
         if col.button(etichetta, key=f"esito_{codice}", type="tertiary", icon=icona, use_container_width=True):
             _registra_evento("esito:" + codice, modello=mod_id, verifica_id=st.session_state.get("_storico_id"))
@@ -2693,7 +2693,7 @@ def _render_le_tue_verifiche():
             _impag = ('<span style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:.12rem .6rem;border-radius:999px;font-weight:700;font-size:.75rem;">'
                       'Impaginata da te</span>' if verifica.get("percorso_scelto") == "IMPAGINA" else "")
             st.markdown(
-                f"""
+                re.sub(r">\s+<", "><", f"""
                 <div style="background:{T['card']};border:1px solid {T['border']};border-left:5px solid {_col_m};border-radius:14px;
                             padding:.95rem 1.2rem;margin-bottom:.5rem;box-shadow:0 2px 8px rgba(15,23,42,.06);display:flex;gap:.9rem;align-items:center;">
                     <div style="flex:0 0 2.9rem;height:2.9rem;border-radius:12px;background:{_col_m}1A;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">{_ico_m}</div>
@@ -2710,7 +2710,7 @@ def _render_le_tue_verifiche():
                         </div>
                     </div>
                 </div>
-                """,
+                """).replace(chr(10), " "),
                 unsafe_allow_html=True,
             )
 
@@ -2875,7 +2875,7 @@ def _card_attesa_impagina(passo: int) -> str:
         "@keyframes imp-riga{0%{width:12%}60%{width:var(--w)}100%{width:12%}}"
         "@keyframes imp-gira{to{transform:rotate(360deg)}}"
         ".imp-attesa{display:flex;gap:1.4rem;align-items:center;margin:.8rem 0 .4rem;padding:1.1rem 1.3rem;border-radius:18px;"
-        f"background:linear-gradient(160deg,#fff 0%,{_acc}0F 100%);border:1px solid {_acc}33;box-shadow:0 10px 28px {_acc}22;font-family:'DM Sans',sans-serif;}}"
+        f"background:linear-gradient(160deg,{T['card']} 0%,{_acc}0F 100%);border:1px solid {_acc}33;box-shadow:0 10px 28px {_acc}22;font-family:'DM Sans',sans-serif;}}"
         ".imp-pagina{position:relative;flex:0 0 5.6rem;height:7.2rem;border-radius:10px;background:#fff;border:1.5px solid #CBD5E1;"
         "box-shadow:0 6px 16px rgba(15,23,42,.12);padding:.8rem .6rem;overflow:hidden;}"
         ".imp-pagina b{display:block;height:.32rem;border-radius:3px;background:#CBD5E1;margin-bottom:.42rem;animation:imp-riga 2.6s ease-in-out infinite;}"
@@ -3690,8 +3690,7 @@ def _render_percorso_b_form(_prog_placeholder):
                     help="Tipo di scuola e livello. Se hai caricato un file, viene rilevato automaticamente.",
                     label_visibility="collapsed", key="sel_scuola_b",
                 )
-            with _box_ms:
-                _selettore_classe()
+            _selettore_classe()           # fuori dalla riga «Materia · Scuola»: resta visibile anche quando quella è chiusa
 
             # Section header rimosso per evitare ripetizioni
             _auto_arg = _info_cons.get("contenuto_argomento", "")
@@ -5999,8 +5998,8 @@ html body .stApp div.st-key-mod_rapida:not(#vf) {background:linear-gradient(160d
   border:1.5px solid __ACC__44;border-radius:18px;padding:1rem 1.15rem 1.05rem;box-shadow:0 8px 22px __ACC__22;margin:.7rem 0 .9rem;}
 html body .stApp div.st-key-mod_rapida:not(#vf) .mr-t {font-family:'DM Sans',sans-serif;font-weight:800;font-size:1.02rem;color:__TX__;line-height:1.25;}
 html body .stApp div.st-key-mod_rapida:not(#vf) .mr-d {font-family:'DM Sans',sans-serif;font-size:.86rem;color:__T2__;margin:.15rem 0 .55rem;line-height:1.4;}
-html body .stApp div.st-key-mod_rapida:not(#vf) textarea {background:#fff !important;border:1.5px solid __ACC__55 !important;border-radius:12px !important;
-  font-size:.95rem !important;min-height:4.2rem !important;}
+html body .stApp div.st-key-mod_rapida:not(#vf) textarea {background:__CARD__ !important;border:1.5px solid __ACC__55 !important;border-radius:12px !important;
+  font-size:.95rem !important;min-height:4.2rem !important;color:__TX__ !important;}
 html body .stApp div.st-key-mod_rapida:not(#vf) textarea:focus {border-color:__ACC__ !important;box-shadow:0 0 0 3px __ACC__22 !important;}
 html body .stApp div[class*="st-key-mod_applica"]:not(#vf) button {min-height:2.35rem !important;font-weight:700 !important;font-size:.88rem !important;border-radius:10px !important;padding:.3rem 1.2rem !important;width:auto !important;}
 html body .stApp div.st-key-mod_rapida_applica:not(#vf) {width:auto !important;margin-left:auto;}
@@ -6118,7 +6117,7 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
     with st.container(key="mod_rapida"):
         if _fatto:
             st.success("Fatto: ho modificato la verifica. L'anteprima qui sopra è già aggiornata (puoi annullare qui sotto).", icon="✅")
-        st.markdown(_CSS_MOD_RAPIDA.replace("__ACC__", T["accent"]).replace("__TX__", T["text"]).replace("__T2__", T["text2"]) +
+        st.markdown(_CSS_MOD_RAPIDA.replace("__CARD__", T["card"]).replace("__ACC__", T["accent"]).replace("__TX__", T["text"]).replace("__T2__", T["text2"]) +
                     '<div class="mr-t">✨ Vuoi cambiare qualcosa? Chiedilo</div>'
                     '<div class="mr-d">Scrivi cosa modificare e la verifica si rifà subito: niente da ricominciare.</div>',
                     unsafe_allow_html=True)
@@ -6356,8 +6355,9 @@ def _render_stage_final():
     )
     # ── Anteprima: una pagina alla volta, con ◀ ▶ (così il kit sotto resta vicino) ──────────
     _zoom = False
-    _, _col_prev, _ = st.columns([0.15, 3, 0.15] if _zoom else [1, 3, 1])
+    _col_prev, _col_dx = st.columns([1, 1.12], gap="large")      # desktop: anteprima a sinistra (fissa) e azioni a destra; su telefono si impilano
     with _col_prev:
+        st.markdown('<span class="col-prev"></span>', unsafe_allow_html=True)
         _imgs_f = st.session_state.get("preview_images") or []
         if _imgs_f:
             _n_tot = len(_imgs_f)
@@ -6394,6 +6394,7 @@ def _render_stage_final():
             )
         else:
             st.caption("Anteprima non disponibile.")
+    with _col_dx:
         if vA.get("pdf") and vA.get("latex"):
             _box_modifica_rapida(gp, vA, mod_id)
         if vA.get("pdf") and not _mini_gate:
@@ -6414,143 +6415,143 @@ def _render_stage_final():
                 _dialogo_mini_feedback(vA["pdf"], _fname_a + ".pdf")
         _riga_esito(mod_id)
 
-    # ── Versione Word modificabile: sotto la verifica, per chi preferisce lavorare in Word ─────────────────
-    if WORD_ATTIVO and vA.get("latex"):
-        spazio("sm")
-        st.markdown(
-            f'<style>html body .stApp .st-key-word_card {{background:linear-gradient(135deg,{T["accent"]}12 0%,{T["accent"]}26 100%);'
-            f'border:1.5px solid {T["accent"]}55;border-radius:18px;padding:1.1rem 1.3rem;}}'
-            f'html body .stApp .st-key-word_card button {{min-height:2.9rem;font-weight:700;border-radius:12px;background:#fff !important;background-image:none !important;'
-            f'border:1.5px solid {T["accent"]}77 !important;box-shadow:none !important;}}'
-            f'html body .stApp .st-key-word_card button, html body .stApp .st-key-word_card button * {{color:{T["accent"]} !important;-webkit-text-fill-color:{T["accent"]} !important;}}</style>',
-            unsafe_allow_html=True)
-        with st.container(key="word_card"):
-            _w1, _w2 = st.columns([2.3, 1.2], vertical_alignment="center", gap="medium")
-            with _w1:
-                st.markdown(
-                    f'<div style="display:flex;gap:.9rem;align-items:center;font-family:DM Sans,sans-serif;">'
-                    f'<div style="flex:0 0 3rem;height:3rem;border-radius:12px;background:{T["accent"]};color:#fff;font-size:1.5rem;'
-                    f'display:flex;align-items:center;justify-content:center;">📝</div>'
-                    f'<div style="line-height:1.35;"><div style="font-weight:800;font-size:1.05rem;color:{T["text"]};">Versione Word modificabile</div>'
-                    f'<div style="color:{T["text2"]};font-size:.9rem;">Testo, formule e punteggi da ritoccare come preferisci; i grafici sono già inseriti.</div></div></div>',
-                    unsafe_allow_html=True)
-            with _w2:
-                if vA.get("docx"):
-                    _dl(f"📝 Scarica Word · {_stima(vA['docx'])}", data=vA["docx"], file_name=arg_str + "_FilaA.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        use_container_width=True, type="primary", key="dl_docx_A_generale")
-                elif _pro_bloccato("word"):
-                    _pulsante_pro("word", "pro_word_generale")
-                elif st.button("📝 Crea il file Word", key="gen_docx_A_generale", use_container_width=True, type="primary"):
-                    with st.spinner("Preparo il file Word… (qualche secondo)"):
-                        try:
-                            _db, _emsg = latex_to_docx_modificabile(vA["latex"], mat_str, arg_str, con_griglia)
-                        except Exception as _e:
-                            _db, _emsg = None, str(_e)
-                    if _db:
-                        st.session_state.verifiche["A"]["docx"] = _db
-                        _registra_evento("word", verifica_id=st.session_state.get("_storico_id"))
-                        st.rerun()
-                    else:
-                        _mostra_errore("Non sono riuscito a creare il file Word", _emsg,
-                                       consiglio="Riprova tra un momento; il PDF resta disponibile.")
+        # ── Versione Word modificabile: sotto la verifica, per chi preferisce lavorare in Word ─────────────────
+        if WORD_ATTIVO and vA.get("latex"):
+            spazio("sm")
+            st.markdown(
+                f'<style>html body .stApp .st-key-word_card {{background:linear-gradient(135deg,{T["accent"]}12 0%,{T["accent"]}26 100%);'
+                f'border:1.5px solid {T["accent"]}55;border-radius:18px;padding:1.1rem 1.3rem;}}'
+                f'html body .stApp .st-key-word_card button {{min-height:2.9rem;font-weight:700;border-radius:12px;background:{T["card"]} !important;background-image:none !important;'
+                f'border:1.5px solid {T["accent"]}77 !important;box-shadow:none !important;}}'
+                f'html body .stApp .st-key-word_card button, html body .stApp .st-key-word_card button * {{color:{T["accent"]} !important;-webkit-text-fill-color:{T["accent"]} !important;}}</style>',
+                unsafe_allow_html=True)
+            with st.container(key="word_card"):
+                _w1, _w2 = st.columns([2.3, 1.2], vertical_alignment="center", gap="medium")
+                with _w1:
+                    st.markdown(
+                        f'<div style="display:flex;gap:.9rem;align-items:center;font-family:DM Sans,sans-serif;">'
+                        f'<div style="flex:0 0 3rem;height:3rem;border-radius:12px;background:{T["accent"]};color:#fff;font-size:1.5rem;'
+                        f'display:flex;align-items:center;justify-content:center;">📝</div>'
+                        f'<div style="line-height:1.35;"><div style="font-weight:800;font-size:1.05rem;color:{T["text"]};">Versione Word modificabile</div>'
+                        f'<div style="color:{T["text2"]};font-size:.9rem;">Testo, formule e punteggi da ritoccare come preferisci; i grafici sono già inseriti.</div></div></div>',
+                        unsafe_allow_html=True)
+                with _w2:
+                    if vA.get("docx"):
+                        _dl(f"📝 Scarica Word · {_stima(vA['docx'])}", data=vA["docx"], file_name=arg_str + "_FilaA.docx",
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            use_container_width=True, type="primary", key="dl_docx_A_generale")
+                    elif _pro_bloccato("word"):
+                        _pulsante_pro("word", "pro_word_generale")
+                    elif st.button("📝 Crea il file Word", key="gen_docx_A_generale", use_container_width=True, type="primary"):
+                        with st.spinner("Preparo il file Word… (qualche secondo)"):
+                            try:
+                                _db, _emsg = latex_to_docx_modificabile(vA["latex"], mat_str, arg_str, con_griglia)
+                            except Exception as _e:
+                                _db, _emsg = None, str(_e)
+                        if _db:
+                            st.session_state.verifiche["A"]["docx"] = _db
+                            _registra_evento("word", verifica_id=st.session_state.get("_storico_id"))
+                            st.rerun()
+                        else:
+                            _mostra_errore("Non sono riuscito a creare il file Word", _emsg,
+                                           consiglio="Riprova tra un momento; il PDF resta disponibile.")
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    #  IL KIT COMPLETO — Fila B, BES/DSA, soluzioni, griglia, Word, scheda di allenamento
-    # ═══════════════════════════════════════════════════════════════════════════
-    # Etichetta «Pro» sulle funzioni del kit: spenta finché non parte la monetizzazione
-    _PRO = (
-        f' <span style="font-size:.62rem;font-weight:800;letter-spacing:.06em;color:{T["accent"]};'
-        f'border:1px solid {T["accent"]};border-radius:6px;padding:1px 6px;vertical-align:middle;">PRO</span>'
-        if MOSTRA_BADGE_PRO else ""
-    )
-    vSC = st.session_state.verifiche.get("SC") or {"latex": None, "pdf": None, "n": 0, "avvisi": []}
-
-    # Coda di «Prepara tutto il kit»: un elemento per volta, perché ogni creazione fa un rerun
-    _flag_kit = {"B": "_gen_fila_b", "R": "_gen_bes", "S": "_gen_sol", "SC": "_gen_scheda"}
-    _coda_kit = st.session_state.get("_kit_coda") or []
-    if _coda_kit and not any(st.session_state.get(f) for f in _flag_kit.values()):
-        _prossimo = _coda_kit.pop(0)
-        st.session_state["_kit_coda"] = _coda_kit
-        st.session_state[_flag_kit[_prossimo]] = True
-    _kit_in_corso = bool(_coda_kit) or any(st.session_state.get(f) for f in _flag_kit.values())
-
-    _kit_pronti = _elementi_kit(arg_str, mat_str, vA, vB, vR, vS, vSC, st.session_state.get("_rubrica_docx"))
-    _kit_mancanti = [k for k, presente in (
-        ("B", vB.get("pdf") or vB.get("latex")), ("R", vR.get("pdf") or vR.get("latex")),
-        ("S", vS.get("pdf") or vS.get("latex")), ("SC", vSC.get("pdf")),
-    ) if not presente]
-
-    # Una riga per documento (titolo + descrizione a sinistra, azione a destra), in due tendine:
-    # «Versioni della verifica», «Per la classe e la valutazione» e «Scarica tutti i file in una volta»: tutte chiuse
-    # (durante la prima verifica lampeggiano, vedi la guida). I segnaposto .g-kitN servono a farle lampeggiare.
-    st.markdown('<div id="kit-completo"></div>' + _css_kit(), unsafe_allow_html=True)
-    _riga = lambda: st.columns([3.4, 1.6], vertical_alignment="center", gap="medium")
-    with st.expander("Versioni della verifica: soluzioni, Fila B, versione BES/DSA", expanded=False, icon=":material/file_copy:"):
-        st.markdown('<span class="g-kit1" style="display:none"></span>', unsafe_allow_html=True)
-        with st.container(border=True):
-            _vc3, _vb3 = _riga()                  # Soluzioni
-        with st.container(border=True):
-            _vc1, _vb1 = _riga()                  # Fila B
-        if False:
-            pass
-        else:
-            # riga del Word: nascosta, il Word sta nella scheda sotto la verifica. Il codice resta, ma scrive in contenitori nascosti.
-            st.markdown('<style>[class*="st-key-word_nascosto"], html body .stApp div:has(> [class*="st-key-word_nascosto"]){display:none !important;}</style>', unsafe_allow_html=True)
-            _vc5, _vb5 = st.container(key="word_nascosto_a"), st.container(key="word_nascosto_b")
-        with st.container(border=True):
-            _vc2, _vb2 = _riga()                  # BES/DSA
-        with st.container(border=True):
-            _vc7, _vb7 = _riga()                  # Alta leggibilità (DSA)
-        with st.container(border=True):
-            _vc8, _vb8 = _riga()                  # Altre file (C, D, E)
-        with st.container(border=True):
-            _vc9, _vb9 = _riga()                  # Versione di recupero
-    with st.expander("Per la classe e la valutazione: scheda di allenamento e griglia", expanded=False,
-                     icon=":material/groups:"):
-        st.markdown('<span class="g-kit2" style="display:none"></span>', unsafe_allow_html=True)
-        with st.container(border=True):
-            _vc6, _vb6 = _riga()                  # Scheda di allenamento
-        with st.container(border=True):
-            _vc4, _vb4 = _riga()                  # Griglia di valutazione
-    with st.expander("Scarica tutti i file in una volta", expanded=bool(_kit_in_corso), icon=":material/folder_zip:"):
-        st.markdown('<span class="g-kit3" style="display:none"></span>', unsafe_allow_html=True)
-        st.markdown(
-            f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:-.2rem 0 .7rem;">'
-            f'Crea in un colpo Fila B, BES/DSA, soluzioni e scheda di allenamento, poi scarica tutto in un unico file ZIP.</div>',
-            unsafe_allow_html=True
+        # ═══════════════════════════════════════════════════════════════════════════
+        #  IL KIT COMPLETO — Fila B, BES/DSA, soluzioni, griglia, Word, scheda di allenamento
+        # ═══════════════════════════════════════════════════════════════════════════
+        # Etichetta «Pro» sulle funzioni del kit: spenta finché non parte la monetizzazione
+        _PRO = (
+            f' <span style="font-size:.62rem;font-weight:800;letter-spacing:.06em;color:{T["accent"]};'
+            f'border:1px solid {T["accent"]};border-radius:6px;padding:1px 6px;vertical-align:middle;">PRO</span>'
+            if MOSTRA_BADGE_PRO else ""
         )
-        _kc1, _kc2 = st.columns(2, gap="small")
-        with _kc1:
-            if _pro_bloccato("zip"):
-                _pulsante_pro("zip", "pro_kit", "Prepara tutto il kit con il piano Pro")
-            elif st.button("Prepara tutto il kit", icon=":material/auto_awesome:", key="kit_tutto",
-                           use_container_width=True, disabled=(not _kit_mancanti) or _kit_in_corso,
-                           help="Crea Fila B, BES/DSA, Soluzioni e scheda di allenamento, una dopo l'altra "
-                                "(circa un minuto). Quello che c'è già non si rifà."):
-                st.session_state["_kit_coda"] = [k for k in ("B", "R", "S", "SC") if k in _kit_mancanti]
-                st.rerun()
-        with _kc2:
-            if len(_kit_pronti) >= 2 and not _pro_bloccato("zip"):
-                _dl("Scarica tutto (ZIP)", data=lambda: _zip_kit(_kit_pronti),
-                    file_name=_nome_base_file(mat_str, arg_str) + "_kit.zip", mime="application/zip",
-                    icon=":material/folder_zip:", use_container_width=True, key="dl_kit_zip",
-                    help="Tutti i documenti pronti in un solo file.")
-        if _kit_in_corso:
+        vSC = st.session_state.verifiche.get("SC") or {"latex": None, "pdf": None, "n": 0, "avvisi": []}
+
+        # Coda di «Prepara tutto il kit»: un elemento per volta, perché ogni creazione fa un rerun
+        _flag_kit = {"B": "_gen_fila_b", "R": "_gen_bes", "S": "_gen_sol", "SC": "_gen_scheda"}
+        _coda_kit = st.session_state.get("_kit_coda") or []
+        if _coda_kit and not any(st.session_state.get(f) for f in _flag_kit.values()):
+            _prossimo = _coda_kit.pop(0)
+            st.session_state["_kit_coda"] = _coda_kit
+            st.session_state[_flag_kit[_prossimo]] = True
+        _kit_in_corso = bool(_coda_kit) or any(st.session_state.get(f) for f in _flag_kit.values())
+
+        _kit_pronti = _elementi_kit(arg_str, mat_str, vA, vB, vR, vS, vSC, st.session_state.get("_rubrica_docx"))
+        _kit_mancanti = [k for k, presente in (
+            ("B", vB.get("pdf") or vB.get("latex")), ("R", vR.get("pdf") or vR.get("latex")),
+            ("S", vS.get("pdf") or vS.get("latex")), ("SC", vSC.get("pdf")),
+        ) if not presente]
+
+        # Una riga per documento (titolo + descrizione a sinistra, azione a destra), in due tendine:
+        # «Versioni della verifica», «Per la classe e la valutazione» e «Scarica tutti i file in una volta»: tutte chiuse
+        # (durante la prima verifica lampeggiano, vedi la guida). I segnaposto .g-kitN servono a farle lampeggiare.
+        st.markdown('<div id="kit-completo"></div>' + _css_kit(), unsafe_allow_html=True)
+        _riga = lambda: st.columns([3.4, 1.6], vertical_alignment="center", gap="medium")
+        with st.expander("Versioni della verifica: soluzioni, Fila B, versione BES/DSA", expanded=False, icon=":material/file_copy:"):
+            st.markdown('<span class="g-kit1" style="display:none"></span>', unsafe_allow_html=True)
+            with st.container(border=True):
+                _vc3, _vb3 = _riga()                  # Soluzioni
+            with st.container(border=True):
+                _vc1, _vb1 = _riga()                  # Fila B
+            if False:
+                pass
+            else:
+                # riga del Word: nascosta, il Word sta nella scheda sotto la verifica. Il codice resta, ma scrive in contenitori nascosti.
+                st.markdown('<style>[class*="st-key-word_nascosto"], html body .stApp div:has(> [class*="st-key-word_nascosto"]){display:none !important;}</style>', unsafe_allow_html=True)
+                _vc5, _vb5 = st.container(key="word_nascosto_a"), st.container(key="word_nascosto_b")
+            with st.container(border=True):
+                _vc2, _vb2 = _riga()                  # BES/DSA
+            with st.container(border=True):
+                _vc7, _vb7 = _riga()                  # Alta leggibilità (DSA)
+            with st.container(border=True):
+                _vc8, _vb8 = _riga()                  # Altre file (C, D, E)
+            with st.container(border=True):
+                _vc9, _vb9 = _riga()                  # Versione di recupero
+        with st.expander("Per la classe e la valutazione: scheda di allenamento e griglia", expanded=False,
+                         icon=":material/groups:"):
+            st.markdown('<span class="g-kit2" style="display:none"></span>', unsafe_allow_html=True)
+            with st.container(border=True):
+                _vc6, _vb6 = _riga()                  # Scheda di allenamento
+            with st.container(border=True):
+                _vc4, _vb4 = _riga()                  # Griglia di valutazione
+        with st.expander("Scarica tutti i file in una volta", expanded=bool(_kit_in_corso), icon=":material/folder_zip:"):
+            st.markdown('<span class="g-kit3" style="display:none"></span>', unsafe_allow_html=True)
             st.markdown(
-                f'<div role="status" style="margin:.6rem 0;padding:.7rem 1rem;border:1px solid {T["border2"]};'
-                f'border-radius:12px;background:{T["card"]};font-size:.9rem;color:{T["text2"]};'
-                f'font-family:DM Sans,sans-serif;">⏳ Sto preparando il kit'
-                + (f' (ancora {len(_coda_kit)} dopo questo passaggio)' if _coda_kit else '')
-                + '. Ci vuole circa un minuto: non toccare la pagina.</div>',
+                f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:-.2rem 0 .7rem;">'
+                f'Crea in un colpo Fila B, BES/DSA, soluzioni e scheda di allenamento, poi scarica tutto in un unico file ZIP.</div>',
                 unsafe_allow_html=True
             )
-        if _kit_pronti:
-            st.markdown(
-                f'<div style="font-size:.85rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.3rem 0 .6rem;">'
-                f'Pronti nel kit: <b>{_esc(" · ".join(e["etichetta"] for e in _kit_pronti))}</b></div>',
-                unsafe_allow_html=True
-            )
+            _kc1, _kc2 = st.columns(2, gap="small")
+            with _kc1:
+                if _pro_bloccato("zip"):
+                    _pulsante_pro("zip", "pro_kit", "Prepara tutto il kit con il piano Pro")
+                elif st.button("Prepara tutto il kit", icon=":material/auto_awesome:", key="kit_tutto",
+                               use_container_width=True, disabled=(not _kit_mancanti) or _kit_in_corso,
+                               help="Crea Fila B, BES/DSA, Soluzioni e scheda di allenamento, una dopo l'altra "
+                                    "(circa un minuto). Quello che c'è già non si rifà."):
+                    st.session_state["_kit_coda"] = [k for k in ("B", "R", "S", "SC") if k in _kit_mancanti]
+                    st.rerun()
+            with _kc2:
+                if len(_kit_pronti) >= 2 and not _pro_bloccato("zip"):
+                    _dl("Scarica tutto (ZIP)", data=lambda: _zip_kit(_kit_pronti),
+                        file_name=_nome_base_file(mat_str, arg_str) + "_kit.zip", mime="application/zip",
+                        icon=":material/folder_zip:", use_container_width=True, key="dl_kit_zip",
+                        help="Tutti i documenti pronti in un solo file.")
+            if _kit_in_corso:
+                st.markdown(
+                    f'<div role="status" style="margin:.6rem 0;padding:.7rem 1rem;border:1px solid {T["border2"]};'
+                    f'border-radius:12px;background:{T["card"]};font-size:.9rem;color:{T["text2"]};'
+                    f'font-family:DM Sans,sans-serif;">⏳ Sto preparando il kit'
+                    + (f' (ancora {len(_coda_kit)} dopo questo passaggio)' if _coda_kit else '')
+                    + '. Ci vuole circa un minuto: non toccare la pagina.</div>',
+                    unsafe_allow_html=True
+                )
+            if _kit_pronti:
+                st.markdown(
+                    f'<div style="font-size:.85rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.3rem 0 .6rem;">'
+                    f'Pronti nel kit: <b>{_esc(" · ".join(e["etichetta"] for e in _kit_pronti))}</b></div>',
+                    unsafe_allow_html=True
+                )
 
     # ── FILA B ────────────────────────────────────────────────────────────────
     with _vc1:
@@ -7443,6 +7444,8 @@ if _prev_stage != _current_stage:
 if not _share_view_active:
     _current = _current_stage
     _mostra_conferma()
+    if st.session_state.pop("_apri_preferenze", False):
+        _dialogo_preferenze()
     if _current == STAGE_PREVIEW:   # sessioni aperte prima dell'unione di anteprima e download
         st.session_state.stage = _current = STAGE_FINAL
     if   _current == STAGE_INPUT:   _render_stage_input()
