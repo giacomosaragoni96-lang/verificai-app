@@ -2923,7 +2923,7 @@ def _render_scelta_iniziale() -> None:
     with _c2:
         with st.container(border=True, key="scelta_impagina"):
             st.markdown(
-                f'<div class="sc-ribbon">Più richiesto</div><div class="sc-ico">📄</div><div class="sc-tit">Impagina la mia verifica</div>'
+                f'<div class="sc-ribbon"><span>★<br>Più<br>richiesto</span></div><div class="sc-ico">📄</div><div class="sc-tit">Impagina la mia verifica</div>'
                 f'<div class="sc-txt">Caricala: la rifacciamo identica, impaginata bene.</div>', unsafe_allow_html=True)
             if st.button("Carica la mia verifica", key="scelta_impagina_btn", type="primary", icon=":material/upload_file:", use_container_width=True):
                 st.session_state["_home_modo"] = "impagina"
