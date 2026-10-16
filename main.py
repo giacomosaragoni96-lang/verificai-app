@@ -982,7 +982,7 @@ _CSS_BANNER_PIANO = """
 <style>
 @keyframes gpulse {
   0%,100% { box-shadow:0 0 0 0 rgba(245,158,11,0); outline:2px solid rgba(245,158,11,0); outline-offset:3px; }
-  50%     { box-shadow:0 0 0 5px rgba(245,158,11,.16); outline:2px solid rgba(245,158,11,.42); outline-offset:3px; }
+  50%     { box-shadow:0 0 0 7px rgba(245,158,11,.30); outline:2px solid rgba(245,158,11,.70); outline-offset:3px; }
 }
 /* Riquadro dei messaggi sul piano (assaggio, Free, guida): blu notte con un velo di luce in alto a destra.
    Contenitore con chiave: classe st-key-banner_piano_* */
@@ -1153,7 +1153,7 @@ def _css_pulsa(chiavi: list) -> str:
     # definitivo lo fa lo script (_js_guida_visti)
     sul = ", ".join(f"html body .stApp {s}:hover" for k in chiavi for s in _BERSAGLI_GUIDA[k])
     fuoco = ", ".join(f"html body .stApp {s}:focus-within" for k in chiavi for s in _BERSAGLI_GUIDA[k])
-    return (f"<style>{sel} {{animation:gpulse 2.8s ease-in-out infinite;border-radius:12px;}}"
+    return (f"<style>{sel} {{animation:gpulse 1.9s ease-in-out infinite;border-radius:12px;}}"
             f"{sul} {{animation:none !important;outline:none !important;box-shadow:none !important;}}"
             f"{fuoco} {{animation:none !important;outline:none !important;box-shadow:none !important;}}</style>")
 
@@ -1572,6 +1572,9 @@ _CSS_BOX_SBLOCCO = """<style>
   letter-spacing:.12em;text-transform:uppercase;margin-bottom:.1rem;}
 [class*="st-key-box_sblocco"] .bx-t {color:#fff !important;font-family:'DM Sans',sans-serif;font-weight:800;font-size:1.1rem;line-height:1.22;letter-spacing:-.01em;}
 [class*="st-key-box_sblocco"] .bx-d {color:rgba(255,255,255,.9) !important;font-family:'DM Sans',sans-serif;font-size:.86rem;line-height:1.4;margin-top:.2rem;}
+[class*="st-key-box_sblocco"] .bx-mini {white-space:nowrap;}
+[class*="st-key-box_sblocco"] [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .bx-b) {gap:.3rem !important;}
+[class*="st-key-box_sblocco"] [data-testid="stColumn"]:last-child [data-testid="stElementContainer"] {width:100%;}
 [class*="st-key-box_sblocco"] .bx-pills {display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.6rem;}
 [class*="st-key-box_sblocco"] .bx-pills span {background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;
   padding:.14rem .62rem;font-family:'DM Sans',sans-serif;font-size:.74rem;font-weight:700;}
@@ -1596,7 +1599,7 @@ def _box_invito(dove: str) -> None:
     if not _INVITO:
         return
     with st.container(key=f"box_invito_{dove}"):
-        _c1, _c2 = st.columns([3, 1.3], vertical_alignment="center", gap="medium")
+        _c1, _c2 = st.columns([2.5, 1.5], vertical_alignment="center", gap="medium")
         with _c1:
             st.markdown(
                 f'<style>html body .stApp div[class*="st-key-box_invito"]:not(#vf) {{background:{T["bg2"]};border:1px solid {T["border2"]};'
@@ -1604,11 +1607,16 @@ def _box_invito(dove: str) -> None:
                 f'.bi-wrap{{display:flex;gap:.8rem;align-items:center;font-family:DM Sans,sans-serif;}}'
                 f'.bi-badge{{flex:0 0 2.6rem;height:2.6rem;border-radius:13px;background:#CCFBF1;display:flex;align-items:center;justify-content:center;font-size:1.3rem;}}'
                 f'.bi-t{{font-weight:800;font-size:1rem;color:{T["text"]};line-height:1.25;}}'
-                f'.bi-d{{font-size:.85rem;color:{T["text2"]};line-height:1.4;margin-top:.1rem;}}</style>'
+                f'.bi-d{{font-size:.85rem;color:{T["text2"]};line-height:1.4;margin-top:.1rem;}}'
+                'html body .stApp [class*="st-key-bi_btn_"]:not(#vf) button{background:linear-gradient(135deg,#0D9488,#14B8A6) !important;border:none !important;'
+                'box-shadow:0 6px 16px rgba(20,184,166,.32) !important;white-space:nowrap !important;}'
+                'html body .stApp [class*="st-key-bi_btn_"]:not(#vf) button, html body .stApp [class*="st-key-bi_btn_"]:not(#vf) button *{color:#fff !important;'
+                '-webkit-text-fill-color:#fff !important;font-weight:700 !important;white-space:nowrap !important;}'
+                'html body .stApp [class*="st-key-bi_btn_"]:not(#vf) button:hover{filter:brightness(1.06);}</style>'
                 '<div class="bi-wrap"><div class="bi-badge">👥</div><div>'
                 '<div class="bi-t">Invita un collega</div>'
                 f'<div class="bi-d">Per ogni collega che si iscrive col tuo link e crea la sua prima verifica, '
-                f'<b>+{BONUS_PER_INVITO} verifiche complete</b> per te.</div></div></div>',
+                f'<b>+{BONUS_PER_INVITO} verifiche complete</b> per te (Fila B, BES/DSA, soluzioni, Word…).</div></div></div>',
                 unsafe_allow_html=True)
         with _c2:
             if st.button("Invita un collega", key=f"bi_btn_{dove}", use_container_width=True, icon=":material/group_add:"):
@@ -1633,7 +1641,7 @@ def _box_sblocco(dove: str) -> None:
                         unsafe_allow_html=True)
         with _c2:
             st.markdown('<a class="bx-b" href="?pagina=questionario" target="_blank" rel="noopener">Compila il questionario</a>'
-                        f'<div class="bx-mini">⏱ 4 minuti · anonimo · +{VERIFICHE_PER_CODICE} verifiche</div>',
+                        '<div class="bx-mini">⏱ 4 minuti · anonimo</div>',
                         unsafe_allow_html=True)
             if st.button("Ho già un codice", key=f"sblocco_codice_{dove}", type="tertiary"):
                 _vai_a_upgrade(None)
@@ -2794,7 +2802,7 @@ def _render_impagina() -> None:
     # punteggi
     _rip = impagina.punti_rilevati(_inclusi)
     _cop = _rip["con_punti"] / max(1, _rip["richieste"])
-    _SEN, _FOG, _ASS = "Senza punteggi", "Come sul foglio", "Li assegno io (100 punti)"
+    _SEN, _FOG, _ASS = "Senza tabella dei punti", "Come sul foglio", "Assegno io i punti (100)"
     _opz = [_FOG, _SEN, _ASS] if _cop >= .6 else [_SEN, _ASS]
     _modo = st.radio("Punteggi", _opz, horizontal=True, key=f"imp_punti_{len(_opz)}")
     _mostra, _tot, _fedeli, _lista = True, 100, False, _inclusi
@@ -2910,14 +2918,16 @@ def _render_scelta_iniziale() -> None:
                 f'<div class="sc-txt">Scrivi l\'argomento: gli esercizi li scrive VerificAI.</div>', unsafe_allow_html=True)
             if st.button("Comincia da qui", key="scelta_crea_btn", type="primary", icon=":material/edit_note:", use_container_width=True):
                 st.session_state["_home_modo"] = "crea"
+                _registra_evento("scelta:crea")
                 st.rerun()
     with _c2:
         with st.container(border=True, key="scelta_impagina"):
             st.markdown(
-                f'<div class="sc-tag">Molto richiesto</div><div class="sc-ico">📄</div><div class="sc-tit">Impagina la mia verifica</div>'
+                f'<div class="sc-ribbon">Più richiesto</div><div class="sc-ico">📄</div><div class="sc-tit">Impagina la mia verifica</div>'
                 f'<div class="sc-txt">Caricala: la rifacciamo identica, impaginata bene.</div>', unsafe_allow_html=True)
             if st.button("Carica la mia verifica", key="scelta_impagina_btn", type="primary", icon=":material/upload_file:", use_container_width=True):
                 st.session_state["_home_modo"] = "impagina"
+                _registra_evento("scelta:impagina")
                 st.rerun()
 
 
@@ -3386,7 +3396,7 @@ def _render_percorso_b_form(_prog_placeholder):
                                "Spegnilo se vuoi esattamente il numero di esercizi scelto.")
 
                 _tog = st.toggle(
-                    "Mostra i punti accanto a ogni domanda",
+                    "Aggiungi la tabella dei punteggi in fondo",
                     value=mostra_punteggi, key="toggle_punteggi_b",
                 )
                 mostra_punteggi = _tog
@@ -3545,7 +3555,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 else:
                     _riep = (f"{num_esercizi} esercizi"
                              + (" + 1 per l'eccellenza" if st.session_state.get("toggle_eccellenza", True) and not st.session_state.esercizi_custom else "")
-                             + (f" · {punti_totali} punti" if mostra_punteggi else "")
+                             + (f" · tabella punti da {punti_totali}" if mostra_punteggi else "")
                              + " <span style='opacity:.8'>(se la descrizione non dice altro: si cambia in «Altre opzioni»)</span>")
                 st.markdown(f'<div style="text-align:center;font-size:.82rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.1rem 0 .5rem;">{_riep}</div>',
                             unsafe_allow_html=True)
