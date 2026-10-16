@@ -1547,12 +1547,18 @@ def _dialogo_benvenuto() -> None:
         f'<div style="font-family:DM Sans,sans-serif;font-weight:800;color:{_tx};font-size:1.05rem;margin:.45rem 0 .2rem;">{t}</div>'
         f'<div style="font-family:DM Sans,sans-serif;color:{_tx};opacity:.78;font-size:.93rem;line-height:1.4;">{d}</div></div>'
         for ic, t, d in _vie)
+    _chip = "".join(
+        f'<span style="background:{T["bg2"]};border:1px solid {T["border"]};border-radius:999px;padding:.3rem .8rem;font-family:DM Sans,sans-serif;'
+        f'font-size:.85rem;font-weight:600;color:{_tx};">{x}</span>'
+        for x in ["📄 Fila B", "🧩 Versione BES/DSA", "🔤 Alta leggibilità", "✅ Soluzioni", "🎯 Scheda di allenamento", "📝 Word modificabile",
+                  "✏️ Modifica un esercizio", "🏫 Logo della scuola", "…e molto altro"])
     st.markdown(
         f'<div style="font-family:DM Sans,sans-serif;color:{_tx};font-size:1.1rem;font-weight:700;margin-bottom:.8rem;">'
         f'Due modi per cominciare:</div>'
         f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;">{_tessere}</div>'
-        f'<div style="font-family:DM Sans,sans-serif;color:{_t2};font-size:.9rem;margin-top:.9rem;">'
-        f'Poi, da qualsiasi verifica: Fila B, versione BES/DSA, soluzioni e Word.</div>',
+        f'<div style="font-family:DM Sans,sans-serif;color:{_tx};font-size:.95rem;font-weight:700;margin:1rem 0 .5rem;">'
+        f'Poi, da qualsiasi verifica, con un clic:</div>'
+        f'<div style="display:flex;flex-wrap:wrap;gap:.4rem;">{_chip}</div>',
         unsafe_allow_html=True)
     # chiudere con la X conta come visto: il cookie si scrive appena la finestra si apre
     components.html('<script>try{window.parent.document.cookie="vf_benvenuto=1; max-age=31536000; path=/; SameSite=Lax";}catch(e){}</script>', height=0)
