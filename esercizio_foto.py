@@ -39,7 +39,7 @@ _RE_VIETATI = re.compile(
 # ── LETTURA DELLA RISPOSTA DEL MODELLO ──────────────────────────────────────────────────────────────
 
 def _campo(blocco: str, nome: str) -> str:
-    m = re.search(rf"^\s*{nome}\s*:\s*(.*?)\s*$", blocco, re.MULTILINE | re.IGNORECASE)
+    m = re.search(rf"^[ \t]*{nome}[ \t]*:[ \t]*(.*?)[ \t]*$", blocco, re.MULTILINE | re.IGNORECASE)
     return m.group(1).strip() if m else ""
 
 
@@ -57,19 +57,19 @@ def _dubbi(valore: str, blocco: str) -> list:
     return righe[:8]
 
 
-def leggi_risposta(testo: str) -> tuple:
+def leggi_risposta(testo: str, tieni_punti: bool = False, titolo_vuoto: str = "Esercizio dal libro") -> tuple:
     """(lista di esercizi, problema o None) dalla risposta in formato a marcatori."""
     testo = re.sub(r"```(?:latex|tex)?", "", testo or "")
     esercizi = []
     for m in _RE_BLOCCO.finditer(testo):
         b = m.group(1)
-        corpo = pulisci_latex_esercizio(_testo_del_blocco(b))
+        corpo = pulisci_latex_esercizio(_testo_del_blocco(b), tieni_punti)
         if not corpo.strip():
             continue
         figura = _campo(b, "FIGURA").lower().replace(" ", "_")
         figura = figura if figura in FIGURE_VALIDE else ("non_riproducibile" if "non_riprod" in figura else "nessuna")
         esercizi.append({
-            "titolo": _titolo_pulito(_campo(b, "TITOLO")),
+            "titolo": _titolo_pulito(_campo(b, "TITOLO"), titolo_vuoto),
             "figura": figura,
             "dubbi": _dubbi(_campo(b, "DUBBI"), b),
             "latex": corpo,
@@ -91,13 +91,13 @@ def _campo_multi(blocco: str, nome: str) -> list:
     return [r for r in righe if r and r.lower().strip(" .") not in ("nessuna", "nessuno", "nessuna differenza")][:10]
 
 
-def _titolo_pulito(t: str) -> str:
+def _titolo_pulito(t: str, vuoto: str = "Esercizio dal libro") -> str:
     t = re.sub(r"^\s*(esercizio|es\.?)\s*\d*\s*[:.\-–—]?\s*", "", t or "", flags=re.IGNORECASE)
     t = re.sub(r"[{}\\$]", "", t).strip(" .:")
-    return (t[:60] or "Esercizio dal libro")
+    return (t[:60] or vuoto)
 
 
-def pulisci_latex_esercizio(testo: str) -> str:
+def pulisci_latex_esercizio(testo: str, tieni_punti: bool = False) -> str:
     """Toglie ciò che non è il corpo dell'esercizio: recinti di codice, numeri del libro in testa, comandi vietati."""
     t = re.sub(r"```(?:latex|tex)?", "", testo or "").strip()
     t = re.sub(r"^\s*===.*$", "", t, flags=re.MULTILINE)
@@ -107,8 +107,9 @@ def pulisci_latex_esercizio(testo: str) -> str:
             r = _RE_VIETATI.sub("", r)
         righe.append(r.rstrip())
     t = "\n".join(righe).strip()
-    # punteggi che il modello avesse scritto lo stesso: li aggiunge il programma
-    t = re.sub(r"\s*\(\s*\d+(?:[.,]\d+)?\s*pt\s*\)", "", t)
+    # punteggi che il modello avesse scritto lo stesso: li aggiunge il programma (non per la verifica completa, dove sono quelli del docente)
+    if not tieni_punti:
+        t = re.sub(r"\s*\(\s*\d+(?:[.,]\d+)?\s*pt\s*\)", "", t)
     return t
 
 
@@ -176,12 +177,12 @@ def _chiama(model, contenuto) -> str:
         return ""
 
 
-def controlla_foto(immagini: list) -> str | None:
+def controlla_foto(immagini: list, massimo: int = MAX_FOTO) -> str | None:
     """Messaggio d'errore se le foto non vanno bene (troppe, troppo grandi, formato strano), None se vanno."""
     if not immagini:
         return "Carica almeno una foto."
-    if len(immagini) > MAX_FOTO:
-        return f"Carica al massimo {MAX_FOTO} foto per volta."
+    if len(immagini) > massimo:
+        return f"Carica al massimo {massimo} file per volta."
     for i in immagini:
         d = i.get("data") or b""
         if len(d) > MAX_BYTE_FOTO:
@@ -228,15 +229,15 @@ def _testo_da_ricontrollare(esercizi: list) -> str:
     return "\n\n".join(f"===ESERCIZIO===\nTITOLO: {e['titolo']}\nTESTO:\n{e['latex']}\n===FINE===" for e in esercizi)
 
 
-def ricontrolla(model, parti: list, esercizi: list) -> list:
+def ricontrolla(model, parti: list, esercizi: list, tieni_punti: bool = False) -> list:
     """
     Secondo sguardo indipendente: il modello confronta la trascrizione con la foto. Se corregge qualcosa si prende la versione corretta
     e si ricordano le differenze (il docente le vede). Se la risposta non è coerente (numero di esercizi diverso, testo vuoto o
     con problemi) si tiene la prima lettura e si segnala che il controllo non è riuscito.
     """
     try:
-        testo = _chiama(model, [prompt_ricontrolla_trascrizione(_testo_da_ricontrollare(esercizi), len(parti))] + parti)
-        riletti, _ = leggi_risposta(testo)
+        testo = _chiama(model, [prompt_ricontrolla_trascrizione(_testo_da_ricontrollare(esercizi), len(parti), tieni_punti)] + parti)
+        riletti, _ = leggi_risposta(testo, tieni_punti)
     except Exception:
         return esercizi
     if len(riletti) != len(esercizi):

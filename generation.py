@@ -298,7 +298,7 @@ def _rimuovi_tutti_punteggi(latex: str) -> str:
     ciò che il modello AI ha generato.
     """
     # Rimuovi pattern come (5 pt), (10 pt), (10 punti), etc. — inline
-    latex = re.sub(r"\s*\(\s*\d+\s*(?:pt|punt(?:i|o)?|p\.)\s*\)", "", latex)
+    latex = re.sub(r"\s*\(\s*\d+(?:[.,]\d+)?\s*(?:pt|punt(?:i|o)?|p\.)\s*\)", "", latex)
     return latex
 
 
@@ -309,6 +309,8 @@ def _assembla_e_compila(
     punti_totali: int,
     con_griglia: bool,
     piano: dict | None = None,
+    fedele: bool = False,      # verifica del docente impaginata da noi: il testo non si tocca (niente consegne aggiunte)
+    punti_fedeli: bool = False,   # i punteggi sono quelli scritti dal docente: non si ripesano per tipo di esercizio
 ) -> tuple[str, bytes | None]:
     """
     Assembla preambolo + corpo, applica le trasformazioni post-processing,
@@ -316,7 +318,8 @@ def _assembla_e_compila(
     """
     latex = preambolo + clean_tikz_spoilers(corpo)
     latex = fix_items_environment(latex)
-    latex = aggiungi_consegne_mancanti(latex)    # richieste nude senza consegna → ricevono il loro verbo
+    if not fedele:
+        latex = aggiungi_consegne_mancanti(latex)    # richieste nude senza consegna → ricevono il loro verbo
     latex = rifinisci_scelta_multipla_e_vf(latex)   # opzioni A) B) C) D), V/F su una riga
     latex = normalizza_labels_numerici(latex)   # 1) 2) 3) → a) b) c)
     latex = semplifica_item_singoli(latex)       # enumerate 1 solo item → testo diretto
@@ -338,7 +341,8 @@ def _assembla_e_compila(
         # li ignora → griglia mostra '—' e il totale è sbagliato.
         latex = prepara_esercizi_aperti(latex, punti_totali)
         latex = applica_punti_piano(latex, piano)   # punti decisi dal piano (se c'è e i conti tornano)
-        latex = pesa_punti_per_tipo(latex)    # punteggi tutti uguali → pesati per tipo di esercizio
+        if not punti_fedeli:
+            latex = pesa_punti_per_tipo(latex)    # punteggi tutti uguali → pesati per tipo di esercizio
         latex = riscala_punti(latex, punti_totali)
     else:
         # Guardia deterministica: rimuove punteggi residui anche se l'AI li ha inseriti

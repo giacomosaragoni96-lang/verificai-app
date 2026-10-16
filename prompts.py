@@ -1394,7 +1394,7 @@ def prompt_leggi_esercizi_foto(materia: str, scuola: str, n_immagini: int, max_e
     )
 
 
-def prompt_ricontrolla_trascrizione(esercizi_testo: str, n_immagini: int) -> str:
+def prompt_ricontrolla_trascrizione(esercizi_testo: str, n_immagini: int, tieni_punti: bool = False) -> str:
     """Secondo sguardo, indipendente: confronta la trascrizione con l'immagine e corregge ciò che non coincide."""
     return (
         "Sei un revisore severo. Qui sotto trovi la TRASCRIZIONE LaTeX di uno o più esercizi, fatta da un altro assistente guardando "
@@ -1410,7 +1410,8 @@ def prompt_ricontrolla_trascrizione(esercizi_testo: str, n_immagini: int) -> str
         "TESTO:\n"
         "<il testo LaTeX COMPLETO, già corretto; se l'esito è «ok» ricopialo identico>\n"
         "===FINE===\n"
-        "Correggi SOLO ciò che differisce dalla foto: non riscrivere, non risolvere, non abbellire. Non toccare il formato delle righe "
+        + ("I punteggi (N pt) alla fine delle richieste sono VOLUTI: non toglierli; controllali sul foglio e correggili se diversi. " if tieni_punti else "")
+        + "Correggi SOLO ciò che differisce dalla foto: non riscrivere, non risolvere, non abbellire. Non toccare il formato delle righe "
         "[[GRAFICO: …]] se la funzione è giusta. Se non sei sicuro di una differenza, lascia il testo com'è e scrivila come dubbio nelle "
         "DIFFERENZE con la parola «DUBBIO».\n\n"
         "TRASCRIZIONE DA CONTROLLARE:\n" + esercizi_testo
@@ -1470,4 +1471,56 @@ def prompt_esercizi_mancanti(materia: str, argomento: str, calibrazione: str, co
         f"- {REGOLA_GRAFICO_CURVE}\n"
         "- Rispondi SOLO con il LaTeX dei blocchi mancanti: niente preambolo, niente \\end{document}, niente spiegazioni.\n\n"
         "VERIFICA ESISTENTE:\n" + corpo
+    )
+
+
+# ── VERIFICA GIÀ SCRITTA DAL DOCENTE, DA IMPAGINARE BENE (impagina.py) ───────────────────────────────────────────
+
+_ECCEZIONI_VERIFICA_COMPLETA = (
+    "ECCEZIONI PER QUESTA VERIFICA COMPLETA (valgono al posto delle regole sopra dove sono in contrasto):\n"
+    "- Le foto o le pagine sono UNA verifica intera, spesso fatta con screenshot e ritagli messi insieme, con stili e caratteri diversi. "
+    "Trascrivi TUTTI gli esercizi, nell'ordine in cui compaiono, uno per blocco ===ESERCIZIO===. Non saltarne nessuno, non unirne due, non cambiarne l'ordine.\n"
+    "- INTESTAZIONE E CORNICE: ignora (non trascrivere) il nome della scuola e il logo, le righe «Nome / Classe / Data», il voto, la tabella o la griglia "
+    "finale dei punteggi, le frasi generali tipo «svolgere tutti gli esercizi» o «tempo a disposizione». Il numero dell'esercizio («Esercizio 3», «3.») "
+    "NON va nel testo: lo mette il programma. Se l'esercizio ha un titolo o un tema scritto (es. «Equazioni di secondo grado») mettilo in TITOLO, "
+    "altrimenti lascia TITOLO vuoto.\n"
+    "- PUNTEGGI: se nel foglio ci sono i punti delle richieste (es. «[2 punti]», «(0,5)», «2 pt», «3p»), riportali alla fine di OGNI richiesta nel "
+    "formato (N pt), con il punto per i decimali (es. (0.5 pt)). Se non ci sono, NON inventarli e non scrivere nulla.\n"
+    "- Mantieni la struttura di ciascun esercizio: la stessa consegna, le stesse richieste con le stesse lettere o numeri, nello stesso ordine; "
+    "scelta multipla con le stesse opzioni, vero/falso con le stesse affermazioni, tabelle con gli stessi dati. NON risolvere, NON correggere gli errori "
+    "(se vedi un errore nel testo del docente trascrivilo com'è e segnalalo in DUBBI), NON aggiungere né togliere richieste.\n"
+    "- Prima di tutti i blocchi scrivi due righe: VERIFICA_TITOLO: il titolo o l'argomento della verifica come compare (o la sola parola «nessuno») e "
+    "PUNTI_TOTALI: il totale scritto sul foglio (solo il numero, o «nessuno»).\n"
+)
+
+
+def prompt_leggi_verifica_completa(materia: str, scuola: str, n_immagini: int, max_esercizi: int = 12) -> str:
+    contesto = ""
+    if (materia or "").strip():
+        contesto = f"Materia: {materia.strip()}" + (f" · scuola: {scuola.strip()}" if (scuola or "").strip() else "") + ".\n"
+    return (
+        "Sei un trascrittore estremamente accurato di verifiche scolastiche. Ricevi "
+        + ("una foto o un PDF" if n_immagini == 1 else f"{n_immagini} foto o PDF")
+        + " con la verifica di un docente, scritta o impaginata male. Il docente la vuole IDENTICA nel contenuto, ma impaginata bene: "
+        "il tuo compito è trascrivere tutti gli esercizi in LaTeX senza cambiare nulla di ciò che chiedono.\n"
+        + contesto
+        + f"La verifica ha al massimo {max_esercizi} esercizi.\n\n"
+        + _REGOLE_TRASCRIZIONE + "\n" + _ECCEZIONI_VERIFICA_COMPLETA + "\n"
+        + _MARCATORI_FOTO.replace("TITOLO: titolo breve dell'esercizio, 2-6 parole, senza «Esercizio n»",
+                                  "TITOLO: titolo breve dell'esercizio (2-6 parole, senza «Esercizio n»), oppure vuoto se non ne ha uno")
+    )
+
+
+def prompt_correggi_verifica(testo_latex: str, richiesta: str, n_immagini: int) -> str:
+    """Il docente ha visto la verifica trascritta e dice cosa non va: si riguardano le foto e si corregge SOLO quello."""
+    return (
+        "Hai trascritto in LaTeX la verifica di " + ("una foto" if n_immagini == 1 else "alcune foto") + " (allegate). Il docente ha controllato "
+        "il risultato e segnala un errore. Riguarda le foto e correggi SOLO ciò che segnala (e le conseguenze dirette), senza toccare il resto: "
+        "la trascrizione deve restare fedele all'originale, con TUTTI gli esercizi nello stesso ordine.\n"
+        "Stesse regole di prima: niente soluzioni, grafici di funzioni con [[GRAFICO: y = … | x da A a B]], figure geometriche in TikZ, tabelle con "
+        "tabular, punteggi (N pt) solo dove ci sono sul foglio.\n"
+        f"SEGNALAZIONE DEL DOCENTE: {richiesta.strip()}\n\n"
+        "TRASCRIZIONE ATTUALE:\n" + testo_latex + "\n\n"
+        "Rispondi con TUTTI gli esercizi, uno per blocco, nel formato:\n===ESERCIZIO===\nTITOLO: … (o vuoto)\nFIGURA: nessuna | grafico_funzione | "
+        "figura_geometrica | tabella | non_riproducibile\nDUBBI: … oppure «nessuno»\nTESTO:\n<il testo LaTeX>\n===FINE==="
     )
