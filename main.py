@@ -2698,7 +2698,6 @@ def _blocco_esercizio_foto(materia: str, scuola: str, num_esercizi: int) -> None
     Lascia in `_foto_es_pronti` gli esercizi confermati, con la loro posizione, per la generazione.
     """
     st.session_state["_foto_es_pronti"] = []
-    st.markdown(_html_separatore() + '<div class="opt-label">Hai un esercizio del libro da includere? (opzionale)</div>', unsafe_allow_html=True)
     dati = st.session_state.get("_foto_es")
     if _pro_bloccato("materiale") and not dati:
         st.caption("Fotografa un esercizio del tuo libro e VerificAI lo riporta identico nella verifica, con il suo grafico: "
@@ -3112,114 +3111,113 @@ def _render_percorso_b_form(_prog_placeholder):
                     )
                     st.session_state["_pers_pt"] = punti_totali
 
-                st.markdown(_html_separatore() + '<div class="opt-label">Hai già del materiale? (opzionale)</div>', unsafe_allow_html=True)
-                if _pro_bloccato("materiale") and not _fm:
-                    st.caption("Carica appunti o una verifica già fatta e VerificAI ne crea una nuova, con dati diversi: "
-                               + ("è una funzione del piano Pro." if PREZZI_VISIBILI else "è una delle funzioni complete, da sbloccare con il questionario."))
-                    _pulsante_pro("materiale", "pro_materiale", "Carica un file con il piano Pro")
-                elif not _fm:
-                    _up = st.file_uploader(
-                        "Carica appunti, una verifica o un foglio di esercizi",
-                        type=["pdf", "png", "jpg", "jpeg"],
-                        key=f"pb_file_up_{st.session_state['_up_ciclo']}",
-                        help="PDF o foto. Il file viene letto quando premi «Crea verifica».",
-                    )
-                    if _up:
-                        _bytes_up = _up.getvalue()
-                        st.session_state["_file_materiale"] = {
-                            "bytes": _bytes_up, "mime": _up.type or "image/png",
-                            "name": _up.name, "hash": hash(_bytes_up),
-                        }
-                        st.session_state.file_ispirazione = _FileInMemoria(
-                            _bytes_up, _up.type or "image/png", _up.name)
-                        st.rerun()
-                else:
-                    _nome_f = _fm["name"] if len(_fm["name"]) <= 38 else _fm["name"][:35] + "…"
-                    st.markdown(
-                        f'<div class="file-pool-card"><div class="fpc-header">'
-                        f'<span class="fpc-name">📄 {_nome_f}</span></div></div>',
-                        unsafe_allow_html=True,
-                    )
-                    _SCELTE_MATERIALE = {
-                        "base_conoscenza":   "📚 Prendi spunto dai miei appunti",
-                        "copia_fedele":      "🔁 Rifai questa verifica con dati nuovi",
-                    }
-                    _scelta_mat = st.radio(
-                        "Cosa vuoi fare con questo file?",
-                        options=list(_SCELTE_MATERIALE),
-                        format_func=lambda k: _SCELTE_MATERIALE[k],
-                        key="sel_materiale_b",
-                    )
-                    _SUGGERIMENTI_MATERIALE = {
-                        "base_conoscenza":   "Esercizi nuovi sugli argomenti del tuo materiale, nello stesso livello.",
-                        "copia_fedele":      "Stessa struttura e stessi punteggi del file, con numeri e testi nuovi "
-                                             "(il numero di esercizi e i punti vengono dal file).",
-                    }
-                    st.caption(_SUGGERIMENTI_MATERIALE[_scelta_mat])
-                    if st.button("✕ Togli il file", key="pb_rm_materiale"):
-                        for _k_rm in ("_file_materiale", "analisi_doc", "file_mode", "file_ispirazione"):
-                            st.session_state[_k_rm] = None
-                        st.session_state.analisi_docs_list = []
-                        st.session_state.info_consolidate = {}
-                        st.session_state.istruzioni_per_file = {}
-                        st.session_state["_up_ciclo"] += 1
-                        if st.session_state.get("_pb_argomento_source") != "manual":
-                            st.session_state["_pb_argomento_source"] = None
-                        st.rerun()
-
-                try:
-                    _blocco_esercizio_foto(materia_scelta, difficolta, num_esercizi)
-                except Exception as _e_foto:      # funzione accessoria: un suo errore non deve mai bloccare il form
-                    logger.warning("Esercizio da foto: %s", _e_foto)
-                    st.session_state["_foto_es_pronti"] = []
-
-                # ── Logo della scuola: si carica una volta, poi compare in tutte le verifiche ──
-                st.markdown(_html_separatore() + '<div class="opt-label">Logo della scuola (opzionale)</div>',
-                            unsafe_allow_html=True)
-                _logo_s = _logo_scuola()
-                _logo_bloccato = _pro_bloccato("logo")
-                if _logo_bloccato:
-                    st.caption("Il logo della tua scuola sull'intestazione è una funzione del piano Pro." if PREZZI_VISIBILI
-                               else "Il logo della tua scuola sull'intestazione è una delle funzioni complete, da sbloccare con il questionario.")
-                    _pulsante_pro("logo", "pro_logo", "Logo della scuola con il piano Pro")
-                elif _logo_s:
-                    _attivo_nuovo = st.toggle("Metti il logo nelle verifiche",
-                                              value=_logo_s.get("attivo", True), key="logo_attivo_b")
-                    if _attivo_nuovo != _logo_s.get("attivo", True):
-                        _salva_logo({**_logo_s, "attivo": _attivo_nuovo})
-                    _etichette_scala = {0.75: "Più piccolo", 1.0: "Normale", 1.25: "Più grande"}
-                    _scala_salvata = float(_logo_s.get("scala", 1.0))
-                    _scala_nuova = st.select_slider(
-                        "Dimensione del logo", options=list(_etichette_scala),
-                        value=_scala_salvata if _scala_salvata in _etichette_scala else 1.0,
-                        format_func=_etichette_scala.get, key="logo_scala_b",
-                    )
-                    if _scala_nuova != _scala_salvata:
-                        _salva_logo({**_logo_s, "scala": _scala_nuova})
-                    # Anteprima immediata dell'intestazione: niente generazione sprecata
-                    with st.spinner("Preparo l'anteprima dell'intestazione…"):
-                        _img_int = _anteprima_intestazione(
-                            _logo_s["b64"], _logo_s.get("tipo", "largo"), _attivo_nuovo, materia_scelta,
-                            _scala_nuova, _LAYOUT_LOGO)
-                    if _img_int:
-                        st.image(_img_int, width=560)
-                        st.caption("Intestazione come sarà nel PDF (il titolo sarà quello della tua verifica).")
-                    if st.button("Cambia o togli il logo", key="logo_togli", icon=":material/delete:"):
-                        _salva_logo(None)
-                        st.rerun()
-                    st.caption("Vale per le nuove verifiche e per la Fila B; nel file Word non compare.")
-                else:
-                    _logo_up = st.file_uploader(
-                        "Carica il logo della tua scuola (PNG o JPG)", type=["png", "jpg", "jpeg"],
-                        key="logo_up_b", help="Si salva sul tuo account: lo carichi una volta sola.",
-                    )
-                    if _logo_up is not None:
-                        _esito_logo = _prepara_logo(_logo_up.getvalue())
-                        if _esito_logo:
-                            _salva_logo({"b64": _esito_logo[0], "tipo": _esito_logo[1], "attivo": True})
+                st.markdown(_html_separatore() + '<div class="opt-label">Allegati e logo (opzionale)</div>', unsafe_allow_html=True)
+                _t_mat, _t_foto, _t_logo = st.tabs(["📄 Appunti o verifica", "📷 Esercizio del libro", "🏫 Logo della scuola"])
+                with _t_mat:
+                    if _pro_bloccato("materiale") and not _fm:
+                        st.caption("Carica appunti o una verifica già fatta e VerificAI ne crea una nuova, con dati diversi: "
+                                   + ("è una funzione del piano Pro." if PREZZI_VISIBILI else "è una delle funzioni complete, da sbloccare con il questionario."))
+                        _pulsante_pro("materiale", "pro_materiale", "Carica un file con il piano Pro")
+                    elif not _fm:
+                        _up = st.file_uploader(
+                            "Carica appunti, una verifica o un foglio di esercizi",
+                            type=["pdf", "png", "jpg", "jpeg"],
+                            key=f"pb_file_up_{st.session_state['_up_ciclo']}",
+                            help="PDF o foto. Il file viene letto quando premi «Crea verifica».",
+                        )
+                        if _up:
+                            _bytes_up = _up.getvalue()
+                            st.session_state["_file_materiale"] = {
+                                "bytes": _bytes_up, "mime": _up.type or "image/png",
+                                "name": _up.name, "hash": hash(_bytes_up),
+                            }
+                            st.session_state.file_ispirazione = _FileInMemoria(
+                                _bytes_up, _up.type or "image/png", _up.name)
                             st.rerun()
-                        else:
-                            st.warning("Non riesco a leggere questa immagine: prova con un PNG o un JPG più piccolo.")
+                    else:
+                        _nome_f = _fm["name"] if len(_fm["name"]) <= 38 else _fm["name"][:35] + "…"
+                        st.markdown(
+                            f'<div class="file-pool-card"><div class="fpc-header">'
+                            f'<span class="fpc-name">📄 {_nome_f}</span></div></div>',
+                            unsafe_allow_html=True,
+                        )
+                        _SCELTE_MATERIALE = {
+                            "base_conoscenza":   "📚 Prendi spunto dai miei appunti",
+                            "copia_fedele":      "🔁 Rifai questa verifica con dati nuovi",
+                        }
+                        _scelta_mat = st.radio(
+                            "Cosa vuoi fare con questo file?",
+                            options=list(_SCELTE_MATERIALE),
+                            format_func=lambda k: _SCELTE_MATERIALE[k],
+                            key="sel_materiale_b",
+                        )
+                        _SUGGERIMENTI_MATERIALE = {
+                            "base_conoscenza":   "Esercizi nuovi sugli argomenti del tuo materiale, nello stesso livello.",
+                            "copia_fedele":      "Stessa struttura e stessi punteggi del file, con numeri e testi nuovi "
+                                                 "(il numero di esercizi e i punti vengono dal file).",
+                        }
+                        st.caption(_SUGGERIMENTI_MATERIALE[_scelta_mat])
+                        if st.button("✕ Togli il file", key="pb_rm_materiale"):
+                            for _k_rm in ("_file_materiale", "analisi_doc", "file_mode", "file_ispirazione"):
+                                st.session_state[_k_rm] = None
+                            st.session_state.analisi_docs_list = []
+                            st.session_state.info_consolidate = {}
+                            st.session_state.istruzioni_per_file = {}
+                            st.session_state["_up_ciclo"] += 1
+                            if st.session_state.get("_pb_argomento_source") != "manual":
+                                st.session_state["_pb_argomento_source"] = None
+                            st.rerun()
+                with _t_foto:
+                    try:
+                        _blocco_esercizio_foto(materia_scelta, difficolta, num_esercizi)
+                    except Exception as _e_foto:      # funzione accessoria: un suo errore non deve mai bloccare il form
+                        logger.warning("Esercizio da foto: %s", _e_foto)
+                        st.session_state["_foto_es_pronti"] = []
+                with _t_logo:
+                    _logo_s = _logo_scuola()
+                    _logo_bloccato = _pro_bloccato("logo")
+                    if _logo_bloccato:
+                        st.caption("Il logo della tua scuola sull'intestazione è una funzione del piano Pro." if PREZZI_VISIBILI
+                                   else "Il logo della tua scuola sull'intestazione è una delle funzioni complete, da sbloccare con il questionario.")
+                        _pulsante_pro("logo", "pro_logo", "Logo della scuola con il piano Pro")
+                    elif _logo_s:
+                        _attivo_nuovo = st.toggle("Metti il logo nelle verifiche",
+                                                  value=_logo_s.get("attivo", True), key="logo_attivo_b")
+                        if _attivo_nuovo != _logo_s.get("attivo", True):
+                            _salva_logo({**_logo_s, "attivo": _attivo_nuovo})
+                        _etichette_scala = {0.75: "Più piccolo", 1.0: "Normale", 1.25: "Più grande"}
+                        _scala_salvata = float(_logo_s.get("scala", 1.0))
+                        _scala_nuova = st.select_slider(
+                            "Dimensione del logo", options=list(_etichette_scala),
+                            value=_scala_salvata if _scala_salvata in _etichette_scala else 1.0,
+                            format_func=_etichette_scala.get, key="logo_scala_b",
+                        )
+                        if _scala_nuova != _scala_salvata:
+                            _salva_logo({**_logo_s, "scala": _scala_nuova})
+                        # Anteprima immediata dell'intestazione: niente generazione sprecata
+                        with st.spinner("Preparo l'anteprima dell'intestazione…"):
+                            _img_int = _anteprima_intestazione(
+                                _logo_s["b64"], _logo_s.get("tipo", "largo"), _attivo_nuovo, materia_scelta,
+                                _scala_nuova, _LAYOUT_LOGO)
+                        if _img_int:
+                            st.image(_img_int, width=560)
+                            st.caption("Intestazione come sarà nel PDF (il titolo sarà quello della tua verifica).")
+                        if st.button("Cambia o togli il logo", key="logo_togli", icon=":material/delete:"):
+                            _salva_logo(None)
+                            st.rerun()
+                        st.caption("Vale per le nuove verifiche e per la Fila B; nel file Word non compare.")
+                    else:
+                        _logo_up = st.file_uploader(
+                            "Carica il logo della tua scuola (PNG o JPG)", type=["png", "jpg", "jpeg"],
+                            key="logo_up_b", help="Si salva sul tuo account: lo carichi una volta sola.",
+                        )
+                        if _logo_up is not None:
+                            _esito_logo = _prepara_logo(_logo_up.getvalue())
+                            if _esito_logo:
+                                _salva_logo({"b64": _esito_logo[0], "tipo": _esito_logo[1], "attivo": True})
+                                st.rerun()
+                            else:
+                                st.warning("Non riesco a leggere questa immagine: prova con un PNG o un JPG più piccolo.")
 
             # ── CTA: Genera Bozza ─────────────────────────────────────────────────
             _manca_arg = not argomento and not _fm
