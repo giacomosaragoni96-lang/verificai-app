@@ -75,6 +75,7 @@ import inviti
 from aperture import registra_apertura
 from styles import get_css, _is_light_color
 from ui_banca import render_banca
+from ui_cruscotto import render_cruscotto
 from ui_helpers import (
     render_privacy,
     _make_katex_html,
@@ -99,6 +100,7 @@ except ImportError:
 # ── COSTANTI STAGE ────────────────────────────────────────────────────────────
 STAGE_MIE_VERIFICHE = "MIE_VERIFICHE"  # pagina "Le tue verifiche"
 STAGE_UPGRADE = "UPGRADE"               # pagina «Passa a Pro»
+STAGE_CRUSCOTTO = "CRUSCOTTO"           # pagina «Cruscotto» (solo admin)
 STAGE_BANCA = "BANCA"                   # pagina "Banca esercizi" (solo admin)
 
 # ── PAGE CONFIG ───────────────────────────────────────────────────────────────
@@ -3983,6 +3985,7 @@ def _lancia_generazione(
         # L'errore si mostra in cima alla pagina, sopra il form (che il rerun ridisegna):
         # sotto il pulsante non si vedrebbe, perché la pagina è scorsa in alto.
         _prog.empty()
+        _registra_evento("errore:impagina" if generatore is not None else "errore:generazione")
         st.session_state["_esito_gen"] = {
             "azione": "Non sono riuscito a creare la verifica", "exc": _e,
         }
@@ -6934,6 +6937,15 @@ if not _share_view_active:
             render_sblocco(T, _esci_da_upgrade, st.session_state.get("_upgrade_funzione"),
                            _bonus_residui() if (MONETIZZAZIONE_ATTIVA and st.session_state.utente) else 0, _riscatta_codice,
                            invito=_INVITO)
+    elif _current == STAGE_CRUSCOTTO:
+        if _is_admin:
+            def _esci_dal_cruscotto():
+                st.session_state.stage = STAGE_INPUT
+                st.rerun()
+            render_cruscotto(T, supabase_admin, _esci_dal_cruscotto, ADMIN_EMAILS)
+        else:                                   # il cruscotto è riservato all'admin
+            st.session_state.stage = STAGE_INPUT
+            st.rerun()
     elif _current == STAGE_BANCA:
         if _is_admin:
             def _esci_dalla_banca():

@@ -71,6 +71,9 @@ def render_sidebar(
                              icon=":material/library_books:"):
                     st.session_state.stage = "BANCA"
                     st.rerun()
+                if st.button("Cruscotto", key="open_cruscotto", use_container_width=True, icon=":material/monitoring:"):
+                    st.session_state.stage = "CRUSCOTTO"
+                    st.rerun()
                 for _vecchio, _nuovo in modelli_sostituiti().items():
                     st.caption(f"⚠️ {_vecchio} non è più disponibile: uso {_nuovo}")
                 # Consumi reali dall'ultimo riavvio (token e costo stimato per compito e modello)
