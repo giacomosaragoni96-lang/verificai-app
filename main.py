@@ -2866,30 +2866,37 @@ def _render_impagina() -> None:
         st.rerun()
 
 
+@st.dialog("Stile della verifica", width="large")
+def _dialogo_stili() -> None:
+    """La stessa verifica, nello stesso punto, nei due stili: a sinistra classico, a destra moderno."""
+    _ids = [k for k, _n in stili_disponibili()]
+    _cols = st.columns(len(_ids), gap="medium")
+    for _col, _k in zip(_cols, _ids):
+        _img = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "stili", _k + ".png")
+        with _col:
+            if os.path.exists(_img):
+                st.image(_img, use_container_width=True)
+            st.markdown(f'<div style="text-align:center;font-weight:800;font-size:1.05rem;font-family:DM Sans,sans-serif;color:{T["text"]};margin-top:.2rem;">'
+                        f'{STILI[_k]["nome"]}</div><div style="text-align:center;font-size:.85rem;font-family:DM Sans,sans-serif;color:{T["text2"]};">'
+                        f'{descrizione_stile(_k)}</div>', unsafe_allow_html=True)
+
+
 def _selettore_stile() -> str:
     """Stile del PDF: classico (predefinito) o moderno, con l'anteprima delle due versioni della stessa verifica a richiesta."""
     st.markdown(_html_separatore() + '<div class="opt-label">Stile della verifica</div>', unsafe_allow_html=True)
     _ids = [k for k, _n in stili_disponibili()]
     _sel = st.selectbox("Stile della verifica", _ids, key="sel_stile_verifica", format_func=lambda k: STILI[k]["nome"],
                         label_visibility="collapsed")
-    with st.popover("Guarda un'anteprima", icon=":material/visibility:"):
-        _cols = st.columns(len(_ids), gap="small")
-        for _col, _k in zip(_cols, _ids):
-            _img = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "stili", _k + ".png")
-            with _col:
-                if os.path.exists(_img):
-                    st.image(_img, use_container_width=True)
-                st.markdown(f'<div style="text-align:center;font-weight:700;font-family:DM Sans,sans-serif;color:{T["text"]};">{STILI[_k]["nome"]}</div>',
-                            unsafe_allow_html=True)
+    if st.button("Guarda un'anteprima", key="stile_anteprima", icon=":material/visibility:"):
+        _dialogo_stili()
     st.session_state["_stile_verifica"] = _sel
     return _sel
 
 
 def _link_scelta_iniziale() -> None:
     """In fondo alla pagina, discreto: torna alla prima scelta (descrizione / impagina la mia verifica)."""
-    _a, _b, _c = st.columns([3, 2, 3])
-    if _b.button("Cambia modo di partire", key="home_indietro", type="tertiary", icon=":material/swap_horiz:", use_container_width=True,
-                 help="Torna alla scelta: descrizione o la tua verifica."):
+    _a, _b, _c = st.columns([1, 2, 1])
+    if _b.button("Cambia modo di partire", key="home_indietro", type="tertiary", icon=":material/swap_horiz:", use_container_width=True):
         st.session_state["_home_modo"] = None
         st.rerun()
 

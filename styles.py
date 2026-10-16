@@ -4890,6 +4890,14 @@ font-family: 'DM Sans', sans-serif;
     padding: .22rem .7rem; border-radius: 999px; box-shadow: 0 1px 2px rgba(22,101,52,.08);
   }}
 
+  /* selettore a segmenti (allegati): la voce attiva nel blu del tema, non nel rosso predefinito */
+  html body .stApp [data-testid="stBaseButton-segmented_controlActive"] {{
+    background: {_acc}14 !important; border-color: {_acc} !important; color: {_acc} !important;
+  }}
+  html body .stApp [data-testid="stBaseButton-segmented_controlActive"] * {{ color: {_acc} !important; }}
+
+  html body .stApp .st-key-home_indietro button, html body .stApp .st-key-home_indietro button * {{ white-space: nowrap !important; }}
+
 {_prof}
 </style>
 """
