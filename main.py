@@ -1092,6 +1092,9 @@ html body .stApp [class*="st-key-banner_piano_"] .g-nota {
 # Bersagli che pulsano (selettori CSS). Si usano sia le classi delle chiavi sia i data-testid, per reggere i cambi di Streamlit.
 _BERSAGLI_GUIDA = {
     "argomento": [".st-key-argomento_area_b", '[data-testid="stTextArea"]'],
+    "scelta": [".st-key-scelta_crea_btn", ".st-key-scelta_impagina_btn"],            # i due pulsanti della prima scelta
+    "carica_imp": ['[data-testid="stFileUploader"]'],                                 # «Impagina la mia verifica»: il caricamento
+    "conferma_imp": [".st-key-imp_crea"],
     "opzioni": ['[data-testid="stExpander"]:has(.g-altre)', '[data-testid="stFileUploader"]'],   # «Altre opzioni» e i due caricamenti (file e logo)
     "crea": [".st-key-genera_btn_b", '[data-testid="stButton"]:has([data-testid="stBaseButton-primary"])'],
     "modifica": ['.st-key-review_selectbox', '[class*="st-key-rw_istr_"]', '[class*="st-key-piu_facile_"]', '[class*="st-key-piu_difficile_"]',
@@ -1349,22 +1352,33 @@ def _guida_benvenuto(dove: str, slot) -> None:
     _test = not PREZZI_VISIBILI
     _eti = "Benvenuto" if _test else "Regalo di benvenuto"
     if dove == "input":
+        _m_home = st.session_state.get("_home_modo")
         scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
-        if not scritto:
-            _riquadro(f"{_eti} · Passo 1 di 2", "Scrivi l'argomento",
+        if _m_home is None:
+            _riquadro(f"{_eti} · Passo 1 di 3", "Da dove vuoi partire?",
+                      "Scegli uno dei due modi qui sotto: puoi provarli entrambi.", ["scelta"], passi=(1, 3))
+        elif _m_home == "impagina":
+            if not st.session_state.get("_imp"):
+                _riquadro(f"{_eti} · Passo 2 di 3", "Carica la tua verifica",
+                          "PDF o foto, anche screenshot messi insieme: la rifacciamo identica, impaginata bene.", ["carica_imp"], passi=(2, 3))
+            else:
+                _riquadro(f"{_eti} · Passo 3 di 3", "Controlla e conferma",
+                          "Confronta l'originale con il risultato, poi premi «Crea la verifica».", ["conferma_imp"], passi=(3, 3))
+        elif not scritto:
+            _riquadro(f"{_eti} · Passo 2 di 3", "Scrivi l'argomento",
                       "Scrivi nel riquadro di cosa parla la verifica e, se vuoi, cosa includere o evitare.",
-                      ["argomento"], passi=(1, 2))
+                      ["argomento"], passi=(2, 3))
         else:
             chips = (('<span class="g-chip">✓ Logo caricato</span>' if _logo_scuola() else "") +
                      ('<span class="g-chip">✓ File caricato</span>' if st.session_state.get("_file_materiale") else ""))
-            _riquadro(f"{_eti} · Passo 2 di 2", "Ora crea la tua verifica",
+            _riquadro(f"{_eti} · Passo 3 di 3", "Ora crea la tua verifica",
                       "In <b>«Altre opzioni»</b> puoi provare:" if _test else "In <b>«Altre opzioni»</b> puoi provare, gratis solo per questa verifica:",
                       ["opzioni", "crea", "storico"],
                       voci=[("🏫", "Logo della scuola", "Nell'intestazione della verifica."),
                             ("📎", "Un tuo file", "Appunti o una verifica da rifare."),
                             ("⚙️", "Esercizi e punteggi", "Quanti esercizi e quanti punti.")],
                       nota="Poi premi <b>«Crea verifica»</b>. Le tue verifiche restano in <b>«Le mie verifiche»</b> (barra laterale: la freccia in alto a sinistra).",
-                      chips=chips, passi=(2, 2))
+                      chips=chips, passi=(3, 3))
     elif dove == "review":
         _riquadro(f"{_eti} · Modifica", "Cambia gli esercizi come preferisci",
                   "Ogni modifica rifà subito il PDF.",
@@ -1525,25 +1539,20 @@ def _dialogo_benvenuto() -> None:
     """Pop-up della prima visita: cosa offre VerificAI (poche parole) e perché conviene dare più informazioni."""
     _stile_dialogo()
     _tx, _t2, _ac = T["text"], T["text2"], T["accent"]
-    _vantaggi = [("📄", "PDF perfetto", "Impaginato, con punteggi e grafici, pronto da stampare."),
-                 ("📝", "Anche in Word", "Un file modificabile come preferisci."),
-                 ("✍️", "Parti da ciò che hai", "Una descrizione, i tuoi appunti o una verifica già fatta."),
-                 ("🏫", "Con il tuo logo", "L'intestazione della tua scuola, in cima a ogni verifica.")]
+    _vie = [("✍️", "Da una descrizione", "Scrivi l'argomento: gli esercizi li scrive VerificAI."),
+            ("📄", "Dalla tua verifica", "Caricala: la rifacciamo identica, impaginata bene.")]
     _tessere = "".join(
-        f'<div style="background:{T["bg2"]};border:1.5px solid {T["border"]};border-radius:14px;padding:.8rem .95rem;">'
-        f'<div style="font-size:1.35rem;line-height:1;">{ic}</div>'
-        f'<div style="font-family:DM Sans,sans-serif;font-weight:800;color:{_tx};margin:.3rem 0 .1rem;">{t}</div>'
-        f'<div style="font-family:DM Sans,sans-serif;color:{_t2};font-size:.88rem;line-height:1.35;">{d}</div></div>'
-        for ic, t, d in _vantaggi)
+        f'<div style="background:{T["bg2"]};border:1.5px solid {T["border"]};border-radius:14px;padding:1rem 1.1rem;">'
+        f'<div style="font-size:1.6rem;line-height:1;">{ic}</div>'
+        f'<div style="font-family:DM Sans,sans-serif;font-weight:800;color:{_tx};font-size:1.05rem;margin:.45rem 0 .2rem;">{t}</div>'
+        f'<div style="font-family:DM Sans,sans-serif;color:{_tx};opacity:.78;font-size:.93rem;line-height:1.4;">{d}</div></div>'
+        for ic, t, d in _vie)
     st.markdown(
-        f'<div style="font-family:DM Sans,sans-serif;color:{_tx};font-size:1.08rem;font-weight:700;line-height:1.35;margin-bottom:.8rem;">'
-        f'Verifiche perfette in pochi minuti: scrivi l\'argomento, scarica PDF o Word.</div>'
-        f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;">{_tessere}</div>'
-        f'<div style="margin-top:1rem;padding:.8rem 1rem;border-radius:14px;background:#FEF3C7;border:1.5px solid #FCD34D;'
-        f'font-family:DM Sans,sans-serif;color:#78350F;line-height:1.45;font-size:.93rem;">'
-        f'<b>💡 Più informazioni dai, meglio viene.</b> Invece di «Equazioni di secondo grado», scrivi: '
-        f'«Equazioni di secondo grado, 2ª liceo. Parti dal calcolo diretto, poi un vero o falso, un problema di vita quotidiana '
-        f'e un grafico. Numeri interi.»</div>',
+        f'<div style="font-family:DM Sans,sans-serif;color:{_tx};font-size:1.1rem;font-weight:700;margin-bottom:.8rem;">'
+        f'Due modi per cominciare:</div>'
+        f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;">{_tessere}</div>'
+        f'<div style="font-family:DM Sans,sans-serif;color:{_t2};font-size:.9rem;margin-top:.9rem;">'
+        f'Poi, da qualsiasi verifica: Fila B, versione BES/DSA, soluzioni e Word.</div>',
         unsafe_allow_html=True)
     # chiudere con la X conta come visto: il cookie si scrive appena la finestra si apre
     components.html('<script>try{window.parent.document.cookie="vf_benvenuto=1; max-age=31536000; path=/; SameSite=Lax";}catch(e){}</script>', height=0)
@@ -3900,8 +3909,7 @@ def _render_stage_input():
 
     # In cima, sopra il riquadro di benvenuto: attesa della generazione ed eventuale errore dell'ultimo tentativo
     _prog_ph_b = st.empty()
-    if _modo == "crea":
-        _banner_piano("input")
+    _banner_piano("input")
 
     _esito = st.session_state.pop("_esito_gen", None)
     if _esito:
