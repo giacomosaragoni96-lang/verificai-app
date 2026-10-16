@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 
 from stili_verifica import STILI, STILE_PREDEFINITO, stili_disponibili, descrizione_stile, cambia_stile
 from piano_verifica import numero_esercizi_richiesto
+import impagina
 from esercizio_foto import leggi_esercizi_da_foto, correggi_esercizio, stato_esercizio, blocco_latex, riassunto_per_prompt
 from ai_client import crea_modello, configura as configura_ai, riepilogo_uso, numero_chiamate, chiamate_da
 
@@ -2672,6 +2673,203 @@ def _render_le_tue_verifiche():
             st.session_state["_storico_mostra"] = _n_mostra + 8
             st.rerun()
 
+_MAX_LETTURE_IMP = 6       # letture di verifiche per sessione (ognuna sono due chiamate all'AI)
+
+
+def _azzera_impagina() -> None:
+    st.session_state["_imp"] = None
+    st.session_state["_imp_prev"] = {}
+    st.session_state["_imp_ciclo"] = st.session_state.get("_imp_ciclo", 0) + 1
+
+
+def _anteprima_impaginata(esercizi, titolo, materia, mostra, tot, con_spazio, fedeli):
+    """(PDF, immagini delle pagine) di come verrà la verifica; in cache per contenuto. Niente AI: solo impaginazione."""
+    cache = st.session_state.setdefault("_imp_prev", {})
+    chiave = hashlib.md5(repr((
+        [e.get("latex") for e in esercizi], [e.get("titolo") for e in esercizi], titolo, materia, mostra, tot, sorted(con_spazio), fedeli,
+        st.session_state.get("_stile_verifica") if _is_admin else None)).encode("utf-8")).hexdigest()
+    if chiave not in cache:
+        if len(cache) > 4:
+            cache.clear()
+        v = impagina.genera_da_trascrizione(esercizi, titolo, materia, mostra, tot, mostra, stile=(st.session_state.get("_stile_verifica") if _is_admin else None),
+                                            con_spazio_figura=con_spazio, punti_fedeli=fedeli)
+        pdf = v["A"].get("pdf")
+        imgs, _ = pdf_to_images_bytes(pdf) if pdf else (None, None)
+        cache[chiave] = (pdf, imgs or [])
+    return cache[chiave]
+
+
+def _render_impagina() -> None:
+    """
+    «Impagina la mia verifica»: il docente carica il PDF o le foto di una verifica scritta o impaginata male; si rifanno gli esercizi IDENTICI
+    (lettura + secondo controllo, impagina.py), il docente confronta con l'originale e conferma o corregge, poi la verifica entra nel flusso
+    normale (Fila B, BES/DSA, soluzioni, Word). Solo interfaccia: lettura e impaginazione stanno in impagina.py.
+    """
+    dati = st.session_state.get("_imp")
+    st.markdown(
+        f'<div style="font-family:DM Sans,sans-serif;margin:.2rem 0 .9rem;">'
+        f'<div style="font-size:1.15rem;font-weight:800;color:{T["text"]};">Hai già la tua verifica? Impaginala bene in un minuto</div>'
+        f'<div style="font-size:.92rem;color:{T["text2"]};margin-top:.25rem;line-height:1.5;">Carica il PDF o le foto, anche screenshot messi insieme: '
+        f'rifaccio gli esercizi identici, con intestazione, punteggi e logo della tua scuola. Poi da quella puoi creare la Fila B, la versione '
+        f'BES/DSA, le soluzioni e il Word.</div></div>', unsafe_allow_html=True)
+    if _pro_bloccato("materiale") and not dati:
+        st.caption("Impaginare la tua verifica " + ("è una funzione del piano Pro." if PREZZI_VISIBILI
+                                                    else "è una delle funzioni complete, da sbloccare con il questionario."))
+        _pulsante_pro("materiale", "pro_impagina", "Impagina la tua verifica con il piano Pro")
+        return
+
+    _mat_list = [m for m in MATERIE if "Altra" not in m]
+    if not dati:
+        _files = st.file_uploader("Carica la tua verifica (PDF o foto)", type=["pdf", "png", "jpg", "jpeg", "webp"], accept_multiple_files=True,
+                                  key=f"imp_up_{st.session_state.get('_imp_ciclo', 0)}",
+                                  help="Fino a 8 file. Va bene anche un PDF fatto di screenshot. Foto dritte e leggibili.")
+        _cm, _cs = st.columns(2, gap="small")
+        _mat_def = st.session_state.get("sel_materia_b") if st.session_state.get("sel_materia_b") in _mat_list else "Matematica"
+        _materia = _cm.selectbox("Materia", _mat_list, index=_mat_list.index(_mat_def) if _mat_def in _mat_list else 0, key="imp_materia")
+        _scu_def = st.session_state.get("sel_scuola_b") if st.session_state.get("sel_scuola_b") in SCUOLE else SCUOLE[0]
+        _scuola = _cs.selectbox("Scuola", SCUOLE, index=SCUOLE.index(_scu_def), key="imp_scuola")
+        st.text_area("Vuoi cambiare qualcosa? (facoltativo)", key="imp_richiesta", height=90, max_chars=600,
+                     placeholder="Se non scrivi niente la verifica resta identica, solo impaginata bene. Oppure: «togli l'esercizio 4», "
+                                 "«aggiungi un esercizio sulle disequazioni», «semplifica l'ultimo»…")
+        if _files and st.button("Leggi e impagina", key="imp_leggi", type="primary", icon=":material/auto_fix_high:", use_container_width=True,
+                                disabled=_limite or _blocco_conteggio):
+            if st.session_state.get("_imp_n", 0) >= _MAX_LETTURE_IMP:
+                st.warning("Hai già letto diverse verifiche in questa sessione: riprova più tardi.")
+                return
+            _imm = [{"data": f.getvalue(), "mime_type": f.type or "image/jpeg", "name": f.name} for f in _files]
+            with st.spinner("Leggo la tua verifica e controllo di averla copiata bene… ci vuole circa un minuto."):
+                _ris = impagina.leggi_verifica(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, _materia, _scuola)
+            st.session_state["_imp_n"] = st.session_state.get("_imp_n", 0) + 1
+            _registra_evento("impagina")
+            if _ris["ok"]:
+                st.session_state["_imp"] = {"immagini": _imm, "esercizi": _ris["esercizi"], "titolo": _ris["titolo"], "materia": _materia,
+                                            "scuola": _scuola, "richiesta": st.session_state.get("imp_richiesta", "")}
+                st.session_state["_imp_prev"] = {}
+                st.session_state["imp_titolo"] = _ris["titolo"]
+                st.rerun()
+            st.warning(_ris["messaggio"], icon="📄")
+        return
+
+    # ── Lettura fatta: confronto con l'originale e conferma ──
+    _imm, _esercizi, _materia, _scuola = dati["immagini"], dati["esercizi"], dati["materia"], dati["scuola"]
+    _probl = {i: (motivo, nonrip) for i, motivo, nonrip in impagina.problemi_per_esercizio(_esercizi)}
+    st.success(f"Ho letto {len(_esercizi)} esercizi. Confrontali con la tua verifica qui sotto: i numeri contano.", icon="✅")
+    st.text_input("Titolo della verifica", key="imp_titolo", placeholder="Es.: Equazioni di secondo grado (facoltativo)")
+
+    _inclusi, _spazio, _orig_idx = [], set(), []
+    for _i, _ex in enumerate(_esercizi):
+        with st.container(border=True):
+            _t = (_ex.get("titolo") or "").strip()
+            st.markdown(f"**Esercizio {_i + 1}**" + (f" · {_t}" if _t else ""))
+            if _i in _probl:
+                _mot, _nonrip = _probl[_i]
+                st.warning(_mot, icon="⚠️")
+                if _nonrip and st.toggle("Tienilo con uno spazio vuoto al posto della figura", value=False, key=f"imp_spazio_{_i}"):
+                    _spazio.add(len(_inclusi))
+                    _inclusi.append(_ex)
+                    _orig_idx.append(_i)
+                else:
+                    st.caption("Per ora non è nella verifica." if _nonrip else "Per ora non è nella verifica: correggilo qui sotto.")
+                continue
+            if _ex.get("correzioni"):
+                st.info("Ricontrollando le pagine ho corretto:\n" + "\n".join(f"- {c}" for c in _ex["correzioni"]), icon="🔎")
+            if _ex.get("dubbi"):
+                st.warning("Controlla questi punti sull'originale:\n" + "\n".join(f"- {d}" for d in _ex["dubbi"]), icon="👀")
+            elif _ex.get("ricontrollato"):
+                st.caption("✓ Letto e ricontrollato sulle pagine.")
+            _inclusi.append(_ex)
+            _orig_idx.append(_i)
+
+    # punteggi
+    _rip = impagina.punti_rilevati(_inclusi)
+    _cop = _rip["con_punti"] / max(1, _rip["richieste"])
+    _SEN, _FOG, _ASS = "Senza punteggi", "Come sul foglio", "Li assegno io (100 punti)"
+    _opz = [_FOG, _SEN, _ASS] if _cop >= .6 else [_SEN, _ASS]
+    _modo = st.radio("Punteggi", _opz, horizontal=True, key=f"imp_punti_{len(_opz)}")
+    _mostra, _tot, _fedeli, _lista = True, 100, False, _inclusi
+    if _modo == _FOG:
+        _lista, _tot, _fatt = impagina.punti_del_foglio(_inclusi)
+        _fedeli = True
+        if _fatt > 1:
+            st.caption(f"I punteggi del foglio avevano i decimali: li ho moltiplicati per {_fatt} (totale {_tot}).")
+        elif _tot:
+            st.caption(f"Totale sul foglio: {_tot} punti.")
+    elif _modo == _SEN:
+        _mostra = False
+    else:
+        _lista = impagina.senza_punti(_inclusi)
+
+    # anteprima accanto all'originale
+    _ca, _cb = st.columns(2, gap="medium")
+    with _ca:
+        st.caption("La tua verifica")
+        for _m in _imm[:2]:
+            try:
+                if (_m.get("mime_type") or "").startswith("image/"):
+                    st.image(_m["data"], use_container_width=True)
+                else:
+                    _pp, _ = pdf_to_images_bytes(_m["data"])
+                    for _p in (_pp or [])[:2]:
+                        st.image(_p, use_container_width=True)
+            except Exception:
+                st.caption("(anteprima non disponibile)")
+    with _cb:
+        st.caption("Come verrà")
+        if _lista:
+            with st.spinner("Preparo l'impaginazione…"):
+                _pdf_p, _imgs_p = _anteprima_impaginata(_lista, st.session_state.get("imp_titolo", ""), _materia, _mostra, _tot, _spazio, _fedeli)
+            for _p in _imgs_p[:3]:
+                st.image(_p, use_container_width=True)
+            if not _pdf_p:
+                st.warning("Non riesco a impaginarla: prova a correggere gli esercizi segnalati o a rifare le foto.")
+        else:
+            st.warning("Nessun esercizio da impaginare: correggi quelli segnalati o ricomincia.")
+
+    with st.expander("Qualcosa non è uguale all'originale? Correggilo", expanded=False):
+        _txt = st.text_input("Cosa non va", key="imp_corr_t", label_visibility="collapsed",
+                             placeholder="Es.: nell'esercizio 2 b) l'esponente è 3, non 2")
+        if st.button("Correggi", key="imp_corr_b"):
+            with st.spinner("Riguardo le pagine…"):
+                _cor = impagina.correggi_verifica(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, _esercizi, _txt)
+            if _cor["ok"]:
+                dati["esercizi"] = _cor["esercizi"]
+                st.session_state["_imp_prev"] = {}
+                st.rerun()
+            st.warning(_cor["messaggio"])
+    if (dati.get("richiesta") or "").strip():
+        st.caption("Le tue richieste verranno applicate quando crei la verifica: «" + dati["richiesta"].strip()[:160] + "»")
+
+    _cc1, _cc2 = st.columns([3, 1], gap="small")
+    if _cc1.button("Crea la verifica", key="imp_crea", type="primary", icon=":material/check_circle:", use_container_width=True,
+                   disabled=(not _lista) or _limite or _blocco_conteggio):
+        st.session_state["_imp_crea"] = {
+            "esercizi": _lista, "titolo": st.session_state.get("imp_titolo", ""), "materia": _materia, "scuola": _scuola,
+            "mostra_punteggi": _mostra, "punti_totali": _tot, "con_spazio": sorted(_spazio), "richiesta": dati.get("richiesta", ""),
+            "fedeli": _fedeli,
+        }
+        st.rerun()
+    if _cc2.button("✕ Ricomincia", key="imp_togli", use_container_width=True):
+        _azzera_impagina()
+        st.rerun()
+
+
+def _esegui_impagina(p: dict, prog_ph) -> None:
+    """Crea la verifica impaginata (stesso percorso della generazione: storico, logo, passaggio alla schermata del risultato)."""
+    def _gen(model_obj, avanza):
+        return impagina.genera_da_trascrizione(
+            p["esercizi"], p["titolo"], p["materia"], p["mostra_punteggi"], p["punti_totali"], p["mostra_punteggi"],
+            stile=(st.session_state.get("_stile_verifica") if _is_admin else None), con_spazio_figura=set(p.get("con_spazio") or []),
+            richiesta=p.get("richiesta", ""), model=model_obj.per("modifica") if hasattr(model_obj, "per") else model_obj, on_progress=avanza,
+            punti_fedeli=p.get("fedeli", False))
+
+    st.session_state["input_percorso"] = "IMPAGINA"
+    _lancia_generazione(
+        materia_scelta=p["materia"], argomento=p["titolo"] or p["materia"], difficolta=p["scuola"], durata_scelta="1 ora",
+        num_esercizi_totali=len(p["esercizi"]), punti_totali=p["punti_totali"], mostra_punteggi=p["mostra_punteggi"],
+        con_griglia=p["mostra_punteggi"], note_generali="", s_es="", imgs_es=[], prog_placeholder=prog_ph, generatore=_gen,
+    )
+
+
 _BES_RIDUCI = "Meno richieste (circa il 20% in meno)"
 _BES_PERSONALIZZA = "Lo descrivo io"
 
@@ -3365,6 +3563,7 @@ def _lancia_generazione(
     prog_placeholder=None,         # st.empty() creato nel form, vicino al pulsante
     piano_struttura=None,          # {"primo_base", "eccellenza"}: con la struttura-tipo si pianifica prima di scrivere
     stile=None,                    # stile grafico del PDF (stili_verifica.py): solo admin, in prova
+    generatore=None,               # callable(modello, on_progress) -> risultato come genera_verifica (verifica impaginata invece che scritta)
     eccellenza=False,              # c'è l'esercizio «per l'eccellenza» (ultimo): se il modello lo omette, la generazione lo aggiunge
     esercizi_fissi=None,           # esercizi del libro scelti dal docente (esercizio_foto), inseriti identici nella verifica
 ):
@@ -3473,17 +3672,20 @@ def _lancia_generazione(
     try:
         model_obj = crea_modello(_modello_id_eff)
         _n_chiamate_prima = numero_chiamate()
-        ris = genera_verifica(
-            model=model_obj, materia=materia_scelta, argomento=argomento,
-            difficolta=difficolta, calibrazione=calibrazione, durata=durata_scelta,
-            num_esercizi=num_esercizi_totali, punti_totali=punti_totali,
-            mostra_punteggi=mostra_punteggi, con_griglia=con_griglia,
-            doppia_fila=False, bes_dsa=False, perc_ridotta=20,
-            bes_dsa_b=False, genera_soluzioni=False,
-            note_generali=note_generali, istruzioni_esercizi=s_es,
-            immagini_esercizi=imgs_es, file_ispirazione=file_ispirazione,
-            on_progress=_avanza, piano_struttura=piano_struttura, esercizi_fissi=esercizi_fissi, eccellenza=eccellenza, stile=stile,
-        )
+        if generatore is not None:
+            ris = generatore(model_obj, _avanza)
+        else:
+            ris = genera_verifica(
+                model=model_obj, materia=materia_scelta, argomento=argomento,
+                difficolta=difficolta, calibrazione=calibrazione, durata=durata_scelta,
+                num_esercizi=num_esercizi_totali, punti_totali=punti_totali,
+                mostra_punteggi=mostra_punteggi, con_griglia=con_griglia,
+                doppia_fila=False, bes_dsa=False, perc_ridotta=20,
+                bes_dsa_b=False, genera_soluzioni=False,
+                note_generali=note_generali, istruzioni_esercizi=s_es,
+                immagini_esercizi=imgs_es, file_ispirazione=file_ispirazione,
+                on_progress=_avanza, piano_struttura=piano_struttura, esercizi_fissi=esercizi_fissi, eccellenza=eccellenza, stile=stile,
+            )
         st.session_state["_autoverifica"] = ris.get("_autoverifica")
         if ris.get("_debug"):        # materiale per capire cosa ha fatto ogni modello: lo mostra solo l'admin; per tutti serve alle segnalazioni
             _dbg = dict(ris["_debug"])
@@ -3590,6 +3792,8 @@ def _lancia_generazione(
             durata=next((n for n, v in DURATE.items() if v["durata"] == durata_scelta), None),
         )
 
+        if generatore is not None:
+            _azzera_impagina()            # la verifica del docente è diventata una verifica normale: la prossima riparte da zero
         if esercizi_fissi:
             _azzera_esercizio_foto()          # l'esercizio del libro è entrato in questa verifica: la prossima riparte da zero
         # ── Vai alla schermata del risultato (anteprima + download + modifica)
@@ -3640,9 +3844,27 @@ def _render_stage_input():
                     riprova_flag="_riprova_genera", riprova_key="riprova_genera",
                 )
 
+    # «Impagina la mia verifica»: il docente ha confermato, si crea (la pagina riparte da qui, senza il form)
+    _imp_crea = st.session_state.pop("_imp_crea", None)
+    if _imp_crea:
+        _esegui_impagina(_imp_crea, _prog_ph_b)
+        return
+
+    # Due modi di cominciare: scrivere cosa si vuole oppure partire dalla propria verifica. Le schede stanno in un contenitore svuotabile
+    # come il form: durante la generazione sparisce tutto e resta solo la card di attesa.
+    _tabs_ph = st.empty()
+    with _tabs_ph.container():
+        _tab_crea, _tab_imp = st.tabs(["✍️ Crea da una descrizione", "📄 Impagina la mia verifica"])
+    with _tab_imp:
+        try:
+            _render_impagina()
+        except Exception as _e_imp:      # funzione accessoria: un suo errore non deve mai bloccare il form principale
+            logger.warning("Impagina: %s", _e_imp)
+            st.warning("Questa funzione non è disponibile in questo momento. Riprova tra poco.")
     # Il form sta in un contenitore svuotabile: durante la generazione sparisce, così un clic
     # o un tocco per sbaglio non riavvia la pagina e non fa perdere la richiesta.
-    _form_ph = st.empty()
+    with _tab_crea:
+        _form_ph = st.empty()
     with _form_ph.container():
         (
             argomento, materia_scelta, difficolta,
@@ -3761,7 +3983,7 @@ def _render_stage_input():
     else:
         imgs_es_finale = imgs_es
 
-    _form_ph.empty()   # da qui il form non c'è più: resta solo la card di attesa
+    _tabs_ph.empty()   # da qui il form non c'è più: resta solo la card di attesa
     _lancia_generazione(
         materia_scelta=materia_scelta,
         argomento=argomento,
