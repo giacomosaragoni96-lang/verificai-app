@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 from stili_verifica import STILI, STILE_PREDEFINITO, stili_disponibili, descrizione_stile, cambia_stile
 from piano_verifica import numero_esercizi_richiesto
 import impagina
+import profilo
 from esercizio_foto import leggi_esercizi_da_foto, correggi_esercizio, stato_esercizio, blocco_latex, riassunto_per_prompt
 from ai_client import crea_modello, configura as configura_ai, riepilogo_uso, numero_chiamate, chiamate_da
 
@@ -2165,13 +2166,19 @@ def _load_user_verifiche():
 def _elenco_verifiche(user_id: str, refresh: int) -> list:
     """Elenco leggero dello storico (senza il LaTeX, che pesa): una query ogni 2 minuti
     o appena cambia `_storico_refresh` (nuova verifica, rinomina, eliminazione)."""
-    res = supabase_admin.table("verifiche_storico")\
-        .select("id,argomento,materia,scuola,num_esercizi,created_at,percorso_scelto")\
+    for colonne in ("id,argomento,materia,scuola,num_esercizi,created_at,percorso_scelto,classe", "id,argomento,materia,scuola,num_esercizi,created_at,percorso_scelto"):
+        try:
+            res = supabase_admin.table("verifiche_storico")\
+                .select(colonne)\
         .eq("user_id", user_id)\
         .is_("deleted_at", "null")\
         .order("created_at", desc=True)\
         .execute()
-    return res.data or []
+            return res.data or []
+        except Exception:
+            if "classe" not in colonne:
+                raise
+    return []
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -2541,7 +2548,7 @@ def _render_le_tue_verifiche():
     )
 
     # Filtri e ricerca
-    col_search, col_materia, col_ordine = st.columns([3, 2, 2])
+    col_search, col_materia, col_classe, col_ordine = st.columns([3, 2, 2, 2])
 
     with col_search:
         search_query = st.text_input("Cerca", placeholder="Cerca per materia o argomento…")
@@ -2551,6 +2558,9 @@ def _render_le_tue_verifiche():
     with col_materia:
         materia_filter = st.selectbox("Materia", materie_real)
 
+    _classi_elenco = sorted({v.get("classe") for v in verifiche if v.get("classe")})
+    with col_classe:
+        classe_filter = st.selectbox("Classe", ["Tutte"] + _classi_elenco, help="Le classi si impostano dalla pagina della verifica.")
     with col_ordine:
         ordine_filter = st.selectbox("Ordina per", ["Più recenti", "Più vecchie", "Alfabetico", "Materia"])
 
@@ -2565,6 +2575,8 @@ def _render_le_tue_verifiche():
 
     if materia_filter != "Tutte":
         verifiche_filtrate = [v for v in verifiche_filtrate if v.get("materia") == materia_filter]
+    if classe_filter != "Tutte":
+        verifiche_filtrate = [v for v in verifiche_filtrate if v.get("classe") == classe_filter]
 
     # Ordina le verifiche
     if ordine_filter == "Più recenti":
@@ -2596,6 +2608,8 @@ def _render_le_tue_verifiche():
 
         with st.container():
             _col_m, _ico_m = _stile_materia(verifica.get("materia"))
+            _chip_classe = (f'<span style="background:{T["bg2"]};color:{T["text"]};border:1px solid {T["border2"]};padding:.12rem .6rem;border-radius:999px;font-weight:700;font-size:.75rem;">'
+                            f'👥 {_esc(verifica.get("classe"))}</span>' if verifica.get("classe") else "")
             _impag = ('<span style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:.12rem .6rem;border-radius:999px;font-weight:700;font-size:.75rem;">'
                       'Impaginata da te</span>' if verifica.get("percorso_scelto") == "IMPAGINA" else "")
             st.markdown(
@@ -2612,6 +2626,7 @@ def _render_le_tue_verifiche():
                                 {_esc(verifica.get('materia') or 'Sconosciuta')}</span>
                             <span>{_esc(verifica.get('scuola') or 'Scuola non indicata')} · {_esc(verifica.get('num_esercizi') or '?')} esercizi · {_esc(_data_relativa(verifica.get('created_at')))}</span>
                             {_impag}
+                            {_chip_classe}
                         </div>
                     </div>
                 </div>
@@ -2830,6 +2845,7 @@ def _render_impagina() -> None:
         _materia = _cm.selectbox("Materia", _mat_list, index=_mat_list.index(_mat_def) if _mat_def in _mat_list else 0, key="imp_materia", label_visibility="collapsed")
         _scu_def = st.session_state.get("sel_scuola_b") if st.session_state.get("sel_scuola_b") in SCUOLE else SCUOLE[0]
         _scuola = _cs.selectbox("Scuola", SCUOLE, index=SCUOLE.index(_scu_def), key="imp_scuola", label_visibility="collapsed")
+        _selettore_classe()
         st.markdown('<div class="opt-label">Vuoi cambiare qualcosa? (facoltativo)</div>', unsafe_allow_html=True)
         st.text_area("Vuoi cambiare qualcosa? (facoltativo)", key="imp_richiesta", height=90, max_chars=600, label_visibility="collapsed",
                      placeholder="Se non scrivi niente la verifica resta identica, solo impaginata bene. Oppure: «togli l'esercizio 4», "
@@ -2916,6 +2932,7 @@ def _render_impagina() -> None:
                         dati["esercizi"] = impagina.applica_nota(_esercizi, _nota)
                         dati["note"] = [x for y, x in enumerate(dati["note"]) if y != _k_n]
                         st.session_state["_imp_prev"] = {}
+                        _ricorda_conferma("Correzione applicata")
                         st.rerun()
                     if _n2.button("Lascia com'è", key=f"imp_nota_no_{_i}_{_k_n}", type="tertiary"):
                         dati["note"] = [x for y, x in enumerate(dati["note"]) if y != _k_n]
@@ -3094,6 +3111,149 @@ def _blocco_leggibile(latex: str, chiave: str, nome_file: str) -> None:
             cache[h] = _pdf_l
             st.rerun()
         st.warning("Non sono riuscito a creare la versione ad alta leggibilità. Riprova.")
+
+
+# ── Classi e preferenze del docente (profilo.py) ─────────────────────────────────────────────────────────────
+
+def _profilo() -> dict:
+    """Preferenze fisse e classi del docente (si leggono una volta per sessione)."""
+    if "_profilo_dati" not in st.session_state:
+        grezzo = {}
+        if st.session_state.get("utente"):
+            grezzo = _carica_docente_preferenze(st.session_state.utente.id, profilo.CHIAVE)
+        st.session_state["_profilo_dati"] = profilo.pulisci(grezzo)
+    return st.session_state["_profilo_dati"]
+
+
+def _salva_profilo(p: dict) -> None:
+    p = profilo.pulisci(p)
+    st.session_state["_profilo_dati"] = p
+    _salva_docente_preferenze(profilo.CHIAVE, p)
+
+
+def _classi_disponibili() -> list:
+    """Le classi del profilo più quelle già usate nelle verifiche salvate."""
+    try:
+        usate = [v.get("classe") for v in (_elenco_verifiche(st.session_state.utente.id, st.session_state._storico_refresh) if st.session_state.get("utente") else [])]
+    except Exception:
+        usate = []
+    return profilo.nomi_classi(_profilo(), [u for u in usate if u])
+
+
+def _inserisci_storico(riga: dict):
+    """Inserisce la verifica nello storico; se la colonna `classe` non c'è ancora riprova senza (la migrazione si esegue a mano)."""
+    try:
+        return supabase_admin.table("verifiche_storico").insert(riga).execute()
+    except Exception:
+        if "classe" in riga:
+            riga = {k: v for k, v in riga.items() if k != "classe"}
+            return supabase_admin.table("verifiche_storico").insert(riga).execute()
+        raise
+
+
+def _imposta_classe_storico(vid, nome: str) -> bool:
+    """Cambia la classe di una verifica già salvata. False se non riesce (colonna mancante o errore)."""
+    try:
+        supabase_admin.table("verifiche_storico").update({"classe": profilo.pulisci_nome(nome) or None}).eq("id", vid).eq("user_id", st.session_state.utente.id).execute()
+        st.session_state._storico_refresh += 1
+        return True
+    except Exception as e:
+        logger.warning("classe non salvata: %s", e)
+        return False
+
+
+def _ricorda_conferma(testo: str) -> None:
+    """Una conferma che compare in cima alla prossima schermata (sopravvive al rerun), con un segno di spunta animato."""
+    st.session_state["_conferma_dopo"] = testo
+
+
+def _mostra_conferma() -> None:
+    testo = st.session_state.pop("_conferma_dopo", None)
+    if not testo:
+        return
+    st.markdown(
+        "<style>@keyframes cf-pop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}"
+        "@keyframes cf-draw{to{stroke-dashoffset:0}}"
+        "@keyframes cf-via{0%,72%{opacity:1;max-height:4rem;margin-bottom:.6rem}100%{opacity:0;max-height:0;margin:0;padding:0;border-width:0}}"
+        ".cf-box{display:flex;align-items:center;gap:.6rem;justify-content:center;width:fit-content;margin:.2rem auto .6rem;padding:.45rem 1.05rem .45rem .6rem;"
+        "background:#ECFDF5;border:1px solid #86EFAC;color:#166534;border-radius:999px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.92rem;"
+        "box-shadow:0 4px 14px rgba(22,101,52,.14);overflow:hidden;animation:cf-via 4.2s ease forwards}"
+        ".cf-box svg{width:1.55rem;height:1.55rem;animation:cf-pop .45s ease both}"
+        ".cf-box path{stroke-dasharray:24;stroke-dashoffset:24;animation:cf-draw .45s .2s ease forwards}</style>"
+        '<div class="cf-box" role="status"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#16A34A"/>'
+        '<path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        f"<span>{_esc(testo)}</span></div>", unsafe_allow_html=True)
+
+
+@st.dialog("Le mie preferenze e le mie classi", width="large")
+def _dialogo_preferenze() -> None:
+    _stile_dialogo()
+    p = _profilo()
+    st.caption("Si salvano una volta e valgono per ogni verifica. Quello che scrivi nella descrizione ha sempre la precedenza.")
+    note = st.text_area("Preferenze per ogni verifica", value=p.get("note_fisse", ""), height=110, max_chars=profilo.MAX_NOTE,
+                        placeholder="Es.: numeri interi, niente dimostrazioni, ultimo esercizio di eccellenza, linguaggio semplice")
+    st.markdown("**Le mie classi** (scuola e note sono facoltative; una classe scelta nel form precompila la scuola e aggiunge le sue note)")
+    import pandas as _pd
+    base = _pd.DataFrame(p.get("classi") or [{"nome": "", "scuola": "", "note": ""}], columns=["nome", "scuola", "note"])
+    modificato = st.data_editor(
+        base, num_rows="dynamic", hide_index=True, use_container_width=True, key="de_classi",
+        column_config={"nome": st.column_config.TextColumn("Classe", help="Es. 3ªB", max_chars=24, required=True),
+                       "scuola": st.column_config.SelectboxColumn("Scuola", options=[""] + list(SCUOLE)),
+                       "note": st.column_config.TextColumn("Note per questa classe", max_chars=profilo.MAX_NOTE, width="large")})
+    if st.button("Salva", type="primary", icon=":material/check:", use_container_width=True, key="pref_salva"):
+        classi = [{"nome": r["nome"], "scuola": r["scuola"] or "", "note": r["note"] or ""} for r in modificato.fillna("").to_dict("records")]
+        _salva_profilo({"note_fisse": note, "classi": classi})
+        _ricorda_conferma("Preferenze salvate")
+        st.rerun()
+
+
+def _applica_classe_scelta() -> None:
+    """Callback del selettore di classe: ricorda la scelta e precompila la scuola se la classe ne ha una."""
+    nome = st.session_state.get("sel_classe", "")
+    if nome in ("", "＋ Nuova classe…"):
+        st.session_state["_classe_sel"] = None
+        return
+    st.session_state["_classe_sel"] = nome
+    c = profilo.classe(_profilo(), nome)
+    if c and c.get("scuola") in SCUOLE:
+        st.session_state["sel_scuola_b"] = c["scuola"]
+
+
+def _selettore_classe() -> None:
+    """Selettore compatto «Classe» (facoltativo) e accesso alle preferenze. Senza classi resta solo un invito discreto."""
+    classi = _classi_disponibili()
+    corrente = st.session_state.get("_classe_sel") or ""
+    opzioni = [""] + classi + ["＋ Nuova classe…"]
+    if corrente and corrente not in opzioni:
+        opzioni.insert(1, corrente)
+    st.markdown('<div class="opt-label">Classe (facoltativo)</div>', unsafe_allow_html=True)
+    _a, _b = st.columns([3, 2], gap="small", vertical_alignment="center")
+    st.session_state.setdefault("sel_classe", corrente)
+    _a.selectbox("Classe", opzioni, key="sel_classe", label_visibility="collapsed", on_change=_applica_classe_scelta,
+                 format_func=lambda x: x or "Nessuna classe", help="Serve a ritrovare le verifiche per classe e a usare le note della classe.")
+    if st.session_state.get("sel_classe") == "＋ Nuova classe…":
+        nuova = _a.text_input("Nome della classe", key="nuova_classe_txt", placeholder="Es. 3ªB", max_chars=24, label_visibility="collapsed")
+        if profilo.pulisci_nome(nuova):
+            st.session_state["_classe_sel"] = profilo.pulisci_nome(nuova)
+    if _b.button("Le mie preferenze", key="apri_preferenze", type="tertiary", icon=":material/tune:"):
+        _dialogo_preferenze()
+
+
+@st.dialog("Classe di questa verifica")
+def _dialogo_classe_finale(vid) -> None:
+    classi = _classi_disponibili()
+    attuale = st.session_state.get("_classe_sel") or ""
+    scelta = st.selectbox("Classe", [""] + classi + ["＋ Nuova classe…"], index=([""] + classi).index(attuale) if attuale in classi else 0,
+                          format_func=lambda x: x or "Nessuna classe", key="cf_sel")
+    nuova = st.text_input("Nome della nuova classe", key="cf_nuova", placeholder="Es. 3ªB", max_chars=24) if scelta == "＋ Nuova classe…" else ""
+    nome = profilo.pulisci_nome(nuova) if scelta == "＋ Nuova classe…" else scelta
+    if st.button("Salva", type="primary", use_container_width=True, key="cf_salva", icon=":material/check:"):
+        if vid and _imposta_classe_storico(vid, nome):
+            st.session_state["_classe_sel"] = nome or None
+            _ricorda_conferma(f"Classe {nome}" if nome else "Classe tolta")
+        else:
+            st.session_state["_avviso_dopo"] = "Non sono riuscito a salvare la classe (se l'errore si ripete, avvisa l'amministratore)."
+        st.rerun()
 
 
 _MAX_LETTURE_FOTO = 8      # letture di foto per sessione (ognuna sono due chiamate all'AI)
@@ -3354,7 +3514,7 @@ def _render_percorso_b_form(_prog_placeholder):
             _scu_ora = st.session_state.get("sel_scuola_b", SCUOLE[_scu_idx])
             _c_arg = st.container(key="arg_blocco")      # l'argomento sta in cima; qui sotto materia e scuola come impostazioni
             if _udef.get("materia") and _udef.get("scuola"):
-                _box_ms = st.expander(f"{_mat_ora} · {_scu_ora}  —  cambia", expanded=False, icon=":material/school:")
+                _box_ms = st.expander(f"{_mat_ora} · {_scu_ora}" + (f" · {st.session_state['_classe_sel']}" if st.session_state.get("_classe_sel") else "") + "  —  cambia", expanded=False, icon=":material/school:")
             else:
                 _box_ms = st.container()
             with _box_ms:
@@ -3380,6 +3540,8 @@ def _render_percorso_b_form(_prog_placeholder):
                     help="Tipo di scuola e livello. Se hai caricato un file, viene rilevato automaticamente.",
                     label_visibility="collapsed", key="sel_scuola_b",
                 )
+            with _box_ms:
+                _selettore_classe()
 
             # Section header rimosso per evitare ripetizioni
             _auto_arg = _info_cons.get("contenuto_argomento", "")
@@ -3966,7 +4128,7 @@ def _lancia_generazione(
         _prog.empty()
 
         try:
-            _ris_ins = supabase_admin.table("verifiche_storico").insert({
+            _ris_ins = _inserisci_storico({
                 "user_id":        st.session_state.utente.id,
                 "materia":        materia_scelta,
                 "argomento":      ris["titolo"],
@@ -3979,7 +4141,8 @@ def _lancia_generazione(
                 # ── Campi percorso/upload (recuperati dallo session_state)
                 "percorso_scelto": st.session_state.get("input_percorso"),
                 "file_mode":       st.session_state.get("file_mode"),
-            }).execute()
+                "classe":          st.session_state.get("_classe_sel"),
+            })
             st.session_state._storico_refresh += 1
             # id della riga appena creata: serve per aggiungerle poi Fila B e BES/DSA
             st.session_state["_storico_id"] = (_ris_ins.data or [{}])[0].get("id")
@@ -4142,7 +4305,7 @@ def _render_stage_input():
         )
         return
 
-    _note_finale = note_extra
+    _note_finale = profilo.note_per_generazione(_profilo(), st.session_state.get("_classe_sel"), note_extra)
 
     # L'esercizio «per l'eccellenza» si aggiunge a quelli scelti (e c'è solo se il docente non ha scelto gli esercizi a mano)
     # PRECEDENZA AL DOCENTE: se nella descrizione dice quanti esercizi vuole, vale quel numero (totale, eccellenza compresa se la cita)
@@ -5739,7 +5902,7 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
         _salva_variante_storico("latex_a", st.session_state.verifiche["A"].get("latex"))
         st.session_state["_mod_rapida_pulisci"] = True
         st.session_state["_mod_rapida_ok"] = True
-        st.toast("Verifica modificata!", icon="✅")
+        _ricorda_conferma("Verifica modificata")
         st.rerun()
     # qualcosa non è andato: la verifica torna com'era
     st.session_state.verifiche["A"].clear()
@@ -5828,6 +5991,10 @@ def _render_stage_final():
     )
 
     _banner_piano("final")
+    _fa, _fb, _fc = st.columns([3, 2, 3])
+    if _fb.button(("Classe: " + st.session_state["_classe_sel"]) if st.session_state.get("_classe_sel") else "Aggiungi la classe", key="final_classe",
+                  type="tertiary", icon=":material/groups:", use_container_width=True, help="Serve a ritrovare la verifica per classe."):
+        _dialogo_classe_finale(st.session_state.get("_storico_id"))
 
     # ── Avvisi: tutti nello stesso punto, sopra le azioni ──
     with st.container(key="avvisi_final"):
@@ -6939,6 +7106,7 @@ if _prev_stage != _current_stage:
 
 if not _share_view_active:
     _current = _current_stage
+    _mostra_conferma()
     if _current == STAGE_PREVIEW:   # sessioni aperte prima dell'unione di anteprima e download
         st.session_state.stage = _current = STAGE_FINAL
     if   _current == STAGE_INPUT:   _render_stage_input()
