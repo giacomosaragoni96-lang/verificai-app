@@ -46,7 +46,9 @@
   .via { background:#fff; border:1px solid var(--bordo); border-radius:20px; padding:1.3rem 1.3rem 1.2rem; box-shadow:0 8px 22px rgba(15,23,42,.06); position:relative; }
   .via.nuova { border-color:#FCD34D; box-shadow:0 10px 26px rgba(245,158,11,.16); }
   .via.nuova { overflow:hidden; background:linear-gradient(160deg,#FFFDF5,#FEF3C7); }
-  .via .tag { position:absolute; top:1.75rem; right:-3.35rem; width:12.5rem; transform:rotate(45deg); text-align:center; background:linear-gradient(135deg,#F59E0B,#D97706); color:#fff; font-size:.68rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; padding:.3rem 0; box-shadow:0 3px 8px rgba(120,53,15,.28); }
+  .via .tag { position:absolute; top:0; right:1.5rem; filter:drop-shadow(0 5px 6px rgba(146,64,14,.28)); }
+  .via .tag span { display:block; width:4.6rem; padding:.7rem 0 1.55rem; text-align:center; color:#fff; font-size:.58rem; font-weight:800; letter-spacing:.1em; line-height:1.35; text-transform:uppercase;
+    background:linear-gradient(180deg,#FBBF24 0%,#F59E0B 55%,#D97706 100%); clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - .85rem),0 100%); text-shadow:0 1px 1px rgba(120,53,15,.35); }
   .via .i { font-size:1.9rem; line-height:1; margin-bottom:.5rem; }
   .via b { display:block; font-size:1.1rem; margin-bottom:.25rem; letter-spacing:-.01em; }
   .via span { color:var(--grigio); font-size:.95rem; display:block; }
@@ -90,7 +92,7 @@
         <span>Scrivi l'argomento e come la vuoi. Gli esercizi, con punteggi e grafici, li scrive VerificAI. Puoi partire anche dai tuoi appunti o includere un esercizio del tuo libro con una foto.</span>
       </div>
       <div class="via nuova">
-        <div class="tag">Più richiesto</div>
+        <div class="tag"><span>★<br>Più<br>richiesto</span></div>
         <div class="i">📄</div>
         <b>Dalla tua verifica</b>
         <span>Hai una verifica fatta male, magari con screenshot messi insieme? Caricala: te la rifacciamo identica, impaginata bene, con il logo della tua scuola.</span>

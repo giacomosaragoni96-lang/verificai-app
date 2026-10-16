@@ -4918,9 +4918,14 @@ font-family: 'DM Sans', sans-serif;
     box-shadow: 0 10px 28px rgba(245,158,11,.18) !important;
   }}
   html body .stApp .st-key-scelta_impagina .sc-ribbon {{
-    position: absolute; top: 1.05rem; right: -2.6rem; width: 9.6rem; transform: rotate(45deg); text-align: center;
-    background: linear-gradient(135deg, #F59E0B, #D97706); color: #fff; font-family: 'DM Sans', sans-serif; font-size: .66rem; font-weight: 800;
-    letter-spacing: .12em; text-transform: uppercase; padding: .3rem 0; box-shadow: 0 3px 8px rgba(120,53,15,.28); z-index: 2;
+    position: absolute; top: -1.5rem; right: 1.35rem; z-index: 2; filter: drop-shadow(0 5px 6px rgba(146,64,14,.28));
+  }}
+  html body .stApp .st-key-scelta_impagina .sc-ribbon span {{
+    display: block; width: 4.4rem; padding: .62rem 0 1.45rem; text-align: center; color: #fff !important; -webkit-text-fill-color: #fff !important;
+    font-family: 'DM Sans', sans-serif; font-size: .56rem; font-weight: 800; letter-spacing: .1em; line-height: 1.35; text-transform: uppercase;
+    background: linear-gradient(180deg, #FBBF24 0%, #F59E0B 55%, #D97706 100%);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - .8rem), 0 100%);
+    text-shadow: 0 1px 1px rgba(120,53,15,.35);
   }}
 
 {_prof}
