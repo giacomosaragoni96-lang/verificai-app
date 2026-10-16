@@ -4912,6 +4912,17 @@ font-family: 'DM Sans', sans-serif;
   }}
   html body .stApp :is(.st-key-stile_anteprima, .st-key-home_indietro):not(#vf) button:hover * {{ color: {T['text']} !important; -webkit-text-fill-color: {T['text']} !important; text-decoration: underline; }}
 
+  /* Scheda «Impagina la mia verifica»: sfondo oro tenue e un nastro diagonale nell'angolo */
+  html body .stApp .st-key-scelta_impagina {{
+    overflow: hidden !important; background: linear-gradient(160deg, #FFFDF5 0%, #FEF3C7 100%) !important; border-color: #FCD34D !important;
+    box-shadow: 0 10px 28px rgba(245,158,11,.18) !important;
+  }}
+  html body .stApp .st-key-scelta_impagina .sc-ribbon {{
+    position: absolute; top: 1.05rem; right: -2.6rem; width: 9.6rem; transform: rotate(45deg); text-align: center;
+    background: linear-gradient(135deg, #F59E0B, #D97706); color: #fff; font-family: 'DM Sans', sans-serif; font-size: .66rem; font-weight: 800;
+    letter-spacing: .12em; text-transform: uppercase; padding: .3rem 0; box-shadow: 0 3px 8px rgba(120,53,15,.28); z-index: 2;
+  }}
+
 {_prof}
 </style>
 """
