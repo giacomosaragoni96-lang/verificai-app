@@ -75,6 +75,30 @@ _RE_NOTA = re.compile(r"===\s*NOTA\s*===(.*?)(?:===\s*FINE\s*===|(?====\s*NOTA\s
 MAX_NOTE = 5
 
 
+_SUB = str.maketrans("0123456789+-=()", "₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎")
+_SUP = str.maketrans("0123456789+-=()n", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿ")
+_SIMBOLI = {r"\cdot": "·", r"\times": "×", r"\le": "≤", r"\leq": "≤", r"\ge": "≥", r"\geq": "≥", r"\neq": "≠", r"\pi": "π", r"\infty": "∞",
+            r"\pm": "±", r"\to": "→", r"\rightarrow": "→", r"\Rightarrow": "⇒", r"\in": "∈", r"\mathbb{R}": "ℝ", r"\approx": "≈", r"\ldots": "…", r"\dots": "…",
+            r"\alpha": "α", r"\beta": "β", r"\lambda": "λ", r"\Delta": "Δ", r"\displaystyle": "", r"\left": "", r"\right": "", r"\,": " ", r"\;": " "}
+
+
+def testo_leggibile(t: str) -> str:
+    """Un testo con un po' di LaTeX (formule dentro \\( \\), x_1, \\frac…) in testo semplice da leggere in una nota."""
+    t = t or ""
+    for _ in range(3):
+        t = re.sub(r"\\frac\{([^{}]*)\}\{([^{}]*)\}", lambda m: "(" + m.group(1) + ")/(" + m.group(2) + ")", t)
+    t = re.sub(r"\\sqrt\{([^{}]*)\}", lambda m: "√(" + m.group(1) + ")", t)
+    for k in sorted(_SIMBOLI, key=len, reverse=True):
+        t = t.replace(k, _SIMBOLI[k])
+    t = re.sub(r"\\[()\[\]]|\$", "", t)
+    t = re.sub(r"_\{([^{}]+)\}", lambda m: m.group(1).translate(_SUB), t)
+    t = re.sub(r"_([0-9]+)", lambda m: m.group(1).translate(_SUB), t)
+    t = re.sub(r"\^\{([^{}]+)\}", lambda m: m.group(1).translate(_SUP), t)
+    t = re.sub(r"\^([0-9n])", lambda m: m.group(1).translate(_SUP), t)
+    t = re.sub(r"\\[a-zA-Z]+", "", t).replace("{", "").replace("}", "")
+    return re.sub(r"\s+", " ", t).strip()
+
+
 def impronta(latex: str) -> str:
     """Un'impronta breve del testo di un esercizio: una nota vale solo finché l'esercizio è quello su cui è stata scritta."""
     import hashlib
@@ -101,7 +125,7 @@ def leggi_note(testo: str, esercizi: list) -> list:
             continue
         if abs(len(corretto) - len(originale)) > max(80, len(originale) // 2):
             continue                      # una «correzione» che riscrive mezzo esercizio non è una correzione
-        note.append({"indice": idx, "problema": pr.group(1).strip()[:300], "proposta": po.group(1).strip()[:300],
+        note.append({"indice": idx, "problema": testo_leggibile(pr.group(1).strip())[:300], "proposta": testo_leggibile(po.group(1).strip())[:300],
                      "testo_corretto": corretto, "su": impronta(originale)})
         if len(note) >= MAX_NOTE:
             break

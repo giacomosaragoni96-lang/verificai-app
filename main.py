@@ -1539,7 +1539,7 @@ def _dialogo_benvenuto() -> None:
     """Pop-up della prima visita: cosa offre VerificAI (poche parole) e perché conviene dare più informazioni."""
     _stile_dialogo()
     _tx, _t2, _ac = T["text"], T["text2"], T["accent"]
-    _vie = [("✍️", "Da una descrizione", "Descrivi la verifica come la vuoi: la scriviamo noi."),
+    _vie = [("✍️", "Da una descrizione", "Descrivi la verifica, o parti dai tuoi appunti: la scriviamo noi."),
             ("📄", "Dalla tua verifica", "Caricala: la rifacciamo identica, impaginata bene (o dici tu cosa cambiare).")]
     _tessere = "".join(
         f'<div style="background:{T["bg2"]};border:1.5px solid {T["border"]};border-radius:14px;padding:1rem 1.1rem;">'
@@ -2940,7 +2940,7 @@ def _render_scelta_iniziale() -> None:
         with st.container(border=True, key="scelta_crea"):
             st.markdown(
                 f'<div class="sc-ico">✍️</div><div class="sc-tit">Crea da una descrizione</div>'
-                f'<div class="sc-txt">Descrivi la verifica come la vuoi: la scriviamo noi, con punteggi e grafici.</div>', unsafe_allow_html=True)
+                f'<div class="sc-txt">Descrivi la verifica, o parti dai tuoi appunti: la scriviamo noi, con punteggi e grafici.</div>', unsafe_allow_html=True)
             if st.button("Comincia da qui", key="scelta_crea_btn", type="primary", icon=":material/edit_note:", use_container_width=True):
                 st.session_state["_home_modo"] = "crea"
                 _registra_evento("scelta:crea")
