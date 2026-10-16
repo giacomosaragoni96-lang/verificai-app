@@ -961,6 +961,8 @@ def prompt_da_template(
 def prompt_variante_rapida(
     corpo_latex: str,
     materia: str,
+    lettera: str = "B",
+    altre_versioni: list | None = None,
 ) -> str:
     """
     Genera una Fila B cambiando SOLO i dati numerici e le opzioni di risposta.
@@ -968,8 +970,11 @@ def prompt_variante_rapida(
     """
     return (
         f"Sei un docente esperto di {materia} e LaTeX. "
-        f"Genera una Variante (Fila B) della seguente verifica.\n\n"
+        f"Genera una Variante (Fila {lettera}) della seguente verifica.\n\n"
         f"VERIFICA ORIGINALE:\n{corpo_latex}\n\n"
+        + ("ESISTONO GIÀ QUESTE ALTRE FILE: la nuova deve avere dati e opzioni DIVERSI anche da tutte queste (nessun esercizio uguale a uno di queste):\n"
+           + "\n\n".join(f"--- ALTRA FILA ---\n{a}" for a in altre_versioni) + "\n\n" if altre_versioni else "")
+        + 
         f"REGOLE FERREE — VIOLAZIONE = OUTPUT INUTILIZZABILE:\n"
         f"1. STRUTTURA: mantieni IDENTICI numero esercizi, numero sottopunti, tipologie.\n"
         f"2. DATI NUMERICI: cambia TUTTI i valori numerici (coefficienti, misure, date, ecc.).\n"
@@ -981,7 +986,7 @@ def prompt_variante_rapida(
         f"   della curva ma NON indicare dove passa.\n"
         f"7. TABELLE: PRIMA di ogni \\begin{{tabular}} lascia SEMPRE una riga vuota per evitare\n"
         f"   sovrapposizioni con il testo. Le tabelle devono essere su righe separate.\n"
-        f"8. INTESTAZIONE: nella riga Nome/Classe/Data aggiungi 'Fila B' visibile.\n"
+        f"8. INTESTAZIONE: nella riga Nome/Classe/Data aggiungi 'Fila {lettera}' visibile.\n"
         f"9. COHERENZA: verifica che i nuovi dati siano matematicamente coerenti\n"
         f"   (niente radici di negativi, divisioni per zero, misure impossibili).\n\n"
         f"OUTPUT: SOLO codice LaTeX completo identico nella struttura, "
@@ -1547,4 +1552,23 @@ def prompt_controlla_errori_verifica(esercizi_testo: str, materia: str) -> str:
         "REGOLA IMPORTANTE: cambia SOLO quel frammento. L'enunciato, la consegna e le altre formule restano come sono, a meno che l'errore sia proprio lì. "
         "Se per correggere un errore dovresti cambiare l'enunciato, NON segnalarlo.\n\n"
         "ESERCIZI:\n" + esercizi_testo
+    )
+
+
+def prompt_versione_recupero(corpo_latex: str, materia: str, mostra_punteggi: bool, punti_totali: int, per_chi: str = "") -> str:
+    """Versione di recupero: stessi argomenti e stessa struttura, più breve e più semplice, con dati diversi."""
+    punti = (f"Ridistribuisci i punti in modo che la somma sia ESATTAMENTE {punti_totali} pt, formato (X pt) su ogni richiesta."
+             if mostra_punteggi else "NON inserire punteggi.")
+    return (
+        f"Sei un docente esperto di {materia}. Qui sotto c'è una verifica. Scrivi la VERSIONE DI RECUPERO per chi deve recuperare: "
+        "stessi argomenti e stessa struttura (TUTTI gli esercizi restano, nello stesso ordine), ma più breve e più accessibile.\n"
+        "- Tieni circa il 60% delle richieste di ogni esercizio (togli le più difficili, mai tutte: almeno 1-2 richieste per esercizio; l'eventuale esercizio «Per l'eccellenza» si toglie).\n"
+        "- Le richieste che restano sono un po' più guidate e con numeri più semplici; cambia TUTTI i dati numerici rispetto all'originale.\n"
+        "- Consegne brevi, una riga per esercizio; niente spiegazioni né soluzioni.\n"
+        + (f"- Il docente ha indicato per chi è: «{per_chi.strip()[:200]}». Tienine conto nel tono e nella difficoltà.\n" if (per_chi or "").strip() else "")
+        + f"- {punti}\n"
+        "- NON copiare né riscrivere la tabella dei punteggi finale. Le tabelle su righe separate, con una riga vuota prima di ogni \\begin{tabular}.\n"
+        "- Grafici di funzioni con [[GRAFICO: y = … | x da A a B]] (mai TikZ).\n"
+        "TERMINA con \\end{document}. SOLO il corpo in LaTeX (\\subsection* ecc.), senza preambolo.\n\n"
+        f"VERIFICA ORIGINALE:\n{corpo_latex}"
     )
