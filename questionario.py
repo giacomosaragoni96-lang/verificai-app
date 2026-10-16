@@ -7,13 +7,14 @@ La pagina è `?pagina=questionario` (ui_questionario.py) e si apre anche senza a
 """
 import re
 
-VERSIONE = 1
+VERSIONE = 2        # 2: «formula» è a risposta multipla, funzioni aggiornate (impagina, esercizio dal libro…), domanda «non useresti»
 MAX_TESTO = 1500
 MAX_RIGA = 120
 MAX_EURO = 10000
 
-FUNZIONI = ["Generazione della verifica", "Modifica di un singolo esercizio", "Fila B", "Soluzioni", "Versione BES/DSA",
-            "Logo della scuola", "Griglia di valutazione", "Scheda di allenamento", "Caricamento dei tuoi appunti o di una verifica"]
+FUNZIONI = ["Verifica da una descrizione", "Impagina la tua verifica (da PDF o foto)", "Esercizio del tuo libro da una foto",
+            "Modifica di un singolo esercizio", "Fila B", "Soluzioni", "Versione BES/DSA e alta leggibilità", "Word modificabile",
+            "Logo della scuola", "Griglia di valutazione", "Scheda di allenamento", "Caricamento dei tuoi appunti"]
 
 # Ogni sezione: (titolo, introduzione, [domande]). Tipi: scelta (una risposta), multi (più risposte), scala (da A a B),
 # testo (risposta lunga), riga (risposta breve), euro (cifra in euro).
@@ -53,6 +54,7 @@ _SEZ_BASE = [
     ("4. Cosa manca e cosa è di troppo", "", [
         {"id": "piaciuto", "tipo": "multi", "testo": "Cosa ti è piaciuto di più?", "opzioni": FUNZIONI},
         {"id": "funzioni_mese", "tipo": "multi", "testo": "Quali funzioni useresti ogni mese?", "opzioni": FUNZIONI},
+        {"id": "non_useresti", "tipo": "multi", "testo": "Quali funzioni non useresti mai?", "opzioni": FUNZIONI},
         {"id": "manca", "tipo": "testo", "testo": "Cosa manca?"},
         {"id": "troppo", "tipo": "testo", "testo": "Cosa c'è di troppo o non ti serve?"},
     ]),
@@ -60,7 +62,7 @@ _SEZ_BASE = [
      "Per ora VerificAI è gratuito: queste domande servono a capire cosa avrebbe senso, non a venderti nulla.", [
         {"id": "pagheresti", "tipo": "scelta", "testo": "Pagheresti per un servizio così?", "opzioni": ["Sì", "Forse", "No"]},
         {"id": "perche", "tipo": "testo", "testo": "Se hai risposto «forse» o «no»: perché?"},
-        {"id": "formula", "tipo": "scelta", "testo": "Quale formula preferiresti?",
+        {"id": "formula", "tipo": "multi", "testo": "Quali formule preferiresti? (puoi sceglierne più di una)",
          "opzioni": ["Un anno intero con un solo pagamento", "30 giorni con un solo pagamento", "Pagamento per ogni singola verifica",
                      "Pacchetto di verifiche", "Abbonamento mensile", "Licenza per la scuola o il dipartimento", "Nessuna: non pagherei"]},
         {"id": "verifiche_mese", "tipo": "scelta", "testo": "Quante verifiche al mese ti servirebbero?",
@@ -86,7 +88,7 @@ SEZIONI = [
      "Per ora VerificAI è gratuito: queste domande servono a capire cosa avrebbe senso, non a venderti nulla.",
      [_BASE[i] for i in ("pagheresti", "perche", "formula", "verifiche_mese", "vw_troppo_basso", "vw_conveniente", "vw_caro",
                          "vw_troppo_caro", "consiglieresti")]),
-    ("4. Cosa ti è piaciuto", "", [_BASE[i] for i in ("piaciuto", "funzioni_mese")]),
+    ("4. Cosa ti è piaciuto", "", [_BASE[i] for i in ("piaciuto", "funzioni_mese", "non_useresti")]),
     ("5. Su di te (facoltativo)", "", [_BASE[i] for i in ("ordine", "materie", "verifiche_anno", "parte_pesante", "altro")]),
 ]
 
@@ -157,7 +159,7 @@ OBBLIGATORIE = {
     "tempo_da_zero": "quanto tempo ci metti di solito", "tempo_con": "quanto ci hai messo con VerificAI", "risparmio": "quanto tempo hai risparmiato",
     "utile": "ti è servito davvero", "useresti": "la useresti per una verifica vera", "pronta": "se la verifica era pronta da usare",
     "correzioni": "quanto hai dovuto correggere", "facile": "quanto è stato facile", "manca": "cosa manca (scrivi almeno una frase)",
-    "pagheresti": "se pagheresti", "formula": "la formula che preferiresti", "verifiche_mese": "quante verifiche al mese",
+    "pagheresti": "se pagheresti", "formula": "le formule che preferiresti", "verifiche_mese": "quante verifiche al mese",
     "vw_troppo_basso": "il prezzo troppo basso", "vw_conveniente": "il prezzo conveniente", "vw_caro": "il prezzo che comincia a essere caro",
     "vw_troppo_caro": "il prezzo troppo caro", "consiglieresti": "se lo consiglieresti",
 }
