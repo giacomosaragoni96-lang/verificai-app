@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 from stili_verifica import STILI, STILE_PREDEFINITO, stili_disponibili, descrizione_stile, cambia_stile
 from piano_verifica import numero_esercizi_richiesto
 import impagina
+from collections import Counter
 import profilo
 import esercizio_foto as _ef
 from esercizio_foto import leggi_esercizi_da_foto, correggi_esercizio, stato_esercizio, blocco_latex, riassunto_per_prompt
@@ -79,6 +80,7 @@ from aperture import registra_apertura
 from styles import get_css, _is_light_color
 from ui_banca import render_banca
 from ui_cruscotto import render_cruscotto
+from ui_profilo import render_profilo
 from ui_helpers import (
     render_privacy,
     _make_katex_html,
@@ -103,6 +105,7 @@ except ImportError:
 # ── COSTANTI STAGE ────────────────────────────────────────────────────────────
 STAGE_MIE_VERIFICHE = "MIE_VERIFICHE"  # pagina "Le tue verifiche"
 STAGE_UPGRADE = "UPGRADE"               # pagina «Passa a Pro»
+STAGE_PROFILO = "PROFILO"               # pagina «Il mio profilo»
 STAGE_CRUSCOTTO = "CRUSCOTTO"           # pagina «Cruscotto» (solo admin)
 STAGE_BANCA = "BANCA"                   # pagina "Banca esercizi" (solo admin)
 
@@ -1810,6 +1813,91 @@ def _banner_piano(dove: str) -> None:
             _vai_a_upgrade(None)
 
 
+def _apri_profilo() -> None:
+    """Apre la pagina «Il mio profilo», ricordando da dove si arriva."""
+    if st.session_state.get("stage") != STAGE_PROFILO:
+        st.session_state["_stage_prima"] = st.session_state.get("stage")
+    st.session_state.stage = STAGE_PROFILO
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _eventi_utente(user_id: str) -> dict:
+    """{tipo: quante volte} dall'attività registrata dell'utente (per la pagina profilo)."""
+    try:
+        righe = supabase_admin.table("usage_events").select("tipo").eq("user_id", user_id).limit(5000).execute().data or []
+    except Exception:
+        return {}
+    c = Counter(r.get("tipo") for r in righe)
+    return dict(c)
+
+
+def _elimina_account() -> tuple:
+    """Cancella i dati dell'utente e il suo accesso. Ritorna (ok, messaggio). L'admin non si elimina da qui."""
+    u = st.session_state.get("utente")
+    if not u or u.email in ADMIN_EMAILS:
+        return False, "Questo account non si può eliminare da qui."
+    uid = u.id
+    for tabella in ("verifiche_storico", "docente_preferenze", "shared_verifiche", "usage_events"):
+        try:
+            supabase_admin.table(tabella).delete().eq("user_id", uid).execute()
+        except Exception as e:
+            logger.info("Eliminazione account: %s non svuotata (%s)", tabella, e)
+    try:
+        supabase_admin.auth.admin.delete_user(uid)
+    except Exception as e:
+        logger.warning("Eliminazione account non riuscita: %s", e)
+        return False, "Ho cancellato le tue verifiche e le preferenze, ma non sono riuscito a chiudere l'accesso. Scrivi a verificai.support@gmail.com e lo completiamo."
+    try:
+        from auth import cancella_sessione_cookie
+        cancella_sessione_cookie()
+    except Exception:
+        pass
+    st.session_state.clear()
+    st.rerun()
+    return True, ""
+
+
+def _render_profilo_pagina() -> None:
+    """Pagina «Il mio profilo»: prepara i dati e le funzioni per ui_profilo.render_profilo (solo interfaccia)."""
+    u = st.session_state.utente
+    verifiche = _load_user_verifiche()
+
+    def _indietro():
+        _dove = st.session_state.get("_stage_prima")
+        st.session_state.stage = _dove if _dove not in (None, STAGE_PROFILO) else STAGE_INPUT
+        st.rerun()
+
+    def _nuova_per_classe(nome):
+        c = profilo.classe(_profilo(), nome) or {}
+        st.session_state["_classe_sel"] = nome
+        st.session_state["sel_classe"] = nome
+        if c.get("scuola") in SCUOLE:
+            st.session_state["sel_scuola_b"] = c["scuola"]
+        st.session_state["_home_modo"] = "crea"
+        _nuova_verifica()
+
+    def _elenco_classe(nome):
+        if nome in {v.get("classe") for v in verifiche}:
+            st.session_state["mv_classe"] = nome
+        st.session_state["_stage_prima"] = STAGE_PROFILO
+        st.session_state.stage = STAGE_MIE_VERIFICHE
+        st.rerun()
+
+    def _imposta_tema(scuro):
+        st.session_state["_tema_scuro"] = bool(scuro)
+
+    ctx = {
+        "profilo": _profilo(), "salva": _salva_profilo, "conferma": _ricorda_conferma, "verifiche": verifiche,
+        "eventi": _eventi_utente(u.id), "email": u.email, "piano": "admin" if _is_admin else ENT.piano, "verifiche_mese": _verifiche_mese or 0,
+        "crediti": (_bonus_residui() if (MONETIZZAZIONE_ATTIVA and u) else 0), "scuole": SCUOLE, "stili": stili_disponibili(),
+        "indietro": _indietro, "nuova_per_classe": _nuova_per_classe, "elenco_classe": _elenco_classe, "apri_elenco": _apri_storico,
+        "invita": (lambda: apri_dialogo_invito(T, _INVITO)) if _INVITO else (lambda: None),
+        "tema_scuro": bool(st.session_state.get("_tema_scuro", st.session_state.get("theme") == "notte")), "imposta_tema": _imposta_tema,
+        "elimina_account": _elimina_account, "e_admin": _is_admin,
+    }
+    render_profilo(T, ctx)
+
+
 def _apri_storico() -> None:
     """Apre la pagina «Le mie verifiche» (come il pulsante della barra laterale), ricordando da dove si arriva."""
     if st.session_state.get("stage") != "MIE_VERIFICHE":
@@ -2640,7 +2728,9 @@ def _render_le_tue_verifiche():
 
     _classi_elenco = sorted({v.get("classe") for v in verifiche if v.get("classe")})
     with col_classe:
-        classe_filter = st.selectbox("Classe", ["Tutte"] + _classi_elenco, help="Le classi si impostano dalla pagina della verifica.")
+        if st.session_state.get("mv_classe", "Tutte") not in (["Tutte"] + _classi_elenco):
+            st.session_state["mv_classe"] = "Tutte"
+        classe_filter = st.selectbox("Classe", ["Tutte"] + _classi_elenco, key="mv_classe", help="Le classi si impostano dalla pagina della verifica o dal profilo.")
     with col_ordine:
         ordine_filter = st.selectbox("Ordina per", ["Più recenti", "Più vecchie", "Alfabetico", "Materia"])
 
@@ -2688,7 +2778,8 @@ def _render_le_tue_verifiche():
 
         with st.container():
             _col_m, _ico_m = _stile_materia(verifica.get("materia"))
-            _chip_classe = (f'<span style="background:{T["bg2"]};color:{T["text"]};border:1px solid {T["border2"]};padding:.12rem .6rem;border-radius:999px;font-weight:700;font-size:.75rem;">'
+            _col_cl = (profilo.classe(_profilo(), verifica.get("classe")) or {}).get("colore") or T["text"]
+            _chip_classe = (f'<span style="background:{_col_cl}1F;color:{_col_cl};border:1px solid {_col_cl}66;padding:.12rem .6rem;border-radius:999px;font-weight:700;font-size:.75rem;">'
                             f'👥 {_esc(verifica.get("classe"))}</span>' if verifica.get("classe") else "")
             _impag = ('<span style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:.12rem .6rem;border-radius:999px;font-weight:700;font-size:.75rem;">'
                       'Impaginata da te</span>' if verifica.get("percorso_scelto") == "IMPAGINA" else "")
@@ -3125,6 +3216,7 @@ def _selettore_stile() -> str:
     """Stile del PDF: classico (predefinito) o moderno, con l'anteprima delle due versioni della stessa verifica a richiesta."""
     st.markdown(_html_separatore() + '<div class="opt-label">Stile della verifica</div>', unsafe_allow_html=True)
     _ids = [k for k, _n in stili_disponibili()]
+    st.session_state.setdefault("sel_stile_verifica", (_profilo().get("stile") or STILE_PREDEFINITO) if (_profilo().get("stile") in _ids) else STILE_PREDEFINITO)
     _sel = st.selectbox("Stile della verifica", _ids, key="sel_stile_verifica", format_func=lambda k: STILI[k]["nome"],
                         label_visibility="collapsed")
     if st.button("Guarda un'anteprima", key="stile_anteprima", type="tertiary", icon=":material/visibility:"):
@@ -3276,28 +3368,6 @@ def _mostra_conferma() -> None:
         f"<span>{_esc(testo)}</span></div>", unsafe_allow_html=True)
 
 
-@st.dialog("Le mie preferenze e le mie classi", width="large")
-def _dialogo_preferenze() -> None:
-    _stile_dialogo()
-    p = _profilo()
-    st.caption("Si salvano una volta e valgono per ogni verifica. Quello che scrivi nella descrizione ha sempre la precedenza.")
-    note = st.text_area("Preferenze per ogni verifica", value=p.get("note_fisse", ""), height=110, max_chars=profilo.MAX_NOTE,
-                        placeholder="Es.: numeri interi, niente dimostrazioni, ultimo esercizio di eccellenza, linguaggio semplice")
-    st.markdown("**Le mie classi** (scuola e note sono facoltative; una classe scelta nel form precompila la scuola e aggiunge le sue note)")
-    import pandas as _pd
-    base = _pd.DataFrame(p.get("classi") or [{"nome": "", "scuola": "", "note": ""}], columns=["nome", "scuola", "note"])
-    modificato = st.data_editor(
-        base, num_rows="dynamic", hide_index=True, use_container_width=True, key="de_classi",
-        column_config={"nome": st.column_config.TextColumn("Classe", help="Es. 3ªB", max_chars=24, required=True),
-                       "scuola": st.column_config.SelectboxColumn("Scuola", options=[""] + list(SCUOLE)),
-                       "note": st.column_config.TextColumn("Note per questa classe", max_chars=profilo.MAX_NOTE, width="large")})
-    if st.button("Salva", type="primary", icon=":material/check:", use_container_width=True, key="pref_salva"):
-        classi = [{"nome": r["nome"], "scuola": r["scuola"] or "", "note": r["note"] or ""} for r in modificato.fillna("").to_dict("records")]
-        _salva_profilo({"note_fisse": note, "classi": classi})
-        _ricorda_conferma("Preferenze salvate")
-        st.rerun()
-
-
 def _applica_classe_scelta() -> None:
     """Callback del selettore di classe: ricorda la scelta e precompila la scuola se la classe ne ha una."""
     nome = st.session_state.get("sel_classe", "")
@@ -3326,8 +3396,9 @@ def _selettore_classe() -> None:
         nuova = _a.text_input("Nome della classe", key="nuova_classe_txt", placeholder="Es. 3ªB", max_chars=24, label_visibility="collapsed")
         if profilo.pulisci_nome(nuova):
             st.session_state["_classe_sel"] = profilo.pulisci_nome(nuova)
-    if _b.button("Le mie preferenze", key="apri_preferenze", type="tertiary", icon=":material/tune:"):
-        _dialogo_preferenze()
+    if _b.button("Il mio profilo", key="apri_preferenze", type="tertiary", icon=":material/account_circle:"):
+        _apri_profilo()
+        st.rerun()
 
 
 @st.dialog("Classe di questa verifica")
@@ -6395,8 +6466,6 @@ def _render_stage_final():
         else:
             st.caption("Anteprima non disponibile.")
     with _col_dx:
-        if vA.get("pdf") and vA.get("latex"):
-            _box_modifica_rapida(gp, vA, mod_id)
         if vA.get("pdf") and not _mini_gate:
             _dl(
                 label=f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}",
@@ -6414,6 +6483,15 @@ def _render_stage_final():
                          help="Scarica il PDF della verifica, già formattato e pronto per la stampa."):
                 _dialogo_mini_feedback(vA["pdf"], _fname_a + ".pdf")
         _riga_esito(mod_id)
+        if vA.get("pdf") and vA.get("latex"):
+            _box_modifica_rapida(gp, vA, mod_id)
+        with st.container(key="card_modifica"):
+            st.markdown('<div class="cm-t">✏️ Modifica i singoli esercizi</div>'
+                        '<div class="cm-d">Più facile o più difficile, numeri nuovi, sostituisci, aggiungi o elimina un esercizio: ogni modifica rifà subito il PDF.</div>',
+                        unsafe_allow_html=True)
+            if st.button("Apri la modifica", key="final_edit_card", icon=":material/edit_note:", use_container_width=True):
+                st.session_state.stage = STAGE_REVIEW
+                st.rerun()
 
         # ── Versione Word modificabile: sotto la verifica, per chi preferisce lavorare in Word ─────────────────
         if WORD_ATTIVO and vA.get("latex"):
@@ -6487,7 +6565,7 @@ def _render_stage_final():
         # (durante la prima verifica lampeggiano, vedi la guida). I segnaposto .g-kitN servono a farle lampeggiare.
         st.markdown('<div id="kit-completo"></div>' + _css_kit(), unsafe_allow_html=True)
         _riga = lambda: st.columns([3.4, 1.6], vertical_alignment="center", gap="medium")
-        with st.expander("Versioni della verifica: soluzioni, Fila B, versione BES/DSA", expanded=False, icon=":material/file_copy:"):
+        with st.expander("Versioni della verifica: **soluzioni**, **Fila B**, **BES/DSA**, **recupero**", expanded=False, icon=":material/file_copy:"):
             st.markdown('<span class="g-kit1" style="display:none"></span>', unsafe_allow_html=True)
             with st.container(border=True):
                 _vc3, _vb3 = _riga()                  # Soluzioni
@@ -6507,14 +6585,14 @@ def _render_stage_final():
                 _vc8, _vb8 = _riga()                  # Altre file (C, D, E)
             with st.container(border=True):
                 _vc9, _vb9 = _riga()                  # Versione di recupero
-        with st.expander("Per la classe e la valutazione: scheda di allenamento e griglia", expanded=False,
+        with st.expander("Per la classe e la valutazione: **scheda di allenamento** e **griglia**", expanded=False,
                          icon=":material/groups:"):
             st.markdown('<span class="g-kit2" style="display:none"></span>', unsafe_allow_html=True)
             with st.container(border=True):
                 _vc6, _vb6 = _riga()                  # Scheda di allenamento
             with st.container(border=True):
                 _vc4, _vb4 = _riga()                  # Griglia di valutazione
-        with st.expander("Scarica tutti i file in una volta", expanded=bool(_kit_in_corso), icon=":material/folder_zip:"):
+        with st.expander("**Scarica tutti i file** in una volta", expanded=bool(_kit_in_corso), icon=":material/folder_zip:"):
             st.markdown('<span class="g-kit3" style="display:none"></span>', unsafe_allow_html=True)
             st.markdown(
                 f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:-.2rem 0 .7rem;">'
@@ -7215,7 +7293,10 @@ def _render_stage_final():
                 else:
                     st.error("Non sono riuscito a inviarla. Riprova più tardi o scrivici dal pulsante 💬 del feedback.")
 
-    # In fondo alla pagina: le verifiche salvate
+    # In fondo alla pagina: nuova verifica e le verifiche salvate
+    _nv1, _nv2, _nv3 = st.columns([2, 3, 2])
+    if _nv2.button("Crea una nuova verifica", key="btn_new_bottom", icon=":material/add:", use_container_width=True, type="primary"):
+        _nuova_verifica()
     _sf1, _sf2, _sf3 = st.columns([3, 2, 3])
     _sf2.button("Apri «Le mie verifiche»", key="apri_storico_final", type="tertiary", icon=":material/folder_open:",
                 on_click=_apri_storico, use_container_width=True, help="La verifica è già salvata: qui trovi tutte le tue verifiche.")
@@ -7444,8 +7525,9 @@ if _prev_stage != _current_stage:
 if not _share_view_active:
     _current = _current_stage
     _mostra_conferma()
-    if st.session_state.pop("_apri_preferenze", False):
-        _dialogo_preferenze()
+    if st.session_state.pop("_apri_profilo", False):
+        _apri_profilo()
+        _current = st.session_state.stage
     if _current == STAGE_PREVIEW:   # sessioni aperte prima dell'unione di anteprima e download
         st.session_state.stage = _current = STAGE_FINAL
     if   _current == STAGE_INPUT:   _render_stage_input()
@@ -7479,6 +7561,8 @@ if not _share_view_active:
             render_sblocco(T, _esci_da_upgrade, st.session_state.get("_upgrade_funzione"),
                            _bonus_residui() if (MONETIZZAZIONE_ATTIVA and st.session_state.utente) else 0, _riscatta_codice,
                            invito=_INVITO)
+    elif _current == STAGE_PROFILO:
+        _render_profilo_pagina()
     elif _current == STAGE_CRUSCOTTO:
         if _is_admin:
             def _esci_dal_cruscotto():

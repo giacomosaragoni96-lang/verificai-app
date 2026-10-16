@@ -1,0 +1,229 @@
+"""
+ui_profilo.py — la pagina «Il mio profilo» (stage PROFILO): solo interfaccia. I dati e le funzioni vengono da main.py tramite `ctx`
+(profilo, salvataggi, elenco delle verifiche, eliminazione dell'account…); la logica dei numeri sta in profilo.py.
+
+Quattro sezioni: Le mie classi · Le mie preferenze · La mia attività · Account.
+"""
+from datetime import date, datetime, timezone
+import html
+
+import streamlit as st
+
+import profilo
+
+SEZIONI = ["👥 Le mie classi", "⚙️ Le mie preferenze", "📈 La mia attività", "🔑 Account"]
+_SWATCH = ["🔵", "🟣", "🌸", "🔴", "🟠", "🟡", "🟢", "🔷", "⚫", "🟤"]
+_NOMI_EVENTI = {"verifica": "Verifiche create", "fila_b": "Fila B", "fila_extra": "File C, D, E", "recupero": "Versioni di recupero", "bes": "Versioni BES/DSA",
+                "soluzioni": "Soluzioni", "scheda": "Schede di allenamento", "word": "File Word", "griglia": "Griglie di valutazione", "modifica": "Modifiche con l'AI",
+                "impagina": "Verifiche impaginate", "foto_esercizio": "Esercizi dal libro", "ritaglio_figura": "Figure ritagliate"}
+
+
+def _esc(x) -> str:
+    return html.escape(str(x if x is not None else ""))
+
+
+def _quando(d) -> str:
+    if not d:
+        return "—"
+    giorni = (datetime.now(timezone.utc).date() - d).days
+    if giorni <= 0:
+        return "oggi"
+    if giorni == 1:
+        return "ieri"
+    if giorni < 7:
+        return f"{giorni} giorni fa"
+    if giorni < 30:
+        return f"{giorni // 7} settimane fa" if giorni >= 14 else "1 settimana fa"
+    return d.strftime("%d/%m/%Y")
+
+
+def _css(T: dict) -> str:
+    acc = T["accent"]
+    return f"""<style>
+.pf-testa{{display:flex;gap:1.1rem;align-items:center;flex-wrap:wrap;background:linear-gradient(135deg,{acc}18 0%,{acc}08 100%);border:1px solid {acc}33;border-radius:22px;padding:1.2rem 1.4rem;
+  box-shadow:0 10px 28px rgba(15,23,42,.08);font-family:'DM Sans',sans-serif;margin:.2rem 0 1rem;}}
+.pf-av{{flex:0 0 4rem;height:4rem;border-radius:50%;background:linear-gradient(135deg,{acc},{T.get('accent2',acc)});color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:1.7rem;font-weight:800;box-shadow:0 6px 16px {acc}55;}}
+.pf-nome{{font-size:1.25rem;font-weight:800;color:{T['text']};line-height:1.2;}}
+.pf-mail{{font-size:.88rem;color:{T['text2']};}}
+.pf-pill{{display:inline-block;background:{acc}1F;color:{acc};border-radius:999px;padding:.12rem .65rem;font-size:.74rem;font-weight:800;letter-spacing:.04em;margin-left:.4rem;vertical-align:middle;}}
+.pf-num{{margin-left:auto;display:flex;gap:.8rem;}}
+.pf-n{{text-align:center;background:{T['card']};border:1px solid {T['border']};border-radius:14px;padding:.5rem .95rem;min-width:5.6rem;}}
+.pf-n b{{display:block;font-size:1.45rem;color:{T['text']};line-height:1.1;}}
+.pf-n span{{font-size:.72rem;color:{T['text2']};}}
+.pf-sez{{font-family:'DM Sans',sans-serif;font-size:1.05rem;font-weight:800;color:{T['text']};margin:.2rem 0 .1rem;}}
+.pf-sub{{font-family:'DM Sans',sans-serif;font-size:.88rem;color:{T['text2']};margin:0 0 .8rem;line-height:1.45;}}
+.pf-classe{{display:flex;gap:.7rem;align-items:center;font-family:'DM Sans',sans-serif;}}
+.pf-dot{{flex:0 0 2.6rem;height:2.6rem;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1rem;}}
+.pf-ct{{font-weight:800;font-size:1.08rem;color:{T['text']};}} .pf-cs{{font-size:.84rem;color:{T['text2']};}}
+.pf-cal{{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,12px);grid-auto-columns:12px;gap:3px;overflow-x:auto;padding:.3rem 0 .5rem;}}
+.pf-cal i{{width:12px;height:12px;border-radius:3px;display:block;}}
+.pf-l0{{background:{T['border']};}} .pf-l1{{background:{acc}40;}} .pf-l2{{background:{acc}70;}} .pf-l3{{background:{acc}B0;}} .pf-l4{{background:{acc};}} .pf-lx{{background:transparent;}}
+.pf-bar{{display:flex;align-items:center;gap:.6rem;margin:.28rem 0;font-family:'DM Sans',sans-serif;font-size:.88rem;color:{T['text']};}}
+.pf-bar .e{{flex:0 0 9.5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}} .pf-bar .b{{flex:1;background:{T['border']};border-radius:99px;height:9px;overflow:hidden;}}
+.pf-bar .b i{{display:block;height:100%;background:linear-gradient(90deg,{acc},{T.get('accent2',acc)});border-radius:99px;}} .pf-bar .v{{flex:0 0 2.2rem;text-align:right;font-weight:800;}}
+.pf-ult{{display:flex;gap:.7rem;align-items:center;padding:.5rem 0;border-top:1px solid {T['border']};font-family:'DM Sans',sans-serif;font-size:.9rem;color:{T['text']};}}
+.pf-ult small{{color:{T['text2']};margin-left:auto;}}
+html body .stApp div[class*="st-key-classe_card_"]:not(#vf){{background:{T['card']};border:1px solid {T['border2']};border-radius:18px;padding:1rem 1.2rem 1rem;margin-bottom:.8rem;box-shadow:0 6px 18px rgba(15,23,42,.07);}}
+html body .stApp .st-key-pericolo:not(#vf){{border:1.5px solid #FCA5A5;background:rgba(220,38,38,.05);border-radius:16px;padding:1rem 1.2rem;}}
+</style>"""
+
+
+def _testa(T, ctx, stats) -> None:
+    nome = (ctx["email"].split("@")[0] if ctx.get("email") else "Docente").replace(".", " ").replace("_", " ").title()
+    dal = stats["dal"].strftime("%d/%m/%Y") if stats.get("dal") else "da poco"
+    st.markdown(
+        _css(T) + f'<div class="pf-testa"><div class="pf-av">{_esc(nome[:1])}</div><div><div class="pf-nome">{_esc(nome)}<span class="pf-pill">{_esc(ctx.get("piano", "free").upper())}</span></div>'
+        f'<div class="pf-mail">{_esc(ctx.get("email", ""))} · con noi dal {_esc(dal)}</div></div>'
+        f'<div class="pf-num"><div class="pf-n"><b>{stats["totale"]}</b><span>verifiche create</span></div>'
+        f'<div class="pf-n"><b>{stats["giorni_attivi"]}</b><span>giorni di lavoro</span></div>'
+        f'<div class="pf-n"><b>{len(ctx["profilo"].get("classi", []))}</b><span>classi</span></div></div></div>', unsafe_allow_html=True)
+
+
+def _sezione_classi(T, ctx, stats) -> None:
+    p = ctx["profilo"]
+    st.markdown('<div class="pf-sez">Le mie classi</div><div class="pf-sub">Ogni classe ha la sua scuola e le sue note: scegliendola quando crei una verifica '
+                'si precompila tutto. Il colore ti aiuta a riconoscerla nell\'elenco.</div>', unsafe_allow_html=True)
+    classi = p.get("classi", [])
+    if not classi:
+        st.info("Non hai ancora aggiunto classi. Aggiungine una qui sotto: ti basta il nome (es. «3ªB»).", icon="👥")
+    for i, c in enumerate(classi):
+        info = stats["classi"].get(c["nome"].lower(), {"n": 0, "ultima": None, "ultima_titolo": ""})
+        with st.container(key=f"classe_card_{i}"):
+            st.markdown(
+                f'<div class="pf-classe"><div class="pf-dot" style="background:{c["colore"]};">{_esc(c["nome"][:2])}</div><div>'
+                f'<div class="pf-ct">{_esc(c["nome"])}</div><div class="pf-cs">{_esc(c["scuola"] or "Scuola non indicata")} · {info["n"]} '
+                f'{"verifica" if info["n"] == 1 else "verifiche"}' + (f' · ultima: {_esc(info["ultima_titolo"][:40])} ({_quando(info["ultima"])})' if info["ultima"] else "") + '</div></div></div>',
+                unsafe_allow_html=True)
+            a, b = st.columns([3, 2], gap="medium")
+            sc_opz = [""] + list(ctx["scuole"])
+            scuola = a.selectbox("Scuola", sc_opz, index=sc_opz.index(c["scuola"]) if c["scuola"] in sc_opz else 0, key=f"cl_sc_{i}", format_func=lambda x: x or "Non indicata")
+            col_idx = profilo.COLORI.index(c["colore"]) if c["colore"] in profilo.COLORI else 0
+            colore = b.segmented_control("Colore", _SWATCH, default=_SWATCH[col_idx], key=f"cl_col_{i}") or _SWATCH[col_idx]
+            note = st.text_area("Note per questa classe", value=c["note"], key=f"cl_nt_{i}", height=80, max_chars=profilo.MAX_NOTE,
+                                placeholder="Es.: ritmo lento, molte lacune sulle frazioni, evitare i problemi di realtà")
+            b1, b2, b3, b4 = st.columns([1.1, 1.8, 1.6, .5], gap="small", vertical_alignment="center")
+            if b1.button("Salva", key=f"cl_salva_{i}", type="primary", icon=":material/check:", use_container_width=True):
+                nuove = [dict(x) for x in classi]
+                nuove[i] = {**c, "scuola": scuola, "note": note, "colore": profilo.COLORI[_SWATCH.index(colore)]}
+                ctx["salva"]({**p, "classi": nuove})
+                ctx["conferma"](f"Classe {c['nome']} salvata")
+                st.rerun()
+            if b2.button(f"Nuova verifica per la {c['nome']}", key=f"cl_nuova_{i}", icon=":material/add:", use_container_width=True):
+                ctx["nuova_per_classe"](c["nome"])
+            if b3.button("Vedi le sue verifiche", key=f"cl_elenco_{i}", type="tertiary", icon=":material/folder_open:", use_container_width=True):
+                ctx["elenco_classe"](c["nome"])
+            with b4.popover("⋯", help="Elimina la classe"):
+                st.caption("Le verifiche non si cancellano: restano senza classe.")
+                if st.button("Elimina la classe", key=f"cl_del_{i}", type="primary", use_container_width=True):
+                    ctx["salva"]({**p, "classi": [x for k, x in enumerate(classi) if k != i]})
+                    ctx["conferma"]("Classe eliminata")
+                    st.rerun()
+    with st.expander("＋ Aggiungi una classe", expanded=not classi):
+        a, b = st.columns([2, 3], gap="medium")
+        nome = a.text_input("Nome della classe", key="cl_new_nome", placeholder="Es. 3ªB", max_chars=24)
+        scuola = b.selectbox("Scuola (facoltativa)", [""] + list(ctx["scuole"]), key="cl_new_scuola", format_func=lambda x: x or "Non indicata")
+        colore = st.segmented_control("Colore", _SWATCH, default=_SWATCH[len(classi) % len(_SWATCH)], key="cl_new_col") or _SWATCH[0]
+        if st.button("Aggiungi", key="cl_new_ok", type="primary", icon=":material/add:", disabled=not profilo.pulisci_nome(nome)):
+            if profilo.pulisci_nome(nome).lower() in {c["nome"].lower() for c in classi}:
+                st.warning("Hai già una classe con questo nome.")
+            else:
+                ctx["salva"]({**p, "classi": classi + [{"nome": profilo.pulisci_nome(nome), "scuola": scuola, "note": "", "colore": profilo.COLORI[_SWATCH.index(colore)]}]})
+                ctx["conferma"](f"Classe {profilo.pulisci_nome(nome)} aggiunta")
+                st.rerun()
+
+
+def _sezione_preferenze(T, ctx) -> None:
+    p = ctx["profilo"]
+    st.markdown('<div class="pf-sez">Le mie preferenze</div><div class="pf-sub">Valgono per ogni verifica che crei. Quello che scrivi nella descrizione '
+                'ha sempre la precedenza.</div>', unsafe_allow_html=True)
+    ids = list(profilo.PILLOLE)
+    scelte = st.pills("Accendi quelle che ti servono", ids, selection_mode="multi", default=[i for i in p.get("pillole", []) if i in ids], key="pf_pillole",
+                      format_func=lambda i: profilo.PILLOLE[i][0])
+    note = st.text_area("Altre istruzioni fisse", value=p.get("note_fisse", ""), height=90, max_chars=profilo.MAX_NOTE, key="pf_note",
+                        placeholder="Es.: ultimo esercizio di eccellenza, niente problemi di fisica applicata, richieste brevi")
+    stili = ctx["stili"]
+    chiavi = [""] + [k for k, _n in stili]
+    nomi = {"": "Classico (predefinito)", **{k: n for k, n in stili}}
+    stile = st.selectbox("Stile del PDF", chiavi, index=chiavi.index(p.get("stile", "")) if p.get("stile", "") in chiavi else 0, format_func=lambda k: nomi[k], key="pf_stile")
+    st.caption("Il logo della scuola si imposta dal form di creazione (Altre opzioni → Logo della scuola) e si ricorda da solo.")
+    if st.button("Salva le preferenze", key="pf_salva", type="primary", icon=":material/check:"):
+        ctx["salva"]({**p, "pillole": list(scelte or []), "note_fisse": note, "stile": stile})
+        ctx["conferma"]("Preferenze salvate")
+        st.rerun()
+    frasi = profilo.frasi_preferenze({**p, "pillole": list(scelte or []), "note_fisse": note})
+    with st.container(border=True):
+        st.markdown("**Come finirà nelle tue verifiche**")
+        if frasi:
+            for f in frasi:
+                st.markdown(f"- {f}")
+        else:
+            st.caption("Nessuna istruzione fissa: ogni verifica parte da zero.")
+
+
+def _sezione_attivita(T, ctx, stats) -> None:
+    st.markdown('<div class="pf-sez">La mia attività</div><div class="pf-sub">Le verifiche create nell\'ultimo anno: più il quadratino è scuro, più ne hai fatte quel giorno.</div>',
+                unsafe_allow_html=True)
+    cal = stats["calendario"]
+    massimo = max([g["n"] or 0 for g in cal] + [1])
+    celle = "".join(f'<i class="pf-l{max(0, profilo.scala_colore(g["n"], massimo)) if g["n"] is not None else "x"}" title="{g["data"].strftime("%d/%m/%Y")}: {g["n"] or 0}"></i>' for g in cal)
+    st.markdown(f'<div class="pf-cal">{celle}</div>', unsafe_allow_html=True)
+    a, b = st.columns(2, gap="large")
+    with a:
+        st.markdown("**Per materia**")
+        tot = max([n for _m, n in stats["materie"]] + [1])
+        st.markdown("".join(f'<div class="pf-bar"><span class="e">{_esc(m)}</span><span class="b"><i style="width:{100 * n / tot:.0f}%"></i></span><span class="v">{n}</span></div>'
+                            for m, n in stats["materie"][:7]) or '<div class="pf-cs">Ancora nessuna verifica.</div>', unsafe_allow_html=True)
+    with b:
+        st.markdown("**Cosa usi di più**")
+        ev = [(k, n) for k, n in ctx.get("eventi", {}).items() if k in _NOMI_EVENTI]
+        ev.sort(key=lambda x: -x[1])
+        tot = max([n for _k, n in ev] + [1])
+        st.markdown("".join(f'<div class="pf-bar"><span class="e">{_esc(_NOMI_EVENTI[k])}</span><span class="b"><i style="width:{100 * n / tot:.0f}%"></i></span><span class="v">{n}</span></div>'
+                            for k, n in ev[:7]) or '<div class="pf-cs">Ancora nessun dato.</div>', unsafe_allow_html=True)
+    st.markdown("**Le ultime verifiche**")
+    for v in stats["ultime"]:
+        g = profilo._giorno(v.get("created_at"))
+        st.markdown(f'<div class="pf-ult"><b>{_esc(v.get("argomento") or "Verifica")}</b><span>{_esc(v.get("materia") or "")}</span>'
+                    f'{("<span>· " + _esc(v["classe"]) + "</span>") if v.get("classe") else ""}<small>{_quando(g)}</small></div>', unsafe_allow_html=True)
+    st.button("Vedi tutte le verifiche", key="pf_tutte", type="tertiary", icon=":material/folder_open:", on_click=ctx["apri_elenco"])
+
+
+def _sezione_account(T, ctx) -> None:
+    st.markdown('<div class="pf-sez">Account</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown(f"**Piano:** {ctx.get('piano', 'free').capitalize()} · **Verifiche questo mese:** {ctx.get('verifiche_mese', 0)}" + (f" · **Verifiche complete disponibili:** {ctx['crediti']}" if ctx.get("crediti") else ""))
+        st.button("Invita un collega", key="pf_invita", icon=":material/group_add:", on_click=ctx["invita"], help="Ogni collega che crea la sua prima verifica ti regala verifiche complete.")
+    with st.expander("Impostazioni avanzate", expanded=False, icon=":material/settings:"):
+        scuro = st.toggle("Tema scuro", value=ctx["tema_scuro"], key="pf_tema", help="Colori scuri, più riposanti la sera. La verifica stampata resta sempre uguale.")
+        if scuro != ctx["tema_scuro"]:
+            ctx["imposta_tema"](scuro)
+            st.rerun()
+    with st.container(key="pericolo"):
+        st.markdown("**Elimina il mio account**")
+        st.caption("Cancella per sempre il tuo account, le tue verifiche, le classi e le preferenze. Non si può annullare. "
+                   "Se hai un abbonamento attivo, scrivici prima.")
+        if ctx.get("e_admin"):
+            st.info("L'account amministratore non si elimina da qui.")
+        else:
+            conferma = st.text_input("Per confermare scrivi ELIMINA", key="pf_del_txt", placeholder="ELIMINA")
+            if st.button("Elimina definitivamente il mio account", key="pf_del_ok", type="primary", icon=":material/delete_forever:", disabled=(conferma or "").strip() != "ELIMINA"):
+                ok, msg = ctx["elimina_account"]()
+                if not ok:
+                    st.error(msg)
+
+
+def render_profilo(T: dict, ctx: dict) -> None:
+    if st.button("← Indietro", key="pf_indietro", type="tertiary"):
+        ctx["indietro"]()
+    stats = profilo.statistiche(ctx["verifiche"])
+    _testa(T, ctx, stats)
+    sez = st.segmented_control("Sezione", SEZIONI, default=SEZIONI[0], key="sez_profilo", label_visibility="collapsed") or SEZIONI[0]
+    if sez == SEZIONI[0]:
+        _sezione_classi(T, ctx, stats)
+    elif sez == SEZIONI[1]:
+        _sezione_preferenze(T, ctx)
+    elif sez == SEZIONI[2]:
+        _sezione_attivita(T, ctx, stats)
+    else:
+        _sezione_account(T, ctx)

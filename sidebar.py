@@ -97,11 +97,10 @@ def render_sidebar(
         # ── TEMA ──────────────────────────────────────────────────────────────
         # Tema chiaro (Carta, predefinito) o scuro (Notte): un interruttore in fondo alla barra.
         with _c_user:
-            if st.button("Le mie preferenze e classi", key="sb_preferenze", use_container_width=True, icon=":material/tune:"):
-                st.session_state["_apri_preferenze"] = True
+            if st.button("Il mio profilo", key="sb_profilo", use_container_width=True, icon=":material/account_circle:"):
+                st.session_state["_apri_profilo"] = True
                 st.rerun()
-            _scuro = st.toggle("Tema scuro", value=(st.session_state.get("theme") == "notte"), key="tema_scuro_toggle",
-                               help="Colori scuri, più riposanti la sera. La verifica stampata resta sempre uguale.")
+        _scuro = bool(st.session_state.get("_tema_scuro", st.session_state.get("theme") == "notte"))
         _chiave_tema = "notte" if (_scuro and "notte" in THEMES) else list(THEMES.keys())[0]
         if st.session_state.get("theme") != _chiave_tema:
             st.session_state.theme = _chiave_tema
