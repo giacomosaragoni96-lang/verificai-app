@@ -70,6 +70,86 @@ def get_css(T: dict) -> str:
     # ── Transition standard ────────────────────────────────────────────────────
     _transition = "0.2s cubic-bezier(.4,0,.2,1)"
 
+    # ── Profondità (solo tema chiaro): pagina leggermente colorata, superfici bianche che si staccano con ombre morbide ──
+    _prof = ""
+    if _is_light:
+        _ombra1 = "0 1px 2px rgba(15,23,42,.06), 0 2px 8px rgba(15,23,42,.05)"
+        _ombra2 = "0 2px 4px rgba(15,23,42,.05), 0 14px 34px rgba(15,23,42,.09)"
+        _bordo_s = "#CCD7E8"
+        _prof = f"""
+  /* ═══ PROFONDITÀ — la pagina ha un velo di colore, le superfici bianche (campi, schede, sezioni) si staccano con ombre morbide ═══ */
+  html body .stApp, html body .stApp [data-testid="stAppViewContainer"] {{
+    background-image: radial-gradient(900px 420px at 50% -60px, rgba(37,99,235,.13), rgba(37,99,235,0) 72%),
+                      linear-gradient(180deg, #EAEFF8 0%, #DCE4F1 100%) !important;
+    background-attachment: fixed !important;
+  }}
+  html body .stApp header[data-testid="stHeader"] {{
+    background: rgba(234,239,248,.78) !important; backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(15,23,42,.06) !important;
+  }}
+  /* barra laterale: un tono più profonda della pagina, con i pulsanti come schede bianche in rilievo */
+  html body .stApp [data-testid="stSidebar"] {{
+    background: linear-gradient(180deg, #DDE6F3 0%, #CEDAEB 100%) !important;
+    border-right: 1px solid #BFCDE2 !important;
+    box-shadow: 6px 0 28px rgba(15,23,42,.08) !important;
+  }}
+  html body .stApp [data-testid="stSidebar"] .stButton > button {{
+    background: linear-gradient(180deg, #FFFFFF 0%, #F6F8FC 100%) !important;
+    border: 1px solid {_bordo_s} !important; border-radius: 12px !important;
+    box-shadow: {_ombra1} !important;
+    transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease !important;
+  }}
+  html body .stApp [data-testid="stSidebar"] .stButton > button:hover {{
+    box-shadow: {_ombra2} !important; transform: translateY(-1px); border-color: {_acc}66 !important;
+  }}
+  html body .stApp [data-testid="stSidebar"] .stButton > button[kind="tertiary"],
+  html body .stApp [data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-tertiary"] {{
+    background: rgba(255,255,255,.55) !important; border: 1px solid rgba(255,255,255,.85) !important;
+    box-shadow: 0 1px 2px rgba(15,23,42,.05) !important;
+  }}
+  html body .stApp [data-testid="stSidebar"] .stButton > button[kind="tertiary"]:hover,
+  html body .stApp [data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-tertiary"]:hover {{
+    background: #FFFFFF !important; box-shadow: {_ombra1} !important;
+  }}
+  /* campi di testo, menu a tendina, area di testo: bianchi, con bordo e ombra leggera */
+  html body .stApp [data-baseweb="textarea"],
+  html body .stApp .stTextInput [data-baseweb="input"],
+  html body .stApp .stSelectbox [data-baseweb="select"] > div:first-child {{
+    background-color: #FFFFFF !important; border: 1px solid {_bordo_s} !important;
+    box-shadow: {_ombra1} !important; border-radius: 12px !important;
+  }}
+  html body .stApp [data-baseweb="textarea"]:focus-within,
+  html body .stApp .stSelectbox [data-baseweb="select"] > div:first-child:focus-within {{
+    border-color: {_acc} !important; box-shadow: 0 0 0 3px {_acc}26, {_ombra1} !important;
+  }}
+  /* sezioni a tendina e riquadri con bordo: schede sollevate */
+  html body .stApp details[data-testid="stExpander"] {{
+    border: 1px solid {_bordo_s} !important; box-shadow: {_ombra2} !important;
+  }}
+  html body .stApp [data-testid="stVerticalBlockBorderWrapper"] {{
+    border: 1px solid {_bordo_s} !important; background: #FFFFFF; box-shadow: {_ombra1};
+  }}
+  /* zone di caricamento file: incavate */
+  html body .stApp [data-testid="stFileUploaderDropzone"] {{
+    background: #F3F6FB !important; border: 1.5px dashed #B9C7DC !important; border-radius: 12px !important;
+    box-shadow: inset 0 1px 3px rgba(15,23,42,.07) !important;
+  }}
+  /* schede (tab): controllo a segmenti, la scheda attiva è una pastiglia bianca in rilievo */
+  html body .stApp [data-baseweb="tab-list"] {{
+    background: rgba(15,23,42,.055) !important; border-radius: 12px !important; padding: 4px !important; gap: 4px !important;
+  }}
+  html body .stApp [data-baseweb="tab-border"], html body .stApp [data-baseweb="tab-highlight"] {{ display: none !important; }}
+  html body .stApp [data-baseweb="tab-list"] button[role="tab"] {{ border-radius: 9px !important; padding: .4rem .8rem !important; }}
+  html body .stApp [data-baseweb="tab-list"] button[role="tab"][aria-selected="true"] {{
+    background: #FFFFFF !important; box-shadow: {_ombra1} !important;
+  }}
+  /* pulsante principale: un po' di luce sotto */
+  html body .stApp div.stButton > button[kind="primary"],
+  html body .stApp div.stButton > button[data-testid="stBaseButton-primary"] {{
+    box-shadow: 0 8px 22px {_acc}40, 0 2px 4px rgba(15,23,42,.10) !important;
+  }}
+"""
+
     return f"""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
@@ -4773,6 +4853,7 @@ font-family: 'DM Sans', sans-serif;
     padding-bottom: .15rem;
   }}
 
+{_prof}
 </style>
 """
 
