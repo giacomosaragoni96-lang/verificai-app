@@ -95,9 +95,16 @@ def render_sidebar(
             )
 
         # ── TEMA ──────────────────────────────────────────────────────────────
-        # Il tema scuro non si sceglie più: una sessione rimasta su "notte" torna a Carta.
-        if THEMES and st.session_state.get("theme") != list(THEMES.keys())[0]:
-            st.session_state.theme = list(THEMES.keys())[0]
+        # Tema chiaro (Carta, predefinito) o scuro (Notte): un interruttore in fondo alla barra.
+        with _c_user:
+            if st.button("Le mie preferenze e classi", key="sb_preferenze", use_container_width=True, icon=":material/tune:"):
+                st.session_state["_apri_preferenze"] = True
+                st.rerun()
+            _scuro = st.toggle("Tema scuro", value=(st.session_state.get("theme") == "notte"), key="tema_scuro_toggle",
+                               help="Colori scuri, più riposanti la sera. La verifica stampata resta sempre uguale.")
+        _chiave_tema = "notte" if (_scuro and "notte" in THEMES) else list(THEMES.keys())[0]
+        if st.session_state.get("theme") != _chiave_tema:
+            st.session_state.theme = _chiave_tema
             theme_changed = True
 
         # ── CONTATORE MENSILE ─────────────────────────────────────────────────

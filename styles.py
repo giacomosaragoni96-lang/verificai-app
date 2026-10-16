@@ -151,6 +151,53 @@ def get_css(T: dict) -> str:
   }}
 """
 
+    # ── Profondità nel tema scuro: stesse idee del chiaro (velo di colore, superfici in rilievo, schede a segmenti), con i colori di Notte ──
+    if not _is_light:
+        _b2 = T["border2"]
+        _ombra_s = "0 1px 2px rgba(0,0,0,.45), 0 4px 14px rgba(0,0,0,.30)"
+        _ombra_g = "0 2px 4px rgba(0,0,0,.40), 0 16px 36px rgba(0,0,0,.42)"
+        _prof = f"""
+  /* ═══ PROFONDITÀ (tema scuro) ═══ */
+  html body .stApp, html body .stApp [data-testid="stAppViewContainer"] {{
+    background-image: radial-gradient(900px 420px at 50% -60px, rgba(88,166,255,.14), rgba(88,166,255,0) 72%),
+                      linear-gradient(180deg, #0D1117 0%, #090D13 100%) !important;
+    background-attachment: fixed !important;
+  }}
+  html body .stApp header[data-testid="stHeader"] {{ background: rgba(13,17,23,.78) !important; backdrop-filter: blur(8px); border-bottom: 1px solid rgba(255,255,255,.06) !important; }}
+  html body .stApp [data-testid="stSidebar"] {{ box-shadow: 6px 0 28px rgba(0,0,0,.45) !important; }}
+  html body .stApp [data-testid="stSidebar"] .stButton > button {{
+    background: linear-gradient(180deg, #1C2128 0%, #161B22 100%) !important; border: 1px solid {_b2} !important; border-radius: 12px !important;
+    box-shadow: {_ombra_s} !important; transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease !important;
+  }}
+  html body .stApp [data-testid="stSidebar"] .stButton > button:hover {{ box-shadow: {_ombra_g} !important; transform: translateY(-1px); border-color: {_acc}88 !important; }}
+  html body .stApp .stTextInput [data-baseweb="input"], html body .stApp [data-baseweb="textarea"], html body .stApp .stSelectbox [data-baseweb="select"] > div:first-child {{
+    background-color: #161B22 !important; border: 1px solid {_b2} !important; box-shadow: {_ombra_s} !important; border-radius: 12px !important;
+  }}
+  html body .stApp [data-baseweb="textarea"]:focus-within, html body .stApp .stSelectbox [data-baseweb="select"] > div:first-child:focus-within {{
+    border-color: {_acc} !important; box-shadow: 0 0 0 3px {_acc}33, {_ombra_s} !important;
+  }}
+  html body .stApp details[data-testid="stExpander"], html body .stApp [data-testid="stExpander"] > details {{
+    border: 1px solid {_b2} !important; box-shadow: {_ombra_g} !important; border-radius: 14px !important;
+  }}
+  html body .stApp [data-testid="stVerticalBlockBorderWrapper"] {{ border: 1px solid {_b2} !important; background: #161B22; box-shadow: {_ombra_s}; }}
+  html body .stApp [data-testid="stFileUploaderDropzone"] {{
+    background: #0F141B !important; border: 1.5px dashed #3D444D !important; border-radius: 12px !important; box-shadow: inset 0 1px 3px rgba(0,0,0,.5) !important;
+  }}
+  html body .stApp [data-baseweb="tab-list"] {{ background: rgba(255,255,255,.06) !important; border-radius: 12px !important; padding: 4px !important; gap: 4px !important; }}
+  html body .stApp [data-baseweb="tab-border"], html body .stApp [data-baseweb="tab-highlight"] {{ display: none !important; }}
+  html body .stApp [data-baseweb="tab-list"] button[role="tab"] {{ border-radius: 9px !important; padding: .4rem .8rem !important; }}
+  html body .stApp [data-baseweb="tab-list"] button[role="tab"][aria-selected="true"] {{ background: #21262D !important; box-shadow: {_ombra_s} !important; }}
+  html body .stApp div.stButton > button[kind="primary"], html body .stApp div.stButton > button[data-testid="stBaseButton-primary"] {{
+    box-shadow: 0 8px 22px {_acc}33, 0 2px 4px rgba(0,0,0,.4) !important;
+  }}
+  html body .stApp [data-testid="stBaseButton-segmented_controlActive"] {{ background: {_acc}22 !important; border-color: {_acc} !important; }}
+  /* componenti con colori propri: versione scura */
+  html body .stApp div[class*="st-key-nota_imp_"]:not(#vf) {{ background: linear-gradient(160deg, rgba(210,153,34,.14) 0%, rgba(210,153,34,.07) 100%); border-color: #9E6A03; border-left-color: #D29922; box-shadow: 0 4px 14px rgba(0,0,0,.35); }}
+  html body .stApp div[class*="st-key-nota_imp_"] .ni-k {{ color: #E3B341; }}
+  html body .stApp .st-key-scelta_impagina {{ background: linear-gradient(160deg, rgba(210,153,34,.13) 0%, rgba(210,153,34,.06) 100%) !important; border-color: #9E6A03 !important; box-shadow: 0 10px 28px rgba(0,0,0,.4) !important; }}
+  html body .stApp :is(.st-key-nota_imp_cambi) .ni-k {{ color: #E3B341; }}
+"""
+
     return f"""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
@@ -4948,6 +4995,31 @@ font-family: 'DM Sans', sans-serif;
   html body .stApp div[class*="st-key-nota_imp_"] button, html body .stApp div[class*="st-key-nota_imp_"] button * {{ white-space: nowrap !important; }}
   html body .stApp div[class*="st-key-nota_imp_"]:not(#vf) [data-testid="stBaseButton-tertiary"] {{ background: transparent !important; background-image: none !important; border: none !important; box-shadow: none !important; color: #92400E !important; text-decoration: underline; }}
   html body .stApp div[class*="st-key-nota_imp_"] [data-testid="stBaseButton-tertiary"] * {{ color: #92400E !important; -webkit-text-fill-color: #92400E !important; font-size: .85rem !important; }}
+
+  /* ── Pagina finale su desktop: l'anteprima resta ferma a sinistra mentre si scorrono le azioni a destra; sotto i 1000 px si impila ── */
+  html body .stApp [data-testid="stColumn"]:has(.col-prev) {{ position: sticky; top: 4.6rem; align-self: flex-start; }}
+  @media (max-width: 1000px) {{
+    html body .stApp [data-testid="stHorizontalBlock"]:has(.col-prev) {{ flex-direction: column !important; }}
+    html body .stApp [data-testid="stHorizontalBlock"]:has(.col-prev) > [data-testid="stColumn"] {{ width: 100% !important; flex: none !important; position: static !important; }}
+  }}
+  html body .stApp [class*="st-key-esito_"] button, html body .stApp [class*="st-key-esito_"] button * {{ white-space: nowrap !important; font-size: .82rem !important; }}
+
+  /* ── Micro-interazioni coerenti: un solo modo di rispondere al tocco per pulsanti, schede e campi (disattivate se l'utente riduce i movimenti) ── */
+  @media (prefers-reduced-motion: no-preference) {{
+    html body .stApp .stButton > button, html body .stApp .stDownloadButton > button {{
+      transition: transform .14s ease, box-shadow .18s ease, filter .18s ease, background-color .18s ease, border-color .18s ease !important;
+    }}
+    html body .stApp .stButton > button:not(:disabled):hover, html body .stApp .stDownloadButton > button:not(:disabled):hover {{ transform: translateY(-1px); }}
+    html body .stApp .stButton > button:not(:disabled):active, html body .stApp .stDownloadButton > button:not(:disabled):active {{ transform: translateY(1px) scale(.985); filter: brightness(.97); }}
+    html body .stApp [data-testid="stVerticalBlockBorderWrapper"], html body .stApp details[data-testid="stExpander"] {{ transition: box-shadow .2s ease, border-color .2s ease; }}
+    html body .stApp [data-testid="stVerticalBlockBorderWrapper"]:hover {{ border-color: {_acc}55 !important; }}
+    html body .stApp [data-baseweb="select"] > div, html body .stApp [data-baseweb="textarea"], html body .stApp [data-baseweb="base-input"] {{ transition: border-color .18s ease, box-shadow .18s ease; }}
+  }}
+  /* tastiera: contorno visibile e uguale ovunque */
+  html body .stApp button:focus-visible, html body .stApp [role="tab"]:focus-visible, html body .stApp a:focus-visible {{ outline: 2px solid {_acc} !important; outline-offset: 2px !important; }}
+  /* caricamento: i pulsanti che avviano un lavoro lungo mostrano un leggero pulsare mentre l'app lavora */
+  html body .stApp[data-teststate="running"] div.stButton > button[kind="primary"]:not(:disabled) {{ animation: vf-lavora 1.4s ease-in-out infinite; }}
+  @keyframes vf-lavora {{ 0%,100% {{ filter: none; }} 50% {{ filter: brightness(1.08); }} }}
 
 {_prof}
 </style>
