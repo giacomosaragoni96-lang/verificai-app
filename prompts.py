@@ -1524,3 +1524,23 @@ def prompt_correggi_verifica(testo_latex: str, richiesta: str, n_immagini: int) 
         "Rispondi con TUTTI gli esercizi, uno per blocco, nel formato:\n===ESERCIZIO===\nTITOLO: … (o vuoto)\nFIGURA: nessuna | grafico_funzione | "
         "figura_geometrica | tabella | non_riproducibile\nDUBBI: … oppure «nessuno»\nTESTO:\n<il testo LaTeX>\n===FINE==="
     )
+
+
+def prompt_controlla_errori_verifica(esercizi_testo: str, materia: str) -> str:
+    """Un secondo lettore, solo sul TESTO già trascritto: segnala errori oggettivi nella verifica del docente (mai modifiche di gusto)."""
+    return (
+        f"Sei un docente di {materia or 'scuola'} che rilegge la verifica di un collega prima che venga stampata. Qui sotto ci sono gli esercizi "
+        "in LaTeX. Segnala SOLO errori oggettivi e certi: dati o calcoli sbagliati o incoerenti, richieste impossibili o che si contraddicono, "
+        "consegna che non corrisponde alle richieste, refusi evidenti, formule malformate, dati mancanti senza i quali l'esercizio non si può svolgere. "
+        "NON segnalare questioni di stile, di difficoltà, di gusto o di formulazione alternativa. Se non sei sicuro, non segnalare. Al massimo 5 note.\n"
+        "Se non trovi errori certi rispondi con la sola parola NESSUNO.\n"
+        "Per ogni errore usa questo formato:\n"
+        "===NOTA===\n"
+        "ESERCIZIO: il numero dell'esercizio (1, 2, 3…)\n"
+        "PROBLEMA: una frase che dice cosa non va\n"
+        "PROPOSTA: una frase che dice cosa cambieresti\n"
+        "TESTO_CORRETTO:\n"
+        "<l'INTERO esercizio in LaTeX, identico all'originale tranne la correzione: stesse richieste, stessa struttura, stessi punteggi (N pt)>\n"
+        "===FINE===\n\n"
+        "ESERCIZI:\n" + esercizi_testo
+    )

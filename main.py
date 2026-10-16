@@ -2769,7 +2769,7 @@ def _render_impagina() -> None:
             _registra_evento("impagina")
             if _ris["ok"]:
                 st.session_state["_imp"] = {"immagini": _imm, "esercizi": _ris["esercizi"], "titolo": _ris["titolo"], "materia": _materia,
-                                            "scuola": _scuola, "richiesta": st.session_state.get("imp_richiesta", "")}
+                                            "scuola": _scuola, "richiesta": st.session_state.get("imp_richiesta", ""), "note": _ris.get("note") or []}
                 st.session_state["_imp_prev"] = {}
                 st.session_state["imp_titolo"] = _ris["titolo"]
                 st.rerun()
@@ -2804,6 +2804,23 @@ def _render_impagina() -> None:
                 st.warning("Controlla questi punti sull'originale:\n" + "\n".join(f"- {d}" for d in _ex["dubbi"]), icon="👀")
             elif _ex.get("ricontrollato"):
                 st.caption("✓ Letto e ricontrollato sulle pagine.")
+            for _k_n, _nota in enumerate(dati.get("note") or []):
+                if _nota.get("indice") != _i or _nota.get("su") != impagina.impronta(_ex.get("latex")):
+                    continue
+                with st.container(key=f"nota_imp_{_i}_{_k_n}"):
+                    st.markdown(
+                        '<div class="ni-k">💡 Ho notato una cosa</div>'
+                        f'<div class="ni-t">{_esc(_nota["problema"])}</div>'
+                        f'<div class="ni-p"><b>Proposta:</b> {_esc(_nota["proposta"])}</div>', unsafe_allow_html=True)
+                    _n1, _n2, _n3 = st.columns([2.1, 1.4, 1.2], gap="small", vertical_alignment="center")
+                    if _n1.button("Applica la correzione", key=f"imp_nota_ok_{_i}_{_k_n}", type="primary", icon=":material/check:"):
+                        dati["esercizi"] = impagina.applica_nota(_esercizi, _nota)
+                        dati["note"] = [x for y, x in enumerate(dati["note"]) if y != _k_n]
+                        st.session_state["_imp_prev"] = {}
+                        st.rerun()
+                    if _n2.button("Lascia com'è", key=f"imp_nota_no_{_i}_{_k_n}", type="tertiary"):
+                        dati["note"] = [x for y, x in enumerate(dati["note"]) if y != _k_n]
+                        st.rerun()
             _inclusi.append(_ex)
             _orig_idx.append(_i)
 
