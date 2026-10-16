@@ -75,6 +75,7 @@ import inviti
 from aperture import registra_apertura
 from styles import get_css, _is_light_color
 from ui_banca import render_banca
+from ui_cruscotto import render_cruscotto
 from ui_helpers import (
     render_privacy,
     _make_katex_html,
@@ -99,6 +100,7 @@ except ImportError:
 # ── COSTANTI STAGE ────────────────────────────────────────────────────────────
 STAGE_MIE_VERIFICHE = "MIE_VERIFICHE"  # pagina "Le tue verifiche"
 STAGE_UPGRADE = "UPGRADE"               # pagina «Passa a Pro»
+STAGE_CRUSCOTTO = "CRUSCOTTO"           # pagina «Cruscotto» (solo admin)
 STAGE_BANCA = "BANCA"                   # pagina "Banca esercizi" (solo admin)
 
 # ── PAGE CONFIG ───────────────────────────────────────────────────────────────
@@ -2164,7 +2166,7 @@ def _elenco_verifiche(user_id: str, refresh: int) -> list:
     """Elenco leggero dello storico (senza il LaTeX, che pesa): una query ogni 2 minuti
     o appena cambia `_storico_refresh` (nuova verifica, rinomina, eliminazione)."""
     res = supabase_admin.table("verifiche_storico")\
-        .select("id,argomento,materia,scuola,num_esercizi,created_at")\
+        .select("id,argomento,materia,scuola,num_esercizi,created_at,percorso_scelto")\
         .eq("user_id", user_id)\
         .is_("deleted_at", "null")\
         .order("created_at", desc=True)\
@@ -2449,6 +2451,39 @@ def _apri_verifica_salvata(verifica: dict, contenuto: dict) -> bool:
     return True
 
 
+_MATERIA_STILE = [("matem", "#2563EB", "➗"), ("fisic", "#7C3AED", "⚛️"), ("chim", "#0D9488", "🧪"), ("biolog", "#16A34A", "🧬"), ("scienz", "#16A34A", "🌱"),
+                  ("ital", "#DC2626", "📖"), ("stori", "#B45309", "🏛️"), ("geogr", "#0891B2", "🌍"), ("ingl", "#DB2777", "🇬🇧"), ("filos", "#6D28D9", "💭"),
+                  ("inform", "#475569", "💻"), ("lat", "#9A3412", "🏺"), ("art", "#C026D3", "🎨")]
+
+
+def _stile_materia(materia: str):
+    """(colore, icona) della materia, per le schede di «Le mie verifiche»."""
+    m = (materia or "").lower()
+    for chiave, colore, icona in _MATERIA_STILE:
+        if chiave in m:
+            return colore, icona
+    return "#64748B", "📝"
+
+
+def _data_relativa(iso: str) -> str:
+    """«oggi», «ieri», «3 giorni fa», «2 settimane fa» oppure la data."""
+    try:
+        d = datetime.fromisoformat((iso or "").replace("Z", "+00:00"))
+        giorni = (datetime.now(timezone.utc) - d).days
+    except Exception:
+        return "Data non disponibile"
+    if giorni <= 0:
+        return "oggi"
+    if giorni == 1:
+        return "ieri"
+    if giorni < 7:
+        return f"{giorni} giorni fa"
+    if giorni < 30:
+        n = giorni // 7
+        return "1 settimana fa" if n == 1 else f"{n} settimane fa"
+    return d.strftime("%d/%m/%Y")
+
+
 def _render_le_tue_verifiche():
     """
     Pagina "Le mie verifiche" - Gestione verifiche create dall'utente
@@ -2560,22 +2595,24 @@ def _render_le_tue_verifiche():
                 pass
 
         with st.container():
-            # Titolo, materia in evidenza, il resto in una riga sola
+            _col_m, _ico_m = _stile_materia(verifica.get("materia"))
+            _impag = ('<span style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:.12rem .6rem;border-radius:999px;font-weight:700;font-size:.75rem;">'
+                      'Impaginata da te</span>' if verifica.get("percorso_scelto") == "IMPAGINA" else "")
             st.markdown(
                 f"""
-                <div style="background:{T['card']};border:1px solid {T['border']};border-radius:12px;
-                            padding:1rem 1.3rem;margin-bottom:.5rem;">
-                    <div style="font-size:1.08rem;font-weight:700;color:{T['text']};margin:0 0 .45rem 0;">
-                        {_esc(verifica.get('argomento') or 'Verifica senza titolo')}
-                    </div>
-                    <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;
-                                font-size:.88rem;color:{T['text2']};">
-                        <span style="background:{T['accent_light']};color:{T['accent']};padding:.2rem .7rem;
-                                     border-radius:20px;font-weight:600;">
-                            {_esc(verifica.get('materia') or 'Sconosciuta')}</span>
-                        <span>{_esc(verifica.get('scuola') or 'Scuola non indicata')}
-                              · {_esc(verifica.get('num_esercizi') or '?')} esercizi
-                              · {_esc(data_formattata)}</span>
+                <div style="background:{T['card']};border:1px solid {T['border']};border-left:5px solid {_col_m};border-radius:14px;
+                            padding:.95rem 1.2rem;margin-bottom:.5rem;box-shadow:0 2px 8px rgba(15,23,42,.06);display:flex;gap:.9rem;align-items:center;">
+                    <div style="flex:0 0 2.9rem;height:2.9rem;border-radius:12px;background:{_col_m}1A;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">{_ico_m}</div>
+                    <div style="min-width:0;">
+                        <div style="font-size:1.06rem;font-weight:800;color:{T['text']};margin:0 0 .35rem 0;line-height:1.25;">
+                            {_esc(verifica.get('argomento') or 'Verifica senza titolo')}
+                        </div>
+                        <div style="display:flex;gap:.45rem;flex-wrap:wrap;align-items:center;font-size:.84rem;color:{T['text2']};">
+                            <span style="background:{_col_m}1F;color:{_col_m};padding:.12rem .65rem;border-radius:999px;font-weight:700;">
+                                {_esc(verifica.get('materia') or 'Sconosciuta')}</span>
+                            <span>{_esc(verifica.get('scuola') or 'Scuola non indicata')} · {_esc(verifica.get('num_esercizi') or '?')} esercizi · {_esc(_data_relativa(verifica.get('created_at')))}</span>
+                            {_impag}
+                        </div>
                     </div>
                 </div>
                 """,
@@ -3983,6 +4020,7 @@ def _lancia_generazione(
         # L'errore si mostra in cima alla pagina, sopra il form (che il rerun ridisegna):
         # sotto il pulsante non si vedrebbe, perché la pagina è scorsa in alto.
         _prog.empty()
+        _registra_evento("errore:impagina" if generatore is not None else "errore:generazione")
         st.session_state["_esito_gen"] = {
             "azione": "Non sono riuscito a creare la verifica", "exc": _e,
         }
@@ -6934,6 +6972,15 @@ if not _share_view_active:
             render_sblocco(T, _esci_da_upgrade, st.session_state.get("_upgrade_funzione"),
                            _bonus_residui() if (MONETIZZAZIONE_ATTIVA and st.session_state.utente) else 0, _riscatta_codice,
                            invito=_INVITO)
+    elif _current == STAGE_CRUSCOTTO:
+        if _is_admin:
+            def _esci_dal_cruscotto():
+                st.session_state.stage = STAGE_INPUT
+                st.rerun()
+            render_cruscotto(T, supabase_admin, _esci_dal_cruscotto, ADMIN_EMAILS)
+        else:                                   # il cruscotto è riservato all'admin
+            st.session_state.stage = STAGE_INPUT
+            st.rerun()
     elif _current == STAGE_BANCA:
         if _is_admin:
             def _esci_dalla_banca():
