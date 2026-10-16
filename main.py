@@ -19,6 +19,7 @@ import time
 import hashlib
 from datetime import datetime, timezone
 
+from esercizio_foto import leggi_esercizi_da_foto, correggi_esercizio, stato_esercizio, blocco_latex, riassunto_per_prompt
 from ai_client import crea_modello, configura as configura_ai, riepilogo_uso, numero_chiamate, chiamate_da
 
 from sidebar import render_sidebar
@@ -2667,6 +2668,132 @@ def _render_le_tue_verifiche():
             st.session_state["_storico_mostra"] = _n_mostra + 8
             st.rerun()
 
+_MAX_LETTURE_FOTO = 8      # letture di foto per sessione (ognuna sono due chiamate all'AI)
+
+
+def _anteprima_esercizio_foto(materia: str, titolo: str, latex: str):
+    """PNG di come comparirà l'esercizio del libro nella verifica (in cache per testo); None se non si riesce a comporlo."""
+    cache = st.session_state.setdefault("_img_foto_es", {})
+    chiave = hashlib.md5((materia + "\x00" + titolo + "\x00" + latex).encode("utf-8")).hexdigest()
+    if chiave not in cache:
+        if len(cache) > 12:
+            cache.clear()
+        from generation import _costruisci_preambolo
+        e_mat = any(k in materia.lower() for k in ("matem", "fis", "chim", "inform", "elettr", "meccan"))
+        pre, _ = _costruisci_preambolo(materia, "Titolo", "", e_mat)
+        cache[chiave] = anteprima_esercizio_png(pre, "Esercizio 1: " + titolo, latex)
+    return cache[chiave]
+
+
+def _azzera_esercizio_foto() -> None:
+    st.session_state["_foto_es"] = None
+    st.session_state["_foto_es_pronti"] = []
+    st.session_state["_foto_es_ciclo"] = st.session_state.get("_foto_es_ciclo", 0) + 1
+
+
+def _blocco_esercizio_foto(materia: str, scuola: str, num_esercizi: int) -> None:
+    """
+    «Un esercizio dal tuo libro?»: foto → lettura → il docente vede la foto accanto a come comparirà e conferma (o corregge) →
+    l'esercizio entra identico nella verifica. Solo interfaccia: lettura e ricontrollo sono in esercizio_foto.py.
+    Lascia in `_foto_es_pronti` gli esercizi confermati, con la loro posizione, per la generazione.
+    """
+    st.session_state["_foto_es_pronti"] = []
+    st.markdown(_html_separatore() + '<div class="opt-label">Hai un esercizio del libro da includere? (opzionale)</div>', unsafe_allow_html=True)
+    dati = st.session_state.get("_foto_es")
+    if _pro_bloccato("materiale") and not dati:
+        st.caption("Fotografa un esercizio del tuo libro e VerificAI lo riporta identico nella verifica, con il suo grafico: "
+                   + ("è una funzione del piano Pro." if PREZZI_VISIBILI else "è una delle funzioni complete, da sbloccare con il questionario."))
+        _pulsante_pro("materiale", "pro_foto_es", "Includi un esercizio dalla foto con il piano Pro")
+        return
+
+    if not dati:
+        st.caption("Fotografa l'esercizio (o caricane il PDF): lo riporto identico nella verifica, con il suo grafico se si può riprodurre. "
+                   "Foto dritta, ben illuminata, con l'esercizio intero.")
+        _files = st.file_uploader(
+            "Foto dell'esercizio", type=["jpg", "jpeg", "png", "webp", "pdf"], accept_multiple_files=True,
+            key=f"foto_es_up_{st.session_state.get('_foto_es_ciclo', 0)}", label_visibility="collapsed",
+            help="Se l'esercizio è su due pagine carica entrambe le foto (al massimo 4).")
+        if _files and st.button("Leggi l'esercizio", key="foto_es_leggi", icon=":material/document_scanner:"):
+            if st.session_state.get("_foto_es_n", 0) >= _MAX_LETTURE_FOTO:
+                st.warning("Hai già letto diverse foto in questa sessione: riprova più tardi.")
+                return
+            _imm = [{"data": f.getvalue(), "mime_type": f.type or "image/jpeg", "name": f.name} for f in _files]
+            with st.spinner("Leggo l'esercizio e lo ricontrollo sulla foto…"):
+                _ris = leggi_esercizi_da_foto(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, materia, scuola)
+            st.session_state["_foto_es_n"] = st.session_state.get("_foto_es_n", 0) + 1
+            _registra_evento("foto_esercizio")
+            if _ris["ok"]:
+                st.session_state["_foto_es"] = {"immagini": _imm, "esercizi": _ris["esercizi"]}
+                st.rerun()
+            st.warning(_ris["messaggio"], icon="📷")
+        return
+
+    _imm, _esercizi = dati["immagini"], dati["esercizi"]
+    _pronti = []
+    for _i, _ex in enumerate(_esercizi):
+        _stato = stato_esercizio(_ex)
+        _img = _anteprima_esercizio_foto(materia, _ex["titolo"], _ex["latex"]) if _stato["utilizzabile"] else None
+        if _stato["utilizzabile"] and _img is None:
+            _stato = {"utilizzabile": False, "motivo": "Non riesco a impaginarlo in modo pulito. Prova a correggerlo o a rifare la foto."}
+        with st.container(border=True):
+            st.markdown(f"**{_ex['titolo']}**")
+            _ca, _cb = st.columns(2, gap="small")
+            with _ca:
+                st.caption("La tua foto")
+                _foto_img = [m["data"] for m in _imm if (m.get("mime_type") or "").startswith("image/")][:2]
+                try:
+                    if _foto_img:
+                        st.image(_foto_img, use_container_width=True)
+                    else:
+                        st.caption("(PDF caricato)")
+                except Exception:          # formato che il browser non mostra (per esempio HEIC): la lettura funziona lo stesso
+                    st.caption("(foto caricata)")
+            with _cb:
+                st.caption("Come comparirà nella verifica")
+                if _img:
+                    st.image(_img, use_container_width=True)
+                else:
+                    st.caption("Anteprima non disponibile.")
+            if not _stato["utilizzabile"]:
+                st.warning(_stato["motivo"], icon="⚠️")
+            else:
+                if _ex.get("correzioni"):
+                    st.info("Ricontrollando la foto ho corretto:\n" + "\n".join(f"- {c}" for c in _ex["correzioni"]), icon="🔎")
+                if _ex.get("dubbi"):
+                    st.warning("Controlla questi punti sulla foto:\n" + "\n".join(f"- {d}" for d in _ex["dubbi"]), icon="👀")
+                elif _ex.get("ricontrollato"):
+                    st.caption("✓ Letto e ricontrollato sulla foto. Guarda comunque che sia identico: i numeri contano.")
+                else:
+                    st.caption("Non sono riuscito a ricontrollarlo: guardalo con attenzione.")
+            _usa = st.toggle("Includi nella verifica", value=_stato["utilizzabile"], key=f"foto_es_usa_{_i}",
+                             disabled=not _stato["utilizzabile"])
+            _opz = list(range(1, max(2, num_esercizi) + 1))
+            _pos_def = min(1 + 2 * _i, _opz[-1])
+            _pos = st.selectbox("In che posizione?", _opz, index=_opz.index(_pos_def), key=f"foto_es_pos_{_i}_{len(_opz)}",
+                                format_func=lambda p, _n=len(_opz): f"{p}° esercizio" + (" (l'ultimo)" if p == _n else ""),
+                                disabled=not (_usa and _stato["utilizzabile"]))
+            with st.expander("Qualcosa non è uguale alla foto? Correggilo", expanded=False):
+                _txt = st.text_input("Cosa non va", key=f"foto_es_corr_t_{_i}", label_visibility="collapsed",
+                                     placeholder="Es.: nella b) l'esponente è 3, non 2")
+                if st.button("Correggi", key=f"foto_es_corr_b_{_i}"):
+                    with st.spinner("Riguardo la foto…"):
+                        _cor = correggi_esercizio(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, _ex, _txt)
+                    if _cor["ok"]:
+                        _esercizi[_i] = _cor["esercizio"]
+                        st.rerun()
+                    st.warning(_cor["messaggio"])
+            if _usa and _stato["utilizzabile"]:
+                _pronti.append({"blocco": blocco_latex(_ex, _pos), "posizione": int(_pos), "titolo": _ex["titolo"],
+                                "riassunto": riassunto_per_prompt(_ex)})
+    if st.button("✕ Togli la foto", key="foto_es_togli"):
+        _azzera_esercizio_foto()
+        st.rerun()
+    if len(_pronti) >= max(2, num_esercizi):
+        st.warning(f"La verifica ha {num_esercizi} esercizi: ne lascio almeno uno scritto da VerificAI. Aumenta il numero di esercizi o togli qualcosa.", icon="⚠️")
+        _pronti = _pronti[:max(1, num_esercizi) - 1]
+    st.session_state["_foto_es_pronti"] = _pronti
+
+
 class _FileInMemoria:
     """File caricato tenuto in memoria: stessa interfaccia minima di un UploadedFile
     (type, name, getvalue) per genera_verifica, ma non dipende dal widget di upload."""
@@ -3017,7 +3144,6 @@ def _render_percorso_b_form(_prog_placeholder):
                     )
                     _SCELTE_MATERIALE = {
                         "base_conoscenza":   "📚 Prendi spunto dai miei appunti",
-                        "includi_esercizio": "✏️ Includi questi esercizi nella verifica",
                         "copia_fedele":      "🔁 Rifai questa verifica con dati nuovi",
                     }
                     _scelta_mat = st.radio(
@@ -3028,7 +3154,6 @@ def _render_percorso_b_form(_prog_placeholder):
                     )
                     _SUGGERIMENTI_MATERIALE = {
                         "base_conoscenza":   "Esercizi nuovi sugli argomenti del tuo materiale, nello stesso livello.",
-                        "includi_esercizio": "Gli esercizi del file entrano nella verifica; l'AI crea gli altri.",
                         "copia_fedele":      "Stessa struttura e stessi punteggi del file, con numeri e testi nuovi "
                                              "(il numero di esercizi e i punti vengono dal file).",
                     }
@@ -3043,6 +3168,12 @@ def _render_percorso_b_form(_prog_placeholder):
                         if st.session_state.get("_pb_argomento_source") != "manual":
                             st.session_state["_pb_argomento_source"] = None
                         st.rerun()
+
+                try:
+                    _blocco_esercizio_foto(materia_scelta, difficolta, num_esercizi)
+                except Exception as _e_foto:      # funzione accessoria: un suo errore non deve mai bloccare il form
+                    logger.warning("Esercizio da foto: %s", _e_foto)
+                    st.session_state["_foto_es_pronti"] = []
 
                 # ── Logo della scuola: si carica una volta, poi compare in tutte le verifiche ──
                 st.markdown(_html_separatore() + '<div class="opt-label">Logo della scuola (opzionale)</div>',
@@ -3187,6 +3318,7 @@ def _lancia_generazione(
     file_ispirazione=None,
     prog_placeholder=None,         # st.empty() creato nel form, vicino al pulsante
     piano_struttura=None,          # {"primo_base", "eccellenza"}: con la struttura-tipo si pianifica prima di scrivere
+    esercizi_fissi=None,           # esercizi del libro scelti dal docente (esercizio_foto), inseriti identici nella verifica
 ):
     """
     Funzione condivisa dai due percorsi: lancia genera_verifica,
@@ -3302,14 +3434,15 @@ def _lancia_generazione(
             bes_dsa_b=False, genera_soluzioni=False,
             note_generali=note_generali, istruzioni_esercizi=s_es,
             immagini_esercizi=imgs_es, file_ispirazione=file_ispirazione,
-            on_progress=_avanza, piano_struttura=piano_struttura,
+            on_progress=_avanza, piano_struttura=piano_struttura, esercizi_fissi=esercizi_fissi,
         )
         st.session_state["_autoverifica"] = ris.get("_autoverifica")
         if ris.get("_debug"):        # materiale per capire cosa ha fatto ogni modello: lo mostra solo l'admin; per tutti serve alle segnalazioni
             _dbg = dict(ris["_debug"])
             _dbg["richiesta"] = {"materia": materia_scelta, "scuola": difficolta, "durata": durata_scelta,
                                  "esercizi": num_esercizi_totali, "punti": punti_totali, "note": note_generali,
-                                 "istruzioni_esercizi": s_es, "modello_scelto": _modello_id_eff}
+                                 "istruzioni_esercizi": s_es, "modello_scelto": _modello_id_eff,
+                                 "esercizi_dal_libro": len(esercizi_fissi or [])}
             _dbg["chiamate"] = chiamate_da(_n_chiamate_prima)
             st.session_state["_debug_gen"] = _dbg
 
@@ -3409,6 +3542,8 @@ def _lancia_generazione(
             durata=next((n for n, v in DURATE.items() if v["durata"] == durata_scelta), None),
         )
 
+        if esercizi_fissi:
+            _azzera_esercizio_foto()          # l'esercizio del libro è entrato in questa verifica: la prossima riparte da zero
         # ── Vai alla schermata del risultato (anteprima + download + modifica)
         st.session_state.stage = STAGE_FINAL
         st.rerun()
@@ -3522,10 +3657,11 @@ def _render_stage_input():
     _ecc = bool(st.session_state.get("toggle_eccellenza", True)) and not st.session_state.esercizi_custom
     if re.search(r"(senza|niente|non\s+\w+)\s+(l['’]\s*)?(esercizi\w*\s+)?(per\s+l['’]\s*)?eccellenza", (_note_finale or "").lower()):
         _ecc = False       # il docente lo ha escluso a parole: vince lui sull'interruttore
+    _fissi_foto = list(st.session_state.get("_foto_es_pronti") or [])
     num_esercizi_totali = num_esercizi_totali + (1 if _ecc else 0)
     s_es, imgs_es = _build_prompt_esercizi(
         st.session_state.esercizi_custom,
-        num_esercizi_totali,
+        num_esercizi_totali - len(_fissi_foto),
         punti_totali if mostra_punteggi else 0,
         mostra_punteggi,
         primo_base=bool(st.session_state.get("toggle_primo_base", False)),
@@ -3588,7 +3724,8 @@ def _render_stage_input():
                           if (_scelta_mat == "base_conoscenza" and _fm) else None),
         prog_placeholder=_prog_ph_b,
         piano_struttura=({"primo_base": bool(st.session_state.get("toggle_primo_base", False)), "eccellenza": _ecc}
-                         if (PIANO_ATTIVO and not st.session_state.esercizi_custom) else None),
+                         if (PIANO_ATTIVO and not st.session_state.esercizi_custom and not _fissi_foto) else None),
+        esercizi_fissi=_fissi_foto or None,
     )
     return
 

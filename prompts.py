@@ -1317,3 +1317,123 @@ def prompt_ritocco_difficolta(materia: str, argomento: str, corpo: str, piano_te
         f"- Nessuna soluzione, risposta o commento.\n\n"
         f"OUTPUT: la verifica COMPLETA, dall'inizio, nello stesso formato (solo i blocchi \\subsection*{{...}} con i loro corpi), senza altro testo."
     )
+
+
+# ── ESERCIZIO DA UNA FOTO (esercizio_foto.py) ─────────────────────────────────────────────────────────────────
+# Il docente fotografa un esercizio del libro e lo vuole nella verifica. Tre prompt: leggere, ricontrollare, correggere.
+# Il formato di risposta NON è JSON: il LaTeX dentro un JSON perde le barre rovesciate (\f, \t, \b diventano caratteri di controllo).
+
+_MARCATORI_FOTO = (
+    "FORMATO DELLA RISPOSTA (rispettalo alla lettera, niente altro testo fuori da questo formato, niente blocchi di codice):\n"
+    "===ESERCIZIO===\n"
+    "TITOLO: titolo breve dell'esercizio, 2-6 parole, senza «Esercizio n»\n"
+    "FIGURA: nessuna | grafico_funzione | figura_geometrica | tabella | non_riproducibile\n"
+    "DUBBI: una cosa poco leggibile o incerta per riga (e come l'hai letta), oppure la sola parola «nessuno»\n"
+    "TESTO:\n"
+    "<il testo dell'esercizio in LaTeX, vedi regole>\n"
+    "===FINE===\n"
+    "(ripeti il blocco per ogni esercizio). Se la foto non si può leggere con sicurezza scrivi invece una sola riga: "
+    "PROBLEMA: spiegazione breve e gentile di cosa non va (foto sfocata, tagliata, scritto a mano illeggibile…) e di come rifarla."
+)
+
+_REGOLE_TRASCRIZIONE = (
+    "REGOLE DI TRASCRIZIONE (sono tassative):\n"
+    "1. FEDELTÀ TOTALE. Copia ogni numero, segno, esponente, indice, simbolo, unità di misura e parola ESATTAMENTE come stampati. "
+    "NON risolvere l'esercizio, NON correggerlo, NON migliorarlo, NON semplificarlo, NON cambiare i dati, NON riformulare la consegna. "
+    "Se un dato non è leggibile con sicurezza scrivi la tua lettura migliore e annotala in DUBBI: mai inventare, mai «aggiustare» perché torni.\n"
+    "2. DA TOGLIERE (non fanno parte dell'esercizio): il numero o la sigla del libro (es. «215», «Es. 12», «p. 87»), le stelline o i livelli di "
+    "difficoltà, i simboli grafici del libro (icone, «Esercizio svolto», «Suggerimento»), e SOPRATTUTTO le soluzioni o i risultati stampati "
+    "o scritti a penna (es. «[x = 3]», «R: …», «[−2; 5]»): la verifica non deve contenere le risposte. Se l'esercizio è già svolto, "
+    "trascrivi solo il testo della consegna.\n"
+    "3. STRUTTURA. Una consegna in testa, poi le richieste a), b), c)… come "
+    "\\begin{enumerate}[a)] \\item … \\end{enumerate} (se nel libro non ci sono richieste numerate, solo il testo). "
+    "Formule dentro \\( … \\) (con \\displaystyle per frazioni, limiti e somme), formule isolate in \\[ … \\]. Percentuali come \\%. "
+    "Nel testo non usare \\documentclass, \\usepackage, \\begin{document}, \\input, \\include, \\write né \\subsection: solo il corpo dell'esercizio. "
+    "NON scrivere punteggi (N pt): li aggiunge il programma.\n"
+    "4. FIGURE. Valuta con cura la figura dell'esercizio, se c'è:\n"
+    "   - GRAFICO DI FUNZIONE (la funzione è nel testo o si legge con certezza dal grafico): scrivi su una riga a sé, dove sta nel libro, "
+    "SOLO [[GRAFICO: y = <funzione di x> | x da <A> a <B>]] (funzione in chiaro, potenze con ^, frazioni con /; intervallo «x da A a B»; "
+    "più curve separate da «;»; asintoti disegnati nel libro: aggiungi in fondo | asintoti x = 2, y = 1). Mai codice TikZ per i grafici di funzioni. "
+    "Se il grafico NON ha una formula e devi ricostruirla dalle sue caratteristiche (zeri, asintoti, vertice, punti), usa la funzione più "
+    "semplice che le rispetta TUTTE e scrivilo in DUBBI («grafico ricostruito: controlla che corrisponda»). Se non riesci a ricostruirlo con "
+    "sicurezza scrivi FIGURA: non_riproducibile.\n"
+    "   - FIGURA GEOMETRICA semplice (triangoli, cerchi, rette, angoli, poligoni, solidi in prospettiva semplice, vettori): disegnala con un "
+    "\\begin{center}\\begin{tikzpicture}[scale=…] … \\end{tikzpicture}\\end{center} pulito, con le STESSE etichette del libro (A, B, C, "
+    "misure, angoli) e proporzioni coerenti con le misure date; FIGURA: figura_geometrica. Se è troppo complessa per riprodurla con "
+    "fedeltà: FIGURA: non_riproducibile.\n"
+    "   - TABELLA di dati: ricostruiscila con \\begin{tabular}…, ogni cella ESATTAMENTE come nel libro; FIGURA: tabella.\n"
+    "   - Quadro, fotografia, cartina, schema o circuito complessi, disegni a mano libera, qualsiasi immagine che non puoi rifare IDENTICA: "
+    "FIGURA: non_riproducibile. In quel caso scrivi comunque il testo e al posto della figura la riga [[FIGURA NON RIPRODUCIBILE]]. "
+    "NON sostituire mai una figura con una tua figura «simile» e NON inventare dati.\n"
+    "5. PIÙ ESERCIZI nella stessa foto: un blocco ===ESERCIZIO=== per ciascuno, nell'ordine in cui compaiono. Un esercizio spezzato su due "
+    "foto è UN solo esercizio. Ignora ciò che non è un esercizio (teoria, esempi svolti, pubblicità, margini).\n"
+    "6. Lingua: quella del testo originale (di norma italiano); non tradurre.\n"
+)
+
+
+def prompt_leggi_esercizi_foto(materia: str, scuola: str, n_immagini: int, max_esercizi: int = 3) -> str:
+    contesto = ""
+    if (materia or "").strip():
+        contesto = f"Materia della verifica: {materia.strip()}" + (f" · scuola: {scuola.strip()}" if (scuola or "").strip() else "") + ".\n"
+    return (
+        "Sei un trascrittore estremamente accurato di esercizi scolastici. Ricevi "
+        + ("una foto" if n_immagini == 1 else f"{n_immagini} foto")
+        + " (o pagine) di un libro di testo o di un foglio di esercizi: un docente vuole inserire "
+        "quell'esercizio IDENTICO in una sua verifica. Il tuo compito è trascriverlo in LaTeX senza cambiare nulla di ciò che chiede.\n"
+        + contesto
+        + f"Trascrivi al massimo {max_esercizi} esercizi (i più evidenti o i primi); gli altri ignorali.\n\n"
+        + _REGOLE_TRASCRIZIONE + "\n" + _MARCATORI_FOTO
+    )
+
+
+def prompt_ricontrolla_trascrizione(esercizi_testo: str, n_immagini: int) -> str:
+    """Secondo sguardo, indipendente: confronta la trascrizione con l'immagine e corregge ciò che non coincide."""
+    return (
+        "Sei un revisore severo. Qui sotto trovi la TRASCRIZIONE LaTeX di uno o più esercizi, fatta da un altro assistente guardando "
+        + ("la foto allegata" if n_immagini == 1 else "le foto allegate")
+        + ". Confrontala con l'immagine, esercizio per esercizio, e cerca ogni differenza: numeri, segni, esponenti, indici, frazioni "
+        "(numeratore e denominatore), simboli (≤ ≥ < >), parole, unità, richieste a) b) c) mancanti o in più, dati di tabelle, "
+        "etichette e misure delle figure, intervalli, funzioni dei grafici. Controlla anche che NON siano rimaste soluzioni o risultati "
+        "del libro, il numero dell'esercizio o le stelline.\n"
+        "Per ogni esercizio rispondi con questo formato, nello stesso ordine:\n"
+        "===ESERCIZIO===\n"
+        "ESITO: ok | corretto\n"
+        "DIFFERENZE: una per riga («era X, nella foto è Y»), oppure «nessuna»\n"
+        "TESTO:\n"
+        "<il testo LaTeX COMPLETO, già corretto; se l'esito è «ok» ricopialo identico>\n"
+        "===FINE===\n"
+        "Correggi SOLO ciò che differisce dalla foto: non riscrivere, non risolvere, non abbellire. Non toccare il formato delle righe "
+        "[[GRAFICO: …]] se la funzione è giusta. Se non sei sicuro di una differenza, lascia il testo com'è e scrivila come dubbio nelle "
+        "DIFFERENZE con la parola «DUBBIO».\n\n"
+        "TRASCRIZIONE DA CONTROLLARE:\n" + esercizi_testo
+    )
+
+
+def prompt_correggi_trascrizione(testo_latex: str, richiesta: str, n_immagini: int) -> str:
+    """Il docente ha visto la trascrizione e dice cosa non va: si corregge guardando di nuovo la foto."""
+    return (
+        "Hai trascritto in LaTeX l'esercizio di "
+        + ("una foto" if n_immagini == 1 else "alcune foto")
+        + " (allegate). Il docente ha controllato il risultato e segnala un errore. Riguarda la foto e correggi SOLO ciò che segnala "
+        "(e le conseguenze dirette), senza toccare il resto: la trascrizione deve restare fedele alla foto.\n"
+        "Rispetta le stesse regole: niente soluzioni o risultati del libro, niente punteggi, solo il corpo dell'esercizio, grafici di "
+        "funzioni con [[GRAFICO: y = … | x da A a B]], figure geometriche in TikZ, tabelle con tabular.\n"
+        f"SEGNALAZIONE DEL DOCENTE: {richiesta.strip()}\n\n"
+        "TRASCRIZIONE ATTUALE:\n" + testo_latex + "\n\n"
+        "Rispondi SOLO con:\n===ESERCIZIO===\nTITOLO: …\nFIGURA: nessuna | grafico_funzione | figura_geometrica | tabella | non_riproducibile\n"
+        "DUBBI: … oppure «nessuno»\nTESTO:\n<il testo LaTeX corretto>\n===FINE==="
+    )
+
+
+def testo_esercizi_fissi(fissi: list) -> str:
+    """Nota per chi scrive la verifica: ci sono esercizi del docente, già pronti, che il programma inserirà al posto giusto."""
+    if not fissi:
+        return ""
+    righe = [
+        "ESERCIZI DEL DOCENTE GIÀ PRONTI (tratti dal suo libro): NON scriverli e NON riscriverli, li inserisce il programma. "
+        "Tu scrivi SOLO gli altri esercizi. Per coerenza: non ripetere lo stesso tipo di richiesta e gli stessi dati, "
+        "e tieni il livello di difficoltà degli esercizi che scrivi vicino a quello di questi:"
+    ]
+    for f in fissi:
+        righe.append(f"- «{(f.get('titolo') or 'Esercizio').strip()}»: " + (f.get("riassunto") or "").strip())
+    return "\n".join(righe)
