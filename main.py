@@ -955,8 +955,8 @@ if st.session_state.utente and not _is_admin and not st.session_state.get("_acce
 _CSS_BANNER_PIANO = """
 <style>
 @keyframes gpulse {
-  0%,100% { box-shadow:0 0 0 0 rgba(245,158,11,0); outline:3px solid rgba(245,158,11,0); outline-offset:3px; }
-  50%     { box-shadow:0 0 0 8px rgba(245,158,11,.45); outline:3px solid rgba(245,158,11,.95); outline-offset:3px; }
+  0%,100% { box-shadow:0 0 0 0 rgba(245,158,11,0); outline:2px solid rgba(245,158,11,0); outline-offset:3px; }
+  50%     { box-shadow:0 0 0 5px rgba(245,158,11,.16); outline:2px solid rgba(245,158,11,.42); outline-offset:3px; }
 }
 /* Riquadro dei messaggi sul piano (assaggio, Free, guida): blu notte con un velo di luce in alto a destra.
    Contenitore con chiave: classe st-key-banner_piano_* */
@@ -1077,7 +1077,8 @@ _BERSAGLI_GUIDA = {
     "apri_modifica": [".st-key-final_edit", ".st-key-dl_pdf_hero_A", ".st-key-dl_pdf_basso_A"],
     "kit": ['[data-testid="stExpander"]:has(.g-kit1)', '[data-testid="stExpander"]:has(.g-kit2)',
             '[data-testid="stExpander"]:has(.g-kit3)', ".st-key-kit_tutto", ".st-key-dl_kit_zip",
-            '[class*="st-key-one_click_"]', '[class*="st-key-compile_"]', ".st-key-btn_gen_griglia_v2"],
+            '[class*="st-key-one_click_"]', '[class*="st-key-compile_"]', ".st-key-btn_gen_griglia_v2",
+            ".st-key-gen_docx_A_generale", ".st-key-dl_docx_A_generale"],
 }
 
 
@@ -1123,7 +1124,7 @@ def _css_pulsa(chiavi: list) -> str:
     # definitivo lo fa lo script (_js_guida_visti)
     sul = ", ".join(f"html body .stApp {s}:hover" for k in chiavi for s in _BERSAGLI_GUIDA[k])
     fuoco = ", ".join(f"html body .stApp {s}:focus-within" for k in chiavi for s in _BERSAGLI_GUIDA[k])
-    return (f"<style>{sel} {{animation:gpulse 1.5s ease-in-out infinite;border-radius:12px;}}"
+    return (f"<style>{sel} {{animation:gpulse 2.8s ease-in-out infinite;border-radius:12px;}}"
             f"{sul} {{animation:none !important;outline:none !important;box-shadow:none !important;}}"
             f"{fuoco} {{animation:none !important;outline:none !important;box-shadow:none !important;}}</style>")
 

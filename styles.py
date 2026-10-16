@@ -4763,6 +4763,16 @@ font-family: 'DM Sans', sans-serif;
     }}
   }}
 
+  /* ── Box con testo e pulsante in colonne (box blu, invito, scheda Word, righe del kit): Streamlit toglie 1 rem sotto ai blocchi di testo
+     pensando che finiscano con un paragrafo; i nostri finiscono con un <div> e il blocco successivo ci finiva SOPRA quando le colonne
+     si impilano sul telefono. Qui il margine negativo si azzera. ───────────────────────────────────────────── */
+  html body .stApp :is([class*="st-key-box_sblocco"], [class*="st-key-box_invito"], .st-key-word_card, details[data-testid="stExpander"] [data-testid="stVerticalBlockBorderWrapper"]) :is([data-testid="stMarkdownContainer"], [data-testid="stMarkdown"], [data-testid="stElementContainer"], .stMarkdown, .element-container) {{
+    margin-bottom: 0 !important;
+  }}
+  html body .stApp :is([class*="st-key-box_sblocco"], [class*="st-key-box_invito"], .st-key-word_card) [data-testid="stMarkdownContainer"] > div {{
+    padding-bottom: .15rem;
+  }}
+
 </style>
 """
 
