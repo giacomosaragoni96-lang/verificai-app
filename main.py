@@ -2724,6 +2724,49 @@ def _anteprima_impaginata(esercizi, titolo, materia, mostra, tot, con_spazio, fe
     return cache[chiave]
 
 
+def _card_attesa_impagina(passo: int) -> str:
+    """Scheda animata per l'attesa della lettura: una pagina che si «scrive» con una lama di luce, e i passi che si accendono uno dopo l'altro."""
+    _acc, _tx, _t2 = T["accent"], T["text"], T["text2"]
+    _voci = ["Leggo le pagine della tua verifica", "Ricontrollo ogni numero e cerco eventuali errori", "Preparo l'impaginazione"]
+    _righe = ""
+    for _k, _v in enumerate(_voci):
+        if _k < passo:
+            _ic, _cl = "✓", "imp-ok"
+        elif _k == passo:
+            _ic, _cl = '<i class="imp-giro"></i>', "imp-att"
+        else:
+            _ic, _cl = "○", "imp-da"
+        _righe += f'<li class="{_cl}"><span class="imp-ic">{_ic}</span>{_v}</li>'
+    return (
+        "<style>"
+        "@keyframes imp-scan{0%{top:8%;opacity:.0}10%{opacity:1}50%{top:82%}90%{opacity:1}100%{top:8%;opacity:0}}"
+        "@keyframes imp-riga{0%{width:12%}60%{width:var(--w)}100%{width:12%}}"
+        "@keyframes imp-gira{to{transform:rotate(360deg)}}"
+        ".imp-attesa{display:flex;gap:1.4rem;align-items:center;margin:.8rem 0 .4rem;padding:1.1rem 1.3rem;border-radius:18px;"
+        f"background:linear-gradient(160deg,#fff 0%,{_acc}0F 100%);border:1px solid {_acc}33;box-shadow:0 10px 28px {_acc}22;font-family:'DM Sans',sans-serif;}}"
+        ".imp-pagina{position:relative;flex:0 0 5.6rem;height:7.2rem;border-radius:10px;background:#fff;border:1.5px solid #CBD5E1;"
+        "box-shadow:0 6px 16px rgba(15,23,42,.12);padding:.8rem .6rem;overflow:hidden;}"
+        ".imp-pagina b{display:block;height:.32rem;border-radius:3px;background:#CBD5E1;margin-bottom:.42rem;animation:imp-riga 2.6s ease-in-out infinite;}"
+        ".imp-pagina b:nth-child(1){--w:80%;animation-delay:0s}.imp-pagina b:nth-child(2){--w:94%;animation-delay:.2s}"
+        ".imp-pagina b:nth-child(3){--w:70%;animation-delay:.4s}.imp-pagina b:nth-child(4){--w:88%;animation-delay:.6s}"
+        ".imp-pagina b:nth-child(5){--w:60%;animation-delay:.8s}.imp-pagina b:nth-child(6){--w:90%;animation-delay:1s}"
+        f".imp-pagina u{{position:absolute;left:0;right:0;height:.18rem;background:linear-gradient(90deg,transparent,{_acc},transparent);"
+        f"box-shadow:0 0 12px {_acc};animation:imp-scan 2.6s ease-in-out infinite;text-decoration:none;}}"
+        f".imp-t{{font-weight:800;font-size:1.08rem;color:{_tx};margin-bottom:.1rem;}}"
+        f".imp-s{{font-size:.84rem;color:{_t2};margin-bottom:.6rem;}}"
+        ".imp-attesa ul{list-style:none;margin:0;padding:0;}.imp-attesa li{display:flex;gap:.55rem;align-items:center;font-size:.92rem;padding:.14rem 0;}"
+        ".imp-ic{display:inline-flex;width:1.1rem;justify-content:center;font-weight:800;}"
+        ".imp-ok{color:#15803D;}.imp-da{opacity:.45;}"
+        f".imp-att{{color:{_tx};font-weight:700;}}"
+        f".imp-giro{{width:.85rem;height:.85rem;border-radius:50%;border:2px solid {_acc}44;border-top-color:{_acc};animation:imp-gira .8s linear infinite;display:inline-block;}}"
+        "</style>"
+        '<div class="imp-attesa"><div class="imp-pagina"><b></b><b></b><b></b><b></b><b></b><b></b><u></u></div>'
+        '<div><div class="imp-t">Sto leggendo la tua verifica</div>'
+        '<div class="imp-s">Di solito ci vogliono 30-60 secondi: non chiudere la pagina.</div>'
+        f"<ul>{_righe}</ul></div></div>"
+    )
+
+
 def _render_impagina() -> None:
     """
     «Impagina la mia verifica»: il docente carica il PDF o le foto di una verifica scritta o impaginata male; si rifanno gli esercizi IDENTICI
@@ -2763,8 +2806,12 @@ def _render_impagina() -> None:
                 st.warning("Hai già letto diverse verifiche in questa sessione: riprova più tardi.")
                 return
             _imm = [{"data": f.getvalue(), "mime_type": f.type or "image/jpeg", "name": f.name} for f in _files]
-            with st.spinner("Leggo la tua verifica e controllo di averla copiata bene… ci vuole circa un minuto."):
-                _ris = impagina.leggi_verifica(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, _materia, _scuola)
+            _ph_attesa = st.empty()
+            _ph_attesa.markdown(_card_attesa_impagina(0), unsafe_allow_html=True)
+            _passi_att = {"lettura": 0, "controllo": 1, "fine": 2}
+            _ris = impagina.leggi_verifica(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, _materia, _scuola,
+                                           on_progress=lambda p: _ph_attesa.markdown(_card_attesa_impagina(_passi_att.get(p, 0)), unsafe_allow_html=True))
+            _ph_attesa.empty()
             st.session_state["_imp_n"] = st.session_state.get("_imp_n", 0) + 1
             _registra_evento("impagina")
             if _ris["ok"]:
@@ -2780,6 +2827,17 @@ def _render_impagina() -> None:
     _imm, _esercizi, _materia, _scuola = dati["immagini"], dati["esercizi"], dati["materia"], dati["scuola"]
     _probl = {i: (motivo, nonrip) for i, motivo, nonrip in impagina.problemi_per_esercizio(_esercizi)}
     st.success(f"Ho letto {len(_esercizi)} esercizi. Confrontali con la tua verifica qui sotto: i numeri contano.", icon="✅")
+    if dati.get("cambi"):
+        with st.container(key="nota_imp_cambi"):
+            _righe_c = "".join(
+                f'<div class="ni-p">Esercizio {_n_c}: ' + " · ".join(f"«{_esc(_a)}» → «{_esc(_b)}»" for _a, _b in _dif) + "</div>"
+                for _n_c, _dif in dati["cambi"])
+            st.markdown('<div class="ni-k">✏️ Ho cambiato</div>' + _righe_c, unsafe_allow_html=True)
+            if st.button("Annulla", key="imp_annulla_corr", type="tertiary", icon=":material/undo:"):
+                dati["esercizi"] = dati.pop("prima_correzione", dati["esercizi"])
+                dati["cambi"] = []
+                st.session_state["_imp_prev"] = {}
+                st.rerun()
     st.markdown('<div class="opt-label">Titolo della verifica (facoltativo)</div>', unsafe_allow_html=True)
     st.text_input("Titolo della verifica", key="imp_titolo", placeholder="Es.: Equazioni di secondo grado", label_visibility="collapsed")
 
@@ -2811,9 +2869,13 @@ def _render_impagina() -> None:
                     st.markdown(
                         '<div class="ni-k">💡 Ho notato una cosa</div>'
                         f'<div class="ni-t">{_esc(_nota["problema"])}</div>'
-                        f'<div class="ni-p"><b>Proposta:</b> {_esc(_nota["proposta"])}</div>', unsafe_allow_html=True)
+                        f'<div class="ni-p"><b>Proposta:</b> {_esc(_nota["proposta"])}</div>'
+                        + (f'<div class="ni-p"><b>Cambierei:</b> «{_esc(_nota["prima"])}» → «{_esc(_nota["dopo"])}»</div>' if _nota.get("prima") else ""),
+                        unsafe_allow_html=True)
                     _n1, _n2, _n3 = st.columns([2.1, 1.4, 1.2], gap="small", vertical_alignment="center")
                     if _n1.button("Applica la correzione", key=f"imp_nota_ok_{_i}_{_k_n}", type="primary", icon=":material/check:"):
+                        dati["prima_correzione"] = [dict(e) for e in _esercizi]
+                        dati["cambi"] = [(_i + 1, [(_nota.get("prima", ""), _nota.get("dopo", ""))])]
                         dati["esercizi"] = impagina.applica_nota(_esercizi, _nota)
                         dati["note"] = [x for y, x in enumerate(dati["note"]) if y != _k_n]
                         st.session_state["_imp_prev"] = {}
@@ -2876,6 +2938,8 @@ def _render_impagina() -> None:
             with st.spinner("Riguardo le pagine…"):
                 _cor = impagina.correggi_verifica(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, _esercizi, _txt)
             if _cor["ok"]:
+                dati["prima_correzione"] = [dict(e) for e in _esercizi]
+                dati["cambi"] = _cor.get("cambi") or []
                 dati["esercizi"] = _cor["esercizi"]
                 st.session_state["_imp_prev"] = {}
                 st.rerun()

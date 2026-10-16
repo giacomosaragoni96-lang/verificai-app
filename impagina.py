@@ -37,7 +37,7 @@ def titolo_pulito(t: str, materia: str = "") -> str:
     return t.strip(" .:")[:80]
 
 
-def leggi_verifica(model, immagini: list, materia: str = "", scuola: str = "", max_esercizi: int = MAX_ESERCIZI) -> dict:
+def leggi_verifica(model, immagini: list, materia: str = "", scuola: str = "", max_esercizi: int = MAX_ESERCIZI, on_progress=None) -> dict:
     """
     Legge le pagine e restituisce {"ok", "titolo", "punti_dichiarati", "esercizi", "messaggio"}.
     Ogni esercizio: titolo, latex, figura, dubbi, correzioni, ricontrollato. Qualsiasi errore diventa {"ok": False, "messaggio"}.
@@ -45,8 +45,16 @@ def leggi_verifica(model, immagini: list, materia: str = "", scuola: str = "", m
     errore = ef.controlla_foto(immagini, MAX_FILE)
     if errore:
         return {"ok": False, "esercizi": [], "messaggio": errore}
+    def _p(passo: str):
+        if on_progress:
+            try:
+                on_progress(passo)
+            except Exception:
+                pass
+
     parti = ef._parti(immagini)
     esercizi, problema, testo = [], None, ""
+    _p("lettura")
     for _tentativo in range(2):
         try:
             testo = ef._chiama(model, [prompt_leggi_verifica_completa(materia, scuola, len(parti), max_esercizi)] + parti)
@@ -61,14 +69,28 @@ def leggi_verifica(model, immagini: list, materia: str = "", scuola: str = "", m
     esercizi = esercizi[:max_esercizi]
     for e in esercizi:
         e["ricontrollato"], e["correzioni"] = False, []
-    esercizi = ef.ricontrolla(model, parti, esercizi, tieni_punti=True)
+    _p("controllo")
+    # il secondo sguardo sulle pagine e la ricerca degli errori non dipendono l'uno dall'altra: si fanno insieme (meno attesa)
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=2) as _ex:
+        _f1 = _ex.submit(ef.ricontrolla, model, parti, esercizi, True)
+        _f2 = _ex.submit(_testo_errori, model, esercizi, materia)
+        try:
+            esercizi = _f1.result()
+        except Exception:
+            pass
+        try:
+            _grezzo_errori = _f2.result()
+        except Exception:
+            _grezzo_errori = ""
+    _p("fine")
     dichiarati = _campo_globale(testo, "PUNTI_TOTALI")
     try:
         dichiarati = float(dichiarati.replace(",", ".")) if dichiarati else 0.0
     except ValueError:
         dichiarati = 0.0
     return {"ok": True, "titolo": titolo_pulito(_campo_globale(testo, "VERIFICA_TITOLO"), materia), "punti_dichiarati": dichiarati,
-            "esercizi": esercizi, "messaggio": "", "note": controlla_errori(model, esercizi, materia)}
+            "esercizi": esercizi, "messaggio": "", "note": trova_note(_grezzo_errori, esercizi)}
 
 
 _RE_NOTA = re.compile(r"===\s*NOTA\s*===(.*?)(?:===\s*FINE\s*===|(?====\s*NOTA\s*===)|\Z)", re.DOTALL | re.IGNORECASE)
@@ -105,51 +127,102 @@ def impronta(latex: str) -> str:
     return hashlib.md5((latex or "").strip().encode("utf-8")).hexdigest()[:10]
 
 
+def _trova_una_volta(latex: str, frammento: str):
+    """(inizio, fine) del frammento nel testo se compare UNA sola volta (anche con spazi diversi), altrimenti None."""
+    f = (frammento or "").strip()
+    if len(f) < 2:
+        return None
+    if latex.count(f) == 1:
+        i = latex.index(f)
+        return i, i + len(f)
+    pezzi = [re.escape(x) for x in f.split()]
+    if not pezzi:
+        return None
+    trovati = list(re.finditer(r"\s+".join(pezzi), latex))
+    return (trovati[0].start(), trovati[0].end()) if len(trovati) == 1 else None
+
+
+def sostituisci_frammento(latex: str, da: str, a: str):
+    """Il testo con il frammento `da` sostituito da `a` (solo se `da` compare una volta sola), altrimenti None."""
+    pos = _trova_una_volta(latex or "", da)
+    if pos is None:
+        return None
+    return latex[:pos[0]] + (a or "").strip() + latex[pos[1]:]
+
+
+def differenze(prima: str, dopo: str, massimo: int = 4) -> list:
+    """Le differenze tra due testi come [(prima, dopo)] in testo leggibile: serve a mostrare cosa è cambiato davvero."""
+    import difflib
+    ta, tb = testo_leggibile(prima).split(), testo_leggibile(dopo).split()
+    out = []
+    for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, ta, tb, autojunk=False).get_opcodes():
+        if tag == "equal":
+            continue
+        a1, b1 = max(0, i1 - 1), min(len(ta), i2 + 1)
+        c1, d1 = max(0, j1 - 1), min(len(tb), j2 + 1)
+        out.append((" ".join(ta[a1:b1]), " ".join(tb[c1:d1])))
+        if len(out) >= massimo:
+            break
+    return out
+
+
 def leggi_note(testo: str, esercizi: list) -> list:
-    """Le note dalla risposta del modello: [{indice, problema, proposta, testo_corretto, su}]. Scarta quelle incomplete, rotte o senza cambiamento."""
+    """
+    Le note dalla risposta del modello: [{indice, problema, proposta, da, a, prima, dopo, su}]. Ogni nota è una SOSTITUZIONE di un frammento:
+    vale solo se `da` compare una volta sola nell'esercizio e il testo resta LaTeX valido; mai una riscrittura dell'esercizio.
+    """
     note = []
     for m in _RE_NOTA.finditer(re.sub(r"```(?:latex|tex)?", "", testo or "")):
         b = m.group(1)
         mi = re.search(r"^[ \t]*ESERCIZIO[ \t]*:[ \t]*(\d+)", b, re.MULTILINE | re.IGNORECASE)
         pr = re.search(r"^[ \t]*PROBLEMA[ \t]*:[ \t]*(.+?)[ \t]*$", b, re.MULTILINE | re.IGNORECASE)
         po = re.search(r"^[ \t]*PROPOSTA[ \t]*:[ \t]*(.+?)[ \t]*$", b, re.MULTILINE | re.IGNORECASE)
-        tc = re.search(r"^[ \t]*TESTO_CORRETTO[ \t]*:[ \t]*\n?(.*)$", b, re.DOTALL | re.MULTILINE | re.IGNORECASE)
-        if not (mi and pr and po and tc):
+        ft = re.search(r"^[ \t]*DA[ \t]*:[ \t]*(.*?)\n[ \t]*A[ \t]*:[ \t]*(.*)$", b, re.DOTALL | re.MULTILINE | re.IGNORECASE)
+        if not (mi and pr and po and ft):
             continue
         idx = int(mi.group(1)) - 1
         if not (0 <= idx < len(esercizi)):
             continue
-        corretto = ef.pulisci_latex_esercizio(tc.group(1), tieni_punti=True)
+        da, a = ft.group(1).strip(), ft.group(2).strip()
         originale = (esercizi[idx].get("latex") or "").strip()
-        if not corretto.strip() or corretto.strip() == originale or ef.problemi_latex(corretto):
+        nuovo = sostituisci_frammento(originale, da, a)
+        if nuovo is None or nuovo.strip() == originale or ef.problemi_latex(nuovo) or abs(len(nuovo) - len(originale)) > 160:
             continue
-        if abs(len(corretto) - len(originale)) > max(80, len(originale) // 2):
-            continue                      # una «correzione» che riscrive mezzo esercizio non è una correzione
         note.append({"indice": idx, "problema": testo_leggibile(pr.group(1).strip())[:300], "proposta": testo_leggibile(po.group(1).strip())[:300],
-                     "testo_corretto": corretto, "su": impronta(originale)})
+                     "da": da, "a": a, "prima": testo_leggibile(da)[:160], "dopo": testo_leggibile(a)[:160], "su": impronta(originale)})
         if len(note) >= MAX_NOTE:
             break
     return note
 
 
-def controlla_errori(model, esercizi: list, materia: str = "") -> list:
-    """Un'ulteriore lettura del testo (senza foto) per segnalare errori oggettivi del docente. Mai bloccante: qualsiasi problema = nessuna nota."""
+def _testo_errori(model, esercizi: list, materia: str = "") -> str:
+    """La risposta grezza del controllo degli errori (vuota se qualcosa va storto)."""
     try:
-        testo = ef._chiama(model, prompt_controlla_errori_verifica(_testo_numerato(esercizi), materia))
+        return ef._chiama(model, prompt_controlla_errori_verifica(_testo_numerato(esercizi), materia)) or ""
     except Exception:
-        return []
-    if re.match(r"\s*NESSUNO\b", testo or "", re.IGNORECASE):
+        return ""
+
+
+def trova_note(testo: str, esercizi: list) -> list:
+    if not (testo or "").strip() or re.match(r"\s*NESSUNO\b", testo, re.IGNORECASE):
         return []
     return leggi_note(testo, esercizi)
 
 
+def controlla_errori(model, esercizi: list, materia: str = "") -> list:
+    """Un'ulteriore lettura del testo (senza foto) per segnalare errori oggettivi del docente. Mai bloccante: qualsiasi problema = nessuna nota."""
+    return trova_note(_testo_errori(model, esercizi, materia), esercizi)
+
+
 def applica_nota(esercizi: list, nota: dict) -> list:
-    """Gli esercizi con la correzione proposta applicata (solo se l'esercizio è ancora quello della nota)."""
+    """Gli esercizi con la sostituzione della nota applicata (solo se l'esercizio è ancora quello della nota e il frammento è univoco)."""
     nuovi = [dict(e) for e in esercizi]
     i = nota.get("indice", -1)
     if 0 <= i < len(nuovi) and impronta(nuovi[i].get("latex")) == nota.get("su"):
-        nuovi[i]["latex"] = nota["testo_corretto"]
-        nuovi[i]["corretto_su_proposta"] = True
+        sost = sostituisci_frammento(nuovi[i].get("latex") or "", nota.get("da", ""), nota.get("a", ""))
+        if sost is not None and not ef.problemi_latex(sost):
+            nuovi[i]["latex"] = sost
+            nuovi[i]["corretto_su_proposta"] = True
     return nuovi
 
 
@@ -162,8 +235,16 @@ def _testo_numerato(esercizi: list) -> str:
     return "\n\n".join(f"ESERCIZIO {n} — {e.get('titolo', '')}\n{e['latex']}" for n, e in enumerate(esercizi, 1))
 
 
+def numeri_citati(richiesta: str) -> set:
+    """I numeri di esercizio nominati nella richiesta («nell'esercizio 2», «es. 3»): servono a limitare la correzione a quelli."""
+    return {int(n) for n in re.findall(r"(?:esercizi[oi]?|es\.?|ex\.?)\s*(?:n[°.]?\s*)?(\d{1,2})", richiesta or "", re.IGNORECASE)}
+
+
 def correggi_verifica(model, immagini: list, esercizi: list, richiesta: str) -> dict:
-    """Il docente dice cosa non va; si riguardano le pagine e si corregge solo quello. {"ok", "esercizi", "messaggio"}."""
+    """
+    Il docente dice cosa non va; si riguardano le pagine e si corregge solo quello. Se nomina degli esercizi cambiano SOLO quelli (gli altri
+    tornano com'erano comunque). Ritorna {"ok", "esercizi", "messaggio", "cambi": [(n, [(prima, dopo)])]}: i cambi si mostrano al docente.
+    """
     richiesta = (richiesta or "").strip()
     if len(richiesta) < 3:
         return {"ok": False, "esercizi": esercizi, "messaggio": "Scrivi cosa non va (per esempio: «nell'esercizio 2 b) l'esponente è 3»)."}
@@ -176,13 +257,21 @@ def correggi_verifica(model, immagini: list, esercizi: list, richiesta: str) -> 
     if len(nuovi) != len(esercizi):
         return {"ok": False, "esercizi": esercizi,
                 "messaggio": "La correzione ha cambiato il numero di esercizi, quindi l'ho scartata: la verifica è rimasta com'era."}
-    if all(n["latex"].strip() == o["latex"].strip() for n, o in zip(nuovi, esercizi)):
-        return {"ok": False, "esercizi": esercizi, "messaggio": "Non ho trovato niente da cambiare: prova a dire più precisamente dove sta l'errore."}
-    risultato = []
-    for n, o in zip(nuovi, esercizi):
+    ammessi = numeri_citati(richiesta)
+    risultato, cambi = [], []
+    for n_idx, (n, o) in enumerate(zip(nuovi, esercizi), 1):
+        if ammessi and n_idx not in ammessi:
+            risultato.append(o)              # esercizio non nominato: resta com'era, qualunque cosa abbia risposto il modello
+            continue
+        if n["latex"].strip() == (o.get("latex") or "").strip():
+            risultato.append(o)
+            continue
         risultato.append({**o, "titolo": n["titolo"], "figura": n["figura"], "latex": n["latex"], "dubbi": n["dubbi"],
                           "correzioni": [], "ricontrollato": True})
-    return {"ok": True, "esercizi": risultato, "messaggio": ""}
+        cambi.append((n_idx, differenze(o.get("latex") or "", n["latex"])))
+    if not cambi:
+        return {"ok": False, "esercizi": esercizi, "messaggio": "Non ho trovato niente da cambiare: prova a dire più precisamente dove sta l'errore."}
+    return {"ok": True, "esercizi": risultato, "messaggio": "", "cambi": cambi}
 
 
 def punti_rilevati(esercizi: list) -> dict:
