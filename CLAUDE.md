@@ -63,6 +63,7 @@ Avvio locale: `streamlit run main.py`. Pacchetti di sistema in `packages.txt`
 - Segnalazioni ANONIME («Qualcosa non va in questa verifica?», in FINAL): `segnalazioni.py` (senza streamlit), tabella `segnalazioni` in
   `migrazione_segnalazioni.sql` (da eseguire a mano). Mai user_id, email o IP; il debug della generazione (`_debug_gen`) si tiene in sessione per tutti
   ma lo mostra solo l'admin. Casi da analizzare: cartella `materiale/da_analizzare/` (fuori da git).
+- Aperture ANONIME dell'app (`aperture.py`, senza streamlit, tabella `aperture_app` in `migrazione_aperture.sql`, da eseguire a mano): una riga per sessione quando si vede la schermata di accesso senza essere dentro, con la sola sorgente `?src=` del link (mai user_id, email o IP); serve a capire dove si perde chi arriva dai post. Senza la tabella non succede niente.
 - Non usati: `extra-streamlit-components` e `streamlit-cookies-controller`
   (solo in requirements, `auth.get_cookie_controller()` è uno stub).
 - Mancante: `mathpix_utils.py` è importato da `main.py` ma non esiste, quindi Mathpix è sempre disattivato.

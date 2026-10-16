@@ -68,6 +68,7 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 from auth import mostra_auth, ripristina_sessione, _url_app
 import inviti
+from aperture import registra_apertura
 from styles import get_css, _is_light_color
 from ui_banca import render_banca
 from ui_helpers import (
@@ -191,6 +192,18 @@ if st.session_state.utente is None:
 
 # Mostra auth se non loggato
 if st.session_state.utente is None:
+    # Una sola riga anonima per sessione: quante persone vedono la schermata di accesso e da quale link (vedi aperture.py)
+    if not st.session_state.get("_apertura_registrata"):
+        st.session_state["_apertura_registrata"] = True
+        _src_ap = st.session_state.get("_src")
+        if not _src_ap and st.session_state.get("_ref"):
+            _src_ap = "invito"
+        if not _src_ap:
+            try:
+                _src_ap = st.context.cookies.get("vf_src")
+            except Exception:
+                _src_ap = None
+        registra_apertura(supabase_admin, _src_ap)
     mostra_auth(supabase)
     st.stop()
 
