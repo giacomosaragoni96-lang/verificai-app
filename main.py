@@ -19,7 +19,7 @@ import time
 import hashlib
 from datetime import datetime, timezone
 
-from stili_verifica import STILI, STILE_PREDEFINITO, stili_disponibili, descrizione_stile
+from stili_verifica import STILI, STILE_PREDEFINITO, stili_disponibili, descrizione_stile, cambia_stile
 from esercizio_foto import leggi_esercizi_da_foto, correggi_esercizio, stato_esercizio, blocco_latex, riassunto_per_prompt
 from ai_client import crea_modello, configura as configura_ai, riepilogo_uso, numero_chiamate, chiamate_da
 
@@ -493,7 +493,7 @@ def _postprocessa_latex(latex: str, mostra_punteggi: bool, punti_totali: int,
 
 # ── On-demand variant generation ───────────────────────────────────────────────
 
-def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
+def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict, istruzioni: str = "") -> dict:
     model_v = crea_modello(model_id)
     mostra_punteggi = gp.get("mostra_punteggi", True)
     punti_totali    = gp.get("punti_totali", 100)
@@ -538,12 +538,14 @@ def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict) -> dict:
         corpo_sa = rimuovi_griglia(corpo_a)
         n_sotto  = len(re.findall(r"\\item\b", corpo_sa))
         n_max    = n_sotto * perc_ridotta // 100
+        if (istruzioni or "").strip():
+            n_max = n_sotto      # decide il docente come semplificare: nessun tetto sui sottopunti
 
         def _chiedi(extra: str = "") -> str:
             r = model_v.per("variante").generate_content(
                 prompt_versione_ridotta(corpo_sa, materia, perc_ridotta, mostra_punteggi,
                                         punti_totali, max_da_togliere=n_max,
-                                        totale_sottopunti=n_sotto) + extra)
+                                        totale_sottopunti=n_sotto, istruzioni_docente=istruzioni) + extra)
             return pulisci_corpo_latex(r.text.replace("```latex", "").replace("```", "").strip())
 
         try:
@@ -2668,6 +2670,28 @@ def _render_le_tue_verifiche():
         if st.button(f"Mostra altre ({len(verifiche_filtrate) - _n_mostra})", key="storico_mostra_altre", use_container_width=True):
             st.session_state["_storico_mostra"] = _n_mostra + 8
             st.rerun()
+
+_BES_RIDUCI = "Meno richieste (circa il 20% in meno)"
+_BES_PERSONALIZZA = "Lo descrivo io"
+
+
+def _blocco_leggibile(latex: str, chiave: str, nome_file: str) -> None:
+    """Pulsante «Crea ad alta leggibilità» e, pronto il PDF, il download. Lo stesso LaTeX con un altro stile: niente AI."""
+    cache = st.session_state.setdefault("_pdf_leggibili", {})
+    h = hashlib.md5((latex or "").encode("utf-8")).hexdigest()
+    if h in cache:
+        _dl("⬇ Scarica ad alta leggibilità (PDF)", data=cache[h], file_name=nome_file, mime="application/pdf",
+            use_container_width=True, key=f"dl_leggibile_{chiave}")
+    elif st.button("Crea ad alta leggibilità", key=f"leggibile_{chiave}", use_container_width=True, type="secondary"):
+        with st.spinner("Preparo la versione ad alta leggibilità…"):
+            _pdf_l, _err_l, _ = compila_pdf_sicuro(cambia_stile(latex, "leggibile"))
+        if _pdf_l:
+            if len(cache) > 6:
+                cache.clear()
+            cache[h] = _pdf_l
+            st.rerun()
+        st.warning("Non sono riuscito a creare la versione ad alta leggibilità. Riprova.")
+
 
 _MAX_LETTURE_FOTO = 8      # letture di foto per sessione (ognuna sono due chiamate all'AI)
 
@@ -5577,6 +5601,8 @@ def _render_stage_final():
             _vc5, _vb5 = st.container(key="word_nascosto_a"), st.container(key="word_nascosto_b")
         with st.container(border=True):
             _vc2, _vb2 = _riga()                  # BES/DSA
+        with st.container(border=True):
+            _vc7, _vb7 = _riga()                  # Alta leggibilità (DSA)
     with st.expander("Per la classe e la valutazione: scheda di allenamento e griglia", expanded=False,
                      icon=":material/groups:"):
         st.markdown('<span class="g-kit2" style="display:none"></span>', unsafe_allow_html=True)
@@ -5707,6 +5733,12 @@ def _render_stage_final():
             f'</div>',
             unsafe_allow_html=True
         )
+        if not (_r_pdf or _r_lat) and not _pro_bloccato("bes"):
+            _bes_modo = st.radio("Come vuoi semplificarla?", [_BES_RIDUCI, _BES_PERSONALIZZA], key="bes_modo",
+                                 label_visibility="collapsed")
+            if _bes_modo == _BES_PERSONALIZZA:
+                st.text_area("Come vuoi semplificarla", key="bes_istruzioni", height=90, max_chars=600, label_visibility="collapsed",
+                             placeholder="Es.: frasi più brevi, una sola operazione per richiesta, numeri interi, niente problemi di realtà")
         with _vb2:
             if _r_pdf:
                 _dl(
@@ -5734,7 +5766,8 @@ def _render_stage_final():
             _ph_r.markdown(_skeleton_html("🌟","Versione BES/DSA…","Semplificazione · Adattamento"),
                            unsafe_allow_html=True)
             try:
-                res_r = _genera_variante("R", mod_id, gp, vA)
+                res_r = _genera_variante("R", mod_id, gp, vA, istruzioni=(
+                    st.session_state.get("bes_istruzioni", "") if st.session_state.get("bes_modo") == _BES_PERSONALIZZA else ""))
                 st.session_state.verifiche["R"] = {**vR, **res_r}
                 _salva_variante_storico("latex_r", res_r.get("latex"))
                 _registra_evento("bes", modello=mod_id, verifica_id=st.session_state.get("_storico_id"))
@@ -5744,6 +5777,28 @@ def _render_stage_final():
                 st.session_state["_kit_coda"] = []   # un errore ferma la coda del kit
                 _mostra_errore("Non sono riuscito a creare la versione BES/DSA", _e,
                                riprova_flag="_gen_bes", riprova_key="riprova_bes")
+
+    # ── ALTA LEGGIBILITÀ (DSA) ─────────────────────────────────────────
+    with _vc7:
+        st.markdown(
+            f'<div class="variant-card variant-card-violet">'
+            f'  <div class="variant-card-header">'
+            f'    <span class="variant-card-icon">🔤</span>'
+            f'    <span class="variant-card-title">Versione ad alta leggibilità{_PRO}</span>'
+            f'  </div>'
+            f'  <div class="variant-card-desc">Per DSA: stessa verifica con carattere più grande, più spazio tra le righe e testo non giustificato.'
+            f'{" Puoi averla anche per la versione BES/DSA." if (vR.get("latex")) else ""}</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+    with _vb7:
+        if _pro_bloccato("bes"):
+            _pulsante_pro("bes", "pro_leggibile")
+        else:
+            if vA.get("latex"):
+                _blocco_leggibile(vA["latex"], "A", arg_str + "_AltaLeggibilita.pdf")
+            if vR.get("latex"):
+                _blocco_leggibile(vR["latex"], "R", arg_str + "_BES_AltaLeggibilita.pdf")
 
     # ── SOLUZIONI ─────────────────────────────────────────────────────────────
     with _vc3:
