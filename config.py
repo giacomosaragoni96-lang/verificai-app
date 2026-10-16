@@ -142,11 +142,15 @@ COMPITI_AI = {
     "griglia":           ("medio",  0),
     "cambio_esercizio":  ("veloce", None),
     "analisi_file":      ("veloce", None),
+    "foto_esercizio":    ("flash",  2048),   # legge la foto di un esercizio del libro e lo ricontrolla: Flash anche col piano Free (Lite sbaglia i numeri)
     "scheda":            ("medio",  1024),   # scheda di allenamento: una chiamata per sezione
     "autoverifica":      ("flash",  1024),   # risolve gli esercizi e corregge gli errori: SEMPRE Flash, anche col piano Free.
     #   Con la serie 3.x 1024 = ragionamento BASSO. Con 3072 (livello alto) usava 7-9 mila token e fino a 70 s; se scopre meno
     #   errori del dovuto, provare 2048 (medio).
 }
+
+# Esercizi del libro da una foto (esercizio_foto.py): quanti se ne possono includere in una verifica
+MAX_ESERCIZI_DA_FOTO = 3
 
 # Autoverifica degli esercizi nelle materie scientifiche (autoverifica.py). Costo: circa 1-2 centesimi a verifica.
 AUTOVERIFICA_ATTIVA = True

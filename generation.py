@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 from config import QA_SALTA_SE_PUNTEGGIO_ALMENO, AUTOVERIFICA_ATTIVA, MAX_FACCIATE, nota_istruzioni_verifica
 from autoverifica import autoverifica_corpo
+from esercizio_foto import inserisci_esercizi
 
 from prompts import (
     prompt_titolo,
@@ -25,6 +26,7 @@ from prompts import (
     prompt_analisi_documento,
     prompt_variante_rapida,
     prompt_piano_verifica,
+    testo_esercizi_fissi,
 )
 from piano_verifica import (
     scheletro_piano, normalizza_piano, estrai_json, piano_a_testo, applica_punti_piano, max_esercizi_chiusi, _conta_sottopunti,
@@ -67,7 +69,7 @@ from latex_utils import (
     fix_items_environment, aggiungi_consegne_mancanti, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
-    parse_pts_from_block_body, valida_totale, riscala_single_block,
+    parse_pts_from_block_body, valida_totale, riscala_single_block, apply_item_pts_to_body, bilancia_punti,
     parse_items_from_block, apply_item_pts_to_body,
     prepara_esercizi_aperti, conta_punti_latex,
     migliora_spaziatura_sottopunti, clean_tikz_spoilers, normalizza_labels_numerici, semplifica_item_singoli, limita_altezza_grafici, assicura_punti_visibili, aggiungi_spaziatura_grafici_tabelle,
@@ -479,6 +481,29 @@ def _tronca_al_numero_giusto(corpo: str, num_esercizi: int) -> str:
     return troncato + "\n" + chr(92) + "end{document}"
 
 
+def _con_punti_medi(fissi: list, blocchi_ai: list) -> list:
+    """
+    Gli esercizi del docente arrivano senza punteggi: ognuno riceve un peso pari alla media degli esercizi scritti dall'AI, diviso
+    in parti uguali tra le sue richieste. Poi riscala_punti porta il totale al valore voluto per tutta la verifica.
+    """
+    totali = [parse_pts_from_block_body(b) for b in blocchi_ai]
+    totali = [t for t in totali if t > 0]
+    peso = max(2, round(sum(totali) / len(totali))) if totali else 10
+    nuovi = []
+    for f in fissi:
+        blocco = f["blocco"]
+        m = re.match(r'(' + re.escape(chr(92) + 'subsection*{') + r'[^}]*})(.*)', blocco, re.DOTALL)
+        titolo, corpo = (m.group(1), m.group(2)) if m else ("", blocco)
+        if parse_pts_from_block_body(corpo) == 0:
+            n_item = len(re.findall(re.escape(chr(92) + 'item') + '(?![a-zA-Z])', corpo))
+            if n_item:
+                corpo = apply_item_pts_to_body(corpo, bilancia_punti([1] * n_item, peso))
+            else:
+                corpo = corpo.rstrip() + f' ({peso} pt)' + chr(10)
+        nuovi.append({**f, "blocco": titolo + corpo})
+    return nuovi
+
+
 def _split_blocchi(corpo: str) -> list[str]:
     """
     Divide il corpo LaTeX in blocchi, uno per ogni \\subsection*.
@@ -701,6 +726,7 @@ def genera_verifica(
     mathpix_context: str | None = None,   # LaTeX estratto da Mathpix OCR
     on_progress=None,           # callback(testo: str) -> None
     piano_struttura: dict | None = None,  # {"primo_base", "eccellenza"}: se c'è, si pianifica prima di scrivere
+    esercizi_fissi: list | None = None,   # esercizi del docente già pronti (esercizio_foto): [{"blocco", "posizione", "titolo", "riassunto"}]
 ) -> dict:
     """
     Genera la verifica e restituisce un dizionario con le chiavi:
@@ -720,6 +746,14 @@ def genera_verifica(
         k in materia.lower()
         for k in ["matem", "fis", "chim", "inform", "elettr", "meccan"]
     )
+
+    # Esercizi del docente già pronti: l'AI scrive solo gli altri; quelli del docente entrano dopo, identici,
+    # senza passare dai controlli che li riscriverebbero.
+    fissi = list(esercizi_fissi or [])
+    if fissi:
+        num_esercizi = max(1, num_esercizi - len(fissi))
+        piano_struttura = None
+        istruzioni_esercizi = (istruzioni_esercizi or "") + chr(10) + chr(10) + testo_esercizi_fissi(fissi)
 
     risultato = {
         "titolo": "",
@@ -847,6 +881,12 @@ def genera_verifica(
             model, materia, difficolta, argomento, corpo_a, mostra_punteggi, on_progress=_avanza)
         risultato["_debug"]["autoverifica"] = risultato["_autoverifica"]
         risultato["_debug"]["dopo_autoverifica"] = corpo_a
+    if fissi:
+        _prefisso, _blocchi = _split_blocchi(corpo_a)
+        if mostra_punteggi:
+            fissi = _con_punti_medi(fissi, _blocchi)
+        corpo_a = _prefisso + _assembla_corpo_da_blocchi(inserisci_esercizi(_blocchi, fissi))
+        risultato["_debug"]["con_esercizi_del_docente"] = corpo_a
     _avanza("🖨️  Compilazione PDF…")
     latex_a, pdf_a = _assembla_e_compila(
         preambolo_a, corpo_a, mostra_punteggi, punti_totali, con_griglia, piano=piano
