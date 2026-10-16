@@ -2715,10 +2715,6 @@ def _render_impagina() -> None:
     normale (Fila B, BES/DSA, soluzioni, Word). Solo interfaccia: lettura e impaginazione stanno in impagina.py.
     """
     dati = st.session_state.get("_imp")
-    if not dati:
-        st.markdown(f'<div style="text-align:center;font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:-.4rem auto 1rem;max-width:34rem;line-height:1.5;">'
-                    'Anche screenshot messi insieme. Rifacciamo gli esercizi identici, con intestazione, punteggi e logo; poi da quella crei la Fila B, la versione BES/DSA, le soluzioni e il Word.</div>',
-                    unsafe_allow_html=True)
     if _pro_bloccato("materiale") and not dati:
         st.caption("Impaginare la tua verifica " + ("è una funzione del piano Pro." if PREZZI_VISIBILI
                                                     else "è una delle funzioni complete, da sbloccare con il questionario."))
@@ -2889,7 +2885,7 @@ def _selettore_stile() -> str:
     _ids = [k for k, _n in stili_disponibili()]
     _sel = st.selectbox("Stile della verifica", _ids, key="sel_stile_verifica", format_func=lambda k: STILI[k]["nome"],
                         label_visibility="collapsed")
-    if st.button("Guarda un'anteprima", key="stile_anteprima", icon=":material/visibility:"):
+    if st.button("Guarda un'anteprima", key="stile_anteprima", type="tertiary", icon=":material/visibility:"):
         _dialogo_stili()
     st.session_state["_stile_verifica"] = _sel
     return _sel
@@ -2897,7 +2893,8 @@ def _selettore_stile() -> str:
 
 def _link_scelta_iniziale() -> None:
     """In fondo alla pagina, discreto: torna alla prima scelta (descrizione / impagina la mia verifica)."""
-    _a, _b, _c = st.columns([1, 2, 1])
+    st.markdown('<div style="height:3.2rem"></div>', unsafe_allow_html=True)
+    _a, _b, _c = st.columns([1, 1, 1])
     if _b.button("Cambia modo di partire", key="home_indietro", type="tertiary", icon=":material/swap_horiz:", use_container_width=True):
         st.session_state["_home_modo"] = None
         st.rerun()
@@ -3904,7 +3901,7 @@ def _render_stage_input():
         _dialogo_benvenuto()
     _modo = st.session_state.get("_home_modo")
     _sottotitolo = {None: "", "crea": "Scrivi l’argomento: in un minuto la verifica è pronta.",
-                    "impagina": "Carica la tua verifica: la rifacciamo identica, impaginata bene."}.get(_modo, "")
+                    "impagina": ""}.get(_modo, "")
     st.markdown(
         f'<div class="vf-narrow" style="text-align:center;margin:.2rem 0 1.1rem;">'
         f'<div class="vf-tp" style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'

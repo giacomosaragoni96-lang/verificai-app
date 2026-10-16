@@ -4901,6 +4901,17 @@ font-family: 'DM Sans', sans-serif;
 
   html body .stApp .st-key-home_indietro button, html body .stApp .st-key-home_indietro button * {{ white-space: nowrap !important; }}
 
+  /* «Guarda un'anteprima» e «Cambia modo di partire»: due link discreti, non pulsanti */
+  html body .stApp :is(.st-key-stile_anteprima, .st-key-home_indietro):not(#vf) button {{
+    background: transparent !important; background-image: none !important; border: none !important; box-shadow: none !important;
+    min-height: 0 !important; padding: .15rem .1rem !important; width: auto !important;
+  }}
+  html body .stApp .st-key-home_indietro:not(#vf) button {{ width: 100% !important; }}
+  html body .stApp :is(.st-key-stile_anteprima, .st-key-home_indietro):not(#vf) button, html body .stApp :is(.st-key-stile_anteprima, .st-key-home_indietro):not(#vf) button * {{
+    color: {T['muted']} !important; -webkit-text-fill-color: {T['muted']} !important; font-size: .82rem !important; font-weight: 500 !important;
+  }}
+  html body .stApp :is(.st-key-stile_anteprima, .st-key-home_indietro):not(#vf) button:hover * {{ color: {T['text']} !important; -webkit-text-fill-color: {T['text']} !important; text-decoration: underline; }}
+
 {_prof}
 </style>
 """
