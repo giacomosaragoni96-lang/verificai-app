@@ -175,6 +175,25 @@ def calcola(client, dal: str | None, escludi_emails: set | None = None, escludi_
         "manca": [str(r["manca"]).strip()[:240] for r in risp if len(str(r.get("manca") or "").strip()) > 10][-12:],
     }
 
+    # ── qualità percepita: «Com'è questa verifica?» per modello e per materia ──
+    materia_di = {str(v.get("id")): (v.get("materia") or "?") for v in verifiche}
+    per_modello, per_materia = defaultdict(Counter), defaultdict(Counter)
+    for e in eventi:
+        t = e.get("tipo") or ""
+        if t.startswith("esito:"):
+            esito = t.split(":", 1)[1]
+            per_modello[e.get("modello") or "?"][esito] += 1
+            per_materia[materia_di.get(str(e.get("verifica_id")), "?")][esito] += 1
+
+    def _righe(d):
+        out = []
+        for nome, c in sorted(d.items(), key=lambda x: -sum(x[1].values())):
+            tot = sum(c.values())
+            out.append({"nome": nome, "risposte": tot, "pronta": c.get("pronta", 0), "ritoccare": c.get("ritoccare", 0), "non_usabile": c.get("non_usabile", 0),
+                        "pct_pronta": round(100 * c.get("pronta", 0) / tot) if tot else 0})
+        return out
+    qualita = {"modello": _righe(per_modello), "materia": _righe(per_materia), "totale": sum(sum(c.values()) for c in per_modello.values())}
+
     # ── operativo ──
     errori = [e for e in eventi if (e.get("tipo") or "").startswith("errore:")]
     ultimi = [{"quando": str(e.get("created_at") or "")[:16].replace("T", " "), "tipo": e.get("tipo"), "utente": etichetta(e.get("user_id") or "", email_di.get(e.get("user_id"), ""), mostra_email)}
@@ -186,4 +205,4 @@ def calcola(client, dal: str | None, escludi_emails: set | None = None, escludi_
         "ultimi_eventi": ultimi,
     }
     return {"kpi": kpi, "imbuto": imbuto, "funzioni": funzioni, "scelte": scelte, "percorsi": dict(percorsi), "costi": costi, "ritorno": ritorno,
-            "questionario": questionario, "operativo": operativo, "utenti_esclusi": len(esclusi), "utenti_totali": len(elenco)}
+            "questionario": questionario, "qualita": qualita, "operativo": operativo, "utenti_esclusi": len(esclusi), "utenti_totali": len(elenco)}

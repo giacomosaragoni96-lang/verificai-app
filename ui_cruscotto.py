@@ -109,6 +109,19 @@ def render_cruscotto(T: dict, client, esci, admin_emails: set) -> None:
         _sezione("Ritorno")
         st.write(f"Persone con almeno una verifica: **{r['con_verifica']}** · tornate in un altro giorno: **{r['tornati']}** ({r['percentuale']}%)")
 
+    ql = d["qualita"]
+    with st.container(border=True):
+        _sezione("Qualità percepita", f"«Com'è questa verifica?» dopo la creazione: {ql['totale']} risposte nel periodo.")
+        if ql["totale"]:
+            c_a, c_b = st.columns(2, gap="medium")
+            for col, chiave, titolo in ((c_a, "modello", "Per modello"), (c_b, "materia", "Per materia")):
+                col.markdown(f"**{titolo}**")
+                col.dataframe(pd.DataFrame([{"": r["nome"], "Risposte": r["risposte"], "Pronta": r["pronta"], "Da ritoccare": r["ritoccare"],
+                                             "Non usabile": r["non_usabile"], "% pronta": f"{r['pct_pronta']}%"} for r in ql[chiave]]),
+                              hide_index=True, use_container_width=True)
+        else:
+            st.caption("Ancora nessuna risposta.")
+
     q = d["questionario"]
     with st.container(border=True):
         _sezione("Questionario", f"{q['risposte']} risposte nel periodo (anonime).")

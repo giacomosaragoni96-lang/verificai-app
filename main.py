@@ -505,6 +505,31 @@ def _rimetti_figure(latex: str) -> str:
     return ripristina_figure_foto(latex, st.session_state.get("_figure_foto_blocchi") or [])
 
 
+_ESITI = (("pronta", "Pronta così", ":material/thumb_up:"), ("ritoccare", "Da ritoccare", ":material/edit:"), ("non_usabile", "Non usabile", ":material/thumb_down:"))
+
+
+def _riga_esito(mod_id: str) -> None:
+    """«Com'è questa verifica?»: tre pulsanti discreti, una volta per verifica. Si registra solo l'esito (evento `esito:…`, con modello e verifica): niente testo, niente dati personali."""
+    chiave = str(st.session_state.get("_storico_id") or "senza-id")
+    if st.session_state.get("_esito_dato") == chiave:
+        st.markdown(f'<div style="text-align:center;font-size:.82rem;color:{T["muted"]};font-family:DM Sans,sans-serif;margin:.4rem 0;">'
+                    f'Grazie del parere: ci aiuta a migliorare.</div>', unsafe_allow_html=True)
+        return
+    st.markdown(f'<div class="esito-t" style="text-align:center;font-size:.85rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.6rem 0 .1rem;">'
+                f'Com\'è questa verifica?</div>', unsafe_allow_html=True)
+    cols = st.columns([1, 1.15, 1.15, 1.15, 1], gap="small")
+    for col, (codice, etichetta, icona) in zip(cols[1:4], _ESITI):
+        if col.button(etichetta, key=f"esito_{codice}", type="tertiary", icon=icona, use_container_width=True):
+            _registra_evento("esito:" + codice, modello=mod_id, verifica_id=st.session_state.get("_storico_id"))
+            st.session_state["_esito_dato"] = chiave
+            if codice == "non_usabile":
+                st.session_state["_avviso_dopo"] = ("Mi dispiace. Se vuoi dirci cosa non va, usa «Qualcosa non va in questa verifica?» in fondo alla pagina: "
+                                                    "ci aiuta a capire e correggere.")
+            else:
+                _ricorda_conferma("Grazie!")
+            st.rerun()
+
+
 def _titolo_con_suffisso(latex: str, suffisso: str, latex_con_logo_da: str = "") -> str:
     """Aggiunge « — Fila C» o « — Recupero» al titolo dell'intestazione (con il logo l'intestazione è quella della Fila A, già riconosciuta)."""
     if latex_con_logo_da and estrai_logo(latex_con_logo_da):
@@ -6387,6 +6412,7 @@ def _render_stage_final():
             if st.button(f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}", key="dl_pdf_basso_A", type="primary", use_container_width=True,
                          help="Scarica il PDF della verifica, già formattato e pronto per la stampa."):
                 _dialogo_mini_feedback(vA["pdf"], _fname_a + ".pdf")
+        _riga_esito(mod_id)
 
     # ── Versione Word modificabile: sotto la verifica, per chi preferisce lavorare in Word ─────────────────
     if WORD_ATTIVO and vA.get("latex"):
