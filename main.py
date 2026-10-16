@@ -203,7 +203,11 @@ if st.session_state.utente is None:
                 _src_ap = st.context.cookies.get("vf_src")
             except Exception:
                 _src_ap = None
-        registra_apertura(supabase_admin, _src_ap)
+        try:
+            _ua_ap = st.context.headers.get("User-Agent")
+        except Exception:
+            _ua_ap = None
+        registra_apertura(supabase_admin, _src_ap, user_agent=_ua_ap)
     mostra_auth(supabase)
     st.stop()
 
