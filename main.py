@@ -3987,8 +3987,14 @@ def _lancia_generazione(
         _p = _passo_leggibile(testo)
         return _ordine.index(_p) if _p in _ordine else min(1, len(_ordine) - 1)
 
-    def _avanza(testo):
-        _step[0] += 1
+    _bozza_html = [""]
+    _ultimo_passo = [""]
+    _ultimo_giro = [0.0]
+
+    def _avanza(testo, conta=True):
+        if conta:
+            _step[0] += 1
+        _ultimo_passo[0] = testo
         if _SLOT_BANNER.get("input") is not None:      # durante l'attesa la guida di benvenuto non serve più
             _SLOT_BANNER["input"].empty()
             _SLOT_BANNER["input"] = None
@@ -4017,9 +4023,26 @@ def _lancia_generazione(
             f'<div style="width:{perc}%;height:100%;border-radius:100px;'
             f'background:linear-gradient(90deg,{_acc},{_acc}88,{_acc});background-size:200% 100%;'
             f'animation:vf-scorri 2.2s linear infinite;transition:width .5s ease;"></div>'
-            f'</div></div>',
+            f'</div>' + _bozza_html[0] + '</div>',
             unsafe_allow_html=True
         )
+
+
+    def _su_testo(parziale: str):
+        """Il corpo si sta scrivendo: si mostra una bozza (titoli e prime righe), al massimo una volta ogni 0,8 secondi."""
+        adesso = time.time()
+        if adesso - _ultimo_giro[0] < 0.8:
+            return
+        _ultimo_giro[0] = adesso
+        voci = impagina.bozza_leggibile(parziale)
+        if not voci:
+            return
+        righe = "".join(f'<div style="padding:.35rem 0;border-top:1px solid {T["border"]};"><b style="color:{T["text"]};">{_esc(t)}</b>'
+                        f'<div style="color:{T["text2"]};font-size:.82rem;margin-top:.1rem;">{_esc(c)}</div></div>' for t, c in voci)
+        _bozza_html[0] = (f'<div style="margin-top:.9rem;font-family:DM Sans,sans-serif;font-size:.9rem;">'
+                          f'<div style="font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:{T["accent"]};margin-bottom:.2rem;">'
+                          f'Bozza · gli esercizi che sto scrivendo (può cambiare)</div>{righe}</div>')
+        _avanza(_ultimo_passo[0] or "Scrivo gli esercizi", conta=False)
 
     # ── Routing intelligente modello ──────────────────────────────────────────
     # Se la sidebar ha restituito un modello specifico (admin/pro/gold), lo usa.
@@ -4063,6 +4086,7 @@ def _lancia_generazione(
                 note_generali=note_generali, istruzioni_esercizi=s_es,
                 immagini_esercizi=imgs_es, file_ispirazione=file_ispirazione,
                 on_progress=_avanza, piano_struttura=piano_struttura, esercizi_fissi=esercizi_fissi, eccellenza=eccellenza, stile=stile,
+                    on_testo=_su_testo,
             )
         st.session_state["_autoverifica"] = ris.get("_autoverifica")
         if ris.get("_debug"):        # materiale per capire cosa ha fatto ogni modello: lo mostra solo l'admin; per tutti serve alle segnalazioni
@@ -4146,6 +4170,7 @@ def _lancia_generazione(
             st.session_state._storico_refresh += 1
             # id della riga appena creata: serve per aggiungerle poi Fila B e BES/DSA
             st.session_state["_storico_id"] = (_ris_ins.data or [{}])[0].get("id")
+            st.session_state["_storia_A"], st.session_state["_storia_rifai"] = [], []
             _registra_evento("verifica", modello=_modello_id_eff, verifica_id=st.session_state["_storico_id"])
             if st.session_state.get("_assaggio_tipo") == "bonus" and st.session_state["_storico_id"]:
                 if inviti.usa_bonus(supabase_admin, st.session_state.utente.id, st.session_state["_storico_id"]):
@@ -4448,8 +4473,11 @@ def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali
     # Compila prima: se un grafico esce rotto (errori TikZ) viene sostituito da un segnaposto
     # e il LaTeX effettivo cambia.
     latex_inviato = latex
+    _stato_prima = {"latex": va.get("latex"), "pdf": va.get("pdf")}
     pdf, err, latex = compila_pdf_sicuro(latex)
     va["latex"] = va["latex_originale"] = latex
+    if pdf and _stato_prima["latex"] and latex != _stato_prima["latex"]:
+        _storia_push(_stato_prima)
     if latex != latex_prima:
         va["docx"] = None                       # il Word va rifatto dal testo nuovo
     # Fila B, BES/DSA, Soluzioni e Word derivano dalla Fila A: se la A è cambiata non sono più
@@ -5734,6 +5762,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 st.caption("Anteprima non disponibile.")
 
     # ── Pulsante principale della schermata: torna al PDF ─────────────────────
+    _barra_annulla("review")
     spazio("md")
     confirm_pdf = st.button(
         "Fatto: torna al PDF",
@@ -5820,6 +5849,86 @@ html body .stApp div[class*="st-key-mod_applica"]:not(#vf) button {min-height:2.
 html body .stApp div.st-key-mod_rapida_applica:not(#vf) {width:auto !important;margin-left:auto;}
 </style>"""
 
+# ── Annulla e ripristina per tutta la modifica (pila di versioni della Fila A, in sessione) ───────────────────────
+
+_STORIA_MAX = 10
+
+
+def _storia_reset_se_serve() -> None:
+    """La pila appartiene alla verifica aperta: se è un'altra (nuova o riaperta) si riparte da zero."""
+    chiave = st.session_state.get("_storico_id") or "senza-id"
+    if st.session_state.get("_storia_chiave") != chiave:
+        st.session_state["_storia_chiave"] = chiave
+        st.session_state["_storia_A"] = []
+        st.session_state["_storia_rifai"] = []
+
+
+def _storia_push(stato: dict) -> None:
+    _storia_reset_se_serve()
+    pila = st.session_state.setdefault("_storia_A", [])
+    pila.append(stato)
+    del pila[:-_STORIA_MAX]
+    st.session_state["_storia_rifai"] = []          # una modifica nuova cancella i «ripristina»
+
+
+def _invalida_derivate() -> None:
+    """Fila B, BES/DSA, soluzioni e scheda derivano dalla A: se la A cambia (anche con annulla) non valgono più."""
+    if any((st.session_state.verifiche.get(f) or {}).get("latex") for f in ("B", "R", "RB", "S", "SC")):
+        for _f in ("B", "R", "RB"):
+            st.session_state.verifiche[_f] = _vf()
+        st.session_state.verifiche["S"] = {"latex": None, "testo": None, "pdf": None}
+        st.session_state.verifiche["SC"] = {"latex": None, "pdf": None, "n": 0, "avvisi": []}
+        st.session_state.verifiche["A"]["docx"] = None
+        st.session_state.rubrica_testo = None
+        st.session_state["_rubrica_docx"] = None
+        st.session_state["_avviso_dopo"] = ("Hai cambiato la verifica: Fila B, BES/DSA, soluzioni e scheda di allenamento già create "
+                                            "non valgono più e vanno rigenerate.")
+
+
+def _storia_vai(da: str, verso: str) -> None:
+    """Sposta la Fila A allo stato precedente (da='_storia_A') o successivo (da='_storia_rifai'), tenendo l'altro verso per poter tornare."""
+    _storia_reset_se_serve()
+    sorgente = st.session_state.get(da) or []
+    if not sorgente:
+        return
+    va = st.session_state.verifiche["A"]
+    st.session_state.setdefault(verso, []).append({"latex": va.get("latex"), "pdf": va.get("pdf")})
+    stato = sorgente.pop()
+    va["latex"] = va["latex_originale"] = stato["latex"]
+    va["pdf"], va["docx"] = stato["pdf"], None
+    va["pdf_ts"] = time.time()
+    pre, blocchi = extract_blocks(stato["latex"])
+    if blocchi:
+        st.session_state.review_preamble, st.session_state.review_blocks = pre, blocchi
+    try:
+        imgs, _ = pdf_to_images_bytes(stato["pdf"]) if stato.get("pdf") else (None, None)
+    except Exception:
+        imgs = None
+    st.session_state.preview_images = imgs or []
+    st.session_state["final_pagina"] = 0
+    st.session_state.last_preview_ts = va["pdf_ts"]
+    st.session_state.pop("_img_esercizi", None)
+    _invalida_derivate()
+    _salva_variante_storico("latex_a", stato["latex"])
+    _ricorda_conferma("Fatto: tornata alla versione precedente" if da == "_storia_A" else "Fatto: modifica ripristinata")
+
+
+def _barra_annulla(chiave: str) -> None:
+    """Due link discreti «Annulla» e «Ripristina», solo se c'è qualcosa da annullare o ripristinare."""
+    _storia_reset_se_serve()
+    n_a, n_r = len(st.session_state.get("_storia_A") or []), len(st.session_state.get("_storia_rifai") or [])
+    if not (n_a or n_r):
+        return
+    _c1, _c2, _c3 = st.columns([1.2, 1.2, 3], gap="small")
+    if n_a and _c1.button("Annulla", key=f"storia_annulla_{chiave}", type="tertiary", icon=":material/undo:",
+                           help=f"Torna alla versione precedente ({n_a} disponibili)."):
+        _storia_vai("_storia_A", "_storia_rifai")
+        st.rerun()
+    if n_r and _c2.button("Ripristina", key=f"storia_rifai_{chiave}", type="tertiary", icon=":material/redo:"):
+        _storia_vai("_storia_rifai", "_storia_A")
+        st.rerun()
+
+
 def _annulla_mod_rapida() -> None:
     """Rimette la verifica com'era prima dell'ultima modifica rapida (solo la Fila A: le altre versioni vanno rifatte)."""
     _s = st.session_state.get("_undo_mod_rapida")
@@ -5866,8 +5975,7 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
             st.caption(f"Modifiche con l'AI su questa verifica: {_usate} di {_tetto}")
         if _finite:
             st.info("Hai usato tutte le modifiche con l'AI di questa verifica. Puoi ancora cambiare gli esercizi a mano da «Modifica gli esercizi».")
-    if st.session_state.get("_undo_mod_rapida"):
-        st.button("↩ Annulla l'ultima modifica", key="mod_rapida_annulla", on_click=_annulla_mod_rapida, type="tertiary")
+    _barra_annulla("rapida")
     _msg = st.session_state.pop("_mod_rapida_msg", None)
     if _msg:
         st.info(_msg)
@@ -5897,7 +6005,7 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
         logger.warning("modifica rapida non riuscita: %s", _e)
         _res, _pdf, _err = {"ok": False, "messaggio": ""}, None, str(_e)
     if _res.get("ok") and _pdf:
-        st.session_state["_undo_mod_rapida"] = _prima
+        pass
         st.session_state["final_pagina"] = 0
         _salva_variante_storico("latex_a", st.session_state.verifiche["A"].get("latex"))
         st.session_state["_mod_rapida_pulisci"] = True

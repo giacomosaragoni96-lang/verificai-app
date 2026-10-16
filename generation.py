@@ -774,6 +774,7 @@ def genera_verifica(
     esercizi_fissi: list | None = None,   # esercizi del docente già pronti (esercizio_foto): [{"blocco", "posizione", "titolo", "riassunto"}]
     eccellenza: bool = False,             # l'ultimo esercizio è «Per l'eccellenza»: se il modello lo dimentica si aggiunge
     stile: str | None = None,             # stile grafico del PDF (stili_verifica.py)
+    on_testo=None,                        # callback(testo_parziale): il corpo scritto finora (per la bozza mostrata durante l'attesa)
 ) -> dict:
     """
     Genera la verifica e restituisce un dizionario con le chiavi:
@@ -857,7 +858,25 @@ def genera_verifica(
         inp.append({"mime_type": im["mime_type"], "data": im["data"]})
         inp[0] += f"\nUsa l'immagine come riferimento per l'Esercizio {im['idx']}."
 
-    ra = _safe_generate(model, inp, "Generazione esercizi")
+    ra = None
+    if on_testo is not None:
+        try:
+            _parziale = ""
+            for _pezzo in _modello_per_passo(model, "Generazione esercizi").generate_content(inp, stream=True):
+                if _pezzo.text:
+                    _parziale += _pezzo.text
+                    try:
+                        on_testo(_parziale)
+                    except Exception:
+                        pass
+            if _parziale.strip():
+                class _Risp:                      # stessa forma di una risposta normale
+                    text = _parziale
+                ra = _Risp()
+        except Exception as _e_flusso:
+            logger.warning("Flusso del corpo non riuscito, ripiego sulla chiamata normale: %s", _e_flusso)
+    if ra is None:
+        ra = _safe_generate(model, inp, "Generazione esercizi")
     corpo_a = pulisci_corpo_latex(_pulisci_risposta(ra.text))
     # Diagnostica per l'admin: cosa ha scritto il modello e cosa è stato cambiato dopo (nessun effetto sul risultato)
     risultato["_debug"] = {"prompt": inp[0], "risposta_grezza": ra.text, "dopo_pulizia": corpo_a,

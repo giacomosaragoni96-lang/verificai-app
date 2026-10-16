@@ -121,6 +121,22 @@ def testo_leggibile(t: str) -> str:
     return re.sub(r"\s+", " ", t).strip()
 
 
+def bozza_leggibile(testo: str, massimo: int = 6, lunghezza: int = 120) -> list:
+    """[(titolo, primo pezzo di testo)] degli esercizi scritti finora, in testo leggibile: serve a mostrare una bozza durante l'attesa."""
+    out = []
+    for blocco in re.split(r"(?=\\subsection\*\{)", testo or ""):
+        m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", blocco, re.DOTALL)
+        if not m:
+            continue
+        corpo = re.sub(r"\\(?:begin|end)\{[^}]*\}(?:\[[^\]]*\])?|\\item(?:\[[^\]]*\])?|\[\[.*?\]\]|%[^\n]*", " ", m.group(2), flags=re.DOTALL)
+        corpo = re.sub(r"\(\s*\d+(?:[.,]\d+)?\s*pt\s*\)", "", corpo)
+        corpo = testo_leggibile(corpo)
+        out.append((testo_leggibile(m.group(1)), (corpo[:lunghezza] + ("…" if len(corpo) > lunghezza else "")).strip()))
+        if len(out) >= massimo:
+            break
+    return out
+
+
 def impronta(latex: str) -> str:
     """Un'impronta breve del testo di un esercizio: una nota vale solo finché l'esercizio è quello su cui è stata scritta."""
     import hashlib
