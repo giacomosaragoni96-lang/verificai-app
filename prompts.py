@@ -394,6 +394,7 @@ def prompt_versione_ridotta(
     versione_label: str = "",
     max_da_togliere: int | None = None,
     totale_sottopunti: int | None = None,
+    istruzioni_docente: str = "",
 ) -> str:
     _v_tag = f" ({versione_label})" if versione_label else ""
     punti_str = (
@@ -402,7 +403,14 @@ def prompt_versione_ridotta(
         else "NON inserire punteggi."
     )
     # Con un tetto esplicito la riduzione è leggera: la versione resta quasi identica all'originale.
-    if max_da_togliere is not None:
+    if (istruzioni_docente or "").strip():
+        riduzione = (
+            "Il docente ha scritto come vuole semplificarla: «" + istruzioni_docente.strip() + "». Segui QUESTE istruzioni, "
+            "hanno la precedenza su ogni altra regola. TUTTI gli esercizi restano, nello stesso ordine; puoi semplificare le frasi, i "
+            "numeri e le richieste, e togliere qualche sottopunto solo se serve davvero a seguire le istruzioni. "
+            "Non aggiungere esercizi nuovi e non cambiare l'argomento."
+        )
+    elif max_da_togliere is not None:
         tetto = (
             f"La verifica ha {totale_sottopunti} sottopunti: elimina AL MASSIMO {max_da_togliere} "
             f"sottopunti in tutto (circa il {perc_ridotta}%), NON di più. "
