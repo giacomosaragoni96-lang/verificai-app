@@ -1580,7 +1580,7 @@ _CSS_BOX_SBLOCCO = """<style>
 [class*="st-key-box_sblocco"] .bx-d {color:rgba(255,255,255,.9) !important;font-family:'DM Sans',sans-serif;font-size:.86rem;line-height:1.4;margin-top:.2rem;}
 [class*="st-key-box_sblocco"] .bx-mini {white-space:nowrap;}
 [class*="st-key-box_sblocco"] a.bx-b {padding:.78rem 1rem !important;font-size:.86rem !important;letter-spacing:0 !important;}
-[class*="st-key-box_sblocco"] .bx-mini {margin:.15rem 0 0 !important;}
+[class*="st-key-box_sblocco"] .bx-mini {margin:0 0 .45rem !important;text-align:center;}
 [class*="st-key-box_sblocco"] [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .bx-b) {gap:.3rem !important;}
 [class*="st-key-box_sblocco"] [data-testid="stColumn"]:last-child [data-testid="stElementContainer"] {width:100%;}
 [class*="st-key-box_sblocco"] .bx-pills {display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.6rem;}
@@ -1648,8 +1648,8 @@ def _box_sblocco(dove: str) -> None:
                         + _pillole + '</div></div>',
                         unsafe_allow_html=True)
         with _c2:
-            st.markdown('<a class="bx-b" href="?pagina=questionario" target="_blank" rel="noopener">Compila il questionario</a>'
-                        '<div class="bx-mini">⏱ 4 minuti · anonimo</div>',
+            st.markdown('<div class="bx-mini">⏱ 4 minuti · anonimo</div>'
+                        '<a class="bx-b" href="?pagina=questionario" target="_blank" rel="noopener">Compila il questionario</a>',
                         unsafe_allow_html=True)
             if st.button("Ho già un codice", key=f"sblocco_codice_{dove}", type="tertiary"):
                 _vai_a_upgrade(None)
