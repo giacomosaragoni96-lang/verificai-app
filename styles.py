@@ -4924,6 +4924,16 @@ font-family: 'DM Sans', sans-serif;
     box-shadow: 0 4px 8px rgba(146,64,14,.22); text-shadow: 0 1px 1px rgba(120,53,15,.35);
   }}
 
+  /* Pagina del risultato: «Scarica PDF» in oro e arancio, per staccarsi dal blu di tutto il resto */
+  html body .stApp :is(.st-key-dl_pdf_hero_A, .st-key-dl_pdf_basso_A):not(#vf) button {{
+    background: linear-gradient(135deg, #F59E0B 0%, #EA580C 100%) !important; background-image: linear-gradient(135deg, #F59E0B 0%, #EA580C 100%) !important;
+    border: none !important; box-shadow: 0 8px 20px rgba(234,88,12,.30), 0 1px 0 rgba(255,255,255,.35) inset !important;
+  }}
+  html body .stApp :is(.st-key-dl_pdf_hero_A, .st-key-dl_pdf_basso_A):not(#vf) button:hover {{ filter: brightness(1.05); box-shadow: 0 12px 26px rgba(234,88,12,.38) !important; }}
+  html body .stApp :is(.st-key-dl_pdf_hero_A, .st-key-dl_pdf_basso_A):not(#vf) button, html body .stApp :is(.st-key-dl_pdf_hero_A, .st-key-dl_pdf_basso_A):not(#vf) button * {{
+    color: #fff !important; -webkit-text-fill-color: #fff !important; font-weight: 800 !important;
+  }}
+
 {_prof}
 </style>
 """

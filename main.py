@@ -5527,14 +5527,15 @@ def _zip_kit(elementi: list) -> bytes:
 
 
 _CSS_MOD_RAPIDA = """<style>
-html body .stApp div[class*="st-key-mod_rapida"]:not(#vf) {background:linear-gradient(160deg,__ACC__10 0%,__ACC__24 100%);
+html body .stApp div.st-key-mod_rapida:not(#vf) {background:linear-gradient(160deg,__ACC__10 0%,__ACC__24 100%);
   border:1.5px solid __ACC__44;border-radius:18px;padding:1rem 1.15rem 1.05rem;box-shadow:0 8px 22px __ACC__22;margin:.7rem 0 .9rem;}
-html body .stApp div[class*="st-key-mod_rapida"]:not(#vf) .mr-t {font-family:'DM Sans',sans-serif;font-weight:800;font-size:1.02rem;color:__TX__;line-height:1.25;}
-html body .stApp div[class*="st-key-mod_rapida"]:not(#vf) .mr-d {font-family:'DM Sans',sans-serif;font-size:.86rem;color:__T2__;margin:.15rem 0 .55rem;line-height:1.4;}
-html body .stApp div[class*="st-key-mod_rapida"]:not(#vf) textarea {background:#fff !important;border:1.5px solid __ACC__55 !important;border-radius:12px !important;
+html body .stApp div.st-key-mod_rapida:not(#vf) .mr-t {font-family:'DM Sans',sans-serif;font-weight:800;font-size:1.02rem;color:__TX__;line-height:1.25;}
+html body .stApp div.st-key-mod_rapida:not(#vf) .mr-d {font-family:'DM Sans',sans-serif;font-size:.86rem;color:__T2__;margin:.15rem 0 .55rem;line-height:1.4;}
+html body .stApp div.st-key-mod_rapida:not(#vf) textarea {background:#fff !important;border:1.5px solid __ACC__55 !important;border-radius:12px !important;
   font-size:.95rem !important;min-height:4.2rem !important;}
-html body .stApp div[class*="st-key-mod_rapida"]:not(#vf) textarea:focus {border-color:__ACC__ !important;box-shadow:0 0 0 3px __ACC__22 !important;}
-html body .stApp div[class*="st-key-mod_applica"]:not(#vf) button {min-height:2.8rem !important;font-weight:800 !important;border-radius:12px !important;}
+html body .stApp div.st-key-mod_rapida:not(#vf) textarea:focus {border-color:__ACC__ !important;box-shadow:0 0 0 3px __ACC__22 !important;}
+html body .stApp div[class*="st-key-mod_applica"]:not(#vf) button {min-height:2.35rem !important;font-weight:700 !important;font-size:.88rem !important;border-radius:10px !important;padding:.3rem 1.2rem !important;width:auto !important;}
+html body .stApp div.st-key-mod_rapida_applica:not(#vf) {width:auto !important;margin-left:auto;}
 </style>"""
 
 def _annulla_mod_rapida() -> None:
@@ -5866,7 +5867,9 @@ def _render_stage_final():
         st.markdown(
             f'<style>html body .stApp .st-key-word_card {{background:linear-gradient(135deg,{T["accent"]}12 0%,{T["accent"]}26 100%);'
             f'border:1.5px solid {T["accent"]}55;border-radius:18px;padding:1.1rem 1.3rem;}}'
-            f'html body .stApp .st-key-word_card button {{min-height:3.1rem;font-weight:700;border-radius:12px;}}</style>',
+            f'html body .stApp .st-key-word_card button {{min-height:2.9rem;font-weight:700;border-radius:12px;background:#fff !important;background-image:none !important;'
+            f'border:1.5px solid {T["accent"]}77 !important;box-shadow:none !important;}}'
+            f'html body .stApp .st-key-word_card button, html body .stApp .st-key-word_card button * {{color:{T["accent"]} !important;-webkit-text-fill-color:{T["accent"]} !important;}}</style>',
             unsafe_allow_html=True)
         with st.container(key="word_card"):
             _w1, _w2 = st.columns([2.3, 1.2], vertical_alignment="center", gap="medium")
