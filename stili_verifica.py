@@ -26,7 +26,7 @@ STILI = {
     },
     "moderno": {
         "nome": "Moderno",
-        "descrizione": "Carattere senza grazie, pulito, con i titoli degli esercizi in nero (si stampa bene in bianco e nero).",
+        "descrizione": "Carattere senza grazie, titoli neri: si stampa bene in bianco e nero.",
         "corpo": None, "margine": None,
         "pre": (
             "\\usepackage[T1]{fontenc}\n\\usepackage[scaled=.92]{helvet}\n\\renewcommand{\\familydefault}{\\sfdefault}\n"
