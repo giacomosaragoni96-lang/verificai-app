@@ -76,7 +76,7 @@ Avvio locale: `streamlit run main.py`. Pacchetti di sistema in `packages.txt`
 Stati in `main.py`: INPUT -> PREVIEW -> REVIEW -> FINAL -> export (PDF/DOCX), più la pagina
 MIE_VERIFICHE (storico). PREVIEW può andare direttamente a FINAL. Con la modalità
 condivisione (`_share_view_active`) il router degli stati viene saltato.
-L'INPUT (`_render_stage_input`) parte dal bivio (`input_percorso is None`) e ha i percorsi
+L'INPUT (`_render_stage_input`) apre con la scelta a due schede (`_render_scelta_iniziale`, `_home_modo` = None|crea|impagina, «← Cambia» la riapre): «crea da una descrizione» (il form sotto; il pulsante «Crea verifica» compare solo con una descrizione o un file) e «impagina la mia verifica» (`_render_impagina`). Allegati (materiale, esercizio del libro, logo) in un `st.segmented_control` (`sez_allegati`), NON in `st.tabs`: le schede tornano alla prima a ogni rerun, per esempio dopo un caricamento. Pillole verdi sopra «Altre opzioni» = ciò che è rimasto caricato (appunti, esercizio del libro, logo). Il form originale parte dal bivio (`input_percorso is None`) e ha i percorsi
 A (upload guidato), B (form manuale), FACSIMILE, QA; `LIBERA` reindirizza a B.
 Tutto lo stato UI sta in `st.session_state`.
 
