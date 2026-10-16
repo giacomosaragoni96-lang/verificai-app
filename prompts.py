@@ -1437,3 +1437,29 @@ def testo_esercizi_fissi(fissi: list) -> str:
     for f in fissi:
         righe.append(f"- «{(f.get('titolo') or 'Esercizio').strip()}»: " + (f.get("riassunto") or "").strip())
     return "\n".join(righe)
+
+
+def prompt_esercizi_mancanti(materia: str, argomento: str, calibrazione: str, corpo: str, n_regolari: int,
+                             con_eccellenza: bool, mostra_punteggi: bool) -> str:
+    """Rete di sicurezza: la verifica ha meno esercizi di quanti richiesti. Si scrivono SOLO quelli che mancano."""
+    voci = []
+    if n_regolari > 0:
+        voci.append(f"{n_regolari} " + ("esercizio normale" if n_regolari == 1 else "esercizi normali"))
+    if con_eccellenza:
+        voci.append("1 esercizio «Per l'eccellenza»: facoltativo, MOLTO difficile (un problema che richiede un'idea o un ragionamento "
+                    "non standard), 1-2 richieste, circa 3-10 pt")
+    return (
+        f"Sei un docente di {materia}. Qui sotto c'è una verifica sull'argomento «{argomento}» a cui MANCANO degli esercizi. "
+        f"Scrivi SOLO quelli che mancano: {' e '.join(voci)}.\n"
+        "- NON riscrivere né ripetere gli esercizi che ci sono già: usa tipi di richiesta e dati DIVERSI.\n"
+        "- Livello di difficoltà e stile come quelli già presenti" + (f" ({calibrazione.strip()})" if (calibrazione or "").strip() else "") + ".\n"
+        "- Formato: ogni esercizio è \\subsection*{Esercizio N: Titolo} seguito dal corpo in LaTeX, con le richieste come "
+        "\\begin{enumerate}[a)] \\item … \\end{enumerate}; numeri progressivi dopo quelli esistenti; l'esercizio «Per l'eccellenza» per ultimo "
+        "(titolo «Per l'eccellenza»).\n"
+        + ("- Ogni \\item deve avere (X pt) sulla stessa riga, formato ESATTO (X pt); scegli tu i valori (circa 3-10 pt per richiesta).\n"
+           if mostra_punteggi else "- NON scrivere punteggi.\n")
+        + f"- {REGOLA_CONSEGNE_BREVI}\n"
+        f"- {REGOLA_GRAFICO_CURVE}\n"
+        "- Rispondi SOLO con il LaTeX dei blocchi mancanti: niente preambolo, niente \\end{document}, niente spiegazioni.\n\n"
+        "VERIFICA ESISTENTE:\n" + corpo
+    )
