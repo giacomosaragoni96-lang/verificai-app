@@ -2743,8 +2743,10 @@ def _render_impagina() -> None:
                      placeholder="Se non scrivi niente la verifica resta identica, solo impaginata bene. Oppure: «togli l'esercizio 4», "
                                  "«aggiungi un esercizio sulle disequazioni», «semplifica l'ultimo»…")
         _selettore_stile()
-        if _files and st.button("Leggi e impagina", key="imp_leggi", type="primary", icon=":material/auto_fix_high:", use_container_width=True,
-                                disabled=_limite or _blocco_conteggio):
+        _pronto = bool(_files)
+        if st.button("Leggi e impagina" if _pronto else "Carica la tua verifica per continuare", key="imp_leggi", type="primary",
+                     icon=":material/auto_fix_high:" if _pronto else ":material/upload_file:", use_container_width=True,
+                     disabled=(not _pronto) or _limite or _blocco_conteggio):
             if st.session_state.get("_imp_n", 0) >= _MAX_LETTURE_IMP:
                 st.warning("Hai già letto diverse verifiche in questa sessione: riprova più tardi.")
                 return
@@ -3536,7 +3538,7 @@ def _render_percorso_b_form(_prog_placeholder):
             _manca_arg = not argomento and not _fm
             spazio("lg")
 
-            # Il pulsante compare solo quando c'è qualcosa da creare (una descrizione o un file), come in «Impagina la mia verifica»
+            # Il pulsante c'è sempre: senza una descrizione (o un file) è spento e dice cosa manca; poi diventa «Crea verifica»
             _ha_testo = bool((st.session_state.get("argomento_area_b") or "").strip()) or bool(_fm)
             if _ha_testo:
                 # Riepilogo sopra il pulsante: chi non apre le opzioni vede cosa sta per ottenere; la descrizione scritta ha la precedenza
@@ -3550,22 +3552,20 @@ def _render_percorso_b_form(_prog_placeholder):
                              + " <span style='opacity:.8'>(se la descrizione non dice altro: si cambia in «Altre opzioni»)</span>")
                 st.markdown(f'<div style="text-align:center;font-size:.82rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.1rem 0 .5rem;">{_riep}</div>',
                             unsafe_allow_html=True)
-                st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
-                genera_btn = st.button(
-                    "Crea verifica",
-                    icon=":material/auto_awesome:",
-                    use_container_width=True,
-                    type="primary",
-                    disabled=_limite or _blocco_conteggio,
-                    key="genera_btn_b",
-                    help="Avvia la generazione AI della verifica. Potrai modificare ogni singolo esercizio prima di scaricare il PDF.",
-                )
-                st.markdown('</div>', unsafe_allow_html=True)
-                if genera_btn and _manca_arg:
-                    genera_btn = False
-                    messaggio("avviso", "Scrivi prima di cosa parla la verifica, nel riquadro in alto: basta una riga, ad esempio «Le frazioni».")
-            else:
+            st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
+            genera_btn = st.button(
+                "Crea verifica" if _ha_testo else "Scrivi una descrizione per creare la verifica",
+                icon=":material/auto_awesome:",
+                use_container_width=True,
+                type="primary",
+                disabled=_limite or _blocco_conteggio or not _ha_testo,
+                key="genera_btn_b",
+                help="Avvia la generazione AI della verifica. Potrai modificare ogni singolo esercizio prima di scaricare il PDF.",
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+            if genera_btn and _manca_arg:
                 genera_btn = False
+                messaggio("avviso", "Scrivi prima di cosa parla la verifica, nel riquadro in alto: basta una riga, ad esempio «Le frazioni».")
             _sp1, _sp2, _sp3 = st.columns([3, 2, 3])
             _sp2.button("Le mie verifiche", key="apri_storico_input", type="tertiary", icon=":material/folder_open:",
                         on_click=_apri_storico, use_container_width=True, help="Ritrova le verifiche che hai già creato.")

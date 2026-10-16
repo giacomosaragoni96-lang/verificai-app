@@ -4574,9 +4574,12 @@ font-family: 'DM Sans', sans-serif;
     background: linear-gradient(135deg, {_acc2} 0%, {_acc} 100%) !important;
     box-shadow: 0 8px 24px {_acc_ring} !important;
   }}
-  html body .stApp .cta-genera-wrap button:disabled {{
-    border: 1.5px solid {T['border2']} !important;
+  html body .stApp .st-key-genera_btn_b:not(#vf) button:disabled, html body .stApp .st-key-imp_leggi:not(#vf) button:disabled, html body .stApp .st-key-imp_crea:not(#vf) button:disabled,
+  html body .stApp .st-key-genera_btn_b:not(#vf) [data-testid="stBaseButton-primary"]:disabled, html body .stApp .st-key-imp_leggi:not(#vf) [data-testid="stBaseButton-primary"]:disabled {{
+    background: linear-gradient(135deg, {_acc}, {_acc2}) !important; color: #fff !important; border: none !important;
+    opacity: .5 !important; box-shadow: none !important; cursor: not-allowed;
   }}
+  html body .stApp .st-key-genera_btn_b:not(#vf) button:disabled *, html body .stApp .st-key-imp_leggi:not(#vf) button:disabled *, html body .stApp .st-key-imp_crea:not(#vf) button:disabled * {{ color: #fff !important; -webkit-text-fill-color: #fff !important; }}
 
   /* Radio: cerchio vuoto se non scelto, pieno blu con punto bianco se scelto */
   html body .stApp [data-testid="stRadio"] label > div:first-child {{
