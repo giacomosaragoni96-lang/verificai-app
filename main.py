@@ -3073,11 +3073,9 @@ def _render_percorso_b_form(_prog_placeholder):
                     key=f"sel_num_es_b_{durata_nome}",   # cambia con la durata: riparte dal preset
                     format_func=lambda x: f"{x} esercizi",
                 )
-                st.toggle("Il primo esercizio è un ripasso facile dei concetti base", value=False, key="toggle_primo_base",
-                          help="Di solito gli esercizi vanno dal semplice al difficile e coprono tutta la scala. "
-                               "Attivalo se vuoi aprire la verifica con un esercizio di base.")
-                st.toggle("Aggiungi un esercizio «per l'eccellenza» in fondo", value=True, key="toggle_eccellenza",
-                          help="Un esercizio in più, facoltativo, molto difficile e con pochi punti (3-10), dentro il totale.")
+                st.toggle(f"Aggiungi un esercizio «per l'eccellenza» (in tutto {num_esercizi + 1})", value=True, key="toggle_eccellenza",
+                          help="Un esercizio in più, facoltativo, molto difficile e con pochi punti (3-10), dentro il totale dei punti. "
+                               "Spegnilo se vuoi esattamente il numero di esercizi scelto.")
 
                 _tog = st.toggle(
                     "Mostra i punti accanto a ogni domanda",
@@ -3318,6 +3316,7 @@ def _lancia_generazione(
     file_ispirazione=None,
     prog_placeholder=None,         # st.empty() creato nel form, vicino al pulsante
     piano_struttura=None,          # {"primo_base", "eccellenza"}: con la struttura-tipo si pianifica prima di scrivere
+    eccellenza=False,              # c'è l'esercizio «per l'eccellenza» (ultimo): se il modello lo omette, la generazione lo aggiunge
     esercizi_fissi=None,           # esercizi del libro scelti dal docente (esercizio_foto), inseriti identici nella verifica
 ):
     """
@@ -3434,7 +3433,7 @@ def _lancia_generazione(
             bes_dsa_b=False, genera_soluzioni=False,
             note_generali=note_generali, istruzioni_esercizi=s_es,
             immagini_esercizi=imgs_es, file_ispirazione=file_ispirazione,
-            on_progress=_avanza, piano_struttura=piano_struttura, esercizi_fissi=esercizi_fissi,
+            on_progress=_avanza, piano_struttura=piano_struttura, esercizi_fissi=esercizi_fissi, eccellenza=eccellenza,
         )
         st.session_state["_autoverifica"] = ris.get("_autoverifica")
         if ris.get("_debug"):        # materiale per capire cosa ha fatto ogni modello: lo mostra solo l'admin; per tutti serve alle segnalazioni
@@ -3726,6 +3725,7 @@ def _render_stage_input():
         piano_struttura=({"primo_base": bool(st.session_state.get("toggle_primo_base", False)), "eccellenza": _ecc}
                          if (PIANO_ATTIVO and not st.session_state.esercizi_custom and not _fissi_foto) else None),
         esercizi_fissi=_fissi_foto or None,
+        eccellenza=_ecc,
     )
     return
 

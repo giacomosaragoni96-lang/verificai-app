@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 from config import QA_SALTA_SE_PUNTEGGIO_ALMENO, AUTOVERIFICA_ATTIVA, MAX_FACCIATE, nota_istruzioni_verifica
 from autoverifica import autoverifica_corpo
-from esercizio_foto import inserisci_esercizi
+from esercizio_foto import inserisci_esercizi, rinumera_blocchi
 
 from prompts import (
     prompt_titolo,
@@ -27,6 +27,7 @@ from prompts import (
     prompt_variante_rapida,
     prompt_piano_verifica,
     testo_esercizi_fissi,
+    prompt_esercizi_mancanti,
 )
 from piano_verifica import (
     scheletro_piano, normalizza_piano, estrai_json, piano_a_testo, applica_punti_piano, max_esercizi_chiusi, _conta_sottopunti,
@@ -504,6 +505,43 @@ def _con_punti_medi(fissi: list, blocchi_ai: list) -> list:
     return nuovi
 
 
+def _completa_esercizi_mancanti(model, corpo: str, atteso: int, materia: str, argomento: str, calibrazione: str,
+                                mostra_punteggi: bool, eccellenza: bool = False) -> str:
+    """
+    Rete di sicurezza sul numero di esercizi: se il modello ne ha scritti meno di quelli richiesti (succede, per esempio,
+    quando uno degli esercizi «per l'eccellenza» prende il posto di uno normale) si fa scrivere SOLO quello che manca e lo si
+    mette al posto giusto (l'esercizio per l'eccellenza resta l'ultimo). Qualsiasi problema = si tiene il testo di prima.
+    """
+    try:
+        prefisso, blocchi = _split_blocchi(corpo)
+        n = len(blocchi)
+        mancanti = atteso - n
+        if n == 0 or mancanti < 1 or mancanti > 2:
+            return corpo
+        marcatore = "ecc" + "ellenza"
+        ha_ecc = any(marcatore in b[:160].lower() for b in blocchi)
+        serve_ecc = bool(eccellenza and not ha_ecc)
+        regolari = mancanti - (1 if serve_ecc else 0)
+        r = _safe_generate(
+            model,
+            prompt_esercizi_mancanti(materia, argomento, calibrazione, _assembla_corpo_da_blocchi(blocchi), regolari, serve_ecc, mostra_punteggi),
+            "Esercizi mancanti",
+        )
+        _p, nuovi = _split_blocchi(pulisci_corpo_latex(_pulisci_risposta(r.text)))
+        nuovi = [re.sub(re.escape(chr(92) + "end{document}") + ".*$", "", b, flags=re.DOTALL).rstrip() for b in nuovi][:mancanti]
+        if len(nuovi) != mancanti:
+            logger.warning("Esercizi mancanti: ne servivano %s, arrivati %s: lascio com'era", mancanti, len(nuovi))
+            return corpo
+        ecc_nuovi = [b for b in nuovi if marcatore in b[:160].lower()]
+        reg_nuovi = [b for b in nuovi if b not in ecc_nuovi]
+        fine = [b for b in blocchi if marcatore in b[:160].lower()] + ecc_nuovi
+        inizio = [b for b in blocchi if marcatore not in b[:160].lower()] + reg_nuovi
+        return prefisso + _assembla_corpo_da_blocchi(rinumera_blocchi(inizio + fine))
+    except Exception as e:
+        logger.warning("Esercizi mancanti non aggiunti: %s", e)
+        return corpo
+
+
 def _split_blocchi(corpo: str) -> list[str]:
     """
     Divide il corpo LaTeX in blocchi, uno per ogni \\subsection*.
@@ -727,6 +765,7 @@ def genera_verifica(
     on_progress=None,           # callback(testo: str) -> None
     piano_struttura: dict | None = None,  # {"primo_base", "eccellenza"}: se c'è, si pianifica prima di scrivere
     esercizi_fissi: list | None = None,   # esercizi del docente già pronti (esercizio_foto): [{"blocco", "posizione", "titolo", "riassunto"}]
+    eccellenza: bool = False,             # l'ultimo esercizio è «Per l'eccellenza»: se il modello lo dimentica si aggiunge
 ) -> dict:
     """
     Genera la verifica e restituisce un dizionario con le chiavi:
@@ -870,6 +909,7 @@ def genera_verifica(
         ("eseguito, scartato (numero di esercizi diverso)" if corpo_corretto else
          ("saltato (struttura ottima)" if validation_score >= (QA_SALTA_SE_PUNTEGGIO_ALMENO or 2) else "non applicato")))
     corpo_a = _tronca_al_numero_giusto(corpo_a, num_esercizi)
+    corpo_a = _completa_esercizi_mancanti(model, corpo_a, num_esercizi, materia, argomento, calibrazione, mostra_punteggi, eccellenza)
     risultato["_debug"]["dopo_controllo_qualita"] = corpo_a
     if piano and not piano.get("vincolo"):
         _avanza("🎚️  Calibro la difficoltà degli esercizi…")
