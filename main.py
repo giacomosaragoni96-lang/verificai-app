@@ -2687,11 +2687,11 @@ def _anteprima_impaginata(esercizi, titolo, materia, mostra, tot, con_spazio, fe
     cache = st.session_state.setdefault("_imp_prev", {})
     chiave = hashlib.md5(repr((
         [e.get("latex") for e in esercizi], [e.get("titolo") for e in esercizi], titolo, materia, mostra, tot, sorted(con_spazio), fedeli,
-        st.session_state.get("_stile_verifica") if _is_admin else None)).encode("utf-8")).hexdigest()
+        st.session_state.get("_stile_verifica"))).encode("utf-8")).hexdigest()
     if chiave not in cache:
         if len(cache) > 4:
             cache.clear()
-        v = impagina.genera_da_trascrizione(esercizi, titolo, materia, mostra, tot, mostra, stile=(st.session_state.get("_stile_verifica") if _is_admin else None),
+        v = impagina.genera_da_trascrizione(esercizi, titolo, materia, mostra, tot, mostra, stile=st.session_state.get("_stile_verifica"),
                                             con_spazio_figura=con_spazio, punti_fedeli=fedeli)
         pdf = v["A"].get("pdf")
         imgs, _ = pdf_to_images_bytes(pdf) if pdf else (None, None)
@@ -2733,6 +2733,7 @@ def _render_impagina() -> None:
         st.text_area("Vuoi cambiare qualcosa? (facoltativo)", key="imp_richiesta", height=90, max_chars=600, label_visibility="collapsed",
                      placeholder="Se non scrivi niente la verifica resta identica, solo impaginata bene. Oppure: «togli l'esercizio 4», "
                                  "«aggiungi un esercizio sulle disequazioni», «semplifica l'ultimo»…")
+        _selettore_stile()
         if _files and st.button("Leggi e impagina", key="imp_leggi", type="primary", icon=":material/auto_fix_high:", use_container_width=True,
                                 disabled=_limite or _blocco_conteggio):
             if st.session_state.get("_imp_n", 0) >= _MAX_LETTURE_IMP:
@@ -2856,6 +2857,25 @@ def _render_impagina() -> None:
         st.rerun()
 
 
+def _selettore_stile() -> str:
+    """Stile del PDF: classico (predefinito) o moderno, con l'anteprima delle due versioni della stessa verifica a richiesta."""
+    st.markdown(_html_separatore() + '<div class="opt-label">Stile della verifica</div>', unsafe_allow_html=True)
+    _ids = [k for k, _n in stili_disponibili()]
+    _sel = st.selectbox("Stile della verifica", _ids, key="sel_stile_verifica", format_func=lambda k: STILI[k]["nome"],
+                        label_visibility="collapsed")
+    with st.popover("Guarda un'anteprima", icon=":material/visibility:"):
+        _cols = st.columns(len(_ids), gap="small")
+        for _col, _k in zip(_cols, _ids):
+            _img = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "stili", _k + ".png")
+            with _col:
+                if os.path.exists(_img):
+                    st.image(_img, use_container_width=True)
+                st.markdown(f'<div style="text-align:center;font-weight:700;font-family:DM Sans,sans-serif;color:{T["text"]};">{STILI[_k]["nome"]}</div>',
+                            unsafe_allow_html=True)
+    st.session_state["_stile_verifica"] = _sel
+    return _sel
+
+
 def _link_scelta_iniziale() -> None:
     """In fondo alla pagina, discreto: torna alla prima scelta (descrizione / impagina la mia verifica)."""
     _a, _b, _c = st.columns([3, 2, 3])
@@ -2891,7 +2911,7 @@ def _esegui_impagina(p: dict, prog_ph) -> None:
     def _gen(model_obj, avanza):
         return impagina.genera_da_trascrizione(
             p["esercizi"], p["titolo"], p["materia"], p["mostra_punteggi"], p["punti_totali"], p["mostra_punteggi"],
-            stile=(st.session_state.get("_stile_verifica") if _is_admin else None), con_spazio_figura=set(p.get("con_spazio") or []),
+            stile=st.session_state.get("_stile_verifica"), con_spazio_figura=set(p.get("con_spazio") or []),
             richiesta=p.get("richiesta", ""), model=model_obj.per("modifica") if hasattr(model_obj, "per") else model_obj, on_progress=avanza,
             punti_fedeli=p.get("fedeli", False))
 
@@ -3385,19 +3405,6 @@ def _render_percorso_b_form(_prog_placeholder):
                     )
                     st.session_state["_pers_pt"] = punti_totali
 
-                # ── Stile grafico del PDF (per ora solo admin, in prova) ──
-                _stile_sel = STILE_PREDEFINITO
-                if _is_admin:
-                    st.markdown(_html_separatore() + '<div class="opt-label">Stile della verifica (solo admin, in prova)</div>', unsafe_allow_html=True)
-                    _stile_sel = st.selectbox("Stile della verifica", [k for k, _n in stili_disponibili()], key="sel_stile_verifica",
-                                              format_func=lambda k: STILI[k]["nome"], label_visibility="collapsed")
-                    _c_st1, _c_st2 = st.columns([3, 2], gap="small")
-                    _c_st1.caption(descrizione_stile(_stile_sel))
-                    _img_stile = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "stili", _stile_sel + ".png")
-                    if os.path.exists(_img_stile):
-                        _c_st2.image(_img_stile, use_container_width=True)
-                st.session_state["_stile_verifica"] = _stile_sel
-
                 st.markdown(_html_separatore() + '<div class="opt-label">Allegati e logo (opzionale)</div>', unsafe_allow_html=True)
                 _SEZ_ALL = ["📄 Appunti o verifica", "📷 Esercizio del libro", "🏫 Logo della scuola"]
                 _sez = st.segmented_control("Allegati", _SEZ_ALL, key="sez_allegati", default=_SEZ_ALL[0], label_visibility="collapsed") or _SEZ_ALL[0]
@@ -3506,6 +3513,8 @@ def _render_percorso_b_form(_prog_placeholder):
                                 st.rerun()
                             else:
                                 st.warning("Non riesco a leggere questa immagine: prova con un PNG o un JPG più piccolo.")
+
+                _selettore_stile()
 
             # ── CTA: Genera Bozza ─────────────────────────────────────────────────
             _manca_arg = not argomento and not _fm
@@ -4066,7 +4075,7 @@ def _render_stage_input():
                          if (PIANO_ATTIVO and not st.session_state.esercizi_custom and not _fissi_foto) else None),
         esercizi_fissi=_fissi_foto or None,
         eccellenza=_ecc,
-        stile=(st.session_state.get("_stile_verifica") if _is_admin else None),
+        stile=st.session_state.get("_stile_verifica"),
     )
     return
 
