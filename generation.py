@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 from config import QA_SALTA_SE_PUNTEGGIO_ALMENO, AUTOVERIFICA_ATTIVA, MAX_FACCIATE, nota_istruzioni_verifica
 from autoverifica import autoverifica_corpo
 from esercizio_foto import inserisci_esercizi, rinumera_blocchi
+from stili_verifica import applica_stile
 
 from prompts import (
     prompt_titolo,
@@ -257,6 +258,7 @@ def _costruisci_preambolo(
     titolo_clean: str,
     titolo_variante: str,   # es. "Versione A", "Versione B", "" se nessuna
     e_mat: bool,
+    stile: str | None = None,   # stile grafico del PDF (stili_verifica.py); None = classico
 ) -> str:
     nota_bes = nota_istruzioni_verifica(materia)
     titolo_header = (
@@ -267,7 +269,7 @@ def _costruisci_preambolo(
         "\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\\usepackage{tikz}"
         if e_mat else ""
     )
-    return (
+    preambolo = (
         f"\\documentclass[12pt,a4paper]{{article}}\n"
         f"\\usepackage[utf8]{{inputenc}}\n"
         f"\\usepackage[italian]{{babel}}\n"
@@ -285,7 +287,8 @@ def _costruisci_preambolo(
         f"  \\vspace{{0.3cm}}\n"
         f"  \\textit{{\\small {nota_bes}}}\n"
         f"\\end{{center}}\n"
-    ), titolo_header
+    )
+    return applica_stile(preambolo, stile), titolo_header
 
 
 def _rimuovi_tutti_punteggi(latex: str) -> str:
@@ -766,6 +769,7 @@ def genera_verifica(
     piano_struttura: dict | None = None,  # {"primo_base", "eccellenza"}: se c'è, si pianifica prima di scrivere
     esercizi_fissi: list | None = None,   # esercizi del docente già pronti (esercizio_foto): [{"blocco", "posizione", "titolo", "riassunto"}]
     eccellenza: bool = False,             # l'ultimo esercizio è «Per l'eccellenza»: se il modello lo dimentica si aggiunge
+    stile: str | None = None,             # stile grafico del PDF (stili_verifica.py)
 ) -> dict:
     """
     Genera la verifica e restituisce un dizionario con le chiavi:
@@ -814,7 +818,7 @@ def genera_verifica(
     # ── 2. PREAMBOLO FILA A ───────────────────────────────────────────────────
     titolo_variante_a = "Versione A" if doppia_fila else ""
     preambolo_a, titolo_header_a = _costruisci_preambolo(
-        materia, titolo_clean, titolo_variante_a, e_mat
+        materia, titolo_clean, titolo_variante_a, e_mat, stile
     )
 
     # ── 2b. PIANO DELLA VERIFICA (opzionale) ──────────────────────────────────
@@ -959,7 +963,7 @@ def genera_verifica(
         )
         corpo_b = pulisci_corpo_latex(_pulisci_risposta(rb.text))
 
-        preambolo_b, _ = _costruisci_preambolo(materia, titolo_clean, "Versione B", e_mat)
+        preambolo_b, _ = _costruisci_preambolo(materia, titolo_clean, "Versione B", e_mat, stile)
 
         _avanza("🖨️  PDF Versione B…")
         latex_b, pdf_b = _assembla_e_compila(
@@ -979,7 +983,7 @@ def genera_verifica(
             )
             corpo_rb = pulisci_corpo_latex(_pulisci_risposta(rb_bes_b.text))
             preambolo_rb, _ = _costruisci_preambolo(
-                materia, titolo_clean, "Versione B Ridotta", e_mat
+                materia, titolo_clean, "Versione B Ridotta", e_mat, stile
             )
             latex_rb, pdf_rb = _assembla_e_compila(
                 preambolo_rb, corpo_rb, mostra_punteggi, punti_totali, con_griglia

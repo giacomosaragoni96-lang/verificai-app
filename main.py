@@ -19,6 +19,7 @@ import time
 import hashlib
 from datetime import datetime, timezone
 
+from stili_verifica import STILI, STILE_PREDEFINITO, stili_disponibili, descrizione_stile
 from esercizio_foto import leggi_esercizi_da_foto, correggi_esercizio, stato_esercizio, blocco_latex, riassunto_per_prompt
 from ai_client import crea_modello, configura as configura_ai, riepilogo_uso, numero_chiamate, chiamate_da
 
@@ -3111,6 +3112,19 @@ def _render_percorso_b_form(_prog_placeholder):
                     )
                     st.session_state["_pers_pt"] = punti_totali
 
+                # ── Stile grafico del PDF (per ora solo admin, in prova) ──
+                _stile_sel = STILE_PREDEFINITO
+                if _is_admin:
+                    st.markdown(_html_separatore() + '<div class="opt-label">Stile della verifica (solo admin, in prova)</div>', unsafe_allow_html=True)
+                    _stile_sel = st.selectbox("Stile della verifica", [k for k, _n in stili_disponibili()], key="sel_stile_verifica",
+                                              format_func=lambda k: STILI[k]["nome"], label_visibility="collapsed")
+                    _c_st1, _c_st2 = st.columns([3, 2], gap="small")
+                    _c_st1.caption(descrizione_stile(_stile_sel))
+                    _img_stile = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "stili", _stile_sel + ".png")
+                    if os.path.exists(_img_stile):
+                        _c_st2.image(_img_stile, use_container_width=True)
+                st.session_state["_stile_verifica"] = _stile_sel
+
                 st.markdown(_html_separatore() + '<div class="opt-label">Allegati e logo (opzionale)</div>', unsafe_allow_html=True)
                 _t_mat, _t_foto, _t_logo = st.tabs(["📄 Appunti o verifica", "📷 Esercizio del libro", "🏫 Logo della scuola"])
                 with _t_mat:
@@ -3314,6 +3328,7 @@ def _lancia_generazione(
     file_ispirazione=None,
     prog_placeholder=None,         # st.empty() creato nel form, vicino al pulsante
     piano_struttura=None,          # {"primo_base", "eccellenza"}: con la struttura-tipo si pianifica prima di scrivere
+    stile=None,                    # stile grafico del PDF (stili_verifica.py): solo admin, in prova
     eccellenza=False,              # c'è l'esercizio «per l'eccellenza» (ultimo): se il modello lo omette, la generazione lo aggiunge
     esercizi_fissi=None,           # esercizi del libro scelti dal docente (esercizio_foto), inseriti identici nella verifica
 ):
@@ -3431,7 +3446,7 @@ def _lancia_generazione(
             bes_dsa_b=False, genera_soluzioni=False,
             note_generali=note_generali, istruzioni_esercizi=s_es,
             immagini_esercizi=imgs_es, file_ispirazione=file_ispirazione,
-            on_progress=_avanza, piano_struttura=piano_struttura, esercizi_fissi=esercizi_fissi, eccellenza=eccellenza,
+            on_progress=_avanza, piano_struttura=piano_struttura, esercizi_fissi=esercizi_fissi, eccellenza=eccellenza, stile=stile,
         )
         st.session_state["_autoverifica"] = ris.get("_autoverifica")
         if ris.get("_debug"):        # materiale per capire cosa ha fatto ogni modello: lo mostra solo l'admin; per tutti serve alle segnalazioni
@@ -3724,6 +3739,7 @@ def _render_stage_input():
                          if (PIANO_ATTIVO and not st.session_state.esercizi_custom and not _fissi_foto) else None),
         esercizi_fissi=_fissi_foto or None,
         eccellenza=_ecc,
+        stile=(st.session_state.get("_stile_verifica") if _is_admin else None),
     )
     return
 
