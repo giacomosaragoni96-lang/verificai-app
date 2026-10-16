@@ -207,7 +207,10 @@ if st.session_state.utente is None:
             _ua_ap = st.context.headers.get("User-Agent")
         except Exception:
             _ua_ap = None
-        registra_apertura(supabase_admin, _src_ap, user_agent=_ua_ap)
+        try:
+            registra_apertura(supabase_admin, _src_ap, user_agent=_ua_ap)
+        except Exception as _e_ap:      # il contatore non deve mai impedire l'accesso
+            logger.warning("apertura non registrata: %s", _e_ap)
     mostra_auth(supabase)
     st.stop()
 
