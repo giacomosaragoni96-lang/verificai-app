@@ -20,6 +20,7 @@ import hashlib
 from datetime import datetime, timezone
 
 from stili_verifica import STILI, STILE_PREDEFINITO, stili_disponibili, descrizione_stile, cambia_stile
+from piano_verifica import numero_esercizi_richiesto
 from esercizio_foto import leggi_esercizi_da_foto, correggi_esercizio, stato_esercizio, blocco_latex, riassunto_per_prompt
 from ai_client import crea_modello, configura as configura_ai, riepilogo_uso, numero_chiamate, chiamate_da
 
@@ -3088,7 +3089,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 _n_idx  = (_n_opts.index(_n_default) if _n_default in _n_opts else 3)
 
 
-                st.markdown('<div class="opt-label">Quanti esercizi nella verifica?</div>', unsafe_allow_html=True)
+                st.markdown('<div class="opt-label">Quanti esercizi nella verifica? <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.75;">(se non lo scrivi già nella descrizione)</span></div>', unsafe_allow_html=True)
                 num_esercizi = st.selectbox(
                     "Numero esercizi",
                     options=_n_opts,
@@ -3261,6 +3262,17 @@ def _render_percorso_b_form(_prog_placeholder):
             _manca_arg = not argomento and not _fm
             spazio("lg")
 
+            # Riepilogo sopra il pulsante: chi non apre le opzioni vede cosa sta per ottenere; la descrizione scritta ha la precedenza
+            _n_desc_f = numero_esercizi_richiesto(st.session_state.get("argomento_area_b", ""))
+            if _n_desc_f:
+                _riep = f"{_n_desc_f} esercizi, come hai scritto nella descrizione"
+            else:
+                _riep = (f"{num_esercizi} esercizi"
+                         + (" + 1 per l'eccellenza" if st.session_state.get("toggle_eccellenza", True) and not st.session_state.esercizi_custom else "")
+                         + (f" · {punti_totali} punti" if mostra_punteggi else "")
+                         + " <span style='opacity:.8'>(se la descrizione non dice altro: si cambia in «Altre opzioni»)</span>")
+            st.markdown(f'<div style="text-align:center;font-size:.82rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.1rem 0 .5rem;">{_riep}</div>',
+                        unsafe_allow_html=True)
             st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
             genera_btn = st.button(
                 "🚀  Crea verifica",
@@ -3690,11 +3702,18 @@ def _render_stage_input():
     _note_finale = note_extra
 
     # L'esercizio «per l'eccellenza» si aggiunge a quelli scelti (e c'è solo se il docente non ha scelto gli esercizi a mano)
+    # PRECEDENZA AL DOCENTE: se nella descrizione dice quanti esercizi vuole, vale quel numero (totale, eccellenza compresa se la cita)
+    _n_desc = numero_esercizi_richiesto((argomento or "") + "\n" + (note_extra or ""))
+    if _n_desc:
+        num_esercizi_totali = _n_desc
     _ecc = bool(st.session_state.get("toggle_eccellenza", True)) and not st.session_state.esercizi_custom
     if re.search(r"(senza|niente|non\s+\w+)\s+(l['’]\s*)?(esercizi\w*\s+)?(per\s+l['’]\s*)?eccellenza", (_note_finale or "").lower()):
         _ecc = False       # il docente lo ha escluso a parole: vince lui sull'interruttore
     _fissi_foto = list(st.session_state.get("_foto_es_pronti") or [])
-    num_esercizi_totali = num_esercizi_totali + (1 if _ecc else 0)
+    if _n_desc:
+        _ecc = _ecc and bool(re.search(r"eccellenza", ((argomento or "") + " " + (note_extra or "")).lower()))
+    else:
+        num_esercizi_totali = num_esercizi_totali + (1 if _ecc else 0)
     s_es, imgs_es = _build_prompt_esercizi(
         st.session_state.esercizi_custom,
         num_esercizi_totali - len(_fissi_foto),

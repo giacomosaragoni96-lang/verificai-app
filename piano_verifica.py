@@ -76,6 +76,26 @@ def punti_richieste(livelli: list, totale: int, tipo: str = "aperto") -> list:
     return bilancia_punti(pesi, max(totale, len(livelli)))
 
 
+_NUMERI_PAROLA = {"due": 2, "tre": 3, "quattro": 4, "cinque": 5, "sei": 6, "sette": 7, "otto": 8, "nove": 9, "dieci": 10}
+_RE_CONTA_ES = re.compile(r"\b(\d{1,2}|due|tre|quattro|cinque|sei|sette|otto|nove|dieci)\s+(?:\w+\s+){0,1}?(esercizi|problemi|quesiti)\b")
+
+
+def numero_esercizi_richiesto(testo: str):
+    """
+    Il numero di esercizi che il docente ha scritto nella descrizione («una verifica di 3 esercizi», «3 esercizi e 2 problemi»),
+    oppure None se non lo dice. Si sommano esercizi, problemi e quesiti nominati; «di cui…» non si conta due volte; fuori da 2-10
+    non si fida (potrebbe essere un'altra cosa, per esempio «20 esercizi per casa»).
+    """
+    t = (testo or "").lower()
+    t = re.sub(r"\bdi cui\b[^.;\n]*", " ", t)
+    t = re.sub(r"\bper (?:casa|compito|esercitarsi|allenarsi)\b", " ", t)
+    totale = 0
+    for m in _RE_CONTA_ES.finditer(t):
+        n = _NUMERI_PAROLA.get(m.group(1)) or int(m.group(1))
+        totale += n
+    return totale if 2 <= totale <= 10 else None
+
+
 def docente_ha_vincoli(grezzo, note_docente: str) -> bool:
     """True se le note del docente dicono qualcosa sulla struttura: allora il piano si adatta a lui e il codice non impone regole."""
     note = (note_docente or "").strip().lower()

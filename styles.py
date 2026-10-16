@@ -123,8 +123,9 @@ def get_css(T: dict) -> str:
     border-color: {_acc} !important; box-shadow: 0 0 0 3px {_acc}26, {_ombra1} !important;
   }}
   /* sezioni a tendina e riquadri con bordo: schede sollevate */
-  html body .stApp details[data-testid="stExpander"] {{
-    border: 1px solid {_bordo_s} !important; box-shadow: {_ombra2} !important;
+  html body .stApp details[data-testid="stExpander"],
+  html body .stApp [data-testid="stExpander"] > details {{
+    border: 1px solid {_bordo_s} !important; box-shadow: {_ombra2} !important; border-radius: 14px !important;
   }}
   html body .stApp [data-testid="stVerticalBlockBorderWrapper"] {{
     border: 1px solid {_bordo_s} !important; background: #FFFFFF; box-shadow: {_ombra1};
@@ -4851,6 +4852,13 @@ font-family: 'DM Sans', sans-serif;
   }}
   html body .stApp :is([class*="st-key-box_sblocco"], [class*="st-key-box_invito"], .st-key-word_card) [data-testid="stMarkdownContainer"] > div {{
     padding-bottom: .15rem;
+  }}
+
+  /* «Altre opzioni» è facoltativa: una piccola etichetta a destra nella barra, discreta, così chi la apre e vede troppa roba sa che può richiuderla */
+  html body .stApp [data-testid="stExpander"]:has(.g-altre) summary::after {{
+    content: "opzionale"; margin-left: auto; align-self: center; flex: none;
+    font-size: .68rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+    color: {T['muted']}; background: rgba(100,116,139,.12); padding: 2px 10px; border-radius: 999px;
   }}
 
 {_prof}
