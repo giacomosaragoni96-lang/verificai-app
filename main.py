@@ -2706,12 +2706,10 @@ def _render_impagina() -> None:
     normale (Fila B, BES/DSA, soluzioni, Word). Solo interfaccia: lettura e impaginazione stanno in impagina.py.
     """
     dati = st.session_state.get("_imp")
-    st.markdown(
-        f'<div style="font-family:DM Sans,sans-serif;margin:.2rem 0 .9rem;">'
-        f'<div style="font-size:1.15rem;font-weight:800;color:{T["text"]};">Hai già la tua verifica? Impaginala bene in un minuto</div>'
-        f'<div style="font-size:.92rem;color:{T["text2"]};margin-top:.25rem;line-height:1.5;">Carica il PDF o le foto, anche screenshot messi insieme: '
-        f'rifaccio gli esercizi identici, con intestazione, punteggi e logo della tua scuola. Poi da quella puoi creare la Fila B, la versione '
-        f'BES/DSA, le soluzioni e il Word.</div></div>', unsafe_allow_html=True)
+    if not dati:
+        st.markdown(f'<div style="text-align:center;font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:-.4rem auto 1rem;max-width:34rem;line-height:1.5;">'
+                    'Anche screenshot messi insieme. Rifacciamo gli esercizi identici, con intestazione, punteggi e logo; poi da quella crei la Fila B, la versione BES/DSA, le soluzioni e il Word.</div>',
+                    unsafe_allow_html=True)
     if _pro_bloccato("materiale") and not dati:
         st.caption("Impaginare la tua verifica " + ("è una funzione del piano Pro." if PREZZI_VISIBILI
                                                     else "è una delle funzioni complete, da sbloccare con il questionario."))
@@ -2720,15 +2718,19 @@ def _render_impagina() -> None:
 
     _mat_list = [m for m in MATERIE if "Altra" not in m]
     if not dati:
+        st.markdown('<div class="opt-label">La tua verifica (PDF o foto) ✱</div>', unsafe_allow_html=True)
         _files = st.file_uploader("Carica la tua verifica (PDF o foto)", type=["pdf", "png", "jpg", "jpeg", "webp"], accept_multiple_files=True,
-                                  key=f"imp_up_{st.session_state.get('_imp_ciclo', 0)}",
+                                  key=f"imp_up_{st.session_state.get('_imp_ciclo', 0)}", label_visibility="collapsed",
                                   help="Fino a 8 file. Va bene anche un PDF fatto di screenshot. Foto dritte e leggibili.")
         _cm, _cs = st.columns(2, gap="small")
+        _cm.markdown('<div class="opt-label">Materia ✱</div>', unsafe_allow_html=True)
+        _cs.markdown('<div class="opt-label">Tipo di scuola ✱</div>', unsafe_allow_html=True)
         _mat_def = st.session_state.get("sel_materia_b") if st.session_state.get("sel_materia_b") in _mat_list else "Matematica"
-        _materia = _cm.selectbox("Materia", _mat_list, index=_mat_list.index(_mat_def) if _mat_def in _mat_list else 0, key="imp_materia")
+        _materia = _cm.selectbox("Materia", _mat_list, index=_mat_list.index(_mat_def) if _mat_def in _mat_list else 0, key="imp_materia", label_visibility="collapsed")
         _scu_def = st.session_state.get("sel_scuola_b") if st.session_state.get("sel_scuola_b") in SCUOLE else SCUOLE[0]
-        _scuola = _cs.selectbox("Scuola", SCUOLE, index=SCUOLE.index(_scu_def), key="imp_scuola")
-        st.text_area("Vuoi cambiare qualcosa? (facoltativo)", key="imp_richiesta", height=90, max_chars=600,
+        _scuola = _cs.selectbox("Scuola", SCUOLE, index=SCUOLE.index(_scu_def), key="imp_scuola", label_visibility="collapsed")
+        st.markdown('<div class="opt-label">Vuoi cambiare qualcosa? (facoltativo)</div>', unsafe_allow_html=True)
+        st.text_area("Vuoi cambiare qualcosa? (facoltativo)", key="imp_richiesta", height=90, max_chars=600, label_visibility="collapsed",
                      placeholder="Se non scrivi niente la verifica resta identica, solo impaginata bene. Oppure: «togli l'esercizio 4», "
                                  "«aggiungi un esercizio sulle disequazioni», «semplifica l'ultimo»…")
         if _files and st.button("Leggi e impagina", key="imp_leggi", type="primary", icon=":material/auto_fix_high:", use_container_width=True,
@@ -2754,7 +2756,8 @@ def _render_impagina() -> None:
     _imm, _esercizi, _materia, _scuola = dati["immagini"], dati["esercizi"], dati["materia"], dati["scuola"]
     _probl = {i: (motivo, nonrip) for i, motivo, nonrip in impagina.problemi_per_esercizio(_esercizi)}
     st.success(f"Ho letto {len(_esercizi)} esercizi. Confrontali con la tua verifica qui sotto: i numeri contano.", icon="✅")
-    st.text_input("Titolo della verifica", key="imp_titolo", placeholder="Es.: Equazioni di secondo grado (facoltativo)")
+    st.markdown('<div class="opt-label">Titolo della verifica (facoltativo)</div>', unsafe_allow_html=True)
+    st.text_input("Titolo della verifica", key="imp_titolo", placeholder="Es.: Equazioni di secondo grado", label_visibility="collapsed")
 
     _inclusi, _spazio, _orig_idx = [], set(), []
     for _i, _ex in enumerate(_esercizi):
@@ -2851,6 +2854,29 @@ def _render_impagina() -> None:
     if _cc2.button("✕ Ricomincia", key="imp_togli", use_container_width=True):
         _azzera_impagina()
         st.rerun()
+
+
+def _render_scelta_iniziale() -> None:
+    """Prima schermata: due modi di cominciare. Ogni scelta porta alla sua pagina (la scelta resta per tutta la sessione, «← Cambia» la riapre)."""
+    _c1, _c2 = st.columns(2, gap="medium")
+    with _c1:
+        with st.container(border=True, key="scelta_crea"):
+            st.markdown(
+                f'<div class="sc-ico">✍️</div><div class="sc-tit">Crea da una descrizione</div>'
+                f'<div class="sc-txt">Scrivi l\'argomento e come la vuoi: gli esercizi li scrive VerificAI, con punteggi e grafici. '
+                f'Puoi partire anche dai tuoi appunti o da un esercizio del tuo libro.</div>', unsafe_allow_html=True)
+            if st.button("Comincia da qui", key="scelta_crea_btn", type="primary", icon=":material/edit_note:", use_container_width=True):
+                st.session_state["_home_modo"] = "crea"
+                st.rerun()
+    with _c2:
+        with st.container(border=True, key="scelta_impagina"):
+            st.markdown(
+                f'<div class="sc-tag">Molto richiesto</div><div class="sc-ico">📄</div><div class="sc-tit">Impagina la mia verifica</div>'
+                f'<div class="sc-txt">Hai già una verifica, magari fatta male o con screenshot messi insieme? Caricala: la rifacciamo identica, '
+                f'impaginata bene, con il logo della tua scuola.</div>', unsafe_allow_html=True)
+            if st.button("Carica la mia verifica", key="scelta_impagina_btn", type="primary", icon=":material/upload_file:", use_container_width=True):
+                st.session_state["_home_modo"] = "impagina"
+                st.rerun()
 
 
 def _esegui_impagina(p: dict, prog_ph) -> None:
@@ -3269,6 +3295,23 @@ def _render_percorso_b_form(_prog_placeholder):
                 st.session_state["_up_ciclo"] += 1
                 st.warning(_rifiuto.get("messaggio") or "Questo file non sembra materiale scolastico.", icon="📎")
             _fm = st.session_state.get("_file_materiale")
+            # Ciò che resta caricato da una verifica all'altra (appunti, esercizio del libro, logo) si vede qui, anche a «Altre opzioni» chiuso:
+            # chi crea una nuova verifica non deve ritrovarsi per sbaglio gli appunti di un'altra classe.
+            _pillole = []
+            if _fm:
+                _nm = _fm.get("name") or "file"
+                _pillole.append("📄 Appunti caricati: " + (_nm if len(_nm) <= 28 else _nm[:25] + "…"))
+            _n_libro = len(st.session_state.get("_foto_es_pronti") or [])
+            if _n_libro:
+                _pillole.append("📷 " + ("Esercizio del libro incluso" if _n_libro == 1 else f"{_n_libro} esercizi del libro inclusi"))
+            try:
+                _logo_p = _logo_scuola()
+                if _logo_p and _logo_p.get("attivo", True) and not _pro_bloccato("logo"):
+                    _pillole.append("🏫 Logo della scuola attivo")
+            except Exception:
+                pass
+            if _pillole:
+                st.markdown('<div class="pille-ok">' + "".join(f'<span>{_esc(x)}</span>' for x in _pillole) + '</div>', unsafe_allow_html=True)
             with st.expander("Altre opzioni (esercizi, materiale, punteggi, logo)", expanded=bool(_fm), icon=":material/tune:"):
                 st.markdown('<span class="g-altre" style="display:none"></span>', unsafe_allow_html=True)
                 # ── DURATA: un solo scatto sceglie numero di esercizi e tempo previsto ──────
@@ -3349,8 +3392,9 @@ def _render_percorso_b_form(_prog_placeholder):
                 st.session_state["_stile_verifica"] = _stile_sel
 
                 st.markdown(_html_separatore() + '<div class="opt-label">Allegati e logo (opzionale)</div>', unsafe_allow_html=True)
-                _t_mat, _t_foto, _t_logo = st.tabs(["📄 Appunti o verifica", "📷 Esercizio del libro", "🏫 Logo della scuola"])
-                with _t_mat:
+                _SEZ_ALL = ["📄 Appunti o verifica", "📷 Esercizio del libro", "🏫 Logo della scuola"]
+                _sez = st.segmented_control("Allegati", _SEZ_ALL, key="sez_allegati", default=_SEZ_ALL[0], label_visibility="collapsed") or _SEZ_ALL[0]
+                if _sez == _SEZ_ALL[0]:
                     if _pro_bloccato("materiale") and not _fm:
                         st.caption("Carica appunti o una verifica già fatta e VerificAI ne crea una nuova, con dati diversi: "
                                    + ("è una funzione del piano Pro." if PREZZI_VISIBILI else "è una delle funzioni complete, da sbloccare con il questionario."))
@@ -3404,13 +3448,13 @@ def _render_percorso_b_form(_prog_placeholder):
                             if st.session_state.get("_pb_argomento_source") != "manual":
                                 st.session_state["_pb_argomento_source"] = None
                             st.rerun()
-                with _t_foto:
+                if _sez == _SEZ_ALL[1]:
                     try:
                         _blocco_esercizio_foto(materia_scelta, difficolta, num_esercizi)
                     except Exception as _e_foto:      # funzione accessoria: un suo errore non deve mai bloccare il form
                         logger.warning("Esercizio da foto: %s", _e_foto)
                         st.session_state["_foto_es_pronti"] = []
-                with _t_logo:
+                if _sez == _SEZ_ALL[2]:
                     _logo_s = _logo_scuola()
                     _logo_bloccato = _pro_bloccato("logo")
                     if _logo_bloccato:
@@ -3460,30 +3504,36 @@ def _render_percorso_b_form(_prog_placeholder):
             _manca_arg = not argomento and not _fm
             spazio("lg")
 
-            # Riepilogo sopra il pulsante: chi non apre le opzioni vede cosa sta per ottenere; la descrizione scritta ha la precedenza
-            _n_desc_f = numero_esercizi_richiesto(st.session_state.get("argomento_area_b", ""))
-            if _n_desc_f:
-                _riep = f"{_n_desc_f} esercizi, come hai scritto nella descrizione"
+            # Il pulsante compare solo quando c'è qualcosa da creare (una descrizione o un file), come in «Impagina la mia verifica»
+            _ha_testo = bool((st.session_state.get("argomento_area_b") or "").strip()) or bool(_fm)
+            if _ha_testo:
+                # Riepilogo sopra il pulsante: chi non apre le opzioni vede cosa sta per ottenere; la descrizione scritta ha la precedenza
+                _n_desc_f = numero_esercizi_richiesto(st.session_state.get("argomento_area_b", ""))
+                if _n_desc_f:
+                    _riep = f"{_n_desc_f} esercizi, come hai scritto nella descrizione"
+                else:
+                    _riep = (f"{num_esercizi} esercizi"
+                             + (" + 1 per l'eccellenza" if st.session_state.get("toggle_eccellenza", True) and not st.session_state.esercizi_custom else "")
+                             + (f" · {punti_totali} punti" if mostra_punteggi else "")
+                             + " <span style='opacity:.8'>(se la descrizione non dice altro: si cambia in «Altre opzioni»)</span>")
+                st.markdown(f'<div style="text-align:center;font-size:.82rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.1rem 0 .5rem;">{_riep}</div>',
+                            unsafe_allow_html=True)
+                st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
+                genera_btn = st.button(
+                    "Crea verifica",
+                    icon=":material/auto_awesome:",
+                    use_container_width=True,
+                    type="primary",
+                    disabled=_limite or _blocco_conteggio,
+                    key="genera_btn_b",
+                    help="Avvia la generazione AI della verifica. Potrai modificare ogni singolo esercizio prima di scaricare il PDF.",
+                )
+                st.markdown('</div>', unsafe_allow_html=True)
+                if genera_btn and _manca_arg:
+                    genera_btn = False
+                    messaggio("avviso", "Scrivi prima di cosa parla la verifica, nel riquadro in alto: basta una riga, ad esempio «Le frazioni».")
             else:
-                _riep = (f"{num_esercizi} esercizi"
-                         + (" + 1 per l'eccellenza" if st.session_state.get("toggle_eccellenza", True) and not st.session_state.esercizi_custom else "")
-                         + (f" · {punti_totali} punti" if mostra_punteggi else "")
-                         + " <span style='opacity:.8'>(se la descrizione non dice altro: si cambia in «Altre opzioni»)</span>")
-            st.markdown(f'<div style="text-align:center;font-size:.82rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.1rem 0 .5rem;">{_riep}</div>',
-                        unsafe_allow_html=True)
-            st.markdown('<div class="cta-genera-wrap">', unsafe_allow_html=True)
-            genera_btn = st.button(
-                "🚀  Crea verifica",
-                use_container_width=True,
-                type="primary",
-                disabled=_limite or _blocco_conteggio,
-                key="genera_btn_b",
-                help="Avvia la generazione AI della verifica. Potrai modificare ogni singolo esercizio prima di scaricare il PDF.",
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
-            if genera_btn and _manca_arg:
                 genera_btn = False
-                messaggio("avviso", "Scrivi prima di cosa parla la verifica, nel riquadro in alto: basta una riga, ad esempio «Le frazioni».")
             _sp1, _sp2, _sp3 = st.columns([3, 2, 3])
             _sp2.button("Le mie verifiche", key="apri_storico_input", type="tertiary", icon=":material/folder_open:",
                         on_click=_apri_storico, use_container_width=True, help="Ritrova le verifiche che hai già creato.")
@@ -3820,18 +3870,26 @@ def _render_stage_input():
     if _benvenuto_richiesto():
         st.session_state["_benvenuto_visto"] = True        # una volta per sessione; il cookie lo ricorda per le prossime
         _dialogo_benvenuto()
+    _modo = st.session_state.get("_home_modo")
+    _sottotitolo = {None: "Da dove vuoi partire?", "crea": "Scrivi l’argomento: in un minuto la verifica è pronta.",
+                    "impagina": "Carica la tua verifica: la rifacciamo identica, impaginata bene."}.get(_modo, "")
     st.markdown(
         f'<div class="vf-narrow" style="text-align:center;margin:.2rem 0 1.1rem;">'
         f'<div class="vf-tp" style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
         f'letter-spacing:-.025em;color:{T["text"]};line-height:1.15;">Crea la tua verifica</div>'
         f'<div style="font-size:.82rem;font-weight:400;color:{T["text2"]};margin-top:.3rem;'
-        f'font-family:DM Sans,sans-serif;">Scrivi l’argomento: in un minuto la verifica è pronta.</div></div>',
+        f'font-family:DM Sans,sans-serif;">{_sottotitolo}</div></div>',
         unsafe_allow_html=True,
     )
 
     # In cima, sopra il riquadro di benvenuto: attesa della generazione ed eventuale errore dell'ultimo tentativo
+    if _modo is not None and not st.session_state.get("_imp_crea"):
+        if st.button("← Cambia", key="home_indietro", type="tertiary", help="Torna alla scelta: descrizione o la tua verifica."):
+            st.session_state["_home_modo"] = None
+            st.rerun()
     _prog_ph_b = st.empty()
-    _banner_piano("input")
+    if _modo == "crea":
+        _banner_piano("input")
 
     _esito = st.session_state.pop("_esito_gen", None)
     if _esito:
@@ -3850,21 +3908,20 @@ def _render_stage_input():
         _esegui_impagina(_imp_crea, _prog_ph_b)
         return
 
-    # Due modi di cominciare: scrivere cosa si vuole oppure partire dalla propria verifica. Le schede stanno in un contenitore svuotabile
-    # come il form: durante la generazione sparisce tutto e resta solo la card di attesa.
-    _tabs_ph = st.empty()
-    with _tabs_ph.container():
-        _tab_crea, _tab_imp = st.tabs(["✍️ Crea da una descrizione", "📄 Impagina la mia verifica"])
-    with _tab_imp:
+    if _modo is None:
+        _render_scelta_iniziale()
+        return
+    if _modo == "impagina":
         try:
             _render_impagina()
-        except Exception as _e_imp:      # funzione accessoria: un suo errore non deve mai bloccare il form principale
+        except Exception as _e_imp:      # funzione accessoria: un suo errore non deve mai bloccare il resto
             logger.warning("Impagina: %s", _e_imp)
             st.warning("Questa funzione non è disponibile in questo momento. Riprova tra poco.")
+        return
+
     # Il form sta in un contenitore svuotabile: durante la generazione sparisce, così un clic
     # o un tocco per sbaglio non riavvia la pagina e non fa perdere la richiesta.
-    with _tab_crea:
-        _form_ph = st.empty()
+    _form_ph = st.empty()
     with _form_ph.container():
         (
             argomento, materia_scelta, difficolta,
@@ -3983,7 +4040,7 @@ def _render_stage_input():
     else:
         imgs_es_finale = imgs_es
 
-    _tabs_ph.empty()   # da qui il form non c'è più: resta solo la card di attesa
+    _form_ph.empty()   # da qui il form non c'è più: resta solo la card di attesa
     _lancia_generazione(
         materia_scelta=materia_scelta,
         argomento=argomento,

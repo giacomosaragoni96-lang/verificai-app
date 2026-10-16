@@ -4861,6 +4861,32 @@ font-family: 'DM Sans', sans-serif;
     color: {T['muted']}; background: rgba(100,116,139,.12); padding: 2px 10px; border-radius: 999px;
   }}
 
+  /* ── Prima scelta (descrizione / impagina la mia verifica): due schede affiancate ── */
+  html body .stApp [class*="st-key-scelta_"] {{
+    position: relative; border-radius: 18px !important; padding: .4rem .35rem .2rem !important;
+    transition: transform .16s ease, box-shadow .16s ease;
+  }}
+  html body .stApp [class*="st-key-scelta_"]:hover {{ transform: translateY(-3px); box-shadow: 0 16px 38px rgba(15,23,42,.14) !important; }}
+  html body .stApp [class*="st-key-scelta_"] .sc-ico {{ font-size: 2rem; line-height: 1; margin-bottom: .55rem; }}
+  html body .stApp [class*="st-key-scelta_"] .sc-tit {{
+    font-family: 'DM Sans', sans-serif; font-weight: 800; font-size: 1.15rem; letter-spacing: -.01em; color: {T['text']}; margin-bottom: .3rem;
+  }}
+  html body .stApp [class*="st-key-scelta_"] .sc-txt {{
+    font-family: 'DM Sans', sans-serif; font-size: .93rem; line-height: 1.5; color: {T['text2']}; margin-bottom: .9rem; min-height: 6.4em;
+  }}
+  html body .stApp [class*="st-key-scelta_"] .sc-tag {{
+    position: absolute; top: .55rem; right: .7rem; background: #FEF3C7; border: 1.5px solid #FCD34D; color: #78350F;
+    font-family: 'DM Sans', sans-serif; font-size: .66rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+    padding: .14rem .6rem; border-radius: 999px;
+  }}
+
+  /* Pillole verdi: ciò che è già caricato e verrà usato nella verifica (appunti, esercizio del libro, logo) */
+  html body .stApp .pille-ok {{ display: flex; flex-wrap: wrap; gap: .45rem; margin: .1rem 0 .7rem; }}
+  html body .stApp .pille-ok span {{
+    background: #DCFCE7; border: 1px solid #86EFAC; color: #166534; font-family: 'DM Sans', sans-serif; font-size: .8rem; font-weight: 600;
+    padding: .22rem .7rem; border-radius: 999px; box-shadow: 0 1px 2px rgba(22,101,52,.08);
+  }}
+
 {_prof}
 </style>
 """
