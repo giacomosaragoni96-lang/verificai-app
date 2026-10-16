@@ -2856,6 +2856,15 @@ def _render_impagina() -> None:
         st.rerun()
 
 
+def _link_scelta_iniziale() -> None:
+    """In fondo alla pagina, discreto: torna alla prima scelta (descrizione / impagina la mia verifica)."""
+    _a, _b, _c = st.columns([3, 2, 3])
+    if _b.button("Cambia modo di partire", key="home_indietro", type="tertiary", icon=":material/swap_horiz:", use_container_width=True,
+                 help="Torna alla scelta: descrizione o la tua verifica."):
+        st.session_state["_home_modo"] = None
+        st.rerun()
+
+
 def _render_scelta_iniziale() -> None:
     """Prima schermata: due modi di cominciare. Ogni scelta porta alla sua pagina (la scelta resta per tutta la sessione, «← Cambia» la riapre)."""
     _c1, _c2 = st.columns(2, gap="medium")
@@ -2863,8 +2872,7 @@ def _render_scelta_iniziale() -> None:
         with st.container(border=True, key="scelta_crea"):
             st.markdown(
                 f'<div class="sc-ico">✍️</div><div class="sc-tit">Crea da una descrizione</div>'
-                f'<div class="sc-txt">Scrivi l\'argomento e come la vuoi: gli esercizi li scrive VerificAI, con punteggi e grafici. '
-                f'Puoi partire anche dai tuoi appunti o da un esercizio del tuo libro.</div>', unsafe_allow_html=True)
+                f'<div class="sc-txt">Scrivi l\'argomento: gli esercizi li scrive VerificAI.</div>', unsafe_allow_html=True)
             if st.button("Comincia da qui", key="scelta_crea_btn", type="primary", icon=":material/edit_note:", use_container_width=True):
                 st.session_state["_home_modo"] = "crea"
                 st.rerun()
@@ -2872,8 +2880,7 @@ def _render_scelta_iniziale() -> None:
         with st.container(border=True, key="scelta_impagina"):
             st.markdown(
                 f'<div class="sc-tag">Molto richiesto</div><div class="sc-ico">📄</div><div class="sc-tit">Impagina la mia verifica</div>'
-                f'<div class="sc-txt">Hai già una verifica, magari fatta male o con screenshot messi insieme? Caricala: la rifacciamo identica, '
-                f'impaginata bene, con il logo della tua scuola.</div>', unsafe_allow_html=True)
+                f'<div class="sc-txt">Caricala: la rifacciamo identica, impaginata bene.</div>', unsafe_allow_html=True)
             if st.button("Carica la mia verifica", key="scelta_impagina_btn", type="primary", icon=":material/upload_file:", use_container_width=True):
                 st.session_state["_home_modo"] = "impagina"
                 st.rerun()
@@ -3871,7 +3878,7 @@ def _render_stage_input():
         st.session_state["_benvenuto_visto"] = True        # una volta per sessione; il cookie lo ricorda per le prossime
         _dialogo_benvenuto()
     _modo = st.session_state.get("_home_modo")
-    _sottotitolo = {None: "Da dove vuoi partire?", "crea": "Scrivi l’argomento: in un minuto la verifica è pronta.",
+    _sottotitolo = {None: "", "crea": "Scrivi l’argomento: in un minuto la verifica è pronta.",
                     "impagina": "Carica la tua verifica: la rifacciamo identica, impaginata bene."}.get(_modo, "")
     st.markdown(
         f'<div class="vf-narrow" style="text-align:center;margin:.2rem 0 1.1rem;">'
@@ -3883,10 +3890,6 @@ def _render_stage_input():
     )
 
     # In cima, sopra il riquadro di benvenuto: attesa della generazione ed eventuale errore dell'ultimo tentativo
-    if _modo is not None and not st.session_state.get("_imp_crea"):
-        if st.button("← Cambia", key="home_indietro", type="tertiary", help="Torna alla scelta: descrizione o la tua verifica."):
-            st.session_state["_home_modo"] = None
-            st.rerun()
     _prog_ph_b = st.empty()
     if _modo == "crea":
         _banner_piano("input")
@@ -3917,6 +3920,7 @@ def _render_stage_input():
         except Exception as _e_imp:      # funzione accessoria: un suo errore non deve mai bloccare il resto
             logger.warning("Impagina: %s", _e_imp)
             st.warning("Questa funzione non è disponibile in questo momento. Riprova tra poco.")
+        _link_scelta_iniziale()
         return
 
     # Il form sta in un contenitore svuotabile: durante la generazione sparisce, così un clic
@@ -3929,6 +3933,7 @@ def _render_stage_input():
             num_esercizi_totali, note_extra, genera_btn,
             _prog_fac_ph, durata_str, durata_nome,
         ) = _render_percorso_b_form(_prog_ph_b)
+        _link_scelta_iniziale()
 
     _riprova      = st.session_state.pop("_riprova_genera", False)
     _dopo_analisi = st.session_state.pop("_genera_dopo_analisi", False)

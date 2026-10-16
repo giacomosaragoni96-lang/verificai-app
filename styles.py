@@ -4862,20 +4862,23 @@ font-family: 'DM Sans', sans-serif;
   }}
 
   /* ── Prima scelta (descrizione / impagina la mia verifica): due schede affiancate ── */
-  html body .stApp [class*="st-key-scelta_"] {{
-    position: relative; border-radius: 18px !important; padding: .4rem .35rem .2rem !important;
+  html body .stApp :is(.st-key-scelta_crea, .st-key-scelta_impagina) {{
+    position: relative; border-radius: 20px !important; padding: 1.5rem 1.6rem 1.4rem !important;
     transition: transform .16s ease, box-shadow .16s ease;
   }}
-  html body .stApp [class*="st-key-scelta_"]:hover {{ transform: translateY(-3px); box-shadow: 0 16px 38px rgba(15,23,42,.14) !important; }}
-  html body .stApp [class*="st-key-scelta_"] .sc-ico {{ font-size: 2rem; line-height: 1; margin-bottom: .55rem; }}
-  html body .stApp [class*="st-key-scelta_"] .sc-tit {{
-    font-family: 'DM Sans', sans-serif; font-weight: 800; font-size: 1.15rem; letter-spacing: -.01em; color: {T['text']}; margin-bottom: .3rem;
+  html body .stApp :is(.st-key-scelta_crea, .st-key-scelta_impagina) [data-testid="stButton"],
+  html body .stApp :is(.st-key-scelta_crea, .st-key-scelta_impagina) [data-testid="stButton"] > button {{ width: 100% !important; }}
+  html body .stApp :is(.st-key-scelta_crea, .st-key-scelta_impagina) button {{ white-space: nowrap !important; }}
+  html body .stApp :is(.st-key-scelta_crea, .st-key-scelta_impagina):hover {{ transform: translateY(-3px); box-shadow: 0 16px 38px rgba(15,23,42,.14) !important; }}
+  html body .stApp :is(.st-key-scelta_crea, .st-key-scelta_impagina) .sc-ico {{ font-size: 2.2rem; line-height: 1; margin-bottom: .8rem; }}
+  html body .stApp :is(.st-key-scelta_crea, .st-key-scelta_impagina) .sc-tit {{
+    font-family: 'DM Sans', sans-serif; font-weight: 800; font-size: 1.25rem; letter-spacing: -.015em; color: {T['text']}; margin-bottom: .4rem;
   }}
-  html body .stApp [class*="st-key-scelta_"] .sc-txt {{
-    font-family: 'DM Sans', sans-serif; font-size: .93rem; line-height: 1.5; color: {T['text2']}; margin-bottom: .9rem; min-height: 6.4em;
+  html body .stApp :is(.st-key-scelta_crea, .st-key-scelta_impagina) .sc-txt {{
+    font-family: 'DM Sans', sans-serif; font-size: 1rem; line-height: 1.45; color: {T['text']}; opacity: .78; margin-bottom: 1.3rem; min-height: 2.9em;
   }}
-  html body .stApp [class*="st-key-scelta_"] .sc-tag {{
-    position: absolute; top: .55rem; right: .7rem; background: #FEF3C7; border: 1.5px solid #FCD34D; color: #78350F;
+  html body .stApp :is(.st-key-scelta_crea, .st-key-scelta_impagina) .sc-tag {{
+    position: absolute; top: 1rem; right: 1.1rem; background: #FEF3C7; border: 1.5px solid #FCD34D; color: #78350F;
     font-family: 'DM Sans', sans-serif; font-size: .66rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
     padding: .14rem .6rem; border-radius: 999px;
   }}
