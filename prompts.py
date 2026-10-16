@@ -1517,6 +1517,8 @@ def prompt_correggi_verifica(testo_latex: str, richiesta: str, n_immagini: int) 
         "Hai trascritto in LaTeX la verifica di " + ("una foto" if n_immagini == 1 else "alcune foto") + " (allegate). Il docente ha controllato "
         "il risultato e segnala un errore. Riguarda le foto e correggi SOLO ciò che segnala (e le conseguenze dirette), senza toccare il resto: "
         "la trascrizione deve restare fedele all'originale, con TUTTI gli esercizi nello stesso ordine.\n"
+        "Cambia SOLO ciò che il docente segnala, nell'esercizio che indica: gli altri esercizi e il resto dell'esercizio restano IDENTICI, carattere per carattere "
+        "(non toccare segni, numeri o formule dell'enunciato se non è quello l'errore).\n"
         "Stesse regole di prima: niente soluzioni, grafici di funzioni con [[GRAFICO: y = … | x da A a B]], figure geometriche in TikZ, tabelle con "
         "tabular, punteggi (N pt) solo dove ci sono sul foglio.\n"
         f"SEGNALAZIONE DEL DOCENTE: {richiesta.strip()}\n\n"
@@ -1539,8 +1541,10 @@ def prompt_controlla_errori_verifica(esercizi_testo: str, materia: str) -> str:
         "ESERCIZIO: il numero dell'esercizio (1, 2, 3…)\n"
         "PROBLEMA: una frase in TESTO SEMPLICE (niente LaTeX: scrivi x1, x^2, 3/4, radice di 2) che dice cosa non va\n"
         "PROPOSTA: una frase in TESTO SEMPLICE (niente LaTeX) che dice cosa cambieresti\n"
-        "TESTO_CORRETTO:\n"
-        "<l'INTERO esercizio in LaTeX, identico all'originale tranne la correzione: stesse richieste, stessa struttura, stessi punteggi (N pt)>\n"
-        "===FINE===\n\n"
+        "DA: il frammento ESATTO dell'esercizio da cambiare, copiato IDENTICO dal testo (poche parole: la sola formula, opzione o parola sbagliata)\n"
+        "A: lo stesso frammento, corretto\n"
+        "===FINE===\n"
+        "REGOLA IMPORTANTE: cambia SOLO quel frammento. L'enunciato, la consegna e le altre formule restano come sono, a meno che l'errore sia proprio lì. "
+        "Se per correggere un errore dovresti cambiare l'enunciato, NON segnalarlo.\n\n"
         "ESERCIZI:\n" + esercizi_testo
     )

@@ -101,6 +101,7 @@ def pulisci_latex_esercizio(testo: str, tieni_punti: bool = False) -> str:
     """Toglie ciò che non è il corpo dell'esercizio: recinti di codice, numeri del libro in testa, comandi vietati."""
     t = re.sub(r"```(?:latex|tex)?", "", testo or "").strip()
     t = re.sub(r"^\s*===.*$", "", t, flags=re.MULTILINE)
+    t = re.sub(r"^\s*(?:ESERCIZIO|Esercizio)\s+\d+\s*[\u2014\u2013:\-].*\n", "", t.lstrip("\n"), count=1)     # «ESERCIZIO 2 — titolo» in testa
     righe = []
     for r in t.splitlines():
         if _RE_VIETATI.search(r):
