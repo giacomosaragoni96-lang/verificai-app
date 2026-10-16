@@ -5021,6 +5021,26 @@ font-family: 'DM Sans', sans-serif;
   html body .stApp[data-teststate="running"] div.stButton > button[kind="primary"]:not(:disabled) {{ animation: vf-lavora 1.4s ease-in-out infinite; }}
   @keyframes vf-lavora {{ 0%,100% {{ filter: none; }} 50% {{ filter: brightness(1.08); }} }}
 
+  /* Pagina finale su desktop: la barra in alto è ridondante (Scarica sta a destra, Modifica ha la sua carta, Nuova verifica è in fondo) */
+  @media (min-width: 1001px) {{
+    html body .stApp [data-testid="stLayoutWrapper"]:has(> .st-key-az_principali) {{ display: none !important; }}
+  }}
+  @media (max-width: 1000px) {{ html body .stApp .st-key-card_modifica {{ display: none !important; }} }}
+  html body .stApp .st-key-card_modifica:not(#vf) {{
+    background: {T['card']}; border: 1px solid {T['border2']}; border-left: 4px solid {_acc}; border-radius: 16px; padding: .95rem 1.1rem 1rem;
+    margin: .2rem 0 .8rem; box-shadow: 0 6px 18px rgba(15,23,42,.08);
+  }}
+  html body .stApp .st-key-card_modifica .cm-t {{ font-family: 'DM Sans', sans-serif; font-weight: 800; font-size: 1.02rem; color: {T['text']}; }}
+  html body .stApp .st-key-card_modifica .cm-d {{ font-family: 'DM Sans', sans-serif; font-size: .86rem; color: {T['text2']}; margin: .15rem 0 .7rem; line-height: 1.45; }}
+
+  /* Parole chiave in evidenza: titoli delle tendine del kit e chip della classe */
+  html body .stApp details[data-testid="stExpander"] summary strong, html body .stApp details[data-testid="stExpander"] summary b {{ color: {_acc}; font-weight: 800; text-decoration: underline; text-decoration-color: {_acc}66; text-underline-offset: 3px; }}
+  html body .stApp .st-key-final_classe:not(#vf) button, html body .stApp .st-key-final_classe:not(#vf) button * {{ color: {_acc} !important; -webkit-text-fill-color: {_acc} !important; font-weight: 800 !important; }}
+
+  /* pillole selezionabili (st.pills): la scelta attiva nel blu del tema, come il selettore a segmenti */
+  html body .stApp [data-testid="stBaseButton-pillsActive"] {{ background: {_acc}1F !important; border-color: {_acc} !important; color: {_acc} !important; font-weight: 700 !important; }}
+  html body .stApp [data-testid="stBaseButton-pillsActive"] * {{ color: {_acc} !important; }}
+
 {_prof}
 </style>
 """
