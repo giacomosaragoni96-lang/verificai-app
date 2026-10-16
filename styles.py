@@ -4934,6 +4934,21 @@ font-family: 'DM Sans', sans-serif;
     color: #fff !important; -webkit-text-fill-color: #fff !important; font-weight: 800 !important;
   }}
 
+  /* «Ho notato una cosa»: avviso discreto con la correzione proposta (pagina Impagina) */
+  html body .stApp div[class*="st-key-nota_imp_"]:not(#vf) {{
+    background: linear-gradient(160deg, #FFFBEB 0%, #FEF3C7 100%); border: 1px solid #FCD34D; border-left: 4px solid #F59E0B;
+    border-radius: 14px; padding: .8rem 1rem .75rem; margin: .4rem 0 .3rem; box-shadow: 0 4px 14px rgba(245,158,11,.14);
+  }}
+  html body .stApp div[class*="st-key-nota_imp_"] .ni-k {{ font-family: 'DM Sans', sans-serif; font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #92400E; }}
+  html body .stApp div[class*="st-key-nota_imp_"] .ni-t {{ font-family: 'DM Sans', sans-serif; font-size: .95rem; font-weight: 700; color: {T['text']}; margin: .15rem 0 .1rem; line-height: 1.4; }}
+  html body .stApp div[class*="st-key-nota_imp_"] .ni-p {{ font-family: 'DM Sans', sans-serif; font-size: .88rem; color: {T['text']}; opacity: .85; line-height: 1.4; margin-bottom: .5rem; }}
+  html body .stApp div[class*="st-key-nota_imp_"] button[kind="primary"], html body .stApp div[class*="st-key-nota_imp_"] [data-testid="stBaseButton-primary"] {{
+    min-height: 2.2rem; padding: .25rem .9rem; font-size: .86rem; border-radius: 10px;
+  }}
+  html body .stApp div[class*="st-key-nota_imp_"] button, html body .stApp div[class*="st-key-nota_imp_"] button * {{ white-space: nowrap !important; }}
+  html body .stApp div[class*="st-key-nota_imp_"]:not(#vf) [data-testid="stBaseButton-tertiary"] {{ background: transparent !important; background-image: none !important; border: none !important; box-shadow: none !important; color: #92400E !important; text-decoration: underline; }}
+  html body .stApp div[class*="st-key-nota_imp_"] [data-testid="stBaseButton-tertiary"] * {{ color: #92400E !important; -webkit-text-fill-color: #92400E !important; font-size: .85rem !important; }}
+
 {_prof}
 </style>
 """

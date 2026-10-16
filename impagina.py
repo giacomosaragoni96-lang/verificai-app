@@ -12,7 +12,7 @@ può riprodurre identica non si inventa: l'esercizio si toglie oppure si tiene c
 import re
 
 import esercizio_foto as ef
-from prompts import prompt_leggi_verifica_completa, prompt_correggi_verifica
+from prompts import prompt_leggi_verifica_completa, prompt_correggi_verifica, prompt_controlla_errori_verifica
 
 MAX_FILE = 8            # pagine o foto per volta
 MAX_ESERCIZI = 12
@@ -68,11 +68,74 @@ def leggi_verifica(model, immagini: list, materia: str = "", scuola: str = "", m
     except ValueError:
         dichiarati = 0.0
     return {"ok": True, "titolo": titolo_pulito(_campo_globale(testo, "VERIFICA_TITOLO"), materia), "punti_dichiarati": dichiarati,
-            "esercizi": esercizi, "messaggio": ""}
+            "esercizi": esercizi, "messaggio": "", "note": controlla_errori(model, esercizi, materia)}
+
+
+_RE_NOTA = re.compile(r"===\s*NOTA\s*===(.*?)(?:===\s*FINE\s*===|(?====\s*NOTA\s*===)|\Z)", re.DOTALL | re.IGNORECASE)
+MAX_NOTE = 5
+
+
+def impronta(latex: str) -> str:
+    """Un'impronta breve del testo di un esercizio: una nota vale solo finché l'esercizio è quello su cui è stata scritta."""
+    import hashlib
+    return hashlib.md5((latex or "").strip().encode("utf-8")).hexdigest()[:10]
+
+
+def leggi_note(testo: str, esercizi: list) -> list:
+    """Le note dalla risposta del modello: [{indice, problema, proposta, testo_corretto, su}]. Scarta quelle incomplete, rotte o senza cambiamento."""
+    note = []
+    for m in _RE_NOTA.finditer(re.sub(r"```(?:latex|tex)?", "", testo or "")):
+        b = m.group(1)
+        mi = re.search(r"^[ \t]*ESERCIZIO[ \t]*:[ \t]*(\d+)", b, re.MULTILINE | re.IGNORECASE)
+        pr = re.search(r"^[ \t]*PROBLEMA[ \t]*:[ \t]*(.+?)[ \t]*$", b, re.MULTILINE | re.IGNORECASE)
+        po = re.search(r"^[ \t]*PROPOSTA[ \t]*:[ \t]*(.+?)[ \t]*$", b, re.MULTILINE | re.IGNORECASE)
+        tc = re.search(r"^[ \t]*TESTO_CORRETTO[ \t]*:[ \t]*\n?(.*)$", b, re.DOTALL | re.MULTILINE | re.IGNORECASE)
+        if not (mi and pr and po and tc):
+            continue
+        idx = int(mi.group(1)) - 1
+        if not (0 <= idx < len(esercizi)):
+            continue
+        corretto = ef.pulisci_latex_esercizio(tc.group(1), tieni_punti=True)
+        originale = (esercizi[idx].get("latex") or "").strip()
+        if not corretto.strip() or corretto.strip() == originale or ef.problemi_latex(corretto):
+            continue
+        if abs(len(corretto) - len(originale)) > max(80, len(originale) // 2):
+            continue                      # una «correzione» che riscrive mezzo esercizio non è una correzione
+        note.append({"indice": idx, "problema": pr.group(1).strip()[:300], "proposta": po.group(1).strip()[:300],
+                     "testo_corretto": corretto, "su": impronta(originale)})
+        if len(note) >= MAX_NOTE:
+            break
+    return note
+
+
+def controlla_errori(model, esercizi: list, materia: str = "") -> list:
+    """Un'ulteriore lettura del testo (senza foto) per segnalare errori oggettivi del docente. Mai bloccante: qualsiasi problema = nessuna nota."""
+    try:
+        testo = ef._chiama(model, prompt_controlla_errori_verifica(_testo_numerato(esercizi), materia))
+    except Exception:
+        return []
+    if re.match(r"\s*NESSUNO\b", testo or "", re.IGNORECASE):
+        return []
+    return leggi_note(testo, esercizi)
+
+
+def applica_nota(esercizi: list, nota: dict) -> list:
+    """Gli esercizi con la correzione proposta applicata (solo se l'esercizio è ancora quello della nota)."""
+    nuovi = [dict(e) for e in esercizi]
+    i = nota.get("indice", -1)
+    if 0 <= i < len(nuovi) and impronta(nuovi[i].get("latex")) == nota.get("su"):
+        nuovi[i]["latex"] = nota["testo_corretto"]
+        nuovi[i]["corretto_su_proposta"] = True
+    return nuovi
 
 
 def _testo_esercizi(esercizi: list) -> str:
     return "\n\n".join(f"===ESERCIZIO===\nTITOLO: {e.get('titolo', '')}\nTESTO:\n{e['latex']}\n===FINE===" for e in esercizi)
+
+
+def _testo_numerato(esercizi: list) -> str:
+    """Gli esercizi con il loro numero (per le note: «Esercizio 2»)."""
+    return "\n\n".join(f"ESERCIZIO {n} — {e.get('titolo', '')}\n{e['latex']}" for n, e in enumerate(esercizi, 1))
 
 
 def correggi_verifica(model, immagini: list, esercizi: list, richiesta: str) -> dict:
