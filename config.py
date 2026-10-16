@@ -34,11 +34,11 @@ LANDING_URL = "https://verificai.net"   # il link di invito passa dalla landing 
 # Inviti tra colleghi: per ogni amico che si iscrive e completa la prima verifica, chi invita guadagna verifiche con tutto il Pro
 BONUS_PER_INVITO = 2
 MAX_INVITI_CON_BONUS = 5
-FUNZIONI_PRO = ("fila_b", "bes", "soluzioni", "word", "griglia", "logo", "scheda", "zip", "materiale")
+FUNZIONI_PRO = ("fila_b", "bes", "soluzioni", "word", "griglia", "logo", "scheda", "zip", "materiale", "fila_extra", "recupero")
 
 # Come si chiamano le funzioni nei messaggi «con Pro puoi…»
 ETICHETTE_FUNZIONI = {
-    "fila_b": "la Fila B", "bes": "la versione BES/DSA", "soluzioni": "le soluzioni", "word": "il file Word",
+    "fila_b": "la Fila B", "fila_extra": "le file C, D ed E", "recupero": "la versione di recupero", "bes": "la versione BES/DSA", "soluzioni": "le soluzioni", "word": "il file Word",
     "griglia": "la griglia di valutazione", "logo": "il logo della scuola",
     "scheda": "la scheda di allenamento", "zip": "il kit completo in un solo file",
     "materiale": "la verifica a partire dai tuoi appunti o da una verifica già fatta",

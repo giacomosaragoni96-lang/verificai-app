@@ -33,7 +33,7 @@ from generation import (
 )
 from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
-    prompt_rubrica_valutazione, prompt_variante_rapida, istruzione_livello_esercizio,
+    prompt_rubrica_valutazione, prompt_variante_rapida, prompt_versione_recupero, istruzione_livello_esercizio,
     prompt_nuovo_esercizio,
     REGOLA_SOTTOPUNTI_MODIFICA, REGOLA_GRAFICO_CURVE, REGOLA_CONSEGNE_BREVI, struttura_verifica,
 )
@@ -50,6 +50,7 @@ from questionario import domanda as _domanda_q, pulisci_risposte, riga_rapida
 from licenze import attiva_licenza, riconvalida_se_serve
 from segnalazioni import costruisci_segnalazione, MAX_PER_SESSIONE
 from latex_utils import (
+    estrai_logo,
     conta_pagine_pdf, riduci_a_pagine, compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, copia_intestazione_con_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
     fix_items_environment, aggiungi_consegne_mancanti, rifinisci_scelta_multipla_e_vf, rimuovi_vspace_corpo, pulisci_corpo_latex,
     rimuovi_punti_subsection, pdf_to_images_bytes,
@@ -497,6 +498,45 @@ def _postprocessa_latex(latex: str, mostra_punteggi: bool, punti_totali: int,
 
 
 # ── On-demand variant generation ───────────────────────────────────────────────
+
+def _titolo_con_suffisso(latex: str, suffisso: str, latex_con_logo_da: str = "") -> str:
+    """Aggiunge « — Fila C» o « — Recupero» al titolo dell'intestazione (con il logo l'intestazione è quella della Fila A, già riconosciuta)."""
+    if latex_con_logo_da and estrai_logo(latex_con_logo_da):
+        return copia_intestazione_con_logo(latex_con_logo_da, latex, suffisso)
+    return re.sub(r"(\\textbf\{\\large [^\n]*?)(\}\s*\\\\)", lambda m: m.group(1) + suffisso + m.group(2), latex, count=1)
+
+
+def _genera_extra(tipo: str, lettera: str, mod_id: str, gp: dict, vA: dict, precedenti: list, per_chi: str = "") -> dict:
+    """
+    Una versione in più della verifica: «fila» (C, D, E: stessi esercizi con dati diversi da A e dalle altre file) oppure «recupero»
+    (più breve e più semplice). Ritorna {"latex", "pdf"}; solleva se la generazione non produce nulla.
+    """
+    modello = crea_modello(mod_id).per("variante")
+    mat = gp.get("materia", "")
+    mostra, punti, con_griglia = gp.get("mostra_punteggi", True), gp.get("punti_totali", 100), gp.get("con_griglia", False)
+    lat_a = vA.get("latex", "")
+    if tipo == "fila":
+        testo = modello.generate_content(
+            [prompt_variante_rapida(_latex_per_ai(lat_a), mat, lettera, [_latex_per_ai(x) for x in precedenti if x])],
+            generation_config={"temperature": 0.8}).text.strip()
+        testo = re.sub(r"^```[a-z]*\n?", "", testo)
+        testo = re.sub(r"\n?```$", "", testo)
+        latex = _titolo_con_suffisso(testo, f" — Fila {lettera}", lat_a) if estrai_logo(lat_a) else testo
+    else:
+        corpo_a, preamb = rimuovi_griglia(extract_corpo(lat_a)), extract_preambolo(lat_a)
+        r = modello.generate_content([prompt_versione_recupero(corpo_a, mat, mostra, punti, per_chi)])
+        corpo = pulisci_corpo_latex(r.text.replace("```latex", "").replace("```", "").strip())
+        corpo = _postprocessa_latex(corpo, mostra, punti, riscala_totale=True)
+        latex = _titolo_con_suffisso(preamb + "\n" + corpo, " — Recupero", lat_a)
+    if "\\subsection*" not in latex:
+        raise RuntimeError("la risposta non conteneva gli esercizi")
+    if "\\end{document}" not in latex:
+        latex += "\n\\end{document}"
+    if con_griglia:
+        latex = inietta_griglia(latex, punti)
+    pdf, _err, latex = compila_pdf_sicuro(latex)
+    return {"latex": latex, "pdf": pdf}
+
 
 def _genera_variante(tipo: str, model_id: str, gp: dict, vA: dict, istruzioni: str = "") -> dict:
     model_v = crea_modello(model_id)
@@ -4170,7 +4210,7 @@ def _lancia_generazione(
             st.session_state._storico_refresh += 1
             # id della riga appena creata: serve per aggiungerle poi Fila B e BES/DSA
             st.session_state["_storico_id"] = (_ris_ins.data or [{}])[0].get("id")
-            st.session_state["_storia_A"], st.session_state["_storia_rifai"] = [], []
+            st.session_state["_storia_A"], st.session_state["_storia_rifai"], st.session_state["_versioni_extra"] = [], [], []
             _registra_evento("verifica", modello=_modello_id_eff, verifica_id=st.session_state["_storico_id"])
             if st.session_state.get("_assaggio_tipo") == "bonus" and st.session_state["_storico_id"]:
                 if inviti.usa_bonus(supabase_admin, st.session_state.utente.id, st.session_state["_storico_id"]):
@@ -5825,7 +5865,12 @@ def _elementi_kit(argomento, materia, vA, vB, vR, vS, vSC, rubrica_docx) -> list
         ("Word", "_FilaA.docx", vA.get("docx") if WORD_ATTIVO else None),
         ("Griglia", "_Griglia.docx", rubrica_docx),
     )
-    return [{"etichetta": e, "nome_file": base + n, "dati": d} for e, n, d in voci if d]
+    elenco = [{"etichetta": e, "nome_file": base + n, "dati": d} for e, n, d in voci if d]
+    for x in st.session_state.get("_versioni_extra") or []:
+        if x.get("pdf"):
+            etic = f"Fila {x['lettera']}" if x["tipo"] == "fila" else "Recupero"
+            elenco.append({"etichetta": etic, "nome_file": base + (f"_Fila{x['lettera']}.pdf" if x["tipo"] == "fila" else "_Recupero.pdf"), "dati": x["pdf"]})
+    return elenco
 
 
 def _zip_kit(elementi: list) -> bytes:
@@ -5873,6 +5918,7 @@ def _storia_push(stato: dict) -> None:
 
 def _invalida_derivate() -> None:
     """Fila B, BES/DSA, soluzioni e scheda derivano dalla A: se la A cambia (anche con annulla) non valgono più."""
+    st.session_state["_versioni_extra"] = []
     if any((st.session_state.verifiche.get(f) or {}).get("latex") for f in ("B", "R", "RB", "S", "SC")):
         for _f in ("B", "R", "RB"):
             st.session_state.verifiche[_f] = _vf()
@@ -6343,6 +6389,10 @@ def _render_stage_final():
             _vc2, _vb2 = _riga()                  # BES/DSA
         with st.container(border=True):
             _vc7, _vb7 = _riga()                  # Alta leggibilità (DSA)
+        with st.container(border=True):
+            _vc8, _vb8 = _riga()                  # Altre file (C, D, E)
+        with st.container(border=True):
+            _vc9, _vb9 = _riga()                  # Versione di recupero
     with st.expander("Per la classe e la valutazione: scheda di allenamento e griglia", expanded=False,
                      icon=":material/groups:"):
         st.markdown('<span class="g-kit2" style="display:none"></span>', unsafe_allow_html=True)
@@ -6517,6 +6567,69 @@ def _render_stage_final():
                 st.session_state["_kit_coda"] = []   # un errore ferma la coda del kit
                 _mostra_errore("Non sono riuscito a creare la versione BES/DSA", _e,
                                riprova_flag="_gen_bes", riprova_key="riprova_bes")
+
+    # ── ALTRE FILE (C, D, E) e RECUPERO ─────────────────────────────────────────────
+    _extra = st.session_state.setdefault("_versioni_extra", [])
+    _file_extra = [e for e in _extra if e["tipo"] == "fila"]
+    _recupero = next((e for e in _extra if e["tipo"] == "recupero"), None)
+    with _vc8:
+        st.markdown(
+            f'<div class="variant-card variant-card-blue"><div class="variant-card-header"><span class="variant-card-icon">📑</span>'
+            f'<span class="variant-card-title">Altre file: C, D, E{_PRO}</span></div>'
+            f'<div class="variant-card-desc">Per classi numerose o più gruppi: stessi esercizi con dati diversi da quelli delle file già create. Si parte dopo la Fila B.</div></div>',
+            unsafe_allow_html=True)
+    with _vb8:
+        if not vB.get("latex"):
+            st.caption("Crea prima la Fila B.")
+        elif _pro_bloccato("fila_extra"):
+            _pulsante_pro("fila_extra", "pro_fila_extra")
+        else:
+            for _e in _file_extra:
+                if _e.get("pdf"):
+                    _dl(f"⬇ Scarica Fila {_e['lettera']} · {_stima(_e['pdf'])}", data=_e["pdf"], file_name=arg_str + f"_Fila{_e['lettera']}.pdf",
+                        mime="application/pdf", use_container_width=True, key=f"dl_extra_{_e['lettera']}")
+                else:
+                    st.caption(f"Fila {_e['lettera']} creata, ma il PDF non si è compilato: riprova.")
+            _prossima = next((l for l in "CDE" if l not in {e["lettera"] for e in _file_extra}), None)
+            if _prossima and st.button(f"＋ Genera Fila {_prossima}", key=f"gen_extra_{_prossima}", use_container_width=True, type="secondary",
+                                      icon=":material/library_add:"):
+                st.session_state["_gen_extra"] = {"tipo": "fila", "lettera": _prossima}
+                st.rerun()
+            elif not _prossima:
+                st.caption("Hai già tutte le file: A, B, C, D ed E.")
+    with _vc9:
+        st.markdown(
+            f'<div class="variant-card variant-card-violet"><div class="variant-card-header"><span class="variant-card-icon">🛟</span>'
+            f'<span class="variant-card-title">Versione di recupero{_PRO}</span></div>'
+            f'<div class="variant-card-desc">Stessi argomenti, più breve e più guidata, con dati diversi: per chi deve recuperare.</div></div>',
+            unsafe_allow_html=True)
+    with _vb9:
+        if _recupero and _recupero.get("pdf"):
+            _dl(f"⬇ Scarica recupero · {_stima(_recupero['pdf'])}", data=_recupero["pdf"], file_name=arg_str + "_Recupero.pdf",
+                mime="application/pdf", use_container_width=True, key="dl_recupero")
+        elif _pro_bloccato("recupero"):
+            _pulsante_pro("recupero", "pro_recupero")
+        else:
+            st.text_input("Per chi? (facoltativo)", key="rec_perchi", max_chars=120, label_visibility="collapsed",
+                          placeholder="Per chi? Es. lacune sulle frazioni (facoltativo)")
+            if st.button("🛟 Genera recupero", key="gen_recupero", use_container_width=True, type="secondary"):
+                st.session_state["_gen_extra"] = {"tipo": "recupero", "lettera": "", "per_chi": st.session_state.get("rec_perchi", "")}
+                st.rerun()
+    _ge = st.session_state.pop("_gen_extra", None)
+    if _ge:
+        _ph_x = st.empty()
+        _nome_x = f"Fila {_ge['lettera']}" if _ge["tipo"] == "fila" else "la versione di recupero"
+        _ph_x.markdown(_skeleton_html("📑" if _ge["tipo"] == "fila" else "🛟", f"Preparo {_nome_x}…", "Dati nuovi · Controllo · PDF"), unsafe_allow_html=True)
+        try:
+            _prec = [vB.get("latex")] + [e["latex"] for e in _file_extra]
+            _res_x = _genera_extra(_ge["tipo"], _ge.get("lettera", ""), mod_id, gp, vA, _prec, _ge.get("per_chi", ""))
+            _extra.append({"tipo": _ge["tipo"], "lettera": _ge.get("lettera", ""), "latex": _res_x["latex"], "pdf": _res_x["pdf"]})
+            _registra_evento("fila_extra" if _ge["tipo"] == "fila" else "recupero", modello=mod_id, verifica_id=st.session_state.get("_storico_id"))
+            _ricorda_conferma(f"{_nome_x[0].upper() + _nome_x[1:]} pronta")
+            st.rerun()
+        except Exception as _e:
+            _ph_x.empty()
+            _mostra_errore(f"Non sono riuscito a creare {_nome_x}", _e)
 
     # ── ALTA LEGGIBILITÀ (DSA) ─────────────────────────────────────────
     with _vc7:
@@ -7020,6 +7133,7 @@ def _nuova_verifica() -> None:
     st.session_state["_rubrica_docx"]      = None
     st.session_state._rubrica_gen          = False
     st.session_state["_gen_fila_b"]       = False
+    st.session_state["_versioni_extra"]   = []
     st.session_state["_gen_bes"]           = False
     st.session_state["_gen_sol"]           = False
     st.session_state["_gen_scheda"]       = False
