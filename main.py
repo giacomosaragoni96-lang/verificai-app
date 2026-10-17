@@ -1945,7 +1945,7 @@ def _pulsante_pro(funzione: str, key: str, testo: str = "Con il piano Pro") -> N
     else:
         _lbl = testo
         _help = f"Per avere {ETICHETTE_FUNZIONI.get(funzione, 'questa funzione')} serve il piano Pro."
-    if st.button(f"🔒 {_lbl}", key=key, use_container_width=True, type="secondary", help=_help):
+    if st.button(_lbl, icon=":material/lock:", key=key, use_container_width=True, type="secondary", help=_help):
         _vai_a_upgrade(funzione)
 
 # ── CSS + FEEDBACK ────────────────────────────────────────────
@@ -6875,7 +6875,7 @@ def _render_stage_final():
             st.markdown(
                 f'<style>html body .stApp .st-key-word_card {{background:linear-gradient(135deg,{_WD}0A 0%,{_WD}18 100%);'
                 f'border:1px solid {_WD}44;border-radius:16px;padding:.85rem 1.05rem;}}'
-                f'html body .stApp .st-key-word_card button {{min-height:2.9rem;font-weight:700;border-radius:12px;white-space:nowrap !important;background:{T["card"]} !important;background-image:none !important;'
+                f'html body .stApp .st-key-word_card button {{min-height:2.9rem;font-weight:700;border-radius:12px;white-space:normal !important;line-height:1.25;background:{T["card"]} !important;background-image:none !important;'
                 f'border:1.5px solid {_WD}77 !important;box-shadow:none !important;}}'
                 f'html body .stApp .st-key-word_card button, html body .stApp .st-key-word_card button * {{color:{_WD} !important;-webkit-text-fill-color:{_WD} !important;}}'
                 # «Scarica Word» è il pulsante pieno (blu): scritta bianca, mai blu su blu
