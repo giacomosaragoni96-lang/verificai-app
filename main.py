@@ -1831,7 +1831,7 @@ def _render_impostazioni_pagina() -> None:
     render_impostazioni(T, {
         "profilo": _profilo(), "salva": _salva_profilo, "conferma": _ricorda_conferma, "stili": stili_disponibili(),
         "anteprima_stili": _dialogo_stili, "blocco_logo": _blocco_logo_impostazioni, "da_form": da_form, "torna": _torna,
-        "logo_modificato": _logo_modificato, "salva_logo": _applica_logo_bozza,
+        "logo_modificato": _logo_modificato, "salva_logo": _applica_logo_bozza, "logo_info": _logo_bozza,
     })
 
 
