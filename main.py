@@ -6412,6 +6412,34 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
                        consiglio="Riprova tra un momento; la verifica è rimasta com'era.")
 
 
+@st.dialog("Qualcosa non va in questa verifica?", width="small")
+def _dialogo_segnalazione() -> None:
+    """Segnalazione ANONIMA di un problema: si apre da un link discreto in fondo alla pagina finale."""
+    _stile_dialogo()
+    st.caption("Non salviamo il tuo nome né la tua email: arriva solo quello che scrivi qui e, se lasci la spunta, "
+               "il testo della verifica e i dettagli tecnici della generazione.")
+    if st.session_state.get("_n_segnalazioni", 0) >= MAX_PER_SESSIONE:
+        st.info("Hai già inviato diverse segnalazioni: grazie! Per altro usa il pulsante 💬 del feedback.")
+    else:
+        _blocchi_seg = st.session_state.get("review_blocks") or []
+        _dove_seg = st.selectbox("Dove?", ["Tutta la verifica"] + [f"Esercizio {i + 1}" for i in range(len(_blocchi_seg))],
+                                 key="seg_dove")
+        _nota_seg = st.text_area("Cosa non va?", key="seg_nota", height=100, max_chars=2000,
+                                 placeholder="es. Il grafico non corrisponde al testo · I numeri non tornano · "
+                                             "L'esercizio 3 è troppo difficile per il livello")
+        _allega_seg = st.checkbox("Allega il testo della verifica e i dettagli tecnici (aiuta a capire il problema; "
+                                  "se nella verifica c'è il nome della scuola, togli la spunta)",
+                                  value=True, key="seg_allega")
+        if st.button("Invia la segnalazione", key="seg_invia", type="primary", disabled=not _nota_seg.strip()):
+            _es_seg = None if _dove_seg == "Tutta la verifica" else int(_dove_seg.split()[-1])
+            if _invia_segnalazione(_nota_seg, _es_seg, _allega_seg):
+                st.toast("Segnalazione inviata, grazie!", icon="✅")
+                st.session_state.pop("seg_nota", None)
+                st.rerun()
+            else:
+                st.error("Non sono riuscito a inviarla. Riprova più tardi o scrivici dal pulsante 💬 del feedback.")
+
+
 def _render_stage_final():
     gp   = st.session_state.gen_params
     vA   = st.session_state.verifiche["A"]
@@ -7405,30 +7433,6 @@ def _render_stage_final():
                                mime="text/plain", key="dl_debug_gen")
 
     # Segnalazione anonima: arriva a chi sviluppa l'app, senza nome né email
-    with st.expander("Qualcosa non va in questa verifica? Segnalalo in modo anonimo", expanded=False):
-        st.caption("Non salviamo il tuo nome né la tua email: arriva solo quello che scrivi qui e, se lasci la spunta, "
-                   "il testo della verifica e i dettagli tecnici della generazione.")
-        if st.session_state.get("_n_segnalazioni", 0) >= MAX_PER_SESSIONE:
-            st.info("Hai già inviato diverse segnalazioni: grazie! Per altro usa il pulsante 💬 del feedback.")
-        else:
-            _blocchi_seg = st.session_state.get("review_blocks") or []
-            _dove_seg = st.selectbox("Dove?", ["Tutta la verifica"] + [f"Esercizio {i + 1}" for i in range(len(_blocchi_seg))],
-                                     key="seg_dove")
-            _nota_seg = st.text_area("Cosa non va?", key="seg_nota", height=100, max_chars=2000,
-                                     placeholder="es. Il grafico non corrisponde al testo · I numeri non tornano · "
-                                                 "L'esercizio 3 è troppo difficile per il livello")
-            _allega_seg = st.checkbox("Allega il testo della verifica e i dettagli tecnici (aiuta a capire il problema; "
-                                      "se nella verifica c'è il nome della scuola, togli la spunta)",
-                                      value=True, key="seg_allega")
-            if st.button("Invia la segnalazione", key="seg_invia", type="primary", disabled=not _nota_seg.strip()):
-                _es_seg = None if _dove_seg == "Tutta la verifica" else int(_dove_seg.split()[-1])
-                if _invia_segnalazione(_nota_seg, _es_seg, _allega_seg):
-                    st.toast("Segnalazione inviata, grazie!", icon="✅")
-                    st.session_state.pop("seg_nota", None)
-                    st.rerun()
-                else:
-                    st.error("Non sono riuscito a inviarla. Riprova più tardi o scrivici dal pulsante 💬 del feedback.")
-
     # In fondo alla pagina: nuova verifica e le verifiche salvate
     _nv1, _nv2, _nv3 = st.columns([2, 3, 2])
     if _nv2.button("Crea una nuova verifica", key="btn_new_bottom", icon=":material/add:", use_container_width=True, type="primary"):
@@ -7436,6 +7440,10 @@ def _render_stage_final():
     _sf1, _sf2, _sf3 = st.columns([3, 2, 3])
     _sf2.button("Apri «Le mie verifiche»", key="apri_storico_final", type="tertiary", icon=":material/folder_open:",
                 on_click=_apri_storico, use_container_width=True, help="La verifica è già salvata: qui trovi tutte le tue verifiche.")
+    _sg1, _sg2, _sg3 = st.columns([2, 3, 2])
+    if _sg2.button("Qualcosa non va in questa verifica? Segnalalo", key="seg_apri", type="tertiary", icon=":material/flag:", use_container_width=True,
+                   help="Anonimo: non salviamo né il tuo nome né la tua email."):
+        _dialogo_segnalazione()
     spazio("lg")
 
 
