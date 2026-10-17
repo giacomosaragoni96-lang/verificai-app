@@ -6659,7 +6659,7 @@ def _render_stage_final():
             st.markdown(
                 f'<style>html body .stApp .st-key-word_card {{background:linear-gradient(135deg,{_WD}12 0%,{_WD}26 100%);'
                 f'border:1.5px solid {_WD}55;border-radius:18px;padding:1.1rem 1.3rem;}}'
-                f'html body .stApp .st-key-word_card button {{min-height:2.9rem;font-weight:700;border-radius:12px;background:{T["card"]} !important;background-image:none !important;'
+                f'html body .stApp .st-key-word_card button {{min-height:2.9rem;font-weight:700;border-radius:12px;white-space:nowrap !important;background:{T["card"]} !important;background-image:none !important;'
                 f'border:1.5px solid {_WD}77 !important;box-shadow:none !important;}}'
                 f'html body .stApp .st-key-word_card button, html body .stApp .st-key-word_card button * {{color:{_WD} !important;-webkit-text-fill-color:{_WD} !important;}}'
                 # «Scarica Word» è il pulsante pieno (blu): scritta bianca, mai blu su blu
@@ -6667,7 +6667,7 @@ def _render_stage_final():
                 f'html body .stApp .st-key-word_card [class*="st-key-dl_docx_A_generale"] button, html body .stApp .st-key-word_card [class*="st-key-dl_docx_A_generale"] button *{{color:#fff !important;-webkit-text-fill-color:#fff !important;}}</style>',
                 unsafe_allow_html=True)
             with st.container(key="word_card"):
-                _w1, _w2 = st.columns([2.3, 1.2], vertical_alignment="center", gap="medium")
+                _w1, _w2 = st.columns([2.1, 1.3], vertical_alignment="center", gap="medium")
                 with _w1:
                     st.markdown(
                         f'<div style="display:flex;gap:.9rem;align-items:center;font-family:DM Sans,sans-serif;">'
@@ -6682,7 +6682,7 @@ def _render_stage_final():
                         unsafe_allow_html=True)
                 with _w2:
                     if vA.get("docx"):
-                        _dl(f"Scarica Word · {_stima(vA['docx'])}", icon=":material/download:", data=vA["docx"], file_name=arg_str + "_FilaA.docx",
+                        _dl("Scarica Word", icon=":material/download:", help=f"File Word modificabile · {_stima(vA['docx'])}", data=vA["docx"], file_name=arg_str + "_FilaA.docx",
                             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                             use_container_width=True, type="primary", key="dl_docx_A_generale")
                     elif _pro_bloccato("word"):
