@@ -3915,9 +3915,6 @@ def _render_percorso_b_form(_prog_placeholder):
                 pass
             if _pillole:
                 st.markdown('<div class="pille-ok">' + "".join(f'<span>{_esc(x)}</span>' for x in _pillole) + '</div>', unsafe_allow_html=True)
-            st.button("Impostazioni predefinite (logo, stile, preferenze)", key="apri_impostazioni_form", type="tertiary",
-                      icon=":material/tune:", on_click=_apri_impostazioni,
-                      help="Il logo della scuola, lo stile del PDF e le preferenze fisse: si salvano e valgono per ogni verifica. Il form resta com'è.")
             with st.expander("Altre opzioni (esercizi, materiale, punteggi)", expanded=bool(_fm), icon=":material/tune:"):
                 st.markdown('<span class="g-altre" style="display:none"></span>', unsafe_allow_html=True)
                 # ── DURATA: un solo scatto sceglie numero di esercizi e tempo previsto ──────
@@ -4048,6 +4045,10 @@ def _render_percorso_b_form(_prog_placeholder):
                     except Exception as _e_foto:      # funzione accessoria: un suo errore non deve mai bloccare il form
                         logger.warning("Esercizio da foto: %s", _e_foto)
                         st.session_state["_foto_es_pronti"] = []
+
+            st.button("Impostazioni predefinite (logo, stile, preferenze)", key="apri_impostazioni_form", type="tertiary",
+                      icon=":material/tune:", on_click=_apri_impostazioni,
+                      help="Il logo della scuola, lo stile del PDF e le preferenze fisse: si salvano e valgono per ogni verifica. Il form resta com'è.")
 
             # ── CTA: Genera Bozza ─────────────────────────────────────────────────
             _manca_arg = not argomento and not _fm
