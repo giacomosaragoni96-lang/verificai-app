@@ -1724,14 +1724,14 @@ def get_css(T: dict) -> str:
   }}
 
   .opt-label {{
-    font-size: 0.84rem;
+    font-size: 1rem;
     font-weight: 700;
-    color: {T['text']};
+    color: {T['text']} !important;
+    -webkit-text-fill-color: {T['text']};
     font-family: 'DM Sans', sans-serif;
-    margin-bottom: 5px;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    opacity: .78;
+    margin: .35rem 0 .4rem;
+    letter-spacing: -.005em;
+    line-height: 1.3;
   }}
 
 
