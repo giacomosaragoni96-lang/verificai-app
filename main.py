@@ -3284,12 +3284,20 @@ def _selettore_stile() -> str:
     return _sel
 
 
-def _link_scelta_iniziale() -> None:
-    """In fondo alla pagina, discreto: torna alla prima scelta (descrizione / impagina la mia verifica)."""
-    st.markdown('<div style="height:3.2rem"></div>', unsafe_allow_html=True)
-    _a, _b, _c = st.columns([1, 1, 1])
-    if _b.button("Cambia modo di partire", key="home_indietro", type="tertiary", icon=":material/swap_horiz:", use_container_width=True):
-        st.session_state["_home_modo"] = None
+def _link_scelta_iniziale(da: str = "crea") -> None:
+    """In fondo alla pagina: porta direttamente all'altro modo di partire (da «descrizione» a «verifica già scritta» e viceversa)."""
+    st.markdown('<div style="height:1.4rem"></div>', unsafe_allow_html=True)
+    if da == "impagina":
+        etichetta, icona, dove = "Preferisci partire da una descrizione?", ":material/edit_note:", "crea"
+        nota = "Descrivi cosa ti serve e la verifica la scrivo io."
+    else:
+        etichetta, icona, dove = "Parti da una verifica già scritta", ":material/upload_file:", "impagina"
+        nota = "Hai già una verifica in PDF, foto o Word? La impagino identica, in pochi minuti."
+    st.markdown(f'<div style="text-align:center;font-family:DM Sans,sans-serif;font-size:.86rem;color:{T["text2"]};margin-bottom:.45rem;">{nota}</div>',
+                unsafe_allow_html=True)
+    _a, _b, _c = st.columns([1, 2, 1])
+    if _b.button(etichetta, key="home_altra_via", type="secondary", icon=icona, use_container_width=True):
+        st.session_state["_home_modo"] = dove
         st.rerun()
 
 
@@ -4144,12 +4152,20 @@ def _render_percorso_b_form(_prog_placeholder):
                                     "Riprova tra qualche istante.")
             elif not _illimitato and _restanti is not None:
                 # il contatore sta anche nella sidebar, ma di solito è chiusa
+                _tot_c = max(1, int(_TETTO_MENSILE or 1))
+                _pallini = ("".join(f'<i class="{"on" if k < _restanti else ""}"></i>' for k in range(_tot_c)) if _tot_c <= 12 else "")
                 st.markdown(
-                    f'<div style="text-align:center;font-size:.85rem;color:{T["text2"]};'
-                    f'font-family:DM Sans,sans-serif;margin-top:.4rem;">'
-                    f'Ti {"resta" if _restanti == 1 else "restano"} <b>{_restanti}</b> '
-                    f'{"verifica" if _restanti == 1 else "verifiche"} gratuit{"a" if _restanti == 1 else "e"} '
-                    f'questo mese.</div>',
+                    "<style>.cn-box{display:flex;align-items:center;justify-content:center;gap:.9rem;flex-wrap:wrap;margin:1rem auto .2rem;padding:.7rem 1.2rem;"
+                    f"max-width:30rem;border-radius:999px;background:linear-gradient(160deg,{T['card']} 0%,{T['accent']}12 100%);border:1px solid {T['accent']}33;"
+                    f"box-shadow:0 8px 20px {T['accent']}1c;font-family:'DM Sans',sans-serif;}}"
+                    ".cn-p{display:flex;gap:.35rem;}"
+                    f".cn-p i{{width:.8rem;height:.8rem;border-radius:50%;background:{T['border']};display:block;}}"
+                    f".cn-p i.on{{background:linear-gradient(135deg,{T['accent']},{T['accent2']});box-shadow:0 2px 6px {T['accent']}66;}}"
+                    f".cn-t{{font-size:.92rem;color:{T['text']};}}.cn-t b{{color:{T['accent']};font-size:1.05rem;}}"
+                    f".cn-s{{font-size:.78rem;color:{T['text2']};}}</style>"
+                    f'<div class="cn-box"><div class="cn-p">{_pallini}</div>'
+                    f'<div class="cn-t"><b>{_restanti}</b> {"verifica gratuita rimasta" if _restanti == 1 else "verifiche gratuite rimaste"} questo mese'
+                    f'<div class="cn-s">{_reset_label(*_giorni_al_reset())}</div></div></div>',
                     unsafe_allow_html=True,
                 )
 
@@ -4526,7 +4542,7 @@ def _render_stage_input():
         except Exception as _e_imp:      # funzione accessoria: un suo errore non deve mai bloccare il resto
             logger.warning("Impagina: %s", _e_imp)
             st.warning("Questa funzione non è disponibile in questo momento. Riprova tra poco.")
-        _link_scelta_iniziale()
+        _link_scelta_iniziale("impagina")
         return
 
     # Il form sta in un contenitore svuotabile: durante la generazione sparisce, così un clic
@@ -4539,7 +4555,7 @@ def _render_stage_input():
             num_esercizi_totali, note_extra, genera_btn,
             _prog_fac_ph, durata_str, durata_nome,
         ) = _render_percorso_b_form(_prog_ph_b)
-        _link_scelta_iniziale()
+        _link_scelta_iniziale("crea")
 
     _riprova      = st.session_state.pop("_riprova_genera", False)
     _dopo_analisi = st.session_state.pop("_genera_dopo_analisi", False)
