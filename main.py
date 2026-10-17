@@ -6788,7 +6788,7 @@ def _render_stage_final():
             _nuova_verifica()
     # ── Anteprima: una pagina alla volta, con ◀ ▶ (così il kit sotto resta vicino) ──────────
     _zoom = False
-    _col_prev, _col_dx = st.columns([1.25, 1], gap="large")      # desktop: anteprima a sinistra (fissa) e azioni a destra; su telefono si impilano
+    _col_prev, _col_dx = st.columns([1.31, 1], gap="large")      # desktop: anteprima a sinistra (fissa) e azioni a destra; su telefono si impilano
     with _col_prev:
         st.markdown('<span class="col-prev"></span>', unsafe_allow_html=True)
         _imgs_f = st.session_state.get("preview_images") or []
