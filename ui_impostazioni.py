@@ -85,8 +85,12 @@ def render_impostazioni(T: dict, ctx: dict) -> None:
 
         modificato = (set(scelte or []) != set(p.get("pillole", [])) or (note or "").strip() != (p.get("note_fisse", "") or "").strip()
                       or (stile or "") != (p.get("stile", "") or "") or ctx["logo_modificato"]())
-        if modificato:
-            st.caption("Hai modifiche non ancora salvate.")
+        if modificato:        # il pulsante lampeggia (come i suggerimenti della guida, ma più svelto): c'è qualcosa da salvare
+            st.markdown("<style>@keyframes salva-lampeggia{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0);outline:2px solid rgba(245,158,11,0);outline-offset:3px}"
+                        "50%{box-shadow:0 0 0 8px rgba(245,158,11,.32);outline:2px solid rgba(245,158,11,.8);outline-offset:3px}}"
+                        "html body .stApp .st-key-pf_salva button:not(:disabled){animation:salva-lampeggia 1.1s ease-in-out infinite;border-radius:12px;}"
+                        "@media (prefers-reduced-motion:reduce){html body .stApp .st-key-pf_salva button{animation:none !important}}</style>",
+                        unsafe_allow_html=True)
         if st.button("Salva le impostazioni", key="pf_salva", type="primary", icon=":material/check:", disabled=not modificato):
             ctx["salva"]({**p, "pillole": list(scelte or []), "note_fisse": note, "stile": stile})
             ctx["salva_logo"]()
