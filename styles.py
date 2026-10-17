@@ -5094,20 +5094,27 @@ font-family: 'DM Sans', sans-serif;
   .pc-t {{ font-weight: 800; font-size: 1.12rem; color: {T['text']}; line-height: 1.2; }}
   .pc-d {{ font-size: .86rem; color: {T['text2']}; margin-top: .1rem; }}
 
-  /* «Vuoi modificare qualcosa?»: tendina in evidenza, con l'intestazione nel colore del tema */
-  html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] {{
-    background: linear-gradient(160deg, {T['card']} 0%, {_acc}0D 100%) !important; border: 1.5px solid {_acc}55 !important; border-radius: 20px !important;
-    box-shadow: 0 14px 30px {_acc}28 !important; overflow: hidden; margin: 0 !important;
+  /* «Vuoi modificare qualcosa?»: tendina azzurra, con più profondità delle altre (che restano bianche).
+     I selettori valgono per entrambe le strutture di Streamlit: <details data-testid="stExpander"> e <div data-testid="stExpander"><details>. */
+  html body .stApp .st-key-vx_modifica details {{
+    background: linear-gradient(160deg, #F3F8FF 0%, {_acc}1A 100%) !important; border: 1.5px solid {_acc}55 !important; border-radius: 20px !important;
+    box-shadow: 0 16px 34px {_acc}30, 0 2px 6px rgba(15,23,42,.06) !important; overflow: hidden; margin: 0 !important;
   }}
-  html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] > summary {{
-    background: linear-gradient(135deg, {_acc} 0%, {T.get('accent2', _acc)} 100%) !important; padding: 1.05rem 1.25rem !important; border-radius: 0 !important;
+  html body .stApp .st-key-vx_modifica details > summary {{
+    background: linear-gradient(135deg, {_acc}30 0%, {_acc}16 100%) !important; padding: 1.05rem 1.25rem !important; border-radius: 0 !important;
+    border-bottom: 1px solid {_acc}33 !important;
   }}
-  html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] > summary, html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] > summary * {{
-    color: #fff !important; -webkit-text-fill-color: #fff !important; font-weight: 800 !important; font-size: 1.1rem !important; font-family: 'DM Sans', sans-serif !important;
+  html body .stApp .st-key-vx_modifica details > summary, html body .stApp .st-key-vx_modifica details > summary * {{
+    color: {T['text']} !important; -webkit-text-fill-color: {T['text']} !important; font-weight: 800 !important; background: transparent !important;
   }}
-  html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] > summary svg {{ fill: #fff !important; color: #fff !important; }}
-  html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] > div {{ padding: .9rem 1rem 1rem !important; background: transparent !important; }}
-  html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] div.st-key-mod_rapida:not(#vf) {{ margin-top: 0 !important; }}
+  html body .stApp .st-key-vx_modifica details > summary p {{ font-size: 1.1rem !important; font-family: 'DM Sans', sans-serif !important; }}
+  html body .stApp .st-key-vx_modifica details > summary {{ background: linear-gradient(135deg, {_acc}30 0%, {_acc}16 100%) !important; }}
+  html body .stApp .st-key-vx_modifica details > summary svg, html body .stApp .st-key-vx_modifica details > summary svg * {{
+    fill: {_acc} !important; color: {_acc} !important; stroke: none !important;
+  }}
+  html body .stApp .st-key-vx_modifica details > div {{ padding: .9rem 1rem 1.05rem !important; background: transparent !important; }}
+  html body .stApp .st-key-vx_modifica details div.st-key-mod_rapida:not(#vf) {{ margin-top: 0 !important; background: linear-gradient(160deg, #FFFFFF 0%, {_acc}12 100%); }}
+  html body .stApp .st-key-vx_modifica details .st-key-final_classe button {{ background: #FFFFFF !important; border: 1.5px solid {_acc}44 !important; }}
   html body .stApp .st-key-card_modifica .cm-t {{ font-family: 'DM Sans', sans-serif; font-weight: 800; font-size: 1.02rem; color: {T['text']}; }}
   html body .stApp .st-key-card_modifica .cm-d {{ font-family: 'DM Sans', sans-serif; font-size: .86rem; color: {T['text2']}; margin: .15rem 0 .7rem; line-height: 1.45; }}
 
