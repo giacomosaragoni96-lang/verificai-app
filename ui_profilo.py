@@ -54,11 +54,22 @@ def _css(T: dict) -> str:
 .pf-n-main{{background:linear-gradient(145deg,{acc},{T.get('accent2',acc)});border:none;padding:.65rem 1.4rem;min-width:8.2rem;box-shadow:0 10px 24px {acc}55,0 2px 6px rgba(15,23,42,.12);transform:translateY(-3px);}}
 .pf-n-main b{{font-size:2.5rem;color:#fff;letter-spacing:-.03em;}}
 .pf-n-main span{{font-size:.8rem;font-weight:700;color:#fff;opacity:.92;}}
+html body .stApp .pf-n-main b, html body .stApp .pf-n-main span{{color:#fff !important;-webkit-text-fill-color:#fff !important;}}
 .pf-sez{{font-family:'DM Sans',sans-serif;font-size:1.05rem;font-weight:800;color:{T['text']};margin:.2rem 0 .1rem;}}
 .pf-sub{{font-family:'DM Sans',sans-serif;font-size:.88rem;color:{T['text2']};margin:0 0 .8rem;line-height:1.45;}}
 .pf-classe{{display:flex;gap:.7rem;align-items:center;font-family:'DM Sans',sans-serif;}}
-.pf-dot{{flex:0 0 2.6rem;height:2.6rem;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1rem;}}
-.pf-ct{{font-weight:800;font-size:1.08rem;color:{T['text']};}} .pf-cs{{font-size:.84rem;color:{T['text2']};}}
+.pf-dot{{flex:0 0 3.2rem;height:3.2rem;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.15rem;box-shadow:0 6px 14px rgba(15,23,42,.22);}}
+.pf-ct{{font-weight:800;font-size:1.35rem;line-height:1.15;color:{T['text']};letter-spacing:-.01em;}} .pf-cs{{font-size:.95rem;color:{T['text2']};margin-top:.1rem;}}
+html body .stApp div[class*="st-key-classe_card_"] [data-testid="stWidgetLabel"] p{{font-size:.92rem !important;font-weight:700 !important;color:{T['text']} !important;}}
+.pf-mesi{{display:flex;gap:.7rem;align-items:flex-end;height:11rem;padding:.4rem .2rem 0;font-family:'DM Sans',sans-serif;}}
+.pf-mese{{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}}
+.pf-mese .v{{font-weight:800;font-size:.95rem;color:{T['text']};margin-bottom:.2rem;}}
+.pf-mese .barra{{width:100%;max-width:3.6rem;border-radius:10px 10px 4px 4px;background:linear-gradient(180deg,{acc},{T.get('accent2',acc)});min-height:.3rem;}}
+.pf-mese.zero .barra{{background:{T['border']};}}
+.pf-mese .m{{margin-top:.4rem;font-size:.82rem;color:{T['text2']};text-transform:capitalize;}}
+.pf-kpi{{display:flex;gap:.7rem;flex-wrap:wrap;margin:.4rem 0 .9rem;font-family:'DM Sans',sans-serif;}}
+.pf-kpi div{{background:{T['card']};border:1px solid {T['border']};border-radius:14px;padding:.55rem 1rem;min-width:7.5rem;}}
+.pf-kpi b{{display:block;font-size:1.5rem;line-height:1.1;color:{T['text']};}} .pf-kpi span{{font-size:.78rem;color:{T['text2']};}}
 .pf-cal{{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,12px);grid-auto-columns:12px;gap:3px;overflow-x:auto;padding:.3rem 0 .5rem;}}
 .pf-cal i{{width:12px;height:12px;border-radius:3px;display:block;}}
 .pf-l0{{background:{T['border']};}} .pf-l1{{background:{acc}40;}} .pf-l2{{background:{acc}70;}} .pf-l3{{background:{acc}B0;}} .pf-l4{{background:{acc};}} .pf-lx{{background:transparent;}}
@@ -147,13 +158,45 @@ def _sezione_preferenze(T, ctx) -> None:
         st.button("Apri le impostazioni predefinite", key="pf_apri_imp", type="primary", icon=":material/tune:", on_click=ctx["apri_impostazioni"])
 
 
+_MESI_BREVI = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]
+
+
+def _per_mese(cal: list, quanti: int = 6) -> list:
+    """[(etichetta, n)] delle verifiche degli ultimi `quanti` mesi (il mese corrente per ultimo), dal calendario giornaliero."""
+    giorni = [g for g in cal if g["n"] is not None]
+    if not giorni:
+        return []
+    oggi = giorni[-1]["data"]
+    mesi = []
+    anno, mese = oggi.year, oggi.month
+    for _ in range(quanti):
+        mesi.append((anno, mese))
+        mese -= 1
+        if mese == 0:
+            anno, mese = anno - 1, 12
+    mesi.reverse()
+    conta = {k: 0 for k in mesi}
+    for g in giorni:
+        k = (g["data"].year, g["data"].month)
+        if k in conta:
+            conta[k] += g["n"] or 0
+    return [(_MESI_BREVI[m - 1] + (f" {str(a)[2:]}" if m == 1 else ""), conta[(a, m)]) for a, m in mesi]
+
+
 def _sezione_attivita(T, ctx, stats) -> None:
-    st.markdown('<div class="pf-sez">La mia attività</div><div class="pf-sub">Le verifiche create nell\'ultimo anno: più il quadratino è scuro, più ne hai fatte quel giorno.</div>',
+    st.markdown('<div class="pf-sez">La mia attività</div><div class="pf-sub">Quante verifiche hai creato negli ultimi mesi.</div>',
                 unsafe_allow_html=True)
     cal = stats["calendario"]
-    massimo = max([g["n"] or 0 for g in cal] + [1])
-    celle = "".join(f'<i class="pf-l{max(0, profilo.scala_colore(g["n"], massimo)) if g["n"] is not None else "x"}" title="{g["data"].strftime("%d/%m/%Y")}: {g["n"] or 0}"></i>' for g in cal)
-    st.markdown(f'<div class="pf-cal">{celle}</div>', unsafe_allow_html=True)
+    mesi = _per_mese(cal)
+    if mesi:
+        ultimo, precedente = mesi[-1][1], mesi[-2][1] if len(mesi) > 1 else 0
+        anno = sum(g["n"] or 0 for g in cal)
+        st.markdown(f'<div class="pf-kpi"><div><b>{ultimo}</b><span>questo mese</span></div><div><b>{precedente}</b><span>mese scorso</span></div>'
+                    f'<div><b>{anno}</b><span>nell\'ultimo anno</span></div></div>', unsafe_allow_html=True)
+        massimo = max([n for _e, n in mesi] + [1])
+        st.markdown('<div class="pf-mesi">' + "".join(
+            f'<div class="pf-mese{" zero" if n == 0 else ""}"><span class="v">{n}</span><div class="barra" style="height:{max(3, 78 * n / massimo):.0f}%"></div>'
+            f'<span class="m">{_esc(e)}</span></div>' for e, n in mesi) + '</div>', unsafe_allow_html=True)
     a, b = st.columns(2, gap="large")
     with a:
         st.markdown("**Per materia**")

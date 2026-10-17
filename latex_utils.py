@@ -186,6 +186,25 @@ def applica_punti_richieste(body: str, nuovi: list, title: str = ""):
     return block[len(intestazione):]
 
 
+_RE_CLASSE_DATA = re.compile(r"(\\textbf\{Classe e Data:\}\s*)\\underline\{(?:\\hspace\{[^{}]*\}|\\makebox\[[^\]]*\]\[l\]\{\\hspace\{[^{}]*\}[^{}]*\})\}")
+
+
+def _testo_sicuro(t: str) -> str:
+    """Testo semplice per l'intestazione (nome della classe, data): i caratteri speciali di LaTeX si scrivono con il backslash."""
+    t = re.sub(r"\s+", " ", str(t or "")).strip()[:30]
+    return "".join(("\\" + c) if c in "&%$#_{}" else ("\\textasciitilde{}" if c == "~" else ("" if c in "^\\" else c)) for c in t)
+
+
+def riempi_classe_data(latex: str, classe: str = "", data: str = "") -> str:
+    """
+    Scrive la classe e la data nella riga «Classe e Data:» dell'intestazione (al posto dello spazio da compilare a mano).
+    Senza classe né data rimette lo spazio vuoto. Si può richiamare più volte: riconosce sia la riga vuota sia quella già riempita.
+    """
+    contenuto = " \\quad ".join(x for x in (_testo_sicuro(classe), _testo_sicuro(data)) if x)
+    nuova = ("\\underline{\\makebox[4cm][l]{\\hspace{.2em}" + contenuto + "}}") if contenuto else "\\underline{\\hspace{4cm}}"
+    return _RE_CLASSE_DATA.sub(lambda m: m.group(1) + nuova, latex or "")
+
+
 def parse_esercizi(latex: str) -> list:
     """
     Analizza il LaTeX e restituisce una lista di esercizi con i loro punteggi.

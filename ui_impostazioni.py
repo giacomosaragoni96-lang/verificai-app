@@ -38,8 +38,17 @@ def render_impostazioni(T: dict, ctx: dict) -> None:
                              format_func=lambda k: nomi[k], key="pf_stile")
         if st.button("Guarda un'anteprima degli stili", key="pf_anteprima_stili", type="tertiary", icon=":material/visibility:"):
             ctx["anteprima_stili"]()
-        if st.button("Salva le impostazioni", key="pf_salva", type="primary", icon=":material/check:"):
+        st.markdown("**Logo della scuola**")
+        st.caption("Lo carichi una volta sola: compare nell'intestazione di ogni verifica, finché non lo cambi o lo togli.")
+        ctx["blocco_logo"]()
+
+        modificato = (set(scelte or []) != set(p.get("pillole", [])) or (note or "").strip() != (p.get("note_fisse", "") or "").strip()
+                      or (stile or "") != (p.get("stile", "") or "") or ctx["logo_modificato"]())
+        if modificato:
+            st.caption("Hai modifiche non ancora salvate.")
+        if st.button("Salva le impostazioni", key="pf_salva", type="primary", icon=":material/check:", disabled=not modificato):
             ctx["salva"]({**p, "pillole": list(scelte or []), "note_fisse": note, "stile": stile})
+            ctx["salva_logo"]()
             ctx["conferma"]("Impostazioni salvate")
             st.rerun()
         frasi = profilo.frasi_preferenze({**p, "pillole": list(scelte or []), "note_fisse": note})
@@ -47,11 +56,6 @@ def render_impostazioni(T: dict, ctx: dict) -> None:
             st.markdown("**Come finirà nelle tue verifiche**")
             for f in frasi:
                 st.markdown(f"- {f}")
-
-    with st.container(border=True):
-        st.markdown("**Logo della scuola**")
-        st.caption("Lo carichi una volta sola: compare nell'intestazione di ogni verifica, finché non lo cambi o lo togli.")
-        ctx["blocco_logo"]()
 
     if ctx["da_form"]:
         _torna(ctx, "basso", primario=True)

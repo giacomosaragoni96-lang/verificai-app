@@ -177,3 +177,24 @@ def attesa(T: dict, tipo: str, titolo: str, passi: list | None = None, sotto: st
         yield ph
     finally:
         ph.empty()
+
+
+class _Stato:
+    """Finto `st.status` per il codice che chiama `.update(label=…, state=…)`: a lavoro finito (o in errore) la scheda sparisce."""
+
+    def __init__(self, ph):
+        self._ph = ph
+
+    def update(self, label=None, state=None, expanded=None) -> None:
+        if state in ("complete", "error"):
+            self._ph.empty()
+
+
+@contextmanager
+def attesa_in(ph, T: dict, tipo: str, titolo: str, passi: list | None = None, sotto: str = "", durata_passo: float = 5.0):
+    """Come `attesa`, ma nel segnaposto `ph` già creato dal chiamante; restituisce un oggetto con `.update()` come st.status."""
+    ph.markdown(card_html(T, tipo, titolo, sotto, passi, None, durata_passo), unsafe_allow_html=True)
+    try:
+        yield _Stato(ph)
+    finally:
+        ph.empty()
