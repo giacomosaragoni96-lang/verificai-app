@@ -217,7 +217,7 @@ def render_sidebar(
               <div class="user-avatar">{iniziale}</div>
               <div class="user-info">
                 <div class="user-email">{email_utente}</div>
-                <div class="user-role">{_piano_icon} {_piano_label}</div>
+                <div class="user-role">{_piano_label}</div>
               </div>
             </div>
             """, unsafe_allow_html=True)

@@ -823,6 +823,21 @@ def get_css(T: dict) -> str:
     font-weight: 500;
   }}
 
+  /* ── Sidebar: scheda dell'utente (avatar, email, ruolo) con sfondo, bordo e ombra ── */
+  html body .stApp [data-testid="stSidebar"] .user-pill {{
+    background: linear-gradient(160deg, {T['card']} 0%, {_acc}16 100%); border: 1px solid {_acc}38; border-top: 1px solid {_acc}38; border-radius: 16px;
+    padding: .75rem .85rem; margin-top: 1.1rem; gap: .8rem; box-shadow: 0 10px 22px {_acc}22, 0 1px 3px rgba(15,23,42,.06);
+  }}
+  html body .stApp [data-testid="stSidebar"] .user-avatar {{
+    width: 40px; height: 40px; background: linear-gradient(135deg, {_acc}, {_acc2}); color: #fff; font-size: 1rem;
+    box-shadow: 0 6px 14px {_acc}55;
+  }}
+  html body .stApp [data-testid="stSidebar"] .user-email {{ color: {T['text']}; font-size: .8rem; font-weight: 700; }}
+  html body .stApp [data-testid="stSidebar"] .user-role {{
+    display: inline-flex; align-items: center; margin-top: .25rem; padding: .08rem .6rem; border-radius: 999px; background: {_acc}1F; color: {_acc};
+    font-size: .66rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  }}
+
   /* ── Sidebar: logout button ── */
   .logout-btn-wrap .stButton > button {{
     background: {_SB_INPUT_BG}33 !important;
