@@ -2880,6 +2880,69 @@ def _a_capo_equilibrato(testo: str, max_car: int) -> str:
     return " \\\\ ".join(out)
 
 
+_RE_CAMBIO_TITOLO = [
+    re.compile(r"(?:cambia|modifica|rinomina|imposta|metti|sostituisci|aggiorna|correggi)\w*\s+(?:pure\s+)?(?:il\s+)?(?:titolo|nome)(?:\s+della\s+verifica)?"
+               r"\s*(?:in|con|a|come|:)\s*[«\"“'](?P<t>[^»\"”]+)[»\"”']", re.IGNORECASE),
+    re.compile(r"(?:cambia|modifica|rinomina|imposta|metti|sostituisci|aggiorna|correggi)\w*\s+(?:pure\s+)?(?:il\s+)?(?:titolo|nome)(?:\s+della\s+verifica)?"
+               r"\s*(?:in|con|a|come|:)\s*(?P<t>[^.;\n]+)", re.IGNORECASE),
+    re.compile(r"(?:chiama|intitola)(?:la|lo)?\s+(?:la\s+verifica\s+)?(?:come\s+)?[«\"“'](?P<t>[^»\"”]+)[»\"”']", re.IGNORECASE),
+    re.compile(r"(?:chiama|intitola)(?:la|lo)?\s+(?:la\s+verifica\s+)?(?:come\s+)?(?P<t>[^.;\n]+)", re.IGNORECASE),
+    re.compile(r"(?:il\s+)?titolo\s+(?:deve\s+essere|sia|diventa|diventi|è)\s*[«\"“']?(?P<t>[^»\"”.;\n]+)", re.IGNORECASE),
+    re.compile(r"rinomin\w*\s+(?:la\s+verifica\s+)?(?:in|con|come)?\s*(?:titolo\s*:?\s*)?[«\"“']?(?P<t>[^»\"”.;\n]+)", re.IGNORECASE),
+]
+# «… e semplifica l'esercizio 2»: dopo il titolo c'è un'altra richiesta, che resta all'AI
+_RE_FINE_TITOLO = re.compile(r"\s+(?:e|ed|poi|inoltre)\s+(?=(?:semplific|rend|togli|aggiung|cambi|modific|mett|elimin|sostitu|riscriv|allung|accorc|us)\w*)", re.IGNORECASE)
+
+
+def riconosci_cambio_titolo(richiesta: str):
+    """
+    Se la richiesta chiede di cambiare il titolo («chiamala Studio analitico della parabola», «cambia il titolo in …») ritorna
+    (nuovo titolo, resto della richiesta). Il titolo sta nell'intestazione, non negli esercizi: lo cambia il programma, non l'AI.
+    """
+    testo = (richiesta or "").strip()
+    for rx in _RE_CAMBIO_TITOLO:
+        m = rx.search(testo)
+        if not m:
+            continue
+        titolo = m.group("t").strip().strip("«»\"“”'").strip(" .,:;")
+        coda = ""
+        taglio = _RE_FINE_TITOLO.search(titolo)
+        if taglio:
+            titolo, coda = titolo[:taglio.start()].strip(" .,:;"), titolo[taglio.end():]
+        if len(titolo) < 3:
+            continue
+        resto = (testo[:m.start()] + " " + coda + " " + testo[m.end():]).strip(" ,.;:-")
+        resto = re.sub(r"\s+", " ", resto).strip()
+        resto = re.sub(r"^(?:e|ed|poi|inoltre)\s+", "", resto, flags=re.IGNORECASE)
+        return titolo[:110], resto
+    return None
+
+
+def _titolo_sicuro(t: str) -> str:
+    t = re.sub(r"\s+", " ", str(t or "")).strip()[:110]
+    return "".join(("\\" + c) if c in "&%$#_{}" else ("\\textasciitilde{}" if c == "~" else ("" if c in "^\\" else c)) for c in t)
+
+
+def cambia_titolo(latex: str, nuovo: str) -> str:
+    r"""
+    Cambia il titolo della verifica nell'intestazione (sia con il logo, dove è il sottotitolo sotto «Verifica di Materia», sia senza).
+    Lascia «Verifica di Materia» e il resto invariati. Se non riconosce l'intestazione ritorna il LaTeX com'era.
+    """
+    titolo = _titolo_sicuro(nuovo)
+    if not titolo:
+        return latex
+    # con il logo: «\\[4pt]{\large sottotitolo}» dentro la minipage di destra
+    rx_logo = re.compile(r"(\\\\\[4pt\]\{\\large )(.*?)(\}\\end\{minipage\})", re.DOTALL)
+    if rx_logo.search(latex):
+        return rx_logo.sub(lambda m: m.group(1) + _a_capo_equilibrato(titolo, 27) + m.group(3), latex, count=1)
+    # senza logo: «\textbf{\large Verifica di Materia: titolo} \\»
+    rx_cl = re.compile(r"(\\textbf\{\\large [^:}\n]*:)\s*(.*?)(\}\s*\\\\)", re.DOTALL)
+    if rx_cl.search(latex):
+        return rx_cl.sub(lambda m: m.group(1) + " " + titolo + m.group(3), latex, count=1)
+    rx_tt = re.compile(r"(\\textbf\{\\large )(.*?)(\}\s*\\\\)", re.DOTALL)
+    return rx_tt.sub(lambda m: m.group(1) + titolo + m.group(3), latex, count=1)
+
+
 def inserisci_logo(latex: str, tipo: str, b64: str, scala: float = 1.0) -> str:
     """
     Mette il logo a sinistra del titolo (titolo allineato a destra), come nelle verifiche

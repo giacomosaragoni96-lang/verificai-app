@@ -1682,4 +1682,8 @@ def modifica_verifica_libera(model, materia: str, argomento: str, latex: str, ri
     nuovi = [b for b in nuovi if b["body"]]
     if not nuovi:
         return {"ok": False, "messaggio": "La risposta era vuota: riprova."}
+    _norm = lambda lista: [(re.sub(r"\s+", " ", b["title"]).strip(), re.sub(r"\s+", " ", b["body"]).strip()) for b in lista]
+    if _norm(nuovi) == _norm(blocchi):
+        return {"ok": False, "messaggio": "Non ho trovato niente da cambiare negli esercizi con questa richiesta. Prova a scriverla in modo più preciso "
+                                          "(per esempio «Semplifica l'esercizio 2»). Per il titolo scrivi «Cambia il titolo in …»."}
     return {"ok": True, "preambolo": preambolo, "blocchi": nuovi, "messaggio": ""}
