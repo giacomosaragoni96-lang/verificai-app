@@ -7102,6 +7102,21 @@ def _render_stage_final():
                     unsafe_allow_html=True
                 )
 
+        # ── Piccola nota informativa in fondo alla colonna: dove è salvata la verifica e come sbloccare il resto ──
+        _funz_complete = bool(ENT.assaggio) or ENT.piano != "free" or (_is_admin and not _SIM)
+        _testo_nota = ("Questa verifica è salvata in <b>«Le mie verifiche»</b>: la ritrovi quando vuoi dalla barra laterale."
+                       if _funz_complete else
+                       "Questa verifica è salvata in <b>«Le mie verifiche»</b>, che trovi nella barra laterale. Se sblocchi le funzioni complete "
+                       "(questionario o invito di un collega) puoi usarle anche su questa verifica: riaprila da lì e scarica Fila B, soluzioni, Word e il resto.")
+        st.markdown(
+            "<style>.nota-sv{display:flex;gap:.7rem;align-items:flex-start;margin:.9rem 0 .2rem;padding:.75rem .95rem;border-radius:14px;"
+            f"background:rgba(255,255,255,.5);border:1px dashed {T['accent']}55;font-family:'DM Sans',sans-serif;font-size:.82rem;line-height:1.45;color:{T['text2']};}}"
+            f".nota-sv b{{color:{T['text']};}}.nota-sv svg{{flex:0 0 1.1rem;margin-top:.1rem;color:{T['accent']};}}</style>"
+            '<div class="nota-sv"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
+            'stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v5.5M12 7.6v.1"/></svg>'
+            f'<div>{_testo_nota}</div></div>', unsafe_allow_html=True)
+        st.button("Apri «Le mie verifiche»", key="apri_storico_nota", type="tertiary", icon=":material/folder_open:", on_click=_apri_storico)
+
     # ── FILA B ────────────────────────────────────────────────────────────────
     with _vc1:
         _b_pdf = vB.get("pdf")

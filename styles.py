@@ -5009,7 +5009,7 @@ font-family: 'DM Sans', sans-serif;
   html body .stApp .st-key-home_indietro button, html body .stApp .st-key-home_indietro button * {{ white-space: nowrap !important; }}
 
   /* «Guarda un'anteprima» e «Cambia modo di partire»: due link discreti, non pulsanti */
-  html body .stApp :is(.st-key-seg_apri, .st-key-final_classe, .st-key-apri_storico_home, .st-key-logout_btn, .st-key-stile_anteprima, .st-key-pf_anteprima_stili, .st-key-apri_impostazioni_form, .st-key-home_indietro, .st-key-pf_indietro, .st-key-imp_torna_alto, .st-key-back_from_mie_verifiche, .st-key-sb_indietro, .st-key-up_indietro, .st-key-cruscotto_indietro):not(#vf) button {{
+  html body .stApp :is(.st-key-seg_apri, .st-key-apri_storico_nota, .st-key-final_classe, .st-key-apri_storico_home, .st-key-logout_btn, .st-key-stile_anteprima, .st-key-pf_anteprima_stili, .st-key-apri_impostazioni_form, .st-key-home_indietro, .st-key-pf_indietro, .st-key-imp_torna_alto, .st-key-back_from_mie_verifiche, .st-key-sb_indietro, .st-key-up_indietro, .st-key-cruscotto_indietro):not(#vf) button {{
     background: transparent !important; background-image: none !important; border: none !important; box-shadow: none !important;
     min-height: 0 !important; padding: .15rem .1rem !important; width: auto !important;
   }}
