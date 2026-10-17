@@ -5101,13 +5101,13 @@ font-family: 'DM Sans', sans-serif;
     box-shadow: 0 16px 34px {_acc}30, 0 2px 6px rgba(15,23,42,.06) !important; overflow: hidden; margin: 0 !important;
   }}
   html body .stApp .st-key-vx_modifica details > summary {{
-    background: linear-gradient(135deg, {_acc}30 0%, {_acc}16 100%) !important; padding: 1.05rem 1.25rem !important; border-radius: 0 !important;
+    background: linear-gradient(135deg, {_acc}30 0%, {_acc}16 100%) !important; padding: .9rem 1.2rem !important; border-radius: 0 !important;
     border-bottom: 1px solid {_acc}33 !important;
   }}
   html body .stApp .st-key-vx_modifica details > summary, html body .stApp .st-key-vx_modifica details > summary * {{
     color: {T['text']} !important; -webkit-text-fill-color: {T['text']} !important; font-weight: 800 !important; background: transparent !important;
   }}
-  html body .stApp .st-key-vx_modifica details > summary p {{ font-size: 1.1rem !important; font-family: 'DM Sans', sans-serif !important; }}
+  html body .stApp .st-key-vx_modifica details > summary p {{ font-size: 1rem !important; font-family: 'DM Sans', sans-serif !important; }}
   html body .stApp .st-key-vx_modifica details > summary {{ background: linear-gradient(135deg, {_acc}30 0%, {_acc}16 100%) !important; }}
   html body .stApp .st-key-vx_modifica details > summary svg, html body .stApp .st-key-vx_modifica details > summary svg * {{
     fill: {_acc} !important; color: {_acc} !important; stroke: none !important;
