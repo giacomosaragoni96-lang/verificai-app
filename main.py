@@ -2808,44 +2808,81 @@ def _render_le_tue_verifiche():
                 st.rerun()
         return
 
-    # Riepilogo su una riga
+    # Riepilogo a tessere
+    _n_classi_r = len({v.get("classe") for v in verifiche if v.get("classe")})
+    _n_materie_r = len({v.get("materia") for v in verifiche if v.get("materia")})
+    _tess = [(stats["totali"], "in tutto"), (stats["questo_mese"], "questo mese"), (_n_materie_r, "materie")]
+    if _n_classi_r:
+        _tess.append((_n_classi_r, "classi"))
     st.markdown(
-        f'<div style="text-align:center;margin:0 0 1.2rem;font-family:DM Sans,sans-serif;'
-        f'font-size:.95rem;color:{T["text2"]};">'
-        f'<strong style="color:{T["text"]};">{stats["totali"]}</strong> verifiche in tutto &nbsp;·&nbsp; '
-        f'<strong style="color:{T["text"]};">{stats["questo_mese"]}</strong> questo mese</div>',
+        '<div class="mv-stat">' + "".join(f'<div><b>{_n}</b><span>{_t}</span></div>' for _n, _t in _tess) + '</div>',
         unsafe_allow_html=True,
     )
 
-    # Le tue classi: tessere colorate in cima (solo se ci sono verifiche con una classe)
-    _conta_cl = {}
+    # Le tue classi: una vetrina di carte colorate (solo da guardare, non filtra l'elenco)
+    _info_cl = {}
     for _v in verifiche:
-        if _v.get("classe"):
-            _conta_cl[_v["classe"]] = _conta_cl.get(_v["classe"], 0) + 1
-    if st.session_state.get("mv_classe", "Tutte") not in (["Tutte"] + list(_conta_cl)):
-        st.session_state["mv_classe"] = "Tutte"
-    if _conta_cl:
-        st.markdown('<div class="mvcl-et">Le tue classi</div>', unsafe_allow_html=True)
+        _n_c = _v.get("classe")
+        if not _n_c:
+            continue
+        _d = _info_cl.setdefault(_n_c, {"n": 0, "materie": {}, "ultima": None})
+        _d["n"] += 1
+        if _v.get("materia"):
+            _d["materie"][_v["materia"]] = _d["materie"].get(_v["materia"], 0) + 1
+        if not _d["ultima"] or (_v.get("created_at") or "") > (_d["ultima"].get("created_at") or ""):
+            _d["ultima"] = _v
+    classe_filter = "Tutte"
+    if _info_cl:
         _prof_cl = _profilo()
-        _nomi_cl = [c["nome"] for c in (_prof_cl.get("classi") or []) if c.get("nome") in _conta_cl]
-        _nomi_cl += sorted(n for n in _conta_cl if n not in _nomi_cl)
-        _css_cl = ""
-
-        def _scegli_classe(nome):
-            st.session_state["mv_classe"] = nome
-        with st.container(key="mvcl", horizontal=True):
-            _attiva = st.session_state.get("mv_classe", "Tutte")
-            for _k, (_nome, _n) in enumerate([("Tutte", len(verifiche))] + [(n, _conta_cl[n]) for n in _nomi_cl]):
-                _col = T["accent"] if _nome == "Tutte" else ((profilo.classe(_prof_cl, _nome) or {}).get("colore") or T["accent"])
-                _on = (_nome == _attiva)
-                _css_cl += (f'html body .stApp .st-key-mvcl_{_k} button{{border:2px solid {_col}{"" if _on else "66"} !important;'
-                            + (f'background:linear-gradient(135deg,{_col},{_col}CC) !important;box-shadow:0 8px 18px {_col}55 !important;'
-                               if _on else f'background:{_col}14 !important;box-shadow:none !important;')
-                            + f'animation-delay:{_k * 0.05:.2f}s;}}'
-                            f'html body .stApp .st-key-mvcl_{_k} button, html body .stApp .st-key-mvcl_{_k} button *{{color:{"#fff" if _on else _col} !important;'
-                            f'-webkit-text-fill-color:{"#fff" if _on else _col} !important;}}')
-                st.button(f"{'Tutte' if _nome == 'Tutte' else 'Classe ' + _nome}  ·  {_n}", key=f"mvcl_{_k}", on_click=_scegli_classe, args=(_nome,))
-        st.markdown(f"<style>{_css_cl}</style>", unsafe_allow_html=True)
+        _ordine_cl = [c["nome"] for c in (_prof_cl.get("classi") or []) if c.get("nome") in _info_cl]
+        _ordine_cl += sorted((n for n in _info_cl if n not in _ordine_cl), key=lambda n: -_info_cl[n]["n"])
+        _tot_cl = sum(d["n"] for d in _info_cl.values()) or 1
+        _carte = []
+        for _k, _nome in enumerate(_ordine_cl):
+            _d = _info_cl[_nome]
+            _col = (profilo.classe(_prof_cl, _nome) or {}).get("colore") or T["accent"]
+            _quota = round(100 * _d["n"] / _tot_cl)
+            _mat = sorted(_d["materie"].items(), key=lambda x: -x[1])[:3]
+            _chip_m = "".join(f'<i>{_esc(m)}</i>' for m, _ in _mat)
+            _ult = _d["ultima"] or {}
+            _fogli = "".join(f'<u style="--r:{(j - 1) * 7 - 3}deg;--x:{j * 5}px"></u>' for j in range(min(3, _d["n"])))
+            _carte.append(
+                f'<div class="cl-c" style="--c:{_col};animation-delay:{_k * 0.09:.2f}s">'
+                f'<div class="cl-fogli">{_fogli}</div>'
+                f'<svg class="cl-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="3"/>'
+                f'<circle cx="18" cy="18" r="15.9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-dasharray="{_quota} 100" transform="rotate(-90 18 18)"/></svg>'
+                f'<div class="cl-eb">Classe</div><div class="cl-n">{_esc(_nome)}</div>'
+                f'<div class="cl-v"><b>{_d["n"]}</b> {"verifica" if _d["n"] == 1 else "verifiche"}</div>'
+                f'<div class="cl-m">{_chip_m}</div>'
+                f'<div class="cl-u">Ultima: {_esc((_ult.get("argomento") or "senza titolo")[:42])} · {_esc(_data_relativa(_ult.get("created_at")))}</div>'
+                '</div>')
+        st.markdown(
+            "<style>"
+            ".cl-et{font-family:'DM Sans',sans-serif;font-size:.74rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:" + T["accent"] + ";margin:.2rem 0 .6rem .2rem;}"
+            ".cl-row{display:flex;gap:.9rem;overflow-x:auto;padding:.4rem .2rem 1.1rem;margin:0 -.2rem 1rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;}"
+            ".cl-row::-webkit-scrollbar{display:none;}"
+            ".cl-c{position:relative;flex:0 0 14.5rem;scroll-snap-align:start;overflow:hidden;border-radius:22px;padding:1.1rem 1.15rem 1rem;color:#fff;font-family:'DM Sans',sans-serif;"
+            "background:linear-gradient(145deg,var(--c) 0%,color-mix(in srgb,var(--c) 62%,#000) 100%);box-shadow:0 14px 28px color-mix(in srgb,var(--c) 40%,transparent);"
+            "animation:cl-in .6s cubic-bezier(.2,.8,.2,1) both;transition:transform .25s ease,box-shadow .25s ease;}"
+            ".cl-c:hover{transform:translateY(-6px) rotate(-.6deg);box-shadow:0 22px 36px color-mix(in srgb,var(--c) 50%,transparent);}"
+            ".cl-c::before{content:'';position:absolute;right:-2.2rem;top:-2.2rem;width:8rem;height:8rem;border-radius:50%;background:rgba(255,255,255,.14);}"
+            ".cl-c::after{content:'';position:absolute;left:-2rem;bottom:-3rem;width:7rem;height:7rem;border-radius:50%;background:rgba(255,255,255,.09);}"
+            ".cl-c>*{position:relative;z-index:1;}"
+            ".cl-ring{position:absolute;right:1rem;top:1rem;width:2.6rem;height:2.6rem;z-index:1;}"
+            ".cl-fogli{position:absolute;right:1.1rem;bottom:1rem;width:2.4rem;height:3rem;z-index:1;}"
+            ".cl-fogli u{position:absolute;inset:0;border-radius:5px;background:rgba(255,255,255,.88);transform:translate(var(--x),0) rotate(var(--r));box-shadow:0 2px 6px rgba(0,0,0,.18);"
+            "border-top:6px solid rgba(255,255,255,.55);}"
+            ".cl-eb{font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;opacity:.8;}"
+            ".cl-n{font-size:2.5rem;font-weight:800;line-height:1;letter-spacing:-.03em;margin:.1rem 0 .35rem;text-shadow:0 3px 10px rgba(0,0,0,.2);}"
+            ".cl-v{font-size:.92rem;opacity:.95;}.cl-v b{font-size:1.15rem;}"
+            ".cl-m{display:flex;gap:.3rem;flex-wrap:wrap;margin:.55rem 0 .6rem;max-width:80%;}"
+            ".cl-m i{font-style:normal;font-size:.72rem;font-weight:700;padding:.12rem .55rem;border-radius:999px;background:rgba(255,255,255,.22);backdrop-filter:blur(2px);}"
+            ".cl-u{font-size:.74rem;opacity:.85;line-height:1.3;max-width:78%;}"
+            "@keyframes cl-in{from{opacity:0;transform:translateY(24px) scale(.94);}to{opacity:1;transform:none;}}"
+            "@media (prefers-reduced-motion:reduce){.cl-c{animation:none;transition:none;}}"
+            "</style>"
+            '<div class="cl-et">Le tue classi</div><div class="cl-row">' + "".join(_carte) + "</div>",
+            unsafe_allow_html=True)
 
     # Filtri
     col_vai, col_materia, col_ordine = st.columns([3, 2, 2])
@@ -2856,7 +2893,6 @@ def _render_le_tue_verifiche():
     with col_materia:
         materia_filter = st.selectbox("Materia", materie_real)
 
-    classe_filter = st.session_state.get("mv_classe", "Tutte")
     with col_ordine:
         ordine_filter = st.selectbox("Ordina per", ["Più recenti", "Più vecchie", "Alfabetico", "Materia"])
 
@@ -2912,9 +2948,6 @@ def _render_le_tue_verifiche():
 
         with st.container(key=(f"vrow_{i}" if not esteso else "vsel_0")):
             _col_m, _ico_m = _stile_materia(verifica.get("materia"))
-            if not esteso:
-                c_info, c_apri, c_menu = st.columns([5.4, 1.3, 0.5], vertical_alignment="center", gap="small")
-                _pop = c_menu.popover("⋯", help="Scarica, anteprima, condividi, rinomina o elimina")
             _col_cl = (profilo.classe(_profilo(), verifica.get("classe")) or {}).get("colore") or T["text"]
             _chip_classe = (f'<span style="background:{_col_cl}1F;color:{_col_cl};border:1px solid {_col_cl}66;padding:.12rem .6rem;border-radius:999px;font-weight:700;font-size:.75rem;">'
                             f'Classe {_esc(verifica.get("classe"))}</span>' if verifica.get("classe") else "")
@@ -2922,7 +2955,7 @@ def _render_le_tue_verifiche():
                       if esteso else "")
             _impag = ('<span style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:.12rem .6rem;border-radius:999px;font-weight:700;font-size:.75rem;">'
                       'Impaginata da te</span>' if verifica.get("percorso_scelto") == "IMPAGINA" else "")
-            (st if esteso else c_info).markdown(
+            st.markdown(
                 re.sub(r">\s+<", "><", f"""
                 <div style="{_box_v}display:flex;gap:.9rem;align-items:center;">
                     <div style="flex:0 0 2.6rem;height:2.6rem;border-radius:13px;background:linear-gradient(135deg,{_col_m},{_col_m}BB);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.15rem;font-weight:800;box-shadow:0 5px 12px {_col_m}55;font-family:DM Sans,sans-serif;">{_esc((verifica.get('materia') or '?')[:1].upper())}</div>
@@ -2947,6 +2980,9 @@ def _render_le_tue_verifiche():
             if esteso:
                 c_apri, c_pdf, c_prev, c_share, c_menu = st.columns([1.35, 1, 1, 1, 0.5])
             else:
+                # elenco: la scheda sta sopra (a tutta larghezza) e sotto ci sono «Apri» e il menu «⋯», sempre sulla stessa riga
+                c_apri, c_menu = st.columns([5, 1], vertical_alignment="center", gap="small")
+                _pop = c_menu.popover("⋯", help="Scarica, anteprima, condividi, rinomina o elimina")
                 c_pdf = c_prev = c_share = _pop          # nell'elenco le azioni secondarie stanno tutte nel menu «⋯»
 
             with c_apri:
