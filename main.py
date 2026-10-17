@@ -3848,7 +3848,6 @@ def _render_percorso_b_form(_prog_placeholder):
                     help="Tipo di scuola e livello. Se hai caricato un file, viene rilevato automaticamente.",
                     label_visibility="collapsed", key="sel_scuola_b",
                 )
-            _selettore_classe()           # fuori dalla riga «Materia · Scuola»: resta visibile anche quando quella è chiusa
 
             # Section header rimosso per evitare ripetizioni
             _auto_arg = _info_cons.get("contenuto_argomento", "")
@@ -3951,6 +3950,10 @@ def _render_percorso_b_form(_prog_placeholder):
             _n_libro = len(st.session_state.get("_foto_es_pronti") or [])
             if _n_libro:
                 _pillole.append("📷 " + ("Esercizio del libro incluso" if _n_libro == 1 else f"{_n_libro} esercizi del libro inclusi"))
+            if st.session_state.get("_classe_sel") or st.session_state.get("data_verifica_in"):
+                _cd = " · ".join(x for x in (st.session_state.get("_classe_sel") or "",
+                                             st.session_state["data_verifica_in"].strftime("%d/%m/%Y") if st.session_state.get("data_verifica_in") else "") if x)
+                _pillole.append("🎓 " + _cd)
             try:
                 _logo_p = _logo_scuola()
                 if _logo_p and _logo_p.get("attivo", True) and not _pro_bloccato("logo"):
@@ -3959,8 +3962,9 @@ def _render_percorso_b_form(_prog_placeholder):
                 pass
             if _pillole:
                 st.markdown('<div class="pille-ok">' + "".join(f'<span>{_esc(x)}</span>' for x in _pillole) + '</div>', unsafe_allow_html=True)
-            with st.expander("Altre opzioni (esercizi, materiale, punteggi)", expanded=bool(_fm), icon=":material/tune:"):
+            with st.expander("Altre opzioni (classe, esercizi, materiale, punteggi)", expanded=bool(_fm), icon=":material/tune:"):
                 st.markdown('<span class="g-altre" style="display:none"></span>', unsafe_allow_html=True)
+                _selettore_classe()           # classe e data, per prime: compaiono compilate nell'intestazione del PDF
                 # ── DURATA: un solo scatto sceglie numero di esercizi e tempo previsto ──────
                 _nomi_dur = list(DURATE)
                 # Si parte sempre da «Standard»: la lunghezza cambia da verifica a verifica,
