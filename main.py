@@ -7115,7 +7115,6 @@ def _render_stage_final():
             '<div class="nota-sv"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
             'stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v5.5M12 7.6v.1"/></svg>'
             f'<div>{_testo_nota}</div></div>', unsafe_allow_html=True)
-        st.button("Apri «Le mie verifiche»", key="apri_storico_nota", type="tertiary", icon=":material/folder_open:", on_click=_apri_storico)
 
     # ── FILA B ────────────────────────────────────────────────────────────────
     with _vc1:
