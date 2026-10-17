@@ -110,10 +110,12 @@ def _tikz_to_png_bytes(tikz_code: str) -> bytes | None:
             )
             
             if result.returncode != 0:
-                logger.error(f"pdflatex failed - Return code: {result.returncode}")
-                logger.error(f"pdflatex stderr: {result.stderr.decode() if result.stderr else 'None'}")
-                logger.error(f"pdflatex stdout: {result.stdout.decode() if result.stdout else 'None'}")
-                return None
+                # un errore non grave di pgfplots (un'opzione che non conosce) fa uscire pdflatex con un codice diverso da 0 ma il disegno c'è:
+                # si scarta solo se il PDF non è stato creato
+                logger.warning(f"pdflatex ha segnalato errori (codice {result.returncode}): si usa comunque il PDF se esiste")
+                if not os.path.exists(pdf_path):
+                    logger.error(f"pdflatex failed - stdout: {result.stdout.decode(errors='replace')[-600:] if result.stdout else 'None'}")
+                    return None
             
             if not os.path.exists(pdf_path):
                 logger.error(f"PDF file not created at {pdf_path}")

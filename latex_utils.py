@@ -1309,6 +1309,8 @@ def _pulisci_opzioni_asse(testo: str) -> str:
     dagli assi pgfplots.
     """
     testo = _rimuovi_legende_pgf(testo)
+    # «restrict y to domain=-3:10» è un'unica opzione: senza questa protezione «domain=…» veniva tolto e restava «restrict y to,» (errore di pgfplots)
+    testo = re.sub(r'(restrict\s+[xy]\s+to\s+)domain(\s*=)', r'\1RSTRDOM\2', testo)
     testo = _rimuovi_opzioni_pgf(
         testo,
         r'[xy]min|[xy]max|(?:[xy]\s*)?domain|samples|xlabel|ylabel|title|legend[ a-zA-Z]*'
@@ -1318,7 +1320,7 @@ def _pulisci_opzioni_asse(testo: str) -> str:
     testo = re.sub(r',\s*,', ',', testo)
     testo = re.sub(r'\[\s*,', '[', testo)
     testo = re.sub(r',\s*\]', ']', testo)
-    return testo
+    return testo.replace("RSTRDOM", "domain")
 
 
 # ── Grafici da specifica ────────────────────────────────────────────────────────────
