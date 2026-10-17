@@ -3285,6 +3285,19 @@ font-family: 'DM Sans', sans-serif;
     background: linear-gradient(160deg, {T['card']} 0%, {_acc}12 100%); border: 1.5px solid {_acc}55; border-radius: 18px; padding: 1.1rem 1.3rem 1.2rem !important; margin-bottom: .9rem;
     box-shadow: 0 12px 28px {_acc}28;
   }}
+  /* filtri discreti: una riga sottile, senza etichette */
+  html body .stApp .st-key-mv_filtri:not(#vf) {{ margin: .2rem 0 .3rem; opacity: .92; }}
+  html body .stApp .st-key-mv_filtri:not(#vf) [data-baseweb="select"] > div {{ min-height: 2.3rem !important; font-size: .84rem !important; border-radius: 999px !important; padding-left: .35rem; }}
+  html body .stApp .st-key-mv_filtri:not(#vf) [data-testid="stSelectbox"] {{ margin-bottom: 0 !important; }}
+  /* «Apri» compatto; su computer sta a destra della scheda */
+  html body .stApp div[class*="st-key-vrow_"]:not(#vf) [data-testid="stButton"] button {{ min-height: 2.4rem !important; height: 2.4rem !important; padding: 0 1rem !important; border-radius: 12px !important; }}
+  @media (min-width: 641px) {{
+    html body .stApp div[class*="st-key-vrow_"]:not(#vf) {{ position: relative; padding-right: 13.5rem !important; }}
+    html body .stApp div[class*="st-key-vrow_"]:not(#vf) [data-testid="stHorizontalBlock"] {{
+      position: absolute !important; right: 1rem; top: 50%; transform: translateY(-50%); width: auto !important; flex-wrap: nowrap !important; gap: .5rem !important; }}
+    html body .stApp div[class*="st-key-vrow_"]:not(#vf) [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{ width: auto !important; flex: 0 0 auto !important; min-width: 0 !important; }}
+    html body .stApp div[class*="st-key-vrow_"]:not(#vf) [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(1) {{ width: 6.5rem !important; }}
+  }}
   .mv-stat {{ display: flex; gap: .6rem; flex-wrap: wrap; margin: 0 0 1.1rem; }}
   .mv-stat > div {{ flex: 1 1 6rem; text-align: center; padding: .7rem .5rem; border-radius: 16px; background: {T['card']}; border: 1px solid {T['border']};
     box-shadow: 0 3px 10px rgba(15,23,42,.06); font-family: 'DM Sans', sans-serif; }}
