@@ -1931,6 +1931,30 @@ def bilancia_punti(punti: list, totale: int) -> list:
     return risultato
 
 
+def normalizza_elenchi(latex: str) -> str:
+    r"""
+    Ripara gli elenchi che l'AI scrive male quando riscrive un esercizio (di solito un Vero/Falso):
+    - «\item a) testo»: la lettera è già nel testo, diventa «\item[a)] testo» (altrimenti compare due volte);
+    - un \item vuoto subito prima di un altro \item (o della fine dell'elenco) si toglie: era un'etichetta sola, a riga propria;
+    - un \item che contiene soltanto un altro elenco: le sue voci salgono al livello dell'elenco esterno.
+    Non tocca le opzioni A) B) C) D) delle scelte multiple (hanno testo e la lettera maiuscola).
+    """
+    # 1) lettera ripetuta nel testo
+    def _lettera(m):
+        etichetta, lettera = m.group(1), m.group(2)
+        if etichetta is not None and etichetta.strip().lower() != lettera + ")":
+            return m.group(0)
+        return "\\item[" + lettera + ")] "
+    latex = re.sub(r"\\item(?:\[([^\]]*)\])?[ \t]*\n?[ \t]*([a-h])\)[ \t]+", _lettera, latex)
+    # 2) item vuoti
+    latex = re.sub(r"\\item(?:\[[^\]]*\])?[ \t]*\n(?=[ \t]*(?:\\item|\\end\{(?:enumerate|itemize)\}))", "", latex)
+    # 3) item che contiene soltanto un elenco
+    latex = re.sub(
+        r"\\item[ \t]*\n[ \t]*\\begin\{enumerate\}(?:\[[^\]]*\])?\s*(\\item.*?)\\end\{enumerate\}[ \t]*\n?(?=[ \t]*(?:\\item|\\end\{enumerate\}))",
+        lambda m: m.group(1).rstrip() + "\n", latex, flags=re.DOTALL)
+    return latex
+
+
 def normalizza_sottopunti_inline(latex: str) -> str:
     """
     Trasforma in un vero elenco i sottopunti scritti in linea nel testo:

@@ -64,7 +64,7 @@ from latex_utils import (
     parse_items_from_block, apply_item_pts_to_body, punti_richieste, applica_punti_richieste, riempi_classe_data,
     prepara_esercizi_aperti, conta_punti_latex,
     migliora_spaziatura_sottopunti, limita_altezza_grafici, aggiungi_spaziatura_grafici_tabelle,
-    normalizza_sottopunti_inline, bilancia_punti, esercizi_con_grafico_mancante, anteprima_esercizio_png,
+    normalizza_sottopunti_inline, normalizza_elenchi, bilancia_punti, esercizi_con_grafico_mancante, anteprima_esercizio_png,
 )
 from config import (
     APP_NAME, APP_ICON, SHARE_URL, FEEDBACK_FORM_URL,
@@ -526,6 +526,7 @@ def _postprocessa_latex(latex: str, mostra_punteggi: bool, punti_totali: int,
     esercizio). con_griglia inietta la tabella dei punteggi (chi aggiunge
     \\end{document} dopo passa False e la inietta da sé).
     """
+    latex = normalizza_elenchi(latex)             # etichette doppie, voci vuote o annidate scritte dall'AI
     latex = normalizza_sottopunti_inline(latex)   # "a) … b) …" nel paragrafo → elenco
     latex = fix_items_environment(latex)
     latex = aggiungi_consegne_mancanti(latex)
