@@ -6800,7 +6800,7 @@ def _render_stage_final():
         # «Versioni della verifica», «Per la classe e la valutazione» e «Scarica tutti i file in una volta»: tutte chiuse
         # (durante la prima verifica lampeggiano, vedi la guida). I segnaposto .g-kitN servono a farle lampeggiare.
         st.markdown('<div id="kit-completo"></div>' + _css_kit(), unsafe_allow_html=True)
-        _riga = lambda: st.columns([3.4, 1.6], vertical_alignment="center", gap="medium")
+        _riga = lambda: st.columns([2.8, 2.2], vertical_alignment="center", gap="medium")
         with st.expander("Versioni della verifica: **soluzioni**, **Fila B**, **BES/DSA**, **recupero**", expanded=False, icon=":material/file_copy:"):
             st.markdown('<span class="g-kit1" style="display:none"></span>', unsafe_allow_html=True)
             with st.container(key="ver_soluzioni"):
@@ -6890,7 +6890,7 @@ def _render_stage_final():
                     mime="application/pdf", use_container_width=True, key="dl_pdf_B_v2",
                 )
             elif _b_lat:
-                if st.button("📄 Crea PDF Fila B", key="compile_B_v2",
+                if st.button("Crea PDF Fila B", icon=":material/picture_as_pdf:", key="compile_B_v2",
                              use_container_width=True, type="secondary"):
                     with _attesa("copie", "Preparo il PDF della Fila B", ["Compilo il documento"]):
                         _pdf_bc, _ = compila_pdf(_b_lat)
@@ -6899,7 +6899,7 @@ def _render_stage_final():
             elif _pro_bloccato("fila_b"):
                 _pulsante_pro("fila_b", "pro_fila_b")
             else:
-                if st.button("⚡ Genera Fila B", key="one_click_B_v2",
+                if st.button("Genera Fila B", icon=":material/bolt:", key="one_click_B_v2",
                              use_container_width=True, type="secondary"):
                     st.session_state["_gen_fila_b"] = True; st.rerun()
 
@@ -6966,7 +6966,7 @@ def _render_stage_final():
                     mime="application/pdf", use_container_width=True, key="dl_pdf_R_v2",
                 )
             elif _r_lat:
-                if st.button("📄 Crea PDF BES/DSA", key="compile_R_v2",
+                if st.button("Crea PDF BES/DSA", icon=":material/picture_as_pdf:", key="compile_R_v2",
                              use_container_width=True, type="secondary"):
                     with _attesa("copie", "Preparo il PDF della versione BES/DSA", ["Compilo il documento"]):
                         _pdf_rc, _ = compila_pdf(_r_lat)
@@ -6975,7 +6975,7 @@ def _render_stage_final():
             elif _pro_bloccato("bes"):
                 _pulsante_pro("bes", "pro_bes")
             else:
-                if st.button("🌟 Genera BES/DSA", key="one_click_R_v2",
+                if st.button("Genera BES/DSA", icon=":material/auto_awesome:", key="one_click_R_v2",
                              use_container_width=True, type="secondary"):
                     st.session_state["_gen_bes"] = True; st.rerun()
 
@@ -7106,7 +7106,7 @@ def _render_stage_final():
                     mime="application/pdf", use_container_width=True, key="dl_pdf_S_v2",
                 )
             elif _s_lat:
-                if st.button("📄 Crea PDF Soluzioni", key="compile_S_v2",
+                if st.button("Crea PDF Soluzioni", icon=":material/picture_as_pdf:", key="compile_S_v2",
                              use_container_width=True, type="secondary"):
                     with _attesa("pagina", "Preparo il PDF delle soluzioni", ["Compilo il documento"]):
                         _pdf_sc, _ = compila_pdf(_s_lat)
@@ -7115,7 +7115,7 @@ def _render_stage_final():
             elif _pro_bloccato("soluzioni"):
                 _pulsante_pro("soluzioni", "pro_soluzioni")
             else:
-                if st.button("✅ Genera Soluzioni", key="one_click_S_v2",
+                if st.button("Genera Soluzioni", icon=":material/task_alt:", key="one_click_S_v2",
                              use_container_width=True, type="secondary"):
                     st.session_state["_gen_sol"] = True; st.rerun()
 
