@@ -4973,7 +4973,7 @@ font-family: 'DM Sans', sans-serif;
     background: transparent !important; background-image: none !important; border: none !important; box-shadow: none !important;
     min-height: 0 !important; padding: .15rem .1rem !important; width: auto !important;
   }}
-  html body .stApp .st-key-home_indietro:not(#vf) button {{ width: 100% !important; }}
+  html body .stApp :is(.st-key-home_indietro, .st-key-seg_apri):not(#vf) button {{ width: 100% !important; justify-content: center !important; }}
   html body .stApp :is(.st-key-stile_anteprima, .st-key-pf_anteprima_stili, .st-key-apri_impostazioni_form, .st-key-home_indietro, .st-key-pf_indietro, .st-key-imp_torna_alto, .st-key-back_from_mie_verifiche, .st-key-sb_indietro, .st-key-up_indietro, .st-key-cruscotto_indietro):not(#vf) button, html body .stApp :is(.st-key-stile_anteprima, .st-key-pf_anteprima_stili, .st-key-apri_impostazioni_form, .st-key-home_indietro, .st-key-pf_indietro, .st-key-imp_torna_alto, .st-key-back_from_mie_verifiche, .st-key-sb_indietro, .st-key-up_indietro, .st-key-cruscotto_indietro):not(#vf) button * {{
     color: {T['muted']} !important; -webkit-text-fill-color: {T['muted']} !important; font-size: .82rem !important; font-weight: 500 !important;
   }}
@@ -5065,20 +5065,32 @@ font-family: 'DM Sans', sans-serif;
     background: linear-gradient(160deg, {_acc}08 0%, {_acc}1C 100%); border: 1.5px solid {_acc}44; border-left: 4px solid {_acc}; border-radius: 18px;
     padding: 1rem 1.15rem 1.05rem; margin: .2rem 0 .8rem; box-shadow: 0 8px 22px {_acc}22;
   }}
-  /* «Vuoi modificare qualcosa?»: tendina in evidenza, con l'intestazione nel colore del tema */
-  html body .stApp details[data-testid="stExpander"]:has(.vx-mod):not(#vf) {{
-    background: linear-gradient(160deg, {T['card']} 0%, {_acc}0D 100%) !important; border: 1.5px solid {_acc}55 !important; border-radius: 20px !important;
-    box-shadow: 0 14px 30px {_acc}28 !important; overflow: hidden; margin: .7rem 0 1rem !important;
+
+  /* Colonna destra della pagina finale: riquadro del PDF, tendina delle modifiche e scheda Word, con lo stesso stacco tra loro */
+  html body .stApp .st-key-pdf_card:not(#vf) {{
+    background: linear-gradient(160deg, {T['card']} 0%, #F59E0B14 100%); border: 1.5px solid #F59E0B66; border-left: 5px solid #F59E0B; border-radius: 20px;
+    padding: 1.05rem 1.2rem 1.15rem; box-shadow: 0 14px 30px #F59E0B26, 0 2px 6px rgba(15,23,42,.06);
   }}
-  html body .stApp details[data-testid="stExpander"]:has(.vx-mod) > summary {{
+  .pc-h {{ display: flex; align-items: center; gap: .8rem; margin-bottom: .75rem; font-family: 'DM Sans', sans-serif; }}
+  .pc-i {{ flex: 0 0 2.6rem; height: 2.6rem; border-radius: 13px; background: linear-gradient(135deg, #F59E0B, #EA580C); color: #fff; display: flex;
+    align-items: center; justify-content: center; box-shadow: 0 6px 14px #EA580C55; }}
+  .pc-t {{ font-weight: 800; font-size: 1.12rem; color: {T['text']}; line-height: 1.2; }}
+  .pc-d {{ font-size: .86rem; color: {T['text2']}; margin-top: .1rem; }}
+
+  /* «Vuoi modificare qualcosa?»: tendina in evidenza, con l'intestazione nel colore del tema */
+  html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] {{
+    background: linear-gradient(160deg, {T['card']} 0%, {_acc}0D 100%) !important; border: 1.5px solid {_acc}55 !important; border-radius: 20px !important;
+    box-shadow: 0 14px 30px {_acc}28 !important; overflow: hidden; margin: 0 !important;
+  }}
+  html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] > summary {{
     background: linear-gradient(135deg, {_acc} 0%, {T.get('accent2', _acc)} 100%) !important; padding: 1.05rem 1.25rem !important; border-radius: 0 !important;
   }}
-  html body .stApp details[data-testid="stExpander"]:has(.vx-mod) > summary, html body .stApp details[data-testid="stExpander"]:has(.vx-mod) > summary * {{
+  html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] > summary, html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] > summary * {{
     color: #fff !important; -webkit-text-fill-color: #fff !important; font-weight: 800 !important; font-size: 1.1rem !important; font-family: 'DM Sans', sans-serif !important;
   }}
-  html body .stApp details[data-testid="stExpander"]:has(.vx-mod) > summary svg {{ fill: #fff !important; color: #fff !important; }}
-  html body .stApp details[data-testid="stExpander"]:has(.vx-mod) > div {{ padding: .9rem 1rem 1rem !important; background: transparent !important; }}
-  html body .stApp details[data-testid="stExpander"]:has(.vx-mod) div.st-key-mod_rapida:not(#vf) {{ margin-top: 0 !important; }}
+  html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] > summary svg {{ fill: #fff !important; color: #fff !important; }}
+  html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] > div {{ padding: .9rem 1rem 1rem !important; background: transparent !important; }}
+  html body .stApp .st-key-vx_modifica details[data-testid="stExpander"] div.st-key-mod_rapida:not(#vf) {{ margin-top: 0 !important; }}
   html body .stApp .st-key-card_modifica .cm-t {{ font-family: 'DM Sans', sans-serif; font-weight: 800; font-size: 1.02rem; color: {T['text']}; }}
   html body .stApp .st-key-card_modifica .cm-d {{ font-family: 'DM Sans', sans-serif; font-size: .86rem; color: {T['text2']}; margin: .15rem 0 .7rem; line-height: 1.45; }}
 
