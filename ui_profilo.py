@@ -116,7 +116,9 @@ def _sezione_classi(T, ctx, stats) -> None:
             note = st.text_area("Note per questa classe", value=c["note"], key=f"cl_nt_{i}", height=80, max_chars=profilo.MAX_NOTE,
                                 placeholder="Es.: ritmo lento, molte lacune sulle frazioni, evitare i problemi di realtà")
             b1, b2, b3, b4 = st.columns([1.1, 1.8, 1.6, .5], gap="small", vertical_alignment="center")
-            if b1.button("Salva", key=f"cl_salva_{i}", type="primary", icon=":material/check:", use_container_width=True):
+            _cambiata = (scuola != c["scuola"]) or ((note or "").strip() != (c["note"] or "").strip())
+            if b1.button("Salva", key=f"cl_salva_{i}", type="primary", icon=":material/check:", use_container_width=True, disabled=not _cambiata,
+                         help=None if _cambiata else "Nessuna modifica da salvare"):
                 nuove = [dict(x) for x in classi]
                 nuove[i] = {**c, "scuola": scuola, "note": note}
                 ctx["salva"]({**p, "classi": nuove})
