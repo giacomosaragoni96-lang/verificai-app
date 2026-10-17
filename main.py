@@ -47,10 +47,12 @@ from ui_legale import render_termini, render_rimborsi
 from ui_questionario import render_questionario
 from ui_sblocco import render_sblocco
 from ui_inviti import apri_dialogo_invito
+from ui_impostazioni import render_impostazioni
 import sblocco
 from questionario import domanda as _domanda_q, pulisci_risposte, riga_rapida
 from licenze import attiva_licenza, riconvalida_se_serve
 from segnalazioni import costruisci_segnalazione, MAX_PER_SESSIONE
+import commenti
 from latex_utils import (
     estrai_logo, proteggi_figure_foto, ripristina_figure_foto, estrai_immagini,
     conta_pagine_pdf, riduci_a_pagine, compila_pdf, compila_pdf_sicuro, inietta_griglia, rimuovi_griglia, inserisci_logo, copia_intestazione_con_logo, rimuovi_logo_b64, riscala_punti, riscala_punti_custom,
@@ -105,6 +107,7 @@ except ImportError:
 # ── COSTANTI STAGE ────────────────────────────────────────────────────────────
 STAGE_MIE_VERIFICHE = "MIE_VERIFICHE"  # pagina "Le tue verifiche"
 STAGE_UPGRADE = "UPGRADE"               # pagina «Passa a Pro»
+STAGE_IMPOSTAZIONI = "IMPOSTAZIONI"     # pagina «Impostazioni predefinite»
 STAGE_PROFILO = "PROFILO"               # pagina «Il mio profilo»
 STAGE_CRUSCOTTO = "CRUSCOTTO"           # pagina «Cruscotto» (solo admin)
 STAGE_BANCA = "BANCA"                   # pagina "Banca esercizi" (solo admin)
@@ -308,9 +311,14 @@ def _giorni_al_reset():
     return d.days, d.seconds // 3600
 
 
+def _dopo_scarico() -> None:
+    """Callback dei download: il file parte e al rerun successivo si apre la finestra del commento (facoltativo)."""
+    st.session_state["_commento_da_chiedere"] = True
+
+
 def _dl(*args, **kwargs):
-    """st.download_button senza rerun al clic: scaricare non deve ricaricare tutta la pagina."""
-    kwargs.setdefault("on_click", "ignore")
+    """st.download_button: dopo lo scarico si apre la finestra «Com'è andata?» (`_dialogo_commento`)."""
+    kwargs.setdefault("on_click", _dopo_scarico)
     return st.download_button(*args, **kwargs)
 
 
@@ -506,31 +514,6 @@ def _postprocessa_latex(latex: str, mostra_punteggi: bool, punti_totali: int,
 def _rimetti_figure(latex: str) -> str:
     """Rimette nelle versioni create dall'AI le figure-foto tolte da `_latex_per_ai`."""
     return ripristina_figure_foto(latex, st.session_state.get("_figure_foto_blocchi") or [])
-
-
-_ESITI = (("pronta", "Pronta", ":material/thumb_up:"), ("ritoccare", "Da ritoccare", ":material/edit:"), ("non_usabile", "Non usabile", ":material/thumb_down:"))
-
-
-def _riga_esito(mod_id: str) -> None:
-    """«Com'è questa verifica?»: tre pulsanti discreti, una volta per verifica. Si registra solo l'esito (evento `esito:…`, con modello e verifica): niente testo, niente dati personali."""
-    chiave = str(st.session_state.get("_storico_id") or "senza-id")
-    if st.session_state.get("_esito_dato") == chiave:
-        st.markdown(f'<div style="text-align:center;font-size:.82rem;color:{T["muted"]};font-family:DM Sans,sans-serif;margin:.4rem 0;">'
-                    f'Grazie del parere: ci aiuta a migliorare.</div>', unsafe_allow_html=True)
-        return
-    st.markdown(f'<div class="esito-t" style="text-align:center;font-size:.85rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.6rem 0 .1rem;">'
-                f'Com\'è questa verifica?</div>', unsafe_allow_html=True)
-    cols = st.columns([.2, 1, 1.25, 1.25, .2], gap="small")
-    for col, (codice, etichetta, icona) in zip(cols[1:4], _ESITI):
-        if col.button(etichetta, key=f"esito_{codice}", type="tertiary", icon=icona, use_container_width=True):
-            _registra_evento("esito:" + codice, modello=mod_id, verifica_id=st.session_state.get("_storico_id"))
-            st.session_state["_esito_dato"] = chiave
-            if codice == "non_usabile":
-                st.session_state["_avviso_dopo"] = ("Mi dispiace. Se vuoi dirci cosa non va, usa «Qualcosa non va in questa verifica?» in fondo alla pagina: "
-                                                    "ci aiuta a capire e correggere.")
-            else:
-                _ricorda_conferma("Grazie!")
-            st.rerun()
 
 
 def _titolo_con_suffisso(latex: str, suffisso: str, latex_con_logo_da: str = "") -> str:
@@ -1534,19 +1517,6 @@ def _box_feedback(compatto: bool = False) -> None:
                     '.forEach(function(e){e.style.display="none";});}}catch(e){}</script>', height=0)
 
 
-def _mini_feedback_richiesto() -> bool:
-    """True se prima di scaricare il PDF vanno ancora fatte le due domande veloci (una volta per browser: lo ricorda un cookie)."""
-    if not FEEDBACK_PRIMA_DEL_DOWNLOAD or (_is_admin and not _SIM) or st.session_state.get("_mini_ok"):
-        return False
-    try:
-        if st.context.cookies.get("vf_mini_ok") == "1":
-            st.session_state["_mini_ok"] = True
-            return False
-    except Exception:
-        pass
-    return True
-
-
 def _stile_dialogo() -> None:
     """Colori dei pulsanti dentro le finestre (st.dialog): stanno fuori da .stApp e senza questo prendono quelli predefiniti di Streamlit."""
     st.markdown(f"""<style>
@@ -1562,47 +1532,33 @@ def _stile_dialogo() -> None:
 </style>""", unsafe_allow_html=True)
 
 
-@st.dialog("Un attimo prima di scaricare", width="small")
-def _dialogo_mini_feedback(pdf: bytes, nome_file: str) -> None:
-    """
-    Finestra che si apre al clic su «Scarica PDF» (solo la prima volta in questo browser): due domande da 5 secondi e poi il
-    PDF si scarica da qui. È l'unica cosa che chiediamo in cambio dell'uso gratuito.
-    """
+@st.dialog("Com'è andata?", width="small")
+def _dialogo_commento() -> None:
+    """Dopo ogni scarico: un commento anonimo e facoltativo sull'app, più il promemoria di controllare il contenuto."""
     _stile_dialogo()
-    if st.session_state.get("_mini_dialogo_fatto"):
-        st.success("Grazie! Ecco il tuo PDF.", icon="✅")
-        _dl("⬇  Scarica il PDF", data=pdf, file_name=nome_file, mime="application/pdf", type="primary",
-            use_container_width=True, key="dl_pdf_dialogo")
-        st.markdown(f'<div style="text-align:center;font-family:DM Sans,sans-serif;margin-top:.9rem;font-size:.88rem;color:{T["text2"]};">'
-                    f'La cosa più utile che puoi fare per noi:</div>'
-                    f'<a href="?pagina=questionario" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:.4rem;'
-                    f'padding:.65rem 1rem;border:2px solid {T["accent"]};border-radius:12px;color:{T["accent"]} !important;font-weight:800;'
-                    f'text-decoration:none;font-family:DM Sans,sans-serif;">Compila il questionario completo (4 minuti, anonimo) →</a>',
-                    unsafe_allow_html=True)
-        components.html('<script>try{window.parent.document.cookie="vf_mini_ok=1; max-age=31536000; path=/; SameSite=Lax";}catch(e){}</script>', height=0)
-        return
-    st.markdown(f'<div style="font-family:DM Sans,sans-serif;color:{T["text2"]};font-size:.92rem;line-height:1.5;margin-bottom:.4rem;">'
-                f'VerificAI è in beta e gratuita: due domande da 5 secondi ci dicono se ti è servito davvero. Poi il PDF è tuo.</div>',
+    st.markdown(f'<div style="font-family:DM Sans,sans-serif;color:{T["text2"]};font-size:.95rem;line-height:1.5;margin-bottom:.3rem;">'
+                f'Il file è stato scaricato. Se ti va, dicci come ti sei trovato con VerificAI: è anonimo e puoi anche saltare.</div>',
                 unsafe_allow_html=True)
-    _dq1 = _domanda_q("risparmio")
-    with st.form("mini_feedback", border=False):
-        _r1 = st.radio("Rispetto al tuo solito, quanto tempo pensi di aver risparmiato?", _dq1["opzioni"], index=None, key="mini_risparmio")
-        _r2 = st.radio("Ti è servito davvero?  (1 = per niente → 5 = moltissimo)", [1, 2, 3, 4, 5], index=None,
-                       horizontal=True, key="mini_utile")
-        _vai = st.form_submit_button("Invia e scarica", type="primary", use_container_width=True)
-    if _vai:
-        if _r1 is None or _r2 is None:
-            st.warning("Rispondi a tutte e due: ci vogliono 5 secondi.", icon="⏱️")
+    with st.form("commento_app", border=False):
+        _testo = st.text_area("Il tuo commento", placeholder="Cosa ti è piaciuto? Cosa miglioreresti?", max_chars=commenti.MAX_COMMENTO,
+                              height=110, label_visibility="collapsed", key="commento_testo")
+        _invia = st.form_submit_button("Invia il commento", type="primary", use_container_width=True)
+    st.markdown(f'<div style="font-family:DM Sans,sans-serif;color:{T["muted"]};font-size:.82rem;line-height:1.5;margin-top:.5rem;">'
+                f"Questo contenuto è stato creato con l'AI: di solito è molto preciso, ma controllalo come faresti con una verifica "
+                f'ricevuta da un collega prima di darla agli studenti.</div>', unsafe_allow_html=True)
+    if _invia:
+        _riga = commenti.costruisci_commento(_testo)
+        if _riga is None:
+            st.warning("Scrivi qualcosa, oppure chiudi la finestra.", icon="✍️")
             return
-        _risp, _ = pulisci_risposte({"risparmio": _r1, "utile": _r2})
         try:
             if supabase_admin is not None:
-                supabase_admin.table("questionario_tester").insert(riga_rapida(_risp)).execute()
-        except Exception as e:                      # un nostro guasto non deve bloccare il download
-            logger.warning("domande veloci non salvate: %s", e)
-        st.session_state["_mini_ok"] = True
-        st.session_state["_mini_dialogo_fatto"] = True
-        st.rerun(scope="fragment")
+                supabase_admin.table("commenti_app").insert(_riga).execute()
+        except Exception as e:                      # senza la tabella non succede niente
+            logger.warning("commento non salvato: %s", e)
+        st.session_state["_commento_inviato"] = True
+        st.session_state.pop("commento_testo", None)
+        st.rerun()
 
 
 def _benvenuto_richiesto() -> bool:
@@ -1813,11 +1769,35 @@ def _banner_piano(dove: str) -> None:
             _vai_a_upgrade(None)
 
 
+_CAMPI_FORM = ("argomento_area_b", "sel_materia_b", "_mat_custom_b", "sel_scuola_b", "sel_classe", "nuova_classe_txt", "toggle_eccellenza",
+               "toggle_punteggi_b", "sel_punti_b", "sel_materiale_b", "sez_allegati", "imp_titolo")
+
+
 def _apri_profilo() -> None:
     """Apre la pagina «Il mio profilo», ricordando da dove si arriva."""
     if st.session_state.get("stage") != STAGE_PROFILO:
         st.session_state["_stage_prima"] = st.session_state.get("stage")
     st.session_state.stage = STAGE_PROFILO
+
+
+def _apri_impostazioni() -> None:
+    """Apre «Impostazioni predefinite», ricordando se si arriva dal form di creazione (per il ritorno)."""
+    if st.session_state.get("stage") != STAGE_IMPOSTAZIONI:
+        st.session_state["_imp_da"] = st.session_state.get("stage")
+    st.session_state.stage = STAGE_IMPOSTAZIONI
+
+
+def _render_impostazioni_pagina() -> None:
+    da_form = st.session_state.get("_imp_da") == STAGE_INPUT
+
+    def _torna():
+        st.session_state.stage = STAGE_INPUT if da_form else STAGE_PROFILO
+        st.rerun()
+
+    render_impostazioni(T, {
+        "profilo": _profilo(), "salva": _salva_profilo, "conferma": _ricorda_conferma, "stili": stili_disponibili(),
+        "anteprima_stili": _dialogo_stili, "blocco_logo": _blocco_logo_impostazioni, "da_form": da_form, "torna": _torna,
+    })
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -1890,7 +1870,7 @@ def _render_profilo_pagina() -> None:
         "profilo": _profilo(), "salva": _salva_profilo, "conferma": _ricorda_conferma, "verifiche": verifiche,
         "eventi": _eventi_utente(u.id), "email": u.email, "piano": "admin" if _is_admin else ENT.piano, "verifiche_mese": _verifiche_mese or 0,
         "crediti": (_bonus_residui() if (MONETIZZAZIONE_ATTIVA and u) else 0), "scuole": SCUOLE, "stili": stili_disponibili(),
-        "indietro": _indietro, "nuova_per_classe": _nuova_per_classe, "elenco_classe": _elenco_classe, "apri_elenco": _apri_storico,
+        "apri_impostazioni": _apri_impostazioni, "indietro": _indietro, "nuova_per_classe": _nuova_per_classe, "elenco_classe": _elenco_classe, "apri_elenco": _apri_storico,
         "invita": (lambda: apri_dialogo_invito(T, _INVITO)) if _INVITO else (lambda: None),
         "tema_scuro": bool(st.session_state.get("_tema_scuro", st.session_state.get("theme") == "notte")), "imposta_tema": _imposta_tema,
         "elimina_account": _elimina_account, "e_admin": _is_admin,
@@ -3069,7 +3049,7 @@ def _render_impagina() -> None:
     for _i, _ex in enumerate(_esercizi):
         with st.container(border=True):
             _t = (_ex.get("titolo") or "").strip()
-            st.markdown(f"**Esercizio {_i + 1}**" + (f" · {_t}" if _t else ""))
+            st.markdown(f'<div class="ex-h"><span class="ex-n">{_i + 1}</span><span class="ex-t">{_esc(_t) if _t else "Esercizio"}</span></div>', unsafe_allow_html=True)
             if _i in _probl:
                 _mot, _nonrip = _probl[_i]
                 st.warning(_mot, icon="⚠️")
@@ -3091,9 +3071,10 @@ def _render_impagina() -> None:
                     st.rerun()
             if _ex.get("correzioni"):
                 st.info("Ricontrollando le pagine ho corretto:\n" + "\n".join(f"- {c}" for c in _ex["correzioni"]), icon="🔎")
-            if _ex.get("dubbi"):
-                st.warning("Controlla questi punti sull'originale:\n" + "\n".join(f"- {d}" for d in _ex["dubbi"]), icon="👀")
-            elif _ex.get("ricontrollato"):
+            _ha_nota = any(n.get("indice") == _i and n.get("su") == impagina.impronta(_ex.get("latex")) for n in (dati.get("note") or []))
+            if _ex.get("dubbi") and not _ha_nota:          # se c'è già «Ho notato una cosa» non si ripete lo stesso avviso
+                _scheda_dubbi(_ex["dubbi"], f"i{_i}", "l'originale")
+            elif _ex.get("ricontrollato") and not _ex.get("dubbi"):
                 st.caption("✓ Letto e ricontrollato sulle pagine.")
             for _k_n, _nota in enumerate(dati.get("note") or []):
                 if _nota.get("indice") != _i or _nota.get("su") != impagina.impronta(_ex.get("latex")):
@@ -3212,6 +3193,61 @@ def _dialogo_stili() -> None:
                         f'{descrizione_stile(_k)}</div>', unsafe_allow_html=True)
 
 
+def _blocco_logo_impostazioni() -> None:
+    """Logo della scuola: caricamento, dimensione, anteprima dell'intestazione. Sta nella pagina «Impostazioni predefinite»."""
+    _materia_anteprima = st.session_state.get("sel_materia_b") or "Matematica"
+    _logo_s = _logo_scuola()
+    _logo_bloccato = _pro_bloccato("logo")
+    if _logo_bloccato:
+        st.caption("Il logo della tua scuola sull'intestazione è una funzione del piano Pro." if PREZZI_VISIBILI
+                   else "Il logo della tua scuola sull'intestazione è una delle funzioni complete, da sbloccare con il questionario.")
+        _pulsante_pro("logo", "pro_logo", "Logo della scuola con il piano Pro")
+    elif _logo_s:
+        _attivo_nuovo = st.toggle("Metti il logo nelle verifiche",
+                                  value=_logo_s.get("attivo", True), key="logo_attivo_b")
+        if _attivo_nuovo != _logo_s.get("attivo", True):
+            _salva_logo({**_logo_s, "attivo": _attivo_nuovo})
+        _etichette_scala = {0.75: "Più piccolo", 1.0: "Normale", 1.25: "Più grande"}
+        _scala_salvata = float(_logo_s.get("scala", 1.0))
+        _scala_nuova = st.select_slider(
+            "Dimensione del logo", options=list(_etichette_scala),
+            value=_scala_salvata if _scala_salvata in _etichette_scala else 1.0,
+            format_func=_etichette_scala.get, key="logo_scala_b",
+        )
+        if _scala_nuova != _scala_salvata:
+            _salva_logo({**_logo_s, "scala": _scala_nuova})
+        # Anteprima immediata dell'intestazione: niente generazione sprecata
+        with st.spinner("Preparo l'anteprima dell'intestazione…"):
+            _img_int = _anteprima_intestazione(
+                _logo_s["b64"], _logo_s.get("tipo", "largo"), _attivo_nuovo, _materia_anteprima,
+                _scala_nuova, _LAYOUT_LOGO)
+        if _img_int:
+            st.image(_img_int, width=560)
+            st.caption("Intestazione come sarà nel PDF (il titolo sarà quello della tua verifica).")
+        if st.button("Cambia o togli il logo", key="logo_togli", icon=":material/delete:"):
+            _salva_logo(None)
+            st.rerun()
+        st.caption("Vale per le nuove verifiche e per la Fila B; nel file Word non compare.")
+    else:
+        _logo_up = st.file_uploader(
+            "Carica il logo della tua scuola (PNG o JPG)", type=["png", "jpg", "jpeg"],
+            key="logo_up_b", help="Si salva sul tuo account: lo carichi una volta sola.",
+        )
+        if _logo_up is not None:
+            _esito_logo = _prepara_logo(_logo_up.getvalue())
+            if _esito_logo:
+                _salva_logo({"b64": _esito_logo[0], "tipo": _esito_logo[1], "attivo": True})
+                st.rerun()
+            else:
+                st.warning("Non riesco a leggere questa immagine: prova con un PNG o un JPG più piccolo.")
+
+
+def _stile_predefinito() -> str:
+    """Stile del PDF per le verifiche create dal form: quello scelto in «Impostazioni predefinite» (se valido), altrimenti il classico."""
+    _scelto = _profilo().get("stile") or ""
+    return _scelto if _scelto in [k for k, _n in stili_disponibili()] else STILE_PREDEFINITO
+
+
 def _selettore_stile() -> str:
     """Stile del PDF: classico (predefinito) o moderno, con l'anteprima delle due versioni della stessa verifica a richiesta."""
     st.markdown(_html_separatore() + '<div class="opt-label">Stile della verifica</div>', unsafe_allow_html=True)
@@ -3219,7 +3255,7 @@ def _selettore_stile() -> str:
     st.session_state.setdefault("sel_stile_verifica", (_profilo().get("stile") or STILE_PREDEFINITO) if (_profilo().get("stile") in _ids) else STILE_PREDEFINITO)
     _sel = st.selectbox("Stile della verifica", _ids, key="sel_stile_verifica", format_func=lambda k: STILI[k]["nome"],
                         label_visibility="collapsed")
-    if st.button("Guarda un'anteprima", key="stile_anteprima", type="tertiary", icon=":material/visibility:"):
+    if st.button("Guarda un'anteprima degli stili", key="stile_anteprima", type="tertiary", icon=":material/visibility:"):
         _dialogo_stili()
     st.session_state["_stile_verifica"] = _sel
     return _sel
@@ -3388,7 +3424,7 @@ def _selettore_classe() -> None:
     if corrente and corrente not in opzioni:
         opzioni.insert(1, corrente)
     st.markdown('<div class="opt-label">Classe (facoltativo)</div>', unsafe_allow_html=True)
-    _a, _b = st.columns([3, 2], gap="small", vertical_alignment="center")
+    _a = st.container()
     st.session_state.setdefault("sel_classe", corrente)
     _a.selectbox("Classe", opzioni, key="sel_classe", label_visibility="collapsed", on_change=_applica_classe_scelta,
                  format_func=lambda x: x or "Nessuna classe", help="Serve a ritrovare le verifiche per classe e a usare le note della classe.")
@@ -3396,9 +3432,6 @@ def _selettore_classe() -> None:
         nuova = _a.text_input("Nome della classe", key="nuova_classe_txt", placeholder="Es. 3ªB", max_chars=24, label_visibility="collapsed")
         if profilo.pulisci_nome(nuova):
             st.session_state["_classe_sel"] = profilo.pulisci_nome(nuova)
-    if _b.button("Il mio profilo", key="apri_preferenze", type="tertiary", icon=":material/account_circle:"):
-        _apri_profilo()
-        st.rerun()
 
 
 @st.dialog("Classe di questa verifica")
@@ -3433,6 +3466,16 @@ def _anteprima_esercizio_foto(materia: str, titolo: str, latex: str):
         pre, _ = _costruisci_preambolo(materia, "Titolo", "", e_mat)
         cache[chiave] = anteprima_esercizio_png(pre, "Esercizio 1: " + titolo, latex)
     return cache[chiave]
+
+
+def _scheda_dubbi(dubbi: list, chiave: str, sorgente: str) -> None:
+    """I punti incerti di una lettura, in una scheda come «Ho notato una cosa»: dicono cosa fare, non solo cosa c'è."""
+    righe = "".join(f"<li>{_esc(d)}</li>" for d in dubbi)
+    with st.container(key=f"dubbi_imp_{chiave}"):
+        st.markdown(f'<div class="di-k">👀 Da controllare</div>'
+                    f'<div class="di-t">Su {"questo punto" if len(dubbi) == 1 else "questi punti"} non sono sicuro di aver letto bene</div>'
+                    f'<ul class="di-l">{righe}</ul>'
+                    f'<div class="di-p">Confrontali con {sorgente}: se qualcosa non torna, correggi a parole qui sotto.</div>', unsafe_allow_html=True)
 
 
 def _azzera_esercizio_foto() -> None:
@@ -3569,7 +3612,7 @@ def _blocco_esercizio_foto(materia: str, scuola: str, num_esercizi: int) -> None
                 if _ex.get("correzioni"):
                     st.info("Ricontrollando la foto ho corretto:\n" + "\n".join(f"- {c}" for c in _ex["correzioni"]), icon="🔎")
                 if _ex.get("dubbi"):
-                    st.warning("Controlla questi punti sulla foto:\n" + "\n".join(f"- {d}" for d in _ex["dubbi"]), icon="👀")
+                    _scheda_dubbi(_ex["dubbi"], f"b{_i}", "la foto")
                 elif _ex.get("ricontrollato"):
                     st.caption("✓ Letto e ricontrollato sulla foto. Guarda comunque che sia identico: i numeri contano.")
                 else:
@@ -3872,7 +3915,10 @@ def _render_percorso_b_form(_prog_placeholder):
                 pass
             if _pillole:
                 st.markdown('<div class="pille-ok">' + "".join(f'<span>{_esc(x)}</span>' for x in _pillole) + '</div>', unsafe_allow_html=True)
-            with st.expander("Altre opzioni (esercizi, materiale, punteggi, logo)", expanded=bool(_fm), icon=":material/tune:"):
+            st.button("Impostazioni predefinite (logo, stile, preferenze)", key="apri_impostazioni_form", type="tertiary",
+                      icon=":material/tune:", on_click=_apri_impostazioni,
+                      help="Il logo della scuola, lo stile del PDF e le preferenze fisse: si salvano e valgono per ogni verifica. Il form resta com'è.")
+            with st.expander("Altre opzioni (esercizi, materiale, punteggi)", expanded=bool(_fm), icon=":material/tune:"):
                 st.markdown('<span class="g-altre" style="display:none"></span>', unsafe_allow_html=True)
                 # ── DURATA: un solo scatto sceglie numero di esercizi e tempo previsto ──────
                 _nomi_dur = list(DURATE)
@@ -3939,8 +3985,8 @@ def _render_percorso_b_form(_prog_placeholder):
                     )
                     st.session_state["_pers_pt"] = punti_totali
 
-                st.markdown(_html_separatore() + '<div class="opt-label">Allegati e logo (opzionale)</div>', unsafe_allow_html=True)
-                _SEZ_ALL = ["📄 Appunti o verifica", "📷 Esercizio del libro", "🏫 Logo della scuola"]
+                st.markdown(_html_separatore() + '<div class="opt-label">Allegati (opzionale)</div>', unsafe_allow_html=True)
+                _SEZ_ALL = ["📄 Appunti o verifica", "📷 Esercizio del libro"]
                 _sez = st.segmented_control("Allegati", _SEZ_ALL, key="sez_allegati", default=_SEZ_ALL[0], label_visibility="collapsed") or _SEZ_ALL[0]
                 if _sez == _SEZ_ALL[0]:
                     if _pro_bloccato("materiale") and not _fm:
@@ -4002,53 +4048,6 @@ def _render_percorso_b_form(_prog_placeholder):
                     except Exception as _e_foto:      # funzione accessoria: un suo errore non deve mai bloccare il form
                         logger.warning("Esercizio da foto: %s", _e_foto)
                         st.session_state["_foto_es_pronti"] = []
-                if _sez == _SEZ_ALL[2]:
-                    _logo_s = _logo_scuola()
-                    _logo_bloccato = _pro_bloccato("logo")
-                    if _logo_bloccato:
-                        st.caption("Il logo della tua scuola sull'intestazione è una funzione del piano Pro." if PREZZI_VISIBILI
-                                   else "Il logo della tua scuola sull'intestazione è una delle funzioni complete, da sbloccare con il questionario.")
-                        _pulsante_pro("logo", "pro_logo", "Logo della scuola con il piano Pro")
-                    elif _logo_s:
-                        _attivo_nuovo = st.toggle("Metti il logo nelle verifiche",
-                                                  value=_logo_s.get("attivo", True), key="logo_attivo_b")
-                        if _attivo_nuovo != _logo_s.get("attivo", True):
-                            _salva_logo({**_logo_s, "attivo": _attivo_nuovo})
-                        _etichette_scala = {0.75: "Più piccolo", 1.0: "Normale", 1.25: "Più grande"}
-                        _scala_salvata = float(_logo_s.get("scala", 1.0))
-                        _scala_nuova = st.select_slider(
-                            "Dimensione del logo", options=list(_etichette_scala),
-                            value=_scala_salvata if _scala_salvata in _etichette_scala else 1.0,
-                            format_func=_etichette_scala.get, key="logo_scala_b",
-                        )
-                        if _scala_nuova != _scala_salvata:
-                            _salva_logo({**_logo_s, "scala": _scala_nuova})
-                        # Anteprima immediata dell'intestazione: niente generazione sprecata
-                        with st.spinner("Preparo l'anteprima dell'intestazione…"):
-                            _img_int = _anteprima_intestazione(
-                                _logo_s["b64"], _logo_s.get("tipo", "largo"), _attivo_nuovo, materia_scelta,
-                                _scala_nuova, _LAYOUT_LOGO)
-                        if _img_int:
-                            st.image(_img_int, width=560)
-                            st.caption("Intestazione come sarà nel PDF (il titolo sarà quello della tua verifica).")
-                        if st.button("Cambia o togli il logo", key="logo_togli", icon=":material/delete:"):
-                            _salva_logo(None)
-                            st.rerun()
-                        st.caption("Vale per le nuove verifiche e per la Fila B; nel file Word non compare.")
-                    else:
-                        _logo_up = st.file_uploader(
-                            "Carica il logo della tua scuola (PNG o JPG)", type=["png", "jpg", "jpeg"],
-                            key="logo_up_b", help="Si salva sul tuo account: lo carichi una volta sola.",
-                        )
-                        if _logo_up is not None:
-                            _esito_logo = _prepara_logo(_logo_up.getvalue())
-                            if _esito_logo:
-                                _salva_logo({"b64": _esito_logo[0], "tipo": _esito_logo[1], "attivo": True})
-                                st.rerun()
-                            else:
-                                st.warning("Non riesco a leggere questa immagine: prova con un PNG o un JPG più piccolo.")
-
-                _selettore_stile()
 
             # ── CTA: Genera Bozza ─────────────────────────────────────────────────
             _manca_arg = not argomento and not _fm
@@ -4635,7 +4634,7 @@ def _render_stage_input():
                          if (PIANO_ATTIVO and not st.session_state.esercizi_custom and not _fissi_foto) else None),
         esercizi_fissi=_fissi_foto or None,
         eccellenza=_ecc,
-        stile=st.session_state.get("_stile_verifica"),
+        stile=_stile_predefinito(),
     )
     return
 
@@ -6320,8 +6319,9 @@ def _render_stage_final():
         f'<span style="display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;'
         f'border-radius:50%;background:{T["success"]};color:#fff;font-size:1rem;margin-right:.55rem;'
         f'vertical-align:.12em;">✓</span>La verifica è pronta</div>'
-        f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin-top:.35rem;">'
-        + _esc(mat_str) + ' &nbsp;·&nbsp; ' + _esc(scu_str) + ' &nbsp;·&nbsp; ' + _esc(arg_str) +
+        f'<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem .9rem;margin-top:.6rem;font-family:DM Sans,sans-serif;">'
+        + "".join(f'<span style="font-size:.92rem;font-weight:600;color:{T["text"]};padding:0 .1rem .18rem;'
+                  f'border-bottom:2.5px solid {T["accent"]}99;">{_esc(v)}</span>' for v in (mat_str, scu_str, arg_str) if v) +
         f'</div></div>',
         unsafe_allow_html=True
     )
@@ -6387,14 +6387,9 @@ def _render_stage_final():
         unsafe_allow_html=True,
     )
     _box_az = st.container(key="az_principali")
-    _mini_gate = bool(vA.get("pdf")) and _mini_feedback_richiesto()
     _az_dl, _az_mod, _az_new = _box_az.columns([1.3, 1, 1], gap="small", vertical_alignment="center")
     with _az_dl:
-        if _mini_gate:
-            if st.button(f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}", key="dl_pdf_hero_A", type="primary", use_container_width=True,
-                         help="Scarica il PDF della verifica, già formattato e pronto per la stampa."):
-                _dialogo_mini_feedback(vA["pdf"], _fname_a + ".pdf")
-        elif vA.get("pdf"):
+        if vA.get("pdf"):
             _dl(
                 label=f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}",
                 data=vA["pdf"],
@@ -6403,7 +6398,6 @@ def _render_stage_final():
                 use_container_width=True,
                 type="primary",
                 key="dl_pdf_hero_A",
-                on_click="ignore",
                 help="Scarica il PDF della verifica, già formattato e pronto per la stampa.",
             )
         else:
@@ -6418,12 +6412,6 @@ def _render_stage_final():
         if st.button("Nuova verifica", icon=":material/add:", key="btn_new_top",
                      use_container_width=True):
             _nuova_verifica()
-    st.markdown(
-        f'<div style="text-align:center;font-size:.85rem;color:{T["text2"]};margin:.5rem 0 1rem;'
-        f'line-height:1.5;font-family:DM Sans,sans-serif;">Controlla sempre il contenuto prima di '
-        f'distribuirlo agli studenti. La verifica è salvata in «Le mie verifiche».</div>',
-        unsafe_allow_html=True
-    )
     # ── Anteprima: una pagina alla volta, con ◀ ▶ (così il kit sotto resta vicino) ──────────
     _zoom = False
     _col_prev, _col_dx = st.columns([1, 1.12], gap="large")      # desktop: anteprima a sinistra (fissa) e azioni a destra; su telefono si impilano
@@ -6466,7 +6454,7 @@ def _render_stage_final():
         else:
             st.caption("Anteprima non disponibile.")
     with _col_dx:
-        if vA.get("pdf") and not _mini_gate:
+        if vA.get("pdf"):
             _dl(
                 label=f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}",
                 data=vA["pdf"],
@@ -6475,21 +6463,15 @@ def _render_stage_final():
                 use_container_width=True,
                 type="primary",
                 key="dl_pdf_basso_A",
-                on_click="ignore",
                 help="Scarica il PDF della verifica, già formattato e pronto per la stampa.",
             )
-        elif vA.get("pdf"):
-            if st.button(f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}", key="dl_pdf_basso_A", type="primary", use_container_width=True,
-                         help="Scarica il PDF della verifica, già formattato e pronto per la stampa."):
-                _dialogo_mini_feedback(vA["pdf"], _fname_a + ".pdf")
-        _riga_esito(mod_id)
         if vA.get("pdf") and vA.get("latex"):
             _box_modifica_rapida(gp, vA, mod_id)
         with st.container(key="card_modifica"):
             st.markdown('<div class="cm-t">✏️ Modifica i singoli esercizi</div>'
                         '<div class="cm-d">Più facile o più difficile, numeri nuovi, sostituisci, aggiungi o elimina un esercizio: ogni modifica rifà subito il PDF.</div>',
                         unsafe_allow_html=True)
-            if st.button("Apri la modifica", key="final_edit_card", icon=":material/edit_note:", use_container_width=True):
+            if st.button("Scegli l'esercizio da cambiare", key="final_edit_card", icon=":material/edit_note:", use_container_width=True):
                 st.session_state.stage = STAGE_REVIEW
                 st.rerun()
 
@@ -7524,7 +7506,17 @@ if _prev_stage != _current_stage:
 
 if not _share_view_active:
     _current = _current_stage
+    if _current != STAGE_INPUT:
+        # Il form di creazione resta com'era durante la navigazione (profilo, impostazioni, verifiche…): Streamlit toglie lo stato dei campi non
+        # disegnati, riassegnandolo lo si tiene vivo.
+        for _k in [k for k in list(st.session_state.keys()) if isinstance(k, str) and (k in _CAMPI_FORM or k.startswith("sel_num_es_b_"))]:
+            st.session_state[_k] = st.session_state[_k]
     _mostra_conferma()
+    if st.session_state.pop("_commento_inviato", False):
+        _ricorda_conferma("Grazie del commento!")
+        _mostra_conferma()
+    elif st.session_state.pop("_commento_da_chiedere", False) and not (_is_admin and not _SIM):
+        _dialogo_commento()
     if st.session_state.pop("_apri_profilo", False):
         _apri_profilo()
         _current = st.session_state.stage
@@ -7563,6 +7555,8 @@ if not _share_view_active:
                            invito=_INVITO)
     elif _current == STAGE_PROFILO:
         _render_profilo_pagina()
+    elif _current == STAGE_IMPOSTAZIONI:
+        _render_impostazioni_pagina()
     elif _current == STAGE_CRUSCOTTO:
         if _is_admin:
             def _esci_dal_cruscotto():

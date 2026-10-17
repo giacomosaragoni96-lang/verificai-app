@@ -18,7 +18,8 @@ MAX_CLASSI = 30
 _RE_NOME = re.compile(r"\s+")
 
 
-COLORI = ["#2563EB", "#7C3AED", "#DB2777", "#DC2626", "#EA580C", "#CA8A04", "#16A34A", "#0D9488", "#0891B2", "#475569"]
+# Colori delle classi, nell'ordine dei pallini della pagina profilo; gli ultimi quattro erano scelte di prima (restano validi per le classi già salvate)
+COLORI = ["#2563EB", "#7C3AED", "#DC2626", "#EA580C", "#CA8A04", "#16A34A", "#1E293B", "#92400E", "#DB2777", "#0D9488", "#0891B2", "#475569"]
 
 # Preferenze pronte da accendere: id → (etichetta, frase che si aggiunge alle istruzioni)
 PILLOLE = {
