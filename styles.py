@@ -3274,6 +3274,20 @@ font-family: 'DM Sans', sans-serif;
   html body .stApp div[class*="st-key-ver_"] .variant-card-header {{ gap: .7rem !important; }}
   html body .stApp div[class*="st-key-ver_"] .variant-card-title {{ font-size: 1.08rem !important; }}
 
+
+  /* ── Le mie verifiche: righe compatte con ombra leggera, gruppi per periodo ── */
+  html body .stApp div[class*="st-key-vrow_"]:not(#vf) {{
+    background: {T['card']}; border: 1px solid {T['border']}; border-radius: 16px; padding: .6rem .95rem; margin-bottom: .5rem;
+    box-shadow: 0 3px 10px rgba(15,23,42,.06); transition: box-shadow .18s ease, transform .15s ease;
+  }}
+  html body .stApp div[class*="st-key-vrow_"]:not(#vf):hover {{ box-shadow: 0 8px 20px {_acc}2A; border-color: {_acc}55; }}
+  html body .stApp .st-key-vsel_0:not(#vf) {{
+    background: linear-gradient(160deg, {T['card']} 0%, {_acc}12 100%); border: 1.5px solid {_acc}55; border-radius: 18px; padding: .3rem .9rem .5rem; margin-bottom: .8rem;
+    box-shadow: 0 12px 28px {_acc}28;
+  }}
+  .vg-h {{ font-family: 'DM Sans', sans-serif; font-size: .74rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: {_acc};
+    margin: 1.1rem 0 .45rem .2rem; }}
+
   /* Icon + Title inline row */
   .variant-card-header {{
     display: flex;
