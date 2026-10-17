@@ -64,7 +64,7 @@ from latex_utils import (
     parse_items_from_block, apply_item_pts_to_body, punti_richieste, applica_punti_richieste, riempi_classe_data,
     prepara_esercizi_aperti, conta_punti_latex,
     migliora_spaziatura_sottopunti, limita_altezza_grafici, aggiungi_spaziatura_grafici_tabelle,
-    normalizza_sottopunti_inline, normalizza_elenchi, bilancia_punti, esercizi_con_grafico_mancante, anteprima_esercizio_png,
+    normalizza_sottopunti_inline, normalizza_elenchi, riconosci_cambio_titolo, cambia_titolo, bilancia_punti, esercizi_con_grafico_mancante, anteprima_esercizio_png,
 )
 from config import (
     APP_NAME, APP_ICON, SHARE_URL, FEEDBACK_FORM_URL,
@@ -6353,7 +6353,15 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
     _finite = _tetto is not None and _usate >= _tetto
     with st.container(key="mod_rapida"):
         if _fatto:
-            st.success("Fatto: ho modificato la verifica. L'anteprima qui sopra è già aggiornata (puoi annullare qui sotto).", icon="✅")
+            _txt_ok = "Titolo cambiato." if _fatto == "titolo" else "Modifica applicata."
+            st.markdown(
+                "<style>.mr-ok{display:flex;gap:.7rem;align-items:center;margin:0 0 .7rem;padding:.7rem .95rem;border-radius:14px;"
+                "background:linear-gradient(135deg,#16A34A12,#16A34A24);border:1px solid #16A34A44;font-family:'DM Sans',sans-serif;font-size:.88rem;"
+                f"line-height:1.4;color:{T['text']};}}.mr-ok svg{{flex:0 0 1.5rem;}}.mr-ok b{{color:#15803D;}}</style>"
+                '<div class="mr-ok"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#16A34A"/>'
+                '<path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+                f'<div><b>{_txt_ok}</b> L\'anteprima qui accanto è già aggiornata; se non ti convince puoi annullare qui sotto.</div></div>',
+                unsafe_allow_html=True)
         st.markdown(_CSS_MOD_RAPIDA.replace("__CARD__", T["card"]).replace("__ACC__", T["accent"]).replace("__TX__", T["text"]).replace("__T2__", T["text2"]) +
                     f'<div class="mr-t"><svg width="17" height="17" viewBox="0 0 24 24" fill="{T["accent"]}" style="vertical-align:-3px;margin-right:.45rem">'
                     '<path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>Vuoi cambiare qualcosa? Chiedilo</div>'
@@ -6388,15 +6396,32 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
         return
     _prima = {"vA": dict(vA), "pre": st.session_state.get("review_preamble"),
               "blocchi": [dict(b) for b in (st.session_state.get("review_blocks") or [])]}
-    _conta_modifica(mod_id)
+    _c_tit = riconosci_cambio_titolo(_richiesta)
+    _richiesta_ai = _c_tit[1] if _c_tit else _richiesta
+    _usa_ai = bool(_richiesta_ai and len(_richiesta_ai.split()) >= 3)
+    if _usa_ai:
+        _conta_modifica(mod_id)
+    _solo_titolo = False
     try:
         with _stato.container(), _attesa("matita", "Sto modificando la verifica", ["Capisco cosa chiedi", "Riscrivo gli esercizi interessati", "Rifaccio il PDF"], "Ci vuole circa mezzo minuto: non chiudere la pagina.", durata_passo=10):
-            _res = modifica_verifica_libera(crea_modello(mod_id).per("modifica"), mat_str, arg_str, vA["latex"], _richiesta,
-                                            mostra_punteggi, punti_totali)
+            _latex_base = cambia_titolo(vA["latex"], _c_tit[0]) if _c_tit else vA["latex"]
+            if _c_tit and _latex_base == vA["latex"]:
+                _res = {"ok": False, "messaggio": "Non sono riuscito a cambiare il titolo in questa intestazione: riprova scrivendolo tra virgolette."}
+            elif _usa_ai:
+                _res = modifica_verifica_libera(crea_modello(mod_id).per("modifica"), mat_str, arg_str, _latex_base, _richiesta_ai,
+                                                mostra_punteggi, punti_totali)
+                if not _res.get("ok") and _c_tit:        # il titolo è cambiato anche se gli esercizi no
+                    _pre_t, _bl_t = extract_blocks(_latex_base)
+                    _res = {"ok": True, "preambolo": _pre_t, "blocchi": _bl_t}
+                    _solo_titolo = True
+            else:
+                _pre_t, _bl_t = extract_blocks(_latex_base)
+                _res = {"ok": True, "preambolo": _pre_t, "blocchi": _bl_t}
+                _solo_titolo = True
             if _res.get("ok"):
                 st.session_state.review_preamble = _res["preambolo"]
                 st.session_state.review_blocks = _res["blocchi"]
-                _pdf, _err = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali, riscala_totale=True)
+                _pdf, _err = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali, riscala_totale=not _solo_titolo)
             else:
                 _pdf, _err = None, None
     except Exception as _e:
@@ -6407,7 +6432,7 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
         st.session_state["final_pagina"] = 0
         _salva_variante_storico("latex_a", st.session_state.verifiche["A"].get("latex"))
         st.session_state["_mod_rapida_pulisci"] = True
-        st.session_state["_mod_rapida_ok"] = True
+        st.session_state["_mod_rapida_ok"] = "titolo" if (_solo_titolo or (_c_tit and not _usa_ai)) else True
         _ricorda_conferma("Verifica modificata")
         st.rerun()
     # qualcosa non è andato: la verifica torna com'era
