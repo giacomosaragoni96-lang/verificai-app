@@ -312,6 +312,12 @@ def _giorni_al_reset():
     return d.days, d.seconds // 3600
 
 
+def _se_nuovo(chiave: str, **predefinito) -> dict:
+    """Il valore predefinito di un campo si passa solo se il campo non ha già un valore in sessione: con entrambi Streamlit segnala un errore
+    (succede quando il form torna compilato dopo una visita al profilo o alle impostazioni)."""
+    return {} if chiave in st.session_state else predefinito
+
+
 def _attesa(tipo: str, titolo: str, passi: list | None = None, sotto: str = "", durata_passo: float = 8.0, consigli: bool = False):
     """Scheda di attesa animata (ui_attese) al posto di st.spinner: `with _attesa("foto", "Sto leggendo…", ["Passo 1", "Passo 2"]):`."""
     return ui_attese.attesa(T, tipo, titolo, passi, sotto, durata_passo, consigli)
@@ -3825,7 +3831,7 @@ def _render_percorso_b_form(_prog_placeholder):
             with _col_m:
                 st.markdown('<div class="opt-label">Materia ✱</div>', unsafe_allow_html=True)
                 _sel_m = st.selectbox(
-                    "Materia", _mat_list, index=_mat_idx,
+                    "Materia", _mat_list, **_se_nuovo("sel_materia_b", index=_mat_idx),
                     label_visibility="collapsed", key="sel_materia_b",
                     help="Materia della verifica. Se hai caricato un file, viene rilevata automaticamente.",
                 )
@@ -3838,7 +3844,7 @@ def _render_percorso_b_form(_prog_placeholder):
             with _col_s:
                 st.markdown('<div class="opt-label">Tipo di scuola ✱</div>', unsafe_allow_html=True)
                 difficolta = st.selectbox(
-                    "Scuola", SCUOLE, index=_scu_idx,
+                    "Scuola", SCUOLE, **_se_nuovo("sel_scuola_b", index=_scu_idx),
                     help="Tipo di scuola e livello. Se hai caricato un file, viene rilevato automaticamente.",
                     label_visibility="collapsed", key="sel_scuola_b",
                 )
@@ -3975,18 +3981,18 @@ def _render_percorso_b_form(_prog_placeholder):
                 num_esercizi = st.selectbox(
                     "Numero esercizi",
                     options=_n_opts,
-                    index=_n_idx,
+                    **_se_nuovo(f"sel_num_es_b_{durata_nome}", index=_n_idx),
                     label_visibility="collapsed",
                     key=f"sel_num_es_b_{durata_nome}",   # cambia con la durata: riparte dal preset
                     format_func=lambda x: f"{x} esercizi",
                 )
-                st.toggle(f"Aggiungi un esercizio «per l'eccellenza» (in tutto {num_esercizi + 1})", value=True, key="toggle_eccellenza",
+                st.toggle(f"Aggiungi un esercizio «per l'eccellenza» (in tutto {num_esercizi + 1})", **_se_nuovo("toggle_eccellenza", value=True), key="toggle_eccellenza",
                           help="Un esercizio in più, facoltativo, molto difficile e con pochi punti (3-10), dentro il totale dei punti. "
                                "Spegnilo se vuoi esattamente il numero di esercizi scelto.")
 
                 _tog = st.toggle(
                     "Aggiungi la tabella dei punteggi in fondo",
-                    value=mostra_punteggi, key="toggle_punteggi_b",
+                    **_se_nuovo("toggle_punteggi_b", value=mostra_punteggi), key="toggle_punteggi_b",
                     help="I punti di ogni richiesta non si scrivono accanto alle domande: stanno nella tabella in fondo, da compilare con i voti.",
                 )
                 mostra_punteggi = _tog
@@ -4014,7 +4020,7 @@ def _render_percorso_b_form(_prog_placeholder):
                         st.markdown('<div class="opt-label">Punti totali</div>', unsafe_allow_html=True)
                     
                     punti_totali = st.selectbox(
-                        "Punti totali", options=_pt_opts, index=_pt_idx,
+                        "Punti totali", options=_pt_opts, **_se_nuovo("sel_punti_b", index=_pt_idx),
                         label_visibility="collapsed", key="sel_punti_b",
                         format_func=lambda x: f"{x} pt",
                     )
@@ -4022,7 +4028,7 @@ def _render_percorso_b_form(_prog_placeholder):
 
                 st.markdown(_html_separatore() + '<div class="opt-label">Allegati (opzionale)</div>', unsafe_allow_html=True)
                 _SEZ_ALL = ["📄 Appunti o verifica", "📷 Esercizio del libro"]
-                _sez = st.segmented_control("Allegati", _SEZ_ALL, key="sez_allegati", default=_SEZ_ALL[0], label_visibility="collapsed") or _SEZ_ALL[0]
+                _sez = st.segmented_control("Allegati", _SEZ_ALL, key="sez_allegati", **_se_nuovo("sez_allegati", default=_SEZ_ALL[0]), label_visibility="collapsed") or _SEZ_ALL[0]
                 if _sez == _SEZ_ALL[0]:
                     if _pro_bloccato("materiale") and not _fm:
                         st.caption("Carica appunti o una verifica già fatta e VerificAI ne crea una nuova, con dati diversi: "
