@@ -6860,13 +6860,15 @@ def _render_stage_final():
                 # solo su telefono (CSS): apre il PDF a tutto schermo in una scheda nuova, dove si legge davvero
                 with st.container(key="apri_pdf_tel"):
                     components.html(
-                        '<button id="b" style="width:100%;padding:12px;border:1px solid #CBD5E1;border-radius:10px;'
-                        'background:#fff;font:600 15px DM Sans,Arial,sans-serif;color:#0F172A;">Apri il PDF a tutto schermo</button>'
+                        '<button id="b" style="width:100%;height:46px;display:flex;align-items:center;justify-content:center;gap:9px;border:none;border-radius:999px;'
+                        f'background:linear-gradient(135deg,{T["accent"]},{T["accent"]}CC);box-shadow:0 6px 16px {T["accent"]}44;cursor:pointer;'
+                        'font:700 15px DM Sans,Arial,sans-serif;color:#fff;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" '
+                        'stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Apri il PDF a tutto schermo</button>'
                         '<script>var B64="' + base64.b64encode(vA["pdf"]).decode() + '";'
                         'document.getElementById("b").onclick=function(){var s=atob(B64),n=s.length,a=new Uint8Array(n);'
                         'for(var i=0;i<n;i++)a[i]=s.charCodeAt(i);'
                         'window.open(URL.createObjectURL(new Blob([a],{type:"application/pdf"})),"_blank");};</script>',
-                        height=52,
+                        height=58,
                     )
             if _n_tot > 1:
                 def _vai_pagina(delta: int, _n=_n_tot):
@@ -6874,7 +6876,7 @@ def _render_stage_final():
                 _fp1, _fp2, _fp3 = st.columns([1, 2, 1], vertical_alignment="center", gap="small")
                 _fp1.button("◀", key="final_prev_pg", use_container_width=True, disabled=(_pg <= 0),
                             on_click=_vai_pagina, args=(-1,), help="Pagina precedente")
-                _fp2.markdown('<style>html body .stApp [class*="st-key-final_prev_pg"] button, html body .stApp [class*="st-key-final_next_pg"] button{min-height:2.2rem !important;height:2.2rem !important;padding:0 !important;}</style>' + f'<div style="text-align:center;font-family:DM Sans,sans-serif;font-size:.9rem;font-weight:600;'
+                _fp2.markdown('<style>html body .stApp [class*="st-key-final_prev_pg"] button, html body .stApp [class*="st-key-final_next_pg"] button{min-height:2.2rem !important;height:2.2rem !important;padding:0 !important;}</style>' + f'<div class="pg-et" style="text-align:center;font-family:DM Sans,sans-serif;font-size:.9rem;font-weight:600;'
                               f'color:{T["text2"]};">Pagina {_pg + 1} di {_n_tot}</div>', unsafe_allow_html=True)
                 _fp3.button("▶", key="final_next_pg", use_container_width=True, disabled=(_pg >= _n_tot - 1),
                             on_click=_vai_pagina, args=(1,), help="Pagina successiva")
