@@ -250,8 +250,9 @@ def prompt_corpo_verifica(
         f"mettere in difficoltà anche uno studente preparato. Le richieste facili restano facili: serve una scala vera, dal banale al "
         f"quasi proibitivo.\n"
         f"- {REGOLA_DIFFICOLTA_VERA}\n"
+        f"{_riga_umanistica(materia)}"
         f"- VERO/FALSO fatto bene: il titolo dell'esercizio contiene le parole «Vero o Falso»; circa metà delle affermazioni sono "
-        f"false; niente «sempre», «mai», «necessariamente», «esclusivamente» che rendono ambigua la risposta; almeno una falsa deve "
+        f"false; niente «sempre», «mai», «necessariamente», «esclusivamente» che rendono ambigua la risposta; le false sono CREDIBILI (un errore sottile, mai assurdo); almeno una falsa deve "
         f"richiedere di pensare a un controesempio. Ogni richiesta è UNA affermazione da giudicare (mai «Spiega…» dentro un Vero/Falso) "
         f"e si chiude con le caselle indicate sotto. Il segno $ racchiude solo le formule, mai le frasi in italiano.\n"
         f"- FONTI E BRANI (materie umanistiche): se un esercizio chiede di commentare, analizzare o leggere un brano, una fonte o un "
@@ -624,6 +625,32 @@ REGOLA_DIFFICOLTA_VERA = (
     "materia: la richiesta difficile mette insieme più concetti o obbliga a decidere come procedere. Il PARAMETRO (k, a, m…) è un'abilità avanzata: compare solo se l'argomento lo prevede e MAI in una richiesta facile "
     "o media. Dentro un esercizio la difficoltà non scende mai."
 )
+
+_MATERIE_DI_CALCOLO = ("matematica", "fisica", "chimica", "informatica", "scienze della terra", "biologia", "elettr", "meccan", "sistemi", "tecnolog")
+
+REGOLA_UMANISTICA = (
+    "MATERIE UMANISTICHE E DESCRITTIVE — LIVELLO E PUNTI: (1) al massimo UN TERZO delle richieste è di sola memoria (un nome, una data, una "
+    "definizione di una parola); le altre chiedono di applicare, spiegare un perché, usare un dato o confrontare; almeno UNA richiesta presenta "
+    "un caso, un dato o una situazione nuova da interpretare (in geografia: latitudine e longitudine, una scala numerica, un clima o un territorio "
+    "descritti a parole: mai una mappa); (2) l'apertura è breve ma non una domanda da una parola; (3) le richieste di ogni esercizio sono "
+    "in proporzione ai punti: circa UNA ogni 3-4 punti, mai un esercizio da 10 punti o più con due domande a risposta di una parola; una "
+    "domanda di sola memoria vale poco, un «Spiega perché» o un «Confronta» vale di più; (4) la consegna NON anticipa la risposta (mai «la "
+    "linea che divide la Terra a metà» se si chiede «Equatore»); (5) nel Vero/Falso le affermazioni false sono CREDIBILI, con un errore sottile "
+    "(due concetti vicini confusi, un dettaglio scambiato), mai assurde o scherzose."
+)
+
+
+def regola_umanistica(materia: str) -> str:
+    """REGOLA_UMANISTICA per le materie che non sono di calcolo (storia, geografia, italiano, lingue, diritto…); stringa vuota per le altre."""
+    m = (materia or "").lower()
+    return "" if any(m.startswith(k) for k in _MATERIE_DI_CALCOLO) else REGOLA_UMANISTICA
+
+
+def _riga_umanistica(materia: str) -> str:
+    """La regola come riga di elenco per i prompt (vuota per le materie di calcolo)."""
+    r = regola_umanistica(materia)
+    return ("- " + r + chr(10)) if r else ""
+
 
 REGOLA_CONSEGNE_BREVI = (
     "CONSEGNE E RICHIESTE SNELLE — REGOLA FONDAMENTALE: ogni esercizio ha UNA riga di consegna, standard e breve, come sui libri di testo "
@@ -1206,7 +1233,11 @@ _RAMPE_ESEMPIO = [
     (("cinematica", "moto"),
      "cinematica: (1) accelerazione da due dati di velocità e tempo · (2) spazio percorso da un grafico v-t · "
      "(3) frenata con spazio e tempo di arresto · (4) due corpi: quando e dove si incontrano (equazione di secondo grado con discriminante quadrato perfetto)"),
-    (("storia", "geografia"),
+    (("geograf",),
+     "geografia: (1) localizzare con i punti cardinali, i paralleli e i meridiani, o con latitudine e longitudine date · "
+     "(2) usare una scala numerica o grafica (1:50.000: quanti km sono 4 cm?) · (3) collegare clima, rilievo e attività umane in un territorio descritto a parole · "
+     "(4) confrontare due territori o valutare una scelta (dove costruire, quale carta usare) motivando"),
+    (("storia",),
      "storia: (1) collocare un evento (quando, dove, chi) · (2) spiegare una causa o una conseguenza · (3) confrontare due fenomeni o due fonti · "
      "(4) valutare un'interpretazione e argomentarla con i fatti"),
     (("italiano", "letteratura", "antologia"),
@@ -1281,6 +1312,7 @@ def prompt_piano_verifica(
         f"una spiegazione; 3 = più concetti insieme, una trappola, un ragionamento non standard, un'analisi o una valutazione: deve "
         f"essere DAVVERO difficile, non solo più lungo.\n"
         f"{REGOLA_DIFFICOLTA_VERA}\n"
+        f"{_riga_umanistica(materia)}"
         f"Per ogni richiesta di livello 3 la nota dice COSA la rende davvero difficile (per esempio «somma di tre frazioni con denominatori "
         f"da scomporre», «caso da discutere», «confronto tra due fonti»).\n"
         f"REGOLE:\n"
@@ -1323,6 +1355,7 @@ def prompt_ritocco_difficolta(materia: str, argomento: str, corpo: str, piano_te
         f"difficoltà non scenda mai.\n"
         f"- le richieste già giuste le ricopi IDENTICHE, parola per parola.\n\n"
         f"REGOLE:\n- {REGOLA_DIFFICOLTA_VERA}\n- {REGOLA_CONSEGNE_BREVI}\n"
+        f"{_riga_umanistica(materia)}"
         f"- NON cambiare il numero di esercizi, né il numero di richieste di ogni esercizio, né i titoli, né le consegne esistenti (puoi solo "
         f"AGGIUNGERE una consegna dove manca, secondo la regola sulle consegne). NON toccare i punti "
         f"(N pt), le caselle V/F, i grafici ([[GRAFICO: ...]] o TikZ).\n"
