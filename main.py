@@ -39,7 +39,7 @@ from prompts import (
     prompt_nuovo_esercizio,
     REGOLA_SOTTOPUNTI_MODIFICA, REGOLA_GRAFICO_CURVE, REGOLA_CONSEGNE_BREVI, struttura_verifica,
 )
-from docx_export import latex_to_docx_modificabile, _rubrica_to_docx
+from docx_export import latex_to_docx_modificabile, _rubrica_to_docx, rubrica_to_pdf
 from scheda import genera_scheda
 from subscription_management import calcola_entitlements, get_subscription_manager
 from ui_upgrade import render_upgrade
@@ -823,7 +823,7 @@ if "gen_time_sec"      not in st.session_state: st.session_state.gen_time_sec = 
 if "rubrica_testo"     not in st.session_state: st.session_state.rubrica_testo = None
 if "_rubrica_gen"      not in st.session_state: st.session_state._rubrica_gen = False
 if "_rubrica_pdf"      not in st.session_state: st.session_state["_rubrica_pdf"] = None
-if "_rubrica_docx"     not in st.session_state: st.session_state["_rubrica_docx"] = None
+if "_rubrica_docx"     not in st.session_state: st.session_state["_rubrica_docx"] = None; st.session_state["_rubrica_pdf"] = None
 if "file_ispirazione"  not in st.session_state: st.session_state.file_ispirazione = None
 # Analisi documento caricato
 if "analisi_doc"          not in st.session_state: st.session_state.analisi_doc = None
@@ -2628,7 +2628,7 @@ def _apri_verifica_salvata(verifica: dict, contenuto: dict) -> bool:
     }
     _pulisci_stato_revisione()
     st.session_state.rubrica_testo = None
-    st.session_state["_rubrica_docx"] = None
+    st.session_state["_rubrica_docx"] = None; st.session_state["_rubrica_pdf"] = None
     st.session_state._share_code = None
     va = st.session_state.verifiche["A"]
     va["latex"] = va["latex_originale"] = latex_a
@@ -4769,7 +4769,7 @@ def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali
         st.session_state.verifiche["SC"] = {"latex": None, "pdf": None, "n": 0, "avvisi": []}
         va["docx"] = None
         st.session_state.rubrica_testo = None
-        st.session_state["_rubrica_docx"] = None
+        st.session_state["_rubrica_docx"] = None; st.session_state["_rubrica_pdf"] = None
         st.session_state["_avviso_dopo"] = (
             "Hai modificato la verifica: Fila B, BES/DSA, Soluzioni e scheda di allenamento già create "
             "non valgono più e vanno rigenerate dalla nuova versione."
@@ -6267,7 +6267,7 @@ def _invalida_derivate() -> None:
         st.session_state.verifiche["SC"] = {"latex": None, "pdf": None, "n": 0, "avvisi": []}
         st.session_state.verifiche["A"]["docx"] = None
         st.session_state.rubrica_testo = None
-        st.session_state["_rubrica_docx"] = None
+        st.session_state["_rubrica_docx"] = None; st.session_state["_rubrica_pdf"] = None
         st.session_state["_avviso_dopo"] = ("Hai cambiato la verifica: Fila B, BES/DSA, soluzioni e scheda di allenamento già create "
                                             "non valgono più e vanno rigenerate.")
 
@@ -7154,7 +7154,9 @@ def _render_stage_final():
         )
         with _vb4:
             if _rub_ready:
-                # Genera DOCX al volo se non ancora cached
+                # PDF (impaginato da LaTeX, per stampare e archiviare) e Word (modificabile): si creano al volo la prima volta
+                if not st.session_state.get('_rubrica_pdf'):
+                    st.session_state['_rubrica_pdf'] = rubrica_to_pdf(st.session_state.rubrica_testo, materia=mat_str, livello=scu_str, argomento=arg_str)
                 if not st.session_state.get('_rubrica_docx'):
                     _docx_bytes = _rubrica_to_docx(
                         st.session_state.rubrica_testo,
@@ -7164,19 +7166,18 @@ def _render_stage_final():
                     )
                     if _docx_bytes:
                         st.session_state['_rubrica_docx'] = _docx_bytes
+                _rub_pdf = st.session_state.get('_rubrica_pdf')
                 _rub_docx = st.session_state.get('_rubrica_docx')
+                if _rub_pdf:
+                    _dl('Scarica Griglia (PDF)', icon=":material/picture_as_pdf:", data=_rub_pdf, file_name=arg_str + '_GrigliaValutazione.pdf',
+                        mime='application/pdf', key='dl_rubrica_pdf', use_container_width=True, type="primary")
                 if _rub_docx:
+                    _dl('Scarica Griglia (Word)', icon=":material/description:", data=_rub_docx, file_name=arg_str + '_GrigliaValutazione.docx',
+                        mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        key='dl_rubrica_docx_v2', use_container_width=True)
+                if not _rub_pdf and not _rub_docx:
                     _dl(
-                        '⬇ Scarica Griglia (.docx)',
-                        data=_rub_docx,
-                        file_name=arg_str + '_GrigliaValutazione.docx',
-                        mime='application/vnd.openxmlformats-officedocument'
-                             '.wordprocessingml.document',
-                        key='dl_rubrica_docx_v2', use_container_width=True,
-                    )
-                else:
-                    _dl(
-                        '⬇ Scarica griglia (.txt)',
+                        'Scarica griglia (.txt)',
                         data=st.session_state.rubrica_testo.encode('utf-8'),
                         file_name=arg_str + '_Griglia.txt',
                         mime='text/plain', key='dl_rubrica_v2', use_container_width=True,

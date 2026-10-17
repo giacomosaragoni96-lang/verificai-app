@@ -1154,6 +1154,125 @@ def latex_to_docx_via_ai(codice_latex: str, con_griglia: bool = True) -> tuple[b
 
 # ── RUBRICA VALUTAZIONE → DOCX ───────────────────────────────────────────────────
 
+def _fissa_tabella(tbl, larghezze_cm: list, totale_cm: float = 16.8) -> None:
+    """
+    Tabella Word con larghezza fissa (le colonne in proporzione a `larghezze_cm`, in tutto `totale_cm`), centrata e senza rientro:
+    sta dentro i margini di una pagina A4 con 2 cm per lato e non esce a destra come con la larghezza automatica.
+    """
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+    from docx.shared import Cm
+    from docx.enum.table import WD_TABLE_ALIGNMENT
+    somma = float(sum(larghezze_cm))
+    w = [x * totale_cm / somma for x in larghezze_cm]
+    twips = lambda cm: str(int(round(cm / 2.54 * 1440)))
+    tbl.autofit = False                                    # larghezza fissa
+    tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tblPr = tbl._tbl.tblPr
+    tblW = tblPr.find(qn("w:tblW"))
+    if tblW is None:
+        tblW = OxmlElement("w:tblW")
+        tblPr.append(tblW)
+    tblW.set(qn("w:type"), "dxa")
+    tblW.set(qn("w:w"), twips(totale_cm))
+    if tblPr.find(qn("w:tblInd")) is None:
+        ind = OxmlElement("w:tblInd")
+        ind.set(qn("w:w"), "0")
+        ind.set(qn("w:type"), "dxa")
+        ancora = tblPr.find(qn("w:tblLayout"))
+        if ancora is None:
+            ancora = tblPr.find(qn("w:tblLook"))
+        if ancora is not None:
+            ancora.addprevious(ind)
+        else:
+            tblPr.append(ind)
+    for gc, wv in zip(tbl._tbl.tblGrid.findall(qn("w:gridCol")), w):
+        gc.set(qn("w:w"), twips(wv))
+    for riga in tbl.rows:
+        for ci, wv in enumerate(w):
+            riga.cells[ci].width = Cm(wv)
+
+
+def _leggi_rubrica(testo: str) -> tuple:
+    """(fasce, esercizi) dal testo a colonne separate da | scritto dall'AI (sezioni «FASCE:» ed «ESERCIZI:»)."""
+    fasce, esercizi, sezione = [], [], None
+    for raw in (testo or "").strip().split("\n"):
+        riga = raw.strip()
+        if riga == "FASCE:":
+            sezione = "fasce"
+            continue
+        if riga == "ESERCIZI:":
+            sezione = "esercizi"
+            continue
+        if "|" not in riga or riga.startswith("#") or riga.startswith("("):
+            continue
+        parti = [x.strip() for x in riga.split("|")]
+        if sezione == "fasce" and len(parti) >= 6:
+            fasce.append(parti[:6])
+        elif sezione == "esercizi" and len(parti) >= 6:
+            esercizi.append(parti[:6])
+    return fasce, esercizi
+
+
+def rubrica_to_pdf(rubrica_testo: str, materia: str = "", livello: str = "", argomento: str = "") -> bytes | None:
+    """La griglia di valutazione per competenze in PDF (LaTeX): due tabelle ben impaginate, pronte da stampare e archiviare con la verifica."""
+    try:
+        from latex_utils import compila_pdf
+        fasce, esercizi = _leggi_rubrica(rubrica_testo)
+        if not fasce and not esercizi:
+            return None
+
+        def esc(t: str) -> str:
+            t = str(t or "").replace("\\", " ")
+            for a, b in (("&", r"\&"), ("%", r"\%"), ("#", r"\#"), ("_", r"\_"), ("^", r"\^{}"), ("~", r"\~{}"), ("{", r"\{"), ("}", r"\}"), ("$", r"\$")):
+                t = t.replace(a, b)
+            return t
+
+        colori = ["D4EDDA", "D1ECF1", "FFF3CD", "F8D7DA"]
+        X = r">{\raggedright\arraybackslash}X"
+        intest = lambda voci: " & ".join(r"\color{white}\bfseries " + esc(v) for v in voci) + r" \\"
+        t1 = ""
+        if fasce:
+            righe = "".join(
+                r"\rowcolor[HTML]{" + (colori[i] if i < len(colori) else "FFFFFF") + "}" + r"\textbf{" + esc(r[0]) + "} & "
+                + " & ".join(esc(c) for c in r[1:]) + r" \\ \arrayrulecolor{rubTeal!30}\hline" + "\n" for i, r in enumerate(fasce))
+            t1 = (r"\titolosez{Fasce di voto}" "\n"
+                  r"\begin{tabularx}{\linewidth}{>{\centering\arraybackslash}p{1.9cm}>{\centering\arraybackslash}p{1.7cm}>{\centering\arraybackslash}p{1.2cm}" + X + X + X + "}\n"
+                  r"\rowcolor{rubTeal}" + intest(["Fascia", "Punti", "Voto", "Comprensione dei contenuti", "Applicazione delle conoscenze", "Esposizione e precisione"]) + "\n"
+                  + righe + r"\end{tabularx}" "\n")
+        t2 = ""
+        if esercizi:
+            righe = "".join(
+                (r"\rowcolor[HTML]{F0FAF8}" if i % 2 == 0 else "") + r"\textbf{" + esc(r[0]) + "} & " + " & ".join(esc(c) for c in r[1:]) + r" \\ \arrayrulecolor{rubTeal!30}\hline" + "\n"
+                for i, r in enumerate(esercizi))
+            t2 = (r"\titolosez{Griglia per esercizio}" "\n"
+                  r"\begin{tabularx}{\linewidth}{>{\centering\arraybackslash}p{0.9cm}" + X + r">{\centering\arraybackslash}p{1.3cm}" + X + X + X + "}\n"
+                  r"\rowcolor{rubTeal}" + intest(["Es.", "Argomento", "Punti", "Criterio valutato", "Risposta eccellente (9-10)", "Risposta sufficiente (6)"]) + "\n"
+                  + righe + r"\end{tabularx}" "\n")
+        meta = " · ".join(x for x in (materia, livello) if x)
+        latex = (
+            r"\documentclass[a4paper,10pt]{article}" "\n"
+            r"\usepackage[utf8]{inputenc}\usepackage[T1]{fontenc}\usepackage[italian]{babel}" "\n"
+            r"\usepackage[top=1.8cm,bottom=1.8cm,left=1.8cm,right=1.8cm]{geometry}" "\n"
+            r"\usepackage[table,dvipsnames]{xcolor}\usepackage{array,tabularx}" "\n"
+            r"\definecolor{rubTeal}{HTML}{0A7A62}\definecolor{rubGray}{HTML}{6B7280}" "\n"
+            r"\newcommand{\titolosez}[1]{\par\vspace{12pt}{\large\bfseries\color{rubTeal} #1}\par\vspace{5pt}}" "\n"
+            r"\setlength{\parindent}{0pt}\pagestyle{empty}\renewcommand{\arraystretch}{1.45}\setlength{\tabcolsep}{6pt}" "\n"
+            r"\begin{document}\small" "\n"
+            r"\begin{center}{\LARGE\bfseries\color{rubTeal} Griglia di valutazione per competenze}\\[4pt]" "\n"
+            + (r"{\normalsize\color{rubGray} " + esc(meta) + r"}\\[2pt]" "\n" if meta else "")
+            + (r"{\small\itshape\color{rubGray} Argomento: " + esc(argomento) + r"}\\[2pt]" "\n" if argomento else "")
+            + r"{\color{rubTeal}\rule{\linewidth}{1.2pt}}\end{center}" "\n"
+            + t1 + t2 +
+            r"\vfill\begin{center}{\scriptsize\itshape\color{rubGray} Generato con VerificAI · Allineato alle Linee Guida MIM sulla valutazione per competenze}\end{center}" "\n"
+            r"\end{document}"
+        )
+        pdf, _err = compila_pdf(latex)
+        return pdf
+    except Exception:
+        return None
+
+
 def _rubrica_to_docx(
     rubrica_testo: str,
     materia: str = "",
@@ -1204,6 +1323,8 @@ def _rubrica_to_docx(
 
         # ── Page layout ───────────────────────────────────────────────────────
         sec = doc.sections[0]
+        sec.page_width    = Cm(21.0)           # A4 (il modello di python-docx è Letter)
+        sec.page_height   = Cm(29.7)
         sec.top_margin    = Cm(1.8)
         sec.bottom_margin = Cm(1.8)
         sec.left_margin   = Cm(2.0)
@@ -1299,6 +1420,8 @@ def _rubrica_to_docx(
                     rr.bold = True
                     rr.font.color.rgb = C_DARK
 
+        _fissa_tabella(tbl1, [2.2, 2.0, 1.4, 4.2, 4.2, 3.0])
+
         # ── Section 2: Griglia per Esercizio ─────────────────────────────────
         if esercizi:
             p_s2 = doc.add_paragraph()
@@ -1346,6 +1469,8 @@ def _rubrica_to_docx(
                     rr.font.size = Pt(8.5)
                     if ci == 0:
                         rr.bold = True
+
+            _fissa_tabella(tbl2, [1.0, 3.2, 1.4, 3.5, 4.4, 3.5])
 
         # ── Footer ────────────────────────────────────────────────────────────
         p_foot = doc.add_paragraph()
