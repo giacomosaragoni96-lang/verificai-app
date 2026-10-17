@@ -1677,31 +1677,36 @@ html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button {background:tr
 html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button, html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button * {color:rgba(255,255,255,.92) !important;
   -webkit-text-fill-color:rgba(255,255,255,.92) !important;font-size:.8rem !important;font-weight:600 !important;text-decoration:underline;}
 html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button:hover * {color:#fff !important;-webkit-text-fill-color:#fff !important;}
+/* i due pulsanti dei riquadri (questionario e invito) hanno le stesse misure e lo stesso carattere */
+[class*="st-key-box_sblocco"] a.bx-b {display:flex !important;align-items:center;justify-content:center;min-height:2.9rem;box-sizing:border-box;
+  padding:.4rem 1rem !important;font-size:.92rem !important;font-weight:700 !important;border-radius:12px;font-family:'DM Sans',sans-serif;}
+[class*="st-key-box_sblocco"] .bx-badge {color:#fff;}
 html body .stApp div[class*="st-key-box_sblocco"][data-fatto] a.bx-b, html body .stApp div[class*="st-key-box_sblocco"][data-fatto] .bx-pills,
 html body .stApp div[class*="st-key-box_sblocco"][data-fatto] .bx-mini {display:none;}
 </style>"""
 
 
 def _box_invito(dove: str) -> None:
-    """Secondo box, più discreto e di un altro colore, sotto quello del questionario: «Invita un collega» (+2 verifiche per ogni amico)."""
+    """Secondo box, della stessa famiglia del primo ma chiaro: «Invita un collega» (+2 verifiche per ogni amico)."""
     if not _INVITO:
         return
     with st.container(key=f"box_invito_{dove}"):
-        _c1, _c2 = st.columns([2.5, 1.5], vertical_alignment="center", gap="medium")
+        _c1, _c2 = st.columns([2.6, 1.4], vertical_alignment="center", gap="medium")
         with _c1:
             st.markdown(
-                f'<style>html body .stApp div[class*="st-key-box_invito"]:not(#vf) {{background:{T["bg2"]};border:1px solid {T["border2"]};'
-                f'border-left:4px solid #14B8A6;border-radius:14px;padding:.8rem 1.1rem;margin:0 0 1rem;box-shadow:0 2px 8px rgba(15,23,42,.06);}}'
-                f'.bi-wrap{{display:flex;gap:.8rem;align-items:center;font-family:DM Sans,sans-serif;}}'
-                f'.bi-badge{{flex:0 0 2.6rem;height:2.6rem;border-radius:13px;background:#CCFBF1;display:flex;align-items:center;justify-content:center;font-size:1.3rem;}}'
-                f'.bi-t{{font-weight:800;font-size:1rem;color:{T["text"]};line-height:1.25;}}'
-                f'.bi-d{{font-size:.85rem;color:{T["text2"]};line-height:1.4;margin-top:.1rem;}}'
-                'html body .stApp [class*="st-key-bi_btn_"]:not(#vf) button{background:linear-gradient(135deg,#0D9488,#14B8A6) !important;border:none !important;'
-                'box-shadow:0 6px 16px rgba(20,184,166,.32) !important;white-space:nowrap !important;}'
+                f'<style>html body .stApp div[class*="st-key-box_invito"]:not(#vf) {{background:linear-gradient(135deg,#EFF6FF 0%,#DBEAFE 100%);'
+                f'border:1px solid #BFDBFE;border-radius:18px;padding:1rem 1.3rem;margin:0 0 1rem;box-shadow:0 10px 24px rgba(37,99,235,.14),0 2px 6px rgba(37,99,235,.08);}}'
+                f'.bi-wrap{{display:flex;gap:.9rem;align-items:center;font-family:DM Sans,sans-serif;}}'
+                f'.bi-badge{{flex:0 0 3rem;height:3rem;border-radius:15px;background:linear-gradient(135deg,#1E3A8A,#2563EB);color:#fff;display:flex;align-items:center;'
+                f'justify-content:center;box-shadow:0 6px 14px rgba(30,58,138,.28);}}'
+                f'.bi-t{{font-weight:800;font-size:1.1rem;color:#1E3A8A;line-height:1.22;letter-spacing:-.01em;}}'
+                f'.bi-d{{font-size:.86rem;color:#334155;line-height:1.4;margin-top:.2rem;}}'
+                'html body .stApp [class*="st-key-bi_btn_"]:not(#vf) button{background:linear-gradient(135deg,#1E3A8A,#2563EB) !important;border:none !important;'
+                'min-height:2.9rem !important;border-radius:12px !important;box-shadow:0 6px 16px rgba(30,58,138,.3) !important;white-space:nowrap !important;}'
                 'html body .stApp [class*="st-key-bi_btn_"]:not(#vf) button, html body .stApp [class*="st-key-bi_btn_"]:not(#vf) button *{color:#fff !important;'
-                '-webkit-text-fill-color:#fff !important;font-weight:700 !important;white-space:nowrap !important;}'
-                'html body .stApp [class*="st-key-bi_btn_"]:not(#vf) button:hover{filter:brightness(1.06);}</style>'
-                '<div class="bi-wrap"><div class="bi-badge">👥</div><div>'
+                '-webkit-text-fill-color:#fff !important;font-size:.92rem !important;font-weight:700 !important;font-family:"DM Sans",sans-serif !important;white-space:nowrap !important;}'
+                'html body .stApp [class*="st-key-bi_btn_"]:not(#vf) button:hover{filter:brightness(1.08);}</style>'
+                '<div class="bi-wrap"><div class="bi-badge"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M19 8v6M16 11h6"/></svg></div><div>'
                 '<div class="bi-t">Invita un collega</div>'
                 f'<div class="bi-d">Per ogni collega che si iscrive col tuo link e crea la sua prima verifica, '
                 f'<b>+{BONUS_PER_INVITO} verifiche complete</b> per te (Fila B, BES/DSA, soluzioni, Word…).</div></div></div>',
@@ -1721,14 +1726,14 @@ def _box_sblocco(dove: str) -> None:
         _c1, _c2 = st.columns([2.6, 1.4], vertical_alignment="center", gap="medium")
         with _c1:
             st.markdown(_CSS_BOX_SBLOCCO +
-                        '<div class="bx-wrap"><div class="bx-badge">🎁</div><div class="bx-testo">'
+                        '<div class="bx-wrap"><div class="bx-badge"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8C10.5 4 7 4 7 6.2 7 8 9 8 12 8c3 0 5 0 5-1.8C17 4 13.5 4 12 8z"/></svg></div><div class="bx-testo">'
                         '<div class="bx-eyebrow">Sblocca di più</div>'
                         '<div class="bx-t">Altre verifiche con tutte le funzioni</div>'
                         + f'<div class="bx-d">Compila il questionario e ricevi subito un codice per <b>{VERIFICHE_PER_CODICE} verifiche complete</b>.</div>'
                         + _pillole + '</div></div>',
                         unsafe_allow_html=True)
         with _c2:
-            st.markdown('<div class="bx-mini">⏱ 4 minuti · anonimo</div>'
+            st.markdown('<div class="bx-mini"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="vertical-align:-1px;margin-right:.3rem"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>4 minuti · anonimo</div>'
                         '<a class="bx-b" href="?pagina=questionario" target="_blank" rel="noopener">Compila il questionario</a>',
                         unsafe_allow_html=True)
             if st.button("Ho già un codice", key=f"sblocco_codice_{dove}", type="tertiary"):
@@ -1772,7 +1777,7 @@ def _banner_piano(dove: str) -> None:
         with _slot.container(key=f"banner_piano_{dove}"):
             _msg = ("Questa verifica ha tutte le funzioni: è una delle tue verifiche complete." if not PREZZI_VISIBILI
                     else "Per aver invitato un collega, questa verifica ha tutto il piano Pro.")
-            st.markdown(_CSS_BANNER_PIANO + '<div class="bp-wrap"><div class="g-k"><span class="g-ico">🎁</span>Verifica completa</div>'
+            st.markdown(_CSS_BANNER_PIANO + '<div class="bp-wrap"><div class="g-k"><span class="g-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8C10.5 4 7 4 7 6.2 7 8 9 8 12 8c3 0 5 0 5-1.8C17 4 13.5 4 12 8z"/></svg></span>Verifica completa</div>'
                         f'<div class="bp-s">{_msg}</div></div>', unsafe_allow_html=True)
         return
     if ENT.assaggio:
