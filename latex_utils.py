@@ -87,6 +87,105 @@ def _senza_liste_annidate(body: str) -> str:
     return re.sub(r' ?\x00\d+\x00 ?', ' ', testo) if blocchi else body
 
 
+_RE_PUNTI_RICHIESTA = r'[\(\[]?\s*(\d+(?:[.,]\d+)?)\s*(?:pt\b|punt[io]\b|p\.)\s*[\)\]]?'   # «1789 per» non è «1789 p»
+
+
+def _richieste_del_blocco(block: str) -> list:
+    r"""
+    Le richieste (\item di primo livello) di un esercizio con il loro punteggio: [{'label', 'pts', 'righe', 'span'}].
+    `block` è il testo dopo «\subsection*{» (titolo, «}», corpo). `righe` sono le righe della richiesta e `span` la posizione
+    del numero dei punti dentro quelle righe unite: serve a riscriverlo. È lo stesso lettore della tabella dei punteggi.
+    """
+    out = []
+    lines = block.split('\n')
+    lettere = 'abcdefghijklmnopqrstuvwxyz'
+    lettera_idx = 0
+    profondita = _profondita_item_per_riga(lines)
+    livello_top = _livello_sottopunti(profondita)
+
+    for li, line in enumerate(lines):
+        item_label_match = re.search(r'\\item\[([^\]]+)\]', line)
+        item_plain_match = re.search(r'\\item(?!\[)', line)
+
+        if not item_label_match and not item_plain_match:
+            continue
+        # Le opzioni di una scelta multipla (elenco dentro un sottopunto) non sono sottopunti:
+        # senza questo filtro contavano nelle lettere e la tabella mostrava "a) f)".
+        if livello_top is not None and profondita[li] is not None and profondita[li] != livello_top:
+            continue
+
+        if item_label_match:
+            raw_label = item_label_match.group(1).replace('*', '').strip()
+        else:
+            raw_label = lettere[lettera_idx % 26] + ")"
+            lettera_idx += 1
+
+        righe = []
+        for lj in range(li, min(li + 15, len(lines))):
+            if lj > li and re.search(r'\\item(?:\[|(?!\w))', lines[lj]):
+                # un item annidato (opzione A-D) non chiude il sottopunto: il suo punteggio
+                # sta dopo l'elenco delle opzioni. Chiude solo un item dello stesso livello o superiore.
+                if (profondita[lj] is None or profondita[li] is None
+                        or profondita[lj] <= profondita[li]):
+                    break
+            righe.append(lj)
+        unito = '\n'.join(lines[k] for k in righe)
+        # i grafici non contano (dentro un tikzpicture un «5 pt» può essere uno spessore): si coprono con spazi, la posizione resta quella
+        mascherato = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}',
+                            lambda m: re.sub(r'[^\n]', ' ', m.group(0)), unito, flags=re.DOTALL)
+        pt_match = re.search(_RE_PUNTI_RICHIESTA, mascherato, re.IGNORECASE)
+        if not pt_match:
+            continue
+        out.append({'label': raw_label, 'pts': pt_match.group(1), 'righe': righe, 'span': pt_match.span(1)})
+    return out
+
+
+def punti_richieste(body: str, title: str = "") -> list:
+    """
+    [(etichetta, '', punti)] per ogni richiesta dell'esercizio, letti come li legge la tabella dei punteggi (lo stesso lettore).
+    Lista vuota se l'esercizio non ha richieste con punteggio riconoscibili, o se i punti letti non sommano a tutti i (N pt) dell'esercizio:
+    in quel caso chi chiama ripiega sul lettore vecchio.
+    """
+    voci = _richieste_del_blocco(f"{title}}}\n{body}")
+    if not voci:
+        return []
+    punti = [int(round(float(v['pts'].replace(',', '.')))) for v in voci]
+    if abs(sum(punti) - parse_pts_from_block_body(body)) > 0.5:
+        return []
+    return [(v['label'], '', p) for v, p in zip(voci, punti)]
+
+
+def applica_punti_richieste(body: str, nuovi: list, title: str = ""):
+    """
+    Scrive i punti `nuovi` (uno per richiesta, nell'ordine) cambiando il numero del (N pt) che la tabella leggerebbe, nel punto esatto in cui si trova
+    (anche se è dopo una formula, una tabella o un elenco di opzioni). Ritorna il corpo nuovo, oppure None se le richieste lette non sono tante
+    quanti i valori: chi chiama ripiega allora su apply_item_pts_to_body.
+    """
+    intestazione = f"{title}}}\n"
+    block = intestazione + body
+    voci = _richieste_del_blocco(block)
+    if not voci or len(voci) != len(nuovi):
+        return None
+    lines = block.split('\n')
+    inizio_riga, pos = [], 0
+    for r in lines:
+        inizio_riga.append(pos)
+        pos += len(r) + 1
+    sostituzioni = []
+    for v, nuovo in zip(voci, nuovi):
+        a, b = v['span']
+        for k in v['righe']:                      # da posizione nel testo unito a posizione nel blocco
+            lunghezza = len(lines[k]) + 1
+            if a < lunghezza:
+                sostituzioni.append((inizio_riga[k] + a, inizio_riga[k] + a + (b - a), str(nuovo)))
+                break
+            a -= lunghezza
+            b -= lunghezza
+    for a, b, testo in sorted(sostituzioni, reverse=True):
+        block = block[:a] + testo + block[b:]
+    return block[len(intestazione):]
+
+
 def parse_esercizi(latex: str) -> list:
     """
     Analizza il LaTeX e restituisce una lista di esercizi con i loro punteggi.
@@ -108,53 +207,7 @@ def parse_esercizi(latex: str) -> list:
         else:
             num_label = str(i + 1)
 
-        items_found = []
-        lines = block.split('\n')
-        lettere = 'abcdefghijklmnopqrstuvwxyz'
-        lettera_idx = 0
-        profondita = _profondita_item_per_riga(lines)
-        livello_top = _livello_sottopunti(profondita)
-
-        for li, line in enumerate(lines):
-            item_label_match = re.search(r'\\item\[([^\]]+)\]', line)
-            item_plain_match = re.search(r'\\item(?!\[)', line)
-
-            if not item_label_match and not item_plain_match:
-                continue
-            # Le opzioni di una scelta multipla (elenco dentro un sottopunto) non sono sottopunti:
-            # senza questo filtro contavano nelle lettere e la tabella mostrava "a) f)".
-            if livello_top is not None and profondita[li] is not None and profondita[li] != livello_top:
-                continue
-
-            if item_label_match:
-                raw_label = item_label_match.group(1).replace('*', '').strip()
-            else:
-                raw_label = lettere[lettera_idx % 26] + ")"
-                lettera_idx += 1
-
-            window_lines = []
-            for lj in range(li, min(li + 15, len(lines))):
-                if lj > li and re.search(r'\\item(?:\[|(?!\w))', lines[lj]):
-                    # un item annidato (opzione A-D) non chiude il sottopunto: il suo punteggio
-                    # sta dopo l'elenco delle opzioni. Chiude solo un item dello stesso livello o superiore.
-                    if (profondita[lj] is None or profondita[li] is None
-                            or profondita[lj] <= profondita[li]):
-                        break
-                window_lines.append(lines[lj])
-            search_window = '\n'.join(window_lines)
-            search_window = re.sub(
-                r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '',
-                search_window, flags=re.DOTALL
-            )
-
-            pt_match = re.search(
-                r'[\(\[]?\s*(\d+(?:[.,]\d+)?)\s*(?:pt\b|punt[io]\b|p\.)\s*[\)\]]?',   # «1789 per» non è «1789 p»
-                search_window, re.IGNORECASE
-            )
-            if not pt_match:
-                continue
-
-            items_found.append((raw_label, pt_match.group(1)))
+        items_found = [(r['label'], r['pts']) for r in _richieste_del_blocco(block)]
 
         if items_found:
             # Controllo di coerenza: se i punti dei sottopunti riconosciuti non sommano a tutti i
