@@ -5571,7 +5571,8 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         icon="🔒",
                     )
             else:
-                st.caption(f"Modifiche con l'AI su questa verifica: {_usate_mod} di {_tetto_mod}")
+                st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-size:.72rem;color:{T["muted"]};margin-top:.35rem;">Limite modifiche: {_usate_mod} di {_tetto_mod}</div>',
+                            unsafe_allow_html=True)
 
     # ── 3) Altre azioni: aggiungere o eliminare un esercizio ─────────────────────
     _marker = '<div class="btn-outline-accent-marker" style="display:none;height:0;line-height:0"></div>'
@@ -6347,7 +6348,8 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
         if _fatto:
             st.success("Fatto: ho modificato la verifica. L'anteprima qui sopra è già aggiornata (puoi annullare qui sotto).", icon="✅")
         st.markdown(_CSS_MOD_RAPIDA.replace("__CARD__", T["card"]).replace("__ACC__", T["accent"]).replace("__TX__", T["text"]).replace("__T2__", T["text2"]) +
-                    '<div class="mr-t">✨ Vuoi cambiare qualcosa? Chiedilo</div>'
+                    f'<div class="mr-t"><svg width="17" height="17" viewBox="0 0 24 24" fill="{T["accent"]}" style="vertical-align:-3px;margin-right:.45rem">'
+                    '<path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>Vuoi cambiare qualcosa? Chiedilo</div>'
                     '<div class="mr-d">Scrivi cosa modificare e la verifica si rifà subito: niente da ricominciare.</div>',
                     unsafe_allow_html=True)
         st.text_area("Cosa vuoi cambiare?", key="mod_rapida_testo", label_visibility="collapsed", height=90,
@@ -6358,7 +6360,8 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
                                  icon=":material/auto_fix_high:", disabled=_finite)
         _stato = st.empty()          # qui compare l'avviso «sto lavorando», vicino al pulsante (anche su telefono)
         if _tetto is not None:
-            st.caption(f"Modifiche con l'AI su questa verifica: {_usate} di {_tetto}")
+            st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-size:.72rem;color:{T["muted"]};margin-top:.35rem;">Limite modifiche: {_usate} di {_tetto}</div>',
+                        unsafe_allow_html=True)
         if _finite:
             st.info("Hai usato tutte le modifiche con l'AI di questa verifica. Puoi ancora cambiare gli esercizi a mano da «Modifica gli esercizi».")
     _barra_annulla("rapida")
@@ -6652,14 +6655,15 @@ def _render_stage_final():
         # ── Versione Word modificabile: sotto la verifica, per chi preferisce lavorare in Word ─────────────────
         if WORD_ATTIVO and vA.get("latex"):
             spazio("sm")
+            _WD, _WD2 = "#2B579A", "#1F4379"          # il blu di Word: la scheda è riconoscibile e diversa da quella dell'AI
             st.markdown(
-                f'<style>html body .stApp .st-key-word_card {{background:linear-gradient(135deg,{T["accent"]}12 0%,{T["accent"]}26 100%);'
-                f'border:1.5px solid {T["accent"]}55;border-radius:18px;padding:1.1rem 1.3rem;}}'
+                f'<style>html body .stApp .st-key-word_card {{background:linear-gradient(135deg,{_WD}12 0%,{_WD}26 100%);'
+                f'border:1.5px solid {_WD}55;border-radius:18px;padding:1.1rem 1.3rem;}}'
                 f'html body .stApp .st-key-word_card button {{min-height:2.9rem;font-weight:700;border-radius:12px;background:{T["card"]} !important;background-image:none !important;'
-                f'border:1.5px solid {T["accent"]}77 !important;box-shadow:none !important;}}'
-                f'html body .stApp .st-key-word_card button, html body .stApp .st-key-word_card button * {{color:{T["accent"]} !important;-webkit-text-fill-color:{T["accent"]} !important;}}'
+                f'border:1.5px solid {_WD}77 !important;box-shadow:none !important;}}'
+                f'html body .stApp .st-key-word_card button, html body .stApp .st-key-word_card button * {{color:{_WD} !important;-webkit-text-fill-color:{_WD} !important;}}'
                 # «Scarica Word» è il pulsante pieno (blu): scritta bianca, mai blu su blu
-                f'html body .stApp .st-key-word_card [class*="st-key-dl_docx_A_generale"] button{{background:linear-gradient(135deg,{T["accent"]} 0%,{T["accent2"]} 100%) !important;border:none !important;box-shadow:0 6px 16px {T["accent"]}55 !important;}}'
+                f'html body .stApp .st-key-word_card [class*="st-key-dl_docx_A_generale"] button{{background:linear-gradient(135deg,{_WD} 0%,{_WD2} 100%) !important;border:none !important;box-shadow:0 6px 16px {_WD}55 !important;}}'
                 f'html body .stApp .st-key-word_card [class*="st-key-dl_docx_A_generale"] button, html body .stApp .st-key-word_card [class*="st-key-dl_docx_A_generale"] button *{{color:#fff !important;-webkit-text-fill-color:#fff !important;}}</style>',
                 unsafe_allow_html=True)
             with st.container(key="word_card"):
@@ -6667,19 +6671,23 @@ def _render_stage_final():
                 with _w1:
                     st.markdown(
                         f'<div style="display:flex;gap:.9rem;align-items:center;font-family:DM Sans,sans-serif;">'
-                        f'<div style="flex:0 0 3rem;height:3rem;border-radius:12px;background:{T["accent"]};color:#fff;font-size:1.5rem;'
-                        f'display:flex;align-items:center;justify-content:center;">📝</div>'
+                        '<div style="flex:0 0 3.2rem;height:3.2rem;display:flex;align-items:center;justify-content:center;">'
+                        '<svg width="46" height="46" viewBox="0 0 48 48" aria-label="Word"><rect x="14" y="5" width="30" height="38" rx="4" fill="#fff" stroke="#2B579A" stroke-width="2"/>'
+                        '<rect x="24" y="13" width="15" height="3.2" rx="1.6" fill="#9DB7E0"/><rect x="24" y="20" width="15" height="3.2" rx="1.6" fill="#9DB7E0"/>'
+                        '<rect x="24" y="27" width="15" height="3.2" rx="1.6" fill="#9DB7E0"/><rect x="24" y="34" width="11" height="3.2" rx="1.6" fill="#9DB7E0"/>'
+                        '<rect x="3" y="11" width="25" height="26" rx="4" fill="#2B579A"/>'
+                        '<text x="15.5" y="30" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="19" fill="#fff" text-anchor="middle">W</text></svg></div>'
                         f'<div style="line-height:1.35;"><div style="font-weight:800;font-size:1.05rem;color:{T["text"]};">Versione Word modificabile</div>'
                         f'<div style="color:{T["text2"]};font-size:.9rem;">Testo, formule e punteggi da ritoccare come preferisci; i grafici sono già inseriti.</div></div></div>',
                         unsafe_allow_html=True)
                 with _w2:
                     if vA.get("docx"):
-                        _dl(f"📝 Scarica Word · {_stima(vA['docx'])}", data=vA["docx"], file_name=arg_str + "_FilaA.docx",
+                        _dl(f"Scarica Word · {_stima(vA['docx'])}", icon=":material/download:", data=vA["docx"], file_name=arg_str + "_FilaA.docx",
                             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                             use_container_width=True, type="primary", key="dl_docx_A_generale")
                     elif _pro_bloccato("word"):
                         _pulsante_pro("word", "pro_word_generale")
-                    elif st.button("📝 Crea il file Word", key="gen_docx_A_generale", use_container_width=True, type="primary"):
+                    elif st.button("Crea il file Word", icon=":material/description:", key="gen_docx_A_generale", use_container_width=True, type="primary"):
                         with _attesa("word", "Sto preparando il file Word", ["Converto testo e formule", "Inserisco i grafici", "Rifinisco la pagina"], durata_passo=5):
                             try:
                                 _db, _emsg = latex_to_docx_modificabile(vA["latex"], mat_str, arg_str, con_griglia)
