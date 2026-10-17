@@ -6358,6 +6358,8 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
         with st.container(key="mod_applica"):
             _applica = st.button("Applica la modifica", key="mod_rapida_applica", type="primary", use_container_width=True,
                                  icon=":material/auto_fix_high:", disabled=_finite)
+        if _applica:
+            st.session_state["_mod_aperto"] = True      # dopo la modifica la tendina resta aperta: si vede l'esito e si può annullare
         _stato = st.empty()          # qui compare l'avviso «sto lavorando», vicino al pulsante (anche su telefono)
         if _tetto is not None:
             st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-size:.72rem;color:{T["muted"]};margin-top:.35rem;">Limite modifiche: {_usate} di {_tetto}</div>',
@@ -6662,15 +6664,20 @@ def _render_stage_final():
                 key="dl_pdf_basso_A",
                 help="Scarica il PDF della verifica, già formattato e pronto per la stampa.",
             )
-        if vA.get("pdf") and vA.get("latex"):
-            _box_modifica_rapida(gp, vA, mod_id)
-        with st.container(key="card_modifica"):
-            st.markdown('<div class="cm-t">✏️ Modifica i singoli esercizi</div>'
-                        '<div class="cm-d">Più facile o più difficile, numeri nuovi, sostituisci, aggiungi o elimina un esercizio: ogni modifica rifà subito il PDF.</div>',
-                        unsafe_allow_html=True)
-            if st.button("Scegli l'esercizio da cambiare", key="final_edit_card", icon=":material/edit_note:", use_container_width=True):
-                st.session_state.stage = STAGE_REVIEW
-                st.rerun()
+        # Le due vie per cambiare la verifica stanno in una tendina in evidenza: chiusa, la pagina resta leggera
+        with st.expander("Vuoi modificare qualcosa?", expanded=bool(st.session_state.get("_mod_aperto")), icon=":material/auto_fix_high:"):
+            st.markdown('<span class="vx-mod" style="display:none"></span>', unsafe_allow_html=True)
+            if vA.get("pdf") and vA.get("latex"):
+                _box_modifica_rapida(gp, vA, mod_id)
+            with st.container(key="card_modifica"):
+                st.markdown(f'<div class="cm-t"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{T["accent"]}" stroke-width="2" '
+                            'stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:.45rem"><path d="M4 20h4L19 9l-4-4L4 16z"/>'
+                            '<path d="M13.5 6.5l4 4"/></svg>Modifica i singoli esercizi</div>'
+                            '<div class="cm-d">Più facile o più difficile, numeri nuovi, sostituisci, aggiungi o elimina un esercizio: ogni modifica rifà subito il PDF.</div>',
+                            unsafe_allow_html=True)
+                if st.button("Scegli l'esercizio da cambiare", key="final_edit_card", icon=":material/edit_note:", use_container_width=True):
+                    st.session_state.stage = STAGE_REVIEW
+                    st.rerun()
 
         # ── Versione Word modificabile: sotto la verifica, per chi preferisce lavorare in Word ─────────────────
         if WORD_ATTIVO and vA.get("latex"):
@@ -7480,6 +7487,7 @@ def _nuova_verifica(modo: str | None = None) -> None:
     """Torna alla pagina iniziale (scelta tra «da una descrizione» e «dalla tua verifica»), o direttamente a `modo` se indicato,
     azzerando la verifica in corso (le versioni non salvate si perdono)."""
     st.session_state["_home_modo"]    = modo
+    st.session_state.pop("_mod_aperto", None)
     st.session_state.stage            = STAGE_INPUT
     st.session_state["_prev_stage"]   = None
     st.session_state.input_percorso   = None
