@@ -5062,9 +5062,23 @@ font-family: 'DM Sans', sans-serif;
   }}
   @media (max-width: 1000px) {{ html body .stApp .st-key-card_modifica {{ display: none !important; }} }}
   html body .stApp .st-key-card_modifica:not(#vf) {{
-    background: {T['card']}; border: 1px solid {T['border2']}; border-left: 4px solid {_acc}; border-radius: 16px; padding: .95rem 1.1rem 1rem;
-    margin: .2rem 0 .8rem; box-shadow: 0 6px 18px rgba(15,23,42,.08);
+    background: linear-gradient(160deg, {_acc}08 0%, {_acc}1C 100%); border: 1.5px solid {_acc}44; border-left: 4px solid {_acc}; border-radius: 18px;
+    padding: 1rem 1.15rem 1.05rem; margin: .2rem 0 .8rem; box-shadow: 0 8px 22px {_acc}22;
   }}
+  /* «Vuoi modificare qualcosa?»: tendina in evidenza, con l'intestazione nel colore del tema */
+  html body .stApp details[data-testid="stExpander"]:has(.vx-mod):not(#vf) {{
+    background: linear-gradient(160deg, {T['card']} 0%, {_acc}0D 100%) !important; border: 1.5px solid {_acc}55 !important; border-radius: 20px !important;
+    box-shadow: 0 14px 30px {_acc}28 !important; overflow: hidden; margin: .7rem 0 1rem !important;
+  }}
+  html body .stApp details[data-testid="stExpander"]:has(.vx-mod) > summary {{
+    background: linear-gradient(135deg, {_acc} 0%, {T.get('accent2', _acc)} 100%) !important; padding: 1.05rem 1.25rem !important; border-radius: 0 !important;
+  }}
+  html body .stApp details[data-testid="stExpander"]:has(.vx-mod) > summary, html body .stApp details[data-testid="stExpander"]:has(.vx-mod) > summary * {{
+    color: #fff !important; -webkit-text-fill-color: #fff !important; font-weight: 800 !important; font-size: 1.1rem !important; font-family: 'DM Sans', sans-serif !important;
+  }}
+  html body .stApp details[data-testid="stExpander"]:has(.vx-mod) > summary svg {{ fill: #fff !important; color: #fff !important; }}
+  html body .stApp details[data-testid="stExpander"]:has(.vx-mod) > div {{ padding: .9rem 1rem 1rem !important; background: transparent !important; }}
+  html body .stApp details[data-testid="stExpander"]:has(.vx-mod) div.st-key-mod_rapida:not(#vf) {{ margin-top: 0 !important; }}
   html body .stApp .st-key-card_modifica .cm-t {{ font-family: 'DM Sans', sans-serif; font-weight: 800; font-size: 1.02rem; color: {T['text']}; }}
   html body .stApp .st-key-card_modifica .cm-d {{ font-family: 'DM Sans', sans-serif; font-size: .86rem; color: {T['text2']}; margin: .15rem 0 .7rem; line-height: 1.45; }}
 
