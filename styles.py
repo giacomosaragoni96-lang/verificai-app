@@ -5011,6 +5011,8 @@ font-family: 'DM Sans', sans-serif;
 
   /* ── Pagina finale su desktop: l'anteprima resta ferma a sinistra mentre si scorrono le azioni a destra; sotto i 1000 px si impila ── */
   html body .stApp [data-testid="stColumn"]:has(.col-prev) {{ position: sticky; top: 4.6rem; align-self: flex-start; }}
+  /* il segnaposto non deve occupare spazio: altrimenti l'anteprima parte più in basso del pulsante «Scarica PDF» accanto */
+  html body .stApp [data-testid="stElementContainer"]:has(> [data-testid="stMarkdown"] .col-prev) {{ display: none !important; }}
   @media (max-width: 1000px) {{
     html body .stApp [data-testid="stHorizontalBlock"]:has(.col-prev) {{ flex-direction: column !important; }}
     html body .stApp [data-testid="stHorizontalBlock"]:has(.col-prev) > [data-testid="stColumn"] {{ width: 100% !important; flex: none !important; position: static !important; }}
