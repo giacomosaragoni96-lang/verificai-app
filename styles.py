@@ -3228,6 +3228,26 @@ font-family: 'DM Sans', sans-serif;
   .variant-card-teal::before {{ background: linear-gradient(90deg, #0891B2, #22D3EE); }}
   .variant-card-teal:hover {{ border-color: #0891B266; }}
 
+
+  /* ── Versioni della verifica: una scheda per versione, con icona su riquadro colorato e bordo del colore della versione ── */
+  html body .stApp div[class*="st-key-ver_"]:not(#vf) {{
+    background: linear-gradient(160deg, {T['card']} 0%, {T['accent']}0A 100%); border: 1px solid {T['border2']}; border-left: 4px solid var(--vc, {T['accent']});
+    border-radius: 16px; padding: .95rem 1.15rem; margin-bottom: .7rem; box-shadow: 0 8px 20px rgba(15,23,42,.06);
+    transition: box-shadow .2s ease, transform .15s ease;
+  }}
+  html body .stApp div[class*="st-key-ver_"]:not(#vf):hover {{ box-shadow: 0 12px 26px rgba(15,23,42,.1); }}
+  html body .stApp .st-key-ver_soluzioni {{ --vc: #059669; --vc2: #34D399; }}
+  html body .stApp .st-key-ver_filab, html body .stApp .st-key-ver_extra {{ --vc: {T['accent']}; --vc2: {T.get('accent2', T['accent'])}; }}
+  html body .stApp .st-key-ver_bes, html body .stApp .st-key-ver_leggibile, html body .stApp .st-key-ver_recupero {{ --vc: #7C3AED; --vc2: #A78BFA; }}
+  html body .stApp .st-key-ver_scheda {{ --vc: #DB2777; --vc2: #F472B6; }}
+  html body .stApp .st-key-ver_griglia {{ --vc: #D97706; --vc2: #F59E0B; }}
+  html body .stApp div[class*="st-key-ver_"] .variant-card-icon {{
+    display: inline-flex !important; width: 2.3rem; height: 2.3rem; border-radius: 12px; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--vc), var(--vc2)); color: #fff; box-shadow: 0 5px 12px color-mix(in srgb, var(--vc) 40%, transparent);
+  }}
+  html body .stApp div[class*="st-key-ver_"] .variant-card-header {{ gap: .7rem !important; }}
+  html body .stApp div[class*="st-key-ver_"] .variant-card-title {{ font-size: 1.08rem !important; }}
+
   /* Icon + Title inline row */
   .variant-card-header {{
     display: flex;

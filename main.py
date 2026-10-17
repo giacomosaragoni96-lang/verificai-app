@@ -6443,6 +6443,26 @@ def _dialogo_segnalazione() -> None:
                 st.error("Non sono riuscito a inviarla. Riprova più tardi o scrivici dal pulsante 💬 del feedback.")
 
 
+_PERCORSI_ICONE = {
+    "copie": '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+    "bes": '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+    "extra": '<rect x="4" y="13" width="16" height="6" rx="1.5"/><rect x="6" y="8.5" width="12" height="3.5" rx="1"/><rect x="8" y="4" width="8" height="3" rx="1"/>',
+    "recupero": '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/><path d="M6.3 6.3l3.4 3.4M14.3 14.3l3.4 3.4M17.7 6.3l-3.4 3.4M9.7 14.3l-3.4 3.4"/>',
+    "leggibile": '<text x="2.5" y="17.5" font-size="14" font-weight="800" font-family="Arial,Helvetica,sans-serif" fill="currentColor" stroke="none">Aa</text>',
+    "soluzioni": '<rect x="4.5" y="3.5" width="15" height="17" rx="2.5"/><path d="M8 9.5l2 2 3.5-3.5M8 16h8"/>',
+    "word": '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M9.5 13h6M9.5 17h6"/>',
+    "griglia": '<rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 10h17M3.5 15h17M9.5 4v16M15 4v16"/>',
+    "scheda": '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+    "condividi": '<circle cx="6" cy="12" r="2.5"/><circle cx="17" cy="6" r="2.5"/><circle cx="17" cy="18" r="2.5"/><path d="M8.2 10.8l6.6-3.6M8.2 13.2l6.6 3.6"/>',
+}
+
+
+def _ico(nome: str) -> str:
+    """Icona a linee (SVG) per le schede delle versioni: si vede su ogni computer, a differenza di alcune emoji."""
+    return ('<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" '
+            'stroke-linejoin="round" aria-hidden="true">' + _PERCORSI_ICONE.get(nome, "") + "</svg>")
+
+
 def _render_stage_final():
     gp   = st.session_state.gen_params
     vA   = st.session_state.verifiche["A"]
@@ -6734,9 +6754,9 @@ def _render_stage_final():
         _riga = lambda: st.columns([3.4, 1.6], vertical_alignment="center", gap="medium")
         with st.expander("Versioni della verifica: **soluzioni**, **Fila B**, **BES/DSA**, **recupero**", expanded=False, icon=":material/file_copy:"):
             st.markdown('<span class="g-kit1" style="display:none"></span>', unsafe_allow_html=True)
-            with st.container(border=True):
+            with st.container(key="ver_soluzioni"):
                 _vc3, _vb3 = _riga()                  # Soluzioni
-            with st.container(border=True):
+            with st.container(key="ver_filab"):
                 _vc1, _vb1 = _riga()                  # Fila B
             if False:
                 pass
@@ -6744,20 +6764,20 @@ def _render_stage_final():
                 # riga del Word: nascosta, il Word sta nella scheda sotto la verifica. Il codice resta, ma scrive in contenitori nascosti.
                 st.markdown('<style>[class*="st-key-word_nascosto"], html body .stApp div:has(> [class*="st-key-word_nascosto"]){display:none !important;}</style>', unsafe_allow_html=True)
                 _vc5, _vb5 = st.container(key="word_nascosto_a"), st.container(key="word_nascosto_b")
-            with st.container(border=True):
+            with st.container(key="ver_bes"):
                 _vc2, _vb2 = _riga()                  # BES/DSA
-            with st.container(border=True):
+            with st.container(key="ver_leggibile"):
                 _vc7, _vb7 = _riga()                  # Alta leggibilità (DSA)
-            with st.container(border=True):
+            with st.container(key="ver_extra"):
                 _vc8, _vb8 = _riga()                  # Altre file (C, D, E)
-            with st.container(border=True):
+            with st.container(key="ver_recupero"):
                 _vc9, _vb9 = _riga()                  # Versione di recupero
         with st.expander("Per la classe e la valutazione: **scheda di allenamento** e **griglia**", expanded=False,
                          icon=":material/groups:"):
             st.markdown('<span class="g-kit2" style="display:none"></span>', unsafe_allow_html=True)
-            with st.container(border=True):
+            with st.container(key="ver_scheda"):
                 _vc6, _vb6 = _riga()                  # Scheda di allenamento
-            with st.container(border=True):
+            with st.container(key="ver_griglia"):
                 _vc4, _vb4 = _riga()                  # Griglia di valutazione
         with st.expander("**Scarica tutti i file** in una volta", expanded=bool(_kit_in_corso), icon=":material/folder_zip:"):
             st.markdown('<span class="g-kit3" style="display:none"></span>', unsafe_allow_html=True)
@@ -6806,7 +6826,7 @@ def _render_stage_final():
         st.markdown(
             f'<div class="variant-card variant-card-blue">'
             f'  <div class="variant-card-header">'
-            f'    <span class="variant-card-icon">📋</span>'
+            f'    <span class="variant-card-icon">{_ico("copie")}</span>'
             f'    <span class="variant-card-title">Fila B{_PRO}</span>'
             f'  </div>'
             f'  <div class="variant-card-desc">Stessa struttura e stessi punteggi con dati diversi, contro la copiatura. Pronta in pochi secondi.</div>'
@@ -6876,7 +6896,7 @@ def _render_stage_final():
         st.markdown(
             f'<div class="variant-card variant-card-violet">'
             f'  <div class="variant-card-header">'
-            f'    <span class="variant-card-icon">🌟</span>'
+            f'    <span class="variant-card-icon">{_ico("bes")}</span>'
             f'    <span class="variant-card-title">Versione BES/DSA{_PRO}</span>'
             f'  </div>'
             f'  <div class="variant-card-desc">Per studenti con BES o DSA: linguaggio più semplice e struttura alleggerita.</div>'
@@ -6934,7 +6954,7 @@ def _render_stage_final():
     _recupero = next((e for e in _extra if e["tipo"] == "recupero"), None)
     with _vc8:
         st.markdown(
-            f'<div class="variant-card variant-card-blue"><div class="variant-card-header"><span class="variant-card-icon">📑</span>'
+            f'<div class="variant-card variant-card-blue"><div class="variant-card-header"><span class="variant-card-icon">{_ico("extra")}</span>'
             f'<span class="variant-card-title">Altre file: C, D, E{_PRO}</span></div>'
             f'<div class="variant-card-desc">Per classi numerose o più gruppi: stessi esercizi con dati diversi da quelli delle file già create. Si parte dopo la Fila B.</div></div>',
             unsafe_allow_html=True)
@@ -6959,10 +6979,13 @@ def _render_stage_final():
                 st.caption("Hai già tutte le file: A, B, C, D ed E.")
     with _vc9:
         st.markdown(
-            f'<div class="variant-card variant-card-violet"><div class="variant-card-header"><span class="variant-card-icon">🛟</span>'
+            f'<div class="variant-card variant-card-violet"><div class="variant-card-header"><span class="variant-card-icon">{_ico("recupero")}</span>'
             f'<span class="variant-card-title">Versione di recupero{_PRO}</span></div>'
             f'<div class="variant-card-desc">Stessi argomenti, più breve e più guidata, con dati diversi: per chi deve recuperare.</div></div>',
             unsafe_allow_html=True)
+        if not (_recupero and _recupero.get("pdf")) and not _pro_bloccato("recupero"):
+            st.text_input("Per chi? (facoltativo)", key="rec_perchi", max_chars=120, label_visibility="collapsed",
+                          placeholder="Per chi? Es. lacune sulle frazioni (facoltativo)")
     with _vb9:
         if _recupero and _recupero.get("pdf"):
             _dl(f"⬇ Scarica recupero · {_stima(_recupero['pdf'])}", data=_recupero["pdf"], file_name=arg_str + "_Recupero.pdf",
@@ -6970,9 +6993,7 @@ def _render_stage_final():
         elif _pro_bloccato("recupero"):
             _pulsante_pro("recupero", "pro_recupero")
         else:
-            st.text_input("Per chi? (facoltativo)", key="rec_perchi", max_chars=120, label_visibility="collapsed",
-                          placeholder="Per chi? Es. lacune sulle frazioni (facoltativo)")
-            if st.button("🛟 Genera recupero", key="gen_recupero", use_container_width=True, type="secondary"):
+            if st.button("Genera recupero", key="gen_recupero", use_container_width=True, type="secondary", icon=":material/add_circle:"):
                 st.session_state["_gen_extra"] = {"tipo": "recupero", "lettera": "", "per_chi": st.session_state.get("rec_perchi", "")}
                 st.rerun()
     _ge = st.session_state.pop("_gen_extra", None)
@@ -6996,7 +7017,7 @@ def _render_stage_final():
         st.markdown(
             f'<div class="variant-card variant-card-violet">'
             f'  <div class="variant-card-header">'
-            f'    <span class="variant-card-icon">🔤</span>'
+            f'    <span class="variant-card-icon">{_ico("leggibile")}</span>'
             f'    <span class="variant-card-title">Versione ad alta leggibilità{_PRO}</span>'
             f'  </div>'
             f'  <div class="variant-card-desc">Per DSA: stessa verifica con carattere più grande, più spazio tra le righe e testo non giustificato.'
@@ -7021,7 +7042,7 @@ def _render_stage_final():
         st.markdown(
             f'<div class="variant-card variant-card-green">'
             f'  <div class="variant-card-header">'
-            f'    <span class="variant-card-icon">📝</span>'
+            f'    <span class="variant-card-icon">{_ico("soluzioni")}</span>'
             f'    <span class="variant-card-title">Soluzioni{_PRO}</span>'
             f'  </div>'
             f'  <div class="variant-card-desc">Risposte e svolgimenti riservati al docente: niente correzione da preparare a mano.</div>'
@@ -7072,7 +7093,7 @@ def _render_stage_final():
         st.markdown(
             f'<div class="variant-card variant-card-teal">'
             f'  <div class="variant-card-header">'
-            f'    <span class="variant-card-icon">📝</span>'
+            f'    <span class="variant-card-icon">{_ico("word")}</span>'
             f'    <span class="variant-card-title">Formato Word{_PRO}</span>'
             f'  </div>'
             f'  <div class="variant-card-desc">File .docx modificabile con Word o Google Docs.</div>'
@@ -7117,7 +7138,7 @@ def _render_stage_final():
         st.markdown(
             f'<div class="variant-card variant-card-orange">'
             f'  <div class="variant-card-header">'
-            f'    <span class="variant-card-icon">📊</span>'
+            f'    <span class="variant-card-icon">{_ico("griglia")}</span>'
             f'    <span class="variant-card-title">Griglia di Valutazione{_PRO}</span>'
             f'  </div>'
             f'  <div class="variant-card-desc">Griglia di valutazione per competenze (Linee Guida MIM).</div>'
@@ -7185,7 +7206,7 @@ def _render_stage_final():
         st.markdown(
             f'<div class="variant-card variant-card-pink">'
             f'  <div class="variant-card-header">'
-            f'    <span class="variant-card-icon">🎯</span>'
+            f'    <span class="variant-card-icon">{_ico("scheda")}</span>'
             f'    <span class="variant-card-title">Scheda di allenamento{_PRO} '
             f'<span style="font-size:.62rem;font-weight:800;letter-spacing:.06em;color:{T["success"]};'
             f'border:1px solid {T["success"]};border-radius:6px;padding:1px 6px;vertical-align:middle;">NOVITÀ</span></span>'
@@ -7335,7 +7356,7 @@ def _render_stage_final():
                 _sd1.markdown(
                     '<div class="variant-card">'
                     '<div class="variant-card-header">'
-                    '<span class="variant-card-icon">📤</span>'
+                    f'<span class="variant-card-icon">{_ico("condividi")}</span>'
                     '<span class="variant-card-title">Condividi con i colleghi</span></div>'
                     '<div class="variant-card-desc">Un link: chi lo apre vede l’anteprima e può generare la propria variante.</div>'
                     '</div>',
