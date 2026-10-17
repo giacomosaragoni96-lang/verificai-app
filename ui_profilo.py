@@ -155,6 +155,9 @@ def _sezione_preferenze(T, ctx) -> None:
     st.button("Apri le impostazioni predefinite", key="pf_apri_imp", type="primary", icon=":material/tune:", on_click=ctx["apri_impostazioni"])
 
 
+_MESI_BREVI = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]
+
+
 def _per_mese(cal: list, quanti: int = 6) -> list:
     """[(etichetta, n)] delle verifiche degli ultimi `quanti` mesi (il mese corrente per ultimo), dal calendario giornaliero."""
     giorni = [g for g in cal if g["n"] is not None]
