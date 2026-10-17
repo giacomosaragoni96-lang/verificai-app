@@ -6210,6 +6210,7 @@ def _elementi_kit(argomento, materia, vA, vB, vR, vS, vSC, rubrica_docx) -> list
         ("BES/DSA", "_BES_FilaA.pdf", vR.get("pdf")),
         ("Soluzioni", "_Soluzioni.pdf", vS.get("pdf")),
         ("Scheda di allenamento", "_Scheda_allenamento.pdf", (vSC or {}).get("pdf")),
+        ("Alta leggibilità", "_AltaLeggibilita.pdf", (st.session_state.get("_pdf_leggibili") or {}).get(hashlib.md5((vA.get("latex") or "").encode("utf-8")).hexdigest())),
         ("Word", "_FilaA.docx", vA.get("docx") if WORD_ATTIVO else None),
         ("Griglia", "_Griglia.docx", rubrica_docx),
     )
@@ -6503,28 +6504,49 @@ def _ico(nome: str) -> str:
 
 
 _VOCI_KIT = (
-    ("B", "Fila B", "Stessa verifica con dati diversi, contro la copiatura."),
-    ("R", "Versione BES/DSA", "Linguaggio più semplice e struttura alleggerita."),
-    ("S", "Soluzioni", "Risposte e svolgimenti riservati al docente."),
-    ("SC", "Scheda di allenamento", "Circa 40 esercizi graduati per allenarsi prima."),
+    ("B", "Fila B", "Stessa verifica con dati diversi, contro la copiatura.", "Versioni della verifica"),
+    ("C", "Fila C", "Un'altra fila con dati nuovi (serve la Fila B).", "Versioni della verifica"),
+    ("D", "Fila D", "Un'altra fila con dati nuovi.", "Versioni della verifica"),
+    ("E", "Fila E", "Un'altra fila con dati nuovi.", "Versioni della verifica"),
+    ("R", "Versione BES/DSA", "Linguaggio più semplice e struttura alleggerita.", "Versioni della verifica"),
+    ("L", "Alta leggibilità (DSA)", "Carattere più grande, più spazio, testo non giustificato.", "Versioni della verifica"),
+    ("REC", "Versione di recupero", "Più breve e più guidata, per chi deve recuperare.", "Versioni della verifica"),
+    ("S", "Soluzioni", "Risposte e svolgimenti riservati al docente.", "Per la classe e la valutazione"),
+    ("SC", "Scheda di allenamento", "Circa 40 esercizi graduati per allenarsi prima.", "Per la classe e la valutazione"),
+    ("G", "Griglia di valutazione", "Per competenze, con le fasce di voto (PDF e Word).", "Per la classe e la valutazione"),
+    ("W", "File Word modificabile", "La verifica da ritoccare in Word.", "Altri formati"),
 )
+_PRO_KIT = {"B": "fila_b", "R": "bes", "S": "soluzioni", "SC": "scheda", "REC": "recupero", "C": "fila_extra", "D": "fila_extra", "E": "fila_extra",
+            "W": "word", "G": "griglia"}
 
 
 @st.dialog("Cosa vuoi creare?", width="small")
-def _dialogo_kit(mancanti: list) -> None:
+def _dialogo_kit(mancanti: list, bloccati: list) -> None:
     """Prima di «Prepara tutto il kit»: il docente sceglie quali documenti creare. Poi si preparano uno dopo l'altro e si scaricano in un unico ZIP."""
     _stile_dialogo()
-    st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-size:.92rem;color:{T["text2"]};line-height:1.5;margin-bottom:.6rem;">'
-                'Scegli i documenti da creare: li preparo uno dopo l\'altro (circa un minuto in tutto) e poi li scarichi tutti insieme in un solo file ZIP. '
-                'Nello ZIP c\'è sempre anche il PDF della verifica (Fila A).</div>', unsafe_allow_html=True)
-    scelte = []
-    for k, nome, desc in _VOCI_KIT:
-        if k in mancanti:
-            if st.checkbox(nome, value=True, key=f"kit_sel_{k}", help=desc):
-                scelte.append(k)
-            st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-size:.8rem;color:{T["muted"]};margin:-.55rem 0 .5rem 1.7rem;">{desc}</div>', unsafe_allow_html=True)
-        else:
-            st.checkbox(f"{nome} · già pronta", value=True, disabled=True, key=f"kit_gia_{k}")
+    st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-size:.92rem;color:{T["text2"]};line-height:1.5;margin-bottom:.4rem;">'
+                'Scegli i documenti da creare: li preparo uno dopo l\'altro e poi li scarichi tutti insieme in un solo file ZIP. '
+                'Nello ZIP c\'è sempre anche il PDF della verifica (Fila A), più quello che hai già creato.</div>', unsafe_allow_html=True)
+    scelte, gruppo = [], None
+    for k, nome, desc, grp in _VOCI_KIT:
+        if k not in mancanti and k not in ("C", "D", "E"):
+            continue                                   # già pronto: sta nello ZIP, non serve chiederlo
+        if k in ("C", "D", "E") and k not in mancanti:
+            continue
+        if grp != gruppo:
+            gruppo = grp
+            st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;'
+                        f'color:{T["accent"]};margin:.8rem 0 .2rem;">{grp}</div>', unsafe_allow_html=True)
+        if k in bloccati:
+            st.checkbox(f"{nome} · con tutte le funzioni", value=False, disabled=True, key=f"kit_blk_{k}")
+            continue
+        # Fila C, D, E hanno senso solo con la Fila B (già pronta o scelta qui)
+        if k in ("C", "D", "E") and ("B" in mancanti) and not st.session_state.get("kit_sel_B", True):
+            st.checkbox(f"{nome} · serve prima la Fila B", value=False, disabled=True, key=f"kit_dis_{k}")
+            continue
+        if st.checkbox(nome, value=(k not in ("C", "D", "E")), key=f"kit_sel_{k}", help=desc):
+            scelte.append(k)
+        st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-size:.8rem;color:{T["muted"]};margin:-.55rem 0 .5rem 1.7rem;">{desc}</div>', unsafe_allow_html=True)
     if st.button("Crea i documenti scelti", type="primary", use_container_width=True, icon=":material/auto_awesome:", disabled=not scelte, key="kit_conferma"):
         st.session_state["_kit_coda"] = list(scelte)
         st.session_state["_kit_scelta"] = list(scelte)
@@ -6818,19 +6840,31 @@ def _render_stage_final():
         vSC = st.session_state.verifiche.get("SC") or {"latex": None, "pdf": None, "n": 0, "avvisi": []}
 
         # Coda di «Prepara tutto il kit»: un elemento per volta, perché ogni creazione fa un rerun
-        _flag_kit = {"B": "_gen_fila_b", "R": "_gen_bes", "S": "_gen_sol", "SC": "_gen_scheda"}
+        _flag_kit = {"B": "_gen_fila_b", "R": "_gen_bes", "S": "_gen_sol", "SC": "_gen_scheda", "REC": "_gen_extra", "C": "_gen_extra", "D": "_gen_extra",
+                     "E": "_gen_extra", "W": "_gen_word_kit", "G": "_rubrica_gen", "L": "_gen_leggibile_kit"}
+        _valore_flag = {"REC": {"tipo": "recupero", "lettera": "", "per_chi": ""}, "C": {"tipo": "fila", "lettera": "C"},
+                        "D": {"tipo": "fila", "lettera": "D"}, "E": {"tipo": "fila", "lettera": "E"}}
         _coda_kit = st.session_state.get("_kit_coda") or []
-        if _coda_kit and not any(st.session_state.get(f) for f in _flag_kit.values()):
+        _tutti_flag = set(_flag_kit.values())
+        if _coda_kit and not any(st.session_state.get(f) for f in _tutti_flag):
             _prossimo = _coda_kit.pop(0)
             st.session_state["_kit_coda"] = _coda_kit
-            st.session_state[_flag_kit[_prossimo]] = True
-        _kit_in_corso = bool(_coda_kit) or any(st.session_state.get(f) for f in _flag_kit.values())
+            st.session_state[_flag_kit[_prossimo]] = _valore_flag.get(_prossimo, True)
+        _kit_in_corso = bool(_coda_kit) or any(st.session_state.get(f) for f in _tutti_flag)
 
         _kit_pronti = _elementi_kit(arg_str, mat_str, vA, vB, vR, vS, vSC, st.session_state.get("_rubrica_docx"))
+        _extra_kit = st.session_state.get("_versioni_extra") or []
+        _lett_kit = {e["lettera"] for e in _extra_kit if e.get("tipo") == "fila" and e.get("pdf")}
+        _rec_kit = any(e.get("tipo") == "recupero" and e.get("pdf") for e in _extra_kit)
+        _h_leg = hashlib.md5((vA.get("latex") or "").encode("utf-8")).hexdigest()
         _kit_mancanti = [k for k, presente in (
             ("B", vB.get("pdf") or vB.get("latex")), ("R", vR.get("pdf") or vR.get("latex")),
-            ("S", vS.get("pdf") or vS.get("latex")), ("SC", vSC.get("pdf")),
+            ("S", vS.get("pdf") or vS.get("latex")), ("SC", vSC.get("pdf")), ("REC", _rec_kit),
+            ("C", "C" in _lett_kit), ("D", "D" in _lett_kit), ("E", "E" in _lett_kit),
+            ("L", _h_leg in (st.session_state.get("_pdf_leggibili") or {})), ("W", bool(vA.get("docx")) or not WORD_ATTIVO),
+            ("G", bool(st.session_state.get("rubrica_testo"))),
         ) if not presente]
+        _kit_bloccati = [k for k, _pk in _PRO_KIT.items() if _pro_bloccato(_pk)]
 
         # Una riga per documento (titolo + descrizione a sinistra, azione a destra), in due tendine:
         # «Versioni della verifica», «Per la classe e la valutazione» e «Scarica tutti i file in una volta»: tutte chiuse
@@ -6877,7 +6911,7 @@ def _render_stage_final():
             )
             if _kit_finito and len(_kit_pronti) >= 2 and not _pro_bloccato("zip"):
                 _scelta_kit = st.session_state.get("_kit_scelta") or []
-                _mancano = [n for k, n, _d in _VOCI_KIT if k in _scelta_kit and k in _kit_mancanti]
+                _mancano = [n for k, n, _d, _g in _VOCI_KIT if k in _scelta_kit and k in _kit_mancanti]
                 _tit_k = "Ho generato tutti i file" if not _mancano else "Ho generato i file che si potevano creare"
                 _sot_k = (f"Scaricali tutti insieme con il pulsante qui sotto: un unico file ZIP con {len(_kit_pronti)} documenti."
                           if not _mancano else f"Non sono riuscito a creare: {', '.join(_mancano)}. Puoi riprovare con «Prepara tutto il kit»; intanto scarica gli altri nello ZIP.")
@@ -6899,7 +6933,7 @@ def _render_stage_final():
                                use_container_width=True, disabled=(not _kit_mancanti) or _kit_in_corso,
                                help="Scegli quali documenti creare (Fila B, BES/DSA, soluzioni, scheda di allenamento): "
                                     "li preparo uno dopo l'altro e li scarichi in un unico ZIP."):
-                    _dialogo_kit(list(_kit_mancanti))
+                    _dialogo_kit(list(_kit_mancanti), list(_kit_bloccati))
             with _kc2:
                 if len(_kit_pronti) >= 2 and not _pro_bloccato("zip") and not _kit_finito:
                     _dl("Scarica tutto (ZIP)", data=lambda: _zip_kit(_kit_pronti),
@@ -6907,8 +6941,8 @@ def _render_stage_final():
                         icon=":material/folder_zip:", use_container_width=True, key="dl_kit_zip",
                         help="Tutti i documenti pronti in un solo file.")
             if _kit_in_corso:
-                _sc = st.session_state.get("_kit_scelta") or [k for k, _n, _d in _VOCI_KIT]
-                _nomi_sc = [n for k, n, _d in _VOCI_KIT if k in _sc]
+                _sc = st.session_state.get("_kit_scelta") or [k for k, _n, _d, _g in _VOCI_KIT]
+                _nomi_sc = [n for k, n, _d, _g in _VOCI_KIT if k in _sc]
                 _fatti = sum(1 for k in _sc if k not in _kit_mancanti)
                 st.markdown(ui_attese.card_html(T, "copie", "Sto preparando i documenti scelti",
                                                 f"Ne restano {max(len(_nomi_sc) - _fatti, 0)}: ci vuole circa un minuto, non toccare la pagina.",
@@ -7113,6 +7147,32 @@ def _render_stage_final():
         except Exception as _e:
             _ph_x.empty()
             _mostra_errore(f"Non sono riuscito a creare {_nome_x}", _e)
+
+    # ── Word e alta leggibilità richiesti dal kit (nessuna AI) ─────────────────────────────────────
+    if st.session_state.get("_gen_word_kit"):
+        st.session_state["_gen_word_kit"] = False
+        try:
+            with _attesa("word", "Sto preparando il file Word", ["Converto testo e formule", "Inserisco i grafici", "Rifinisco la pagina"], durata_passo=6):
+                _db_k, _em_k = latex_to_docx_modificabile(vA["latex"], mat_str, arg_str, con_griglia)
+            if _db_k:
+                st.session_state.verifiche["A"]["docx"] = _db_k
+                _registra_evento("word", verifica_id=st.session_state.get("_storico_id"))
+        except Exception as _e_w:
+            logger.warning("Word del kit non creato: %s", _e_w)
+        st.rerun()
+    if st.session_state.get("_gen_leggibile_kit"):
+        st.session_state["_gen_leggibile_kit"] = False
+        try:
+            with _attesa("pagina", "Preparo la versione ad alta leggibilità", ["Rifaccio la verifica con il nuovo stile"], durata_passo=5):
+                _pdf_lk, _err_lk, _ = compila_pdf_sicuro(cambia_stile(vA["latex"], "leggibile"))
+            if _pdf_lk:
+                _c_leg = st.session_state.setdefault("_pdf_leggibili", {})
+                if len(_c_leg) > 6:
+                    _c_leg.clear()
+                _c_leg[hashlib.md5((vA["latex"] or "").encode("utf-8")).hexdigest()] = _pdf_lk
+        except Exception as _e_l:
+            logger.warning("Alta leggibilità del kit non creata: %s", _e_l)
+        st.rerun()
 
     # ── ALTA LEGGIBILITÀ (DSA) ─────────────────────────────────────────
     with _vc7:
