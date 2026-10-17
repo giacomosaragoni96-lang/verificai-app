@@ -61,7 +61,7 @@ from latex_utils import (
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
     parse_pts_from_block_body, riscala_single_block,
-    parse_items_from_block, apply_item_pts_to_body, punti_richieste, applica_punti_richieste,
+    parse_items_from_block, apply_item_pts_to_body, punti_richieste, applica_punti_richieste, riempi_classe_data,
     prepara_esercizi_aperti, conta_punti_latex,
     migliora_spaziatura_sottopunti, limita_altezza_grafici, aggiungi_spaziatura_grafici_tabelle,
     normalizza_sottopunti_inline, bilancia_punti, esercizi_con_grafico_mancante, anteprima_esercizio_png,
@@ -315,6 +315,25 @@ def _giorni_al_reset():
 def _attesa(tipo: str, titolo: str, passi: list | None = None, sotto: str = "", durata_passo: float = 8.0, consigli: bool = False):
     """Scheda di attesa animata (ui_attese) al posto di st.spinner: `with _attesa("foto", "Sto leggendo…", ["Passo 1", "Passo 2"]):`."""
     return ui_attese.attesa(T, tipo, titolo, passi, sotto, durata_passo, consigli)
+
+
+def _attesa_esercizio(azione: str, idx: int) -> dict:
+    """Titolo e passi della scheda di attesa per «Più facile», «Più difficile», «Cambia i numeri», «Cambia esercizio», modifica a parole."""
+    n = idx + 1
+    voci = {
+        "facile": (f"Rendo più facile l'esercizio {n}", ["Leggo l'esercizio", "Semplifico numeri e calcoli", "Controllo che torni", "Rifaccio il PDF"]),
+        "difficile": (f"Rendo più difficile l'esercizio {n}", ["Leggo l'esercizio", "Aggiungo un passaggio di ragionamento", "Controllo che torni", "Rifaccio il PDF"]),
+        "numeri": (f"Cambio i numeri dell'esercizio {n}", ["Leggo l'esercizio", "Scelgo dati nuovi", "Ricontrollo i calcoli", "Rifaccio il PDF"]),
+        "nuovo": (f"Scrivo un nuovo esercizio al posto del {n}", ["Scelgo cosa chiedere", "Scrivo l'esercizio", "Ridistribuisco i punti", "Rifaccio il PDF"]),
+        "libera": (f"Modifico l'esercizio {n}", ["Capisco cosa chiedi", "Riscrivo l'esercizio", "Rifaccio il PDF"]),
+    }
+    titolo, passi = voci[azione]
+    return {"tipo": "matita", "titolo": titolo, "passi": passi}
+
+
+def _scheda_attesa_html(azione: str, idx: int) -> str:
+    v = _attesa_esercizio(azione, idx)
+    return ui_attese.card_html(T, v["tipo"], v["titolo"], "Ci vogliono pochi secondi: non toccare la pagina.", v["passi"], durata_passo=5.0)
 
 
 def _dopo_scarico() -> None:
@@ -1798,6 +1817,7 @@ def _apri_impostazioni() -> None:
     """Apre «Impostazioni predefinite», ricordando se si arriva dal form di creazione (per il ritorno)."""
     if st.session_state.get("stage") != STAGE_IMPOSTAZIONI:
         st.session_state["_imp_da"] = st.session_state.get("stage")
+        st.session_state.pop("_logo_bozza", None)          # si riparte dal logo salvato
     st.session_state.stage = STAGE_IMPOSTAZIONI
 
 
@@ -1811,6 +1831,7 @@ def _render_impostazioni_pagina() -> None:
     render_impostazioni(T, {
         "profilo": _profilo(), "salva": _salva_profilo, "conferma": _ricorda_conferma, "stili": stili_disponibili(),
         "anteprima_stili": _dialogo_stili, "blocco_logo": _blocco_logo_impostazioni, "da_form": da_form, "torna": _torna,
+        "logo_modificato": _logo_modificato, "salva_logo": _applica_logo_bozza,
     })
 
 
@@ -2380,6 +2401,25 @@ def _salva_logo(prefs) -> None:
     st.session_state["_logo_scuola"] = prefs or None
     st.session_state["_logo_scuola_caricato"] = True
     _salva_docente_preferenze("__logo__", prefs or {})
+
+
+def _logo_bozza():
+    """Il logo come lo sta modificando il docente nella pagina Impostazioni (non ancora salvato)."""
+    if "_logo_bozza" not in st.session_state:
+        st.session_state["_logo_bozza"] = {"v": _logo_scuola()}
+    return st.session_state["_logo_bozza"]["v"]
+
+
+def _imposta_logo_bozza(v) -> None:
+    st.session_state["_logo_bozza"] = {"v": v or None}
+
+
+def _logo_modificato() -> bool:
+    return (_logo_bozza() or None) != (_logo_scuola() or None)
+
+
+def _applica_logo_bozza() -> None:
+    _salva_logo(_logo_bozza())
 
 
 def _prepara_logo(dati: bytes):
@@ -3174,7 +3214,7 @@ def _dialogo_stili() -> None:
 def _blocco_logo_impostazioni() -> None:
     """Logo della scuola: caricamento, dimensione, anteprima dell'intestazione. Sta nella pagina «Impostazioni predefinite»."""
     _materia_anteprima = st.session_state.get("sel_materia_b") or "Matematica"
-    _logo_s = _logo_scuola()
+    _logo_s = _logo_bozza()
     _logo_bloccato = _pro_bloccato("logo")
     if _logo_bloccato:
         st.caption("Il logo della tua scuola sull'intestazione è una funzione del piano Pro." if PREZZI_VISIBILI
@@ -3184,7 +3224,7 @@ def _blocco_logo_impostazioni() -> None:
         _attivo_nuovo = st.toggle("Metti il logo nelle verifiche",
                                   value=_logo_s.get("attivo", True), key="logo_attivo_b")
         if _attivo_nuovo != _logo_s.get("attivo", True):
-            _salva_logo({**_logo_s, "attivo": _attivo_nuovo})
+            _imposta_logo_bozza({**_logo_s, "attivo": _attivo_nuovo})
         _etichette_scala = {0.75: "Più piccolo", 1.0: "Normale", 1.25: "Più grande"}
         _scala_salvata = float(_logo_s.get("scala", 1.0))
         _scala_nuova = st.select_slider(
@@ -3193,7 +3233,7 @@ def _blocco_logo_impostazioni() -> None:
             format_func=_etichette_scala.get, key="logo_scala_b",
         )
         if _scala_nuova != _scala_salvata:
-            _salva_logo({**_logo_s, "scala": _scala_nuova})
+            _imposta_logo_bozza({**_logo_s, "scala": _scala_nuova})
         # Anteprima immediata dell'intestazione: niente generazione sprecata
         with st.spinner("Preparo l'anteprima dell'intestazione…"):
             _img_int = _anteprima_intestazione(
@@ -3203,7 +3243,7 @@ def _blocco_logo_impostazioni() -> None:
             st.image(_img_int, width=560)
             st.caption("Intestazione come sarà nel PDF (il titolo sarà quello della tua verifica).")
         if st.button("Cambia o togli il logo", key="logo_togli", icon=":material/delete:"):
-            _salva_logo(None)
+            _imposta_logo_bozza(None)
             st.rerun()
         st.caption("Vale per le nuove verifiche e per la Fila B; nel file Word non compare.")
     else:
@@ -3214,7 +3254,7 @@ def _blocco_logo_impostazioni() -> None:
         if _logo_up is not None:
             _esito_logo = _prepara_logo(_logo_up.getvalue())
             if _esito_logo:
-                _salva_logo({"b64": _esito_logo[0], "tipo": _esito_logo[1], "attivo": True})
+                _imposta_logo_bozza({"b64": _esito_logo[0], "tipo": _esito_logo[1], "attivo": True})
                 st.rerun()
             else:
                 st.warning("Non riesco a leggere questa immagine: prova con un PNG o un JPG più piccolo.")
@@ -3401,8 +3441,8 @@ def _selettore_classe() -> None:
     opzioni = [""] + classi + ["＋ Nuova classe…"]
     if corrente and corrente not in opzioni:
         opzioni.insert(1, corrente)
-    st.markdown('<div class="opt-label">Classe (facoltativo)</div>', unsafe_allow_html=True)
-    _a = st.container()
+    st.markdown('<div class="opt-label">Classe e data (facoltativo)</div>', unsafe_allow_html=True)
+    _a, _b = st.columns([3, 2], gap="small", vertical_alignment="center")
     st.session_state.setdefault("sel_classe", corrente)
     _a.selectbox("Classe", opzioni, key="sel_classe", label_visibility="collapsed", on_change=_applica_classe_scelta,
                  format_func=lambda x: x or "Nessuna classe", help="Serve a ritrovare le verifiche per classe e a usare le note della classe.")
@@ -3410,6 +3450,9 @@ def _selettore_classe() -> None:
         nuova = _a.text_input("Nome della classe", key="nuova_classe_txt", placeholder="Es. 3ªB", max_chars=24, label_visibility="collapsed")
         if profilo.pulisci_nome(nuova):
             st.session_state["_classe_sel"] = profilo.pulisci_nome(nuova)
+    _d = _b.date_input("Data della verifica", value=None, format="DD/MM/YYYY", key="data_verifica_in", label_visibility="collapsed",
+                       help="Se la scrivi, compare già compilata nell'intestazione del PDF, insieme alla classe.")
+    st.session_state["_data_verifica"] = _d.strftime("%d/%m/%Y") if _d else ""
 
 
 @st.dialog("Classe di questa verifica")
@@ -3420,9 +3463,27 @@ def _dialogo_classe_finale(vid) -> None:
                           format_func=lambda x: x or "Nessuna classe", key="cf_sel")
     nuova = st.text_input("Nome della nuova classe", key="cf_nuova", placeholder="Es. 3ªB", max_chars=24) if scelta == "＋ Nuova classe…" else ""
     nome = profilo.pulisci_nome(nuova) if scelta == "＋ Nuova classe…" else scelta
+    _data_att = st.session_state.get("_data_verifica") or ""
+    try:
+        _data_def = datetime.strptime(_data_att, "%d/%m/%Y").date() if _data_att else None
+    except ValueError:
+        _data_def = None
+    _data_nuova = st.date_input("Data della verifica (facoltativa)", value=_data_def, format="DD/MM/YYYY", key="cf_data")
+    st.caption("Classe e data compaiono già compilate nell'intestazione del PDF.")
     if st.button("Salva", type="primary", use_container_width=True, key="cf_salva", icon=":material/check:"):
         if vid and _imposta_classe_storico(vid, nome):
             st.session_state["_classe_sel"] = nome or None
+            st.session_state["_data_verifica"] = _data_nuova.strftime("%d/%m/%Y") if _data_nuova else ""
+            _gp = st.session_state.get("gen_params") or {}
+            # le versioni già create (Fila B, BES/DSA, soluzioni…) restano valide: cambia solo l'intestazione della Fila A
+            _tengo = {f: st.session_state.verifiche.get(f) for f in ("B", "R", "RB", "S", "SC")}
+            _pdf_c, _err_c = _ricompila_verifica_a(_gp.get("mostra_punteggi", True), _gp.get("con_griglia", False), _gp.get("punti_totali", 100))
+            for _f, _v in _tengo.items():
+                if _v is not None:
+                    st.session_state.verifiche[_f] = _v
+            st.session_state.pop("_avviso_dopo", None)
+            if _pdf_c:
+                _salva_variante_storico("latex_a", st.session_state.verifiche["A"].get("latex") or "")
             _ricorda_conferma(f"Classe {nome}" if nome else "Classe tolta")
         else:
             st.session_state["_avviso_dopo"] = "Non sono riuscito a salvare la classe (se l'errore si ripete, avvisa l'amministratore)."
@@ -4276,6 +4337,17 @@ def _lancia_generazione(
             _dbg["chiamate"] = chiamate_da(_n_chiamate_prima)
             st.session_state["_debug_gen"] = _dbg
 
+        # Classe e data scelte nel form: compilate già nell'intestazione (il PDF si rifà più sotto, insieme al logo, se serve)
+        _cl_dt = (st.session_state.get("_classe_sel") or "", st.session_state.get("_data_verifica") or "")
+        if (_cl_dt[0] or _cl_dt[1]) and ris["A"].get("latex"):
+            _lat_cd = riempi_classe_data(ris["A"]["latex"], *_cl_dt)
+            if _lat_cd != ris["A"]["latex"]:
+                _pdf_cd, _err_cd, _lat_cd = compila_pdf_sicuro(_lat_cd)
+                if _pdf_cd:
+                    ris["A"]["latex"], ris["A"]["pdf"] = _lat_cd, _pdf_cd
+                else:
+                    logger.warning(f"Classe e data non applicate: {str(_err_cd)[:300]}")
+
         # Logo della scuola: se l'utente ne ha uno attivo va nell'intestazione della Fila A
         # (e quindi anche nelle versioni che ne derivano); si ricompila il PDF con il logo.
         _logo_s = _logo_scuola()
@@ -4647,6 +4719,7 @@ def _ricompila_verifica_a(mostra_punteggi: bool, con_griglia: bool, punti_totali
         latex, mostra_punteggi, punti_totali,
         riscala_totale=riscala_totale, punti_custom=punti_custom, con_griglia=con_griglia,
     )
+    latex = riempi_classe_data(latex, st.session_state.get("_classe_sel") or "", st.session_state.get("_data_verifica") or "")
 
     va = st.session_state.verifiche["A"]
     latex_prima = va.get("latex")
@@ -4741,7 +4814,8 @@ def _rigenera_esercizio_guidato(idx, istruzione, etichetta, materia, argomento, 
     target = int(_pts[idx]) if _pts and len(_pts) == n_blocks else parse_pts_from_block_body(body)
 
     st.session_state[f"_undo_block_{idx}"] = dict(blocchi[idx])
-    with status_ph.status(f"{etichetta} l'esercizio {idx+1}…", expanded=True) as stato:
+    _v = _attesa_esercizio("difficile" if "difficile" in etichetta else "facile", idx)
+    with ui_attese.attesa_in(status_ph, T, _v["tipo"], _v["titolo"], _v["passi"], "Ci vogliono pochi secondi: non toccare la pagina.") as stato:
         try:
             nuovo = rigenera_singolo_blocco(
                 crea_modello(modello).per("modifica"), materia,
@@ -5422,7 +5496,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                     "Questo campo è riservato alle modifiche al contenuto (testo, difficoltà, formato)."
                 )
             else:
-                _loading_ph.info(f"Elaborazione in corso — modifico l'esercizio {idx+1}…")
+                _loading_ph.markdown(_scheda_attesa_html("libera", idx), unsafe_allow_html=True)
 
         # Pulsanti rapidi: piccoli, su una riga
         st.markdown(
@@ -5447,9 +5521,9 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
         # Placeholder feedback immediato — sotto i pulsanti
         _action_ph = st.empty()
         if quick_regen:
-            _action_ph.info(f"Generazione variante esercizio {idx+1}…")
+            _action_ph.markdown(_scheda_attesa_html("numeri", idx), unsafe_allow_html=True)
         elif cambia_tutto:
-            _action_ph.info(f"Generazione nuovo esercizio {idx+1}…")
+            _action_ph.markdown(_scheda_attesa_html("nuovo", idx), unsafe_allow_html=True)
 
         # Tetto di modifiche con l'AI per verifica (ognuna è una chiamata all'AI)
         if _tetto_mod is not None:
@@ -5591,7 +5665,8 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
         )
         st.session_state[f"_undo_block_{idx}"] = dict(st.session_state.review_blocks[idx])
         _action_ph.empty()
-        with _action_ph.status(f"Generazione variante esercizio {idx+1}…", expanded=True) as _qr_st:
+        _v = _attesa_esercizio("numeri", idx)
+        with ui_attese.attesa_in(_action_ph, T, _v["tipo"], _v["titolo"], _v["passi"], "Ci vogliono pochi secondi: non toccare la pagina.") as _qr_st:
             try:
                 _qr_model = crea_modello(modello_rw).per("modifica")
                 _qr_resp = _qr_model.generate_content(_qr_prompt)
@@ -5730,7 +5805,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             st.session_state[f"_undo_block_{idx}"] = dict(st.session_state.review_blocks[idx])
             _loading_ph.empty()
             
-            _loading_ph.info(f"Modifico l'esercizio {idx+1}… ci vogliono pochi secondi.", icon="⏳")
+            _loading_ph.markdown(_scheda_attesa_html("libera", idx), unsafe_allow_html=True)
             try:
                 model_rw_obj = crea_modello(modello_rw).per("modifica")
                 resp  = model_rw_obj.generate_content(_prompt_rw)
@@ -5832,7 +5907,8 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
         )
         st.session_state[f"_undo_block_{idx}"] = dict(st.session_state.review_blocks[idx])
         _action_ph.empty()
-        with _action_ph.status(f"Generazione nuovo esercizio {idx+1}…", expanded=True) as _ct_st:
+        _v = _attesa_esercizio("nuovo", idx)
+        with ui_attese.attesa_in(_action_ph, T, _v["tipo"], _v["titolo"], _v["passi"], "Ci vogliono pochi secondi: non toccare la pagina.") as _ct_st:
             try:
                 _ct_model = crea_modello(MODEL_FAST_ID, "cambio_esercizio")
                 _ct_resp = _ct_model.generate_content(
