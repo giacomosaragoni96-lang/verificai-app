@@ -5009,11 +5009,11 @@ font-family: 'DM Sans', sans-serif;
   html body .stApp .st-key-home_indietro button, html body .stApp .st-key-home_indietro button * {{ white-space: nowrap !important; }}
 
   /* «Guarda un'anteprima» e «Cambia modo di partire»: due link discreti, non pulsanti */
-  html body .stApp :is(.st-key-seg_apri, .st-key-apri_storico_home, .st-key-logout_btn, .st-key-stile_anteprima, .st-key-pf_anteprima_stili, .st-key-apri_impostazioni_form, .st-key-home_indietro, .st-key-pf_indietro, .st-key-imp_torna_alto, .st-key-back_from_mie_verifiche, .st-key-sb_indietro, .st-key-up_indietro, .st-key-cruscotto_indietro):not(#vf) button {{
+  html body .stApp :is(.st-key-seg_apri, .st-key-final_classe, .st-key-apri_storico_home, .st-key-logout_btn, .st-key-stile_anteprima, .st-key-pf_anteprima_stili, .st-key-apri_impostazioni_form, .st-key-home_indietro, .st-key-pf_indietro, .st-key-imp_torna_alto, .st-key-back_from_mie_verifiche, .st-key-sb_indietro, .st-key-up_indietro, .st-key-cruscotto_indietro):not(#vf) button {{
     background: transparent !important; background-image: none !important; border: none !important; box-shadow: none !important;
     min-height: 0 !important; padding: .15rem .1rem !important; width: auto !important;
   }}
-  html body .stApp :is(.st-key-home_indietro, .st-key-seg_apri, .st-key-apri_storico_home):not(#vf) button {{ width: 100% !important; justify-content: center !important; white-space: nowrap !important; }}
+  html body .stApp :is(.st-key-home_indietro, .st-key-seg_apri, .st-key-apri_storico_home, .st-key-final_classe):not(#vf) button {{ width: 100% !important; justify-content: center !important; white-space: nowrap !important; }}
   html body .stApp .st-key-apri_storico_home:not(#vf) button p {{ white-space: nowrap !important; }}
   html body .stApp :is(.st-key-stile_anteprima, .st-key-pf_anteprima_stili, .st-key-apri_impostazioni_form, .st-key-home_indietro, .st-key-pf_indietro, .st-key-imp_torna_alto, .st-key-back_from_mie_verifiche, .st-key-sb_indietro, .st-key-up_indietro, .st-key-cruscotto_indietro):not(#vf) button, html body .stApp :is(.st-key-stile_anteprima, .st-key-pf_anteprima_stili, .st-key-apri_impostazioni_form, .st-key-home_indietro, .st-key-pf_indietro, .st-key-imp_torna_alto, .st-key-back_from_mie_verifiche, .st-key-sb_indietro, .st-key-up_indietro, .st-key-cruscotto_indietro):not(#vf) button * {{
     color: {T['muted']} !important; -webkit-text-fill-color: {T['muted']} !important; font-size: .82rem !important; font-weight: 500 !important;
@@ -5138,7 +5138,7 @@ font-family: 'DM Sans', sans-serif;
   }}
   html body .stApp .st-key-vx_modifica details > div {{ padding: .9rem 1rem 1.05rem !important; background: transparent !important; }}
   html body .stApp .st-key-vx_modifica details div.st-key-mod_rapida:not(#vf) {{ margin-top: 0 !important; background: linear-gradient(160deg, #FFFFFF 0%, {_acc}12 100%); }}
-  html body .stApp .st-key-vx_modifica details .st-key-final_classe button {{ background: #FFFFFF !important; border: 1.5px solid {_acc}44 !important; }}
+
   html body .stApp .st-key-card_modifica .cm-t {{ font-family: 'DM Sans', sans-serif; font-weight: 800; font-size: 1.02rem; color: {T['text']}; }}
   html body .stApp .st-key-card_modifica .cm-d {{ font-family: 'DM Sans', sans-serif; font-size: .86rem; color: {T['text2']}; margin: .15rem 0 .7rem; line-height: 1.45; }}
 
