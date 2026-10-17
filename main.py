@@ -4095,7 +4095,7 @@ def _render_percorso_b_form(_prog_placeholder):
                         st.session_state["_foto_es_pronti"] = []
 
             st.button("Impostazioni predefinite (logo, stile, preferenze)", key="apri_impostazioni_form", type="tertiary",
-                      icon=":material/tune:", on_click=_apri_impostazioni,
+                      icon=":material/settings:", on_click=_apri_impostazioni,
                       help="Il logo della scuola, lo stile del PDF e le preferenze fisse: si salvano e valgono per ogni verifica. Il form resta com'è.")
 
             # ── CTA: Genera Bozza ─────────────────────────────────────────────────
