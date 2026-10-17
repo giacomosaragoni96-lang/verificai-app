@@ -3245,7 +3245,6 @@ def _blocco_logo_impostazioni() -> None:
         if st.button("Cambia o togli il logo", key="logo_togli", icon=":material/delete:"):
             _imposta_logo_bozza(None)
             st.rerun()
-        st.caption("Vale per le nuove verifiche e per la Fila B; nel file Word non compare.")
     else:
         _logo_up = st.file_uploader(
             "Carica il logo della tua scuola (PNG o JPG)", type=["png", "jpg", "jpeg"],
