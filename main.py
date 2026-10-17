@@ -6502,6 +6502,37 @@ def _ico(nome: str) -> str:
             'stroke-linejoin="round" aria-hidden="true">' + _PERCORSI_ICONE.get(nome, "") + "</svg>")
 
 
+_VOCI_KIT = (
+    ("B", "Fila B", "Stessa verifica con dati diversi, contro la copiatura."),
+    ("R", "Versione BES/DSA", "Linguaggio più semplice e struttura alleggerita."),
+    ("S", "Soluzioni", "Risposte e svolgimenti riservati al docente."),
+    ("SC", "Scheda di allenamento", "Circa 40 esercizi graduati per allenarsi prima."),
+)
+
+
+@st.dialog("Cosa vuoi creare?", width="small")
+def _dialogo_kit(mancanti: list) -> None:
+    """Prima di «Prepara tutto il kit»: il docente sceglie quali documenti creare. Poi si preparano uno dopo l'altro e si scaricano in un unico ZIP."""
+    _stile_dialogo()
+    st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-size:.92rem;color:{T["text2"]};line-height:1.5;margin-bottom:.6rem;">'
+                'Scegli i documenti da creare: li preparo uno dopo l\'altro (circa un minuto in tutto) e poi li scarichi tutti insieme in un solo file ZIP. '
+                'Nello ZIP c\'è sempre anche il PDF della verifica (Fila A).</div>', unsafe_allow_html=True)
+    scelte = []
+    for k, nome, desc in _VOCI_KIT:
+        if k in mancanti:
+            if st.checkbox(nome, value=True, key=f"kit_sel_{k}", help=desc):
+                scelte.append(k)
+            st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-size:.8rem;color:{T["muted"]};margin:-.55rem 0 .5rem 1.7rem;">{desc}</div>', unsafe_allow_html=True)
+        else:
+            st.checkbox(f"{nome} · già pronta", value=True, disabled=True, key=f"kit_gia_{k}")
+    if st.button("Crea i documenti scelti", type="primary", use_container_width=True, icon=":material/auto_awesome:", disabled=not scelte, key="kit_conferma"):
+        st.session_state["_kit_coda"] = list(scelte)
+        st.session_state["_kit_scelta"] = list(scelte)
+        st.session_state["_kit_attivo"] = True
+        st.session_state["_kit_finito"] = False
+        st.rerun()
+
+
 def _render_stage_final():
     gp   = st.session_state.gen_params
     vA   = st.session_state.verifiche["A"]
@@ -6833,38 +6864,55 @@ def _render_stage_final():
                 _vc6, _vb6 = _riga()                  # Scheda di allenamento
             with st.container(key="ver_griglia"):
                 _vc4, _vb4 = _riga()                  # Griglia di valutazione
-        with st.expander("**Scarica tutti i file** in una volta", expanded=bool(_kit_in_corso), icon=":material/folder_zip:"):
+        if st.session_state.get("_kit_attivo") and not _kit_in_corso:        # la coda è finita (o si è fermata per un errore)
+            st.session_state["_kit_attivo"] = False
+            st.session_state["_kit_finito"] = True
+        _kit_finito = bool(st.session_state.get("_kit_finito")) and not _kit_in_corso
+        with st.expander("**Scarica tutti i file** in una volta", expanded=bool(_kit_in_corso or _kit_finito), icon=":material/folder_zip:"):
             st.markdown('<span class="g-kit3" style="display:none"></span>', unsafe_allow_html=True)
             st.markdown(
                 f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:-.2rem 0 .7rem;">'
                 f'Crea in un colpo Fila B, BES/DSA, soluzioni e scheda di allenamento, poi scarica tutto in un unico file ZIP.</div>',
                 unsafe_allow_html=True
             )
+            if _kit_finito and len(_kit_pronti) >= 2 and not _pro_bloccato("zip"):
+                _scelta_kit = st.session_state.get("_kit_scelta") or []
+                _mancano = [n for k, n, _d in _VOCI_KIT if k in _scelta_kit and k in _kit_mancanti]
+                _tit_k = "Ho generato tutti i file" if not _mancano else "Ho generato i file che si potevano creare"
+                _sot_k = (f"Scaricali tutti insieme con il pulsante qui sotto: un unico file ZIP con {len(_kit_pronti)} documenti."
+                          if not _mancano else f"Non sono riuscito a creare: {', '.join(_mancano)}. Puoi riprovare con «Prepara tutto il kit»; intanto scarica gli altri nello ZIP.")
+                st.markdown(
+                    "<style>.kit-ok{display:flex;gap:.8rem;align-items:center;margin:.1rem 0 .7rem;padding:.9rem 1rem;border-radius:16px;"
+                    "background:linear-gradient(135deg,#16A34A12,#16A34A26);border:1px solid #16A34A55;box-shadow:0 8px 20px #16A34A22;font-family:'DM Sans',sans-serif;}"
+                    f".kit-ok b{{display:block;font-size:1.02rem;color:{T['text']};}}.kit-ok span{{font-size:.88rem;color:{T['text2']};line-height:1.4;}}</style>"
+                    '<div class="kit-ok"><svg width="30" height="30" viewBox="0 0 24 24" style="flex:0 0 1.9rem"><circle cx="12" cy="12" r="11" fill="#16A34A"/>'
+                    '<path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+                    f'<div><b>{_tit_k}</b><span>{_sot_k}</span></div></div>', unsafe_allow_html=True)
+                _dl("Scarica tutto (ZIP)", data=lambda: _zip_kit(_kit_pronti), file_name=_nome_base_file(mat_str, arg_str) + "_kit.zip",
+                    mime="application/zip", icon=":material/folder_zip:", use_container_width=True, type="primary", key="dl_kit_zip_fine",
+                    help="Tutti i documenti pronti in un solo file.")
             _kc1, _kc2 = st.columns(2, gap="small")
             with _kc1:
                 if _pro_bloccato("zip"):
                     _pulsante_pro("zip", "pro_kit", "Prepara tutto il kit con il piano Pro")
                 elif st.button("Prepara tutto il kit", icon=":material/auto_awesome:", key="kit_tutto",
                                use_container_width=True, disabled=(not _kit_mancanti) or _kit_in_corso,
-                               help="Crea Fila B, BES/DSA, Soluzioni e scheda di allenamento, una dopo l'altra "
-                                    "(circa un minuto). Quello che c'è già non si rifà."):
-                    st.session_state["_kit_coda"] = [k for k in ("B", "R", "S", "SC") if k in _kit_mancanti]
-                    st.rerun()
+                               help="Scegli quali documenti creare (Fila B, BES/DSA, soluzioni, scheda di allenamento): "
+                                    "li preparo uno dopo l'altro e li scarichi in un unico ZIP."):
+                    _dialogo_kit(list(_kit_mancanti))
             with _kc2:
-                if len(_kit_pronti) >= 2 and not _pro_bloccato("zip"):
+                if len(_kit_pronti) >= 2 and not _pro_bloccato("zip") and not _kit_finito:
                     _dl("Scarica tutto (ZIP)", data=lambda: _zip_kit(_kit_pronti),
                         file_name=_nome_base_file(mat_str, arg_str) + "_kit.zip", mime="application/zip",
                         icon=":material/folder_zip:", use_container_width=True, key="dl_kit_zip",
                         help="Tutti i documenti pronti in un solo file.")
             if _kit_in_corso:
-                st.markdown(
-                    f'<div role="status" style="margin:.6rem 0;padding:.7rem 1rem;border:1px solid {T["border2"]};'
-                    f'border-radius:12px;background:{T["card"]};font-size:.9rem;color:{T["text2"]};'
-                    f'font-family:DM Sans,sans-serif;">⏳ Sto preparando il kit'
-                    + (f' (ancora {len(_coda_kit)} dopo questo passaggio)' if _coda_kit else '')
-                    + '. Ci vuole circa un minuto: non toccare la pagina.</div>',
-                    unsafe_allow_html=True
-                )
+                _sc = st.session_state.get("_kit_scelta") or [k for k, _n, _d in _VOCI_KIT]
+                _nomi_sc = [n for k, n, _d in _VOCI_KIT if k in _sc]
+                _fatti = sum(1 for k in _sc if k not in _kit_mancanti)
+                st.markdown(ui_attese.card_html(T, "copie", "Sto preparando i documenti scelti",
+                                                f"Ne restano {max(len(_nomi_sc) - _fatti, 0)}: ci vuole circa un minuto, non toccare la pagina.",
+                                                _nomi_sc, attivo=min(_fatti, max(len(_nomi_sc) - 1, 0))), unsafe_allow_html=True)
             if _kit_pronti:
                 st.markdown(
                     f'<div style="font-size:.85rem;color:{T["text2"]};font-family:DM Sans,sans-serif;margin:.3rem 0 .6rem;">'
@@ -7538,6 +7586,8 @@ def _nuova_verifica(modo: str | None = None) -> None:
     azzerando la verifica in corso (le versioni non salvate si perdono)."""
     st.session_state["_home_modo"]    = modo
     st.session_state.pop("_mod_aperto", None)
+    for _k_kit in ("_kit_attivo", "_kit_finito", "_kit_scelta"):
+        st.session_state.pop(_k_kit, None)
     st.session_state.stage            = STAGE_INPUT
     st.session_state["_prev_stage"]   = None
     st.session_state.input_percorso   = None
