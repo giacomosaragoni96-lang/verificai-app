@@ -4999,7 +4999,8 @@ font-family: 'DM Sans', sans-serif;
     background: transparent !important; background-image: none !important; border: none !important; box-shadow: none !important;
     min-height: 0 !important; padding: .15rem .1rem !important; width: auto !important;
   }}
-  html body .stApp :is(.st-key-home_indietro, .st-key-seg_apri, .st-key-apri_storico_home):not(#vf) button {{ width: 100% !important; justify-content: center !important; }}
+  html body .stApp :is(.st-key-home_indietro, .st-key-seg_apri, .st-key-apri_storico_home):not(#vf) button {{ width: 100% !important; justify-content: center !important; white-space: nowrap !important; }}
+  html body .stApp .st-key-apri_storico_home:not(#vf) button p {{ white-space: nowrap !important; }}
   html body .stApp :is(.st-key-stile_anteprima, .st-key-pf_anteprima_stili, .st-key-apri_impostazioni_form, .st-key-home_indietro, .st-key-pf_indietro, .st-key-imp_torna_alto, .st-key-back_from_mie_verifiche, .st-key-sb_indietro, .st-key-up_indietro, .st-key-cruscotto_indietro):not(#vf) button, html body .stApp :is(.st-key-stile_anteprima, .st-key-pf_anteprima_stili, .st-key-apri_impostazioni_form, .st-key-home_indietro, .st-key-pf_indietro, .st-key-imp_torna_alto, .st-key-back_from_mie_verifiche, .st-key-sb_indietro, .st-key-up_indietro, .st-key-cruscotto_indietro):not(#vf) button * {{
     color: {T['muted']} !important; -webkit-text-fill-color: {T['muted']} !important; font-size: .82rem !important; font-weight: 500 !important;
   }}

@@ -3329,7 +3329,7 @@ def _render_scelta_iniziale() -> None:
                 _registra_evento("scelta:impagina")
                 st.rerun()
     st.markdown('<div style="height:1.2rem"></div>', unsafe_allow_html=True)
-    _h1, _h2, _h3 = st.columns([2, 1, 2])
+    _h1, _h2, _h3 = st.columns([3, 2, 3])
     _h2.button("Le mie verifiche", key="apri_storico_home", type="tertiary", icon=":material/folder_open:", on_click=_apri_storico,
                use_container_width=True, help="Ritrova le verifiche che hai già creato.")
 
