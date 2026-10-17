@@ -914,6 +914,29 @@ def _e_verifica_bonus(verifica_id) -> bool:
     return False
 
 
+def _puo_sbloccare_verifica_corrente() -> bool:
+    """True se c'è una verifica aperta, senza le funzioni complete, e un credito (verifica completa) da usare su di lei."""
+    if not MONETIZZAZIONE_ATTIVA or _is_admin or not st.session_state.get("utente"):
+        return False
+    _sid = st.session_state.get("_storico_id")
+    if not _sid or st.session_state.get("_assaggio_tipo"):
+        return False
+    return _bonus_residui() > 0
+
+
+def _sblocca_verifica_corrente() -> None:
+    """Usa un credito sulla verifica che si sta guardando: da subito ha tutte le funzioni (la pagina si ricarica con tutto sbloccato)."""
+    _sid = st.session_state.get("_storico_id")
+    if _sid and inviti.usa_bonus(supabase_admin, st.session_state.utente.id, _sid):
+        st.session_state.setdefault("_bonus_ids", set()).add(str(_sid))
+        st.session_state.pop("_bonus_cache", None)
+        _registra_evento("sblocco_verifica", verifica_id=_sid)
+        _ricorda_conferma("Verifica sbloccata: ora ha tutte le funzioni")
+    else:
+        st.session_state["_avviso_dopo"] = "Non sono riuscito a sbloccare la verifica: riprova tra un momento."
+    st.rerun()
+
+
 def _assaggio_attivo() -> bool:
     """
     True se la verifica su cui lavora l'utente ha tutto il Pro: la sua prima in assoluto, oppure una «verifica bonus»
@@ -1681,9 +1704,31 @@ html body .stApp div[class*="st-key-box_sblocco"]:not(#vf) button:hover * {color
 [class*="st-key-box_sblocco"] a.bx-b {display:flex !important;align-items:center;justify-content:center;min-height:2.9rem;box-sizing:border-box;
   padding:.4rem 1rem !important;font-size:.92rem !important;font-weight:700 !important;border-radius:12px;font-family:'DM Sans',sans-serif;}
 [class*="st-key-box_sblocco"] .bx-badge {color:#fff;}
+html body .stApp div[class*="st-key-box_sblocco"] .st-key-bx_usa button {background:#fff !important;background-image:none !important;border-radius:12px !important;
+  min-height:2.9rem !important;box-shadow:0 6px 16px rgba(0,0,0,.22) !important;padding:.4rem 1rem !important;}
+html body .stApp div[class*="st-key-box_sblocco"] .st-key-bx_usa button, html body .stApp div[class*="st-key-box_sblocco"] .st-key-bx_usa button * {
+  color:#1E3A8A !important;-webkit-text-fill-color:#1E3A8A !important;font-weight:700 !important;font-size:.92rem !important;text-decoration:none !important;}
 html body .stApp div[class*="st-key-box_sblocco"][data-fatto] a.bx-b, html body .stApp div[class*="st-key-box_sblocco"][data-fatto] .bx-pills,
 html body .stApp div[class*="st-key-box_sblocco"][data-fatto] .bx-mini {display:none;}
 </style>"""
+
+
+def _box_usa_credito() -> None:
+    """Pagina finale, con una verifica completa a disposizione: un tocco e questa verifica ha tutte le funzioni (Fila B, BES/DSA, soluzioni, Word…)."""
+    _n = _bonus_residui()
+    with st.container(key="box_sblocco_credito"):
+        _c1, _c2 = st.columns([2.6, 1.4], vertical_alignment="center", gap="medium")
+        with _c1:
+            st.markdown(_CSS_BOX_SBLOCCO +
+                        '<div class="bx-wrap"><div class="bx-badge"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+                        'stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></svg></div>'
+                        '<div class="bx-testo"><div class="bx-eyebrow">Hai verifiche complete</div>'
+                        '<div class="bx-t">Vuoi tutte le funzioni su questa verifica?</div>'
+                        f'<div class="bx-d">Ne hai <b>{_n}</b> a disposizione: ne usi una e questa verifica ha subito Fila B, BES/DSA, soluzioni, scheda di allenamento, Word e il resto del kit.</div>'
+                        '</div></div>', unsafe_allow_html=True)
+        with _c2:
+            if st.button("Usa una verifica completa", key="bx_usa", icon=":material/lock_open:", use_container_width=True):
+                _sblocca_verifica_corrente()
 
 
 def _box_invito(dove: str) -> None:
@@ -1730,7 +1775,8 @@ def _box_sblocco(dove: str) -> None:
                         '<div class="bx-wrap"><div class="bx-badge"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8C10.5 4 7 4 7 6.2 7 8 9 8 12 8c3 0 5 0 5-1.8C17 4 13.5 4 12 8z"/></svg></div><div class="bx-testo">'
                         '<div class="bx-eyebrow">Sblocca di più</div>'
                         '<div class="bx-t">Altre verifiche con tutte le funzioni</div>'
-                        + f'<div class="bx-d">Compila il questionario e ricevi subito un codice per <b>{VERIFICHE_PER_CODICE} verifiche complete</b>.</div>'
+                        + f'<div class="bx-d">Compila il questionario e ricevi subito un codice per <b>{VERIFICHE_PER_CODICE} verifiche complete</b>'
+                        + (": le puoi usare anche su questa verifica." if dove == "final" else ".") + '</div>'
                         + _pillole + '</div></div>',
                         unsafe_allow_html=True)
         with _c2:
@@ -1789,7 +1835,10 @@ def _banner_piano(dove: str) -> None:
         # durante la creazione non devono disturbare
         if dove == "final":
             with _slot.container():
-                _box_sblocco(dove)
+                if _puo_sbloccare_verifica_corrente():
+                    _box_usa_credito()
+                else:
+                    _box_sblocco(dove)
         else:
             _slot.empty()
         return
@@ -1941,6 +1990,11 @@ def _pro_bloccato(funzione: str) -> bool:
 
 def _pulsante_pro(funzione: str, key: str, testo: str = "Con il piano Pro", breve: str = "") -> None:
     """Al posto dell'azione di una funzione bloccata: porta alla pagina di confronto (o, senza prezzi, allo sblocco con il questionario)."""
+    if not PREZZI_VISIBILI and _puo_sbloccare_verifica_corrente():
+        if st.button("Usa una verifica completa", icon=":material/lock_open:", key=key, use_container_width=True, type="secondary",
+                     help="Sblocca tutte le funzioni su questa verifica, subito."):
+            _sblocca_verifica_corrente()
+        return
     if not PREZZI_VISIBILI:
         _lbl = breve or "Sblocca con il questionario"
         _help = f"Per avere {ETICHETTE_FUNZIONI.get(funzione, 'questa funzione')}: compila il questionario completo e ricevi un codice."
