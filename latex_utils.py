@@ -834,42 +834,53 @@ def rifinisci_scelta_multipla_e_vf(latex: str) -> str:
 
 
 def build_griglia_latex(esercizi: list, punti_totali: int) -> str:
-    """
-    Genera il codice LaTeX della griglia di valutazione a partire
-    dalla lista restituita da parse_esercizi().
-    Tutti gli esercizi appaiono, quelli senza punti mostrano '—'.
+    r"""
+    Genera il codice LaTeX della tabella dei punteggi a partire dalla lista restituita da parse_esercizi().
+
+    Solo in bianco e nero e con i pacchetti già nel preambolo (array): una colonna per ogni richiesta, un blocco con bordo più
+    spesso per ogni esercizio, una riga «Punti» e una riga «Voto» alta abbastanza da scriverci. La riga dei sottopunti (a, b, c…)
+    c'è solo se almeno un esercizio ha sottopunti: con esercizi a punteggio unico la tabella ha solo «Esercizio», «Punti» e «Voto».
     """
     if not esercizi:
         return ""
 
-    col_spec = "|l|" + "".join("c|" * len(ex['items']) for ex in esercizi) + "c|"
+    def _etichetta(label) -> str:
+        e = (label or "").strip()
+        return "" if e in ("", "—") else e
 
-    row_es = "\\textbf{Es.}" + "".join(
-        f" & \\multicolumn{{{len(ex['items'])}}}{{c||}}{{\\textbf{{{ex['num']}}}}}"
-        for ex in esercizi
-    ) + " & \\textbf{Tot} \\\\ \\hline"
+    ha_sottopunti = any(_etichetta(lab) for ex in esercizi for lab, _ in ex["items"])
+    spesso = r"!{\vrule width 1pt}"
 
-    row_sotto = "" + "".join(
-        f" & {label if label else '—'}"
-        for ex in esercizi for label, _ in ex['items']
-    ) + " & \\\\ \\hline"
+    gruppi = ["|".join("c" for _ in ex["items"]) for ex in esercizi]
+    # bordo sottile tra le richieste di uno stesso esercizio, spesso tra un esercizio e l'altro
+    col_spec = "|l" + spesso + "".join(g + spesso for g in gruppi) + "c|"
 
-    row_max = "\\textbf{Max}" + "".join(
-        f" & {pts}" for ex in esercizi for _, pts in ex['items']
-    ) + f" & {punti_totali} \\\\ \\hline"
+    riga_es = r"\textbf{Esercizio}" + "".join(
+        f" & \\multicolumn{{{len(ex['items'])}}}{{c{spesso}}}{{\\textbf{{{ex['num']}}}}}" for ex in esercizi
+    ) + r" & \textbf{Totale} \\"
 
-    # Nuova riga per punteggio effettivo dello studente
-    row_voto = "\\textbf{Voto}" + "".join(
-        f" & \\makebox[1.2cm]{{\\hrulefill}}" for ex in esercizi for _, _ in ex['items']
-    ) + " & \\makebox[1.2cm]{{\\hrulefill}} \\\\ \\hline"
+    righe = [r"\noalign{\hrule height 1pt}", riga_es, r"\noalign{\hrule height 1pt}"]
+
+    if ha_sottopunti:
+        riga_sotto = "Richiesta" + "".join(f" & {_etichetta(lab)}" for ex in esercizi for lab, _ in ex["items"]) + r" & \\"
+        righe += [riga_sotto, r"\hline"]
+
+    # larghezza minima delle colonne: con poche richieste c'è spazio per scrivere il voto, con molte la tabella si stringe
+    n_col = sum(len(ex["items"]) for ex in esercizi)
+    larg = "1.3cm" if n_col <= 6 else ("1.05cm" if n_col <= 12 else "0.85cm")
+    riga_punti = (r"\textbf{Punti}" + "".join(f" & \\makebox[{larg}]{{{pts}}}" for ex in esercizi for _, pts in ex["items"])
+                  + f" & \\textbf{{{punti_totali}}} \\\\")
+    # la riga del voto è alta: il docente ci scrive il punteggio preso
+    riga_voto = r"\textbf{Voto}\rule[-0.55cm]{0pt}{1.2cm}" + " &" * (sum(len(ex["items"]) for ex in esercizi) + 1) + r" \\"
+    righe += [riga_punti, r"\hline", riga_voto, r"\noalign{\hrule height 1pt}"]
 
     return (
-        "% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.3cm]\n"
-        "{\\renewcommand{\\arraystretch}{1.8}\n"
-        f"\\adjustbox{{max width=\\textwidth}}{{\n"
-        f"\\begin{{tabular}}{{{col_spec}}}\n\\hline\n"
-        f"{row_es}\n{row_sotto}\n{row_max}\n{row_voto}\n"
-        f"\\end{{tabular}}\n}}}}\n\\end{{center}}"
+        "% GRIGLIA\n\\begin{center}\n\\textbf{Tabella Punteggi}\\\\[0.25cm]\n"
+        "{\\renewcommand{\\arraystretch}{1.5}\\setlength{\\tabcolsep}{5pt}\n"
+        "\\adjustbox{max width=\\textwidth}{\n"
+        f"\\begin{{tabular}}{{{col_spec}}}\n"
+        + "\n".join(righe) +
+        "\n\\end{tabular}\n}}\n\\end{center}"
     )
 
 
