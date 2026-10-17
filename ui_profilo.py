@@ -10,6 +10,7 @@ import html
 import streamlit as st
 
 import profilo
+from ui_impostazioni import riepilogo
 
 SEZIONI = ["👥 Le mie classi", "⚙️ Impostazioni predefinite", "📈 La mia attività", "🔑 Account"]
 _SWATCH = ["🔵", "🟣", "🔴", "🟠", "🟡", "🟢", "⚫", "🟤"]
@@ -148,18 +149,9 @@ def _sezione_preferenze(T, ctx) -> None:
     p = ctx["profilo"]
     st.markdown('<div class="pf-sez">Impostazioni predefinite</div><div class="pf-sub">Preferenze di scrittura, stile del PDF e logo della scuola: '
                 'si salvano e valgono per ogni verifica finché non le cambi.</div>', unsafe_allow_html=True)
-    frasi = profilo.frasi_preferenze(p)
-    with st.container(border=True):
-        if frasi:
-            st.markdown("**Ora valgono per le tue verifiche**")
-            for f in frasi:
-                st.markdown(f"- {f}")
-        else:
-            st.caption("Nessuna istruzione fissa: ogni verifica parte da zero.")
-        st.button("Apri le impostazioni predefinite", key="pf_apri_imp", type="primary", icon=":material/tune:", on_click=ctx["apri_impostazioni"])
-
-
-_MESI_BREVI = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]
+    nomi = {"": "Classico (predefinito)", **{k: n for k, n in ctx["stili"]}}
+    riepilogo(T, ctx, profilo.frasi_preferenze(p), nomi.get(p.get("stile", "") or "", "Classico"), False)
+    st.button("Apri le impostazioni predefinite", key="pf_apri_imp", type="primary", icon=":material/tune:", on_click=ctx["apri_impostazioni"])
 
 
 def _per_mese(cal: list, quanti: int = 6) -> list:

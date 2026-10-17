@@ -1911,7 +1911,7 @@ def _render_profilo_pagina() -> None:
         "profilo": _profilo(), "salva": _salva_profilo, "conferma": _ricorda_conferma, "verifiche": verifiche,
         "eventi": _eventi_utente(u.id), "email": u.email, "piano": "admin" if _is_admin else ENT.piano, "verifiche_mese": _verifiche_mese or 0,
         "crediti": (_bonus_residui() if (MONETIZZAZIONE_ATTIVA and u) else 0), "scuole": SCUOLE, "stili": stili_disponibili(),
-        "apri_impostazioni": _apri_impostazioni, "indietro": _indietro, "nuova_per_classe": _nuova_per_classe, "elenco_classe": _elenco_classe, "apri_elenco": _apri_storico,
+        "apri_impostazioni": _apri_impostazioni, "logo_info": _logo_scuola, "indietro": _indietro, "nuova_per_classe": _nuova_per_classe, "elenco_classe": _elenco_classe, "apri_elenco": _apri_storico,
         "invita": (lambda: apri_dialogo_invito(T, _INVITO)) if _INVITO else (lambda: None),
         "tema_scuro": bool(st.session_state.get("_tema_scuro", st.session_state.get("theme") == "notte")), "imposta_tema": _imposta_tema,
         "elimina_account": _elimina_account, "e_admin": _is_admin,
