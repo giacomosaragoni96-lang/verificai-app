@@ -6852,9 +6852,8 @@ def _render_stage_final():
           with st.expander("Vuoi modificare qualcosa?", expanded=bool(st.session_state.get("_mod_aperto")), icon=":material/auto_fix_high:"):
             _cl_att = st.session_state.get("_classe_sel") or ""
             _dt_att = st.session_state.get("_data_verifica") or ""
-            _etichetta_cd = (("Classe e data: " + " · ".join(x for x in (_cl_att, _dt_att) if x) + " (cambia)") if (_cl_att or _dt_att)
-                             else "Aggiungi la classe e la data")
-            if st.button(_etichetta_cd, key="final_classe", type="secondary", icon=":material/groups:", use_container_width=True,
+            _etichetta_cd = "Modifica la classe e la data" if (_cl_att or _dt_att) else "Aggiungi la classe e la data"
+            if st.button(_etichetta_cd, key="final_classe", type="tertiary", icon=":material/groups:", use_container_width=True,
                          help="Compaiono già compilate nell'intestazione del PDF e servono a ritrovare la verifica per classe."):
                 _dialogo_classe_finale(st.session_state.get("_storico_id"))
             if vA.get("pdf") and vA.get("latex"):
