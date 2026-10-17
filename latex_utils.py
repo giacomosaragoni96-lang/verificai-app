@@ -2841,6 +2841,45 @@ def estrai_logo(latex: str):
     return (m.group(1), m.group(2)) if m else None
 
 
+def _a_capo_equilibrato(testo: str, max_car: int) -> str:
+    r"""
+    Titolo lungo accanto al logo: invece di lasciare che LaTeX vada a capo per una sola parola («…della / parabola»), lo spezza in righe di
+    lunghezza simile (al minimo di righe che servono). Non spezza dentro le formule ($…$). Testo corto: invariato.
+    """
+    testo = (testo or "").strip()
+    if len(testo) <= max_car or max_car < 8:
+        return testo
+    righe = -(-len(testo) // max_car)                 # righe minime
+    parole = testo.split(" ")
+    # posizioni (in caratteri) dove si può andare a capo: dopo una parola, fuori da una formula
+    posizioni, lungh, aperta = [], 0, False
+    for k, par in enumerate(parole[:-1]):
+        lungh += len(par)
+        aperta ^= (par.count("$") % 2 == 1)
+        if not aperta:
+            posizioni.append((lungh, k))
+        lungh += 1
+    if not posizioni:
+        return testo
+    tagli, ultimo = [], -1
+    for r in range(1, righe):
+        obiettivo = len(testo) * r / righe
+        candidati = [(abs(pos - obiettivo), k) for pos, k in posizioni if k > ultimo]
+        if not candidati:
+            break
+        k = min(candidati)[1]
+        tagli.append(k)
+        ultimo = k
+    if not tagli:
+        return testo
+    out, inizio = [], 0
+    for k in tagli:
+        out.append(" ".join(parole[inizio:k + 1]))
+        inizio = k + 1
+    out.append(" ".join(parole[inizio:]))
+    return " \\\\ ".join(out)
+
+
 def inserisci_logo(latex: str, tipo: str, b64: str, scala: float = 1.0) -> str:
     """
     Mette il logo a sinistra del titolo (titolo allineato a destra), come nelle verifiche
@@ -2860,12 +2899,18 @@ def inserisci_logo(latex: str, tipo: str, b64: str, scala: float = 1.0) -> str:
         def _sost(m):
             # «Verifica di Matematica: Le frazioni» → due righe: titolo in grassetto e, sotto,
             # l'argomento come sottotitolo (invece di due punti e testo che va a capo a destra)
+            # larghezza (in cm, su 18 cm di testo) del riquadro accanto al logo → quanti caratteri ci stanno per riga
+            if tipo == "piccolo" and _prop is not None:
+                _box_cm = 18 - min(h * _prop, w * 18) - 0.7
+            else:
+                _box_cm = (0.97 - w) * 18
+            _car_t, _car_s = int(_box_cm * 3.0), int(_box_cm * 3.9)       # titolo (\Large grassetto) e sottotitolo (\large)
             principale, due_punti, argomento = m.group(1).partition(":")
             if due_punti and argomento.strip():
-                titolo = (f"\\textbf{{\\Large {principale.strip()}}}\\\\[4pt]"
-                          f"{{\\large {argomento.strip()}}}")
+                titolo = (f"\\textbf{{\\Large {_a_capo_equilibrato(principale.strip(), _car_t)}}}\\\\[4pt]"
+                          f"{{\\large {_a_capo_equilibrato(argomento.strip(), _car_s)}}}")
             else:
-                titolo = f"\\textbf{{\\Large {m.group(1)}}}"
+                titolo = f"\\textbf{{\\Large {_a_capo_equilibrato(m.group(1), _car_t)}}}"
             if tipo == "piccolo" and _prop is not None:
                 # Simbolo da solo: il titolo gli sta accanto (a sinistra, con un po' d'aria), non
                 # tutto a destra: con un logo piccolo si aprirebbe un buco in mezzo alla riga.
