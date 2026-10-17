@@ -60,7 +60,7 @@ from latex_utils import (
     rimuovi_punti_subsection, pdf_to_images_bytes,
     extract_blocks, reconstruct_latex, extract_corpo, extract_preambolo,
     parse_pts_from_block_body, riscala_single_block,
-    parse_items_from_block, apply_item_pts_to_body,
+    parse_items_from_block, apply_item_pts_to_body, punti_richieste, applica_punti_richieste,
     prepara_esercizi_aperti, conta_punti_latex,
     migliora_spaziatura_sottopunti, limita_altezza_grafici, aggiungi_spaziatura_grafici_tabelle,
     normalizza_sottopunti_inline, bilancia_punti, esercizi_con_grafico_mancante, anteprima_esercizio_png,
@@ -4762,7 +4762,9 @@ def _applica_punti_a_blocchi(righe: list, punti: list) -> None:
     for i, valori in per_esercizio.items():
         lista = [valori[j] for j in sorted(valori)]
         blocco = st.session_state.review_blocks[i]
-        blocco["body"] = apply_item_pts_to_body(blocco["body"], lista)
+        # stesso lettore della tabella dei punteggi (un «(N pt)» dopo una formula o una tabella conta); se non torna, il metodo di prima
+        nuovo_corpo = applica_punti_richieste(blocco["body"], lista, blocco.get("title", ""))
+        blocco["body"] = nuovo_corpo if nuovo_corpo is not None else apply_item_pts_to_body(blocco["body"], lista)
         titolo = re.sub(r"\s*\(\d+\s*pt\)", "", blocco["title"]).strip()
         blocco["title"] = f"{titolo} ({sum(lista)} pt)"
 
@@ -5926,7 +5928,8 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
     # ── Cambia i punteggi — un numero per esercizio; dentro l'esercizio i punti restano in proporzione ──
     if mostra_punteggi and n_blocks > 0:
         with st.expander("⚖️ Cambia i punteggi", expanded=False):
-            _per_es = [parse_items_from_block(_b["body"], _b.get("title", "")) for _b in st.session_state.review_blocks]
+            _per_es = [(punti_richieste(_b["body"], _b.get("title", "")) or parse_items_from_block(_b["body"], _b.get("title", "")))
+                       for _b in st.session_state.review_blocks]
             _pt_sub = [[int(round(float(_pt))) for (_l, _s, _pt) in _its] for _its in _per_es]   # punti di ogni richiesta
             _tot_es = [sum(_p) for _p in _pt_sub]                                                  # punti di ogni esercizio
             _min_es = [sum(1 for _v in _p if _v > 0) for _p in _pt_sub]                            # almeno 1 pt a richiesta
