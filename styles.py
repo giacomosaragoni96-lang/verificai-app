@@ -3285,9 +3285,14 @@ font-family: 'DM Sans', sans-serif;
     background: linear-gradient(160deg, {T['card']} 0%, {_acc}12 100%); border: 1.5px solid {_acc}55; border-radius: 18px; padding: 1.1rem 1.3rem 1.2rem !important; margin-bottom: .9rem;
     box-shadow: 0 12px 28px {_acc}28;
   }}
+  .mv-stat {{ display: flex; gap: .6rem; flex-wrap: wrap; margin: 0 0 1.1rem; }}
+  .mv-stat > div {{ flex: 1 1 6rem; text-align: center; padding: .7rem .5rem; border-radius: 16px; background: {T['card']}; border: 1px solid {T['border']};
+    box-shadow: 0 3px 10px rgba(15,23,42,.06); font-family: 'DM Sans', sans-serif; }}
+  .mv-stat b {{ display: block; font-size: 1.55rem; font-weight: 800; line-height: 1.1; background: linear-gradient(135deg,{_acc},{_acc}99); -webkit-background-clip: text; background-clip: text; color: transparent; }}
+  .mv-stat span {{ font-size: .76rem; font-weight: 600; color: {T['text2']}; }}
   .mvcl-et {{ font-family: 'DM Sans', sans-serif; font-size: .74rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: {_acc}; margin: .4rem 0 .5rem .2rem; }}
   html body .stApp .st-key-mvcl [data-testid="stLayoutWrapper"], html body .stApp .st-key-mvcl {{ gap: .6rem !important; flex-wrap: wrap !important; }}
-  html body .stApp .st-key-mvcl button {{ min-height: 3.5rem !important; border-radius: 18px !important; padding: .4rem 1.2rem !important; font-weight: 800 !important;
+  html body .stApp .st-key-mvcl:not(#vf) button {{ min-height: 3.5rem !important; border-radius: 18px !important; padding: .4rem 1.2rem !important; font-weight: 800 !important;
     transition: transform .18s ease, box-shadow .18s ease !important; animation: mvcl-entra .45s ease both; }}
   html body .stApp .st-key-mvcl button:hover {{ transform: translateY(-3px) !important; }}
   @keyframes mvcl-entra {{ from {{ opacity: 0; transform: translateY(10px) scale(.96); }} to {{ opacity: 1; transform: none; }} }}
@@ -5114,6 +5119,10 @@ font-family: 'DM Sans', sans-serif;
   }}
   @media (min-width: 641px) and (max-width: 1000px) {{ html body .stApp .st-key-card_modifica {{ display: none !important; }} }}
 
+  @media (max-width: 1000px) {{
+    html body .stApp [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] .col-prev) {{ flex-direction: column !important; flex-wrap: nowrap !important; display: flex !important; }}
+    html body .stApp [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] .col-prev) > [data-testid="stColumn"] {{ width: 100% !important; min-width: 0 !important; max-width: 100% !important; flex: none !important; }}
+  }}
   /* ── Telefono: pagina finale senza la barra in alto (ci sono le stesse azioni in fondo) e navigazione pagine più curata ── */
   @media (max-width: 640px) {{
     html body .stApp [data-testid="stLayoutWrapper"]:has(> .st-key-az_principali) {{ display: none !important; }}
@@ -5137,7 +5146,6 @@ font-family: 'DM Sans', sans-serif;
     /* ── Le mie verifiche: scheda sopra, «Apri» e «⋯» sotto sulla stessa riga ── */
     html body .stApp div[class*="st-key-vrow_"] [data-testid="stHorizontalBlock"] {{ display: grid !important; grid-template-columns: 1fr 3.4rem !important; gap: .6rem !important; align-items: start !important; }}
     html body .stApp div[class*="st-key-vrow_"] [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{ min-width: 0 !important; width: auto !important; height: auto !important; flex: none !important; overflow: visible !important; }}
-    html body .stApp div[class*="st-key-vrow_"] [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(1) {{ grid-column: 1 / -1; }}
     html body .stApp div[class*="st-key-vrow_"] [data-testid="stColumn"] > div, html body .stApp div[class*="st-key-vrow_"] [data-testid="stMarkdownContainer"], html body .stApp div[class*="st-key-vrow_"] [data-testid="stElementContainer"] {{ width: 100% !important; height: auto !important; overflow: visible !important; }}
     html body .stApp div[class*="st-key-vrow_"] [data-testid="stColumn"]:nth-child(1) div[style*="display:flex"] > div:last-child {{ min-width: 0 !important; overflow-wrap: anywhere; }}
     html body .stApp div[class*="st-key-vrow_"] [data-testid="stPopover"] > div > button, html body .stApp div[class*="st-key-vrow_"] [data-testid="stPopover"] button {{ width: 100% !important; }}
