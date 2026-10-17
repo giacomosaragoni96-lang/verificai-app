@@ -48,9 +48,10 @@ def _css(T: dict) -> str:
 .pf-mail{{font-size:.88rem;color:{T['text2']};}}
 .pf-pill{{display:inline-block;background:{acc}1F;color:{acc};border-radius:999px;padding:.12rem .65rem;font-size:.74rem;font-weight:800;letter-spacing:.04em;margin-left:.4rem;vertical-align:middle;}}
 .pf-num{{margin-left:auto;display:flex;gap:.8rem;}}
-.pf-n{{text-align:center;background:{T['card']};border:1px solid {T['border']};border-radius:14px;padding:.5rem .95rem;min-width:5.6rem;}}
-.pf-n b{{display:block;font-size:1.45rem;color:{T['text']};line-height:1.1;}}
-.pf-n span{{font-size:.72rem;color:{T['text2']};}}
+.pf-n{{text-align:center;background:linear-gradient(160deg,{T['card']} 0%,{acc}14 100%);border:1px solid {acc}40;border-radius:16px;padding:.65rem 1.4rem;min-width:8.2rem;
+  box-shadow:0 8px 20px {acc}26,0 2px 5px rgba(15,23,42,.06);}}
+.pf-n b{{display:block;font-size:2.5rem;color:{T['text']};line-height:1.1;letter-spacing:-.03em;}}
+.pf-n span{{font-size:.8rem;font-weight:700;color:{T['text2']};}}
 .pf-n-main{{background:linear-gradient(145deg,{acc},{T.get('accent2',acc)});border:none;padding:.65rem 1.4rem;min-width:8.2rem;box-shadow:0 10px 24px {acc}55,0 2px 6px rgba(15,23,42,.12);transform:translateY(-3px);}}
 .pf-n-main b{{font-size:2.5rem;color:#fff;letter-spacing:-.03em;}}
 .pf-n-main span{{font-size:.8rem;font-weight:700;color:#fff;opacity:.92;}}
