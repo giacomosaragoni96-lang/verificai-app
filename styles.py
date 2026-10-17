@@ -5105,7 +5105,40 @@ font-family: 'DM Sans', sans-serif;
   @media (min-width: 1001px) {{
     html body .stApp [data-testid="stLayoutWrapper"]:has(> .st-key-az_principali) {{ display: none !important; }}
   }}
-  @media (max-width: 1000px) {{ html body .stApp .st-key-card_modifica {{ display: none !important; }} }}
+  @media (min-width: 641px) and (max-width: 1000px) {{ html body .stApp .st-key-card_modifica {{ display: none !important; }} }}
+
+  /* ── Telefono: pagina finale senza la barra in alto (ci sono le stesse azioni in fondo) e navigazione pagine più curata ── */
+  @media (max-width: 640px) {{
+    html body .stApp [data-testid="stLayoutWrapper"]:has(> .st-key-az_principali) {{ display: none !important; }}
+    html body .stApp [data-testid="stHorizontalBlock"]:has(.st-key-final_prev_pg) {{
+      flex-wrap: nowrap !important; flex-direction: row !important; align-items: center !important; gap: .6rem !important; margin: .1rem 0 .4rem !important;
+    }}
+    html body .stApp [data-testid="stHorizontalBlock"]:has(.st-key-final_prev_pg) > [data-testid="stColumn"] {{ min-width: 0 !important; width: auto !important; }}
+    html body .stApp [data-testid="stHorizontalBlock"]:has(.st-key-final_prev_pg) > [data-testid="stColumn"]:nth-child(2) {{ flex: 1 1 auto !important; }}
+    html body .stApp [data-testid="stHorizontalBlock"]:has(.st-key-final_prev_pg) > [data-testid="stColumn"]:nth-child(1),
+    html body .stApp [data-testid="stHorizontalBlock"]:has(.st-key-final_prev_pg) > [data-testid="stColumn"]:nth-child(3) {{ flex: 0 0 3.1rem !important; }}
+    html body .stApp .st-key-final_prev_pg button, html body .stApp .st-key-final_next_pg button {{
+      border-radius: 999px !important; background: {_acc}14 !important; background-image: none !important; border: 1.5px solid {_acc}55 !important;
+      box-shadow: none !important; min-height: 2.6rem !important; height: 2.6rem !important; padding: 0 !important;
+    }}
+    html body .stApp .st-key-final_prev_pg button p, html body .stApp .st-key-final_next_pg button p {{ color: {_acc} !important; font-size: 1.05rem !important; font-weight: 800 !important; }}
+    html body .stApp .st-key-final_prev_pg button:disabled, html body .stApp .st-key-final_next_pg button:disabled {{ opacity: .35 !important; }}
+    html body .stApp [data-testid="stHorizontalBlock"]:has(.st-key-final_prev_pg) .pg-et {{
+      text-align: center; padding: .5rem .6rem; border-radius: 999px; background: {T['card']}; border: 1px solid {T['border']};
+    }}
+
+    /* ── Le mie verifiche: scheda sopra, «Apri» e «⋯» sotto sulla stessa riga ── */
+    html body .stApp div[class*="st-key-vrow_"] [data-testid="stHorizontalBlock"] {{ flex-wrap: wrap !important; flex-direction: row !important; gap: .55rem !important; align-items: center !important; }}
+    html body .stApp div[class*="st-key-vrow_"] [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{ min-width: 0 !important; width: auto !important; }}
+    html body .stApp div[class*="st-key-vrow_"] [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(1) {{ flex: 1 1 100% !important; }}
+    html body .stApp div[class*="st-key-vrow_"] [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(2) {{ flex: 1 1 0 !important; }}
+    html body .stApp div[class*="st-key-vrow_"] [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(3) {{ flex: 0 0 3.2rem !important; }}
+    html body .stApp div[class*="st-key-vrow_"] [data-testid="stColumn"] > div, html body .stApp div[class*="st-key-vrow_"] [data-testid="stColumn"] [data-testid="stMarkdownContainer"] {{ width: 100% !important; }}
+    html body .stApp div[class*="st-key-vrow_"] [data-testid="stColumn"]:nth-child(1) div[style*="display:flex"] {{ flex-wrap: nowrap !important; min-width: 0 !important; }}
+    html body .stApp div[class*="st-key-vrow_"] [data-testid="stColumn"]:nth-child(1) div[style*="display:flex"] > div:last-child {{ min-width: 0 !important; overflow-wrap: anywhere; }}
+    html body .stApp div[class*="st-key-vrow_"] [data-testid="stPopover"] > div > button, html body .stApp div[class*="st-key-vrow_"] [data-testid="stPopover"] button {{ width: 100% !important; }}
+    html body .stApp div[class*="st-key-vrow_"]:not(#vf) {{ padding: .75rem .8rem !important; }}
+  }}
   html body .stApp .st-key-card_modifica:not(#vf) {{
     background: linear-gradient(160deg, {_acc}08 0%, {_acc}1C 100%); border: 1.5px solid {_acc}44; border-left: 4px solid {_acc}; border-radius: 18px;
     padding: 1rem 1.15rem 1.05rem; margin: .2rem 0 .8rem; box-shadow: 0 8px 22px {_acc}22;
