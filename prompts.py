@@ -1632,3 +1632,15 @@ REGOLA_FIGURE_FOTO = (
 def con_regola_figure(prompt: str, testo: str) -> str:
     """Aggiunge la regola sulle figure-foto al prompt solo se il testo ne contiene."""
     return prompt + "\n\n" + REGOLA_FIGURE_FOTO if "[[FIGURA_FOTO_" in (testo or "") else prompt
+
+
+def prompt_descrivi_file() -> str:
+    """Lettura RAPIDA di un file caricato in «Impagina»: cosa c'è dentro, in poche righe (materia, argomento, numero di esercizi, una frase)."""
+    return (
+        "Guarda il documento (di solito una verifica scolastica scritta, fotografata o in Word). Rispondi SOLO con queste quattro righe, senza altro testo:\n"
+        "MATERIA: una materia scolastica (per esempio Matematica, Fisica, Storia, Italiano) oppure «non chiara»\n"
+        "ARGOMENTO: l'argomento, al massimo 8 parole\n"
+        "ESERCIZI: il numero di esercizi che vedi, solo la cifra (0 se non lo sai)\n"
+        "DESCRIZIONE: UNA sola frase in italiano, al massimo 25 parole, che dice cosa hai riconosciuto: che tipo di documento è, la materia, "
+        "l'argomento, quanti esercizi e se ci sono grafici, figure o tabelle. Se NON è una verifica scolastica, dillo chiaramente."
+    )

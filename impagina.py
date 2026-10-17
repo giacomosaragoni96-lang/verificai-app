@@ -12,7 +12,7 @@ può riprodurre identica non si inventa: l'esercizio si toglie oppure si tiene c
 import re
 
 import esercizio_foto as ef
-from prompts import prompt_leggi_verifica_completa, prompt_correggi_verifica, prompt_controlla_errori_verifica
+from prompts import prompt_leggi_verifica_completa, prompt_correggi_verifica, prompt_controlla_errori_verifica, prompt_descrivi_file
 
 MAX_FILE = 8            # pagine o foto per volta
 MAX_ESERCIZI = 12
@@ -106,6 +106,38 @@ _SUP = str.maketrans("0123456789+-=()n", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼�
 _SIMBOLI = {r"\cdot": "·", r"\times": "×", r"\le": "≤", r"\leq": "≤", r"\ge": "≥", r"\geq": "≥", r"\neq": "≠", r"\pi": "π", r"\infty": "∞",
             r"\pm": "±", r"\to": "→", r"\rightarrow": "→", r"\Rightarrow": "⇒", r"\in": "∈", r"\mathbb{R}": "ℝ", r"\approx": "≈", r"\ldots": "…", r"\dots": "…",
             r"\alpha": "α", r"\beta": "β", r"\lambda": "λ", r"\Delta": "Δ", r"\displaystyle": "", r"\left": "", r"\right": "", r"\,": " ", r"\;": " "}
+
+
+def descrivi_file(model, immagini: list) -> dict:
+    """
+    Lettura rapida (una chiamata breve, solo le prime pagine) di ciò che è stato caricato: {"ok", "materia", "argomento", "n_esercizi", "descrizione"}.
+    Serve a far vedere al docente che il file è stato capito, prima della lettura completa. Qualsiasi problema = {"ok": False}.
+    """
+    try:
+        errore = ef.controlla_foto(immagini, MAX_FILE)
+        if errore:
+            return {"ok": False}
+        from docx_import import espandi_file
+        esteso = espandi_file(immagini)
+        if not esteso:
+            return {"ok": False}
+        parti = ef._parti(esteso)[:4]
+        testo = ef._chiama(model, [prompt_descrivi_file()] + parti)
+    except Exception:
+        return {"ok": False}
+    def campo(nome):
+        m = re.search(rf"^\s*{nome}\s*:\s*(.+?)\s*$", testo, re.MULTILINE | re.IGNORECASE)
+        return m.group(1).strip() if m else ""
+    descr = campo("DESCRIZIONE")
+    if not descr:
+        return {"ok": False}
+    try:
+        n = int(re.sub(r"\D", "", campo("ESERCIZI")) or 0)
+    except ValueError:
+        n = 0
+    materia = campo("MATERIA")
+    return {"ok": True, "materia": "" if materia.lower().startswith("non chiar") else materia, "argomento": campo("ARGOMENTO"),
+            "n_esercizi": n, "descrizione": descr[:300]}
 
 
 def testo_leggibile(t: str) -> str:

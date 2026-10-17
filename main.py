@@ -3059,19 +3059,44 @@ def _render_impagina() -> None:
         _files = st.file_uploader("Carica la tua verifica (PDF, foto o Word)", type=["pdf", "png", "jpg", "jpeg", "webp", "docx"], accept_multiple_files=True,
                                   key=f"imp_up_{st.session_state.get('_imp_ciclo', 0)}", label_visibility="collapsed",
                                   help="Fino a 8 file. Va bene anche un PDF fatto di screenshot o un file Word (.docx). Foto dritte e leggibili.")
+        if _files:
+            _chiave_f = hashlib.md5(b"".join((f.name + str(f.size)).encode("utf-8") for f in _files)).hexdigest()
+            _cache_d = st.session_state.setdefault("_imp_desc", {})
+            if _chiave_f not in _cache_d and st.session_state.get("_imp_desc_n", 0) < 12:
+                _imm_d = [{"data": f.getvalue(), "mime_type": f.type or "image/jpeg", "name": f.name} for f in _files]
+                with _attesa("foto", "Guardo il tuo file", ["Apro il file", "Riconosco materia ed esercizi"], durata_passo=3):
+                    _cache_d[_chiave_f] = impagina.descrivi_file(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm_d)
+                st.session_state["_imp_desc_n"] = st.session_state.get("_imp_desc_n", 0) + 1
+                _d_ok = _cache_d[_chiave_f]
+                if _d_ok.get("ok") and _d_ok.get("materia") in [m for m in MATERIE if "Altra" not in m]:
+                    st.session_state["imp_materia"] = _d_ok["materia"]          # la materia riconosciuta è già scelta (si può cambiare)
+            _d = _cache_d.get(_chiave_f) or {}
+            if _d.get("ok"):
+                _titolo_d = " · ".join(x for x in (_d.get("materia"), _d.get("argomento")) if x)
+                st.markdown(
+                    "<style>.dsc{display:flex;gap:.8rem;align-items:center;margin:.5rem 0 .4rem;padding:.8rem 1rem;border-radius:16px;"
+                    f"background:linear-gradient(135deg,{T['accent']}0E,{T['accent']}22);border:1px solid {T['accent']}44;font-family:'DM Sans',sans-serif;}}"
+                    f".dsc b{{display:block;font-size:.95rem;color:{T['text']};}}.dsc span{{font-size:.86rem;color:{T['text2']};line-height:1.4;}}</style>"
+                    f'<div class="dsc"><svg width="26" height="26" viewBox="0 0 24 24" style="flex:0 0 1.6rem"><circle cx="12" cy="12" r="11" fill="#16A34A"/>'
+                    '<path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+                    f'<div><b>Ho letto il file{(": " + _esc(_titolo_d)) if _titolo_d else ""}</b><span>{_esc(_d["descrizione"])}</span></div></div>',
+                    unsafe_allow_html=True)
         _cm, _cs = st.columns(2, gap="small")
         _cm.markdown('<div class="opt-label">Materia ✱</div>', unsafe_allow_html=True)
         _cs.markdown('<div class="opt-label">Tipo di scuola ✱</div>', unsafe_allow_html=True)
         _mat_def = st.session_state.get("sel_materia_b") if st.session_state.get("sel_materia_b") in _mat_list else "Matematica"
-        _materia = _cm.selectbox("Materia", _mat_list, index=_mat_list.index(_mat_def) if _mat_def in _mat_list else 0, key="imp_materia", label_visibility="collapsed")
+        _materia = _cm.selectbox("Materia", _mat_list, **_se_nuovo("imp_materia", index=_mat_list.index(_mat_def) if _mat_def in _mat_list else 0), key="imp_materia", label_visibility="collapsed")
         _scu_def = st.session_state.get("sel_scuola_b") if st.session_state.get("sel_scuola_b") in SCUOLE else SCUOLE[0]
-        _scuola = _cs.selectbox("Scuola", SCUOLE, index=SCUOLE.index(_scu_def), key="imp_scuola", label_visibility="collapsed")
-        _selettore_classe()
+        _scuola = _cs.selectbox("Scuola", SCUOLE, **_se_nuovo("imp_scuola", index=SCUOLE.index(_scu_def)), key="imp_scuola", label_visibility="collapsed")
         st.markdown('<div class="opt-label">Vuoi cambiare qualcosa? (facoltativo)</div>', unsafe_allow_html=True)
         st.text_area("Vuoi cambiare qualcosa? (facoltativo)", key="imp_richiesta", height=90, max_chars=600, label_visibility="collapsed",
                      placeholder="Se non scrivi niente la verifica resta identica, solo impaginata bene. Oppure: «togli l'esercizio 4», "
                                  "«aggiungi un esercizio sulle disequazioni», «semplifica l'ultimo»…")
-        _selettore_stile()
+        with st.expander("Altre opzioni (classe, data, stile)", expanded=False, icon=":material/tune:"):
+            _selettore_classe()
+            _selettore_stile()
+            st.button("Impostazioni predefinite (logo, preferenze)", key="apri_impostazioni_imp", type="tertiary", icon=":material/settings:",
+                      on_click=_apri_impostazioni, help="Il logo della scuola e le preferenze fisse: si salvano e valgono per ogni verifica.")
         _pronto = bool(_files)
         if st.button("Leggi e impagina" if _pronto else "Carica la tua verifica per continuare", key="imp_leggi", type="primary",
                      icon=":material/auto_fix_high:" if _pronto else ":material/upload_file:", use_container_width=True,
@@ -3089,10 +3114,30 @@ def _render_impagina() -> None:
             st.session_state["_imp_n"] = st.session_state.get("_imp_n", 0) + 1
             _registra_evento("impagina")
             if _ris["ok"]:
-                st.session_state["_imp"] = {"immagini": _imm, "esercizi": _ris["esercizi"], "titolo": _ris["titolo"], "materia": _materia,
-                                            "scuola": _scuola, "richiesta": st.session_state.get("imp_richiesta", ""), "note": _ris.get("note") or []}
-                st.session_state["_imp_prev"] = {}
-                st.session_state["imp_titolo"] = _ris["titolo"]
+                # niente schermata di conferma: la verifica si crea subito e se qualcosa non va si chiede dalla tendina «Vuoi modificare qualcosa?»
+                _es_l = _ris["esercizi"]
+                _pr_l = {i: (mot, nonrip) for i, mot, nonrip in impagina.problemi_per_esercizio(_es_l)}
+                _inc_l, _spazio_l = [], set()
+                for _i_l, _ex_l in enumerate(_es_l):
+                    if _i_l in _pr_l:
+                        if _pr_l[_i_l][1]:                       # figura che non si sa ridisegnare: l'esercizio entra con uno spazio vuoto
+                            _spazio_l.add(len(_inc_l))
+                            _inc_l.append(_ex_l)
+                        continue
+                    _inc_l.append(_ex_l)
+                if not _inc_l:
+                    st.warning("Non sono riuscito a leggere esercizi utilizzabili: controlla che le pagine siano leggibili e riprova.", icon="📄")
+                    return
+                _rip_l = impagina.punti_rilevati(_inc_l)
+                if _rip_l["con_punti"] / max(1, _rip_l["richieste"]) >= .6:
+                    _lista_l, _tot_l, _fatt_l = impagina.punti_del_foglio(_inc_l)
+                    _mostra_l, _fedeli_l = True, True
+                else:
+                    _lista_l, _tot_l, _mostra_l, _fedeli_l = _inc_l, 100, False, False
+                st.session_state["_imp_crea"] = {
+                    "esercizi": _lista_l, "titolo": _ris["titolo"], "materia": _materia, "scuola": _scuola, "mostra_punteggi": _mostra_l,
+                    "punti_totali": _tot_l, "con_spazio": sorted(_spazio_l), "richiesta": st.session_state.get("imp_richiesta", ""), "fedeli": _fedeli_l,
+                }
                 st.rerun()
             st.warning(_ris["messaggio"], icon="📄")
         return
