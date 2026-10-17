@@ -7211,7 +7211,7 @@ def _render_stage_final():
             f'<span style="font-size:.62rem;font-weight:800;letter-spacing:.06em;color:{T["success"]};'
             f'border:1px solid {T["success"]};border-radius:6px;padding:1px 6px;vertical-align:middle;">NOVITÀ</span></span>'
             f'  </div>'
-            f'  <div class="variant-card-desc">Circa 40 esercizi graduati ★ ★★ ★★★ sugli stessi tipi di richiesta '
+            f'  <div class="variant-card-desc">Circa 40 esercizi graduati su tre difficoltà (★, ★★, ★★★) sugli stessi argomenti '
             f'della verifica, da dare alla classe per allenarsi prima.</div>'
             f'</div>',
             unsafe_allow_html=True
@@ -7231,7 +7231,7 @@ def _render_stage_final():
         elif _pro_bloccato("scheda"):
             _pulsante_pro("scheda", "pro_scheda")
         else:
-            if st.button("🎯 Crea la scheda", key="one_click_SC", use_container_width=True, type="secondary",
+            if st.button("Crea la scheda", icon=":material/fitness_center:", key="one_click_SC", use_container_width=True, type="secondary",
                          disabled=bool(st.session_state.get("_gen_scheda"))):
                 st.session_state["_gen_scheda"] = True
                 st.rerun()
