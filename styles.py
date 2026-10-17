@@ -89,7 +89,7 @@ def get_css(T: dict) -> str:
   }}
   /* barra laterale: un tono più profonda della pagina, con i pulsanti come schede bianche in rilievo */
   html body .stApp [data-testid="stSidebar"] {{
-    background: linear-gradient(180deg, #DDE6F3 0%, #CEDAEB 100%) !important;
+    background: linear-gradient(180deg, {_acc}26 0%, #DDE6F3 24%, #CEDAEB 100%) !important;
     border-right: 1px solid #BFCDE2 !important;
     box-shadow: 6px 0 28px rgba(15,23,42,.08) !important;
   }}
@@ -102,6 +102,8 @@ def get_css(T: dict) -> str:
   html body .stApp [data-testid="stSidebar"] .stButton > button:hover {{
     box-shadow: {_ombra2} !important; transform: translateY(-1px); border-color: {_acc}66 !important;
   }}
+  /* icone dei pulsanti della barra nel colore del tema */
+  html body .stApp [data-testid="stSidebar"] .stButton > button [data-testid="stIconMaterial"] {{ color: {_acc} !important; }}
   html body .stApp [data-testid="stSidebar"] .stButton > button[kind="tertiary"],
   html body .stApp [data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-tertiary"] {{
     background: rgba(255,255,255,.55) !important; border: 1px solid rgba(255,255,255,.85) !important;
@@ -4969,7 +4971,7 @@ font-family: 'DM Sans', sans-serif;
   html body .stApp .st-key-home_indietro button, html body .stApp .st-key-home_indietro button * {{ white-space: nowrap !important; }}
 
   /* «Guarda un'anteprima» e «Cambia modo di partire»: due link discreti, non pulsanti */
-  html body .stApp :is(.st-key-seg_apri, .st-key-stile_anteprima, .st-key-pf_anteprima_stili, .st-key-apri_impostazioni_form, .st-key-home_indietro, .st-key-pf_indietro, .st-key-imp_torna_alto, .st-key-back_from_mie_verifiche, .st-key-sb_indietro, .st-key-up_indietro, .st-key-cruscotto_indietro):not(#vf) button {{
+  html body .stApp :is(.st-key-seg_apri, .st-key-logout_btn, .st-key-stile_anteprima, .st-key-pf_anteprima_stili, .st-key-apri_impostazioni_form, .st-key-home_indietro, .st-key-pf_indietro, .st-key-imp_torna_alto, .st-key-back_from_mie_verifiche, .st-key-sb_indietro, .st-key-up_indietro, .st-key-cruscotto_indietro):not(#vf) button {{
     background: transparent !important; background-image: none !important; border: none !important; box-shadow: none !important;
     min-height: 0 !important; padding: .15rem .1rem !important; width: auto !important;
   }}

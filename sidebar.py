@@ -112,38 +112,34 @@ def render_sidebar(
             _gg_reset, _hh_reset = giorni_al_reset_func()
             _reset_str = _reset_label(_gg_reset, _hh_reset)
 
+            _acc_u = T["accent"]
             if illimitato:
-                _valore  = f"{verifiche_mese_count}"
-                _sotto   = "Illimitate con il tuo piano"
-                _barra   = ""
+                _num_u, _testo_u = f"{verifiche_mese_count}", "verifiche · illimitate con il tuo piano"
+                _barra = ""
             else:
                 _perc_uso  = min(100, int(verifiche_mese_count / LIMITE_MENSILE * 100))
                 _color_bar = (T["error"] if limite_raggiunto
                               else (T["warn"] if _perc_uso >= 70 else T["success"]))
-                _valore = f"{verifiche_mese_count} di {LIMITE_MENSILE}"
-                _sotto  = _reset_str
-                _barra  = (
-                    f'<div style="background:{T.get("sidebar_border", "#475569")};border-radius:10px;'
-                    'overflow:hidden;height:4px;width:100%;position:relative;">'
-                    f'<div style="width:{_perc_uso}%;background:{_color_bar};height:100%;'
-                    'border-radius:10px;transition:width .6s ease;position:absolute;'
-                    'top:0;left:0;"></div></div>'
-                )
+                _num_u, _testo_u = f"{verifiche_mese_count}", f"di {LIMITE_MENSILE} verifiche"
+                _barra = (f'<div class="sb-uso-b"><i style="width:{max(_perc_uso, 4 if verifiche_mese_count else 0)}%;'
+                          f'background:linear-gradient(90deg,{_color_bar},{_color_bar}CC);"></i></div>')
+            _sotto = _reset_str if not illimitato else "Nessun limite mensile"
 
-            st.markdown('<div class="sidebar-label" style="margin-top:.5rem;">Utilizzo mensile</div>',
-                        unsafe_allow_html=True)
             st.markdown(
-                '<div style="margin-bottom:.6rem;font-family:\'DM Sans\',sans-serif;">'
-                '<div style="display:flex;justify-content:space-between;align-items:center;'
-                'margin-bottom:.5rem;">'
-                f'<span style="font-size:.85rem;font-weight:600;color:{_sb_text};">'
-                'Verifiche questo mese</span>'
-                f'<span style="font-size:.9rem;font-weight:800;color:{_sb_text};">{_valore}</span>'
-                '</div>'
-                f'{_barra}'
-                f'<div style="text-align:left;font-size:.78rem;font-weight:500;'
-                f'color:{_sb_muted};margin-top:6px;">{_sotto}</div>'
-                '</div>',
+                "<style>"
+                f".sb-uso{{margin:.7rem 0 .2rem;padding:.9rem 1rem .85rem;border-radius:16px;background:linear-gradient(160deg,#FFFFFF 0%,{_acc_u}16 100%);"
+                f"border:1px solid {_acc_u}38;box-shadow:0 10px 22px {_acc_u}22,0 1px 3px rgba(15,23,42,.06);font-family:'DM Sans',sans-serif;}}"
+                f".sb-uso-k{{font-size:.68rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:{_acc_u};}}"
+                f".sb-uso-n{{display:flex;align-items:baseline;gap:.4rem;margin:.2rem 0 .5rem;flex-wrap:wrap;}}"
+                f".sb-uso-n b{{font-size:2rem;line-height:1;font-weight:800;letter-spacing:-.03em;color:{_sb_text};}}"
+                f".sb-uso-n span{{font-size:.84rem;font-weight:600;color:{_sb_muted};}}"
+                f".sb-uso-b{{height:8px;border-radius:99px;background:{_acc_u}24;overflow:hidden;}}"
+                ".sb-uso-b i{display:block;height:100%;border-radius:99px;transition:width .6s ease;}"
+                f".sb-uso-s{{font-size:.76rem;font-weight:500;color:{_sb_muted};margin-top:.55rem;}}"
+                "</style>"
+                '<div class="sb-uso"><div class="sb-uso-k">Utilizzo mensile</div>'
+                f'<div class="sb-uso-n"><b>{_num_u}</b><span>{_testo_u}</span></div>{_barra}'
+                f'<div class="sb-uso-s">{_sotto}</div></div>',
                 unsafe_allow_html=True,
             )
 
@@ -227,7 +223,7 @@ def render_sidebar(
             """, unsafe_allow_html=True)
 
             st.markdown('<div class="logout-btn-wrap">', unsafe_allow_html=True)
-            if st.button("↩ Esci dall'account", key="logout_btn"):
+            if st.button("Esci dall'account", key="logout_btn", type="tertiary", icon=":material/logout:"):
                 from auth import cancella_sessione_cookie
                 cancella_sessione_cookie()
                 supabase_client.auth.sign_out()
