@@ -3248,20 +3248,29 @@ font-family: 'DM Sans', sans-serif;
 
   /* ── Versioni della verifica: una scheda per versione, con icona su riquadro colorato e bordo del colore della versione ── */
   html body .stApp div[class*="st-key-ver_"]:not(#vf) {{
-    background: linear-gradient(160deg, {T['card']} 0%, {T['accent']}0A 100%); border: 1px solid {T['border2']}; border-left: 4px solid var(--vc, {T['accent']});
-    border-radius: 16px; padding: .95rem 1.15rem; margin-bottom: .7rem; box-shadow: 0 8px 20px rgba(15,23,42,.06);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--vc) 4%, {T['card']}) 0%, color-mix(in srgb, var(--vc) 13%, {T['card']}) 100%);
+    border: 1px solid color-mix(in srgb, var(--vc) 30%, transparent); border-left: 5px solid var(--vc); border-radius: 18px; padding: 1rem 1.2rem;
+    margin-bottom: .85rem; box-shadow: 0 12px 24px color-mix(in srgb, var(--vc) 20%, transparent), 0 1px 3px rgba(15,23,42,.07);
     transition: box-shadow .2s ease, transform .15s ease;
   }}
-  html body .stApp div[class*="st-key-ver_"]:not(#vf):hover {{ box-shadow: 0 12px 26px rgba(15,23,42,.1); }}
+  html body .stApp div[class*="st-key-ver_"]:not(#vf):hover {{ box-shadow: 0 16px 30px color-mix(in srgb, var(--vc) 28%, transparent), 0 1px 3px rgba(15,23,42,.08); }}
   html body .stApp .st-key-ver_soluzioni {{ --vc: #059669; --vc2: #34D399; }}
-  html body .stApp .st-key-ver_filab, html body .stApp .st-key-ver_extra {{ --vc: {T['accent']}; --vc2: {T.get('accent2', T['accent'])}; }}
-  html body .stApp .st-key-ver_bes, html body .stApp .st-key-ver_leggibile, html body .stApp .st-key-ver_recupero {{ --vc: #7C3AED; --vc2: #A78BFA; }}
-  html body .stApp .st-key-ver_scheda {{ --vc: #DB2777; --vc2: #F472B6; }}
-  html body .stApp .st-key-ver_griglia {{ --vc: #D97706; --vc2: #F59E0B; }}
+  html body .stApp .st-key-ver_filab {{ --vc: {T['accent']}; --vc2: {T.get('accent2', T['accent'])}; }}
+  html body .stApp .st-key-ver_bes {{ --vc: #7C3AED; --vc2: #A78BFA; }}
+  html body .stApp .st-key-ver_leggibile {{ --vc: #0891B2; --vc2: #22D3EE; }}
+  html body .stApp .st-key-ver_extra {{ --vc: #D97706; --vc2: #FBBF24; }}
+  html body .stApp .st-key-ver_recupero {{ --vc: #E11D48; --vc2: #FB7185; }}
+  html body .stApp .st-key-ver_scheda {{ --vc: #4F46E5; --vc2: #818CF8; }}
+  html body .stApp .st-key-ver_griglia {{ --vc: #EA580C; --vc2: #FB923C; }}
   html body .stApp div[class*="st-key-ver_"] .variant-card-icon {{
-    display: inline-flex !important; width: 2.3rem; height: 2.3rem; border-radius: 12px; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, var(--vc), var(--vc2)); color: #fff; box-shadow: 0 5px 12px color-mix(in srgb, var(--vc) 40%, transparent);
+    display: inline-flex !important; width: 2.5rem; height: 2.5rem; border-radius: 13px; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--vc), var(--vc2)); color: #fff; box-shadow: 0 6px 14px color-mix(in srgb, var(--vc) 45%, transparent);
   }}
+  html body .stApp div[class*="st-key-ver_"] .variant-card-title {{ color: color-mix(in srgb, var(--vc) 55%, {T['text']}) !important; }}
+  /* pulsanti delle versioni: le parole non si spezzano a metà, vanno a capo solo tra una parola e l'altra */
+  html body .stApp div[class*="st-key-ver_"] button {{ padding: .35rem .6rem !important; }}
+  html body .stApp div[class*="st-key-ver_"] button p {{ font-size: .9rem !important; word-break: keep-all !important; overflow-wrap: normal !important; hyphens: none !important; }}
+  html body .stApp div[class*="st-key-ver_"] [data-testid="stTextInput"] input {{ font-size: .88rem !important; }}
   html body .stApp div[class*="st-key-ver_"] .variant-card-header {{ gap: .7rem !important; }}
   html body .stApp div[class*="st-key-ver_"] .variant-card-title {{ font-size: 1.08rem !important; }}
 
