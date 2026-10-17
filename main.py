@@ -1937,10 +1937,10 @@ def _pro_bloccato(funzione: str) -> bool:
     return not ENT.puo(funzione)
 
 
-def _pulsante_pro(funzione: str, key: str, testo: str = "Con il piano Pro") -> None:
+def _pulsante_pro(funzione: str, key: str, testo: str = "Con il piano Pro", breve: str = "") -> None:
     """Al posto dell'azione di una funzione bloccata: porta alla pagina di confronto (o, senza prezzi, allo sblocco con il questionario)."""
     if not PREZZI_VISIBILI:
-        _lbl = "Sblocca con il questionario"
+        _lbl = breve or "Sblocca con il questionario"
         _help = f"Per avere {ETICHETTE_FUNZIONI.get(funzione, 'questa funzione')}: compila il questionario completo e ricevi un codice."
     else:
         _lbl = testo
@@ -6901,7 +6901,7 @@ def _render_stage_final():
                             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                             use_container_width=True, type="primary", key="dl_docx_A_generale")
                     elif _pro_bloccato("word"):
-                        _pulsante_pro("word", "pro_word_generale")
+                        _pulsante_pro("word", "pro_word_generale", "Con il piano Pro", breve="Sblocca il Word")
                     elif st.button("Crea il file Word", icon=":material/description:", key="gen_docx_A_generale", use_container_width=True, type="primary"):
                         with _attesa("word", "Sto preparando il file Word", ["Converto testo e formule", "Inserisco i grafici", "Rifinisco la pagina"], durata_passo=5):
                             try:
