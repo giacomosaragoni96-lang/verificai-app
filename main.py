@@ -6477,23 +6477,28 @@ def _dialogo_segnalazione() -> None:
                 st.error("Non sono riuscito a inviarla. Riprova più tardi o scrivici dal pulsante 💬 del feedback.")
 
 
+_D = 'fill="currentColor" fill-opacity=".28" stroke="none"'      # parte «piena» tenue di un'icona: dà corpo senza appesantire
 _PERCORSI_ICONE = {
-    "copie": '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
-    "bes": '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
-    "extra": '<rect x="4" y="13" width="16" height="6" rx="1.5"/><rect x="6" y="8.5" width="12" height="3.5" rx="1"/><rect x="8" y="4" width="8" height="3" rx="1"/>',
-    "recupero": '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/><path d="M6.3 6.3l3.4 3.4M14.3 14.3l3.4 3.4M17.7 6.3l-3.4 3.4M9.7 14.3l-3.4 3.4"/>',
-    "leggibile": '<text x="2.5" y="17.5" font-size="14" font-weight="800" font-family="Arial,Helvetica,sans-serif" fill="currentColor" stroke="none">Aa</text>',
-    "soluzioni": '<rect x="4.5" y="3.5" width="15" height="17" rx="2.5"/><path d="M8 9.5l2 2 3.5-3.5M8 16h8"/>',
-    "word": '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M9.5 13h6M9.5 17h6"/>',
-    "griglia": '<rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 10h17M3.5 15h17M9.5 4v16M15 4v16"/>',
-    "scheda": '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
-    "condividi": '<circle cx="6" cy="12" r="2.5"/><circle cx="17" cy="6" r="2.5"/><circle cx="17" cy="18" r="2.5"/><path d="M8.2 10.8l6.6-3.6M8.2 13.2l6.6 3.6"/>',
+    "copie": f'<rect x="3.5" y="7" width="12" height="14" rx="2.5" {_D}/><rect x="8.5" y="3.5" width="12" height="14" rx="2.5"/><path d="M12 9h5M12 12.5h5"/>',
+    "bes": f'<path d="M12 20.5s-8-4.9-8-11A4.5 4.5 0 0 1 12 6.8 4.5 4.5 0 0 1 20 9.5c0 6.1-8 11-8 11z" {_D}/>'
+           '<path d="M12 20.5s-8-4.9-8-11A4.5 4.5 0 0 1 12 6.8 4.5 4.5 0 0 1 20 9.5c0 6.1-8 11-8 11z"/>',
+    "extra": f'<rect x="3" y="14" width="18" height="6.5" rx="2" {_D}/><rect x="5" y="9" width="14" height="5" rx="1.8"/><rect x="7.5" y="3.5" width="9" height="5" rx="1.6"/>',
+    "recupero": f'<circle cx="12" cy="12" r="9" {_D}/><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6" fill="none"/>'
+                '<path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/>',
+    "leggibile": '<text x="1.5" y="17" font-size="15" font-weight="800" font-family="Arial,Helvetica,sans-serif" fill="currentColor" stroke="none">Aa</text>'
+                 '<path d="M3 21h18" stroke-width="2.2"/>',
+    "soluzioni": f'<rect x="4.5" y="2.8" width="15" height="18.4" rx="3" {_D}/><rect x="4.5" y="2.8" width="15" height="18.4" rx="3"/>'
+                 '<path d="M8.3 11.8l2.6 2.6 4.8-5.2M8.5 18h7"/>',
+    "word": f'<path d="M6 3h8l5 5v13H6z" {_D}/><path d="M6 3h8l5 5v13H6zM14 3v5h5M9.5 13h6M9.5 17h6"/>',
+    "griglia": f'<rect x="3.5" y="4" width="17" height="16" rx="2.5" {_D}/><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M3.5 14.8h17M9.3 4v16M15 4v16"/>',
+    "scheda": f'<circle cx="12" cy="12" r="9" {_D}/><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/>',
+    "condividi": '<circle cx="6" cy="12" r="2.8"/><circle cx="17.5" cy="6" r="2.8"/><circle cx="17.5" cy="18" r="2.8"/><path d="M8.5 10.6l6.6-3.2M8.5 13.4l6.6 3.2"/>',
 }
 
 
 def _ico(nome: str) -> str:
-    """Icona a linee (SVG) per le schede delle versioni: si vede su ogni computer, a differenza di alcune emoji."""
-    return ('<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" '
+    """Icona a linee con un riempimento tenue (SVG) per le schede delle versioni: si vede su ogni computer, a differenza di alcune emoji."""
+    return ('<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" '
             'stroke-linejoin="round" aria-hidden="true">' + _PERCORSI_ICONE.get(nome, "") + "</svg>")
 
 
