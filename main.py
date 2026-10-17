@@ -2831,13 +2831,15 @@ def _render_le_tue_verifiche():
             _d["materie"][_v["materia"]] = _d["materie"].get(_v["materia"], 0) + 1
         if not _d["ultima"] or (_v.get("created_at") or "") > (_d["ultima"].get("created_at") or ""):
             _d["ultima"] = _v
-    classe_filter = "Tutte"
+    if st.session_state.get("mv_classe") not in _info_cl:
+        st.session_state.pop("mv_classe", None)
+    classe_filter = st.session_state.get("mv_classe") or "Tutte"
     if _info_cl:
         _prof_cl = _profilo()
         _ordine_cl = [c["nome"] for c in (_prof_cl.get("classi") or []) if c.get("nome") in _info_cl]
         _ordine_cl += sorted((n for n in _info_cl if n not in _ordine_cl), key=lambda n: -_info_cl[n]["n"])
         _tot_cl = sum(d["n"] for d in _info_cl.values()) or 1
-        _carte = []
+        _carte, _meta_cl = [], []
         for _k, _nome in enumerate(_ordine_cl):
             _d = _info_cl[_nome]
             _col = (profilo.classe(_prof_cl, _nome) or {}).get("colore") or T["accent"]
@@ -2846,8 +2848,9 @@ def _render_le_tue_verifiche():
             _chip_m = "".join(f'<i>{_esc(m)}</i>' for m, _ in _mat)
             _ult = _d["ultima"] or {}
             _fogli = "".join(f'<u style="--r:{(j - 1) * 7 - 3}deg;--x:{j * 5}px"></u>' for j in range(min(3, _d["n"])))
+            _meta_cl.append((_nome, _col))
             _carte.append(
-                f'<div class="cl-c" style="--c:{_col};animation-delay:{_k * 0.09:.2f}s">'
+                f'<div class="cl-c{" cl-sel" if _nome == classe_filter else ""}" style="--c:{_col};animation-delay:{_k * 0.09:.2f}s">'
                 f'<div class="cl-fogli">{_fogli}</div>'
                 f'<svg class="cl-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="3"/>'
                 f'<circle cx="18" cy="18" r="15.9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-dasharray="{_quota} 100" transform="rotate(-90 18 18)"/></svg>'
@@ -2878,11 +2881,34 @@ def _render_le_tue_verifiche():
             ".cl-m{display:flex;gap:.3rem;flex-wrap:wrap;margin:.55rem 0 .6rem;max-width:80%;}"
             ".cl-m i{font-style:normal;font-size:.72rem;font-weight:700;padding:.12rem .55rem;border-radius:999px;background:rgba(255,255,255,.22);backdrop-filter:blur(2px);}"
             ".cl-u{font-size:.74rem;opacity:.85;line-height:1.3;max-width:78%;}"
+            ".cl-c{width:100%;box-sizing:border-box;}.cl-sel{outline:3px solid var(--c);outline-offset:3px;}"
+            ".st-key-clrow{display:flex !important;flex-direction:row !important;flex-wrap:nowrap !important;overflow-x:auto;gap:.9rem !important;padding:.5rem .35rem 1rem;margin:0 -.35rem .6rem;"
+            "scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;}.st-key-clrow::-webkit-scrollbar{display:none;}"
+            "html body .stApp [class*='st-key-clc_']{flex:0 0 14.5rem !important;width:14.5rem !important;min-width:14.5rem !important;scroll-snap-align:start;gap:.55rem !important;}"
             "@keyframes cl-in{from{opacity:0;transform:translateY(24px) scale(.94);}to{opacity:1;transform:none;}}"
             "@media (prefers-reduced-motion:reduce){.cl-c{animation:none;transition:none;}}"
             "</style>"
-            '<div class="cl-et">Le tue classi</div><div class="cl-row">' + "".join(_carte) + "</div>",
+            '<div class="cl-et">Le tue classi</div>',
             unsafe_allow_html=True)
+
+        def _scegli_cl(nome):
+            st.session_state["mv_classe"] = None if st.session_state.get("mv_classe") == nome else nome
+        _css_b = ""
+        with st.container(key="clrow", horizontal=True):
+            for _k, ((_nome, _col), _html) in enumerate(zip(_meta_cl, _carte)):
+                with st.container(key=f"clc_{_k}"):
+                    st.markdown(_html, unsafe_allow_html=True)
+                    _sel = (_nome == classe_filter)
+                    st.button("Mostra tutte" if _sel else "Vedi le verifiche", key=f"clb_{_k}", icon=":material/close:" if _sel else ":material/arrow_forward:",
+                              on_click=_scegli_cl, args=(_nome,), use_container_width=True)
+                _css_b += (f"html body .stApp .st-key-clb_{_k} button{{border-radius:999px !important;min-height:2.5rem !important;font-weight:700 !important;"
+                           f"border:2px solid {_col} !important;box-shadow:none !important;"
+                           + (f"background:{_col} !important;background-image:none !important;" if _sel else f"background:{_col}14 !important;background-image:none !important;")
+                           + f"}}html body .stApp .st-key-clb_{_k} button, html body .stApp .st-key-clb_{_k} button *{{color:{'#fff' if _sel else _col} !important;"
+                           f"-webkit-text-fill-color:{'#fff' if _sel else _col} !important;}}")
+        st.markdown(f"<style>{_css_b}</style>", unsafe_allow_html=True)
+        if classe_filter != "Tutte":
+            st.markdown(f'<div class="vg-h" style="margin-top:.2rem">Verifiche della classe {_esc(classe_filter)}</div>', unsafe_allow_html=True)
 
     # Filtri
     col_vai, col_materia, col_ordine = st.columns([3, 2, 2])
