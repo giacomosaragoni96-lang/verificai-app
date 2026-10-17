@@ -2463,7 +2463,7 @@ _LAYOUT_LOGO = 5
 
 @st.cache_data(ttl=3600, max_entries=24, show_spinner=False)
 def _anteprima_intestazione(b64: str, tipo: str, attivo: bool, materia: str, scala: float = 1.0,
-                            layout: int = _LAYOUT_LOGO):
+                            layout: int = _LAYOUT_LOGO, stile: str = ""):
     """
     Immagine REALE dell'intestazione della verifica (logo + titolo + riga Nome/Classe): si
     compila con pdflatex la stessa intestazione che finirà nel PDF e si ritaglia la parte alta.
@@ -2473,7 +2473,7 @@ def _anteprima_intestazione(b64: str, tipo: str, attivo: bool, materia: str, sca
     try:
         from PIL import Image
         from generation import _costruisci_preambolo
-        pre, _ = _costruisci_preambolo(materia, "titolo della verifica", "", False)
+        pre, _ = _costruisci_preambolo(materia, "titolo della verifica", "", False, stile or None)
         latex = pre + "\\end{document}\n"
         if attivo:
             latex = inserisci_logo(latex, tipo, b64, scala)
@@ -3238,7 +3238,7 @@ def _blocco_logo_impostazioni() -> None:
         with st.spinner("Preparo l'anteprima dell'intestazione…"):
             _img_int = _anteprima_intestazione(
                 _logo_s["b64"], _logo_s.get("tipo", "largo"), _attivo_nuovo, _materia_anteprima,
-                _scala_nuova, _LAYOUT_LOGO)
+                _scala_nuova, _LAYOUT_LOGO, st.session_state.get("pf_stile") or "")      # nello stile scelto qui sopra, anche se non ancora salvato
         if _img_int:
             st.image(_img_int, width=560)
             st.caption("Intestazione come sarà nel PDF (il titolo sarà quello della tua verifica).")
