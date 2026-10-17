@@ -5072,6 +5072,10 @@ font-family: 'DM Sans', sans-serif;
 
   /* ── Pagina finale su desktop: l'anteprima resta ferma a sinistra mentre si scorrono le azioni a destra; sotto i 1000 px si impila ── */
   html body .stApp [data-testid="stColumn"]:has(.col-prev) {{ position: sticky; top: 4.6rem; align-self: flex-start; }}
+  /* l'anteprima non ha il pulsante «schermo intero»: nella colonna fissa sovrapponeva le schede di destra; per vederla grande c'è «Apri il PDF a tutto schermo» */
+  html body .stApp [data-testid="stColumn"]:has(.col-prev) [data-testid="stElementToolbar"],
+  html body .stApp [data-testid="stColumn"]:has(.col-prev) [data-testid="stImage"] button[title*="ullscreen" i],
+  html body .stApp [data-testid="stColumn"]:has(.col-prev) [data-testid="StyledFullScreenButton"] {{ display: none !important; }}
   /* il segnaposto non deve occupare spazio: altrimenti l'anteprima parte più in basso del pulsante «Scarica PDF» accanto */
   html body .stApp [data-testid="stElementContainer"]:has(> [data-testid="stMarkdown"] .col-prev) {{ display: none !important; }}
   @media (max-width: 1000px) {{
