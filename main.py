@@ -6629,7 +6629,10 @@ def _render_stage_final():
                 f'border:1.5px solid {T["accent"]}55;border-radius:18px;padding:1.1rem 1.3rem;}}'
                 f'html body .stApp .st-key-word_card button {{min-height:2.9rem;font-weight:700;border-radius:12px;background:{T["card"]} !important;background-image:none !important;'
                 f'border:1.5px solid {T["accent"]}77 !important;box-shadow:none !important;}}'
-                f'html body .stApp .st-key-word_card button, html body .stApp .st-key-word_card button * {{color:{T["accent"]} !important;-webkit-text-fill-color:{T["accent"]} !important;}}</style>',
+                f'html body .stApp .st-key-word_card button, html body .stApp .st-key-word_card button * {{color:{T["accent"]} !important;-webkit-text-fill-color:{T["accent"]} !important;}}'
+                # «Scarica Word» è il pulsante pieno (blu): scritta bianca, mai blu su blu
+                f'html body .stApp .st-key-word_card [class*="st-key-dl_docx_A_generale"] button{{background:linear-gradient(135deg,{T["accent"]} 0%,{T["accent2"]} 100%) !important;border:none !important;box-shadow:0 6px 16px {T["accent"]}55 !important;}}'
+                f'html body .stApp .st-key-word_card [class*="st-key-dl_docx_A_generale"] button, html body .stApp .st-key-word_card [class*="st-key-dl_docx_A_generale"] button *{{color:#fff !important;-webkit-text-fill-color:#fff !important;}}</style>',
                 unsafe_allow_html=True)
             with st.container(key="word_card"):
                 _w1, _w2 = st.columns([2.3, 1.2], vertical_alignment="center", gap="medium")
