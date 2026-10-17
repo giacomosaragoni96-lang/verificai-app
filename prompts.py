@@ -632,7 +632,7 @@ REGOLA_UMANISTICA = (
     "MATERIE UMANISTICHE E DESCRITTIVE — LIVELLO E PUNTI: (1) al massimo UN TERZO delle richieste è di sola memoria (un nome, una data, una "
     "definizione di una parola); le altre chiedono di applicare, spiegare un perché, usare un dato o confrontare; almeno UNA richiesta presenta "
     "un caso, un dato o una situazione nuova da interpretare (in geografia: latitudine e longitudine, una scala numerica, un clima o un territorio "
-    "descritti a parole: mai una mappa); (2) l'apertura è breve ma non una domanda da una parola; (3) le richieste di ogni esercizio sono "
+    "descritti a parole: mai una mappa); (2) l'apertura è breve ma non una domanda da una parola; LA STESSA CONOSCENZA SI CHIEDE CON UNA SITUAZIONE, non con un'etichetta: non «da dove sorge il Sole?» ma «all'alba cammini con il Sole alla tua destra: in che direzione vai?»; (3) le richieste di ogni esercizio sono "
     "in proporzione ai punti: circa UNA ogni 3-4 punti, mai un esercizio da 10 punti o più con due domande a risposta di una parola; una "
     "domanda di sola memoria vale poco, un «Spiega perché» o un «Confronta» vale di più; (4) la consegna NON anticipa la risposta (mai «la "
     "linea che divide la Terra a metà» se si chiede «Equatore»); (5) nel Vero/Falso le affermazioni false sono CREDIBILI, con un errore sottile "
@@ -1219,8 +1219,8 @@ _RAMPE_ESEMPIO = [
      "domini: (1) ln(x²-x-6) · (2) ∛(x+1)/√(x²-5x+4) · (3) x/(x·ln(x+3)), con ln al denominatore · (4) ln(√(x-1) - 1) · "
      "(5) √((|3x-1| - |x+2|)/(x²-x-6))"),
     (("scompos", "polinom"),
-     "scomposizioni: (1) 4x²y + 8xy · (2) ab + 3a - 2b - 6 · (3) x² - 3x - 10 · (4) 2y² - 7y - 4 · (5) x³ + 1/8 · "
-     "(6) x³ - 9x - x² + 9 · (7) 4a² - 4b² + 8bc - 4c²"),
+     "scomposizioni: (1) 6x³ - 24x, raccoglimento e poi differenza di quadrati · (2) ab + 3a - 2b - 6 · (3) 2x² - 7x - 15 · (4) x⁴ - 5x² + 4, da scomporre fino in fondo · (5) x³ + 1/8 · "
+     "(6) x³ - 9x - x² + 9 · (7) 4a² - 4b² + 8bc - 4c² · (8) x⁵ - x³ - 8x² + 8, con raccoglimenti in due tempi"),
     (("disequaz",),
      "disequazioni (questo è il LIVELLO MINIMO, non andare sotto): (1) facile non banale: (x²-5x+6)/(x²-1) ≤ 0 · "
      "(2) media: (x+1)/(x-2) - 3/(x+2) ≥ 0, somma di due frazioni · (3) media: (x³-4x²-x+4)/(x²-9) ≥ 0, con scomposizione per raccoglimento · "
@@ -1228,38 +1228,47 @@ _RAMPE_ESEMPIO = [
      "(5) difficile: (x³-3x²-x+3)/(x²-4x+3) · (x+2)/(x²-1) ≤ 0, prodotto di frazioni con fattori da scomporre e ripetuti · "
      "(6) difficile: un sistema di tre disequazioni di tipo diverso (fratta, a prodotto, con valore assoluto)"),
     (("radical", "razionalizz"),
-     "radicali: (1) semplificare √18 + √50 - √8 · (2) razionalizzare 2/√3 · (3) razionalizzare 1/(√x - √y) · "
-     "(4) semplificare un'espressione con radicali letterali e condizioni di esistenza"),
+     "radicali: (1) 2√45 - √20 + √(5/9), da semplificare · (2) razionalizzare (√3 + 1)/(√3 - 1) · (3) razionalizzare 1/(√x - √y) · (4) semplificare un'espressione con radicali letterali e condizioni di esistenza · "
+     "(5) verificare, senza calcolatrice, se √(7 + 4√3) è uguale a 2 + √3, e dire perché"),
     (("cinematica", "moto"),
-     "cinematica: (1) accelerazione da due dati di velocità e tempo · (2) spazio percorso da un grafico v-t · "
-     "(3) frenata con spazio e tempo di arresto · (4) due corpi: quando e dove si incontrano (equazione di secondo grado con discriminante quadrato perfetto)"),
+     "cinematica: (1) un'auto passa da 54 km/h a 90 km/h in 8 s: accelerazione in m/s² e spazio percorso (le unità vanno convertite) · (2) spazio percorso da un grafico v-t con tratti diversi · "
+     "(3) frenata: da quale velocità si può partire per fermarsi entro 40 m con una decelerazione data, e dopo quanto tempo · (4) due corpi: quando e dove si incontrano (equazione di secondo grado) · "
+     "(5) spiegare perché due corpi lanciati alla stessa velocità ma con masse diverse arrivano insieme (un ragionamento, non un calcolo)"),
     (("geograf",),
-     "geografia: (1) localizzare con i punti cardinali, i paralleli e i meridiani, o con latitudine e longitudine date · "
-     "(2) usare una scala numerica o grafica (1:50.000: quanti km sono 4 cm?) · (3) collegare clima, rilievo e attività umane in un territorio descritto a parole · "
-     "(4) confrontare due territori o valutare una scelta (dove costruire, quale carta usare) motivando"),
+     "geografia (le richieste sono SITUAZIONI da ragionare, non etichette da ricordare: la conoscenza richiesta è la stessa, la domanda è diversa):  "
+     "(1) invece di «da dove sorge il Sole?»: «Cammini su un sentiero all'alba e il Sole sorge alla tua destra: in che direzione stai andando? E se fosse il tramonto?» ·  "
+     "(2) una carta in scala 1:25.000: due rifugi distano 6 cm sulla carta, quanti km in linea d'aria? Un percorso di 3 km quanti cm occupa? E perché lo stesso percorso è più lungo di quanto misuri sulla carta? ·  "
+     "(3) due città alla stessa longitudine, una a 45° N e l'altra a 45° S: cosa hanno in comune e in cosa differiscono (emisfero, stagioni, ore di luce a dicembre)? ·  "
+     "(4) senza sentieri e con il GPS scarico hai una bussola e una carta: come ti orienti, e come fai se perdi la bussola ma è mezzogiorno e c'è il Sole? Quale scelta è più sicura e perché?"),
     (("storia",),
-     "storia: (1) collocare un evento (quando, dove, chi) · (2) spiegare una causa o una conseguenza · (3) confrontare due fenomeni o due fonti · "
-     "(4) valutare un'interpretazione e argomentarla con i fatti"),
+     "storia (esempi del LIVELLO, non dell'epoca; richieste di RAGIONAMENTO, non di memoria): (1) un evento è avvenuto dopo A e prima di B: perché non può essere avvenuto prima di A? ·  "
+     "(2) data una causa, quali conseguenze erano prevedibili per chi viveva allora e quali no? · (3) due fonti sullo stesso evento, una scritta da un vincitore e una da uno sconfitto:  "
+     "cosa affermano entrambe, in cosa divergono e perché · (4) «fu inevitabile»: valuta questa interpretazione con almeno due fatti a favore e uno contro"),
     (("italiano", "letteratura", "antologia"),
-     "italiano: (1) comprensione letterale del testo · (2) lessico e figure retoriche · (3) narratore, punto di vista, temi · "
-     "(4) interpretazione e confronto con un altro testo, produzione argomentata"),
+     "italiano (ragionamento sul testo, non solo riconoscimento): (1) cosa il testo dice esplicitamente e cosa lascia capire senza dirlo, con la riga che lo prova ·  "
+     "(2) perché l'autore sceglie proprio questa parola o questa figura retorica e non un'altra, e cosa cambierebbe sostituendola · (3) chi racconta, con quale punto di vista, e come cambierebbe la scena vista da un altro personaggio ·  "
+     "(4) confronto con un altro testo su un tema comune, con una tesi sostenuta da citazioni"),
     (("inglese", "francese", "spagnolo", "tedesco", "lingua"),
-     "lingue: (1) vocabolario e completamento · (2) grammatica in contesto · (3) comprensione di un testo con risposte aperte · "
-     "(4) produzione scritta guidata con vincoli di forma e lessico"),
+     "lingue (la lingua in uso, non elenchi da ricordare): (1) completare un testo breve dove la forma giusta dipende dal contesto, non da una regola isolata ·  "
+     "(2) trovare e correggere l'errore in una frase spiegando la regola violata · (3) comprensione di un testo con risposte che richiedono di inferire, non di copiare ·  "
+     "(4) produzione scritta guidata: una situazione con vincoli di registro, tempi verbali e lessico da usare"),
     (("scienze", "biologia", "chimica", "terra"),
-     "scienze: (1) definizione o riconoscimento · (2) applicazione di una legge o formula a un caso · (3) problema con più passaggi o un dato da ricavare · "
-     "(4) interpretazione di un esperimento o di un grafico, previsione motivata"),
+     "scienze (ragionare su un fenomeno, non recitare definizioni): (1) un esperimento con un risultato inatteso: quale variabile è stata cambiata, quale tenuta costante, cosa si può e cosa non si può concludere ·  "
+     "(2) applicare una legge o una formula a un caso con dati in unità diverse · (3) problema con più passaggi o un dato da ricavare prima di poter calcolare ·  "
+     "(4) interpretare un grafico o una tabella e fare una previsione motivata su cosa succede cambiando un fattore"),
     (("informatica", "programmazione", "sistemi"),
-     "informatica: (1) leggere un frammento di codice · (2) completare un algoritmo · (3) scrivere una funzione con più casi · "
-     "(4) analizzare correttezza e complessità, o trovare un errore nascosto"),
+     "informatica: (1) leggere un frammento di codice e dire cosa stampa per un ingresso dato, passo passo · (2) completare un algoritmo dove manca la condizione giusta ·  "
+     "(3) scrivere una funzione con più casi, anche limite (lista vuota, un solo elemento) · (4) trovare un errore nascosto che compare solo con certi dati, e analizzare correttezza e complessità"),
     (("diritto", "economia", "arte", "filosofia"),
-     "materie di rielaborazione: (1) definire un concetto · (2) collegarlo a un esempio · (3) confrontare due teorie, norme o autori · "
-     "(4) valutare un caso nuovo argomentando"),
+     "materie di rielaborazione (casi da ragionare, non definizioni da recitare): (1) spiegare un concetto con un esempio nuovo, scelto dallo studente ·  "
+     "(2) un caso reale da inquadrare: quale principio, norma o idea si applica e perché NON si applica l'altra, quella più vicina · (3) confrontare due teorie, norme o autori su un caso concreto ·  "
+     "(4) valutare una situazione nuova argomentando a favore e contro, e arrivare a una conclusione motivata"),
 ]
 
 _RAMPA_GENERICA = (
-    "per qualsiasi materia: (a) riconoscere o definire · (b) applicare in un caso standard · (c) caso con un'eccezione, un dato da "
-    "ricavare o un passaggio che si sbaglia facilmente · (d) collegare due concetti o affrontare una situazione nuova"
+    "per qualsiasi materia (ogni gradino è una SITUAZIONE da ragionare, mai una domanda di sola memoria): (a) riconoscere un concetto in un caso concreto, non definirlo · "
+    "(b) applicarlo in un caso standard · (c) caso con un'eccezione, un dato da ricavare o un passaggio che si sbaglia facilmente · "
+    "(d) collegare due concetti o affrontare una situazione nuova, motivando la scelta"
 )
 
 
@@ -1269,7 +1278,7 @@ def rampe_esempio(materia: str, argomento: str) -> str:
     trovate = [r for chiavi, r in _RAMPE_ESEMPIO if any(c in t for c in chiavi)][:2]
     if not trovate:
         trovate = [_RAMPA_GENERICA]
-    return ("ESEMPI DI RAMPA DI DIFFICOLTÀ (servono SOLO a capire il livello: NON copiarli, inventa esercizi nuovi con altri dati):\n"
+    return ("ESEMPI DI RAMPA DI DIFFICOLTÀ (servono SOLO a capire il livello: NON copiarli, inventa esercizi nuovi con altri dati). La difficoltà sta nel RAGIONAMENTO, mai nella memoria: la stessa conoscenza si chiede con una situazione da risolvere, non con una domanda diretta. Mantieni il livello di questi esempi, non scendere sotto:\n"
             + "\n".join(f"  • {r}" for r in trovate) + "\n")
 
 
