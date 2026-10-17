@@ -2884,7 +2884,7 @@ def _render_le_tue_verifiche():
             ".cl-c{width:100%;box-sizing:border-box;}.cl-sel{outline:3px solid var(--c);outline-offset:3px;}"
             ".st-key-clrow{display:flex !important;flex-direction:row !important;flex-wrap:nowrap !important;overflow-x:auto;gap:.9rem !important;padding:.5rem .35rem 1rem;margin:0 -.35rem .6rem;"
             "scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;}.st-key-clrow::-webkit-scrollbar{display:none;}"
-            "html body .stApp [class*='st-key-clc_']{flex:0 0 14.5rem !important;width:14.5rem !important;min-width:14.5rem !important;scroll-snap-align:start;gap:.55rem !important;}"
+            "html body .stApp [data-testid='stLayoutWrapper']:has(> [class*='st-key-clc_']), html body .stApp [class*='st-key-clc_']{flex:0 0 14.5rem !important;width:14.5rem !important;min-width:14.5rem !important;max-width:14.5rem !important;scroll-snap-align:start;gap:.55rem !important;}"
             "@keyframes cl-in{from{opacity:0;transform:translateY(24px) scale(.94);}to{opacity:1;transform:none;}}"
             "@media (prefers-reduced-motion:reduce){.cl-c{animation:none;transition:none;}}"
             "</style>"
@@ -2901,7 +2901,7 @@ def _render_le_tue_verifiche():
                     _sel = (_nome == classe_filter)
                     st.button("Mostra tutte" if _sel else "Vedi le verifiche", key=f"clb_{_k}", icon=":material/close:" if _sel else ":material/arrow_forward:",
                               on_click=_scegli_cl, args=(_nome,), use_container_width=True)
-                _css_b += (f"html body .stApp .st-key-clb_{_k} button{{border-radius:999px !important;min-height:2.5rem !important;font-weight:700 !important;"
+                _css_b += (f"html body .stApp .st-key-clb_{_k}:not(#vf) button{{border-radius:999px !important;min-height:2.5rem !important;font-weight:700 !important;"
                            f"border:2px solid {_col} !important;box-shadow:none !important;"
                            + (f"background:{_col} !important;background-image:none !important;" if _sel else f"background:{_col}14 !important;background-image:none !important;")
                            + f"}}html body .stApp .st-key-clb_{_k} button, html body .stApp .st-key-clb_{_k} button *{{color:{'#fff' if _sel else _col} !important;"

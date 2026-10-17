@@ -134,6 +134,19 @@ def _sezione_classi(T, ctx, stats) -> None:
                     ctx["salva"]({**p, "classi": [x for k, x in enumerate(classi) if k != i]})
                     ctx["conferma"]("Classe eliminata")
                     st.rerun()
+    _salvate = {c["nome"].lower() for c in classi}
+    _extra = [d for k, d in stats["classi"].items() if k not in _salvate and profilo.pulisci_nome(d["nome"])]
+    if _extra:
+        st.markdown('<div class="pf-sub" style="margin-top:.8rem">Nelle tue verifiche compaiono anche queste classi, scritte a mano e non ancora tra le tue classi. '
+                    'Aggiungile per averle con scuola e note.</div>', unsafe_allow_html=True)
+        for j, d in enumerate(_extra):
+            e1, e2 = st.columns([3, 2], vertical_alignment="center", gap="small")
+            e1.markdown(f'**{_esc(d["nome"])}** · {d["n"]} {"verifica" if d["n"] == 1 else "verifiche"}')
+            if e2.button("Aggiungi alle mie classi", key=f"cl_agg_{j}", icon=":material/add:", use_container_width=True):
+                ctx["salva"]({**p, "classi": classi + [{"nome": profilo.pulisci_nome(d["nome"]), "scuola": "", "note": "",
+                                                       "colore": profilo.COLORI[len(classi) % len(profilo.COLORI)]}]})
+                ctx["conferma"](f"Classe {profilo.pulisci_nome(d['nome'])} aggiunta")
+                st.rerun()
     with st.expander("＋ Aggiungi una classe", expanded=not classi):
         a, b = st.columns([2, 3], gap="medium")
         nome = a.text_input("Nome della classe", key="cl_new_nome", placeholder="Es. 3ªB", max_chars=24)
