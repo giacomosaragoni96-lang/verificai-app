@@ -23,14 +23,18 @@ COLORI = ["#2563EB", "#7C3AED", "#DC2626", "#EA580C", "#CA8A04", "#16A34A", "#1E
 
 # Preferenze pronte da accendere: id → (etichetta, frase che si aggiunge alle istruzioni)
 PILLOLE = {
-    "interi": ("Numeri interi", "Usa numeri interi o frazioni semplici, risultati puliti."),
-    "no_dim": ("Niente dimostrazioni", "Evita le dimostrazioni e richieste come «dimostra che»."),
-    "eccellenza": ("Esercizio per l'eccellenza", "Chiudi con un esercizio per l'eccellenza, facoltativo e più difficile."),
+    "crescente": ("Dal facile al difficile", "Ordina gli esercizi e le richieste dal più facile al più difficile."),
     "linguaggio": ("Linguaggio semplice", "Consegne brevi e con linguaggio semplice."),
-    "poche_formule": ("Poche formule", "Privilegia richieste a parole e brevi: poche formule lunghe."),
-    "realta": ("Un problema di vita reale", "Includi almeno un problema legato a una situazione di vita quotidiana."),
-    "grafico": ("Un grafico da leggere", "Includi un esercizio con un grafico da leggere e interpretare."),
+    "concrete": ("Situazioni concrete", "Quando possibile usa situazioni concrete e vicine alla vita degli studenti."),
+    "ragionamento": ("Più ragionamento che memoria", "Privilegia richieste di ragionamento (perché, come, confronta) rispetto alla sola memoria."),
+    "eccellenza": ("Esercizio per l'eccellenza", "Chiudi con un esercizio per l'eccellenza, facoltativo e più difficile."),
+    "no_trabocchetti": ("Niente trabocchetti", "Evita domande ambigue o con trabocchetti: la difficoltà sta nel contenuto, non nel testo."),
+    "sintesi": ("Chiudi con una sintesi", "Chiudi con una richiesta aperta di sintesi o di rielaborazione."),
+    "compatta": ("Poche richieste, ben distinte", "Poche richieste per esercizio, ben distinte tra loro: meglio meno richieste ma significative."),
 }
+
+# le scelte salvate quando le preferenze erano altre (alcune erano solo per la matematica): passano alla più vicina, le altre si perdono
+_PILLOLE_VECCHIE = {"realta": "concrete", "poche_formule": "linguaggio"}
 
 
 def vuoto() -> dict:
@@ -57,7 +61,11 @@ def pulisci(grezzo) -> dict:
                        "colore": col if col in COLORI else COLORI[len(classi) % len(COLORI)]})
         if len(classi) >= MAX_CLASSI:
             break
-    pill = [x for x in (g.get("pillole") if isinstance(g.get("pillole"), list) else []) if x in PILLOLE]
+    pill = []
+    for x in (g.get("pillole") if isinstance(g.get("pillole"), list) else []):
+        x = _PILLOLE_VECCHIE.get(x, x)
+        if x in PILLOLE and x not in pill:
+            pill.append(x)
     return {"note_fisse": str(g.get("note_fisse") or "").strip()[:MAX_NOTE], "pillole": pill, "stile": str(g.get("stile") or "")[:20], "classi": classi}
 
 

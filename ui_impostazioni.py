@@ -58,20 +58,43 @@ def _riepilogo(T: dict, ctx: dict, frasi: list, nome_stile: str, modificato: boo
         unsafe_allow_html=True)
 
 
+_CSS_PAGINA = """<style>
+html body .stApp div[class*="st-key-imp_card_"]:not(#vf) {{
+  background: linear-gradient(160deg, {card} 0%, {acc}0D 100%); border: 1px solid {acc}30; border-radius: 20px;
+  padding: 1.2rem 1.4rem 1.3rem; margin-bottom: 1rem; box-shadow: 0 14px 30px {acc}1c, 0 2px 6px rgba(15,23,42,.06);
+}}
+.imp-h {{ display: flex; align-items: center; gap: .7rem; margin: 0 0 .9rem; font-family: 'DM Sans', sans-serif; }}
+.imp-hi {{ flex: 0 0 2.3rem; height: 2.3rem; border-radius: 12px; background: linear-gradient(135deg, {acc}, {acc2}); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 6px 14px {acc}44; }}
+.imp-ht {{ font-weight: 800; font-size: 1.12rem; color: {tx}; line-height: 1.15; }}
+.imp-hs {{ font-size: .84rem; color: {t2}; margin-top: .1rem; }}
+html body .stApp .st-key-imp_azioni:not(#vf) {{ margin: .2rem 0 .4rem; }}
+</style>"""
+
+
+def _titolo(icona: str, titolo: str, sotto: str) -> None:
+    st.markdown(f'<div class="imp-h"><div class="imp-hi">{icona}</div><div><div class="imp-ht">{html.escape(titolo)}</div>'
+                f'<div class="imp-hs">{html.escape(sotto)}</div></div></div>', unsafe_allow_html=True)
+
+
 def render_impostazioni(T: dict, ctx: dict) -> None:
     _torna(ctx, "alto", primario=False)
     p = ctx["profilo"]
+    st.markdown(_CSS_PAGINA.format(card=T["card"], acc=T["accent"], acc2=T.get("accent2", T["accent"]), tx=T["text"], t2=T["text2"]), unsafe_allow_html=True)
     st.markdown('<div class="pf-sez" style="font-size:1.5rem;">Impostazioni predefinite</div>'
                 '<div class="pf-sub">Si applicano a ogni verifica che crei e restano salvate finché non le modifichi. '
                 'Quello che scrivi nella descrizione di una verifica ha sempre la precedenza.</div>', unsafe_allow_html=True)
 
-    with st.container(border=True):
-        st.markdown("**Come scrivere le verifiche**")
+    with st.container(key="imp_card_scrittura"):
+        _titolo("✍️", "Come scrivere le verifiche", "Preferenze che valgono per ogni materia e ogni classe.")
         ids = list(profilo.PILLOLE)
         scelte = st.pills("Accendi quelle che ti servono", ids, selection_mode="multi", default=[i for i in p.get("pillole", []) if i in ids],
                           key="pf_pillole", format_func=lambda i: profilo.PILLOLE[i][0])
         note = st.text_area("Altre istruzioni fisse", value=p.get("note_fisse", ""), height=90, max_chars=profilo.MAX_NOTE, key="pf_note",
-                            placeholder="Es.: ultimo esercizio di eccellenza, niente problemi di fisica applicata, richieste brevi")
+                            placeholder="Es.: ultimo esercizio di eccellenza, richieste brevi, niente date da ricordare")
+
+    with st.container(key="imp_card_aspetto"):
+        _titolo("🎨", "Stile e logo", "Come appare il PDF: carattere, intestazione, logo della scuola.")
         stili = ctx["stili"]
         chiavi = [""] + [k for k, _n in stili]
         nomi = {"": "Classico (predefinito)", **{k: n for k, n in stili}}
@@ -83,8 +106,9 @@ def render_impostazioni(T: dict, ctx: dict) -> None:
         st.caption("Lo carichi una volta sola: compare nell'intestazione di ogni verifica, finché non lo cambi o lo togli.")
         ctx["blocco_logo"]()
 
-        modificato = (set(scelte or []) != set(p.get("pillole", [])) or (note or "").strip() != (p.get("note_fisse", "") or "").strip()
-                      or (stile or "") != (p.get("stile", "") or "") or ctx["logo_modificato"]())
+    modificato = (set(scelte or []) != set(p.get("pillole", [])) or (note or "").strip() != (p.get("note_fisse", "") or "").strip()
+                  or (stile or "") != (p.get("stile", "") or "") or ctx["logo_modificato"]())
+    with st.container(key="imp_azioni"):
         if modificato:        # il pulsante lampeggia (come i suggerimenti della guida, ma più svelto): c'è qualcosa da salvare
             st.markdown("<style>@keyframes salva-lampeggia{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0);outline:2px solid rgba(245,158,11,0);outline-offset:3px}"
                         "50%{box-shadow:0 0 0 8px rgba(245,158,11,.32);outline:2px solid rgba(245,158,11,.8);outline-offset:3px}}"
