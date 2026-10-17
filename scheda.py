@@ -1,5 +1,5 @@
 # scheda.py — VerificAI
-# Scheda di allenamento: ~40 esercizi graduati (★ ★★ ★★★) sugli stessi tipi di richiesta
+# Scheda di allenamento: ~40 esercizi graduati (★ ★★ ★★★) sugli stessi argomenti della verifica
 # di una verifica già generata, da dare alla classe prima della verifica.
 # Una sezione per ogni esercizio della verifica, una chiamata all'AI per sezione (in parallelo).
 # Nessun import di streamlit: resta testabile in isolamento (CLAUDE.md).
