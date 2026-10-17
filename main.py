@@ -1785,7 +1785,9 @@ def _banner_piano(dove: str) -> None:
         _guida_benvenuto(dove, _slot)
         return
     if not PREZZI_VISIBILI:
-        if dove in ("input", "final"):
+        # i riquadri «Sblocca di più» e «Invita un collega» si vedono solo a fine percorso (pagina finale) e in fondo alla home:
+        # durante la creazione non devono disturbare
+        if dove == "final":
             with _slot.container():
                 _box_sblocco(dove)
         else:
@@ -3417,6 +3419,10 @@ def _render_scelta_iniziale() -> None:
     _h1, _h2, _h3 = st.columns([3, 2, 3])
     _h2.button("Le mie verifiche", key="apri_storico_home", type="tertiary", icon=":material/folder_open:", on_click=_apri_storico,
                use_container_width=True, help="Ritrova le verifiche che hai già creato.")
+    # in fondo alla home: sblocco con il questionario e invito (solo per chi non ha già le funzioni complete)
+    if MONETIZZAZIONE_ATTIVA and not PREZZI_VISIBILI and ENT.piano == "free" and not ENT.assaggio and not (_is_admin and not _SIM):
+        st.markdown('<div style="height:1.4rem"></div>', unsafe_allow_html=True)
+        _box_sblocco("input")
 
 
 def _esegui_impagina(p: dict, prog_ph) -> None:
