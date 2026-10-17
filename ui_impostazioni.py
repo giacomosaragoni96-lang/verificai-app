@@ -19,7 +19,7 @@ def _torna(ctx, chiave: str, primario: bool) -> None:
         ctx["torna"]()
 
 
-def _riepilogo(T: dict, ctx: dict, frasi: list, nome_stile: str, modificato: bool) -> None:
+def riepilogo(T: dict, ctx: dict, frasi: list, nome_stile: str, modificato: bool) -> None:
     """Scheda con ciò che verrà applicato a ogni verifica (istruzioni, stile, logo), come sarà dopo il salvataggio."""
     acc, tx, t2 = T["accent"], T["text"], T["text2"]
     logo = ctx["logo_info"]()
@@ -121,7 +121,7 @@ def render_impostazioni(T: dict, ctx: dict) -> None:
             ctx["conferma"]("Impostazioni salvate")
             st.rerun()
 
-    _riepilogo(T, ctx, profilo.frasi_preferenze({**p, "pillole": list(scelte or []), "note_fisse": note}), nomi.get(stile or "", "Classico"), modificato)
+    riepilogo(T, ctx, profilo.frasi_preferenze({**p, "pillole": list(scelte or []), "note_fisse": note}), nomi.get(stile or "", "Classico"), modificato)
 
     if ctx["da_form"]:
         _torna(ctx, "basso", primario=True)
