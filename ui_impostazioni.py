@@ -63,6 +63,9 @@ html body .stApp div[class*="st-key-imp_card_"]:not(#vf) {{
   background: linear-gradient(160deg, {card} 0%, {acc}0D 100%); border: 1px solid {acc}30; border-radius: 20px;
   padding: 1.2rem 1.4rem 1.3rem; margin-bottom: 1rem; box-shadow: 0 14px 30px {acc}1c, 0 2px 6px rgba(15,23,42,.06);
 }}
+.imp-titolo {{ font-family: 'DM Sans', sans-serif; font-size: 1.9rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; color: {tx}; margin: .5rem 0 .25rem; }}
+.imp-titolo::after {{ content: ""; display: block; width: 3.6rem; height: .32rem; border-radius: 99px; margin-top: .55rem; background: linear-gradient(90deg, {acc}, {acc2}); }}
+.imp-sotto {{ font-family: 'DM Sans', sans-serif; font-size: .96rem; color: {t2}; margin: 0 0 1.1rem; line-height: 1.5; }}
 .imp-h {{ display: flex; align-items: center; gap: .7rem; margin: 0 0 .9rem; font-family: 'DM Sans', sans-serif; }}
 .imp-hi {{ flex: 0 0 2.3rem; height: 2.3rem; border-radius: 12px; background: linear-gradient(135deg, {acc}, {acc2}); color: #fff;
   display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 6px 14px {acc}44; }}
@@ -81,8 +84,8 @@ def render_impostazioni(T: dict, ctx: dict) -> None:
     _torna(ctx, "alto", primario=False)
     p = ctx["profilo"]
     st.markdown(_CSS_PAGINA.format(card=T["card"], acc=T["accent"], acc2=T.get("accent2", T["accent"]), tx=T["text"], t2=T["text2"]), unsafe_allow_html=True)
-    st.markdown('<div class="pf-sez" style="font-size:1.5rem;">Impostazioni predefinite</div>'
-                '<div class="pf-sub">Si applicano a ogni verifica che crei e restano salvate finché non le modifichi. '
+    st.markdown('<div class="imp-titolo">Impostazioni predefinite</div>'
+                '<div class="imp-sotto">Si applicano a ogni verifica che crei e restano salvate finché non le modifichi. '
                 'Quello che scrivi nella descrizione di una verifica ha sempre la precedenza.</div>', unsafe_allow_html=True)
 
     with st.container(key="imp_card_scrittura"):
