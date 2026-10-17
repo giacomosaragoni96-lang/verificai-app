@@ -2817,8 +2817,38 @@ def _render_le_tue_verifiche():
         unsafe_allow_html=True,
     )
 
+    # Le tue classi: tessere colorate in cima (solo se ci sono verifiche con una classe)
+    _conta_cl = {}
+    for _v in verifiche:
+        if _v.get("classe"):
+            _conta_cl[_v["classe"]] = _conta_cl.get(_v["classe"], 0) + 1
+    if st.session_state.get("mv_classe", "Tutte") not in (["Tutte"] + list(_conta_cl)):
+        st.session_state["mv_classe"] = "Tutte"
+    if _conta_cl:
+        st.markdown('<div class="mvcl-et">Le tue classi</div>', unsafe_allow_html=True)
+        _prof_cl = _profilo()
+        _nomi_cl = [c["nome"] for c in (_prof_cl.get("classi") or []) if c.get("nome") in _conta_cl]
+        _nomi_cl += sorted(n for n in _conta_cl if n not in _nomi_cl)
+        _css_cl = ""
+
+        def _scegli_classe(nome):
+            st.session_state["mv_classe"] = nome
+        with st.container(key="mvcl", horizontal=True):
+            _attiva = st.session_state.get("mv_classe", "Tutte")
+            for _k, (_nome, _n) in enumerate([("Tutte", len(verifiche))] + [(n, _conta_cl[n]) for n in _nomi_cl]):
+                _col = T["accent"] if _nome == "Tutte" else ((profilo.classe(_prof_cl, _nome) or {}).get("colore") or T["accent"])
+                _on = (_nome == _attiva)
+                _css_cl += (f'html body .stApp .st-key-mvcl_{_k} button{{border:2px solid {_col}{"" if _on else "66"} !important;'
+                            + (f'background:linear-gradient(135deg,{_col},{_col}CC) !important;box-shadow:0 8px 18px {_col}55 !important;'
+                               if _on else f'background:{_col}14 !important;box-shadow:none !important;')
+                            + f'animation-delay:{_k * 0.05:.2f}s;}}'
+                            f'html body .stApp .st-key-mvcl_{_k} button, html body .stApp .st-key-mvcl_{_k} button *{{color:{"#fff" if _on else _col} !important;'
+                            f'-webkit-text-fill-color:{"#fff" if _on else _col} !important;}}')
+                st.button(f"{'Tutte' if _nome == 'Tutte' else 'Classe ' + _nome}  ·  {_n}", key=f"mvcl_{_k}", on_click=_scegli_classe, args=(_nome,))
+        st.markdown(f"<style>{_css_cl}</style>", unsafe_allow_html=True)
+
     # Filtri
-    col_vai, col_materia, col_classe, col_ordine = st.columns([3, 2, 2, 2])
+    col_vai, col_materia, col_ordine = st.columns([3, 2, 2])
     search_query = ""
 
     # Materie uniche dalle verifiche reali
@@ -2826,11 +2856,7 @@ def _render_le_tue_verifiche():
     with col_materia:
         materia_filter = st.selectbox("Materia", materie_real)
 
-    _classi_elenco = sorted({v.get("classe") for v in verifiche if v.get("classe")})
-    with col_classe:
-        if st.session_state.get("mv_classe", "Tutte") not in (["Tutte"] + _classi_elenco):
-            st.session_state["mv_classe"] = "Tutte"
-        classe_filter = st.selectbox("Classe", ["Tutte"] + _classi_elenco, key="mv_classe", help="Le classi si impostano dalla pagina della verifica o dal profilo.")
+    classe_filter = st.session_state.get("mv_classe", "Tutte")
     with col_ordine:
         ordine_filter = st.selectbox("Ordina per", ["Più recenti", "Più vecchie", "Alfabetico", "Materia"])
 
@@ -6873,7 +6899,8 @@ def _render_stage_final():
             if _n_tot > 1:
                 def _vai_pagina(delta: int, _n=_n_tot):
                     st.session_state["final_pagina"] = min(max(int(st.session_state.get("final_pagina", 0)) + delta, 0), _n - 1)
-                _fp1, _fp2, _fp3 = st.columns([1, 2, 1], vertical_alignment="center", gap="small")
+                _nav_box = st.container(key="nav_pagine")
+                _fp1, _fp2, _fp3 = _nav_box.columns([1, 2, 1], vertical_alignment="center", gap="small")
                 _fp1.button("◀", key="final_prev_pg", use_container_width=True, disabled=(_pg <= 0),
                             on_click=_vai_pagina, args=(-1,), help="Pagina precedente")
                 _fp2.markdown('<style>html body .stApp [class*="st-key-final_prev_pg"] button, html body .stApp [class*="st-key-final_next_pg"] button{min-height:2.2rem !important;height:2.2rem !important;padding:0 !important;}</style>' + f'<div class="pg-et" style="text-align:center;font-family:DM Sans,sans-serif;font-size:.9rem;font-weight:600;'
