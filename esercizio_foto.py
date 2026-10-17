@@ -48,11 +48,15 @@ def _testo_del_blocco(blocco: str) -> str:
     return m.group(1) if m else ""
 
 
+# le righe «FIGURA: …», «RITAGLIO: …» ecc. tra DUBBI e TESTO sono altri campi, non dubbi
+_RE_ALTRO_CAMPO = re.compile(r"^\s*(?:FIGURA|RITAGLIO|TITOLO|ESITO|DIFFERENZE)\s*:", re.IGNORECASE)
+
+
 def _dubbi(valore: str, blocco: str) -> list:
     """Righe di DUBBI: sulla stessa riga del campo e, se continuano, sulle righe successive fino a TESTO."""
     m = re.search(r"^\s*DUBBI\s*:\s*(.*?)^\s*TESTO\s*:", blocco, re.DOTALL | re.MULTILINE | re.IGNORECASE)
     grezzo = m.group(1) if m else valore
-    righe = [re.sub(r"^\s*[-•*]\s*", "", r).strip() for r in grezzo.splitlines()]
+    righe = [re.sub(r"^\s*[-•*]\s*", "", r).strip() for r in grezzo.splitlines() if not _RE_ALTRO_CAMPO.match(r)]
     righe = [r for r in righe if r and r.lower().strip(" .") not in ("nessuno", "nessun dubbio", "nessuna")]
     return righe[:8]
 
@@ -104,7 +108,7 @@ def _campo_multi(blocco: str, nome: str) -> list:
     m = re.search(rf"^\s*{nome}\s*:\s*(.*?)^\s*TESTO\s*:", blocco, re.DOTALL | re.MULTILINE | re.IGNORECASE)
     if not m:
         return []
-    righe = [re.sub(r"^\s*[-•*]\s*", "", r).strip() for r in m.group(1).splitlines()]
+    righe = [re.sub(r"^\s*[-•*]\s*", "", r).strip() for r in m.group(1).splitlines() if not _RE_ALTRO_CAMPO.match(r)]
     return [r for r in righe if r and r.lower().strip(" .") not in ("nessuna", "nessuno", "nessuna differenza")][:10]
 
 

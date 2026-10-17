@@ -4981,6 +4981,19 @@ font-family: 'DM Sans', sans-serif;
     color: #fff !important; -webkit-text-fill-color: #fff !important; font-weight: 800 !important;
   }}
 
+  /* «Da controllare» (punti incerti della lettura) e intestazione dell'esercizio, pagina Impagina */
+  html body .stApp div[class*="st-key-dubbi_imp_"]:not(#vf) {{
+    background: linear-gradient(160deg, {T['accent']}10 0%, {T['accent']}1c 100%); border: 1px solid {T['accent']}44; border-left: 4px solid {T['accent']};
+    border-radius: 14px; padding: .8rem 1rem .75rem; margin: .4rem 0 .3rem; box-shadow: 0 4px 14px {T['accent']}18;
+  }}
+  html body .stApp div[class*="st-key-dubbi_imp_"] .di-k {{ font-family: 'DM Sans', sans-serif; font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: {T['accent']}; }}
+  html body .stApp div[class*="st-key-dubbi_imp_"] .di-t {{ font-family: 'DM Sans', sans-serif; font-size: .95rem; font-weight: 700; color: {T['text']}; margin: .15rem 0 .2rem; line-height: 1.4; }}
+  html body .stApp div[class*="st-key-dubbi_imp_"] .di-l {{ font-family: 'DM Sans', sans-serif; font-size: .9rem; color: {T['text']}; margin: .1rem 0 .4rem; padding-left: 1.1rem; line-height: 1.45; }}
+  html body .stApp div[class*="st-key-dubbi_imp_"] .di-p {{ font-family: 'DM Sans', sans-serif; font-size: .84rem; color: {T['text2']}; line-height: 1.4; }}
+  html body .stApp .ex-h {{ display: flex; align-items: center; gap: .6rem; margin: .1rem 0 .5rem; font-family: 'DM Sans', sans-serif; }}
+  html body .stApp .ex-n {{ flex: 0 0 auto; min-width: 1.7rem; height: 1.7rem; padding: 0 .35rem; border-radius: 9px; background: {T['accent']}; color: #fff; font-weight: 800; font-size: .9rem; display: inline-flex; align-items: center; justify-content: center; }}
+  html body .stApp .ex-t {{ font-weight: 700; font-size: 1rem; color: {T['text']}; line-height: 1.3; }}
+
   /* «Ho notato una cosa»: avviso discreto con la correzione proposta (pagina Impagina) */
   html body .stApp div[class*="st-key-nota_imp_"]:not(#vf) {{
     background: linear-gradient(160deg, #FFFBEB 0%, #FEF3C7 100%); border: 1px solid #FCD34D; border-left: 4px solid #F59E0B;
