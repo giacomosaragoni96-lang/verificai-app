@@ -34,7 +34,7 @@ def render_sblocco(T: dict, on_back, funzione, residui: int, on_riscatta, invito
     with _c2:
         passi = [("1", "Compila il questionario completo", "Circa 4 minuti, anonimo: ci dici cosa ti è servito e cosa manca."),
                  ("2", "Ricevi un codice", f"Alla fine compare un codice per {VERIFICHE_PER_CODICE} verifiche con tutte le funzioni."),
-                 ("3", "Inseriscilo qui sotto", "Le prossime verifiche che crei avranno tutto il kit.")]
+                 ("3", "Inseriscilo qui sotto", "Poi usi una verifica completa su quella che hai appena creato, su una a tua scelta in «Le mie verifiche» o su una nuova.")]
         for n, t, d in passi:
             st.markdown(
                 f'<div style="display:flex;gap:.8rem;align-items:center;margin:.5rem 0;font-family:DM Sans,sans-serif;">'
@@ -51,7 +51,7 @@ def render_sblocco(T: dict, on_back, funzione, residui: int, on_riscatta, invito
             st.markdown("##### Oppure invita un collega")
             render_invito(T, invito, con_titolo=False)
         if residui > 0:
-            st.success(f"Hai {residui} verifiche con tutte le funzioni a disposizione: la prossima che crei ne usa una.", icon="🎁")
+            st.success(f"Hai {residui} verifiche con tutte le funzioni a disposizione: usane una sulla verifica che stavi guardando, su una tua in «Le mie verifiche» o su una nuova.", icon="🎁")
         st.markdown("##### Ho un codice")
         codice = st.text_input("Codice", key="sb_codice", placeholder="VF-ABCD-2345", label_visibility="collapsed")
         if st.button("Sblocca", key="sb_sblocca", type="primary", use_container_width=True, disabled=not (codice or "").strip()):
@@ -60,5 +60,8 @@ def render_sblocco(T: dict, on_back, funzione, residui: int, on_riscatta, invito
             if ok:
                 st.success(msg, icon="✅")
                 st.session_state.pop("sb_codice", None)
+                if st.button("Torna alla verifica e usa una verifica completa", key="sb_torna_dopo", type="primary", icon=":material/arrow_back:", use_container_width=True):
+                    on_back()
+                    return
             else:
                 st.error(msg)
