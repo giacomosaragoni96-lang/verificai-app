@@ -1895,8 +1895,7 @@ def _render_profilo_pagina() -> None:
         st.session_state["sel_classe"] = nome
         if c.get("scuola") in SCUOLE:
             st.session_state["sel_scuola_b"] = c["scuola"]
-        st.session_state["_home_modo"] = "crea"
-        _nuova_verifica()
+        _nuova_verifica("crea")
 
     def _elenco_classe(nome):
         if nome in {v.get("classe") for v in verifiche}:
@@ -7417,8 +7416,10 @@ def _render_stage_final():
     spazio("lg")
 
 
-def _nuova_verifica() -> None:
-    """Torna al form di creazione azzerando la verifica in corso (le versioni non salvate si perdono)."""
+def _nuova_verifica(modo: str | None = None) -> None:
+    """Torna alla pagina iniziale (scelta tra «da una descrizione» e «dalla tua verifica»), o direttamente a `modo` se indicato,
+    azzerando la verifica in corso (le versioni non salvate si perdono)."""
+    st.session_state["_home_modo"]    = modo
     st.session_state.stage            = STAGE_INPUT
     st.session_state["_prev_stage"]   = None
     st.session_state.input_percorso   = None
