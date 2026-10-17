@@ -48,6 +48,7 @@ from ui_questionario import render_questionario
 from ui_sblocco import render_sblocco
 from ui_inviti import apri_dialogo_invito
 from ui_impostazioni import render_impostazioni
+import ui_attese
 import sblocco
 from questionario import domanda as _domanda_q, pulisci_risposte, riga_rapida
 from licenze import attiva_licenza, riconvalida_se_serve
@@ -309,6 +310,11 @@ def _giorni_al_reset():
                             hour=0, minute=0, second=0, microsecond=0)
     d = reset - now
     return d.days, d.seconds // 3600
+
+
+def _attesa(tipo: str, titolo: str, passi: list | None = None, sotto: str = "", durata_passo: float = 8.0, consigli: bool = False):
+    """Scheda di attesa animata (ui_attese) al posto di st.spinner: `with _attesa("foto", "Sto leggendo…", ["Passo 1", "Passo 2"]):`."""
+    return ui_attese.attesa(T, tipo, titolo, passi, sotto, durata_passo, consigli)
 
 
 def _dopo_scarico() -> None:
@@ -2936,46 +2942,10 @@ def _anteprima_impaginata(esercizi, titolo, materia, mostra, tot, con_spazio, fe
 
 
 def _card_attesa_impagina(passo: int) -> str:
-    """Scheda animata per l'attesa della lettura: una pagina che si «scrive» con una lama di luce, e i passi che si accendono uno dopo l'altro."""
-    _acc, _tx, _t2 = T["accent"], T["text"], T["text2"]
-    _voci = ["Leggo le pagine della tua verifica", "Ricontrollo ogni numero e cerco eventuali errori", "Preparo l'impaginazione"]
-    _righe = ""
-    for _k, _v in enumerate(_voci):
-        if _k < passo:
-            _ic, _cl = "✓", "imp-ok"
-        elif _k == passo:
-            _ic, _cl = '<i class="imp-giro"></i>', "imp-att"
-        else:
-            _ic, _cl = "○", "imp-da"
-        _righe += f'<li class="{_cl}"><span class="imp-ic">{_ic}</span>{_v}</li>'
-    return (
-        "<style>"
-        "@keyframes imp-scan{0%{top:8%;opacity:.0}10%{opacity:1}50%{top:82%}90%{opacity:1}100%{top:8%;opacity:0}}"
-        "@keyframes imp-riga{0%{width:12%}60%{width:var(--w)}100%{width:12%}}"
-        "@keyframes imp-gira{to{transform:rotate(360deg)}}"
-        ".imp-attesa{display:flex;gap:1.4rem;align-items:center;margin:.8rem 0 .4rem;padding:1.1rem 1.3rem;border-radius:18px;"
-        f"background:linear-gradient(160deg,{T['card']} 0%,{_acc}0F 100%);border:1px solid {_acc}33;box-shadow:0 10px 28px {_acc}22;font-family:'DM Sans',sans-serif;}}"
-        ".imp-pagina{position:relative;flex:0 0 5.6rem;height:7.2rem;border-radius:10px;background:#fff;border:1.5px solid #CBD5E1;"
-        "box-shadow:0 6px 16px rgba(15,23,42,.12);padding:.8rem .6rem;overflow:hidden;}"
-        ".imp-pagina b{display:block;height:.32rem;border-radius:3px;background:#CBD5E1;margin-bottom:.42rem;animation:imp-riga 2.6s ease-in-out infinite;}"
-        ".imp-pagina b:nth-child(1){--w:80%;animation-delay:0s}.imp-pagina b:nth-child(2){--w:94%;animation-delay:.2s}"
-        ".imp-pagina b:nth-child(3){--w:70%;animation-delay:.4s}.imp-pagina b:nth-child(4){--w:88%;animation-delay:.6s}"
-        ".imp-pagina b:nth-child(5){--w:60%;animation-delay:.8s}.imp-pagina b:nth-child(6){--w:90%;animation-delay:1s}"
-        f".imp-pagina u{{position:absolute;left:0;right:0;height:.18rem;background:linear-gradient(90deg,transparent,{_acc},transparent);"
-        f"box-shadow:0 0 12px {_acc};animation:imp-scan 2.6s ease-in-out infinite;text-decoration:none;}}"
-        f".imp-t{{font-weight:800;font-size:1.08rem;color:{_tx};margin-bottom:.1rem;}}"
-        f".imp-s{{font-size:.84rem;color:{_t2};margin-bottom:.6rem;}}"
-        ".imp-attesa ul{list-style:none;margin:0;padding:0;}.imp-attesa li{display:flex;gap:.55rem;align-items:center;font-size:.92rem;padding:.14rem 0;}"
-        ".imp-ic{display:inline-flex;width:1.1rem;justify-content:center;font-weight:800;}"
-        ".imp-ok{color:#15803D;}.imp-da{opacity:.45;}"
-        f".imp-att{{color:{_tx};font-weight:700;}}"
-        f".imp-giro{{width:.85rem;height:.85rem;border-radius:50%;border:2px solid {_acc}44;border-top-color:{_acc};animation:imp-gira .8s linear infinite;display:inline-block;}}"
-        "</style>"
-        '<div class="imp-attesa"><div class="imp-pagina"><b></b><b></b><b></b><b></b><b></b><b></b><u></u></div>'
-        '<div><div class="imp-t">Sto leggendo la tua verifica</div>'
-        '<div class="imp-s">Di solito ci vogliono 30-60 secondi: non chiudere la pagina.</div>'
-        f"<ul>{_righe}</ul></div></div>"
-    )
+    """Scheda animata per l'attesa della lettura: una pagina che si «scrive» con una lama di luce, i passi che si accendono uno dopo l'altro, un consiglio."""
+    return ui_attese.card_html(
+        T, "pagina", "Sto leggendo la tua verifica", "Di solito ci vogliono 30-60 secondi: non chiudere la pagina.",
+        ["Leggo le pagine della tua verifica", "Ricontrollo ogni numero e cerco eventuali errori", "Preparo l'impaginazione"], attivo=passo, consigli=True)
 
 
 def _render_impagina() -> None:
@@ -3147,7 +3117,7 @@ def _render_impagina() -> None:
     with _cb:
         st.caption("Come verrà")
         if _lista:
-            with st.spinner("Preparo l'impaginazione…"):
+            with _attesa("pagina", "Impagino la tua verifica", ["Metto in pagina gli esercizi", "Preparo l'anteprima"], durata_passo=4):
                 _pdf_p, _imgs_p = _anteprima_impaginata(_lista, st.session_state.get("imp_titolo", ""), _materia, _mostra, _tot, _spazio, _fedeli)
             for _p in _imgs_p[:3]:
                 st.image(_p, use_container_width=True)
@@ -3160,7 +3130,7 @@ def _render_impagina() -> None:
         _txt = st.text_input("Cosa non va", key="imp_corr_t", label_visibility="collapsed",
                              placeholder="Es.: nell'esercizio 2 b) l'esponente è 3, non 2")
         if st.button("Correggi", key="imp_corr_b"):
-            with st.spinner("Riguardo le pagine…"):
+            with _attesa("foto", "Riguardo le pagine", ["Rileggo le pagine", "Applico la correzione"], durata_passo=6):
                 _cor = impagina.correggi_verifica(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, _esercizi, _txt)
             if _cor["ok"]:
                 dati["prima_correzione"] = [dict(e) for e in _esercizi]
@@ -3563,7 +3533,7 @@ def _blocco_esercizio_foto(materia: str, scuola: str, num_esercizi: int) -> None
                 st.warning("Hai già letto diverse foto in questa sessione: riprova più tardi.")
                 return
             _imm = [{"data": f.getvalue(), "mime_type": f.type or "image/jpeg", "name": f.name} for f in _files]
-            with st.spinner("Leggo l'esercizio e lo ricontrollo sulla foto…"):
+            with _attesa("foto", "Sto leggendo l'esercizio", ["Guardo la foto", "Trascrivo l'esercizio", "Ricontrollo ogni numero"], durata_passo=7):
                 _ris = leggi_esercizi_da_foto(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, materia, scuola)
             st.session_state["_foto_es_n"] = st.session_state.get("_foto_es_n", 0) + 1
             _registra_evento("foto_esercizio")
@@ -3636,7 +3606,7 @@ def _blocco_esercizio_foto(materia: str, scuola: str, num_esercizi: int) -> None
                 _txt = st.text_input("Cosa non va", key=f"foto_es_corr_t_{_i}", label_visibility="collapsed",
                                      placeholder="Es.: nella b) l'esponente è 3, non 2")
                 if st.button("Correggi", key=f"foto_es_corr_b_{_i}"):
-                    with st.spinner("Riguardo la foto…"):
+                    with _attesa("foto", "Riguardo la foto", ["Rileggo la foto", "Applico la correzione"], durata_passo=6):
                         _cor = correggi_esercizio(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, _ex, _txt)
                     if _cor["ok"]:
                         _esercizi[_i] = _cor["esercizio"]
@@ -4206,7 +4176,9 @@ def _lancia_generazione(
             return "Preparo il PDF"
         return "Ancora un momento"
 
-    _NOMI_PASSI = ["Titolo", "Struttura", "Esercizi", "Controllo", "PDF"] if piano_struttura is not None else ["Titolo", "Esercizi", "Controllo", "PDF"]
+    _NOMI_PASSI_LUNGHI = (["Scelgo il titolo", "Preparo la struttura", "Scrivo gli esercizi", "Ricontrollo gli esercizi", "Preparo il PDF"]
+                          if piano_struttura is not None else
+                          ["Scelgo il titolo", "Scrivo gli esercizi", "Ricontrollo gli esercizi", "Preparo il PDF"])
 
     def _indice_passo(testo: str) -> int:
         _ordine = (["Scelgo il titolo", "Preparo la struttura", "Scrivo gli esercizi", "Ricontrollo gli esercizi", "Preparo il PDF"]
@@ -4226,32 +4198,10 @@ def _lancia_generazione(
         if _SLOT_BANNER.get("input") is not None:      # durante l'attesa la guida di benvenuto non serve più
             _SLOT_BANNER["input"].empty()
             _SLOT_BANNER["input"] = None
-        perc  = int(min(_step[0] / _n_steps, 0.95) * 100)
-        _acc  = T["accent"]
-        _bg   = T["border"]
-        _txt  = T["text2"]
         _prog.markdown(
-            f'<style>@keyframes vf-scorri{{0%{{background-position:200% 0}}100%{{background-position:-200% 0}}}}</style>'
-            f'<div role="status" aria-live="polite" style="margin:.4rem 0 1.2rem 0;padding:1.1rem 1.3rem;'
-            f'background:{T["card"]};border:1px solid {T["border2"]};border-radius:14px;">'
-            f'<div style="font-family:DM Sans,sans-serif;font-size:1.05rem;font-weight:800;'
-            f'color:{T["text"]};margin-bottom:.15rem;">Sto creando la tua verifica…</div>'
-            f'<div style="font-size:.9rem;color:{_txt};font-family:DM Sans,sans-serif;margin-bottom:.8rem;">'
-            f'{_esc(_passo_leggibile(testo))} · di solito ci vuole circa un minuto. '
-            f'Non toccare e non chiudere la pagina.</div>'
-            f'<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.7rem;font-family:DM Sans,sans-serif;font-size:.78rem;font-weight:700;">'
-            + "".join(
-                f'<span style="padding:.12rem .6rem;border-radius:999px;'
-                + (f'background:{_acc};color:#fff;' if _k == _indice_passo(testo) else
-                   f'background:{_bg};color:{_txt};opacity:{1 if _k < _indice_passo(testo) else .6};')
-                + f'">{"✓ " if _k < _indice_passo(testo) else ""}{_nome}</span>'
-                for _k, _nome in enumerate(_NOMI_PASSI))
-            + f'</div>'
-            f'<div style="background:{_bg};border-radius:100px;height:8px;overflow:hidden;">'
-            f'<div style="width:{perc}%;height:100%;border-radius:100px;'
-            f'background:linear-gradient(90deg,{_acc},{_acc}88,{_acc});background-size:200% 100%;'
-            f'animation:vf-scorri 2.2s linear infinite;transition:width .5s ease;"></div>'
-            f'</div>' + _bozza_html[0] + '</div>',
+            ui_attese.card_html(
+                T, "pagina", "Sto creando la tua verifica", f"{_passo_leggibile(testo)} · di solito ci vuole circa un minuto. Non toccare e non chiudere la pagina.",
+                _NOMI_PASSI_LUNGHI, attivo=_indice_passo(testo), extra_html=_bozza_html[0], consigli=not _bozza_html[0]),
             unsafe_allow_html=True
         )
 
@@ -4531,7 +4481,7 @@ def _render_stage_input():
     if _fm and _voce is None:
         _registra_evento("materiale")
         st.session_state["_genera_dopo_analisi"] = True
-        with _prog_ph_b.container(), st.spinner("Leggo il tuo file…"):
+        with _prog_ph_b.container(), _attesa("foto", "Sto leggendo il tuo file", ["Apro il file", "Leggo gli appunti", "Preparo la verifica"], durata_passo=7):
             _esegui_analisi_documento(_fm["bytes"], _fm["mime"], _fm["name"])
         # Se arriviamo qui la lettura non è andata a buon fine (nessun rerun): niente di fatto
         st.session_state.pop("_genera_dopo_analisi", None)
@@ -4927,7 +4877,7 @@ def _sostituisci_con_mio_esercizio(idx, materia, scuola, mostra_punteggi, con_gr
                 st.warning("Hai già letto diverse foto in questa sessione: riprova più tardi.")
                 return
             _imm = [{"data": f.getvalue(), "mime_type": f.type or "image/jpeg", "name": f.name} for f in _files]
-            with st.spinner("Leggo l'esercizio e lo ricontrollo sulla foto…"):
+            with _attesa("foto", "Sto leggendo l'esercizio", ["Guardo la foto", "Trascrivo l'esercizio", "Ricontrollo ogni numero"], durata_passo=7):
                 _ris = leggi_esercizi_da_foto(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, materia, scuola)
             st.session_state["_foto_es_n"] = st.session_state.get("_foto_es_n", 0) + 1
             _conta_modifica(MODEL_FAST_ID)
@@ -4974,7 +4924,7 @@ def _sostituisci_con_mio_esercizio(idx, materia, scuola, mostra_punteggi, con_gr
     with st.expander("Qualcosa non è uguale alla foto? Correggilo", expanded=False):
         _txt = st.text_input("Cosa non va", key=f"sost_corr_t_{idx}", label_visibility="collapsed", placeholder="Es.: nella b) l'esponente è 3, non 2")
         if st.button("Correggi", key=f"sost_corr_b_{idx}"):
-            with st.spinner("Riguardo la foto…"):
+            with _attesa("foto", "Riguardo la foto", ["Rileggo la foto", "Applico la correzione"], durata_passo=6):
                 _cor = correggi_esercizio(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, _ex, _txt)
             if _cor["ok"]:
                 _esercizi[_k] = _cor["esercizio"]
@@ -5544,12 +5494,9 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 icon=":material/delete:", disabled=(n_blocks <= 1),
                 help="Toglie questo esercizio e ridistribuisce i punti sugli altri.",
             )
-        if st.button("Sostituisci con un mio esercizio (foto o file)", key=f"sost_apri_{idx}", use_container_width=True,
-                     icon=":material/upload_file:", help="Carichi una foto o un PDF di un esercizio che hai già: prende il posto di questo, identico."):
-            st.session_state["_sost_aperto"] = None if st.session_state.get("_sost_aperto") == idx else idx
-            st.rerun()
-        if st.session_state.get("_sost_aperto") == idx:
-            _sostituisci_con_mio_esercizio(idx, materia_str, scuola_str, mostra_punteggi, con_griglia, punti_totali, _finite)
+        st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-weight:700;font-size:.92rem;color:{T["text"]};margin:.7rem 0 .1rem;">'
+                    f'Sostituisci con un mio esercizio</div>', unsafe_allow_html=True)
+        _sostituisci_con_mio_esercizio(idx, materia_str, scuola_str, mostra_punteggi, con_griglia, punti_totali, _finite)
         if elimina:
             st.session_state["_conf_elimina"] = idx
         elif st.session_state.get("_conf_elimina") not in (None, idx):
@@ -5692,7 +5639,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
     # ── Aggiungi un esercizio ─────────────────────────────────────────────────
     if aggiungi:
         _action_ph.empty()
-        with st.spinner("Creo un nuovo esercizio e ridistribuisco i punti…"):
+        with _attesa("matita", "Sto scrivendo un nuovo esercizio", ["Scelgo cosa chiedere", "Scrivo l'esercizio", "Ridistribuisco i punti"], durata_passo=7):
             _ok_ag = _aggiungi_esercizio(mostra_punteggi, con_griglia, punti_totali,
                                          materia_str, argomento_str, scuola_str, modello_rw)
         if _ok_ag:
@@ -5983,7 +5930,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                             righe.append((_i, _j)); prima.append(_a); dopo.append(_b)
                     st.session_state["_punti_prima"] = {"righe": righe, "punti": prima}
                     _applica_punti_a_blocchi(righe, dopo)
-                    with st.spinner("Ricompilazione PDF con i nuovi punteggi…"):
+                    with _attesa("pagina", "Aggiorno i punteggi", ["Scrivo i nuovi punti", "Rifaccio il PDF"], durata_passo=3):
                         _pdf_rc, _err_rc = _ricompila_verifica_a(
                             mostra_punteggi, con_griglia, punti_totali, rileggi_blocchi=True,
                         )
@@ -6105,7 +6052,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
     )
 
     if confirm_pdf:
-        with st.spinner("Preparo il PDF aggiornato… ancora qualche secondo"):
+        with _attesa("pagina", "Preparo il PDF aggiornato", ["Rimetto in ordine gli esercizi", "Rifaccio il PDF"], durata_passo=3):
             _pts_custom = st.session_state.get("recalibra_pts", [])
             pdf_bytes, err = _ricompila_verifica_a(
                 mostra_punteggi, con_griglia, punti_totali, riscala_totale=True,
@@ -6330,7 +6277,7 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
               "blocchi": [dict(b) for b in (st.session_state.get("review_blocks") or [])]}
     _conta_modifica(mod_id)
     try:
-        with _stato.container(), st.spinner("Sto modificando la verifica… ci vuole circa mezzo minuto, non chiudere la pagina"):
+        with _stato.container(), _attesa("matita", "Sto modificando la verifica", ["Capisco cosa chiedi", "Riscrivo gli esercizi interessati", "Rifaccio il PDF"], "Ci vuole circa mezzo minuto: non chiudere la pagina.", durata_passo=10):
             _res = modifica_verifica_libera(crea_modello(mod_id).per("modifica"), mat_str, arg_str, vA["latex"], _richiesta,
                                             mostra_punteggi, punti_totali)
             if _res.get("ok"):
@@ -6380,23 +6327,10 @@ def _render_stage_final():
 
     # ── Helper skeleton animato ───────────────────────────────────────────────
     def _skeleton_html(icon, title, sub):
-        return (
-            f'<div class="ocr-skeleton-wrap">'
-            f'  <div class="ocr-skeleton-header">'
-            f'    <div class="ocr-skeleton-icon">{icon}</div>'
-            f'    <div>'
-            f'      <div class="ocr-skeleton-title">{title}</div>'
-            f'      <div class="ocr-skeleton-sub">{sub}</div>'
-            f'    </div>'
-            f'  </div>'
-            f'  <div class="ocr-skeleton-doc">'
-            f'    <div class="ocr-skeleton-scan"></div>'
-            f'    <div class="ocr-skeleton-line" style="width:88%;animation-delay:.0s"></div>'
-            f'    <div class="ocr-skeleton-line" style="width:70%;animation-delay:.2s"></div>'
-            f'    <div class="ocr-skeleton-line" style="width:82%;animation-delay:.4s"></div>'
-            f'  </div>'
-            f'</div>'
-        )
+        """Scheda di attesa per le versioni e il kit: i passi sono le parti del sottotitolo («Cambio numeri · Controllo qualità»)."""
+        tipo = {"✅": "pagina", "🎯": "matita"}.get(icon, "copie")
+        passi = [x.strip() for x in sub.split("·") if x.strip()]
+        return ui_attese.card_html(T, tipo, title.rstrip("… ."), "Di solito ci vuole circa mezzo minuto.", passi, durata_passo=8.0)
 
     # ── Anteprima aggiornata se il PDF è cambiato (modifiche nell'editor) ─────
     _pdf_ts   = vA.get("pdf_ts")
@@ -6614,7 +6548,7 @@ def _render_stage_final():
                     elif _pro_bloccato("word"):
                         _pulsante_pro("word", "pro_word_generale")
                     elif st.button("📝 Crea il file Word", key="gen_docx_A_generale", use_container_width=True, type="primary"):
-                        with st.spinner("Preparo il file Word… (qualche secondo)"):
+                        with _attesa("word", "Sto preparando il file Word", ["Converto testo e formule", "Inserisco i grafici", "Rifinisco la pagina"], durata_passo=5):
                             try:
                                 _db, _emsg = latex_to_docx_modificabile(vA["latex"], mat_str, arg_str, con_griglia)
                             except Exception as _e:
@@ -6749,7 +6683,7 @@ def _render_stage_final():
             elif _b_lat:
                 if st.button("📄 Crea PDF Fila B", key="compile_B_v2",
                              use_container_width=True, type="secondary"):
-                    with st.spinner("Compilazione PDF Fila B in corso…"):
+                    with _attesa("copie", "Preparo il PDF della Fila B", ["Compilo il documento"]):
                         _pdf_bc, _ = compila_pdf(_b_lat)
                     if _pdf_bc:
                         st.session_state.verifiche["B"]["pdf"] = _pdf_bc; st.rerun()
@@ -6825,7 +6759,7 @@ def _render_stage_final():
             elif _r_lat:
                 if st.button("📄 Crea PDF BES/DSA", key="compile_R_v2",
                              use_container_width=True, type="secondary"):
-                    with st.spinner("Compilazione PDF BES/DSA in corso…"):
+                    with _attesa("copie", "Preparo il PDF della versione BES/DSA", ["Compilo il documento"]):
                         _pdf_rc, _ = compila_pdf(_r_lat)
                     if _pdf_rc:
                         st.session_state.verifiche["R"]["pdf"] = _pdf_rc; st.rerun()
@@ -6964,7 +6898,7 @@ def _render_stage_final():
             elif _s_lat:
                 if st.button("📄 Crea PDF Soluzioni", key="compile_S_v2",
                              use_container_width=True, type="secondary"):
-                    with st.spinner("Compilazione PDF Soluzioni in corso…"):
+                    with _attesa("pagina", "Preparo il PDF delle soluzioni", ["Compilo il documento"]):
                         _pdf_sc, _ = compila_pdf(_s_lat)
                     if _pdf_sc:
                         st.session_state.verifiche["S"]["pdf"] = _pdf_sc; st.rerun()
@@ -7022,7 +6956,7 @@ def _render_stage_final():
                              use_container_width=True, type="secondary"):
                     st.session_state[_docx_key] = True
                 if st.session_state.get(_docx_key, False):
-                    with st.spinner("Conversione in formato Word in corso… (30–60 sec)"):
+                    with _attesa("word", "Sto preparando il file Word", ["Converto testo e formule", "Inserisco i grafici", "Rifinisco la pagina"], "Ci vogliono circa 30-60 secondi.", durata_passo=15):
                         try:
                             _db, _emsg = latex_to_docx_modificabile(vA["latex"], mat_str, arg_str, con_griglia)
                         except Exception as _e:
@@ -7145,10 +7079,15 @@ def _render_stage_final():
         st.session_state["_gen_scheda"] = False
         _ph_sc = st.empty()
 
+        _scheda_mostrata = [False]
+
         def _avanza_scheda(testo):
+            if _scheda_mostrata[0]:          # i passi si accendono da soli: ridisegnare la scheda ogni volta li farebbe ripartire
+                return
+            _scheda_mostrata[0] = True
             _ph_sc.markdown(
-                _skeleton_html("🎯", "Preparo la scheda di allenamento…",
-                               f"{_esc(testo)} · circa 30 secondi, non toccare la pagina"),
+                ui_attese.card_html(T, "matita", "Preparo la scheda di allenamento", "Circa 30 secondi: non toccare la pagina.",
+                                    ["Leggo la verifica", "Scrivo gli esercizi di allenamento", "Preparo il PDF"], durata_passo=10.0),
                 unsafe_allow_html=True)
 
         _avanza_scheda("Leggo la verifica")
@@ -7308,7 +7247,7 @@ def _render_stage_final():
                                  key="gen_docx_"+fid+"_extra", use_container_width=True):
                         st.session_state[_docx_key] = True
                     if st.session_state.get(_docx_key, False):
-                        with st.spinner("Conversione in formato Word in corso…"):
+                        with _attesa("word", "Sto preparando il file Word", ["Converto testo e formule", "Inserisco i grafici", "Rifinisco la pagina"], durata_passo=10):
                             try:
                                 db, error_msg = latex_to_docx_modificabile(v["latex"], mat_str, arg_str, con_griglia)
                             except Exception as e:
