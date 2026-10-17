@@ -6654,19 +6654,27 @@ def _render_stage_final():
             st.caption("Anteprima non disponibile.")
     with _col_dx:
         if vA.get("pdf"):
-            _dl(
-                label=f"⬇  Scarica PDF  ·  {_stima(vA['pdf'])}",
-                data=vA["pdf"],
-                file_name=_fname_a + ".pdf",
-                mime="application/pdf",
-                use_container_width=True,
-                type="primary",
-                key="dl_pdf_basso_A",
-                help="Scarica il PDF della verifica, già formattato e pronto per la stampa.",
-            )
+            with st.container(key="pdf_card"):
+                _np = conta_pagine_pdf(vA.get("pdf"))
+                st.markdown('<div class="pc-h"><div class="pc-i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+                            'stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></div>'
+                            '<div><div class="pc-t">La tua verifica è pronta</div>'
+                            f'<div class="pc-d">PDF pronto per la stampa{f" · {_np} facciat" + ("a" if _np == 1 else "e") if _np else ""} · {_stima(vA["pdf"])}</div></div></div>',
+                            unsafe_allow_html=True)
+                _dl(
+                    label="Scarica PDF",
+                    icon=":material/download:",
+                    data=vA["pdf"],
+                    file_name=_fname_a + ".pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                    type="primary",
+                    key="dl_pdf_basso_A",
+                    help="Scarica il PDF della verifica, già formattato e pronto per la stampa.",
+                )
         # Le due vie per cambiare la verifica stanno in una tendina in evidenza: chiusa, la pagina resta leggera
-        with st.expander("Vuoi modificare qualcosa?", expanded=bool(st.session_state.get("_mod_aperto")), icon=":material/auto_fix_high:"):
-            st.markdown('<span class="vx-mod" style="display:none"></span>', unsafe_allow_html=True)
+        with st.container(key="vx_modifica"):
+          with st.expander("Vuoi modificare qualcosa?", expanded=bool(st.session_state.get("_mod_aperto")), icon=":material/auto_fix_high:"):
             if vA.get("pdf") and vA.get("latex"):
                 _box_modifica_rapida(gp, vA, mod_id)
             with st.container(key="card_modifica"):
@@ -6681,11 +6689,10 @@ def _render_stage_final():
 
         # ── Versione Word modificabile: sotto la verifica, per chi preferisce lavorare in Word ─────────────────
         if WORD_ATTIVO and vA.get("latex"):
-            spazio("sm")
             _WD, _WD2 = "#2B579A", "#1F4379"          # il blu di Word: la scheda è riconoscibile e diversa da quella dell'AI
             st.markdown(
-                f'<style>html body .stApp .st-key-word_card {{background:linear-gradient(135deg,{_WD}12 0%,{_WD}26 100%);'
-                f'border:1.5px solid {_WD}55;border-radius:18px;padding:1.1rem 1.3rem;}}'
+                f'<style>html body .stApp .st-key-word_card {{background:linear-gradient(135deg,{_WD}0A 0%,{_WD}18 100%);'
+                f'border:1px solid {_WD}44;border-radius:16px;padding:.85rem 1.05rem;}}'
                 f'html body .stApp .st-key-word_card button {{min-height:2.9rem;font-weight:700;border-radius:12px;white-space:nowrap !important;background:{T["card"]} !important;background-image:none !important;'
                 f'border:1.5px solid {_WD}77 !important;box-shadow:none !important;}}'
                 f'html body .stApp .st-key-word_card button, html body .stApp .st-key-word_card button * {{color:{_WD} !important;-webkit-text-fill-color:{_WD} !important;}}'
@@ -7474,9 +7481,11 @@ def _render_stage_final():
     _nv1, _nv2, _nv3 = st.columns([2, 3, 2])
     if _nv2.button("Crea una nuova verifica", key="btn_new_bottom", icon=":material/add:", use_container_width=True, type="primary"):
         _nuova_verifica()
+    st.markdown('<div style="height:.9rem"></div>', unsafe_allow_html=True)
     _sf1, _sf2, _sf3 = st.columns([3, 2, 3])
     _sf2.button("Apri «Le mie verifiche»", key="apri_storico_final", type="tertiary", icon=":material/folder_open:",
                 on_click=_apri_storico, use_container_width=True, help="La verifica è già salvata: qui trovi tutte le tue verifiche.")
+    st.markdown('<div style="height:.2rem"></div>', unsafe_allow_html=True)
     _sg1, _sg2, _sg3 = st.columns([2, 3, 2])
     if _sg2.button("Qualcosa non va in questa verifica? Segnalalo", key="seg_apri", type="tertiary", icon=":material/flag:", use_container_width=True,
                    help="Anonimo: non salviamo né il tuo nome né la tua email."):
