@@ -57,7 +57,8 @@ def _css(T: dict) -> str:
 .pf-n-main b{{font-size:2.5rem;color:#fff;letter-spacing:-.03em;}}
 .pf-n-main span{{font-size:.8rem;font-weight:700;color:#fff;opacity:.92;}}
 html body .stApp .pf-n-main b, html body .stApp .pf-n-main span{{color:#fff !important;-webkit-text-fill-color:#fff !important;}}
-.pf-sez{{font-family:'DM Sans',sans-serif;font-size:1.05rem;font-weight:800;color:{T['text']};margin:.2rem 0 .1rem;}}
+.pf-sez{{font-family:'DM Sans',sans-serif;font-size:1.7rem;font-weight:800;letter-spacing:-.025em;line-height:1.15;color:{T['text']};margin:.5rem 0 .25rem;}}
+.pf-sez::after{{content:"";display:block;width:3.4rem;height:.3rem;border-radius:99px;margin-top:.5rem;background:linear-gradient(90deg,{acc},{T.get('accent2',acc)});}}
 .pf-sub{{font-family:'DM Sans',sans-serif;font-size:.88rem;color:{T['text2']};margin:0 0 .8rem;line-height:1.45;}}
 .pf-classe{{display:flex;gap:.7rem;align-items:center;font-family:'DM Sans',sans-serif;}}
 .pf-dot{{flex:0 0 3.2rem;height:3.2rem;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.15rem;box-shadow:0 6px 14px rgba(15,23,42,.22);}}
