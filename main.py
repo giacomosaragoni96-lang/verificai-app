@@ -2761,11 +2761,9 @@ def _render_le_tue_verifiche():
         unsafe_allow_html=True,
     )
 
-    # Filtri e ricerca
-    col_search, col_materia, col_classe, col_ordine = st.columns([3, 2, 2, 2])
-
-    with col_search:
-        search_query = st.text_input("Cerca", placeholder="Cerca per materia o argomento…")
+    # Filtri
+    col_vai, col_materia, col_classe, col_ordine = st.columns([3, 2, 2, 2])
+    search_query = ""
 
     # Materie uniche dalle verifiche reali
     materie_real = ["Tutte"] + sorted(list(set([v.get("materia", "Sconosciuta") for v in verifiche if v.get("materia")])))
@@ -2804,6 +2802,14 @@ def _render_le_tue_verifiche():
     elif ordine_filter == "Materia":
         verifiche_filtrate.sort(key=lambda x: x.get("materia") or "")
 
+    with col_vai:
+        _ids_f = [v.get("id") for v in verifiche_filtrate]
+        _mappa_f = {v.get("id"): f"{(v.get('argomento') or 'Verifica senza titolo')} · {v.get('materia') or ''} · {_data_relativa(v.get('created_at'))}" for v in verifiche_filtrate}
+        if st.session_state.get("mv_vai") not in _ids_f:
+            st.session_state.pop("mv_vai", None)
+        st.selectbox("Vai a una verifica", _ids_f, index=None, key="mv_vai", placeholder="Scegli o cerca tra le tue verifiche…",
+                     format_func=lambda x: _mappa_f.get(x, ""))
+
     # Mostra verifiche reali — a blocchi di 8 ("Mostra altre"): con centinaia di verifiche
     # il vecchio elenco completo creava migliaia di pulsanti a ogni clic.
     _n_mostra = max(8, int(st.session_state.get("_storico_mostra", 8)))
@@ -2811,7 +2817,7 @@ def _render_le_tue_verifiche():
         st.info("Nessuna verifica corrisponde alla ricerca: prova a cancellare i filtri.", icon="🔎")
         return
 
-    for i, verifica in enumerate(verifiche_filtrate[:_n_mostra]):
+    def _scheda_verifica(verifica, i, esteso=False):
         _vid = verifica.get("id")
         # Formatta data
         data_formattata = "Data non disponibile"
@@ -2822,18 +2828,22 @@ def _render_le_tue_verifiche():
             except Exception:
                 pass
 
-        with st.container():
+        with st.container(key=(f"vrow_{i}" if not esteso else "vsel_0")):
             _col_m, _ico_m = _stile_materia(verifica.get("materia"))
+            if not esteso:
+                c_info, c_apri, c_menu = st.columns([5.4, 1.3, 0.5], vertical_alignment="center", gap="small")
+                _pop = c_menu.popover("⋯", help="Scarica, anteprima, condividi, rinomina o elimina")
             _col_cl = (profilo.classe(_profilo(), verifica.get("classe")) or {}).get("colore") or T["text"]
             _chip_classe = (f'<span style="background:{_col_cl}1F;color:{_col_cl};border:1px solid {_col_cl}66;padding:.12rem .6rem;border-radius:999px;font-weight:700;font-size:.75rem;">'
-                            f'👥 {_esc(verifica.get("classe"))}</span>' if verifica.get("classe") else "")
+                            f'Classe {_esc(verifica.get("classe"))}</span>' if verifica.get("classe") else "")
+            _box_v = (f"background:{T['card']};border:1px solid {T['border']};border-left:5px solid {_col_m};border-radius:14px;padding:.95rem 1.2rem;margin-bottom:.5rem;box-shadow:0 2px 8px rgba(15,23,42,.06);"
+                      if esteso else "")
             _impag = ('<span style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:.12rem .6rem;border-radius:999px;font-weight:700;font-size:.75rem;">'
                       'Impaginata da te</span>' if verifica.get("percorso_scelto") == "IMPAGINA" else "")
-            st.markdown(
+            (st if esteso else c_info).markdown(
                 re.sub(r">\s+<", "><", f"""
-                <div style="background:{T['card']};border:1px solid {T['border']};border-left:5px solid {_col_m};border-radius:14px;
-                            padding:.95rem 1.2rem;margin-bottom:.5rem;box-shadow:0 2px 8px rgba(15,23,42,.06);display:flex;gap:.9rem;align-items:center;">
-                    <div style="flex:0 0 2.9rem;height:2.9rem;border-radius:12px;background:{_col_m}1A;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">{_ico_m}</div>
+                <div style="{_box_v}display:flex;gap:.9rem;align-items:center;">
+                    <div style="flex:0 0 2.6rem;height:2.6rem;border-radius:13px;background:linear-gradient(135deg,{_col_m},{_col_m}BB);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.15rem;font-weight:800;box-shadow:0 5px 12px {_col_m}55;font-family:DM Sans,sans-serif;">{_esc((verifica.get('materia') or '?')[:1].upper())}</div>
                     <div style="min-width:0;">
                         <div style="font-size:1.06rem;font-weight:800;color:{T['text']};margin:0 0 .35rem 0;line-height:1.25;">
                             {_esc(verifica.get('argomento') or 'Verifica senza titolo')}
@@ -2852,10 +2862,13 @@ def _render_le_tue_verifiche():
             )
 
             # Azioni principali in primo piano; Rinomina ed Elimina nel menu "⋯".
-            c_apri, c_pdf, c_prev, c_share, c_menu = st.columns([1.35, 1, 1, 1, 0.5])
+            if esteso:
+                c_apri, c_pdf, c_prev, c_share, c_menu = st.columns([1.35, 1, 1, 1, 0.5])
+            else:
+                c_pdf = c_prev = c_share = _pop          # nell'elenco le azioni secondarie stanno tutte nel menu «⋯»
 
             with c_apri:
-                if st.button("Apri e modifica", icon=":material/edit_note:", use_container_width=True,
+                if st.button("Apri e modifica" if esteso else "Apri", icon=":material/edit_note:", use_container_width=True,
                              key=f"facsimile_{_vid}_{i}", type="primary"):
                     try:
                         _cont = _contenuto_verifica(_uid, _vid)
@@ -2921,7 +2934,7 @@ def _render_le_tue_verifiche():
                         st.caption("Link per i colleghi (vale 30 giorni): copialo con l'icona a destra.")
                         st.code(link, language=None)
 
-            with c_menu.popover("⋯", help="Rinomina o elimina questa verifica"):
+            with (c_menu.popover("⋯", help="Rinomina o elimina questa verifica") if esteso else _pop):
                 nuovo_nome = st.text_input(
                     "Nome della verifica",
                     value=verifica.get("argomento", ""),
@@ -2960,7 +2973,34 @@ def _render_le_tue_verifiche():
                         st.session_state.pop(f"confirm_delete_{_vid}", None)
                         st.rerun()
 
-            spazio("lg")
+            if esteso:
+                spazio("lg")
+
+    # Verifica scelta dal menu: scheda estesa con tutte le azioni, in cima
+    _scelta_id = st.session_state.get("mv_vai")
+    _scelta = next((v for v in verifiche_filtrate if v.get("id") == _scelta_id), None) if _scelta_id else None
+    if _scelta:
+        st.markdown(f'<div class="vg-h">Verifica scelta</div>', unsafe_allow_html=True)
+        _scheda_verifica(_scelta, 9999, esteso=True)
+
+    _gruppo_corrente = None
+    _ora = datetime.now(timezone.utc)
+
+    def _gruppo(v):
+        try:
+            _d = datetime.fromisoformat((v.get("created_at") or "").replace("Z", "+00:00"))
+            _g = (_ora - _d).days
+        except Exception:
+            return "Prima"
+        return "Oggi" if _g < 1 else ("Questa settimana" if _g < 7 else ("Questo mese" if _g < 31 else "Prima"))
+
+    for i, verifica in enumerate(verifiche_filtrate[:_n_mostra]):
+        if ordine_filter == "Più recenti":
+            _g = _gruppo(verifica)
+            if _g != _gruppo_corrente:
+                _gruppo_corrente = _g
+                st.markdown(f'<div class="vg-h">{_g}</div>', unsafe_allow_html=True)
+        _scheda_verifica(verifica, i)
 
     if len(verifiche_filtrate) > _n_mostra:
         if st.button(f"Mostra altre ({len(verifiche_filtrate) - _n_mostra})", key="storico_mostra_altre", use_container_width=True):
