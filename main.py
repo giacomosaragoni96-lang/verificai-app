@@ -475,6 +475,14 @@ _SCORE_KEYWORDS = {
 
 
 
+_RE_CHIEDE_PUNTEGGI = re.compile(r"\b(?:pt|punti|punteggio|punteggi|punto|voto|voti|score|peso|percentuale|percentuali)\b|%", re.IGNORECASE)
+
+
+def _chiede_punteggi(testo: str) -> bool:
+    """True se il testo chiede di cambiare i punteggi. Parole intere: «sottopunto», «richiesta» o «percorso» non contano."""
+    return bool(_RE_CHIEDE_PUNTEGGI.search(re.sub(r"sottopunt\w*", " ", testo or "")))
+
+
 # ── Post-processing LaTeX unico ────────────────────────────────────────────────
 
 def _postprocessa_latex(latex: str, mostra_punteggi: bool, punti_totali: int,
@@ -4899,6 +4907,103 @@ def _aggiungi_esercizio(mostra_punteggi, con_griglia, punti_totali, materia, arg
     return True
 
 
+def _sostituisci_con_mio_esercizio(idx, materia, scuola, mostra_punteggi, con_griglia, punti_totali, bloccato) -> None:
+    """
+    «Sostituisci con un mio esercizio»: foto o file → lettura (come per l'esercizio del libro) → il docente confronta, corregge a parole e conferma
+    → l'esercizio idx diventa identico a quello caricato. I punti dell'esercizio tolto passano al nuovo. «Annulla modifica» lo rimette com'era.
+    """
+    chiave = f"_sost_es_{idx}"
+    dati = st.session_state.get(chiave)
+    ciclo = st.session_state.get(f"_sost_ciclo_{idx}", 0)
+    if not dati:
+        st.caption("Fotografa o carica (JPG, PNG, PDF) l'esercizio che vuoi al posto di questo: lo riporto identico, con il grafico. "
+                   "Foto dritta e ben illuminata.")
+        _files = st.file_uploader("Foto o file dell'esercizio", type=["jpg", "jpeg", "png", "webp", "pdf"], accept_multiple_files=True,
+                                  key=f"sost_up_{idx}_{ciclo}", label_visibility="collapsed")
+        if _files and st.button("Leggi l'esercizio", key=f"sost_leggi_{idx}", icon=":material/document_scanner:", disabled=bloccato):
+            if st.session_state.get("_foto_es_n", 0) >= _MAX_LETTURE_FOTO:
+                st.warning("Hai già letto diverse foto in questa sessione: riprova più tardi.")
+                return
+            _imm = [{"data": f.getvalue(), "mime_type": f.type or "image/jpeg", "name": f.name} for f in _files]
+            with st.spinner("Leggo l'esercizio e lo ricontrollo sulla foto…"):
+                _ris = leggi_esercizi_da_foto(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, materia, scuola)
+            st.session_state["_foto_es_n"] = st.session_state.get("_foto_es_n", 0) + 1
+            _conta_modifica(MODEL_FAST_ID)
+            _registra_evento("foto_esercizio")
+            if _ris["ok"]:
+                st.session_state[chiave] = {"immagini": _imm, "esercizi": _ris["esercizi"]}
+                st.rerun()
+            st.warning(_ris["messaggio"], icon="📷")
+        return
+
+    _imm, _esercizi = dati["immagini"], dati["esercizi"]
+    _k = 0
+    if len(_esercizi) > 1:
+        _k = st.selectbox("Quale esercizio vuoi usare?", list(range(len(_esercizi))), key=f"sost_sel_{idx}",
+                          format_func=lambda k: f"{k + 1}. {_esercizi[k]['titolo']}")
+    _ex = _esercizi[_k]
+    _stato = stato_esercizio(_ex)
+    _img = _anteprima_esercizio_foto(materia, _ex["titolo"], _ex["latex"]) if _stato["utilizzabile"] else None
+    if _stato["utilizzabile"] and _img is None:
+        _stato = {"utilizzabile": False, "motivo": "Non riesco a impaginarlo in modo pulito. Prova a correggerlo o a rifare la foto."}
+    _ca, _cb = st.columns(2, gap="small")
+    with _ca:
+        st.caption("La tua foto")
+        _foto_img = [m["data"] for m in _imm if (m.get("mime_type") or "").startswith("image/")][:2]
+        try:
+            if _foto_img:
+                st.image(_foto_img, use_container_width=True)
+            else:
+                st.caption("(PDF caricato)")
+        except Exception:
+            st.caption("(foto caricata)")
+    with _cb:
+        st.caption("Come comparirà nella verifica")
+        if _img:
+            st.image(_img, use_container_width=True)
+        else:
+            st.caption("Anteprima non disponibile.")
+    if not _stato["utilizzabile"]:
+        st.warning(_stato["motivo"], icon="⚠️")
+    if _ex.get("correzioni"):
+        st.info("Ricontrollando la foto ho corretto:\n" + "\n".join(f"- {c}" for c in _ex["correzioni"]), icon="🔎")
+    if _ex.get("dubbi"):
+        _scheda_dubbi(_ex["dubbi"], f"s{idx}", "la foto")
+    with st.expander("Qualcosa non è uguale alla foto? Correggilo", expanded=False):
+        _txt = st.text_input("Cosa non va", key=f"sost_corr_t_{idx}", label_visibility="collapsed", placeholder="Es.: nella b) l'esponente è 3, non 2")
+        if st.button("Correggi", key=f"sost_corr_b_{idx}"):
+            with st.spinner("Riguardo la foto…"):
+                _cor = correggi_esercizio(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, _ex, _txt)
+            if _cor["ok"]:
+                _esercizi[_k] = _cor["esercizio"]
+                st.rerun()
+            st.warning(_cor["messaggio"])
+    _b1, _b2 = st.columns([2, 1.2], gap="small")
+    if _b1.button(f"Sostituisci l'esercizio {idx + 1} con questo", key=f"sost_ok_{idx}", type="primary", use_container_width=True,
+                  icon=":material/check:", disabled=not _stato["utilizzabile"]):
+        _blocchi = st.session_state.review_blocks
+        _vecchio = dict(_blocchi[idx])
+        st.session_state[f"_undo_block_{idx}"] = _vecchio
+        _pref = re.match(r"^(Esercizio\s*\d+\s*[:.\-]\s*)", _vecchio["title"], flags=re.IGNORECASE)
+        _blocchi[idx]["title"] = (_pref.group(1) if _pref else f"Esercizio {idx + 1}: ") + _ef._titolo_pulito(_ex["titolo"])
+        _blocchi[idx]["body"] = (_ex.get("latex") or "").strip()
+        st.session_state.pop("recalibra_pts", None)
+        _pdf, _err = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali, blocco_modificato=idx)
+        if not _pdf:
+            _blocchi[idx] = _vecchio
+            _mostra_errore("Non sono riuscito a rifare il PDF con il tuo esercizio", _err, consiglio="L'esercizio di prima è rimasto al suo posto: riprova.")
+            return
+        st.session_state.pop(chiave, None)
+        st.session_state["_sost_aperto"] = None
+        st.session_state[f"_sost_ciclo_{idx}"] = ciclo + 1
+        _ricorda_conferma(f"Esercizio {idx + 1} sostituito")
+        st.rerun()
+    if _b2.button("Scegli un altro file", key=f"sost_altro_{idx}", type="tertiary", use_container_width=True):
+        st.session_state.pop(chiave, None)
+        st.session_state[f"_sost_ciclo_{idx}"] = ciclo + 1
+        st.rerun()
+
+
 def _render_stage_review():
     gp              = st.session_state.gen_params
     blocks          = st.session_state.review_blocks
@@ -5340,7 +5445,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
         )
         istruzione = st.text_area(
             f"Modifica esercizio {idx+1}",
-            placeholder="es. Rendi il testo più semplice · Converti in Vero/Falso · Aggiungi un sottopunto · Usa un contesto di vita quotidiana",
+            placeholder="es. Rendi il testo più semplice · Converti in Vero/Falso · Aggiungi una richiesta · Usa un contesto di vita quotidiana",
             key=f"rw_istr_{idx}",
             label_visibility="collapsed",
             height=90,
@@ -5357,7 +5462,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
         _loading_ph = st.empty()
         if rigenera and istruzione.strip():
             _istr_low_quick = istruzione.lower()
-            if any(kw in _istr_low_quick for kw in _SCORE_KEYWORDS):
+            if _chiede_punteggi(istruzione):
                 _loading_ph.warning(
                     "⚠️ **Hai menzionato punteggi / punti.**\n\n"
                     "Per modificare i punti usa il pannello **⚖️ Cambia i punteggi** "
@@ -5367,43 +5472,25 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             else:
                 _loading_ph.info(f"Elaborazione in corso — modifico l'esercizio {idx+1}…")
 
-        # Pulsanti rapidi: prima ciò che si usa più spesso (livello), poi le sostituzioni
+        # Pulsanti rapidi: piccoli, su una riga
         st.markdown(
             f'<div style="font-family:DM Sans,sans-serif;font-size:.8rem;color:{T["muted"]};margin:.5rem 0 .25rem;">'
-            f'Oppure con un tocco</div>',
+            f'Oppure con un tocco</div>'
+            '<style>html body .stApp div[class*="st-key-azioni_rapide_"] button{min-height:2rem !important;padding:.1rem .35rem !important;'
+            'border-radius:9px !important;white-space:nowrap !important;}'
+            'html body .stApp div[class*="st-key-azioni_rapide_"] button p{font-size:.78rem !important;font-weight:600 !important;}</style>',
             unsafe_allow_html=True,
         )
-        _marker = '<div class="btn-outline-accent-marker" style="display:none;height:0;line-height:0"></div>'
-        _lv_col1, _lv_col2 = st.columns(2, gap="small")
-        with _lv_col1:
-            st.markdown(_marker, unsafe_allow_html=True)
-            piu_facile = st.button(
-                "Più facile", key=f"piu_facile_{idx}", use_container_width=True, disabled=_finite,
-                help="Semplifica numeri e calcoli, mantenendo lo stesso argomento.",
-            )
-        with _lv_col2:
-            st.markdown(_marker, unsafe_allow_html=True)
-            piu_difficile = st.button(
-                "Più difficile", key=f"piu_difficile_{idx}", use_container_width=True, disabled=_finite,
-                help="Numeri meno immediati e un passaggio di ragionamento in più.",
-            )
-        _qr_col1, _qr_col2 = st.columns(2, gap="small")
-        with _qr_col1:
-            st.markdown(_marker, unsafe_allow_html=True)
-            quick_regen = st.button(
-                "Cambia i numeri",
-                key=f"quick_regen_{idx}",
-                use_container_width=True, disabled=_finite,
-                help="Stesso esercizio con valori e dati numerici nuovi.",
-            )
-        with _qr_col2:
-            st.markdown(_marker, unsafe_allow_html=True)
-            cambia_tutto = st.button(
-                "Cambia esercizio",
-                key=f"cambia_tutto_{idx}",
-                use_container_width=True, disabled=_finite,
-                help="Un esercizio completamente diverso, sullo stesso argomento.",
-            )
+        with st.container(key=f"azioni_rapide_{idx}"):
+            _q1, _q2, _q3, _q4 = st.columns(4, gap="small")
+            piu_facile = _q1.button("Più facile", key=f"piu_facile_{idx}", use_container_width=True, disabled=_finite,
+                                    help="Semplifica numeri e calcoli, mantenendo lo stesso argomento.")
+            piu_difficile = _q2.button("Più difficile", key=f"piu_difficile_{idx}", use_container_width=True, disabled=_finite,
+                                       help="Numeri meno immediati e un passaggio di ragionamento in più.")
+            quick_regen = _q3.button("Cambia i numeri", key=f"quick_regen_{idx}", use_container_width=True, disabled=_finite,
+                                     help="Stesso esercizio con valori e dati numerici nuovi.")
+            cambia_tutto = _q4.button("Cambia esercizio", key=f"cambia_tutto_{idx}", use_container_width=True, disabled=_finite,
+                                      help="Un esercizio completamente diverso, sullo stesso argomento.")
 
         # Placeholder feedback immediato — sotto i pulsanti
         _action_ph = st.empty()
@@ -5436,9 +5523,10 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 st.caption(f"Modifiche con l'AI su questa verifica: {_usate_mod} di {_tetto_mod}")
 
     # ── 3) Altre azioni: aggiungere o eliminare un esercizio ─────────────────────
+    _marker = '<div class="btn-outline-accent-marker" style="display:none;height:0;line-height:0"></div>'
     elimina_si = False
-    with st.expander("Altre azioni: aggiungi o elimina un esercizio",
-                     expanded=(st.session_state.get("_conf_elimina") == idx)):
+    with st.expander("Altre azioni: aggiungi, sostituisci o elimina un esercizio",
+                     expanded=(st.session_state.get("_conf_elimina") == idx or st.session_state.get("_sost_aperto") == idx)):
         _ea_c1, _ea_c2 = st.columns(2, gap="small")
         with _ea_c1:
             st.markdown(_marker, unsafe_allow_html=True)
@@ -5454,6 +5542,12 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                 icon=":material/delete:", disabled=(n_blocks <= 1),
                 help="Toglie questo esercizio e ridistribuisce i punti sugli altri.",
             )
+        if st.button("Sostituisci con un mio esercizio (foto o file)", key=f"sost_apri_{idx}", use_container_width=True,
+                     icon=":material/upload_file:", help="Carichi una foto o un PDF di un esercizio che hai già: prende il posto di questo, identico."):
+            st.session_state["_sost_aperto"] = None if st.session_state.get("_sost_aperto") == idx else idx
+            st.rerun()
+        if st.session_state.get("_sost_aperto") == idx:
+            _sostituisci_con_mio_esercizio(idx, materia_str, scuola_str, mostra_punteggi, con_griglia, punti_totali, _finite)
         if elimina:
             st.session_state["_conf_elimina"] = idx
         elif st.session_state.get("_conf_elimina") not in (None, idx):
@@ -5497,7 +5591,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
     # ── Conteggio delle modifiche con l'AI (tetto per verifica) ───────────────────
     _azione_ai = bool(
         quick_regen or cambia_tutto or piu_facile or piu_difficile or aggiungi
-        or (rigenera and istruzione.strip() and not any(kw in istruzione.lower() for kw in _SCORE_KEYWORDS))
+        or (rigenera and istruzione.strip() and not _chiede_punteggi(istruzione))
     )
     if _azione_ai and _finite:        # difesa lato server: i pulsanti disabilitati non devono mai partire
         quick_regen = cambia_tutto = piu_facile = piu_difficile = aggiungi = rigenera = False
@@ -5617,7 +5711,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
 
         # ── Rilevamento richieste punteggio ───────────────────────────────────
         # L'avviso è già mostrato inline sotto il pulsante (via _loading_ph).
-        _is_score_req = any(kw in _istr_low for kw in _SCORE_KEYWORDS)
+        _is_score_req = _chiede_punteggi(_istr_low)
         if not _is_score_req:
             # ── Regen AI con preservazione punti ─────────────────────────────
             # Cattura i punti correnti dell'esercizio PRIMA della regen.
@@ -5842,22 +5936,30 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
             else:
                 st.markdown(
                     f'<div style="font-size:.88rem;color:{T["text2"]};margin-bottom:.5rem;font-family:DM Sans,sans-serif;">'
-                    f'Scegli quanti punti vale ogni <b>esercizio</b>: dentro ogni esercizio le richieste restano in proporzione. '
+                    f'Scegli quanti punti vale ogni <b>richiesta</b> (a, b, c…) di ogni esercizio: i punti dell\'esercizio sono la loro somma. '
                     f'Il totale deve fare <b>{punti_totali} pt</b>.</div>',
                     unsafe_allow_html=True,
                 )
-                _firma_pt = abs(hash(tuple(_tot_es)))          # nuova chiave se i punti cambiano da fuori
-                _colonne = st.columns(min(3, n_blocks), gap="small")
-                _nuovi_es = []
-                for _i, _t in enumerate(_tot_es):
-                    with _colonne[_i % len(_colonne)]:
-                        if _t == 0:
-                            _nuovi_es.append(0)
-                            continue
-                        _nuovi_es.append(int(st.number_input(
-                            f"Esercizio {_i + 1}", min_value=max(1, _min_es[_i]), max_value=punti_totali,
-                            value=min(punti_totali, max(_t, max(1, _min_es[_i]))), step=1, key=f"pt_es_{_firma_pt}_{_i}",
-                        )))
+                _firma_pt = abs(hash(tuple(tuple(_x) for _x in _pt_sub)))      # nuova chiave se i punti cambiano da fuori
+                _nuovi_rq = []                                                  # punti scelti per ogni richiesta, esercizio per esercizio
+                for _i, _p in enumerate(_pt_sub):
+                    if not _p:
+                        _nuovi_rq.append([])
+                        continue
+                    with st.container(border=True):
+                        _intest = st.empty()
+                        _cols = st.columns(min(len(_p), 6), gap="small")
+                        _vals = []
+                        for _j, _v in enumerate(_p):
+                            _lab = (_per_es[_i][_j][0] or "").strip() or ("Tutto l'esercizio" if len(_p) == 1 else str(_j + 1))
+                            with _cols[_j % len(_cols)]:
+                                _vals.append(int(st.number_input(
+                                    _lab, min_value=(1 if _v > 0 else 0), max_value=punti_totali, value=min(punti_totali, _v), step=1,
+                                    key=f"pt_rq_{_firma_pt}_{_i}_{_j}",
+                                )))
+                        _intest.markdown(f"**Esercizio {_i + 1}** · {sum(_vals)} pt")
+                        _nuovi_rq.append(_vals)
+                _nuovi_es = [sum(_v) for _v in _nuovi_rq]
                 _somma_es = sum(_nuovi_es)
                 _quadra = (_somma_es == punti_totali)
                 if _quadra:
@@ -5870,14 +5972,11 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         icon="⚖️",
                     )
 
-                def _applica_totali(nuovi_es: list) -> bool:
-                    """Porta ogni esercizio al suo nuovo totale (richieste in proporzione) e rifà il PDF."""
+                def _applica_richieste(nuovi_rq: list) -> bool:
+                    """Scrive i punti di ogni richiesta e rifà il PDF."""
                     righe, prima, dopo = [], [], []
                     for _i, _p in enumerate(_pt_sub):
-                        if not _p:
-                            continue
-                        _nv = _p if int(nuovi_es[_i]) == sum(_p) else bilancia_punti(_p, int(nuovi_es[_i]))
-                        for _j, (_a, _b) in enumerate(zip(_p, _nv)):
+                        for _j, (_a, _b) in enumerate(zip(_p, nuovi_rq[_i])):
                             righe.append((_i, _j)); prima.append(_a); dopo.append(_b)
                     st.session_state["_punti_prima"] = {"righe": righe, "punti": prima}
                     _applica_punti_a_blocchi(righe, dopo)
@@ -5889,24 +5988,32 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         _mostra_errore_pdf(_err_rc, "questa verifica")
                         return False
                     for _kk in list(st.session_state.keys()):
-                        if _kk.startswith(("pt_es_", "rc_editor_")) or re.match(r"^item_pt_\d+_\d+$", _kk):
+                        if _kk.startswith(("pt_es_", "pt_rq_", "rc_editor_")) or re.match(r"^item_pt_\d+_\d+$", _kk):
                             del st.session_state[_kk]
                     st.session_state.pop("recalibra_pts", None)
                     return True
+
+                def _ribilancia(nuovi_rq: list) -> list:
+                    """Porta il totale a punti_totali ridistribuendo in proporzione tra TUTTE le richieste."""
+                    piatti = bilancia_punti([_v for _r in nuovi_rq for _v in _r], punti_totali)
+                    _out, _k = [], 0
+                    for _r in nuovi_rq:
+                        _out.append(piatti[_k:_k + len(_r)])
+                        _k += len(_r)
+                    return _out
 
                 _bp1, _bp2 = st.columns(2, gap="small")
                 with _bp1:
                     if _quadra:
                         _applica = st.button("✅ Applica punteggi", key="rc_applica", use_container_width=True, type="primary",
-                                             disabled=(_nuovi_es == _tot_es))
+                                             disabled=(_nuovi_rq == _pt_sub))
                     else:
                         _applica = st.button("Ribilancia e applica", key="rc_ribilancia", use_container_width=True, type="primary")
                 with _bp2:
                     _annulla_pt = st.button("↩️ Annulla ultimi punteggi", key="rc_annulla", use_container_width=True,
                                             disabled=("_punti_prima" not in st.session_state))
                 if _applica:
-                    _finali_es = _nuovi_es if _quadra else bilancia_punti(_nuovi_es, punti_totali)
-                    if _applica_totali(_finali_es):
+                    if _applica_richieste(_nuovi_rq if _quadra else _ribilancia(_nuovi_rq)):
                         st.toast("✅ Punteggi applicati", icon="⚖️")
                         st.rerun()
                 if _annulla_pt:
@@ -5916,7 +6023,7 @@ html body .stApp details[data-testid="stExpander"] [data-testid="stNumberInput"]
                         _pdf_an, _err_an = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali, rileggi_blocchi=True)
                         if _pdf_an:
                             for _kk in list(st.session_state.keys()):
-                                if _kk.startswith(("pt_es_", "rc_editor_")) or re.match(r"^item_pt_\d+_\d+$", _kk):
+                                if _kk.startswith(("pt_es_", "pt_rq_", "rc_editor_")) or re.match(r"^item_pt_\d+_\d+$", _kk):
                                     del st.session_state[_kk]
                             st.session_state.pop("recalibra_pts", None)
                             st.toast("↩️ Punteggi precedenti ripristinati", icon="↩️")
