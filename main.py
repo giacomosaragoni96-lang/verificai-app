@@ -2911,16 +2911,16 @@ def _render_le_tue_verifiche():
             st.markdown(f'<div class="vg-h" style="margin-top:.2rem">Verifiche della classe {_esc(classe_filter)}</div>', unsafe_allow_html=True)
 
     # Filtri
-    col_vai, col_materia, col_ordine = st.columns([3, 2, 2])
+    col_vai, col_materia, col_ordine = st.container(key="mv_filtri").columns([3, 2, 2], gap="small")
     search_query = ""
 
     # Materie uniche dalle verifiche reali
     materie_real = ["Tutte"] + sorted(list(set([v.get("materia", "Sconosciuta") for v in verifiche if v.get("materia")])))
     with col_materia:
-        materia_filter = st.selectbox("Materia", materie_real)
+        materia_filter = st.selectbox("Materia", materie_real, label_visibility="collapsed", format_func=lambda x: "Tutte le materie" if x == "Tutte" else x)
 
     with col_ordine:
-        ordine_filter = st.selectbox("Ordina per", ["Più recenti", "Più vecchie", "Alfabetico", "Materia"])
+        ordine_filter = st.selectbox("Ordina per", ["Più recenti", "Più vecchie", "Alfabetico", "Materia"], label_visibility="collapsed", format_func=lambda x: "Ordina: " + x.lower())
 
     # Filtra le verifiche
     verifiche_filtrate = verifiche.copy()
@@ -2951,7 +2951,7 @@ def _render_le_tue_verifiche():
         _mappa_f = {v.get("id"): f"{(v.get('argomento') or 'Verifica senza titolo')} · {v.get('materia') or ''} · {_data_relativa(v.get('created_at'))}" for v in verifiche_filtrate}
         if st.session_state.get("mv_vai") not in _ids_f:
             st.session_state.pop("mv_vai", None)
-        st.selectbox("Vai a una verifica", _ids_f, index=None, key="mv_vai", placeholder="Scegli o cerca tra le tue verifiche…",
+        st.selectbox("Vai a una verifica", _ids_f, index=None, key="mv_vai", placeholder="Cerca una verifica…", label_visibility="collapsed",
                      format_func=lambda x: _mappa_f.get(x, ""))
 
     # Mostra verifiche reali — a blocchi di 8 ("Mostra altre"): con centinaia di verifiche
