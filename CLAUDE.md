@@ -166,7 +166,7 @@ Materia automatica: il menu «Materia» parte da `config.MATERIA_AUTO` («Rileva
 
 **Prova pubblica (dal 15 ottobre 2026):** `MONETIZZAZIONE_ATTIVA = True` (blocchi delle funzioni accesi: la prima verifica ha tutto, le successive no) ma
 `PREZZI_VISIBILI = False`: nessun prezzo, piano Pro, Lemon Squeezy o checkout nell'interfaccia; al posto dello sblocco a pagamento c'è lo SBLOCCO CON IL
-QUESTIONARIO: il questionario completo (domande chiave `questionario.OBBLIGATORIE`) rilascia un codice `VF-XXXX-XXXX` (`sblocco.py`, tabella `codici_sblocco`
+QUESTIONARIO: il questionario completo (domande chiave `questionario.OBBLIGATORIE`; dal novembre 2026 è breve, versione 3: 15 domande, 9 obbligatorie, circa 2 minuti, prezzi con tre domande «conveniente / caro / troppo caro» invece delle quattro di Van Westendorp; le risposte della versione lunga restano nel database e nel cruscotto) rilascia un codice `VF-XXXX-XXXX` (`sblocco.py`, tabella `codici_sblocco`
 in `migrazione_sblocco.sql`, NON collegato alle risposte) che l'utente inserisce nella pagina «Sblocca» (`ui_sblocco.py`, stage UPGRADE) e vale
 `VERIFICHE_PER_CODICE` verifiche complete (crediti letti da `inviti.riepilogo`, stesso meccanismo dei bonus degli inviti; `INVITI_ATTIVI = False`).
 INVITI TRA COLLEGHI ATTIVI (`INVITI_ATTIVI = True`): il questionario completo vale `VERIFICHE_PER_CODICE = 2` verifiche complete e ogni collega che si iscrive col link di invito e crea

@@ -32,7 +32,7 @@ def render_sblocco(T: dict, on_back, funzione, residui: int, on_riscatta, invito
         st.info(f"Ti serve {ETICHETTE_FUNZIONI[funzione]}? Fa parte delle funzioni che si sbloccano qui sotto.", icon="🔒")
     _c1, _c2, _c3 = st.columns([1, 6, 1])
     with _c2:
-        passi = [("1", "Compila il questionario completo", "Circa 4 minuti, anonimo: ci dici cosa ti è servito e cosa manca."),
+        passi = [("1", "Compila il questionario completo", "Circa 2 minuti, anonimo: ci dici cosa ti è servito e cosa manca."),
                  ("2", "Ricevi un codice", f"Alla fine compare un codice per {VERIFICHE_PER_CODICE} verifiche con tutte le funzioni."),
                  ("3", "Inseriscilo qui sotto", "Poi usi una verifica completa su quella che hai appena creato, su una a tua scelta in «Le mie verifiche» o su una nuova.")]
         for n, t, d in passi:

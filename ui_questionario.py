@@ -24,7 +24,7 @@ def render_questionario(T: dict, supabase_admin) -> None:
             f'<h1 style="font-size:1.9rem;font-weight:800;margin:1rem 0 .3rem;">Il tuo parere su VerificAI</h1>'
             f'<div style="color:{T["text2"]};line-height:1.6;margin-bottom:.8rem;">'
             f'Grazie per aver provato VerificAI! Rispondi con sincerità, non esistono risposte giuste o sbagliate: ci vogliono '
-            f'circa 4 minuti. <b>È anonimo</b>: non sappiamo chi sei (l\'email, in fondo, è facoltativa).</div>'
+            f'circa 2 minuti. <b>È anonimo</b>: non sappiamo chi sei (l\'email, in fondo, è facoltativa).</div>'
             f'<div style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:12px;padding:.8rem 1rem;margin-bottom:1.2rem;'
             f'color:#1E3A8A;line-height:1.5;">🎁 <b>Compilando le domande principali ricevi un codice</b>: inseriscilo in VerificAI e ottieni '
             f'<b>{VERIFICHE_PER_CODICE} verifiche con tutte le funzioni</b> (Fila B, BES/DSA, soluzioni, scheda di allenamento, logo, Word…). '
