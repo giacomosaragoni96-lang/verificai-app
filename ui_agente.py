@@ -1,16 +1,18 @@
 """
 ui_agente.py — l'interfaccia dell'agente (solo disegno, nessuna logica AI né accesso ai dati).
 
-`render_home` disegna la barra «Cosa ti serve?» con la conversazione, le domande con risposte rapide e il riepilogo di ciò che l'agente
-ha capito. Restituisce un EVENTO (o None) e main.py decide cosa fare:
+`render_home` disegna la barra «Cosa ti serve?» con la conversazione (bolle: le tue a destra, quelle dell'assistente a sinistra), le domande con
+risposte rapide e il riepilogo di ciò che l'agente ha capito. Restituisce un EVENTO (o None) e main.py decide cosa fare:
     {"tipo": "testo", "testo": str, "files": list}   il docente ha scritto (e magari allegato) qualcosa
-    {"tipo": "opzione", "testo": str}                ha scelto una risposta rapida o un esempio
+    {"tipo": "opzione", "testo": str}                ha scelto una risposta rapida
     {"tipo": "conferma"}                             «Crea verifica»
     {"tipo": "impagina_conferma"}                    «Impagina» (file allegati)
     {"tipo": "ritocco", "campo": "esercizi"|"eccellenza"|"punteggi", "delta": int, "valore": bool}   piccola correzione della scheda, senza AI
     {"tipo": "modulo"}                               «Modifica nel modulo»
-    {"tipo": "annulla"}                              ha cambiato idea
+    {"tipo": "annulla"}                              ha cambiato idea / nuova conversazione
     {"tipo": "vai", "dove": "impagina"|"libro"|"storico"}
+
+Regola di stile del progetto: i contenitori `blk_…` non condividono la radice del nome con i pulsanti che contengono; qui si usano classi esatte.
 """
 import html
 
@@ -19,52 +21,87 @@ import streamlit.components.v1 as components
 
 import agente
 
-_ESEMPI_ICONE = [":material/school:", ":material/history_edu:", ":material/replay:"]
-
 
 def _esc(x) -> str:
     return html.escape(str(x if x is not None else ""))
 
 
+def _css_pillole(T: dict) -> str:
+    """Risposte rapide e scorciatoie come pillole (valgono anche nella pagina finale)."""
+    acc = T["accent"]
+    return (
+        "<style>"
+        "html body .stApp [class*='st-key-blk_ag_pill'] button{border-radius:999px !important;min-height:2.3rem !important;padding:.15rem .95rem !important;"
+        f"border:1.5px solid {acc}55 !important;background:{T['card']} !important;box-shadow:none !important;transition:all .15s ease !important;}}"
+        f"html body .stApp [class*='st-key-blk_ag_pill'] button p{{color:{acc} !important;font-weight:650 !important;font-size:.86rem !important;}}"
+        f"html body .stApp [class*='st-key-blk_ag_pill'] button:hover{{background:{acc} !important;border-color:{acc} !important;transform:translateY(-1px);"
+        f"box-shadow:0 8px 18px {acc}38 !important;}}"
+        "html body .stApp [class*='st-key-blk_ag_pill'] button:hover p,html body .stApp [class*='st-key-blk_ag_pill'] button:hover span{color:#fff !important;}"
+        "</style>"
+    )
+
+
 def _css(T: dict) -> str:
     acc, acc2 = T["accent"], T.get("accent2", T["accent"])
+    f = "font-family:'DM Sans',sans-serif;"
     return (
         "<style>"
         ".st-key-blk_agente{max-width:46rem;margin:0 auto;}"
-        # intestazione con la scintilla che pulsa piano
-        ".ag-hero{text-align:center;margin:.2rem 0 1.1rem;font-family:'DM Sans',sans-serif;}"
-        f".ag-spark{{display:inline-flex;width:2.7rem;height:2.7rem;align-items:center;justify-content:center;border-radius:14px;margin-bottom:.55rem;"
-        f"background:linear-gradient(135deg,{acc},{acc2});box-shadow:0 10px 26px {acc}55;animation:ag-pulsa 3.2s ease-in-out infinite;}}"
-        "@keyframes ag-pulsa{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}"
-        f".ag-hero b{{display:block;font-size:1.7rem;font-weight:800;letter-spacing:-.025em;color:{T['text']};line-height:1.15;}}"
-        f".ag-hero span.ag-s{{display:block;font-size:.9rem;color:{T['text2']};margin-top:.4rem;line-height:1.45;}}"
-        # la casella di scrittura: bordo che si accende quando ci si scrive
-        f".st-key-blk_agente [data-testid='stChatInput']{{border-radius:18px;border:1.5px solid {acc}40;box-shadow:0 10px 28px {acc}14;"
-        f"background:{T['card']};transition:border-color .18s ease,box-shadow .18s ease;}}"
-        f".st-key-blk_agente [data-testid='stChatInput']:focus-within{{border-color:{acc};box-shadow:0 0 0 4px {acc}22,0 12px 32px {acc}26;}}"
-        # messaggi
-        f".st-key-blk_agente [data-testid='stChatMessage']{{border-radius:16px;background:{T['card']};border:1px solid {T['border']};"
-        "animation:ag-entra .28s ease both;}"
-        "@keyframes ag-entra{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}"
-        # esempi come carte
-        f".st-key-blk_ag_esempi button{{min-height:4.4rem;text-align:left;border-radius:16px;border:1px solid {T['border']};background:{T['card']};"
-        "transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;}"
-        f".st-key-blk_ag_esempi button:hover{{transform:translateY(-2px);border-color:{acc};box-shadow:0 10px 22px {acc}1f;}}"
-        ".st-key-blk_ag_esempi button p{font-size:.84rem;line-height:1.35;}"
-        # scheda di riepilogo
-        f".ag-card{{margin:.2rem 0 .7rem;padding:1rem 1.1rem;border-radius:16px;background:linear-gradient(160deg,{T['card']} 0%,{acc}10 100%);"
-        f"border:1px solid {acc}40;box-shadow:0 8px 22px {acc}14;font-family:'DM Sans',sans-serif;animation:ag-entra .3s ease both;}}"
-        f".ag-card .ag-arg{{font-size:1.08rem;font-weight:800;color:{T['text']};line-height:1.3;}}"
-        f".ag-card .ag-ind{{margin-top:.25rem;font-size:.86rem;color:{T['text2']};line-height:1.45;white-space:pre-line;}}"
-        ".ag-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.7rem;}"
-        f".ag-chip{{font-size:.76rem;padding:.22rem .65rem;border-radius:999px;background:{acc}18;border:1px solid {acc}33;color:{T['text']};}}"
-        f".ag-chip i{{font-style:normal;color:{T['text2']};margin-right:.3rem;}}"
-        f".ag-nota{{margin-top:.7rem;font-size:.78rem;line-height:1.5;color:{T['text2']};}}"
+        # ── titolo ────────────────────────────────────────────────────────────
+        f".ag-hero{{text-align:center;margin:1.4rem 0 1.5rem;{f}}}"
+        f".ag-hero b{{display:block;font-size:2.5rem;font-weight:800;letter-spacing:-.04em;line-height:1.08;color:{T['text']};}}"
+        f".ag-hero b em{{font-style:normal;background:linear-gradient(100deg,{acc},{acc2});-webkit-background-clip:text;background-clip:text;color:transparent;}}"
+        f".ag-hero span{{display:block;margin-top:.7rem;font-size:1.02rem;line-height:1.5;color:{T['text2']};}}"
+        f".ag-cap{{text-align:center;margin:.85rem 0 0;font-size:.78rem;line-height:1.7;color:{T['muted']};{f}}}"
+        f".ag-cap i{{font-style:normal;margin:0 .45rem;opacity:.5;}}"
+        # ── casella di scrittura ──────────────────────────────────────────────
+        f"html body .stApp .st-key-blk_agente [data-testid='stChatInput']{{background:{T['card']} !important;border:1.5px solid {T['border']} !important;"
+        "border-radius:22px !important;padding:.3rem .35rem !important;box-shadow:0 18px 44px rgba(15,23,42,.08),0 2px 6px rgba(15,23,42,.04) !important;"
+        "transition:border-color .2s ease,box-shadow .2s ease !important;}"
+        f"html body .stApp .st-key-blk_agente [data-testid='stChatInput']:focus-within{{border-color:{acc} !important;"
+        f"box-shadow:0 0 0 4px {acc}22,0 20px 48px {acc}2b !important;}}"
+        "html body .stApp .st-key-blk_agente [data-testid='stChatInput'] > div,html body .stApp .st-key-blk_agente [data-testid='stChatInput'] > div > div,"
+        "html body .stApp .st-key-blk_agente [data-testid='stChatInput'] textarea{background:transparent !important;border:none !important;box-shadow:none !important;}"
+        f"html body .stApp .st-key-blk_agente [data-testid='stChatInput'] textarea{{font-size:1.03rem !important;color:{T['text']} !important;}}"
+        f"html body .stApp .st-key-blk_agente [data-testid='stChatInput'] textarea::placeholder{{color:{T['muted']} !important;opacity:1;}}"
+        f"html body .stApp .st-key-blk_agente [data-testid='stChatInputSubmitButton']{{background:linear-gradient(135deg,#2563EB,#1D4ED8) !important;"
+        f"border-radius:14px !important;color:#fff !important;box-shadow:0 8px 18px #2563EB55 !important;transition:transform .15s ease !important;}}"
+        "html body .stApp .st-key-blk_agente [data-testid='stChatInputSubmitButton']:hover{transform:scale(1.06);}"
+        f"html body .stApp .st-key-blk_agente [data-testid='stChatInputSubmitButton']:disabled{{background:{T['border']} !important;box-shadow:none !important;}}"
+        "html body .stApp .st-key-blk_agente [data-testid='stChatInputSubmitButton'] svg{fill:#fff !important;color:#fff !important;}"
+        # ── conversazione: bolle ──────────────────────────────────────────────
+        f".ag-top{{display:flex;align-items:center;justify-content:space-between;margin:.2rem 0 .5rem;{f}font-size:.72rem;font-weight:800;letter-spacing:.09em;"
+        f"text-transform:uppercase;color:{T['muted']};}}"
+        f".ag-row{{display:flex;gap:.6rem;margin:.6rem 0;align-items:flex-end;animation:ag-entra .3s ease both;{f}}}"
+        ".ag-row.u{justify-content:flex-end;}"
+        f".ag-av{{flex:0 0 2.1rem;width:2.1rem;height:2.1rem;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;"
+        f"font-weight:800;font-size:.72rem;letter-spacing:-.02em;background:linear-gradient(135deg,#2563EB,#1D4ED8);box-shadow:0 6px 14px #2563EB44;}}"
+        f".ag-bub{{max-width:80%;padding:.72rem 1.05rem;border-radius:20px;font-size:.96rem;line-height:1.5;word-wrap:break-word;}}"
+        f".ag-row.u .ag-bub{{background:linear-gradient(135deg,#2563EB,#1D4ED8);color:#fff;border-bottom-right-radius:6px;box-shadow:0 10px 24px #2563EB40;}}"
+        f".ag-row.b .ag-bub{{background:{T['card']};color:{T['text']};border:1px solid {T['border']};border-bottom-left-radius:6px;box-shadow:0 6px 18px rgba(15,23,42,.06);}}"
+        ".ag-file{display:inline-flex;align-items:center;gap:.3rem;margin:.4rem .35rem 0 0;padding:.14rem .6rem;border-radius:999px;background:rgba(255,255,255,.22);font-size:.76rem;}"
+        f".ag-dots{{display:inline-flex;gap:.28rem;padding:.2rem 0;}}"
+        f".ag-dots i{{width:.45rem;height:.45rem;border-radius:50%;background:{T['muted']};animation:ag-punti 1.2s ease-in-out infinite;}}"
+        ".ag-dots i:nth-child(2){animation-delay:.18s;}.ag-dots i:nth-child(3){animation-delay:.36s;}"
+        "@keyframes ag-punti{0%,60%,100%{opacity:.25;transform:translateY(0);}30%{opacity:1;transform:translateY(-3px);}}"
+        "@keyframes ag-entra{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}"
+        # ── scheda «Ho capito» ────────────────────────────────────────────────
+        f".ag-card{{margin:.5rem 0 .8rem 2.7rem;padding:1.05rem 1.2rem 1.1rem;border-radius:20px;background:{T['card']};border:1px solid {acc}40;"
+        f"box-shadow:0 14px 34px {acc}18;{f}animation:ag-entra .3s ease both;position:relative;overflow:hidden;}}"
+        f".ag-card::before{{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,{acc},{acc2});}}"
+        f".ag-eye{{font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:{acc};margin-bottom:.35rem;}}"
+        f".ag-card .ag-arg{{font-size:1.15rem;font-weight:800;letter-spacing:-.015em;color:{T['text']};line-height:1.3;}}"
+        f".ag-card .ag-ind{{margin-top:.3rem;font-size:.88rem;color:{T['text2']};line-height:1.5;white-space:pre-line;}}"
+        ".ag-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.8rem;}"
+        f".ag-chip{{font-size:.77rem;padding:.26rem .7rem;border-radius:999px;background:{acc}14;border:1px solid {acc}2e;color:{T['text']};}}"
+        f".ag-chip i{{font-style:normal;color:{T['text2']};margin-right:.35rem;}}"
+        f".ag-nota{{margin-top:.8rem;padding-top:.7rem;border-top:1px dashed {T['border']};font-size:.79rem;line-height:1.55;color:{T['text2']};}}"
         f".ag-nota b{{color:{T['text']};}}"
-        f".ag-q{{font-size:1rem;font-weight:700;color:{T['text']};margin:.1rem 0 .5rem;font-family:'DM Sans',sans-serif;}}"
-        f".ag-rit{{font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:{T['muted']};margin:.1rem 0 .25rem;}}"
-        "@media (prefers-reduced-motion: reduce){.ag-spark,.st-key-blk_agente [data-testid='stChatMessage'],.ag-card{animation:none !important;}}"
-        "</style>"
+        f".ag-rit{{{f}font-size:.7rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:{T['muted']};margin:.2rem 0 .3rem;}}"
+        "html body .stApp .st-key-blk_ag_azioni{margin-left:2.7rem;}"
+        "@media (max-width:640px){.ag-hero b{font-size:2rem;}.ag-card,html body .stApp .st-key-blk_ag_azioni{margin-left:0;}.ag-bub{max-width:90%;}}"
+        "@media (prefers-reduced-motion: reduce){.ag-row,.ag-card,.ag-dots i{animation:none !important;}}"
+        "</style>" + _css_pillole(T)
     )
 
 
@@ -72,7 +109,19 @@ def _chip(etichetta: str, valore: str) -> str:
     return f'<span class="ag-chip"><i>{_esc(etichetta)}</i>{_esc(valore)}</span>'
 
 
-_SCINTILLA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>'
+def bolla_utente(testo: str, allegati: list | None = None) -> str:
+    """La tua richiesta: bolla a destra. (main.py la mostra subito, prima della risposta.)"""
+    files = "".join(f'<span class="ag-file">📎 {_esc(f)}</span>' for f in allegati or [])
+    return f'<div class="ag-row u"><div class="ag-bub">{_esc(testo).replace(chr(10), "<br>")}{("<br>" + files) if files else ""}</div></div>'
+
+
+def bolla_assistente(testo: str) -> str:
+    return f'<div class="ag-row b"><div class="ag-av">AI</div><div class="ag-bub">{_esc(testo).replace(chr(10), "<br>")}</div></div>'
+
+
+def bolla_scrive() -> str:
+    """I tre puntini mentre l'assistente sta pensando."""
+    return '<div class="ag-row b"><div class="ag-av">AI</div><div class="ag-bub"><span class="ag-dots"><i></i><i></i><i></i></span></div></div>'
 
 
 def card_riepilogo(T: dict, dec: dict, default_ecc: bool = True) -> str:
@@ -83,8 +132,8 @@ def card_riepilogo(T: dict, dec: dict, default_ecc: bool = True) -> str:
         chips += _chip("Poi preparo", ", ".join(agente.VERSIONI.get(k, k) for k in dec["versioni"]))
     ass = "".join(f"<div>• {_esc(a)}</div>" for a in dec.get("assunzioni") or [])
     nota = f'<div class="ag-nota"><b>Ho assunto:</b>{ass}</div>' if ass else ""
-    resto = '<div class="ag-nota">Quello che non ho indicato lo imposto come al solito: lo puoi cambiare qui sotto o in «Modifica nel modulo».</div>'
-    return (f'<div class="ag-card"><div class="ag-arg">{_esc(par.get("argomento") or "Verifica dagli appunti caricati")}</div>'
+    resto = '<div class="ag-nota">Quello che non ho indicato lo imposto come al solito: puoi ritoccarlo qui sotto o in «Modifica nel modulo».</div>'
+    return (f'<div class="ag-card"><div class="ag-eye">Ho capito</div><div class="ag-arg">{_esc(par.get("argomento") or "Verifica dagli appunti caricati")}</div>'
             + (f'<div class="ag-ind">{_esc(par["indicazioni"])}</div>' if par.get("indicazioni") else "")
             + f'<div class="ag-chips">{chips}</div>{nota}{resto}</div>')
 
@@ -98,34 +147,41 @@ def card_impagina(T: dict, dec: dict, nomi: list) -> str:
     if par.get("scuola"):
         chips += _chip("Scuola", par["scuola"])
     richiesta = dec.get("modifica") or par.get("indicazioni") or ""
-    return ('<div class="ag-card"><div class="ag-arg">Impagino la tua verifica</div>'
+    return ('<div class="ag-card"><div class="ag-eye">Ho capito</div><div class="ag-arg">Impagino la tua verifica</div>'
             + (f'<div class="ag-ind">Poi: {_esc(richiesta)}</div>' if richiesta else '<div class="ag-ind">Gli esercizi restano identici: li rimetto in pagina con intestazione e punteggi.</div>')
             + f'<div class="ag-chips">{chips}</div>'
             '<div class="ag-nota">Leggo le pagine, ricontrollo i numeri e ti mostro la verifica pronta: se qualcosa non è uguale, lo correggi a parole.</div></div>')
 
 
-def opzioni_rapide(opzioni: list, prefisso: str) -> str | None:
-    """Pulsanti con le risposte rapide a una domanda: restituisce il testo di quello premuto."""
+def opzioni_rapide(opzioni: list, prefisso: str, T: dict | None = None) -> str | None:
+    """Risposte rapide a una domanda, come pillole: restituisce il testo di quella premuta."""
     if not opzioni:
         return None
+    if T:
+        st.markdown(_css_pillole(T), unsafe_allow_html=True)
     scelta = None
-    colonne = st.columns(min(len(opzioni), 4), gap="small")
-    for i, (col, o) in enumerate(zip(colonne, opzioni)):
-        if col.button(o, key=f"{prefisso}_{i}", use_container_width=True, type="secondary"):
-            scelta = o
+    with st.container(key=f"blk_ag_pill_{prefisso}"):
+        colonne = st.columns(min(len(opzioni), 4), gap="small")
+        for i, (col, o) in enumerate(zip(colonne, opzioni)):
+            if col.button(o, key=f"{prefisso}_{i}", use_container_width=True, type="secondary"):
+                scelta = o
     return scelta
 
 
-def suggerimenti_rapidi(items: list, prefisso: str) -> str | None:
+def suggerimenti_rapidi(items: list, prefisso: str, T: dict | None = None) -> str | None:
     """Scorciatoie sotto la casella della pagina finale: [(etichetta, testo)] → testo di quella premuta (nessuna attesa: le risolve il codice)."""
     if not items:
         return None
+    if T:
+        st.markdown(_css_pillole(T), unsafe_allow_html=True)
     scelta = None
-    st.markdown('<div class="ag-rit">Con un tocco</div>', unsafe_allow_html=True)
-    colonne = st.columns(len(items), gap="small")
-    for i, (col, (et, testo)) in enumerate(zip(colonne, items)):
-        if col.button(et, key=f"{prefisso}_{i}", use_container_width=True, type="secondary", icon=":material/bolt:"):
-            scelta = testo
+    st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-size:.7rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;'
+                f'color:{(T or {}).get("muted", "#94A3B8")};margin:.2rem 0 .3rem;">Con un tocco</div>', unsafe_allow_html=True)
+    with st.container(key=f"blk_ag_pill_{prefisso}"):
+        colonne = st.columns(len(items), gap="small")
+        for i, (col, (et, testo)) in enumerate(zip(colonne, items)):
+            if col.button(et, key=f"{prefisso}_{i}", use_container_width=True, type="secondary", icon=":material/bolt:"):
+                scelta = testo
     return scelta
 
 
@@ -133,7 +189,7 @@ def _ritocchi(dec: dict):
     """Piccole correzioni alla scheda senza chiamare l'AI: numero di esercizi, esercizio per l'eccellenza, tabella dei punti."""
     par = dec.get("crea") or {}
     st.markdown('<div class="ag-rit">Ritocca al volo</div>', unsafe_allow_html=True)
-    c1, c2, c3, c4 = st.columns([1.5, 1, 1, 1.4], gap="small", vertical_alignment="center")
+    c1, c2, c3, c4 = st.columns([1.5, 1, 1, 1.5], gap="small", vertical_alignment="center")
     n = par.get("num_esercizi")
     c1.caption(f"Esercizi: **{n if n else 'standard'}**")
     evento = None
@@ -154,82 +210,79 @@ def _ritocchi(dec: dict):
     return evento
 
 
-def render_home(T: dict, chat: list, esempi: list, blocco: str | None, bloccate: list, allegati: list | None = None, js_microfono: str = "") -> dict | None:
+def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegati: list | None = None, js_microfono: str = "") -> dict | None:
     """Barra + conversazione della schermata iniziale. `blocco` = testo se non si può creare ora (limite mensile); `bloccate` = versioni non disponibili;
     `allegati` = nomi dei file allegati nella barra; `js_microfono` = script della dettatura (lo prepara main.py)."""
     evento = None
     with st.container(key="blk_agente"):
         st.markdown(_css(T), unsafe_allow_html=True)
         if not chat:
-            st.markdown(f'<div class="ag-hero"><div class="ag-spark">{_SCINTILLA}</div><b>Cosa ti serve?</b>'
-                        '<span class="ag-s">Scrivilo come lo diresti a un collega: argomento, classe, cosa vuoi in più.<br>'
-                        'Puoi anche trascinare appunti o una verifica da sistemare. Se manca qualcosa te lo chiedo.</span></div>', unsafe_allow_html=True)
+            st.markdown('<div class="ag-hero"><b>Cosa ti <em>serve</em>?</b>'
+                        '<span>Descrivi la verifica come la diresti a un collega.<br>Al resto penso io.</span></div>', unsafe_allow_html=True)
+        else:
+            c_a, c_b = st.columns([3, 1.4], vertical_alignment="center")
+            c_a.markdown('<div class="ag-top">Conversazione</div>', unsafe_allow_html=True)
+            if c_b.button("Nuova richiesta", key="ag_nuova", type="tertiary", icon=":material/restart_alt:", use_container_width=True):
+                evento = {"tipo": "annulla"}
         for m in chat:
             if m.get("stage", "home") != "home":
                 continue
             if m["ruolo"] == "utente":
-                with st.chat_message("user"):
-                    st.markdown(_esc(m["testo"]).replace("\n", "  \n"))
-                    for f in m.get("allegati") or []:
-                        st.caption(f"📎 {f}")
+                st.markdown(bolla_utente(m["testo"], m.get("allegati")), unsafe_allow_html=True)
             elif m.get("testo"):
-                with st.chat_message("assistant", avatar=":material/auto_awesome:"):
-                    st.markdown(_esc(m["testo"]))
+                st.markdown(bolla_assistente(m["testo"]), unsafe_allow_html=True)
 
         ultimo = chat[-1] if chat and chat[-1]["ruolo"] == "agente" else None
         dec = (ultimo or {}).get("decisione") or {}
         az = dec.get("azione")
         if az == "domanda":
-            st.markdown(f'<div class="ag-q">{_esc(dec.get("domanda"))}</div>', unsafe_allow_html=True)
-            sc = opzioni_rapide(dec.get("opzioni") or [], "ag_opt")
+            st.markdown(bolla_assistente(dec.get("domanda") or ""), unsafe_allow_html=True)
+            with st.container(key="blk_ag_azioni"):
+                sc = opzioni_rapide(dec.get("opzioni") or [], "ag_opt")
             if sc:
                 evento = {"tipo": "opzione", "testo": sc}
         elif az == "crea":
             st.markdown(card_riepilogo(T, dec), unsafe_allow_html=True)
-            nb = [k for k in dec.get("versioni") or [] if k in bloccate]
-            if nb:
-                st.caption("Non posso ancora preparare: " + ", ".join(agente.VERSIONI.get(k, k) for k in nb) + " (funzioni complete da sbloccare).")
-            if blocco:
-                st.warning(blocco)
-            rit = _ritocchi(dec)
-            if rit:
-                evento = rit
-            c1, c2, c3 = st.columns([3, 2, 1.4], gap="small")
-            if c1.button("Crea verifica", key="ag_crea", type="primary", icon=":material/auto_awesome:", use_container_width=True, disabled=bool(blocco)):
-                evento = {"tipo": "conferma"}
-            if c2.button("Modifica nel modulo", key="ag_modulo", type="secondary", icon=":material/tune:", use_container_width=True):
-                evento = {"tipo": "modulo"}
-            if c3.button("Annulla", key="ag_annulla", type="tertiary", use_container_width=True):
-                evento = {"tipo": "annulla"}
+            with st.container(key="blk_ag_azioni"):
+                nb = [k for k in dec.get("versioni") or [] if k in bloccate]
+                if nb:
+                    st.caption("Non posso ancora preparare: " + ", ".join(agente.VERSIONI.get(k, k) for k in nb) + " (funzioni complete da sbloccare).")
+                if blocco:
+                    st.warning(blocco)
+                rit = _ritocchi(dec)
+                if rit:
+                    evento = rit
+                c1, c2 = st.columns([3, 2], gap="small")
+                if c1.button("Crea verifica", key="ag_crea", type="primary", icon=":material/auto_awesome:", use_container_width=True, disabled=bool(blocco)):
+                    evento = {"tipo": "conferma"}
+                if c2.button("Modifica nel modulo", key="ag_modulo", type="secondary", icon=":material/tune:", use_container_width=True):
+                    evento = {"tipo": "modulo"}
+                st.caption("Vuoi cambiare altro? Scrivilo qui sotto («meglio 6 esercizi», «aggiungi la fila B»…).")
         elif az == "impagina" and allegati:
             st.markdown(card_impagina(T, dec, allegati), unsafe_allow_html=True)
-            if blocco:
-                st.warning(blocco)
-            c1, c2 = st.columns([3, 1.4], gap="small")
-            if c1.button("Impagina", key="ag_impagina", type="primary", icon=":material/auto_fix_high:", use_container_width=True, disabled=bool(blocco)):
-                evento = {"tipo": "impagina_conferma"}
-            if c2.button("Annulla", key="ag_annulla_imp", type="tertiary", use_container_width=True):
-                evento = {"tipo": "annulla"}
+            with st.container(key="blk_ag_azioni"):
+                if blocco:
+                    st.warning(blocco)
+                c1, c2 = st.columns([3, 2], gap="small")
+                if c1.button("Impagina", key="ag_impagina", type="primary", icon=":material/auto_fix_high:", use_container_width=True, disabled=bool(blocco)):
+                    evento = {"tipo": "impagina_conferma"}
+                if c2.button("Annulla", key="ag_annulla_imp", type="secondary", use_container_width=True):
+                    evento = {"tipo": "annulla"}
         elif az in ("impagina", "libro", "storico"):
             etichetta = {"impagina": "Impagina la mia verifica", "libro": "Apri il modulo e aggiungi la foto", "storico": "Apri «Le mie verifiche»"}[az]
             icona = {"impagina": ":material/upload_file:", "libro": ":material/photo_camera:", "storico": ":material/folder_open:"}[az]
-            if st.button(etichetta, key="ag_vai", type="primary", icon=icona):
-                evento = {"tipo": "vai", "dove": az}
-
-        if not chat and esempi:
-            with st.container(key="blk_ag_esempi"):
-                cols = st.columns(len(esempi), gap="small")
-                for i, (col, e) in enumerate(zip(cols, esempi)):
-                    if col.button(e, key=f"ag_es_{i}", use_container_width=True, type="secondary", icon=_ESEMPI_ICONE[i % len(_ESEMPI_ICONE)]):
-                        evento = {"tipo": "opzione", "testo": e}
-        elif az == "crea":
-            st.caption("Vuoi cambiare altro? Scrivilo qui sotto («meglio 6 esercizi», «aggiungi la fila B»…).")
+            with st.container(key="blk_ag_azioni"):
+                if st.button(etichetta, key="ag_vai", type="primary", icon=icona):
+                    evento = {"tipo": "vai", "dove": az}
 
         if js_microfono:
             with st.container(key="dettatura_ag"):
                 components.html(js_microfono, height=0)
-        invio = st.chat_input("Scrivi o detta cosa ti serve… (puoi allegare appunti o una verifica)", key="ag_in", accept_file="multiple",
+        invio = st.chat_input("Scrivi o detta cosa ti serve…", key="ag_in", accept_file="multiple",
                               file_type=["pdf", "png", "jpg", "jpeg", "webp", "docx"])
+        if not chat:
+            st.markdown('<div class="ag-cap">Argomento e classe<i>·</i>Fila B, soluzioni, versione per DSA<i>·</i>Appunti, foto o una verifica da sistemare</div>',
+                        unsafe_allow_html=True)
         if invio and evento is None:
             if isinstance(invio, str):
                 testo, files = invio.strip(), []
