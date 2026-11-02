@@ -12,7 +12,7 @@ import json
 import logging
 import re
 
-from config import AGENTE_MAX_DOMANDE, MATERIE, SCUOLE
+from config import AGENTE_MAX_DOMANDE, DURATA_DEFAULT, DURATE, MATERIE, SCUOLE
 from prompts import prompt_agente
 
 logger = logging.getLogger(__name__)
@@ -441,6 +441,11 @@ def riepilogo(par: dict, default_eccellenza: bool = True) -> list:
     if par.get("uso_file"):
         out.append(("Allegato", "esercizi nuovi dagli appunti" if par["uso_file"] == "spunto" else "rifatta con dati nuovi"))
     return out
+
+
+def totale_predefinito(par: dict) -> int:
+    """Quanti esercizi avrà la verifica se il docente non ha detto un numero: quelli della durata standard più, salvo rifiuto, quello per l'eccellenza."""
+    return DURATE[DURATA_DEFAULT]["num_esercizi"] + (0 if par.get("eccellenza") is False else 1)
 
 
 def seleziona_esercizi(totale: int | None, eccellenza: bool) -> int | None:
