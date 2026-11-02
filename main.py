@@ -1515,6 +1515,9 @@ def _guida_benvenuto(dove: str, slot) -> None:
                 _riquadro(f"{_eti} · Passo 2 di 3", "Controlla il riepilogo",
                           "Ritocca ciò che non va, poi premi <b>«Crea verifica»</b>." if _az_g == "crea" else "Controlla i file, poi premi <b>«Impagina»</b>.",
                           ["agente_crea"], passi=(2, 3))
+            elif _az_g == "dettagli":
+                _riquadro(f"{_eti} · Passo 1 di 3", "Più sei preciso, meglio viene",
+                          "Aggiungi esercizi, punti, richieste o cosa includere nella barra, oppure premi <b>«Vai così»</b>.", ["agente"], passi=(1, 3))
             elif _az_g == "domanda":
                 _riquadro(f"{_eti} · Passo 1 di 3", "Ti chiedo una cosa sola",
                           "Tocca una risposta, oppure scrivila nella barra.", ["agente"], passi=(1, 3))
@@ -4042,7 +4045,7 @@ def _ag_contesto(stage: str) -> dict:
                            "classe": ss.get("_classe_sel"), "esercizi": [b.get("title", "") for b in (ss.get("review_blocks") or [])],
                            "pronte": pronte, "punti_totali": gp.get("punti_totali") if gp.get("mostra_punteggi", True) else None}
     ultimo = next((m for m in reversed(ss.get("_ag_chat") or []) if m["ruolo"] == "agente"), None)       # l'ultima proposta dell'agente
-    if ultimo and (ultimo.get("decisione") or {}).get("azione") == "crea" and ultimo.get("stage") == stage:
+    if ultimo and (ultimo.get("decisione") or {}).get("azione") in ("crea", "dettagli") and ultimo.get("stage") == stage:
         d = ultimo["decisione"]
         ctx["bozza"] = {"crea": {k: v for k, v in d["crea"].items() if v not in (None, "")}, "versioni": d.get("versioni") or []}
     return ctx
@@ -4097,6 +4100,12 @@ def _ag_ricevi(testo: str, files: list, stage: str, nav: bool = False) -> dict |
         chat.append({"ruolo": "agente", "stage": stage, "testo": "Per ora hai fatto molte richieste: usa il modulo qui sotto, oppure riprova più tardi.",
                      "decisione": {"azione": "aiuto"}})
         return None
+    _ult_ag = next((m for m in reversed(chat) if m["ruolo"] == "agente" and m.get("stage") == stage), None)
+    _dec_ult = (_ult_ag or {}).get("decisione") or {}
+    if stage == "home" and not nav and testo.strip() == agente.VAI_COSI and _dec_ult.get("azione") == "dettagli" and _dec_ult.get("_pendente"):
+        pend = _dec_ult["_pendente"]               # «Vai così»: si procede con la richiesta di prima, senza altre domande e senza chiamare l'AI
+        chat.append({"ruolo": "agente", "stage": stage, "testo": pend.get("messaggio") or "", "decisione": pend})
+        return pend
     nomi, avviso = _ag_allega(files)
     chat.append({"ruolo": "utente", "stage": stage, "testo": testo or "Uso i file che ho allegato.", "allegati": nomi})
     ctx = _ag_contesto(stage)
@@ -4110,6 +4119,11 @@ def _ag_ricevi(testo: str, files: list, stage: str, nav: bool = False) -> dict |
             with _attesa("pagina", "Sto capendo cosa ti serve", ["Leggo la richiesta", "Guardo le tue classi e le tue abitudini", "Preparo il riepilogo"], durata_passo=3):
                 dec = agente.interpreta(crea_modello(_mid or modello_id).per("agente"), chat, ctx, stage, _ag_domande_fatte(stage), nav)
         _registra_evento("agente")
+    # Richiesta scarna (solo l'argomento): prima di creare, un consiglio su cosa dire per avere la verifica che si immagina (una volta per conversazione)
+    if (stage == "home" and not nav and not nomi and dec.get("azione") == "crea"
+            and not any((m.get("decisione") or {}).get("azione") == "dettagli" for m in chat)
+            and agente.pochi_dettagli([m["testo"] for m in chat if m["ruolo"] == "utente" and m.get("stage") == stage])):
+        dec = {**dec, "azione": "dettagli", "messaggio": agente.messaggio_dettagli(), "_pendente": dec}
     msg = (dec.get("messaggio") or "") + ((" " + avviso) if avviso else "")
     chat.append({"ruolo": "agente", "stage": stage, "testo": msg.strip(), "decisione": dec})
     return dec

@@ -114,6 +114,34 @@ def contesto_testo(ctx: dict) -> str:
     return "\n".join(r)
 
 
+# ── Più dettagli, verifica migliore ───────────────────────────────────────────
+VAI_COSI = "Vai così"
+# Che cosa vale come «dettaglio»: numeri di esercizi, punti o richieste, cosa includere o evitare, tipo di esercizi, livello. Le versioni da preparare
+# (Fila B, soluzioni, DSA) e la classe NON contano: dicono cosa fare dopo, non com'è fatta la verifica.
+_RE_DETTAGLI = [re.compile(p) for p in (
+    r"\b\d+\s*(?:esercizi|esercizio|punti|pt|richieste|sottopunti|domande|quesiti|problemi)\b",
+    r"\b(?:esercizi|punti|richieste|sottopunti|domande|quesiti)\s*[:=]?\s*\d+\b",
+    r"\b(?:includ|esclud|evit|senza|solo|soltanto|anche|almeno|niente)\w*\b",
+    r"\b(?:grafic|problem|vero|falso|scelta multipla|risposta|eccellenza|sottoargoment|difficolt|facil|livello|tipo di|tipologi)\w*\b",
+)]
+
+
+def pochi_dettagli(testi: list) -> bool:
+    """True se la richiesta è scarna: solo l'argomento (e magari la classe), senza numeri di esercizi o punti, cose da includere o evitare, livello.
+    Con una richiesta così l'esito spesso non è quello che il docente immagina: l'agente lo avverte prima di partire."""
+    t = " ".join(x for x in testi if x and x.strip() != VAI_COSI).lower()
+    if len(t) >= 170:
+        return False
+    return not any(rx.search(t) for rx in _RE_DETTAGLI)
+
+
+def messaggio_dettagli() -> str:
+    """Il consiglio dell'assistente prima di creare (testo semplice, serve anche alla storia della conversazione)."""
+    return ("Prima di partire: più sei preciso, più la verifica esce come la immagini. Se ce l'hai in mente, dimmi quanti esercizi e quanti punti, "
+            "quante richieste per esercizio, cosa includere o evitare, se vuoi grafici, problemi o scelta multipla, il livello della classe. "
+            "Scrivilo qui sotto, oppure premi «Vai così» e scelgo io.")
+
+
 def conversazione_testo(chat: list, stage: str, ultimi: int = 8) -> str:
     righe = []
     for m in [m for m in chat if m.get("stage", stage) == stage][-ultimi:]:

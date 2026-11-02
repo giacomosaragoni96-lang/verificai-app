@@ -115,6 +115,10 @@ def _css(T: dict) -> str:
         f".ag-card .ag-arg{{font-size:1.15rem;font-weight:800;letter-spacing:-.015em;color:{T['text']};line-height:1.3;}}"
         f".ag-card .ag-ind{{margin-top:.3rem;font-size:.88rem;color:{T['text2']};line-height:1.5;white-space:pre-line;}}"
         ".ag-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.8rem;}"
+        ".ag-det{list-style:none;margin:.7rem 0 .6rem;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem .9rem;}"
+        f".ag-det li{{display:flex;gap:.55rem;align-items:flex-start;font-size:.88rem;line-height:1.35;color:{T['text']};}}"
+        ".ag-det li span{flex:0 0 1.5rem;text-align:center;font-size:1.05rem;line-height:1.3;}"
+        f".ag-det li b{{display:block;font-weight:700;}}.ag-det li em{{display:block;font-style:normal;font-size:.8rem;color:{T['text2']};}}"
         f".ag-chip{{font-size:.77rem;padding:.26rem .7rem;border-radius:999px;background:{acc}14;border:1px solid {acc}2e;color:{T['text']};}}"
         f".ag-chip i{{font-style:normal;color:{T['text2']};margin-right:.35rem;}}"
         f".ag-nota{{margin-top:.8rem;padding-top:.7rem;border-top:1px dashed {T['border']};font-size:.79rem;line-height:1.55;color:{T['text2']};}}"
@@ -142,7 +146,7 @@ def _css(T: dict) -> str:
         f"html body .stApp .st-key-blk_ag_rit button[data-testid^='stNumberInputStep']:hover{{background:{acc}18 !important;color:{acc} !important;}}"
         "html body .stApp .st-key-blk_ag_rit [data-testid='stToggle'] label{align-items:center;gap:.5rem;}"
         f"html body .stApp .st-key-blk_ag_rit [data-testid='stToggle'] p{{font-weight:650;font-size:.92rem;color:{T['text']};}}"
-        "@media (max-width:640px){.ag-hero{margin:.1rem 0 .9rem;}.ag-hero b{font-size:1.6rem;}.ag-hero span{font-size:.9rem;margin-top:.35rem;}.ag-cap{font-size:.84rem;line-height:1.5;margin-top:.8rem;padding:0 .3rem;}html body .stApp .st-key-blk_agente [data-testid='stChatInput']{min-height:3.1rem;padding:.3rem .5rem .3rem .4rem !important;}html body .stApp .st-key-blk_agente [data-testid='stChatInput'] textarea{font-size:.95rem !important;}.ag-card{margin-left:0;}html body .stApp .st-key-blk_ag_azioni{margin-left:0;width:100% !important;}.ag-bub{max-width:90%;}}"
+        "@media (max-width:640px){.ag-det{grid-template-columns:1fr;}.ag-hero{margin:.1rem 0 .9rem;}.ag-hero b{font-size:1.6rem;}.ag-hero span{font-size:.9rem;margin-top:.35rem;}.ag-cap{font-size:.84rem;line-height:1.5;margin-top:.8rem;padding:0 .3rem;}html body .stApp .st-key-blk_agente [data-testid='stChatInput']{min-height:3.1rem;padding:.3rem .5rem .3rem .4rem !important;}html body .stApp .st-key-blk_agente [data-testid='stChatInput'] textarea{font-size:.95rem !important;}.ag-card{margin-left:0;}html body .stApp .st-key-blk_ag_azioni{margin-left:0;width:100% !important;}.ag-bub{max-width:90%;}}"
         "@media (prefers-reduced-motion: reduce){.ag-row,.ag-card,.ag-dots i{animation:none !important;}}"
         "</style>" + _css_pillole(T)
     )
@@ -178,6 +182,23 @@ def card_riepilogo(T: dict, dec: dict, default_ecc: bool = True) -> str:
     return (f'<div class="ag-card"><div class="ag-eye">Ho capito</div><div class="ag-arg">{_esc(par.get("argomento") or "Verifica dagli appunti caricati")}</div>'
             + (f'<div class="ag-ind">{_esc(par["indicazioni"])}</div>' if par.get("indicazioni") else "")
             + f'<div class="ag-chips">{chips}</div>{nota}</div>')
+
+
+def card_dettagli(T: dict, dec: dict) -> str:
+    """Il consiglio prima di creare: cosa conviene dire per avere la verifica che si immagina."""
+    voci = [("📐", "Quanti esercizi e quanti punti", "per ogni esercizio, o il totale"),
+            ("🔢", "Quante richieste per esercizio", "i sottopunti a), b), c)"),
+            ("🎯", "Cosa includere o evitare", "un sottoargomento, un tipo di calcolo"),
+            ("📊", "Che tipo di esercizi", "grafici, problemi, vero/falso, scelta multipla"),
+            ("🎚️", "Il livello della classe", "più facile o più impegnativa")]
+    elenco = "".join(f'<li><span>{ic}</span><div><b>{_esc(t)}</b><em>{_esc(d)}</em></div></li>' for ic, t, d in voci)
+    argomento = (dec.get("crea") or {}).get("argomento") or ""
+    intro = (f"Ho capito: {_esc(argomento)}. Se ce l&#8217;hai in mente, aggiungi:" if argomento else "Se ce l&#8217;hai in mente, aggiungi:")
+    return ('<div class="ag-card"><div class="ag-eye">Un consiglio prima di partire</div>'
+            '<div class="ag-arg">Più sei preciso, più la verifica è come la vuoi</div>'
+            f'<div class="ag-ind">{intro}</div>'
+            f'<ul class="ag-det">{elenco}</ul>'
+            '<div class="ag-ind">Scrivilo qui sotto, anche a voce. Oppure premi «Vai così» e scelgo io.</div></div>')
 
 
 def card_impagina(T: dict, dec: dict, nomi: list) -> str:
@@ -270,7 +291,7 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
                     evento = {"tipo": "annulla"}
         _ult = chat[-1] if chat and chat[-1]["ruolo"] == "agente" and not in_arrivo else None
         _az_ult = ((_ult or {}).get("decisione") or {}).get("azione")
-        _card_ult = _az_ult == "crea" or (_az_ult == "impagina" and bool(allegati))      # in questi casi lo dice già la scheda: la bolla ripeterebbe
+        _card_ult = _az_ult in ("crea", "dettagli") or (_az_ult == "impagina" and bool(allegati))      # in questi casi lo dice già la scheda: la bolla ripeterebbe
         for m in chat:
             if m.get("stage", "home") != "home":
                 continue
@@ -290,6 +311,12 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
                 sc = opzioni_rapide(dec.get("opzioni") or [], "ag_opt")
             if sc:
                 evento = {"tipo": "opzione", "testo": sc}
+        elif az == "dettagli":
+            st.markdown(card_dettagli(T, dec), unsafe_allow_html=True)
+            with st.container(key="blk_ag_azioni"):
+                sc = opzioni_rapide([agente.VAI_COSI], "ag_det")
+            if sc:
+                evento = {"tipo": "opzione", "testo": sc}
         elif az == "crea":
             st.markdown(card_riepilogo(T, dec), unsafe_allow_html=True)
             with st.container(key="blk_ag_azioni"):
@@ -306,7 +333,7 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
                     evento = {"tipo": "conferma"}
                 if c2.button("Apri nel modulo", key="ag_modulo", type="secondary", icon=":material/tune:", use_container_width=True):
                     evento = {"tipo": "modulo"}
-                st.caption("Altro da cambiare? Scrivilo qui sotto.")
+                st.caption("Vuoi più precisione? Scrivi qui sotto esercizi, punti, richieste o cosa includere.")
         elif az == "impagina" and allegati:
             st.markdown(card_impagina(T, dec, allegati), unsafe_allow_html=True)
             with st.container(key="blk_ag_azioni"):
