@@ -25,6 +25,9 @@ from piano_verifica import numero_esercizi_richiesto
 import impagina
 import agente
 import ui_agente
+import correzione
+import ui_profilo
+from ui_correzione import render_correzione
 from collections import Counter
 import profilo
 import esercizio_foto as _ef
@@ -78,6 +81,7 @@ from config import (
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS, MODIFICHE_PER_VERIFICA, FEEDBACK_PRIMA_DEL_DOWNLOAD, MOSTRA_BOX_FEEDBACK,
     PREZZI_VISIBILI, INVITI_ATTIVI, VERIFICHE_PER_CODICE, PIANO_ATTIVO, RUOLI_ESERCIZI_ATTIVI, BONUS_PER_INVITO, LANDING_URL,
     AGENTE_ATTIVO, AGENTE_SOLO_ADMIN, AGENTE_MAX_MESSAGGI,
+    MAX_STUDENTI_CORREZIONE, MAX_CORREZIONI_SESSIONE, MAX_BYTE_CORREZIONE,
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -116,6 +120,7 @@ STAGE_IMPOSTAZIONI = "IMPOSTAZIONI"     # pagina «Impostazioni predefinite»
 STAGE_PROFILO = "PROFILO"               # pagina «Il mio profilo»
 STAGE_CRUSCOTTO = "CRUSCOTTO"           # pagina «Cruscotto» (solo admin)
 STAGE_BANCA = "BANCA"                   # pagina "Banca esercizi" (solo admin)
+STAGE_CORREZIONE = "CORREZIONE"         # pagina «Correggi i compiti»
 
 # ── PAGE CONFIG ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -1983,6 +1988,418 @@ def _render_profilo_pagina() -> None:
     render_profilo(T, ctx)
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+#  CORREZIONE DEI COMPITI — zona dedicata (logica in correzione.py, disegno in ui_correzione.py)
+#  I compiti e i nomi degli alunni restano SOLO in st.session_state["_cor"]: non si scrive mai nel database né su disco.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _apri_correzione(da_verifica_aperta: bool = False) -> None:
+    """Apre «Correggi i compiti», ricordando da dove si arriva. Dalla pagina finale parte già con la verifica aperta."""
+    if st.session_state.get("stage") != STAGE_CORREZIONE:
+        st.session_state["_stage_prima"] = st.session_state.get("stage")
+    if da_verifica_aperta:
+        st.session_state["_cor_da_aperta"] = True
+    st.session_state.stage = STAGE_CORREZIONE
+
+
+def _cor_stato() -> dict:
+    return st.session_state.setdefault("_cor", {"fase": 1, "verifica": None, "alunni": [], "scala": correzione.SCALA_PREDEFINITA, "sel": None, "ciclo": 0})
+
+
+def _cor_modello(compito: str):
+    return crea_modello(MODEL_FAST_ID).per(compito)          # sempre Flash (vedi config.COMPITI_AI): Lite sbaglia calcoli e scrittura a mano
+
+
+def _cor_prepara(titolo: str, materia: str, scuola: str, latex: str, origine: str):
+    """Struttura (richieste, id, punti) e soluzioni di riferimento della verifica da correggere. Restituisce un messaggio se non va."""
+    S = _cor_stato()
+    struttura = correzione.struttura_da_latex(latex)
+    if not correzione.richieste_piatte(struttura):
+        return "Non riesco a leggere gli esercizi di questa verifica."
+    with _attesa("pagina", "Preparo la correzione", ["Leggo richieste e punteggi", "Scrivo le soluzioni di riferimento"], "Pochi secondi.", durata_passo=6):
+        soluzioni = correzione.soluzioni_di_riferimento(_cor_modello("soluzioni_rif"), latex, materia)
+    S["verifica"] = {"titolo": titolo or materia or "Verifica", "materia": materia, "scuola": scuola, "latex": latex, "struttura": struttura,
+                     "soluzioni": soluzioni, "origine": origine}
+    S["alunni"], S["sel"], S["fase"] = [], None, 1
+    return None
+
+
+def _cor_opzioni_verifiche() -> list:
+    ss = st.session_state
+    opz = []
+    vA = (ss.get("verifiche") or {}).get("A") or {}
+    if vA.get("latex") and ss.get("gen_params"):
+        opz.append({"id": "__aperta__", "etichetta": f"La verifica aperta ora · {(ss.gen_params or {}).get('argomento', 'Verifica')}"})
+    for v in _load_user_verifiche():
+        quando = _data_relativa(v.get("created_at") or "")
+        opz.append({"id": v["id"], "etichetta": " · ".join(x for x in (v.get("argomento") or "Verifica", v.get("classe"), v.get("materia"), quando) if x)})
+    return opz
+
+
+def _cor_scegli(vid) -> str | None:
+    ss = st.session_state
+    if vid == "__aperta__":
+        gp = ss.gen_params or {}
+        return _cor_prepara(gp.get("argomento", "Verifica"), gp.get("materia", ""), gp.get("difficolta", ""), ss.verifiche["A"].get("latex") or "", "aperta")
+    riga = next((v for v in _load_user_verifiche() if v["id"] == vid), None) or {}
+    try:
+        latex = (_contenuto_verifica(ss.utente.id, vid) or {}).get("latex_a") or ""
+    except Exception as e:
+        logger.warning("correzione: verifica non letta: %s", e)
+        latex = ""
+    if not latex:
+        return "Non riesco a leggere questa verifica: riprova tra poco."
+    return _cor_prepara(riga.get("argomento", "Verifica"), riga.get("materia", ""), riga.get("scuola", ""), latex, "storico")
+
+
+def _cor_leggi_traccia(files: list, materia: str, scuola: str) -> str | None:
+    """La traccia da foto/PDF: si legge come in «Impagina» (esercizi in LaTeX con i punti del foglio), poi si prepara come una verifica."""
+    with _attesa("foto", "Leggo la traccia", ["Apro le pagine", "Trascrivo gli esercizi", "Controllo i punteggi"], durata_passo=8):
+        ris = impagina.leggi_verifica(_cor_modello("foto_esercizio"), files, materia, scuola)
+    if not ris.get("ok"):
+        return ris.get("messaggio") or "Non riesco a leggere la traccia."
+    latex = impagina._blocchi(ris["esercizi"], set())
+    _registra_evento("correzione_traccia")
+    return _cor_prepara(ris.get("titolo") or materia, materia, scuola, latex, "traccia")
+
+
+def _cor_correggi(lista: list) -> str | None:
+    """Corregge i compiti (uno per alunno) con poche chiamate in parallelo; mostra l'avanzamento vero."""
+    S = _cor_stato()
+    v = S["verifica"]
+    ss = st.session_state
+    if ss.get("_cor_conta", 0) + len(lista) > MAX_CORREZIONI_SESSIONE:
+        return "Hai corretto molti compiti in questa sessione: riprova più tardi."
+    if sum(len(p["data"]) for _n, pagine in lista for p in pagine) > MAX_BYTE_CORREZIONE:
+        return "I file sono troppo pesanti in tutto: caricane meno per volta."
+    n = len(lista)
+    secondi = max(1, -(-n // 3)) * 25
+    with _attesa("pagina", "Correggo i compiti", ["Leggo le pagine", "Confronto con le soluzioni", "Preparo la revisione"], f"Circa {secondi} secondi: non chiudere la pagina.",
+                 durata_passo=max(4.0, secondi / 3)):
+        barra = st.progress(0.0, text=f"Compiti corretti: 0 di {n}")
+        risultati = correzione.correggi_tutti(_cor_modello("correzione"), v["struttura"], v.get("soluzioni", ""), [pagine for _n, pagine in lista],
+                                              v.get("materia", ""), v.get("scuola", ""), on_fatto=lambda k, tot: barra.progress(k / tot, text=f"Compiti corretti: {k} di {tot}"))
+    base = len(S.get("alunni") or [])
+    alunni = []
+    for k, ((nome, pagine), ris) in enumerate(zip(lista, risultati), 1):
+        a = {"id": f"s{ss.get('_cor_seq', 0) + k}", "nome": nome, "pagine": pagine, "righe": [], "commento_generale": "", "non_corrisponde": False, "errore": None, "controllato": False}
+        if ris.get("ok"):
+            c = ris["correzione"]
+            a.update(righe=c["righe"], non_corrisponde=c["non_corrisponde"], commento_generale=c["commento_generale"], nome=nome or c["nome"] or f"Alunno {base + k}")
+        else:
+            a["errore"], a["nome"] = ris.get("messaggio") or "Compito non letto.", nome or f"Alunno {base + k}"
+        alunni.append(a)
+        _registra_evento("correzione")
+    ss["_cor_seq"] = ss.get("_cor_seq", 0) + n
+    ss["_cor_conta"] = ss.get("_cor_conta", 0) + n
+    S["alunni"] = (S.get("alunni") or []) + alunni
+    S["sel"] = alunni[0]["id"] if alunni else None
+    pass
+    return None
+
+
+def _cor_riprova(aid: str) -> None:
+    S = _cor_stato()
+    v = S["verifica"]
+    a = next((x for x in S["alunni"] if x["id"] == aid), None)
+    if not a:
+        return
+    with _attesa("pagina", "Rileggo il compito", ["Leggo le pagine", "Confronto con le soluzioni"], durata_passo=8):
+        ris = correzione.correggi_compito(_cor_modello("correzione"), v["struttura"], v.get("soluzioni", ""), a["pagine"], v.get("materia", ""), v.get("scuola", ""))
+    _registra_evento("correzione")
+    if ris.get("ok"):
+        c = ris["correzione"]
+        a.update(righe=c["righe"], non_corrisponde=c["non_corrisponde"], commento_generale=c["commento_generale"], errore=None, controllato=False)
+        a["nome"] = a.get("nome") or c["nome"]
+    else:
+        a["errore"] = ris.get("messaggio")
+
+
+def _cor_anteprima(a: dict) -> list:
+    S = _cor_stato()
+    cache = S.setdefault("_img", {})
+    if a["id"] not in cache:
+        pagine = []
+        for p in a.get("pagine") or []:
+            if (p.get("mime_type") or "").startswith("image/"):
+                pagine.append(p["data"])
+            else:
+                try:
+                    imgs, _e = pdf_to_images_bytes(p["data"])
+                    pagine += (imgs or [])[:4]
+                except Exception:
+                    pass
+        cache[a["id"]] = pagine
+    return cache[a["id"]]
+
+
+def _cor_compila(latex: str):
+    """PDF di un documento della correzione, in cache per contenuto."""
+    cache = _cor_stato().setdefault("_pdf", {})
+    chiave = hashlib.md5(latex.encode("utf-8")).hexdigest()
+    if chiave not in cache:
+        pdf, _err = compila_pdf(latex)
+        cache[chiave] = pdf
+    return cache[chiave]
+
+
+def _cor_scheda_pdf(aid: str):
+    S = _cor_stato()
+    a = next((x for x in S["alunni"] if x["id"] == aid), None)
+    if not a or not correzione.valido(a):
+        return None
+    v = S["verifica"]
+    return _cor_compila(correzione.scheda_latex(v["materia"], v["titolo"], a, S["scala"]))
+
+
+def _cor_report_pdf():
+    S = _cor_stato()
+    v = S["verifica"]
+    latex = correzione.report_latex(v["materia"], v["titolo"], S["alunni"], v["struttura"], S["scala"])
+    return _cor_compila(latex) if latex else None
+
+
+def _cor_zip_schede():
+    """Tutte le schede degli alunni (e il resoconto) in un solo ZIP, con l'avanzamento."""
+    S = _cor_stato()
+    v = S["verifica"]
+    validi = [a for a in S["alunni"] if correzione.valido(a)]
+    elementi, barra = [], st.progress(0.0, text="Preparo le schede…")
+    for i, a in enumerate(validi, 1):
+        pdf = _cor_scheda_pdf(a["id"])
+        if pdf:
+            elementi.append({"nome": f"scheda_{i:02d}_{re.sub(r'[^A-Za-z0-9]+', '_', a.get('nome') or 'alunno').strip('_')[:30]}.pdf", "dati": pdf})
+        barra.progress(i / max(1, len(validi)), text=f"Schede pronte: {i} di {len(validi)}")
+    rep = _cor_report_pdf()
+    if rep:
+        elementi.append({"nome": "resoconto_classe.pdf", "dati": rep})
+    barra.empty()
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        for e in elementi:
+            z.writestr(e["nome"], e["dati"])
+    return buf.getvalue()
+
+
+def _cor_azzera() -> None:
+    ss = st.session_state
+    for k in [k for k in list(ss.keys()) if isinstance(k, str) and (k.startswith("cor_") or k in ("_cor", "_cor_da_aperta"))]:
+        ss.pop(k, None)
+    _ricorda_conferma("Dati degli alunni eliminati")
+    st.rerun()
+
+
+def _cor_recupero(indicazioni: str) -> None:
+    """Apre la creazione di una verifica di recupero con gli argomenti in cui la classe è andata peggio (conferma sempre dal docente)."""
+    S = _cor_stato()
+    v = S.get("verifica") or {}
+    ss = st.session_state
+    if _agente_abilitato():
+        crea = agente.pulisci_crea({"materia": v.get("materia"), "scuola": v.get("scuola"), "argomento": f"Recupero: {v.get('titolo', '')}", "indicazioni": indicazioni,
+                                    "classe": ss.get("_classe_sel")}, _profilo().get("classi") or [])
+        dec = {"azione": "crea", "messaggio": "", "domanda": "", "opzioni": [], "crea": crea, "versioni": [], "per_chi": "", "modifica": "", "operazioni": [], "assunzioni": []}
+        ss["_ag_chat"] = [{"ruolo": "utente", "stage": "home", "testo": "Recupero sugli argomenti più sbagliati dai compiti della classe", "allegati": []},
+                          {"ruolo": "agente", "stage": "home", "testo": "", "decisione": dec}]
+        ss["_home_modo"] = None
+    else:
+        ss["argomento_area_b"] = f"Recupero: {v.get('titolo', '')}\n{indicazioni}"
+        ss["_pb_argomento_source"], ss["_pb_argomento_manual_val"] = "manual", ss["argomento_area_b"]
+        ss["_home_modo"] = "crea"
+    ss.stage = STAGE_INPUT
+    st.rerun()
+
+
+def _render_correzione_pagina() -> None:
+    """Pagina «Correggi i compiti»: prepara dati e funzioni per ui_correzione.render_correzione (solo interfaccia)."""
+    ss = st.session_state
+    S = _cor_stato()
+    if ss.pop("_cor_da_aperta", False) and not S.get("verifica") and not _pro_bloccato("correzione"):
+        _cor_scegli("__aperta__")
+
+    def _indietro():
+        _dove = ss.get("_stage_prima")
+        ss.stage = _dove if _dove not in (None, STAGE_CORREZIONE) else STAGE_INPUT
+        st.rerun()
+
+    ctx = {
+        "stato": S, "bloccato": _pro_bloccato("correzione"), "pulsante_pro": lambda: _pulsante_pro("correzione", "pro_correzione", "Sblocca la correzione dei compiti"),
+        "opzioni_verifiche": _cor_opzioni_verifiche() if S.get("fase", 1) == 1 and not S.get("verifica") else [],
+        "scegli": _cor_scegli, "leggi_traccia": _cor_leggi_traccia, "materie": [m for m in MATERIE if "Altra" not in m], "scuole": SCUOLE,
+        "max_studenti": MAX_STUDENTI_CORREZIONE, "correggi": _cor_correggi, "riprova": _cor_riprova, "anteprima": _cor_anteprima,
+        "scheda_pdf": _cor_scheda_pdf, "report_pdf": _cor_report_pdf, "zip_schede": _cor_zip_schede,
+        "csv": lambda: correzione.csv_risultati(S["alunni"], S["verifica"]["struttura"], S["scala"]),
+        "recupero": _cor_recupero, "azzera": _cor_azzera, "indietro": _indietro,
+    }
+    render_correzione(T, ctx)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  BARRA COMANDI (Ctrl+K) — l'assistente da qualsiasi pagina
+#  Ctrl+K (⌘K su Mac) o il pulsante nella barra laterale aprono una finestra con una sola riga: si scrive cosa serve («riapri quella sulle frazioni»,
+#  «aggiungi la classe 2C», «correggi i compiti», «tema scuro»). Le richieste ovvie si risolvono senza AI; le altre le capisce `agente.interpreta`
+#  (modalità navigazione). Cosa si crea o si cambia passa sempre dalle schermate di conferma di sempre.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_JS_CMDK = r"""<script>(function () {
+  var P = window.parent, D = P.document;
+  if (P.__vfCmdK) return;
+  P.__vfCmdK = true;
+  D.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (e.key === 'k' || e.key === 'K')) {
+      var b = D.querySelector('.st-key-cmdk_trigger button');
+      if (b) { e.preventDefault(); b.click(); }
+    }
+  }, true);
+})();</script>"""
+
+_JS_CMDK_FUOCO = r"""<script>(function () {
+  var D = window.parent.document, n = 0;
+  (function f() { var i = D.querySelector('[role="dialog"] input[type="text"]'); if (i) { i.focus(); return; } if (n++ < 20) setTimeout(f, 60); })();
+})();</script>"""
+
+_SEZIONI_PROFILO = {"classi": 0, "preferenze": 1, "attivita": 2, "account": 3}
+
+
+def _cmd_on_enter() -> None:
+    st.session_state["_cmd_invio"] = (st.session_state.get("cmd_testo") or "").strip()
+
+
+def _cmd_pulisci_chat() -> None:
+    """Toglie dalla conversazione la coppia domanda/risposta appena fatta: i comandi di navigazione non devono comparire nella barra della home."""
+    ss = st.session_state
+    ss["_ag_chat"] = (ss.get("_ag_chat") or [])[:-2]
+
+
+def _cmd_esegui(dec: dict, testo: str, stage_pal: str, pulisci: bool = True) -> str | None:
+    """Esegue ciò che l'assistente ha deciso. Se serve cambiare pagina fa st.rerun() (e la finestra si chiude); altrimenti restituisce un messaggio da mostrare nella finestra."""
+    ss = st.session_state
+    az, nav = dec.get("azione"), dec.get("navigazione") or {}
+    if az in ("operazioni", "versioni", "modifica"):                    # solo con la verifica aperta: le esegue la casella «Chiedi quello che vuoi»
+        ss["_ag_decisione_pronta"], ss["_ag_rispondi"] = dec, testo
+        st.rerun()
+    if az in ("crea", "impagina", "libro"):
+        if stage_pal == "final":
+            if az == "crea":
+                ss["_ag_esito_final"] = {"azione": "crea", "testo": dec.get("messaggio") or ""}
+                st.rerun()
+            if pulisci:
+                _cmd_pulisci_chat()
+            return "Per partire da una verifica nuova chiudi prima questa con «Crea una nuova verifica»."
+        ss.stage, ss["_home_modo"] = STAGE_INPUT, None                  # la scheda «Ho capito» compare nella home
+        st.rerun()
+    if az == "domanda":
+        ss["_cmd_domanda"] = {"domanda": dec.get("domanda") or "", "opzioni": dec.get("opzioni") or []}
+        return None
+    if pulisci:
+        _cmd_pulisci_chat()
+    if az == "storico":
+        _apri_storico()
+        st.rerun()
+    if az == "apri_verifica":
+        riga = next((v for v in _load_user_verifiche() if str(v.get("id")) == str(nav.get("apri_id"))), None)
+        if riga:
+            try:
+                if _apri_verifica_salvata(riga, _contenuto_verifica(ss.utente.id, riga["id"]) or {}):
+                    _registra_evento("agente:apri_verifica")
+                    st.rerun()
+            except Exception as e:
+                logger.warning("apri verifica dalla barra comandi: %s", e)
+        return "Non riesco ad aprire quella verifica: prova da «Le mie verifiche»."
+    if az == "correggi":
+        _apri_correzione(stage_pal == "final")
+        st.rerun()
+    if az == "profilo":
+        if nav.get("sezione") in _SEZIONI_PROFILO:
+            ss["sez_profilo"] = ui_profilo.SEZIONI[_SEZIONI_PROFILO[nav["sezione"]]]
+        _apri_profilo()
+        st.rerun()
+    if az == "classe":
+        nome, scuola = nav["nuova_classe"]["nome"], nav["nuova_classe"].get("scuola") or ""
+        p = _profilo()
+        if profilo.classe(p, nome):
+            return f"La classe {nome} c'è già."
+        _salva_profilo({**p, "classi": list(p.get("classi") or []) + [{"nome": nome, "scuola": scuola, "note": ""}]})
+        if not profilo.classe(_profilo(), nome):
+            return "Non sono riuscito ad aggiungere la classe: riprova dal profilo."
+        _registra_evento("agente:classe")
+        _ricorda_conferma(f"Classe {nome} aggiunta" + (f" ({scuola})" if scuola else ""))
+        st.rerun()
+    if az == "impostazioni":
+        _apri_impostazioni()
+        st.rerun()
+    if az == "tema":
+        scuro = (nav.get("tema") == "scuro") if nav.get("tema") else not bool(ss.get("_tema_scuro", ss.get("theme") == "notte"))
+        ss["_tema_scuro"] = scuro
+        _ricorda_conferma("Tema scuro attivato" if scuro else "Tema chiaro attivato")
+        st.rerun()
+    if az == "invita":
+        ss["_apri_invito"] = True
+        st.rerun()
+    return dec.get("messaggio") or "Non ho capito: prova a dirlo in un altro modo."
+
+
+@st.dialog("Cosa ti serve?", width="large")
+def _dialogo_comandi() -> None:
+    ss = st.session_state
+    stage_pal = "final" if ss.get("stage") == STAGE_FINAL else "home"
+    if ss.pop("_cmd_pulisci", False):
+        ss["cmd_testo"] = ""
+    st.markdown(
+        "<style>"
+        f".cmd-hint{{font-family:'DM Sans',sans-serif;font-size:.8rem;color:{T['muted']};margin:.5rem 0 .2rem;line-height:1.6;}}"
+        f".cmd-hint i{{font-style:normal;color:{T['text2']};}}"
+        "html body .stApp [role='dialog'] input[type='text']{font-size:1.1rem !important;padding:.8rem 1rem !important;border-radius:16px !important;}"
+        "</style>", unsafe_allow_html=True)
+    st.text_input("Scrivi cosa ti serve", key="cmd_testo", on_change=_cmd_on_enter, label_visibility="collapsed",
+                  placeholder="Scrivi cosa ti serve… poi Invio", autocomplete="off")
+    testo = ss.pop("_cmd_invio", "")
+    if testo:
+        ph = st.empty()
+        ph.markdown(ui_agente.bolla_utente(testo) + ui_agente.bolla_scrive(), unsafe_allow_html=True)
+        dec = _ag_ricevi(testo, [], stage_pal, nav=True)
+        ph.empty()
+        ss["_cmd_pulisci"] = True
+        ss["_cmd_domanda"], ss["_cmd_msg"] = None, None
+        ss["_cmd_msg"] = _cmd_esegui(dec, testo, stage_pal) if dec else "Per ora hai fatto molte richieste: riprova più tardi."
+    if ss.get("_cmd_msg"):
+        st.markdown(ui_agente.bolla_assistente(ss["_cmd_msg"]), unsafe_allow_html=True)
+    dom = ss.get("_cmd_domanda")
+    if dom:
+        st.markdown(ui_agente.bolla_assistente(dom["domanda"]), unsafe_allow_html=True)
+        sc = ui_agente.opzioni_rapide(dom["opzioni"], "cmd_opt", T)
+        if sc:
+            ss["_cmd_invio"] = sc
+            st.rerun(scope="fragment")
+    st.markdown('<div class="cmd-hint"><i>Prova:</i> «riapri quella sulle frazioni» · «aggiungi la classe 2C» · «correggi i compiti» · «tema scuro»'
+                + (' · «togli l\'esercizio 3» · «fila B e soluzioni»' if stage_pal == "final" else '') + '</div>', unsafe_allow_html=True)
+    scorciatoie = [("Le mie verifiche", "storico", ":material/folder_open:"), ("Correggi i compiti", "correggi", ":material/rate_review:"),
+                   ("Il mio profilo", "profilo", ":material/account_circle:"), ("Tema chiaro" if ss.get("_tema_scuro", ss.get("theme") == "notte") else "Tema scuro", "tema", ":material/contrast:")]
+    for col, (et, az, ic) in zip(st.columns(len(scorciatoie), gap="small"), scorciatoie):
+        if col.button(et, key=f"cmd_q_{az}", use_container_width=True, icon=ic, type="secondary"):
+            _cmd_esegui({"azione": az, "navigazione": {"tema": None, "sezione": None, "apri_id": None, "nuova_classe": {"nome": "", "scuola": None}}, "messaggio": ""}, et, stage_pal, pulisci=False)
+    components.html(_JS_CMDK_FUOCO, height=0)
+
+
+def _cmdk_installa() -> None:
+    """Su ogni pagina: il pulsante invisibile che Ctrl+K preme, e l'apertura della finestra (anche dal pulsante nella barra laterale)."""
+    if not st.session_state.get("utente") or not _agente_abilitato():
+        return
+    st.markdown("<style>.st-key-blk_cmdk{position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;}</style>", unsafe_allow_html=True)
+    aperto = bool(st.session_state.pop("_cmdk_aperto", False))
+    with st.container(key="blk_cmdk"):
+        if st.button("Chiedi", key="cmdk_trigger"):
+            aperto = True
+        components.html(_JS_CMDK, height=0)
+    if aperto:
+        for k in ("_cmd_msg", "_cmd_domanda"):
+            st.session_state.pop(k, None)
+        st.session_state["cmd_testo"] = ""
+        try:
+            _dialogo_comandi()
+        except Exception as _e_cmd:          # un'altra finestra già aperta nella stessa schermata: si riprova al prossimo comando
+            logger.warning("Barra comandi non aperta: %s", _e_cmd)
+
+
 def _apri_storico() -> None:
     """Apre la pagina «Le mie verifiche» (come il pulsante della barra laterale), ricordando da dove si arriva."""
     if st.session_state.get("stage") != "MIE_VERIFICHE":
@@ -2056,6 +2473,7 @@ if (MONETIZZAZIONE_ATTIVA and st.session_state.utente and supabase_admin is not 
     except Exception as _e_inv:
         logger.warning("info inviti non disponibile: %s", _e_inv)
 
+st.session_state["_agente_sidebar"] = bool(AGENTE_ATTIVO and (_is_admin or not AGENTE_SOLO_ADMIN))      # il pulsante «Chiedi all'assistente» della barra laterale
 settings   = render_sidebar(
     invito=_INVITO,
     supabase_admin=supabase_admin, utente=st.session_state.utente,
@@ -3564,7 +3982,7 @@ def _ag_contesto(stage: str) -> dict:
     except Exception:
         pass
     try:
-        ctx["ultime"] = [{"argomento": v.get("argomento"), "materia": v.get("materia"), "scuola": v.get("scuola"), "classe": v.get("classe")}
+        ctx["ultime"] = [{"id": v.get("id"), "argomento": v.get("argomento"), "materia": v.get("materia"), "scuola": v.get("scuola"), "classe": v.get("classe")}
                          for v in _elenco_verifiche(ss.utente.id, ss._storico_refresh)[:5]]
     except Exception:
         ctx["ultime"] = []
@@ -3631,7 +4049,7 @@ def _ag_allega(files: list) -> tuple:
     return [e["name"] for e in elenco], avviso
 
 
-def _ag_ricevi(testo: str, files: list, stage: str) -> dict | None:
+def _ag_ricevi(testo: str, files: list, stage: str, nav: bool = False) -> dict | None:
     """Un messaggio del docente: lo aggiunge alla conversazione, lo fa capire all'agente e registra la risposta. Restituisce la decisione.
     Le richieste brevissime e inequivocabili («fila B e soluzioni», «togli il 4», «annulla») si risolvono qui, senza chiamare l'AI."""
     ss = st.session_state
@@ -3643,15 +4061,15 @@ def _ag_ricevi(testo: str, files: list, stage: str) -> dict | None:
     nomi, avviso = _ag_allega(files)
     chat.append({"ruolo": "utente", "stage": stage, "testo": testo or "Uso i file che ho allegato.", "allegati": nomi})
     ctx = _ag_contesto(stage)
-    dec = None if nomi else agente.scorciatoia(testo, stage, ctx)
+    dec = None if nomi else agente.scorciatoia(testo, stage, ctx, nav)
     if dec is None:
         ss["_ag_conta"] = ss.get("_ag_conta", 0) + 1
         _mid = (ss.get("gen_params") or {}).get("modello_id") if stage == "final" else None
-        if stage == "home":                  # la bolla con i tre puntini la mostra già la barra (in_arrivo)
-            dec = agente.interpreta(crea_modello(_mid or modello_id).per("agente"), chat, ctx, stage, _ag_domande_fatte(stage))
+        if stage == "home" or nav:           # la bolla con i tre puntini la mostra già la barra o la finestra dei comandi
+            dec = agente.interpreta(crea_modello(_mid or modello_id).per("agente"), chat, ctx, stage, _ag_domande_fatte(stage), nav)
         else:
             with _attesa("pagina", "Sto capendo cosa ti serve", ["Leggo la richiesta", "Guardo le tue classi e le tue abitudini", "Preparo il riepilogo"], durata_passo=3):
-                dec = agente.interpreta(crea_modello(_mid or modello_id).per("agente"), chat, ctx, stage, _ag_domande_fatte(stage))
+                dec = agente.interpreta(crea_modello(_mid or modello_id).per("agente"), chat, ctx, stage, _ag_domande_fatte(stage), nav)
         _registra_evento("agente")
     msg = (dec.get("messaggio") or "") + ((" " + avviso) if avviso else "")
     chat.append({"ruolo": "agente", "stage": stage, "testo": msg.strip(), "decisione": dec})
@@ -3868,6 +4286,8 @@ def _render_agente_home() -> None:
             ss["_home_modo"] = "impagina"
         elif ev["dove"] == "libro":
             ss["_home_modo"], ss["sez_allegati"], ss["_apri_altre"] = "crea", "📷 Esercizio del libro", True
+        elif ev["dove"] == "correggi":
+            _apri_correzione()
         else:
             _apri_storico()
         ss["_ag_chat"] = []
@@ -7039,6 +7459,8 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
                 _nuova_verifica(None)
         elif _es_ag["azione"] == "storico":
             st.button("Apri «Le mie verifiche»", key="ag_storico_da_final", on_click=_apri_storico, icon=":material/folder_open:")
+        elif _es_ag["azione"] == "correggi":
+            st.button("Apri «Correggi i compiti»", key="ag_correggi_da_final", on_click=lambda: _apri_correzione(True), icon=":material/rate_review:", type="primary")
 
     if not _applica and not _risposta_ag:
         return
@@ -7052,7 +7474,7 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
     if _agente_on and not _c_tit0:
         # L'agente capisce cosa si chiede: cambiare gli esercizi (continua qui sotto), creare altre versioni, una verifica nuova o chiarire
         st.session_state.pop("_ag_domanda_final", None)
-        _dec_ag = _ag_ricevi(_richiesta, [], "final")
+        _dec_ag = st.session_state.pop("_ag_decisione_pronta", None) or _ag_ricevi(_richiesta, [], "final")      # (dalla barra comandi la decisione è già pronta)
         _az_ag = (_dec_ag or {}).get("azione")
         if _az_ag == "domanda":
             st.session_state["_ag_domanda_final"] = {"domanda": _dec_ag["domanda"], "opzioni": _dec_ag.get("opzioni") or []}
@@ -7077,7 +7499,7 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
                 st.rerun()
             st.warning(_msg_o)
             return
-        elif _az_ag in ("crea", "storico", "aiuto"):
+        elif _az_ag in ("crea", "storico", "aiuto", "correggi"):
             st.session_state["_mod_rapida_pulisci"] = True
             st.session_state["_ag_esito_final"] = {"azione": _az_ag, "testo": _dec_ag.get("messaggio") or ""}
             st.rerun()
@@ -8353,6 +8775,11 @@ def _render_stage_final():
     _sf1, _sf2, _sf3 = st.columns([3, 2, 3])
     _sf2.button("Apri «Le mie verifiche»", key="apri_storico_final", type="tertiary", icon=":material/folder_open:",
                 on_click=_apri_storico, use_container_width=True, help="La verifica è già salvata: qui trovi tutte le tue verifiche.")
+    _sc1, _sc2, _sc3 = st.columns([3, 2, 3])
+    if _sc2.button("Correggi i compiti di questa verifica", key="apri_correzione_final", type="tertiary", icon=":material/rate_review:", use_container_width=True,
+                   help="Carica le foto dei compiti: propongo punti e commenti, tu controlli."):
+        _apri_correzione(True)
+        st.rerun()
     st.markdown('<div style="height:.2rem"></div>', unsafe_allow_html=True)
     _sg1, _sg2, _sg3 = st.columns([2, 3, 2])
     if _sg2.button("Qualcosa non va in questa verifica? Segnalalo", key="seg_apri", type="tertiary", icon=":material/flag:", use_container_width=True,
@@ -8601,6 +9028,12 @@ if not _share_view_active:
     if st.session_state.pop("_apri_profilo", False):
         _apri_profilo()
         _current = st.session_state.stage
+    if st.session_state.pop("_apri_correzione", False):
+        _apri_correzione(bool(st.session_state.pop("_apri_correzione_aperta", False)))
+        _current = st.session_state.stage
+    _cmdk_installa()
+    if st.session_state.pop("_apri_invito", False) and _INVITO:
+        apri_dialogo_invito(T, _INVITO)
     if _current == STAGE_PREVIEW:   # sessioni aperte prima dell'unione di anteprima e download
         st.session_state.stage = _current = STAGE_FINAL
     if   _current == STAGE_INPUT:   _render_stage_input()
@@ -8636,6 +9069,8 @@ if not _share_view_active:
                            invito=_INVITO)
     elif _current == STAGE_PROFILO:
         _render_profilo_pagina()
+    elif _current == STAGE_CORREZIONE:
+        _render_correzione_pagina()
     elif _current == STAGE_IMPOSTAZIONI:
         _render_impostazioni_pagina()
     elif _current == STAGE_CRUSCOTTO:

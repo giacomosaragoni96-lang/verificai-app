@@ -23,14 +23,26 @@ AZIONI_HOME = {
     "impagina": "il docente ha GIÀ una verifica scritta (PDF, foto, Word) e vuole solo impaginarla o sistemarla (se l'ha allegata, la impagino subito)",
     "libro": "il docente vuole inserire nella verifica un esercizio preso da una foto del suo libro",
     "storico": "il docente vuole ritrovare o riaprire una verifica già creata",
+    "correggi": "il docente vuole correggere i compiti dei suoi alunni (si apre la zona «Correggi i compiti»)",
     "aiuto": "domande su come funziona l'app, o richieste che l'app non sa fare: rispondi in «messaggio»",
     "domanda": "ti manca un'informazione essenziale: fai UNA domanda (campi «domanda» e «opzioni»)",
 }
+# Azioni di navigazione della barra comandi (Ctrl+K), disponibili da qualsiasi pagina
+AZIONI_NAV = {
+    "apri_verifica": "riapri una verifica già creata: scrivi in «navigazione.apri_id» l'id di una delle ultime verifiche elencate",
+    "profilo": "apri il profilo (campo «navigazione.sezione»: classi, preferenze, attivita oppure account)",
+    "classe": "aggiungi una classe al profilo (campo «navigazione.nuova_classe»: nome e, se lo dice, scuola)",
+    "impostazioni": "apri logo, stile e preferenze fisse",
+    "tema": "cambia il tema dell'app (campo «navigazione.tema»: scuro o chiaro)",
+    "invita": "il docente vuole invitare un collega",
+}
+SEZIONI_PROFILO = ("classi", "preferenze", "attivita", "account")
 AZIONI_FINAL = {
     "operazioni": "azioni su ESERCIZI PRECISI della verifica aperta (rifai/semplifica/complica il 3, togli il 4, cambia i numeri, punti, aggiungi, annulla): elencale in «operazioni»",
     "modifica": "cambio generale della verifica aperta, che non si riduce a operazioni su singoli esercizi: scrivi la richiesta in «modifica»",
     "versioni": "crea documenti aggiuntivi della verifica aperta (Fila B, BES/DSA, soluzioni, recupero…): elencali in «versioni»",
     "crea": "il docente vuole una verifica NUOVA e diversa da quella aperta",
+    "correggi": "il docente vuole correggere i compiti dei suoi alunni (si apre la zona «Correggi i compiti»)",
     "storico": "il docente vuole ritrovare un'altra verifica già creata",
     "aiuto": "domande su come funziona l'app, o richieste che l'app non sa fare: rispondi in «messaggio»",
     "domanda": "ti manca un'informazione essenziale: fai UNA domanda (campi «domanda» e «opzioni»)",
@@ -48,12 +60,14 @@ OPERAZIONI = {"riscrivi": (True, True), "piu_facile": (True, True), "piu_diffici
 MAX_OPERAZIONI = 8
 
 
-def azioni_per(stage: str) -> dict:
-    return AZIONI_FINAL if stage == "final" else AZIONI_HOME
+def azioni_per(stage: str, nav: bool = False) -> dict:
+    """Le azioni ammesse in questa schermata; con `nav` (barra comandi) anche quelle di navigazione."""
+    base = dict(AZIONI_FINAL if stage == "final" else AZIONI_HOME)
+    return {**base, **AZIONI_NAV} if nav else base
 
 
-def _azioni_testo(stage: str) -> str:
-    return "".join(f"- {k}: {v}\n" for k, v in azioni_per(stage).items())
+def _azioni_testo(stage: str, nav: bool = False) -> str:
+    return "".join(f"- {k}: {v}\n" for k, v in azioni_per(stage, nav).items())
 
 
 # ── Contesto per il prompt ────────────────────────────────────────────────────
@@ -76,7 +90,7 @@ def contesto_testo(ctx: dict) -> str:
     if ult:
         r.append("Ultime verifiche create (la più recente per prima):")
         for u in ult[:5]:
-            r.append("  - " + " · ".join(x for x in (u.get("argomento"), u.get("materia"), u.get("scuola"), u.get("classe")) if x))
+            r.append("  - " + " · ".join(x for x in (u.get("argomento"), u.get("materia"), u.get("scuola"), u.get("classe")) if x) + (f" [id={u['id']}]" if u.get("id") else ""))
     if ctx.get("preferenze"):
         r.append("Preferenze fisse del docente (le applica già l'app, non ripeterle): " + "; ".join(ctx["preferenze"][:6]) + ".")
     al = ctx.get("allegato")
@@ -257,11 +271,25 @@ def stima_secondi(ops: list, n_attuale: int = 0) -> int:
     return (10 + (4 if par > 1 else 0) if par else 0) + 8 * agg + 6
 
 
-def normalizza(grezzo, ctx: dict, stage: str, domande_fatte: int, testo_utente: str = "") -> dict:
+def pulisci_navigazione(grezzo, ctx: dict) -> dict:
+    """I campi di navigazione controllati: l'id della verifica deve essere tra le ultime elencate, la sezione e il tema tra i valori noti."""
+    g = grezzo if isinstance(grezzo, dict) else {}
+    ids = {str(u.get("id")): u for u in ctx.get("ultime") or [] if u.get("id") is not None}
+    apri = re.sub(r"^id\s*=\s*", "", str(g.get("apri_id") or "").strip())
+    sez = _chiave(g.get("sezione"))
+    tema = _chiave(g.get("tema"))
+    nc = g.get("nuova_classe") if isinstance(g.get("nuova_classe"), dict) else {}
+    nome = re.sub(r"\s+", " ", str(nc.get("nome") or "")).strip()[:24]
+    return {"apri_id": apri if apri in ids else None, "sezione": sez if sez in SEZIONI_PROFILO else None,
+            "tema": "scuro" if tema in ("scuro", "scura", "notte", "dark") else ("chiaro" if tema in ("chiaro", "chiara", "carta", "light") else None),
+            "nuova_classe": {"nome": "" if nome.lower() in ("null", "none") else nome, "scuola": _scuola_da_testo(nc.get("scuola"))}}
+
+
+def normalizza(grezzo, ctx: dict, stage: str, domande_fatte: int, testo_utente: str = "", nav: bool = False) -> dict:
     """La risposta dell'AI controllata: azione ammessa, parametri validi, nessuna domanda oltre il limite.
     Chiavi: azione, messaggio, domanda, opzioni, crea, versioni, per_chi, modifica, assunzioni."""
     g = grezzo if isinstance(grezzo, dict) else {}
-    ammesse = azioni_per(stage)
+    ammesse = azioni_per(stage, nav)
     azione = str(g.get("azione") or "").strip().lower()
     if azione not in ammesse:
         azione = "crea" if stage != "final" else "modifica"
@@ -275,6 +303,7 @@ def normalizza(grezzo, ctx: dict, stage: str, domande_fatte: int, testo_utente: 
         "per_chi": _testo(g.get("per_chi"), 120),
         "modifica": _testo(g.get("modifica"), 700),
         "operazioni": [],
+        "navigazione": pulisci_navigazione(g.get("navigazione"), ctx),
         "assunzioni": [a for a in (_testo(x, 200) for x in (g.get("assunzioni") if isinstance(g.get("assunzioni"), list) else [])) if a][:3],
     }
     # Una domanda senza testo, o oltre il limite, non ha senso: si decide con ciò che c'è
@@ -301,6 +330,13 @@ def normalizza(grezzo, ctx: dict, stage: str, domande_fatte: int, testo_utente: 
                          opzioni=[f"Esercizio {i + 1}" for i in range(min(4, len(titoli)))])
             else:
                 d.update(azione="modifica", modifica=_testo(testo_utente, 700))
+    if azione == "apri_verifica" and not d["navigazione"]["apri_id"]:       # non so quale: si mostra l'elenco
+        d.update(azione="storico", messaggio=d["messaggio"] or "Non ho capito quale verifica: ecco l'elenco.")
+    if azione == "classe" and not d["navigazione"]["nuova_classe"]["nome"]:
+        if domande_fatte < AGENTE_MAX_DOMANDE:
+            d.update(azione="domanda", domanda="Come si chiama la classe?", opzioni=[])
+        else:
+            d.update(azione="aiuto", messaggio="Dimmi il nome della classe, per esempio «2C».")
     if azione == "modifica" and not d["modifica"]:
         d["modifica"] = _testo(testo_utente, 700)
     if azione == "versioni" and not d["versioni"]:
@@ -347,17 +383,17 @@ def _estrai_json(testo: str):
             return None
 
 
-def interpreta(modello, chat: list, ctx: dict, stage: str, domande_fatte: int = 0) -> dict:
+def interpreta(modello, chat: list, ctx: dict, stage: str, domande_fatte: int = 0, nav: bool = False) -> dict:
     """Capisce l'ultimo messaggio del docente. `modello` è un ModelloAI (già adatto al compito «agente»). Non solleva mai."""
     ultimo = next((m.get("testo") for m in reversed(chat) if m.get("ruolo") == "utente"), "") or ""
     try:
-        prompt = prompt_agente(conversazione_testo(chat, stage), contesto_testo(ctx), _azioni_testo(stage),
+        prompt = prompt_agente(conversazione_testo(chat, stage), contesto_testo(ctx), _azioni_testo(stage, nav),
                                max(0, AGENTE_MAX_DOMANDE - domande_fatte))
         risposta = modello.generate_content([prompt], generation_config={"json": True, "temperature": 0.2})
         grezzo = _estrai_json(risposta.text)
         if not isinstance(grezzo, dict):
             raise ValueError("risposta non valida")
-        return unisci_bozza(normalizza(grezzo, ctx, stage, domande_fatte, ultimo), ctx.get("bozza"))
+        return unisci_bozza(normalizza(grezzo, ctx, stage, domande_fatte, ultimo, nav), ctx.get("bozza"))
     except Exception as e:
         logger.warning("agente: %s", e)
         return ripiego(ultimo, stage, ctx)
@@ -384,13 +420,30 @@ _RE_OPS = [
 ]
 
 
-def scorciatoia(testo: str, stage: str, ctx: dict) -> dict | None:
+_RE_NAV = [
+    (re.compile(r"^(?:apri |vai (?:al|a) |mostra )?(?:il )?(?:mio )?profilo$"), {"azione": "profilo"}),
+    (re.compile(r"^(?:apri |vai a |mostra )?(?:le )?(?:mie )?verifiche$|^storico$|^cronologia$"), {"azione": "storico"}),
+    (re.compile(r"^(?:correggi(?: i)?(?: compiti)?|correzione(?: dei compiti)?)$"), {"azione": "correggi"}),
+    (re.compile(r"^(?:apri )?(?:le )?impostazioni$"), {"azione": "impostazioni"}),
+    (re.compile(r"^invita(?: un)?(?: collega)?$"), {"azione": "invita"}),
+    (re.compile(r"^(?:attiva |metti |passa a |usa )?(?:il )?(?:tema|modalit[àa])\s+(?:scur[oa]|notte|dark)$"), {"azione": "tema", "navigazione": {"tema": "scuro"}}),
+    (re.compile(r"^(?:attiva |metti |passa a |usa )?(?:il )?(?:tema|modalit[àa])\s+(?:chiar[oa]|carta|light)$"), {"azione": "tema", "navigazione": {"tema": "chiaro"}}),
+]
+
+
+def scorciatoia(testo: str, stage: str, ctx: dict, nav: bool = False) -> dict | None:
     """Per le richieste brevissime e inequivocabili della pagina finale («fila B e soluzioni», «togli l'esercizio 4», «annulla») restituisce
     la decisione senza chiamare l'AI. Se c'è il minimo dubbio restituisce None e decide l'AI."""
-    if stage != "final" or not (ctx.get("verifica")):
-        return None
     t = re.sub(r"\s+", " ", (testo or "").lower()).strip(" .!?")
     if not t or len(t) > 80:
+        return None
+    if nav:
+        for rx, base in _RE_NAV:
+            if rx.match(t):
+                d = normalizza(dict(base), ctx, stage, AGENTE_MAX_DOMANDE, testo, nav=True)
+                d["scorciatoia"] = True
+                return d
+    if stage != "final" or not (ctx.get("verifica")):
         return None
     for rx, fn in _RE_OPS:
         m = rx.match(t)

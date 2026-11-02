@@ -97,6 +97,13 @@ def render_sidebar(
         # ── TEMA ──────────────────────────────────────────────────────────────
         # Tema chiaro (Carta, predefinito) o scuro (Notte): un interruttore in fondo alla barra.
         with _c_user:
+            if st.session_state.get("_agente_sidebar") and st.button("Chiedi all'assistente  ·  Ctrl K", key="sb_cmdk", use_container_width=True, icon=":material/auto_awesome:",
+                                                                      type="primary", help="Scrivi cosa ti serve: apre una verifica, aggiunge una classe, cambia il tema…"):
+                st.session_state["_cmdk_aperto"] = True
+                st.rerun()
+            if st.button("Correggi i compiti", key="sb_correzione", use_container_width=True, icon=":material/rate_review:"):
+                st.session_state["_apri_correzione"] = True
+                st.rerun()
             if st.button("Il mio profilo", key="sb_profilo", use_container_width=True, icon=":material/account_circle:"):
                 st.session_state["_apri_profilo"] = True
                 st.rerun()

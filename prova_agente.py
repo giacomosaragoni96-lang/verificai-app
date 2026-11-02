@@ -1,5 +1,5 @@
 """
-prova_agente.py — prova da riga di comando dell'agente (agente.py) con l'AI vera: diciassette richieste di esempio, dalla più chiara alla più strana.
+prova_agente.py — prova da riga di comando dell'agente (agente.py) con l'AI vera: venti richieste di esempio, dalla più chiara alla più strana.
 Serve a vedere se capisce, se chiede solo ciò che manca e se compila i campi giusti. Usa GOOGLE_API_KEY del file .env (non la stampa).
 
     python prova_agente.py
@@ -54,13 +54,19 @@ CASI = [
                                                               "esercizi": ["Equazioni lineari", "Equazioni lineari fratte", "Equazioni con valore assoluto", "Equazioni razionali", "Problema"], "pronte": [], "punti_totali": 100}}),
     ("final", "no, fai 5 esercizi", {"verifica": {"argomento": "Equazioni (recupero)", "materia": "Matematica", "scuola": "Liceo Scientifico",
                                                   "esercizi": ["Equazioni lineari"], "pronte": [], "punti_totali": 100}}),
+    ("home", "riapri quella sulle equazioni", {"nav": True, "ultime": [{"id": 31, "argomento": "Le equazioni di primo grado", "materia": "Matematica", "classe": "3ªB"},
+                                                                       {"id": 30, "argomento": "Storia romana", "materia": "Storia", "classe": "1ªA"}]}),
+    ("home", "aggiungi la classe 2C del classico", {"nav": True}),
+    ("home", "vorrei correggere i compiti della 3B", {"nav": True}),
     ("final", "fammi una verifica nuova sui polinomi per la 2a", {"verifica": {"argomento": "Le equazioni", "materia": "Matematica", "esercizi": ["Equazioni"], "pronte": []}}),
 ]
 
 for stage, testo, extra in CASI:
+    extra = dict(extra)
+    nav = extra.pop("nav", False)
     ctx = {**BASE, **extra}
     chat = [{"ruolo": "utente", "testo": testo, "stage": stage}]
-    d = agente.interpreta(modello, chat, ctx, stage, 0)
+    d = agente.interpreta(modello, chat, ctx, stage, 0, nav)
     c = {k: v for k, v in d["crea"].items() if v not in (None, "")}
     print(f"\n[{stage}] «{testo}»\n  → {d['azione']}" + (" (RIPIEGO)" if d.get("ripiego") else ""))
     if d["messaggio"]:
@@ -73,6 +79,8 @@ for stage, testo, extra in CASI:
         print("  versioni:", d["versioni"], d["per_chi"])
     if d["azione"] == "modifica" or (d["azione"] == "impagina" and d["modifica"]):
         print("  modifica:", d["modifica"])
+    if d.get("navigazione") and any(v for k, v in d["navigazione"].items() if k != "nuova_classe") or (d["navigazione"]["nuova_classe"]["nome"]):
+        print("  navigazione:", d["navigazione"])
     if d["azione"] == "operazioni":
         print("  operazioni:", [(o["tipo"], (o["indice"] + 1) if o["indice"] is not None else None, o["numero"] or o["punti"] or o["istruzione"] or o["classe"] or o["data"]) for o in d["operazioni"]])
     if d["assunzioni"]:
