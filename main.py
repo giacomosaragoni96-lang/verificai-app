@@ -3647,11 +3647,8 @@ def _ag_ricevi(testo: str, files: list, stage: str) -> dict | None:
     if dec is None:
         ss["_ag_conta"] = ss.get("_ag_conta", 0) + 1
         _mid = (ss.get("gen_params") or {}).get("modello_id") if stage == "final" else None
-        if stage == "home":
-            _ph_ag = st.empty()
-            _ph_ag.markdown(ui_agente.bolla_utente(testo or "Uso i file che ho allegato.", nomi) + ui_agente.bolla_scrive(), unsafe_allow_html=True)
+        if stage == "home":                  # la bolla con i tre puntini la mostra già la barra (in_arrivo)
             dec = agente.interpreta(crea_modello(_mid or modello_id).per("agente"), chat, ctx, stage, _ag_domande_fatte(stage))
-            _ph_ag.empty()
         else:
             with _attesa("pagina", "Sto capendo cosa ti serve", ["Leggo la richiesta", "Guardo le tue classi e le tue abitudini", "Preparo il riepilogo"], durata_passo=3):
                 dec = agente.interpreta(crea_modello(_mid or modello_id).per("agente"), chat, ctx, stage, _ag_domande_fatte(stage))
@@ -3804,14 +3801,20 @@ def _render_agente_home() -> None:
     blocco = ("Hai finito le verifiche gratuite di questo mese." if _limite else
               "Non riesco a controllare il tuo utilizzo mensile in questo momento. Riprova tra qualche istante." if _blocco_conteggio else None)
     _mic = _js_dettatura('textarea[data-testid="stChatInputTextArea"]', '[data-testid="stChatInput"]', "right:58px;bottom:12px;") if not chat else ""
+    _arr = ss.get("_ag_in_arrivo")
     ev = ui_agente.render_home(T, chat, blocco, [k for k, pk in _PRO_KIT.items() if _pro_bloccato(pk)],
-                               [a["name"] for a in ss.get("_ag_allegati") or []], _mic)
+                               [a["name"] for a in ss.get("_ag_allegati") or []], _mic,
+                               {"testo": _arr["testo"] or "Uso i file che ho allegato.", "nomi": [f.name for f in _arr["files"]]} if _arr else None)
+    if _arr:                                  # la richiesta è già in vista sotto la storia: ora la capisce l'agente
+        ss.pop("_ag_in_arrivo", None)
+        _ag_ricevi(_arr["testo"], _arr["files"], "home")
+        st.rerun()
     if not ev:
         return
     dec = ((chat[-1].get("decisione") if chat and chat[-1]["ruolo"] == "agente" else None) or {})
     t = ev["tipo"]
     if t in ("testo", "opzione"):
-        _ag_ricevi(ev["testo"], ev.get("files") or [], "home")
+        ss["_ag_in_arrivo"] = {"testo": ev["testo"], "files": ev.get("files") or []}      # si ridisegna subito con la bolla e i puntini, poi si elabora
         st.rerun()
     elif t == "conferma" and dec.get("azione") == "crea" and not (_limite or _blocco_conteggio):
         _ag_applica_crea(dec, avvia=True)
@@ -3820,8 +3823,7 @@ def _render_agente_home() -> None:
     elif t == "ritocco" and dec.get("azione") == "crea":
         par = dec["crea"]
         if ev["campo"] == "esercizi":
-            base = par.get("num_esercizi") or (DURATE[DURATA_DEFAULT]["num_esercizi"] + (1 if par.get("eccellenza") is not False else 0))
-            par["num_esercizi"] = max(3, min(11, base + ev["delta"]))
+            par["num_esercizi"] = max(3, min(11, int(ev["valore"])))
         elif ev["campo"] == "eccellenza":
             par["eccellenza"] = bool(ev["valore"])
         elif ev["campo"] == "punteggi":

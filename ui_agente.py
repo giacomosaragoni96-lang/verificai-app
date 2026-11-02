@@ -99,6 +99,10 @@ def _css(T: dict) -> str:
         f".ag-nota b{{color:{T['text']};}}"
         f".ag-rit{{{f}font-size:.7rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:{T['muted']};margin:.2rem 0 .3rem;}}"
         "html body .stApp .st-key-blk_ag_azioni{margin-left:2.7rem;}"
+        f"html body .stApp .st-key-blk_ag_rit{{background:{T['card']};border:1px solid {T['border']};border-radius:16px;padding:.75rem 1rem .6rem;margin:.1rem 0 .75rem;}}"
+        f".ag-lab{{{f}font-size:.68rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:{T['muted']};margin:0 0 .3rem;}}"
+        "html body .stApp .st-key-blk_ag_rit [data-testid='stNumberInput'] input{font-weight:700;font-size:1rem;text-align:center;}"
+        "html body .stApp .st-key-blk_ag_rit [data-testid='stNumberInput'] > div{max-width:9.5rem;}"
         "@media (max-width:640px){.ag-hero b{font-size:2rem;}.ag-card,html body .stApp .st-key-blk_ag_azioni{margin-left:0;}.ag-bub{max-width:90%;}}"
         "@media (prefers-reduced-motion: reduce){.ag-row,.ag-card,.ag-dots i{animation:none !important;}}"
         "</style>" + _css_pillole(T)
@@ -186,37 +190,40 @@ def suggerimenti_rapidi(items: list, prefisso: str, T: dict | None = None) -> st
 
 
 def _ritocchi(dec: dict):
-    """Piccole correzioni alla scheda senza chiamare l'AI: numero di esercizi, esercizio per l'eccellenza, tabella dei punti."""
+    """Piccole correzioni alla scheda senza chiamare l'AI: quanti esercizi in tutto, esercizio per l'eccellenza, tabella dei punti.
+    Il numero mostrato è sempre quello vero (se il docente non l'ha detto, quello che si userebbe)."""
     par = dec.get("crea") or {}
-    st.markdown('<div class="ag-rit">Ritocca al volo</div>', unsafe_allow_html=True)
-    c1, c2, c3, c4 = st.columns([1.5, 1, 1, 1.5], gap="small", vertical_alignment="center")
-    n = par.get("num_esercizi")
-    c1.caption(f"Esercizi: **{n if n else 'standard'}**")
     evento = None
-    if c2.button("−", key="ag_meno", use_container_width=True, help="Un esercizio in meno"):
-        evento = {"tipo": "ritocco", "campo": "esercizi", "delta": -1}
-    if c3.button("+", key="ag_piu", use_container_width=True, help="Un esercizio in più"):
-        evento = {"tipo": "ritocco", "campo": "esercizi", "delta": 1}
-    ecc = par.get("eccellenza")
-    ecc_v = True if ecc is None else bool(ecc)
-    nuovo = c4.toggle("Eccellenza", value=ecc_v, key=f"ag_ecc_{ecc}", help="Un esercizio finale facoltativo e più difficile")
-    if nuovo != ecc_v:
-        evento = {"tipo": "ritocco", "campo": "eccellenza", "valore": nuovo}
-    pun = par.get("punteggi")
-    pun_v = True if pun is None else bool(pun)
-    nuovo_p = st.toggle("Tabella dei punteggi in fondo", value=pun_v, key=f"ag_pun_{pun}")
-    if nuovo_p != pun_v:
-        evento = {"tipo": "ritocco", "campo": "punteggi", "valore": nuovo_p}
+    with st.container(key="blk_ag_rit"):
+        c1, c2, c3 = st.columns([1.15, 1.2, 1.3], gap="medium", vertical_alignment="bottom")
+        n_ora = par.get("num_esercizi") or agente.totale_predefinito(par)
+        c1.markdown('<div class="ag-lab">Esercizi in tutto</div>', unsafe_allow_html=True)
+        n_nuovo = c1.number_input("Esercizi in tutto", min_value=3, max_value=11, value=int(n_ora), step=1, key=f"ag_n_{n_ora}_{par.get('eccellenza')}",
+                                  label_visibility="collapsed", help="Compreso l'esercizio per l'eccellenza, se c'è.")
+        if int(n_nuovo) != int(n_ora):
+            evento = {"tipo": "ritocco", "campo": "esercizi", "valore": int(n_nuovo)}
+        ecc = par.get("eccellenza")
+        ecc_v = True if ecc is None else bool(ecc)
+        nuovo = c2.toggle("Esercizio per l'eccellenza", value=ecc_v, key=f"ag_ecc_{ecc}", help="Un esercizio finale facoltativo, più difficile, con pochi punti.")
+        if nuovo != ecc_v:
+            evento = {"tipo": "ritocco", "campo": "eccellenza", "valore": nuovo}
+        pun = par.get("punteggi")
+        pun_v = True if pun is None else bool(pun)
+        nuovo_p = c3.toggle("Tabella dei punteggi", value=pun_v, key=f"ag_pun_{pun}", help="In fondo alla verifica, da compilare con i voti.")
+        if nuovo_p != pun_v:
+            evento = {"tipo": "ritocco", "campo": "punteggi", "valore": nuovo_p}
     return evento
 
 
-def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegati: list | None = None, js_microfono: str = "") -> dict | None:
+def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegati: list | None = None, js_microfono: str = "",
+                in_arrivo: dict | None = None) -> dict | None:
     """Barra + conversazione della schermata iniziale. `blocco` = testo se non si può creare ora (limite mensile); `bloccate` = versioni non disponibili;
-    `allegati` = nomi dei file allegati nella barra; `js_microfono` = script della dettatura (lo prepara main.py)."""
+    `allegati` = nomi dei file allegati nella barra; `js_microfono` = script della dettatura (lo prepara main.py).
+    `in_arrivo` = la richiesta appena inviata ({"testo", "nomi"}) mentre l'assistente la sta capendo: compare in coda alla storia, con i tre puntini."""
     evento = None
     with st.container(key="blk_agente"):
         st.markdown(_css(T), unsafe_allow_html=True)
-        if not chat:
+        if not chat and not in_arrivo:
             st.markdown('<div class="ag-hero"><b>Cosa ti <em>serve</em>?</b>'
                         '<span>Descrivi la verifica come la diresti a un collega.<br>Al resto penso io.</span></div>', unsafe_allow_html=True)
         else:
@@ -232,7 +239,9 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
             elif m.get("testo"):
                 st.markdown(bolla_assistente(m["testo"]), unsafe_allow_html=True)
 
-        ultimo = chat[-1] if chat and chat[-1]["ruolo"] == "agente" else None
+        if in_arrivo:                                    # la scheda e i pulsanti di prima non servono più: c'è una richiesta nuova in lavorazione
+            st.markdown(bolla_utente(in_arrivo["testo"], in_arrivo.get("nomi")) + bolla_scrive(), unsafe_allow_html=True)
+        ultimo = chat[-1] if chat and chat[-1]["ruolo"] == "agente" and not in_arrivo else None
         dec = (ultimo or {}).get("decisione") or {}
         az = dec.get("azione")
         if az == "domanda":
@@ -280,10 +289,10 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
                 components.html(js_microfono, height=0)
         invio = st.chat_input("Scrivi o detta cosa ti serve…", key="ag_in", accept_file="multiple",
                               file_type=["pdf", "png", "jpg", "jpeg", "webp", "docx"])
-        if not chat:
+        if not chat and not in_arrivo:
             st.markdown('<div class="ag-cap">Argomento e classe<i>·</i>Fila B, soluzioni, versione per DSA<i>·</i>Appunti, foto o una verifica da sistemare</div>',
                         unsafe_allow_html=True)
-        if invio and evento is None:
+        if invio and evento is None and not in_arrivo:
             if isinstance(invio, str):
                 testo, files = invio.strip(), []
             else:
