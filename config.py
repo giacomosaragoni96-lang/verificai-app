@@ -87,7 +87,7 @@ PIANI = {
 
 # ── MODELLI AI ─────────────────────────────────────────────────────────────────
 MODELLI_DISPONIBILI = {
-    "⚡ Flash 2.5 Lite (veloce · Free)": {
+    "⚡ Piano Free (Claude Haiku · veloce)": {
         "id":    "gemini-2.5-flash-lite",
         "piano": "free",
     },
@@ -104,6 +104,22 @@ MODELLI_DISPONIBILI = {
 MODEL_FAST_ID = "gemini-2.5-flash-lite"
 MODEL_FLASH_ID = "gemini-2.5-flash"
 
+# Piano Free con Claude (confronto del 2 novembre 2026: stessa pipeline, 5 materie × 4 modelli): Haiku 5.5 al posto di Flash-Lite
+# costa pochi centesimi in più e non produce verifiche rotte (fonte mancante, grafico assente, scelta multipla ignorata).
+# Compiti leggeri e del piano → Haiku; l'autoverifica dei calcoli → Sonnet (come nel confronto); compiti con immagini → Gemini Flash.
+# Serve la chiave ANTHROPIC_API_KEY (secrets o .env): senza chiave o senza il pacchetto il Free resta su Gemini Flash-Lite.
+FREE_CON_CLAUDE = True
+MODEL_CLAUDE_FAST_ID = "claude-haiku-5-5"
+MODEL_CLAUDE_STRONG_ID = "claude-sonnet-5-5"
+COMPITI_CLAUDE_FORTE = ("autoverifica",)
+
+
+def free_usa_claude() -> bool:
+    """True se il piano Free lavora con Claude: interruttore acceso, chiave presente e pacchetto installato."""
+    import importlib.util
+    import os
+    return bool(FREE_CON_CLAUDE and os.getenv("ANTHROPIC_API_KEY") and importlib.util.find_spec("anthropic"))
+
 # ── COSTI E ROUTING DEI MODELLI ───────────────────────────────────────────────
 # Prezzi in USD per milione di token (input, output). L'output include i token di
 # "ragionamento" dei modelli 2.5: sono quelli che pesano di più sul costo.
@@ -112,6 +128,8 @@ PREZZI_USD_PER_MILIONE = {
     "gemini-2.5-flash":      (0.30, 2.50),
     "gemini-2.5-pro":        (1.25, 10.00),
     "gemini-3.5-flash-lite": (0.30, 2.50),
+    "claude-haiku-5-5":      (0.10, 0.50),     # listino Anthropic (prompt fino a 100K token)
+    "claude-sonnet-5-5":     (2.00, 10.00),
 }
 # Stima per i modelli della serie 3.x non elencati sopra (famiglia → input, output).
 PREZZI_STIMATI_GEN3 = {"lite": (0.30, 2.50), "flash": (0.50, 3.00), "pro": (2.00, 12.00)}

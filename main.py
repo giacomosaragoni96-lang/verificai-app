@@ -5337,7 +5337,7 @@ def _lancia_generazione(
     _modello_id_eff = modello_id  # da sidebar
     # Verifica che il modello selezionato sia coerente con il piano (protezione lato server)
     # Usa sempre gli ID definiti in config.MODELLI_DISPONIBILI per evitare drift tra codice e config.
-    _id_free  = MODELLI_DISPONIBILI["⚡ Flash 2.5 Lite (veloce · Free)"]["id"]
+    _id_free  = MODELLI_DISPONIBILI["⚡ Piano Free (Claude Haiku · veloce)"]["id"]
     _ids_all  = {v["id"] for v in MODELLI_DISPONIBILI.values()}
     _ids_pro  = {
         v["id"]

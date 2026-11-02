@@ -102,7 +102,7 @@ Piani reali: `free`, `pro`, `premium` (da `subscription_management`) e `admin` (
 `ADMIN_EMAILS`). `gold` esiste nel codice ma non è raggiungibile; `premium` vale come `pro` (normalizzato in
 `calcola_entitlements`).
 Modello: lo sceglie la sidebar in base al piano; `config.get_model_id_per_piano` è solo un ripiego
-se il modello scelto non è valido per il piano. Free = flash-lite; pro = sempre gemini-2.5-flash
+se il modello scelto non è valido per il piano. Free = Claude Haiku 5.5 (`ai_claude.py`, senza streamlit; `config.FREE_CON_CLAUDE`, serve `ANTHROPIC_API_KEY` nei secrets: senza chiave o senza pacchetto torna a gemini-flash-lite; compiti leggeri e del piano → Haiku, autoverifica → Sonnet 5.5, compiti con foto/agente/correzione → Gemini Flash; scelta dopo il confronto del 2 novembre 2026 con `prova_confronto_modelli.py`, costo medio ~$0,03 a verifica; ATTENZIONE: i dati del Free passano da Anthropic, informativa aggiornata in `landing/privacy.html`); pro = sempre gemini-2.5-flash
 (nessun upgrade STEM); gemini-2.5-pro (costa 3-4 volte Flash, vantaggio non netto) non si sceglie MAI in automatico,
 nemmeno per gold o per l'admin: solo l'admin può sceglierlo a mano dalla sidebar. L'autoverifica gira a ragionamento basso
 (`config.COMPITI_AI`: 1024; con 3072 la serie 3.x andava al livello alto, 7-9 mila token e fino a 70 s).

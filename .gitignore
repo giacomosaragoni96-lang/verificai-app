@@ -38,6 +38,7 @@ build/
 Thumbs.db
 # Output di prova_generazione.py
 prove_output/
+prove_confronto/
 materiale/
 
 # Impostazioni locali di Claude Code

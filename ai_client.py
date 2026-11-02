@@ -16,7 +16,7 @@ from collections import deque
 from google import genai
 from google.genai import errors, types
 
-from config import PREZZI_STIMATI_GEN3, PREZZI_USD_PER_MILIONE, scegli_modello_per_compito
+from config import MODEL_FAST_ID, PREZZI_STIMATI_GEN3, PREZZI_USD_PER_MILIONE, free_usa_claude, scegli_modello_per_compito
 
 logger = logging.getLogger("verificai.ai")
 
@@ -369,8 +369,13 @@ class ModelloAI:
         _registra(mid, self.compito, _uso_da_meta(ultimo_meta), time.time() - t0)
 
 
-def crea_modello(model_id: str, compito: str | None = None) -> ModelloAI:
-    """Modello «così com'è» (senza tetto di ragionamento), per es. quello del piano dell'utente."""
+def crea_modello(model_id: str, compito: str | None = None):
+    """Modello «così com'è» (senza tetto di ragionamento), per es. quello del piano dell'utente.
+    Il modello del piano Free (MODEL_FAST_ID) è Claude Haiku se la chiave Anthropic c'è (vedi ai_claude);
+    con un compito indicato resta Gemini, come prima."""
+    if compito is None and model_id == MODEL_FAST_ID and free_usa_claude():
+        from ai_claude import ModelloClaude
+        return ModelloClaude()
     if compito:
         return ModelloAI(model_id, compito, None)
     return ModelloAI(model_id)
@@ -380,6 +385,10 @@ def crea_modello(model_id: str, compito: str | None = None) -> ModelloAI:
 
 def errore_definitivo(exc: Exception) -> bool:
     """True se riprovare è inutile: chiave non valida, richiesta errata, crediti/fatturazione finiti."""
+    if free_usa_claude():
+        from ai_claude import errore_definitivo as _claude_definitivo
+        if _claude_definitivo(exc):
+            return True
     if isinstance(exc, errors.APIError):
         codice = getattr(exc, "code", None)
         testo = str(exc).lower()
