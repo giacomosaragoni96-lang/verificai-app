@@ -3647,8 +3647,14 @@ def _ag_ricevi(testo: str, files: list, stage: str) -> dict | None:
     if dec is None:
         ss["_ag_conta"] = ss.get("_ag_conta", 0) + 1
         _mid = (ss.get("gen_params") or {}).get("modello_id") if stage == "final" else None
-        with _attesa("pagina", "Sto capendo cosa ti serve", ["Leggo la richiesta", "Guardo le tue classi e le tue abitudini", "Preparo il riepilogo"], durata_passo=3):
+        if stage == "home":
+            _ph_ag = st.empty()
+            _ph_ag.markdown(ui_agente.bolla_utente(testo or "Uso i file che ho allegato.", nomi) + ui_agente.bolla_scrive(), unsafe_allow_html=True)
             dec = agente.interpreta(crea_modello(_mid or modello_id).per("agente"), chat, ctx, stage, _ag_domande_fatte(stage))
+            _ph_ag.empty()
+        else:
+            with _attesa("pagina", "Sto capendo cosa ti serve", ["Leggo la richiesta", "Guardo le tue classi e le tue abitudini", "Preparo il riepilogo"], durata_passo=3):
+                dec = agente.interpreta(crea_modello(_mid or modello_id).per("agente"), chat, ctx, stage, _ag_domande_fatte(stage))
         _registra_evento("agente")
     msg = (dec.get("messaggio") or "") + ((" " + avviso) if avviso else "")
     chat.append({"ruolo": "agente", "stage": stage, "testo": msg.strip(), "decisione": dec})
@@ -3795,13 +3801,10 @@ def _render_agente_home() -> None:
     """La barra della schermata iniziale: conversazione, domande, riepilogo e avvio."""
     ss = st.session_state
     chat = ss.setdefault("_ag_chat", [])
-    _classi = [c["nome"] for c in _profilo().get("classi") or []][:1]
-    esempi = [f"Verifica di matematica per la {_classi[0]}" if _classi else "Verifica sulle frazioni per la 1ª media",
-              "Interrogazione scritta di storia sul Risorgimento", "Come l'ultima, ma più facile, con la fila B"]
     blocco = ("Hai finito le verifiche gratuite di questo mese." if _limite else
               "Non riesco a controllare il tuo utilizzo mensile in questo momento. Riprova tra qualche istante." if _blocco_conteggio else None)
     _mic = _js_dettatura('textarea[data-testid="stChatInputTextArea"]', '[data-testid="stChatInput"]', "right:58px;bottom:12px;") if not chat else ""
-    ev = ui_agente.render_home(T, chat, esempi, blocco, [k for k, pk in _PRO_KIT.items() if _pro_bloccato(pk)],
+    ev = ui_agente.render_home(T, chat, blocco, [k for k, pk in _PRO_KIT.items() if _pro_bloccato(pk)],
                                [a["name"] for a in ss.get("_ag_allegati") or []], _mic)
     if not ev:
         return
@@ -5082,14 +5085,15 @@ def _render_stage_input():
     _modo = st.session_state.get("_home_modo")
     _sottotitolo = {None: "", "crea": "Scrivi l’argomento: in un minuto la verifica è pronta.",
                     "impagina": ""}.get(_modo, "")
-    st.markdown(
-        f'<div class="vf-narrow" style="text-align:center;margin:.2rem 0 1.1rem;">'
-        f'<div class="vf-tp" style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
-        f'letter-spacing:-.025em;color:{T["text"]};line-height:1.15;">Crea la tua verifica</div>'
-        f'<div style="font-size:.82rem;font-weight:400;color:{T["text2"]};margin-top:.3rem;'
-        f'font-family:DM Sans,sans-serif;">{_sottotitolo}</div></div>',
-        unsafe_allow_html=True,
-    )
+    if not (_modo is None and _agente_abilitato()):
+        st.markdown(
+            f'<div class="vf-narrow" style="text-align:center;margin:.2rem 0 1.1rem;">'
+            f'<div class="vf-tp" style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
+            f'letter-spacing:-.025em;color:{T["text"]};line-height:1.15;">Crea la tua verifica</div>'
+            f'<div style="font-size:.82rem;font-weight:400;color:{T["text2"]};margin-top:.3rem;'
+            f'font-family:DM Sans,sans-serif;">{_sottotitolo}</div></div>',
+            unsafe_allow_html=True,
+        )
 
     # In cima, sopra il riquadro di benvenuto: attesa della generazione ed eventuale errore dell'ultimo tentativo
     _prog_ph_b = st.empty()
@@ -5116,8 +5120,9 @@ def _render_stage_input():
         if _agente_abilitato():
             try:
                 _render_agente_home()
-                st.markdown(f'<div style="text-align:center;margin:1.6rem 0 .6rem;font-family:DM Sans,sans-serif;font-size:.8rem;color:{T["muted"]};">oppure scegli tu da dove partire</div>',
-                            unsafe_allow_html=True)
+                st.markdown(f'<div style="display:flex;align-items:center;gap:.9rem;margin:2.1rem auto 1.1rem;max-width:46rem;font-family:DM Sans,sans-serif;font-size:.78rem;'
+                            f'font-weight:600;letter-spacing:.04em;color:{T["muted"]};"><span style="flex:1;height:1px;background:{T["border"]};"></span>'
+                            f'oppure parti da qui<span style="flex:1;height:1px;background:{T["border"]};"></span></div>', unsafe_allow_html=True)
             except Exception as _e_ag:      # l'agente è accessorio: un suo errore non deve mai bloccare la home
                 logger.warning("Agente: %s", _e_ag)
         _render_scelta_iniziale()
@@ -6962,14 +6967,14 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
         if _agente_on and _dom_ag:                       # l'agente ha chiesto qualcosa: domanda e risposte rapide sopra la casella
             st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-weight:700;color:{T["text"]};margin:.2rem 0 .4rem;">{_esc(_dom_ag["domanda"])}</div>',
                         unsafe_allow_html=True)
-            _sc_ag = ui_agente.opzioni_rapide(_dom_ag.get("opzioni") or [], "ag_fin_opt")
+            _sc_ag = ui_agente.opzioni_rapide(_dom_ag.get("opzioni") or [], "ag_fin_opt", T)
             if _sc_ag:
                 st.session_state["_ag_rispondi"] = _sc_ag
                 st.session_state.pop("_ag_domanda_final", None)
                 st.rerun()
         if _agente_on and not _finite and not _dom_ag:       # scorciatoie con un tocco: le risolve il codice, senza attesa
             try:
-                _pick = ui_agente.suggerimenti_rapidi(agente.suggerimenti(_ag_contesto("final")), "ag_sug")
+                _pick = ui_agente.suggerimenti_rapidi(agente.suggerimenti(_ag_contesto("final")), "ag_sug", T)
             except Exception as _e_sug:
                 logger.warning("Suggerimenti dell'agente: %s", _e_sug)
                 _pick = None
