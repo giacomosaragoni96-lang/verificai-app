@@ -53,7 +53,7 @@ def _css(T: dict) -> str:
         f".ag-hero b em{{font-style:normal;background:linear-gradient(100deg,{acc},{acc2});-webkit-background-clip:text;background-clip:text;color:transparent;}}"
         f".ag-hero span{{display:block;margin-top:.7rem;font-size:1.02rem;line-height:1.5;color:{T['text2']};}}"
         f".ag-cap{{text-align:center;margin:.85rem 0 0;font-size:.78rem;line-height:1.7;color:{T['muted']};{f}}}"
-        f".ag-cap i{{font-style:normal;margin:0 .45rem;opacity:.5;}}"
+        f".ag-cap b{{font-weight:650;color:{T['text2']};}}"
         # ── casella di scrittura: una scheda sola, pulita; dentro tutto trasparente ─────────────────────────────────
         "html body .stApp .st-key-blk_agente [data-testid='stChatInput']{"
         f"background:{T['card']} !important;border:1.5px solid {T['border']} !important;border-radius:26px !important;padding:.45rem .65rem .45rem .5rem !important;"
@@ -326,11 +326,11 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
         if js_microfono:
             with st.container(key="dettatura_ag"):
                 components.html(js_microfono, height=0)
-        invio = st.chat_input("Scrivi o detta cosa ti serve…", key="ag_in", accept_file="multiple",
+        invio = st.chat_input("Scrivi o detta, per esempio: disequazioni di secondo grado per la 3B", key="ag_in", accept_file="multiple",
                               file_type=["pdf", "png", "jpg", "jpeg", "webp", "docx"])
         if not chat and not in_arrivo:
-            st.markdown('<div class="ag-cap">Argomento e classe<i>·</i>Fila B, soluzioni, versione per DSA<i>·</i>Appunti, foto o una verifica da sistemare</div>',
-                        unsafe_allow_html=True)
+            st.markdown('<div class="ag-cap">Basta l&#8217;argomento. Se vuoi, aggiungi la <b>classe</b> e cosa preparare (<b>Fila B</b>, <b>soluzioni</b>, <b>versione per DSA</b>).<br>'
+                        'Con <b>＋</b> allegi appunti, foto o una verifica da sistemare.</div>', unsafe_allow_html=True)
         if invio and evento is None and not in_arrivo:
             if isinstance(invio, str):
                 testo, files = invio.strip(), []
