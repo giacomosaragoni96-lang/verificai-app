@@ -31,7 +31,11 @@ def _css_pillole(T: dict) -> str:
     acc = T["accent"]
     return (
         "<style>"
-        "html body .stApp [class*='st-key-blk_ag_pill'] button{border-radius:999px !important;min-height:2.3rem !important;padding:.15rem .95rem !important;"
+        # il contenitore dispone le pillole in fila e le manda a capo da sole (niente colonne strette)
+        "html body .stApp [class*='st-key-blk_ag_pill'],html body .stApp [class*='st-key-blk_ag_pill'] > [data-testid='stVerticalBlock']{"
+        "display:flex !important;flex-direction:row !important;flex-wrap:wrap !important;gap:.5rem !important;align-items:center;}"
+        "html body .stApp [class*='st-key-blk_ag_pill'] [data-testid='stElementContainer']{width:auto !important;flex:0 0 auto !important;}"
+        "html body .stApp [class*='st-key-blk_ag_pill'] button{white-space:nowrap !important;width:auto !important;border-radius:999px !important;min-height:2.3rem !important;padding:.15rem .95rem !important;"
         f"border:1.5px solid {acc}55 !important;background:{T['card']} !important;box-shadow:none !important;transition:all .15s ease !important;}}"
         f"html body .stApp [class*='st-key-blk_ag_pill'] button p{{color:{acc} !important;font-weight:650 !important;font-size:.86rem !important;}}"
         f"html body .stApp [class*='st-key-blk_ag_pill'] button:hover{{background:{acc} !important;border-color:{acc} !important;transform:translateY(-1px);"
@@ -197,9 +201,8 @@ def opzioni_rapide(opzioni: list, prefisso: str, T: dict | None = None) -> str |
         st.markdown(_css_pillole(T), unsafe_allow_html=True)
     scelta = None
     with st.container(key=f"blk_ag_pill_{prefisso}"):
-        colonne = st.columns(min(len(opzioni), 4), gap="small")
-        for i, (col, o) in enumerate(zip(colonne, opzioni)):
-            if col.button(o, key=f"{prefisso}_{i}", use_container_width=True, type="secondary"):
+        for i, o in enumerate(opzioni[:4]):
+            if st.button(o, key=f"{prefisso}_{i}", type="secondary"):
                 scelta = o
     return scelta
 
@@ -211,12 +214,9 @@ def suggerimenti_rapidi(items: list, prefisso: str, T: dict | None = None) -> st
     if T:
         st.markdown(_css_pillole(T), unsafe_allow_html=True)
     scelta = None
-    st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-size:.7rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;'
-                f'color:{(T or {}).get("muted", "#94A3B8")};margin:.2rem 0 .3rem;">Con un tocco</div>', unsafe_allow_html=True)
     with st.container(key=f"blk_ag_pill_{prefisso}"):
-        colonne = st.columns(len(items), gap="small")
-        for i, (col, (et, testo)) in enumerate(zip(colonne, items)):
-            if col.button(et, key=f"{prefisso}_{i}", use_container_width=True, type="secondary", icon=":material/bolt:"):
+        for i, (et, testo) in enumerate(items):
+            if st.button(et, key=f"{prefisso}_{i}", type="secondary", icon=":material/bolt:"):
                 scelta = testo
     return scelta
 
