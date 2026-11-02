@@ -1107,8 +1107,11 @@ def prompt_modifica_verifica(
     richiesta: str,
     mostra_punteggi: bool = True,
     punti_totali: int = 100,
+    n_esercizi: int | None = None,
+    n_voluto: int | None = None,
 ) -> str:
     """Modifica «al volo» di tutta la verifica da una richiesta scritta dal docente (es. «semplifica il primo esercizio»).
+    n_esercizi = quanti esercizi ha ora la verifica; n_voluto = il numero che il docente chiede (se lo dice).
     blocchi = gli esercizi attuali, ciascuno come \\subsection*{...} seguito dal corpo; le figure sono segnaposto [[FIGURA n]]."""
     punti = (
         f"Ogni \\item ha il punteggio nel formato (N pt) sulla stessa riga; la somma di tutti i punti deve restare {punti_totali} pt."
@@ -1120,7 +1123,15 @@ def prompt_modifica_verifica(
         f"RICHIESTA DEL DOCENTE:\n«{richiesta.strip()}»\n\n"
         f"VERIFICA ATTUALE (esercizi in LaTeX):\n{blocchi}\n\n"
         f"COSA FARE:\n"
-        f"- Applica SOLO ciò che il docente chiede. Gli esercizi che la richiesta non riguarda li ricopi IDENTICI, parola per parola.\n"
+        f"- Un ESERCIZIO è un blocco \\subsection*{{...}} con il suo titolo; le RICHIESTE sono le sottodomande (\\item a, b, c…) dentro un esercizio. "
+        f"Non confonderli mai: «fai 5 esercizi» vuol dire 5 blocchi \\subsection*, NON un esercizio con 5 richieste.\n"
+        + (f"- La verifica ha ORA {n_esercizi} esercizi: il numero di esercizi NON cambia, salvo che il docente chieda chiaramente di toglierne («togli», «elimina», "
+           f"«meno esercizi») o di averne un numero preciso.\n" if n_esercizi else "")
+        + f"- «Lascia solo / usa solo / soltanto <un tipo di esercizi>» riguarda il CONTENUTO, non il numero: gli esercizi che non rispettano quel tipo vanno "
+        f"SOSTITUITI con esercizi NUOVI e diversi tra loro che lo rispettano (stesso argomento, punti simili a quelli sostituiti), non tolti.\n"
+        + (f"- Il docente vuole ESATTAMENTE {n_voluto} esercizi: l'output deve avere {n_voluto} blocchi \\subsection*. Se ne servono di più, aggiungi esercizi NUOVI, "
+           f"ciascuno con più richieste, diversi tra loro e dagli esistenti; mai accorpare tutto in un solo esercizio.\n" if n_voluto else "")
+        + f"- Applica SOLO ciò che il docente chiede. Gli esercizi che la richiesta non riguarda li ricopi IDENTICI, parola per parola.\n"
         f"- Se chiede di rendere un esercizio più facile o più difficile, o di cambiarne i dati o il tipo, riscrivi quell'esercizio; "
         f"se chiede di togliere un esercizio, omettilo; se chiede di aggiungerne uno, scrivilo nuovo (sull'argomento della verifica) "
         f"e mettilo dove richiesto, altrimenti in fondo.\n"
@@ -1705,8 +1716,14 @@ def prompt_agente(conversazione: str, contesto: str, azioni: str, domande_rimast
         "COME SI VEDE ORA (il primo è 1), anche se più voci ne cambiano la numerazione. Per cambi generali o che toccano tutta la verifica («più adatta a una classe lenta», "
         "«meno calcoli ovunque») usa modifica.\n"
         "- Tipi di operazione: riscrivi (serve «istruzione»: cosa cambiare, chiara e completa), piu_facile, piu_difficile, numeri (stesso esercizio con dati nuovi), "
-        "aggiungi (in fondo; «istruzione» facoltativa: cosa aggiungere), elimina, punti (serve «punti»: i punti di QUELL'esercizio), intestazione («classe» e/o «data»), "
-        "annulla, ripristina.\n"
+        "sostituisci (l'esercizio diventa uno COMPLETAMENTE NUOVO e diverso; «istruzione» facoltativa: come deve essere), "
+        "aggiungi (in fondo; «istruzione» facoltativa: cosa aggiungere), porta_a (campo «numero»: porta la verifica a QUEL numero di esercizi aggiungendone di nuovi e diversi tra loro), "
+        "elimina, punti (serve «punti»: i punti di QUELL'esercizio), intestazione («classe» e/o «data»), annulla, ripristina.\n"
+        "- «Esercizio» e «richiesta» sono cose diverse: un esercizio è un blocco con il suo titolo, le richieste sono le sottodomande a), b), c). «Fai 5 esercizi» o «portala a 5» "
+        "significa 5 blocchi (azione porta_a con numero 5), MAI un esercizio con 5 sottodomande.\n"
+        "- «Lascia solo / tieni solo / usa solo <un tipo di esercizi>» riguarda il CONTENUTO: il numero di esercizi NON cambia. Gli esercizi che non rispettano il tipo vanno "
+        "SOSTITUITI (una voce sostituisci per ciascuno, con l'istruzione, oppure l'azione modifica se riguarda tutta la verifica), mai tolti. Si tolgono esercizi solo se il docente "
+        "lo dice chiaramente («togli», «elimina», «meno esercizi»). Nell'azione modifica, riscrivi la richiesta conservando questo significato e dichiarando che il numero di esercizi resta lo stesso.\n"
         "- Se c'è un allegato può essere: appunti da cui prendere spunto (azione crea, uso_file «spunto»); una verifica da rifare con dati nuovi (crea, uso_file «rifai»); "
         "oppure una verifica GIÀ SCRITTA da impaginare o sistemare (azione impagina: in «modifica» scrivi le richieste del docente, per esempio «togli l'esercizio 4», o lascia null). "
         "Se dal messaggio e dal nome del file non è chiaro, fai UNA domanda con le opzioni «Sono appunti», «Rifai questa verifica con dati nuovi», «Impagina questa verifica».\n"
@@ -1725,7 +1742,7 @@ def prompt_agente(conversazione: str, contesto: str, azioni: str, domande_rimast
         '  "versioni": [],\n'
         '  "per_chi": null,\n'
         '  "modifica": null,\n'
-        '  "operazioni": [{"tipo": "...", "indice": null, "istruzione": null, "punti": null, "classe": null, "data": null}],\n'
+        '  "operazioni": [{"tipo": "...", "indice": null, "istruzione": null, "punti": null, "numero": null, "classe": null, "data": null}],\n'
         '  "assunzioni": []\n'
         "}\n"
         "Per «materia» e «scuola» usa ESATTAMENTE un nome dell'elenco del contesto. «classe» è il nome di una classe del docente (o null). "

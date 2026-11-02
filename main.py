@@ -3673,6 +3673,14 @@ def _ag_esegui_operazioni(ops: list, gp: dict, vA: dict, mod_id: str) -> tuple:
         return True, ""
     mostra, tot, griglia = gp.get("mostra_punteggi", True), gp.get("punti_totali", 100), gp.get("con_griglia", False)
     materia, argomento, scuola = gp.get("materia", ""), gp.get("argomento", ""), gp.get("difficolta", "")
+    # «porta a N esercizi» = tanti «aggiungi» quanti ne mancano
+    _ops_esp = []
+    for o in ops:
+        if o["tipo"] == "porta_a":
+            _ops_esp += [{**o, "tipo": "aggiungi", "numero": None} for _ in range(max(0, o["numero"] - len(ss.review_blocks)))]
+        else:
+            _ops_esp.append(o)
+    ops = _ops_esp
     ai_ops = [o for o in ops if agente.OPERAZIONI[o["tipo"]][1]]
     tetto, usate = _tetto_modifiche(), _modifiche_usate()
     if tetto is not None and usate + len(ai_ops) > tetto:
@@ -3687,24 +3695,34 @@ def _ag_esegui_operazioni(ops: list, gp: dict, vA: dict, mod_id: str) -> tuple:
                   "numeri": lambda: istruzione_cambia_numeri(argomento)}
 
     def _lavoro(op):                                   # in un thread: niente Streamlit qui dentro
-        if op["tipo"] == "aggiungi":
-            arg = argomento + (f". Richiesta del docente per questo esercizio: {op['istruzione']}" if op.get("istruzione") else "")
-            return _blocco_nuovo(modello, materia, arg, scuola, copy.deepcopy(blocchi), mostra, tot)
         b = blocchi[op["indice"]]
-        istr = op["istruzione"] if op["tipo"] == "riscrivi" else istr_fissa[op["tipo"]]()
+        if op["tipo"] == "riscrivi":
+            istr = op["istruzione"]
+        elif op["tipo"] == "sostituisci":
+            istr = ("Sostituisci questo esercizio con uno COMPLETAMENTE NUOVO e diverso (non una variante dello stesso), sullo stesso argomento, "
+                    "con un numero simile di richieste e gli stessi punti." + (f" Deve rispettare questa indicazione: {op['istruzione']}" if op["istruzione"] else ""))
+        else:
+            istr = istr_fissa[op["tipo"]]()
         return _blocco_riscritto(modello, materia, b["title"], b["body"], istr, mostra, parse_pts_from_block_body(b["body"]))
 
     try:
         risultati = {}
-        if ai_ops:
-            with ThreadPoolExecutor(max_workers=min(4, len(ai_ops))) as pool:
-                futuri = [(o, pool.submit(_lavoro, o)) for o in ai_ops]
+        par_ops = [o for o in ai_ops if o["tipo"] != "aggiungi"]
+        if par_ops:
+            with ThreadPoolExecutor(max_workers=min(4, len(par_ops))) as pool:
+                futuri = [(o, pool.submit(_lavoro, o)) for o in par_ops]
                 for o, f in futuri:
                     risultati[id(o)] = f.result()
+        nuovi_vista = []                                # gli esercizi da aggiungere si scrivono uno dopo l'altro: ciascuno deve essere diverso dai precedenti
+        for o in ops:
+            if o["tipo"] == "aggiungi":
+                arg = argomento + (f". Richiesta del docente per questo esercizio: {o['istruzione']}" if o.get("istruzione") else "")
+                risultati[id(o)] = _blocco_nuovo(modello, materia, arg, scuola, copy.deepcopy(blocchi) + nuovi_vista, mostra, tot)
+                nuovi_vista.append({"title": risultati[id(o)][0], "body": risultati[id(o)][1]})
         ids = list(range(len(blocchi)))                # a quale esercizio originale corrisponde ogni posizione
         struttura = False
         for o in ops:
-            if o["tipo"] in ("riscrivi", "piu_facile", "piu_difficile", "numeri"):
+            if o["tipo"] in ("riscrivi", "piu_facile", "piu_difficile", "numeri", "sostituisci"):
                 blocchi[o["indice"]]["title"], blocchi[o["indice"]]["body"] = risultati[id(o)]
         punti_fissi = {o["indice"]: o["punti"] for o in ops if o["tipo"] == "punti"}
         for idx in sorted((o["indice"] for o in ops if o["tipo"] == "elimina"), reverse=True):
@@ -3726,6 +3744,9 @@ def _ag_esegui_operazioni(ops: list, gp: dict, vA: dict, mod_id: str) -> tuple:
             altri = [k for k in range(len(blocchi)) if k not in fissi]
             ripartiti = bilancia_punti([max(1, parse_pts_from_block_body(blocchi[k]["body"])) for k in altri], tot - sum(fissi.values())) if altri else []
             punti_custom = [fissi.get(k) if k in fissi else ripartiti[altri.index(k)] for k in range(len(blocchi))]
+        if mostra and not punti_custom and sum(1 for o in ops if o["tipo"] == "aggiungi") >= 2:
+            # verifica ricostruita con più esercizi nuovi: i punti si dividono in proporzione alle richieste di ciascuno (non tutti sul vecchio esercizio)
+            punti_custom = bilancia_punti([max(1, len(re.findall(r"\\item\b", b["body"]))) for b in blocchi], tot)
         for o in ops:
             if o["tipo"] == "intestazione":
                 if o["classe"]:
@@ -7044,7 +7065,7 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
             st.rerun()
         elif _az_ag == "operazioni":
             _ops = _dec_ag["operazioni"]
-            _stima = agente.stima_secondi(_ops)
+            _stima = agente.stima_secondi(_ops, len(st.session_state.review_blocks))
             _passi = [agente.descrivi_operazione(o) for o in _ops if o["tipo"] not in ("annulla", "ripristina")] + ["Rifaccio il PDF"]
             with _stato.container(), _attesa("matita", "Sto applicando le modifiche", _passi,
                                              f"Di solito ci vogliono circa {_stima} secondi: non chiudere la pagina.", durata_passo=max(2.0, _stima / len(_passi))):

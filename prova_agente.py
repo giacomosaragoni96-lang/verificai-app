@@ -1,5 +1,5 @@
 """
-prova_agente.py — prova da riga di comando dell'agente (agente.py) con l'AI vera: quindici richieste di esempio, dalla più chiara alla più strana.
+prova_agente.py — prova da riga di comando dell'agente (agente.py) con l'AI vera: diciassette richieste di esempio, dalla più chiara alla più strana.
 Serve a vedere se capisce, se chiede solo ciò che manca e se compila i campi giusti. Usa GOOGLE_API_KEY del file .env (non la stampa).
 
     python prova_agente.py
@@ -50,6 +50,10 @@ CASI = [
                                                                                                        "esercizi": ["Equazioni intere", "Equazioni fratte", "Problema", "Per l'eccellenza"], "pronte": [], "punti_totali": 100}}),
     ("final", "aggiungi un problema sul traffico e scrivi la classe 3B con la data 15 novembre", {"verifica": {"argomento": "Le equazioni", "materia": "Matematica", "esercizi": ["Equazioni", "Problema"], "pronte": [], "punti_totali": 100}}),
     ("home", "ti allego la mia verifica in pdf, togli l'esercizio 4 e impaginala", {"allegato": {"nome": "verifica_3B.pdf", "tipo": "application/pdf", "n": 1}}),
+    ("final", "lascia solo le equazioni lineari", {"verifica": {"argomento": "Equazioni (recupero)", "materia": "Matematica", "scuola": "Liceo Scientifico",
+                                                              "esercizi": ["Equazioni lineari", "Equazioni lineari fratte", "Equazioni con valore assoluto", "Equazioni razionali", "Problema"], "pronte": [], "punti_totali": 100}}),
+    ("final", "no, fai 5 esercizi", {"verifica": {"argomento": "Equazioni (recupero)", "materia": "Matematica", "scuola": "Liceo Scientifico",
+                                                  "esercizi": ["Equazioni lineari"], "pronte": [], "punti_totali": 100}}),
     ("final", "fammi una verifica nuova sui polinomi per la 2a", {"verifica": {"argomento": "Le equazioni", "materia": "Matematica", "esercizi": ["Equazioni"], "pronte": []}}),
 ]
 

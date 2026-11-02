@@ -43,8 +43,8 @@ _ALIAS_VERSIONI = {"FILA B": "B", "FILA C": "C", "FILA D": "D", "FILA E": "E", "
 
 
 # Operazioni su singoli esercizi: tipo → (richiede un indice, usa l'AI)
-OPERAZIONI = {"riscrivi": (True, True), "piu_facile": (True, True), "piu_difficile": (True, True), "numeri": (True, True), "aggiungi": (False, True),
-              "elimina": (True, False), "punti": (True, False), "intestazione": (False, False), "annulla": (False, False), "ripristina": (False, False)}
+OPERAZIONI = {"riscrivi": (True, True), "piu_facile": (True, True), "piu_difficile": (True, True), "numeri": (True, True), "sostituisci": (True, True),
+              "aggiungi": (False, True), "porta_a": (False, True), "elimina": (True, False), "punti": (True, False), "intestazione": (False, False), "annulla": (False, False), "ripristina": (False, False)}
 MAX_OPERAZIONI = 8
 
 
@@ -206,7 +206,7 @@ def pulisci_operazioni(lista, ctx: dict) -> tuple:
         tipo = str(o.get("tipo") or "").strip().lower()
         if tipo not in OPERAZIONI:
             continue
-        op = {"tipo": tipo, "indice": None, "istruzione": _testo(o.get("istruzione"), 500), "punti": None,
+        op = {"tipo": tipo, "indice": None, "istruzione": _testo(o.get("istruzione"), 500), "punti": None, "numero": None,
               "classe": _testo(o.get("classe"), 24), "data": _testo(o.get("data"), 20)}
         if OPERAZIONI[tipo][0]:
             i = _intero(o.get("indice"), 0, 99)
@@ -217,6 +217,11 @@ def pulisci_operazioni(lista, ctx: dict) -> tuple:
         if tipo == "riscrivi" and not op["istruzione"]:
             scartate.append(o)
             continue
+        if tipo == "porta_a":
+            op["numero"] = _intero(o.get("numero") or o.get("indice"), 2, 15)
+            if not op["numero"] or op["numero"] <= n:           # la verifica ha già quel numero (o più): non c'è niente da aggiungere
+                scartate.append({**o, "tipo": "porta_a"})
+                continue
         if tipo == "punti":
             op["punti"] = _intero(o.get("punti"), 0, 1000)
             if not op["punti"] or op["punti"] >= tot:
@@ -238,15 +243,18 @@ def descrivi_operazione(op: dict) -> str:
     """Una frase breve per la scheda di attesa e per la conferma («Riscrivo l'esercizio 3»)."""
     n = (op.get("indice") or 0) + 1
     return {"riscrivi": f"Riscrivo l'esercizio {n}", "piu_facile": f"Rendo più facile l'esercizio {n}", "piu_difficile": f"Rendo più difficile l'esercizio {n}",
-            "numeri": f"Cambio i numeri dell'esercizio {n}", "aggiungi": "Aggiungo un esercizio", "elimina": f"Tolgo l'esercizio {n}",
+            "numeri": f"Cambio i numeri dell'esercizio {n}", "sostituisci": f"Sostituisco l'esercizio {n} con uno nuovo", "aggiungi": "Aggiungo un esercizio",
+            "porta_a": f"Porto la verifica a {op.get('numero')} esercizi", "elimina": f"Tolgo l'esercizio {n}",
             "punti": f"Metto {op.get('punti')} punti all'esercizio {n}", "intestazione": "Aggiorno classe e data",
             "annulla": "Torno alla versione precedente", "ripristina": "Ripristino la modifica"}.get(op.get("tipo"), "Applico la modifica")
 
 
-def stima_secondi(ops: list) -> int:
-    """Stima (non misurata) dell'attesa: le chiamate all'AI partono in parallelo, il PDF si rifà una volta sola."""
-    ai = sum(1 for o in ops if OPERAZIONI.get(o.get("tipo"), (0, 0))[1])
-    return (10 + (4 if ai > 1 else 0) if ai else 0) + 6
+def stima_secondi(ops: list, n_attuale: int = 0) -> int:
+    """Stima (non misurata) dell'attesa: le chiamate all'AI per riscrivere partono in parallelo (circa 10 s), gli esercizi da aggiungere uno dopo l'altro
+    (circa 8 s ciascuno, perché ognuno deve essere diverso dai precedenti), il PDF si rifà una volta sola (circa 6 s)."""
+    agg = sum(1 for o in ops if o.get("tipo") == "aggiungi") + sum(max(0, (o.get("numero") or 0) - n_attuale) for o in ops if o.get("tipo") == "porta_a")
+    par = sum(1 for o in ops if OPERAZIONI.get(o.get("tipo"), (0, 0))[1] and o.get("tipo") not in ("aggiungi", "porta_a"))
+    return (10 + (4 if par > 1 else 0) if par else 0) + 8 * agg + 6
 
 
 def normalizza(grezzo, ctx: dict, stage: str, domande_fatte: int, testo_utente: str = "") -> dict:
@@ -286,7 +294,9 @@ def normalizza(grezzo, ctx: dict, stage: str, domande_fatte: int, testo_utente: 
         d["operazioni"] = ops
         if not ops:
             titoli = (ctx.get("verifica") or {}).get("esercizi") or []
-            if scartate and titoli and domande_fatte < AGENTE_MAX_DOMANDE:
+            if any(o.get("tipo") == "porta_a" for o in scartate):
+                d.update(azione="aiuto", messaggio=f"La verifica ha già {len(titoli)} esercizi. Per averne meno dimmi quali togliere; per averne di più, un numero più alto.")
+            elif scartate and titoli and domande_fatte < AGENTE_MAX_DOMANDE:
                 d.update(azione="domanda", domanda="A quale esercizio ti riferisci?",
                          opzioni=[f"Esercizio {i + 1}" for i in range(min(4, len(titoli)))])
             else:
