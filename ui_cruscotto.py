@@ -6,8 +6,10 @@ from datetime import datetime, timedelta, timezone
 import streamlit as st
 
 import cruscotto
+import ui_cruscotto_persone as persone
 
 LANCIO = "2026-10-15T00:00:00+00:00"
+SEZIONI = ["Panoramica", "Persone", "Verifiche", "Feedback"]
 PERIODI = ["Oggi", "Ultimi 7 giorni", "Ultimi 30 giorni", "Dal lancio (15 ottobre)", "Tutto"]
 
 
@@ -46,22 +48,35 @@ def render_cruscotto(T: dict, client, esci, admin_emails: set) -> None:
         esci()
     st.markdown(f'<div style="text-align:center;margin:.2rem 0 1rem;"><div style="font-family:DM Sans,sans-serif;font-size:1.7rem;font-weight:800;'
                 f'letter-spacing:-.025em;color:{T["text"]};">Cruscotto</div>'
-                f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;">Chi arriva, cosa usa, quanto costa, cosa dicono i tester.</div></div>',
+                f'<div style="font-size:.9rem;color:{T["text2"]};font-family:DM Sans,sans-serif;">Chi si iscrive e quando, cosa crea, cosa usa, quanto costa, cosa dicono i tester.</div></div>',
                 unsafe_allow_html=True)
 
+    sezione = st.segmented_control("Sezione", SEZIONI, default=SEZIONI[0], key="cr_sezione", label_visibility="collapsed") or SEZIONI[0]
+    panoramica = sezione == SEZIONI[0]
     c1, c2 = st.columns([2, 3], gap="medium")
-    periodo = c1.selectbox("Periodo", PERIODI, index=3, key="cr_periodo")
+    periodo = c1.selectbox("Periodo", PERIODI, index=3, key="cr_periodo", disabled=not panoramica, help=None if panoramica else "Vale solo per la Panoramica: le altre schede mostrano i totali di sempre.")
     escludi_mie = c2.toggle("Escludi le mie attività e gli account di prova", value=True, key="cr_escludi",
                             help="Toglie dai numeri l'admin e le email che contengono i pezzi qui sotto: i primi giorni sono quasi tutte prove tue.")
     c3, c4 = st.columns([3, 2], gap="medium")
     pezzi_txt = c3.text_input("Escludi anche le email che contengono (separate da virgola)", value="+prova, +test", key="cr_pezzi", disabled=not escludi_mie)
-    mostra_email = c4.toggle("Mostra le email", value=False, key="cr_email", help="Di default si vedono solo i primi caratteri dell'identificativo.")
+    mostra_email = c4.toggle("Mostra le email", value=True, key="cr_email", help="Di default si vedono solo i primi caratteri dell'identificativo.")
     if st.button("Aggiorna i dati", key="cr_aggiorna", icon=":material/refresh:"):
         _dati.clear()
+        persone.svuota_cache()
         st.rerun()
 
     emails = tuple(sorted(admin_emails)) if escludi_mie else ()
     pezzi = tuple(p.strip() for p in pezzi_txt.split(",") if p.strip()) if escludi_mie else ()
+    if sezione == "Persone":
+        persone.render_persone(client, emails, pezzi, mostra_email)
+        return
+    if sezione == "Verifiche":
+        persone.render_verifiche(client, emails, pezzi, mostra_email)
+        return
+    if sezione == "Feedback":
+        persone.render_feedback(client)
+        return
+
     with st.spinner("Leggo i dati…"):
         d = _dati(client, _dal(periodo), emails, pezzi, mostra_email)
 

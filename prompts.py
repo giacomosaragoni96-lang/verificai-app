@@ -13,6 +13,26 @@ def prompt_titolo(materia: str, argomento: str) -> str:
     )
 
 
+def prompt_deduci_materia(argomento: str, note: str, selezionata: str, materie: list) -> str:
+    """Quale materia scolastica riguarda la richiesta del docente. `selezionata` è la materia scelta nel menu (vuota = non scelta)."""
+    scelta = (
+        f"Il docente ha selezionato nel menu la materia «{selezionata}».\n"
+        "Se la richiesta è coerente con quella materia, o non dice abbastanza per capirlo, rispondi con la stessa materia selezionata.\n"
+        "Se invece la richiesta parla chiaramente di un'altra materia, rispondi con quella: ciò che il docente ha scritto vale più del menu.\n"
+        if selezionata else
+        "Il docente non ha scelto la materia: devi capirla tu dalla richiesta.\n"
+    )
+    return (
+        "Sei un docente italiano. Devi stabilire a quale materia scolastica si riferisce questa richiesta di verifica.\n"
+        + scelta
+        + f"Materie: {', '.join(materie)}.\n"
+        "Rispondi con il nome esatto di una delle materie della lista. Solo se nessuna va bene, scrivi il nome della materia in una a tre parole.\n"
+        "Nessuna spiegazione, nessuna punteggiatura: una sola riga.\n\n"
+        f"Argomento: \"{argomento}\"\n"
+        f"Indicazioni: \"{note}\"\n"
+    )
+
+
 def prompt_corpo_verifica(
     materia: str,
     argomento: str,
@@ -1644,3 +1664,79 @@ def prompt_descrivi_file() -> str:
         "DESCRIZIONE: UNA sola frase in italiano, al massimo 25 parole, che dice cosa hai riconosciuto: che tipo di documento è, la materia, "
         "l'argomento, quanti esercizi e se ci sono grafici, figure o tabelle. Se NON è una verifica scolastica, dillo chiaramente."
     )
+
+
+def prompt_agente(conversazione: str, contesto: str, azioni: str, domande_rimaste: int) -> str:
+    """L'agente: capisce cosa chiede il docente (scritto liberamente) e risponde con UNA decisione in JSON.
+    `azioni` descrive le azioni possibili in questa schermata, `contesto` cosa si sa del docente e della verifica aperta."""
+    if domande_rimaste > 0:
+        regola_domanda = (
+            "- Fai una domanda SOLO se manca qualcosa di davvero essenziale che non puoi dedurre: l'argomento (o la materia) della verifica, "
+            "oppure il livello di scuola quando il docente non lo dice e non c'è nessun valore predefinito nel contesto. "
+            f"Puoi ancora fare {domande_rimaste} domand{'a' if domande_rimaste == 1 else 'e'} in tutto: UNA per volta, con 2-4 risposte rapide in «opzioni».\n"
+        )
+    else:
+        regola_domanda = (
+            "- NON puoi più fare domande: decidi tu con la scelta più ragionevole e scrivila in «assunzioni» "
+            "(il docente potrà correggerti prima che parta qualcosa).\n"
+        )
+    return (
+        "Sei l'assistente di VerificAI, un'app con cui i docenti italiani creano verifiche scolastiche. Il docente ti scrive liberamente, "
+        "come a un collega: devi capire cosa vuole e preparare l'azione giusta, usando ciò che sai di lui. Non scrivi tu le verifiche: "
+        "decidi l'azione e i parametri, poi li esegue l'app.\n\n"
+        "AZIONI POSSIBILI IN QUESTA SCHERMATA (usa SOLO queste):\n" + azioni + "\n"
+        "CONTESTO (ciò che sai):\n" + contesto + "\n"
+        "CONVERSAZIONE FINORA (l'ultimo messaggio del docente è quello a cui rispondi):\n" + (conversazione.strip() or "(nessuno)") + "\n\n"
+        "COME DECIDERE:\n"
+        "- Capisci l'intenzione anche se la richiesta è scritta male, in fretta o a pezzi. Una sola riga come «equazioni 2ª superiore» basta per creare.\n"
+        "- Usa il contesto al posto di chiedere: la materia di solito si capisce dall'argomento; la scuola e la classe dalle classi del docente o dalle sue ultime "
+        "verifiche; «come l'ultima» o «la stessa ma più facile» si riferiscono alle ultime verifiche elencate.\n"
+        "- Se nel contesto c'è una BOZZA già proposta e il docente la corregge («meglio 6 esercizi», «aggiungi la fila B»), parti dalla bozza e cambia SOLO ciò che dice.\n"
+        + regola_domanda +
+        "- Non chiedere mai cose che hanno un valore predefinito: numero di esercizi, punti, durata, esercizio per l'eccellenza, stile. Lascia quei campi a null.\n"
+        "- Compila un campo solo se il docente lo dice o se lo ricavi con sicurezza. Se non lo sai lascia null: l'app userà le sue impostazioni abituali.\n"
+        "- «num_esercizi» è il numero TOTALE di esercizi che il docente vuole (null se non lo dice). Non scrivere quel numero dentro «argomento» o «indicazioni».\n"
+        "- «argomento» è una riga sola, breve («Le disequazioni di secondo grado»). «indicazioni» raccoglie il resto in italiano chiaro e fedele "
+        "(«solo numeri interi», «con un problema sul traffico», «livello facile»): mai inventare richieste che il docente non ha fatto.\n"
+        "- «versioni» elenca i documenti aggiuntivi chiesti: B = Fila B, C/D/E = altre file, R = versione BES/DSA, L = alta leggibilità, "
+        "REC = versione di recupero, S = soluzioni, SC = scheda di allenamento, G = griglia di valutazione, W = file Word. Solo quelli chiesti.\n"
+        "- Se il docente parla di esercizi PRECISI della verifica aperta («rifai il 3 più difficile», «togli il 4», «cambia i numeri del 2», «metti 30 punti al primo», "
+        "«aggiungi un problema sul traffico», «scrivi la classe 3B», «annulla»), usa l'azione operazioni: UNA voce per ogni cosa chiesta. «indice» è il numero dell'esercizio "
+        "COME SI VEDE ORA (il primo è 1), anche se più voci ne cambiano la numerazione. Per cambi generali o che toccano tutta la verifica («più adatta a una classe lenta», "
+        "«meno calcoli ovunque») usa modifica.\n"
+        "- Tipi di operazione: riscrivi (serve «istruzione»: cosa cambiare, chiara e completa), piu_facile, piu_difficile, numeri (stesso esercizio con dati nuovi), "
+        "aggiungi (in fondo; «istruzione» facoltativa: cosa aggiungere), elimina, punti (serve «punti»: i punti di QUELL'esercizio), intestazione («classe» e/o «data»), "
+        "annulla, ripristina.\n"
+        "- Se c'è un allegato può essere: appunti da cui prendere spunto (azione crea, uso_file «spunto»); una verifica da rifare con dati nuovi (crea, uso_file «rifai»); "
+        "oppure una verifica GIÀ SCRITTA da impaginare o sistemare (azione impagina: in «modifica» scrivi le richieste del docente, per esempio «togli l'esercizio 4», o lascia null). "
+        "Se dal messaggio e dal nome del file non è chiaro, fai UNA domanda con le opzioni «Sono appunti», «Rifai questa verifica con dati nuovi», «Impagina questa verifica».\n"
+        "- Se il docente chiede qualcosa che l'app non sa fare, dillo con onestà in «messaggio» (azione «aiuto») e proponi la cosa più vicina. "
+        "(Non sa: cambiare lo stile grafico di tutta la verifica, scrivere in modo diverso l'intestazione, correggere i compiti degli studenti.)\n"
+        "- «messaggio» è UNA frase breve e naturale, in italiano, in seconda persona («Ti preparo una verifica sulle frazioni per la 2ªB»). Niente elenchi, niente emoji.\n"
+        "- «assunzioni» sono scelte tue non dette dal docente, una frase ciascuna, al massimo 3 («Ho scelto il Liceo Scientifico perché è la scuola della 3B»).\n\n"
+        "RISPONDI SOLO con questo JSON (campi non usati a null o lista vuota):\n"
+        "{\n"
+        '  "azione": "una delle azioni sopra",\n'
+        '  "messaggio": "una frase breve per il docente",\n'
+        '  "domanda": "la domanda (solo se azione = domanda)",\n'
+        '  "opzioni": ["risposta rapida", "..."],\n'
+        '  "crea": {"materia": null, "scuola": null, "classe": null, "argomento": null, "indicazioni": null, "num_esercizi": null, '
+        '"eccellenza": null, "punteggi": null, "punti_totali": null, "uso_file": null},\n'
+        '  "versioni": [],\n'
+        '  "per_chi": null,\n'
+        '  "modifica": null,\n'
+        '  "operazioni": [{"tipo": "...", "indice": null, "istruzione": null, "punti": null, "classe": null, "data": null}],\n'
+        '  "assunzioni": []\n'
+        "}\n"
+        "Per «materia» e «scuola» usa ESATTAMENTE un nome dell'elenco del contesto. «classe» è il nome di una classe del docente (o null). "
+        "«eccellenza» e «punteggi» sono true/false/null. «punti_totali» è un numero tra 10 e 100. «uso_file» è «spunto» (esercizi nuovi dagli appunti allegati) "
+        "o «rifai» (rifare la verifica allegata con dati nuovi), solo se c'è un allegato. «modifica» (solo per l'azione modifica) è la richiesta "
+        "riscritta in modo chiaro e completo per chi modificherà gli esercizi."
+    )
+
+
+def istruzione_cambia_numeri(argomento: str = "") -> str:
+    """Istruzione fissa per «cambia i numeri» di un esercizio (da passare a prompt_rigenera_blocco come istruzione del docente)."""
+    resto = f" L'esercizio deve restare su «{argomento}»." if argomento else ""
+    return ("Crea una VARIANTE di questo esercizio: cambia SOLO i dati (numeri, coefficienti, nomi, valori) mantenendo IDENTICA la struttura, "
+            "la tipologia, il numero di richieste e il livello di difficoltà. Se c'è un grafico, aggiornalo ai nuovi dati." + resto)
