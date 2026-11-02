@@ -1732,7 +1732,8 @@ def prompt_agente(conversazione: str, contesto: str, azioni: str, domande_rimast
         "- Se il docente chiede qualcosa che l'app non sa fare, dillo con onestà in «messaggio» (azione «aiuto») e proponi la cosa più vicina. "
         "(Non sa: cambiare lo stile grafico di tutta la verifica, scrivere in modo diverso l'intestazione, correggere i compiti degli studenti.)\n"
         "- «messaggio» è UNA frase breve e naturale, in italiano, in seconda persona («Ti preparo una verifica sulle frazioni per la 2ªB»). Niente elenchi, niente emoji.\n"
-        "- «assunzioni» sono scelte tue non dette dal docente, una frase ciascuna, al massimo 3 («Ho scelto il Liceo Scientifico perché è la scuola della 3B»).\n\n"
+        "- «assunzioni» sono scelte tue non dette dal docente: al massimo 3, BREVISSIME (al massimo 7 parole), nella forma «Scuola: Liceo Scientifico (la tua abituale)» o «Classe: 1ªA (dal tuo profilo)». "
+        "Mai frasi come «Ho associato…» o «Ho impostato…», e non ripetere ciò che il docente ha già detto.\n\n"
         "RISPONDI SOLO con questo JSON (campi non usati a null o lista vuota):\n"
         "{\n"
         '  "azione": "una delle azioni sopra",\n'

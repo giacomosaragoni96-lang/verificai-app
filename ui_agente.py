@@ -115,10 +115,20 @@ def _css(T: dict) -> str:
         f".ag-nota b{{color:{T['text']};}}"
         f".ag-rit{{{f}font-size:.7rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:{T['muted']};margin:.2rem 0 .3rem;}}"
         "html body .stApp .st-key-blk_ag_azioni{margin-left:2.7rem;}"
-        f"html body .stApp .st-key-blk_ag_rit{{background:{T['card']};border:1px solid {T['border']};border-radius:16px;padding:.75rem 1rem .6rem;margin:.1rem 0 .75rem;}}"
-        f".ag-lab{{{f}font-size:.68rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:{T['muted']};margin:0 0 .3rem;}}"
-        "html body .stApp .st-key-blk_ag_rit [data-testid='stNumberInput'] input{font-weight:700;font-size:1rem;text-align:center;}"
-        "html body .stApp .st-key-blk_ag_rit [data-testid='stNumberInput'] > div{max-width:9.5rem;}"
+        f"html body .stApp .st-key-blk_ag_rit{{background:{T['card']};border:1px solid {T['border']};border-radius:18px;padding:.85rem 1.1rem .8rem;margin:.1rem 0 .8rem;}}"
+        f".ag-lab{{{f}font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:{T['muted']};margin:0 0 .35rem;}}"
+        # contatore degli esercizi: piccolo, con i due pulsanti dentro
+        f"html body .stApp .st-key-blk_ag_rit [data-baseweb='input']{{border-radius:12px !important;border:1px solid {T['border']} !important;background:{T['card']} !important;"
+        "min-height:2.5rem;overflow:hidden;}"
+        "html body .stApp .st-key-blk_ag_rit [data-baseweb='input'] > div{background:transparent !important;}"
+        f"html body .stApp .st-key-blk_ag_rit [data-testid='stNumberInput'] input{{font-weight:700;font-size:1rem;text-align:center;padding:.2rem .3rem !important;color:{T['text']} !important;}}"
+        "html body .stApp .st-key-blk_ag_rit [data-testid='stNumberInput'] > div{max-width:8.5rem;}"
+        f"html body .stApp .st-key-blk_ag_rit button[data-testid^='stNumberInputStep']{{background:transparent !important;color:{T['text2']} !important;border:none !important;"
+        "min-width:1.9rem;transition:background .15s ease !important;}"
+        f"html body .stApp .st-key-blk_ag_rit button[data-testid^='stNumberInputStep']:hover{{background:{acc}18 !important;color:{acc} !important;}}"
+        # le due scelte sì/no: interruttore e parola, sulla stessa riga
+        "html body .stApp .st-key-blk_ag_rit [data-testid='stToggle'] label{align-items:center;gap:.5rem;}"
+        f"html body .stApp .st-key-blk_ag_rit [data-testid='stToggle'] p{{font-weight:650;font-size:.92rem;color:{T['text']};}}"
         "@media (max-width:640px){.ag-hero b{font-size:2rem;}.ag-card,html body .stApp .st-key-blk_ag_azioni{margin-left:0;}.ag-bub{max-width:90%;}}"
         "@media (prefers-reduced-motion: reduce){.ag-row,.ag-card,.ag-dots i{animation:none !important;}}"
         "</style>" + _css_pillole(T)
@@ -150,12 +160,12 @@ def card_riepilogo(T: dict, dec: dict, default_ecc: bool = True) -> str:
     chips = "".join(_chip(e, v) for e, v in agente.riepilogo(par, default_ecc))
     if dec.get("versioni"):
         chips += _chip("Poi preparo", ", ".join(agente.VERSIONI.get(k, k) for k in dec["versioni"]))
-    ass = "".join(f"<div>• {_esc(a)}</div>" for a in dec.get("assunzioni") or [])
-    nota = f'<div class="ag-nota"><b>Ho assunto:</b>{ass}</div>' if ass else ""
-    resto = '<div class="ag-nota">Quello che non ho indicato lo imposto come al solito: puoi ritoccarlo qui sotto o in «Modifica nel modulo».</div>'
+    gia = {e.lower() for e, _v in agente.riepilogo(par, default_ecc)}               # ciò che è già un'etichetta non si ripete tra le «scelte mie»
+    ass = "".join(f"<div>{_esc(a)}</div>" for a in dec.get("assunzioni") or [] if a.split(":")[0].strip().lower() not in gia)
+    nota = f'<div class="ag-nota"><b>Scelte mie</b>{ass}</div>' if ass else ""
     return (f'<div class="ag-card"><div class="ag-eye">Ho capito</div><div class="ag-arg">{_esc(par.get("argomento") or "Verifica dagli appunti caricati")}</div>'
             + (f'<div class="ag-ind">{_esc(par["indicazioni"])}</div>' if par.get("indicazioni") else "")
-            + f'<div class="ag-chips">{chips}</div>{nota}{resto}</div>')
+            + f'<div class="ag-chips">{chips}</div>{nota}</div>')
 
 
 def card_impagina(T: dict, dec: dict, nomi: list) -> str:
@@ -168,9 +178,9 @@ def card_impagina(T: dict, dec: dict, nomi: list) -> str:
         chips += _chip("Scuola", par["scuola"])
     richiesta = dec.get("modifica") or par.get("indicazioni") or ""
     return ('<div class="ag-card"><div class="ag-eye">Ho capito</div><div class="ag-arg">Impagino la tua verifica</div>'
-            + (f'<div class="ag-ind">Poi: {_esc(richiesta)}</div>' if richiesta else '<div class="ag-ind">Gli esercizi restano identici: li rimetto in pagina con intestazione e punteggi.</div>')
+            + (f'<div class="ag-ind">Poi: {_esc(richiesta)}</div>' if richiesta else '<div class="ag-ind">Gli esercizi restano identici, in pagina con intestazione e punteggi.</div>')
             + f'<div class="ag-chips">{chips}</div>'
-            '<div class="ag-nota">Leggo le pagine, ricontrollo i numeri e ti mostro la verifica pronta: se qualcosa non è uguale, lo correggi a parole.</div></div>')
+            '</div>')
 
 
 def opzioni_rapide(opzioni: list, prefisso: str, T: dict | None = None) -> str | None:
@@ -206,26 +216,28 @@ def suggerimenti_rapidi(items: list, prefisso: str, T: dict | None = None) -> st
 
 
 def _ritocchi(dec: dict):
-    """Piccole correzioni alla scheda senza chiamare l'AI: quanti esercizi in tutto, esercizio per l'eccellenza, tabella dei punti.
+    """Tre scelte rapide sulla scheda, senza chiamare l'AI: quanti esercizi in tutto, esercizio per l'eccellenza, tabella dei punti.
     Il numero mostrato è sempre quello vero (se il docente non l'ha detto, quello che si userebbe)."""
     par = dec.get("crea") or {}
     evento = None
     with st.container(key="blk_ag_rit"):
-        c1, c2, c3 = st.columns([1.15, 1.2, 1.3], gap="medium", vertical_alignment="bottom")
+        c1, c2, c3 = st.columns(3, gap="medium")
         n_ora = par.get("num_esercizi") or agente.totale_predefinito(par)
-        c1.markdown('<div class="ag-lab">Esercizi in tutto</div>', unsafe_allow_html=True)
-        n_nuovo = c1.number_input("Esercizi in tutto", min_value=3, max_value=11, value=int(n_ora), step=1, key=f"ag_n_{n_ora}_{par.get('eccellenza')}",
-                                  label_visibility="collapsed", help="Compreso l'esercizio per l'eccellenza, se c'è.")
+        c1.markdown('<div class="ag-lab">Esercizi</div>', unsafe_allow_html=True)
+        n_nuovo = c1.number_input("Esercizi", min_value=3, max_value=11, value=int(n_ora), step=1, key=f"ag_n_{n_ora}_{par.get('eccellenza')}",
+                                  label_visibility="collapsed", help="In tutto, compreso quello per l'eccellenza.")
         if int(n_nuovo) != int(n_ora):
             evento = {"tipo": "ritocco", "campo": "esercizi", "valore": int(n_nuovo)}
         ecc = par.get("eccellenza")
         ecc_v = True if ecc is None else bool(ecc)
-        nuovo = c2.toggle("Esercizio per l'eccellenza", value=ecc_v, key=f"ag_ecc_{ecc}", help="Un esercizio finale facoltativo, più difficile, con pochi punti.")
+        c2.markdown('<div class="ag-lab">Eccellenza</div>', unsafe_allow_html=True)
+        nuovo = c2.toggle("Sì" if ecc_v else "No", value=ecc_v, key=f"ag_ecc_{ecc}", help="Un esercizio finale facoltativo, più difficile, con pochi punti.")
         if nuovo != ecc_v:
             evento = {"tipo": "ritocco", "campo": "eccellenza", "valore": nuovo}
         pun = par.get("punteggi")
         pun_v = True if pun is None else bool(pun)
-        nuovo_p = c3.toggle("Tabella dei punteggi", value=pun_v, key=f"ag_pun_{pun}", help="In fondo alla verifica, da compilare con i voti.")
+        c3.markdown('<div class="ag-lab">Punteggi</div>', unsafe_allow_html=True)
+        nuovo_p = c3.toggle("Sì" if pun_v else "No", value=pun_v, key=f"ag_pun_{pun}", help="La tabella dei punteggi in fondo, da compilare con i voti.")
         if nuovo_p != pun_v:
             evento = {"tipo": "ritocco", "campo": "punteggi", "valore": nuovo_p}
     return evento
@@ -247,12 +259,15 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
             c_a.markdown('<div class="ag-top">Conversazione</div>', unsafe_allow_html=True)
             if c_b.button("Nuova richiesta", key="ag_nuova", type="tertiary", icon=":material/restart_alt:", use_container_width=True):
                 evento = {"tipo": "annulla"}
+        _ult = chat[-1] if chat and chat[-1]["ruolo"] == "agente" and not in_arrivo else None
+        _az_ult = ((_ult or {}).get("decisione") or {}).get("azione")
+        _card_ult = _az_ult == "crea" or (_az_ult == "impagina" and bool(allegati))      # in questi casi lo dice già la scheda: la bolla ripeterebbe
         for m in chat:
             if m.get("stage", "home") != "home":
                 continue
             if m["ruolo"] == "utente":
                 st.markdown(bolla_utente(m["testo"], m.get("allegati")), unsafe_allow_html=True)
-            elif m.get("testo"):
+            elif m.get("testo") and not (m is _ult and _card_ult):
                 st.markdown(bolla_assistente(m["testo"]), unsafe_allow_html=True)
 
         if in_arrivo:                                    # la scheda e i pulsanti di prima non servono più: c'è una richiesta nuova in lavorazione
@@ -280,9 +295,9 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
                 c1, c2 = st.columns([3, 2], gap="small")
                 if c1.button("Crea verifica", key="ag_crea", type="primary", icon=":material/auto_awesome:", use_container_width=True, disabled=bool(blocco)):
                     evento = {"tipo": "conferma"}
-                if c2.button("Modifica nel modulo", key="ag_modulo", type="secondary", icon=":material/tune:", use_container_width=True):
+                if c2.button("Apri nel modulo", key="ag_modulo", type="secondary", icon=":material/tune:", use_container_width=True):
                     evento = {"tipo": "modulo"}
-                st.caption("Vuoi cambiare altro? Scrivilo qui sotto («meglio 6 esercizi», «aggiungi la fila B»…).")
+                st.caption("Altro da cambiare? Scrivilo qui sotto.")
         elif az == "impagina" and allegati:
             st.markdown(card_impagina(T, dec, allegati), unsafe_allow_html=True)
             with st.container(key="blk_ag_azioni"):
