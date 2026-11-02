@@ -4,7 +4,7 @@ Serve a vedere se capisce, se chiede solo ciò che manca e se compila i campi gi
 
     python prova_agente.py
 
-Costa circa un centesimo in tutto. Non fa parte dell'app.
+Costa circa 3 centesimi in tutto (circa 0,2 centesimi a richiesta). Non fa parte dell'app.
 """
 import json
 import os
@@ -74,10 +74,10 @@ for stage, testo, extra in CASI:
     if d["azione"] == "modifica" or (d["azione"] == "impagina" and d["modifica"]):
         print("  modifica:", d["modifica"])
     if d["azione"] == "operazioni":
-        print("  operazioni:", [(o["tipo"], (o["indice"] + 1) if o["indice"] is not None else None, o["punti"] or o["istruzione"] or o["classe"] or o["data"]) for o in d["operazioni"]])
+        print("  operazioni:", [(o["tipo"], (o["indice"] + 1) if o["indice"] is not None else None, o["numero"] or o["punti"] or o["istruzione"] or o["classe"] or o["data"]) for o in d["operazioni"]])
     if d["assunzioni"]:
         print("  assunzioni:", d["assunzioni"])
 
-print("\nchiamate:", len(ai_client.riepilogo_uso()))
-for r in ai_client.riepilogo_uso()[-1:]:
-    print({k: r[k] for k in r if k in ("modello", "compito", "costo_usd", "secondi")})
+tot = ai_client.riepilogo_uso()
+print("\nchiamate:", sum(r["chiamate"] for r in tot), "| costo totale: ~$%.4f" % sum(r["costo_usd"] for r in tot),
+      "| modello:", ", ".join(sorted({r["modello"] for r in tot})))
