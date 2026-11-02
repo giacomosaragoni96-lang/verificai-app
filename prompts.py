@@ -1729,9 +1729,6 @@ def prompt_agente(conversazione: str, contesto: str, azioni: str, domande_rimast
         "- Se c'è un allegato può essere: appunti da cui prendere spunto (azione crea, uso_file «spunto»); una verifica da rifare con dati nuovi (crea, uso_file «rifai»); "
         "oppure una verifica GIÀ SCRITTA da impaginare o sistemare (azione impagina: in «modifica» scrivi le richieste del docente, per esempio «togli l'esercizio 4», o lascia null). "
         "Se dal messaggio e dal nome del file non è chiaro, fai UNA domanda con le opzioni «Sono appunti», «Rifai questa verifica con dati nuovi», «Impagina questa verifica».\n"
-        "- Se il docente chiede di aprire una pagina, riaprire una verifica già creata («riapri quella sulle frazioni»), aggiungere una classe, cambiare il tema o correggere i compiti, "
-        "usa SOLO le azioni di navigazione elencate sopra e compila «navigazione»: per riaprire una verifica scegli, tra le ultime elencate, quella che somiglia di più a ciò che dice "
-        "e scrivi il suo id (tra parentesi quadre); per una classe scrivi il nome come lo dice («2C»).\n"
         "- Se il docente chiede qualcosa che l'app non sa fare, dillo con onestà in «messaggio» (azione «aiuto») e proponi la cosa più vicina. "
         "(Non sa: cambiare lo stile grafico di tutta la verifica, scrivere in modo diverso l'intestazione, correggere i compiti degli studenti.)\n"
         "- «messaggio» è UNA frase breve e naturale, in italiano, in seconda persona («Ti preparo una verifica sulle frazioni per la 2ªB»). Niente elenchi, niente emoji.\n"
@@ -1749,7 +1746,6 @@ def prompt_agente(conversazione: str, contesto: str, azioni: str, domande_rimast
         '  "per_chi": null,\n'
         '  "modifica": null,\n'
         '  "operazioni": [{"tipo": "...", "indice": null, "istruzione": null, "punti": null, "numero": null, "classe": null, "data": null}],\n'
-        '  "navigazione": {"apri_id": null, "sezione": null, "nuova_classe": {"nome": null, "scuola": null}, "tema": null},\n'
         '  "assunzioni": []\n'
         "}\n"
         "Per «materia» e «scuola» usa ESATTAMENTE un nome dell'elenco del contesto. «classe» è il nome di una classe del docente (o null). "
@@ -1766,27 +1762,58 @@ def istruzione_cambia_numeri(argomento: str = "") -> str:
             "la tipologia, il numero di richieste e il livello di difficoltà. Se c'è un grafico, aggiornalo ai nuovi dati." + resto)
 
 
-def prompt_correggi_compito(materia: str, scuola: str, traccia: str, soluzioni: str, n_parti: int) -> str:
-    """Corregge il compito di UN alunno dalle sue pagine (foto o PDF). `traccia` elenca le richieste con id e punti massimi;
-    `soluzioni` sono le soluzioni di riferimento. Risposta: solo JSON."""
+def prompt_leggi_compito(materia: str, scuola: str, traccia: str, n_parti: int) -> str:
+    """PRIMO PASSO della correzione: LEGGERE il compito di UNO studente, senza valutarlo e senza conoscere le soluzioni (così non si «vede» ciò che
+    dovrebbe esserci). Trascrizione fedele riga per riga, con la posizione di ogni riga sulla pagina. Risposta: solo JSON."""
+    return (
+        f"Sei un trascrittore molto attento di compiti scritti a mano di {materia or 'una materia scolastica'}"
+        + (f" ({scuola})" if scuola else "")
+        + f". Qui sotto trovi la TRACCIA (le richieste, ciascuna con un id) e {n_parti} {'pagina' if n_parti == 1 else 'pagine'} del compito di UNO studente "
+        "(foto o PDF, nell'ordine in cui le vedi: pagina 1, 2, 3…). Il tuo UNICO compito è LEGGERE e TRASCRIVERE ciò che lo studente ha scritto per ogni richiesta: "
+        "NON valutare, NON calcolare, NON correggere gli errori, NON completare ciò che manca.\n\n"
+        f"TRACCIA (id · punti massimi · testo):\n{traccia}\n\n"
+        "COME TRASCRIVERE:\n"
+        "- Una voce per ogni richiesta della traccia, con l'id esatto. Dentro, ogni riga scritta dallo studente (ogni passaggio) è una riga a parte, "
+        "nell'ordine in cui è scritta, ESATTAMENTE come la vedi, anche se sbagliata.\n"
+        "- I SEGNI sono la cosa più importante: + (più), - (meno), = , × o *, / , ^ (esponente). Guarda con attenzione se davanti a un numero o a una lettera "
+        "c'è un meno (per esempio «-2(3-x)» o «y = -x^2»): non perderlo e non aggiungerne. Controlla anche parentesi, frazioni (a/b), radici (sqrt()) e apici.\n"
+        "- Se un carattere, un numero o un segno NON si legge con certezza scrivi la tua migliore lettura seguita da [?] (per esempio «-[?]3x») e spiega "
+        "in «dubbio» in poche parole (per esempio «segno prima del 3: meno o più?»). Non indovinare mai in silenzio.\n"
+        "- Le parti barrate non si trascrivono. Un disegno o un grafico si descrive in una riga tra parentesi quadre, per esempio [grafico: parabola con vertice in (2;-1)].\n"
+        "- «vuoto»: true se per quella richiesta non c'è nulla di scritto.\n"
+        "- Per ogni riga indica la «pagina» (1, 2, …) e il «riquadro» che la contiene: [x0, y0, x1, y1] in millesimi della pagina "
+        "(0 = bordo sinistro o alto, 1000 = bordo destro o basso), stretto attorno a quella riga, senza tagliare nulla.\n"
+        "- «nome»: nome e cognome scritti in intestazione, se si leggono (altrimenti null). Non riportare altri dati personali.\n"
+        "- Se le pagine non sembrano il compito di questa verifica, metti «non_corrisponde»: true.\n\n"
+        "RISPONDI SOLO con questo JSON:\n"
+        '{"nome": null, "non_corrisponde": false, "richieste": [{"id": "1a", "vuoto": false, "righe": ['
+        '{"pagina": 1, "riquadro": [60, 120, 940, 170], "testo": "3x - 5 = 2x + 7", "dubbio": ""}]}]}'
+    )
+
+
+def prompt_valuta_lettura(materia: str, scuola: str, traccia: str, soluzioni: str, letture: str) -> str:
+    """SECONDO PASSO: valutare la trascrizione (solo testo) confrontandola con le soluzioni. Le righe sono numerate: l'errore si indica con il numero di riga."""
     return (
         f"Sei un docente italiano esperto di {materia or 'materia scolastica'}"
         + (f" ({scuola})" if scuola else "")
-        + f" e devi correggere il compito di UNO studente. Qui sotto trovi la TRACCIA con le richieste (ciascuna con un id e i punti massimi), "
-        f"le SOLUZIONI DI RIFERIMENTO e, a seguire, {n_parti} {'pagina' if n_parti == 1 else 'pagine'} del suo compito (foto o PDF).\n\n"
+        + " e devi correggere il compito di UNO studente a partire dalla TRASCRIZIONE di ciò che ha scritto (fatta da un'altra persona, a volte con qualche "
+        "incertezza segnata con [?]).\n\n"
         f"TRACCIA (id · punti massimi · testo):\n{traccia}\n\n"
         f"SOLUZIONI DI RIFERIMENTO:\n{soluzioni or '(non disponibili: ricavale tu con cura)'}\n\n"
+        f"TRASCRIZIONE DEL COMPITO (per ogni richiesta, le righe numerate):\n{letture}\n\n"
         "COME CORREGGERE:\n"
-        "- Valuta SOLO ciò che è scritto. Se una parte è illeggibile o non c'è, dillo: esito «illeggibile» o «vuoto». Non indovinare mai passaggi che non vedi.\n"
+        "- Valuta SOLO ciò che è trascritto. Se la richiesta è vuota: esito «vuoto». Se è illeggibile: «illeggibile». Non inventare passaggi.\n"
         "- Punteggio di ogni richiesta da 0 al massimo, a multipli di 0,5. Parziale quando il metodo è giusto e il risultato no (o il contrario); "
         "un errore di calcolo isolato toglie poco; lo STESSO errore riportato nelle richieste successive non si penalizza di nuovo (errore trascinato).\n"
         "- Un risultato giusto ottenuto con un metodo diverso ma valido vale il punteggio pieno. Una risposta giusta senza giustificazione dove la traccia chiede di motivare vale meno.\n"
-        "- «commento»: UNA frase breve (al massimo 15 parole) rivolta allo studente, specifica (cosa è giusto o cosa correggere), gentile, mai generica. Vuoto se tutto è corretto.\n"
-        "- «confidenza» da 0 a 1: quanto sei sicuro di quella valutazione (bassa con scrittura difficile, passaggi ambigui, grafici da interpretare).\n"
-        "- «nome»: nome e cognome scritti in intestazione, se si leggono (altrimenti null). Non riportare altri dati personali.\n"
-        "- Se le pagine non sembrano il compito di questa verifica, metti «non_corrisponde»: true.\n"
+        "- Se l'errore sembra dovuto a un segno o a un carattere segnato [?], potrebbe essere un errore di lettura e non dello studente: abbassa la «confidenza» "
+        "e dillo nel commento.\n"
+        "- «riga_errore»: il NUMERO della riga trascritta in cui compare il PRIMO errore (null se la richiesta è corretta, vuota o l'errore non sta in una riga precisa). "
+        "«errore»: in una frase breve (al massimo 14 parole) cosa non va in quella riga (per esempio «Segno sbagliato nel passaggio dal membro destro»). Vuoto se corretto.\n"
+        "- «commento»: UNA frase breve (al massimo 15 parole) rivolta allo studente, specifica, gentile, mai generica. Vuoto se tutto è corretto.\n"
+        "- «confidenza» da 0 a 1: quanto sei sicuro di quella valutazione.\n"
         "- «commento_generale»: al massimo due frasi: un punto di forza e cosa ripassare.\n\n"
         "RISPONDI SOLO con questo JSON, con TUTTE le richieste della traccia, usando gli id esatti:\n"
-        '{"nome": null, "non_corrisponde": false, "righe": [{"id": "1a", "punti": 0, "esito": "corretto|parziale|errato|vuoto|illeggibile", '
+        '{"righe": [{"id": "1a", "punti": 0, "esito": "corretto|parziale|errato|vuoto|illeggibile", "riga_errore": null, "errore": "", '
         '"commento": "", "confidenza": 0.9}], "commento_generale": ""}'
     )

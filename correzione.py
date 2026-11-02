@@ -1,9 +1,14 @@
 """
 correzione.py — la correzione assistita dei compiti dalle foto (senza Streamlit).
 
-Il docente sceglie la verifica (una delle sue, oppure la traccia da foto) e carica i compiti degli alunni, uno per file. Per ogni alunno l'AI legge le
-pagine e propone, richiesta per richiesta, punti, esito e un breve commento; il docente controlla (le valutazioni dubbie sono segnalate), corregge i
-punti e ottiene voti, schede per gli alunni, un resoconto della classe e gli argomenti da ripassare.
+Il docente sceglie la verifica (una delle sue, oppure la traccia da foto) e carica i compiti degli alunni: per ogni alunno una o PIÙ foto/pagine, con il nome.
+LA CORREZIONE È IN DUE PASSI SEPARATI. 1) LEGGERE: un modello trascrive riga per riga ciò che lo studente ha scritto, senza valutare e senza vedere le
+soluzioni (così non «vede» ciò che dovrebbe esserci), segnando con [?] ciò che non legge con certezza e indicando dove sta ogni riga sulla pagina; un SECONDO
+lettore (modello diverso, economico) rilegge le stesse pagine e dove le due letture non coincidono (tipicamente un + o un - perso) la richiesta è «da controllare».
+2) VALUTARE: dalla trascrizione (solo testo) si confrontano le soluzioni e si propongono punti, esito, commento e la riga dell'errore. Così il docente vede
+«cosa ho letto» e il pezzo di compito con l'errore, può correggere la lettura e rivalutare quella richiesta.
+Il docente controlla (le valutazioni dubbie sono segnalate), corregge i punti e ottiene voti, schede per gli alunni, un resoconto della classe e gli argomenti
+da ripassare.
 
 REGOLE:
 - I PUNTI E IL VOTO LI CALCOLA IL CODICE: l'AI propone i punti di ogni richiesta, che qui si limitano a [0, massimo] a passi di 0,5; somme e voti non
@@ -24,7 +29,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import esercizio_foto as ef
 from config import MAX_PAGINE_COMPITO
 from latex_utils import extract_blocks, parse_esercizi
-from prompts import prompt_correggi_compito, prompt_soluzioni
+from prompts import prompt_leggi_compito, prompt_soluzioni, prompt_valuta_lettura
 
 logger = logging.getLogger(__name__)
 
@@ -133,9 +138,151 @@ def _testo(v, massimo: int) -> str:
     return "" if t.lower() in ("null", "none") else t[:massimo]
 
 
-def normalizza_correzione(grezzo, struttura: dict) -> dict:
-    """La risposta dell'AI riportata alla struttura vera: una riga per OGNI richiesta, punti nei limiti, esiti validi. Ciò che manca resta «da controllare»."""
+LATO_PAGINA = 1900               # lato lungo massimo delle pagine mandate ai modelli (oltre non servono: vengono ridotte)
+
+
+def pagine_compito(compito: list) -> list:
+    """Le pagine di un compito (foto o PDF) come immagini JPEG pronte per i modelli: orientate come nell'EXIF, RGB, ridotte a LATO_PAGINA e con il
+    contrasto un po' ripreso (una foto col telefono ha spesso ombre e carta grigia). Restituisce una lista di bytes; le pagine illeggibili si saltano."""
+    from PIL import Image, ImageOps
+    from docx_import import espandi_file
+    out = []
+    for f in espandi_file(compito):
+        dati = f.get("data") or b""
+        if not dati:
+            continue
+        pezzi = [dati]
+        if (f.get("mime_type") or "").startswith("application/pdf"):
+            try:
+                from latex_utils import pdf_to_images_bytes
+                pezzi = (pdf_to_images_bytes(dati)[0] or [])[:MAX_PAGINE_COMPITO]
+            except Exception:
+                pezzi = []
+        for b in pezzi:
+            try:
+                im = Image.open(io.BytesIO(b))
+                im.load()
+                im = ImageOps.exif_transpose(im).convert("RGB")
+                if max(im.size) > LATO_PAGINA:
+                    k = LATO_PAGINA / max(im.size)
+                    im = im.resize((max(1, int(im.width * k)), max(1, int(im.height * k))), Image.LANCZOS)
+                im = ImageOps.autocontrast(im, cutoff=1)
+                buf = io.BytesIO()
+                im.save(buf, "JPEG", quality=90)
+                out.append(buf.getvalue())
+            except Exception:
+                continue
+    return out
+
+
+def _riquadro(v):
+    """[x0, y0, x1, y1] in millesimi, controllato; None se non è un riquadro sensato."""
+    try:
+        x0, y0, x1, y1 = [int(round(float(x))) for x in v]
+    except (TypeError, ValueError):
+        return None
+    x0, x1 = sorted((max(0, min(1000, x0)), max(0, min(1000, x1))))
+    y0, y1 = sorted((max(0, min(1000, y0)), max(0, min(1000, y1))))
+    return [x0, y0, x1, y1] if (x1 - x0 >= 20 and y1 - y0 >= 8) else None
+
+
+def normalizza_lettura(grezzo, struttura: dict, n_pagine: int) -> dict:
+    """La trascrizione dell'AI riportata alla struttura vera: una voce per OGNI richiesta, righe pulite, pagine e riquadri controllati."""
     g = grezzo if isinstance(grezzo, dict) else {}
+    per_id = {}
+    for r in (g.get("richieste") if isinstance(g.get("richieste"), list) else []):
+        if isinstance(r, dict) and r.get("id") is not None:
+            per_id[str(r["id"]).strip().lower()] = r
+    richieste = {}
+    for r in richieste_piatte(struttura):
+        v = per_id.get(r["id"].lower())
+        if v is None:
+            richieste[r["id"]] = {"trovata": False, "vuoto": False, "righe": []}
+            continue
+        righe = []
+        for x in (v.get("righe") if isinstance(v.get("righe"), list) else []):
+            if not isinstance(x, dict):
+                continue
+            testo = _testo(x.get("testo"), 400)
+            if not testo:
+                continue
+            try:
+                pag = int(x.get("pagina") or 1)
+            except (TypeError, ValueError):
+                pag = 1
+            righe.append({"pagina": min(max(1, pag), max(1, n_pagine)), "riquadro": _riquadro(x.get("riquadro")), "testo": testo,
+                          "dubbio": _testo(x.get("dubbio"), 120)})
+        richieste[r["id"]] = {"trovata": True, "vuoto": v.get("vuoto") is True and not righe, "righe": righe[:30]}
+    return {"nome": _testo(g.get("nome"), 40), "non_corrisponde": g.get("non_corrisponde") is True, "richieste": richieste}
+
+
+def _chiama_json(model, contenuto, chiave: str):
+    """Chiama il modello (due tentativi) e restituisce il JSON letto, oppure (None, motivo)."""
+    ultimo = "risposta non valida"
+    for _ in range(2):
+        try:
+            risposta = ef._chiama(model, contenuto)
+        except Exception as e:
+            ultimo = str(e)[:140]
+            continue
+        grezzo = _estrai_json(risposta)
+        if isinstance(grezzo, dict) and isinstance(grezzo.get(chiave), list):
+            return grezzo, ""
+    return None, ultimo
+
+
+def leggi_compito(model, struttura: dict, pagine: list, materia: str = "", scuola: str = "") -> dict:
+    """PRIMO PASSO: trascrive il compito (pagine = JPEG già preparate). Restituisce {"ok", "lettura" | "messaggio"}; non solleva mai."""
+    if not pagine:
+        return {"ok": False, "messaggio": "Non riesco ad aprire le pagine di questo compito: prova con foto JPG o PNG, oppure un PDF."}
+    prompt = prompt_leggi_compito(materia, scuola, traccia_testo(struttura), len(pagine))
+    grezzo, motivo = _chiama_json(model, [prompt] + [{"mime_type": "image/jpeg", "data": p} for p in pagine], "richieste")
+    if grezzo is None:
+        return {"ok": False, "messaggio": f"Non sono riuscito a leggere questo compito ({motivo}). Prova con una foto più nitida."}
+    return {"ok": True, "lettura": normalizza_lettura(grezzo, struttura, len(pagine))}
+
+
+def _chiave_lettura(righe: list) -> str:
+    """Le righe di una richiesta ridotte a una forma confrontabile: stessi caratteri, senza spazi né differenze tra i vari «meno»."""
+    t = " ".join(r["testo"] for r in righe)
+    t = t.replace("−", "-").replace("–", "-").replace("—", "-").replace("×", "*").replace("·", "*").replace("÷", "/").replace("[?]", "")
+    return re.sub(r"\s+", "", t).lower()
+
+
+def confronta_letture(prima: dict, seconda: dict) -> dict:
+    """{id: righe della seconda lettura} per le richieste in cui le due letture NON coincidono (un segno o una cifra diversi); le altre non compaiono.
+    Una differenza di sole spaziature o di simboli equivalenti non conta."""
+    diverse = {}
+    for rid, a in (prima.get("richieste") or {}).items():
+        b = (seconda.get("richieste") or {}).get(rid) or {}
+        if not a.get("righe") and not b.get("righe"):
+            continue
+        if _chiave_lettura(a.get("righe") or []) != _chiave_lettura(b.get("righe") or []):
+            diverse[rid] = b.get("righe") or []
+    return diverse
+
+
+def testo_letture(lettura: dict, struttura: dict) -> str:
+    """La trascrizione come testo per il passo di valutazione: per ogni richiesta le righe numerate (1., 2., …)."""
+    blocchi = []
+    for r in richieste_piatte(struttura):
+        v = (lettura.get("richieste") or {}).get(r["id"]) or {}
+        if v.get("righe"):
+            corpo = "\n".join(f"{k}. {x['testo']}" + (f"   (dubbio: {x['dubbio']})" if x.get("dubbio") else "") for k, x in enumerate(v["righe"], 1))
+        elif v.get("vuoto") or not v.get("trovata", True):
+            corpo = "(vuota: nessuna risposta scritta)"
+        else:
+            corpo = "(vuota: nessuna risposta scritta)"
+        blocchi.append(f"[{r['id']}]\n{corpo}")
+    return "\n\n".join(blocchi)
+
+
+def normalizza_correzione(grezzo, struttura: dict, lettura: dict | None = None, diverse: dict | None = None) -> dict:
+    """La valutazione dell'AI riportata alla struttura vera: una riga per OGNI richiesta, punti nei limiti, esiti validi; ogni riga porta anche ciò che è stato
+    letto, la riga dell'errore e, se le due letture non coincidono, la lettura alternativa. Ciò che manca resta «da controllare»."""
+    g = grezzo if isinstance(grezzo, dict) else {}
+    lettura = lettura or {}
+    diverse = diverse or {}
     per_id = {}
     for r in (g.get("righe") if isinstance(g.get("righe"), list) else []):
         if isinstance(r, dict) and r.get("id") is not None:
@@ -143,8 +290,10 @@ def normalizza_correzione(grezzo, struttura: dict) -> dict:
     righe = []
     for r in richieste_piatte(struttura):
         v = per_id.get(r["id"].lower())
+        letta = (lettura.get("richieste") or {}).get(r["id"]) or {}
+        base = {**r, "lettura": letta.get("righe") or [], "lettura_alt": diverse.get(r["id"]), "riga_errore": None, "errore": ""}
         if v is None:
-            righe.append({**r, "punti": 0.0, "esito": "vuoto", "commento": "Non l'ho trovata nel compito: controlla.", "confidenza": 0.0, "da_controllare": True})
+            righe.append({**base, "punti": 0.0, "esito": "vuoto", "commento": "Non l'ho trovata nel compito: controlla.", "confidenza": 0.0, "da_controllare": True})
             continue
         esito = str(v.get("esito") or "").strip().lower()
         esito = esito if esito in ESITI else "parziale"
@@ -152,42 +301,75 @@ def normalizza_correzione(grezzo, struttura: dict) -> dict:
             conf = max(0.0, min(1.0, float(v.get("confidenza", 0.7))))
         except (TypeError, ValueError):
             conf = 0.7
-        righe.append({**r, "punti": _passo(_numero(v.get("punti")), r["punti_max"]), "esito": esito, "commento": _testo(v.get("commento"), 140),
-                      "confidenza": conf, "da_controllare": conf < SOGLIA_CONFIDENZA or esito == "illeggibile"})
-    nome = _testo(g.get("nome"), 40)
-    return {"nome": nome, "non_corrisponde": g.get("non_corrisponde") is True, "righe": righe,
+        try:
+            k = int(v.get("riga_errore")) if v.get("riga_errore") is not None else None
+        except (TypeError, ValueError):
+            k = None
+        k = k if (k is not None and 1 <= k <= len(base["lettura"])) else None
+        dubbi = any("[?]" in x["testo"] or x.get("dubbio") for x in base["lettura"])
+        diversa = base["lettura_alt"] is not None
+        da_ctrl = conf < SOGLIA_CONFIDENZA or esito == "illeggibile" or diversa or (dubbi and esito not in ("corretto", "vuoto"))
+        righe.append({**base, "punti": _passo(_numero(v.get("punti")), r["punti_max"]), "esito": esito, "commento": _testo(v.get("commento"), 140),
+                      "riga_errore": k, "errore": _testo(v.get("errore"), 140) if esito not in ("corretto", "vuoto") else "",
+                      "confidenza": conf, "da_controllare": da_ctrl, "lettura_incerta": dubbi, "letture_diverse": diversa})
+    return {"nome": _testo(lettura.get("nome"), 40), "non_corrisponde": lettura.get("non_corrisponde") is True, "righe": righe,
             "commento_generale": _testo(g.get("commento_generale"), 280)}
 
 
-def correggi_compito(model, struttura: dict, soluzioni: str, compito: list, materia: str = "", scuola: str = "") -> dict:
-    """Corregge il compito di un alunno. `compito` = pagine {"data", "mime_type", "name"}. Restituisce {"ok", "correzione" | "messaggio"}; non solleva mai.
-    Un tentativo in più se la risposta non è un JSON utilizzabile."""
+def valuta_lettura(model, struttura: dict, soluzioni: str, lettura: dict, materia: str = "", scuola: str = "", diverse: dict | None = None) -> dict:
+    """SECONDO PASSO: valuta la trascrizione (solo testo). Restituisce {"ok", "correzione" | "messaggio"}; non solleva mai."""
+    prompt = prompt_valuta_lettura(materia, scuola, traccia_testo(struttura), soluzioni, testo_letture(lettura, struttura))
+    grezzo, motivo = _chiama_json(model, prompt, "righe")
+    if grezzo is None:
+        return {"ok": False, "messaggio": f"Non sono riuscito a valutare questo compito ({motivo}). Riprova."}
+    return {"ok": True, "correzione": normalizza_correzione(grezzo, struttura, lettura, diverse)}
+
+
+def correggi_compito(modelli: dict, struttura: dict, soluzioni: str, compito: list, materia: str = "", scuola: str = "", pagine: list | None = None) -> dict:
+    """Corregge il compito di un alunno in due passi. `modelli` = {"lettura", "lettura2" (facoltativo), "valutazione"}; `compito` = file {"data", "mime_type", "name"}
+    (una o più foto o un PDF). Restituisce {"ok", "correzione", "pagine" (JPEG usate) | "messaggio"}; non solleva mai."""
     errore = ef.controlla_foto(compito, MAX_PAGINE_COMPITO)
     if errore:
         return {"ok": False, "messaggio": errore}
-    parti = ef._parti(compito)
-    prompt = prompt_correggi_compito(materia, scuola, traccia_testo(struttura), soluzioni, len(parti))
-    ultimo = "risposta non valida"
-    for _ in range(2):
-        try:
-            risposta = ef._chiama(model, [prompt] + parti)
-        except Exception as e:
-            ultimo = str(e)[:140]
-            continue
-        grezzo = _estrai_json(risposta)
-        if isinstance(grezzo, dict) and isinstance(grezzo.get("righe"), list) and grezzo["righe"]:
-            return {"ok": True, "correzione": normalizza_correzione(grezzo, struttura)}
-    return {"ok": False, "messaggio": f"Non sono riuscito a leggere questo compito ({ultimo}). Prova con una foto più nitida."}
+    pagine = pagine or pagine_compito(compito)
+    if len(pagine) > MAX_PAGINE_COMPITO:
+        return {"ok": False, "messaggio": f"Questo compito ha {len(pagine)} pagine: al massimo {MAX_PAGINE_COMPITO} per alunno."}
+    prima = leggi_compito(modelli["lettura"], struttura, pagine, materia, scuola)
+    if not prima["ok"]:
+        return prima
+    diverse = {}
+    if modelli.get("lettura2") is not None:
+        seconda = leggi_compito(modelli["lettura2"], struttura, pagine, materia, scuola)
+        if seconda["ok"]:
+            diverse = confronta_letture(prima["lettura"], seconda["lettura"])
+    ris = valuta_lettura(modelli["valutazione"], struttura, soluzioni, prima["lettura"], materia, scuola, diverse)
+    if ris["ok"]:
+        ris["pagine"] = pagine
+        ris["lettura"] = prima["lettura"]
+    return ris
 
 
-def correggi_tutti(model, struttura: dict, soluzioni: str, compiti: list, materia: str = "", scuola: str = "", on_fatto=None, paralleli: int = 3) -> list:
-    """Corregge più compiti insieme (poche chiamate in parallelo). `compiti` = [pagine di ciascun alunno]. Restituisce i risultati nello stesso ordine.
+def rivaluta_richiesta(model, struttura: dict, soluzioni: str, riga: dict, testi: list, materia: str = "", scuola: str = "") -> dict:
+    """Rivaluta UNA richiesta dopo che il docente ha corretto la lettura. `testi` = le righe lette (una per riga). Restituisce {"ok", "riga" | "messaggio"}."""
+    righe = [{"pagina": 1, "riquadro": None, "testo": t.strip(), "dubbio": ""} for t in testi if t and t.strip()]
+    mini = {"nome": "", "non_corrisponde": False, "richieste": {riga["id"]: {"trovata": True, "vuoto": not righe, "righe": righe}}}
+    sotto = {"esercizi": [{**e, "richieste": [r for r in e["richieste"] if r["id"] == riga["id"]]} for e in struttura.get("esercizi", [])
+                           if any(r["id"] == riga["id"] for r in e["richieste"])]}
+    ris = valuta_lettura(model, sotto, soluzioni, mini, materia, scuola)
+    if not ris["ok"]:
+        return ris
+    nuova = next((r for r in ris["correzione"]["righe"] if r["id"] == riga["id"]), None)
+    return {"ok": True, "riga": nuova} if nuova else {"ok": False, "messaggio": "Non sono riuscito a rivalutare questa richiesta."}
+
+
+def correggi_tutti(modelli: dict, struttura: dict, soluzioni: str, compiti: list, materia: str = "", scuola: str = "", on_fatto=None, paralleli: int = 3) -> list:
+    """Corregge più compiti insieme (poche chiamate in parallelo). `compiti` = [file di ciascun alunno]. Restituisce i risultati nello stesso ordine.
     `on_fatto(n_fatti, totale)` è chiamata dal thread di chi invoca (si può usare per aggiornare una barra)."""
     risultati = [None] * len(compiti)
     if not compiti:
         return risultati
     with ThreadPoolExecutor(max_workers=max(1, min(paralleli, len(compiti)))) as pool:
-        futuri = {pool.submit(correggi_compito, model, struttura, soluzioni, c, materia, scuola): i for i, c in enumerate(compiti)}
+        futuri = {pool.submit(correggi_compito, modelli, struttura, soluzioni, c, materia, scuola): i for i, c in enumerate(compiti)}
         fatti = 0
         for f in as_completed(futuri):
             i = futuri[f]
@@ -202,6 +384,35 @@ def correggi_tutti(model, struttura: dict, soluzioni: str, compiti: list, materi
                 except Exception:
                     pass
     return risultati
+
+
+def ritaglio_righe(pagine: list, righe: list, margine: int = 14):
+    """Il pezzo di compito che contiene le `righe` date (stessa pagina), come PNG leggero; None se non si può ritagliare. Il riquadro si allarga un po'
+    (`margine` millesimi) perché il modello non sia troppo stretto."""
+    usabili = [r for r in righe if r.get("riquadro")]
+    if not usabili:
+        return None
+    pag = usabili[0]["pagina"]
+    usabili = [r for r in usabili if r["pagina"] == pag]
+    if not (1 <= pag <= len(pagine)):
+        return None
+    x0 = max(0, min(r["riquadro"][0] for r in usabili) - margine)
+    y0 = max(0, min(r["riquadro"][1] for r in usabili) - margine)
+    x1 = min(1000, max(r["riquadro"][2] for r in usabili) + margine)
+    y1 = min(1000, max(r["riquadro"][3] for r in usabili) + margine)
+    return ef.ritaglia(pagine[pag - 1], x0, y0, x1, y1, lato_max=1400, peso_max=220_000)
+
+
+def ritaglio_errore(pagine: list, riga: dict):
+    """Il pezzo di compito con l'ERRORE di una richiesta: la riga indicata e quella prima (per capire da dove viene); se non c'è la riga, tutta la risposta."""
+    k = riga.get("riga_errore")
+    lettura = riga.get("lettura") or []
+    if k and 1 <= k <= len(lettura):
+        scelte = [lettura[k - 1]] + ([lettura[k - 2]] if k >= 2 else [])
+        png = ritaglio_righe(pagine, scelte)
+        if png:
+            return png
+    return ritaglio_righe(pagine, lettura)
 
 
 # ── Punti, voti, statistiche ──────────────────────────────────────────────────
@@ -288,8 +499,9 @@ _PREAMBOLO = ("\\documentclass[11pt,a4paper]{article}\n\\usepackage[utf8]{inpute
               "\\geometry{margin=2cm}\n\\pagestyle{empty}\n\\setlength{\\parindent}{0pt}\n")
 
 
-def scheda_latex(materia: str, titolo: str, alunno: dict, scala: str = SCALA_PREDEFINITA) -> str:
-    """La scheda di correzione di UN alunno (una pagina): voto, punti, commento di ogni richiesta e in sintesi."""
+def scheda_latex(materia: str, titolo: str, alunno: dict, scala: str = SCALA_PREDEFINITA, ritagli: dict | None = None) -> str:
+    """La scheda di correzione di UN alunno: voto, punti, commento di ogni richiesta e in sintesi; con `ritagli` ({id richiesta: PNG}) anche il pezzo di
+    compito dove sta ogni errore (le figure viaggiano nel LaTeX come il logo: vedi latex_utils.blocco_figura)."""
     p, m = punti_alunno(alunno["righe"])
     v = voto(p, m, scala)
     corpo = []
@@ -297,6 +509,15 @@ def scheda_latex(materia: str, titolo: str, alunno: dict, scala: str = SCALA_PRE
         com = latex_escape(r.get("commento")) or ("Corretto." if r["punti"] >= r["punti_max"] else "")
         corpo.append(f"{latex_escape(str(r['id']))} & {r['punti']:g}/{r['punti_max']:g} & {com} \\\\")
     sintesi = f"\\vspace{{1em}}\\textbf{{In sintesi.}} {latex_escape(alunno.get('commento_generale'))}\n" if alunno.get("commento_generale") else ""
+    dove = []
+    if ritagli:
+        from latex_utils import blocco_figura
+        for r in alunno["righe"]:
+            png = ritagli.get(r["id"])
+            if png:
+                dove.append(f"\\textbf{{{latex_escape(str(r['id']))}}}" + (f" -- {latex_escape(r['errore'])}" if r.get("errore") else "") + "\n\n" + blocco_figura(png, 12.0) + "\n")
+    if dove:
+        sintesi += "\\vspace{1em}\\textbf{Dove sono gli errori}\n\n" + "\n".join(dove)
     return (_PREAMBOLO + "\\begin{document}\n"
             f"\\begin{{center}}{{\\LARGE\\textbf{{Scheda di correzione}}}}\\\\[4pt]{{\\large {latex_escape(materia)} -- {latex_escape(titolo)}}}\\end{{center}}\n\\vspace{{.6em}}\n"
             f"\\textbf{{Studente:}} {latex_escape(alunno.get('nome') or '')}\n\n\\vspace{{.8em}}\n"
