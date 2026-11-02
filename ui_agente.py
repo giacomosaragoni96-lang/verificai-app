@@ -114,22 +114,29 @@ def _css(T: dict) -> str:
         f".ag-nota{{margin-top:.8rem;padding-top:.7rem;border-top:1px dashed {T['border']};font-size:.79rem;line-height:1.55;color:{T['text2']};}}"
         f".ag-nota b{{color:{T['text']};}}"
         f".ag-rit{{{f}font-size:.7rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:{T['muted']};margin:.2rem 0 .3rem;}}"
-        "html body .stApp .st-key-blk_ag_azioni{margin-left:2.7rem;}"
+        "html body .stApp .st-key-blk_ag_azioni{margin-left:2.7rem;width:calc(100% - 2.7rem) !important;}"
+        "html body .stApp .st-key-blk_ag_nuova{display:flex;justify-content:flex-end;}"
+        f"html body .stApp .st-key-blk_ag_nuova button{{min-height:2rem !important;padding:.1rem .8rem !important;border-radius:999px !important;border:1px solid {T['border']} !important;"
+        f"background:transparent !important;box-shadow:none !important;}}"
+        f"html body .stApp .st-key-blk_ag_nuova button p{{font-size:.8rem !important;font-weight:650 !important;color:{T['text2']} !important;}}"
+        f"html body .stApp .st-key-blk_ag_nuova button:hover{{border-color:{acc} !important;}}"
+        f"html body .stApp .st-key-blk_ag_nuova button:hover p{{color:{acc} !important;}}"
         f"html body .stApp .st-key-blk_ag_rit{{background:{T['card']};border:1px solid {T['border']};border-radius:18px;padding:.85rem 1.1rem .8rem;margin:.1rem 0 .8rem;}}"
         f".ag-lab{{{f}font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:{T['muted']};margin:0 0 .35rem;}}"
         # contatore degli esercizi: piccolo, con i due pulsanti dentro
-        f"html body .stApp .st-key-blk_ag_rit [data-baseweb='input']{{border-radius:12px !important;border:1px solid {T['border']} !important;background:{T['card']} !important;"
-        "min-height:2.5rem;overflow:hidden;}"
-        "html body .stApp .st-key-blk_ag_rit [data-baseweb='input'] > div{background:transparent !important;}"
+        # il riquadro è il contenitore che tiene insieme campo e pulsanti: così sono un oggetto solo
+        f"html body .stApp .st-key-blk_ag_rit div:has(> [data-baseweb='input']){{display:flex;align-items:center;max-width:9rem;border:1px solid {T['border']};border-radius:12px;"
+        f"background:{T['card']};overflow:hidden;}}"
+        "html body .stApp .st-key-blk_ag_rit [data-baseweb='input'],html body .stApp .st-key-blk_ag_rit [data-baseweb='input'] > div{border:none !important;"
+        "background:transparent !important;min-height:2.5rem;flex:1;}"
         f"html body .stApp .st-key-blk_ag_rit [data-testid='stNumberInput'] input{{font-weight:700;font-size:1rem;text-align:center;padding:.2rem .3rem !important;color:{T['text']} !important;}}"
-        "html body .stApp .st-key-blk_ag_rit [data-testid='stNumberInput'] > div{max-width:8.5rem;}"
+        "html body .stApp .st-key-blk_ag_rit div:has(> button[data-testid^='stNumberInputStep']){border:none !important;background:transparent !important;box-shadow:none !important;}"
         f"html body .stApp .st-key-blk_ag_rit button[data-testid^='stNumberInputStep']{{background:transparent !important;color:{T['text2']} !important;border:none !important;"
         "min-width:1.9rem;transition:background .15s ease !important;}"
         f"html body .stApp .st-key-blk_ag_rit button[data-testid^='stNumberInputStep']:hover{{background:{acc}18 !important;color:{acc} !important;}}"
-        # le due scelte sì/no: interruttore e parola, sulla stessa riga
         "html body .stApp .st-key-blk_ag_rit [data-testid='stToggle'] label{align-items:center;gap:.5rem;}"
         f"html body .stApp .st-key-blk_ag_rit [data-testid='stToggle'] p{{font-weight:650;font-size:.92rem;color:{T['text']};}}"
-        "@media (max-width:640px){.ag-hero b{font-size:2rem;}.ag-card,html body .stApp .st-key-blk_ag_azioni{margin-left:0;}.ag-bub{max-width:90%;}}"
+        "@media (max-width:640px){.ag-hero b{font-size:2rem;}.ag-card{margin-left:0;}html body .stApp .st-key-blk_ag_azioni{margin-left:0;width:100% !important;}.ag-bub{max-width:90%;}}"
         "@media (prefers-reduced-motion: reduce){.ag-row,.ag-card,.ag-dots i{animation:none !important;}}"
         "</style>" + _css_pillole(T)
     )
@@ -160,8 +167,7 @@ def card_riepilogo(T: dict, dec: dict, default_ecc: bool = True) -> str:
     chips = "".join(_chip(e, v) for e, v in agente.riepilogo(par, default_ecc))
     if dec.get("versioni"):
         chips += _chip("Poi preparo", ", ".join(agente.VERSIONI.get(k, k) for k in dec["versioni"]))
-    gia = {e.lower() for e, _v in agente.riepilogo(par, default_ecc)}               # ciò che è già un'etichetta non si ripete tra le «scelte mie»
-    ass = "".join(f"<div>{_esc(a)}</div>" for a in dec.get("assunzioni") or [] if a.split(":")[0].strip().lower() not in gia)
+    ass = "".join(f"<div>{_esc(a)}</div>" for a in agente.assunzioni_utili(par, dec.get("assunzioni")))      # ciò che è già un'etichetta non si ripete
     nota = f'<div class="ag-nota"><b>Scelte mie</b>{ass}</div>' if ass else ""
     return (f'<div class="ag-card"><div class="ag-eye">Ho capito</div><div class="ag-arg">{_esc(par.get("argomento") or "Verifica dagli appunti caricati")}</div>'
             + (f'<div class="ag-ind">{_esc(par["indicazioni"])}</div>' if par.get("indicazioni") else "")
@@ -255,10 +261,11 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
             st.markdown('<div class="ag-hero"><b>Cosa ti <em>serve</em>?</b>'
                         '<span>Descrivi la verifica come la diresti a un collega.<br>Al resto penso io.</span></div>', unsafe_allow_html=True)
         else:
-            c_a, c_b = st.columns([3, 1.4], vertical_alignment="center")
+            c_a, c_b = st.columns([2, 1], vertical_alignment="center")
             c_a.markdown('<div class="ag-top">Conversazione</div>', unsafe_allow_html=True)
-            if c_b.button("Nuova richiesta", key="ag_nuova", type="tertiary", icon=":material/restart_alt:", use_container_width=True):
-                evento = {"tipo": "annulla"}
+            with c_b.container(key="blk_ag_nuova"):
+                if st.button("Nuova richiesta", key="ag_nuova", type="tertiary", icon=":material/restart_alt:"):
+                    evento = {"tipo": "annulla"}
         _ult = chat[-1] if chat and chat[-1]["ruolo"] == "agente" and not in_arrivo else None
         _az_ult = ((_ult or {}).get("decisione") or {}).get("azione")
         _card_ult = _az_ult == "crea" or (_az_ult == "impagina" and bool(allegati))      # in questi casi lo dice già la scheda: la bolla ripeterebbe

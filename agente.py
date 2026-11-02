@@ -428,6 +428,19 @@ def suggerimenti(ctx: dict, massimo: int = 4) -> list:
 
 
 # ── Dal parametro al modulo ───────────────────────────────────────────────────
+def assunzioni_utili(par: dict, assunzioni: list) -> list:
+    """Le «scelte mie» da mostrare: si tolgono quelle che ripetono un valore già visibile come etichetta della scheda (materia, scuola, classe),
+    qualunque sia la frase con cui il modello le ha scritte («Ho associato la verifica alla classe 1 A»), e si accorciano."""
+    visibili = [_chiave(par.get(k)) for k in ("materia", "scuola", "classe") if par.get(k)]
+    out = []
+    for a in assunzioni or []:
+        k = _chiave(a)
+        if any(v and v in k for v in visibili):
+            continue
+        out.append(a if len(a) <= 90 else a[:87].rstrip() + "…")
+    return out
+
+
 def riepilogo(par: dict, default_eccellenza: bool = True) -> list:
     """Le «pillole» del riepilogo mostrato al docente: [(etichetta, valore)] solo per ciò che è stato deciso."""
     out = []
