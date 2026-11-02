@@ -52,7 +52,7 @@ def _css(T: dict) -> str:
         "<style>"
         ".st-key-blk_agente{max-width:46rem;margin:0 auto;}"
         # ── titolo ────────────────────────────────────────────────────────────
-        f".ag-hero{{text-align:center;margin:1.4rem 0 1.5rem;{f}}}"
+        f".ag-hero{{text-align:center;margin:1.1rem 0 1.4rem;{f}}}"
         f".ag-hero b{{display:block;font-size:2.5rem;font-weight:800;letter-spacing:-.04em;line-height:1.08;color:{T['text']};}}"
         f".ag-hero b em{{font-style:normal;background:linear-gradient(100deg,{acc},{acc2});-webkit-background-clip:text;background-clip:text;color:transparent;}}"
         f".ag-hero span{{display:block;margin-top:.7rem;font-size:1.02rem;line-height:1.5;color:{T['text2']};}}"
@@ -140,7 +140,7 @@ def _css(T: dict) -> str:
         f"html body .stApp .st-key-blk_ag_rit button[data-testid^='stNumberInputStep']:hover{{background:{acc}18 !important;color:{acc} !important;}}"
         "html body .stApp .st-key-blk_ag_rit [data-testid='stToggle'] label{align-items:center;gap:.5rem;}"
         f"html body .stApp .st-key-blk_ag_rit [data-testid='stToggle'] p{{font-weight:650;font-size:.92rem;color:{T['text']};}}"
-        "@media (max-width:640px){.ag-hero b{font-size:2rem;}.ag-card{margin-left:0;}html body .stApp .st-key-blk_ag_azioni{margin-left:0;width:100% !important;}.ag-bub{max-width:90%;}}"
+        "@media (max-width:640px){.ag-hero{margin:.5rem 0 1rem;}.ag-hero b{font-size:1.85rem;}.ag-hero span{font-size:.95rem;margin-top:.5rem;}.ag-cap{font-size:.74rem;line-height:1.55;margin-top:.7rem;padding:0 .4rem;}.ag-cap .ag-pc{display:none;}.ag-cap .ag-tel{display:inline !important;}html body .stApp .st-key-blk_agente [data-testid='stChatInput']{min-height:3.1rem;padding:.3rem .5rem .3rem .4rem !important;}html body .stApp .st-key-blk_agente [data-testid='stChatInput'] textarea{font-size:.95rem !important;}.ag-card{margin-left:0;}html body .stApp .st-key-blk_ag_azioni{margin-left:0;width:100% !important;}.ag-bub{max-width:90%;}}"
         "@media (prefers-reduced-motion: reduce){.ag-row,.ag-card,.ag-dots i{animation:none !important;}}"
         "</style>" + _css_pillole(T)
     )
@@ -326,11 +326,13 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
         if js_microfono:
             with st.container(key="dettatura_ag"):
                 components.html(js_microfono, height=0)
-        invio = st.chat_input("Scrivi o detta, per esempio: disequazioni di secondo grado per la 3B", key="ag_in", accept_file="multiple",
+        invio = st.chat_input("Es. equazioni per la 3B", key="ag_in", accept_file="multiple",
                               file_type=["pdf", "png", "jpg", "jpeg", "webp", "docx"])
         if not chat and not in_arrivo:
-            st.markdown('<div class="ag-cap">Basta l&#8217;argomento. Se vuoi, aggiungi la <b>classe</b> e cosa preparare (<b>Fila B</b>, <b>soluzioni</b>, <b>versione per DSA</b>).<br>'
-                        'Con <b>＋</b> allegi appunti, foto o una verifica da sistemare.</div>', unsafe_allow_html=True)
+            st.markdown('<div class="ag-cap"><span class="ag-pc">Basta l&#8217;argomento. Se vuoi, aggiungi la <b>classe</b> e cosa preparare (<b>Fila B</b>, <b>soluzioni</b>, <b>versione per DSA</b>).<br>'
+                        'Con <b>＋</b> allegi appunti, foto o una verifica da sistemare.</span>'
+                        '<span class="ag-tel" style="display:none">Basta l&#8217;argomento. Aggiungi <b>classe</b>, <b>Fila B</b> o <b>soluzioni</b> se serve.<br>'
+                        'Con <b>＋</b> allegi appunti o una verifica da sistemare.</span></div>', unsafe_allow_html=True)
         if invio and evento is None and not in_arrivo:
             if isinstance(invio, str):
                 testo, files = invio.strip(), []
