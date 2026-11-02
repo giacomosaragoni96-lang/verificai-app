@@ -3821,7 +3821,7 @@ def _render_agente_home() -> None:
     chat = ss.setdefault("_ag_chat", [])
     blocco = ("Hai finito le verifiche gratuite di questo mese." if _limite else
               "Non riesco a controllare il tuo utilizzo mensile in questo momento. Riprova tra qualche istante." if _blocco_conteggio else None)
-    _mic = _js_dettatura('textarea[data-testid="stChatInputTextArea"]', '[data-testid="stChatInput"]', "right:58px;bottom:12px;") if not chat else ""
+    _mic = _js_dettatura('textarea[data-testid="stChatInputTextArea"]', '[data-testid="stChatInput"]', "right:62px;top:50%;margin-top:-17px;") if not chat else ""
     _arr = ss.get("_ag_in_arrivo")
     ev = ui_agente.render_home(T, chat, blocco, [k for k, pk in _PRO_KIT.items() if _pro_bloccato(pk)],
                                [a["name"] for a in ss.get("_ag_allegati") or []], _mic,

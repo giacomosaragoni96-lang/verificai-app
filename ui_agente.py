@@ -54,21 +54,37 @@ def _css(T: dict) -> str:
         f".ag-hero span{{display:block;margin-top:.7rem;font-size:1.02rem;line-height:1.5;color:{T['text2']};}}"
         f".ag-cap{{text-align:center;margin:.85rem 0 0;font-size:.78rem;line-height:1.7;color:{T['muted']};{f}}}"
         f".ag-cap i{{font-style:normal;margin:0 .45rem;opacity:.5;}}"
-        # ── casella di scrittura ──────────────────────────────────────────────
-        f"html body .stApp .st-key-blk_agente [data-testid='stChatInput']{{background:{T['card']} !important;border:1.5px solid {T['border']} !important;"
-        "border-radius:22px !important;padding:.3rem .35rem !important;box-shadow:0 18px 44px rgba(15,23,42,.08),0 2px 6px rgba(15,23,42,.04) !important;"
+        # ── casella di scrittura: una scheda sola, pulita; dentro tutto trasparente ─────────────────────────────────
+        "html body .stApp .st-key-blk_agente [data-testid='stChatInput']{"
+        f"background:{T['card']} !important;border:1.5px solid {T['border']} !important;border-radius:26px !important;padding:.45rem .65rem .45rem .5rem !important;"
+        "min-height:3.5rem;box-shadow:0 1px 2px rgba(15,23,42,.05),0 20px 48px rgba(15,23,42,.09) !important;"
         "transition:border-color .2s ease,box-shadow .2s ease !important;}"
         f"html body .stApp .st-key-blk_agente [data-testid='stChatInput']:focus-within{{border-color:{acc} !important;"
-        f"box-shadow:0 0 0 4px {acc}22,0 20px 48px {acc}2b !important;}}"
-        "html body .stApp .st-key-blk_agente [data-testid='stChatInput'] > div,html body .stApp .st-key-blk_agente [data-testid='stChatInput'] > div > div,"
-        "html body .stApp .st-key-blk_agente [data-testid='stChatInput'] textarea{background:transparent !important;border:none !important;box-shadow:none !important;}"
-        f"html body .stApp .st-key-blk_agente [data-testid='stChatInput'] textarea{{font-size:1.03rem !important;color:{T['text']} !important;}}"
+        f"box-shadow:0 0 0 4px {acc}22,0 22px 52px {acc}2b !important;}}"
+        # ogni livello interno senza fondo, bordo né ombra (era la casella grigia dentro la scheda)
+        "html body .stApp .st-key-blk_agente [data-testid='stChatInput'] div,html body .stApp .st-key-blk_agente [data-testid='stChatInput'] [data-baseweb],"
+        "html body .stApp .st-key-blk_agente [data-testid='stChatInput'] textarea{background:transparent !important;background-color:transparent !important;"
+        "border:none !important;box-shadow:none !important;outline:none !important;}"
+        f"html body .stApp .st-key-blk_agente [data-testid='stChatInput'] textarea{{font-size:1.04rem !important;color:{T['text']} !important;padding-left:.2rem !important;"
+        f"padding-right:3.2rem !important;}}"  # spazio per il microfono
         f"html body .stApp .st-key-blk_agente [data-testid='stChatInput'] textarea::placeholder{{color:{T['muted']} !important;opacity:1;}}"
-        f"html body .stApp .st-key-blk_agente [data-testid='stChatInputSubmitButton']{{background:linear-gradient(135deg,#2563EB,#1D4ED8) !important;"
-        f"border-radius:14px !important;color:#fff !important;box-shadow:0 8px 18px #2563EB55 !important;transition:transform .15s ease !important;}}"
-        "html body .stApp .st-key-blk_agente [data-testid='stChatInputSubmitButton']:hover{transform:scale(1.06);}"
-        f"html body .stApp .st-key-blk_agente [data-testid='stChatInputSubmitButton']:disabled{{background:{T['border']} !important;box-shadow:none !important;}}"
+        # «+» per allegare: discreto, tondo
+        "html body .stApp .st-key-blk_agente [data-testid='stChatInput'] button:not([data-testid='stChatInputSubmitButton']):not(.vf-mic){"
+        f"background:transparent !important;border:none !important;box-shadow:none !important;color:{T['text2']} !important;border-radius:50% !important;"
+        "width:2.3rem;height:2.3rem;transition:background .15s ease !important;}"
+        f"html body .stApp .st-key-blk_agente [data-testid='stChatInput'] button:not([data-testid='stChatInputSubmitButton']):not(.vf-mic):hover{{background:{acc}14 !important;"
+        f"color:{acc} !important;}}"
+        # microfono (creato dallo script della dettatura): senza bordo, al centro, a sinistra dell'invio
+        f"html body .stApp .vf-mic{{border:none !important;background:transparent !important;color:{T['text2']} !important;box-shadow:none !important;transition:background .15s ease !important;}}"
+        f"html body .stApp .vf-mic:hover{{background:{acc}14 !important;}}"
+        # invio: tondo, blu quando c'è qualcosa da inviare, quasi invisibile quando non c'è
+        "html body .stApp .st-key-blk_agente [data-testid='stChatInputSubmitButton']{"
+        "background:linear-gradient(135deg,#2563EB,#1D4ED8) !important;border:none !important;border-radius:50% !important;width:2.4rem;height:2.4rem;"
+        "color:#fff !important;box-shadow:0 8px 18px #2563EB55 !important;transition:transform .15s ease,box-shadow .15s ease !important;}"
+        "html body .stApp .st-key-blk_agente [data-testid='stChatInputSubmitButton']:not(:disabled):hover{transform:scale(1.08);}"
+        f"html body .stApp .st-key-blk_agente [data-testid='stChatInputSubmitButton']:disabled{{background:{T['border']}88 !important;box-shadow:none !important;}}"
         "html body .stApp .st-key-blk_agente [data-testid='stChatInputSubmitButton'] svg{fill:#fff !important;color:#fff !important;}"
+        f"html body .stApp .st-key-blk_agente [data-testid='stChatInputSubmitButton']:disabled svg{{fill:{T['muted']} !important;color:{T['muted']} !important;}}"
         # ── conversazione: bolle ──────────────────────────────────────────────
         f".ag-top{{display:flex;align-items:center;justify-content:space-between;margin:.2rem 0 .5rem;{f}font-size:.72rem;font-weight:800;letter-spacing:.09em;"
         f"text-transform:uppercase;color:{T['muted']};}}"
