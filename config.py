@@ -34,7 +34,7 @@ LANDING_URL = "https://verificai.net"   # il link di invito passa dalla landing 
 # Inviti tra colleghi: per ogni amico che si iscrive e completa la prima verifica, chi invita guadagna verifiche con tutto il Pro
 BONUS_PER_INVITO = 2
 MAX_INVITI_CON_BONUS = 5
-FUNZIONI_PRO = ("fila_b", "bes", "soluzioni", "word", "griglia", "logo", "scheda", "zip", "materiale", "fila_extra", "recupero")
+FUNZIONI_PRO = ("fila_b", "bes", "soluzioni", "word", "griglia", "logo", "scheda", "zip", "materiale", "fila_extra", "recupero", "correzione")
 
 # Come si chiamano le funzioni nei messaggi «con Pro puoi…»
 ETICHETTE_FUNZIONI = {
@@ -42,6 +42,7 @@ ETICHETTE_FUNZIONI = {
     "griglia": "la griglia di valutazione", "logo": "il logo della scuola",
     "scheda": "la scheda di allenamento", "zip": "il kit completo in un solo file",
     "materiale": "la verifica a partire dai tuoi appunti o da una verifica già fatta",
+    "correzione": "la correzione assistita dei compiti",
     "modifiche": "più modifiche con l'AI su ogni verifica",
 }
 # Dati del fornitore per le pagine legali (Termini, Rimborsi, Privacy). Indirizzo e partita IVA: compaiono solo se compilati.
@@ -146,6 +147,8 @@ COMPITI_AI = {
     "foto_esercizio":    ("flash",  2048),   # legge la foto di un esercizio del libro e lo ricontrolla: Flash anche col piano Free (Lite sbaglia i numeri)
     "scheda":            ("medio",  1024),   # scheda di allenamento: una chiamata per sezione
     "agente":            ("flash",  1024),   # capisce la richiesta libera del docente (agente.py): Flash anche col piano Free, ragionamento basso
+    "soluzioni_rif":     ("flash",  2048),   # soluzioni di riferimento per la correzione dei compiti (correzione.py): una volta per verifica
+    "correzione":        ("flash",  2048),   # corregge il compito di UN alunno dalle foto: sempre Flash (Lite sbaglia calcoli e scrittura a mano)
     "autoverifica":      ("flash",  1024),   # risolve gli esercizi e corregge gli errori: SEMPRE Flash, anche col piano Free.
     #   Con la serie 3.x 1024 = ragionamento BASSO. Con 3072 (livello alto) usava 7-9 mila token e fino a 70 s; se scopre meno
     #   errori del dovuto, provare 2048 (medio).
@@ -157,6 +160,12 @@ AGENTE_ATTIVO = True
 AGENTE_SOLO_ADMIN = True
 AGENTE_MAX_DOMANDE = 2        # domande di chiarimento al massimo per richiesta, poi decide da sé dichiarando le assunzioni
 AGENTE_MAX_MESSAGGI = 40      # richieste all'agente per sessione (freno agli abusi)
+
+# Correzione assistita dei compiti (correzione.py, ui_correzione.py). I compiti degli alunni restano SOLO nella sessione: mai salvati.
+MAX_STUDENTI_CORREZIONE = 40      # compiti per volta
+MAX_PAGINE_COMPITO = 6            # pagine o foto per ogni alunno
+MAX_CORREZIONI_SESSIONE = 120     # tetto di sicurezza per sessione (ogni compito è una chiamata all'AI con le immagini)
+MAX_BYTE_CORREZIONE = 60 * 1024 * 1024   # peso totale dei file caricati
 
 # Esercizi del libro da una foto (esercizio_foto.py): quanti se ne possono includere in una verifica
 MAX_ESERCIZI_DA_FOTO = 8

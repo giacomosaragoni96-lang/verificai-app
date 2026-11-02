@@ -315,9 +315,10 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
                     evento = {"tipo": "impagina_conferma"}
                 if c2.button("Annulla", key="ag_annulla_imp", type="secondary", use_container_width=True):
                     evento = {"tipo": "annulla"}
-        elif az in ("impagina", "libro", "storico"):
-            etichetta = {"impagina": "Impagina la mia verifica", "libro": "Apri il modulo e aggiungi la foto", "storico": "Apri «Le mie verifiche»"}[az]
-            icona = {"impagina": ":material/upload_file:", "libro": ":material/photo_camera:", "storico": ":material/folder_open:"}[az]
+        elif az in ("impagina", "libro", "storico", "correggi"):
+            etichetta = {"impagina": "Impagina la mia verifica", "libro": "Apri il modulo e aggiungi la foto", "storico": "Apri «Le mie verifiche»",
+                         "correggi": "Apri «Correggi i compiti»"}[az]
+            icona = {"impagina": ":material/upload_file:", "libro": ":material/photo_camera:", "storico": ":material/folder_open:", "correggi": ":material/rate_review:"}[az]
             with st.container(key="blk_ag_azioni"):
                 if st.button(etichetta, key="ag_vai", type="primary", icon=icona):
                     evento = {"tipo": "vai", "dove": az}

@@ -1729,6 +1729,9 @@ def prompt_agente(conversazione: str, contesto: str, azioni: str, domande_rimast
         "- Se c'è un allegato può essere: appunti da cui prendere spunto (azione crea, uso_file «spunto»); una verifica da rifare con dati nuovi (crea, uso_file «rifai»); "
         "oppure una verifica GIÀ SCRITTA da impaginare o sistemare (azione impagina: in «modifica» scrivi le richieste del docente, per esempio «togli l'esercizio 4», o lascia null). "
         "Se dal messaggio e dal nome del file non è chiaro, fai UNA domanda con le opzioni «Sono appunti», «Rifai questa verifica con dati nuovi», «Impagina questa verifica».\n"
+        "- Se il docente chiede di aprire una pagina, riaprire una verifica già creata («riapri quella sulle frazioni»), aggiungere una classe, cambiare il tema o correggere i compiti, "
+        "usa SOLO le azioni di navigazione elencate sopra e compila «navigazione»: per riaprire una verifica scegli, tra le ultime elencate, quella che somiglia di più a ciò che dice "
+        "e scrivi il suo id (tra parentesi quadre); per una classe scrivi il nome come lo dice («2C»).\n"
         "- Se il docente chiede qualcosa che l'app non sa fare, dillo con onestà in «messaggio» (azione «aiuto») e proponi la cosa più vicina. "
         "(Non sa: cambiare lo stile grafico di tutta la verifica, scrivere in modo diverso l'intestazione, correggere i compiti degli studenti.)\n"
         "- «messaggio» è UNA frase breve e naturale, in italiano, in seconda persona («Ti preparo una verifica sulle frazioni per la 2ªB»). Niente elenchi, niente emoji.\n"
@@ -1746,6 +1749,7 @@ def prompt_agente(conversazione: str, contesto: str, azioni: str, domande_rimast
         '  "per_chi": null,\n'
         '  "modifica": null,\n'
         '  "operazioni": [{"tipo": "...", "indice": null, "istruzione": null, "punti": null, "numero": null, "classe": null, "data": null}],\n'
+        '  "navigazione": {"apri_id": null, "sezione": null, "nuova_classe": {"nome": null, "scuola": null}, "tema": null},\n'
         '  "assunzioni": []\n'
         "}\n"
         "Per «materia» e «scuola» usa ESATTAMENTE un nome dell'elenco del contesto. «classe» è il nome di una classe del docente (o null). "
@@ -1760,3 +1764,29 @@ def istruzione_cambia_numeri(argomento: str = "") -> str:
     resto = f" L'esercizio deve restare su «{argomento}»." if argomento else ""
     return ("Crea una VARIANTE di questo esercizio: cambia SOLO i dati (numeri, coefficienti, nomi, valori) mantenendo IDENTICA la struttura, "
             "la tipologia, il numero di richieste e il livello di difficoltà. Se c'è un grafico, aggiornalo ai nuovi dati." + resto)
+
+
+def prompt_correggi_compito(materia: str, scuola: str, traccia: str, soluzioni: str, n_parti: int) -> str:
+    """Corregge il compito di UN alunno dalle sue pagine (foto o PDF). `traccia` elenca le richieste con id e punti massimi;
+    `soluzioni` sono le soluzioni di riferimento. Risposta: solo JSON."""
+    return (
+        f"Sei un docente italiano esperto di {materia or 'materia scolastica'}"
+        + (f" ({scuola})" if scuola else "")
+        + f" e devi correggere il compito di UNO studente. Qui sotto trovi la TRACCIA con le richieste (ciascuna con un id e i punti massimi), "
+        f"le SOLUZIONI DI RIFERIMENTO e, a seguire, {n_parti} {'pagina' if n_parti == 1 else 'pagine'} del suo compito (foto o PDF).\n\n"
+        f"TRACCIA (id · punti massimi · testo):\n{traccia}\n\n"
+        f"SOLUZIONI DI RIFERIMENTO:\n{soluzioni or '(non disponibili: ricavale tu con cura)'}\n\n"
+        "COME CORREGGERE:\n"
+        "- Valuta SOLO ciò che è scritto. Se una parte è illeggibile o non c'è, dillo: esito «illeggibile» o «vuoto». Non indovinare mai passaggi che non vedi.\n"
+        "- Punteggio di ogni richiesta da 0 al massimo, a multipli di 0,5. Parziale quando il metodo è giusto e il risultato no (o il contrario); "
+        "un errore di calcolo isolato toglie poco; lo STESSO errore riportato nelle richieste successive non si penalizza di nuovo (errore trascinato).\n"
+        "- Un risultato giusto ottenuto con un metodo diverso ma valido vale il punteggio pieno. Una risposta giusta senza giustificazione dove la traccia chiede di motivare vale meno.\n"
+        "- «commento»: UNA frase breve (al massimo 15 parole) rivolta allo studente, specifica (cosa è giusto o cosa correggere), gentile, mai generica. Vuoto se tutto è corretto.\n"
+        "- «confidenza» da 0 a 1: quanto sei sicuro di quella valutazione (bassa con scrittura difficile, passaggi ambigui, grafici da interpretare).\n"
+        "- «nome»: nome e cognome scritti in intestazione, se si leggono (altrimenti null). Non riportare altri dati personali.\n"
+        "- Se le pagine non sembrano il compito di questa verifica, metti «non_corrisponde»: true.\n"
+        "- «commento_generale»: al massimo due frasi: un punto di forza e cosa ripassare.\n\n"
+        "RISPONDI SOLO con questo JSON, con TUTTE le richieste della traccia, usando gli id esatti:\n"
+        '{"nome": null, "non_corrisponde": false, "righe": [{"id": "1a", "punti": 0, "esito": "corretto|parziale|errato|vuoto|illeggibile", '
+        '"commento": "", "confidenza": 0.9}], "commento_generale": ""}'
+    )
