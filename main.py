@@ -7343,19 +7343,31 @@ def _storia_vai(da: str, verso: str) -> None:
 
 
 def _barra_annulla(chiave: str) -> None:
-    """Due link discreti «Annulla» e «Ripristina», solo se c'è qualcosa da annullare o ripristinare."""
+    """«Annulla» e «Ripristina» come due pillole discrete in fila, solo se c'è qualcosa da annullare o ripristinare."""
     _storia_reset_se_serve()
     n_a, n_r = len(st.session_state.get("_storia_A") or []), len(st.session_state.get("_storia_rifai") or [])
     if not (n_a or n_r):
         return
-    _c1, _c2, _c3 = st.columns([1.2, 1.2, 3], gap="small")
-    if n_a and _c1.button("Annulla", key=f"storia_annulla_{chiave}", type="tertiary", icon=":material/undo:",
-                           help=f"Torna alla versione precedente ({n_a} disponibili)."):
-        _storia_vai("_storia_A", "_storia_rifai")
-        st.rerun()
-    if n_r and _c2.button("Ripristina", key=f"storia_rifai_{chiave}", type="tertiary", icon=":material/redo:"):
-        _storia_vai("_storia_rifai", "_storia_A")
-        st.rerun()
+    st.markdown(
+        "<style>"
+        "html body .stApp [class*='st-key-blk_storia'],html body .stApp [class*='st-key-blk_storia'] > [data-testid='stVerticalBlock']{"
+        "display:flex !important;flex-direction:row !important;flex-wrap:wrap !important;gap:.45rem !important;align-items:center;}"
+        "html body .stApp [class*='st-key-blk_storia'] [data-testid='stElementContainer']{width:auto !important;flex:0 0 auto !important;}"
+        "html body .stApp [class*='st-key-blk_storia'] button{width:auto !important;white-space:nowrap !important;min-height:2rem !important;padding:.1rem .85rem !important;"
+        f"border-radius:999px !important;border:1px solid {T['border']} !important;background:transparent !important;box-shadow:none !important;transition:all .15s ease !important;}}"
+        f"html body .stApp [class*='st-key-blk_storia'] button p{{font-size:.82rem !important;font-weight:650 !important;color:{T['text2']} !important;}}"
+        f"html body .stApp [class*='st-key-blk_storia'] button:hover{{border-color:{T['accent']} !important;background:{T['accent']}12 !important;}}"
+        f"html body .stApp [class*='st-key-blk_storia'] button:hover p,html body .stApp [class*='st-key-blk_storia'] button:hover span{{color:{T['accent']} !important;}}"
+        "</style>", unsafe_allow_html=True)
+    with st.container(key=f"blk_storia_{chiave}"):
+        if n_a and st.button("Annulla", key=f"storia_annulla_{chiave}", type="tertiary", icon=":material/undo:",
+                             help=f"Torna alla versione precedente ({n_a} disponibili)."):
+            _storia_vai("_storia_A", "_storia_rifai")
+            st.rerun()
+        if n_r and st.button("Ripristina", key=f"storia_rifai_{chiave}", type="tertiary", icon=":material/redo:",
+                             help="Rimette la modifica che hai annullato."):
+            _storia_vai("_storia_rifai", "_storia_A")
+            st.rerun()
 
 
 def _annulla_mod_rapida() -> None:
