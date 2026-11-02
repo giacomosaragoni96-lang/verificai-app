@@ -12,6 +12,7 @@ import base64
 import io
 import zipfile
 import copy
+from concurrent.futures import ThreadPoolExecutor
 import logging
 import re
 import os
@@ -22,6 +23,8 @@ from datetime import datetime, timezone
 from stili_verifica import STILI, STILE_PREDEFINITO, stili_disponibili, descrizione_stile, cambia_stile
 from piano_verifica import numero_esercizi_richiesto
 import impagina
+import agente
+import ui_agente
 from collections import Counter
 import profilo
 import esercizio_foto as _ef
@@ -31,11 +34,11 @@ from ai_client import crea_modello, configura as configura_ai, riepilogo_uso, nu
 from sidebar import render_sidebar
 from generation import (
     genera_verifica, analizza_documento_caricato, compila_contesto_generazione,
-    rigenera_singolo_blocco, modifica_verifica_libera,
+    rigenera_singolo_blocco, modifica_verifica_libera, deduci_materia,
 )
 from prompts import (
     prompt_versione_b, prompt_versione_ridotta, prompt_soluzioni,
-    prompt_rubrica_valutazione, prompt_variante_rapida, prompt_versione_recupero, istruzione_livello_esercizio, con_regola_figure,
+    prompt_rubrica_valutazione, prompt_variante_rapida, prompt_versione_recupero, istruzione_livello_esercizio, istruzione_cambia_numeri, con_regola_figure,
     prompt_nuovo_esercizio,
     REGOLA_SOTTOPUNTI_MODIFICA, REGOLA_GRAFICO_CURVE, REGOLA_CONSEGNE_BREVI, struttura_verifica,
 )
@@ -69,11 +72,12 @@ from latex_utils import (
 from config import (
     APP_NAME, APP_ICON, SHARE_URL, FEEDBACK_FORM_URL,
     LIMITE_MENSILE, ADMIN_EMAILS, MODELLI_DISPONIBILI, THEMES,
-    SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, esempio_richiesta, TIPI_ESERCIZIO,
+    SCUOLE, CALIBRAZIONE_SCUOLA, MATERIE, MATERIA_AUTO, esempio_richiesta, TIPI_ESERCIZIO,
     DURATE, DURATA_DEFAULT, parametri_durata, etichetta_durata,
     MOSTRA_BADGE_PRO, MONETIZZAZIONE_ATTIVA, ETICHETTE_FUNZIONI, PREZZO_PRO_ANNUALE, LEGALE_PRONTO, TETTO_BREVE, MAX_FACCIATE, WORD_ATTIVO,
     MODEL_FAST_ID, get_model_id_per_piano, THEME_LABELS, MODIFICHE_PER_VERIFICA, FEEDBACK_PRIMA_DEL_DOWNLOAD, MOSTRA_BOX_FEEDBACK,
     PREZZI_VISIBILI, INVITI_ATTIVI, VERIFICHE_PER_CODICE, PIANO_ATTIVO, RUOLI_ESERCIZI_ATTIVI, BONUS_PER_INVITO, LANDING_URL,
+    AGENTE_ATTIVO, AGENTE_SOLO_ADMIN, AGENTE_MAX_MESSAGGI,
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -1288,14 +1292,16 @@ def _css_pulsa(chiavi: list) -> str:
             f"{fuoco} {{animation:none !important;outline:none !important;box-shadow:none !important;}}</style>")
 
 
-def _js_dettatura() -> str:
+def _js_dettatura(area: str = 'textarea[aria-label^="Cosa vuoi nella verifica"]', box: str = '[data-testid="stTextArea"]',
+                  posizione: str = "right:10px;bottom:10px;") -> str:
     """
     Script (statico) che aggiunge un piccolo microfono nell'angolo del riquadro dell'argomento: si parla e il testo
     compare. Usa il riconoscimento vocale del browser (gratis, nessun costo AI; Chrome, Edge e Safari). Dove il browser
     non lo ha, il pulsante non compare. Il testo si aggiunge in fondo a quello già scritto. Sotto il riquadro una riga
     di stato dice cosa succede (ascolto, permesso negato, ecc.), così un problema non resta muto.
+    `area` e `box` sono i selettori CSS della casella e del suo contenitore; `posizione` dove sta il microfono dentro il contenitore.
     """
-    return r"""<script>(function () {
+    js = r"""<script>(function () {
   var P = window.parent, D = P.document;
   var SR = P.SpeechRecognition || P.webkitSpeechRecognition;
   if (!SR) return;
@@ -1310,9 +1316,9 @@ def _js_dettatura() -> str:
     'language-not-supported': 'Lingua non supportata dal browser.'
   };
   var rec = null, attivo = false, btn = null, ricevuto = false, timer = null;
-  function area() { return D.querySelector('textarea[aria-label^="Cosa vuoi nella verifica"]'); }
+  function area() { return D.querySelector('__AREA__'); }
   function stato(testo) {
-    var box = area() && area().closest('[data-testid="stTextArea"]'); if (!box) return;
+    var box = area() && area().closest('__BOX__'); if (!box) return;
     var r = box.parentElement.querySelector('.vf-mic-stato');
     if (!r) { r = D.createElement('div'); r.className = 'vf-mic-stato'; box.parentElement.insertBefore(r, box.nextSibling); }
     r.textContent = testo || '';
@@ -1382,12 +1388,12 @@ def _js_dettatura() -> str:
   }
   function monta() {
     var ta = area(); if (!ta) return;
-    var box = ta.closest('[data-testid="stTextArea"]'); if (!box) return;
+    var box = ta.closest('__BOX__'); if (!box) return;
     if (box.querySelector('.vf-mic')) return;
     box.style.position = 'relative';
     btn = D.createElement('button');
     btn.type = 'button'; btn.className = 'vf-mic'; btn.innerHTML = ICONA;
-    btn.style.cssText = 'position:absolute;right:10px;bottom:10px;width:34px;height:34px;border-radius:50%;'
+    btn.style.cssText = 'position:absolute;__POS__width:34px;height:34px;border-radius:50%;'
       + 'border:1px solid #CBD5E1;background:#fff;display:flex;align-items:center;justify-content:center;'
       + 'cursor:pointer;padding:0;z-index:5;';
     colore(false);
@@ -1398,6 +1404,7 @@ def _js_dettatura() -> str:
   P.__vfMicObs = new P.MutationObserver(monta);
   P.__vfMicObs.observe(D.body, { childList: true, subtree: true });
 })();</script>"""
+    return js.replace("__AREA__", area.replace("'", "\\'")).replace("__BOX__", box.replace("'", "\\'")).replace("__POS__", posizione)
 
 
 def _js_guida_visti(epoca: str = "") -> str:
@@ -3184,6 +3191,51 @@ def _card_attesa_impagina(passo: int) -> str:
         ["Leggo le pagine della tua verifica", "Ricontrollo ogni numero e cerco eventuali errori", "Preparo l'impaginazione"], attivo=passo, consigli=True)
 
 
+def _leggi_e_impagina(imm: list, materia: str | None, scuola: str, richiesta: str) -> str | None:
+    """Legge le pagine con l'AI e, se tutto va bene, prepara la creazione della verifica impaginata (`_imp_crea`, poi rerun).
+    Se non riesce restituisce il messaggio da mostrare. Usata dal pulsante «Leggi e impagina» e dall'agente (file allegati nella barra)."""
+    if st.session_state.get("_imp_n", 0) >= _MAX_LETTURE_IMP:
+        return "Hai già letto diverse verifiche in questa sessione: riprova più tardi."
+    if not materia:                                    # allegato dall'agente senza materia: la riconosce l'AI dalla prima occhiata
+        _d = impagina.descrivi_file(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), imm)
+        _m_ok = [m for m in MATERIE if "Altra" not in m]
+        materia = _d.get("materia") if (_d.get("ok") and _d.get("materia") in _m_ok) else "Matematica"
+    _ph_attesa = st.empty()
+    _ph_attesa.markdown(_card_attesa_impagina(0), unsafe_allow_html=True)
+    _passi_att = {"lettura": 0, "controllo": 1, "fine": 2}
+    _ris = impagina.leggi_verifica(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), imm, materia, scuola,
+                                   on_progress=lambda p: _ph_attesa.markdown(_card_attesa_impagina(_passi_att.get(p, 0)), unsafe_allow_html=True))
+    _ph_attesa.empty()
+    st.session_state["_imp_n"] = st.session_state.get("_imp_n", 0) + 1
+    _registra_evento("impagina")
+    if not _ris["ok"]:
+        return _ris["messaggio"]
+    # niente schermata di conferma: la verifica si crea subito e se qualcosa non va si chiede dalla tendina «Vuoi modificare qualcosa?»
+    _es_l = _ris["esercizi"]
+    _pr_l = {i: (mot, nonrip) for i, mot, nonrip in impagina.problemi_per_esercizio(_es_l)}
+    _inc_l, _spazio_l = [], set()
+    for _i_l, _ex_l in enumerate(_es_l):
+        if _i_l in _pr_l:
+            if _pr_l[_i_l][1]:                       # figura che non si sa ridisegnare: l'esercizio entra con uno spazio vuoto
+                _spazio_l.add(len(_inc_l))
+                _inc_l.append(_ex_l)
+            continue
+        _inc_l.append(_ex_l)
+    if not _inc_l:
+        return "Non sono riuscito a leggere esercizi utilizzabili: controlla che le pagine siano leggibili e riprova."
+    _rip_l = impagina.punti_rilevati(_inc_l)
+    if _rip_l["con_punti"] / max(1, _rip_l["richieste"]) >= .6:
+        _lista_l, _tot_l, _fatt_l = impagina.punti_del_foglio(_inc_l)
+        _mostra_l, _fedeli_l = True, True
+    else:
+        _lista_l, _tot_l, _mostra_l, _fedeli_l = _inc_l, 100, False, False
+    st.session_state["_imp_crea"] = {
+        "esercizi": _lista_l, "titolo": _ris["titolo"], "materia": materia, "scuola": scuola, "mostra_punteggi": _mostra_l,
+        "punti_totali": _tot_l, "con_spazio": sorted(_spazio_l), "richiesta": richiesta, "fedeli": _fedeli_l,
+    }
+    st.rerun()
+
+
 def _render_impagina() -> None:
     """
     «Impagina la mia verifica»: il docente carica il PDF o le foto di una verifica scritta o impaginata male; si rifanno gli esercizi IDENTICI
@@ -3199,6 +3251,11 @@ def _render_impagina() -> None:
 
     _mat_list = [m for m in MATERIE if "Altra" not in m]
     if not dati:
+        _ia = st.session_state.pop("_imp_agente", None)            # file allegati nella barra dell'agente: si leggono subito
+        if _ia:
+            _msg_a = _leggi_e_impagina(_ia["imm"], _ia.get("materia"), _ia["scuola"], _ia.get("richiesta", ""))
+            if _msg_a:
+                st.warning(_msg_a, icon="📄")
         st.markdown('<div class="opt-label">La tua verifica (PDF, foto o Word) ✱</div>', unsafe_allow_html=True)
         _files = st.file_uploader("Carica la tua verifica (PDF, foto o Word)", type=["pdf", "png", "jpg", "jpeg", "webp", "docx"], accept_multiple_files=True,
                                   key=f"imp_up_{st.session_state.get('_imp_ciclo', 0)}", label_visibility="collapsed",
@@ -3245,45 +3302,10 @@ def _render_impagina() -> None:
         if st.button("Leggi e impagina" if _pronto else "Carica la tua verifica per continuare", key="imp_leggi", type="primary",
                      icon=":material/auto_fix_high:" if _pronto else ":material/upload_file:", use_container_width=True,
                      disabled=(not _pronto) or _limite or _blocco_conteggio):
-            if st.session_state.get("_imp_n", 0) >= _MAX_LETTURE_IMP:
-                st.warning("Hai già letto diverse verifiche in questa sessione: riprova più tardi.")
-                return
             _imm = [{"data": f.getvalue(), "mime_type": f.type or "image/jpeg", "name": f.name} for f in _files]
-            _ph_attesa = st.empty()
-            _ph_attesa.markdown(_card_attesa_impagina(0), unsafe_allow_html=True)
-            _passi_att = {"lettura": 0, "controllo": 1, "fine": 2}
-            _ris = impagina.leggi_verifica(crea_modello(MODEL_FAST_ID).per("foto_esercizio"), _imm, _materia, _scuola,
-                                           on_progress=lambda p: _ph_attesa.markdown(_card_attesa_impagina(_passi_att.get(p, 0)), unsafe_allow_html=True))
-            _ph_attesa.empty()
-            st.session_state["_imp_n"] = st.session_state.get("_imp_n", 0) + 1
-            _registra_evento("impagina")
-            if _ris["ok"]:
-                # niente schermata di conferma: la verifica si crea subito e se qualcosa non va si chiede dalla tendina «Vuoi modificare qualcosa?»
-                _es_l = _ris["esercizi"]
-                _pr_l = {i: (mot, nonrip) for i, mot, nonrip in impagina.problemi_per_esercizio(_es_l)}
-                _inc_l, _spazio_l = [], set()
-                for _i_l, _ex_l in enumerate(_es_l):
-                    if _i_l in _pr_l:
-                        if _pr_l[_i_l][1]:                       # figura che non si sa ridisegnare: l'esercizio entra con uno spazio vuoto
-                            _spazio_l.add(len(_inc_l))
-                            _inc_l.append(_ex_l)
-                        continue
-                    _inc_l.append(_ex_l)
-                if not _inc_l:
-                    st.warning("Non sono riuscito a leggere esercizi utilizzabili: controlla che le pagine siano leggibili e riprova.", icon="📄")
-                    return
-                _rip_l = impagina.punti_rilevati(_inc_l)
-                if _rip_l["con_punti"] / max(1, _rip_l["richieste"]) >= .6:
-                    _lista_l, _tot_l, _fatt_l = impagina.punti_del_foglio(_inc_l)
-                    _mostra_l, _fedeli_l = True, True
-                else:
-                    _lista_l, _tot_l, _mostra_l, _fedeli_l = _inc_l, 100, False, False
-                st.session_state["_imp_crea"] = {
-                    "esercizi": _lista_l, "titolo": _ris["titolo"], "materia": _materia, "scuola": _scuola, "mostra_punteggi": _mostra_l,
-                    "punti_totali": _tot_l, "con_spazio": sorted(_spazio_l), "richiesta": st.session_state.get("imp_richiesta", ""), "fedeli": _fedeli_l,
-                }
-                st.rerun()
-            st.warning(_ris["messaggio"], icon="📄")
+            _msg_l = _leggi_e_impagina(_imm, _materia, _scuola, st.session_state.get("imp_richiesta", ""))
+            if _msg_l:
+                st.warning(_msg_l, icon="📄")
         return
 
     # ── Lettura fatta: confronto con l'originale e conferma ──
@@ -3455,6 +3477,8 @@ def _dialogo_stili() -> None:
 def _blocco_logo_impostazioni() -> None:
     """Logo della scuola: caricamento, dimensione, anteprima dell'intestazione. Sta nella pagina «Impostazioni predefinite»."""
     _materia_anteprima = st.session_state.get("sel_materia_b") or "Matematica"
+    if _materia_anteprima == MATERIA_AUTO:
+        _materia_anteprima = "Matematica"       # è solo l'esempio dell'intestazione
     _logo_s = _logo_bozza()
     _logo_bloccato = _pro_bloccato("logo")
     if _logo_bloccato:
@@ -3517,6 +3541,312 @@ def _selettore_stile() -> str:
         _dialogo_stili()
     st.session_state["_stile_verifica"] = _sel
     return _sel
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  AGENTE — la barra «Cosa ti serve?» (logica in agente.py, disegno in ui_agente.py)
+#  Qui solo il collegamento: contesto per l'agente, messaggi, e applicazione delle sue decisioni al modulo e al kit.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _agente_abilitato() -> bool:
+    return bool(AGENTE_ATTIVO and (_is_admin or not AGENTE_SOLO_ADMIN) and st.session_state.get("utente"))
+
+
+def _ag_contesto(stage: str) -> dict:
+    """Ciò che l'agente sa del docente e della schermata: classi, abitudini, ultime verifiche, allegato, verifica aperta."""
+    ss = st.session_state
+    prof = _profilo()
+    ctx = {"materie": MATERIE, "scuole": SCUOLE, "classi": prof.get("classi") or [], "preferenze": profilo.frasi_preferenze(prof),
+           "bloccate": [k for k, pk in _PRO_KIT.items() if _pro_bloccato(pk)]}
+    try:
+        u = _load_user_defaults()
+        ctx["predefiniti"] = {"materia": u.get("materia"), "scuola": u.get("scuola")}
+    except Exception:
+        pass
+    try:
+        ctx["ultime"] = [{"argomento": v.get("argomento"), "materia": v.get("materia"), "scuola": v.get("scuola"), "classe": v.get("classe")}
+                         for v in _elenco_verifiche(ss.utente.id, ss._storico_refresh)[:5]]
+    except Exception:
+        ctx["ultime"] = []
+    alleg = ss.get("_ag_allegati")
+    fm = ss.get("_file_materiale")
+    if alleg:
+        ctx["allegato"] = {"nome": ", ".join(a["name"] for a in alleg)[:100], "tipo": alleg[0]["mime_type"], "n": len(alleg)}
+    elif fm:
+        ctx["allegato"] = {"nome": fm.get("name"), "tipo": fm.get("mime"), "n": 1}
+    if stage == "final":
+        gp = ss.get("gen_params") or {}
+        vv = ss.verifiche
+        pronte = [k for k, v in (("B", vv["B"]), ("R", vv["R"]), ("S", vv["S"])) if v.get("latex") or v.get("pdf")]
+        pronte += [e["lettera"] for e in (ss.get("_versioni_extra") or []) if e.get("tipo") == "fila" and e.get("lettera")]
+        if any(e.get("tipo") == "recupero" for e in (ss.get("_versioni_extra") or [])):
+            pronte.append("REC")
+        ctx["verifica"] = {"argomento": gp.get("argomento"), "materia": gp.get("materia"), "scuola": gp.get("difficolta"),
+                           "classe": ss.get("_classe_sel"), "esercizi": [b.get("title", "") for b in (ss.get("review_blocks") or [])],
+                           "pronte": pronte, "punti_totali": gp.get("punti_totali") if gp.get("mostra_punteggi", True) else None}
+    ultimo = next((m for m in reversed(ss.get("_ag_chat") or []) if m["ruolo"] == "agente"), None)       # l'ultima proposta dell'agente
+    if ultimo and (ultimo.get("decisione") or {}).get("azione") == "crea" and ultimo.get("stage") == stage:
+        d = ultimo["decisione"]
+        ctx["bozza"] = {"crea": {k: v for k, v in d["crea"].items() if v not in (None, "")}, "versioni": d.get("versioni") or []}
+    return ctx
+
+
+def _ag_domande_fatte(stage: str) -> int:
+    """Domande di chiarimento già fatte per la richiesta in corso (quelle di fila, in coda alla conversazione)."""
+    n = 0
+    for m in reversed([m for m in (st.session_state.get("_ag_chat") or []) if m.get("stage") == stage]):
+        if m["ruolo"] == "utente":
+            continue
+        if (m.get("decisione") or {}).get("azione") != "domanda":
+            break
+        n += 1
+    return n
+
+
+def _ag_allega(files: list) -> tuple:
+    """I file allegati nella barra (fino a 8: PDF, foto, Word) restano in `_ag_allegati`. Il primo PDF o foto diventa anche il «materiale» del modulo
+    (appunti o verifica da rifare). Restituisce (nomi, avviso)."""
+    if not files:
+        return [], ""
+    if _pro_bloccato("materiale"):
+        return [], "Caricare file è una delle funzioni complete, da sbloccare con il questionario: intanto ti aiuto con la sola descrizione."
+    elenco, totale, avviso = [], 0, ""
+    for f in files[:8]:
+        dati = f.getvalue()
+        if len(dati) > 15 * 1024 * 1024 or totale + len(dati) > 40 * 1024 * 1024:
+            avviso = "Qualche file era troppo pesante e l'ho lasciato fuori: prova con file più leggeri."
+            continue
+        totale += len(dati)
+        elenco.append({"data": dati, "mime_type": f.type or "image/jpeg", "name": f.name})
+    if len(files) > 8:
+        avviso = "Posso leggere al massimo 8 file alla volta: ho preso i primi 8."
+    if not elenco:
+        return [], avviso
+    st.session_state["_ag_allegati"] = elenco
+    primo = next((e for e in elenco if not e["name"].lower().endswith(".docx")), None)
+    if primo:
+        st.session_state["_file_materiale"] = {"bytes": primo["data"], "mime": primo["mime_type"], "name": primo["name"], "hash": hash(primo["data"])}
+        st.session_state.file_ispirazione = _FileInMemoria(primo["data"], primo["mime_type"], primo["name"])
+        st.session_state["_up_ciclo"] += 1
+    return [e["name"] for e in elenco], avviso
+
+
+def _ag_ricevi(testo: str, files: list, stage: str) -> dict | None:
+    """Un messaggio del docente: lo aggiunge alla conversazione, lo fa capire all'agente e registra la risposta. Restituisce la decisione.
+    Le richieste brevissime e inequivocabili («fila B e soluzioni», «togli il 4», «annulla») si risolvono qui, senza chiamare l'AI."""
+    ss = st.session_state
+    chat = ss.setdefault("_ag_chat", [])
+    if ss.get("_ag_conta", 0) >= AGENTE_MAX_MESSAGGI:
+        chat.append({"ruolo": "agente", "stage": stage, "testo": "Per ora hai fatto molte richieste: usa il modulo qui sotto, oppure riprova più tardi.",
+                     "decisione": {"azione": "aiuto"}})
+        return None
+    nomi, avviso = _ag_allega(files)
+    chat.append({"ruolo": "utente", "stage": stage, "testo": testo or "Uso i file che ho allegato.", "allegati": nomi})
+    ctx = _ag_contesto(stage)
+    dec = None if nomi else agente.scorciatoia(testo, stage, ctx)
+    if dec is None:
+        ss["_ag_conta"] = ss.get("_ag_conta", 0) + 1
+        _mid = (ss.get("gen_params") or {}).get("modello_id") if stage == "final" else None
+        with _attesa("pagina", "Sto capendo cosa ti serve", ["Leggo la richiesta", "Guardo le tue classi e le tue abitudini", "Preparo il riepilogo"], durata_passo=3):
+            dec = agente.interpreta(crea_modello(_mid or modello_id).per("agente"), chat, ctx, stage, _ag_domande_fatte(stage))
+        _registra_evento("agente")
+    msg = (dec.get("messaggio") or "") + ((" " + avviso) if avviso else "")
+    chat.append({"ruolo": "agente", "stage": stage, "testo": msg.strip(), "decisione": dec})
+    return dec
+
+
+def _ag_esegui_operazioni(ops: list, gp: dict, vA: dict, mod_id: str) -> tuple:
+    """Esegue le operazioni dell'agente sugli esercizi della verifica aperta, con UN solo rifacimento del PDF.
+    Ordine: prima riscritture, cambio numeri e punti (sull'esercizio com'è ora), poi le eliminazioni, infine l'esercizio da aggiungere.
+    Le chiamate all'AI partono insieme. Se qualcosa va storto la verifica torna com'era. Restituisce (ok, messaggio)."""
+    ss = st.session_state
+    tipi = [o["tipo"] for o in ops]
+    if "annulla" in tipi or "ripristina" in tipi:                   # esclusive: tornare indietro o avanti nella cronologia
+        da, verso = ("_storia_A", "_storia_rifai") if "annulla" in tipi else ("_storia_rifai", "_storia_A")
+        _storia_reset_se_serve()
+        if not ss.get(da):
+            return False, "Non c'è niente da annullare." if da == "_storia_A" else "Non c'è niente da ripristinare."
+        _storia_vai(da, verso)
+        return True, ""
+    mostra, tot, griglia = gp.get("mostra_punteggi", True), gp.get("punti_totali", 100), gp.get("con_griglia", False)
+    materia, argomento, scuola = gp.get("materia", ""), gp.get("argomento", ""), gp.get("difficolta", "")
+    ai_ops = [o for o in ops if agente.OPERAZIONI[o["tipo"]][1]]
+    tetto, usate = _tetto_modifiche(), _modifiche_usate()
+    if tetto is not None and usate + len(ai_ops) > tetto:
+        return False, (f"Ti restano {max(0, tetto - usate)} modifiche con l'AI di questa verifica e per questa richiesta ne servono {len(ai_ops)}. "
+                       "Puoi ancora togliere esercizi, cambiare i punti o annullare.")
+    blocchi = ss.review_blocks
+    if not blocchi:
+        return False, "Non riesco a leggere gli esercizi di questa verifica."
+    backup = (copy.deepcopy(blocchi), ss.review_preamble, (vA.get("latex"), vA.get("latex_originale")), ss.get("_classe_sel"), ss.get("_data_verifica"))
+    modello = crea_modello(mod_id).per("modifica")
+    istr_fissa = {"piu_facile": lambda: istruzione_livello_esercizio(False, argomento), "piu_difficile": lambda: istruzione_livello_esercizio(True, argomento),
+                  "numeri": lambda: istruzione_cambia_numeri(argomento)}
+
+    def _lavoro(op):                                   # in un thread: niente Streamlit qui dentro
+        if op["tipo"] == "aggiungi":
+            arg = argomento + (f". Richiesta del docente per questo esercizio: {op['istruzione']}" if op.get("istruzione") else "")
+            return _blocco_nuovo(modello, materia, arg, scuola, copy.deepcopy(blocchi), mostra, tot)
+        b = blocchi[op["indice"]]
+        istr = op["istruzione"] if op["tipo"] == "riscrivi" else istr_fissa[op["tipo"]]()
+        return _blocco_riscritto(modello, materia, b["title"], b["body"], istr, mostra, parse_pts_from_block_body(b["body"]))
+
+    try:
+        risultati = {}
+        if ai_ops:
+            with ThreadPoolExecutor(max_workers=min(4, len(ai_ops))) as pool:
+                futuri = [(o, pool.submit(_lavoro, o)) for o in ai_ops]
+                for o, f in futuri:
+                    risultati[id(o)] = f.result()
+        ids = list(range(len(blocchi)))                # a quale esercizio originale corrisponde ogni posizione
+        struttura = False
+        for o in ops:
+            if o["tipo"] in ("riscrivi", "piu_facile", "piu_difficile", "numeri"):
+                blocchi[o["indice"]]["title"], blocchi[o["indice"]]["body"] = risultati[id(o)]
+        punti_fissi = {o["indice"]: o["punti"] for o in ops if o["tipo"] == "punti"}
+        for idx in sorted((o["indice"] for o in ops if o["tipo"] == "elimina"), reverse=True):
+            del blocchi[ids.index(idx)]
+            ids.remove(idx)
+            struttura = True
+        for o in ops:
+            if o["tipo"] == "aggiungi":
+                blocchi.append({"title": risultati[id(o)][0], "body": risultati[id(o)][1]})
+                ids.append(None)
+                struttura = True
+        for i, b in enumerate(blocchi):                # rinumera i titoli dopo togli/aggiungi
+            b["title"] = re.sub(r"^(Esercizio\s*)\d+", lambda m, n=i + 1: f"{m.group(1)}{n}", b["title"], flags=re.IGNORECASE)
+        punti_custom = None
+        if punti_fissi and mostra:
+            fissi = {ids.index(i): v for i, v in punti_fissi.items() if i in ids}
+            if sum(fissi.values()) >= tot:
+                raise ValueError(f"I punti fissati ({sum(fissi.values())}) non lasciano spazio agli altri esercizi (il totale è {tot}).")
+            altri = [k for k in range(len(blocchi)) if k not in fissi]
+            ripartiti = bilancia_punti([max(1, parse_pts_from_block_body(blocchi[k]["body"])) for k in altri], tot - sum(fissi.values())) if altri else []
+            punti_custom = [fissi.get(k) if k in fissi else ripartiti[altri.index(k)] for k in range(len(blocchi))]
+        for o in ops:
+            if o["tipo"] == "intestazione":
+                if o["classe"]:
+                    ss["_classe_sel"] = o["classe"]
+                if o["data"]:
+                    ss["_data_verifica"] = o["data"]
+        pdf, err = _ricompila_verifica_a(mostra, griglia, tot, riscala_totale=bool(struttura or punti_custom), punti_custom=punti_custom)
+        if not pdf:
+            raise RuntimeError(err or "il PDF non si è compilato")
+    except Exception as e:
+        logger.warning("operazioni dell'agente non riuscite: %s", e)
+        ss.review_blocks, ss.review_preamble = backup[0], backup[1]
+        vA["latex"], vA["latex_originale"] = backup[2]
+        ss["_classe_sel"], ss["_data_verifica"] = backup[3], backup[4]
+        return False, f"Non sono riuscito ad applicarle e ho lasciato la verifica com'era. ({str(e)[:160]})"
+    for _ in ai_ops:
+        _conta_modifica(mod_id)
+    _pulisci_stato_revisione()
+    ss.review_sel_idx = min(ss.get("review_sel_idx", 0), len(ss.review_blocks) - 1)
+    gp["num_esercizi"] = len(ss.review_blocks)
+    ss["final_pagina"] = 0
+    ss.force_preview_refresh = True
+    _salva_variante_storico("latex_a", ss.verifiche["A"].get("latex"))
+    _registra_evento("agente:operazioni", modello=mod_id, verifica_id=ss.get("_storico_id"))
+    return True, ""
+
+
+def _ag_applica_crea(dec: dict, avvia: bool) -> None:
+    """Porta ciò che l'agente ha capito nel modulo di creazione (le stesse chiavi dei suoi campi). Con `avvia` parte anche la creazione."""
+    ss = st.session_state
+    par = dec.get("crea") or {}
+    ss["sel_materia_b"] = par.get("materia") or MATERIA_AUTO
+    if par.get("scuola"):
+        ss["sel_scuola_b"] = par["scuola"]
+    classe = par.get("classe") or None
+    ss["_classe_sel"] = classe
+    ss["sel_classe"] = classe or ""
+    testo = agente.testo_richiesta(par)
+    ss["argomento_area_b"] = testo
+    ss["_pb_argomento_source"], ss["_pb_argomento_manual_val"] = "manual", testo
+    ecc = par.get("eccellenza")
+    if par.get("num_esercizi"):
+        if ecc is None:
+            ecc = par["num_esercizi"] > 3          # con 3 esercizi non c'è posto per quello in più
+        ss[f"sel_num_es_b_{DURATA_DEFAULT}"] = agente.seleziona_esercizi(par["num_esercizi"], bool(ecc))
+    if ecc is not None:
+        ss["toggle_eccellenza"] = bool(ecc)
+    if par.get("punteggi") is not None:
+        ss["toggle_punteggi_b"] = ss["_pers_punteggi"] = bool(par["punteggi"])
+    if par.get("punti_totali") and par.get("punteggi") is not False:
+        ss["sel_punti_b"] = ss["_pers_pt"] = par["punti_totali"]
+    if par.get("uso_file") and ss.get("_file_materiale"):
+        ss["sel_materiale_b"] = "copia_fedele" if par["uso_file"] == "rifai" else "base_conoscenza"
+    ss["_ag_dopo"] = {"versioni": list(dec.get("versioni") or []), "per_chi": dec.get("per_chi") or "", "ts": time.time()}
+    ss["_ag_chat"] = []
+    ss.pop("_ag_allegati", None)
+    ss["_home_modo"] = "crea"
+    if avvia:
+        ss["_riprova_genera"] = True
+        _registra_evento("agente:crea")
+    st.rerun()
+
+
+def _ag_accoda_versioni(versioni: list, per_chi: str = "") -> None:
+    """Chiede alla pagina finale di preparare queste versioni (con la stessa coda di «Prepara tutto il kit»)."""
+    st.session_state["_ag_dopo"] = {"versioni": list(versioni), "per_chi": per_chi or "", "ts": time.time()}
+
+
+def _render_agente_home() -> None:
+    """La barra della schermata iniziale: conversazione, domande, riepilogo e avvio."""
+    ss = st.session_state
+    chat = ss.setdefault("_ag_chat", [])
+    _classi = [c["nome"] for c in _profilo().get("classi") or []][:1]
+    esempi = [f"Verifica di matematica per la {_classi[0]}" if _classi else "Verifica sulle frazioni per la 1ª media",
+              "Interrogazione scritta di storia sul Risorgimento", "Come l'ultima, ma più facile, con la fila B"]
+    blocco = ("Hai finito le verifiche gratuite di questo mese." if _limite else
+              "Non riesco a controllare il tuo utilizzo mensile in questo momento. Riprova tra qualche istante." if _blocco_conteggio else None)
+    _mic = _js_dettatura('textarea[data-testid="stChatInputTextArea"]', '[data-testid="stChatInput"]', "right:58px;bottom:12px;") if not chat else ""
+    ev = ui_agente.render_home(T, chat, esempi, blocco, [k for k, pk in _PRO_KIT.items() if _pro_bloccato(pk)],
+                               [a["name"] for a in ss.get("_ag_allegati") or []], _mic)
+    if not ev:
+        return
+    dec = ((chat[-1].get("decisione") if chat and chat[-1]["ruolo"] == "agente" else None) or {})
+    t = ev["tipo"]
+    if t in ("testo", "opzione"):
+        _ag_ricevi(ev["testo"], ev.get("files") or [], "home")
+        st.rerun()
+    elif t == "conferma" and dec.get("azione") == "crea" and not (_limite or _blocco_conteggio):
+        _ag_applica_crea(dec, avvia=True)
+    elif t == "modulo" and dec.get("azione") == "crea":
+        _ag_applica_crea(dec, avvia=False)
+    elif t == "ritocco" and dec.get("azione") == "crea":
+        par = dec["crea"]
+        if ev["campo"] == "esercizi":
+            base = par.get("num_esercizi") or (DURATE[DURATA_DEFAULT]["num_esercizi"] + (1 if par.get("eccellenza") is not False else 0))
+            par["num_esercizi"] = max(3, min(11, base + ev["delta"]))
+        elif ev["campo"] == "eccellenza":
+            par["eccellenza"] = bool(ev["valore"])
+        elif ev["campo"] == "punteggi":
+            par["punteggi"] = bool(ev["valore"])
+        st.rerun()
+    elif t == "impagina_conferma" and dec.get("azione") == "impagina" and ss.get("_ag_allegati") and not (_limite or _blocco_conteggio):
+        par = dec.get("crea") or {}
+        scuola = par.get("scuola") or ss.get("sel_scuola_b") or (_load_user_defaults() or {}).get("scuola") or SCUOLE[0]
+        ss["_imp_agente"] = {"imm": ss.pop("_ag_allegati"), "materia": par.get("materia"), "scuola": scuola if scuola in SCUOLE else SCUOLE[0],
+                             "richiesta": dec.get("modifica") or par.get("indicazioni") or ""}
+        ss["_home_modo"] = "impagina"
+        ss["_ag_chat"] = []
+        _registra_evento("agente:impagina")
+        st.rerun()
+    elif t == "annulla":
+        ss["_ag_chat"] = []
+        ss.pop("_ag_allegati", None)
+        st.rerun()
+    elif t == "vai":
+        if ev["dove"] == "impagina":
+            ss["_home_modo"] = "impagina"
+        elif ev["dove"] == "libro":
+            ss["_home_modo"], ss["sez_allegati"], ss["_apri_altre"] = "crea", "📷 Esercizio del libro", True
+        else:
+            _apri_storico()
+        ss["_ag_chat"] = []
+        ss.pop("_ag_allegati", None)
+        st.rerun()
 
 
 def _link_scelta_iniziale(da: str = "crea") -> None:
@@ -4055,8 +4385,8 @@ def _render_percorso_b_form(_prog_placeholder):
             # L'avanzamento e gli errori stanno in cima alla pagina: il segnaposto
             # (_prog_placeholder) lo crea _render_stage_input, fuori da questo form.
 
-            _mat_list = MATERIE + ["✏️ Altra materia..."]
-            _mat_prev = _prev.get("materia") or _udef.get("materia", "Matematica")
+            _mat_list = [MATERIA_AUTO] + MATERIE + ["✏️ Altra materia..."]      # si parte da «Rileva dalla richiesta»: la materia la capisce l'AI
+            _mat_prev = _prev.get("materia") or MATERIA_AUTO
             _mat_idx  = _mat_list.index(_mat_prev) if _mat_prev in _mat_list else 0
             _scu_prev = _prev.get("difficolta") or _udef.get("scuola", "")
             _scu_idx  = SCUOLE.index(_scu_prev) if _scu_prev in SCUOLE else 0
@@ -4085,7 +4415,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 _sel_m = st.selectbox(
                     "Materia", _mat_list, **_se_nuovo("sel_materia_b", index=_mat_idx),
                     label_visibility="collapsed", key="sel_materia_b",
-                    help="Materia della verifica. Se hai caricato un file, viene rilevata automaticamente.",
+                    help="Se non la scegli, la capisce l'AI da quello che scrivi. Se ne scegli una ma nella richiesta parli chiaramente di un'altra, vale la richiesta.",
                 )
                 materia_scelta = (
                     st.text_input("Scrivi materia:", key="_mat_custom_b",
@@ -4214,7 +4544,7 @@ def _render_percorso_b_form(_prog_placeholder):
                 pass
             if _pillole:
                 st.markdown('<div class="pille-ok">' + "".join(f'<span>{_esc(x)}</span>' for x in _pillole) + '</div>', unsafe_allow_html=True)
-            with st.expander("Altre opzioni (classe, esercizi, materiale, punteggi)", expanded=bool(_fm), icon=":material/tune:"):
+            with st.expander("Altre opzioni (classe, esercizi, materiale, punteggi)", expanded=bool(_fm) or bool(st.session_state.pop("_apri_altre", False)), icon=":material/tune:"):
                 st.markdown('<span class="g-altre" style="display:none"></span>', unsafe_allow_html=True)
                 _selettore_classe()           # classe e data, per prime: compaiono compilate nell'intestazione del PDF
                 # ── DURATA: un solo scatto sceglie numero di esercizi e tempo previsto ──────
@@ -4584,6 +4914,11 @@ def _lancia_generazione(
         if generatore is not None:
             ris = generatore(model_obj, _avanza)
         else:
+            # Materia: «Rileva dalla richiesta» la deduce l'AI; se il docente ne ha scelta una ma la richiesta parla d'altro, vince la richiesta
+            _mat_menu = materia_scelta
+            materia_scelta, _mat_cambiata = deduci_materia(model_obj, argomento, note_generali, materia_scelta)
+            if _mat_cambiata:
+                _ricorda_conferma(f"Materia: {materia_scelta}" + ("" if _mat_menu == MATERIA_AUTO else f" (come scritto nella richiesta, non «{_mat_menu}»)"))
             ris = genera_verifica(
                 model=model_obj, materia=materia_scelta, argomento=argomento,
                 difficolta=difficolta, calibrazione=calibrazione, durata=durata_scelta,
@@ -4778,6 +5113,13 @@ def _render_stage_input():
         return
 
     if _modo is None:
+        if _agente_abilitato():
+            try:
+                _render_agente_home()
+                st.markdown(f'<div style="text-align:center;margin:1.6rem 0 .6rem;font-family:DM Sans,sans-serif;font-size:.8rem;color:{T["muted"]};">oppure scegli tu da dove partire</div>',
+                            unsafe_allow_html=True)
+            except Exception as _e_ag:      # l'agente è accessorio: un suo errore non deve mai bloccare la home
+                logger.warning("Agente: %s", _e_ag)
         _render_scelta_iniziale()
         return
     if _modo == "impagina":
@@ -5069,6 +5411,42 @@ def _pulisci_stato_revisione():
             del st.session_state[_k]
 
 
+def _blocco_riscritto(modello, materia: str, title: str, body: str, istruzione: str, mostra_punteggi: bool, target: int) -> tuple:
+    """(titolo, corpo) dell'esercizio riscritto secondo l'istruzione, con i punti riportati a `target`. Non tocca lo stato: si può chiamare da un thread."""
+    nuovo = rigenera_singolo_blocco(modello, materia, f"\\subsection*{{{title}}}\n{body}", istruzione, mostra_punteggi)
+    # rigenera_singolo_blocco ripulisce la risposta con pulisci_corpo_latex, che in
+    # coda aggiunge \end{document}: va tolto, altrimenti la verifica finirebbe
+    # a questo esercizio e quelli successivi sparirebbero dal PDF.
+    nuovo = re.sub(r"\\end\{document\}.*$", "", nuovo, flags=re.DOTALL).strip()
+    m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", nuovo, re.DOTALL)
+    new_title = m.group(1) if m else title
+    new_body  = m.group(2).strip() if m else nuovo.strip()
+    new_title = re.sub(r"\s*\(\d+\s*pt\)", "", new_title).strip() or title
+    # Se il titolo originale era numerato ("Esercizio 3: …") e la risposta no, lo ripristina
+    _pref = re.match(r"^(Esercizio\s*\d+\s*[:.\-]\s*)", title, flags=re.IGNORECASE)
+    if _pref and not re.match(r"^Esercizio\s*\d+", new_title, flags=re.IGNORECASE):
+        new_title = _pref.group(1) + new_title
+    if mostra_punteggi and target > 0:
+        new_body = riscala_single_block(new_title, new_body, target)
+    return new_title, new_body
+
+
+def _blocco_nuovo(modello, materia: str, argomento: str, scuola: str, blocchi: list, mostra_punteggi: bool, punti_totali: int) -> tuple:
+    """(titolo, corpo) di un esercizio in più, diverso dagli esistenti. Non tocca lo stato: si può chiamare da un thread."""
+    n = len(blocchi)
+    esistenti = "\n".join(f"- {b['title']}: {b['body'][:160].strip()}…" for b in blocchi)
+    prompt = prompt_nuovo_esercizio(materia, argomento, scuola, esistenti, n + 1, mostra_punteggi, max(5, punti_totali // (n + 1)))
+    testo = modello.generate_content(prompt).text
+    testo = testo.replace("```latex", "").replace("```", "").strip()
+    testo = re.sub(r"\\end\{document\}.*$", "", testo, flags=re.DOTALL).strip()
+    m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", testo, re.DOTALL)
+    titolo = re.sub(r"\s*\(\d+\s*pt\)", "", m.group(1)).strip() if m else f"Esercizio {n + 1}"
+    corpo = m.group(2).strip() if m else testo
+    if not re.match(r"^Esercizio\s*\d+", titolo, flags=re.IGNORECASE):
+        titolo = f"Esercizio {n + 1}: {titolo}"
+    return titolo, corpo
+
+
 def _rigenera_esercizio_guidato(idx, istruzione, etichetta, materia, argomento, modello,
                                 mostra_punteggi, con_griglia, punti_totali, status_ph):
     """
@@ -5086,24 +5464,7 @@ def _rigenera_esercizio_guidato(idx, istruzione, etichetta, materia, argomento, 
     _v = _attesa_esercizio("difficile" if "difficile" in etichetta else "facile", idx)
     with ui_attese.attesa_in(status_ph, T, _v["tipo"], _v["titolo"], _v["passi"], "Ci vogliono pochi secondi: non toccare la pagina.") as stato:
         try:
-            nuovo = rigenera_singolo_blocco(
-                crea_modello(modello).per("modifica"), materia,
-                f"\\subsection*{{{title}}}\n{body}", istruzione, mostra_punteggi,
-            )
-            # rigenera_singolo_blocco ripulisce la risposta con pulisci_corpo_latex, che in
-            # coda aggiunge \end{document}: va tolto, altrimenti la verifica finirebbe
-            # a questo esercizio e quelli successivi sparirebbero dal PDF.
-            nuovo = re.sub(r"\\end\{document\}.*$", "", nuovo, flags=re.DOTALL).strip()
-            m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", nuovo, re.DOTALL)
-            new_title = m.group(1) if m else title
-            new_body  = m.group(2).strip() if m else nuovo.strip()
-            new_title = re.sub(r"\s*\(\d+\s*pt\)", "", new_title).strip() or title
-            # Se il titolo originale era numerato ("Esercizio 3: …") e la risposta no, lo ripristina
-            _pref = re.match(r"^(Esercizio\s*\d+\s*[:.\-]\s*)", title, flags=re.IGNORECASE)
-            if _pref and not re.match(r"^Esercizio\s*\d+", new_title, flags=re.IGNORECASE):
-                new_title = _pref.group(1) + new_title
-            if mostra_punteggi and target > 0:
-                new_body = riscala_single_block(new_title, new_body, target)
+            new_title, new_body = _blocco_riscritto(crea_modello(modello).per("modifica"), materia, title, body, istruzione, mostra_punteggi, target)
             blocchi[idx]["title"] = new_title
             blocchi[idx]["body"]  = new_body
             st.session_state.pop("recalibra_pts", None)
@@ -5166,24 +5527,12 @@ def _aggiungi_esercizio(mostra_punteggi, con_griglia, punti_totali, materia, arg
     if n >= 15:
         st.warning("Una verifica può avere al massimo 15 esercizi.", icon="⚠️")
         return False
-    esistenti = "\n".join(f"- {b['title']}: {b['body'][:160].strip()}…" for b in blocchi)
-    prompt = prompt_nuovo_esercizio(
-        materia, argomento, scuola, esistenti, n + 1, mostra_punteggi,
-        max(5, punti_totali // (n + 1)),
-    )
     backup_blocchi = copy.deepcopy(blocchi)
     backup_pre     = st.session_state.review_preamble
     va             = st.session_state.verifiche["A"]
     backup_latex   = (va.get("latex"), va.get("latex_originale"))
     try:
-        testo = crea_modello(modello).per("modifica").generate_content(prompt).text
-        testo = testo.replace("```latex", "").replace("```", "").strip()
-        testo = re.sub(r"\\end\{document\}.*$", "", testo, flags=re.DOTALL).strip()
-        m = re.match(r"\\subsection\*\{([^}]*)\}(.*)", testo, re.DOTALL)
-        titolo = re.sub(r"\s*\(\d+\s*pt\)", "", m.group(1)).strip() if m else f"Esercizio {n + 1}"
-        corpo = m.group(2).strip() if m else testo
-        if not re.match(r"^Esercizio\s*\d+", titolo, flags=re.IGNORECASE):
-            titolo = f"Esercizio {n + 1}: {titolo}"
+        titolo, corpo = _blocco_nuovo(crea_modello(modello).per("modifica"), materia, argomento, scuola, blocchi, mostra_punteggi, punti_totali)
         blocchi.append({"title": titolo, "body": corpo})
         pdf, err = _ricompila_verifica_a(mostra_punteggi, con_griglia, punti_totali, riscala_totale=True)
     except Exception as e:
@@ -6587,6 +6936,8 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
     if st.session_state.pop("_mod_rapida_pulisci", False):
         st.session_state["mod_rapida_testo"] = ""
     _fatto = st.session_state.pop("_mod_rapida_ok", False)
+    _agente_on = _agente_abilitato()
+    _risposta_ag = st.session_state.pop("_ag_rispondi", None) if _agente_on else None      # risposta rapida a una domanda dell'agente
     _tetto, _usate = _tetto_modifiche(), _modifiche_usate()
     _finite = _tetto is not None and _usate >= _tetto
     with st.container(key="mod_rapida"):
@@ -6602,11 +6953,32 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
                 unsafe_allow_html=True)
         st.markdown(_CSS_MOD_RAPIDA.replace("__CARD__", T["card"]).replace("__ACC__", T["accent"]).replace("__TX__", T["text"]).replace("__T2__", T["text2"]) +
                     f'<div class="mr-t"><svg width="17" height="17" viewBox="0 0 24 24" fill="{T["accent"]}" style="vertical-align:-3px;margin-right:.45rem">'
-                    '<path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>Vuoi cambiare qualcosa? Chiedilo</div>'
-                    '<div class="mr-d">Scrivi cosa modificare e la verifica si rifà subito: niente da ricominciare.</div>',
+                    '<path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>'
+                    + ("Chiedi quello che vuoi" if _agente_on else "Vuoi cambiare qualcosa? Chiedilo") + '</div>'
+                    '<div class="mr-d">' + ("Cambiare gli esercizi, creare la Fila B, le soluzioni, una versione per chi ha il DSA: scrivilo come lo diresti a un collega."
+                                           if _agente_on else "Scrivi cosa modificare e la verifica si rifà subito: niente da ricominciare.") + '</div>',
                     unsafe_allow_html=True)
+        _dom_ag = st.session_state.get("_ag_domanda_final")
+        if _agente_on and _dom_ag:                       # l'agente ha chiesto qualcosa: domanda e risposte rapide sopra la casella
+            st.markdown(f'<div style="font-family:DM Sans,sans-serif;font-weight:700;color:{T["text"]};margin:.2rem 0 .4rem;">{_esc(_dom_ag["domanda"])}</div>',
+                        unsafe_allow_html=True)
+            _sc_ag = ui_agente.opzioni_rapide(_dom_ag.get("opzioni") or [], "ag_fin_opt")
+            if _sc_ag:
+                st.session_state["_ag_rispondi"] = _sc_ag
+                st.session_state.pop("_ag_domanda_final", None)
+                st.rerun()
+        if _agente_on and not _finite and not _dom_ag:       # scorciatoie con un tocco: le risolve il codice, senza attesa
+            try:
+                _pick = ui_agente.suggerimenti_rapidi(agente.suggerimenti(_ag_contesto("final")), "ag_sug")
+            except Exception as _e_sug:
+                logger.warning("Suggerimenti dell'agente: %s", _e_sug)
+                _pick = None
+            if _pick:
+                st.session_state["_ag_rispondi"] = _pick
+                st.rerun()
         st.text_area("Cosa vuoi cambiare?", key="mod_rapida_testo", label_visibility="collapsed", height=90,
-                     placeholder="Es. Semplifica il primo esercizio · Togli l'ultimo esercizio · Aggiungi un problema con una situazione reale",
+                     placeholder=("Es. Semplifica il primo esercizio · Fai la Fila B con le soluzioni · Versione per un alunno con DSA" if _agente_on else
+                                  "Es. Semplifica il primo esercizio · Togli l'ultimo esercizio · Aggiungi un problema con una situazione reale"),
                      disabled=_finite)
         with st.container(key="mod_applica"):
             _applica = st.button("Applica la modifica", key="mod_rapida_applica", type="primary", use_container_width=True,
@@ -6623,14 +6995,67 @@ def _box_modifica_rapida(gp: dict, vA: dict, mod_id: str) -> None:
     _msg = st.session_state.pop("_mod_rapida_msg", None)
     if _msg:
         st.info(_msg)
+    _es_ag = st.session_state.pop("_ag_esito_final", None) if _agente_on else None
+    if _es_ag:
+        if _es_ag["testo"]:
+            st.info(_es_ag["testo"])
+        if _es_ag["azione"] == "crea":
+            st.caption("Per una verifica nuova chiudo questa (resta salvata in «Le mie verifiche»; le versioni non scaricate si perdono).")
+            if st.button("Prepara la nuova verifica", key="ag_nuova_da_final", type="primary", icon=":material/auto_awesome:"):
+                _ch = st.session_state.get("_ag_chat") or []
+                _ultimo = next((m for m in reversed(_ch) if m["ruolo"] == "agente"), None)
+                if _ultimo:
+                    _ultimo["stage"] = "home"; _ultimo["decisione"]["azione"] = "crea"
+                    for _m in _ch:
+                        _m["stage"] = "home"
+                _nuova_verifica(None)
+        elif _es_ag["azione"] == "storico":
+            st.button("Apri «Le mie verifiche»", key="ag_storico_da_final", on_click=_apri_storico, icon=":material/folder_open:")
 
-    if not _applica:
+    if not _applica and not _risposta_ag:
         return
-    _richiesta = (st.session_state.get("mod_rapida_testo") or "").strip()
+    _richiesta = _risposta_ag or (st.session_state.get("mod_rapida_testo") or "").strip()
     if not _richiesta:
         st.warning("Scrivi cosa vuoi cambiare, oppure scegli uno dei suggerimenti.")
         return
-    if _finite or not vA.get("latex"):
+    if not vA.get("latex"):
+        return
+    _c_tit0 = riconosci_cambio_titolo(_richiesta)
+    if _agente_on and not _c_tit0:
+        # L'agente capisce cosa si chiede: cambiare gli esercizi (continua qui sotto), creare altre versioni, una verifica nuova o chiarire
+        st.session_state.pop("_ag_domanda_final", None)
+        _dec_ag = _ag_ricevi(_richiesta, [], "final")
+        _az_ag = (_dec_ag or {}).get("azione")
+        if _az_ag == "domanda":
+            st.session_state["_ag_domanda_final"] = {"domanda": _dec_ag["domanda"], "opzioni": _dec_ag.get("opzioni") or []}
+            st.session_state["_mod_rapida_pulisci"] = True
+            st.rerun()
+        elif _az_ag == "versioni":
+            _ag_accoda_versioni(_dec_ag["versioni"], _dec_ag.get("per_chi", ""))
+            st.session_state["_mod_rapida_pulisci"] = True
+            _ricorda_conferma("Preparo: " + ", ".join(agente.VERSIONI.get(k, k) for k in _dec_ag["versioni"]))
+            st.rerun()
+        elif _az_ag == "operazioni":
+            _ops = _dec_ag["operazioni"]
+            _stima = agente.stima_secondi(_ops)
+            _passi = [agente.descrivi_operazione(o) for o in _ops if o["tipo"] not in ("annulla", "ripristina")] + ["Rifaccio il PDF"]
+            with _stato.container(), _attesa("matita", "Sto applicando le modifiche", _passi,
+                                             f"Di solito ci vogliono circa {_stima} secondi: non chiudere la pagina.", durata_passo=max(2.0, _stima / len(_passi))):
+                _ok_o, _msg_o = _ag_esegui_operazioni(_ops, gp, vA, mod_id)
+            if _ok_o:
+                st.session_state["_mod_rapida_pulisci"] = True
+                if not any(o["tipo"] in ("annulla", "ripristina") for o in _ops):       # annulla e ripristina hanno già la loro conferma
+                    _ricorda_conferma(" · ".join(agente.descrivi_operazione(o) for o in _ops)[:150])
+                st.rerun()
+            st.warning(_msg_o)
+            return
+        elif _az_ag in ("crea", "storico", "aiuto"):
+            st.session_state["_mod_rapida_pulisci"] = True
+            st.session_state["_ag_esito_final"] = {"azione": _az_ag, "testo": _dec_ag.get("messaggio") or ""}
+            st.rerun()
+        elif _az_ag == "modifica" and _dec_ag.get("modifica"):
+            _richiesta = _dec_ag["modifica"]          # la richiesta riscritta in modo chiaro per chi modifica gli esercizi
+    if _finite:
         return
     _prima = {"vA": dict(vA), "pre": st.session_state.get("review_preamble"),
               "blocchi": [dict(b) for b in (st.session_state.get("review_blocks") or [])]}
@@ -7081,7 +7506,7 @@ def _render_stage_final():
         # Coda di «Prepara tutto il kit»: un elemento per volta, perché ogni creazione fa un rerun
         _flag_kit = {"B": "_gen_fila_b", "R": "_gen_bes", "S": "_gen_sol", "SC": "_gen_scheda", "REC": "_gen_extra", "C": "_gen_extra", "D": "_gen_extra",
                      "E": "_gen_extra", "W": "_gen_word_kit", "G": "_rubrica_gen", "L": "_gen_leggibile_kit"}
-        _valore_flag = {"REC": {"tipo": "recupero", "lettera": "", "per_chi": ""}, "C": {"tipo": "fila", "lettera": "C"},
+        _valore_flag = {"REC": {"tipo": "recupero", "lettera": "", "per_chi": st.session_state.get("rec_perchi", "")}, "C": {"tipo": "fila", "lettera": "C"},
                         "D": {"tipo": "fila", "lettera": "D"}, "E": {"tipo": "fila", "lettera": "E"}}
         _coda_kit = st.session_state.get("_kit_coda") or []
         _tutti_flag = set(_flag_kit.values())
@@ -7104,6 +7529,20 @@ def _render_stage_final():
             ("G", bool(st.session_state.get("rubrica_testo"))),
         ) if not presente]
         _kit_bloccati = [k for k, _pk in _PRO_KIT.items() if _pro_bloccato(_pk)]
+
+        # Versioni chieste all'agente («con fila B e soluzioni»): partono con la stessa coda di «Prepara tutto il kit»
+        _agd = st.session_state.pop("_ag_dopo", None)
+        if _agd and time.time() - _agd.get("ts", 0) < 900 and not _kit_in_corso:
+            _vers = [k for k in _agd.get("versioni") or [] if k in _kit_mancanti and k not in _kit_bloccati]
+            if any(k in ("C", "D", "E") for k in _vers) and "B" in _kit_mancanti and "B" not in _kit_bloccati and "B" not in _vers:
+                _vers.insert(0, "B")                 # le file C, D, E vengono dopo la B
+            _vers = [k for k in _vers if not (k in ("C", "D", "E") and "B" in _kit_bloccati and "B" in _kit_mancanti)]
+            if _vers:
+                if _agd.get("per_chi"):
+                    st.session_state["rec_perchi"] = _agd["per_chi"]
+                st.session_state.update({"_kit_coda": list(_vers), "_kit_scelta": list(_vers), "_kit_attivo": True, "_kit_finito": False})
+                _registra_evento("agente:versioni")
+                st.rerun()
 
         # Una riga per documento (titolo + descrizione a sinistra, azione a destra), in due tendine:
         # «Versioni della verifica», «Per la classe e la valutazione» e «Scarica tutti i file in una volta»: tutte chiuse

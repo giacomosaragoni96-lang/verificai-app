@@ -46,7 +46,8 @@ def utenti(client) -> list:
         if not lista:
             break
         for u in lista:
-            out.append({"id": str(getattr(u, "id", "")), "email": (getattr(u, "email", "") or ""), "created_at": str(getattr(u, "created_at", "") or "")})
+            out.append({"id": str(getattr(u, "id", "")), "email": (getattr(u, "email", "") or ""), "created_at": str(getattr(u, "created_at", "") or ""),
+                        "ultimo_accesso": str(getattr(u, "last_sign_in_at", "") or ""), "confermato": bool(getattr(u, "email_confirmed_at", None))})
         if len(lista) < 200:
             break
         pagina += 1

@@ -12,13 +12,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from config import QA_SALTA_SE_PUNTEGGIO_ALMENO, AUTOVERIFICA_ATTIVA, MAX_FACCIATE, nota_istruzioni_verifica
+from config import QA_SALTA_SE_PUNTEGGIO_ALMENO, AUTOVERIFICA_ATTIVA, MAX_FACCIATE, nota_istruzioni_verifica, MATERIE, MATERIA_AUTO
 from autoverifica import autoverifica_corpo
 from esercizio_foto import inserisci_esercizi, rinumera_blocchi
 from stili_verifica import applica_stile
 
 from prompts import (
     prompt_titolo,
+    prompt_deduci_materia,
     prompt_corpo_verifica,
     prompt_controllo_qualita,
     prompt_versione_b,
@@ -157,6 +158,7 @@ except Exception:                                   # SDK assente (test in isola
 
 # Nome del passo → compito (config.COMPITI_AI): decide modello e ragionamento di ogni chiamata.
 _COMPITO_DA_PASSO = (
+    ("Deduzione materia", "materia"),
     ("Generazione titolo", "titolo"),
     ("Piano della verifica", "piano"),
     ("Calibrazione difficoltà", "difficolta"),
@@ -746,6 +748,40 @@ def ritocca_difficolta(model, materia: str, argomento: str, corpo: str, piano: d
     if _norma(nuovo) == _norma(corpo):
         return corpo, "invariato"
     return nuovo, "applicato"
+
+
+def _materia_da_parole(testo: str) -> str:
+    """Ripiego senza AI: la prima materia della lista il cui nome compare nel testo (altrimenti Matematica, come prima)."""
+    t = (testo or "").lower()
+    for m in MATERIE:
+        if m != "Altra materia" and m.lower() in t:
+            return m
+    return "Matematica"
+
+
+def deduci_materia(model, argomento: str, note: str, selezionata: str) -> tuple:
+    """
+    (materia, cambiata). `selezionata` è la voce del menu: MATERIA_AUTO = la deduce l'AI dalla richiesta; una materia vera vale,
+    a meno che la richiesta (argomento e indicazioni) parli chiaramente di un'altra: allora vince ciò che ha scritto il docente.
+    Qualsiasi problema = si tiene la materia selezionata (o, se era automatica, un ripiego a parole chiave).
+    """
+    auto = (selezionata or "") in ("", MATERIA_AUTO)
+    testo = f"{argomento or ''}\n{note or ''}".strip()
+    if not testo:
+        return ("Matematica" if auto else selezionata), False      # niente da cui dedurre: come prima
+    try:
+        elenco = [m for m in MATERIE if m != "Altra materia"]
+        resp = _safe_generate(model, prompt_deduci_materia(argomento, (note or "")[:600], "" if auto else selezionata, elenco), "Deduzione materia", retries=1)
+        riga = ((resp.text or "").strip().splitlines() or [""])[0].strip().strip("\"'«»*.").strip()
+        if not riga or len(riga) > 40:
+            raise ValueError("risposta non valida")
+        trovata = next((m for m in elenco if m.lower() == riga.lower()), None) or riga[:1].upper() + riga[1:]
+    except Exception as e:
+        logger.warning("deduci_materia: %s", e)
+        return (_materia_da_parole(testo) if auto else selezionata), auto
+    if auto:
+        return trovata, True
+    return (trovata, True) if trovata.lower() != (selezionata or "").lower() else (selezionata, False)
 
 
 def genera_verifica(

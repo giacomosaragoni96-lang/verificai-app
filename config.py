@@ -132,6 +132,7 @@ QA_SALTA_SE_PUNTEGGIO_ALMENO = 1.0
 #   ragionamento: "alto" = RAGIONAMENTO_ALTO · numero = tetto in token · 0 = spento · None = predefinito
 COMPITI_AI = {
     "titolo":            ("veloce", 0),
+    "materia":           ("veloce", 0),      # deduce la materia dalla richiesta (e controlla che sia coerente con quella scelta)
     "difficolta":        ("medio",  1024),   # secondo sguardo sulla difficoltà (riscrive le richieste fuori livello)
     "piano":             ("medio",  0),      # il piano della verifica (struttura prima del testo): breve, Lite col piano free, Flash col Pro
     "corpo":             ("piano",  "alto"),
@@ -144,10 +145,18 @@ COMPITI_AI = {
     "analisi_file":      ("veloce", None),
     "foto_esercizio":    ("flash",  2048),   # legge la foto di un esercizio del libro e lo ricontrolla: Flash anche col piano Free (Lite sbaglia i numeri)
     "scheda":            ("medio",  1024),   # scheda di allenamento: una chiamata per sezione
+    "agente":            ("flash",  1024),   # capisce la richiesta libera del docente (agente.py): Flash anche col piano Free, ragionamento basso
     "autoverifica":      ("flash",  1024),   # risolve gli esercizi e corregge gli errori: SEMPRE Flash, anche col piano Free.
     #   Con la serie 3.x 1024 = ragionamento BASSO. Con 3072 (livello alto) usava 7-9 mila token e fino a 70 s; se scopre meno
     #   errori del dovuto, provare 2048 (medio).
 }
+
+# Agente conversazionale (agente.py, ui_agente.py): una barra «Cosa ti serve?» che capisce la richiesta libera, compila al posto del docente
+# tutto quello che il modulo chiede e chiede solo ciò che manca. SOLO_ADMIN = in prova: lo vede solo l'admin.
+AGENTE_ATTIVO = True
+AGENTE_SOLO_ADMIN = True
+AGENTE_MAX_DOMANDE = 2        # domande di chiarimento al massimo per richiesta, poi decide da sé dichiarando le assunzioni
+AGENTE_MAX_MESSAGGI = 40      # richieste all'agente per sessione (freno agli abusi)
 
 # Esercizi del libro da una foto (esercizio_foto.py): quanti se ne possono includere in una verifica
 MAX_ESERCIZI_DA_FOTO = 8
@@ -520,6 +529,10 @@ MATERIE = [
     "Scienze Umane", "Psicologia", "Sociologia",
     "Religione", "Altra materia",
 ]
+
+# Voce di partenza del menu «Materia»: la materia la deduce l'AI dalla richiesta (generation.deduci_materia); se il docente ne sceglie una,
+# vale quella, salvo che la richiesta parli chiaramente di un'altra.
+MATERIA_AUTO = "Rileva dalla richiesta"
 
 MATERIE_ICONS = {
     "Matematica": "📐", "Fisica": "⚛️", "Chimica": "🧪", "Biologia": "🧬",
