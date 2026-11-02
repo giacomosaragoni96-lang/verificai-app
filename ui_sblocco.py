@@ -44,7 +44,7 @@ def render_sblocco(T: dict, on_back, funzione, residui: int, on_riscatta, invito
                 unsafe_allow_html=True)
         st.markdown(
             f'<a href="?pagina=questionario" target="_blank" rel="noopener" style="display:block;text-align:center;margin:1rem 0 1.2rem;'
-            f'padding:.8rem 1rem;border-radius:12px;background:linear-gradient(135deg,{acc},{T["accent2"]});color:#fff !important;'
+            f'padding:.8rem 1rem;border-radius:12px;background:linear-gradient(135deg,#2563EB,#1D4ED8);color:#fff !important;-webkit-text-fill-color:#fff;'
             f'font-weight:800;text-decoration:none;font-family:DM Sans,sans-serif;">Compila il questionario completo →</a>',
             unsafe_allow_html=True)
         if invito:

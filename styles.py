@@ -198,19 +198,39 @@ def get_css(T: dict) -> str:
   html body .stApp div[class*="st-key-nota_imp_"] .ni-k {{ color: #E3B341; }}
   html body .stApp .st-key-scelta_impagina {{ background: linear-gradient(160deg, rgba(210,153,34,.13) 0%, rgba(210,153,34,.06) 100%) !important; border-color: #9E6A03 !important; box-shadow: 0 10px 28px rgba(0,0,0,.4) !important; }}
   html body .stApp :is(.st-key-nota_imp_cambi) .ni-k {{ color: #E3B341; }}
+  /* pulsanti primari: blu pieno con testo bianco (l'azzurro chiaro dell'accento con il testo bianco si leggeva male) */
+  html body .stApp div.stButton > button[kind="primary"], html body .stApp div.stButton > button[data-testid="stBaseButton-primary"],
+  html body .stApp button[data-testid="stBaseButton-primary"], html body .stApp button[data-testid="stBaseButton-primaryFormSubmit"],
+  html body .stApp [data-testid="stDownloadButton"] button[data-testid="stBaseButton-primary"] {{
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important; color: #fff !important; -webkit-text-fill-color: #fff !important;
+  }}
+  html body .stApp button[data-testid="stBaseButton-primary"] *, html body .stApp button[data-testid="stBaseButton-primaryFormSubmit"] * {{ color: #fff !important; -webkit-text-fill-color: #fff !important; }}
+  html body .stApp button[data-testid="stBaseButton-primary"]:disabled, html body .stApp button[data-testid="stBaseButton-primaryFormSubmit"]:disabled {{ background: {T["bg2"]} !important; color: {T["muted"]} !important; -webkit-text-fill-color: {T["muted"]} !important; }}
+  html body .stApp button[data-testid="stBaseButton-primary"]:disabled *, html body .stApp button[data-testid="stBaseButton-primaryFormSubmit"]:disabled * {{ color: {T["muted"]} !important; -webkit-text-fill-color: {T["muted"]} !important; }}
+  /* selettori a segmenti e pillole: le voci non attive restano scure (prima erano bianche con testo chiaro) */
+  html body .stApp [data-testid="stBaseButton-segmented_control"], html body .stApp [data-testid="stBaseButton-pills"] {{
+    background: #161B22 !important; border: 1px solid {_b2} !important; color: {T["text"]} !important; -webkit-text-fill-color: {T["text"]} !important;
+  }}
+  html body .stApp [data-testid="stBaseButton-segmented_control"] *, html body .stApp [data-testid="stBaseButton-pills"] * {{ color: {T["text"]} !important; -webkit-text-fill-color: {T["text"]} !important; }}
+  html body .stApp [data-testid="stBaseButton-segmented_control"]:hover, html body .stApp [data-testid="stBaseButton-pills"]:hover {{ background: #21262D !important; border-color: {_acc}88 !important; }}
+  html body .stApp [data-testid="stBaseButton-segmented_controlActive"], html body .stApp [data-testid="stBaseButton-pillsActive"] {{ background: {_acc}26 !important; border-color: {_acc} !important; }}
+  html body .stApp [data-testid="stBaseButton-segmented_controlActive"] *, html body .stApp [data-testid="stBaseButton-pillsActive"] * {{ color: {_acc} !important; -webkit-text-fill-color: {_acc} !important; }}
+  /* prima scelta della home: anche la scheda «Crea» ha un suo colore (blu), come «Impagina» ha l'ambra */
+  html body .stApp .st-key-scelta_crea {{ background: linear-gradient(160deg, rgba(88,166,255,.16) 0%, rgba(88,166,255,.06) 100%) !important; border-color: rgba(88,166,255,.5) !important; box-shadow: 0 10px 28px rgba(0,0,0,.4) !important; }}
 """
 
     return f"""
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,800;1,9..144,700;1,9..144,800&display=swap');
+
   /* Elementi senza altezza (stili, script, finestre nascoste): fuori dal flusso, così non aggiungono 1rem di spazio ciascuno tra i blocchi */
   [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"][height="0px"],
   [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:has(.stMarkdown [data-testid="stMarkdownContainer"] > style:only-child),
   [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] > [data-testid="stLayoutWrapper"]:has(> .st-key-blk_cmdk) {{
     position: absolute !important; width: 0 !important; height: 0 !important; margin: 0 !important; overflow: hidden !important;
   }}
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,800;1,9..144,700;1,9..144,800&display=swap');
 
   *, *::before, *::after {{ box-sizing: border-box; }}
 
