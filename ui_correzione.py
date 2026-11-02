@@ -365,7 +365,7 @@ def render_correzione(T: dict, ctx: dict) -> None:
     """La pagina: intestazione, passi e contenuto del passo corrente. `ctx` lo prepara main.py (vedi i campi usati qui sopra)."""
     S = ctx["stato"]
     with st.container(key="blk_cor"):
-        if st.button("← Indietro", key="cor_indietro", type="tertiary", icon=":material/arrow_back:"):
+        if st.button("Indietro", key="cor_indietro", type="tertiary", icon=":material/arrow_back:"):
             ctx["indietro"]()
         fase = int(S.get("fase", 1))
         if fase > 1 and not S.get("verifica"):
