@@ -166,7 +166,9 @@ COMPITI_AI = {
     "scheda":            ("medio",  1024),   # scheda di allenamento: una chiamata per sezione
     "agente":            ("flash",  1024),   # capisce la richiesta libera del docente (agente.py): Flash anche col piano Free, ragionamento basso
     "soluzioni_rif":     ("flash",  2048),   # soluzioni di riferimento per la correzione dei compiti (correzione.py): una volta per verifica
-    "correzione":        ("flash",  2048),   # corregge il compito di UN alunno dalle foto: sempre Flash (Lite sbaglia calcoli e scrittura a mano)
+    "correzione":        ("flash",  2048),   # (vecchio nome) corregge il compito di UN alunno dalle foto
+    "lettura_compito":   ("flash",  1024),   # PRIMO passo della correzione: trascrive le pagine del compito (scrittura a mano), senza valutare
+    "valutazione_compito": ("flash", 1024),  # SECONDO passo: valuta la trascrizione con le soluzioni (solo testo)
     "autoverifica":      ("flash",  1024),   # risolve gli esercizi e corregge gli errori: SEMPRE Flash, anche col piano Free.
     #   Con la serie 3.x 1024 = ragionamento BASSO. Con 3072 (livello alto) usava 7-9 mila token e fino a 70 s; se scopre meno
     #   errori del dovuto, provare 2048 (medio).
@@ -175,13 +177,18 @@ COMPITI_AI = {
 # Agente conversazionale (agente.py, ui_agente.py): una barra «Cosa ti serve?» che capisce la richiesta libera, compila al posto del docente
 # tutto quello che il modulo chiede e chiede solo ciò che manca. SOLO_ADMIN = in prova: lo vede solo l'admin.
 AGENTE_ATTIVO = True
-AGENTE_SOLO_ADMIN = True
+AGENTE_SOLO_ADMIN = False
 AGENTE_MAX_DOMANDE = 2        # domande di chiarimento al massimo per richiesta, poi decide da sé dichiarando le assunzioni
 AGENTE_MAX_MESSAGGI = 40      # richieste all'agente per sessione (freno agli abusi)
 
 # Correzione assistita dei compiti (correzione.py, ui_correzione.py). I compiti degli alunni restano SOLO nella sessione: mai salvati.
 MAX_STUDENTI_CORREZIONE = 40      # compiti per volta
 MAX_PAGINE_COMPITO = 6            # pagine o foto per ogni alunno
+# Chi legge i compiti: due lettori diversi rileggono le stesse pagine e dove non coincidono (un + o un - perso) la richiesta è «da controllare».
+# «gemini» = Gemini Flash; un ID «claude-…» = quel modello Claude (serve ANTHROPIC_API_KEY: senza, si usa solo Gemini e un solo lettore).
+CORREZIONE_LETTORE_1 = "gemini"
+CORREZIONE_LETTORE_2 = "claude-sonnet-5-5"
+CORREZIONE_VALUTATORE = "gemini"
 MAX_CORREZIONI_SESSIONE = 120     # tetto di sicurezza per sessione (ogni compito è una chiamata all'AI con le immagini)
 MAX_BYTE_CORREZIONE = 60 * 1024 * 1024   # peso totale dei file caricati
 

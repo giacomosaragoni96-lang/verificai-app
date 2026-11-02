@@ -5022,6 +5022,18 @@ font-family: 'DM Sans', sans-serif;
     color: {T['muted']}; background: rgba(100,116,139,.12); padding: 2px 10px; border-radius: 999px;
   }}
 
+  /* ── Riga «Correggi i compiti» sotto le due schede della home: sottile, con un filo di blu ── */
+  html body .stApp .st-key-scelta_correggi {{
+    margin-top: .9rem; padding: .7rem 1rem !important; border-radius: 16px !important; border: 1px solid {_acc}40 !important;
+    background: {_acc}0D !important; box-shadow: none !important;
+  }}
+  html body .stApp .st-key-scelta_correggi .sc-cor {{ display: flex; gap: .8rem; align-items: center; font-family: 'DM Sans', sans-serif; }}
+  html body .stApp .st-key-scelta_correggi .sc-cor .ic {{ font-size: 1.5rem; line-height: 1; flex: 0 0 auto; }}
+  html body .stApp .st-key-scelta_correggi .sc-cor b {{ display: block; color: {T['text']}; font-size: .98rem; }}
+  html body .stApp .st-key-scelta_correggi .sc-cor span:not(.ic) {{ display: block; color: {T['text2']}; font-size: .84rem; line-height: 1.4; }}
+  html body .stApp .st-key-scelta_correggi button {{ min-height: 2.5rem !important; white-space: nowrap !important; }}
+  @media (max-width: 640px) {{ html body .stApp .st-key-scelta_correggi {{ padding: .7rem .8rem !important; }} }}
+
   /* ── Prima scelta (descrizione / impagina la mia verifica): due schede affiancate ── */
   html body .stApp :is(.st-key-scelta_crea, .st-key-scelta_impagina) {{
     position: relative; border-radius: 20px !important; padding: 1.5rem 1.6rem 1.4rem !important;

@@ -3,7 +3,7 @@ ui_correzione.py — la zona «Correggi i compiti» (stage CORREZIONE): solo int
 tramite `ctx`; la logica sta in correzione.py.
 
 Quattro passi: 1 La verifica · 2 I compiti · 3 Revisione · 4 Risultati. Tutto lo stato sta in `ctx["stato"]` (dizionario in sessione):
-    fase, verifica {titolo, materia, scuola, struttura, soluzioni, origine}, alunni [...], scala, sel
+    fase, verifica {titolo, materia, scuola, struttura, soluzioni, origine}, alunni [...], scala, sel, roster (alunni aggiunti, ancora da correggere)
 I compiti degli alunni non si salvano mai: restano nella sessione finché il docente non li elimina.
 """
 import html
@@ -53,6 +53,12 @@ def _css(T: dict) -> str:
         f".cor-rig{{{f}font-size:.9rem;color:{T['text']};font-weight:700;}}.cor-rig small{{display:block;font-weight:500;color:{T['muted']};font-size:.74rem;}}"
         "html body .stApp .st-key-blk_cor_lista button{justify-content:flex-start;text-align:left;border-radius:12px;min-height:2.6rem;padding:.3rem .8rem;}"
         "html body .stApp .st-key-blk_cor_lista button p{font-size:.84rem;font-weight:650;text-align:left;}"
+        f".cor-al{{display:flex;align-items:center;gap:.7rem;{f}}}"
+        f".cor-al .n{{width:1.9rem;height:1.9rem;border-radius:50%;background:{acc}22;color:{acc};font-weight:800;font-size:.82rem;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}}"
+        f".cor-al .p{{font-size:.76rem;color:{T['muted']};}}"
+        f".cor-err{{{f}font-size:.9rem;color:#7F1D1D;background:#FEF2F2;border:1px solid #FECACA;border-left:4px solid #DC2626;border-radius:10px;padding:.5rem .75rem;margin:.2rem 0 .5rem;}}"
+        f".cor-alt{{{f}font-size:.82rem;color:#92400E;background:#FFFBEB;border:1px solid #FCD34D;border-radius:10px;padding:.45rem .7rem;margin:.3rem 0;white-space:pre-wrap;}}"
+        "html body .stApp .st-key-blk_cor_nuovo{border:1.5px dashed " + acc + "66;border-radius:18px;padding:1rem 1.1rem .4rem;background:" + acc + "0D;margin:.4rem 0 1rem;}"
         "@media (max-width:760px){.cor-steps{flex-wrap:wrap;}.cor-step{flex:1 1 45%;}}"
         "</style>"
     )
@@ -64,7 +70,7 @@ def _intestazione(T: dict, fase: int) -> None:
         f'<div class="cor-step {"on" if i + 1 == fase else ("ok" if i + 1 < fase else "")}"><i>{"✓" if i + 1 < fase else i + 1}</i>{p}</div>' for i, p in enumerate(PASSI))
     st.markdown('<div class="cor-tit">Correggi i compiti</div>'
                 '<div class="cor-sub">Carica i compiti dei tuoi alunni: propongo punti e commenti, tu controlli. Ottieni voti, schede e gli argomenti da ripassare.</div>'
-                '<span class="cor-priv">🔒 I compiti restano solo in questa sessione: non vengono salvati</span>'
+                '<span class="cor-priv">🔒 I compiti non vengono salvati: restano in questa sessione e passano dall&#8217;AI solo per la correzione</span>'
                 f'<div class="cor-steps">{passi}</div>', unsafe_allow_html=True)
 
 
@@ -130,49 +136,96 @@ def _nome_da_file(nome: str) -> str:
     return base[:40] if not re.fullmatch(r"(?i)(img|dsc|image|scan|foto|photo|whatsapp)?[\s\d]*", base) else ""
 
 
+_TIPI = ["pdf", "png", "jpg", "jpeg", "webp"]
+
+
+def _file(f) -> dict:
+    return {"data": f.getvalue(), "mime_type": f.type or "image/jpeg", "name": f.name}
+
+
+def _miniature(files: list, larghezza: int = 78) -> None:
+    """Le anteprime piccole dei file di un alunno (i PDF come etichetta)."""
+    immagini = [f["data"] for f in files if (f.get("mime_type") or "").startswith("image/")][:6]
+    if immagini:
+        st.image(immagini, width=larghezza)
+    for f in files:
+        if (f.get("mime_type") or "") == "application/pdf":
+            st.caption(f"📄 {f['name'][:28]}")
+
+
 def _passo_compiti(T: dict, ctx: dict) -> None:
     S = ctx["stato"]
+    roster = S.setdefault("roster", [])
+    ciclo, nuovo_n = S.get("ciclo", 0), S.get("up_n", 0)
+    max_p = ctx.get("max_pagine", 6)
     if S.get("alunni"):
-        st.markdown(f'<div class="cor-card"><b class="t">Hai già corretto {len(S["alunni"])} compiti</b><span class="s">Puoi riprendere la revisione dal punto in cui eri.</span></div>',
-                    unsafe_allow_html=True)
-        c1, c2 = st.columns([3, 1.6], gap="small")
-        if c1.button("Vai alla revisione", key="cor_p2_rev", type="primary", icon=":material/arrow_forward:", use_container_width=True):
+        st.markdown(f'<div class="cor-card"><b class="t">Hai già corretto {len(S["alunni"])} compiti</b>'
+                    f'<span class="s">Puoi riprendere la revisione, oppure aggiungere altri alunni qui sotto.</span></div>', unsafe_allow_html=True)
+        if st.button("Vai alla revisione", key="cor_p2_rev", type="primary", icon=":material/arrow_forward:", use_container_width=True):
             S["fase"] = 3
             st.rerun()
-        if c2.button("Carica altri compiti", key="cor_p2_altri", type="secondary", use_container_width=True):
-            S["alunni"], S["sel"] = [], None
+    st.markdown(f'<div class="cor-card"><b class="t">Aggiungi gli alunni, uno alla volta</b>'
+                f'<span class="s">Per ogni alunno carica <b>tutte le foto delle sue pagine</b> (fino a {max_p}, anche con più selezioni) o un PDF, scrivi il nome e premi '
+                f'«Aggiungi alunno». Poi passa al successivo. Il nome è facoltativo: se non lo scrivi lo leggo dall\'intestazione.</span></div>', unsafe_allow_html=True)
+    with st.container(key="blk_cor_nuovo"):
+        c1, c2 = st.columns([1, 2], gap="medium")
+        c1.markdown('<div class="cor-lab">Nome (facoltativo)</div>', unsafe_allow_html=True)
+        nome = c1.text_input("Nome dell'alunno", key=f"cor_new_nome_{ciclo}_{nuovo_n}", placeholder="Nome e cognome", label_visibility="collapsed")
+        c2.markdown('<div class="cor-lab">Foto o PDF del compito</div>', unsafe_allow_html=True)
+        files = c2.file_uploader("Foto o PDF del compito", type=_TIPI, accept_multiple_files=True, key=f"cor_new_up_{ciclo}_{nuovo_n}", label_visibility="collapsed")
+        pronti = [_file(f) for f in files or []]
+        if pronti:
+            _miniature(pronti)
+            if len(pronti) > max_p:
+                st.warning(f"Per un alunno posso leggere al massimo {max_p} pagine: ho preso le prime {max_p}.")
+                pronti = pronti[:max_p]
+        puo = bool(pronti) and len(roster) + len(S.get("alunni") or []) < ctx["max_studenti"]
+        if len(roster) + len(S.get("alunni") or []) >= ctx["max_studenti"]:
+            st.caption(f"Hai raggiunto il massimo di {ctx['max_studenti']} alunni per volta.")
+        if st.button("＋ Aggiungi alunno", key=f"cor_new_ok_{ciclo}_{nuovo_n}", type="secondary", disabled=not puo, use_container_width=True,
+                     help="Carica almeno una foto o un PDF." if not pronti else None):
+            S["seq_r"] = S.get("seq_r", 0) + 1
+            roster.append({"id": S["seq_r"], "nome": (nome or "").strip(), "pagine": pronti})
+            S["up_n"] = nuovo_n + 1
             st.rerun()
-        return
-    st.markdown('<div class="cor-card"><b class="t">Un file per alunno</b>'
-                '<span class="s">PDF o foto del compito. Se un alunno ha più pagine, mettile in un unico PDF. Il nome lo leggo dall\'intestazione, ma puoi scriverlo tu.</span></div>',
-                unsafe_allow_html=True)
-    files = st.file_uploader("Compiti", type=["pdf", "png", "jpg", "jpeg", "webp"], accept_multiple_files=True, key=f"cor_compiti_{S.get('ciclo', 0)}",
-                             label_visibility="collapsed")
-    if not files:
-        if st.button("← Torna alla verifica", key="cor_p2_back", type="tertiary"):
-            S["fase"] = 1
+    with st.expander("Ho un file per alunno: li carico tutti insieme", expanded=False, icon=":material/upload_file:"):
+        molti = st.file_uploader("Un file per alunno (PDF o foto)", type=_TIPI, accept_multiple_files=True, key=f"cor_molti_{ciclo}_{S.get('molti_n', 0)}",
+                                 label_visibility="collapsed")
+        if molti and st.button(f"Aggiungi {len(molti)} alunni", key=f"cor_molti_ok_{ciclo}", type="secondary", use_container_width=True):
+            for f in molti[:max(0, ctx["max_studenti"] - len(roster) - len(S.get("alunni") or []))]:
+                S["seq_r"] = S.get("seq_r", 0) + 1
+                roster.append({"id": S["seq_r"], "nome": _nome_da_file(f.name), "pagine": [_file(f)]})
+            S["molti_n"] = S.get("molti_n", 0) + 1
             st.rerun()
-        return
-    if len(files) > ctx["max_studenti"]:
-        st.warning(f"Posso correggere al massimo {ctx['max_studenti']} compiti per volta: ho preso i primi {ctx['max_studenti']}.")
-        files = files[:ctx["max_studenti"]]
-    st.markdown('<div class="cor-lab">Nomi (facoltativi)</div>', unsafe_allow_html=True)
-    nomi = []
-    colonne = st.columns(2, gap="small")
-    for i, f in enumerate(files):
-        nomi.append(colonne[i % 2].text_input(f"Alunno {i + 1}", value=_nome_da_file(f.name), key=f"cor_nome_{S.get('ciclo', 0)}_{i}_{f.name}",
-                                              label_visibility="collapsed", placeholder=f"Alunno {i + 1} · {f.name[:24]}"))
-    secondi = max(1, -(-len(files) // 3)) * 25
-    c1, c2 = st.columns([3, 1.2], gap="small")
-    if c1.button(f"Correggi {len(files)} {'compito' if len(files) == 1 else 'compiti'}", key="cor_p2_vai", type="primary", icon=":material/auto_awesome:",
-                 use_container_width=True, help=f"Di solito ci vogliono circa {secondi} secondi."):
-        errore = ctx["correggi"]([(n.strip(), [{"data": f.getvalue(), "mime_type": f.type or "image/jpeg", "name": f.name}]) for n, f in zip(nomi, files)])
-        if errore:
-            st.warning(errore)
-        else:
-            S["fase"] = 3
-            st.rerun()
-    c2.caption(f"≈ {secondi} secondi")
+    if roster:
+        st.markdown(f'<div class="cor-lab" style="margin-top:.4rem">Alunni da correggere ({len(roster)})</div>', unsafe_allow_html=True)
+        for k, r in enumerate(list(roster), 1):
+            with st.container(border=True):
+                a, b, c, d = st.columns([0.5, 2.4, 2.2, 0.9], gap="small", vertical_alignment="center")
+                a.markdown(f'<div class="cor-al"><span class="n">{k}</span></div>', unsafe_allow_html=True)
+                r["nome"] = b.text_input(f"Nome alunno {k}", value=r["nome"], key=f"cor_rn_{ciclo}_{r['id']}", label_visibility="collapsed", placeholder=f"Alunno {k}")
+                with c:
+                    _miniature(r["pagine"], 56)
+                    st.caption(f"{len(r['pagine'])} {'pagina' if len(r['pagine']) == 1 else 'pagine'}")
+                if d.button("Togli", key=f"cor_rx_{ciclo}_{r['id']}", type="tertiary", icon=":material/close:", use_container_width=True):
+                    S["roster"] = [x for x in roster if x["id"] != r["id"]]
+                    st.rerun()
+        n = len(roster)
+        secondi = max(1, -(-n // 3)) * 40
+        c1, c2 = st.columns([3, 1.2], gap="small")
+        if c1.button(f"Correggi {n} {'compito' if n == 1 else 'compiti'}", key="cor_p2_vai", type="primary", icon=":material/auto_awesome:", use_container_width=True,
+                     help=f"Di solito ci vogliono circa {secondi} secondi."):
+            errore = ctx["correggi"]([(r["nome"].strip(), r["pagine"]) for r in roster])
+            if errore:
+                st.warning(errore)
+            else:
+                S["roster"] = []
+                S["fase"] = 3
+                st.rerun()
+        c2.caption(f"≈ {secondi} secondi")
+    if not S.get("alunni") and st.button("← Torna alla verifica", key="cor_p2_back", type="tertiary"):
+        S["fase"] = 1
+        st.rerun()
 
 
 # ── Passo 3: revisione ────────────────────────────────────────────────────────
@@ -184,6 +237,40 @@ def _etichetta_alunno(a: dict, scala: str) -> str:
     p, m = cor.punti_alunno(a["righe"])
     dub = cor.da_controllare(a)
     return f"{a.get('nome') or 'Alunno'} · {cor.voto_testo(cor.voto(p, m, scala))}" + (f" · ⚠ {dub}" if dub else (" · ✓" if a.get("controllato") else ""))
+
+
+def _dettaglio_richiesta(T: dict, ctx: dict, a: dict, r: dict) -> None:
+    """Sotto la riga di una richiesta: cosa ha scritto l'alunno secondo la lettura, il pezzo di compito dove sta l'errore e, se serve, la lettura da correggere."""
+    if not r.get("lettura") and not r.get("errore"):
+        return
+    problema = r["esito"] in ("errato", "parziale") or r.get("da_controllare")
+    etichetta = "Dov'è l'errore e cosa ho letto" if r["esito"] in ("errato", "parziale") else "Cosa ho letto"
+    with st.expander(f"{r['id']} · {etichetta}", expanded=bool(problema and not r.get("rivista")), icon=":material/visibility:"):
+        if r.get("errore"):
+            st.markdown(f'<div class="cor-err"><b>Errore:</b> {_esc(r["errore"])}</div>', unsafe_allow_html=True)
+        img = ctx["ritaglio"](a, r) if (r.get("lettura") and ctx.get("ritaglio")) else None
+        sx, dx = st.columns([1.15, 1], gap="medium")
+        with sx:
+            if img:
+                st.image(img, caption="Il punto del compito" if r.get("riga_errore") else "La risposta dell'alunno", use_container_width=True)
+            else:
+                st.caption("Non riesco a mostrarti il pezzo di compito: guarda le pagine in «Guarda il compito».")
+        with dx:
+            testo = "\n".join(x["testo"] for x in r.get("lettura") or [])
+            nuovo = st.text_area("Cosa ho letto (correggimi se sbaglio)", value=testo, key=f"cor_l_{a['id']}_{r['id']}", height=max(110, 38 * (len(r.get("lettura") or []) + 1)),
+                                 help="Se ho letto male un segno o un numero, correggi qui e premi «Rivaluta»: rifaccio solo questa richiesta.")
+            if r.get("lettura_alt"):
+                alt = "\n".join(x["testo"] for x in r["lettura_alt"])
+                st.markdown(f'<div class="cor-alt"><b>Un secondo lettore ha letto diversamente:</b>\n{_esc(alt)}</div>', unsafe_allow_html=True)
+            elif r.get("lettura_incerta"):
+                st.caption("⚠ Qualche segno o carattere era poco leggibile (segnato con [?]).")
+            if nuovo.strip() != testo.strip():
+                if st.button("Rivaluta con questa lettura", key=f"cor_rv_{a['id']}_{r['id']}", type="primary", icon=":material/refresh:"):
+                    messaggio = ctx["rivaluta"](a["id"], r["id"], nuovo.splitlines())
+                    if messaggio:
+                        st.warning(messaggio)
+                    else:
+                        st.rerun()
 
 
 def _riga_correzione(T: dict, a: dict, r: dict, scala: str) -> None:
@@ -255,6 +342,7 @@ def _passo_revisione(T: dict, ctx: dict) -> None:
         st.markdown('<div class="cor-lab" style="margin-top:.6rem">Richiesta · punti · esito · commento</div>', unsafe_allow_html=True)
         for r in a["righe"]:
             _riga_correzione(T, a, r, scala)
+            _dettaglio_richiesta(T, ctx, a, r)
         a["commento_generale"] = st.text_area("In sintesi", value=a.get("commento_generale", ""), key=f"cor_cg_{a['id']}", height=80, placeholder="In sintesi (appare nella scheda)")
         p, m = cor.punti_alunno(a["righe"])
         v = cor.voto(p, m, scala)
