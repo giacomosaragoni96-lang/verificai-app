@@ -1232,6 +1232,8 @@ html body .stApp [class*="st-key-banner_piano_"] .g-nota {
 _BERSAGLI_GUIDA = {
     "argomento": [".st-key-argomento_area_b", '[data-testid="stTextArea"]'],
     "scelta": [".st-key-scelta_crea_btn", ".st-key-scelta_impagina_btn"],            # i due pulsanti della prima scelta
+    "agente": [".st-key-blk_agente [data-testid='stChatInput']"],                      # la barra «Cosa ti serve?»
+    "agente_crea": [".st-key-ag_crea", ".st-key-ag_impagina"],                         # «Crea verifica» / «Impagina» nella scheda dell'agente
     "carica_imp": ['[data-testid="stFileUploader"]'],                                 # «Impagina la mia verifica»: il caricamento
     "conferma_imp": [".st-key-imp_crea"],
     "opzioni": ['[data-testid="stExpander"]:has(.g-altre)', '[data-testid="stFileUploader"]'],   # «Altre opzioni» e i due caricamenti (file e logo)
@@ -1496,7 +1498,22 @@ def _guida_benvenuto(dove: str, slot) -> None:
     if dove == "input":
         _m_home = st.session_state.get("_home_modo")
         scritto = bool((st.session_state.get("argomento_area_b") or "").strip())
-        if _m_home is None:
+        if _m_home is None and _agente_abilitato():
+            _chat_g = st.session_state.get("_ag_chat") or []
+            _dec_g = ((_chat_g[-1].get("decisione") or {}) if _chat_g and _chat_g[-1].get("ruolo") == "agente" else {})
+            _az_g = _dec_g.get("azione")
+            if _az_g == "crea" or (_az_g == "impagina" and st.session_state.get("_ag_allegati")):
+                _riquadro(f"{_eti} · Passo 2 di 3", "Controlla il riepilogo",
+                          "Ritocca ciò che non va, poi premi <b>«Crea verifica»</b>." if _az_g == "crea" else "Controlla i file, poi premi <b>«Impagina»</b>.",
+                          ["agente_crea"], passi=(2, 3))
+            elif _az_g == "domanda":
+                _riquadro(f"{_eti} · Passo 1 di 3", "Ti chiedo una cosa sola",
+                          "Tocca una risposta, oppure scrivila nella barra.", ["agente"], passi=(1, 3))
+            else:
+                _riquadro(f"{_eti} · Passo 1 di 3", "Scrivi cosa ti serve",
+                          "Per esempio: <b>«verifica di matematica sulle equazioni per la 3B»</b>. Con <b>＋</b> allegi appunti o una verifica da sistemare.",
+                          ["agente"], passi=(1, 3))
+        elif _m_home is None:
             _riquadro(f"{_eti} · Passo 1 di 3", "Da dove vuoi partire?",
                       "Scegli uno dei due modi qui sotto: puoi provarli entrambi.", ["scelta"], passi=(1, 3))
         elif _m_home == "impagina":
@@ -1651,29 +1668,41 @@ def _benvenuto_richiesto() -> bool:
 
 @st.dialog("Benvenuto in VerificAI 👋", width="large")
 def _dialogo_benvenuto() -> None:
-    """Pop-up della prima visita: cosa offre VerificAI (poche parole) e perché conviene dare più informazioni."""
+    """Pop-up della prima visita: cosa si può chiedere (poche parole) e cosa si fa dopo. Con la barra «Cosa ti serve?» parte da lì."""
     _stile_dialogo()
     _tx, _t2, _ac = T["text"], T["text2"], T["accent"]
-    _vie = [("✍️", "Da una descrizione", "Descrivi la verifica, o parti dai tuoi appunti: la scriviamo noi."),
-            ("📄", "Dalla tua verifica", "Caricala: la rifacciamo identica, impaginata bene (o dici tu cosa cambiare).")]
+    _agente = _agente_abilitato()
+    if _agente:
+        _vie = [("✍️", "Crea", "«Verifica di fisica sul moto, 3ª liceo, con Fila B e soluzioni»"),
+                ("📄", "Impagina", "Allega con <b>＋</b> la tua verifica (PDF, foto o Word): la rifaccio identica, impaginata bene."),
+                ("✏️", "Ritocca", "Scrivi «togli l'esercizio 4» o «più facile il 2»: lo faccio al volo.")]
+        _intro = "Scrivi cosa ti serve, come lo diresti a un collega. <b>Al resto penso io.</b>"
+        _titolo_vie = "Per esempio"
+    else:
+        _vie = [("✍️", "Da una descrizione", "Descrivi la verifica, o parti dai tuoi appunti: la scriviamo noi."),
+                ("📄", "Dalla tua verifica", "Caricala: la rifacciamo identica, impaginata bene (o dici tu cosa cambiare).")]
+        _intro = ""
+        _titolo_vie = "Due modi per cominciare"
     _tessere = "".join(
-        f'<div style="background:{T["bg2"]};border:1.5px solid {T["border"]};border-radius:14px;padding:1rem 1.1rem;">'
-        f'<div style="font-size:1.6rem;line-height:1;">{ic}</div>'
-        f'<div style="font-family:DM Sans,sans-serif;font-weight:800;color:{_tx};font-size:1.05rem;margin:.45rem 0 .2rem;">{t}</div>'
-        f'<div style="font-family:DM Sans,sans-serif;color:{_tx};opacity:.78;font-size:.93rem;line-height:1.4;">{d}</div></div>'
+        f'<div class="bv-t"><div class="bv-i">{ic}</div><div><div class="bv-tt">{t}</div><div class="bv-td">{d}</div></div></div>'
         for ic, t, d in _vie)
-    _chip = "".join(
-        f'<span style="background:{T["bg2"]};border:1px solid {T["border"]};border-radius:999px;padding:.3rem .8rem;font-family:DM Sans,sans-serif;'
-        f'font-size:.85rem;font-weight:600;color:{_tx};">{x}</span>'
-        for x in ["📄 Fila B", "🧩 Versione BES/DSA", "🔤 Alta leggibilità", "✅ Soluzioni", "🎯 Scheda di allenamento", "📝 Word modificabile",
-                  "✏️ Modifica un esercizio", "🏫 Logo della scuola", "…e molto altro"])
+    _chip = "".join(f'<span class="bv-c">{x}</span>' for x in (
+        ["📄 Fila B", "🧩 Versione BES/DSA", "✅ Soluzioni", "📝 Word modificabile", "🎯 Scheda di allenamento", "…e molto altro"] if _agente else
+        ["📄 Fila B", "🧩 Versione BES/DSA", "🔤 Alta leggibilità", "✅ Soluzioni", "🎯 Scheda di allenamento", "📝 Word modificabile",
+         "✏️ Modifica un esercizio", "🏫 Logo della scuola", "…e molto altro"]))
     st.markdown(
-        f'<div style="font-family:DM Sans,sans-serif;color:{_tx};font-size:1.1rem;font-weight:700;margin-bottom:.8rem;">'
-        f'Due modi per cominciare:</div>'
-        f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;">{_tessere}</div>'
-        f'<div style="font-family:DM Sans,sans-serif;color:{_tx};font-size:.95rem;font-weight:700;margin:1rem 0 .5rem;">'
-        f'Poi, da qualsiasi verifica, con un clic:</div>'
-        f'<div style="display:flex;flex-wrap:wrap;gap:.4rem;">{_chip}</div>',
+        f'<style>.bv-intro{{font-family:DM Sans,sans-serif;color:{_tx};font-size:1.12rem;line-height:1.45;margin:0 0 1.1rem;}}'
+        f'.bv-k{{font-family:DM Sans,sans-serif;color:{_t2};font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin:0 0 .55rem;}}'
+        f'.bv-g{{display:grid;grid-template-columns:repeat({len(_vie)},minmax(0,1fr));gap:.7rem;}}'
+        f'.bv-t{{display:flex;gap:.6rem;align-items:flex-start;background:{T["bg2"]};border:1.5px solid {T["border"]};border-radius:14px;padding:.75rem .85rem;}}'
+        f'.bv-i{{font-size:1.5rem;line-height:1;flex:0 0 2rem;text-align:center;}}.bv-tt{{font-family:DM Sans,sans-serif;font-weight:800;color:{_tx};font-size:1rem;margin-bottom:.15rem;}}'
+        f'.bv-td{{font-family:DM Sans,sans-serif;color:{_tx};opacity:.8;font-size:.9rem;line-height:1.4;}}'
+        f'.bv-cs{{display:flex;flex-wrap:wrap;gap:.4rem;}}'
+        f'.bv-c{{background:{T["bg2"]};border:1px solid {T["border"]};border-radius:999px;padding:.28rem .75rem;font-family:DM Sans,sans-serif;font-size:.84rem;font-weight:600;color:{_tx};}}'
+        f'@media (max-width:640px){{.bv-g{{grid-template-columns:1fr;gap:.5rem;}}.bv-intro{{font-size:1rem;margin-bottom:.8rem;}}.bv-td{{font-size:.86rem;}}}}</style>'
+        + (f'<div class="bv-intro">{_intro}</div>' if _intro else "")
+        + f'<div class="bv-k">{_titolo_vie}</div><div class="bv-g">{_tessere}</div>'
+        f'<div class="bv-k" style="margin-top:1.1rem;">Poi, con un clic</div><div class="bv-cs">{_chip}</div>',
         unsafe_allow_html=True)
     # chiudere con la X conta come visto: il cookie si scrive appena la finestra si apre
     components.html('<script>try{window.parent.document.cookie="vf_benvenuto=1; max-age=31536000; path=/; SameSite=Lax";}catch(e){}</script>', height=0)
