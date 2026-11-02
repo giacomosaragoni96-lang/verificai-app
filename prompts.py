@@ -1683,7 +1683,9 @@ def prompt_agente(conversazione: str, contesto: str, azioni: str, domande_rimast
     if domande_rimaste > 0:
         regola_domanda = (
             "- Fai una domanda SOLO se manca qualcosa di davvero essenziale che non puoi dedurre: l'argomento (o la materia) della verifica, "
-            "oppure il livello di scuola quando il docente non lo dice e non c'è nessun valore predefinito nel contesto. "
+            "oppure il livello di scuola quando il docente non lo dice e nel contesto NON ci sono né «Valori abituali» né classi. "
+            "Se ci sono valori abituali o classi, NON chiedere la scuola: usa la più probabile e dichiarala in «assunzioni». "
+            "Quando chiedi la scuola, le «opzioni» sono nomi ESATTI dell'elenco delle scuole ammesse (le 3-4 più probabili). "
             f"Puoi ancora fare {domande_rimaste} domand{'a' if domande_rimaste == 1 else 'e'} in tutto: UNA per volta, con 2-4 risposte rapide in «opzioni».\n"
         )
     else:
