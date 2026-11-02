@@ -33,6 +33,7 @@ from prompts import (
 )
 from piano_verifica import (
     scheletro_piano, normalizza_piano, estrai_json, piano_a_testo, applica_punti_piano, max_esercizi_chiusi, _conta_sottopunti,
+    numero_esercizi_richiesto,
 )
 
 # prompt_rigenera_blocco potrebbe non essere ancora in prompts.py (deploy graduale)
@@ -1671,6 +1672,11 @@ _RE_TIKZ_FIGURA = re.compile(r"(?:^%IMG_B64:[^\n]*\n\\begin\{center\}\\includegr
                              re.DOTALL | re.MULTILINE)
 
 
+# parole con cui il docente chiede esplicitamente di togliere esercizi (altrimenti il loro numero non deve scendere)
+_RE_TOGLIE = re.compile(r"\b(togli\w*|elimin\w*|rimuov\w*|cancell\w*|meno esercizi|riduci\w*|accorcia\w*)\b"
+                        r"|\b(?:tieni|lascia|mantieni|resta)\w*\s+solo\s+(?:il\s+|l['’]\s*)?(?:esercizio|es\.?)\s*\d")
+
+
 def modifica_verifica_libera(model, materia: str, argomento: str, latex: str, richiesta: str,
                              mostra_punteggi: bool = True, punti_totali: int = 100) -> dict:
     """
@@ -1697,16 +1703,48 @@ def modifica_verifica_libera(model, materia: str, argomento: str, latex: str, ri
     testo = "\n\n".join(
         f"\\subsection*{{{b['title']}}}\n" + _RE_TIKZ_FIGURA.sub(_segnaposto, b["body"]) for b in blocchi
     )
-    prompt = prompt_modifica_verifica(materia, argomento, testo, richiesta, mostra_punteggi, punti_totali)
-    risposta = model.generate_content(prompt).text.replace("```latex", "").replace("```", "").strip()
+    n_prima = len(blocchi)
+    n_voluto = numero_esercizi_richiesto(richiesta)
+    toglie = bool(_RE_TOGLIE.search(richiesta.lower()))
+    prompt = prompt_modifica_verifica(materia, argomento, testo, richiesta, mostra_punteggi, punti_totali, n_esercizi=n_prima, n_voluto=n_voluto)
 
-    if risposta.upper().startswith("NESSUNA_MODIFICA"):
-        motivo = risposta.split(":", 1)[1].strip() if ":" in risposta else ""
-        return {"ok": False, "messaggio": motivo or "Non ho trovato una modifica da fare."}
+    def _problema(lista) -> str:
+        """Cosa non va nel NUMERO di esercizi prodotto (stringa vuota se va bene)."""
+        n = len(lista)
+        if n_voluto and n != n_voluto:
+            return (f"ERRORE NEL TENTATIVO PRECEDENTE: hai scritto {n} esercizi (blocchi \\subsection*), ma il docente ne vuole ESATTAMENTE {n_voluto}. "
+                    f"Rifallo con {n_voluto} blocchi \\subsection*: aggiungi esercizi NUOVI e diversi tra loro (mai un solo esercizio con tante richieste) "
+                    f"oppure togli gli ultimi, secondo il caso.")
+        if not n_voluto and n < n_prima and not toglie:
+            return (f"ERRORE NEL TENTATIVO PRECEDENTE: hai tolto esercizi ({n} invece di {n_prima}) ma il docente non l'ha chiesto. "
+                    f"Rifallo con {n_prima} esercizi: gli esercizi che non rispettano la richiesta vanno SOSTITUITI con esercizi NUOVI "
+                    f"(stesso argomento, punti simili), non eliminati.")
+        return ""
 
-    _pre, nuovi = extract_blocks(risposta)
-    if not nuovi:
+    def _genera(extra: str = ""):
+        """(esito, dati): «nessuna» + motivo | «vuota» + messaggio | «ok» + esercizi nuovi."""
+        risposta = model.generate_content(prompt + (f"\n\n{extra}" if extra else "")).text.replace("```latex", "").replace("```", "").strip()
+        if risposta.upper().startswith("NESSUNA_MODIFICA"):
+            return "nessuna", (risposta.split(":", 1)[1].strip() if ":" in risposta else "")
+        _p, lista = extract_blocks(risposta)
+        return ("ok", lista) if lista else ("vuota", "")
+
+    esito, nuovi = _genera()
+    if esito == "nessuna":
+        return {"ok": False, "messaggio": nuovi or "Non ho trovato una modifica da fare."}
+    if esito == "vuota":
         return {"ok": False, "messaggio": "Non sono riuscito a capire la modifica: riprova scrivendola in un altro modo."}
+    errore_n = _problema(nuovi)
+    if errore_n:                                   # controllo del codice: il numero di esercizi non si cambia da solo (un solo nuovo tentativo)
+        esito, nuovi2 = _genera(errore_n)
+        if esito == "ok" and not _problema(nuovi2):
+            nuovi = nuovi2
+        elif n_voluto:
+            return {"ok": False, "messaggio": f"Non sono riuscito a portare la verifica a {n_voluto} esercizi (ne ottenevo {len(nuovi2) if esito == 'ok' else len(nuovi)}). "
+                                              "Non ho cambiato niente: prova con «Aggiungi un esercizio su …» oppure chiedimelo di nuovo specificando il tipo di esercizi nuovi."}
+        else:
+            return {"ok": False, "messaggio": "La richiesta avrebbe tolto degli esercizi, e non l'hai chiesto: non ho cambiato niente. "
+                                              "Prova con «Sostituisci gli esercizi 3, 4 e 5 con …», così il loro numero resta lo stesso."}
 
     def _rimetti(m):
         n = int(m.group(1))
