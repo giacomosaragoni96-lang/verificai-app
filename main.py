@@ -1233,6 +1233,7 @@ _BERSAGLI_GUIDA = {
     "argomento": [".st-key-argomento_area_b", '[data-testid="stTextArea"]'],
     "scelta": [".st-key-scelta_crea_btn", ".st-key-scelta_impagina_btn"],            # i due pulsanti della prima scelta
     "agente": [".st-key-blk_agente [data-testid='stChatInput']"],                      # la barra «Cosa ti serve?»
+    "agente_tondi": [".st-key-blk_agente [data-testid='stChatInputFileUploadButton'] button", ".st-key-blk_agente .vf-mic"],   # «＋» e microfono (rotondi)
     "agente_crea": [".st-key-ag_crea", ".st-key-ag_impagina"],                         # «Crea verifica» / «Impagina» nella scheda dell'agente
     "carica_imp": ['[data-testid="stFileUploader"]'],                                 # «Impagina la mia verifica»: il caricamento
     "conferma_imp": [".st-key-imp_crea"],
@@ -1287,14 +1288,22 @@ def _html_separatore() -> str:
     return (f'<div style="height:1px;background:{T["border2"]};opacity:.9;margin:1.2rem 0 .7rem;"></div>')
 
 
+_RAGGI_GUIDA = {"agente": "26px", "agente_tondi": "50%"}
+
+
 def _css_pulsa(chiavi: list) -> str:
     """CSS che fa pulsare in giallo gli elementi indicati (nomi di _BERSAGLI_GUIDA)."""
     sel = ", ".join(f"html body .stApp {s}" for k in chiavi for s in _BERSAGLI_GUIDA[k])
+    # gli elementi rotondi (barra, «＋», microfono) tengono la loro forma: l'alone segue il bordo
+    _raggi = "".join(f"html body .stApp {s} {{border-radius:{_RAGGI_GUIDA[k]} !important;}}" for k in chiavi if k in _RAGGI_GUIDA for s in _BERSAGLI_GUIDA[k])
+    # i pulsanti piccoli dentro la barra («＋», microfono) hanno un alone più stretto, così non coprono i vicini
+    _piccoli = "".join(f"html body .stApp {s} {{animation:gpulsep 1.9s ease-in-out infinite;}}" for k in chiavi if k == "agente_tondi" for s in _BERSAGLI_GUIDA[k])
+    _kf = "@keyframes gpulsep{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0);outline:2px solid rgba(245,158,11,0);outline-offset:1px;}50%{box-shadow:0 0 0 3px rgba(245,158,11,.30);outline:2px solid rgba(245,158,11,.75);outline-offset:1px;}}" if _piccoli else ""
     # rete di sicurezza in solo CSS: mentre ci si passa sopra o dopo un clic (focus) il lampeggio si ferma; lo spegnimento
     # definitivo lo fa lo script (_js_guida_visti)
     sul = ", ".join(f"html body .stApp {s}:hover" for k in chiavi for s in _BERSAGLI_GUIDA[k])
     fuoco = ", ".join(f"html body .stApp {s}:focus-within" for k in chiavi for s in _BERSAGLI_GUIDA[k])
-    return (f"<style>{sel} {{animation:gpulse 1.9s ease-in-out infinite;border-radius:12px;}}"
+    return (f"<style>{sel} {{animation:gpulse 1.9s ease-in-out infinite;border-radius:12px;}}{_raggi}{_piccoli}{_kf}"
             f"{sul} {{animation:none !important;outline:none !important;box-shadow:none !important;}}"
             f"{fuoco} {{animation:none !important;outline:none !important;box-shadow:none !important;}}</style>")
 
@@ -1511,8 +1520,9 @@ def _guida_benvenuto(dove: str, slot) -> None:
                           "Tocca una risposta, oppure scrivila nella barra.", ["agente"], passi=(1, 3))
             else:
                 _riquadro(f"{_eti} · Passo 1 di 3", "Scrivi cosa ti serve",
-                          "Per esempio: <b>«verifica di matematica sulle equazioni per la 3B»</b>. Con <b>＋</b> allegi appunti o una verifica da sistemare.",
-                          ["agente"], passi=(1, 3))
+                          "Scrivilo o <b>detta</b> con il microfono, per esempio <b>«verifica di matematica sulle equazioni per la 3B»</b>. "
+                          "Con <b>＋</b> allegi appunti o una verifica da sistemare. Oppure scegli una delle due schede qui sotto.",
+                          ["agente", "agente_tondi", "scelta"], passi=(1, 3))
         elif _m_home is None:
             _riquadro(f"{_eti} · Passo 1 di 3", "Da dove vuoi partire?",
                       "Scegli uno dei due modi qui sotto: puoi provarli entrambi.", ["scelta"], passi=(1, 3))
@@ -5592,9 +5602,10 @@ def _render_stage_input():
         if _agente_abilitato():
             try:
                 _render_agente_home()
-                st.markdown(f'<div style="display:flex;align-items:center;gap:.9rem;margin:2.1rem auto 1.1rem;max-width:46rem;font-family:DM Sans,sans-serif;font-size:.78rem;'
-                            f'font-weight:600;letter-spacing:.04em;color:{T["muted"]};"><span style="flex:1;height:1px;background:{T["border"]};"></span>'
-                            f'oppure parti da qui<span style="flex:1;height:1px;background:{T["border"]};"></span></div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="display:flex;align-items:center;gap:.8rem;margin:1.9rem auto 1.1rem;max-width:46rem;"><span style="flex:1;height:1px;background:{T["border"]};"></span>'
+                            f'<span style="flex:0 0 auto;font-family:DM Sans,sans-serif;font-size:.86rem;font-weight:700;color:{T["text"]};background:{T["card"]};'
+                            f'border:1px solid {T["border"]};border-radius:999px;padding:.4rem 1rem;box-shadow:0 1px 3px rgba(15,23,42,.06);">Oppure scegli come partire</span>'
+                            f'<span style="flex:1;height:1px;background:{T["border"]};"></span></div>', unsafe_allow_html=True)
             except Exception as _e_ag:      # l'agente è accessorio: un suo errore non deve mai bloccare la home
                 logger.warning("Agente: %s", _e_ag)
         _render_scelta_iniziale()

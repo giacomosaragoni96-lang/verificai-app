@@ -52,12 +52,15 @@ def _css(T: dict) -> str:
         "<style>"
         ".st-key-blk_agente{max-width:46rem;margin:0 auto;}"
         # ── titolo ────────────────────────────────────────────────────────────
-        f".ag-hero{{text-align:center;margin:1.1rem 0 1.4rem;{f}}}"
-        f".ag-hero b{{display:block;font-size:2.5rem;font-weight:800;letter-spacing:-.04em;line-height:1.08;color:{T['text']};}}"
+        f".ag-hero{{text-align:center;margin:.2rem 0 1.15rem;{f}}}"
+        ".st-key-blk_agente{margin-top:-.5rem;}"
+        f".ag-hero b{{display:block;font-size:2rem;font-weight:750;letter-spacing:-.03em;line-height:1.1;color:{T['text']};}}"
         f".ag-hero b em{{font-style:normal;background:linear-gradient(100deg,{acc},{acc2});-webkit-background-clip:text;background-clip:text;color:transparent;}}"
-        f".ag-hero span{{display:block;margin-top:.7rem;font-size:1.02rem;line-height:1.5;color:{T['text2']};}}"
-        f".ag-cap{{text-align:center;margin:.85rem 0 0;font-size:.78rem;line-height:1.7;color:{T['muted']};{f}}}"
-        f".ag-cap b{{font-weight:650;color:{T['text2']};}}"
+        f".ag-hero span{{display:block;margin:.45rem auto 0;max-width:30rem;font-size:.97rem;line-height:1.45;color:{T['text2']};}}"
+        f".ag-cap{{text-align:center;margin:1rem auto 0;max-width:36rem;font-size:.9rem;line-height:1.55;color:{T['text2']};{f}}}"
+        f".ag-cap b{{font-weight:700;color:{T['text']};}}"
+        f".ag-cap .ag-l2{{margin-top:.45rem;display:flex;gap:.5rem;align-items:center;justify-content:center;}}"
+        f".ag-cap .ag-plus{{font-style:normal;flex:0 0 1.35rem;width:1.35rem;height:1.35rem;border-radius:50%;background:{T['card']};border:1px solid {T['border']};display:inline-flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:{T['text2']};}}"
         # ── casella di scrittura: una scheda sola, pulita; dentro tutto trasparente ─────────────────────────────────
         "html body .stApp .st-key-blk_agente [data-testid='stChatInput']{"
         f"background:{T['card']} !important;border:1.5px solid {T['border']} !important;border-radius:26px !important;padding:.45rem .65rem .45rem .5rem !important;"
@@ -140,7 +143,7 @@ def _css(T: dict) -> str:
         f"html body .stApp .st-key-blk_ag_rit button[data-testid^='stNumberInputStep']:hover{{background:{acc}18 !important;color:{acc} !important;}}"
         "html body .stApp .st-key-blk_ag_rit [data-testid='stToggle'] label{align-items:center;gap:.5rem;}"
         f"html body .stApp .st-key-blk_ag_rit [data-testid='stToggle'] p{{font-weight:650;font-size:.92rem;color:{T['text']};}}"
-        "@media (max-width:640px){.ag-hero{margin:.5rem 0 1rem;}.ag-hero b{font-size:1.85rem;}.ag-hero span{font-size:.95rem;margin-top:.5rem;}.ag-cap{font-size:.74rem;line-height:1.55;margin-top:.7rem;padding:0 .4rem;}.ag-cap .ag-pc{display:none;}.ag-cap .ag-tel{display:inline !important;}html body .stApp .st-key-blk_agente [data-testid='stChatInput']{min-height:3.1rem;padding:.3rem .5rem .3rem .4rem !important;}html body .stApp .st-key-blk_agente [data-testid='stChatInput'] textarea{font-size:.95rem !important;}.ag-card{margin-left:0;}html body .stApp .st-key-blk_ag_azioni{margin-left:0;width:100% !important;}.ag-bub{max-width:90%;}}"
+        "@media (max-width:640px){.ag-hero{margin:.1rem 0 .9rem;}.ag-hero b{font-size:1.6rem;}.ag-hero span{font-size:.9rem;margin-top:.35rem;}.ag-cap{font-size:.84rem;line-height:1.5;margin-top:.8rem;padding:0 .3rem;}html body .stApp .st-key-blk_agente [data-testid='stChatInput']{min-height:3.1rem;padding:.3rem .5rem .3rem .4rem !important;}html body .stApp .st-key-blk_agente [data-testid='stChatInput'] textarea{font-size:.95rem !important;}.ag-card{margin-left:0;}html body .stApp .st-key-blk_ag_azioni{margin-left:0;width:100% !important;}.ag-bub{max-width:90%;}}"
         "@media (prefers-reduced-motion: reduce){.ag-row,.ag-card,.ag-dots i{animation:none !important;}}"
         "</style>" + _css_pillole(T)
     )
@@ -259,7 +262,7 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
         st.markdown(_css(T), unsafe_allow_html=True)
         if not chat and not in_arrivo:
             st.markdown('<div class="ag-hero"><b>Cosa ti <em>serve</em>?</b>'
-                        '<span>Descrivi la verifica come la diresti a un collega.<br>Al resto penso io.</span></div>', unsafe_allow_html=True)
+                        '<span>Descrivila come a un collega: al resto penso io.</span></div>', unsafe_allow_html=True)
         else:
             c_a, c_b = st.columns([2, 1], vertical_alignment="center")
             c_a.markdown('<div class="ag-top">Conversazione</div>', unsafe_allow_html=True)
@@ -329,10 +332,8 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
         invio = st.chat_input("Es. equazioni per la 3B", key="ag_in", accept_file="multiple",
                               file_type=["pdf", "png", "jpg", "jpeg", "webp", "docx"])
         if not chat and not in_arrivo:
-            st.markdown('<div class="ag-cap"><span class="ag-pc">Basta l&#8217;argomento. Se vuoi, aggiungi la <b>classe</b> e cosa preparare (<b>Fila B</b>, <b>soluzioni</b>, <b>versione per DSA</b>).<br>'
-                        'Con <b>＋</b> allegi appunti, foto o una verifica da sistemare.</span>'
-                        '<span class="ag-tel" style="display:none">Basta l&#8217;argomento. Aggiungi <b>classe</b>, <b>Fila B</b> o <b>soluzioni</b> se serve.<br>'
-                        'Con <b>＋</b> allegi appunti o una verifica da sistemare.</span></div>', unsafe_allow_html=True)
+            st.markdown('<div class="ag-cap"><div>Scrivi o detta: basta l&#8217;argomento. Se ti servono, aggiungi la <b>classe</b>, la <b>Fila B</b>, le <b>soluzioni</b> o la <b>versione per DSA</b>.</div>'
+                        '<div class="ag-l2"><i class="ag-plus">＋</i><span>allega appunti, foto o una verifica da sistemare</span></div></div>', unsafe_allow_html=True)
         if invio and evento is None and not in_arrivo:
             if isinstance(invio, str):
                 testo, files = invio.strip(), []
