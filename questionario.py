@@ -7,7 +7,7 @@ La pagina è `?pagina=questionario` (ui_questionario.py) e si apre anche senza a
 """
 import re
 
-VERSIONE = 2        # 2: «formula» è a risposta multipla, funzioni aggiornate (impagina, esercizio dal libro…), domanda «non useresti»
+VERSIONE = 3        # 3: versione breve (15 domande, 9 obbligatorie, circa 2 minuti); 2 = la lunga (28 domande), le sue risposte restano nel database
 MAX_TESTO = 1500
 MAX_RIGA = 120
 MAX_EURO = 10000
@@ -18,78 +18,36 @@ FUNZIONI = ["Verifica da una descrizione", "Impagina la tua verifica (da PDF o f
 
 # Ogni sezione: (titolo, introduzione, [domande]). Tipi: scelta (una risposta), multi (più risposte), scala (da A a B),
 # testo (risposta lunga), riga (risposta breve), euro (cifra in euro).
-_SEZ_BASE = [
-    ("1. Chi sei (facoltativo)", "", [
-        {"id": "ordine", "tipo": "multi", "testo": "In che ordine di scuola insegni?",
-         "opzioni": ["Scuola primaria", "Secondaria di primo grado (medie)", "Liceo", "Istituto tecnico", "Istituto professionale", "Altro"]},
-        {"id": "materie", "tipo": "riga", "testo": "Quali materie insegni?"},
-        {"id": "verifiche_anno", "tipo": "scelta", "testo": "Quante verifiche scrivi in un anno?",
-         "opzioni": ["0–5", "6–15", "16–30", "Più di 30"]},
-    ]),
-    ("2. Come fai oggi", "Prima di parlare di VerificAI, pensa a come prepari le verifiche di solito.", [
-        {"id": "tempo_da_zero", "tipo": "scelta",
-         "testo": "Di solito quanto tempo ci metti a creare una verifica da zero (scelta degli esercizi, impaginazione, "
-                  "tabella dei punteggi, eventuali versioni)?",
+SEZIONI = [
+    ("1. Com'è andata", "", [
+        {"id": "tempo_da_zero", "tipo": "scelta", "testo": "Di solito quanto tempo ci metti a creare una verifica da zero?",
          "opzioni": ["Meno di 30 minuti", "30–60 minuti", "1–2 ore", "Più di 2 ore"]},
-        {"id": "parte_pesante", "tipo": "multi", "testo": "Quale parte ti pesa di più?",
-         "opzioni": ["Scegliere gli esercizi", "Scriverli", "Impaginare", "Calcolare e scrivere i punteggi", "Preparare la Fila B",
-                     "Preparare le soluzioni", "Adattare la verifica per BES/DSA", "Altro"]},
-    ]),
-    ("3. La tua esperienza con VerificAI", "", [
-        {"id": "tempo_con", "tipo": "scelta", "testo": "Quanto ci hai messo a ottenere una verifica pronta da stampare?",
-         "opzioni": ["Meno di 5 minuti", "5–15 minuti", "15–30 minuti", "Più di 30 minuti"]},
-        {"id": "risparmio", "tipo": "scelta", "testo": "Rispetto al tuo solito, quanto tempo pensi di aver risparmiato?",
+        {"id": "risparmio", "tipo": "scelta", "testo": "Con VerificAI, quanto tempo pensi di aver risparmiato?",
          "opzioni": ["Niente", "Un po'", "Circa la metà", "Più della metà"]},
         {"id": "utile", "tipo": "scala", "testo": "Ti è servito davvero?", "da": 1, "a": 5, "etichette": ("Per niente", "Moltissimo")},
+        {"id": "correzioni", "tipo": "scelta", "testo": "Quanto hai dovuto correggere la verifica?", "opzioni": ["Niente", "Poco", "Molto"]},
         {"id": "useresti", "tipo": "scelta", "testo": "La useresti la prossima volta per una verifica vera?",
          "opzioni": ["Sì", "Forse", "No"]},
-        {"id": "facile", "tipo": "scala", "testo": "Quanto è stato facile creare la prima verifica?", "da": 1, "a": 5,
-         "etichette": ("Difficile", "Facilissimo")},
-        {"id": "intuitivo", "tipo": "testo", "testo": "Cosa hai trovato più intuitivo?"},
-        {"id": "confuso", "tipo": "testo", "testo": "Cosa ti ha confuso o rallentato?"},
-        {"id": "pronta", "tipo": "scelta", "testo": "La verifica generata era pronta da usare?",
-         "opzioni": ["Mai", "A volte", "Spesso", "Sempre"]},
-        {"id": "correzioni", "tipo": "scelta", "testo": "Quanto hai dovuto correggere?", "opzioni": ["Niente", "Poco", "Molto"]},
+        {"id": "manca", "tipo": "testo", "testo": "Cosa manca o cosa cambieresti? (anche una frase sola)"},
     ]),
-    ("4. Cosa manca e cosa è di troppo", "", [
-        {"id": "piaciuto", "tipo": "multi", "testo": "Cosa ti è piaciuto di più?", "opzioni": FUNZIONI},
-        {"id": "funzioni_mese", "tipo": "multi", "testo": "Quali funzioni useresti ogni mese?", "opzioni": FUNZIONI},
-        {"id": "non_useresti", "tipo": "multi", "testo": "Quali funzioni non useresti mai?", "opzioni": FUNZIONI},
-        {"id": "manca", "tipo": "testo", "testo": "Cosa manca?"},
-        {"id": "troppo", "tipo": "testo", "testo": "Cosa c'è di troppo o non ti serve?"},
-    ]),
-    ("5. Se un giorno fosse a pagamento",
+    ("2. Se un giorno fosse a pagamento",
      "Per ora VerificAI è gratuito: queste domande servono a capire cosa avrebbe senso, non a venderti nulla.", [
         {"id": "pagheresti", "tipo": "scelta", "testo": "Pagheresti per un servizio così?", "opzioni": ["Sì", "Forse", "No"]},
-        {"id": "perche", "tipo": "testo", "testo": "Se hai risposto «forse» o «no»: perché?"},
-        {"id": "formula", "tipo": "multi", "testo": "Quali formule preferiresti? (puoi sceglierne più di una)",
-         "opzioni": ["Un anno intero con un solo pagamento", "30 giorni con un solo pagamento", "Pagamento per ogni singola verifica",
-                     "Pacchetto di verifiche", "Abbonamento mensile", "Licenza per la scuola o il dipartimento", "Nessuna: non pagherei"]},
-        {"id": "verifiche_mese", "tipo": "scelta", "testo": "Quante verifiche al mese ti servirebbero?",
-         "opzioni": ["1–2", "3–5", "6–10", "Più di 10"]},
-        {"id": "vw_troppo_basso", "tipo": "euro", "testo": "Pensando a un anno intero: a che prezzo sarebbe così basso da farti dubitare della qualità? (€ all'anno)"},
-        {"id": "vw_conveniente", "tipo": "euro", "testo": "A che prezzo all'anno lo troveresti conveniente? (€)"},
-        {"id": "vw_caro", "tipo": "euro", "testo": "A che prezzo all'anno comincerebbe a sembrarti caro? (€)"},
-        {"id": "vw_troppo_caro", "tipo": "euro", "testo": "A che prezzo all'anno lo troveresti troppo caro per comprarlo? (€)"},
+        {"id": "formula", "tipo": "multi", "testo": "Quale formula preferiresti? (puoi sceglierne più di una)",
+         "opzioni": ["Un anno intero con un solo pagamento", "Pagamento per ogni singola verifica", "Pacchetto di verifiche",
+                     "Abbonamento mensile", "Licenza per la scuola o il dipartimento", "Nessuna: non pagherei"]},
+        {"id": "vw_conveniente", "tipo": "euro", "testo": "Pensando a un anno intero: a che prezzo lo troveresti conveniente? (€ all'anno)"},
+        {"id": "vw_caro", "tipo": "euro", "testo": "A che prezzo comincerebbe a sembrarti caro? (€ all'anno)"},
+        {"id": "vw_troppo_caro", "tipo": "euro", "testo": "A che prezzo lo troveresti troppo caro per comprarlo? (€ all'anno)"},
         {"id": "consiglieresti", "tipo": "scala", "testo": "Quanto è probabile che lo consiglieresti a un collega?", "da": 0, "a": 10,
          "etichette": ("Per niente probabile", "Sicuramente")},
     ]),
-    ("6. Ultima cosa (facoltativa)", "", [
+    ("3. Se hai ancora un minuto (facoltativo)", "", [
+        {"id": "funzioni_mese", "tipo": "multi", "testo": "Quali funzioni useresti ogni mese?", "opzioni": FUNZIONI},
+        {"id": "ordine", "tipo": "multi", "testo": "In che ordine di scuola insegni?",
+         "opzioni": ["Scuola primaria", "Secondaria di primo grado (medie)", "Liceo", "Istituto tecnico", "Istituto professionale", "Altro"]},
         {"id": "altro", "tipo": "testo", "testo": "Altro che vuoi dirci?"},
     ]),
-]
-
-_BASE = {d["id"]: d for _t, _i, ds in _SEZ_BASE for d in ds}
-# Ordine pensato per chi si stanca: prima le domande che contano di più (tempo, utilità, cosa manca, prezzo), in fondo quelle su di sé.
-SEZIONI = [
-    ("1. Il tuo tempo", "", [_BASE[i] for i in ("tempo_da_zero", "tempo_con", "risparmio", "utile", "useresti", "pronta", "correzioni")]),
-    ("2. Cosa cambieresti", "", [_BASE[i] for i in ("facile", "intuitivo", "confuso", "manca", "troppo")]),
-    ("3. Se un giorno fosse a pagamento",
-     "Per ora VerificAI è gratuito: queste domande servono a capire cosa avrebbe senso, non a venderti nulla.",
-     [_BASE[i] for i in ("pagheresti", "perche", "formula", "verifiche_mese", "vw_troppo_basso", "vw_conveniente", "vw_caro",
-                         "vw_troppo_caro", "consiglieresti")]),
-    ("4. Cosa ti è piaciuto", "", [_BASE[i] for i in ("piaciuto", "funzioni_mese", "non_useresti")]),
-    ("5. Su di te (facoltativo)", "", [_BASE[i] for i in ("ordine", "materie", "verifiche_anno", "parte_pesante", "altro")]),
 ]
 
 _DOMANDE = {d["id"]: d for _t, _i, ds in SEZIONI for d in ds}
@@ -156,14 +114,11 @@ def riga_rapida(risposte: dict) -> dict:
 
 # Domande che servono per ricevere il codice (non «tutto»: quelle su di sé restano facoltative). Etichetta breve → per dire cosa manca.
 OBBLIGATORIE = {
-    "tempo_da_zero": "quanto tempo ci metti di solito", "tempo_con": "quanto ci hai messo con VerificAI", "risparmio": "quanto tempo hai risparmiato",
-    "utile": "ti è servito davvero", "useresti": "la useresti per una verifica vera", "pronta": "se la verifica era pronta da usare",
-    "correzioni": "quanto hai dovuto correggere", "facile": "quanto è stato facile", "manca": "cosa manca (scrivi almeno una frase)",
-    "pagheresti": "se pagheresti", "formula": "le formule che preferiresti", "verifiche_mese": "quante verifiche al mese",
-    "vw_troppo_basso": "il prezzo troppo basso", "vw_conveniente": "il prezzo conveniente", "vw_caro": "il prezzo che comincia a essere caro",
-    "vw_troppo_caro": "il prezzo troppo caro", "consiglieresti": "se lo consiglieresti",
+    "risparmio": "quanto tempo hai risparmiato", "utile": "ti è servito davvero", "useresti": "la useresti per una verifica vera",
+    "manca": "cosa manca (scrivi almeno una frase)", "pagheresti": "se pagheresti", "vw_conveniente": "il prezzo conveniente",
+    "vw_caro": "il prezzo che comincia a essere caro", "vw_troppo_caro": "il prezzo troppo caro", "consiglieresti": "se lo consiglieresti",
 }
-MIN_CARATTERI_MANCA = 15
+MIN_CARATTERI_MANCA = 10
 
 
 def e_completo(risposte: dict):
@@ -171,7 +126,7 @@ def e_completo(risposte: dict):
     mancanti = [lab for qid, lab in OBBLIGATORIE.items() if qid not in risposte]
     if "manca" in risposte and len(str(risposte["manca"]).strip()) < MIN_CARATTERI_MANCA and OBBLIGATORIE["manca"] not in mancanti:
         mancanti.append(OBBLIGATORIE["manca"])
-    prezzi = [risposte.get(k) for k in ("vw_troppo_basso", "vw_conveniente", "vw_caro", "vw_troppo_caro")]
+    prezzi = [risposte.get(k) for k in ("vw_conveniente", "vw_caro", "vw_troppo_caro")]
     if all(p is not None for p in prezzi) and any(a > b for a, b in zip(prezzi, prezzi[1:])):
-        mancanti.append("i prezzi devono crescere: dal «troppo basso» al «troppo caro»")
+        mancanti.append("i prezzi devono crescere: dal «conveniente» al «troppo caro»")
     return (not mancanti), mancanti

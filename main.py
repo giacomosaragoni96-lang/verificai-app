@@ -1607,11 +1607,11 @@ def _box_feedback(compatto: bool = False) -> None:
     Sparisce da solo, in questo browser, dopo aver inviato il questionario (il flag lo mette la pagina del questionario)."""
     if compatto:
         corpo = ('<div class="vf-fb-testo"><div class="vf-fb-t">VerificAI è in beta ed è gratuita</div>'
-                 '<div class="vf-fb-d">Il tuo parere ci serve davvero: bastano 4 minuti.</div></div>')
+                 '<div class="vf-fb-d">Il tuo parere ci serve davvero: bastano 2 minuti.</div></div>')
     else:
         corpo = ('<div class="vf-fb-testo"><div class="vf-fb-t">Aiutaci a migliorare VerificAI</div>'
                  '<div class="vf-fb-d">VerificAI è in <b>beta</b> e per ora è <b>completamente gratuita</b>: l\'unica cosa che ti chiediamo '
-                 'è un parere sincero. Bastano 4 minuti e le risposte sono anonime. Per noi è fondamentale.</div></div>')
+                 'è un parere sincero. Bastano 2 minuti e le risposte sono anonime. Per noi è fondamentale.</div></div>')
     st.markdown(_CSS_BOX_FEEDBACK + f'<div class="vf-fb{" vf-fb-c" if compatto else ""}"><div class="vf-fb-ico">💬</div>{corpo}'
                 '<a class="vf-fb-b" href="?pagina=questionario" target="_blank" rel="noopener">Lascia il tuo feedback →</a></div>',
                 unsafe_allow_html=True)
@@ -1831,7 +1831,7 @@ def _box_sblocco(dove: str) -> None:
                         + _pillole + '</div></div>',
                         unsafe_allow_html=True)
         with _c2:
-            st.markdown('<div class="bx-mini"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="vertical-align:-1px;margin-right:.3rem"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>4 minuti · anonimo</div>'
+            st.markdown('<div class="bx-mini"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="vertical-align:-1px;margin-right:.3rem"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>2 minuti · anonimo</div>'
                         '<a class="bx-b" href="?pagina=questionario" target="_blank" rel="noopener">Compila il questionario</a>',
                         unsafe_allow_html=True)
             if st.button("Ho già un codice", key=f"sblocco_codice_{dove}", type="tertiary"):

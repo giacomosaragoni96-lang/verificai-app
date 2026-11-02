@@ -56,11 +56,10 @@ def _css(T: dict) -> str:
         ".st-key-blk_agente{margin-top:-.5rem;}"
         f".ag-hero b{{display:block;font-size:2rem;font-weight:750;letter-spacing:-.03em;line-height:1.1;color:{T['text']};}}"
         f".ag-hero b em{{font-style:normal;background:linear-gradient(100deg,{acc},{acc2});-webkit-background-clip:text;background-clip:text;color:transparent;}}"
-        f".ag-hero span{{display:block;margin:.45rem auto 0;max-width:30rem;font-size:.97rem;line-height:1.45;color:{T['text2']};}}"
+        f".ag-hero span{{display:block;margin:.45rem auto 0;max-width:38rem;font-size:.97rem;line-height:1.45;color:{T['text2']};}}"
         f".ag-cap{{text-align:center;margin:1rem auto 0;max-width:36rem;font-size:.9rem;line-height:1.55;color:{T['text2']};{f}}}"
         f".ag-cap b{{font-weight:700;color:{T['text']};}}"
-        f".ag-cap .ag-l2{{margin-top:.45rem;display:flex;gap:.5rem;align-items:center;justify-content:center;}}"
-        f".ag-cap .ag-plus{{font-style:normal;flex:0 0 1.35rem;width:1.35rem;height:1.35rem;border-radius:50%;background:{T['card']};border:1px solid {T['border']};display:inline-flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:{T['text2']};}}"
+        f".ag-cap .ag-plus{{font-style:normal;width:1.15rem;height:1.15rem;border-radius:50%;vertical-align:-.2rem;margin:0 .1rem;line-height:1;background:{T['card']};border:1px solid {T['border']};display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:{T['text2']};}}"
         # ── casella di scrittura: una scheda sola, pulita; dentro tutto trasparente ─────────────────────────────────
         "html body .stApp .st-key-blk_agente [data-testid='stChatInput']{"
         f"background:{T['card']} !important;border:1.5px solid {T['border']} !important;border-radius:26px !important;padding:.45rem .65rem .45rem .5rem !important;"
@@ -262,7 +261,7 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
         st.markdown(_css(T), unsafe_allow_html=True)
         if not chat and not in_arrivo:
             st.markdown('<div class="ag-hero"><b>Cosa ti <em>serve</em>?</b>'
-                        '<span>Descrivila come a un collega: al resto penso io.</span></div>', unsafe_allow_html=True)
+                        '<span>Dimmi che verifica ti serve, come lo diresti a un collega. Al resto penso io.</span></div>', unsafe_allow_html=True)
         else:
             c_a, c_b = st.columns([2, 1], vertical_alignment="center")
             c_a.markdown('<div class="ag-top">Conversazione</div>', unsafe_allow_html=True)
@@ -332,8 +331,8 @@ def render_home(T: dict, chat: list, blocco: str | None, bloccate: list, allegat
         invio = st.chat_input("Es. equazioni per la 3B", key="ag_in", accept_file="multiple",
                               file_type=["pdf", "png", "jpg", "jpeg", "webp", "docx"])
         if not chat and not in_arrivo:
-            st.markdown('<div class="ag-cap"><div>Scrivi o detta: basta l&#8217;argomento. Se ti servono, aggiungi la <b>classe</b>, la <b>Fila B</b>, le <b>soluzioni</b> o la <b>versione per DSA</b>.</div>'
-                        '<div class="ag-l2"><i class="ag-plus">＋</i><span>allega appunti, foto o una verifica da sistemare</span></div></div>', unsafe_allow_html=True)
+            st.markdown('<div class="ag-cap">Scrivi o detta l&#8217;argomento. Se vuoi, aggiungi <b>classe</b>, <b>Fila&nbsp;B</b>, <b>soluzioni</b> o <b>versione&nbsp;DSA</b>; '
+                        'con <i class="ag-plus">＋</i> allegi appunti o una verifica da sistemare.</div>', unsafe_allow_html=True)
         if invio and evento is None and not in_arrivo:
             if isinstance(invio, str):
                 testo, files = invio.strip(), []
