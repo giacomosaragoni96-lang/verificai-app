@@ -4788,11 +4788,17 @@ font-family: 'DM Sans', sans-serif;
 
   /* Schermata di creazione: colonna stretta e centrata, logo piu' piccolo */
   /* il marchio sta alla stessa altezza in tutte le pagine */
-  [data-testid="stMainBlockContainer"], .main .block-container {{ padding-top: 2.7rem !important; }}
+  /* La barra in alto di Streamlit (alta ~60px) copriva il logo: più bassa e trasparente (resta il pulsante della barra laterale e, per l'admin, gli strumenti), e il contenuto parte sotto di lei */
+  html body .stApp header[data-testid="stHeader"]:not(#_vf) {{
+    height: 2.8rem !important; min-height: 0 !important;
+    background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    border-bottom: none !important;
+  }}
+  [data-testid="stMainBlockContainer"], .main .block-container {{ padding-top: 4.3rem !important; }}
   [data-testid="stMainBlockContainer"]:has(.vf-narrow),
   .main .block-container:has(.vf-narrow) {{
     max-width: 820px !important;
-    padding-top: 2.7rem !important;
+    padding-top: 4.3rem !important;
   }}
   .opt-label .opt-hint {{
     text-transform: none;
