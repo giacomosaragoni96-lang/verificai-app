@@ -4794,11 +4794,11 @@ font-family: 'DM Sans', sans-serif;
     background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
     border-bottom: none !important;
   }}
-  [data-testid="stMainBlockContainer"], .main .block-container {{ padding-top: 3.7rem !important; }}
+  [data-testid="stMainBlockContainer"], .main .block-container {{ padding-top: 4.3rem !important; }}
   [data-testid="stMainBlockContainer"]:has(.vf-narrow),
   .main .block-container:has(.vf-narrow) {{
     max-width: 820px !important;
-    padding-top: 3.7rem !important;
+    padding-top: 4.3rem !important;
   }}
   .opt-label .opt-hint {{
     text-transform: none;
