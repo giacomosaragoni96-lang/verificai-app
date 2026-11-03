@@ -43,3 +43,9 @@ materiale/
 
 # Impostazioni locali di Claude Code
 .claude/settings.local.json
+
+# scroll-craft: build della landing (file pesanti, fuori da git)
+scrollcraft/
+
+# gli esempi PDF della landing sono pubblici e la pagina li linka
+!landing/*.pdf
