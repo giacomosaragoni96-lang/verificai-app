@@ -2,17 +2,17 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VerificAI — verifiche scolastiche pronte in pochi minuti</title>
-<meta name="description" content="VerificAI è un servizio web per docenti: crea una verifica da una descrizione o dai tuoi appunti, fatti impaginare bene una verifica fatta male e correggi i compiti dalle foto, con voti, commenti e l'errore evidenziato. PDF e Word, con Fila B, BES/DSA e soluzioni.">
-<meta name="theme-color" content="#FAF8F4">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VerificAI: verifiche pronte da stampare in pochi minuti</title>
+<meta name="description" content="VerificAI è un servizio web per docenti: crea una verifica da una descrizione, fatti impaginare bene una verifica fatta male e correggi i compiti dalle foto. PDF e Word, con Fila B, BES/DSA e soluzioni.">
+<meta name="theme-color" content="#0B1020">
 <link rel="canonical" href="https://verificai.net/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563EB'/%3E%3Ctext x='32' y='45' font-family='Georgia,serif' font-size='38' font-weight='bold' text-anchor='middle' fill='white'%3EV%3C/text%3E%3C/svg%3E">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="it_IT">
 <meta property="og:site_name" content="VerificAI">
 <meta property="og:url" content="https://verificai.net/">
-<meta property="og:title" content="VerificAI — verifiche pronte da stampare in pochi minuti">
+<meta property="og:title" content="VerificAI: verifiche pronte da stampare in pochi minuti">
 <meta property="og:description" content="Crea una verifica da una descrizione, fatti impaginare bene una verifica fatta male o correggi i compiti dalle foto. PDF e Word. Gratis durante la fase beta.">
 <meta property="og:image" content="https://verificai.net/og.png">
 <meta property="og:image:width" content="1200">
@@ -21,132 +21,370 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,800;1,9..144,700;1,9..144,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,800;1,9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="scrollcraft.css">
 <style>
-  :root { --blu:#2563EB; --blu-scuro:#1E3A8A; --testo:#0F172A; --grigio:#475569; --carta:#FAF8F4; --bordo:#E7E2D8; --oro:#F59E0B; }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body { margin:0; font-family:"DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color:var(--testo); background:var(--carta); line-height:1.5; font-size:15.5px; }
-  .w { max-width: 1040px; margin: 0 auto; padding: 0 1.3rem; }
-  /* barra */
-  .nav { display:flex; justify-content:space-between; align-items:center; padding:1rem 0; }
-  .logo { font-family:"Fraunces", Georgia, serif; font-weight:800; font-size:2.1rem; letter-spacing:-.02em; line-height:1.1; }
-  .logo .m { background: linear-gradient(transparent 58%, #FDE68A 58%); padding:0 .12em; }
-  .logo i { color:var(--blu); }
-  .logo small { font-family:"DM Sans",sans-serif; font-style:normal; font-size:.74rem; font-weight:800; letter-spacing:.1em; color:var(--blu); border:2px solid var(--blu); border-radius:999px; padding:.16rem .6rem; margin-left:.55rem; vertical-align:middle; }
-  .btn { display:inline-block; background:linear-gradient(135deg,var(--blu),var(--blu-scuro)); color:#fff !important; padding:1.05rem 2.4rem; border-radius:16px; font-weight:800; font-size:1.12rem; text-decoration:none; box-shadow:0 12px 30px rgba(37,99,235,.32); transition:transform .15s ease, box-shadow .15s ease; }
-  .btn:hover { transform: translateY(-2px); box-shadow:0 16px 34px rgba(37,99,235,.40); }
-  .btn.s { padding:.55rem 1.1rem; border-radius:11px; font-size:.95rem; box-shadow:0 8px 20px rgba(37,99,235,.25); }
-  /* in cima: cosa puoi fare */
-  .hero { text-align:center; padding: 1.4rem 0 .6rem; }
-  .hero h1 { font-family:"Fraunces", Georgia, serif; font-size: clamp(2rem, 4.2vw, 3rem); line-height:1.1; letter-spacing:-.025em; margin:0 0 1.6rem; text-wrap:balance; }
-  .hero h1 em { color:var(--blu); }
-  .hero p.sub { font-size:1.08rem; color:var(--grigio); margin:0 auto 1.5rem; max-width:36rem; }
-  .vie { display:grid; grid-template-columns: repeat(3, 1fr); gap:1.1rem; text-align:left; margin:0 auto 1.3rem; max-width:1000px; }
-  .via.corr { border-color:#BFDBFE; background:linear-gradient(160deg,#FFFFFF,#EFF6FF); box-shadow:0 8px 22px rgba(37,99,235,.10); }
-  .via { background:#fff; border:1px solid var(--bordo); border-radius:20px; padding:1.3rem 1.3rem 1.2rem; box-shadow:0 8px 22px rgba(15,23,42,.06); position:relative; }
-  .via.nuova { border-color:#FCD34D; box-shadow:0 10px 26px rgba(245,158,11,.16); }
-  .via.nuova { overflow:hidden; background:linear-gradient(160deg,#FFFDF5,#FEF3C7); }
-  .via .tag { position:absolute; top:0; right:1.4rem; white-space:nowrap; color:#fff; font-size:.62rem; font-weight:800; letter-spacing:.09em; text-transform:uppercase;
-    padding:.36rem .8rem .42rem; border-radius:0 0 10px 10px; background:linear-gradient(180deg,#FBBF24 0%,#F59E0B 60%,#D97706 100%); box-shadow:0 4px 8px rgba(146,64,14,.22); text-shadow:0 1px 1px rgba(120,53,15,.35); }
-  .via .i { font-size:1.9rem; line-height:1; margin-bottom:.5rem; }
-  .via b { display:block; font-size:1.1rem; margin-bottom:.25rem; letter-spacing:-.01em; }
-  .via span { color:var(--grigio); font-size:.95rem; display:block; }
-  .poi { display:flex; align-items:center; justify-content:center; gap:.5rem; flex-wrap:wrap; margin:0 auto 1.7rem; max-width:760px; }
-  .poi .et { flex:0 0 100%; text-align:center; color:var(--grigio); font-weight:700; font-size:.92rem; margin:0 0 .25rem; }
-  .poi span.c { background:#fff; border:1px solid var(--bordo); border-radius:999px; padding:.38rem .85rem; font-size:.9rem; font-weight:600; }
-  .azione { text-align:center; }
-  .gratis { margin-top:.9rem; font-size:.95rem; color:var(--grigio); }
-  .gratis b { background:#FEF3C7; border:1.5px solid #FCD34D; color:#78350F; padding:.18rem .7rem; border-radius:999px; font-weight:800; }
-  /* esempi */
-  section { padding: 2rem 0 .6rem; }
-  h2 { font-family:"Fraunces", Georgia, serif; font-size: clamp(1.3rem, 2.4vw, 1.65rem); letter-spacing:-.02em; margin:0 0 .3rem; text-align:center; }
-  .intro { color:var(--grigio); margin:0 0 1.2rem; text-align:center; }
-  .esempi-vero { display:grid; grid-template-columns: repeat(auto-fit, minmax(225px, 1fr)); gap:1.1rem; }
-  .vero { background:#fff; border:1px solid var(--bordo); border-radius:18px; overflow:hidden; text-decoration:none; color:var(--testo); display:block; transition: transform .15s ease, box-shadow .15s ease; }
-  .vero:hover { transform: translateY(-3px); box-shadow:0 14px 30px rgba(15,23,42,.12); }
-  .vero .anteprima { height:230px; overflow:hidden; border-bottom:1px solid var(--bordo); background:#fff; }
-  .vero .anteprima img { width:100%; display:block; }
-  .vero .testo { padding:1rem 1.2rem 1.2rem; }
-  .vero b { display:block; font-size:1.02rem; } .vero span { display:block; color:var(--grigio); font-size:.9rem; margin:.15rem 0 .5rem; }
-  .vero .apri { color:var(--blu-scuro); font-weight:700; font-size:.92rem; }
-  footer { padding: 2rem 0 2.6rem; color:var(--grigio); font-size:.9rem; text-align:center; }
-  footer a { color:var(--grigio); }
-  @media (max-width: 820px) { .logo { font-size:1.8rem; } .vie { grid-template-columns: 1fr; gap:1.1rem; } .btn { width:100%; text-align:center; padding:1.05rem 1rem; } }
+  :root {
+    --sc-canvas:     #0B1020;
+    --sc-surface:    #121A33;
+    --sc-ink:        #F1F4FB;
+    --sc-ink-soft:   #A9B2CE;
+    --sc-accent:     #3B82F6;
+    --sc-accent-ink: #0B1020;
+    --sc-font-display: "Fraunces", Georgia, serif;
+    --sc-font-text:    "DM Sans", system-ui, sans-serif;
+    --sc-shadow-color: 226 55% 3%;
+  }
+  .sc-display { font-weight: 800; }
+  .sc-display em { font-style: italic; color: var(--sc-accent); }
+
+  /* ---- unica azione, sempre a portata (non è una barra) ---- */
+  .pill {
+    position: fixed; top: max(1rem, env(safe-area-inset-top)); right: var(--sc-gutter); z-index: var(--sc-z-chrome);
+    display: inline-flex; align-items: center; min-height: 44px; padding: 0 1.25rem;
+    background: var(--sc-accent); color: var(--sc-accent-ink); font-weight: 700; font-size: var(--sc-t-sm);
+    border-radius: var(--sc-r-pill); text-decoration: none;
+    box-shadow: var(--sc-e2), var(--sc-edge);
+    transition: transform var(--sc-d-fast) var(--sc-ease-out);
+  }
+  .pill:active { transform: scale(.97); }
+  @media (hover: hover) and (pointer: fine) { .pill:hover { transform: translateY(-1px); } }
+  .marchio {
+    position: fixed; top: max(1rem, env(safe-area-inset-top)); left: var(--sc-gutter); z-index: var(--sc-z-chrome);
+    display: flex; align-items: center; min-height: 44px;
+    font-family: var(--sc-font-display); font-weight: 800; font-size: 1.5rem; letter-spacing: -.02em; text-decoration: none;
+  }
+  .marchio i { color: var(--sc-accent); }
+  .marchio small { font-family: var(--sc-font-text); font-style: normal; font-size: .65rem; font-weight: 700; letter-spacing: .1em; color: var(--sc-ink-soft); border: 1px solid var(--sc-hairline-strong); border-radius: 999px; padding: .1rem .5rem; margin-left: .55rem; }
+
+  body::before { content:""; position:fixed; left:0; right:0; top:0; height:5.5rem; z-index:59; pointer-events:none; background:linear-gradient(var(--sc-canvas) 35%, transparent); }
+  /* ================= ATTO 1: il foglio che si impagina da solo ================= */
+  .atto1 .sc-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    align-items: center;
+    padding: 5.5rem var(--sc-gutter) 2rem;
+    gap: var(--sc-6);
+    background: radial-gradient(90% 70% at 72% 50%, #16224A 0%, var(--sc-canvas) 70%);
+  }
+  .copia { display: grid; align-self: center; }
+  .copia > * { grid-area: 1 / 1; align-self: center; }
+  .copia h1, .copia h2 { margin: 0 0 var(--sc-4); font-size: var(--sc-t-3xl); line-height: var(--sc-leading-tight); letter-spacing: var(--sc-track-tight); text-wrap: balance; }
+  .copia p { margin: 0; max-width: 30rem; color: var(--sc-ink-soft); font-size: var(--sc-t-base); text-wrap: pretty; }
+  .copia .grande { font-size: var(--sc-t-4xl); }
+  .copia .fine { color: var(--sc-ink); font-weight: 500; }
+
+  /* il tavolo: due fogli sovrapposti, il "prima" (markup) sotto e il "dopo" (PDF vero) sopra */
+  .tavolo { position: relative; display: grid; place-items: center; height: 100%; min-height: 0; }
+  .foglio {
+    --t: clamp(0, calc((var(--sc-p, 0) - 0.10) / 0.32), 1);   /* quanto si è raddrizzato */
+    --w: clamp(0, calc((var(--sc-p, 0) - 0.46) / 0.34), 1);   /* quanto ha avanzato il "dopo" */
+    position: relative; container-type: inline-size;
+    height: min(calc(100svh - 7.5rem), 60vw); aspect-ratio: 1 / 1.414; max-width: 100%;
+    border-radius: 4px; box-shadow: var(--sc-e3), 0 40px 80px -30px #000, 0 0 calc(var(--w) * 70px) calc(var(--w) * 4px) #3B82F633;
+    background: #F3EEE0; overflow: hidden; color: #2a2a2a;
+  }
+  .foglio .prima, .foglio .dopo { position: absolute; inset: 0; }
+  .foglio .dopo { clip-path: inset(0 0 0 calc((1 - var(--w)) * 100%)); background: #fff; }
+  .foglio .dopo img { width: 100%; height: 100%; object-fit: cover; }
+  .linea {
+    position: absolute; top: 0; bottom: 0; left: calc((1 - var(--w)) * 100%); width: 3px; margin-left: -1.5px;
+    background: var(--sc-accent); box-shadow: 0 0 0 1px #0B102055, 0 0 24px 2px #3B82F6aa;
+    opacity: clamp(0, calc(var(--w) * 40), 1); z-index: 3; pointer-events: none;
+  }
+  .linea::after { content: "‹ ›"; position: absolute; top: 50%; left: 50%; width: 9cqw; height: 9cqw; margin: -4.5cqw 0 0 -4.5cqw; display: grid; place-items: center; border-radius: 50%; background: #fff; color: #1d4ed8; font: 700 4cqw/1 var(--sc-font-text); letter-spacing: .1cqw; box-shadow: 0 .6cqw 2cqw #0B102080, 0 0 0 .5cqw var(--sc-accent); }
+  .etichetta {
+    position: absolute; top: 3cqw; z-index: 4; font-family: var(--sc-font-text); font-weight: 700; font-size: 3cqw; letter-spacing: .1em; text-transform: uppercase;
+    padding: .8cqw 2.4cqw; border-radius: 99px; box-shadow: 0 .4cqw 1.4cqw #0006;
+  }
+  .et-prima { left: 3cqw; background: #2a2a2a; color: #FFF8E1; opacity: calc(1 - var(--w) * 1.5); }
+  .et-dopo  { right: 3cqw; background: var(--sc-accent); color: var(--sc-accent-ink); opacity: clamp(0, calc((var(--w) - .15) * 4), 1); }
+
+  /* il "prima": tutto storto, tutto sbagliato, ma testo vero */
+  .prima { font-size: 2.7cqw; line-height: 1.3; padding: 7cqw 6cqw; }
+  .prima .m {
+    display: block; position: relative; transform-origin: 0 50%;
+    transform: translateX(calc(var(--x, 0) * 1cqw * (1 - var(--t)))) rotate(calc(var(--r, 0) * 1deg * (1 - var(--t))));
+    margin-top: calc(var(--g, 1) * 1.5cqw);
+  }
+  .prima .tit { font-family: "Comic Sans MS", "Comic Neue", cursive; font-size: 4.8cqw; font-weight: 700; color: #B3261E; margin-top: 0; }
+  .prima .nome { font-family: "Courier New", monospace; font-size: 2.3cqw; }
+  .prima .e1 { font-family: "Times New Roman", serif; font-weight: 700; font-size: 3.3cqw; }
+  .prima .e2 { font-family: Arial, sans-serif; font-weight: 700; font-size: 2.8cqw; text-transform: uppercase; }
+  .prima .r  { font-family: Georgia, serif; }
+  .prima .r2 { font-family: Verdana, sans-serif; font-size: 2.4cqw; }
+  .prima .r3 { font-family: "Trebuchet MS", sans-serif; font-size: 3.1cqw; }
+  .prima .shot {
+    width: 66%; height: 26cqw; background: #d9d9d9; border: 1px dashed #888; position: relative;
+    box-shadow: 0 .4cqw 1.2cqw #0003; filter: blur(.35px);
+    background-image: linear-gradient(#bbb 1px, transparent 1px), linear-gradient(90deg, #bbb 1px, transparent 1px); background-size: 3cqw 3cqw;
+  }
+  .prima .shot::after { content: "Schermata 2026-10-11 alle 21.43.png"; position: absolute; left: .8cqw; bottom: .5cqw; font: 1.3cqw Arial, sans-serif; color: #666; }
+  .prima .evid { background: #FFF176; padding: 0 .6cqw; }
+  .prima .barra { text-decoration: line-through; text-decoration-color: #B3261E; text-decoration-thickness: .3cqw; }
+  .prima .macchia {
+    position: absolute; right: 8cqw; bottom: 12cqw; width: 18cqw; height: 18cqw; border-radius: 50%;
+    border: .8cqw solid #8B5E3C22; background: radial-gradient(circle, #8B5E3C10 0, #8B5E3C26 70%, transparent 71%);
+    opacity: calc(1 - var(--t)); transform: none; margin: 0;
+  }
+  .prima .punti { position: absolute; right: 5cqw; top: 14cqw; font: 700 3cqw "Comic Sans MS", cursive; color: #B3261E; transform: rotate(calc(8deg * (1 - var(--t)))); opacity: calc(1 - var(--t)); margin: 0; }
+
+
+  /* ================= ATTO 1b: l'app al lavoro (registrazione vera) ================= */
+  .demo { padding-block: var(--sc-section) var(--sc-7); background: var(--sc-canvas); }
+  .demo h2 { margin: 0 0 var(--sc-4); font-size: var(--sc-t-3xl); line-height: var(--sc-leading-tight); letter-spacing: var(--sc-track-tight); text-wrap: balance; max-width: 20ch; }
+  .demo .sc-body { margin-bottom: var(--sc-7); }
+  .schermo { position: relative; margin: 0 auto; max-width: 62rem; border-radius: var(--sc-r-lg); overflow: hidden; background: #E9EEF9; box-shadow: var(--sc-e3), 0 50px 90px -40px #000, var(--sc-edge); border: 1px solid var(--sc-hairline-strong); }
+  .schermo video { width: 100%; height: auto; aspect-ratio: 16 / 9; display: block; }
+  .gioca { position: absolute; right: var(--sc-4); bottom: var(--sc-4); min-width: 44px; min-height: 44px; padding: 0 1.1rem; border: 0; border-radius: var(--sc-r-pill); background: #0B1020E6; color: var(--sc-ink); font-weight: 700; font-size: var(--sc-t-sm); cursor: pointer; box-shadow: var(--sc-e2); transition: transform var(--sc-d-fast) var(--sc-ease-out); }
+  .gioca:active { transform: scale(.97); }
+  @media (hover: hover) and (pointer: fine) { .gioca:hover { transform: translateY(-1px); } }
+  .passi { list-style: none; margin: var(--sc-6) auto 0; padding: 0; max-width: 62rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sc-5); }
+  .passi li { border-top: 1px solid var(--sc-hairline-strong); padding-top: var(--sc-3); color: var(--sc-ink-soft); font-size: var(--sc-t-sm); text-wrap: pretty; }
+  .passi b { display: block; color: var(--sc-ink); font-size: var(--sc-t-base); font-weight: 700; margin-bottom: var(--sc-1); }
+  .nota-video { max-width: 62rem; margin: var(--sc-4) auto 0; color: var(--sc-ink-soft); font-size: var(--sc-t-xs); }
+  @media (max-width: 860px) { .passi { grid-template-columns: 1fr; gap: var(--sc-4); } }
+
+  /* ================= ATTO 2: esempi veri ================= */
+  .esempi { padding-block: var(--sc-section) var(--sc-8); background: var(--sc-canvas); }
+  .esempi h2 { margin: 0 0 var(--sc-4); font-size: var(--sc-t-3xl); line-height: var(--sc-leading-tight); letter-spacing: var(--sc-track-tight); text-wrap: balance; max-width: 22ch; }
+  .esempi .sc-body { margin-bottom: var(--sc-7); }
+  .galleria { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sc-6) var(--sc-5); }
+  .ex { display: block; text-decoration: none; color: var(--sc-ink); }
+  .ex .carta { overflow: hidden; border-radius: var(--sc-r-md); background: #fff; box-shadow: var(--sc-e2); transition: transform var(--sc-d-base) var(--sc-ease-out), box-shadow var(--sc-d-base) var(--sc-ease-out); }
+  .ex img { width: 100%; height: auto; }
+  .ex b { display: block; margin-top: var(--sc-3); font-size: var(--sc-t-base); }
+  .ex span { display: block; color: var(--sc-ink-soft); font-size: var(--sc-t-sm); }
+  .ex .apri { color: var(--sc-accent); font-weight: 700; margin-top: var(--sc-1); }
+  @media (hover: hover) and (pointer: fine) { .ex:hover .carta { transform: translateY(-4px); box-shadow: var(--sc-e3); } }
+  .ex:active .carta { transform: scale(.985); }
+
+  /* ================= ATTO 3: tre modi per partire, testo su spazio ================= */
+  .modi { padding-block: var(--sc-8) var(--sc-section); background: var(--sc-canvas); }
+  .modi h2 { margin: 0 0 var(--sc-7); font-size: var(--sc-t-2xl); letter-spacing: var(--sc-track-snug); line-height: 1.12; text-wrap: balance; max-width: 26ch; }
+  .modo { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sc-6); padding-block: var(--sc-6); border-top: 1px solid var(--sc-hairline-strong); }
+  .modo h3 { margin: 0; font-family: var(--sc-font-display); font-weight: 800; font-size: var(--sc-t-xl); letter-spacing: var(--sc-track-snug); line-height: 1.1; }
+  .modo p { margin: 0; color: var(--sc-ink-soft); max-width: 46ch; text-wrap: pretty; }
+  .modo .piu { display: inline-block; margin-bottom: var(--sc-2); font-size: var(--sc-t-xs); font-weight: 700; letter-spacing: var(--sc-track-wide); text-transform: uppercase; color: var(--sc-accent); }
+  .poi { margin-top: var(--sc-7); padding-top: var(--sc-6); border-top: 1px solid var(--sc-hairline-strong); color: var(--sc-ink-soft); max-width: 60ch; text-wrap: pretty; }
+  .poi b { color: var(--sc-ink); font-weight: 500; }
+
+  /* ================= ATTO 4: la decisione ================= */
+  .chiusura .sc-stage { display: grid; place-items: center; text-align: left; background: radial-gradient(80% 60% at 30% 40%, #16224A 0%, var(--sc-canvas) 75%); }
+  .chiusura .dentro { width: 100%; max-width: var(--sc-maxw); padding-inline: var(--sc-gutter); }
+  .chiusura h2 { margin: 0 0 var(--sc-6); font-size: var(--sc-t-4xl); line-height: var(--sc-leading-none); letter-spacing: var(--sc-track-tight); max-width: 14ch; text-wrap: balance; }
+  .cta {
+    display: inline-flex; align-items: center; min-height: 56px; padding: 0 2.2rem; border-radius: var(--sc-r-pill);
+    background: var(--sc-accent); color: var(--sc-accent-ink); font-weight: 700; font-size: var(--sc-t-lg); text-decoration: none;
+    box-shadow: var(--sc-e3), var(--sc-edge); transition: transform var(--sc-d-fast) var(--sc-ease-out), box-shadow var(--sc-d-fast) var(--sc-ease-out);
+  }
+  .cta:active { transform: scale(.97); }
+  @media (hover: hover) and (pointer: fine) { .cta:hover { transform: translateY(-2px); } }
+  .gratis { margin: var(--sc-4) 0 0; color: var(--sc-ink-soft); font-size: var(--sc-t-sm); }
+  .piede { position: absolute; left: 0; right: 0; bottom: 0; padding: var(--sc-5) var(--sc-gutter) calc(var(--sc-5) + env(safe-area-inset-bottom)); color: var(--sc-ink-soft); font-size: var(--sc-t-sm); line-height: 1.8; }
+  .piede a { text-underline-offset: .22em; }
+
+  /* ================= telefono ================= */
+  @media (max-width: 860px) {
+    .marchio { font-size: 1.25rem; }
+    .marchio small { display: none; }
+    .atto1 .sc-stage { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); align-items: start; padding: 4.6rem var(--sc-gutter) 1rem; gap: var(--sc-4); }
+    .copia h1, .copia h2 { font-size: var(--sc-t-2xl); margin-bottom: var(--sc-3); }
+    .copia .grande { font-size: var(--sc-t-2xl); }
+    .copia p { font-size: var(--sc-t-sm); }
+    .copia { min-height: 12.5rem; }
+    .foglio { height: min(100%, 118vw); width: auto; }
+    .tavolo { align-items: start; }
+    .galleria { grid-template-columns: 1fr 1fr; gap: var(--sc-5) var(--sc-4); }
+    .modo { grid-template-columns: 1fr; gap: var(--sc-3); }
+    .chiusura h2 { font-size: var(--sc-t-3xl); }
+  }
+  @media (max-width: 520px) { .galleria { grid-template-columns: 1fr; } }
+
+  /* movimento ridotto: le righe non si inclinano, ma il confronto prima/dopo resta guidato dalla rotella */
+  @media (prefers-reduced-motion: reduce) {
+    .foglio { --t: 1; }
+  }
 </style>
 </head>
 <body>
-<div class="w">
-  <div class="nav">
-    <div class="logo"><span class="m">Verific<i>AI</i></span><small>BETA</small></div>
-    <a href="https://verificai.streamlit.app" class="btn s">Prova gratis</a>
-  </div>
 
-  <div class="hero">
-    <h1>Verifiche pronte da stampare in <em>pochi minuti</em></h1>
+<span data-sc-progress></span>
+<div class="sc-grain" aria-hidden="true"></div>
 
-    <div class="vie">
-      <div class="via">
-        <div class="i">✍️</div>
-        <b>Da una descrizione</b>
-        <span>Scrivi l'argomento e come la vuoi. Gli esercizi, con punteggi e grafici, li scrive VerificAI. Puoi partire anche dai tuoi appunti o includere un esercizio del tuo libro con una foto.</span>
+<a class="marchio" href="#top" aria-label="VerificAI, torna in cima">Verific<i>AI</i><small>BETA</small></a>
+<a class="pill" href="https://verificai.streamlit.app">Prova gratis</a>
+
+<main id="top">
+
+  <!-- 1 · il foglio che si impagina da solo (picco, atto più lungo) -->
+  <section class="atto1" data-sc-act="pin" data-sc-span="5.4" aria-label="Da verifica fatta di corsa a verifica impaginata">
+    <div data-sc-stage>
+      <div class="copia">
+        <div data-sc-cue="0 0.30 0">
+          <h1 class="sc-display">Dalla verifica fatta di corsa a quella <em>da stampare</em>.</h1>
+          <p>Screenshot, copia e incolla, tre caratteri diversi. Caricala: VerificAI la rifa identica, impaginata bene.</p>
+        </div>
+        <div data-sc-cue="0.26 0.58">
+          <h2 class="sc-display">Gli esercizi restano <em>i tuoi</em>.</h2>
+          <p>Stessi testi, stessi punteggi. Cambia solo come si presenta sul foglio.</p>
+        </div>
+        <div data-sc-cue="0.50 0.78 0.2 0.25">
+          <h2 class="sc-display">Intestazione, griglia dei punti, <em>grafici</em>.</h2>
+          <p>Con il logo della tua scuola. Se c'è un errore nel testo, te lo segnala: la correzione la decidi tu.</p>
+        </div>
+        <div data-sc-cue="0.76 1 0.2 0.02">
+          <h2 class="sc-display grande">Pronta in <em>pochi minuti</em>.</h2>
+          <p class="fine">PDF o Word, con Fila B, BES/DSA e soluzioni quando ti servono.</p>
+        </div>
       </div>
-      <div class="via nuova">
-        <div class="tag">Più richiesto</div>
-        <div class="i">📄</div>
-        <b>Dalla tua verifica</b>
-        <span>Hai una verifica fatta male, magari con screenshot messi insieme? Caricala: te la rifacciamo identica, impaginata bene, con il logo della tua scuola.</span>
+
+      <div class="tavolo">
+        <div class="foglio" role="img" aria-label="Una verifica di matematica scritta male che si trasforma nella stessa verifica impaginata da VerificAI">
+          <div class="prima" aria-hidden="true">
+            <span class="m tit" style="--r:-3; --x:-1.5">VERIFICA DI MATEMATICA!!!</span>
+            <span class="m nome" style="--r:2; --x:3; --g:1.4">nome ............... cl. 4B  data ......</span>
+            <span class="m e1" style="--r:1.2; --x:-1; --g:2">Es. 1) Si osservi il grafico della funzione f(x)</span>
+            <span class="m shot" style="--r:-2.5; --x:5; --g:1.2"></span>
+            <span class="m r" style="--r:-1.2; --x:2; --g:1.4">a) determina dominio e immagine di f(x)</span>
+            <span class="m r2" style="--r:1; --x:-3; --g:.6">b) intervalli in cui la funzione è <span class="evid">positiva</span> e negativa (studio del segno)</span>
+            <span class="m r3" style="--r:-.8; --x:4; --g:.9">c) limiti agli estremi e asintoti ???</span>
+            <span class="m e2" style="--r:1.8; --x:-2; --g:2.2">esercizio 2 -- studia la funzione</span>
+            <span class="m r" style="--r:-1.4; --x:3; --g:.6">f(x)= (x^2 - x - 2) / (x - 3)</span>
+            <span class="m r2" style="--r:.8; --x:-2; --g:.7">a) dominio e intersezioni con gli assi</span>
+            <span class="m r3 barra" style="--r:-.6; --x:3; --g:.7">b) segno della funzione</span>
+            <span class="m r" style="--r:1.2; --x:-4; --g:.7">c) limiti e asintoti d) derivata prima, max e min</span>
+            <span class="m e2" style="--r:-1.4; --x:2; --g:2.4">es 3 problema di ottimizzazione</span>
+            <span class="m r" style="--r:1; --x:-3; --g:.7">Un azienda agricola deve costruire un recinto rettangolare di area 216 m2 diviso a metà da una recinzione</span>
+            <span class="m r3" style="--r:-.9; --x:3; --g:.8">a) scrivi la funzione della recinzione totale in funzione di x</span>
+            <span class="macchia" aria-hidden="true"></span>
+            <span class="punti" aria-hidden="true">+ punti??</span>
+          </div>
+          <div class="dopo">
+            <img src="assets/sheet-matematica.webp" width="1240" height="1754" alt="Verifica di Matematica impaginata da VerificAI: logo della scuola, titolo, spazio per nome e data, esercizio con grafico e richieste a), b), c)">
+          </div>
+          <span class="linea" aria-hidden="true"></span>
+          <span class="etichetta et-prima" aria-hidden="true">Prima</span>
+          <span class="etichetta et-dopo" aria-hidden="true">Dopo</span>
+        </div>
       </div>
-      <div class="via corr">
-        <div class="i">📝</div>
-        <b>Correggi i compiti</b>
-        <span>Fotografa le pagine dei compiti, anche più foto per alunno: leggo la scrittura a mano, propongo punti e commenti e ti mostro il punto esatto dove c'è l'errore. Il voto lo decidi tu.</span>
-      </div>
-    </div>
-
-    <div class="poi">
-      <span class="et">Poi, da qualsiasi verifica, con un clic:</span>
-      <span class="c">📄 Fila B</span><span class="c">🧩 Versione BES/DSA</span><span class="c">🔤 Alta leggibilità</span>
-      <span class="c">✅ Soluzioni</span><span class="c">🎯 Scheda di allenamento (40 esercizi)</span><span class="c">📝 Word modificabile</span>
-      <span class="c">✏️ Modifica un esercizio</span><span class="c">🏫 Logo della tua scuola</span><span class="c">📝 Correzione dei compiti dalle foto</span>
-    </div>
-
-    <div class="azione">
-      <a class="btn" href="https://verificai.streamlit.app">Prova subito</a>
-      <div class="gratis"><b>Gratis</b> durante la fase beta · accesso con email o Google</div>
-    </div>
-  </div>
-
-  <section id="esempi">
-    <h2>Guarda cosa esce</h2>
-    <p class="intro">Verifiche create da VerificAI, così come escono: clicca per aprire il PDF completo. Puoi scegliere tra due stili.</p>
-    <div class="esempi-vero">
-      <a class="vero" href="esempio-matematica.pdf" target="_blank" rel="noopener">
-        <div class="anteprima"><img src="esempio-matematica.png" alt="Anteprima della verifica di Matematica" loading="lazy"></div>
-        <div class="testo"><b>Matematica · stile Classico</b><span>Funzioni e grafici: lettura di un grafico, studio di funzione, problema</span><div class="apri">Apri il PDF →</div></div>
-      </a>
-      <a class="vero" href="esempio-matematica-moderno.pdf" target="_blank" rel="noopener">
-        <div class="anteprima"><img src="esempio-matematica-moderno.png" alt="Anteprima della verifica di Matematica, stile Moderno" loading="lazy"></div>
-        <div class="testo"><b>Matematica · stile Moderno</b><span>La stessa verifica con il carattere senza grazie</span><div class="apri">Apri il PDF →</div></div>
-      </a>
-      <a class="vero" href="esempio-fisica.pdf" target="_blank" rel="noopener">
-        <div class="anteprima"><img src="esempio-fisica.png" alt="Anteprima della verifica di Fisica" loading="lazy"></div>
-        <div class="testo"><b>Fisica</b><span>Moto rettilineo uniformemente accelerato, con grafico</span><div class="apri">Apri il PDF →</div></div>
-      </a>
-      <a class="vero" href="esempio-italiano.pdf" target="_blank" rel="noopener">
-        <div class="anteprima"><img src="esempio-italiano.png" alt="Anteprima della verifica di Italiano" loading="lazy"></div>
-        <div class="testo"><b>Italiano</b><span>I Promessi Sposi, con brano da commentare</span><div class="apri">Apri il PDF →</div></div>
-      </a>
     </div>
   </section>
 
-  <footer>
-    Fatto da un docente, per i colleghi · VerificAI · Versione beta · <a href="privacy.html">Privacy</a> · <a href="mailto:verificai.support@gmail.com">Contatti</a>
-  </footer>
-</div>
+  <!-- 1b · l'app al lavoro -->
+  <section class="demo" id="come-funziona">
+    <div class="sc-wrap">
+      <div data-sc-in data-sc-stagger="70">
+        <h2 class="sc-display">Guarda l'app <em>al lavoro</em>.</h2>
+        <p class="sc-body">Scrivi cosa ti serve come lo diresti a un collega, controlli il riepilogo, e la verifica è pronta da scaricare.</p>
+      </div>
+      <figure class="schermo" data-sc-in>
+        <video id="demo" src="assets/demo-crea.mp4" poster="assets/demo-poster.webp" width="1280" height="720" muted playsinline loop preload="none" aria-label="Registrazione di VerificAI: si scrive la richiesta, si controlla il riepilogo e la verifica di matematica viene creata"></video>
+        <button class="gioca" type="button" id="demo-btn" aria-pressed="false">Avvia</button>
+      </figure>
+      <ol class="passi" data-sc-in data-sc-stagger="60">
+        <li><b>Scrivi la richiesta</b>Argomento, classe, quanti esercizi. Anche a voce.</li>
+        <li><b>Controlla il riepilogo</b>Ritocchi ciò che non va, poi premi «Crea verifica».</li>
+        <li><b>Scarica il PDF</b>Pronto per la stampa. Fila B, BES/DSA e soluzioni con un clic.</li>
+      </ol>
+      <p class="nota-video">Registrazione vera dell'app. L'attesa durante la creazione è accorciata nel video.</p>
+    </div>
+  </section>
+
+  <!-- 2 · esempi veri -->
+  <section class="esempi">
+    <div class="sc-wrap">
+      <div data-sc-in data-sc-stagger="70">
+        <h2 class="sc-display">Guarda cosa esce, così com'è.</h2>
+        <p class="sc-body">Verifiche create da VerificAI, così come escono. Apri il PDF completo e controlla tu come sono impaginate.</p>
+      </div>
+      <div class="galleria" data-sc-in data-sc-stagger="60">
+        <a class="ex" href="esempio-matematica.pdf" target="_blank" rel="noopener">
+          <div class="carta"><img src="assets/ex-matematica.webp" width="1157" height="818" alt="Anteprima della verifica di Matematica, stile Classico: logo della scuola, titolo e primo esercizio" loading="lazy"></div>
+          <b>Matematica, stile Classico</b><span>Equazioni di secondo grado e parabola, con lettura di un grafico</span><div class="apri">Apri il PDF →</div>
+        </a>
+        <a class="ex" href="esempio-matematica-moderno.pdf" target="_blank" rel="noopener">
+          <div class="carta"><img src="assets/ex-matematica-moderno.webp" width="1157" height="818" alt="Anteprima della stessa verifica di Matematica, stile Moderno" loading="lazy"></div>
+          <b>Matematica, stile Moderno</b><span>La stessa verifica con il carattere senza grazie</span><div class="apri">Apri il PDF →</div>
+        </a>
+        <a class="ex" href="esempio-fisica.pdf" target="_blank" rel="noopener">
+          <div class="carta"><img src="assets/ex-fisica.webp" width="1157" height="818" alt="Anteprima della verifica di Fisica sulla cinematica" loading="lazy"></div>
+          <b>Fisica</b><span>Frenata, inseguimento tra due auto e grafico velocità-tempo</span><div class="apri">Apri il PDF →</div>
+        </a>
+        <a class="ex" href="esempio-chimica.pdf" target="_blank" rel="noopener">
+          <div class="carta"><img src="assets/ex-chimica.webp" width="1157" height="818" alt="Anteprima della verifica di Chimica sulla stechiometria" loading="lazy"></div>
+          <b>Chimica</b><span>Reagente limitante, resa e scelta multipla</span><div class="apri">Apri il PDF →</div>
+        </a>
+        <a class="ex" href="esempio-storia.pdf" target="_blank" rel="noopener">
+          <div class="carta"><img src="assets/ex-storia.webp" width="1157" height="818" alt="Anteprima della verifica di Storia sulla Rivoluzione francese" loading="lazy"></div>
+          <b>Storia</b><span>La Rivoluzione francese, con fonti del tempo da analizzare</span><div class="apri">Apri il PDF →</div>
+        </a>
+        <a class="ex" href="esempio-italiano.pdf" target="_blank" rel="noopener">
+          <div class="carta"><img src="assets/ex-italiano.webp" width="1157" height="818" alt="Anteprima della verifica di Italiano con un brano a righe numerate" loading="lazy"></div>
+          <b>Italiano</b><span>Analisi di un brano, con le righe numerate da citare</span><div class="apri">Apri il PDF →</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · tre modi per partire -->
+  <section class="modi">
+    <div class="sc-wrap">
+      <h2 class="sc-display" data-sc-in>Meno tempo sul foglio, più tempo per la classe.</h2>
+      <div data-sc-in data-sc-stagger="70">
+        <div class="modo">
+          <h3>Dalla tua verifica</h3>
+          <div><span class="piu">Il più richiesto</span><p>Hai una verifica fatta male, magari con screenshot messi insieme? Caricala: te la rifacciamo identica, impaginata bene, con il logo della tua scuola.</p></div>
+        </div>
+        <div class="modo">
+          <h3>Da una descrizione</h3>
+          <p>Scrivi l'argomento e come la vuoi. Gli esercizi, con punteggi e grafici, li scrive VerificAI. Puoi partire anche dai tuoi appunti o da un esercizio del tuo libro, con una foto.</p>
+        </div>
+        <div class="modo">
+          <h3>Correggi i compiti</h3>
+          <p>Fotografa le pagine dei compiti: leggo la scrittura a mano, propongo punti e commenti e ti mostro il punto esatto dove c'è l'errore. Il voto lo decidi tu.</p>
+        </div>
+      </div>
+      <p class="poi" data-sc-in><b>Poi, da qualsiasi verifica, con un clic:</b> Fila B, versione BES/DSA, alta leggibilità, soluzioni, scheda di allenamento, Word modificabile, modifica di un singolo esercizio.</p>
+    </div>
+  </section>
+
+  <!-- 4 · la decisione -->
+  <section class="chiusura" id="prova" data-sc-act="pin" data-sc-span="1.4">
+    <div data-sc-stage>
+      <div class="dentro">
+        <h2 class="sc-display" data-sc-cue="0 1 0 0">La prossima verifica, <em>già pronta</em>.</h2>
+        <a class="cta" href="https://verificai.streamlit.app" data-sc-cue="0 1 0 0">Prova gratis</a>
+        <p class="gratis" data-sc-cue="0 1 0 0">Gratis durante la fase beta. Accesso con email o Google.</p>
+      </div>
+      <footer class="piede">Fatto da un docente, per i colleghi · VerificAI · Versione beta · <a href="privacy.html">Privacy</a> · <a href="mailto:verificai.support@gmail.com">Contatti</a></footer>
+    </div>
+  </section>
+
+</main>
+
+<script src="scrollcraft.js"></script>
+<script>ScrollCraft.mount(document.body);</script>
 <script>
-  // Se il link della pagina ha ?src=nome (da quale gruppo arriva il visitatore) o ?ref=codice (invito di un collega),
-  // li passa ai pulsanti che portano all'app
+  // il video parte da solo quando è in vista (se l'utente non ha chiesto meno movimento) e ha sempre un pulsante per fermarlo
+  (function () {
+    var v = document.getElementById("demo"), btn = document.getElementById("demo-btn");
+    if (!v || !btn) return;
+    var ridotto = window.matchMedia("(prefers-reduced-motion: reduce)").matches, manuale = false;
+    function agg() { var on = !v.paused; btn.textContent = on ? "Pausa" : "Avvia"; btn.setAttribute("aria-pressed", on ? "true" : "false"); }
+    function avvia() { v.preload = "auto"; var p = v.play(); if (p && p.catch) p.catch(function () {}); agg(); }
+    btn.addEventListener("click", function () { manuale = true; if (v.paused) avvia(); else { v.pause(); agg(); } });
+    v.addEventListener("play", agg); v.addEventListener("pause", agg);
+    if ("IntersectionObserver" in window && !ridotto) {
+      new IntersectionObserver(function (e) {
+        if (e[0].isIntersecting) { if (!manuale || !v.paused) avvia(); } else { v.pause(); }
+      }, { threshold: 0.5 }).observe(v);
+    }
+    agg();
+  })();
+</script>
+<script>
+  // ?src=nome (da quale gruppo arriva il visitatore) e ?ref=codice (invito di un collega) passano ai link che portano all'app
   (function () {
     try {
       var q = new URLSearchParams(window.location.search);
