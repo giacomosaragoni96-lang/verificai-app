@@ -58,60 +58,66 @@
   .marchio small { font-family: var(--sc-font-text); font-style: normal; font-size: .65rem; font-weight: 700; letter-spacing: .1em; color: var(--sc-ink-soft); border: 1px solid var(--sc-hairline-strong); border-radius: 999px; padding: .1rem .5rem; margin-left: .55rem; }
 
   body::before { content:""; position:fixed; left:0; right:0; top:0; height:5.5rem; z-index:59; pointer-events:none; background:linear-gradient(var(--sc-canvas) 35%, transparent); }
-  /* ================= ATTO 1: il foglio che si impagina da solo ================= */
-  .atto1 .sc-stage {
-    display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-    align-items: center;
-    padding: 5.5rem var(--sc-gutter) 4.5rem;
-    gap: var(--sc-6);
-    background: radial-gradient(90% 70% at 72% 50%, #16224A 0%, var(--sc-canvas) 70%);
+  /* ================= ATTO 1: messaggi che si alternano da soli + foglio da confrontare ================= */
+  .atto1 { position: relative; background: radial-gradient(90% 70% at 72% 50%, #16224A 0%, var(--sc-canvas) 70%); }
+  .atto1 .scena {
+    min-height: 100vh; min-height: 100svh;
+    display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: center;
+    padding: 5.5rem var(--sc-gutter) 3.5rem; gap: var(--sc-6);
   }
-  .colonna { display: flex; flex-direction: column; justify-content: center; gap: var(--sc-5); min-width: 0; align-self: center; }
-  .colonna .copia h1, .colonna .copia h2, .colonna .copia .grande { font-size: var(--sc-t-2xl); margin-bottom: var(--sc-3); }
+  .colonna { display: flex; flex-direction: column; justify-content: center; gap: var(--sc-4); min-width: 0; align-self: center; }
   .hero-video { margin: 0; max-width: none; width: 100%; }
-  .copia { display: grid; align-self: center; }
-  .copia > * { grid-area: 1 / 1; align-self: center; }
-  .copia h1, .copia h2 { margin: 0 0 var(--sc-4); font-size: var(--sc-t-3xl); line-height: var(--sc-leading-tight); letter-spacing: var(--sc-track-tight); text-wrap: balance; }
-  .copia p { margin: 0; max-width: 30rem; color: var(--sc-ink-soft); font-size: var(--sc-t-base); text-wrap: pretty; }
-  .copia .grande { font-size: var(--sc-t-4xl); }
-  .copia .fine { color: var(--sc-ink); font-weight: 500; }
-
-  /* invito a scorrere: si vede solo all'inizio e sparisce al primo gesto */
-  .invito {
-    position: absolute; z-index: 30; left: var(--sc-gutter); bottom: max(1.75rem, env(safe-area-inset-bottom));
-    display: inline-flex; align-items: center; gap: .6rem; padding: .6rem 1.1rem .6rem 1.2rem; border-radius: var(--sc-r-pill);
-    background: #0B1020B8; border: 1px solid var(--sc-hairline-strong); color: var(--sc-ink);
-    font-size: var(--sc-t-sm); font-weight: 500; pointer-events: none; box-shadow: var(--sc-e2);
-    opacity: clamp(0, calc(1 - var(--sc-p, 0) * 70), 1);
+  .copia { display: grid; }
+  .copia > .msg {
+    grid-area: 1 / 1; align-self: start; opacity: 0; visibility: hidden; transform: translateY(12px);
+    transition: opacity .6s var(--sc-ease-out), transform .6s var(--sc-ease-out), visibility 0s linear .6s;
   }
-  .invito svg { width: 1.1rem; height: 1.1rem; flex: none; animation: scendi 1.7s var(--sc-ease-out) infinite; }
-  @keyframes scendi { 0%, 100% { transform: translateY(-2px); opacity: .55; } 50% { transform: translateY(3px); opacity: 1; } }
-  /* il tavolo: due fogli sovrapposti, il "prima" (markup) sotto e il "dopo" (PDF vero) sopra */
-  .tavolo { position: relative; display: grid; place-items: center; height: 100%; min-height: 0; }
+  .copia > .msg.on { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+  .copia h1, .copia h2 { margin: 0 0 var(--sc-3); font-size: var(--sc-t-2xl); line-height: var(--sc-leading-tight); letter-spacing: var(--sc-track-tight); text-wrap: balance; }
+  .copia p { margin: 0; max-width: 30rem; color: var(--sc-ink-soft); font-size: var(--sc-t-base); text-wrap: pretty; }
+  .copia .fine { color: var(--sc-ink); font-weight: 500; }
+  /* i quattro messaggi: una barretta ciascuno, la barra attiva si riempie in sync con il tempo */
+  .punti { display: flex; gap: .4rem; margin-top: calc(var(--sc-2) * -1); }
+  .punti button { flex: 0 0 auto; width: 3.2rem; padding: 1rem 0; border: 0; background: none; cursor: pointer; }
+  .punti i { position: relative; display: block; height: 3px; border-radius: 2px; background: var(--sc-hairline-strong); overflow: hidden; }
+  .punti i::after { content: ""; position: absolute; inset: 0; background: var(--sc-accent); transform: scaleX(0); transform-origin: 0 50%; }
+  .punti button[aria-current="true"] i::after { animation: riempi var(--giro, 5.5s) linear forwards; }
+  .colonna.sosta .punti button[aria-current="true"] i::after { animation-play-state: paused; }
+  .atto1.statico .punti button[aria-current="true"] i::after { animation: none; transform: scaleX(1); }
+  @keyframes riempi { to { transform: scaleX(1); } }
+
+  /* il tavolo: il "prima" (markup) sotto, il "dopo" (PDF vero) sopra; il cursore decide quanto se ne vede */
+  .tavolo { position: relative; display: grid; place-items: center; min-height: 0; }
   .foglio {
-    --t: clamp(0, calc(var(--sc-p, 0) / 0.14), 1);   /* quanto si è raddrizzato: parte subito */
-    --w: clamp(0, calc((var(--sc-p, 0) - 0.30) / 0.46), 1);   /* quanto ha avanzato il "dopo" */
-    position: relative; container-type: inline-size;
-    height: min(calc(100svh - 9.5rem), 60vw); aspect-ratio: 1 / 1.414; max-width: 100%;
-    border-radius: 4px; box-shadow: var(--sc-e3), 0 40px 80px -30px #000, 0 0 calc(var(--w) * 70px) calc(var(--w) * 4px) #3B82F633;
+    --d: .25;      /* posizione del cursore: 0 = tutto "dopo", 1 = tutto "prima" */
+    --t: 0;        /* quanto si è raddrizzato il "prima": mai, resta com'è */
+    position: relative; container-type: inline-size; touch-action: pan-y; cursor: ew-resize; user-select: none; -webkit-user-select: none;
+    height: min(calc(100svh - 9rem), 60vw); aspect-ratio: 1 / 1.414; max-width: 100%;
+    border-radius: 4px; box-shadow: var(--sc-e3), 0 40px 80px -30px #000, 0 0 60px 2px #3B82F633;
     background: #F3EEE0; overflow: hidden; color: #2a2a2a;
   }
   .foglio .prima, .foglio .dopo { position: absolute; inset: 0; }
-  .foglio .dopo { clip-path: inset(0 0 0 calc((1 - var(--w)) * 100%)); background: #fff; }
-  .foglio .dopo img { width: 100%; height: 100%; object-fit: cover; }
+  .foglio .dopo { clip-path: inset(0 0 0 calc(var(--d) * 100%)); background: #fff; }
+  .foglio .dopo img { width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; pointer-events: none; }
   .linea {
-    position: absolute; top: 0; bottom: 0; left: calc((1 - var(--w)) * 100%); width: 3px; margin-left: -1.5px;
-    background: var(--sc-accent); box-shadow: 0 0 0 1px #0B102055, 0 0 24px 2px #3B82F6aa;
-    opacity: clamp(0, calc(var(--w) * 40), 1); z-index: 3; pointer-events: none;
+    position: absolute; top: 0; bottom: 0; left: calc(var(--d) * 100%); width: 3px; margin-left: -1.5px;
+    background: var(--sc-accent); box-shadow: 0 0 0 1px #0B102055, 0 0 24px 2px #3B82F6aa; z-index: 3; pointer-events: none;
   }
-  .linea::after { content: "‹ ›"; position: absolute; top: 50%; left: 50%; width: 9cqw; height: 9cqw; margin: -4.5cqw 0 0 -4.5cqw; display: grid; place-items: center; border-radius: 50%; background: #fff; color: #1d4ed8; font: 700 4cqw/1 var(--sc-font-text); letter-spacing: .1cqw; box-shadow: 0 .6cqw 2cqw #0B102080, 0 0 0 .5cqw var(--sc-accent); }
+  .maniglia {
+    position: absolute; z-index: 5; top: 50%; left: calc(var(--d) * 100%); width: 9.5cqw; height: 9.5cqw; margin: -4.75cqw 0 0 -4.75cqw;
+    display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: #fff; color: #1d4ed8;
+    font: 700 4.2cqw/1 var(--sc-font-text); letter-spacing: .1cqw; cursor: ew-resize; touch-action: none;
+    box-shadow: 0 .6cqw 2cqw #0B102080, 0 0 0 .5cqw var(--sc-accent);
+  }
+  .maniglia:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+  .foglio.invita .maniglia { animation: anello 2.2s var(--sc-ease-out) infinite; }
+  @keyframes anello { 0% { box-shadow: 0 .6cqw 2cqw #0B102080, 0 0 0 .5cqw var(--sc-accent), 0 0 0 .5cqw #3B82F6aa; } 70%, 100% { box-shadow: 0 .6cqw 2cqw #0B102080, 0 0 0 .5cqw var(--sc-accent), 0 0 0 4.5cqw #3B82F600; } }
   .etichetta {
     position: absolute; top: 1.8cqw; z-index: 4; font-family: var(--sc-font-text); font-weight: 700; font-size: 2.6cqw; letter-spacing: .1em; text-transform: uppercase;
-    padding: .8cqw 2.4cqw; border-radius: 99px; box-shadow: 0 .4cqw 1.4cqw #0006;
+    padding: .8cqw 2.4cqw; border-radius: 99px; box-shadow: 0 .4cqw 1.4cqw #0006; pointer-events: none; transition: opacity var(--sc-d-base) var(--sc-ease-out);
   }
-  .et-prima { left: 3cqw; background: #2a2a2a; color: #FFF8E1; opacity: calc(1 - var(--w) * 1.5); }
-  .et-dopo  { right: 3cqw; background: var(--sc-accent); color: var(--sc-accent-ink); opacity: clamp(0, calc((var(--w) - .15) * 4), 1); }
+  .et-prima { left: 3cqw; background: #2a2a2a; color: #FFF8E1; opacity: clamp(0, calc((var(--d) - .16) * 8), 1); }
+  .et-dopo  { right: 3cqw; background: var(--sc-accent); color: var(--sc-accent-ink); opacity: clamp(0, calc((.84 - var(--d)) * 8), 1); }
 
   /* il "prima": tutto storto, tutto sbagliato, ma testo vero */
   .prima { font-size: 2.7cqw; line-height: 1.3; padding: 7cqw 6cqw; }
@@ -211,25 +217,21 @@
   @media (max-width: 860px) {
     .marchio { font-size: 1.25rem; }
     .marchio small { display: none; }
-    .atto1 .sc-stage { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); align-items: start; padding: 4.6rem var(--sc-gutter) 1rem; gap: var(--sc-4); }
-    .copia h1, .copia h2 { font-size: var(--sc-t-2xl); margin-bottom: var(--sc-3); }
-    .copia .grande { font-size: var(--sc-t-2xl); }
+    .atto1 .scena { grid-template-columns: 1fr; min-height: 0; align-items: start; padding: 4.6rem var(--sc-gutter) 2.5rem; gap: var(--sc-5); }
     .copia p { font-size: var(--sc-t-sm); }
     .copia { min-height: 12.5rem; }
     .hero-video { display: none; }
-    .invito { left: 50%; translate: -50% 0; bottom: max(1rem, env(safe-area-inset-bottom)); }
-    .foglio { height: min(100%, 118vw); width: auto; }
-    .tavolo { align-items: start; }
+    .foglio { height: auto; width: min(100%, 26rem); }
     .galleria { grid-template-columns: 1fr 1fr; gap: var(--sc-5) var(--sc-4); }
     .modo { grid-template-columns: 1fr; gap: var(--sc-3); }
     .chiusura h2 { font-size: var(--sc-t-3xl); }
   }
   @media (max-width: 520px) { .galleria { grid-template-columns: 1fr; } }
 
-  /* movimento ridotto: le righe non si inclinano, ma il confronto prima/dopo resta guidato dalla rotella */
+  /* movimento ridotto: i messaggi non si alternano da soli (si scelgono con le barrette) e il foglio non si muove da solo */
   @media (prefers-reduced-motion: reduce) {
-    .foglio { --t: 1; }
-    .invito svg { animation: none; }
+    .copia > .msg { transform: none; transition-duration: .01s; }
+    .foglio.invita .maniglia { animation: none; }
   }
 </style>
 </head>
@@ -244,36 +246,36 @@
 <main id="top">
 
   <!-- 1 · il foglio che si impagina da solo (picco, atto più lungo) -->
-  <section class="atto1" data-sc-act="pin" data-sc-span="5.4" aria-label="Da verifica fatta di corsa a verifica impaginata">
-    <div data-sc-stage>
+  <section class="atto1" aria-label="Da verifica fatta di corsa a verifica impaginata">
+    <div class="scena">
       <div class="colonna">
       <div class="copia">
-        <div data-sc-cue="0 0.30 0">
+        <div class="msg on">
           <h1 class="sc-display">Dalla verifica fatta di corsa a quella <em>da stampare</em>.</h1>
           <p>Screenshot, copia e incolla, tre caratteri diversi. Caricala: VerificAI la rifa identica, impaginata bene.</p>
         </div>
-        <div data-sc-cue="0.26 0.58">
+        <div class="msg">
           <h2 class="sc-display">Gli esercizi restano <em>i tuoi</em>.</h2>
           <p>Stessi testi, stessi punteggi. Cambia solo come si presenta sul foglio.</p>
         </div>
-        <div data-sc-cue="0.50 0.78 0.2 0.25">
+        <div class="msg">
           <h2 class="sc-display">Intestazione, griglia dei punti, <em>grafici</em>.</h2>
           <p>Con il logo della tua scuola. Se c'è un errore nel testo, te lo segnala: la correzione la decidi tu.</p>
         </div>
-        <div data-sc-cue="0.76 1 0.2 0.02">
-          <h2 class="sc-display grande">Pronta in <em>pochi minuti</em>.</h2>
+        <div class="msg">
+          <h2 class="sc-display">Pronta in <em>pochi minuti</em>.</h2>
           <p class="fine">PDF o Word, con Fila B, BES/DSA e soluzioni quando ti servono.</p>
         </div>
       </div>
+      <div class="punti" role="group" aria-label="Messaggi"><button type="button" aria-label="Messaggio 1 di 4" aria-current="true"><i></i></button><button type="button" aria-label="Messaggio 2 di 4"><i></i></button><button type="button" aria-label="Messaggio 3 di 4"><i></i></button><button type="button" aria-label="Messaggio 4 di 4"><i></i></button></div>
       <figure class="schermo hero-video">
         <video src="assets/demo-crea.mp4" poster="assets/demo-poster.webp" width="1280" height="720" muted playsinline loop preload="metadata" aria-label="Registrazione di VerificAI: si scrive la richiesta, si controlla il riepilogo e la verifica di matematica viene creata"></video>
         <button class="gioca" type="button" aria-label="Metti in pausa il video"><svg class="ib" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg><svg class="ip" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.2v11.6a.6.6 0 0 0 .9.5l9.2-5.8a.6.6 0 0 0 0-1L4.9 1.7a.6.6 0 0 0-.9.5z"/></svg><span class="gl">Pausa</span></button>
       </figure>
       </div>
 
-      <div class="invito" aria-hidden="true">Scorri e guarda <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5l6 6 6-6"/></svg></div>
       <div class="tavolo">
-        <div class="foglio" role="img" aria-label="Una verifica di matematica scritta male che si trasforma nella stessa verifica impaginata da VerificAI">
+        <div class="foglio invita" id="foglio" role="group" aria-label="Confronto tra una verifica scritta male e la stessa verifica impaginata da VerificAI">
           <div class="prima" aria-hidden="true">
             <span class="m tit" style="--r:-3; --x:-1.5">VERIFICA DI MATEMATICA!!!</span>
             <span class="m nome" style="--r:2; --x:3; --g:1.4">nome ............... cl. 4B  data ......</span>
@@ -297,6 +299,7 @@
             <img src="assets/sheet-matematica.webp" width="1240" height="1754" alt="Verifica di Matematica impaginata da VerificAI: logo della scuola, titolo, spazio per nome e data, esercizio con grafico e richieste a), b), c)">
           </div>
           <span class="linea" aria-hidden="true"></span>
+          <button class="maniglia" type="button" role="slider" aria-label="Sposta per confrontare prima e dopo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="75"><span aria-hidden="true">‹ ›</span></button>
           <span class="etichetta et-prima" aria-hidden="true">Prima</span>
           <span class="etichetta et-dopo" aria-hidden="true">Dopo</span>
         </div>
@@ -426,6 +429,78 @@
       } else { avvia(); }
       agg();
     });
+  })();
+</script>
+<script>
+  // atto iniziale: i quattro messaggi si alternano da soli (5,5 s ciascuno), si fermano col mouse sopra o con la scheda in secondo piano;
+  // il foglio si confronta trascinando (o con le frecce) e ogni 5 s passa da solo da "prima" a "dopo" e viceversa, finché non lo si usa
+  (function () {
+    var atto = document.querySelector(".atto1"); if (!atto) return;
+    var ridotto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var GIRO = 5500;
+    var colonna = atto.querySelector(".colonna"), msgs = atto.querySelectorAll(".msg"), bar = atto.querySelectorAll(".punti button");
+    var i = 0, trascorso = 0, sosta = false, visibile = true;
+    atto.style.setProperty("--giro", (GIRO / 1000) + "s");
+    if (ridotto) atto.classList.add("statico");
+    function mostra(n) {
+      i = (n + msgs.length) % msgs.length; trascorso = 0;
+      msgs.forEach(function (m, k) { m.classList.toggle("on", k === i); });
+      bar.forEach(function (b, k) {
+        if (k === i) { b.setAttribute("aria-current", "true"); } else { b.removeAttribute("aria-current"); }
+      });
+      // riparte l'animazione della barretta
+      var cur = bar[i].querySelector("i"); cur.style.animation = "none"; void cur.offsetWidth; cur.style.animation = "";
+    }
+    bar.forEach(function (b, k) { b.addEventListener("click", function () { mostra(k); }); });
+    colonna.addEventListener("mouseenter", function () { sosta = true; colonna.classList.add("sosta"); });
+    colonna.addEventListener("mouseleave", function () { sosta = false; colonna.classList.remove("sosta"); });
+    colonna.addEventListener("focusin", function () { sosta = true; colonna.classList.add("sosta"); });
+    colonna.addEventListener("focusout", function () { sosta = false; colonna.classList.remove("sosta"); });
+    if (!ridotto) setInterval(function () {
+      if (sosta || document.hidden || !visibile) return;
+      trascorso += 100; if (trascorso >= GIRO) mostra(i + 1);
+    }, 100);
+
+    // --- foglio: cursore trascinabile + passaggio automatico
+    var f = document.getElementById("foglio"), man = f.querySelector(".maniglia");
+    var d = 0.25, ultimoUso = -1e9, trascina = false, anim = null;
+    function imposta(x) {
+      d = Math.max(0.04, Math.min(0.96, x));
+      f.style.setProperty("--d", d.toFixed(4));
+      man.setAttribute("aria-valuenow", String(Math.round((1 - d) * 100)));     // percentuale di "dopo" che si vede
+    }
+    function da(e) { var r = f.getBoundingClientRect(); imposta((e.clientX - r.left) / r.width); }
+    function usato() { ultimoUso = performance.now(); f.classList.remove("invita"); if (anim) { cancelAnimationFrame(anim); anim = null; } }
+    f.addEventListener("pointerdown", function (e) {
+      if (e.button > 0) return; usato(); trascina = true;
+      try { f.setPointerCapture(e.pointerId); } catch (x) {}
+      da(e);
+    });
+    f.addEventListener("pointermove", function (e) { if (trascina) { usato(); da(e); } });
+    function fine() { trascina = false; ultimoUso = performance.now(); }
+    f.addEventListener("pointerup", fine); f.addEventListener("pointercancel", fine);
+    man.addEventListener("keydown", function (e) {
+      var passo = e.shiftKey ? 0.15 : 0.05, v = null;
+      if (e.key === "ArrowLeft" || e.key === "ArrowDown") v = d - passo;
+      else if (e.key === "ArrowRight" || e.key === "ArrowUp") v = d + passo;
+      else if (e.key === "Home") v = 0.04; else if (e.key === "End") v = 0.96;
+      if (v !== null) { e.preventDefault(); usato(); imposta(v); }
+    });
+    function vai(a, ms) {
+      var da0 = d, t0 = performance.now();
+      (function passo(t) {
+        var k = Math.min(1, (t - t0) / ms), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+        imposta(da0 + (a - da0) * e);
+        anim = k < 1 ? requestAnimationFrame(passo) : null;
+      })(t0);
+    }
+    var verso = 0.78;     // la prima volta va verso "prima" (il foglio parte con "dopo" ben visibile)
+    if (!ridotto) setInterval(function () {
+      if (trascina || document.hidden || !visibile || performance.now() - ultimoUso < 9000) return;
+      vai(verso, 1600); verso = verso > 0.5 ? 0.25 : 0.78;
+    }, 5000);
+    imposta(d);
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (e) { visibile = e[0].isIntersecting; }, { threshold: 0.2 }).observe(atto);
   })();
 </script>
 <script>
