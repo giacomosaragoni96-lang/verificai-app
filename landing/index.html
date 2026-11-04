@@ -63,10 +63,13 @@
     display: grid;
     grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
     align-items: center;
-    padding: 5.5rem var(--sc-gutter) 2rem;
+    padding: 5.5rem var(--sc-gutter) 4.5rem;
     gap: var(--sc-6);
     background: radial-gradient(90% 70% at 72% 50%, #16224A 0%, var(--sc-canvas) 70%);
   }
+  .colonna { display: flex; flex-direction: column; justify-content: center; gap: var(--sc-5); min-width: 0; align-self: center; }
+  .colonna .copia h1, .colonna .copia h2, .colonna .copia .grande { font-size: var(--sc-t-2xl); margin-bottom: var(--sc-3); }
+  .hero-video { margin: 0; max-width: none; width: 100%; }
   .copia { display: grid; align-self: center; }
   .copia > * { grid-area: 1 / 1; align-self: center; }
   .copia h1, .copia h2 { margin: 0 0 var(--sc-4); font-size: var(--sc-t-3xl); line-height: var(--sc-leading-tight); letter-spacing: var(--sc-track-tight); text-wrap: balance; }
@@ -90,7 +93,7 @@
     --t: clamp(0, calc(var(--sc-p, 0) / 0.14), 1);   /* quanto si è raddrizzato: parte subito */
     --w: clamp(0, calc((var(--sc-p, 0) - 0.30) / 0.46), 1);   /* quanto ha avanzato il "dopo" */
     position: relative; container-type: inline-size;
-    height: min(calc(100svh - 7.5rem), 60vw); aspect-ratio: 1 / 1.414; max-width: 100%;
+    height: min(calc(100svh - 9.5rem), 60vw); aspect-ratio: 1 / 1.414; max-width: 100%;
     border-radius: 4px; box-shadow: var(--sc-e3), 0 40px 80px -30px #000, 0 0 calc(var(--w) * 70px) calc(var(--w) * 4px) #3B82F633;
     background: #F3EEE0; overflow: hidden; color: #2a2a2a;
   }
@@ -104,7 +107,7 @@
   }
   .linea::after { content: "‹ ›"; position: absolute; top: 50%; left: 50%; width: 9cqw; height: 9cqw; margin: -4.5cqw 0 0 -4.5cqw; display: grid; place-items: center; border-radius: 50%; background: #fff; color: #1d4ed8; font: 700 4cqw/1 var(--sc-font-text); letter-spacing: .1cqw; box-shadow: 0 .6cqw 2cqw #0B102080, 0 0 0 .5cqw var(--sc-accent); }
   .etichetta {
-    position: absolute; top: 3cqw; z-index: 4; font-family: var(--sc-font-text); font-weight: 700; font-size: 3cqw; letter-spacing: .1em; text-transform: uppercase;
+    position: absolute; top: 1.8cqw; z-index: 4; font-family: var(--sc-font-text); font-weight: 700; font-size: 2.6cqw; letter-spacing: .1em; text-transform: uppercase;
     padding: .8cqw 2.4cqw; border-radius: 99px; box-shadow: 0 .4cqw 1.4cqw #0006;
   }
   .et-prima { left: 3cqw; background: #2a2a2a; color: #FFF8E1; opacity: calc(1 - var(--w) * 1.5); }
@@ -146,9 +149,19 @@
   .demo .sc-body { margin-bottom: var(--sc-7); }
   .schermo { position: relative; margin: 0 auto; max-width: 62rem; border-radius: var(--sc-r-lg); overflow: hidden; background: #E9EEF9; box-shadow: var(--sc-e3), 0 50px 90px -40px #000, var(--sc-edge); border: 1px solid var(--sc-hairline-strong); }
   .schermo video { width: 100%; height: auto; aspect-ratio: 16 / 9; display: block; }
-  .gioca { position: absolute; right: var(--sc-4); bottom: var(--sc-4); min-width: 44px; min-height: 44px; padding: 0 1.1rem; border: 0; border-radius: var(--sc-r-pill); background: #0B1020E6; color: var(--sc-ink); font-weight: 700; font-size: var(--sc-t-sm); cursor: pointer; box-shadow: var(--sc-e2); transition: transform var(--sc-d-fast) var(--sc-ease-out); }
+  .gioca {
+    position: absolute; z-index: 3; top: var(--sc-4); left: var(--sc-4); display: inline-flex; align-items: center; gap: .55rem;
+    min-height: 44px; padding: 0 1.15rem 0 1rem; border: 0; border-radius: var(--sc-r-pill);
+    background: var(--sc-accent); color: var(--sc-accent-ink); font: 700 var(--sc-t-sm)/1 var(--sc-font-text); cursor: pointer;
+    box-shadow: var(--sc-e2), var(--sc-edge); transition: transform var(--sc-d-fast) var(--sc-ease-out);
+  }
+  .gioca svg { width: 1rem; height: 1rem; flex: none; }
+  .gioca .ip { display: none; }
+  .schermo.inpausa .gioca .ip { display: block; } .schermo.inpausa .gioca .ib { display: none; }
+  .schermo.ferma .gioca { top: 50%; left: 50%; translate: -50% -50%; min-height: 64px; padding: 0 1.9rem 0 1.6rem; font-size: var(--sc-t-lg); box-shadow: var(--sc-e3), 0 0 0 .5rem #3B82F644; }
+  .schermo.ferma .gioca svg { width: 1.3rem; height: 1.3rem; }
   .gioca:active { transform: scale(.97); }
-  @media (hover: hover) and (pointer: fine) { .gioca:hover { transform: translateY(-1px); } }
+  @media (hover: hover) and (pointer: fine) { .gioca:hover { transform: translateY(-1px); } .schermo.ferma .gioca:hover { transform: none; filter: brightness(1.08); } }
   .passi { list-style: none; margin: var(--sc-6) auto 0; padding: 0; max-width: 62rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sc-5); }
   .passi li { border-top: 1px solid var(--sc-hairline-strong); padding-top: var(--sc-3); color: var(--sc-ink-soft); font-size: var(--sc-t-sm); text-wrap: pretty; }
   .passi b { display: block; color: var(--sc-ink); font-size: var(--sc-t-base); font-weight: 700; margin-bottom: var(--sc-1); }
@@ -203,6 +216,7 @@
     .copia .grande { font-size: var(--sc-t-2xl); }
     .copia p { font-size: var(--sc-t-sm); }
     .copia { min-height: 12.5rem; }
+    .hero-video { display: none; }
     .invito { left: 50%; translate: -50% 0; bottom: max(1rem, env(safe-area-inset-bottom)); }
     .foglio { height: min(100%, 118vw); width: auto; }
     .tavolo { align-items: start; }
@@ -232,6 +246,7 @@
   <!-- 1 · il foglio che si impagina da solo (picco, atto più lungo) -->
   <section class="atto1" data-sc-act="pin" data-sc-span="5.4" aria-label="Da verifica fatta di corsa a verifica impaginata">
     <div data-sc-stage>
+      <div class="colonna">
       <div class="copia">
         <div data-sc-cue="0 0.30 0">
           <h1 class="sc-display">Dalla verifica fatta di corsa a quella <em>da stampare</em>.</h1>
@@ -249,6 +264,11 @@
           <h2 class="sc-display grande">Pronta in <em>pochi minuti</em>.</h2>
           <p class="fine">PDF o Word, con Fila B, BES/DSA e soluzioni quando ti servono.</p>
         </div>
+      </div>
+      <figure class="schermo hero-video">
+        <video src="assets/demo-crea.mp4" poster="assets/demo-poster.webp" width="1280" height="720" muted playsinline loop preload="metadata" aria-label="Registrazione di VerificAI: si scrive la richiesta, si controlla il riepilogo e la verifica di matematica viene creata"></video>
+        <button class="gioca" type="button" aria-label="Metti in pausa il video"><svg class="ib" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg><svg class="ip" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.2v11.6a.6.6 0 0 0 .9.5l9.2-5.8a.6.6 0 0 0 0-1L4.9 1.7a.6.6 0 0 0-.9.5z"/></svg><span class="gl">Pausa</span></button>
+      </figure>
       </div>
 
       <div class="invito" aria-hidden="true">Scorri e guarda <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5l6 6 6-6"/></svg></div>
@@ -292,8 +312,8 @@
         <p class="sc-body">Scrivi cosa ti serve come lo diresti a un collega, controlli il riepilogo, e la verifica è pronta da scaricare.</p>
       </div>
       <figure class="schermo" data-sc-in>
-        <video id="demo" src="assets/demo-crea.mp4" poster="assets/demo-poster.webp" width="1280" height="720" muted playsinline loop preload="none" aria-label="Registrazione di VerificAI: si scrive la richiesta, si controlla il riepilogo e la verifica di matematica viene creata"></video>
-        <button class="gioca" type="button" id="demo-btn" aria-pressed="false">Avvia</button>
+        <video src="assets/demo-crea.mp4" poster="assets/demo-poster.webp" width="1280" height="720" muted playsinline loop preload="none" aria-label="Registrazione di VerificAI: si scrive la richiesta, si controlla il riepilogo e la verifica di matematica viene creata"></video>
+        <button class="gioca" type="button" aria-label="Metti in pausa il video"><svg class="ib" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg><svg class="ip" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.2v11.6a.6.6 0 0 0 .9.5l9.2-5.8a.6.6 0 0 0 0-1L4.9 1.7a.6.6 0 0 0-.9.5z"/></svg><span class="gl">Pausa</span></button>
       </figure>
       <ol class="passi" data-sc-in data-sc-stagger="60">
         <li><b>Scrivi la richiesta</b>Argomento, classe, quanti esercizi. Anche a voce.</li>
@@ -379,21 +399,33 @@
 <script src="scrollcraft.js"></script>
 <script>ScrollCraft.mount(document.body);</script>
 <script>
-  // il video parte da solo quando è in vista (se l'utente non ha chiesto meno movimento) e ha sempre un pulsante per fermarlo
+  // i video (senza audio) partono da soli quando sono in vista, in loop, e si fermano quando escono; il pulsante in alto a sinistra li ferma e li fa ripartire
   (function () {
-    var v = document.getElementById("demo"), btn = document.getElementById("demo-btn");
-    if (!v || !btn) return;
-    var ridotto = window.matchMedia("(prefers-reduced-motion: reduce)").matches, manuale = false;
-    function agg() { var on = !v.paused; btn.textContent = on ? "Pausa" : "Avvia"; btn.setAttribute("aria-pressed", on ? "true" : "false"); }
-    function avvia() { v.preload = "auto"; var p = v.play(); if (p && p.catch) p.catch(function () {}); agg(); }
-    btn.addEventListener("click", function () { manuale = true; if (v.paused) avvia(); else { v.pause(); agg(); } });
-    v.addEventListener("play", agg); v.addEventListener("pause", agg);
-    if ("IntersectionObserver" in window && !ridotto) {
-      new IntersectionObserver(function (e) {
-        if (e[0].isIntersecting) { if (!manuale || !v.paused) avvia(); } else { v.pause(); }
-      }, { threshold: 0.5 }).observe(v);
-    }
-    agg();
+    document.querySelectorAll(".schermo").forEach(function (fig) {
+      var v = fig.querySelector("video"), btn = fig.querySelector(".gioca");
+      if (!v || !btn) return;
+      var lab = btn.querySelector(".gl"), manuale = false, mostra = false;
+      function agg() {
+        var fermo = v.paused;
+        fig.classList.toggle("inpausa", fermo);
+        fig.classList.toggle("ferma", fermo && mostra);   // grande al centro solo se è fermo per scelta o se il browser non l'ha fatto partire
+        lab.textContent = fermo ? (mostra ? "Guarda il video" : "Avvia") : "Pausa";
+        btn.setAttribute("aria-label", fermo ? "Avvia il video" : "Metti in pausa il video");
+      }
+      function avvia() { v.preload = "auto"; var p = v.play(); if (p && p.catch) p.catch(function () { mostra = true; agg(); }); }
+      btn.addEventListener("click", function () {
+        if (v.paused) { manuale = false; mostra = false; avvia(); } else { manuale = true; mostra = true; v.pause(); }
+        agg();
+      });
+      v.addEventListener("play", function () { mostra = false; agg(); });
+      v.addEventListener("pause", agg);
+      if ("IntersectionObserver" in window) {
+        new IntersectionObserver(function (e) {
+          if (e[0].isIntersecting) { if (!manuale) avvia(); } else if (!v.paused) { v.pause(); }
+        }, { threshold: 0.35 }).observe(fig);
+      } else { avvia(); }
+      agg();
+    });
   })();
 </script>
 <script>
